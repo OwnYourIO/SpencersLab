@@ -7,9 +7,11 @@
 #               pre-C05: the new ids and the ornith hygiene ladder are not in
 #               the catalog yet.
 #   NO-PHANTOM — every catalog key must be routable: a gpu-ai render model, a
-#               render alias, or one of the two explicit allow-list families
+#               render alias, or one of the three explicit allow-list families
 #               (workload `:tags`/`:caption` aliases; peers-routed Strata
-#               arenas, whose serving authority is the peers evidence file).
+#               arenas, whose serving authority is the peers evidence file;
+#               vllm-peer-routed ids and their class aliases, whose serving
+#               authority is the rendered peers.vllm models list — cf-105 C03).
 #               RED pre-C05 because the 13 ruled-out REMOVED_IDS are still
 #               registered; stays RED if C05 pre-registers something that does
 #               not serve.
@@ -176,9 +178,19 @@ def test_c05_card_asks_already_served_and_routable(catalog, model_id):
 def test_c05_no_phantom_catalog_entries(catalog):
     served, aliases = _render_surface()
     peers_routed = set(S.strata_peers_evidence()["models_allowed"])
+    # cf-105 C03: the vllm peer is a second serving authority. Its models
+    # list (read from the RENDER — never from the catalog) names the served
+    # wire id; a catalog row that IS that wire id, or carries it as its
+    # modelID (the D6/D10 class aliases — same wire model, row key differs by
+    # priority class), is routed through the same hop. The set empties
+    # automatically if the vllm peer leaves the render, so the rows fall
+    # back to phantom-red with it.
+    vllm_wire = set(((L.rendered_config("gpu-ai").get("peers") or {}).get("vllm") or {}).get("models") or [])
+    vllm_routed = {k for k, e in catalog.items()
+                   if k in vllm_wire or (e or {}).get("modelID") in vllm_wire}
     phantoms = []
     for key in sorted(catalog):
-        if key in served or key in aliases or key in peers_routed:
+        if key in served or key in aliases or key in peers_routed or key in vllm_routed:
             continue
         if key.endswith(WORKLOAD_ALIAS_SUFFIXES):
             continue

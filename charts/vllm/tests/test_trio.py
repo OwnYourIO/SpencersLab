@@ -37,12 +37,17 @@ def test_trio_charts_vllm_entry_is_exact():
 def test_trio_vllm_block_carries_the_two_overrides():
     block = _svc().get("vllm")
     assert isinstance(block, dict), "C02 AC5: no top-level vllm: values block in services/gpu-ai/prod/values.yaml"
+    sub = block.get("app-template")
+    assert isinstance(sub, dict), (
+        "C07 AC5: the vllm: block must nest its overrides under app-template: (the repo "
+        "app-template idiom — C02's top-level shape is void, owner ruling 2026-11-06)"
+    )
     # modelPath pinned to the actual q4 GGUF path on the PVC (C02 task).
-    model_path = block.get("modelPath")
+    model_path = sub.get("modelPath")
     V.assert_model_path_shape(model_path, "service vllm block")
     # rocrVisibleDevices "0" = R9700 (D2); a values key so the template never changes.
-    assert str(block.get("rocrVisibleDevices")) == "0", (
-        f"C02 AC5: vllm block rocrVisibleDevices must be \"0\" (R9700), got {block.get('rocrVisibleDevices')!r}"
+    assert str(sub.get("rocrVisibleDevices")) == "0", (
+        f"C02 AC5: vllm block app-template.rocrVisibleDevices must be \"0\" (R9700), got {sub.get('rocrVisibleDevices')!r}"
     )
 
 

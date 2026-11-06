@@ -1,3 +1,7 @@
+{{- /* .Release.Name doubles as the app-template fullname here: it always
+contains the chart name (gpu-ai-vllm), so fullname dedups to it and the
+primary Service is named after the release. */ -}}
+{{- $svc := .Release.Name -}}
 vLLM (qwen3.8-27b dense) is CLUSTER-INTERNAL by the Q4 ruling — no
 ingress, no public host. The one client route is the llama-swap
 peers.vllm hop on the existing llama host, whose proxy target is this
@@ -5,11 +9,11 @@ release's Service. The peer URL carries NO /v1 suffix (the request path
 appends verbatim) and is the exact string the C03 peers.vllm entry
 consumes
 
-  http://{{ include "bjw-s.common.lib.chart.names.fullname" . }}.default.svc.cluster.local:8000
+  http://{{ $svc }}.default.svc.cluster.local:8000
 
 Debug access from outside the cluster (kubectl only — not a client path)
 
-  kubectl -n default port-forward svc/{{ include "bjw-s.common.lib.chart.names.fullname" . }} 8000:8000
+  kubectl -n default port-forward svc/{{ $svc }} 8000:8000
   curl -s http://127.0.0.1:8000/health
 
 Next step — the C06 on-target acceptance runbook

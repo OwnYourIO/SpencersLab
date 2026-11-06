@@ -3,22 +3,24 @@ name: boards
 description: >-
   WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card
   pickup (a given card id, else the top card walking Rework → Not Started → Low
-  Priority, one scheduled walk serving both Provider flavors with per-card model
-  routing and the unlabeled-card ask; candidates additionally skipped by the
-  dependency gate over blocking Red Strings edges), the claim-time
-  `preload_board` consumer with its degrade law, the grouped-sibling flow
-  running a card's blocking-edge companions under one claim, card-driven kickoff
-  where the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in
-  the Loop) and the active slug field (an append-only stack of combined
-  `[<slug>](<session link>)` values, newest last) supply the answers
-  pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate
-  with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs
-  naming every surface, the iterative research-only loop for Research-labelled
-  cards (ending at Review), the card lifecycle with post-plan write-back
-  (Finished stays human-owned), the follow-up-card protocol landing Inbox
-  (Backlog swimlane), the archive-and-never-ask no-cards exit, and the batched
-  question protocol. MUST-loaded by agent-board-coord at run start; load it
-  anywhere else when working the WeKan AI-Dev board card flow.
+  Priority, scheduled walks additionally filtered by Provider label with the
+  Local task the planned taker of unlabeled cards; candidates additionally
+  skipped by the dependency gate over blocking Red Strings edges), the
+  claim-time `preload_board` consumer with its degrade law, the grouped-sibling
+  flow running a card's blocking-edge companions under one claim, card-driven
+  kickoff where the five standard checklists
+  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the two custom fields
+  — `slug` (combined `[<slug>](<session link>)` value) and `Priority` (NUMBER,
+  the serving-class kickoff input; model choice still rides the Model(s)
+  checklist) — supply the answers pipeline-kickoff would ask live, the
+  checked-stages-only Lifecycle stage gate with its single-authority Stage map,
+  run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative
+  research-only loop for Research-labelled cards (ending at Review), the card
+  lifecycle with post-plan write-back (Finished stays human-owned), the
+  follow-up-card protocol landing Inbox (Backlog swimlane), the
+  archive-and-never-ask no-cards exit, and the batched question protocol.
+  MUST-loaded by agent-board-coord at run start; load it anywhere else when
+  working the WeKan AI-Dev board card flow.
 ---
 # Boards
 
@@ -29,7 +31,7 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
 - Lists — the board structure is human-owned and DRIFTS; this enumeration is context, never a freeze — resolve list ids live (the board-context block's `lists:` section, else `list_lists`). Captured 2026-11-01, the **In Process** swimlane holds: **Not Started**, **Executing**, **Review**, **Rework**, **Finished** (human acceptance — the agent never moves there, and the dependency gate counts a blocker here as satisfied), **Low Priority** (deprioritised work — picked up last), plus two human-owned non-intake lists the flow READS: **Test** (acceptance-holding — a blocker sitting here also satisfies the dependency gate; never a pickup or grouping source) and **Cancelled** (human shelving — never picked). Pickup walks only **Rework → Not Started → Low Priority**. **Timeout** (reaper destination, still landing via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s; until it exists the reaper degrades per Parallel pipeline loops).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned). Labels whose name starts with `Pipeline:` mark the pipelines a card blocks on the lease-lock surface (Parallel pipeline loops): the TRIMMED remainder of the label name is one pipeline/lock name, ONE card may carry several, and a card with no such label runs on the single `default` pipeline. `Pipeline:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as **Research** (D17/D19). Labels whose name starts with `Repo:` name the owning repo of a card for PICKUP filtering (Card pickup): the TRIMMED remainder of the label name is the owning repo's name, matched case-sensitively on the exact `Repo:` prefix, and a card may carry AT MOST ONE `Repo:` label — one carrying more is claimed by none of its conflicting repos, so the walk skips it and the run records the conflict in its RESULT. A card with NO `Repo:` label at all belongs to the DEFAULT PICKER repo (Repo identity below). `Repo:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as `Pipeline:` and **Research** (OQ-A1 COEXIST). `Repo:` is a pickup filter, not a lock: it NEVER contributes to the claim set (Parallel pipeline loops, derivation bullet), while `Pipeline:` keeps its lock meaning unchanged — the two prefixes coexist on one card.
-- Custom fields: `slug` is the only active agent-facing field — the roster has exactly one such entry — carrying the append-only stack of combined `[<slug>](<session link>)` values (newest LAST, one line per run), resolved by name with `list_custom_fields`. Other live board fields sit outside the agent's read/write surface: the retired `session` field is never read, never written (its board-level removal is human-owned); no third field joins this roster (D19 — pipeline identity is LABELS, never a field), and there is no `models` field (D12 — model routing rides the Model(s) checklist).
+- Custom fields: exactly TWO board-level fields — `slug` (text, carrying the combined `[<slug>](<session link>)` link value) and `Priority` (NUMBER), both resolved by name with `list_custom_fields`. `get_card` is the only value source for `Priority` (`[{id, value}]`); the claim-time `preload_board` per-card dict does NOT carry it, so the value is read from the single `get_card` confirm at kickoff. `Priority` is a serving-class field consumed at kickoff — the D12 carve-out: model choice still rides the Model(s) checklist, so `Priority` modifies how the resolved model is served (the background leg moves engine, never model family) and never picks models otherwise. The legacy `session` field may linger on the live board but is retired: never read, never written (its board-level removal is human-owned). There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a field.
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
@@ -276,6 +278,14 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   mapping authority stay in `pipeline-models` — reference it, never
   duplicate its table. Record the resolved tiers in STATE.json
   `kickoff.models` and in the claim comment — never as a custom field.
+- **priority** — the `Priority` custom field's value (string→int
+   coercion; `null`/absent = the default class) joins the card-provided
+   answers; the resolved CLASS is recorded in STATE.json
+   `kickoff.priority {raw, class}` and in the claim comment alongside
+   `kickoff.models` — the class table's single authority is
+   `pipeline-models`, referenced, never duplicated. The board field
+   itself is NEVER written back by agents: it is input-only, and the
+   post-plan write-back stays slug-only.
 - **human-in-the-loop** — the checked Human in the Loop items are THIS
   run's stop stages: each checked item stops the run AFTER that step
   completes (even if a later stage is skipped) and waits for human input
@@ -312,7 +322,7 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   bare slug alike, and the mint mechanics live in `pipeline-kickoff` —
   citation only, never restated here. STATE.json `kickoff` carries `card`
   (the id) + `slug` + `session_origin` (the claim-once slot record — Config
-  constants) and omits/nulls `run_tag`.
+  constants) + (board runs) `priority: {raw, class}` (the `Priority` value and its resolved class — the Card-driven kickoff priority bullet) and omits/nulls `run_tag`.
 
 ## Board context block (consumer side)
 
@@ -465,6 +475,6 @@ The card answers in advance: the planner MUST NOT record a question whose answer
 When launching `agent-plan`, agent-board-coord MUST include this extra prompt text (in addition to the standard launch prompt):
 
 > Card context: <card title, card description, and card comments> — the card description is the request; the feature folder is <path>.
-> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Lifecycle / Human in the Loop the CHECKED items, plus the card's `slug` custom-field value (the combined `[<slug>](<session link>)` link) and its `cardNumber`.
+> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Lifecycle / Human in the Loop the CHECKED items, plus the card's `slug` custom-field value (the combined `[<slug>](<session link>)` link), its `Priority` custom-field value, and its `cardNumber`.
 > No-questions rule: until this plan is finalized you must NOT call the `question` tool. Record every question you would ask — question, the best-guess answer you take, and its impact — in the plan's Open questions section, and continue the work on the best guess.
 > Question return: when the plan is about to be written/finalized, return ALL accumulated questions — in RESULT `open_questions` and in the plan's Open questions section. They go to the user in one batched question round, and the plan session is re-launched with the answers before final approval.

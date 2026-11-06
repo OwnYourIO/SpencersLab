@@ -1,10 +1,13 @@
 {
   "feature": "2026/2026-11-cf-105-feat-implement-vllm",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e53bbc1d5ffepUTUiAWeRg001r",
   "test_session": {
     "note": "the single original agent-test session (ses_e587db2c1ffewHuz1AOwWENhpy) and its immediate retry (ses_e58158663ffezQg176HMOunRUs) BOTH died on harness compaction errors after the first wrote partial suites to disk (its retry wrote nothing). Test writing was therefore split into per-chunk test sessions with minimal context; each session's id is recorded per chunk below and routes that chunk's faulty-test fixes",
-    "dead": ["ses_e587db2c1ffewHuz1AOwWENhpy", "ses_e58158663ffezQg176HMOunRUs"],
+    "dead": [
+      "ses_e587db2c1ffewHuz1AOwWENhpy",
+      "ses_e58158663ffezQg176HMOunRUs"
+    ],
     "C01": "ses_e57b384cfffeRNBDHS34eR6DSW",
     "C02": "ses_e57aa288affeFv7IrIgEUfMUkZ",
     "C03": "ses_e5741efdbffetfnoAMN4FAUFM3",
@@ -12,8 +15,8 @@
     "C05": "ses_e571e33aaffem65mehSZjZ9guS",
     "C06": "id not captured by coord (session completed; a faulty-test repair for C06 launches a FRESH agent-test session per the gates contract)"
   },
-  "current_wave": 1,
-  "updated_at": "2026-11-05T15:36:00+00:00",
+  "current_wave": 3,
+  "updated_at": "2026-11-05T23:12:00+00:00",
   "kickoff": {
     "slug": "cf-105-feat-implement-vllm",
     "type": "feat",
@@ -73,6 +76,17 @@
       "note": "tools/list probe at claim returned 26 tools on the deployed wekan-mcp 4.1.3 build: no preload_board, no dependency tools, no set_card_labels, and create_card carries no parent_id. Per the cf-96 degrade law the run kept per-list list_cards_in_list reads and SKIPPED the dependency gate; follow-up cards will carry their label/lineage intent in the body instead."
     }
   },
+  "final_review": {
+    "at": "2026-11-05T23:12:00+00:00",
+    "session": "ses_e521d64acffeMpfLA0W34p6yJw",
+    "verdict": "APPROVED",
+    "summary": "whole-plan review at branch tip 711981060: every validation re-run fresh and green (charts/vllm 27/27 0 skips; llama-swap 415 passed / 9 skipped / 0 failed; surface M1-M7 full 7 ok; dashboards 5 ok incl. live 200+panels; runbook T1-T5; vllm-rocm t1-t6 incl. live digest; helm lint + chart-defaults + service-level renders 0 OVERRIDE_ sentinels; plan C03 configmap leg exact; rulesync generate --check clean; aislop 0/0/0); every Goal item + D-ruling mapped to a committed artifact (C01 6afec2d44 / C02 925a2c62b / C03 71e9116b0 / C04 01317f447 / C05 d0670e031 / C06 711981060 — exactly six linear commits on ceb9a8ed6, never pushed); cross-chunk constants branch-wide consistent with zero drift (served name qwen3.8-27b-vllm, base tag v0.33.0-rocm100, 262144, priority 1/10 + floor 10, peer URL without /v1, class-table rows); sanctioned exclusions confirmed absent/documented (proxy-local leg, PrometheusRule, Open WebUI, GPU-side telemetry, the step-10 :v<run> pin pending CI); bookkeeping + git hygiene clean (tgz gitignored, Chart.lock committed).",
+    "nits": [
+      "chunks.C01 lacked the commit field its siblings carried — stamped with this edit (6afec2d44)",
+      "chunks/C06.md '## Tests' enumerates T1-T4 while the shipped suite runs T1-T5 (one-line spec gap, no assertion difference; DECISIONS Deferred)"
+    ],
+    "note": "local main has advanced past the recorded base (cf-106 work at eaa1a2c5b) — expected for an in-flight branch; the branch rebases at merge time (human-owned)"
+  },
   "chunks": {
     "C01": {
       "status": "done",
@@ -82,13 +96,31 @@
       "review_rounds": 1,
       "last_verdict": "APPROVED",
       "dev_session": "id not captured by coord (a fix round launches a fresh agent-dev-local session per the gates contract)",
+      "commit": "6afec2d44",
       "handoffs": [
         {
           "role": "dev",
           "status": "DONE",
-          "files_changed": ["containers/vllm-rocm/Dockerfile", "containers/vllm-rocm/README.md", "containers/vllm-rocm/carry/qwen35-import-compat.patch"],
-          "commands_run": ["bash -n Dockerfile/patch sanity => pass", "bash tests/containers/vllm-rocm.sh => pass (t1-t6 all ok; t3 live digest check, not skipped)", "python3 -c \"import yaml; yaml.safe_load(open('containers/vllm-rocm/carry/qwen35-import-compat.patch'))\"-style structural checks => pass", "npx aislop ci --changes => pass (0 errors, 0 warnings)", "docker build containers/vllm-rocm => no-daemon, CI-deferred (designed gate shape; docker CLI present, daemon UNREACHABLE; docker-build.yaml on the pushed branch is authoritative)", "GHCR/GHCR-proxy probes: base image digest re-verified => sha256:4fcd39b7... matches ledger", "git rev-parse vllm-gguf-plugin e454affe0ca23c9dc8754ec3033270cb30622ed5 => pass (commit exists, 2026-10-24, '[BugFix] Flatten batched inputs in the GGUF linear method (#149)')"],
-          "deviations": ["pip install line carries --no-cache-dir --no-build-isolation (REQUIRED: the plugin compiles vllm_gguf_plugin._C_gguf via torch cpp_extension; an isolated build would fetch CUDA torch, and the image has only hipcc)", "precheck added: python3 -c \"import setuptools, torch; assert torch.version.hip\" so a base that loses ROCm torch fails loudly at build time", "base image has no non-root user (config User: null) so the overlay creates uid 65532 with getent guards + numeric USER 65532", "no ENTRYPOINT directive added — the base's [\"vllm\",\"serve\"] is inherited unchanged (AC4: overlay adds plugin + env only); EXPOSE 8000 added since the base declares no ExposedPorts"],
+          "files_changed": [
+            "containers/vllm-rocm/Dockerfile",
+            "containers/vllm-rocm/README.md",
+            "containers/vllm-rocm/carry/qwen35-import-compat.patch"
+          ],
+          "commands_run": [
+            "bash -n Dockerfile/patch sanity => pass",
+            "bash tests/containers/vllm-rocm.sh => pass (t1-t6 all ok; t3 live digest check, not skipped)",
+            "python3 -c \"import yaml; yaml.safe_load(open('containers/vllm-rocm/carry/qwen35-import-compat.patch'))\"-style structural checks => pass",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings)",
+            "docker build containers/vllm-rocm => no-daemon, CI-deferred (designed gate shape; docker CLI present, daemon UNREACHABLE; docker-build.yaml on the pushed branch is authoritative)",
+            "GHCR/GHCR-proxy probes: base image digest re-verified => sha256:4fcd39b7... matches ledger",
+            "git rev-parse vllm-gguf-plugin e454affe0ca23c9dc8754ec3033270cb30622ed5 => pass (commit exists, 2026-10-24, '[BugFix] Flatten batched inputs in the GGUF linear method (#149)')"
+          ],
+          "deviations": [
+            "pip install line carries --no-cache-dir --no-build-isolation (REQUIRED: the plugin compiles vllm_gguf_plugin._C_gguf via torch cpp_extension; an isolated build would fetch CUDA torch, and the image has only hipcc)",
+            "precheck added: python3 -c \"import setuptools, torch; assert torch.version.hip\" so a base that loses ROCm torch fails loudly at build time",
+            "base image has no non-root user (config User: null) so the overlay creates uid 65532 with getent guards + numeric USER 65532",
+            "no ENTRYPOINT directive added — the base's [\"vllm\",\"serve\"] is inherited unchanged (AC4: overlay adds plugin + env only); EXPOSE 8000 added since the base declares no ExposedPorts"
+          ],
           "friction": "none blocking — /tmp/opencode held a stale patched/ dir from an earlier session that silently no-op'd the first diff generation; resolved by using a fresh vllm-patch/ path",
           "open_questions": "watch-item recorded in README: a vllm-gguf-plugin release v0.0.6? or main ref carrying PR #98 + the #60623 import fix → point the ARG at it and drop the carry patch"
         },
@@ -96,29 +128,68 @@
           "role": "review",
           "status": "APPROVED",
           "verdict": "APPROVED - all 5 ACs met and covered, both in-repo precedents matched, scope clean, all four dev deviations checked out as justified; no blocker/major/minor findings; only carry = the documented watch-item (a plugin release or main ref with the upstream #60623 import fix -> re-point ARG, drop carry)",
-          "files_changed": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C01.md (review notes only)"],
-          "commands_run": ["bash tests/containers/vllm-rocm.sh => pass (t1-t6 ok, exit 0; t3 live, digest match)", "npx aislop ci containers/vllm-rocm => pass (exit 0, 0 scoreable files, 0 findings)", "npx aislop ci --changes => pass (score 100, 70 files, 0 errors/0 warnings)", "docker build containers/vllm-rocm => no-daemon, CI-deferred (daemon socket absent - designed AC1 gate shape)", "curl hub.docker.com tags/v0.33.0-rocm100 => pass (digest sha256:4fcd39b7...83fba, full_size 18038402058, pushed 2026-11-02T02:45:27Z - matches ledger)", "curl api.github.com commits/e454affe... => pass (exists, 2026-10-24T03:46:01Z, msg matches)", "curl api.github.com branches/main => pass (main HEAD == pinned SHA)", "shallow fetch plugin @ e454affe + tree-wide grep + pyproject/setup.py => pass (hunk context exact; only 2 lines touch removed module; installed layout matches patch path; entry point vllm.general_plugins confirmed)", "raw fetch plugin weights_adapter/qwen3_5.py @ ref => pass (lines 11-18 == patch context)", "raw fetch vllm v0.33.0 models/qwen3_5.py + configs/qwen3_5{,_moe}.py => pass (imports from transformers; vendored modules 404)", "Docker Hub registry config blob => pass (User null, Entrypoint [vllm,serve], no ExposedPorts, SITE_PACKAGES set, AITER gfx942;gfx950, PYTORCH_ROCM_ARCH incl. gfx1201+gfx1151, env pins not pre-set)", "find containers/vllm-rocm -type f => pass (exactly the 3 in-scope files)", "grep -rin renovate containers/vllm-rocm/ => pass (exactly 1 hit: the sanctioned git-refs comment)"],
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C01.md (review notes only)"
+          ],
+          "commands_run": [
+            "bash tests/containers/vllm-rocm.sh => pass (t1-t6 ok, exit 0; t3 live, digest match)",
+            "npx aislop ci containers/vllm-rocm => pass (exit 0, 0 scoreable files, 0 findings)",
+            "npx aislop ci --changes => pass (score 100, 70 files, 0 errors/0 warnings)",
+            "docker build containers/vllm-rocm => no-daemon, CI-deferred (daemon socket absent - designed AC1 gate shape)",
+            "curl hub.docker.com tags/v0.33.0-rocm100 => pass (digest sha256:4fcd39b7...83fba, full_size 18038402058, pushed 2026-11-02T02:45:27Z - matches ledger)",
+            "curl api.github.com commits/e454affe... => pass (exists, 2026-10-24T03:46:01Z, msg matches)",
+            "curl api.github.com branches/main => pass (main HEAD == pinned SHA)",
+            "shallow fetch plugin @ e454affe + tree-wide grep + pyproject/setup.py => pass (hunk context exact; only 2 lines touch removed module; installed layout matches patch path; entry point vllm.general_plugins confirmed)",
+            "raw fetch plugin weights_adapter/qwen3_5.py @ ref => pass (lines 11-18 == patch context)",
+            "raw fetch vllm v0.33.0 models/qwen3_5.py + configs/qwen3_5{,_moe}.py => pass (imports from transformers; vendored modules 404)",
+            "Docker Hub registry config blob => pass (User null, Entrypoint [vllm,serve], no ExposedPorts, SITE_PACKAGES set, AITER gfx942;gfx950, PYTORCH_ROCM_ARCH incl. gfx1201+gfx1151, env pins not pre-set)",
+            "find containers/vllm-rocm -type f => pass (exactly the 3 in-scope files)",
+            "grep -rin renovate containers/vllm-rocm/ => pass (exactly 1 hit: the sanctioned git-refs comment)"
+          ],
           "friction": "none",
           "open_questions": "none"
         }
       ]
     },
     "C02": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e53780a73ffen5vXPydAMd234c",
+      "review_session": "ses_e53176802ffeYB1PFQYHvCJON6",
+      "commit": "925a2c62b",
       "handoffs": [
         {
           "role": "dev",
           "round": 1,
           "session": "ses_e53780a73ffen5vXPydAMd234c",
           "status": "BLOCKED (validation_at_fault — implementation DONE, left in tree; 26/27 green, the one red is a test defect)",
-          "files_changed": ["charts/vllm/Chart.yaml (stub rewritten: two deps — common + app-template, no-trailing-slash repo URL)", "charts/vllm/Chart.lock (generated, commit)", "charts/vllm/values.yaml (new)", "charts/vllm/templates/common.yaml (new, one-line loader)", "charts/vllm/templates/NOTES.txt (new)", "charts/vllm/templates/pvc-vllm-cache.yaml (new)", "services/gpu-ai/prod/values.yaml (charts.vllm entry + subdomains skip-ruling comment + top-level vllm: block)", ".github/workflows/vllm-render-tests.yaml (new)", "charts/vllm/charts/{common,app-template}-5.0.1.tgz on disk, gitignored/untracked per repo convention"],
-          "commands_run": ["helm dependency update charts/vllm => pass", "helm lint charts/vllm => pass (0 failed, icon INFO only)", "helm template chart-defaults (domain/clusterName sets) => pass (PVC+Service+Deployment, 0 OVERRIDE_ sentinels)", "python3 extract-subtree services/gpu-ai/prod/values.yaml['vllm'] => /tmp/vllm-vals.yaml => pass", "helm template service-level -f render => pass (0 sentinels)", "grep OVERRIDE_ both renders => empty", "python3 -m pytest charts/vllm/tests -v => 26 passed / 1 failed (test_ac6_chart_lock_and_vendored_dependency — test defect, see friction)", "trio greps: services/gpu-ai 7 vllm hits (charts entry + skip comment + block) / services/proxy-local empty / custom-values empty / services/gpu empty => pass", "workflow yaml.safe_load => pass (also asserted in-suite)", "npx aislop ci --changes => pass (0 errors, 0 warnings, 70 files)"],
+          "files_changed": [
+            "charts/vllm/Chart.yaml (stub rewritten: two deps — common + app-template, no-trailing-slash repo URL)",
+            "charts/vllm/Chart.lock (generated, commit)",
+            "charts/vllm/values.yaml (new)",
+            "charts/vllm/templates/common.yaml (new, one-line loader)",
+            "charts/vllm/templates/NOTES.txt (new)",
+            "charts/vllm/templates/pvc-vllm-cache.yaml (new)",
+            "services/gpu-ai/prod/values.yaml (charts.vllm entry + subdomains skip-ruling comment + top-level vllm: block)",
+            ".github/workflows/vllm-render-tests.yaml (new)",
+            "charts/vllm/charts/{common,app-template}-5.0.1.tgz on disk, gitignored/untracked per repo convention"
+          ],
+          "commands_run": [
+            "helm dependency update charts/vllm => pass",
+            "helm lint charts/vllm => pass (0 failed, icon INFO only)",
+            "helm template chart-defaults (domain/clusterName sets) => pass (PVC+Service+Deployment, 0 OVERRIDE_ sentinels)",
+            "python3 extract-subtree services/gpu-ai/prod/values.yaml['vllm'] => /tmp/vllm-vals.yaml => pass",
+            "helm template service-level -f render => pass (0 sentinels)",
+            "grep OVERRIDE_ both renders => empty",
+            "python3 -m pytest charts/vllm/tests -v => 26 passed / 1 failed (test_ac6_chart_lock_and_vendored_dependency — test defect, see friction)",
+            "trio greps: services/gpu-ai 7 vllm hits (charts entry + skip comment + block) / services/proxy-local empty / custom-values empty / services/gpu empty => pass",
+            "workflow yaml.safe_load => pass (also asserted in-suite)",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings, 70 files)"
+          ],
           "deviations": "(1) Chart.yaml declares TWO deps: common (functional — parent-side loader's values.init normalizes the render context only when .Values.common is populated by the common subchart's defaults; without it the library's pod-options dig panics on this helm build, empirically verified) plus app-template (the repo-standard pin test_ac6 asserts; renders nothing since no values sit under its namespace); both tgz vendored on disk (gitignored, llama-swap precedent). (2) --model value rides serveArgs via a YAML anchor to chart-level modelPath (app-template 5.0.1 args renders verbatim, no tpl); service block re-pins the identical literal; a C06 snapshot-hash retarget stays values-only. (3) enableSleepMode: true is a documented D5/Q6 values key, not a mechanical gate — the args list cannot be conditionally templated by the library; toggling is a serveArgs edit (stated in the values comment). (4) global.createDefaultServiceAccount: false (home-assistant/mosquitto precedent — the engine pod never calls the K8s API; avoids an orphan ServiceAccount object in the parent render).",
           "friction": "one faulty test blocks the gate — charts/vllm/tests/test_contract.py test_ac6_chart_lock_and_vendored_dependency runs json.loads() on Chart.lock, which helm 3.16.4 writes as YAML (proven 3 ways: llama-swap's committed lock, the dev-regenerated lock, a scratch chart's lock — all JSONDecodeError at char 0; the CI workflow regenerates the lock via helm dependency update before pytest, so a hand-written JSON lock cannot survive either). Repair is one line: json.loads -> yaml.safe_load; all other assertions in that test are already met. Also: recurring harness display truncation/garbling of tool output this run — resolved with file-backed re-reads (awk/python asserts), same workaround as the plan/coord friction entries.",
           "open_questions": "none",
@@ -129,50 +200,206 @@
           "round": "repair-1",
           "session": "ses_e531983faffex3HTZqnAxlUbyx (fresh session — the original C02 test session ses_e57aa288affeFv7IrIgEUfMUkZ is not reachable as a child of this coord; recorded as test_session.C02 repair-route)",
           "status": "DONE",
-          "files_changed": ["charts/vllm/tests/test_contract.py (test_ac6_chart_lock_and_vendored_dependency: json.loads -> yaml.safe_load on Chart.lock; now-dead import json removed; 3-line why-comment)"],
-          "commands_run": ["export PATH=$HOME/.local/bin:$PATH + helm version --short => pass (v3.16.4)", "json.loads on committed Chart.lock => fail (JSONDecodeError char 0 — defect reproduced fresh)", "yaml.safe_load on committed Chart.lock => pass (dict; deps common 5.0.1 + app-template 5.0.1)", "helm dependency update on scratch chart => pass (fresh lock is YAML)", "pytest charts/vllm/tests -v pre-repair => 26 passed / 1 failed (only the ac6 test)", "pytest charts/vllm/tests -v post-repair => pass (27 passed in 0.72s, no skips — helm-guarded tests actually ran)", "aislop-gate on both edits => pass (100/100, 0 issues)"],
+          "files_changed": [
+            "charts/vllm/tests/test_contract.py (test_ac6_chart_lock_and_vendored_dependency: json.loads -> yaml.safe_load on Chart.lock; now-dead import json removed; 3-line why-comment)"
+          ],
+          "commands_run": [
+            "export PATH=$HOME/.local/bin:$PATH + helm version --short => pass (v3.16.4)",
+            "json.loads on committed Chart.lock => fail (JSONDecodeError char 0 — defect reproduced fresh)",
+            "yaml.safe_load on committed Chart.lock => pass (dict; deps common 5.0.1 + app-template 5.0.1)",
+            "helm dependency update on scratch chart => pass (fresh lock is YAML)",
+            "pytest charts/vllm/tests -v pre-repair => 26 passed / 1 failed (only the ac6 test)",
+            "pytest charts/vllm/tests -v post-repair => pass (27 passed in 0.72s, no skips — helm-guarded tests actually ran)",
+            "aislop-gate on both edits => pass (100/100, 0 issues)"
+          ],
           "deviations": "none — repair exactly as routed; all other assertions byte-intact; zero edits outside tests/",
           "friction": "none — dev's three-way unsatisfiability proof independently re-verified (committed lock + fresh scratch regeneration with the local binary)",
           "open_questions": "none",
           "next_suggested": "launch C02 agent-review (re-runs the chunk suite first; 27/27 expected), then coord commits the C02 set (charts/vllm/ incl. Chart.lock + values/templates + tests, services/gpu-ai/prod/values.yaml, .github/workflows/vllm-render-tests.yaml; vendored tgz stays untracked per the llama-swap precedent)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e53176802ffeYB1PFQYHvCJON6",
+          "verdict": "APPROVED",
+          "summary": "all validations re-run fresh (gate 27/27, 0 skipped; both renders 0 sentinels, service-level byte-identical to chart-defaults; AC3 peer URL http://gpu-ai-vllm.default.svc.cluster.local:8000; AC6 metadata + tag main/Always/PIN-ME; exactly two k8s.grafana.com annotations, no scrapeInterval; trio greps pass; AC5 custom-values/ + services/gpu/ byte-unchanged; aislop 0/0; scratch-chart reproduction of the two-deps common requirement). Four dev deviations adjudicated: two-deps JUSTIFIED (reproduced + mechanism verified in vendored values.init), serveArgs anchor JUSTIFIED, enableSleepMode documented-key ACCEPTED, createDefaultServiceAccount false JUSTIFIED. Test repair verified strictness-neutral (JSON subset of YAML; assertions byte-intact). Minor (non-blocking) -> DECISIONS Deferred: retarget-surface comment overstates (service-only modelPath edit does not change rendered --model). Nit: dep repository URL omits the trailing slash of other bjw-s deps (functionally identical; matches chunk text + test).",
+          "next_suggested": "coord commits the C02 set; mark C02 done; proceed to wave 2 (C03 first — its golden re-capture runs against the post-C02 tree)"
         }
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e530450f7ffeekCqwwNx5AT9uJ",
+      "review_session": "ses_e52893544ffexrtvRWcddHsJR4",
+      "commit": "71e9116b0",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e530450f7ffeekCqwwNx5AT9uJ",
+          "status": "BLOCKED (validation_at_fault — implementation DONE, left in tree; 6 reds are test-side re-pins that no correct C03 implementation can clear)",
+          "files_changed": [
+            "services/gpu-ai/prod/values.yaml (peers.vllm block, additive-only)",
+            ".opencode/opencode.jsonc (two gpu-ai catalog rows, pure 12-line insertion)",
+            "charts/llama-swap/tests/golden/gpu-ai.config.yaml (re-captured 33688->39159 B, 60 models, peers {strata,vllm}; gpu golden untouched)",
+            "charts/llama-swap/tests/TEST_SPEC.md (dated capture note + corrected Posture paragraph)"
+          ],
+          "commands_run": [
+            "export PATH + helm version => pass (v3.16.4)",
+            "pytest charts/llama-swap/tests -v (C03 tree) => 6 failed / 409 passed / 9 skipped (the 6 = by-name ledger in next_suggested; T1-T4 = 5/5 green)",
+            "pytest charts/llama-swap/tests -v (baseline worktree @925a2c62b, tgz copied in) => pass (410 passed / 9 skipped / 0 failed — every red arm proven green pre-C03)",
+            "bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 => pass (6 ok; M7 excluded as C04 designed-red)",
+            "plan-commands C03 leg: extract gpu-ai llama-swap subtree + helm template --show-only configmap => pass (peers.vllm exact per task spec)",
+            "AC4 trio greps => pass (all empty)",
+            "AC5 python byte-identity vs 925a2c62b => pass (strata peer, matrix, models, hooks byte-identical; vllm block pure insertion)",
+            "AC3 node JSONC parse + row-shape via M3 => pass (both rows, shared wire modelID, limit.context 262144, body.priority 10/1; git diff = 12 added lines only)",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings, 70 files)"
+          ],
+          "deviations": "(1) golden re-capture + TEST_SPEC note written via shell (python) — agent-dev-local denies edit on charts/**/tests/**; the chunk assigns both to dev as test assets C03 owns to re-capture; no test .py touched. (2) The prior session's TEST_SPEC §10 Posture paragraph was inaccurate (claimed two arms 'now pass') — rewritten to the verified 6-item ledger with base/handoff suite counts. (3) Baseline proof ran in a temporary detached worktree @925a2c62b with the gitignored app-template-5.0.1.tgz copied in; both scratch worktrees removed afterwards.",
+          "friction": "heredoc wrote literal \\u2014 escape sequences into the TEST_SPEC note (caught on re-read, fixed with a targeted unicode replace — no semantic change); recurring harness display garbling persisted, mitigated with file-backed outputs + re-reads as in prior rounds",
+          "open_questions": "none",
+          "next_suggested": "route the 6 test re-pins to the C03 test session (test_session.C03 = ses_e5741efdbffetfnoAMN4FAUFM3; if unreachable, a FRESH agent-test per the C02 repair precedent) with the by-name ledger: (1) test_config_parity.py::test_c02_2[gpu-ai] — _assert_strata_peers pin set(peers)=={'strata'} -> admit vllm (cf-86 peer wave-law); (2) test_config_parity.py::test_repl_tables_match_frozen_decisions — CF86_NEW_IDS now inside the re-captured golden (era-chain; CATALOG identity still holds); (3) test_config_parity.py::test_c02_3 — union law ai_ids==gpu_ids|GPUAI_LOCAL_IDS calibrated at 55, golden is now 60 (era-chain); (4) test_flashnext_blast_radius.py::test_c03_ac2_matrix_hooks_scalars_identical — peers delta None->{strata,vllm} not the pinned cf-77 evidence shape (test's own message routes this to the test session); (5) test_strata_wiring.py::test_c03_extract_and_render_yields_on_shape_keyless — single-peer pin -> 2 peers; (6) test_catalog_contract.py::test_c05_no_phantom_catalog_entries — admit qwen3.8-27b-vllm (vllm-peer-served) + the -urgent class alias of the same wire ID. Then dev re-run (expect 415 passed / 9 skipped / 0 failed + surface M1-M6 green), agent-review, coord commit of the C03 set (4 files + test_vllm_peer.py + surface.sh; tgz stays untracked)."
+        },
+        {
+          "role": "test",
+          "round": "repins-1",
+          "session": "ses_e52a4c89cffeQo7Xr8HpuKSszF (fresh agent-test — the original C03 test session ses_e5741efdbffetfnoAMN4FAUFM3 is unreachable as a child of this coord; recorded as the C03 test-repair route)",
+          "status": "DONE",
+          "files_changed": [
+            "charts/llama-swap/tests/test_config_parity.py",
+            "charts/llama-swap/tests/test_flashnext_blast_radius.py",
+            "charts/llama-swap/tests/test_strata_wiring.py",
+            "charts/llama-swap/tests/test_catalog_contract.py",
+            "charts/llama-swap/tests/llama_swap_testlib.py (PEER_VLLM single source)",
+            "charts/llama-swap/tests/test_vllm_peer.py (aliases L.PEER_VLLM; T1 assertions byte-intact)"
+          ],
+          "commands_run": [
+            "pytest C03 tree pre-repair => 6 failed / 409 passed / 9 skipped (matches dev ledger)",
+            "pytest post-repair => pass (415 passed / 9 skipped / 0 failed; twice fresh)",
+            "pytest -k the six ledger arms => pass (7 — parity arm parametrized over 2 clusters)",
+            "bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 => pass (6 ok; twice; M7 untouched, still C04 designed-red)",
+            "git diff golden/gpu.config.yaml => pass (0 bytes — gpu golden byte-identical)",
+            "python set-arithmetic pre-verification of the era laws vs goldens + frozen tables => pass (golden ai == CATALOG 60; (55-13+18)==60; REMOVED subset law holds)",
+            "8 mutation/drift probes P1-P6 => pass (8/8 RED-OK, each restored + sha256-verified; /tmp dir deleted)",
+            "aislop per-edit gate => pass (100/100, 0 findings on every edit)"
+          ],
+          "deviations": "(1) Arm 2's ledger entry undercounted: test_repl_tables_match_frozen_decisions carries a SECOND red hidden behind the listed line-107 failure — the REMOVED subset witness assert (the 4 gpu-ai-local REMOVED ids existed only in the pre-capture golden). Re-pinned in the same pass (witness = gpu golden ∪ GPUAI_LOCAL_IDS plan inventory); same era-chain class, no functionality change, CATALOG identity assert untouched. (2) PEER_VLLM literal moved to llama_swap_testlib as L.PEER_VLLM — single source shared by the three arms pinning the block; zero edits outside tests/**. (3) Three stale comments corrected inside blocks already being extended. No assertion outside the six arms touched.",
+          "friction": "arm-2 hidden second red found by pre-verifying every assert of the arm, not just the first failing one — the ledger's single-line attribution masked it; recurring harness display truncation (known repo friction) mitigated with file-backed outputs + re-reads",
+          "open_questions": "none",
+          "next_suggested": "launch C03 agent-review (re-runs the chunk suite first; 415 passed / 9 skipped / 0 failed + surface M1-M6 green expected, M7 still designed-red), then coord commits the C03 set (dev-owned: services/gpu-ai/prod/values.yaml, .opencode/opencode.jsonc, gpu-ai golden + TEST_SPEC note; test-side: the six files above; vendored tgz stays untracked)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e52893544ffexrtvRWcddHsJR4",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (plan C03 leg render: peers.vllm exact per spec, no /v1, 1800/30, {\"priority?\": 10}, no apiKey; pre-C03 vs post-C03 render diff = single hunk, exactly the 10-line vllm insertion; golden fidelity: re-captured golden minus 8 preserved annotation lines == fresh render line-for-line, and the committed-HEAD golden is 798 lines stale vs base — full re-capture justified; pytest 415 passed / 9 skipped / 0 failed; surface M1-M6 6 ok; M7 red on its first C04 needle with both C03-dependent cross-file legs passing in isolation — confirmed C04's, not C03's; AC3 JSONC 12+/0- pure insertion; AC4 trio greps empty; AC5 strata peer + matrix byte-identical; aislop 100/0/0 70 files; comment-slop pass keep-all; reviewer's own 3 mutation probes (phantom id / 1-byte port drift / peer removal) all bite). Both test-session deviations adjudicated: arm-2 hidden second red = era-chain-class (witness re-pin verified, CATALOG identity untouched); PEER_VLLM single-source move = T1 assertions byte-intact alias, three arms share the one literal. Minors (non-blocking): STATE.json lacked the repins-1 entry (coord bookkeeping — closed by this record); TEST_SPEC §10 says 15-line diff where the actual pre/post render delta is 10 lines (count fix rides the next test touch, DECISIONS Deferred).",
+          "next_suggested": "coord commits the C03 set; mark C03 done; launch C04 (M7 turns green on the C04 dev edit; the final review runs full M1-M7)"
+        }
+      ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C03"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e526ea1fdffefz3NEpgDhARZEL",
+      "review_session": "ses_e525531b6ffeJmB4pAEqIxp1qP",
+      "commit": "01317f447",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e526ea1fdffefz3NEpgDhARZEL",
+          "status": "DONE",
+          "files_changed": [
+            ".rulesync/skills/boards/SKILL.md (two-field roster + D12 carve-out + priority kickoff bullet + record-fields bullet + launch-prompt Priority + frontmatter two-field phrasing)",
+            ".rulesync/skills/pipeline-kickoff/SKILL.md (board-runs-only priority: {raw, class} slot in the handoff record; live Questions untouched)",
+            ".rulesync/skills/pipeline-models/SKILL.md (single-authority Priority class table + polarity sentence + peer-filter-floor note + two favorited qwen3.8-27b-vllm rows)",
+            ".opencode/skills/{boards,pipeline-kickoff,pipeline-models}/SKILL.md (regenerated twins; boards twin shows the generator's YAML-fold rewrap of the description — confined to the pair)"
+          ],
+          "commands_run": [
+            "rulesync generate => pass (exactly the 3 twins written, no other churn; full generated diff read)",
+            "bash tests/pipeline-models/surface.sh M1..M7 FULL => pass (7 ok, exit 0; M7 designed-red -> green; M1-M6 stayed green; re-run fresh at end)",
+            "rulesync generate --check => pass (exit 0, all files up to date; M6 re-runs it in-suite + second-generate no-op)",
+            "AC1 scope: git diff 71e9116b0 --stat => pass (exactly the six skill files + pre-existing STATE.json bookkeeping; zero other .opencode/ files; zero .rulesync/ files outside the three)",
+            "AC4 single-authority greps => pass (the 1-3 / 4+ boundary text exists ONLY in the pipeline-models pair src+gen; literal '4+' absent from boards+kickoff; boards cites twice, kickoff once)",
+            "AC5 cross-file => pass (node JSONC parse: qwen3.8-27b-vllm body.priority 10 + -urgent body.priority 1, both limit.context 262144, shared wire modelID — equal to the table rows; grep: 'priority?' floor = 10 at services/gpu-ai/prod/values.yaml:556)",
+            "AC6 diff review => pass (five standard checklists, Post-plan slug write-back, Research-only loop, legacy session retired / no models field / no pipeline field, D12/D19 citations all intact; live kickoff Questions still exactly two)",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings, 0 fixable, 70 files)"
+          ],
+          "deviations": "none material — HR2 (batched-round Q2) confirmed the chunk's class table as written (no override recorded in DECISIONS); the boards generated-twin description YAML-fold rewrap is the generator's own formatting of the one-paragraph source text (anticipated by the chunk's rulesync-reformat note)",
+          "friction": "edit tool rejected two multi-line oldStrings whose transcription mis-counted continuation-line indentation (2 spaces in the source, not 3) — resolved with single-line unique anchors; no semantic impact",
+          "open_questions": "none",
+          "next_suggested": "launch C04 agent-review (re-runs FULL M1..M7 + rulesync generate --check + aislop first, then AC1-AC6 review), then coord commits the C04 set (six skill files + bookkeeping), marks C04 done, posts the card comment, and launches C05 (wave 2, depends_on C02 only)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e525531b6ffeJmB4pAEqIxp1qP",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (surface M1..M7 full: 7 ok, M7 green + M1-M6 stayed green; rulesync generate --check exit 0 + second generate a no-op (idempotent); aislop 0/0/0 70 files; AC1 scope = six skill files + STATE.json bookkeeping only; AC3 roster two-field + D12 carve-out + priority bullet + launch-prompt all in src and gen; AC4 single-authority bidirectional — the 1-3/4+ boundary text only in pipeline-models, boards cites twice, kickoff once, zero vllm row IDs in boards/kickoff; AC5 cross-file — node JSONC rows equal the table, 'priority?' floor 10 at services/gpu-ai/prod/values.yaml:556; AC6 five checklists + write-back + Research loop + Stage map byte-unchanged, live kickoff still exactly two questions; AC7 comment-slop three-clause pass on every new bullet). Dev's flagged deviation (boards twin description YAML-fold rewrap) adjudicated JUSTIFIED — generator formatting, token-multiset identical, confined to the pair. DECISIONS HR2/Q2 confirmed: no batched-round override, table cell-for-cell as D6/HR2.",
+          "minors": "non-blocking nit -> DECISIONS Deferred: the rewritten boards roster line contains a 'third field' phrasing that should read 'field' (semantics preserved); info: the q4 favorited row's background-leg cross-reference stays inside the single-authority file (no action). Full notes appended to chunks/C04.md Review notes.",
+          "next_suggested": "coord commits the C04 set; mark C04 done; post the card comment; launch C05 (wave 2, depends_on C02 only)"
+        }
+      ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e5248a6bfffeKknLloiqzhAL2L",
+      "review_session": "ses_e52455addffe7bPjURe6PS5c7G",
+      "commit": "d0670e031",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e5248a6bfffeKknLloiqzhAL2L",
+          "status": "DONE",
+          "files_changed": [
+            "services/monitoring/prod/values.yaml (two grafana.dashboards.default entries: vllm-performance-statistics + vllm-query-statistics, url-pinned to vllm repo tag v0.33.0 + tag-coupling comments + datasource: Prometheus; placed at the folder's alphabetical position between unpackerr and volsync)"
+          ],
+          "commands_run": [
+            "bash tests/services/vllm-dashboards.sh => pass (5 ok, exit 0; t1, t2, t3 LIVE both URLs 200 + panels array (egress available, NOT skipped), t4 pin-coupling vs C01 README ledger line 3)",
+            "AC1 verbatim python yaml key dump => pass (both vllm-* keys in grafana.dashboards.default, 44 keys, order intact)",
+            "AC4 independent curl probe => pass (200 + panels len=20 performance / len=18 query)",
+            "AC5 git diff => pass (single hunk, 10 insertions / 0 deletions; all sibling entries byte-identical)",
+            "npx aislop ci --changes => pass (0/0/0, 70 files)"
+          ],
+          "deviations": "none — byte-exact per the chunk spec (em dash U+2014 + straight apostrophe verified via od -c / cat -A; no CRLF, no trailing whitespace); placement at the existing alphabetical position since the chunk names none",
+          "friction": "one display-only truncation of a verification line (known repo display-garbling item) — resolved by file-backed cat -A re-read; no semantic impact",
+          "open_questions": "none",
+          "next_suggested": "launch C05 agent-review (re-runs bash tests/services/vllm-dashboards.sh first incl. the t3 live probe — expect 5 ok; AC4 probe fresh), then coord commits the C05 set (services/monitoring/prod/values.yaml + tests/services/vllm-dashboards.sh + bookkeeping) and proceeds to C06 (wave 3)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e52455addffe7bPjURe6PS5c7G",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (suite 5 ok: t1/t2 + t3 LIVE both URLs 200 + panels (egress available) + t4 pin-coupling vs C01 committed ledger vllm/vllm-openai-rocm:v0.33.0-rocm100; AC1 verbatim 44 keys; reviewer's own AC4 curl: 200, 20/18 panels, schemaVersion 40, __inputs null on both; R5 Q3 single-engine-safety verified against the fetched JSONs — DS_PROMETHEUS type=datasource query=prometheus, Deployment_id label_values on model_name, zero dp_rank, no engine-filter keys, so datasource: Prometheus is conventional parity per the __inputs-no-op ruling; AC5 single hunk 10 insertions / 0 deletions, all siblings byte-identical, alphabetical placement between unpackerr and volsync accepted; full-tree scope audit: R5 'Nothing else' holds — no PrometheusRule / wrapper-chart / central-Prometheus / Loki changes, no new dashboardProviders block; test file verified unmodified in spirit (test-owned, pre-dates dev); aislop 0/0/0). No minors.",
+          "next_suggested": "coord commits the C05 set; mark C05 done; post the card comment; launch C06 (wave 3, the final chunk)"
+        }
+      ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C01",
@@ -181,28 +408,148 @@
         "C04",
         "C05"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e523de0acffeMJ1rPAOPT0NcSg",
+      "review_session": "ses_e522db181ffeR43dQwxsrdoozd",
+      "commit": "711981060",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e523de0acffeMJ1rPAOPT0NcSg",
+          "status": "DONE",
+          "files_changed": [
+            ".agents/notes/vllm-on-target-acceptance.md (new, 552 lines — provenance/ground-rules header + honest D4/HR3 envelope + all eleven step groups 0-10 + the public-host follow-up section, strata-runbook shape)"
+          ],
+          "commands_run": [
+            "bash tests/notes/vllm-runbook.sh => pass (T1-T5 all ok, exit 0; re-run fresh at end: T1 eleven headers in order + 552 lines, T2 no mutation tokens, T3 constants match values, T4 all citations resolve, T5 step content present)",
+            "independent byte-level T2 scan => 0 mutation-token lines",
+            "independent T4 citation grep => all 24 citation sites resolve (R1 OQ4/OQ5, R1 §3/§4, R3 OQ3/OQ4/Q5, R4 Q1/OQ6, R5 Q2/Q3/OQ6, Post Research V1/V2/V3/V5)",
+            "npx aislop ci --changes => pass (score 100, 70 files, 0/0/0)",
+            "git status => only change is the new runbook + pre-existing STATE.json bookkeeping; tests/notes/ untouched"
+          ],
+          "deviations": "none",
+          "friction": "display-garbling recurred once (T2 grep line numbers) — resolved with the known file-backed byte-level re-verification",
+          "open_questions": "none",
+          "next_suggested": "launch C06 agent-review (re-runs bash tests/notes/vllm-runbook.sh first — expect T1-T5 green — then AC1-AC5 review against the chunk), then coord commits the C06 set (runbook + tests/notes/vllm-runbook.sh + bookkeeping); this is the final chunk — after it, the final whole-plan review per the run protocol"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e522db181ffeR43dQwxsrdoozd",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (T1-T5 5 ok; aislop 0/0/0; diff base d0670e031 confirmed; test-owned suite unmodified in spirit). AC1 eleven step groups in order, strata house shape matched. AC2 met — ~20 citations verified to exist AND support the claim (R1 OQ4/OQ5, R1 §3/§4 cell-for-cell, R3 OQ3/OQ4 + weakest SSE, R4 acceptance 1/2 + OQ6 + medium-confidence (a), R5 OQ6 + job-label + dashboard-import, Post Research V1/V2/V3/V5 with the 2x-peak cuMemCreate caveat quoted accurately) — one mis-citation found (runbook 4.3 cites R3 Q5; the peer-listing evidence is R3 Q3 at RESEARCH.md:950). AC3 independent sweep: zero kubectl mutation commands / zero helm / zero argocd; node one-shots are ctr/docker run; 5.2/10 git-only. AC4 no 256k-x-4 anywhere; envelope constants match D4 exactly. AC5 all constants agree with charts/vllm/values.yaml, services/gpu-ai/prod/values.yaml, the C01 README ledger, and both opencode.jsonc rows; scrapeInterval absence asserted both ways. Step-8 sleep/wake sequence in the exact documented order with the do-not-wake gate-fail branch + VLLM_SERVER_DEV_MODE coupling; 5.2 clearly OPTIONAL; public-host section correctly unnumbered.",
+          "minors": "two non-blocking (DECISIONS Deferred, ride the pre-PR doc touch or the next touch): (1) runbook 2.2 'values no-op touch' cannot restart the pod — a comment-only values change renders identical manifests so ArgoCD never redeploys; (2) runbook 4.3 mis-citation R3 Q5 -> R3 Q3. Nits (no action): 1.2 '15-minute envelope' vs its own 60 s + 90x10 s = 16 min arithmetic (inherited plan shorthand); 4.3/5.1 lack explicit if-fails lines; 6.1 no hint how to construct a 262144-token prompt; 1.1 calls amd.com/gpu a 'request' though the chart declares it under limits. Full notes appended to chunks/C06.md Review notes.",
+          "next_suggested": "coord commits the C06 set; mark C06 done (all six chunks done); post the card comment; run the final whole-plan review"
+        }
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": [
+        "C02",
+        "C03"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e4e874241ffehHmkpt33jhl1lz",
+      "review_session": "ses_e4e68cdaaffe9zi6Tkj840ZDH4",
+      "commit": "6a9b78971",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e4e874241ffehHmkpt33jhl1lz",
+          "status": "DONE (implementation complete; the 7 suite reds + runbook T3 red are exactly the chunk ledger's layout pins — test-session re-pins owed, then review)",
+          "files_changed": [
+            "charts/vllm/Chart.yaml (single app-template 5.0.1 dep, trailing-slash URL, idiom comment)",
+            "charts/vllm/Chart.lock (regenerated — digest sha256:0ea7893a… identical to charts/llama-swap/Chart.lock; stale common tgz auto-deleted)",
+            "charts/vllm/values.yaml (schema + render-consumed custom keys under app-template: subtree; cachePvcSize parent-only; anchors valid; retarget-surface comment rewritten to the actual dual-edit surface)",
+            "charts/vllm/templates/common.yaml (DELETED)",
+            "charts/vllm/templates/NOTES.txt (llama-swap idiom: .Release.Name + fullname-dedup note; peer URL + port-forward strings preserved)",
+            "services/gpu-ai/prod/values.yaml (vllm: block only — re-nested under app-template:, single hunk L599-609; charts.vllm entry + skip-ruling comment + entire llama-swap: block byte-identical)"
+          ],
+          "commands_run": [
+            "oracle capture pre-edit, 4 legs (brief's 3 + CI release-vllm form) to /tmp/opencode/cf105-c07-oracle => pass (Deployment+Service+PVC; leg1==leg2; 0 sentinels)",
+            "helm dependency update charts/vllm => pass (lock digest == llama-swap's; common tgz deleted; app-template tgz remains gitignored)",
+            "helm lint charts/vllm => pass (icon INFO only)",
+            "re-render 4 legs + diff vs oracle => pass (full diff identical on all legs: 2x # Source comment + helm.sh/chart vllm-1.0.0 -> app-template-5.0.1 + app.kubernetes.io/version dropped — exactly the planning-side expectation)",
+            "spec-critical python byte-check (Service gpu-ai-vllm + ClusterIP + http:8000 + selector, PVC doc, full pod template) => pass (identical old vs new)",
+            "gate probe: --set app-template.monitoring.annotations=false => both annotations ''; old path no longer gates => pass (the ledger's docstring evidence)",
+            "grep OVERRIDE_ all 4 new renders => 0",
+            "pytest charts/vllm/tests -v (helm on PATH, 0 skips) => 7 failed / 20 passed — the 7 reds ARE the ledger's by-name layout pins and no other red; env test passes VACUOUSLY as predicted; lock test passes unmodified as predicted; every rendered-output assert green",
+            "bash tests/notes/vllm-runbook.sh => T3 red with exactly the six D4 flags (top-level serveArgs read yields []) per the ledger; T1/T2/T4/T5 ok",
+            "pytest charts/llama-swap/tests => pass (415/9/0 — llama-swap: block byte-untouched)",
+            "bash tests/pipeline-models/surface.sh M1-M7 => pass (7 ok)",
+            "bash tests/services/vllm-dashboards.sh => pass (5 ok, t3 LIVE)",
+            "npx aislop ci --changes => pass (0/0/0, 70 files)",
+            "AC1 greps => pass (zero bjw-s.common hits regex + fixed-string; deps exactly [app-template 5.0.1] in Chart.yaml and Chart.lock; templates/common.yaml absent)",
+            "CI-recipe extract-subtree + -f render on the new block shape => pass (workflow unchanged)"
+          ],
+          "deviations": "(1) four oracle legs instead of three (additive CI-leg evidence, no scope change); (2) first Chart.yaml comment draft said 'bjw-s common' (space) which the AC1 regex needle 'bjw-s.common' matches — caught by own verification, reworded to 'the common chart'",
+          "friction": "AC1 grep needle is a regex and bites comment prose (deviation 2); helm install --dry-run=client fails in this workspace on cluster RBAC (PVC get forbidden, pre-existing environmental) — NOTES grounded via lint render + both-release-name renders + the byte-identical llama-swap idiom instead",
+          "open_questions": "runbook old-shape key-location wording flagged for the rework commit (NOT edited per the chunk): .agents/notes/vllm-on-target-acceptance.md L99 (rocrVisibleDevices location), L292 (step-5.2 'charts/vllm/values.yaml serveArgs' GIT-values line), L438 (monitoring.annotations gate reference) — the keys moved one level down under app-template:",
+          "next_suggested": "route the by-name re-pin ledger to the C07 test session (chunk Tests section + this entry), then dev re-run (expect 27/27 + runbook T1-T5), then agent-review, then coord commits the C07 set + the three flagged runbook lines"
+        },
+        {
+          "role": "test",
+          "round": "repins-1",
+          "session": "ses_e4e79f669ffeDDkcubMJ5lAgAn (fresh agent-test)",
+          "status": "DONE",
+          "files_changed": [
+            "charts/vllm/tests/test_contract.py (6 arms re-pinned per the ledger)",
+            "charts/vllm/tests/test_render.py (modelPath lookup subtree; the vacuous env read restored to a live read)",
+            "charts/vllm/tests/test_trio.py (both overrides read from block[app-template])",
+            "tests/notes/vllm-runbook.sh (T3 serveArgs read to the app-template subtree)"
+          ],
+          "commands_run": [
+            "pytest pre-re-pin baseline => 7 failed / 20 passed / 0 skipped (ledger reproduced exactly; gate-off old-path values captured 'true'/'8000')",
+            "runbook T3 pre-pin => red with exactly the six D4 flags, all other T3 reads green (layout-free reads verified)",
+            "10 mutation/drift probes (in /tmp/opencode/cf105-c07-test, cleaned) => each re-pinned arm bites on a wrong implementation, restored green",
+            "pytest charts/vllm/tests -v => pass (27 passed, 0 skipped)",
+            "bash tests/notes/vllm-runbook.sh => pass (T1-T5 5 ok)",
+            "pytest charts/llama-swap/tests => pass (415 / 9 skipped / 0 failed)",
+            "bash tests/pipeline-models/surface.sh M1-M7 => pass (7 ok)",
+            "bash tests/services/vllm-dashboards.sh => pass (5 ok, t3 LIVE)",
+            "npx aislop ci --changes => pass (0/0/0, 70 files)"
+          ],
+          "deviations": "one precision edit beyond the ledger letter: the gate-OFF assert message now names the live app-template.monitoring.annotations=false path (it named the dead old path); the bar itself is unchanged",
+          "friction": "none — all 10 re-pins mechanical, first pass; pre-verified every assert of every arm (C03 lesson), no hidden co-reds",
+          "open_questions": "none",
+          "next_suggested": "launch C07 agent-review (re-runs the full battery first; AC1-6 + the render-equivalence diff adjudication), then coord commits the C07 set incl. the three flagged runbook doc lines from the dev handoff (L99, L292, L438)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e4e68cdaaffe9zi6Tkj840ZDH4",
+          "verdict": "APPROVED",
+          "summary": "full battery fresh (vllm 27/0 skipped; llama-swap 415/9/0; surface M1-M7 7 ok; dashboards 5 ok t3 LIVE; runbook T1-T5; lint 0 failed; 4-leg renders 0 sentinels, service-level == chart-defaults; aislop 0/0/0). AC1 idiom match side-by-side (deps exactly [app-template 5.0.1] in Chart.yaml + Chart.lock, common.yaml absent, zero bjw-s.common non-test, cachePvcSize parent-only, sibling trailing-slash URL, service block nesting equals the llama-swap:/langflow: idiom). AC2 render equivalence independently re-derived from git (scratch worktree @ spec commit re-rendered: 4/4 legs BYTE-IDENTICAL to the dev oracle — provenance verified; post-rework diff = only # Source comments + helm.sh/chart flip + version label drop, all spec-critical pod/Service/PVC fields byte-identical). Metadata diff adjudicated the accepted idiom form (fresh llama-swap render carries the exact same label shape; scrape targeting is annotation-driven and pod annotations are byte-identical; the C03 peer URL's Service name/port untouched). Test-session gate-OFF message deviation strictness-neutral (bar byte-unchanged, both --set paths re-probed). 4 teeth probes confirm the re-pinned arms bite. Trio greps: gpu-ai 10 hits, proxy-local/custom-values/services-gpu empty (scope law holds).",
+          "carry": "the three dev-flagged stale runbook key-location lines (rocrVisibleDevices ~L99, serveArgs ~L292, monitoring.annotations ~L438) verified stale — fixed by a follow-up doc-only dev session (ses_e4e61db86ffeg322bHjT2Cro6U: wording-only, 3 hunks, line count unchanged at 552, T1-T5 + aislop re-verified green) and folded into this commit per the chunk's flag-instead-of-edit rule.",
+          "next_suggested": "coord commits the C07 set; mark C07 done; post the card comment (rework complete, branch back with the owner for re-review — card stays in Review); the plan record stands: plan_status complete, C01-C07 all done/APPROVED"
+        }
+      ]
     }
   },
   "handoffs": [
     {
-    "at": "2026-11-05T09:56:00Z",
-    "by": "coord session ses_e5622dbd2ffe1lipbEtMS4MWaK",
-    "reason": "harness failure, not a pipeline failure — the OpenCode server restarted four times during this tick and every `agent-dev-local` launch for C02 died with it (child session ses_e559e9e8cffefna6s6Glvnge2n plus two earlier launches; a continuation of that session was aborted too). The run stopped instead of a fifth retry; FRICTION.md carries both entries",
-    "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending, no implementation code exists for them. Branch `cf-105-feat-implement-vllm` at 6afec2d44 (one commit ahead of main `ceb9a8ed6`, nothing pushed). Uncommitted working tree: STATE.json (bookkeeping), `charts/vllm/Chart.yaml` (170-byte stub from the first killed dev attempt — unverified, the next dev verifies or rewrites it), `charts/vllm/tests/` (C02 suite, designed-RED), `charts/llama-swap/tests/test_vllm_peer.py` (C03), `tests/notes/` (C06), `tests/services/vllm-dashboards.sh` (C05), `tests/pipeline-models/surface.sh` (M, C04)",
-    "next_chunk": "C02 (wave 1, depends_on []) — `charts/vllm` chart + gpu-ai ApplicationSet trio: verify/rewrite the Chart.yaml stub, then the rest of Files in scope; agent-dev-local → agent-review → commit",
-    "note": "the `AI` set was released with outcome `abandoned`, so a fresh run can re-claim. The card sits in **Executing** — an agent cannot move it back to Rework (that move is owner-owned), so the next run needs either an owner **Executing → Rework** move or a manual launch naming card `R4EjaHtDeHMjAkDpf`. D11 unchanged: slug set + plan_status approved ⇒ resume this folder, no new slug."
+      "at": "2026-11-05T09:56:00Z",
+      "by": "coord session ses_e5622dbd2ffe1lipbEtMS4MWaK",
+      "reason": "harness failure, not a pipeline failure — the OpenCode server restarted four times during this tick and every `agent-dev-local` launch for C02 died with it (child session ses_e559e9e8cffefna6s6Glvnge2n plus two earlier launches; a continuation of that session was aborted too). The run stopped instead of a fifth retry; FRICTION.md carries both entries",
+      "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending, no implementation code exists for them. Branch `cf-105-feat-implement-vllm` at 6afec2d44 (one commit ahead of main `ceb9a8ed6`, nothing pushed). Uncommitted working tree: STATE.json (bookkeeping), `charts/vllm/Chart.yaml` (170-byte stub from the first killed dev attempt — unverified, the next dev verifies or rewrites it), `charts/vllm/tests/` (C02 suite, designed-RED), `charts/llama-swap/tests/test_vllm_peer.py` (C03), `tests/notes/` (C06), `tests/services/vllm-dashboards.sh` (C05), `tests/pipeline-models/surface.sh` (M, C04)",
+      "next_chunk": "C02 (wave 1, depends_on []) — `charts/vllm` chart + gpu-ai ApplicationSet trio: verify/rewrite the Chart.yaml stub, then the rest of Files in scope; agent-dev-local → agent-review → commit",
+      "note": "the `AI` set was released with outcome `abandoned`, so a fresh run can re-claim. The card sits in **Executing** — an agent cannot move it back to Rework (that move is owner-owned), so the next run needs either an owner **Executing → Rework** move or a manual launch naming card `R4EjaHtDeHMjAkDpf`. D11 unchanged: slug set + plan_status approved ⇒ resume this folder, no new slug."
     },
     {
-    "at": "2026-11-04T18:30:00Z",
-    "by": "coord session ses_e5c5bec6dffebVkbqg5j2BDR52",
-    "reason": "owner ruling 2026-11-04 \u2014 resume in a FRESH session: the coord session compacted heavily and was observed confabulating git history (recalling C02/C03 commits that do not exist); the owner directed a fresh session to avoid risking the run on a degraded context",
-    "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending. Branch cf-105-feat-implement-vllm is at 6afec2d44 (one commit ahead of ceb9a8ed6). Uncommitted working-tree changes (bookkeeping + test-only; NO implementation code): STATE.json (this file), chunks/C02.md (stray notes), charts/llama-swap/tests/golden/gpu-ai-config.yaml (test re-capture), tests/pipeline-models/surface.sh (test surface change) \u2014 commit or stash these alongside C02's commit; NONE are implementation code, so nothing implementation-related is lost",
-    "next_chunk": "C02 (wave 1, depends_on []) \u2014 the charts/vllm chart + gpu-ai ApplicationSet trio; launch agent-dev-local, then agent-review, then commit",
-    "note": "a fresh agent-board-coord session should re-claim the AI set and resume from C02; no re-kickoff, no new slug (D11)"
+      "at": "2026-11-04T18:30:00Z",
+      "by": "coord session ses_e5c5bec6dffebVkbqg5j2BDR52",
+      "reason": "owner ruling 2026-11-04 \u2014 resume in a FRESH session: the coord session compacted heavily and was observed confabulating git history (recalling C02/C03 commits that do not exist); the owner directed a fresh session to avoid risking the run on a degraded context",
+      "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending. Branch cf-105-feat-implement-vllm is at 6afec2d44 (one commit ahead of ceb9a8ed6). Uncommitted working-tree changes (bookkeeping + test-only; NO implementation code): STATE.json (this file), chunks/C02.md (stray notes), charts/llama-swap/tests/golden/gpu-ai-config.yaml (test re-capture), tests/pipeline-models/surface.sh (test surface change) \u2014 commit or stash these alongside C02's commit; NONE are implementation code, so nothing implementation-related is lost",
+      "next_chunk": "C02 (wave 1, depends_on []) \u2014 the charts/vllm chart + gpu-ai ApplicationSet trio; launch agent-dev-local, then agent-review, then commit",
+      "note": "a fresh agent-board-coord session should re-claim the AI set and resume from C02; no re-kickoff, no new slug (D11)"
     }
   ],
   "blocked": [],
@@ -241,7 +588,9 @@
       "stage": "Exploration",
       "session": "ses_e5c42c321ffeGSawDed8O9GcCT",
       "status": "DONE",
-      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/EXPLORE.md"],
+      "files": [
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/EXPLORE.md"
+      ],
       "substance": "EXPLORE.md §1-§8 (AMD-only clusters, 8060S gfx1151 = the '32 GB card', R9700 gfx1201 = Strata's card, chart/peers/monitoring/agent-context surfaces, validation commands, 12 gotchas)",
       "friction": "none",
       "open_questions": "R1-R5 research asks + OQ1-OQ4 plan-owned (all resolved downstream)"
@@ -256,7 +605,9 @@
         "R5": "ses_e5aff3994ffeDXL5MHR8UeZyDh"
       },
       "status": "DONE",
-      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"],
+      "files": [
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"
+      ],
       "substance": "RESEARCH.md R1-R5 (sources 1-139): R1 conditional GO on R9700 / MARGINAL 8060S / 4x256k impossible; R2 the 50 tok/s condition FAILS for the flash MoE \u2192 Strata keeps it; R3 no vLLM UI \u2192 llama-swap peers.vllm as FE; R4 vLLM request-level priority + OpenCode model-row body carrier (option E); R5 annotation-based scrape + official dashboards, GPU exporter out of scope",
       "friction": "searxng engine degradation (duckduckgo CAPTCHA, wolframalpha timeout) \u2014 compensated multi-engine; write tool denied on /tmp/opencode \u2014 shell heredoc used for scratch only",
       "open_questions": "carried into the batched round (Q1-Q7) and the plan's Risks section; on-target verification items live in the C06 runbook"
@@ -284,7 +635,9 @@
       "stage": "Post Research",
       "session": "ses_e58bf2142ffeFVjrzwsi1GA556",
       "status": "DONE",
-      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"],
+      "files": [
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"
+      ],
       "verdict": "plan_impact: none — no locked decision D1-D12/HR1-HR7 overturned (the GDN-hybrid qwen3.8-27b family IS natively registered in vLLM v0.33.0, so no pin bump/model/format change). Three REQUIRED chunk-level corrections: C01 pin the vllm-gguf-plugin to a git ref (main >= e454affe0ca23c9dc8754ec3033270cb30622ed5, or the first release carrying PR #98) + a 2-line transformers import patch in the overlay (plugin main imports vllm.transformers_utils.configs.qwen3_5, removed in vLLM #60623 and absent from v0.33.0) + update AC3/t5; C02 add env VLLM_SERVER_DEV_MODE: \"1\" (the /sleep + /wake_up endpoints are dev-gated); C06 add probe gates (patched-plugin import probe + GGUF serve + 1 token, find /models -name 'Qwen3.8-27B-UD-Q4_K_XL.gguf', sleep -> verify VRAM reclamation -> wake -> Strata re-pin sequencing against the documented ROCm 2x-peak OOM caveat). Confirmed facts: ROCR_VISIBLE_DEVICES still correct under ROCm 10 (index or UUID, coexists with the amd-gpu plugin on this node per the live strata pod); the Q4 weight is literally on the PVC — Qwen3.8-27B-UD-Q4_K_XL.gguf (16.35 GiB, unsloth/Qwen3.8-27B-GGUF, llama.cpp -hf auto-fetch into /models); FP8 fallback EXISTS — Qwen/Qwen3.8-27B-FP8 (28.77 GiB, W8A8 e4m3, stock-loadable on gfx1201)",
       "friction": "global-searxng engine degradation recurred this round (duckduckgo CAPTCHA, wolframalpha timeout) — compensated with multi-engine + direct versioned fetches, same as the R1-R5 friction entry",
       "open_questions": "on-target only (C06 gates): patched plugin loading the qwen3_5 GGUF on gfx1201; R9700 ROCr index under the v0.33.0-rocm100 image; VRAM reclamation after level-1 sleep on this amdgpu driver; watch for a vllm-gguf-plugin v0.0.6 or an upstream import fix"
@@ -309,10 +662,22 @@
     "created_at": "2026-11-04T17:01:00Z",
     "destination": "Backlog/Inbox (list PjEZ39rXBdpNcpncs, swimlane MoZHQz3C4dSW4Atya)",
     "cards": [
-      { "id": "pvJsE8WcHHJEDuKSL", "title": "ROCm Device Metrics Exporter on ai-gpu" },
-      { "id": "qCgmQZJbPKdFhHxFw", "title": "PrometheusRule alert convention + vLLM alert set" },
-      { "id": "saLixJw3vnvzfhGmW", "title": "8060S vLLM-flash re-evaluation (watch-item)" },
-      { "id": "urCQQ7xWkxDHK894Z", "title": "llama-swap selectors: unified 27B model ID (vLLM peer + llama.cpp rungs)" }
+      {
+        "id": "pvJsE8WcHHJEDuKSL",
+        "title": "ROCm Device Metrics Exporter on ai-gpu"
+      },
+      {
+        "id": "qCgmQZJbPKdFhHxFw",
+        "title": "PrometheusRule alert convention + vLLM alert set"
+      },
+      {
+        "id": "saLixJw3vnvzfhGmW",
+        "title": "8060S vLLM-flash re-evaluation (watch-item)"
+      },
+      {
+        "id": "urCQQ7xWkxDHK894Z",
+        "title": "llama-swap selectors: unified 27B model ID (vLLM peer + llama.cpp rungs)"
+      }
     ],
     "checklists": "Services/Type/Model(s) checked on all four via toggle_checklist_item (createCard rule adds the five standard checklists; the deployed build rejects default_checked, so the answers ride toggles)",
     "degrade": "deployed wekan-mcp 4.1.3: no create_card parent_id (parent lineage recorded in each card body) and no set_card_labels (labels-to-apply line in each body citing the AD-74 ledger card: Provider: API + Pipeline: AI). Card #5 (Open WebUI) DECLINED per HR1 — not created",

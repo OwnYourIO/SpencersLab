@@ -22,6 +22,16 @@
 # AC trace (cf-83 C01): M1[AC1–AC3 pipeline-models] M2[AC1–AC3 kickoff]
 # M3[catalog HOLD — DECISIONS D5] M4[AC8 serving facts] M5[AC1–AC3 boards
 # routing + Model(s) stability] M6[AC5 mirrors/regen].
+# cf-105 (2026-11, Priority wiring): M3 re-pinned — the two gpu-ai vLLM class
+# rows (C03, additive; the HOLD checks stay byte-green) plus the shadow-free
+# bar for the peer wire name (R3 Q5.2). NEW M7[cf-105 C04]: the board
+# Priority custom field as a kickoff answer — boards roster bullet + D12
+# carve-out, the card-driven kickoff priority bullet + launch-prompt value,
+# the board-scoped kickoff record slot (two-question list intact), and the
+# single-authority class table in pipeline-models (the 4+/background leg text
+# must not leak into boards/kickoff). M7 is designed-red before C04 and
+# green after; C03 dev/review run the M1..M6 subset, C04 and the final
+# review run the full set (cf-83 posture).
 #
 # AC trace (cf-106 C02 re-pin, OQ-6/OQ-7 rulings): M1 re-pins the label to
 # `Qwen Dense` and forbids it in current-state prose, adds the local-first
@@ -44,6 +54,13 @@
 # contract names appears in a serving authority; green today, red the day
 # routing drifts to an unserved id). M6 is HOLD now (mirrors honest) and
 # re-arms red between the dev source edit and its regenerate.
+# cf-105 handoff posture (2026-11-04): M3 red — the two vLLM class rows are
+# absent until C03 (the q4/flash-next HOLD rows inside it stay green); M4
+# red — qwen3.8-27b-vllm is not in a serving authority until C03's
+# peers.vllm block lands in the gpu-ai values; M7 red — the C04 needles are
+# absent until the C04 dev edit. C03 dev/review run M1..M6 (green once C03
+# lands); C04 and the final review run M1..M7 (nothing designed-red after
+# C04).
 #
 # Base discipline: no ticket-base diff remains in this suite since the cf-83
 # re-pin — the cf-58 M3 delta arm and its TB/CF58_BASE read are retired
@@ -56,7 +73,7 @@
 # mandate — bare jq would choke on the comments).
 #
 # Usage:
-#   bash tests/pipeline-models/surface.sh            # M1..M6
+#   bash tests/pipeline-models/surface.sh            # M1..M7
 #   bash tests/pipeline-models/surface.sh M3 M4      # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -80,31 +97,49 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6; do WANT["m$i"]=1; done
+  for i in 1 2 3 4 5 6 7; do WANT["m$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^m[1-8]$ ]] || fail "unknown check id '$a' (expected M1..M8)"
+    [[ "$lc" =~ ^m[1-7]$ ]] || fail "unknown check id '$a' (expected M1..M7)"
     WANT["$lc"]=1
   done
 fi
 want() { [ -n "${WANT[$1]:-}" ]; }
 
+# Whitespace- and case-tolerant phrase bar (prose wraps mid-phrase; a
+# line-bound grep false-reds on a rewrap of an otherwise intact semantic).
+# Words are escaped individually and re-joined on \s+: re.escape of the
+# whole needle first leaves a backslash before each space that the \s+
+# join cannot clear.
+phrased() {
+  python3 -c '
+import re, sys
+needle, path = sys.argv[1], sys.argv[2]
+rx = r"\s+".join(re.escape(t) for t in needle.lower().split())
+text = re.sub(r"\s+", " ", open(path).read()).lower()
+sys.exit(0 if re.search(rx, text) else 1)
+' "$1" "$2"
+}
+
 # --- shared helpers -------------------------------------------------------------
 
 cat >"$TMP/win.py" <<'PY'
 # Co-location window (rulesync-surface.sh convention): the routing needles
-# must read as one passage, not as scattered file-wide hits.
-import sys
+# must read as one passage, not as scattered file-wide hits. Whitespace is
+# collapsed first: prose wraps, and a needle must not fail on a line break
+# mid-phrase (all current callers are single-line-safe, so this only ever
+# ADDS matches — no existing check changes state).
+import re, sys
 argv = sys.argv[1:]
 ci = argv[0] == '--ci'
 if ci:
     argv = argv[1:]
 path, span = argv[0], int(argv[1])
 needles = argv[2:]
-text = open(path).read()
+text = re.sub(r"\s+", " ", open(path).read())
 if ci:
-    text = text.lower(); needles = [n.lower() for n in needles]
+    text = text.lower(); needles = [re.sub(r"\s+", " ", n).lower() for n in needles]
 pts = []
 for n in needles:
     start, found = 0, 0
@@ -295,9 +330,12 @@ fi
 # itself — proven red-by-construction at eb8a963 ("added entries are []",
 # "q4: fields other than capabilities changed"). Rejected alternative kept
 # out by design: a historical CF58_BASE default — a hidden stale ref passing
-# only when the env happens to be set. Q4 rules no catalog edits on this
-# ticket, so this arm is the guard against the catalog losing or reshaping
-# an entry a route needs: green before AND after the dev edit.
+# only when the env happens to be set. Under cf-83's Q4 this arm guards
+# against the catalog losing or reshaping an entry a route needs: green
+# before AND after the dev edit. cf-105 C03 re-pins it additively: the two
+# gpu-ai vLLM class rows (D10 — same wire modelID, only body.priority
+# differs) join the presence checks, and the peer wire name must stay
+# shadow-free against the local llama-swap model ids (R3 Q5.2).
 if want m3; then
   [ -f "$CAT" ] || fail "M3[HOLD]: $CAT missing"
   cat >"$TMP/catalog.js" <<'JS'
@@ -331,11 +369,41 @@ for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flas
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context not 262144`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
 }
+// cf-105 C03: the two vLLM class rows — D10 keeps the wire modelID
+// (qwen3.8-27b-vllm) identical on both rows; only body.priority differs
+// (10 default / 1 urgent), and the HR3 context pin is 262144 on both.
+for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1]]) {
+  const e = cur[k];
+  if (!e) { errs.push(`${k}: catalog row missing (C03 adds the two class rows)`); continue; }
+  if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID is ${e.modelID}, want the shared wire value qwen3.8-27b-vllm`);
+  if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
+  if (!e.body || e.body.priority !== prio) errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
+  if (!e.name) errs.push(`${k}: no descriptive name`);
+}
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/catalog.js" "$CAT" \
-    || fail "M3[HOLD]: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD across C01: Q4 forbids catalog edits, cf-77 landed these)"
-  ok "M3[HOLD]: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (presence HOLD, cf-83 D5 re-base)"
+    || fail "M3: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD rows never reshaped; the vllm rows are C03's additive re-pin)"
+  # The peer hop only works while the wire name is not also a local model id
+  # (llama-swap precedence: local IDs beat unqualified peer IDs, R3 Q5.2).
+  python3 - <<'PY' \
+    || fail "M3: qwen3.8-27b-vllm is declared as a local llama-swap model id — it would shadow the unqualified vLLM peer (R3 Q5.2)"
+import yaml
+
+def model_ids(cfg):
+    out = set((cfg or {}).get("models") or {})
+    for fam, spec in ((cfg or {}).get("families") or {}).items():
+        for quant, rung in ((spec or {}).get("quants") or {}).items():
+            out.add((rung or {}).get("id") or f"{fam}-{quant}")
+    return out
+
+chart = yaml.safe_load(open("charts/llama-swap/values.yaml"))
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+ids = model_ids(chart.get("config") or {})
+ids |= model_ids((svc.get("llama-swap") or {}).get("config") or {})
+assert "qwen3.8-27b-vllm" not in ids, "qwen3.8-27b-vllm is a local model id in the chart or gpu-ai overlay config"
+PY
+  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the two vLLM class rows exist with the shared wire modelID, 262144 context and body.priority 10/1 (cf-105 C03 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
 fi
 
 # --- M4: serving-fact cross-check (AC8) -------------------------------------------
@@ -343,15 +411,19 @@ if want m4; then
   # cf-83 list = the ids the contract TEXT names: the two default routes
   # (27b+Local → q4, Flash+Local → strata) plus q3 as the documented
   # explicit-request alternate. flash-next-q4 stays OUT — the generic escape
-  # names no ids; it joins if contract text ever names one.
-  for id in qwen3.8-27b-q4 qwen3.8-flash-next-strata qwen3.8-flash-next-q3; do
+  # names no ids; it joins if contract text ever names one. cf-105 C04
+  # re-pins additively: the class table's wire id qwen3.8-27b-vllm joins —
+  # it is served from C03's peers.vllm.models list in the gpu-ai values, so
+  # this arm is designed-red until C03 lands (C03 review runs M1..M6 with
+  # C03 already landed → green).
+  for id in qwen3.8-27b-q4 qwen3.8-flash-next-strata qwen3.8-flash-next-q3 qwen3.8-27b-vllm; do
     if grep -qF "$id" charts/llama-swap/values.yaml || grep -qF "$id" services/gpu-ai/prod/values.yaml; then
       :
     else
       fail "M4[AC8]: contract-named id '$id' is absent from both serving authorities (charts/llama-swap/values.yaml, services/gpu-ai/prod/values.yaml) — routing must never point at an unserved id"
     fi
   done
-  ok "M4[AC8]: every id the contract names (27b-q4 + flash-next-strata defaults, flash-next-q3 documented alternate) appears in the serving authority (HOLD invariant)"
+  ok "M4[AC8]: every id the contract names (27b-q4 + flash-next-strata defaults, flash-next-q3 documented alternate, cf-105 vllm wire id — red until C03's peers.vllm block lands) appears in the serving authority"
 fi
 
 # --- M5: boards skill — Model(s) line re-pinned, routing clauses re-pinned (AC1, AC3) --
@@ -432,86 +504,182 @@ if want m6; then
   fi
 fi
 
-# --- M7: retired-vocabulary sweep over current-state surfaces (AC3) ---------------
-# C02 renames the label wherever the contract speaks it today. The sweep set is the
-# current-state surfaces the plan names (skill sources + their generated mirrors +
-# the provision engine + the hand-maintained wekan-board-provision skill tree).
-# The only sanctioned survivors: (a) dated changelog rows, which record what a past
-# run did (AC3 lets history keep it), and (b) the boards alias sentence, which must
-# name the retired label in order to bind it. The exception budget is pinned, so a
-# surface that goes Dense again but grows a second alias mention also fails.
+# --- M7: cf-105 Priority wiring (C04; designed-red before the dev edit) ------
+# The board's Priority NUMBER custom field becomes a first-class kickoff
+# answer (D11): the boards roster gains the second field + the D12 carve-out,
+# the card-driven kickoff gains the priority bullet + the launch-prompt value,
+# pipeline-kickoff gains the board-scoped record slot (the live Questions list
+# keeps exactly its two questions), and pipeline-models publishes the
+# single-authority class table. None of the needles exists yet, so M7 reds
+# naming C04; C04 is the last chunk to touch these skills, so nothing is
+# designed-red after it (cf-83 posture). Checked on source AND generated twin
+# (a half-regenerate cannot pass).
+# Re-pin note (cf-83 precedent): C04's edits are additive at every pinned
+# location — M1's pipeline-models pins and M5's boards routing pins sit
+# adjacent to the new text but no pinned phrase changes, so NO M1..M6 arm
+# needed a C04 re-pin (they stay byte-untouched above); the only M1..M6
+# re-pins in this suite are M3's two vLLM catalog rows + shadow-free bar and
+# M4's vllm wire id, both C03's (suite header, cf-105 handoff posture).
 if want m7; then
-  if python3 - . <<'PY'
-import json, pathlib, re, sys
-repo = pathlib.Path(sys.argv[1])
-exceptions = {".rulesync/skills/boards/SKILL.md": 1, ".opencode/skills/boards/SKILL.md": 1}
-surfaces = [".rulesync/skills", ".opencode/skills", "scripts/provision-board.py",
-            "skills/wekan-board-provision"]
-hits = []
-for s in surfaces:
-    p = repo / s
-    if not p.exists():
-        print(f"sweep surface missing: {s}"); sys.exit(1)
-    files = [p] if p.is_file() else sorted(x for x in p.rglob("*") if x.is_file())
-    for f in files:
-        rel = str(f.relative_to(repo))
-        try:
-            lines = f.read_text().splitlines()
-        except UnicodeDecodeError:
-            continue
-        for i, l in enumerate(lines, 1):
-            if "Qwen 27b" in l:
-                hits.append((rel, i, l.strip()))
-# A line opening with a '- **YYYY-MM-DD' stamp is a changelog row: history, not
-# current state, so it is sanctioned wherever it lives.
-DATED = re.compile(r"^[-*]?\s*\*\*20[0-9]{2}-[0-9]{2}-[0-9]{2}")
-unaccounted, per_file = [], {}
-for rel, i, text in hits:
-    per_file[rel] = per_file.get(rel, 0) + 1
-    if DATED.match(text):
-        continue
-    if exceptions.get(rel, 0) > 0:
-        exceptions[rel] -= 1
-    else:
-        unaccounted.append(f"{rel}:{i}: {text[:90]}")
-if unaccounted:
-    print("current-state 'Qwen 27b' outside the sanctioned exception set:")
-    print("\n".join(unaccounted))
-    sys.exit(1)
-print(f"swept {len(hits)} mentions; every survivor is a dated changelog row or the "
-      f"single boards alias: {json.dumps(per_file)}")
-PY
-  then ok "M7[AC3 cf-106 C02]: no current-state surface names the retired 'Qwen 27b' label — only the boards alias (one mention) and dated changelog rows keep it"
-  else fail "M7[AC3 cf-106 C02]: a current-state surface still names the retired 'Qwen 27b' label outside the sanctioned set — the rename must reach every live contract surface, including the agents-sync pipeline-overview flow prose (red until C02 sweeps it)"; fi
-fi
-
-# --- M8: model-label vocabulary closure — exactly four options everywhere (AC1) ---
-# AC1's "no new option" is a whole-contract invariant, so it is pinned as a set
-# comparison rather than per-file prose: every surface that enumerates the Model(s)
-# vocabulary must enumerate EXACTLY the four canonical labels, and the retired label
-# must never appear as an option.
-if want m8; then
   for f in "$BD_SRC" "$BD_GEN"; do
-    [ -f "$f" ] || fail "M8[AC1]: $f missing"
-    if python3 - "$f" <<'PY'
+    [ -f "$f" ] || fail "M7[AC3]: $f missing"
+    # Roster: the Custom-fields bullet names BOTH board fields, resolved by name.
+    python3 "$TMP/win.py" "$f" 500 'slug' 'Priority' 'list_custom_fields' \
+      || fail "M7[AC3]: $f's Custom-fields bullet does not name both board fields (slug + Priority) with list_custom_fields name-resolution in one span (designed-red before C04)"
+    # The D12 carve-out: Priority is a serving-class field; model choice still
+    # rides the Model(s) checklist.
+    python3 "$TMP/win.py" --ci "$f" 500 'serving-class' 'choice still rides the model(s) checklist' \
+      || fail "M7[AC3]: $f lacks the D12 carve-out (Priority is a serving-class field consumed at kickoff; model choice still rides the Model(s) checklist)"
+    # Retired-field roster semantics survive the re-pin.
+    python3 "$TMP/win.py" --ci "$f" 400 'session' 'retired' \
+      || fail "M7[AC3]: $f lost the 'legacy session field retired' roster semantic"
+    # Whitespace-tolerant phrase bars (prose wraps mid-phrase; a line-bound
+    # grep would false-red on a rewrap of an otherwise intact semantic).
+    phrased 'no `models` custom field' "$f" \
+      || fail "M7[AC3]: $f lost the 'no models custom field' roster semantic (D12)"
+    # The real text reads "Nor a `pipeline` field" (D19) — the needle must be
+    # a substring of that phrasing, not of the chunk's summary of it.
+    phrased '`pipeline` field' "$f" \
+      || fail "M7[AC3]: $f lost the 'no pipeline field' roster semantic (D19)"
+    # The priority kickoff bullet, scoped to the Card-driven kickoff section.
+    python3 -c '
 import re, sys
 text = open(sys.argv[1]).read()
-canon = {"Qwen Large", "Qwen Dense", "Qwen Flash", "Local"}
-lines = [l for l in text.splitlines() if all(k in l for k in ("Qwen Large", "Qwen Flash", "Local"))]
-if not lines:
-    print("no Model(s) option enumeration line found"); sys.exit(1)
-for l in lines:
-    opts = set(re.findall(r"Qwen (?:Large|Dense|Flash|27b)(?: Next)?", l))
-    if "Qwen 27b" in opts:
-        print(f"the retired label is still an OPTION: {l.strip()[:110]}"); sys.exit(1)
-    if extra := {o for o in opts if o not in canon}:
-        print(f"a fifth model option appears ({sorted(extra)}) — AC1 forbids a new option"); sys.exit(1)
-    if not {"Qwen Large", "Qwen Dense", "Qwen Flash"} <= opts:
-        print(f"the option set is not the canonical four: {sorted(opts)}"); sys.exit(1)
-PY
-    then ok "M8[AC1 cf-106 C02]: $f enumerates exactly the canonical four Model(s) labels (Qwen Dense replaces Qwen 27b, no fifth option)"
-    else fail "M8[AC1 cf-106 C02]: $f's Model(s) option set is not the canonical four (Qwen Large / Qwen Dense / Qwen Flash / Local) — AC1's no-new-option rule holds across the whole contract, not one file at a time"; fi
+m = re.search(r"(?m)^## Card-driven kickoff[^\n]*\n.*?(?=^## |\Z)", text, re.S)
+assert m, "no Card-driven kickoff section"
+open(sys.argv[2], "w").write(m.group(0))
+' "$f" "$TMP/kd.md" || fail "M7[AC3]: $f has no '## Card-driven kickoff' section"
+    python3 "$TMP/win.py" "$TMP/kd.md" 400 'Priority' 'string→int' 'kickoff.priority' '{raw, class}' \
+      || fail "M7[AC3]: $f's Card-driven kickoff section lacks the priority bullet (Priority + string→int + kickoff.priority + {raw, class} in one span)"
+    python3 -c '
+import re, sys
+text = re.sub(r"\s+", " ", open(sys.argv[1]).read()).lower()
+sys.exit(0 if "never written back" in text else 1)
+' "$f" \
+      || fail "M7[AC3]: $f's priority bullet lacks the 'NEVER written back' phrasing (the board field is input-only; post-plan write-back stays slug-only)"
+    # The launch-prompt block names the Priority value alongside the slug value.
+    python3 -c '
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r"(?m)^## Launch prompt to agent-plan[^\n]*\n.*?(?=^## |\Z)", text, re.S)
+assert m, "no Launch prompt section"
+open(sys.argv[2], "w").write(m.group(0))
+' "$f" "$TMP/lp.md" || fail "M7[AC3]: $f has no '## Launch prompt to agent-plan' section"
+    python3 "$TMP/win.py" --ci "$TMP/lp.md" 400 'slug' 'priority' 'cardnumber' \
+      || fail "M7[AC3]: $f's launch-prompt block does not name the Priority value alongside the slug value and cardNumber"
+    # Single-authority guard (cite-don't-restate): the background leg's
+    # literal '4+' marker is pipeline-models' text alone — a bare absence
+    # grep (the contract's "grep must be empty"), the same discipline as the
+    # q3/strix bars. The word "background" itself is allowed: the D12
+    # carve-out sentence names the background leg without the marker.
+    grep -qF '4+' "$f" \
+      && fail "M7[AC4]: $f carries the literal '4+' marker — the class table's background leg lives ONLY in pipeline-models"
   done
+  for f in "$PK_SRC" "$PK_GEN"; do
+    [ -f "$f" ] || fail "M7[AC3]: $f missing"
+    # The record slot: priority {raw, class}, scoped to board runs.
+    python3 "$TMP/win.py" --ci "$f" 400 'priority' '{raw, class}' 'board' \
+      || fail "M7[AC3]: $f lacks the kickoff priority {raw, class} slot scoped to board runs"
+    # The live Questions list keeps exactly its two questions (slug + models)
+    # — the Priority field is board-intake-only, never a live question.
+    python3 -c '
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r"(?m)^## Questions[^\n]*\n.*?(?=^## |\Z)", text, re.S)
+assert m, "no Questions section"
+nums = re.findall(r"(?m)^\s*\d+\.\s", m.group(0))
+assert len(nums) == 2, f"the live Questions list must carry exactly two numbered questions, found {len(nums)}"
+low = m.group(0).lower()
+assert "slug" in low and "models" in low, "the two questions must be the slug and the models questions"
+' "$f" || fail "M7[AC3]: $f's live Questions list no longer carries exactly its two questions (slug + models)"
+    # Single-authority guard (kickoff half): the literal '4+' marker is
+    # pipeline-models' text alone — same bare absence bar as the boards half.
+    grep -qF '4+' "$f" \
+      && fail "M7[AC4]: $f carries the literal '4+' marker — the class table's background leg lives ONLY in pipeline-models"
+  done
+  for f in "$PM_SRC" "$PM_GEN"; do
+    [ -f "$f" ] || fail "M7[AC4]: $f missing"
+    # The class table rows, verbatim cells (markdown table lines only).
+    python3 -c '
+import re, sys
+# Cells are conventionally backtick-wrapped (the plan table writes `1`–`3`);
+# the contract is the cell TEXT, so match on backtick-stripped lines.
+lines = [ln.replace("`", "").lower()
+         for ln in open(sys.argv[1]).read().splitlines()
+         if ln.lstrip().startswith("|")]
+def find(cells, rx=None, must_not=()):
+    for low in lines:
+        if all(c.lower() in low for c in cells) and not any(b in low for b in must_not) \
+           and (rx is None or re.search(rx, low)):
+            return low
+    return None
+# The 1-3 range is part of the row MATCHER, not a post-hoc assert: the
+# favorited -urgent row carries every other cell as a substring ("urgent"
+# and "3" both inside qwen3.8-27b-vllm-urgent) and would otherwise shadow
+# the table row when the favorited table precedes it in the file.
+r1 = find(["urgent", "qwen3.8-27b-vllm-urgent"], rx=r"1\s*[–\-—]\s*3")
+assert r1, "class table: no urgent row (1-3 / urgent / qwen3.8-27b-vllm-urgent / 1)"
+assert re.search(r"\|\s*1\s*\|", r1), f"class table: urgent row lacks the vLLM priority cell 1: {r1}"
+r2 = find(["default", "qwen3.8-27b-vllm", "10", "unset"], must_not=["-urgent"])
+assert r2, "class table: no default row (unset / default / qwen3.8-27b-vllm / 10)"
+assert re.search(r"\|\s*10\s*\|", r2), f"class table: default row lacks the vLLM priority cell 10: {r2}"
+r3 = find(["background", "qwen3.8-27b-q4", "n/a"]) or find(["background", "qwen3.8-27b-q4", "n-a"])
+assert r3, "class table: no background row (4+ / background / qwen3.8-27b-q4 / n-a)"
+assert re.search(r"\b4\s*\+", r3), f"class table: background row lacks the 4+ card-Priority marker: {r3}"
+# Polarity sentence: 1:1 passthrough, lower = more urgent (vLLM convention).
+text = open(sys.argv[1]).read().lower()
+i = text.find("more urgent")
+assert i >= 0, "no polarity sentence (lower = more urgent)"
+window = text[max(0, i - 300):i + 300]
+assert "lower" in window and "1:1" in window, "the polarity sentence must state 1:1 passthrough with lower = more urgent"
+# The two favorited rows: exact model cells (the class table routes
+# gpu-ai/<id>, so exact-cell matching keeps the two apart).
+def favrow(cell):
+    for ln in lines:
+        cells = [c.strip().strip("`").strip() for c in ln.strip().strip("|").split("|")]
+        if cell in cells and "gpu-ai" in cells:
+            return ln
+    return None
+assert favrow("qwen3.8-27b-vllm"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm"
+assert favrow("qwen3.8-27b-vllm-urgent"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm-urgent"
+' "$f" || fail "M7[AC4/AC5]: $f lacks the single-authority class table (rows + polarity + the two favorited rows)"
+  done
+  # Cross-file (M4 style): the class table's row IDs appear in a serving
+  # authority, and the floor 10 equals the peer filter value.
+  python3 -c '
+import sys, yaml
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+peer = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers", {}).get("vllm")
+assert peer is not None, "services/gpu-ai: no llama-swap.config.peers.vllm block (C03)"
+assert peer.get("models") == ["qwen3.8-27b-vllm"], f"peers.vllm.models must be exactly [qwen3.8-27b-vllm], got {peer.get('models')!r}"
+floor = ((peer.get("filters") or {}).get("setParams") or {}).get("priority?")
+assert floor == 10, f"the peer priority? floor must be 10 (the default class), got {floor!r}"
+' || fail "M7[AC5]: the peers.vllm serving authority (models list + priority? floor 10) is absent or wrong in services/gpu-ai/prod/values.yaml"
+  cat >"$TMP/vllm-catalog.js" <<'JS'
+// cf-105 C04 cross-file leg: the class table's row IDs exist in the gpu-ai
+// provider catalog with the shared wire modelID, the HR3 context pin and the
+// class body.priority values (1 urgent / 10 default).
+const fs = require('fs');
+function load(p) { return eval('(' + fs.readFileSync(p, 'utf8') + ')'); }
+const o = load(process.argv[2]);
+const provs = o.providerMetas || o.providers || {};
+const models = (provs['gpu-ai'] || {}).models || {};
+const errs = [];
+for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1]]) {
+  const e = models[k];
+  if (!e) { errs.push(`${k}: row missing`); continue; }
+  if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID ${e.modelID}, want the wire value qwen3.8-27b-vllm`);
+  if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
+  if ((e.body || {}).priority !== prio) errs.push(`${k}: body.priority ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
+}
+if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
+JS
+  node "$TMP/vllm-catalog.js" "$CAT" \
+    || fail "M7[AC5]: the gpu-ai provider catalog rows do not match the class table (shared wire modelID, 262144 context, body.priority 1/10)"
+  grep -qF 'qwen3.8-27b-q4' charts/llama-swap/values.yaml \
+    || grep -qF 'qwen3.8-27b-q4' services/gpu-ai/prod/values.yaml \
+    || fail "M7[AC5]: the background-leg rung qwen3.8-27b-q4 is absent from the serving authorities (chart catalog or gpu-ai overlay)"
+  ok "M7[cf-105 C04]: boards roster names both fields + the D12 carve-out with the retired semantics intact, the priority kickoff bullet and launch-prompt value are present, the kickoff slot is board-scoped with the two-question list intact, the class table + polarity + favorited rows live in pipeline-models alone, the serving authorities agree (floor 10, wire model, background rung), and no 4+/background leg text leaks into boards/kickoff"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

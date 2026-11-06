@@ -791,6 +791,18 @@
         "whisper-large-v3": {
           "modelID": "whisper-large-v3",
           "name": "Whisper Large v3"
+        },
+        "qwen3.8-27b-vllm": {
+          "modelID": "qwen3.8-27b-vllm",
+          "name": "Qwen3.8 27B (vLLM, R9700) - default priority",
+          "limit": { "context": 262144 },
+          "body": { "priority": 10 }
+        },
+        "qwen3.8-27b-vllm-urgent": {
+          "modelID": "qwen3.8-27b-vllm",
+          "name": "Qwen3.8 27B (vLLM, R9700) - urgent",
+          "limit": { "context": 262144 },
+          "body": { "priority": 1 }
         }
       }
     }

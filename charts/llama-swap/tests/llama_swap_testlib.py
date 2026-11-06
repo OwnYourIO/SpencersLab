@@ -814,6 +814,22 @@ CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
 # families (the -ot string is byte-exact contract, TEST_SPEC §8 lineage).
 CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 
+# ---------------------------------------------------------------------------
+# cf-105 frozen tables (C03 peers.vllm hop; DECISIONS D6/D7/D10). The vllm
+# peer block exactly as the C03 task spec renders it. Single source for the
+# arms that pin the block from the SPEC side (test_vllm_peer T1, the parity
+# _assert_strata_peers, the strata-wiring overlay arm); the blast-radius
+# carve pins it from the ERA side (the re-captured golden) instead, so a
+# later re-capture re-aligns that guard automatically.
+# ---------------------------------------------------------------------------
+
+PEER_VLLM = {
+    "proxy": "http://gpu-ai-vllm.default.svc.cluster.local:8000",
+    "models": ["qwen3.8-27b-vllm"],
+    "timeouts": {"responseHeader": 1800, "connect": 30},
+    "filters": {"setParams": {"priority?": 10}},
+}
+
 
 # --- HF loader-pick simulation (llama.cpp common/download.cpp@889edf43) -----
 # The `-hf repo:QUANT` legs in this chart are resolved by llama-server's own

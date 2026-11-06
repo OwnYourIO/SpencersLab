@@ -527,6 +527,33 @@ llama-swap:
         timeouts:
           responseHeader: 1800
           connect: 30
+      # cf-105 C03: the vLLM engine (charts/vllm, C02) is reached
+      # through this surface only (D7 — no ingress of its own, HR4).
+      # proxy carries NO /v1 suffix: the request path is appended
+      # verbatim, a suffix would double-prefix every route (EXPLORE
+      # §8.9 — the strata peer's own law). models lists the served
+      # name explicitly (peers is not a blanket URL proxy, R3 Q3) and
+      # is deliberately new, so it cannot shadow a local rung (local
+      # IDs beat unqualified peer IDs — D10, R3 Q5.2). responseHeader
+      # 1800 = the deep-prefill first-byte knob (Strata precedent,
+      # R3 Q5.1 — 100k+ prefills took 131 s even under llama.cpp).
+      # setParams "priority?" = the set-if-undefined floor 10 (the
+      # default class): a client-sent priority wins, so the C04 class
+      # rows' values pass through untouched (R4 Q2 — the `?` is part
+      # of the key string). No apiKey: keyless in-cluster (R3 Q5.3,
+      # the strata C-A ruling). The peer model stays OUT of the
+      # matrix below: invisible to the solver, so R9700 coexistence
+      # with Strata remains operator discipline (D5, HR6).
+      vllm:
+        proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-27b-vllm
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 10
     matrix:
       # vars moved chart-side with the catalog (CA2): one var per catalog
       # rung, names kept identical so the set expressions below resolve
@@ -572,11 +599,16 @@ llama-swap:
 # subdomains skip note above); C03 wires the llama-swap peers.vllm hop on
 # the llama host as the sole client route.
 vllm:
-  # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
-  # Research V3), in the HF hub-cache layout under the shared 500Gi
-  # llama-swap PVC. The snapshot <commit> segment resolves on target —
-  # the C06 step-2 find is the path authority; a mismatch is a values-only
-  # fix here.
-  modelPath: /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
-  # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
-  rocrVisibleDevices: "0"
+  app-template:
+    # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
+    # Research V3), in the HF hub-cache layout under the shared 500Gi
+    # llama-swap PVC. The snapshot <commit> segment resolves on target —
+    # the C06 step-2 find is the path authority. A retarget is the dual
+    # edit of the chart's modelPath/serveArgs with this re-pin kept in
+    # sync — the chart's anchored serveArgs splices the chart-level
+    # modelPath (anchors resolve per-document), so this key alone does
+    # not change the rendered --model; the suite's --model == service
+    # modelPath assert guards the divergence.
+    modelPath: /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
+    # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
+    rocrVisibleDevices: "0"
