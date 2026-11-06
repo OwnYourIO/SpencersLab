@@ -327,6 +327,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e4e874241ffehHmkpt33jhl1lz",
       "review_session": "ses_e4e68cdaaffe9zi6Tkj840ZDH4",
+      "commit": "6a9b78971",
       "handoffs": [
         {
           "role": "dev",
