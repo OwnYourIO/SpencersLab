@@ -118,6 +118,10 @@ def test_ac2_security_context_trio_plus_repo_standard():
         "C02 AC2: seccompProfile must be Unconfined (the upstream AMD pod shape, R1 Q5)"
     )
     assert sc.get("runAsGroup") == 44, "C02 AC2: runAsGroup must be 44 (video)"
+    assert sc.get("runAsUser") == 0, (
+        "C02 AC2: runAsUser must be 0 (a non-root uid cannot open the host-group-486 /dev/kfd "
+        "even under privileged — root is the proven zero-GPU-crash fix)"
+    )
     assert "SYS_PTRACE" in (sc.get("capabilities") or {}).get("add", []), (
         "C02 AC2: capabilities.add must include SYS_PTRACE"
     )
