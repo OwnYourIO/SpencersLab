@@ -1,0 +1,130 @@
+{
+  "feature": "2026/2026-11-cf-119-feat-forgejo-push-main",
+  "plan_file": "2026-11-06-cf-119-feat-forgejo-push-main.md",
+  "plan_status": "approved",
+  "coord_session": "ses_e4ced1b7bffedxEKEV4qpH6dGk",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-07T00:01:07+00:00",
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "kickoff": {
+    "card": "H9RyH3jp5W6uSMfoK",
+    "card_number": 119,
+    "card_title": "Forgejo job to push main",
+    "slug": "cf-119-feat-forgejo-push-main",
+    "type": "feat",
+    "session_origin": "Session origin: https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "run_tag": null,
+    "worktree": "cf-119-feat-forgejo-push-main",
+    "branch": "cf-119-feat-forgejo-push-main",
+    "branch_minted": "MINTED 0b1e2e2b1f9cb9c3f319c6bb1b107d70956edf32",
+    "origin_dir": "/home/coder/SpencersLab",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "models_note": "Provider: API label routes every tier to the hosted provider; checklist had Qwen Dense + Qwen Flash checked, Local unchecked — largest=Dense→plan, smallest=Flash→code.",
+    "checklists": {
+      "services": [
+        "dev",
+        "gpu"
+      ],
+      "type": "feat",
+      "models": [
+        "Qwen Dense",
+        "Qwen Flash"
+      ],
+      "lifecycle": [
+        "Exploration",
+        "Agent Decides Research",
+        "Planning",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review"
+      ],
+      "lifecycle_note": "Test Writing UNCHECKED — no separate test session; the contract suite is written red-first inside C01 (plan P-2/DECISIONS #4). Deployment UNCHECKED — no deploy stage; the rollout is a human-ops leg recorded in the plan, not a pipeline stage. Single Session unchecked.",
+      "human_in_the_loop": [
+        "Deployment"
+      ],
+      "hitl_note": "Deployment is an INACTIVE stop (not in the run's stage list); the plan-approval pause gate is this run's only stop.",
+      "slug_cf": "custom field null (fresh kickoff) — slug cf-119-feat-forgejo-push-main derived and auto-accepted",
+      "priority_cf": "custom field null — default serving class"
+    },
+    "board_context": {
+      "source": "launch block 2026-11-06T22:55:22.279Z + claim-time preload_board",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Pipeline: CICD": "NHvBk5",
+        "Provider: API": "f3sKNX"
+      }
+    },
+    "preload": {
+      "at": "2026-11-06T23:05:00Z",
+      "tool": "preload_board",
+      "cards": "board-wide (display-truncated payload; structure verified)",
+      "degraded": false
+    },
+    "card_details": {
+      "at": "2026-11-06T23:05:30Z",
+      "tool": "degraded: get_card + list_board_dependencies (claim answer carried no card-details block; dependency read returned zero edges board-wide)",
+      "degraded": true
+    },
+    "claim": {
+      "cardId": "H9RyH3jp5W6uSMfoK",
+      "pipelines": [
+        "CICD"
+      ],
+      "setId": "fe9f08bc-2a6d-4da2-94ee-571e628f6438",
+      "claimed": "2026-11-06T23:03:00Z"
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "approval": {
+    "state": "APPROVED 2026-11-07 at the plan-approval gate (user answer: 'Approve the plan (Recommended)') — the single C01 chunk loop may start",
+    "answered_at": "2026-11-06T23:56:16+00:00",
+    "answers": {
+      "OQ-1": "No mirror — manual flow (best guess confirmed: bootstrap = owner's manual push / existing GitHub→Forgejo path per UA5; UA4 stays the defensive disable-if-found check)",
+      "OQ-2": "Exists — keep --no-ff merge (DELTA vs best guess: backup-proxy EXISTS on git.scifi.farm, possibly with unique commits; --no-ff merge is the expected path; conflict fails the job, owner resolves by hand; create-from-main demoted to absent-branch fallback)",
+      "OQ-3": "Yes/unknown — verify at first fire (best guess confirmed; diag step + workflow_dispatch make it diagnosable; if blocked → separate runner-network ticket)",
+      "OQ-4": "confirmed fact (dev Forgejo down, cf-104 LFS leg) — expected-red window, not a chunk failure",
+      "OQ-5": "Yes — reuse the existing Bitwarden item forgejo-token (dev) as FORGEJO_DEV_PUSH_TOKEN; UA2 confirms repo-write scope",
+      "P-1": "Keep workflow_dispatch (stays in on: and contract leg t2)",
+      "P-2": "Single chunk, red-first inside it — fine as shaped",
+      "P-3": "Keep the cf-NN plan-file name (2026-11-06-cf-119-feat-forgejo-push-main.md stands)"
+    },
+    "plan_edits": "Goal, Out of scope (backup-proxy line), Design merge step, Secrets-of-record, UA2, UA5, V3, V4, Open questions (closed-round rewrite), Follow-ups, chunks/C01.md P-1 note — all folded; no chunk/suite logic rework (merge step already branch-agnostic; t8 re-verified accurate)",
+    "approved_at": "2026-11-07T00:01:07+00:00"
+  }
+}
