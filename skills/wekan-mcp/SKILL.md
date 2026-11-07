@@ -108,28 +108,54 @@ Full per-tool argument tables, each row stamped live probe or source-only:
 The single normative home of this format. Producers — the
 `/wekan-board-context` collector command and the board-coord prefetch plugin —
 emit it exactly as written here; consumers (the `boards` flow) treat it as a
-resolved id map instead of re-running the resolution calls:
+resolved id map plus a per-list card snapshot instead of re-running the
+resolution calls:
 
 ```text
 Board context (collected <ISO-8601>, <server-id>)
 board_id: <id>
 swimlane_id: <id>
 lists:
-  <list title>=<id>
+  - title: "<list title>"
+    id: <id>
+    cards:
+      - card_number: "AD-<card_number>"
+        card_id: <card id>
+        labels: ["<label name>", ...]
 custom_fields:
-  <field name>=<id>
+  "<field name>": <id>
 labels:
-  <label name>=<id>
-Card and checklist ids are not included — they are live per-card data,
-resolved at use time. On any id-shaped call error, re-resolve this block
-against the live board before retrying.
+  "<label name>": <id>
+# Cards are a collection-time snapshot — the walk's get_card confirmation
+# and claim-before-move absorb drift. Checklist ids are not included — they
+# are live per-card data, resolved at use time. On any id-shaped call
+# error, re-resolve this block against the live board before retrying.
 ```
 
-`lists:` carries only the lists inside the named swimlane — `list_lists`
-items expose `swimlane_id` and titles repeat across swimlanes. Labels come
-from `get_board`, custom fields from `list_custom_fields` (items carry
-`{id, name, type}` — the key is `name`, not `title`). Board structure is
-human-owned and drifts (a non-pipeline list appeared in the AI-Dev
+Everything under the unchanged header line parses as ONE strict YAML
+document; the footer is `#` comment lines, part of the schema. `lists:`
+carries only the lists inside the named swimlane — `list_lists` items expose
+`swimlane_id` and titles repeat across swimlanes. Under each list the
+`cards:` group is that list's cards at collection time, exactly three fields
+each: `card_id`, `labels` (names, resolved through the whole-board read's
+board-wide `label_names` map — an id the map lacks emits raw), and
+`card_number`, derived — never a hardcoded literal — as
+`<boardKey>-<cardNumber>` from the board's `key` field on the `get_board`
+answer (AI-Dev's key is `AD`, so card 123 reads `AD-123`). Archived cards
+are skipped and the rest render in the board's `sort` order; a list the
+whole-board read drops (cardless lists do not leave it) renders `cards: []`.
+Until the deployed build's `get_board` projection carries `key`,
+`card_number` degrades to the bare number — still quoted, so the parsed type
+never flips int/string across the degrade states — and the block then also
+carries exactly this one pinned note line as the first trailing comment:
+
+```text
+# card_number values are bare: the get_board projection carried no board key at collection time.
+```
+
+Labels come from `get_board`, custom fields from `list_custom_fields` (items
+carry `{id, name, type}` — the key is `name`, not `title`). Board structure
+is human-owned and drifts (a non-pipeline list appeared in the AI-Dev
 "In Process" swimlane during 2026-10), so the block is a snapshot with its
 collection stamp, never a freeze — the re-resolve footer is part of the
 schema.

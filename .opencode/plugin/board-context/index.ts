@@ -112,25 +112,56 @@ export function isBoardCoordAgent(agent: unknown): boolean {
   return BOARD_COORD_AGENTS.includes(agent as string);
 }
 
-// Mirrors the schema fence block byte-for-byte: line-per-entry indented lists,
-// custom fields keyed on `name`, labels from get_board, and the re-resolve
-// footer the schema declares part of itself. Pure — the collection stamp comes
-// from the input, never a clock read, so tests and callers own the timestamp.
+// Mirrors the schema fence byte-for-byte: the body under the header line is
+// one strict YAML document (the header itself is not part of the document),
+// card_number is quoted in both derive states so the parsed type stays a
+// string across the key-absent degrade, and the footer is `#` comment lines —
+// the schema (wekan-mcp skill) declares all three part of the block. Pure —
+// the collection stamp comes from the input, never a clock read, so tests and
+// callers own the timestamp.
 export function formatBlock(fields: any): string {
-  const pair = (entry: any) => `  ${entry.name}=${entry.id}`;
+  const boardKey = fields.boardKey ? String(fields.boardKey) : "";
+  const pair = (entry: any) => `  ${JSON.stringify(entry.name)}: ${entry.id}`;
+  const cardNumber = (card: any) =>
+    JSON.stringify(boardKey ? `${boardKey}-${card.cardNumber}` : String(card.cardNumber));
+  const cardsBlock = (cards: any[]) =>
+    cards.length === 0
+      ? "    cards: []"
+      : [
+          "    cards:",
+          ...cards.map(
+            (card: any) =>
+              `      - card_number: ${cardNumber(card)}\n` +
+              `        card_id: ${card.cardId}\n` +
+              `        labels: [${(Array.isArray(card.labels) ? card.labels : [])
+                .map((name: any) => JSON.stringify(name))
+                .join(", ")}]`,
+          ),
+        ].join("\n");
   return [
     `Board context (collected ${fields.collectedAt}, ${fields.serverId})`,
     `board_id: ${fields.boardId}`,
     `swimlane_id: ${fields.swimlaneId}`,
     "lists:",
-    ...fields.lists.map(pair),
+    ...(fields.lists ?? []).map(
+      (list: any) =>
+        `  - title: ${JSON.stringify(list.name)}\n` +
+        `    id: ${list.id}\n` +
+        cardsBlock(Array.isArray(list.cards) ? list.cards : []),
+    ),
     "custom_fields:",
-    ...fields.customFields.map(pair),
+    ...(fields.customFields ?? []).map(pair),
     "labels:",
-    ...fields.labels.map(pair),
-    "Card and checklist ids are not included — they are live per-card data,",
-    "resolved at use time. On any id-shaped call error, re-resolve this block",
-    "against the live board before retrying.",
+    ...(fields.labels ?? []).map(pair),
+    ...(boardKey
+      ? []
+      : [
+          "# card_number values are bare: the get_board projection carried no board key at collection time.",
+        ]),
+    "# Cards are a collection-time snapshot — the walk's get_card confirmation",
+    "# and claim-before-move absorb drift. Checklist ids are not included — they",
+    "# are live per-card data, resolved at use time. On any id-shaped call",
+    "# error, re-resolve this block against the live board before retrying.",
   ].join("\n");
 }
 
@@ -147,12 +178,18 @@ function asArray(value: any): any[] {
 }
 
 // The collector's resolution sequence (wekan-mcp skill): board by title ->
-// get_board (labels) -> swimlane by title -> lists filtered by swimlane id
-// (titles repeat across swimlanes; list_lists items carry swimlane_id) ->
-// custom fields keyed on `name`. Unknown titles throw — the caller's failure
+// get_board (labels + the board key, the card_number prefix source) ->
+// swimlane by title -> lists filtered by swimlane id (titles repeat across
+// swimlanes; list_lists items carry swimlane_id) -> custom fields keyed on
+// `name` -> preload_board with the board_id only. The In Process scope is
+// applied client-side: a server-side title filter would answer an empty
+// grouping on a renamed swimlane, and every list rendering cards: [] reads as
+// an empty board — the throw here degrades to no block instead. A successful
+// preload whose swimlane grouping is absent renders every list empty cards +
+// one stderr line, never a throw. Unknown titles throw — the caller's failure
 // policy turns that into an untouched prompt.
 export async function resolveBoardContext(deps: any, opts: any): Promise<string> {
-  const { callTool } = deps;
+  const { callTool, log } = deps;
   const { boardTitle, swimlaneTitle, serverId, collectedAt } = opts;
 
   const boards = asArray(await callTool("list_boards", {}));
@@ -167,13 +204,39 @@ export async function resolveBoardContext(deps: any, opts: any): Promise<string>
   const lists = asArray(await callTool("list_lists", { board_id: board.id }));
   const laneLists = lists.filter((l: any) => l?.swimlane_id === swimlane.id);
   const customFields = asArray(await callTool("list_custom_fields", { board_id: board.id }));
+  const preload = await callTool("preload_board", { board_id: board.id });
+
+  const laneGrouping = asArray(preload?.swimlanes).find((s: any) => s?.id === swimlane.id);
+  if (!laneGrouping) {
+    (typeof log === "function" ? log : console.error)(
+      "board context: the preload carried no swimlane grouping for the target lane — every list renders empty cards",
+    );
+  }
+  const labelNames =
+    preload?.label_names && typeof preload.label_names === "object" ? preload.label_names : {};
+  const cardsFor = (listId: any) => {
+    const entry = asArray(laneGrouping?.lists).find((l: any) => l?.id === listId);
+    if (!entry) return [];
+    return asArray(entry.cards)
+      .filter((card: any) => card?.archived !== true)
+      .sort(
+        (a: any, b: any) =>
+          (typeof a?.sort === "number" ? a.sort : 0) - (typeof b?.sort === "number" ? b.sort : 0),
+      )
+      .map((card: any) => ({
+        cardNumber: card?.card_number,
+        cardId: card?.id,
+        labels: asArray(card?.label_ids).map((id: any) => labelNames[id] ?? id),
+      }));
+  };
 
   return formatBlock({
     collectedAt,
     serverId,
     boardId: board.id,
     swimlaneId: swimlane.id,
-    lists: laneLists.map((l: any) => ({ name: l.title, id: l.id })),
+    boardKey: boardInfo?.key,
+    lists: laneLists.map((l: any) => ({ name: l.title, id: l.id, cards: cardsFor(l.id) })),
     customFields: customFields.map((f: any) => ({ name: f.name, id: f.id })),
     labels: asArray(boardInfo?.labels).map((l: any) => ({ name: l.name, id: l.id })),
   });

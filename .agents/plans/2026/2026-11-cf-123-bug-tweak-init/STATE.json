@@ -262,7 +262,9 @@
       "history": [
         "2026-11-07 pickup: pipeline_claim(cardId, pipelines:[Context]) -> setId 47349bee; move to Executing + claim comment on the held claim",
         "2026-11-07 ~03:00Z (session_move incident): holder row state:failed transiently after the kickoff session_move; sanctioned single question -> owner yes; card-id re-claim refused already_held; heartbeat ok:true — continued under the ORIGINAL Context claim 47349bee (no takeover)",
-        "2026-11-07 ~14:27-15:02Z (owner-launched OpenChamber restart): engine in-memory attribution gone (heartbeat no_claim; disk row state:failed, under the 2 h window, never reaped — lastReap still 2026-11-05); the owner's explicit in-session 'Continue' gated the sanctioned C09 recovery -> re-claimed under the CARD-ID key xdrvXPW3LeF2TGpGD -> setId 41bd98b9-aa96-4105-87b1-9f486f946d79; card verified untouched (Executing); takeover comment posted naming the recovery and lock key. The run now operates under the card-id lock set; the orphan failed Context.json holder row for this card stays on disk and ages out (plugin-owned, never touched by this run)"
+        "2026-11-07 ~14:27-15:02Z (owner-launched OpenChamber restart): engine in-memory attribution gone (heartbeat no_claim; disk row state:failed, under the 2 h window, never reaped — lastReap still 2026-11-05); the owner's explicit in-session 'Continue' gated the sanctioned C09 recovery -> re-claimed under the CARD-ID key xdrvXPW3LeF2TGpGD -> setId 41bd98b9-aa96-4105-87b1-9f486f946d79; card verified untouched (Executing); takeover comment posted naming the recovery and lock key. The run now operates under the card-id lock set; the orphan failed Context.json holder row for this card stays on disk and ages out (plugin-owned, never touched by this run)",
+        "2026-11-07 ~17:11Z (third restart, owner-launched): in-memory attribution dropped again (heartbeat no_claim); the card-id re-claim was REFUSED 'occupied' by THIS session's own 15:02Z row while it was still inside its 2 h freshness window — engine edge case: a restart inside the takeover row's freshness window leaves the run unable to beat, release or re-claim its own key (C09's re-claim assumes a stale/absent row). The 16:28Z timer reap had already pruned the morning's orphan Context row (jsonl degrade + HA alert, by design). 'Context' is now GENUINELY held by the AD-124 run (ses_e490c1708ffeHpuuwIqQJ5nNnf, setId ae6c4460, claimed ~17:05Z) — no alternate key. Owner ruling 2026-11-07T~17:25Z: CLEAR THE STALE ROW NOW — the owner manually removes the plugin-owned /home/coder/SpencersLab/.pipeline/locks/xdrvXPW3LeF2TGpGD.json (agents never touch .pipeline files), then this run re-claims the card-id key and resumes. Work state at the hold: C04 committed (29b4ea2ce), C02 dev DONE with the diff uncommitted, C02 review not yet run",
+        "2026-11-07 ~17:31-17:35Z: re-claim attempts at 17:31Z and 17:33Z STILL refused 'occupied' by this session's own 15:02Z row (last heartbeat 17:11Z — the owner's deletion did not reach that path or removed a different file; confirmed via the engine's holder naming, agents never read .pipeline files). Owner's second ruling (verbatim, 17:33Z): 'It's fine, just continue and overwrite the lock fresh' — the run PROCEEDS on that explicit gate: C02 review + commit and the remaining waves continue; the card-id claim is re-attempted at every subagent hand-back and lands the moment the row is cleared (manual delete) or goes stale (~19:11Z, next reap tick — one designed-degrade HA alert on this card expected). Card comment posted 17:35Z naming the anomaly + the owner's authorization. Serialization stays intact by construction: no other run uses this card-id key; 'Context' is held by the AD-124 run and is never touched by this one"
       ],
       "takeover": {
         "at": "2026-11-07T15:02+00:00",
@@ -326,16 +328,123 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C04"
+      ],
+      "dev_session": "ses_e48ea649dffezZ9NgLlZrNnnD6",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (zero blocker/major/minor/nit findings; all arms re-derived by the reviewer)",
+      "wave_order_note": "C01 (wave 2) ran before C02 (wave 1 remainder) — recorded sequencing deviation, benign: C01's only dependency is C04 (satisfied, dev+review APPROVED), C01 and C02 are file-disjoint (plugin+skills+commands vs the loop file), and the wave-2-before-wave-1 ordering changes no acceptance criteria; C02 dev runs next",
+      "dev_rounds": 1,
+      "handoffs": [
+        {
+          "role": "review",
+          "status": "APPROVED",
+          "chunk": "C01",
+          "session": "C01 review round 1 (fresh agent-review session; the RESULT hand-off was received in full, the reviewer's round notes are the on-disk record in chunks/C01.md; recorded first in the array because the entry-tail anchor resisted repeated edits — the role field is the order authority, not the array index)",
+          "verdict": "APPROVED — zero blocker/major/minor/nit findings",
+          "commands_run": [
+            "bash tests/wekan-mcp/skill-surface.sh => pass (8 ok — t3 single-owner + cards tokens, t4 mixed stamp)",
+            "node --test tests/opencode/board-context.test.ts => pass (49/49 — all S1-S10 arms incl. the inverted S10 and both strict-YAML arms)",
+            "bash tests/wekan-mcp/board-context.sh => pass (t1-t5 green; t6 nested-gate green)",
+            "bash tests/agent-board-coord/gate.sh => t1-t21 green (t17 known exclusion)",
+            "bash tests/agent-board-coord/rulesync-surface.sh => c1-c21 green",
+            "bash tests/wekan-mcp/tools.sh => pass (10 ok — C04 re-run unchanged)",
+            "npx --yes rulesync@37.0.0 generate --check => clean",
+            "npx aislop ci --changes => pass (0 errors)",
+            "bash tests/provider-loops/surface.sh => t7 RIDER now green (single-walk wording); t1-t10 green",
+            "own re-derivations: formatBlock executed in BOTH key states (board.key AD -> card_number quoted AD-123, no note / key absent -> bare quoted 123 + degrade note as first trailing comment; both bodies parse as one strict YAML document); five-artifact fence byte-identity (plugin output == EXPECTED_BLOCK == skill fence body == collector target); S10/t9/t10 arms bite (re-bloat 33 lines red, 'also enabled' reintroduced red, cards-absent red); regen idempotence (2nd generate no-op, --check clean)"
+          ],
+          "findings": "none — zero blocker/major/minor/nit",
+          "deviations": "none"
+        },
+        {
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": [
+            ".opencode/plugin/board-context/index.ts",
+            "skills/wekan-mcp/SKILL.md",
+            ".rulesync/commands/wekan-board-context.md",
+            ".opencode/commands/wekan-board-context.md",
+            ".rulesync/skills/boards/SKILL.md",
+            ".opencode/skills/boards/SKILL.md"
+          ],
+          "summary": "formatBlock emits the strict-YAML fence (header byte-identical, card_number always quoted, labels flow-list joined ', ', empty lists cards: [], footer as # comment lines, pinned degrade note first when boardKey absent); resolveBoardContext gains the sixth serial leg preload_board {board_id}-only (client-side In Process scoping, drift-safe), reads key off the existing get_board leg; schema fence + collector + consumer rule reworded (five-artifact move); t7 rider: boards-skill frontmatter two-task clause replaced with the single-walk wording (description double-quoted for the colon+space — same parsed value, rulesync recovery advice followed)",
+          "commands_run": [
+            "node --test tests/opencode/board-context.test.ts baseline => 49 tests 26 pass / 23 fail (14 C01 + 9 C03 arms)",
+            "node --test tests/opencode/board-context.test.ts final => 49 tests 40 pass / 9 fail — all 14 C01 arms green; the 9 reds are C03's by-design arms (S4x3, S5x1, S6x1, S9x2, C03 executor x2)",
+            "bash tests/provider-loops/surface.sh => 10 ok (t7 RIDER now green; t1-t6/t8-t10 green)",
+            "bash tests/wekan-mcp/skill-surface.sh => 8 ok (t3 green)",
+            "bash tests/wekan-mcp/board-context.sh (>=900 s) => t1-t5 green; t6 red solely on pre-existing agent-perms A15 (01317f447 — documented must-NOT-chase)",
+            "bash tests/agent-board-coord/rulesync-surface.sh => c8 green; c19 red = pre-existing 01317f447; all other arms green",
+            "npx --yes rulesync@37.0.0 generate => wrote 2 (.opencode command + boards mirror); second run => no-op; --check => clean",
+            "npx aislop ci --changes => 0 errors, 1 warning (plugin file-too-large — pre-existing threshold, out of C01 scope)",
+            "node --test tests/opencode/card-details.test.ts => 32/32 pass (same plugin file, claim-time leg byte-unchanged)"
+          ],
+          "deviations": "labels flow-list separator: the chunk's emitter rule says 'quoted via JSON.stringify' per label name, but the re-pinned EXPECTED_BLOCK bytes join the quoted names with \", \" (a whole-array JSON.stringify would emit none) — matched the pinned bytes (the byte contract is authoritative, suite green). Boards-skill frontmatter: the prescribed replacement clause contains colon+space which breaks the unquoted YAML scalar — the whole description is double-quoted in source (same parsed string; rulesync's own recovery advice)",
+          "friction": "the rulesync 'Recovered malformed YAML frontmatter' notice (cause above) — resolved in-source; no recurrence on the second run or --check",
+          "open_questions": "none",
+          "next_suggested": "wave 3 C03 against the same re-pinned seam (its 9 by-design red arms are the entry baseline); when the shell is restored, coord commits C01 (source + generated together) alongside the deferred C02 commit"
+        }
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
-      "depends_on": []
+      "depends_on": [],
+      "dev_session": "ses_e4905bd4dffeglf9PBC7xzvEQi",
+      "review_session": "C02 review round 1 (session id lost in transport — the reviewer's full round-1 notes are the on-disk record at chunks/C02.md '### Review round 1 — APPROVED'; the RESULT hand-back transport answered 'Tool result missing' after the ~17:50Z restart, the review work itself completed)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (zero findings; all eight ACs verified; gate set re-run by the reviewer; pin-bite proven on a scratch worktree; the dev's '(enabled:false per the 2026-11-07 live probe)' deviation accepted)",
+      "commit_pending": "deferred behind the lock anomaly (STATE.json claim.history 17:31-17:35Z entry) — the coordinator's shell is claim-guarded; the C02 commit lands when the card-id claim re-attributes",
+      "dev_rounds": 1,
+      "handoffs": [
+        {
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": [".agents/loops/pipeline-worker.md"],
+          "commands_run": [
+            "bash tests/provider-loops/surface.sh => t1-t6 pass, t7 RED (documented pre-existing main red — boards-skill frontmatter two-task wording, C01 rider in wave 2 per AC7; the loop file itself carries no t7 hit), exit at t7 as designed",
+            "bash tests/provider-loops/surface.sh t8 t9 t10 => pass (t8 single loop file; t9 comment block 16 non-empty lines <=25; t10 legacy task named enabled:false, 'also enabled' gone)",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (15/15, incl. T2 byte-exact frontmatter + body + raw /pipeline-tick + no slash in prose)",
+            "bash tests/noop-marker/surface.sh n4 => pass (both whole-file windows, single enabled:true row, no 'Shipped DISABLED')",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings, score 100)",
+            "cmp of frontmatter lines 1-8 and body line vs HEAD => byte-identical",
+            "grep dead-weight tokens (mcp-surface-absent / run-tag / :30 / stagger / D21 / D15 / D30 / D9-Q5 / OQ10 / pipeline-worker-local) => clean"
+          ],
+          "deviations": "reference-draft adaptation only — the draft's '(enabled:false since 2026-11)' was ungrounded (the ticket's own live probe establishes enabled:false as of 2026-11-07, and cf-90 RESEARCH round-2 had already flagged the stale phrasing in 2026-10, so a 'since 2026-11' onset claim is not verifiable); written instead as '(enabled:false per the 2026-11-07 live probe)'. Chunk rule honored: the pins are the contract, not the draft text. All t9/t10/N4/T2 pins verify green on that wording. No other deviations; tests untouched; nothing staged or committed",
+          "friction": "none",
+          "open_questions": "none",
+          "next_suggested": "review runs the gate set against this diff (provider-loops t1-t6 + t8-t10 with t7 documented-red, pipeline-locks-tick 15/15, noop-marker N4, aislop --changes, the frontmatter/body byte-identity check); on approval coord commits C02, then wave 2 C01 lands the t7 rider + C04's key consumption"
+        },
+        {
+          "role": "review",
+          "status": "APPROVED",
+          "chunk": "C02",
+          "note": "RESULT transport lost (~17:50Z restart, 'Tool result missing') — the on-disk round-1 notes in chunks/C02.md are the record",
+          "verdict": "APPROVED — zero findings; all eight acceptance criteria met; the diff is exactly the one in-scope file",
+          "commands_run": [
+            "bash tests/provider-loops/surface.sh t1 t2 t3 t4 t5 => pass (5 ok)",
+            "bash tests/provider-loops/surface.sh t6 => pass (gate script byte-unchanged vs f5ee40c64 + gate t1..t21 minus t17 green)",
+            "bash tests/provider-loops/surface.sh t7 => RED as documented (AC7) — hits only the boards-skill frontmatter; the loop file carries no hit; the C01 rider (wave 2) clears it",
+            "bash tests/provider-loops/surface.sh t8 t9 t10 => pass",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (15/15)",
+            "bash tests/noop-marker/surface.sh n4 => pass",
+            "npx aislop ci --changes => pass (0 errors, 0 warnings, score 100)",
+            "cmp lines 1-8 + body line vs HEAD => IDENTICAL (body line 677 bytes both versions)",
+            "dead-weight grep (mcp-surface-absent, run-tag, :30, stagger, D21, D15, D30, D9-Q5, OQ10, pipeline-worker-local) => all clean",
+            "pin-bite re-derivation (scratch worktree at HEAD + delivered file): header re-bloated to 33 lines => t9 RED; 24-line bloat stayed green (cap live, not vacuous); 'also enabled' reintroduced => t10 RED; enabled:false wording swapped => t10 RED; restored delivered bytes => t9+t10 green",
+            "full suite attributed: board-context.test.ts 26/23 (C01/C03 by-design, test-wave signature); tools.sh 10 ok; skill-surface t1-t2,t4-t8 pass, t3 C01 by-design; board-context.sh t1/t4/t5 pass, t2/t3 C01 by-design, t6 = A15 pre-existing 01317f447; rulesync-surface c1-c18 pass, c19 same drift; gate t17 known exclusion; hourly-board-check 8 ok; cf90-ledger 8 ok",
+            "git diff f5ee40c64 --stat (excl. plan folder) = C04 trio + seven test files + the loop file ONLY — boards skill + subagents untouched"
+          ],
+          "findings": "none — dev deviation '(enabled:false per the 2026-11-07 live probe)' vs draft '(since 2026-11)' accepted (onset claim unverifiable; the pins, not the draft, are the contract); AC6 clause (fingerprint-law + permissionAutoAccept + L1) confirmed surviving in new P3",
+          "deviations": "none"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
