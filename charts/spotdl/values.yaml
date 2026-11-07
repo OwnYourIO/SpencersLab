@@ -29,7 +29,7 @@ app-template:
         main:
           image:
             repository: docker.io/spotdl/spotify-downloader
-            tag: v4.5.2
+            tag: v4.6.0
           command: ["/bin/sh", "-c"]
           args:
             - |
