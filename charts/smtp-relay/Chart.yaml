@@ -4,5 +4,5 @@ version: 1.0.10
 appVersion: 1.0.0
 dependencies:
 - name: mail
-  version: v5.1.0
+  version: 5.2.1
   repository: https://bokysan.github.io/docker-postfix/
