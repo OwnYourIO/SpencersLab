@@ -156,18 +156,27 @@ app-template:
             # count and cannot name the card: on this R9700+8060S node it
             # allocated the 8060S and the pod crash-looped with zero HIP
             # devices (2026-11-07). Chip targeting happens inside, via
-            # rocrVisibleDevices on host enumeration (0 = R9700). The rest
-            # is the upstream AMD pod shape (R1 Q5): the ROCm runtime needs
-            # the full ioctl surface (Unconfined seccomp), the video group
-            # for /dev/dri, and SYS_PTRACE for the HIP debugger path — the
-            # approved deviation from the repo drop-ALL standard, confined
-            # to this pod.
+            # rocrVisibleDevices on host enumeration (0 = R9700).
+            # runAsUser 0: this openSUSE node's /dev/kfd and
+            # /dev/dri/renderD* are group 486 (mode 660), not the image's
+            # `video` GID 44 — and runc drops effective capabilities on
+            # setuid to a non-root uid without ambient caps, so a
+            # non-root uid cannot open /dev/kfd even under privileged
+            # (EACCES, HIP enumerates 0 devices). Root bypasses the DAC
+            # check — the strata privileged+root precedent. runAsGroup 44
+            # is inert under root but stays: this exact shape initialized
+            # both GPUs on target (2026-11-07). The rest is the upstream
+            # AMD pod shape (R1 Q5): the ROCm runtime needs the full ioctl
+            # surface (Unconfined seccomp) and SYS_PTRACE for the HIP
+            # debugger path — the approved deviation from the repo
+            # drop-ALL standard, confined to this pod.
             # No allowPrivilegeEscalation key here: k8s rejects explicit
             # false alongside privileged: true, and escalation is implicit
             # in privileged mode.
             privileged: true
             seccompProfile:
               type: Unconfined
+            runAsUser: 0
             runAsGroup: 44
             capabilities:
               add:
