@@ -1,0 +1,68 @@
+{
+  "feature": "2026/2026-11-cf-122-feat-lfs-s3-optional",
+  "plan_status": "approved",
+  "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
+  "test_session": null,
+  "approval": {
+    "state": "approved — user-directed in-session run: the user's 2026-11-06 instruction IS the plan approval (no separate approval round; run_shape records this). Coord accepted the plan with its one evidenced ruling (D4/AC3 re-word: infra 'effective S3 config identical + render delta == exactly the A9 four-item list' instead of whole-render byte-identity, which is provably unachievable by any design that also removes the shape keys from dev's render).",
+    "approved_at": "2026-11-07T02:35:00+0000",
+    "claim": "card prBBEA8JnJDx7cHfy (#122) held on the default pipeline (setId 8c121a8e-36c4-4e19-85f8-4b39d7fb8ae4, claimed 2026-11-06; heartbeat ok 2026-11-07T01:53Z); card in Executing with the claim comment; slug field set at claim time (cf-104's D11-gap lesson)."
+  },
+  "current_wave": 1,
+  "updated_at": "2026-11-07T02:31:00+00:00",
+  "kickoff": {
+    "slug": "cf-122-feat-lfs-s3-optional",
+    "card": "prBBEA8JnJDx7cHfy",
+    "card_number": 122,
+    "card_title": "Make the S3 component of forgejo LFS optional (local default); apply not-enabled stance to dev",
+    "type": "feat",
+    "worktree": "cf-122-feat-lfs-s3-optional",
+    "branch": "cf-122-feat-lfs-s3-optional",
+    "fork_base": "main a0502f0dd (already contains the merged cf-104 LFS work)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-27b"
+    },
+    "models_note": "ALL tiers on openrouter/qwen/qwen3.8-27b per the user's standing instruction (2026-11-05, re-confirmed for this run) — the card's Model(s) checklist carries Qwen Dense; the card's Local gpu-ai provider was 503ing during cf-104's tail. The board's Model(s) checklist item and the pipeline-models local mapping both point at the gpu-ai provider, so this run explicitly overrides it; the override is user-instruction, not routing.",
+    "local": true,
+    "local_note": "commit-only posture (one-PR landing, cf-104 pattern); no push without explicit user ask",
+    "run_tag": null,
+    "run_shape": "user-directed in-session: Planning (this run) → Test Writing → C01 dev → C01 review → final whole-plan review; NO separate approval round — the user's 2026-11-06 instruction is the approval (recorded as coord-relay in DECISIONS.md), plan_status flips on the coord's call",
+    "no_questions": "new questions go to the plan's Open questions best-guess-first; the `question` tool is not used in this run",
+    "coord_session_note": "coord session id not carried in the launch message — null until the coord records it; the slug custom field on card #122 carries this run's session link for resume (D11-style)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "measured_baselines": {
+    "note": "COORD-PINNED, measured solo on this worktree (main a0502f0d) 2026-11-07 by the planning session (logs /tmp/opencode/cf122/baseline-*.log); authoritative over the plan's Commands where they disagree.",
+    "suites": {
+      "forgejo-lfs.sh": "exit 0 / 34 ok — CHANGED by this ticket (master-contract rework, plan Test contract A); post-C01 target exit 0 / N ok, N pinned when the test session measures the full-green run",
+      "infra-forgejo.sh": "exit 0 / 33 ok — stays green across the transition after the storage-aware t6 edit (plan Test contract B)",
+      "forgejo-ssh-gateway.sh": "exit 1 / 63 ok, red ONLY at the pinned t11 (re-runs audit-trail) — storage-aware t8c edit (plan Test contract C)",
+      "dev-forgejo-runner.sh": "exit 1 / 34 ok, red ONLY at the pinned t5 (cf-93 comment-window false positive) — untouched",
+      "gpu-forgejo-runner.sh": "exit 0 / 18 ok — untouched",
+      "dev-git-auth.sh": "exit 0 / 36 ok — untouched (renders the dev umbrella, never the forgejo release)",
+      "gpu-coder-sso.sh": "exit 0 / 15 ok — untouched",
+      "audit-trail.sh": "exit 1 / 0 ok, pinned t1 (tracked storm-runs/ at repo root) — NOT this ticket's red",
+      "multi-repo/dev-wiring.sh": "exit 0 / 9 ok — untouched"
+    },
+    "sentinel_sweeps": "dev umbrella 1 (pre-existing home-assistant.bitwardenIds wart in the ApplicationSet values JSON), infra umbrella 1 (charts/samba/values.yaml:5 samba-users OVERRIDE_NEEDED chart default inside the samba app's values JSON), gpu umbrella 1 (legacy OVERRIDE_VIA_CLUSTER_ANNOTATION trio on one values-JSON line) — all must stay unchanged (plan A12)"
+  },
+  "live_state_at_planning": {
+    "note": "READ-ONLY observation 2026-11-07 via readonly-{dev,infra}-kubernetes (no cluster mutation); plan Authority A4-A7, A11, A5.",
+    "dev": "dev-forgejo pod (dev-forgejo-5bb75677cf-g42jb, created 2026-11-06T21:07:52Z) STUCK: init-app-ini CreateContainerConfigError 'secret \"forgejo-s3-secret\" not found'; ExternalSecret forgejo-s3-secret (same item UUID 06a65037-… as infra) Ready=False SecretSyncedError 'could not get secret data from provider' (refreshTime null) — the Bitwarden fetch of item forgejo-s3 fails on the DEV cluster only; git.scifi.farm down since ~2026-11-06T21:07Z. PVC forgejo: 10Gi, RWO, local-path, Bound, mounted /data. Main container env: GITEA_WORK_DIR=/data, GITEA_APP_INI=/data/gitea/conf/app.ini, GITEA_CUSTOM=/data/gitea.",
+    "infra": "infra-forgejo Running 1/1, 0 restarts, 29h; ESO forgejo-s3-secret Ready=True SecretSynced (transition 2026-11-05T21:15Z, next refresh due 2026-11-07T02:15Z); seaweedfs-s3 Deployment present — infra's S3 LFS healthy.",
+    "consequence": "this ticket's dev flip removes dev's dependency on the failing store path (ESO pruned, refs optional); the store failure itself stays a separate user/admin incident (plan Q1)."
+  },
+  "blocked": [],
+  "deferred": []
+}
