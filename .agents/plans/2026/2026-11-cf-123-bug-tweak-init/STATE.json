@@ -468,11 +468,69 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C01"
-      ]
+      ],
+      "dev_session": "ses_e48d0434dffe77o6dxX5BpAmmD",
+      "dev_rounds": 1,
+      "handoffs": [
+        {
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C03",
+          "files_changed": [".opencode/plugin/board-context/index.ts"],
+          "summary": "durable once-mark replaces the in-memory attempted Map: bindOnceMarkStorage (tolerant positional get/set/remove probe, null when any method missing) + readOnce/writeOnce/removeOnce in createPromptHandler; mark key once/<sessionID> epoch-ms in ctx.storage (plugin-id+project-id scoped, shared by both live servers — pipeline-locks D26 precedent), per-process in-memory Map fallback with one stderr line when storage absent. Consume-once-whether-successful kept (mark written before the fetch, after the agent check; header scan marks durably without injecting; stale >6h marks ignored+removed; fresh-messageID immunity). /reload-board-context plugin command via ctx.command.transform + editor.add (pipeline-locks /pipeline-* shape; one degrade stderr line when the host lacks the transform), executor resolves through the shared six-leg seam under FETCH_TIMEOUT_MS and answers via ctx.session.prompt — success: the block itself as the one reply (header scan marks the session, no pre-mark by the executor); failure: one-line reply, mark untouched, never throws. Claim-time card-details leg byte-verified unchanged (8609-byte HEAD-vs-tree region diff). Header comment rewritten to the why-only rationale (two-server topology root cause, session-scoped mark per ruling #4, consume-once trade-off per ruling #5, TTL, fallback)",
+          "commands_run": [
+            "node --test tests/opencode/board-context.test.ts => pass (49/49; entry baseline 40 pass / 9 fail — all 9 by-design C03 arms green: S4x3 durable/cross-instance/TTL, S5x1 durable scan-mark, S6x1 failed-fetch consume-once, S9x2 command registration+degrade, executor x2 success/failure)",
+            "node --test tests/opencode/card-details.test.ts => pass (32/32 — claim-time leg byte-identical)",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (15/15)",
+            "bash tests/wekan-mcp/board-context.sh (background ~1500 s) => t1-t5 pass; t6 fail = nested agent-perms A15 pre-existing 01317f447 roster drift (documented, not chased)",
+            "bash tests/wekan-mcp/skill-surface.sh => pass (8 ok)",
+            "bash tests/wekan-mcp/tools.sh => pass (10 ok)",
+            "bash tests/provider-loops/surface.sh => pass (10 ok; t7 rider green, t9/t10 C02 pins intact)",
+            "bash tests/noop-marker/surface.sh n4 => pass",
+            "bash tests/multi-repo/hourly-board-check.sh => pass (8 ok)",
+            "bash tests/cf90-ledger/surface.sh => pass (8 ok)",
+            "bash tests/agent-board-coord/rulesync-surface.sh => c1-c18 pass (incl. c7 rulesync no-op + c8 self-admit over the plugin file); c19 fail = pre-existing 01317f447 drift, owner-routed per STATE coord_routing",
+            "npx aislop ci --changes => pass (score 100, 0 errors, 1 warning = pre-existing file-too-large on the hand-managed plugin)"
+          ],
+          "deviations": "(1) MID-RUN INCIDENT: npx aislop fix (repo-wide, NOT diff-scoped) stripped narrative comments from two out-of-scope files (containers/traefik-mqtt-allowlist/main.py, src/java/keycloak-to-traefik/.../LoginEventListenerProvider.java) and one of the dev's own catch comments (which then tripped eslint/no-empty) — the out-of-scope files were reverted to HEAD, the own comment restored; the final tree diff is the single in-scope plugin file only. (2) the aislop-gate narrative-comment warning on the bindOnceMarkStorage doc block was resolved by rewording it to a pure adapter-contract statement; final engine: 0 findings on the file",
+          "friction": "(1) npx aislop fix operates on the whole repo, unlike the diff-scoped inline gate scan — it auto-fixed pre-existing comments in untouched files in one shot; resolution: git checkout HEAD on the two out-of-scope files; in pipeline sessions use only aislop ci --changes (read-only) and hand-resolve findings. (2) board-context.sh full run again exceeded default shell budgets (third chunk in a row; FRICTION cf-96 re-confirmed); ran in background with ~1500 s as prescribed",
+          "open_questions": "none",
+          "next_suggested": "C03 review against this diff — re-run the gate set, verify the executor's no-pre-mark arm bites, then coord commits C03; the live-smoke leg (first post-merge scheduled tick + a follow-up prompt proving cross-process once-semantics) rides the Review hand-off comment per the chunk notes"
+        },
+        {
+          "role": "review",
+          "status": "APPROVED",
+          "chunk": "C03",
+          "session": "ses_e48c3d9f8ffegcUmgW0Z3g2wP2",
+          "verdict": "APPROVED — no blocker, major, minor, or nit findings; round-1 notes appended to chunks/C03.md",
+          "commands_run": [
+            "git status --porcelain => 3 files: plugin + STATE.json + FRICTION.md (plan folder) — no traefik-mqtt-allowlist, no keycloak residue",
+            "git diff HEAD -- .opencode/plugin/board-context/index.ts => full-diff read (single-file diff, 184 ins / 26 del)",
+            "awk/cmp claim-leg region (marker -> before projectConfigText) HEAD vs tree => BYTE-IDENTICAL (8621 B both; re-derived by the reviewer)",
+            "grep 'harmlessly' => GONE in tree (HEAD had it); grep D26 in pipeline-locks => 4 grounded sites",
+            "node --test tests/opencode/board-context.test.ts => 49/49 (the 9 C03 by-design arms green)",
+            "node --test tests/opencode/card-details.test.ts => 32/32",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => 15/15",
+            "bash tests/wekan-mcp/board-context.sh (~1500 s background) => t1-t5 ok; t6 FAIL = nested agent-perms A15 pre-existing 01317f447 roster drift (attributed)",
+            "bash tests/agent-board-coord/rulesync-surface.sh => c1-c18 ok; c19 FAIL = same pre-existing drift (owner-routed)",
+            "bash tests/provider-loops/surface.sh => 10 ok; noop-marker n4 => 1 ok; skill-surface => 8 ok; tools.sh => 10 ok; py_compile server.py => pass; hourly-board-check => 8 ok; cf90-ledger => 8 ok",
+            "npx aislop ci --changes => exit 0, 0 errors; 1 style-policy warning = file-too-large on the plugin (827 lines — pre-existing finding grown by C03, accepted per brief)",
+            "scratch M1 (per-process-only mark) => 43/6 — exactly the durable-mark arms red; S4 cross-instance BITES",
+            "scratch M2 (executor pre-marks on failed fetch) => 48/1 — exactly the executor failure arm red; the no-pre-mark arm BITES",
+            "scratch M3 (command registration removed) => 45/4 — S9 registration + degrade + both executor arms red; the registration arm BITES",
+            "scratch e2e no-pre-mark on the REAL tree plugin => 2/2 (failed reload: mark untouched + first prompt still injects + follow-up clean; success: reply=block, no pre-mark, header scan marks durably)"
+          ],
+          "deviations": "none — full gate set re-run; t6 and c19 attributed not chased; scratch mutations under /tmp/opencode/c03-review only (repo tree untouched by the reviewer)",
+          "findings": "none"
+        }
+      ],
+      "review_session": "ses_e48c3d9f8ffegcUmgW0Z3g2wP2",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (zero findings; claim-time leg byte-identical under the reviewer's own extraction; all three new-arm classes proven to bite)"
     },
     "C04": {
       "status": "done",

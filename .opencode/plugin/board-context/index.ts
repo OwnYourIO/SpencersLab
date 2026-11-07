@@ -22,15 +22,26 @@
 // FETCH_TIMEOUT_MS budget so a hanging leg cannot stall admission
 // indefinitely.
 //
-// Once-per-session: the command path mints a fresh messageID per attempt, so
-// server-side id-dedup never protects the prompt hook (RESEARCH.md Implication
-// 1) — the guard keys the sessionID. A failed or hanging attempt still consumes
-// the slot: re-firing the fetch on every later prompt of the run would pay the
-// latency budget repeatedly for a block the run can resolve itself (absence is
-// normal per the boards consumer rule). The canonical-header scan is the second
-// belt: a prompt already carrying a pasted block (the /wekan-board-context
-// collector path) is never double-injected, and the scan sees the fully
-// expanded command text.
+// Once-per-session, durable: the command path mints a fresh messageID per
+// attempt, so server-side id-dedup never protects the prompt hook — the
+// guard keys the sessionID. The mark lives in ctx.storage under
+// once/<sessionID> as an epoch-ms stamp (plugin-id+project-id scoped — the
+// pipeline-locks D26 binding): two live opencode server processes load
+// this plugin independently and share only the durable store, so an
+// in-memory guard sees only the prompts its own process served and
+// re-injects on a follow-up riding the other. The mark keys sessionID, so
+// each scheduled tick — a fresh session — keeps its first-prompt block;
+// the once rule covers within-session follow-ups only. A failed or hanging
+// attempt still consumes the mark: re-firing the fetch on every later
+// prompt of a degraded run would pay the admission budget repeatedly for
+// a block the run can resolve itself (absence is normal per the boards
+// consumer rule). The canonical-header scan is the second belt: a prompt
+// already carrying a pasted block (the /wekan-board-context collector
+// path) or the refresh command's own reply is marked without injecting,
+// and the scan sees the fully expanded command text. A stale mark older
+// than ONCE_TTL_MS is ignored and removed on encounter. Storage absent or
+// unusable degrades to the per-process in-memory guard (one stderr line
+// at setup); the mark then spans one process again.
 //
 // The block format has one normative home — the "Board context block schema"
 // section of skills/wekan-mcp/SKILL.md. formatBlock below mirrors its bytes;
@@ -97,9 +108,10 @@ export const FETCH_TIMEOUT_MS = 8_000;
 // re-enablement breaks this credential-free MCP leg for plugin and
 // session alike — the restamp duty rides this note.
 export const DEFAULT_ENABLED = true;
-// A session's once-slot outlives any plausible first-prompt retry burst but
-// not the run; the set is in-memory because a server restart already resets
-// the plugin, and a re-fired prompt without the block re-injects harmlessly.
+// A session's once-mark outlives any plausible first-prompt retry burst
+// but not the run: a plan-approval pause can hold one session for hours,
+// while a mark left by a dead session must expire — a re-injection after
+// 6 h costs one fetch on a session the run has abandoned.
 const ONCE_TTL_MS = 6 * 60 * 60 * 1000;
 
 export const BOARD_COORD_AGENTS = [
@@ -311,9 +323,57 @@ export async function resolveMcpUrl(deps: any): Promise<string | null> {
   }
 }
 
+// ctx.storage adapter shape: positional set(key, value), get(key) ->
+// undefined when absent, remove(key); a source missing any method is null.
+function bindOnceMarkStorage(source: any): any {
+  const store = source?.storage;
+  if (
+    typeof store?.get !== "function" ||
+    typeof store?.set !== "function" ||
+    typeof store?.remove !== "function"
+  ) {
+    return null;
+  }
+  return store;
+}
+
 export function createPromptHandler(deps: any, opts: any = {}) {
   const enabled = opts?.enabled ?? DEFAULT_ENABLED;
+  const storage = bindOnceMarkStorage(deps);
+  // Per-process fallback (storage absent or a call failing): the in-memory
+  // guard, once semantics scoped to this plugin load.
   const attempted = new Map<string, number>();
+
+  const onceKey = (sessionID: string) => `once/${sessionID}`;
+  const readOnce = async (sessionID: string): Promise<number | undefined> => {
+    if (storage) {
+      try {
+        const value = await storage.get(onceKey(sessionID));
+        return typeof value === "number" ? value : undefined;
+      } catch {
+        // a storage failure degrades the read to the in-memory view, not the prompt
+      }
+    }
+    return attempted.get(sessionID);
+  };
+  const writeOnce = async (sessionID: string): Promise<void> => {
+    const stamp = Date.now();
+    attempted.set(sessionID, stamp);
+    if (!storage) return;
+    try {
+      await storage.set(onceKey(sessionID), stamp);
+    } catch {
+      // the in-memory stamp stands; a storage failure must not drop the prompt
+    }
+  };
+  const removeOnce = async (sessionID: string): Promise<void> => {
+    if (!storage) return;
+    try {
+      await storage.remove(onceKey(sessionID));
+    } catch {
+      // the re-stamp that follows overwrites the stale value anyway
+    }
+  };
 
   return async (event: any): Promise<void> => {
     if (!enabled) return;
@@ -322,10 +382,10 @@ export function createPromptHandler(deps: any, opts: any = {}) {
       const text = event?.prompt?.text;
       if (!sessionID || typeof text !== "string") return;
       if (text.includes(CANONICAL_HEADER)) {
-        attempted.set(sessionID, Date.now());
+        await writeOnce(sessionID);
         return;
       }
-      const seen = attempted.get(sessionID);
+      const seen = await readOnce(sessionID);
       if (seen !== undefined && Date.now() - seen < ONCE_TTL_MS) return;
 
       // Dual read, question-notify's tolerant shape: the prompt event carries
@@ -334,7 +394,8 @@ export function createPromptHandler(deps: any, opts: any = {}) {
         typeof event?.agent === "string" ? event.agent : await deps.getAgent(sessionID);
       if (!isBoardCoordAgent(agent)) return;
 
-      attempted.set(sessionID, Date.now());
+      if (seen !== undefined) await removeOnce(sessionID);
+      await writeOnce(sessionID);
       const block = await withinBudget(
         Promise.resolve(deps.resolve(MCP_SERVER_KEY)),
         deps.fetchTimeoutMs ?? FETCH_TIMEOUT_MS,
@@ -610,6 +671,56 @@ function makeCallTool(url: string): (name: string, args: any) => Promise<any> {
   };
 }
 
+// The /reload-board-context spec: a manual refresh of the once-per-session
+// block. The executor itself never marks — a failed fetch must leave the
+// session's first-prompt attempt intact, and a successful reply is marked by
+// the hook's header scan when the host dispatches it.
+function buildReloadCommand(ctx: any, resolveBlock: (serverId: string) => Promise<string>) {
+  const say = async (input: any, text: string): Promise<void> => {
+    try {
+      // The live envelope's prompt is an object; a bare string (the offline
+      // suites) must not spread into numeric junk keys on the prompt call.
+      const base = input?.prompt && typeof input.prompt === "object" ? input.prompt : {};
+      await ctx?.session?.prompt?.({
+        ...base,
+        sessionID: input?.sessionID,
+        text,
+        delivery: input?.delivery,
+      });
+    } catch (err: any) {
+      console.error(`[board-context] refresh reply could not be posted: ${err?.message ?? err}`);
+    }
+  };
+  return {
+    name: "reload-board-context",
+    description:
+      "Fetch a fresh AI-Dev board context block and post it into this session as a reply — the manual refresh of the once-per-session board-context block. Takes no arguments.",
+    execute: async (input: any) => {
+      let reply: string;
+      let summary: string;
+      try {
+        const block = await withinBudget(
+          Promise.resolve(resolveBlock(MCP_SERVER_KEY)),
+          FETCH_TIMEOUT_MS,
+          "reload board context",
+        );
+        if (typeof block !== "string" || !block.startsWith(CANONICAL_HEADER)) {
+          reply = "board context refresh failed: the fetch returned no board context block";
+          summary = reply;
+        } else {
+          reply = block;
+          summary = "board context refreshed";
+        }
+      } catch (err: any) {
+        reply = `board context refresh failed: ${oneLine(err?.message ?? err)}`;
+        summary = reply;
+      }
+      await say(input, reply);
+      return summary;
+    },
+  };
+}
+
 export default {
   id: "local.board-context",
   async setup(ctx: any) {
@@ -621,20 +732,29 @@ export default {
       if (!url) throw new Error(`no URL discovered for ${MCP_SERVER_KEY}`);
       return url;
     };
+    // One resolve seam for both consumers: the prompt hook's first fetch and
+    // the refresh command's on-demand fetch run the same six legs.
+    const resolveBlock = async (serverId: string): Promise<string> =>
+      resolveBoardContext(
+        { callTool: makeCallTool(await discoverUrl()) },
+        {
+          boardTitle: BOARD_TITLE,
+          swimlaneTitle: SWIMLANE_TITLE,
+          serverId,
+          collectedAt: localIso(),
+        },
+      );
+    const storage = bindOnceMarkStorage(ctx);
+    if (!storage) {
+      console.error(
+        "[board-context] degraded: no usable ctx.storage — the once-mark keeps its per-process in-memory fallback",
+      );
+    }
     const handler = createPromptHandler({
       getAgent: async (sessionID: string) => (await ctx.session.get({ sessionID }))?.agent,
-      resolve: async (serverId: string) => {
-        return resolveBoardContext(
-          { callTool: makeCallTool(await discoverUrl()) },
-          {
-            boardTitle: BOARD_TITLE,
-            swimlaneTitle: SWIMLANE_TITLE,
-            serverId,
-            collectedAt: localIso(),
-          },
-        );
-      },
+      resolve: resolveBlock,
       log: (message: string) => console.error(`[board-context] ${message}`),
+      storage,
     });
     await ctx.session.hook("prompt", handler);
 
@@ -689,6 +809,18 @@ export default {
       });
     } else {
       console.error("[board-context] degraded: no ctx.tool.hook — claim-time card block disabled");
+    }
+
+    if (typeof ctx?.command?.transform === "function") {
+      try {
+        await ctx.command.transform((editor: any) => {
+          editor.add(buildReloadCommand(ctx, resolveBlock));
+        });
+      } catch (err: any) {
+        console.error(`[board-context] command registration failed: ${err?.message ?? err}`);
+      }
+    } else {
+      console.error("[board-context] degraded: no ctx.command.transform — /reload-board-context disabled");
     }
   },
 };
