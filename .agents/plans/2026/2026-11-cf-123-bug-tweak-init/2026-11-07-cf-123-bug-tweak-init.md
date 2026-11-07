@@ -283,3 +283,134 @@ user with the one sanctioned approval question; only the user's word sets
 `plan_status: "approved"` (recorded in STATE.json kickoff.approval, cf-106
 shape). The plan-approval pause applies regardless of the card's
 Human-in-the-Loop checks — it is a pipeline gate, not a card bit.
+
+## Final whole-plan review — APPROVED (2026-11-07, fresh agent-review session)
+
+**Verdict: APPROVED — zero blocker/major findings.** The five-commit branch
+(`git diff f5ee40c64..HEAD`: test wave 4d94218de, C04 29b4ea2ce, C01
+4c9cccbf0, C02 7892c8450, C03 d0361cf24) meets the plan's Goal, all four
+asks, every chunk's acceptance criteria, the five owner rulings in
+DECISIONS.md, and the hard rules. All validations re-run fresh by this
+reviewer; the documented pre-existing reds re-attributed from git history,
+not taken on faith.
+
+**Full validation suite (this session, all fresh):**
+
+- `node --test tests/opencode/board-context.test.ts` => 49/49 pass
+- `node --test tests/opencode/card-details.test.ts` => 32/32 pass
+- `node --test tests/opencode/pipeline-locks-tick.test.ts` => 15/15 pass
+- `bash tests/provider-loops/surface.sh` => 10 ok (t1-t10; t6 nests the
+  gate subset: gate byte-unchanged vs base + t1..t21 minus the pre-existing
+  t17 green inside)
+- `bash tests/noop-marker/surface.sh n4` => 1 ok
+- `bash tests/wekan-mcp/skill-surface.sh` => 8 ok
+- `bash tests/wekan-mcp/board-context.sh` (~background) => t1-t5 ok; t6 RED
+  solely on agent-perms A15 = documented pre-existing 01317f447 drift
+- `bash tests/wekan-mcp/tools.sh` => 10 ok (incl. t10 C04 projection arm)
+- `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py` => pass
+- `bash tests/agent-board-coord/rulesync-surface.sh` => c1-c18 ok; c19 RED
+  = documented pre-existing 01317f447 drift
+- `bash tests/multi-repo/hourly-board-check.sh` => 8 ok
+- `bash tests/cf90-ledger/surface.sh` => 8 ok
+- `npx --yes rulesync@37.0.0 generate` x2 => both "All files are up to
+  date" (no-op); `generate --check` => clean; git status unchanged after
+- `npx aislop ci --changes` => exit 0, 0 errors, 0 warnings
+- docker: `docker info` => daemon absent (no /var/run/docker.sock) =>
+  `docker build => no-daemon, CI-deferred` (C04's designed gate shape,
+  cf-77; docker-build.yaml at merge authoritative)
+
+**Pre-existing reds — attributed, none cf-123's:**
+
+- `git merge-base --is-ancestor 01317f447 f5ee40c64` => TRUE: the "agent-
+  context Priority wiring: two-field roster" commit entered via main before
+  this branch. rulesync-surface c19 (cf-85 "exactly one" fence) and
+  agent-perms A15 (cf-106 C01 re-pin) both read the same "exactly TWO …
+  Priority" roster text it introduced; no cf-123 diff touches the roster.
+  Owner-routed at the run's end per STATE test_wave.coord_routing.
+- gate.sh t17: the known pre-existing exclusion; every other gate arm green
+  inside provider-loops t6.
+
+**Goal + asks, all met:**
+
+- A (C02): header 55 → 16 non-empty lines; keep-list byte-exact (T2/N4/
+  t9/t10 green this session; reviewer rounds cmp'd frontmatter+body);
+  "also enabled" corrected to enabled:false; fingerprint-law +
+  permissionAutoAccept + L1 clause survives as the runbook's cite.
+- B (C01+C04): strict YAML under the UNCHANGED canonical header — this
+  reviewer executed formatBlock in both key states and yaml.safe_load'd
+  both bodies: one document each, `card_number` type-stable `str` in both
+  degrade states, empty list `cards: []`. Prefix DERIVED (truthy `key` on
+  the existing get_board leg → `"<key>-<n>"`; absent → bare quoted + the
+  pinned note as the FIRST trailing comment — no `AD` literal in the
+  emitter). Six serial legs, preload `{board_id}`-only per the drift-safety
+  ruling. The MCP-tool evaluation settled per ruling #2: server-side
+  projection YES (C04), composite tool NO (Deferred stands).
+- C (USER-owned): runbook present in this file with the merge-day ordering
+  (toggle any time; re-approve AFTER merge — A's edit rotates the
+  loopFingerprint); repo-side artifact is C02's AC6 clause. Agents execute
+  nothing of it.
+- D (C03): durable once-mark in ctx.storage (`once/<sessionID>`, epoch-ms;
+  tolerant adapter + per-process fallback + one setup stderr line),
+  session-scoped so scheduled ticks keep their block (ruling #4),
+  consume-once-whether-successful kept (ruling #5, mark written before the
+  fetch), TTL 6 h with stale removal, `/reload-board-context` via
+  ctx.command.transform with one degrade line when absent — executor
+  no-pre-mark on failure, header-scan-mark on success.
+
+**Cross-chunk consistency (the between-chunks sweep):**
+
+- Five-artifact fence contract is ONE shape: plugin formatBlock output
+  (executed both states) == wekan-mcp skill schema fence == EXPECTED_BLOCK
+  (DEGRADED_BLOCK derived from it, no transcription drift); CANONICAL_HEADER
+  still `"Board context (collected"`; collector command points at the
+  schema, never copies it; boards consumer rule reads the cards group "as
+  the schema fences them". skill-surface t3's single-owner guard green.
+- No cross-effect between C02's loop file and C01's t7 rider: the commits
+  are file-disjoint (C01 touches no loop file, C02 no boards skill); the
+  loop file's pins (T2, t9, t10, N4) and the rider's t7 are all green in
+  the same suite run.
+- C03 left C01's fence intact two commits later: no C03 hunk covers the
+  formatBlock/resolveBoardContext bodies (old lines 112-310), the claim-
+  time card-details leg (old lines 382-559) or CANONICAL_HEADER — proven
+  by hunk-range analysis plus 49/49 S1 byte parity and card-details 32/32.
+- C04's doc rows match the projection: `key` positioned after `title` in
+  `_slim_board`, the call-shapes shape cell, the docstring and the README
+  row alike; the stamp stays honest (live probe 2026-10-27 · key
+  source-only 2026-11, deploy pending).
+- Nothing fell between chunks: tests/** untouched after the test-wave
+  commit (dev ran, never wrote); the wave-order deviation (C01 before C02)
+  is the recorded benign one; C02's documented-red AC7 was superseded by
+  the rider landing first (strictly better).
+
+**Hard rules:**
+
+- Version/tag scan over the full diff: only plan-folder prose naming the
+  current `:v162` pin — no hand bumps anywhere.
+- No `.pipeline/` files in the diff; no board mutations (the one write-
+  shaped grep hit is DECISIONS prose).
+- rulesync pairs: both the command and the boards-skill source + generated
+  land in C01's single commit; generate x2 no-op + --check clean.
+- Claim-time card-details leg and pipeline-locks surface untouched (no
+  files/regions in the diff; both suites green).
+
+**Findings (non-blocking):**
+
+- (nit, bookkeeping) STATE.json chunks.C02 still carries the stale
+  `commit_pending` text though the C02 commit landed (7892c8450).
+- (nit, bookkeeping) the C02 commit message attributes dev to
+  `ses_e48da885cffe…` while STATE.json C02.dev_session records
+  `ses_e4905bd4dffe…` — one record is mistyped; no acceptance criterion
+  affected.
+
+**Deferred (carried from C01 review round 1, still open by design):**
+
+- The `resolveBlock` seam passes no `log` into resolveBoardContext, so the
+  swimlane-grouping-absent stderr line lands on raw console.error without
+  the `[board-context]` prefix in production (the test arm accepts either).
+  A one-line add for a future pass; no chunk rework owed.
+
+**FRICTION.md sweep:** every entry is either resolved by the shipped state
+(t7 rider green, self-admit rows green, aislop-fix residue verified absent
+— clean tree) or correctly routed OUT of this ticket (c19/A15 owner routing,
+the two pipeline-locks engine edge cases as follow-up card candidates). No
+entry names a hole the shipped state should have closed.

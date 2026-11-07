@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-123-bug-tweak-init",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e4c244562ffeMfAbt3zkhDf6u4",
   "test_session": "ses_e4957c769ffe6TkfgPGcsI5L0F",
   "current_wave": 1,
@@ -595,6 +595,27 @@
         }
       ]
     }
+  },
+  "final_review": {
+    "at": "2026-11-07 (whole-plan review, planning tier)",
+    "session": "ses_e48bfefd5ffetRocRLJ19NwsPQ",
+    "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+    "verdict": "APPROVED — zero blocker/major findings; the whole branch (5 commits over f5ee40c64) delivers the plan's Goal and all four asks; every chunk's ACs hold under a fresh full-suite run; the five owner rulings honored; cross-chunk fence contract one consistent shape; the three documented reds (rulesync-surface c19, agent-perms A15, gate t17) re-attributed from git history (01317f447 proven an ancestor of the base) — pre-existing main drift, not cf-123's",
+    "record": "appended to the plan of record by the reviewer (the reviewer wrote no code or tests)",
+    "exit": "card AD-123 moved to Review + summary comment (branch, commit range f5ee40c64..d0361cf24, validation results, the C03 live-smoke leg, the USER-owned merge-day runbook); pipeline_release(outcome:done) accepted (ok:true, released:[] — the engine's attribution state at release carried no live set to hand back; the on-disk card-id row had been the owner-cleared/stale one) — Finished stays human-owned"
+  },
+  "friction_followup": {
+    "at": "2026-11-07 (run's end, step-11 — the two-question budget: items, then mode)",
+    "items_question": "owner checked ONE item: the pipeline-locks restart edge case (the c19/A15 roster-pin drift was NOT checked — it stays unrouted, recorded under test_wave.coord_routing)",
+    "mode_question": "Inbox card (the family's recommended mode)",
+    "card": {
+      "id": "cJzj4C4jPH4BY3qQB",
+      "title": "pipeline-locks: re-adopt own claim row after a restart (stranded-run edge case)",
+      "destination": "Inbox (PjEZ39rXBdpNcpncs), Backlog swimlane (MoZHQz3C4dSW4Atya) — re-resolved live at use time",
+      "answers": "default_checked on create: Services 'agent context', Type 'chore', Model(s) 'Qwen Dense' (all applied, none missing/failed)",
+      "note": "a record awaiting the owner's call — not auto-pickup intake; the pickup walk never visits the Backlog swimlane. The creating session claimed nothing, moved nothing, set no fields beyond this card"
+    },
+    "fRICTION_status": "the engine-edge-case FRICTION.md entry stays OPEN (cause not repaired; the card records the routing, not a fix)"
   },
   "blocked": [],
   "deferred": []
