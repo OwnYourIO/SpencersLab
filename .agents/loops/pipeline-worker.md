@@ -29,3 +29,5 @@ replace the body with the bare command /pipeline-tick and nothing else.
 -->
 
 Load the boards skill and run exactly one Parallel pipeline loops iteration. First call pipeline_status, then follow the skill. This one scheduled task serves both Provider flavors — the card's `Provider: API` or `Provider: Local` label routes the model inside the run, per the boards skill's Provider filtering section, and a run that takes an unlabeled card asks the user which provider applies before any routing. The run starts with the structural board-context block and receives the claimed card's details on the claim answer, so the first turn does not spend round-trips; a no-work tick takes the marked, archived exit the boards skill's No-op marker section defines.
+
+If Provider: API label is present, you should change the model being used for this session to be the OpenRouter equivalent. 
