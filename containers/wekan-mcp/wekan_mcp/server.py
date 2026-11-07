@@ -81,6 +81,7 @@ def _slim_board(b: dict) -> dict:
     return {
         "id": b.get("_id"),
         "title": b.get("title"),
+        "key": b.get("key"),
         "permission": b.get("permission"),
         "color": b.get("color"),
         "archived": b.get("archived", False),
@@ -174,7 +175,7 @@ def list_boards() -> list[dict]:
 
 @mcp.tool
 def get_board(board_id: str) -> dict:
-    """Get a board's metadata: title, permission, color, labels."""
+    """Get a board's metadata: title, board key, permission, color, labels."""
     return _slim_board(_wekan.get(f"/api/boards/{board_id}") or {})
 
 

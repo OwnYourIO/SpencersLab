@@ -29,7 +29,7 @@ parameter; the direct-probe recipe is in
 | tool | required args | optional args | response shape and gotchas | evidence |
 |---|---|---|---|---|
 | `list_boards` | — | — | `[{id, title}]` — boards the service user is a member of; membership scopes every other call. | live probe 2026-10-27 |
-| `get_board` | `board_id` | — | `{id, title, permission, color, archived, labels: [{id, name, color}]}` — the only read that carries the board's label list. | live probe 2026-10-27 |
+| `get_board` | `board_id` | — | `{id, title, key, permission, color, archived, labels: [{id, name, color}]}` — the only read that carries the board's label list; `key` is the board key: 2-10 capitals, auto-assigned on insert, REST-immutable. | live probe 2026-10-27 · key source-only 2026-11 (deploy pending) |
 | `list_lists` | `board_id` | — | `[{id, title, swimlane_id}]` — the `swimlane_id` is hydrated per list from the single-list route (WeKan's collection route projects lists to `{_id, title}` only, see `list_lists`); no sort field; titles repeat across swimlanes. | live probe 2026-10-27 |
 | `list_swimlanes` | `board_id` | — | `[{id, title}]` — every board has at least one. | live probe 2026-10-27 |
 | `list_cards_in_list` | `board_id`, `list_id` | — | cards in board order, top first; the by-list projection strips `card_number` (null), `custom_fields` and `label_ids` (empty) and — since cf-96 — `card_dependencies` (empty) and `parent_id` (null); `get_card` per candidate for those. Both ids are required together (observed live 2026-10-26). | source-only |

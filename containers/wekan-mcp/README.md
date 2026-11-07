@@ -110,7 +110,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | Tool | Kind | Purpose |
 |---|---|---|
 | `list_boards` | read | Boards the service user belongs to |
-| `get_board` | read | Board metadata + labels |
+| `get_board` | read | Board metadata + board key + labels |
 | `list_lists` | read | Columns on a board (each with its `swimlane_id`) |
 | `list_swimlanes` | read | Rows on a board |
 | `list_cards_in_list` | read | Cards in a list |

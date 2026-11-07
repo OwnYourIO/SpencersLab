@@ -345,9 +345,67 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
-      "depends_on": []
+      "depends_on": [],
+      "dev_session": "ses_e4911ac80ffem7rctMq20ZOrmy",
+      "review_session": "ses_e490ec578ffeUkGXvCGJPw1ehT",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (zero findings; t10 arm proven to bite via two negative + one positive control; all documented reds root-caused, none attributable to C04)",
+      "dev_rounds": 1,
+      "handoffs": [
+        {
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C04",
+          "files_changed": [
+            "containers/wekan-mcp/wekan_mcp/server.py",
+            "containers/wekan-mcp/README.md",
+            "skills/wekan-mcp/references/call-shapes.md"
+          ],
+          "commands_run": [
+            "python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py => pass",
+            "bash tests/wekan-mcp/tools.sh => pass (10 ok: t1-t6, t8, t9, t10)",
+            "bash tests/wekan-mcp/skill-surface.sh => t1,t2,t4,t5,t6,t7,t8 pass; t3 fail-by-design (C01's schema-fence cards-group, wave 2 — aborted the full run, so t4/t5 and t6/t7/t8 verified via subset invocations)",
+            "npx aislop ci --changes => pass (exit 0, 0 errors, 2 pre-existing style/policy warnings in untouched code)",
+            "docker build => no-daemon, CI-deferred"
+          ],
+          "deviations": "none on scope — three files exactly per 'Files in scope' (tests/wekan-mcp/tools.sh t10 is the agent-test-authored arm; dev ran it, did not write it). README row wording 'Board metadata + board key + labels' follows the existing 'metadata + labels' pattern; the chunk only requires naming the key. The two aislop warnings (file-too-large, function-too-long on preload_board) are pre-existing complexity style findings outside this diff; refactoring them is beyond C04",
+          "friction": "none new — the skill-surface full-run abort on t3 (C01 by-design red) required subset invocations to evidence t4/t5 green; same shape the test wave recorded",
+          "open_questions": "none",
+          "next_suggested": "reviewer re-runs the gate set (tools.sh full, skill-surface t4+t5, aislop --changes) against this diff, then coord commits the chunk and moves on to C02 (wave 1) / C01 (wave 2, which clears t3 and consumes this chunk's key projection)"
+        },
+        {
+          "role": "review",
+          "status": "APPROVED",
+          "chunk": "C04",
+          "session": "ses_e490ec578ffeUkGXvCGJPw1ehT",
+          "verdict": "APPROVED — no blocker, major, minor, or nit findings",
+          "commands_run": [
+            "bash tests/wekan-mcp/tools.sh => pass (10 ok: t1-t6, t8, t9, t10)",
+            "python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py => pass",
+            "WEKAN_SERVER=/tmp/opencode/c04-review/server-no-key.py bash tests/wekan-mcp/tools.sh t10 => fail-by-design (negative control 1: no 'key' entry — arm bites)",
+            "WEKAN_SERVER=/tmp/opencode/c04-review/server-standin.py bash tests/wekan-mcp/tools.sh t10 => fail-by-design (negative control 2: hardcoded stand-in rejected — arm bites)",
+            "python3 call-shapes row scratch (key stripped from shape cell) => fail-by-design (doc-side arm bites)",
+            "bash tests/wekan-mcp/skill-surface.sh t4 t5 => pass (t5 nested tools.sh cascade CLEARS with C04)",
+            "bash tests/wekan-mcp/skill-surface.sh t3 => fail (designed-red, C01 cards-group, wave 2 — exact test-wave signature)",
+            "bash tests/wekan-mcp/skill-surface.sh t6 t7 t8 => pass",
+            "npx aislop ci --changes => pass (exit 0, 0 errors; 2 pre-existing style/policy warnings outside the diff)",
+            "node --test tests/opencode/board-context.test.ts => fail-by-design (26 pass / 23 fail, identical to test-wave record)",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (15/15)",
+            "bash tests/provider-loops/surface.sh => fail at t7 (pre-existing main red, verified at base f5ee40c64); t8 => pass",
+            "bash tests/noop-marker/surface.sh n4 => pass",
+            "bash tests/wekan-mcp/board-context.sh t4 t5 => pass; t2/t3 => fail (designed-red, C01); t6 => fail (nested agent-perms A15 = pre-existing 01317f447 drift, root-caused via git show/merge-base)",
+            "bash tests/agent-board-coord/rulesync-surface.sh => fail at c19 (pre-existing 01317f447 drift; c1-c18 green)",
+            "bash tests/multi-repo/hourly-board-check.sh => pass (8 ok)",
+            "bash tests/cf90-ledger/surface.sh => pass (8 ok)",
+            "git diff HEAD version/tag/bump scan => no lines (hard rule honored)",
+            "docker info => daemon absent (no-daemon, CI-deferred — designed passing gate shape)"
+          ],
+          "findings": "none — the c19/A15 roster-drift routing to owner-at-run-end stays with coord per the STATE test_wave routing; t7 rider clears in wave 2 with C01",
+          "deviations": "none (negative controls ran on scratch copies under /tmp/opencode; no repo edits — reviewer wrote only the C04.md review notes)"
+        }
+      ]
     }
   },
   "blocked": [],
