@@ -50,7 +50,7 @@ FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-266 AS supervisor
 # the packaged engine roots below are upstream binaries and stay UNPATCHED,
 # which is why the ornith profile must name the claim-compiled engine and never
 # a packaged root (charts/llama-swap engineProfileStrataOrnith).
-FROM alpine:3.22 AS strata-src
+FROM alpine:3.24 AS strata-src
 COPY carry/ornith-q36.patch /opt/strata/carry/ornith-q36.patch
 RUN apk add --no-cache git ca-certificates \
     && git clone --depth 1 --branch v0.2.9 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
