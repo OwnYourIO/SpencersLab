@@ -50,6 +50,20 @@
 // handleLifecycle consults noWorkSuppressed on the FINISHED event only. The
 // pipeline-locks plugin's reap alert stays gated only by haNotify — the
 // marker never reaches it.
+// Fan-out dedup (2026-11-07 debug, .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md):
+// this location plugin loads once per active checkout per server, every
+// instance subscribes to the WHOLE public event stream, and the 15 s cooldown
+// is per-setup memory — one turn-end measured 4 phone pushes across the two
+// live servers sharing one opencode.db. ctx.storage's kv namespace is keyed by
+// plugin id alone (verified from pipeline-locks rows written by main AND
+// worktree instances), so a consume-once claim over it is visible fleet-wide.
+// Claim keys are event identities (tool-call id, permission request id,
+// lifecycle event id, last-assistant-message fallback): no identity, or a
+// storage read/write that throws ⇒ push — the claim may mute copies of an
+// alert, never the alert itself. get→set is not atomic across processes, so a
+// same-millisecond collision can still double-ring: systematic ×N collapses to
+// a rare duplicate — an improvement bound, not a bug. Checkouts that predate
+// this code never consult the claim and stay loud until they carry it.
 // The approval trigger is the durable permission.asked event, re-grounded
 // on the v2.1.4 binary: the server publishes it only when the
 // ruleset effect resolves to `ask` and exactly once per request id. The push
@@ -81,6 +95,12 @@ const COOLDOWN_MS = 15_000; // one push per session per burst, shared by the que
 // detection and burst-suppression are independent user-visible behaviors and
 // merging the constants would couple them (DECISIONS 2026-10-27).
 const PENDING_NOTIFY_MS = 15_000;
+// How long a consume-once claim mutes redeliveries of the same event.
+// Fan-out deliveries land seconds apart (servers polling one durable store);
+// the window trades that spread against swallowing the NEXT real occurrence —
+// two same-key turn-ends inside 10 minutes are rare enough to mute once, and
+// stale storage can never mute forever (an expired row re-claims).
+const CLAIM_TTL_MS = 10 * 60_000;
 const MAX_MESSAGE = 240;
 const FINISHED_EVENT = "session.execution.succeeded";
 const CRASH_EVENT = "session.execution.failed";
@@ -140,6 +160,51 @@ export function noWorkSuppressed(info: any): boolean {
   return typeof marker === "object" && marker !== null && typeof marker.reason === "string" && marker.reason !== "";
 }
 
+// Exported seam (T11): the consume-once claim over ctx.storage. True means
+// "you are the first this key has seen — push"; false means a sibling instance
+// already attempted this exact event. Every degrade path returns true: a
+// store-less ctx (old checkout shape), an unreadable store, or an unwritable
+// one must never cost the user an alert — the claim mutes copies, never the
+// copy-count-one original. The get→set pair is not atomic across processes;
+// the millisecond race is the documented improvement bound, not a flaw to fix
+// here (no CAS primitive exists on the storage surface).
+export async function claimOnce(storage: any, key: string, now: () => number = Date.now): Promise<boolean> {
+  if (!storage || typeof storage.get !== "function" || typeof storage.set !== "function") return true;
+  try {
+    const seen = await storage.get(key);
+    const at = typeof seen?.at === "number" ? seen.at : undefined;
+    const stamp = now();
+    if (at !== undefined && stamp - at < CLAIM_TTL_MS) return false;
+    await storage.set(key, { at: stamp });
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+// Housekeeping, never correctness: claim rows only cost kv size — an expired
+// row unread is re-claimed anyway (claimOnce's TTL). Best-effort by the
+// failure policy: a sweep that cannot run today runs on the next load.
+export async function sweepExpiredClaims(storage: any, now: () => number = Date.now): Promise<void> {
+  if (!storage || typeof storage.scan !== "function" || typeof storage.remove !== "function") return;
+  try {
+    const page = await storage.scan({ prefix: "claim/", limit: 200 });
+    const entries = Array.isArray(page?.entries) ? page.entries : [];
+    const at = now();
+    for (const entry of entries) {
+      const stamp = typeof entry?.value?.at === "number" ? entry.value.at : 0;
+      if (at - stamp < CLAIM_TTL_MS) continue;
+      try {
+        await storage.remove(entry.key);
+      } catch {
+        // a row left behind is kv size, not a contract
+      }
+    }
+  } catch {
+    // a blind sweep is harmless: claimOnce re-reads per push
+  }
+}
+
 // Newest-first scan over assistant `content` parts only: a turn commonly ends
 // on a tool or reasoning part, and the top-level `text` on user/system records
 // is the user's own prompt — reading it would echo it back as the answer.
@@ -154,6 +219,18 @@ export function lastAssistantExcerpt(messages: any): string {
     }
   }
   return "";
+}
+
+// The FINISHED claim's fallback identity when the envelope carries no event
+// id: the last assistant message id names the completed turn, and every
+// instance reading the same session context computes the same key. Absent ⇒
+// no key ⇒ the loud path (identity to share is what makes muting safe).
+function lastAssistantMessageID(messages: any): string | undefined {
+  if (!Array.isArray(messages)) return undefined;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.type === "assistant" && typeof messages[i].id === "string") return messages[i].id;
+  }
+  return undefined;
 }
 
 // Session.StructuredError puts the human-readable text in `message` and falls
@@ -202,8 +279,27 @@ export async function handleLifecycle(deps: any, event: any): Promise<void> {
         return;
       }
       const messages = await deps.getMessages(sessionID);
+      // The claim runs after the round-trips that build its key and before
+      // any push attempt: a muted duplicate consumes no transport, and the
+      // fallback identity (last assistant message id) is only computable
+      // from the context the excerpt already needed. Suppression stays
+      // first — a no-work tick never reaches the claim (T12).
+      const turnID = event?.id ?? event?.data?.id ?? lastAssistantMessageID(messages);
+      if (turnID && deps.claim && !(await deps.claim(`claim/finished:${sessionID}:${turnID}`))) {
+        console.error("[question-notify] deduped finished push", sessionID);
+        return;
+      }
       await deps.notify(finishedTitle(agent), truncate(lastAssistantExcerpt(messages) || "no text output"));
     } else {
+      // Crash dedup requires a real event identity (id or messageID): with
+      // nothing to share a key on, every delivery stays loud — a muted crash
+      // without proof of a sibling push is the one failure this leg never
+      // ships (the marker rule's same direction, per-event).
+      const evID = event?.id ?? event?.data?.id ?? event?.messageID ?? event?.data?.messageID;
+      if (evID && deps.claim && !(await deps.claim(`claim/crash:${sessionID}:${evID}`))) {
+        console.error("[question-notify] deduped crash push", sessionID);
+        return;
+      }
       await deps.notify(crashTitle(agent), truncate(crashExcerpt(event.data?.error ?? event.error)));
     }
   } catch (err: any) {
@@ -260,6 +356,14 @@ export async function handlePermission(deps: any, event: any): Promise<void> {
         // an approval push needs no session record to decide whether to fire
         // — the record only refines the title.
         if (!deps.allowPush(sessionID)) return;
+        // Fleet-wide dedup of the same durable ask: requestID is the
+        // server's unique publish id, so the shared claim is exact, and it
+        // runs at the attempt like the cooldown — arrival and cancel still
+        // consume nothing.
+        if (deps.claim && !(await deps.claim(`claim/approval:${requestID}`))) {
+          console.error("[question-notify] deduped approval push", sessionID);
+          return;
+        }
         let agent = "session";
         try {
           const info = await deps.getSession(sessionID);
@@ -293,6 +397,39 @@ function firstQuestion(input: any): string {
     return String(head?.question ?? head?.header ?? "question pending");
   }
   return "question pending";
+}
+
+// The question leg as an exported seam (cf-106 hook-arm law: behavior living
+// in a hook needs an arm driving the hook — handleLifecycle/handlePermission
+// set the pattern). The shipped filter order is preserved exactly: tool
+// filter, agent off the event with the session-record fallback, agent-prefix,
+// burst cooldown, consume-once claim keyed on the tool-call id, push. A
+// question event with no call id dedups to nothing (loud), same rule as crash.
+export async function handleQuestion(deps: any, event: any): Promise<void> {
+  try {
+    if (event?.tool !== "question") return;
+    const sessionID: string | undefined = event.sessionID ?? event.context?.sessionID;
+    let agent: unknown = event.agent;
+    if (typeof agent !== "string" && sessionID) {
+      try {
+        agent = (await deps.getSession(sessionID))?.agent;
+      } catch {
+        agent = undefined;
+      }
+    }
+    if (typeof agent !== "string" || !agent.startsWith(AGENT_PREFIX)) return;
+    if (!deps.allowPush(sessionID ?? agent)) return;
+    const callID = event.id ?? event.messageID;
+    if (callID && deps.claim && !(await deps.claim(`claim/question:${callID}`))) {
+      console.error("[question-notify] deduped question push", sessionID ?? agent);
+      return;
+    }
+    await deps.notify(questionTitle(agent), truncate(firstQuestion(event.input)));
+  } catch (err: any) {
+    // Swallowed by the failure policy: the tool execution must not wait on
+    // or fail because of a phone push.
+    console.error("[question-notify] question push failed:", err?.message ?? err);
+  }
 }
 
 // Exported URL-discovery seam (tests/opencode/ha-mcp-url.test.ts). Leg 1 is
@@ -408,6 +545,11 @@ export default {
     const envPendingMs = Number(process.env.OPENCODE_NOTIFY_PENDING_MS);
     const pendingMs = Number.isFinite(envPendingMs) && envPendingMs >= 0 ? envPendingMs : PENDING_NOTIFY_MS;
     const pendingApproval = new Map<string, any>();
+    // Claim rows are receipts, not state: prune expired ones on load so the
+    // kv stays a footprint, not a growth curve (TTL makes any surviving row
+    // re-claimable anyway). Best-effort and detached — never blocks plugin
+    // load, never rejects.
+    void sweepExpiredClaims(ctx.storage);
     // One cooldown gate, keyed on sessionID alone, shared by the question hook
     // and the fired approval path: a question push and a near-simultaneous ask
     // for one session yield a single phone push (intake: burst → one push).
@@ -424,25 +566,16 @@ export default {
 
     await ctx.tool.hook("execute.before", async (event: any) => {
       try {
-        if (event.tool !== "question") return;
+        if (event?.tool !== "question") return;
         if (!debugLogged) {
           debugLogged = true;
           console.error("[question-notify] execute.before event keys:", Object.keys(event ?? {}));
         }
-        const sessionID: string | undefined = event.sessionID ?? event.context?.sessionID;
-        let agent: unknown = event.agent;
-        if (typeof agent !== "string" && sessionID) {
-          try {
-            agent = (await ctx.session.get({ sessionID }))?.agent;
-          } catch {
-            agent = undefined;
-          }
-        }
-        if (typeof agent !== "string" || !agent.startsWith(AGENT_PREFIX)) return;
-        if (!allowPush(sessionID ?? agent)) return;
-
-        void sendHANotify(ctx, questionTitle(agent), firstQuestion(event.input)).catch((err) =>
-          console.error("[question-notify] notify failed:", err?.message ?? err),
+        // The shipped fire-and-forget shape, moved behind the exported seam:
+        // the tool execution the hook gates never waits on the claim round
+        // trip or the phone push.
+        void handleQuestion(deps, event).catch((err: any) =>
+          console.error("[question-notify] question hook failed:", err?.message ?? err),
         );
       } catch (err: any) {
         console.error("[question-notify] hook error:", err?.message ?? err);
@@ -456,6 +589,10 @@ export default {
     const controller = new AbortController();
     const deps = {
       allowPush,
+      // One claim surface over ctx.storage for every push path: the kv
+      // namespace is plugin-id-only, so instances in other checkouts and
+      // other server processes contend on the SAME rows.
+      claim: (key: string) => claimOnce(ctx.storage, key),
       getSession: (sessionID: string) => ctx.session.get({ sessionID }),
       getMessages: (sessionID: string) => ctx.session.context({ sessionID }),
       notify: (title: string, message: string) => sendHANotify(ctx, title, message),

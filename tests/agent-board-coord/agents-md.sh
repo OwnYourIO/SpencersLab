@@ -409,11 +409,12 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
-      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) : ;;
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

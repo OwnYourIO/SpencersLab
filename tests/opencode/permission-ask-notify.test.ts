@@ -101,10 +101,10 @@ const replied = (requestID: string | undefined, sessionID: string, reply = "once
 // instead of arming anything, so fire-path tests stay instant and deterministic;
 // a throwing dep simulates a collaborator failure at exactly one seam call.
 function fakePermissionDeps(opts: any = {}) {
-  const calls: any = { allowPush: [], getSession: [], notify: [], scheduled: [], cancelled: [] };
+  const calls: any = { allowPush: [], getSession: [], notify: [], scheduled: [], cancelled: [], claim: [] };
   const timers = new Map<string, any>();
   let seq = 0;
-  const deps = {
+  const deps: any = {
     timers,
     pendingMs: opts.pendingMs === undefined ? PENDING_MS : opts.pendingMs,
     schedule: (fn: any, ms: number) => {
@@ -131,6 +131,10 @@ function fakePermissionDeps(opts: any = {}) {
       calls.notify.push({ title, message });
       if (opts.notifyRejects) throw new Error("notify boom");
     },
+  };
+  if (opts.claim) deps.claim = async (key: string) => {
+    calls.claim.push(key);
+    return opts.claim(key);
   };
   return { deps, calls };
 }
@@ -233,6 +237,9 @@ function fakeSetupCtx(opts: any = {}) {
     // no-URL path, so a test that reaches the notify helper cannot open a socket.
     mcp: { list: async () => [] },
     location: { directory: "/tmp/opencode/question-notify-no-config" },
+    // Two setups sharing one of these simulate two loaded locations claiming
+    // against the same durable store (the 2026-11-07 fan-out fix's mechanism).
+    storage: opts.storage,
   };
   return { ctx, seen };
 }
@@ -1050,5 +1057,156 @@ describe("D9 setup-level timers: cleanup sweep and the env knob (AC 13, 15)", ()
         }
       });
     }
+  });
+});
+
+// D1–D2 (2026-11-07 fan-out debug): the approval leg's consume-once claim.
+// The pending-only contract is untouched — the claim sits at the push attempt,
+// after the cooldown gate, exactly where allowPush stamps (DECISIONS 2026-10-27
+// "at the actual push attempt"); an arrival, a cancel, or a denied-by-cooldown
+// fire consults no storage at all.
+
+function liveStorage() {
+  const map = new Map<string, any>();
+  return {
+    map,
+    get: async (key: string) => map.get(key),
+    set: async (key: string, value: any) => {
+      map.set(key, value);
+    },
+    remove: async (key: string) => {
+      map.delete(key);
+    },
+    scan: async (input: any) => ({
+      entries: [...map.entries()]
+        .filter(([k]) => !input?.prefix || k.startsWith(input.prefix))
+        .map(([key, value]) => ({ key, value })),
+    }),
+  };
+}
+
+describe("D1 approval claim at the push attempt (fan-out dedup, plan D1)", () => {
+  it("a granted claim pushes once and the key carries the request id", async () => {
+    const { deps, calls } = fakePermissionDeps({
+      getSession: async () => topSession(),
+      claim: async () => true,
+    });
+    await runPermission(deps, asked("ses_top", { id: "per_g1" }));
+    await fireScheduled(calls, 0, "per_g1");
+    assert.equal(calls.notify.length, 1);
+    assert.equal(calls.claim.length, 1, "the gate runs once per fired push");
+    assert.ok(calls.claim[0].includes("per_g1"), `the claim key carries the request id, saw ${calls.claim[0]}`);
+  });
+
+  it("a denied claim mutes: no lookup, no push", async () => {
+    const { deps, calls } = fakePermissionDeps({
+      getSession: async () => topSession(),
+      claim: async () => false,
+    });
+    await runPermission(deps, asked("ses_top", { id: "per_d1" }));
+    await fireScheduled(calls, 0, "per_d1");
+    assert.equal(calls.notify.length, 0, "another instance won the claim — the ask is already on the phone");
+    assert.equal(calls.getSession.length, 0, "the mute returns before the title lookup");
+  });
+
+  it("arrival and cancel never consult the claim — a cancelled ask consumes nothing (AC 9 extended)", async () => {
+    const { deps, calls } = fakePermissionDeps({ getSession: async () => topSession(), claim: async () => true });
+    await runPermission(deps, asked("ses_top", { id: "per_c1" }));
+    await runPermission(deps, replied("ses_top", "per_c1"));
+    assert.deepEqual(calls.claim, [], "claims are push-attempt state, like the cooldown stamp");
+  });
+
+  it("deps without a claim (the shipped pre-dedup harness) push unchanged — back-compat pin", async () => {
+    const { deps, calls } = fakePermissionDeps({ getSession: async () => topSession() });
+    await runPermission(deps, asked("ses_top", { id: "per_b1" }));
+    await fireScheduled(calls, 0, "per_b1");
+    assert.equal(calls.notify.length, 1);
+  });
+});
+
+describe("D2 two real setups, one shared store: the fired approval rings once", () => {
+  it("same request id delivered to both servers ⇒ one transport attempt", async () => {
+    const store = liveStorage();
+    await withKnob("0", async () => {
+      const streamA = makeStream();
+      const streamB = makeStream();
+      const { ctx: ctxA, seen: seenA } = fakeSetupCtx({ events: streamA.iterable, storage: store, sessions: { ses_z: topSession("agent-dev") } });
+      const { ctx: ctxB, seen: seenB } = fakeSetupCtx({ events: streamB.iterable, storage: store, sessions: { ses_z: topSession("agent-dev") } });
+      const cap = captureErrors();
+      let cleanupA: any;
+      let cleanupB: any;
+      try {
+        cleanupA = await openSetup(ctxA);
+        cleanupB = await openSetup(ctxB);
+        streamA.push(asked("ses_z", { id: "per_shared" }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        streamB.push(asked("ses_z", { id: "per_shared" }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        assert.equal(pushAttempts(cap.lines), 1,
+          `the shared durable claim must mute the second instance, saw ${JSON.stringify(cap.lines)}`);
+        assert.ok(seenA.sessionIDs.includes("ses_z") || seenB.sessionIDs.includes("ses_z"), "the winner still refines its title");
+      } finally {
+        streamA.stop();
+        streamB.stop();
+        if (typeof cleanupA === "function") cleanupA();
+        if (typeof cleanupB === "function") cleanupB();
+        cap.restore();
+      }
+    });
+  });
+
+  it("distinct request ids on the two servers each ring — the claim mutes copies, not alerts", async () => {
+    const store = liveStorage();
+    await withKnob("0", async () => {
+      const streamA = makeStream();
+      const streamB = makeStream();
+      const { ctx: ctxA } = fakeSetupCtx({ events: streamA.iterable, storage: store, sessions: { ses_p: topSession("agent-dev"), ses_q: topSession("agent-review") } });
+      const { ctx: ctxB } = fakeSetupCtx({ events: streamB.iterable, storage: store, sessions: { ses_p: topSession("agent-dev"), ses_q: topSession("agent-review") } });
+      const cap = captureErrors();
+      let cleanupA: any;
+      let cleanupB: any;
+      try {
+        cleanupA = await openSetup(ctxA);
+        cleanupB = await openSetup(ctxB);
+        streamA.push(asked("ses_p", { id: "per_one" }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        streamB.push(asked("ses_q", { id: "per_two" }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        assert.equal(pushAttempts(cap.lines), 2, "two real pending asks must both ring");
+      } finally {
+        streamA.stop();
+        streamB.stop();
+        if (typeof cleanupA === "function") cleanupA();
+        if (typeof cleanupB === "function") cleanupB();
+        cap.restore();
+      }
+    });
+  });
+
+  it("no ctx.storage (old checkout shape) keeps every setup pushing — fail-loud rollout", async () => {
+    await withKnob("0", async () => {
+      const streamA = makeStream();
+      const streamB = makeStream();
+      const { ctx: ctxA } = fakeSetupCtx({ events: streamA.iterable, sessions: { ses_w: topSession("agent-dev") } });
+      const { ctx: ctxB } = fakeSetupCtx({ events: streamB.iterable, sessions: { ses_w: topSession("agent-dev") } });
+      const cap = captureErrors();
+      let cleanupA: any;
+      let cleanupB: any;
+      try {
+        cleanupA = await openSetup(ctxA);
+        cleanupB = await openSetup(ctxB);
+        streamA.push(asked("ses_w", { id: "per_nostore" }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        streamB.push(asked("ses_w", { id: "per_nostore" }));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        assert.equal(pushAttempts(cap.lines), 2, "a store-less instance cannot claim — it stays loud, the shipped behavior");
+      } finally {
+        streamA.stop();
+        streamB.stop();
+        if (typeof cleanupA === "function") cleanupA();
+        if (typeof cleanupB === "function") cleanupB();
+        cap.restore();
+      }
+    });
   });
 });

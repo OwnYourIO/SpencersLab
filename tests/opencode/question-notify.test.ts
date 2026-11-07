@@ -89,9 +89,12 @@ const failedEvent = (sessionID: string, error: any) => ({
 
 // deps keys are pinned by C01 "Notes for dev": the real deps bind
 // ctx.session.get / ctx.session.context, and notify takes the full title.
+// `claim` (2026-11-07 fanout) is the consume-once seam setup() builds over
+// ctx.storage — absent ⇒ always granted, so every pre-dedup fake keeps its
+// shipped single-push behavior.
 function fakeDeps(opts: any = {}) {
-  const calls: any = { getSession: [], getMessages: [], notify: [] };
-  const deps = {
+  const calls: any = { getSession: [], getMessages: [], notify: [], claim: [] };
+  const deps: any = {
     getSession: async (sessionID: string) => {
       calls.getSession.push(sessionID);
       if (opts.getSessionThrows) throw new Error("session lookup failed");
@@ -106,7 +109,35 @@ function fakeDeps(opts: any = {}) {
       calls.notify.push({ title, message });
     },
   };
+  if (opts.claim) deps.claim = async (key: string) => {
+    calls.claim.push(key);
+    return opts.claim(key);
+  };
   return { deps, calls };
+}
+
+// A faithful ctx.storage fake: the real one is the shared durable kv table
+// namespaced by plugin id alone — the property the dedup rests on. Two
+// fake instances sharing one of these simulate the cross-location/cross-
+// server visibility proven in the 2026-11-07 debug session (opencode.db is
+// one store for every loaded location on every running server).
+function liveStorage() {
+  const map = new Map<string, any>();
+  return {
+    map,
+    get: async (key: string) => map.get(key),
+    set: async (key: string, value: any) => {
+      map.set(key, value);
+    },
+    remove: async (key: string) => {
+      map.delete(key);
+    },
+    scan: async (input: any) => ({
+      entries: [...map.entries()]
+        .filter(([k]) => !input?.prefix || k.startsWith(input.prefix))
+        .map(([key, value]) => ({ key, value })),
+    }),
+  };
 }
 
 function makeStream() {
@@ -150,11 +181,12 @@ function makeStream() {
 // Mirrors the plugin ctx surface setup() consumes: the tool hook the question
 // path registers, plus the V2 event stream the lifecycle loop subscribes to.
 function fakeCtx(opts: any = {}) {
-  const seen: any = { hookNames: [], subscribeArgs: [], sessionIDs: [] };
+  const seen: any = { hookNames: [], hooks: {}, subscribeArgs: [], sessionIDs: [] };
   const ctx = {
     tool: {
-      hook: async (name: string, _handler: any) => {
+      hook: async (name: string, handler: any) => {
         seen.hookNames.push(name);
+        seen.hooks[name] = handler;
       },
     },
     event: {
@@ -178,6 +210,9 @@ function fakeCtx(opts: any = {}) {
     // no-URL path, so a test that reaches the notify helper cannot open a socket.
     mcp: { list: async () => [] },
     location: { directory: "/tmp/opencode/question-notify-no-config" },
+    // setup() builds its consume-once claim over ctx.storage; tests pass one
+    // shared fake through two setups to simulate two plugin instances.
+    storage: opts.storage,
   };
   return { ctx, seen };
 }
@@ -759,5 +794,270 @@ describe("T8 subscribe loop wiring (C01 Tasks: wire the live loop in setup)", ()
       await until(() => seen.subscribeArgs[0]?.signal?.aborted === true),
       "cleanup must abort the subscription's AbortSignal",
     );
+  });
+});
+
+// T11–T13 (2026-11-07 fan-out debug, .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md):
+// the server loads this location plugin once per active checkout per server, every instance
+// subscribes to the whole public event stream, and the cooldown map is per-setup memory — one
+// event measured at 4 phone pushes across 2 live servers sharing one opencode.db. The claim
+// store (ctx.storage, namespaced by plugin id ALONE — verified from the kv rows) is the one
+// surface every instance sees. Design law: unknown identity or a throwing store ⇒ push
+// (fail-loud, same direction as every other policy in this plugin); a claimed duplicate
+// logs an audit line and consumes nothing else. Red before dev by design: the seam is absent.
+
+describe("T11 claimOnce — the consume-once seam (plan D1)", () => {
+  it("exports claimOnce and sweepStaleClaims as functions", () => {
+    for (const name of ["claimOnce", "sweepExpiredClaims"]) {
+      assert.equal(typeof seam(name), "function", `${name} must be an exported seam (red before dev)`);
+    }
+  });
+
+  it("first claim wins; a repeat inside the TTL loses; the value is the writer's {at} stamp", async () => {
+    const store = liveStorage();
+    const now = () => 1_762_500_000_000;
+    assert.equal(await seam("claimOnce")(store, "claim/x", now), true, "first delivery claims");
+    assert.equal(store.map.get("claim/x").at, now(), "the claim row carries the attempt time");
+    assert.equal(await seam("claimOnce")(store, "claim/x", now), false, "the second instance is muted");
+  });
+
+  it("a stale claim is re-claimable — storage rot never mutes forever", async () => {
+    const store = liveStorage();
+    const t0 = () => 1_762_500_000_000;
+    assert.equal(await seam("claimOnce")(store, "claim/x", t0), true);
+    const muchLater = () => 1_762_500_000_000 + 60 * 60_000;
+    assert.equal(await seam("claimOnce")(store, "claim/x", muchLater), true, "past the TTL the same key pushes again");
+  });
+
+  it("no storage, a throwing read, or a throwing write all resolve to CLAIMED (fail-loud)", async () => {
+    const now = () => 1;
+    assert.equal(await seam("claimOnce")(undefined, "claim/x", now), true, "old-shape ctx (no storage) must never mute");
+    assert.equal(
+      await seam("claimOnce")({ get: async () => { throw new Error("kv gone"); }, set: async () => {} }, "claim/x", now),
+      true, "a store that cannot answer is a store that cannot mute",
+    );
+    assert.equal(
+      await seam("claimOnce")({ get: async () => undefined, set: async () => { throw new Error("kv full"); } }, "claim/x", now),
+      true, "a claim that cannot be recorded must not cost the push",
+    );
+  });
+
+  it("sweepExpiredClaims prunes only expired rows and never rejects", async () => {
+    const store = liveStorage();
+    const at = 1_762_500_000_000;
+    await store.set("claim/fresh", { at });
+    await store.set("claim/stale", { at: at - 60 * 60_000 });
+    await store.set("claim/malformed", "not-an-object");
+    await seam("sweepExpiredClaims")(store, () => at);
+    assert.ok(store.map.has("claim/fresh"), "a live claim survives the sweep");
+    assert.ok(!store.map.has("claim/stale"), "the expired row goes");
+    assert.ok(!store.map.has("claim/malformed"), "an unreadable row goes — the reader would treat it as expired anyway");
+    await seam("sweepExpiredClaims")(undefined, () => at);
+    await seam("sweepExpiredClaims")({ scan: async () => { throw new Error("scan boom"); } }, () => at);
+  });
+});
+
+describe("T12 handleLifecycle claim gates — one event, one push, fleet-wide", () => {
+  it("FINISHED with an event id: two instances sharing the store ⇒ exactly one push + audit line", async () => {
+    const store = liveStorage();
+    const session = { id: "ses_top", agent: "agent-coord" };
+    const evt = { type: "session.execution.succeeded", data: { sessionID: "ses_top", id: "evt_42" } };
+    const mk = () =>
+      fakeDeps({
+        getSession: async () => session,
+        messages: [assistant(textPart("the turn ended"))],
+        claim: (key: string) => seam("claimOnce")(store, key),
+      });
+    const a = mk();
+    assert.equal(await runLifecycle(a.deps, evt), null);
+    assert.equal(a.calls.notify.length, 1, "the first instance pushes");
+    const b = mk();
+    const { lines } = await withConsoleErrorCapture(() => runLifecycle(b.deps, evt));
+    assert.equal(b.calls.notify.length, 0, "the same durable event must not ring twice");
+    assert.ok(b.calls.claim.length === 1 && b.calls.claim[0].includes("evt_42"), `the key carries the event id, saw ${JSON.stringify(b.calls.claim)}`);
+    assert.ok(
+      lines.some((l) => l.includes("[question-notify] deduped") && l.includes("ses_top")),
+      `expected the dedup audit line, saw ${JSON.stringify(lines)}`,
+    );
+  });
+
+  it("FINISHED without an event id falls back to the last assistant message id — same turn, same mute", async () => {
+    const store = liveStorage();
+    const session = { id: "ses_top", agent: "agent-coord" };
+    const evt = (aid: string) => ({
+      type: "session.execution.succeeded",
+      data: { sessionID: "ses_top" },
+      messages: aid,
+    });
+    const run = async (messages: any[]) => {
+      const { deps, calls } = fakeDeps({
+        getSession: async () => session,
+        messages,
+        claim: (key: string) => seam("claimOnce")(store, key),
+      });
+      assert.equal(await runLifecycle(deps, { type: "session.execution.succeeded", data: { sessionID: "ses_top" } }), null);
+      return calls;
+    };
+    assert.equal((await run([{ ...assistant(textPart("turn one")), id: "msg_a" }])).notify.length, 1);
+    assert.equal((await run([{ ...assistant(textPart("turn one")), id: "msg_a" }])).notify.length, 0,
+      "a second instance seeing the same completed turn (same last message id) must mute");
+    assert.equal((await run([{ ...assistant(textPart("turn two")), id: "msg_b" }])).notify.length, 1,
+      "the next real turn has a different message id and must ring");
+  });
+
+  it("a flat-envelope event id is honored (the dual-read habit)", async () => {
+    const store = liveStorage();
+    const claim = (key: string) => seam("claimOnce")(store, key);
+    const evt = { type: "session.execution.succeeded", sessionID: "ses_top", id: "evt_flat" };
+    const mk = () => fakeDeps({ getSession: async () => ({ id: "ses_top", agent: "agent-coord" }), messages: [assistant(textPart("flat"))], claim });
+    const a = mk();
+    await runLifecycle(a.deps, evt);
+    assert.equal(a.calls.notify.length, 1);
+    const b = mk();
+    await runLifecycle(b.deps, evt);
+    assert.equal(b.calls.notify.length, 0, "flat-envelope ids dedup identically");
+  });
+
+  it("CRASH with an id dedups to one push; a crash with NO identity pushes loud twice (never muted blind)", async () => {
+    const store = liveStorage();
+    const claim = (key: string) => seam("claimOnce")(store, key);
+    const mk = () => fakeDeps({ getSession: async () => ({ id: "ses_top", agent: "agent-coord" }), claim });
+    const evt = { type: "session.execution.failed", data: { sessionID: "ses_top", id: "evt_c9", error: { type: "provider_error", message: "boom" } } };
+    const a = mk();
+    await runLifecycle(a.deps, evt);
+    assert.equal(a.calls.notify.length, 1, "first crash delivery rings");
+    const b = mk();
+    await runLifecycle(b.deps, evt);
+    assert.equal(b.calls.notify.length, 0, "the same crash event must not double-ring");
+
+    const naked = { type: "session.execution.failed", data: { sessionID: "ses_top2", error: { type: "provider_error", message: "twice burned" } } };
+    const c = mk();
+    await runLifecycle(c.deps, naked);
+    const d = mk();
+    await runLifecycle(d.deps, naked);
+    assert.equal(c.calls.notify.length + d.calls.notify.length, 2,
+      "with no event id and no message id there is nothing to share a key on — a crash without identity is never muted (fail-loud)");
+    assert.deepEqual(c.calls.claim, [], "and no claim is consulted when there is no key");
+  });
+
+  it("noWorkSuppressed runs before the claim: a suppressed tick claims nothing", async () => {
+    const store = liveStorage();
+    const { deps, calls } = fakeDeps({
+      getSession: async () => ({ id: "ses_top", agent: "agent-board-coord", metadata: scheduled({ pipelineNoop: { reason: "no-cards" } }) }),
+      messages: [assistant(textPart("no work"))],
+      claim: (key: string) => seam("claimOnce")(store, key),
+    });
+    assert.equal(await runLifecycle(deps, succeededEvent("ses_top")), null);
+    assert.equal(calls.notify.length, 0);
+    assert.deepEqual(calls.claim, [], "suppression is decided and returns before any claim is attempted");
+    assert.equal(store.map.size, 0, "the shared claim store stays untouched");
+  });
+
+  it("deps without a claim (the shipped pre-dedup harness) still pushes once per event — back-compat pin", async () => {
+    const { deps, calls } = fakeDeps({ getSession: async () => ({ id: "ses_top", agent: "agent-coord" }), messages: [assistant(textPart("legacy"))] });
+    await runLifecycle(deps, { type: "session.execution.succeeded", data: { sessionID: "ses_top", id: "evt_legacy" } });
+    assert.equal(calls.notify.length, 1);
+  });
+});
+
+describe("T13 the real setup(): two instances, one question event, one transport attempt", () => {
+  const questionEvent = (id: string) => ({
+    tool: "question",
+    sessionID: "ses_q",
+    agent: "agent-coord",
+    messageID: "msg_q",
+    id,
+    input: { questions: [{ question: "which chart?" }] },
+  });
+
+  // Counts pushes through the SHIPPED wiring: the hook callback runs the real
+  // cooldown closure and the real claim closure over ctx.storage, and a push
+  // attempt is the "no URL found" stderr line (fakeCtx keeps haMcpUrl on the
+  // no-socket path). Two setups sharing one store simulate two loaded locations.
+  async function driveTwoInstances(storages: any[], event: any): Promise<number> {
+    const lines: string[] = [];
+    const original = console.error;
+    console.error = (...args: any[]) => lines.push(args.map(String).join(" "));
+    const cleanups: any[] = [];
+    try {
+      for (const storage of storages) {
+        const { ctx, seen } = fakeCtx({ storage });
+        const cleanup = await mod.default.setup(ctx);
+        cleanups.push(cleanup);
+        await seen.hooks["execute.before"](event);
+        // The fan-out arrives seconds apart in the field (two servers polling
+        // one durable store); a macrotask between instances flushes the prior
+        // claim fully, so the arm pins the claim — never the microtask race.
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    } finally {
+      console.error = original;
+      for (const cleanup of cleanups) cleanup();
+    }
+    return lines.filter((l) => l.includes("no URL found")).length;
+  }
+
+  it("one shared store: the second instance is muted at the claim, not the transport", async () => {
+    const store = liveStorage();
+    const attempts = await driveTwoInstances([store, store], questionEvent("call_1"));
+    assert.equal(attempts, 1, `the fan-out must collapse to one attempt, saw ${attempts}`);
+    assert.equal(store.map.size, 1, "the claim lives under one key for the call id");
+  });
+
+  it("separate stores (an unfixed old checkout) still each push — the mixed-fleet caveat, stated", async () => {
+    const attempts = await driveTwoInstances([liveStorage(), liveStorage()], questionEvent("call_2"));
+    assert.equal(attempts, 2, "dedup only reaches instances that run the claim code; rollout is honest about the rest");
+  });
+
+  it("no storage at all keeps the shipped behavior (every instance pushes) — fail-loud default", async () => {
+    const attempts = await driveTwoInstances([undefined, undefined], questionEvent("call_3"));
+    assert.equal(attempts, 2);
+  });
+
+  it("the deduped delivery logs its audit line", async () => {
+    const store = liveStorage();
+    const lines: string[] = [];
+    const original = console.error;
+    console.error = (...args: any[]) => lines.push(args.map(String).join(" "));
+    try {
+      const { ctx, seen } = fakeCtx({ storage: store });
+      const cleanup = await mod.default.setup(ctx);
+      await seen.hooks["execute.before"](questionEvent("call_4"));
+      const { ctx: ctx2, seen: seen2 } = fakeCtx({ storage: store });
+      const cleanup2 = await mod.default.setup(ctx2);
+      await seen2.hooks["execute.before"](questionEvent("call_4"));
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      cleanup();
+      cleanup2();
+    } finally {
+      console.error = original;
+    }
+    assert.ok(
+      lines.some((l) => l.includes("[question-notify] deduped") && l.includes("ses_q")),
+      `expected the dedup audit line for the muted instance, saw ${JSON.stringify(lines)}`,
+    );
+  });
+
+  it("a non-question tool event still never reaches the transport (filter order preserved)", async () => {
+    const store = liveStorage();
+    const lines: string[] = [];
+    const original = console.error;
+    console.error = (...args: any[]) => lines.push(args.map(String).join(" "));
+    try {
+      const { ctx, seen } = fakeCtx({ storage: store });
+      const cleanup = await mod.default.setup(ctx);
+      await seen.hooks["execute.before"]({ tool: "read", sessionID: "ses_q", agent: "agent-coord", id: "call_5", input: {} });
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      cleanup();
+    } finally {
+      console.error = original;
+    }
+    assert.equal(lines.filter((l) => l.includes("no URL found")).length, 0);
+    assert.equal(store.map.size, 0, "and no claim is spent on a filtered event");
+  });
+
+  it("the question-path seam is extracted for offline driving (cf-106 hook-arm law)", () => {
+    assert.equal(typeof seam("handleQuestion"), "function", "handleQuestion(deps, event) joins the handleLifecycle/handlePermission seam pair");
   });
 });
