@@ -104,7 +104,7 @@ mcp:
   # default config.
   kubernetes-readonly:
     enabled: true
-    image: ghcr.io/containers/kubernetes-mcp-server:v0.0.69
+    image: ghcr.io/containers/kubernetes-mcp-server:v0.1.2
     transport: streamable-http
     mcpPort: 8080
     serviceAccount: kubernetes-mcp-readonly
@@ -153,7 +153,7 @@ mcp:
                 mountPath: /etc/kubernetes-mcp-server
   kubernetes-admin:
     enabled: true
-    image: ghcr.io/containers/kubernetes-mcp-server:v0.0.69
+    image: ghcr.io/containers/kubernetes-mcp-server:v0.1.2
     transport: streamable-http
     mcpPort: 8080
     serviceAccount: kubernetes-mcp-admin
