@@ -29,8 +29,10 @@ bitwardenIds:
   # username/password).
   forgejo-sso: OVERRIDE_VIA_CUSTOM_VALUES
   # Git LFS object store on the SeaweedFS S3 gateway. Login item: username =
-  # S3 access key id, password = secret access key. Both instances deploy the
-  # same item, so the same UUID goes into dev's and infra's custom-values.
+  # S3 access key id, password = secret access key. Consumed only by the
+  # gate-rendered forgejo-s3-secret ExternalSecret, so instances without S3
+  # storage provide no value for this key; every opted-in instance deploys
+  # the same item, so opted-in slices share one UUID.
   forgejo-s3: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
@@ -85,28 +87,17 @@ forgejo:
       # so the external port has to be pinned here.
       server:
         SSH_PORT: 22222
-      # Git LFS object store: the instance-independent shape only. The
-      # activation switch ([lfs] STORAGE_TYPE=minio) and the endpoint pair
-      # (MINIO_ENDPOINT, MINIO_USE_SSL) are per-instance, so a cluster whose
-      # gateway has no bucket keeps LFS on the data PVC.
-      # Every LFS key stays in this one section: Forgejo reads the S3
-      # credentials from the section that declares STORAGE_TYPE, so a
-      # [storage] section would leave [lfs] unconfigured and move attachments,
-      # avatars and packages to S3 with it.
-      lfs:
-        # Set explicitly — the code default is `gitea`, a bucket this lab does
-        # not create.
-        MINIO_BUCKET: git-lfs
-        # `auto` decides from the endpoint, and an AWS-shaped endpoint gets
-        # virtual-host; the virtual-host form needs git-lfs.<endpoint>, a name
-        # no certificate covers.
-        MINIO_BUCKET_LOOKUP: path
-        # `default` is what an unset key does — only `md5` sends Content-MD5 —
-        # written out so the choice is visible instead of inherited.
-        MINIO_CHECKSUM_ALGORITHM: default
-        # false keeps every LFS download behind Forgejo, so no git client ever
-        # has to reach the storage endpoint.
-        SERVE_DIRECT: false
+      # No [lfs] keys ship in the chart: LFS object storage defaults to
+      # local, rooted at /data/lfs (the subchart pins [server]
+      # APP_DATA_PATH=/data). Opt-in is per instance: declare
+      # gitea.config.lfs.STORAGE_TYPE: minio (plus MINIO_ENDPOINT and
+      # MINIO_USE_SSL) in the custom-values slice — that declaration is the
+      # gate, there is no boolean flag — and the bucket-shape constants then
+      # ride template-injected in
+      # templates/secret-forgejo-lfs-shape.yaml, so no values file can fork
+      # them. An opting-in instance keeps every key in [lfs], never
+      # [storage]: a [storage] section would leave [lfs] unconfigured and
+      # move attachments, avatars and packages to S3 with the object store.
       # Local sign-up stays closed; ALLOW_ONLY_EXTERNAL_REGISTRATION lets
       # Keycloak OIDC users get accounts (created on first SSO login).
       service:
@@ -143,22 +134,57 @@ forgejo:
           secretKeyRef:
             name: forgejo-secret
             key: SECRET_KEY
-      # Git LFS S3 credentials from ExternalSecret forgejo-s3-secret.
+      # Git LFS S3 credentials from ExternalSecret forgejo-s3-secret, plus
+      # the bucket-shape constants from the gate-rendered Secret
+      # forgejo-lfs-shape.
       # environment-to-ini lower-cases the section of a
-      # FORGEJO__<SECTION>__<KEY> name, so these land in the [lfs] section
-      # above. Unlike the secrets config_environment.sh generates itself, these
+      # FORGEJO__<SECTION>__<KEY> name, so these land in the [lfs] section.
+      # Unlike the secrets config_environment.sh generates itself, these
       # legs survive an existing app.ini, so they still apply on a running
       # instance's next start.
+      # This list is the chart's one static env surface: a slice that
+      # overrode gitea.additionalConfigFromEnvs would replace the whole list
+      # (helm replaces lists, it does not merge them) and drop the legs it
+      # omits, so no custom-values file may ever carry this key. The six LFS
+      # legs are optional: true because the list exists on every instance
+      # while their Secrets exist only on S3 instances — a hard secretKeyRef
+      # on a missing Secret wedges init-app-ini in CreateContainerConfigError.
       - name: FORGEJO__LFS__MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
             name: forgejo-s3-secret
             key: access_key_id
+            optional: true
       - name: FORGEJO__LFS__MINIO_SECRET_ACCESS_KEY
         valueFrom:
           secretKeyRef:
             name: forgejo-s3-secret
             key: secret_access_key
+            optional: true
+      - name: FORGEJO__LFS__MINIO_BUCKET
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-lfs-shape
+            key: MINIO_BUCKET
+            optional: true
+      - name: FORGEJO__LFS__MINIO_BUCKET_LOOKUP
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-lfs-shape
+            key: MINIO_BUCKET_LOOKUP
+            optional: true
+      - name: FORGEJO__LFS__MINIO_CHECKSUM_ALGORITHM
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-lfs-shape
+            key: MINIO_CHECKSUM_ALGORITHM
+            optional: true
+      - name: FORGEJO__LFS__SERVE_DIRECT
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-lfs-shape
+            key: SERVE_DIRECT
+            optional: true
 
     # Initial admin user from ExternalSecret forgejo-admin-secret
     # (keys: username/password). passwordMode keepUpdated (chart default)

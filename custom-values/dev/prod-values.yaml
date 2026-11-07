@@ -64,13 +64,6 @@ forgejo:
     forgejo: 47d1d689-b615-4461-8b57-b4e20015ae75            # password = SECRET_KEY
     forgejo-admin: 47d1d689-b615-4461-8b57-b4e20015ae75      # shared dev DB item
     forgejo-pg: 47d1d689-b615-4461-8b57-b4e20015ae75         # shared dev DB item
-    # forgejo-s3 — the SeaweedFS S3 gateway identity whose bucket holds this
-    # instance's Git LFS objects. LOGIN item: username = access key id,
-    # password = secret access key; the same item serves the infra instance.
-    # A real UUID is mandatory here (no sentinel, no placeholder): the
-    # credentials reach app.ini through a secretKeyRef on the init container,
-    # so an id that cannot resolve stops the forgejo pod from starting.
-    forgejo-s3: 06a65037-29d3-48de-978c-b3b6002d3978
     forgejo-sso: d07b1bec-d02c-4580-8544-b4e2000e1783        # shared dev SSO
   # Forgejo's per-instance identity — dev-specific, kept out of the chart
   # (the chart ships neutral defaults shared with infra; these reproduce
@@ -83,20 +76,16 @@ forgejo:
         server:
           DOMAIN: git.scifi.farm
           ROOT_URL: "https://git.scifi.farm/"
-          # Forgejo defaults this to false — with it unset the LFS batch
-          # endpoint stays 404 even once [lfs] resolves a bucket.
+          # LFS server on, objects stored locally on the data volume: with
+          # no [lfs] section the object store is local. Forgejo defaults
+          # this to false — unset, the LFS batch endpoint stays 404.
           LFS_START_SERVER: true
-        # Activation is per-instance. The chart ships the bucket-shape keys
-        # (MINIO_BUCKET, MINIO_BUCKET_LOOKUP, MINIO_CHECKSUM_ALGORITHM,
-        # SERVE_DIRECT) once for both instances, so they must not be repeated
-        # here — a copy would let dev and infra drift silently.
-        lfs:
-          STORAGE_TYPE: minio
-          # dev has no gateway of its own (SeaweedFS runs on infra), so it
-          # reaches the store over the public route. Bare host, no scheme:
-          # minio-go builds https://<host> and Go takes 443 as the default.
-          MINIO_ENDPOINT: s3.spencerslab.com
-          MINIO_USE_SSL: true
+        # LFS storage stance: LOCAL — dev declares no [lfs] section, so the
+        # chart's S3 gate stays closed, no S3 artifacts render for this
+        # instance, and dev holds no slot for the shared gateway credential
+        # (infra keeps S3 and its UUID). Objects land on the data volume —
+        # PVC forgejo: 10Gi, local-path, RWO, mounted at /data; the local
+        # root is /data/lfs, printed in the boot log.
       admin:
         email: forgejo@scifi.farm
 
