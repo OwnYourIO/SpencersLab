@@ -1,0 +1,109 @@
+{
+  "feature": "2026/2026-11-cf-122-feat-lfs-s3-optional",
+  "plan_status": "complete",
+  "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
+  "test_session": "ses_e4c1dc783ffe1iuOj76fuGc3u7",
+  "approval": {
+    "state": "approved — user-directed in-session run: the user's 2026-11-06 instruction IS the plan approval (no separate approval round; run_shape records this). Coord accepted the plan with its one evidenced ruling (D4/AC3 re-word: infra 'effective S3 config identical + render delta == exactly the A9 four-item list' instead of whole-render byte-identity, which is provably unachievable by any design that also removes the shape keys from dev's render).",
+    "approved_at": "2026-11-07T02:35:00+0000",
+    "claim": "card prBBEA8JnJDx7cHfy (#122) held on the default pipeline (setId 8c121a8e-36c4-4e19-85f8-4b39d7fb8ae4, claimed 2026-11-06; heartbeat ok 2026-11-07T01:53Z); card in Executing with the claim comment; slug field set at claim time (cf-104's D11-gap lesson)."
+  },
+  "current_wave": 1,
+  "updated_at": "2026-11-07T04:45:00+00:00",
+  "kickoff": {
+    "slug": "cf-122-feat-lfs-s3-optional",
+    "card": "prBBEA8JnJDx7cHfy",
+    "card_number": 122,
+    "card_title": "Make the S3 component of forgejo LFS optional (local default); apply not-enabled stance to dev",
+    "type": "feat",
+    "worktree": "cf-122-feat-lfs-s3-optional",
+    "branch": "cf-122-feat-lfs-s3-optional",
+    "fork_base": "main a0502f0dd (already contains the merged cf-104 LFS work)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-27b"
+    },
+    "models_note": "ALL tiers on openrouter/qwen/qwen3.8-27b per the user's standing instruction (2026-11-05, re-confirmed for this run) — the card's Model(s) checklist carries Qwen Dense; the card's Local gpu-ai provider was 503ing during cf-104's tail. The board's Model(s) checklist item and the pipeline-models local mapping both point at the gpu-ai provider, so this run explicitly overrides it; the override is user-instruction, not routing.",
+    "local": true,
+    "local_note": "commit-only posture (one-PR landing, cf-104 pattern); no push without explicit user ask",
+    "run_tag": null,
+    "run_shape": "user-directed in-session: Planning (this run) → Test Writing → C01 dev → C01 review → final whole-plan review; NO separate approval round — the user's 2026-11-06 instruction is the approval (recorded as coord-relay in DECISIONS.md), plan_status flips on the coord's call",
+    "no_questions": "new questions go to the plan's Open questions best-guess-first; the `question` tool is not used in this run",
+    "coord_session_note": "coord session id not carried in the launch message — null until the coord records it; the slug custom field on card #122 carries this run's session link for resume (D11-style)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "review-approved",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e4bd1d387ffeNctNM8QcdHh948",
+      "review_session": "ses_e4bb9aef3ffe1tTCwwKqkSDBsb",
+      "last_verdict": "APPROVED (round 1) — every AC re-measured solo against an independently derived fork-base oracle (git archive a0502f0d); closed-gate proof on both gated templates; infra whole-render delta exactly the A9 four-item list (shape Secret the only new object, [lfs] 7→3 order-preserved, +4 env legs/+2 optional, checksum rolled; [server]/[mailer] byte-identical, ESO parsed-identical with the sanctioned header-comment raw delta only); dev stance fully inverted with [server] byte-identical; storage-aware teeth probed in 6 synthetic cases (both directions fail correctly); blast radius exactly the 5 in-scope + 3 test files; all 9 suites at pins; helm lint 0 failed; aislop 0/0/0. Committed as 74aacf38d (tests + chunk in one commit, cf-122 pattern per the review's routing).",
+      "test_session": "ses_e4c1dc783ffe1iuOj76fuGc3u7",
+      "handoffs": [
+        {
+          "at": "2026-11-07T03:20:00+0000",
+          "role": "agent-test",
+          "status": "DONE (test contract, red-first)",
+          "chunk": "C01 — test stage",
+          "files_changed": ["tests/services/forgejo-lfs.sh (reworked: default-off bare leg, gate-open/closed legs, dev local-stance legs, infra A9 four-item delta pin, storage-aware t8, blast-radius t11 vs fork base)", "tests/services/infra-forgejo.sh (t6 storage-aware: forgejo-s3 sentinel requires a key only where merged STORAGE_TYPE == minio; teeth kept both directions)", "tests/services/forgejo-ssh-gateway.sh (t8 storage-aware, same semantics)"],
+          "commands_run_headline": "pristine baselines all == A12 (forgejo-lfs 0/34, infra-forgejo 0/33, ssh-gateway 1/63 red only t11, dev-git-auth 0/36); reworked forgejo-lfs on pristine = exit 1 / 1 ok red ONLY at t2 (red-first by design); on the scratch C01 emulation = exit 0 / 37 ok ALL legs (N=37 measured); infra-forgejo 0/33 and ssh-gateway 1/63-red-only-t11 on BOTH pristine and post-C01 trees; aislop clean",
+          "open_questions": "none — the fork-base diff base (git merge-base HEAD main) is the right self-maintaining choice while main churns"
+        },
+        {
+          "at": "2026-11-07T04:10:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": ["charts/forgejo/templates/_helpers.tpl (new gate helper, A13-correct eq-include form)", "charts/forgejo/templates/secret-forgejo-lfs-shape.yaml (new whole-gated shape Secret, the four A14 constants, SERVE_DIRECT the string false)", "charts/forgejo/templates/secret-forgejo-s3.yaml (whole-object gate wrap; body byte-untouched)", "charts/forgejo/values.yaml (shape keys out of gitea.config.lfs; 2 cred legs gain optional; 4 shape legs appended; single static env list intact; sentinel stays)", "custom-values/dev/prod-values.yaml (lfs block + forgejo-s3 key dropped; LFS_START_SERVER kept; stance record; zero S3 literals)"],
+          "commands_run_headline": "helm lint 0 failed; bare render zero S3 artifacts + closed-gate proof on both gated templates; gate-open ESO object-identical to pristine + shape Secret exact; dev effective: no [lfs]/ESO/shape, [server] byte-identical; infra whole-render delta = exactly the A9 four-item list; sweeps 1/1/1; forgejo-lfs.sh exit 0 / 37 ok (the full-green target); infra-forgejo 0/33; ssh-gateway 1/63 red only t11; all other pins unchanged; aislop 0/0/0; blast radius exactly the 5 in-scope files",
+          "deviations": "none",
+          "live_consequence": "dev has been DOWN since 2026-11-06T21:07Z (CreateContainerConfigError on forgejo-s3-secret; the dev Bitwarden store cannot fetch the item, infra's can, same UUID). This change prunes that ESO from dev's render and makes the six LFS secretKeyRefs optional, so the dev pod boots without the store being repaired; the store failure itself stays a separate user-side incident (plan Q1)."
+        },
+        {
+          "at": "2026-11-07T04:40:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (round 1)",
+          "chunk": "C01",
+          "verdict": "Every AC re-measured solo against an independently derived fork-base oracle (git archive a0502f0d — not the plan's /tmp captures): closed-gate proof on both gated templates; A9 four-item delta exact (shape Secret the only new object; [lfs] 7→3 order-preserved; +4 env legs / +2 optional lines; checksum rolled; [server]/[mailer] byte-identical; ESO parsed-identical, raw delta = the sanctioned header comment only); dev stance fully inverted; 6 synthetic teeth probes on the storage-aware sweeps all correct; blast radius exact (5 in-scope + 3 test files); all 9 suites at their pins; helm lint 0 failed; aislop 0/0/0. Notes in chunks/C01.md."
+        },
+        {
+          "at": "2026-11-07T05:30:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (final whole-plan review)",
+          "chunk": "final-review",
+          "verdict": "The branch as a set delivers the user's instruction: default-off chart (bare render zero S3 artifacts, closed-gate proof on both gated templates), dev not-enabled stance (zero S3 literals, LFS_START_SERVER kept, local root /data/lfs on the 10Gi PVC — the '10gb volume'), infra effective config unchanged (independently re-derived A9 four-item delta; the whole-render diff adds exactly one object), runners/seaweedfs/services byte-untouched. Final posture re-measured solo at every pin (forgejo-lfs 0/37 all legs, the rest per measured_baselines); aislop 0/0/0; STATE parses; no new User actions or vault items (the only new object is a static template-injected Secret); no cluster mutation in the record. No PR-embarrassment findings."
+        }
+      ]
+    }
+  },
+  "measured_baselines": {
+    "note": "COORD-PINNED, measured solo on this worktree (main a0502f0d) 2026-11-07 by the planning session (logs /tmp/opencode/cf122/baseline-*.log); authoritative over the plan's Commands where they disagree.",
+    "suites": {
+      "forgejo-lfs.sh": "exit 0 / 34 ok on the pristine fork base — CHANGED by this ticket (master-contract rework, plan Test contract A); post-C01 target exit 0 / 37 ok (N measured by the test session's scratch emulation of C01, all legs, 0 skips — re-verify in dev and review)",
+      "infra-forgejo.sh": "exit 0 / 33 ok — stays green across the transition after the storage-aware t6 edit (plan Test contract B)",
+      "forgejo-ssh-gateway.sh": "exit 1 / 63 ok, red ONLY at the pinned t11 (re-runs audit-trail) — storage-aware t8c edit (plan Test contract C)",
+      "dev-forgejo-runner.sh": "exit 1 / 34 ok, red ONLY at the pinned t5 (cf-93 comment-window false positive) — untouched",
+      "gpu-forgejo-runner.sh": "exit 0 / 18 ok — untouched",
+      "dev-git-auth.sh": "exit 0 / 36 ok — untouched (renders the dev umbrella, never the forgejo release)",
+      "gpu-coder-sso.sh": "exit 0 / 15 ok — untouched",
+      "audit-trail.sh": "exit 1 / 0 ok, pinned t1 (tracked storm-runs/ at repo root) — NOT this ticket's red",
+      "multi-repo/dev-wiring.sh": "exit 0 / 9 ok — untouched"
+    },
+    "sentinel_sweeps": "dev umbrella 1 (pre-existing home-assistant.bitwardenIds wart in the ApplicationSet values JSON), infra umbrella 1 (charts/samba/values.yaml:5 samba-users OVERRIDE_NEEDED chart default inside the samba app's values JSON), gpu umbrella 1 (legacy OVERRIDE_VIA_CLUSTER_ANNOTATION trio on one values-JSON line) — all must stay unchanged (plan A12)"
+  },
+  "live_state_at_planning": {
+    "note": "READ-ONLY observation 2026-11-07 via readonly-{dev,infra}-kubernetes (no cluster mutation); plan Authority A4-A7, A11, A5.",
+    "dev": "dev-forgejo pod (dev-forgejo-5bb75677cf-g42jb, created 2026-11-06T21:07:52Z) STUCK: init-app-ini CreateContainerConfigError 'secret \"forgejo-s3-secret\" not found'; ExternalSecret forgejo-s3-secret (same item UUID 06a65037-… as infra) Ready=False SecretSyncedError 'could not get secret data from provider' (refreshTime null) — the Bitwarden fetch of item forgejo-s3 fails on the DEV cluster only; git.scifi.farm down since ~2026-11-06T21:07Z. PVC forgejo: 10Gi, RWO, local-path, Bound, mounted /data. Main container env: GITEA_WORK_DIR=/data, GITEA_APP_INI=/data/gitea/conf/app.ini, GITEA_CUSTOM=/data/gitea.",
+    "infra": "infra-forgejo Running 1/1, 0 restarts, 29h; ESO forgejo-s3-secret Ready=True SecretSynced (transition 2026-11-05T21:15Z, next refresh due 2026-11-07T02:15Z); seaweedfs-s3 Deployment present — infra's S3 LFS healthy.",
+    "consequence": "this ticket's dev flip removes dev's dependency on the failing store path (ESO pruned, refs optional); the store failure itself stays a separate user/admin incident (plan Q1)."
+  },
+  "blocked": [],
+  "coord_adjudications": [
+    "DIFF_BASE = the fork base (git merge-base HEAD main; LFS_DIFF_BASE env override), not literal main — ADOPTED 2026-11-07: main drifted 5 commits past the fork (renovate wekan-mcp in services/{dev,gpu} + vllm fixes), which would false-red the new t11 blast-radius clause; the fork base is the semantically correct pre-ticket state and survives future main drift. Re-base at PR time if main conflicts (the clause self-maintains: after a rebase, merge-base == the new fork point).",
+    "ESO 'byte-identical' = PARSED-OBJECT identity (whole objects) + exact string equality for inline ini sections — ADOPTED: the C01 chunk sanctions an ESO header-comment update, which raw-line identity would forbid; object identity is the correct semantics (comments are not behavior)."
+  ],
+  "deferred": []
+}

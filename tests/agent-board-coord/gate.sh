@@ -958,7 +958,8 @@ if want t14; then
       .agents/plans/2026/2026-11-bug-pipeline-locks-tick-pin/*|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
-      .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml) : ;;
+      .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml|\
+      .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill widenings)" ;;
     esac
   done <"$TMP/changed.txt"

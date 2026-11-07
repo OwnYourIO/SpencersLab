@@ -47,11 +47,12 @@ D4_RECIPE = [
 
 # The known Q4 GGUF location (RESEARCH Post Research V3: the live
 # qwen3.8-27b-q4 rung's file, unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL,
-# -hf auto-fetched into the HF hub-cache layout under LLAMA_CACHE=/models).
-# The snapshot hash segment resolves on target (the C06 step-2 `find` is
-# the path authority), so the contract is layout + exact filename, never
+# -hf auto-fetched by llama.cpp at the LLAMA_CACHE=/models root — no
+# hub/ segment, that is the HUGGINGFACE_HUB_CACHE convention, not
+# llama.cpp's). The values pin the live snapshot hash (discovered on
+# target 2026-11-07), so the contract is layout + exact filename, never
 # the full path.
-MODEL_PREFIX = "/models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/"
+MODEL_PREFIX = "/models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/"
 MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 
 # Probe ports may render as the numeric 8000 or the named container port
@@ -149,8 +150,8 @@ def persistent_volume_claims(docs) -> list:
 
 def assert_model_path_shape(path, label: str) -> None:
     assert isinstance(path, str) and path.startswith(MODEL_PREFIX), (
-        f"C02: {label} --model path {path!r} must live in the HF hub-cache layout "
-        f"{MODEL_PREFIX} (the 500 GiB weights PVC, RESEARCH Post Research V3)"
+        f"C02: {label} --model path {path!r} must live under the LLAMA_CACHE-root "
+        f"snapshot layout {MODEL_PREFIX} (the 500 GiB weights PVC, RESEARCH Post Research V3)"
     )
     assert path.endswith(MODEL_FILENAME), (
         f"C02: {label} --model path {path!r} must name the known Q4 GGUF file {MODEL_FILENAME}"

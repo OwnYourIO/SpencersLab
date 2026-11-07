@@ -130,8 +130,9 @@ the wrong chip — retarget the values key, then re-run 1.3.
 
 **2.1 — Weight presence (RESEARCH Post Research V3).** The exact Q4 file on
 the shared 500 GiB PVC: `Qwen3.8-27B-UD-Q4_K_XL.gguf` (16.35 GiB,
-`unsloth/Qwen3.8-27B-GGUF`), populated by llama.cpp's `-hf` auto-fetch into
-`LLAMA_CACHE=/models` in the HF hub-cache layout:
+`unsloth/Qwen3.8-27B-GGUF`), populated by llama.cpp's `-hf` auto-fetch at
+the `LLAMA_CACHE=/models` root (llama.cpp's cache layout — no `hub/`
+segment; that is the `HUGGINGFACE_HUB_CACHE` convention, not llama.cpp's):
 
 ```
 # run inside the vllm pod — the operator's own pod access (no agent tier grants it, EXPLORE §7)
@@ -139,7 +140,7 @@ find /models -name 'Qwen3.8-27B-UD-Q4_K_XL.gguf'
 ```
 
 Expected: exactly the path the chart renders as `--model`
-(`/models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/…gguf`).
+(`/models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q4_K_XL.gguf`).
 The find output IS the `--model` value — if it differs from the chart's
 rendered `modelPath`, that is a values-only fix: record the actual path.
 If it fails: file absent means the llama.cpp rung never fetched it — the

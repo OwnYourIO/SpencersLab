@@ -1476,12 +1476,14 @@ def bw_key_occurrences(node, key, path=''):
             out.extend(bw_key_occurrences(v, key, p))
     return out
 
-def check_sentinels(label, values, custom, custom_path, prefix=''):
+def check_sentinels(label, values, custom, custom_path, prefix='', exempt=frozenset()):
     missing, still_sentinel = [], []
     for p, v in sentinel_paths(values):
         if v != SENTINEL:
             continue
         leaf = p.split('.')[-1]
+        if leaf in exempt:
+            continue
         if '.' not in p and not prefix:
             # top-level scalar sentinel (authRealm): matched at custom top level
             occ = [('<top-level>', custom.get(leaf))] if leaf in custom else []
@@ -1496,11 +1498,23 @@ def check_sentinels(label, values, custom, custom_path, prefix=''):
     if missing or still_sentinel:
         bad(f't8: {label}: ' + '; '.join(missing + still_sentinel))
     else:
-        n = sum(1 for _, v in sentinel_paths(values) if v == SENTINEL)
-        ok(f't8: {label}: all {n} OVERRIDE_VIA_CUSTOM_VALUES sentinels have a matching key in {custom_path}')
+        n = sum(1 for p, v in sentinel_paths(values) if v == SENTINEL and p.split('.')[-1] not in exempt)
+        note = ' (forgejo-s3 exempt — its slice declares no minio storage, so the gated forgejo-s3 ESO is not consumed)' if exempt else ''
+        ok(f't8: {label}: all {n} OVERRIDE_VIA_CUSTOM_VALUES sentinels have a matching key in {custom_path}{note}')
 
 chart = load(chart_vals)
-check_sentinels('charts/forgejo/values.yaml (consumed by dev)', chart, load(dev_cv), dev_cv, prefix='forgejo.')
+dev_cv_doc = load(dev_cv)
+# The forgejo-s3 sentinel is consumed only by the gated forgejo-s3
+# ExternalSecret: require its key in dev's custom-values only while dev's
+# merged slice declares lfs.STORAGE_TYPE=minio (cf-122: S3 is opt-in, default
+# OFF). A slice that declares no minio storage must carry no forgejo-s3 key
+# at all — a leftover slot would be dead config and would re-arm the gate on
+# a future lfs declaration with a stale UUID.
+dev_slice = ((dev_cv_doc.get('forgejo') or {}).get('forgejo') or {})
+dev_exempt = frozenset({'forgejo-s3'}) if (((dev_slice.get('gitea') or {}).get('config') or {}).get('lfs') or {}).get('STORAGE_TYPE') != 'minio' else frozenset()
+check_sentinels('charts/forgejo/values.yaml (consumed by dev)', chart, dev_cv_doc, dev_cv, prefix='forgejo.', exempt=dev_exempt)
+if dev_exempt and bw_key_occurrences(dev_cv_doc, 'forgejo-s3'):
+    bad('t8: custom-values/dev still carries a forgejo-s3 key while its slice declares no minio storage — the not-enabled stance keeps no S3 slot')
 check_sentinels('charts/forgejo/values.yaml (consumed by infra)', chart, load(infra_cv), infra_cv, prefix='forgejo.')
 check_sentinels('services/dev/prod/values.yaml', load(dev_vals), load(dev_cv), dev_cv)
 check_sentinels('services/infra/prod/values.yaml', load(infra_vals), load(infra_cv), infra_cv)
