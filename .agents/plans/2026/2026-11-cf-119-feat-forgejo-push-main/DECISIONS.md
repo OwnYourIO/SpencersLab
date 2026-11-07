@@ -115,5 +115,16 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   approved for execution: `plan_status` set to `approved`; the single C01 chunk loop may start.
   No changes requested at the gate.
 
+- 2026-11-07 human (in-session, mid-C01): **Model override — all remaining launches on the API 27b.**
+  The user stopped the first C01 review launch and asked for `openrouter/qwen/qwen3.8-27b`
+  (the API version of Qwen Dense — already this run's planning tier) for everything going
+  forward; the owner is running other work on the local provider. Scope: C01 chunk review, any
+  dev fix rounds, and the final whole-plan review all launch with
+  `model: openrouter/qwen/qwen3.8-27b`. The kickoff record (`kickoff.models`: plan=Dense-API,
+  code=Flash-API) stays the frozen intake; the override is recorded in STATE.json
+  `kickoff.models_override`. Completed work is untouched: the C01 dev round already finished on
+  `openrouter/qwen/qwen3.8-flash` and its recorded RESULT stands. Alternatives rejected:
+  re-running dev on the 27b (its validation evidence is recorded green; a re-run buys nothing).
+
 ## Deferred
 - (none yet)

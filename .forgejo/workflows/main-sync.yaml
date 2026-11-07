@@ -1,0 +1,80 @@
+# Keep GitHub and the dev instance even with infra's main, and merge the dev
+# instance's main into backup-proxy.
+#
+# Both Forgejo instances serve this same repository path, so one main push is
+# visible to this workflow from either side. The jobs carry mutually
+# exclusive guards on forgejo.server_url: unguarded, each instance's push
+# would re-fire the other instance's copy of this workflow and the pair would
+# ping-pong forever. startsWith tolerates trailing-slash variance in the
+# rendered value, and the diag steps echo it so the exact value can be read
+# from any run log.
+#
+# Every push here is plain: a refused non-fast-forward or any push error fails
+# the step, and with it the job — a target is never overwritten. The
+# instance's built-in push mirror is deliberately unused because it overwrites
+# its targets with forced updates.
+#
+# push-main writes to repositories other than the one it runs in, and the
+# automatic per-run token is scoped to its own repository, so each of its
+# pushes carries its own Actions secret. backup-proxy-merge writes inside the
+# repository it runs in, where that token already has write access: it
+# references no secret at all, and a merge conflict or a refused push fails
+# the job for a human to resolve.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  push-main:
+    if: startsWith(forgejo.server_url, 'https://git.spencerslab.com')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # A one-commit shallow clone cannot negotiate a non-force push.
+          fetch-depth: 0
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "server_url=${{ forgejo.server_url }}"
+          echo "repository=${{ forgejo.repository }}"
+      - name: push main to GitHub
+        run: |
+          set -euo pipefail
+          git push "https://x-access-token:${{ secrets.GITHUB_PUSH_TOKEN }}@github.com/OwnYourIO/SpencersLab.git" HEAD:refs/heads/main
+      - name: push main to the dev instance
+        run: |
+          set -euo pipefail
+          git push "https://x-access-token:${{ secrets.FORGEJO_DEV_PUSH_TOKEN }}@git.scifi.farm/CuratedForest/SpencersLab.git" HEAD:refs/heads/main
+
+  backup-proxy-merge:
+    if: startsWith(forgejo.server_url, 'https://git.scifi.farm')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The merge needs history to find a merge base.
+          fetch-depth: 0
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "server_url=${{ forgejo.server_url }}"
+      - name: merge main into backup-proxy
+        run: |
+          set -euo pipefail
+          # The checkout may leave a detached HEAD; the refspecs below need
+          # a local branch named main.
+          git checkout -B main
+          if git ls-remote --exit-code --heads origin backup-proxy >/dev/null; then
+            git fetch origin backup-proxy:refs/heads/backup-proxy
+            git checkout backup-proxy
+            # -c gives the merge commit an identity without writing config.
+            git -c user.name=forgejo-actions -c user.email=forgejo-actions@localhost merge --no-ff main -m 'Merge main into backup-proxy'
+            git push origin backup-proxy
+          else
+            # A transport error reaches this branch too; the push below then
+            # fails the step, so absence need not be distinguished from doubt.
+            git push origin main:backup-proxy
+          fi
