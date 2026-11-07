@@ -1,0 +1,355 @@
+{
+  "feature": "2026/2026-11-cf-123-bug-tweak-init",
+  "plan_status": "approved",
+  "coord_session": "ses_e4c244562ffeMfAbt3zkhDf6u4",
+  "test_session": "ses_e4957c769ffe6TkfgPGcsI5L0F",
+  "current_wave": 1,
+  "updated_at": "2026-11-07T15:55:00+00:00",
+  "explore": {
+    "at": "2026-11-07 (stage 1, pre-research/pre-planning)",
+    "session": "ses_e4c069ba5ffekpgHmwK28EBh20",
+    "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+    "result": {
+      "status": "DONE",
+      "chunk": "plan",
+      "files_changed": [
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/EXPLORE.md"
+      ],
+      "commands_run": [
+        "git status/log reads => pass",
+        "read loop file/plugin/tests/skills/commands => pass",
+        "OpenChamber source reads (loops.js/project-config.js/service.js/routes.js/runtime.js) => pass",
+        "curl GET 127.0.0.1:3000 health+status+scheduled-tasks => pass (200, read-only)",
+        "dev-boards catalog search => pass (38 tools)",
+        "dev-boards list_cards_in_list/preload_board/get_card live probes => pass (read-only)",
+        "readonly-dev-kubernetes pods_list/pods_get => pass (pod image v148)",
+        "opencode api session/message reads => pass",
+        "sqlite session_message census => pass",
+        "ps/ss/proc process probes => pass",
+        "ghcr tag metadata => not reachable (recorded ABSENCE in F-2)"
+      ],
+      "deviations": "none — no writes outside EXPLORE.md, no board mutations, no user questions",
+      "friction": "dev-kubernetes pods_list rows are column-objects not k8s dicts (resolved by inspecting one row); opencode api truncates >~250KB message payloads mid-JSON (resolved via read-only SQLite); OpenChamber /api/projects listing route 404 (resolved via projectId = config filename)",
+      "open_questions": [
+        "1) Which server process serves a scheduled session's follow-up prompts (attribution for the D fix choice — needs research/live trace)",
+        "2) Does :v162 carry cf-106's surface (answer = first post-rollout tools/list probe)",
+        "3) cards-group scope: all In Process lists (72) vs pickup-scoped (~18) — plan ruling",
+        "4) strictness of the 'yaml' shape (five-artifact fence contract)",
+        "5) AD- prefix composition rule (no repo authority — user wording call)",
+        "6) whether ask-1.b ships as an owner-run curl one-liner or UI pointer (USER-owned either way). Needs research: only #1 if the plan wants mechanism-level attribution; #2-6 are plan rulings"
+      ],
+      "next_suggested": "Agent Decides Research — likely skip formal research (all four asks are repo/host-grounded; OQ1 is optional) and hand to Planning with EXPLORE.md B option-shape and C/A merge-day re-approval runbook as the plan's load-bearing decisions"
+    },
+    "coord_stage_decision": "Agent Decides Research: NO research round — all four asks are repo/host-grounded in EXPLORE.md; OQ1 does not affect the fix direction (shared durable once-mark, attribution-independent per EXPLORE F-1) and is live-trace territory, not web research; OQ2 is answered by the first post-rollout tools/list probe; OQ3-OQ6 are plan/user rulings that ride the batched plan-question round. (Same stage resolution as cf-106.)"
+  },
+  "plan": {
+    "at": "2026-11-07 (stage 3, Planning)",
+    "session": "ses_e4bc4aad6ffe3R1Zry3pqo3tTV",
+    "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+    "result": {
+      "status": "DONE",
+      "chunk": "plan",
+      "files_changed": [
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/2026-11-07-cf-123-bug-tweak-init.md",
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/chunks/C03.md",
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/DECISIONS.md",
+        ".agents/plans/2026/2026-11-cf-123-bug-tweak-init/STATE.json"
+      ],
+      "commands_run": [
+        "read STATE/EXPLORE/DECISIONS/FRICTION + loop file/plugin/tests/skills/commands source reads => pass",
+        "node --test tests/opencode/board-context.test.ts => pass (0 fail)",
+        "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (0 fail)",
+        "bash tests/noop-marker/surface.sh n4 => pass",
+        "bash tests/wekan-mcp/skill-surface.sh => pass (8 ok)",
+        "bash tests/cf90-ledger/surface.sh => pass (8 ok)",
+        "bash tests/multi-repo/hourly-board-check.sh => pass (8 ok)",
+        "bash tests/provider-loops/surface.sh t1-t5,t7,t8 => fail (t7 RED pre-existing on main: boards-skill description stale two-task wording — C01 rider fixes)",
+        "bash tests/provider-loops/surface.sh t6 => fail (t14 gate scope-guard red on this ticket's untracked plan folder — test-wave self-admit)",
+        "bash tests/wekan-mcp/board-context.sh => fail (t1-t5 green; t6 nested gate same t14 red)",
+        "bash tests/agent-board-coord/rulesync-surface.sh => fail (c1-c7 green; c8 same plan-folder red)"
+      ],
+      "deviations": "none — followed the launch brief's six plan-level decisions; re-verified the load-bearing pins from source and kept plan_status draft per the approval gate",
+      "friction": "provider-loops t7 is RED at pristine main f5ee40c64 (boards-skill frontmatter description teaches the retired two-task posture) — undocumented pre-existing red; resolution: C01 rider fixes it since C01 edits that file anyway; gate.sh t14 / rulesync-surface c8 scope guards red on this ticket's own untracked plan folder until the test session adds the self-admit rows (cf-106 precedent row gate.sh:952) — harness state, not repo drift; cf-96 friction re-confirmed: board-context.sh exceeds default shell timeouts (ran with 900 s); FRICTION.md untouched — these ride RESULT per the coord-appends rule",
+      "open_questions": [
+        "1) YAML strictness — fence body becomes strict YAML under the UNCHANGED canonical header line (best guess: keep the header, it is the five-artifact idempotence anchor); if the owner wants a wholly yaml-parseable fence the header becomes a `#` comment and CANONICAL_HEADER moves in the same commit — C01 fence bytes change shape, not scope",
+        "2) AD- prefix — hardcode literal `AD-` before card_number per the card's own example (best guess: hardcode; no board-API authority exists; alternatives: derive from board title or emit bare number)",
+        "3) Cards scope — all In Process lists (~72 cards, ≈5 KB block) vs pickup-scoped (~18); best guess all lists (card's literal read + free dependency-gate membership reads)",
+        "4) Scheduled ticks — each tick is a FRESH session and keeps its first-prompt block; the no-re-injection rule covers within-session follow-ups only (best guess: yes, ticks unchanged — every live tick relies on the block; a different answer changes C03's mark keying)",
+        "5) Failed-attempt semantics — keep today's consume-once-whether-successful (a failed first fetch is not retried on later prompts; absence is designed-normal; best guess: keep — the alternative re-opens the re-injection complaint on degraded board surfaces)"
+      ],
+      "next_suggested": "coord runs the ONE batched question round with the five open questions (best guesses as recommended options), re-launches agent-plan with the answers to finalize, then presents the plan for the user's approval (plan_status -> approved only on the user's word) before the Test Writing stage"
+    },
+    "coord_note": "plan of record 2026-11-07-cf-123-bug-tweak-init.md: C01 (block YAML + per-list cards, consumer-side Option 1 + S10 re-pin + t7 rider) wave 1; C02 (loop header trim, pinned-byte keep list) wave 1; C03 (durable once-mark via ctx.storage + /reload-board-context plugin command, depends C01) wave 2. Ask C = USER-owned runbook steps in the plan (permissionAutoAccept toggle + post-merge loop re-approval; the header trim rotates the loopFingerprint). plan_status stays draft until the batched round + the user's approval word.",
+    "finalization_round": {
+      "at": "2026-11-07 (batched round answered; approval 2026-11-07T15:31:16+00:00)",
+      "session": "ses_e4974b0d1ffeUfNSMi30tgH7W7",
+      "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "note": "the round-1 session's continuation (ses_e4bc4aad) was cancelled by the 14:27Z host restart; this fresh session completed the rework and the approval. A coordinator duplicate re-launch after the SECOND restart returned 'Tool result missing' and wrote nothing — disk verified (updated_at == the approval stamp; no double application; the plan file is one coherent rework). The duplicate is recorded in FRICTION.md.",
+      "result": {
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": [
+          "2026-11-07-cf-123-bug-tweak-init.md",
+          "chunks/C01.md",
+          "chunks/C02.md",
+          "chunks/C03.md",
+          "chunks/C04.md",
+          "DECISIONS.md",
+          "STATE.json"
+        ],
+        "commands_run": [
+          "server.py source reads (_slim_board/get_board/update_board/preload_board grouping) => pass",
+          "plugin index.ts resolve/formatBlock reads => pass",
+          "greps tests/wekan-mcp + skills doc-parity targets => pass (no get_board field-set pins; wekan-api/SKILL.md need no C04 edit)",
+          "live dev-boards probe: catalog 39 tools + get_board(AI-Dev) => pass (no `key`; preload advertises swimlane_titles?)",
+          "git status/log (HEAD == branch_sha f5ee40c64, plan folder untracked only) => pass",
+          "STATE.json JSON validation + chunks/approval readback => pass",
+          "python3 -m py_compile => not run (no server.py edit this round — C04 dev-time gate)"
+        ],
+        "deviations": "relaunch-brief premise 'deployed preload advertised schema carries no swimlane filter argument' DISPROVEN by the in-session catalog probe — recorded in DECISIONS; design kept {board_id}-only on drift-safety grounds, not the brief's premise. C01 re-waved 1->2 (depends_on C04, interface-first), which moves the t7 rider past C02's review — C02 AC7 reworded to expect the documented pre-existing red. No renumbering (C04 appended; C01-C03 ids anchored in the run's records). Round-1 C01 fence contradicted ruling #1 (plain-prose footer breaks strict parseability) — corrected to # comment footer + always-quoted card_number",
+        "friction": "round-1 fence contract vs ruling #1 inconsistency (footer prose unparseable as YAML) — resolved via the # comment footer ruling in DECISIONS; brief's preload-signature premise stale hours after the pod roll — resolved by the live catalog probe (deployed surface is the authority)",
+        "open_questions": "none — the five batched-round questions are owner-RESOLVED (annotated in the plan) and the final approval question is answered: 'Approve — run all waves' (kickoff.approval recorded, plan_status=approved)",
+        "next_suggested": "coord posts the plan-approved card comment + post-plan write-back (slug-stack append, unchecked-item cleanup), then launches the ONE Test Writing session (all chunks' tests: S10 inversion, C04 projection arm, gate/rulesync self-admit rows), then runs wave 1 (C02 + C04) -> wave 2 (C01) -> wave 3 (C03)"
+      }
+    }
+  },
+  "test_wave": {
+    "at": "2026-11-07 (stage: Test Writing — one session for every chunk, before any dev)",
+    "session": "ses_e4957c769ffe6TkfgPGcsI5L0F",
+    "model": "openrouter/qwen/qwen3.8-27b",
+    "result": {
+      "status": "DONE",
+      "chunk": "plan",
+      "files_changed": [
+        "tests/opencode/board-context.test.ts",
+        "tests/provider-loops/surface.sh",
+        "tests/wekan-mcp/board-context.sh",
+        "tests/wekan-mcp/skill-surface.sh",
+        "tests/wekan-mcp/tools.sh",
+        "tests/agent-board-coord/gate.sh",
+        "tests/agent-board-coord/rulesync-surface.sh"
+      ],
+      "commands_run": [
+        "node --test tests/opencode/board-context.test.ts => fail-by-design (49 tests: 26 pass / 23 fail, all 23 ERR_ASSERTION on the unimplemented C01 fence/assembly + C03 durable-mark/command contract; keep-arms + pinned-constant strict-YAML arms green)",
+        "node --test tests/opencode/pipeline-locks-tick.test.ts => pass (15/15 — C02 keep-list T2 unchanged)",
+        "bash tests/provider-loops/surface.sh t1 t2 t3 t4 t5 => pass (keep-list)",
+        "bash tests/provider-loops/surface.sh t7 => fail (PRE-EXISTING main red: boards-skill frontmatter two-task wording — C01 rider fixes in wave 2; expected-red at C02 review per C02 AC7, NOT re-pinned)",
+        "bash tests/provider-loops/surface.sh t8 => pass",
+        "bash tests/provider-loops/surface.sh t6 => pass (nested gate cleared by the gate.sh t14 self-admit row; t17 exclusion unchanged)",
+        "bash tests/provider-loops/surface.sh t9 t10 => fail-by-design (t9: header 54 non-empty lines > 25; t10: 'also enabled' still present — both verified green against C02's reference draft: 16 lines, enabled:false within 250ch)",
+        "bash tests/noop-marker/surface.sh n4 => pass (keep-list)",
+        "bash tests/wekan-mcp/tools.sh => t1-t6,t8,t9 pass; t10 fail-by-design (_slim_board no 'key' entry + call-shapes shape cell no 'key'; positive control on scratch C04-shaped files passes, negative control on the real tree fails)",
+        "bash tests/wekan-mcp/skill-surface.sh => t1,t2,t4,t6,t7,t8 pass; t3 fail-by-design (schema section lost cards:/card_number/card_id tokens); t5 fail-by-design (nested tools.sh t10 cascade — clears when C04 lands)",
+        "bash tests/wekan-mcp/board-context.sh t1 t4 t5 => pass",
+        "bash tests/wekan-mcp/board-context.sh t2 => fail-by-design (no preload_board sixth leg / no card_number derivation+degrade instruction / stale usage note)",
+        "bash tests/wekan-mcp/board-context.sh t3 => fail-by-design (exactly the four cf-123 consumer clauses missing/stale; every legacy clause passes; both directions verified)",
+        "bash tests/wekan-mcp/board-context.sh t6 => fail (nested gate NOW PASSES via self-admit row; agent-perms A15 red on PRE-EXISTING main state — cf-106 C01 roster re-pin vs 01317f447's 'exactly TWO … Priority' roster; masked before by the t14 plan-folder red; not cf-123's file)",
+        "bash tests/agent-board-coord/gate.sh t14 => pass (self-admit row + rulesync no-op)",
+        "bash tests/agent-board-coord/rulesync-surface.sh c8 => pass (self-admit row)",
+        "bash tests/agent-board-coord/rulesync-surface.sh (full) => c1-c18 pass; c19 fail on PRE-EXISTING main state (cf-85 'exactly one' fence vs the same 01317f447 roster change; was masked behind c8's plan-folder red)",
+        "bash tests/cf90-ledger/surface.sh => pass (8 ok, unchanged)",
+        "bash tests/multi-repo/hourly-board-check.sh => pass (8 ok, unchanged)",
+        "npx aislop ci --changes => pass (0 errors, 0 warnings)"
+      ],
+      "deviations": "no chunk file reserves a '## Test notes' spot (all four end at '## Review notes (review agent fills)'), so per the brief's conditional I left the chunk files untouched — this RESULT carries the per-chunk written/after-state record instead. No arm weakened; S10 inversion, C04 projection arm and both self-admit rows landed exactly as directed; t7 left expected-red for C02's review (its rider fix lands with C01 in wave 2)",
+      "friction": "(1) pre-existing main-state roster pin drift discovered+documented: 01317f447 'agent-context Priority wiring: two-field roster' (2026-11-05) reworded the boards skill 'Custom fields:' roster to 'exactly TWO board-level fields — slug … and Priority', breaking rulesync-surface c19 (cf-85 'exactly one' fence) AND agent-perms A15 (cf-106 C01 agent-facing re-pin: bans 'exactly two/three' + Priority per OQ-15); both were masked (c19 behind c8's plan-folder red, A15 behind board-context t6's nested-gate t14 red) and the plan-directed self-admit rows unmasked them — routing is coord's (open question 1). (2) cf-96 friction re-confirmed: tests/wekan-mcp/board-context.sh exceeds default shell timeouts (t6 run with 1500 s budget in the background)",
+      "open_questions": "1) c19 + A15 roster-pin drift (both red on the 01317f447 'exactly TWO … Priority' roster text): re-pin them in the Priority-wiring ticket's surface, or file a follow-up card? Until routed, board-context.sh t6 and the full rulesync-surface run carry that red on every cf-123 chunk gate — it is not attributable to any cf-123 chunk. 2) none otherwise — the five owner rulings are folded into the pins (strict-YAML header-unchanged fence, board-key derivation + pinned degrade note, all-In-Process scope, ticks-unchanged durable session mark, consume-once-whether-successful)",
+      "next_suggested": "coordinator commits the test wave, then runs wave 1 in either order (C04 first unblocks the skill-surface t5 cascade; C02's review runs with t7 documented-red), then wave 2 C01 (S10 inversion + t7 rider), then wave 3 C03; route open question 1 alongside"
+    },
+    "coord_routing": {
+      "c19_A15_roster_drift": "PRE-EXISTING main-state reds, attributed to 01317f447 (2026-11-05, 'agent-context Priority wiring: two-field roster') — NOT cf-123's doing and NOT cf-123's surface to fix (the cf-85/cf-106 pins belong to those tickets). Carried through every cf-123 chunk gate as documented pre-existing reds in the cf-106 arm-level gate shape: whole-suite board-context.sh fails on t6 (nested agent-perms A15) and whole rulesync-surface fails on c19; chunk gates = plan Commands + chunk-relevant legs green + pre-existing reds attributed in commands_run. Owner routing at the run's end (friction follow-up; test session's options: re-pin in the Priority-wiring ticket's surface or file a follow-up card)",
+      "at": "2026-11-07T~15:55Z"
+    }
+  },
+  "kickoff": {
+    "card": "xdrvXPW3LeF2TGpGD",
+    "card_number": 123,
+    "card_title": "Tweak init",
+    "slug": "cf-123-bug-tweak-init",
+    "type": "bug",
+    "worktree": "cf-123-bug-tweak-init",
+    "worktree_dir": "/home/coder/.local/share/opencode/worktree/5e680f/cf-123-bug-tweak-init",
+    "branch": "cf-123-bug-tweak-init",
+    "branch_sha": "f5ee40c642b31c4a0003ce7bbd1c19966da71ed1",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (scheduled launch carried no Session origin line); resolved live 2026-11-07, host probe-recognized",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-27b"
+    },
+    "local": false,
+    "models_basis": "Model(s) checked: Qwen Large + Qwen Dense (no Local); card label Provider: API -> hosted (openrouter) routing with local treatment withheld; several checked -> largest (Qwen Large) = planning tier, smallest (Qwen Dense) = code tier per pipeline-models size order",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "provider_label": "Provider: API",
+    "approval": {
+      "at": "2026-11-07T15:31:16+00:00",
+      "by": "owner, in-session question (agent-plan finalization round, after the batched round's five rulings were folded)",
+      "verdict": "Approve — run all waves",
+      "note": "approval_comment (card comment id) rides the coord's post-plan write-back leg — agent-plan performs no board writes"
+    },
+    "card_write_back": {
+      "at": "2026-11-07T15:36:34+00:00",
+      "slug_field": "set (upsert, attached=true) on card xdrvXPW3LeF2TGpGD — current value was null (claim-time read, re-verified live before the write), so this run's combined line was written",
+      "value": "[cf-123-bug-tweak-init](https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_e4c244562ffeMfAbt3zkhDf6u4)",
+      "consistency_check": "link host equals kickoff.session_origin — pass",
+      "surviving_checklist_items": {
+        "Model(s)": ["Qwen Large", "Qwen Dense"],
+        "Services": ["agent context"],
+        "Type": ["bug"],
+        "Lifecycle": ["Exploration", "Agent Decides Research", "Planning", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+        "Human in the Loop": ["Final Review"]
+      },
+      "deleted_unchecked_items": 36,
+      "plan_approved_comment": "posted 2026-11-07T15:36:34+00:00 (plan path, worktree/branch, chunk/wave layout, the five rulings, the USER-owned merge-day runbook)"
+    },
+    "human_in_the_loop": [
+      "Final Review"
+    ],
+    "stages": [
+      "Exploration",
+      "Agent Decides Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "checked Lifecycle items = the standard default loop's seven stages exactly (Pre Research / Post Research / Deployment / Single Session unchecked); the plan-approval pause still applies as a pipeline gate regardless of checks",
+    "checklist_answers": {
+      "Services": [
+        "agent context"
+      ],
+      "Type": [
+        "bug"
+      ],
+      "Model(s)": [
+        "Qwen Large",
+        "Qwen Dense"
+      ],
+      "Lifecycle": [
+        "Exploration",
+        "Agent Decides Research",
+        "Planning",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review"
+      ],
+      "Human in the Loop": [
+        "Final Review"
+      ],
+      "slug_custom_field": null,
+      "Priority": null,
+      "note": "fresh kickoff — slug custom field unset, slug derived from card content (auto-accepted, never a batched-round item); the retired `session` field is null and was never read"
+    },
+    "claim": {
+      "cardId": "xdrvXPW3LeF2TGpGD",
+      "pipelines": [
+        "Context"
+      ],
+      "derived_from": "board label 'Pipeline: Context' (3PGnrD) on card #123; card carries no Repo: label -> SpencersLab default-picker eligibility (walk candidate #1 of Not Started)",
+      "setId": "41bd98b9-aa96-4105-87b1-9f486f946d79",
+      "claimed_at": "2026-11-07 (original pickup claim ~02:47Z; engine stamps authoritative)",
+      "card_move": "Not Started (XhDyShvuwhGWzWH2z) -> Executing (qZ9CLZqCRbv7NQQ6R)",
+      "claim_comment": "oTgqsGts3sbzys5FX (2026-11-07T02:50:52+00:00)",
+      "history": [
+        "2026-11-07 pickup: pipeline_claim(cardId, pipelines:[Context]) -> setId 47349bee; move to Executing + claim comment on the held claim",
+        "2026-11-07 ~03:00Z (session_move incident): holder row state:failed transiently after the kickoff session_move; sanctioned single question -> owner yes; card-id re-claim refused already_held; heartbeat ok:true — continued under the ORIGINAL Context claim 47349bee (no takeover)",
+        "2026-11-07 ~14:27-15:02Z (owner-launched OpenChamber restart): engine in-memory attribution gone (heartbeat no_claim; disk row state:failed, under the 2 h window, never reaped — lastReap still 2026-11-05); the owner's explicit in-session 'Continue' gated the sanctioned C09 recovery -> re-claimed under the CARD-ID key xdrvXPW3LeF2TGpGD -> setId 41bd98b9-aa96-4105-87b1-9f486f946d79; card verified untouched (Executing); takeover comment posted naming the recovery and lock key. The run now operates under the card-id lock set; the orphan failed Context.json holder row for this card stays on disk and ages out (plugin-owned, never touched by this run)"
+      ],
+      "takeover": {
+        "at": "2026-11-07T15:02+00:00",
+        "key": "xdrvXPW3LeF2TGpGD (card-id lock, uncontended by definition)",
+        "gate": "owner's explicit in-session continue instruction after the host restart (the run's one sanctioned question was already answered yes ~03:00Z; no second question — never-a-second-question holds)",
+        "note": "the SAME run resuming its card under the takeover key, not a new run"
+      },
+      "lock_lost_incident": {
+        "at": "2026-11-07, after the kickoff session_move into the ticket worktree (root change)",
+        "hook": "PIPELINE LOCK LOST naming claim setId 47349bee",
+        "engine_state": "Context holder row (this card, this session) marked state:failed at ~8 s age; lastReap unchanged (2026-11-05T21:08:07.767Z) — not a stale reap",
+        "recovery": "sanctioned single question -> owner answered YES (2026-11-07); card-id re-claim refused already_held (the engine still attributed set 47349bee to this session, so no card-id takeover was possible or needed); pipeline_heartbeat -> ok:true, beaten:[Context] — the claim is confirmed live under the ORIGINAL Context key and the run continues under it",
+        "class": "same silent-loss family as cf-106 C09/C10 (state:failed holder row); this instance surfaced immediately after session_move instead of across a restart — candidate root cause: claim/root tracking across the session location change; out of this ticket's file set, candidate for the owner's follow-up card",
+        "owner_ruling": "2026-11-07: may continue anyway — yes (the run's one sanctioned question; recorded per C09)"
+      }
+    },
+    "board_context": {
+      "collectedAt": "2026-11-07T02:34:45.146Z",
+      "source": "launch block (board-context prompt hook, dev-boards); the 02:55:00.593Z refresh carried identical ids",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF (In Process)",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT (retired: never read, never written)",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Pipeline: Context": "3PGnrD",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: AI": "ezGduq",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: API": "f3sKNX",
+        "Provider: Local": "PnhFKk",
+        "Research": "ysSmS5",
+        "Research: Parallel": "Nd5h6R"
+      },
+      "note": "full label list rides the launch block; only the ids this run consumed are recorded here — the block is a snapshot, re-resolve on id-shaped call errors"
+    },
+    "preload": {
+      "at": "2026-11-07T~02:48Z",
+      "tool": "preload_board",
+      "cards": 170,
+      "degraded": false,
+      "card_details": {
+        "degraded": true,
+        "reason": "deployed preload is the lean seven-field card shape (no per-card checklists), no card-details block rode the claim answer, and get_card_details is absent from tools/list -> claimed-card details fell back to get_card + list_checklists/get_checklist fan-out per the cf-96 degrade law (one retry budget, no stall); dependency gate evaluated from the preload's board-wide dependencies"
+      },
+      "gate": "board-wide dependencies = exactly one edge: related-to from QZPzjuGT4u6aQvq6C (AD-124 'Checklist improvements') to xdrvXPW3LeF2TGpGD (AD-123) — related-to is outside the blocking set (blocks/is-blocked-by only), both spellings checked -> PASSED, no skipped candidates"
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C04"
+      ]
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C01"
+      ]
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

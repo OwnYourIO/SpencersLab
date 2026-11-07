@@ -22,9 +22,19 @@
 # current-state text still claims two tasks or an API-only scheduled walk] plus
 # t8[AC4 single-file sweep: the deleted file's name lives only in records].
 #
+# cf-123 C02 (ask A: loop header trim): t9[AC4 header weight — the comment
+# block is ≤25 non-empty lines, a re-bloat reddens even if every pinned byte
+# survives] t10[AC5 legacy-state correctness — the "Hourly Pipeline call"
+# task is named enabled:false (the 2026-11-07 live probe) and the stale
+# "also enabled" phrasing is gone].
+#
 # Red posture: t1/t2/t3/t7/t8 are designed-red until C10 dev lands the single
 # body, the model flip and the file deletion. t6 is the plan-time red that
 # C01's scope admits clear; it stays green through C10 (the gate is untouched).
+# cf-123: t9/t10 are designed-red until the C02 trim lands; provider-loops t7
+# stays RED through C02's review — its fix is C01's boards-skill frontmatter
+# rider (wave 2), a documented pre-existing main-state red, never a C02 defect
+# (plan Verified facts + C02 AC7).
 #
 # Selection / known-baseline note (cf-90 FRICTION + DECISIONS): t6 runs
 # tests/agent-board-coord/gate.sh as an ID SUBSET excluding t17 — t17 (like
@@ -39,7 +49,7 @@
 # board, no OpenChamber, no network.
 #
 # Usage:
-#   bash tests/provider-loops/surface.sh            # t1..t8
+#   bash tests/provider-loops/surface.sh            # t1..t10
 #   bash tests/provider-loops/surface.sh t2 t7      # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -60,11 +70,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
+    [[ "$lc" =~ ^t([1-9]|10)$ ]] || fail "unknown check id '$a' (expected t1..t10)"
     WANT["$lc"]=1
   done
 fi
@@ -310,6 +320,56 @@ if want t8; then
   strays=$(grep -rln 'pipeline-worker-local' .agents/loops .rulesync .opencode scripts AGENTS.md 2>/dev/null || true)
   [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "t8[cf-106 C10 AC4]: the retired loop file's name still lives in a live surface above — the deletion is a repo-side fact (the live task's retirement is the owner's)"; }
   ok "t8[cf-106 C10 AC4]: exactly one loop file; the retired name appears in no live surface (records and the runbook only)"
+fi
+
+# --- t9: header weight guard — the comment block stays lean (cf-123 C02 AC4) --
+# The whole comment block rides every hourly tick prompt as model-visible text
+# (OpenChamber puts the body, comments included, into execution.prompt), so
+# the trim is about WEIGHT, not just content: count non-empty comment lines
+# and cap them. A re-bloat reddens even if every pinned byte survives.
+if want t9; then
+  [ -f "$API" ] || fail "t9: $API missing (harness fault)"
+  n=$(python3 - "$API" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+blocks = re.findall(r"<!--[\s\S]*?-->", text)
+assert blocks, "no HTML comment block in the loop file — the header docs moved out (harness fault or over-trim)"
+n = 0
+for b in blocks:
+    inner = b.strip()
+    if inner.startswith("<!--"):
+        inner = inner[4:]
+    if inner.endswith("-->"):
+        inner = inner[:-3]
+    n += sum(1 for l in inner.splitlines() if l.strip())
+print(n)
+PY
+)
+  [ "$n" -le 25 ] \
+    || fail "t9[cf-123 C02 AC4]: the loop file's comment block is $n non-empty lines, want ≤25 — the header is model-visible text on every hourly tick; cut the dead weight, keep the pins (plan ask A)"
+  ok "t9[cf-123 C02 AC4]: the comment block is $n non-empty lines (≤25)"
+fi
+
+# --- t10: legacy-state correctness — the stale "also enabled" is corrected (cf-123 C02 AC5)
+# The 2026-11-07 live probe (EXPLORE §0) found the legacy "Hourly Pipeline
+# call" daily task enabled:false; the header's "(also enabled, runs no gate)"
+# phrasing is a stale present-tense claim. The N4 window pins that the mention
+# + the human-owned clause survive within 500 chars; this arm pins the VALUE
+# the header states near the mention.
+if want t10; then
+  [ -f "$API" ] || fail "t10: $API missing (harness fault)"
+  if grep -qiE 'also enabled' "$API"; then
+    fail "t10[cf-123 C02 AC5]: the header still claims the legacy task is 'also enabled' — the 2026-11-07 OpenChamber probe found enabled:false (the stale phrasing is the correction C02 lands in the same trim)"
+  fi
+  python3 - "$API" <<'PY' || fail "t10[cf-123 C02 AC5]: the header does not name the legacy 'Hourly Pipeline call' task as enabled:false near its mention"
+import re, sys
+text = open(sys.argv[1]).read().lower()
+i = text.find("hourly pipeline call")
+assert i >= 0, "the legacy task name left the header entirely — the N4 window (hourly pipeline call + human-owned ≤500ch) needs the mention"
+window = text[max(0, i - 250): i + 250]
+assert re.search(r"enabled\s*:\s*false", window), f"the legacy task is not named enabled:false within 250 chars of its mention: {window!r}"
+PY
+  ok "t10[cf-123 C02 AC5]: the legacy task is named enabled:false (the 2026-11-07 live state) and the 'also enabled' phrasing is gone"
 fi
 
 printf 'PASS: provider loop-tasks contract checks (%d ok)\n' "$checks"

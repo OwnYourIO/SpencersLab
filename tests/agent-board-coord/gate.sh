@@ -891,6 +891,13 @@ fi
 # t14 rejects this ticket's EXPLORE.md/plan file until this line lands, and
 # provider-loops t6 reddens as its consumer (plan Grounding, FRICTION
 # 2026-11-03). Any replan-added file joins THIS line, not a new arm.
+# cf-123 (2026-11-07, agent-test): this ticket's own plan folder joins on the
+# same once-per-ticket rule (cf-106 precedent row) — its declared surfaces
+# already ride this set: tests/* (the board-context re-pin + provider-loops
+# t9/t10 + the wekan-mcp re-pins), .opencode/plugin/board-context/*,
+# containers/wekan-mcp/*, skills/wekan-mcp/*, .agents/loops/* and
+# .rulesync/* + .opencode/{commands,skills}/*. Harness state, not repo drift
+# (plan DECISIONS baseline note).
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -950,11 +957,12 @@ if want t14; then
       .rulesync/skills/pipeline-role-research/*|.opencode/skills/pipeline-role-research/*|\
       .agents/plans/2026/2026-11-bug-pipeline-locks-tick-pin/*|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
       .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits and the cf-106 own-folder admit (whole-ticket scope union; base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit and the cf-123 own-folder admit (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

@@ -534,6 +534,12 @@ fi
 # Any file a replan adds joins THIS line — same rule as the cf-86 exact-file
 # precedent, and the probe loop below keeps the widening from becoming a
 # catch-all.
+# cf-123 (2026-11-07, agent-test): this ticket's own plan folder joins on the
+# same once-per-ticket rule (cf-106 precedent row) — its declared surfaces
+# already ride this set: tests/*, .opencode/plugin/board-context/*,
+# containers/wekan-mcp/*, skills/wekan-mcp/*, .agents/loops/* and .rulesync/*
+# + .opencode/{commands,skills}/*. Harness state, not repo drift (plan
+# DECISIONS baseline note).
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -578,7 +584,8 @@ if want c8; then
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
       .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
-      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) return 0 ;;
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*) return 0 ;;
       *) return 1 ;;
     esac
   }
@@ -615,7 +622,7 @@ if want c8; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits) and cf-96 (plan folder + C09 coder-template pair) widenings; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair) and the cf-106/cf-123 own-folder admits; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

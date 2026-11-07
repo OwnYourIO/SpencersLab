@@ -48,6 +48,13 @@
 # a sanctioned +1 can no longer leave a doc that quietly disagrees with the
 # registry (the cf-68 FRICTION "missed parity literal" trap, made structural).
 #
+# cf-123 C04 (board-key projection, 2026-11-07, agent-test): t10 pins the
+# get_board PROJECTION change offline — _slim_board's returned dict carries a
+# "key" entry reading b.get("key"), and call-shapes.md's get_board row shapes
+# it. A projection change moves NO registry count (t2 stays 18 reads / 21
+# writes; owner ruling #2: the board key is DERIVED by consumers, never a new
+# tool).
+#
 # Statics-only by design (D8): the image has no pytest harness and none is
 # introduced; the live 25-tool round-trip is user acceptance after M1-M3.
 #
@@ -60,7 +67,7 @@
 # touch, D23); review may pass the pre-chunk commit.
 #
 # Usage:
-#   bash tests/wekan-mcp/tools.sh              # t1..t6 + t8 + t9
+#   bash tests/wekan-mcp/tools.sh              # t1..t6 + t8 + t9 + t10
 #   bash tests/wekan-mcp/tools.sh t2 t4        # subset
 #   WEKAN_SERVER=<path> bash tests/wekan-mcp/tools.sh t5   # re-derive the
 #       doc-parity arms against a scratch copy of server.py (non-vacuity probe)
@@ -72,6 +79,7 @@ SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
 WEKAN_PY="containers/wekan-mcp/wekan_mcp/wekan.py"
 README="containers/wekan-mcp/README.md"
 SKILL_API="skills/wekan-api/SKILL.md"
+CALLS="skills/wekan-mcp/references/call-shapes.md"
 LOGIN_TESTS="tests/containers/wekan-mcp-login.sh"
 PIN_BASE="${C01_BASE:-5e35ba6da}"
 # One parity implementation for every wekan-mcp suite (claims = doc counts,
@@ -93,10 +101,10 @@ ok() {
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 8 9; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 8 9 10; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-6]|8|9)$ ]] || fail "unknown test id '$a' (expected t1..t6, t8 or t9; t7 is tests/services/dev-mcp-fleet.sh)"
+    [[ "$a" =~ ^t([1-6]|8|9|10)$ ]] || fail "unknown test id '$a' (expected t1..t6, t8, t9 or t10; t7 is tests/services/dev-mcp-fleet.sh)"
     WANT["$a"]=1
   done
 fi
@@ -569,6 +577,58 @@ PY
     checks=$((checks + 1))
   else
     fail 't9: the default_checked contract is not satisfied (reason printed above)'
+  fi
+fi
+
+# --- t10: get_board projects the board key — offline, no live server, no docker (cf-123 C04)
+# A PROJECTION change, not a new tool: t2's registry arithmetic (18 reads / 21
+# writes) is untouched. The arm pins the two surfaces the projection must
+# reach: _slim_board's returned dict (the only producer of get_board's answer)
+# and call-shapes.md's get_board row shape cell (the single documentation home).
+if want t10; then
+  if python3 - "$SERVER" "$CALLS" <<'PY'
+import ast, re, sys
+
+path = sys.argv[1]
+src = open(path).read()
+tree = ast.parse(src)
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+fn = next((n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == '_slim_board'), None)
+if fn is None:
+    bad('t10: _slim_board disappeared from server.py')
+ret = next((n for n in fn.body if isinstance(n, ast.Return)), None)
+if ret is None or not isinstance(ret.value, ast.Dict):
+    bad('t10: _slim_board must return a dict literal — the projection IS the contract')
+keys = [k.value for k in ret.value.keys if isinstance(k, ast.Constant)]
+if 'key' not in keys:
+    bad(f't10: _slim_board projects {sorted(keys)} — no "key" entry (cf-123 C04 AC1: get_board must carry the board key so consumers derive <boardKey>-<cardNumber> instead of hardcoding a prefix)')
+val = next(v for k, v in zip(ret.value.keys, ret.value.values)
+           if isinstance(k, ast.Constant) and k.value == 'key')
+if ast.unparse(val) not in ("b.get('key')", 'b.get("key")'):
+    bad(f't10: the "key" projection reads {ast.unparse(val)!r}, want b.get("key") — the board document carries the key (update_board\'s echo is the precedent); a computed or hardcoded stand-in is not the projection')
+for k in ("id", "title", "permission", "color", "archived", "labels"):
+    if k not in keys:
+        bad(f't10: _slim_board lost its {k!r} projection field — C04 is additive, the existing six fields stay')
+
+calls = open(sys.argv[2]).read()
+rows = [l for l in calls.splitlines() if re.match(r"^\|\s*`?get_board`?\s*\|", l)]
+if len(rows) != 1:
+    bad(f't10: call-shapes.md must carry exactly one get_board row, found {len(rows)}')
+cells = [c.strip() for c in rows[0].strip().strip('|').split('|')]
+if len(cells) < 5:
+    bad(f't10: the get_board row lost its five cells (tool | required | optional | shape | evidence): {rows[0]!r}')
+if 'key' not in cells[3]:
+    bad(f't10: the get_board row\'s shape cell is {cells[3]!r} — no "key" (cf-123 C04 AC3: the documented shape must name the projection beside id/title/permission/color/archived/labels)')
+print('ok: t10 — _slim_board projects "key" from b.get("key") (additive, six base fields intact) and call-shapes.md\'s get_board row shapes it (cf-123 C04: a projection change, no registry move)')
+PY
+  then
+    checks=$((checks + 1))
+  else
+    fail 't10: the get_board board-key projection contract is not satisfied (reason printed above)'
   fi
 fi
 

@@ -131,7 +131,7 @@ PY
   ok "t1: generated agent-board — name/mode, deny-all baseline, allow set exactly read/skill/question/execute/dev-boards* with at most the one C01 trailing 'ls *' shell allow gated to sit after the shell-'*' deny, shell+edit+subagent '*' denies kept, no underscore or broad MCP grant (C03 AC1 + C01/OQ9 read-only exception)"
 fi
 
-# --- t2: collector command — sequence, defaults, pointer-not-copy (C03 AC2) -----
+# --- t2: collector command — six legs in order, defaults, derivation + degrade, pointer-not-copy (C03 AC2 + cf-123 C01 AC7 re-pin) -----
 if want t2; then
   for f in "$CMD_SRC" "$CMD_GEN"; do
     [ -f "$f" ] || fail "t2: $f missing"
@@ -145,13 +145,13 @@ if fm.get("agent") != "agent-board":
     print(f"agent is {fm.get('agent')!r}, want agent-board"); sys.exit(1)
 PY
   for f in "$CMD_SRC" "$CMD_GEN"; do
-    for tok in '$ARGUMENTS' list_boards get_board list_swimlanes list_lists list_custom_fields fenced 'AI-Dev' 'In Process'; do
-      grep -qF "$tok" "$f" || fail "t2: $f never carries '$tok' (resolution sequence / defaults / fenced-output instruction)"
+    for tok in '$ARGUMENTS' list_boards get_board list_swimlanes list_lists list_custom_fields preload_board fenced 'AI-Dev' 'In Process'; do
+      grep -qF "$tok" "$f" || fail "t2: $f never carries '$tok' (six-leg resolution sequence / defaults / fenced-output instruction — cf-123 C01 adds the sixth, preload_board, leg)"
     done
-    python3 - "$f" <<'PY' || fail "t2: $f does not run the five resolution calls in order"
+    python3 - "$f" <<'PY' || fail "t2: $f does not run the six resolution calls in order"
 import sys
 text = open(sys.argv[1]).read()
-seq = ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields"]
+seq = ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields", "preload_board"]
 pos = [text.find(s) for s in seq]
 if any(p < 0 for p in pos):
     print(f"missing calls: {[s for s, p in zip(seq, pos) if p < 0]}"); sys.exit(1)
@@ -162,17 +162,41 @@ PY
     if grep -qF "$HEADER" "$f"; then
       fail "t2: $f copies the canonical schema header — pointer to the skill only (one normative owner, DECISIONS 2026-10-27)"
     fi
+    # cf-123 C01: the card_number derivation + degrade instruction rides the
+    # command prose (the schema itself stays pointed-at, never copied): the
+    # prefix is the board key the get_board leg carries, and the keyless
+    # pre-rollout shape must be documented, not silently rendered.
+    python3 - "$f" <<'PY' || fail "t2: $f lost the card_number derivation + degrade instruction (cf-123 C01 AC7)"
+import re, sys
+text = open(sys.argv[1]).read()
+errs = []
+if "card_number" not in text:
+    errs.append("no 'card_number' naming — the command cannot document the field it derives")
+if not re.search(r"board.{0,12}key", text, re.I):
+    errs.append("no board-key derivation source named (ruling #2: the prefix is the board key from get_board, never a hardcoded literal)")
+if not re.search(r"degrad|bare|no key", text, re.I):
+    errs.append("no degrade instruction (the pre-rollout projection carries no key — the bare-number + note-line shape must be documented)")
+print("; ".join(errs)); sys.exit(1 if errs else 0)
+PY
+    # The reworded usage note: cards ARE pre-collected now (card_number /
+    # card_id / labels as a collection-time snapshot) — only checklist ids
+    # stay live per-card data, and the drift advice survives the reword.
+    if grep -qiF 'Card and checklist ids are never pre-collected' "$f"; then
+      fail "t2: $f still says 'Card and checklist ids are never pre-collected' — the cards group pre-collects card_number/card_id/labels as a snapshot; only checklist ids stay live per-card data (cf-123 C01 AC7 reworded usage note)"
+    fi
+    grep -qiF 'checklist' "$f" || fail "t2: $f's usage note lost the checklist exclusion — checklist ids remain live per-card data after the cards join"
+    grep -qiE 're-resolve|re-collect' "$f" || fail "t2: $f's usage note lost the drift advice (re-collect after a structure change / re-resolve on any id-shaped call error)"
   done
-  ok "t2: command (source + generated) binds agent-board, carries the ordered six-step resolution sequence with AI-Dev/In Process defaults and the fenced-output note, and points at (never copies) the schema (C03 AC2)"
+  ok "t2: command (source + generated) binds agent-board, carries the ordered six-leg resolution sequence with AI-Dev/In Process defaults, the card_number derivation + degrade instruction, the reworded usage note (cards pre-collected as a snapshot, checklist ids live), and points at (never copies) the schema (C03 AC2 + cf-123 C01 AC7 re-pin)"
 fi
 
-# --- t3: boards skill consumer rule — additive over the pinned titles (C03 AC3) --
+# --- t3: boards skill consumer rule — cards group consumable, snapshot caveat, stale claims gone (C03 AC3 + cf-123 C01 AC8 re-pin) --
 if want t3; then
   for f in "$BOARDS_SRC" "$BOARDS_GEN"; do
     [ -f "$f" ] || fail "t3: $f missing"
     grep -qE '^#{1,6}[[:space:]].*Board context block' "$f" \
       || fail "t3: $f has no 'Board context block' subsection heading (the consumer rule is missing)"
-    python3 - "$f" <<'PY' || fail "t3: $f's consumer passage lacks a required clause"
+    python3 - "$f" <<'PY' || fail "t3: $f's consumer passage lacks a required clause (cf-123 C01 re-pin)"
 import re, sys
 text = open(sys.argv[1]).read()
 m = re.search(r'(?ms)^#+[^\n]*Board context block[^\n]*\n(.*?)(?=^#+[^\n]*$|\Z)', text)
@@ -188,11 +212,24 @@ if "board_context" not in body:
     errs.append("no kickoff.board_context STATE.json naming")
 if "wekan-board-context" not in body:
     errs.append("no pointer to the /wekan-board-context producer")
-if errs:
-    print("; ".join(errs)); sys.exit(1)
+# cf-123 C01: the cards group is consumable at launch (the injected per-list
+# projections serve the walk), the snapshot caveat rides the consumer rule,
+# and the two stale present-tense claims leave with the reword: the six-count
+# predates the preload leg, and the hook is no longer structural-only (its
+# sixth leg prefetches the per-list cards — the claim-time preload law itself
+# stays, only the OQ3 "structural-only" clause is replaced).
+if not re.search(r"cards.{0,200}(walk|pickup|launch)|(walk|pickup|launch).{0,200}cards", body, re.S):
+    errs.append("no cards-group-consumable-at-launch rule (the block's per-list projections must serve the pickup walk)")
+if "snapshot" not in body:
+    errs.append("no snapshot caveat on the cards (a collection-time block that contradicts the live board must re-resolve)")
+if re.search(r"first (six|6) board round-trips", body):
+    errs.append("the stale 'first six board round-trips' count survives — the prefetch now spends a sixth (preload) leg")
+if re.search(r"structural-only|structure-only|stays structural", body):
+    errs.append("the stale 'hook stays structural(-only)' clause survives — the hook's sixth leg prefetches the per-list cards (C01 rewords both the preload-consumer and card-details sibling clauses)")
+print("; ".join(errs)); sys.exit(1 if errs else 0)
 PY
     n=$(grep -oF 'board_context' "$f" | wc -l)
-    [ "$n" -eq 1 ] || fail "t3: 'board_context' spelled $n times in $f, want exactly once (the STATE key has one canonical mention; AC3)"
+    [ "$n" -eq 1 ] || fail "t3: 'board_context' spelled $n times in $f, want exactly once (the STATE key has one canonical mention; AC3 — the cards reword must not add a second literal)"
   done
   # Re-pin posture: the pinned section titles are rulesync-surface c4's
   # fixture — extract them live from that suite instead of restating the

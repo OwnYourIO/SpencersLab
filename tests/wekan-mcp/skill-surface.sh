@@ -20,6 +20,13 @@
 # the live AST walk plus the shared registry-parity row check — the absolute
 # registry size stays pinned once, in tools.sh t2.
 #
+# cf-123 C01 test round (2026-11-07, agent-test): t3 gains the cards-group
+# tokens arm — the schema fence in the ONE owner section must carry
+# cards:/card_number/card_id/labels (the strict-YAML per-list cards shape,
+# owner rulings #1/#2/#3). t4 is untouched: C04's get_board key projection is
+# a doc-row change with NO registry move, and its offline arm lives in
+# tools.sh t10 (which t5 nests).
+#
 # Statics-only by design (D8 precedent: no network in suites — the live
 # dev-boards smoke is C03's, dev+run side). Red before C01: t1-t4/t7 fail on
 # the absent skill directory, t6 on the unlisted skill name — every red names
@@ -121,7 +128,7 @@ if want t2; then
   ok "t2: the three server ids and all ten rule tokens grep out of SKILL.md (C01 AC1)"
 fi
 
-# --- t3: one normative Board context schema, owned by this skill (C01 AC2) -------
+# --- t3: one normative Board context schema, owned by this skill (C01 AC2 + cf-123 C01 AC6 cards group) -------
 if want t3; then
   [ -f "$SKILL" ] || fail "t3: $SKILL does not exist"
   # find, not git-ls: the skill arrives untracked until dev commits it, and a
@@ -134,7 +141,21 @@ if want t3; then
     || fail "t3: '$HEADER' must occur in exactly one markdown file outside .agents/plans/, $SKILL — found: ${owners:-<none>}"
   n=$(grep -cF "$HEADER" "$SKILL")
   [ "$n" -eq 1 ] || fail "t3: SKILL.md must carry the canonical schema header exactly once, found $n (the schema has one normative home)"
-  ok "t3: the Board context schema header is owned solely by $SKILL (C01 AC2)"
+  # cf-123 C01: the fence in the owner section shows the cards group — every
+  # In Process list carries cards: with exactly the three per-card fields
+  # (card_number / card_id / labels). The owner section is where the shape
+  # becomes contract; the consumers point at it, they never copy it.
+  python3 - "$SKILL" <<'PY' || fail "t3: the schema section lost the cards group or its per-card field tokens (cf-123 C01 AC6)"
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r'(?ms)^## Board context block schema[^\n]*\n(.*?)(?=^## |\Z)', text)
+assert m, "the '## Board context block schema' section moved or was renamed — the single normative home is gone"
+sec = m.group(1)
+for tok in ("cards:", "card_number", "card_id", "labels:"):
+    if tok not in sec:
+        print(f"schema section lost the {tok!r} token — the cards group (card_number/card_id/labels per card) must be fenced in the schema itself"); sys.exit(1)
+PY
+  ok "t3: the Board context schema header is owned solely by $SKILL and its section fences the cards group with the three per-card fields (C01 AC2 + cf-123 C01 AC6)"
 fi
 
 # --- t4: call-shapes.md — one stamped row per registered tool, no line refs ----
