@@ -38,7 +38,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # One pinned Node for every workspace: a node version manager would let a
 # workspace drift off the pin.
 # renovate: datasource=node-version depName=node
-ARG NODE_VERSION=26.12.1
+ARG NODE_VERSION=26.13.0
 
 # Go from go.dev: the Debian-packaged Go lags what the repo's own tooling is
 # built against.
