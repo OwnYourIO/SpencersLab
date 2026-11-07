@@ -2,7 +2,8 @@
 # chunks/C02.md AC1-AC4): extract the service `vllm:` subtree, render with
 # --set domain/clusterName, and assert AC2/AC3/AC4 line by line — the full
 # D4 serve recipe verbatim, the complete container env set, probes,
-# securityContext, GPU/RAM/shm pod shape, the exactly-two scrape annotations,
+# securityContext, the privileged+hostPath device shape, GPU/RAM/shm pod
+# shape, the exactly-two scrape annotations,
 # the peer-hop Service name, and both persistence legs. All tests
 # designed-red at test-write time: charts/vllm and the service `vllm:` block
 # do not exist yet, so every render/extract fails on the absent chart — that
@@ -125,6 +126,33 @@ def test_ac2_security_context_trio_plus_repo_standard():
     )
 
 
+def test_ac2_privileged_hostpath_devices():
+    """The strata device-access ruling (EXPLORE 8.7) rendered: privileged
+    plus the /dev/kfd (CharDevice) and /dev/dri (Directory) hostPath volumes
+    mounted back at the same paths — the only sanctioned GPU device path on
+    this node. The plugin side (no amd.com/gpu) is pinned in
+    test_ac2_gpu_ram_shm_pod_shape; together the two tests hold the
+    hostPath-for-privileged swap closed."""
+    docs, _ = _service_render()
+    container = V.main_container(V.deployment(docs))
+    assert container.get("securityContext", {}).get("privileged") is True, (
+        "C02 AC2: privileged must be true (the strata device-access ruling, EXPLORE 8.7)"
+    )
+    pod = V.pod_template(V.deployment(docs))["spec"]
+    hostpaths = {v["hostPath"]["path"]: v["hostPath"].get("type")
+                 for v in pod.get("volumes", []) if "hostPath" in v}
+    assert hostpaths.get("/dev/kfd") == "CharDevice", (
+        f"C02 AC2: /dev/kfd must be a CharDevice hostPath volume, got {hostpaths}"
+    )
+    assert hostpaths.get("/dev/dri") == "Directory", (
+        f"C02 AC2: /dev/dri must be a Directory hostPath volume, got {hostpaths}"
+    )
+    mounts = {m.get("mountPath") for c in pod["containers"] for m in c.get("volumeMounts", [])}
+    assert {"/dev/kfd", "/dev/dri"} <= mounts, (
+        f"C02 AC2: the container must mount both host device paths, got {sorted(mounts)}"
+    )
+
+
 def test_ac2_gpu_ram_shm_pod_shape():
     docs, _ = _service_render()
     deploy = V.deployment(docs)
@@ -134,10 +162,14 @@ def test_ac2_gpu_ram_shm_pod_shape():
     container = V.main_container(deploy)
     resources = container.get("resources") or {}
     limits = resources.get("limits") or {}
-    assert str(limits.get("amd.com/gpu")) == "1", (
-        f"C02 AC2: limits must carry amd.com/gpu '1', got {limits}"
-    )
     requests = resources.get("requests") or {}
+    # The strata device-access ruling (EXPLORE 8.7): the GPU arrives by
+    # privileged + hostPath /dev/kfd + /dev/dri (pinned in
+    # test_ac2_privileged_hostpath_devices), so a device-plugin allocation
+    # is a contradiction, not a second device source.
+    assert "amd.com/gpu" not in {**requests, **limits}, (
+        f"C02 AC2: amd.com/gpu contradicts the privileged+hostPath device ruling, got {resources}"
+    )
     assert str(requests.get("cpu")) == "4", f"C02 AC2: cpu request must be 4, got {requests.get('cpu')}"
     # RAM-law sizing (EXPLORE §8.6): the 32Gi limit is the cap that keeps the
     # 125Gi node undisturbed; the request rides the documented band

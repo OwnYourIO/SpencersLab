@@ -16,8 +16,10 @@ app-template:
   # fixed here (values), never in a template.
   modelPath: &modelPath /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
 
-  # ROCr device index of the R9700 (D2). The index itself is confirmed at
-  # the C06 rocminfo gate — retarget this key, never the template.
+  # ROCr device index of the R9700 (D2). With the hostPath device pattern
+  # the index is HOST enumeration — 0 = R9700, 1 = 8060S — so the pin is
+  # deterministic (no plugin allocation to hide it). The index is confirmed
+  # at the C06 rocminfo gate — retarget this key, never the template.
   rocrVisibleDevices: "0"
 
   # D5/Q6: --enable-sleep-mode ON by default (the operator time-sharing
@@ -147,13 +149,20 @@ app-template:
               memory: 16Gi
             limits:
               memory: 32Gi
-              amd.com/gpu: "1"
           securityContext:
-            # Upstream AMD pod shape (R1 Q5): the ROCm runtime needs the
-            # full ioctl surface (Unconfined seccomp), the video group for
-            # /dev/dri, and SYS_PTRACE for the HIP debugger path — the
+            # Device access: the strata ruling (EXPLORE 8.7) — privileged +
+            # hostPath /dev/kfd + /dev/dri (the persistence entries below),
+            # NOT the amd.com/gpu device plugin. The plugin advertises by
+            # count and cannot name the card: on this R9700+8060S node it
+            # allocated the 8060S and the pod crash-looped with zero HIP
+            # devices (2026-11-07). Chip targeting happens inside, via
+            # rocrVisibleDevices on host enumeration (0 = R9700). The rest
+            # is the upstream AMD pod shape (R1 Q5): the ROCm runtime needs
+            # the full ioctl surface (Unconfined seccomp), the video group
+            # for /dev/dri, and SYS_PTRACE for the HIP debugger path — the
             # approved deviation from the repo drop-ALL standard, confined
-            # to this pod (strata precedent, EXPLORE 8.7).
+            # to this pod.
+            privileged: true
             allowPrivilegeEscalation: false
             seccompProfile:
               type: Unconfined
@@ -192,3 +201,18 @@ app-template:
       sizeLimit: 8Gi
       globalMounts:
         - path: /dev/shm
+    # The GPU device nodes — hostPath per the strata ruling (the
+    # securityContext comment carries the why), so the container sees host
+    # enumeration and rocrVisibleDevices pins the R9700 from it.
+    kfd:
+      type: hostPath
+      hostPath: /dev/kfd
+      hostPathType: CharDevice
+      globalMounts:
+        - path: /dev/kfd
+    dri:
+      type: hostPath
+      hostPath: /dev/dri
+      hostPathType: Directory
+      globalMounts:
+        - path: /dev/dri
