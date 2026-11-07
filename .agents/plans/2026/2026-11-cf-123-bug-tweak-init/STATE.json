@@ -403,6 +403,27 @@
       "dev_rounds": 1,
       "handoffs": [
         {
+          "role": "review",
+          "status": "APPROVED (round 2)",
+          "chunk": "C02",
+          "session": "ses_e48d721a0ffeoHUlSbLxmCweP4 (round 2 — fresh independent re-verification; round 1's APPROVED record exists on disk at chunks/C02.md, its RESULT transport was lost in the ~17:50Z restart)",
+          "verdict": "APPROVED — zero blocker/major/minor/nit findings",
+          "commands_run": [
+            "git diff HEAD --stat => single file (.agents/loops/pipeline-worker.md, 16 ins / 55 del); C01/C04/test-wave already committed (4c9cccbf0 / 29b4ea2ce / 4d94218de)",
+            "bash tests/provider-loops/surface.sh => t1-t10, 10 ok (clean pass; t7 green via the committed C01 rider — AC7's expected-red superseded by the recorded wave-order deviation, strictly better)",
+            "node --test tests/opencode/pipeline-locks-tick.test.ts => 15/15",
+            "bash tests/noop-marker/surface.sh n4 => pass",
+            "npx aislop ci --changes => 0 errors, 0 warnings",
+            "cmp frontmatter lines 1-8 + body line vs HEAD => IDENTICAL (677-byte body both, trailing newline + adjacency preserved)",
+            "t9/t10 pin-bite scratch re-derivation (/tmp/opencode) => t9: 41 lines RED / 25 GREEN / 16 GREEN (inclusive cap live); t10: 'also enabled' reintroduced RED, enabled:false past the 250-char window RED, delivered GREEN",
+            "N4 spans independently computed => 95 <=900, 25 <=500; raw /pipeline-tick occurs exactly once, in the comment only",
+            "dead-weight grep (mcp-surface-absent, run-tag, stagger, :30, D21, D15, D30, D9-Q5, OQ10, pipeline-worker-local, 'also enabled', 'Shipped DISABLED', 'known failure') => all clean",
+            "full suite attributed: board-context.test.ts 40/9 (all 9 = C03 by-design); tools.sh 10 ok; skill-surface 8 ok; board-context.sh t1-t5 pass, t6 = pre-existing A15/01317f447; rulesync-surface c1-c18 pass, c19 same drift; gate t17 known exclusion; hourly-board-check 8 ok; cf90-ledger 8 ok"
+          ],
+          "findings": "none — dev's wording adaptation ('per the 2026-11-07 live probe' vs draft 'since 2026-11') re-accepted: onset claim unverifiable, pins are the contract, all pins hold on delivered bytes",
+          "deviations": "AC7's literal expectation (t7 RED at C02 review time) did not hold — C01 ran ahead per the recorded wave_order_note and its t7 rider is committed, so t7 is GREEN and the gate is a clean pass; substantively better, no C02 defect"
+        },
+        {
           "role": "dev",
           "status": "DONE",
           "chunk": "C02",
