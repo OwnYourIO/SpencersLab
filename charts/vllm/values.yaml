@@ -9,12 +9,14 @@ cachePvcSize: 10Gi
 
 app-template:
   # --model value: the Q4 GGUF the live qwen3.8-27b-q4 rung references
-  # (unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL), auto-fetched into the HF hub-cache
-  # layout under the shared 500Gi llama-swap PVC (LLAMA_CACHE=/models). The
-  # snapshot <commit> segment resolves on target — the C06 step-2 `find` is
-  # the path authority, so a wrong path is an operator-visible startup error
-  # fixed here (values), never in a template.
-  modelPath: &modelPath /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
+  # (unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL), auto-fetched by llama.cpp into
+  # its cache layout at the LLAMA_CACHE=/models root of the shared 500Gi
+  # llama-swap PVC — no hub/ segment (that is the HUGGINGFACE_HUB_CACHE
+  # convention, not llama.cpp's). The hash is the live snapshot discovered
+  # on target 2026-11-07; a re-fetch of the weights re-pins this key — a
+  # wrong path is an operator-visible startup error fixed here (values),
+  # never in a template (the C06 step-2 find is the path authority).
+  modelPath: &modelPath /models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q4_K_XL.gguf
 
   # ROCr device index of the R9700 (D2). With the hostPath device pattern
   # the index is HOST enumeration — 0 = R9700, 1 = 8060S — so the pin is
