@@ -162,8 +162,10 @@ app-template:
             # for /dev/dri, and SYS_PTRACE for the HIP debugger path — the
             # approved deviation from the repo drop-ALL standard, confined
             # to this pod.
+            # No allowPrivilegeEscalation key here: k8s rejects explicit
+            # false alongside privileged: true, and escalation is implicit
+            # in privileged mode.
             privileged: true
-            allowPrivilegeEscalation: false
             seccompProfile:
               type: Unconfined
             runAsGroup: 44

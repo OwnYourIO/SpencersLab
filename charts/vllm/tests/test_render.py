@@ -121,8 +121,9 @@ def test_ac2_security_context_trio_plus_repo_standard():
     assert "SYS_PTRACE" in (sc.get("capabilities") or {}).get("add", []), (
         "C02 AC2: capabilities.add must include SYS_PTRACE"
     )
-    assert sc.get("allowPrivilegeEscalation") is False, (
-        "C02 AC2: allowPrivilegeEscalation must be false (repo standard)"
+    assert sc.get("allowPrivilegeEscalation") is not False, (
+        "C02 AC2: allowPrivilegeEscalation must not be explicitly false "
+        "(k8s rejects false alongside privileged: true — the strata shape omits the key)"
     )
 
 
