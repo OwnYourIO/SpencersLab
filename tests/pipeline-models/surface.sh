@@ -66,6 +66,21 @@
 # catalog rows) and turn green with the wire, its skills-text legs are C02's.
 # M4's wire-id list is unchanged (the wire id is not new).
 #
+# AC trace (cf-131 C04 re-pin, rounds 1+2+3 — the 0.30 Radiance base move):
+# M3 ONLY, additively — the three vLLM class rows gain the capabilities
+# asserts (input [text, image] + output [text], the round-1 OQ9/R4 carry
+# re-grounded on the 0.30 vision records; tools: true, the round-2 Q6
+# override standing on the 0.30 stack's own 30/30 tool record — its
+# TP2-only + mtp-29/30 caveats ride the runbook's on-target tool smoke, not
+# this suite). The M3 vLLM-loop context assert STAYS 262144 byte-verbatim:
+# the re-plan's 65536 re-pin is VOID (round-2 Q3 keep) and the round-3 Q11
+# engine-cap ruling makes the axis TRUE on both sides (catalog 262144 ==
+# engine --max-model-len 262144, D31). M1, M2, M4, M5, M6, M7: byte-untouched
+# (the class table + floor needles + wire-id leg are the protected wiring —
+# the re-scope and the base move change no class mapping). Red posture: M3 is
+# red until C04's catalog edit lands (the capabilities key is absent on the
+# rows until then); the other arms HOLD green across the window.
+#
 # Red posture (cf-83): M1, M2 and M5 are red before the C01 dev edit — the
 # sources still route Flash+Local to q3, so the strata route needles and the
 # q3/strix absence guards name the missing re-route (never a harness fault).
@@ -359,7 +374,10 @@ fi
 # before AND after the dev edit. cf-105 C03 re-pins it additively: the two
 # gpu-ai vLLM class rows (D10 — same wire modelID, only body.priority
 # differs) join the presence checks, and the peer wire name must stay
-# shadow-free against the local llama-swap model ids (R3 Q5.2).
+# shadow-free against the local llama-swap model ids (R3 Q5.2). cf-131 C04
+# re-pins the vLLM loop additively: the capabilities marker (input/output —
+# the round-1 OQ9/R4 carry; tools — the round-2 Q6 override) and the
+# true-axis record below; the context assert itself stays byte-verbatim.
 if want m3; then
   [ -f "$CAT" ] || fail "M3[HOLD]: $CAT missing"
   cat >"$TMP/catalog.js" <<'JS'
@@ -395,8 +413,14 @@ for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flas
 }
 // cf-105 C03 + cf-105-vllm-followup C01: the three vLLM class rows — D10
 // keeps the wire modelID (qwen3.8-27b-vllm) identical on all rows; only
-// body.priority differs (5 default / 1 urgent / 9 low), and the HR3 context
-// pin is 262144 on all three.
+// body.priority differs (5 default / 1 urgent / 9 low). cf-131 C04: the
+// 262144 context pin below is the owner-ruled TRUE AXIS — catalog 262144
+// == engine --max-model-len 262144 (round-2 Q3 keep + round-3 Q11
+// engine-cap ruling, D31) — the assert stays byte-verbatim; the same loop
+// gains the capabilities marker (round-1 OQ9/R4 input/output + round-2 Q6
+// tools: true, the 0.30 stack's own 30/30 tool record with its TP2-only
+// and mtp-29/30 caveats — the runbook's on-target tool smoke closes it).
+const capEq = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
 for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
   const e = cur[k];
   if (!e) { errs.push(`${k}: catalog row missing (cf-105 C03 adds the default/urgent pair, cf-105-vllm-followup C01 adds the low row)`); continue; }
@@ -404,6 +428,10 @@ for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1]
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
   if (!e.body || e.body.priority !== prio) errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
+  const caps = e.capabilities || {};
+  if (!capEq(caps.input, ['text', 'image'])) errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text","image"] (cf-131 C04 — the 0.30 stack serves vision: records [109] + [91])`);
+  if (!capEq(caps.output, ['text'])) errs.push(`${k}: capabilities.output is ${JSON.stringify(caps.output)}, want ["text"] (cf-131 C04)`);
+  if (caps.tools !== true) errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true (cf-131 round-2 Q6 override — the tools marker on the shipped dflash lane)`);
 }
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
@@ -428,7 +456,7 @@ ids = model_ids(chart.get("config") or {})
 ids |= model_ids((svc.get("llama-swap") or {}).get("config") or {})
 assert "qwen3.8-27b-vllm" not in ids, "qwen3.8-27b-vllm is a local model id in the chart or gpu-ai overlay config"
 PY
-  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, 262144 context and body.priority 5/1/9 (cf-105 C03 + cf-105-vllm-followup C01 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
+  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, body.priority 5/1/9, the 262144 context on the TRUE axis (catalog == engine cap, cf-131 round-2 Q3 + round-3 Q11) and the capabilities marker (input [text, image], output [text], tools true — cf-131 C04 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
 fi
 
 # --- M4: serving-fact cross-check (AC8) -------------------------------------------

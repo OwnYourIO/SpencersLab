@@ -1,5 +1,5 @@
 # Shared helpers for the charts/vllm render-contract suite
-# (2026/2026-11-cf-105-feat-implement-vllm — C02).
+# (2026/2026-11-cf-105-feat-implement-vllm — C02; cf-131 rounds 1+2+3).
 #
 # Contract surface (plan "Commands"): the service-level render is produced
 # with the documented extract-and-render pattern — the `vllm:` subtree of
@@ -8,8 +8,19 @@
 # values). A second render uses the appset release name `gpu-ai-vllm`
 # because the peer-hop DNS name (AC3) only resolves under that release name.
 #
-# Everything here is designed-red at test-write time: charts/vllm does not
-# exist yet, so every render and values read below fails naming C02.
+# cf-131 generation witness: one test session writes this suite before wave
+# 1, but every chunk's green bar is the FULL suite on that chunk's commit —
+# C01 still ships the pre-switch chart (its AC names the untouched legs as
+# the stability witness), C02 flips the serve plane while the persistence
+# legs must stand on the old mount shape, C03 moves the data plane. A single
+# static expectation cannot serve three waves, so the legs C02/C03 re-pin
+# branch on the generation read from the chart itself: the main-container
+# image repository (cf131_plane) and the setup init container (staged_plane).
+# Each branch asserts the COMPLETE contract of its generation, so the moment
+# a chunk's flip lands every new constant binds at once and any half-moved
+# state reds (a flipped marker with un-migrated env/recipe, or migrated
+# mounts with the marker un-flipped). The next wave's contract never runs
+# early and never needs a hand edit to the suite between chunks.
 
 from __future__ import annotations
 
@@ -26,8 +37,12 @@ REPO_ROOT = CHART_DIR.parent.parent
 SERVICE_VALUES = REPO_ROOT / "services" / "gpu-ai" / "prod" / "values.yaml"
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "vllm-render-tests.yaml"
 
-# The D4 serve recipe (plan locked decision D4, HR3 re-scoped): exact flag
-# order and values. The MODEL placeholder is substituted with the
+# ---------------------------------------------------------------------------
+# The cf-105 (GGUF) generation contract — the pre-switch stability witness.
+# ---------------------------------------------------------------------------
+
+# The D4 serve recipe (cf-105 plan locked decision D4, HR3 re-scoped): exact
+# flag order and values. The MODEL placeholder is substituted with the
 # values-driven modelPath.
 D4_RECIPE = [
     ("--model", "MODEL"),
@@ -55,6 +70,143 @@ D4_RECIPE = [
 MODEL_PREFIX = "/models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/"
 MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 
+# ---------------------------------------------------------------------------
+# The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
+# Every constant here is copied from the cf-131 plan of record: the round-3
+# header + DECISIONS D23-D31 + the C01/C02/C03 chunk recipes. They are the
+# ground truth dev must satisfy; a re-pin changes the plan first.
+# ---------------------------------------------------------------------------
+
+# The C01 thin-re-export target and the C02 flip of the chart image pin
+# (D23: the repo's first-build artifact for the 0.30 Radiance stack).
+CF131_IMAGE_REPO = "ghcr.io/ownyourio/vllm-radiance-mxfp4"
+UPSTREAM_IMAGE = "magiccodingman/vllm-radiance"
+UPSTREAM_TAG = "1.0.397"
+UPSTREAM_DIGEST = "sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0"
+SRC_COMMIT = "5b99d66c844fd0a54e4a7eb93b40a1ece009a53d"          # the OCI revision label
+ENGINE_COMMIT = "ced6857afa0ea7b2e3f0846a62e1394e90f15607"      # = the v0.30.0 tag commit
+
+# The retired GGUF overlay's name, assembled so the literal never sits
+# contiguously in this file: the retirement scans below walk
+# charts/vllm/tests/ itself, and an intact literal would match its own
+# absence-assertion (the bjw-s.common needle-exclusion precedent expressed
+# without the exclusion).
+LEGACY_REF = "vllm" "-rocm"
+
+# The C02 modelPath dual edit (D24/D13, round-2 Q8 raw-release ruling): the
+# served dir is exact and plain (no HF snapshot-hash segment — a re-fetch
+# moves source-sha + marker + path together, the path pins the OUTPUT).
+MODEL_DIR = "/models/Qwen3.8-27B-Quark-AWQ-MXFP4"
+DRAFTER_DIR = "/models/Qwen3.8-27B-DFlash2-FP8"
+TARGET_REPO = "amd/Qwen3.8-27B-Quark-AWQ-MXFP4"
+DRAFTER_REPO = "tcclaviger/Qwen3.8-27B-DFlash2-FP8"
+TARGET_SHA = "93245f7c00f1a8964b66a97c6e02e2fd09080be4"          # the post-mtp-exclude-fix revision
+DRAFTER_SHA = "ee0cb26a8279b7910cc28d82a8a3e15e4728d56f"         # the qualified drafter revision
+STAGED_MARKER = f".staged-mxfp4-{TARGET_SHA}-{DRAFTER_SHA}"      # both-sha-keyed (D14/D26)
+
+# The shipped dflash spec JSON (D24: the R3 L2.3 0.30-native keys, K7 the
+# top measured lane, draft max_model_len re-bound to the target's 262144 by
+# the round-3 Q11 engine-cap chain). The single-quoted YAML must render this
+# byte-for-byte into the arg string — a quote drift reds the verbatim test.
+SPEC_CONFIG_DFLASH = (
+    '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8",'
+    '"num_speculative_tokens":7,"max_model_len":262144,'
+    '"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}'
+)
+# The mtp toggle JSON is a values-COMMENT record, never the shipped splice
+# (D16/D24); the comment test matches whitespace-stripped fragments.
+SPEC_CONFIG_MTP = (
+    '{"method":"mtp","num_speculative_tokens":4,"attention_backend":"R4D",'
+    '"disable_padded_drafter_batch":true}'
+)
+
+# The D24 serve recipe (cf-131 plan of record + round-3 Q11 engine-cap
+# ruling): exact flag order and values, rendered at the SERVICE level where
+# only modelPath/rocrVisibleDevices are overridden. The recipe starts at
+# --served-model-name because flag_pairs() skips the leading non-flag token
+# — the args-START-with-the-model-path law (D24: the 0.30 entrypoint does
+# `exec vllm serve "$@"`, so a `vllm`/`serve` token would double the verb)
+# is asserted directly on args[0] by the verbatim test.
+RECIPE_CF131 = [
+    ("--served-model-name", "qwen3.8-27b-vllm"),
+    ("--tensor-parallel-size", "1"),
+    ("--max-num-seqs", "3"),
+    ("--max-model-len", "262144"),
+    ("--gpu-memory-utilization", "0.90"),
+    ("--max-num-batched-tokens", "2560"),
+    ("--kv-cache-dtype", "fp8"),
+    ("--attention-backend", "R4D"),
+    ("--enable-prefix-caching", None),
+    ("--mamba-cache-mode", "align"),
+    ("--no-async-scheduling", None),
+    ("--enable-auto-tool-choice", None),
+    ("--tool-call-parser", "qwen3_coder"),
+    ("--reasoning-parser", "qwen3"),
+    ("--generation-config", "auto"),
+    ("--default-chat-template-kwargs", '{"reasoning_effort":"xhigh"}'),
+    ("--trust-remote-code", None),
+    ("--speculative-config", SPEC_CONFIG_DFLASH),
+    ("--host", "0.0.0.0"),
+    ("--port", "8000"),
+    # the Q7 carries appended after the compose-baseline block (round-2):
+    ("--scheduling-policy", "priority"),
+    ("--watermark", "0.05"),
+    ("--limit-mm-per-prompt", "image=4"),
+]
+
+# The D24 drop list — AC7's absence side. Each of these rode the cf-105
+# recipe and must be GONE from the 0.30 render, not merely unreferenced.
+DROPPED_FLAGS_CF131 = (
+    "--enforce-eager",
+    "--enable-sleep-mode",
+    "--disable-access-log-for-endpoints",
+    "--language-model-only",
+    "--kv-cache-memory-bytes",   # the re-measure-gate law (D24): the chart ships NO pool pin
+    "--mamba-cache-dtype",
+    "--override-generation-config",
+)
+
+# The D25 20-var main-container env law (the exact set — the entrypoint's
+# exit-64 combination gates make any var drift a boot failure, so exact
+# equality IS the risk control). ROCR_VISIBLE_DEVICES splices from the
+# service values key, the rest are literal.
+def env_want_cf131(rocr_value: str) -> dict:
+    return {
+        "ROCR_VISIBLE_DEVICES": str(rocr_value),
+        "HIP_VISIBLE_DEVICES": "0",           # the 8060S-exclusion twin
+        "HF_HUB_OFFLINE": "1",
+        "VLLM_CACHE_ROOT": "/cache/vllm",     # the four /cache/* re-declarations —
+        "TORCHINDUCTOR_CACHE_DIR": "/cache/inductor",   # C03's mount lands the target
+        "TRITON_CACHE_DIR": "/cache/triton",
+        "AITER_ROOT_DIR": "/cache/aiter",
+        "FLASH_ATTENTION_TRITON_AMD_ENABLE": "TRUE",    # the round-1 OQ12 owner ruling
+        "RADIANCE_WEIGHT_QUANTIZATION": "auto",         # the entrypoint seam name (D25)
+        "RADIANCE_MXFP4": "1",
+        "RADIANCE_MXFP4_W4A8": "1",
+        "RADIANCE_MXFP4_W4A8_MIN_M": "0",
+        "RADIANCE_MXFP4_DECODE_MAX_M": "64",
+        "RADIANCE_MXFP4_TN4_MIN_M": "2048",
+        "RADIANCE_MXFP4_WPERM": "1",
+        "RADIANCE_MXFP4_DECODE_NT": "1",
+        "VLLM_USE_V2_MODEL_RUNNER": "1",      # the dflash V2-lane prerequisites
+        "RADIANCE_FAST_DRAFT": "1",
+        "RADIANCE_COMPILATION_CONFIG": '{"cudagraph_mode":"PIECEWISE"}',
+        "HSA_TOOLS_DISABLE_REGISTER": "1",    # issue #6/#12 mitigation (R3-Q5)
+    }
+
+# Named individually because AC5 calls them out — the dict equality above
+# already excludes them, but a failure message must name WHICH drop leaked.
+DROPPED_ENV_CF131 = ("RADIANCE_GDN_LAZY", "HUGGINGFACE_HUB_CACHE", "VLLM_SERVER_DEV_MODE")
+
+# Probe budget on the 0.30 boot class (D18 amended): 60 s + 15 s x 160 = the
+# 40-min conservative envelope for the first-deploy (init staging + cold
+# AITER-JIT boot). The startup probe is the LIVE-262144 risk's loud, gated
+# refusal leg (D31) — the exact budget, not a floor, is the contract.
+PROBES_CF131 = {"initialDelaySeconds": 60, "periodSeconds": 15, "failureThreshold": 160}
+
+# The C03 init container bars (D26): the plan numbers, pinned exactly.
+INIT_RESOURCES = {"requests": {"cpu": "2", "memory": "4Gi"}, "limits": {"memory": "8Gi"}}
+
 # Probe ports may render as the numeric 8000 or the named container port
 # "http" — the name is bound to 8000 by the containerPort contract
 # (test_render), so both forms hit the same endpoint.
@@ -76,6 +228,26 @@ def chart_values() -> dict:
     path = CHART_DIR / "values.yaml"
     assert path.is_file(), "C02: charts/vllm/values.yaml missing — the chart is not implemented yet"
     return yaml.safe_load(path.read_text())
+
+
+def find_image_nodes(node, out: list):
+    if isinstance(node, dict):
+        if "repository" in node and "tag" in node:
+            out.append(node)
+        for v in node.values():
+            find_image_nodes(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            find_image_nodes(v, out)
+
+
+def cf131_plane(values: dict | None = None) -> bool:
+    """True once the chart image pin names the cf-131 re-export (the C02
+    flip). Every generation-branch reads exactly this marker so the render
+    contract, the values contract and the CI witnesses switch together."""
+    nodes: list = []
+    find_image_nodes((values if values is not None else chart_values()), nodes)
+    return any(node.get("repository") == CF131_IMAGE_REPO for node in nodes)
 
 
 def service_vllm_block() -> dict:
@@ -132,6 +304,23 @@ def main_container(deploy: dict) -> dict:
     raise AssertionError(f"C02: no container named 'vllm'; got {[c.get('name') for c in containers]}")
 
 
+def init_container(deploy: dict) -> dict:
+    """The C03 staging actor (D14): the rendered pod carries EXACTLY one init
+    container, named 'setup' — more than one would run staging alongside
+    something the plan never sanctioned."""
+    inits = deploy["spec"]["template"]["spec"].get("initContainers") or []
+    assert len(inits) == 1, f"C03: expected exactly one init container, got {[i.get('name') for i in inits]}"
+    assert inits[0].get("name") == "setup", f"C03: the init container is named {inits[0].get('name')!r}, want setup"
+    return inits[0]
+
+
+def staged_plane(deploy: dict) -> bool:
+    """True once the C03 data plane lands (the setup init container — the
+    same artifact the persistence advancedMounts conversion writes in the
+    same chunk, so the render's initContainers list is the C02/C03 marker)."""
+    return bool(deploy["spec"]["template"]["spec"].get("initContainers"))
+
+
 def pod_template(deploy: dict) -> dict:
     return deploy["spec"]["template"]
 
@@ -149,6 +338,13 @@ def persistent_volume_claims(docs) -> list:
 
 
 def assert_model_path_shape(path, label: str) -> None:
+    if cf131_plane():
+        assert path == MODEL_DIR, (
+            f"C02 (cf-131): {label} model path {path!r} must be EXACTLY {MODEL_DIR} — the raw-release "
+            "dir of the 500 GiB weights PVC (the round-2 Q8 raw-release ruling; the source revision "
+            f"{TARGET_SHA[:8]} pins the marker + the comment + the runbook, NOT the path)"
+        )
+        return
     assert isinstance(path, str) and path.startswith(MODEL_PREFIX), (
         f"C02: {label} --model path {path!r} must live under the LLAMA_CACHE-root "
         f"snapshot layout {MODEL_PREFIX} (the 500 GiB weights PVC, RESEARCH Post Research V3)"
@@ -183,6 +379,8 @@ def flag_pairs(args: list) -> list:
 
 
 def expected_recipe(model_path: str) -> list:
+    if cf131_plane():
+        return list(RECIPE_CF131)
     return [(flag, model_path if value == "MODEL" else value)
             for flag, value in D4_RECIPE]
 

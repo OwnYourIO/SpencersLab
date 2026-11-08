@@ -1,9 +1,10 @@
-# C02 trio contract (2026/2026-11-cf-105-feat-implement-vllm —
-# chunks/C02.md AC5 + the plan trio greps): the gpu-ai ApplicationSet entry is
-# exact, the service-level `vllm:` block carries the two documented overrides,
-# the trio proxy leg is deliberately skipped with a ruling comment, and the
-# two sibling surfaces that must stay untouched (custom-values/gpu-ai and
-# services/gpu) carry zero vllm keys. Pure file reads — no helm needed — and
+# C02 trio contract (born 2026/2026-11-cf-105-feat-implement-vllm —
+# chunks/C02.md AC5 + the plan trio greps; cf-131 C02 reworded the modelPath
+# leg to the raw-release dir law): the gpu-ai ApplicationSet entry is
+# exact, the service-level `vllm:` block carries the two documented overrides
+# and nothing else, the trio proxy leg is deliberately skipped with a ruling
+# comment, and the two sibling surfaces that must stay untouched
+# (custom-values/gpu-ai and services/gpu) carry zero vllm keys. Pure file reads — no helm needed — and
 # all designed-red at test-write time: the `vllm:` block and the charts entry
 # do not exist yet.
 
@@ -42,7 +43,13 @@ def test_trio_vllm_block_carries_the_two_overrides():
         "C07 AC5: the vllm: block must nest its overrides under app-template: (the repo "
         "app-template idiom — C02's top-level shape is void, owner ruling 2026-11-06)"
     )
-    # modelPath pinned to the actual q4 GGUF path on the PVC (C02 task).
+    # The block carries EXACTLY the two documented overrides — a third key
+    # is a silent re-pin of something the chart owns (cf-131 C02 AC9).
+    assert set(sub) == {"modelPath", "rocrVisibleDevices"}, (
+        f"C02 AC5: vllm.app-template must carry exactly the two overrides, got {sorted(sub)}"
+    )
+    # modelPath: the exact served model on the PVC — the cf-105 Q4 GGUF
+    # snapshot layout until the cf-131 dual edit lands the raw-release dir.
     model_path = sub.get("modelPath")
     V.assert_model_path_shape(model_path, "service vllm block")
     # rocrVisibleDevices "0" = R9700 (D2); a values key so the template never changes.
