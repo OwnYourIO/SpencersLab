@@ -1,0 +1,597 @@
+{
+  "feature": "2026/2026-11-cf-131-feat-vllm-fp8-official",
+  "plan_status": "approved",
+  "final_approval": {
+    "at": "2026-11-08T15:12:31+00:00 (verified workspace clock)",
+    "by": "owner, in-session question after the Q11 correction pass (the HIL Planning stop + the plan-approval pipeline gate, satisfied by the same interaction per the cf-106 precedent)",
+    "verdict": "Approve — run all waves",
+    "rounds_consumed": "three owner ruling rounds: batched round 1 (14 questions, 4 overrides), approval rejection + re-scope ruling (the MXFP4 fork), batched round 2 (Q1-Q10, 6 overrides), final rework + batched round 3 (R3-Q1..Q6 + Q11, 1 override: engine cap 262144)",
+    "risk_statements_carried": "A: the LIVE 262144 pool outcome (on-target unknown until the day-one re-measure gate; backstops: the 40-min probe, the gate's pool derivation + values-only --kv-cache-memory-bytes re-tune, the runbook startup contingency). B: the tools marker's standing risk (the 30/30 record is TP2-only, synthetic wire-gate, mtp lane 29/30 tool-gate-FAIL class; the on-target tool smoke in C05 is the closing gate)",
+    "post_plan_write_back": {
+      "at": "2026-11-08T15:12:31+00:00 (verified workspace clock; board calls completed 15:2x — one transient MCP session drop hit the read batch (Session not found on 4/7 parallel calls), verified + re-read sequentially per the playbook, then the write batch ran clean)",
+      "approval_comment": "uJqfFJ5o4kpC7FGX6",
+      "slug_field": "set (upsert, attached=true) on card unDxRqcrNTfahp656 — the run's combined line; the current value was null (fresh get_card verify before the write), so this is the stack's first line",
+      "consistency_check": "PASS — the link host (openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com) equals kickoff.session_origin (the claim-once recorded value, leg 2 script resolution)",
+      "deleted_unchecked_items": "35 of 35 (fresh get_checklist reads: Model(s) 2, Services 14, Type 6, Lifecycle 4, Human in the Loop 9 — zero failures)",
+      "surviving_checklist_items": {
+        "Model(s)": [
+          "Qwen Dense",
+          "Qwen Flash"
+        ],
+        "Services": [
+          "gpu-ai"
+        ],
+        "Type": [
+          "feat"
+        ],
+        "Lifecycle": [
+          "Exploration",
+          "Pre Research",
+          "Planning",
+          "Test Writing",
+          "Chunk Development",
+          "Chunk Review",
+          "Final Review"
+        ],
+        "Human in the Loop": [
+          "Planning",
+          "Chunk Review"
+        ]
+      }
+    }
+  },
+  "coord_session": "ses_e4860e71bffeqHykL23nSUdAJk",
+  "test_session": "ses_e44462844ffepO2mLc4sTneGwj",
+  "current_wave": 1,
+  "updated_at": "2026-11-08T18:16:15+00:00",
+  "kickoff": {
+    "card": "unDxRqcrNTfahp656",
+    "card_number": 131,
+    "card_title": "vLLM: drop GGUF — serve official FP8 checkpoint (KV-q4 default / q8 toggle, keep vision + 1m heads)",
+    "slug": "cf-131-feat-vllm-fp8-official",
+    "slug_source": "derived from card content (slug custom field was empty; auto-accepted — never joins the batched round)",
+    "type": "feat",
+    "worktree": "cf-131-feat-vllm-fp8-official",
+    "branch": "cf-131-feat-vllm-fp8-official",
+    "branch_minted_at": "5ddcf39972cb0430d8a94e0fe18f2a9cdfad4f60",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (the scheduled launch text carried no 'Session origin:' line)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "models_basis": "Provider: API label (hosted routing) + Model(s) checklist 'Qwen Dense' + 'Qwen Flash': largest checked (Dense) drives the planning tier, smallest checked (Flash) drives the code tier, per pipeline-models size order. Priority unset -> default class (no serving-class effect on an openrouter-routed card).",
+    "models_deviation": "Session-level model switch NOT applied: the owner launch text routes Provider: API cards to 'the OpenRouter equivalent' of this session's model; the v2.1.4 session PATCH route silently ignores the model field (four shapes tried at kickoff: nested model object, top-level modelID/providerID, flat model string, nested providerID/modelID — all no-ops; time.updated moved, model stayed gpu-ai/qwen3.8-27b-q4). The coord session therefore stays on the scheduled runner model; every subagent tier of this run launches on the models above. Claim comment KJ9TBv3jLpXgSiHdT records this for the owner.",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "stages": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "card's checked Lifecycle items, in card order (checked-stages-only; no Agent Decides Research, no Post Research, no Deployment, no Single Session)",
+    "human_in_the_loop": [
+      "Planning",
+      "Chunk Review"
+    ],
+    "checklist_answers": {
+      "Services": [
+        "gpu-ai"
+      ],
+      "Type": [
+        "feat"
+      ],
+      "Model(s)": [
+        "Qwen Dense",
+        "Qwen Flash"
+      ],
+      "Lifecycle": [
+        "Exploration",
+        "Pre Research",
+        "Planning",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review"
+      ],
+      "Human in the Loop": [
+        "Planning",
+        "Chunk Review"
+      ]
+    },
+    "claim": {
+      "pipelines": [
+        "AI"
+      ],
+      "derived_from": "board label 'Pipeline: AI' on card #131",
+      "setId": "b6547d73-b0a6-4fde-8656-a13be0657d8f",
+      "lock_file": "AI.json",
+      "claimed_at": "2026-11-07",
+      "card_move": "Not Started -> Executing",
+      "claim_comment": "KJ9TBv3jLpXgSiHdT"
+    },
+    "board_context": {
+      "collected": "2026-11-07T20:06:59.587Z",
+      "source": "launch block (dev-boards)",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "swimlanes": {
+        "In Process": "jLzy39L7djCRr67SF",
+        "Planning": "hFgncuRJ8Pkvpt8ki",
+        "Backlog": "MoZHQz3C4dSW4Atya",
+        "Farm": "BkNBQgMLJBvmCgMAQ"
+      },
+      "lists_In_Process": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_Backlog": {
+        "Inbox": "PjEZ39rXBdpNcpncs"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT (retired: never read, never written)",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      }
+    },
+    "preload": {
+      "at": "2026-11-07T21:20:00+00:00 (claim-time, approximate — stamp taken from run clock; the call itself landed on the sanctioned one-retry after a transient MCP drop)",
+      "tool": "dev-boards preload_board",
+      "cards": "whole-board export (In Process + Planning + Backlog + Farm swimlanes)",
+      "degraded": false,
+      "dependency_gate": "CLEAR for card 131 — the board-wide payload carries exactly one edge, related-to #124(QZPzjuGT4u6aQvq6C) -> #123(xdrvXPW3LeF2TGpGD), which never gates; no blocks/is-blocked-by edge points at card 131; card 131's own edge list is empty (get_card_details)"
+    },
+    "card_details": {
+      "at": "2026-11-07T21:18:00+00:00 (claim-time)",
+      "tool": "get_card_details",
+      "degraded": false,
+      "note": "the claim answer carried no card-details block (hook leg absent); coord called get_card_details itself once after probing the live catalog (39 tools = post-C10 surface), on the one permitted retry after a transient MCP drop that also swallowed the first attempt"
+    }
+  },
+  "pre_planning": {
+    "explore": {
+      "stage": "Exploration",
+      "session": "ses_e48106c26ffecNB4bQG7stiaKP",
+      "model": "openrouter/qwen/qwen3.8-27b",
+      "at": "2026-11-07T21:42:00+00:00",
+      "files": [
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/EXPLORE.md"
+      ],
+      "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/EXPLORE.md]\ncommands_run: [\n  \"git status/log/show/merge-base (read-only: branch tip 5ddcf3997, pivot commit 42c55b4bc on owner branch fix-vllm-common-loader, docs-only)\" => pass,\n  \"find/grep/sed over charts/vllm, charts/llama-swap, containers/vllm-rocm, services/gpu-ai, services/gpu, custom-values/gpu-ai, .opencode/opencode.jsonc, .rulesync/skills/pipeline-models, tests/pipeline-models, tests/notes, .github/workflows, cf-105 ticket folders x2\" => pass,\n  \"skill loads: pipeline-conventions, helm-chart-creation, container-creation, llama-swap\" => pass,\n  \"execute/readonly-ai-gpu-kubernetes: pods_list_in_namespace + pods_get + pods_log x3 + resources_list (PVCs) + resources_get (Node ai-gpu, Service gpu-ai-vllm)\" => pass,\n  \"execute/dev-boards: preload_board (TNQJ2BrXenZovngTS) + get_card (unDxRqcrNTfahp656 — intake checklists + full description incl. attached guide)\" => pass,\n  \"webfetch: huggingface.co Qwen/Qwen3.8-27B-FP8 config.json + api/models?blobs=true (sizes, gating, file list)\" => pass,\n  \"mkdir -p feature folder\" => pass\n]\ndeviations: none\nfriction: readonly-ai-gpu-kubernetes answers pods_list_in_namespace/resources_list in tabular form (display rows) while pods_get/resources_get answer full objects — the scout's extraction code had to branch on shape; noted in EXPLORE §7\nopen_questions: \"OQ1 [Needs research: yes] KV q4/q8 -> v0.33.0-rocm100 --kv-cache-dtype values on ROCm gfx1201 (q8 = today's fp8_e4m3 grounded; q4 unknown — TurboQuant/Octave backends were overridden for DECODER attention in the live log); best guess: a kvCacheDtype values key spliced into serveArgs via the modelPath-anchor pattern. OQ2 [Needs research: yes] '1m heads' — best guess adopted: the 1 MTP head (speculative-config method qwen3_5_mtp vs qwen3_next_mtp to be verified against the pinned image; cf-105 R1 'no MTP on AMD' vs guide's gfx1100 MTP proof); the 1M-context reading is grounded-infeasible on this card under FP8+vision (EXPLORE §5) — owner ruling at the batched round if it was meant. OQ3 [plan-owned] envelope re-derivation (max-model-len/max-num-seqs/utilization vs --kv-cache-memory + sleep/wake 2x-peak) — math pre-registered in EXPLORE §6. OQ4 [plan-owned] retire vs repurpose containers/vllm-rocm — best guess: RETIRE (overlay exists solely for the dropped GGUF plugin + carry patch); point the chart at the upstream base image vllm/vllm-openai-rocm:v0.33.0-rocm100 (digest already in the ledger), re-pin test_ac6 + CI trigger paths. OQ5 [plan-owned] FP8 weight placement — 10Gi vllm-cache cannot hold 28.77 GiB; best guess: stage on the 500Gi llama-swap claim (tools sidecar/operator fetch, vllm mount is ro), alt: cachePvcSize ~40Gi + local-path claim recreation. OQ6 [plan-owned] keep served name qwen3.8-27b-vllm (card: orthogonal; 5+ pinned surfaces) — context re-pin only if OQ3 moves --max-model-len. OQ7 [Needs research: yes, light] attention backend for v0.33 gfx1201 head_dim 256 (live ROCM_ATTN; guide PR #60418 open). OQ8 [owner, batched-round] confirm the guide's R9700 MXFP4-fork path stays out of scope (requirement #1 mandates the official FP8 stock path; best guess: yes, out of scope). OQ9 [plan-owned] multimodal limits flags + whether the three vllm catalog rows gain capabilities.input image (picker-visible).\"\nnext_suggested: \"coord runs the 'Agent Decides Research' stage: commission agent-research for OQ1+OQ2+OQ7 (v0.33.0-rocm100 KV-dtype values incl. 4-bit support on gfx1201, MTP speculative method for qwen3_5, attention-backend/PR-60418 status) -> then agent-plan with this EXPLORE.md as the ground, resolving OQ3/OQ4/OQ5/OQ6/OQ9 at plan time and OQ2/OQ8 at the owner batched round\""
+    }
+  },
+  "research": {
+    "stage": "Pre Research",
+    "session": "ses_e48089700ffeZQWe4Ll5bXcdfD",
+    "model": "openrouter/qwen/qwen3.8-27b",
+    "at": "2026-11-07T21:55:00+00:00",
+    "files": [
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/RESEARCH.md"
+    ],
+    "key_findings": [
+      "FP8 checkpoint stock-loadable on v0.33.0-rocm100 gfx1201 — weight GEMM lands on TritonFp8BlockScaledMMKernel; zero tuned R9700 config JSONs in the tree (the 'default W8A8 Block FP8 kernel config' log line is the runbook marker)",
+      "4-bit KV EXISTS in v0.33.0: int4_per_token_head (TRITON_ATTN-served, 16.5 KiB/token, MTP-safe), turboquant_4bit_nc + ultraquant_4bit (TQ+MTP documented-garbage on RDNA per the in-tree Octave RFC); octave_* architecturally dead on gfx1201 (RDNA3/CDNA3-gated)",
+      "q8 mapping: fp8 (=fp8_e4m3, live-verified today) / fp8_e5m2 — 32 KiB/token, same attention backends",
+      "PR #60418 (TRITON_ATTN priority swap for RDNA) merged 2026-11-03 — AFTER the pinned image was cut; pin --attention-backend TRITON_ATTN explicitly for the fp8 shapes",
+      "Envelope correction: EXPLORE's 0.3–0.5 GiB residual is W+O-only; honest residual is approx -0.2 to -1.2 GiB at 0.95 util (infeasible) -> util 0.98–0.99 + 2–3 max-num-seqs + --kv-cache-memory-bytes re-derivation",
+      "'1m heads' = MTP: qwen3_5_mtp and qwen3_next_mtp are deprecated aliases normalizing to method 'mtp' in v0.33.0; draft loads mtp.safetensors from the same checkpoint (n_predict=1); cf-105 R1 'no MTP on AMD' reconciled as official-validation status, not capability",
+      "1M-context reading: YaRN x4 with mrope mechanically expressible but decisively infeasible (approx 46–47 GiB q4 / 61–62 GiB q8 vs 31.86 GiB visible)",
+      "Bonus correction: pearsonkyle's 1.71x/71.2% MTP numbers are NVIDIA Blackwell hardware, not AMD",
+      "Pinned image re-verified: digest sha256:4fcd39b7...83fba, still latest-rocm100, no v0.34 stable; VLLM_ROCM_USE_AITER now defaults False upstream"
+    ],
+    "open_questions_to_batched_round": [
+      "OQ-A '1m heads' = enable MTP now vs keep head dormant (best guess: dormant now — envelope cannot absorb +1 GDN block/seq; weights stay resident at zero cost; impact: serveArgs flag, envelope -0.3–-0.5 GiB, runbook step)",
+      "OQ-B q4 default: int4_per_token_head vs turboquant_4bit_nc (best guess: int4_per_token_head — TQ+MTP documented-garbage on RDNA; impact: values-key default string)",
+      "OQ-C confirm the guide's R9700 MXFP4-fork section stays out of scope (best guess: yes per requirement #1; impact: none)",
+      "OQ-D q8 value: keep fp8=e4m3 (live-verified) vs fp8_e5m2 (best guess: keep fp8; impact: cosmetic)",
+      "OQ-E if '1m heads' meant 1M-context parity: infeasible on this card under FP8+vision (RESEARCH L2.4 math); the llama.cpp q8-1m rung already owns 1M — owner ruling requested (scope-defining)"
+    ],
+    "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/RESEARCH.md]\ncommands_run: [v0.33.0-tag source fetches (cache.py, rocm.py, speculative.py, kv_cache_interface.py, backend registry/selector/rocm_attn/triton_attn/rocm_octave/turboquant/ultraquant, kernel registries, qwen3_5_mtp.py, qwen3_vl.py + mm_encoder_attention.py, rotary_embedding pkg, envs.py, fp8_utils.py) => pass; GitHub API PR/issue status checks (#60418 merged 2026-11-03, #54438/#59773/#28649/#50603/#40081, #54706 merged 2026-10-03) => pass; Docker Hub tag API (v0.33.0-rocm100 digest/size/push date re-verified; latest-rocm100 = same digest) => pass; HF API + model cards (pearsonkyle GPTQ-W4A16 card; Qwen3.8-27B-FP8 facts re-confirmed via EXPLORE live fetch) => pass; v0.33.0rc3 release notes + docs.vllm.ai v0.33.0 CLI + Qwen3.5 recipe page => pass; dev-boards.get_card_details (card #131 full text incl. attached guide) => pass; python3 arithmetic cross-check of all derived bytes/token + tokens/GiB + envelope table => pass]\ndeviations: none (storm skill fan-out unavailable to this subagent, so the five grounded interviews ran in-session — same file layout/deliverable per the skill's plain-surface path; RESEARCH.md written only to the commissioned feature folder per pipeline-role-research hard rule)\nfriction: edit tool failed twice on unicode-heavy blocks (en-dash/≈/→ content) — resolved via python line-range replacement; no repo-side impact\nopen_questions: 1) '1m heads' = enable MTP now vs keep head dormant (best guess: dormant now — envelope can't absorb +1 GDN block/seq; weights stay resident at zero cost, re-enable post-acceptance-smoke; impact: serveArgs flag, envelope −0.3–0.5 GiB, runbook step) 2) q4 default: int4_per_token_head vs turboquant_4bit_nc (best guess: int4_per_token_head — TQ+MTP documented-garbage on RDNA; impact: values-key default string) 3) confirm the guide's R9700 MXFP4-fork section stays out of scope (best guess: yes per requirement #1; impact: none) 4) q8 value: keep fp8=e4m3 (live-verified) vs fp8_e5m2 (best guess: keep fp8; impact: cosmetic) 5) if '1m heads' meant 1M-context parity: infeasible on this card under FP8+vision (exact math in L2.4), llama.cpp q8-1m rung already owns 1M — owner ruling requested (impact: scope-defining; a yes reopens physics/CPU-KV-offload territory)\nnext_suggested: agent-plan takes the L1.2 dtype table + L1.5 envelope table + L2.1 speculative-config spelling + the five open questions into the plan (values-key KV toggle with int4_per_token_head default, TRITON_ATTN pin for the fp8 shapes only, forced envelope re-derivation at util 0.98–0.99 / 2–3 seqs, MTP as a values-key opt-in defaulting dormant, overlay retirement to the re-verified upstream digest pin)"
+  },
+  "research_round_3": {
+    "stage": "Pre Research (round 3 — the 0.30 base, owner round-2 Q10 consequence)",
+    "session": "ses_e47c152efffebHMODaTIgI3ePO",
+    "model": "openrouter/qwen/qwen3.8-27b",
+    "at": "2026-11-07T23:00:00+00:00 (coord-estimated display stamp; see clock_note)",
+    "files": [
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/RESEARCH.md (R3 section appended at lines 2183-3649; R1 lines 1-707 and R2 lines 711-2179 byte-untouched — pure append)"
+    ],
+    "grounding": [
+      "Pin: magiccodingman/vllm-radiance:1.0.397 (= latest = 1.0 = sha-5b99d66c844f) @ sha256:b73bf3e4…7313e0 — four-source corroboration (Hub API, registry manifest probe, the release-branch tag<->commit law, and the image's own OCI image.revision label = 5b99d66c844f); the in-image vLLM = ced6857a = exactly the v0.30.0 tag commit; push 2026-10-18; 13,005 pulls, no deprecation",
+      "PAIRING ANSWER: the GGZ14 launcher (codeberg df0af7cf6b) does NOT work against the 0.30 image — its patch chain + the b9e42ab-rx9 libr4d key are 0.27.1/0.9.3 artifacts; the 0.30 image is a self-contained terminal build (libr4d 0.5.0 + its own 35 release overlays baked). The qualified combo is image + magiccodingman's own compose/env recipe; our containers/vllm-radiance-mxfp4 overlay COLLAPSES to a thin digest-pinned re-export (the D11 rx9 deviation stops applying); pod args start with the model path (the entrypoint execs `vllm serve \"$@\"`)",
+      "Q5 int4: still UNQUALIFIED at 0.30 — R4D's baked gate = auto/bf16/fp8/fp8_e4m3 (per-(token,head) scales refused at startup); int4 exists at CLI + TRITON_ATTN level; the two-edit prerequisites carry verbatim into the owner-ruled qualification gate",
+      "Q8 raw release: grounded — the 0.30 stack's own MTP lane served the pre-fix revision's bf16 MTP head via the baked RADIANCE_QUARK_BF16_MTP path; our post-AMD-fix pin is more loadable; the rewrite stays skipped (the re-land contingency recorded)",
+      "Q1 dflash: native at 0.30 (V2 runner + PIECEWISE prerequisites); the drafter revision ee0cb26a is the qualified pin (weights etag-identical to main f02593d0; config byte-identical, max_position_embeddings 262144)",
+      "Q6 30/30 tool-calling record: exactly characterized (gate fixtures, parsers, TP2 identity) WITH honest caveats — MTP 29/30 tool-FAIL, TP2-only, the on-target tool smoke is the closing gate; the marker's risk statement rides the approval presentation",
+      "Issue #6 (HSA profiler spin at idle): OPEN — the HSA_TOOLS_DISABLE_REGISTER=1 workaround is documented and reporter-verified (metrics unaffected); PR #42 fix still draft",
+      "SHAPE B: no 0.30 measurement exists at ANY TP1 shape — the owner's re-measure gate binds as the SOLE envelope path (the 8.49 GiB pin is recorded carried-and-unverified); R3-Q2 asks the GPU_UTIL start value (0.85/0.90/0.98; best guess 0.90 — the 0.30 Quark capacity class, 0.98 being a 0.9.3-stack record)",
+      "Q7 flag surface at 0.30: the round-2 carry/drop set re-spot-checked (the 0.27.1 spot-check commissioned by R2 becomes a 0.30 spot-check); the TRITON_ATTN-pin non-carry holds"
+    ],
+    "open_questions_plan_level": [
+      "R3-Q1 overlay-or-direct-pin: thin containers/vllm-radiance-mxfp4 re-export vs chart-pinned docker.io upstream (guess: keep the thin overlay — Q4 named the dir pre-Q10)",
+      "R3-Q2 Shape B GPU_UTIL start at 0.30 TP1: 0.85/0.90/0.98 (guess: 0.90)",
+      "R3-Q3 dflash JSON draft max_model_len: matched 220000 vs the recipe's 8192 constant (guess: matched — README requirement + drafter native 262144)",
+      "R3-Q4 documented mtp-toggle depth: K4 measured vs K8 opt-in guidance (guess: K4)",
+      "R3-Q5 HSA_TOOLS_DISABLE_REGISTER=1 in the pod env (issue #6/#12 mitigation; guess: adopt — reporter-verified, metrics unaffected, single pinnable var)",
+      "R3-Q6 RADIANCE_QUARK_BF16_MTP coupling: off-by-default tied to the mtp toggle vs always-on (guess: tied to the toggle — the maintainer's documented line)"
+    ],
+    "friction": "GitHub raw + HF resolve endpoints redirect (need -L); the Codeberg commit API rejects short SHAs (full SHA required); dev-boards get_card requires board_id+card_id together; /tmp/opencode writes permission-denied for the subagent — the R2 in-ticket staging pattern (write the ~45KB R3 block into the feature folder, append, remove) is the sanctioned path for this family"
+  },
+  "research_round_2": {
+    "stage": "Pre Research (re-scope round 2)",
+    "session": "ses_e47e0e82effeJVOFuFWldfic0R",
+    "model": "openrouter/qwen/qwen3.8-27b",
+    "at": "2026-11-07T23:05:00+00:00",
+    "files": [
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/RESEARCH.md (R2 section appended at line 711; R1 lines 1-707 byte-intact as supporting context)"
+    ],
+    "grounding": [
+      "Pin target: Codeberg main @ df0af7cf6b (2026-10-30), version 0.13.0 — the GitHub mirror is stale AND divergent (MoE-lane-only history); v0.13 flipped the TP=1 default to the long-context shape, so the guide's 65536/4096/8 throughput shape is now an explicit override",
+      "stilldeadcode/vllm-radiance:0.9.3 pullable (registry probe 200, digest 45694209177a… triple-corroborated) with a live deprecation warning (successor is a non-vLLM engine); magiccodingman/vllm-radiance = maintained v0.30 successor (issue #6 HSA-profiler-spin confirmed open); capicua25x = different checkpoint + MTP-3, fallback-only",
+      "amd/Qwen3.8-27B-Quark-AWQ-MXFP4: 18.41 GiB single file, public, main-sha 93245f7c, carries vision (111 bf16 visual modules) + the MTP head; AMD's 2026-11-03 config re-upload fixed the mtp-exclude module naming (the rewrite's original blocker) — raw release MAY load, the fp8_mtp.py rewrite stays the qualified path; drafter tcclaviger/Qwen3.8-27B-DFlash2-FP8 verified 1.97 GiB DFlash2DraftModel",
+      "KV requirement CHANGES SHAPE: qualified KV under the fork = fp8/bf16/auto only (R4D refuses other dtypes at startup); int4 exists at the 0.27.1 CLI+TRITON level but is UNQUALIFIED — the card's 'KV q4 default' needs the owner's ruling on the new shape",
+      "Spec decode: dflash (measured default, 2 GiB drafter resident) vs mtp (SPEC=4, head-in-checkpoint, zero extra weights) — '1m heads' is satisfied under both (owner OQ-A/E rulings carried into Q1)",
+      "TP1 shape A (65536/4096/8, measured pin 6535819798, 137.7 c=1 / 416 c=8) vs shape B (220000/2560/3, user-reported pin 9126805504) — Q2",
+      "The fork ships its own minutes-scale bake recipe (Dockerfile.ggz14.top); our overlay transcribes it under the repo CI law with one documented deviation (rx9 libr4d bake — .top ships rx6, the TP=1 profile needs rx9); GID-486 pod shape carries unchanged + new pitfall: auto-detect would see the 8060S and pick a broken TP=2, so the device pin is mandatory",
+      "Storage: 500Gi llama-swap claim for models (ro pod / rw Job, ~20.4 GiB steady) + the existing 10Gi vllm-cache PVC mounted fresh at /cache (claim untouched)",
+      "R1 v0.33 findings that STAY relevant at 0.27.1: --kv-cache-memory-bytes, mamba-dtype flags, prefix-caching, --scheduling-policy, --watermark, the metric names (spec-decode counters verified, diffusion-family naming nuance flagged); the TRITON_ATTN pin and enforce-eager do NOT carry"
+    ],
+    "open_questions_to_batched_round": [
+      "Q1 spec default dflash vs mtp (guess: dflash — measured default; impact: spec-config JSON + drafter staging + ~2 GiB + smoke family)",
+      "Q2 TP1 shape A (65536/4096/8, measured) vs B (220000/2560/3, user-reported) (guess: A; impact: MAXLEN/MAXSEQS/CHUNK + KV pin + pre-registered numbers)",
+      "Q3 catalog limit.context re-pin 262144 -> 65536 (guess: 65536 — the one sanctioned D9 byte-stability breach; impact: opencode.jsonc rows + surface.sh M3 + runbook + peers-hop semantics)",
+      "Q4 image/container naming (guess: new containers/vllm-radiance-mxfp4; impact: chart image repo + test_ac6 + CI paths + runbook)",
+      "Q5 KV requirement's new shape — q4-KV unqualified under the fork: fp8 default, bf16/auto tested toggles, int4_per_token_head documented-OFF experimental (impact: values key + runbook on-target gate); does the owner's 48GB-RDNA3 q4 note attach to this card or a future stock card?",
+      "Q6 tool-calling: the fork fixes --enable-auto-tool-choice + qwen3_coder parser (unlike the R1 no-tools ruling) — gain a tools capability marker on the catalog rows? (guess: no marker; impact: surface scope)",
+      "Q7 carried flags: --scheduling-policy priority CARRY (wiring law, unmeasured under fork), --watermark 0.05 CARRY-as-values-default, sleep-mode + VLLM_SERVER_DEV_MODE DROP (absent from the fork recipe), --disable-access-log-for-endpoints DROP (spot-check at C01); impact: serveArgs + env + test pins",
+      "Q8 keep the fp8_mtp.py rewrite in the setup Job despite AMD's 2026-11-03 module-name config fix (guess: KEEP — qualified path, raw-release bf16-head load unverified; impact: Job duration + staging layout + acceptance-smoke class)"
+    ],
+    "friction": "Codeberg API /api/v1/repositories/… 404s (the /api/v1/repos/… path works); HF /commit/<sha> 404s as R1 predicted (/commits/main works); the shell's portable scanner rejects very large heredocs (staged the ~30KB R2 block via the write tool into the feature folder, removed after append); the Codeberg README webfetch truncated at 975/1185 lines (tail read from tool output)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "dev_done",
+      "wave": 1,
+      "size": "M",
+      "depends_on": [],
+      "title": "The thin fork overlay: containers/vllm-radiance-mxfp4 (the 0.30 digest-pinned re-export + the ledger README) + the vllm-rocm retirement + CI paths",
+      "dev_sessions": [
+        "ses_e43cbbe71ffesMqR4medczZr2N (code tier; the partial run that landed the C01 artifacts in-tree at 17:33 — its hand-back was truncated by the checkpoint and no STATE record survived; the artifacts it left are the verified content)",
+        "ses_e43bfcf3dffe2t682QKUqKUCW0 (verification run: line-by-line verification of every in-tree artifact against the R3 record — pin set, four-source corroboration, stack record, entrypoint/args law, interface contract — plus the full green bar re-run fresh; zero file changes this session)"
+      ],
+      "dev_at": "2026-11-08T18:16:15+00:00 (coord record on the fresh workspace clock)",
+      "green_bar": "pytest charts/vllm 31 pass / 5 skip (the C02/C03 plane designed-skips); tests/containers/vllm-radiance-mxfp4.sh t1-t6 green incl. the live registry probes with ZERO drift (Hub digest b73bf3e4...7313e0 on all four sibling tags, full_size 4079863554 B, push 2026-10-18T06:35:03Z, OCI revision label 5b99d66c...); helm lint + chart-defaults + service-level renders green; chart byte-untouched (AC5); the AC1 functional-reference scan clean (no ghcr.io/ownyourio/vllm-rocm anywhere); npx aislop ci --changes 0 errors / 0 warnings; docker build no-daemon CI-deferred (the cf-77 gate shape)",
+      "open_item": "tests/services/vllm-dashboards.sh t4 LEDGER re-pin (the D-T2 disposition; the chunk marks it '(test session, before dev)' — dev is permission-denied on test files) — ROUTED to the test session; lands with the C01 commit so the dashboards suite is green at commit time",
+      "next": "test-session re-pin -> coordinator commits C01 -> agent-review (fresh context) -> the Chunk Review HITL stop"
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "size": "L",
+      "depends_on": [
+        "C01"
+      ],
+      "title": "The engine switch: 0.30 image pin @ first-build shape, the Shape-B serve recipe (compose-baseline ground + the Q7 carries), the 20-var env law, the probe carry, the values keys, the service twin, the test re-pins"
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "size": "M",
+      "depends_on": [
+        "C02"
+      ],
+      "title": "The staging + storage switch: the setup init container (the raw-release + drafter-revision staging, Q8), the persistence restructure (advancedMounts models ro/rw, /data -> /cache), the test re-pins"
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "size": "M",
+      "depends_on": [
+        "C02"
+      ],
+      "title": "The catalog + surface: the capabilities marker (input/output + tools: true, the round-2 Q6 override) + the surface.sh M3 re-pin; the limit.context 262144 stays (the Q3 keep-ruling voids the re-plan's breach)"
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 4,
+      "size": "M",
+      "depends_on": [
+        "C03",
+        "C04"
+      ],
+      "title": "The runbook + vllm-runbook.sh re-pin for the 0.30 fork shape (the day-one re-measure gate re-bound to 262144/2560/3, the true-axis note, the LIVE 262144 risk + startup contingency, the int4 gate, the tool smoke, the recorded alternatives) + the no-move confirmation (the final-chunk bar)"
+    }
+  },
+  "plan": {
+    "stage": "Planning",
+    "session": "ses_e47fe405affeek62gAUxD8ZHrQ",
+    "model": "openrouter/qwen/qwen3.8-27b",
+    "at": "2026-11-07T21:59:39+00:00",
+    "plan_file": ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md (reworked in place — one folder, one plan file; no second plan file)",
+    "files": [
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md",
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C01.md",
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C02.md",
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C03.md",
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C04.md",
+      ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C05.md"
+    ],
+    "decisions": "D1-D9 + chunking (DECISIONS.md, plan section)",
+    "open_questions_carried_to_batched_round": "OQ-A..OQ-E inherited verbatim from RESEARCH.md + plan-owned OQ3/OQ4/OQ5/OQ6/OQ9 resolved with best guesses + new OQ10..OQ13 (plan file Open questions section)",
+    "approval": {
+      "at": "2026-11-07T22:40:00+00:00",
+      "by": "owner, in-session question after the plan rework",
+      "verdict": "REJECTED as presented — re-scope ruling: 'you need to include the MXFP4 fork in the R9700 image. I've dropped the official checkpoint mandate.' The fork follow-up card question answered 'No, do it in this work.' — the re-scope lands in this ticket, no Inbox card",
+      "effect": "plan_status stays draft; the D10 'fork as documented alternative, FP8 primary' outcome is superseded — the MXFP4 fork path becomes the shipping path for the R9700. Round-1 research (FP8 official) is now supporting context; a second research round grounds the fork path before the re-plan",
+      "follow_up_card": "declined — the re-scope is this run's work"
+    },
+    "rework_handoff": {
+      "at": "2026-11-07T22:35:00+00:00",
+      "session": "ses_e47fe405affeek62gAUxD8ZHrQ (continued)",
+      "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md (reworked: Goal/Out-of-scope/Ground/Chunks/Wave/Risks/Open questions/Decisions), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C01.md (MTP flag + 0.99 + enableMtp true + testlib/AC rework), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C02.md (6-var env + probe re-check), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C03.md (catalog rows + M3 re-pin + runbook MTP gates + fork section + 0.99 constants + T3/T5 needles), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/DECISIONS.md (rework section R1-R7 + new D10 appended; owner-rulings section untouched), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/STATE.json (plan.rework stamped, updated_at refreshed, plan_status stays draft)]\ncommands_run: [rework-range python rewrites of C03.md (staged script in-ticket, deleted after run) => pass, grep/cat -A byte-verification of every reworked region (C01 goal/serveArgs/testlib/AC/notes, C02 env/probe/AC, C03 all 14 ranges) => pass, stale-constant sweep grep across plan + 3 chunks + DECISIONS (0.98 shipped-util / dormant-as-default / 5-var / deferred-capability / omit-FLASH hits all contextually correct) => pass, python3 STATE.json extend + JSON re-parse => pass, ls confirming no temp artifacts in the ticket folder => pass]\ndeviations: none (the four overrides landed exactly as ruled; the MTP envelope move 0.98->0.99 is the rework the ruling's own text anticipated — \"confirm util 0.98 + 2 max-num-seqs still holds … or adjust the envelope constants (and say so in D4)\" — stated in R1)\nfriction: the edit tool's whitespace matching failed twice on C03.md regions (the file's actual indentation differed from the read-rendering I matched against) — resolved via anchored range-based python replacements (staged script deleted after run; no repo-side impact beyond the intended rework)\nopen_questions: none new — all 13 questions carry round outcomes (10 confirmations + 4 overrides), recorded in the plan's Open questions section + DECISIONS R1-R7/D10; the two owner-visible contingencies are stated, not open: (a) the MTP off-toggle is the documented values-only revert and is the owner's call only if the step-3/6.8 acceptance gates fail on target, (b) the fork follow-up card is recommended at approval (owner's call to mint or not)\nnext_suggested: coordinator presents the reworked plan at the HIL Planning stop for final approval (the OQ-C fork outcome + the follow-up-card recommendation are the two items worth the owner's explicit nod); on approval set plan_status approved and launch the test session (all three chunks' re-pins in one session before any dev), then C01 dev"
+    },
+    "owner_batched_round": {
+      "at": "2026-11-07T22:15:00+00:00",
+      "shape": "single batched plan-question round (14 questions: OQ-A..OQ-E + plan-owned OQ3/OQ4/OQ5/OQ6/OQ9/OQ10/OQ11/OQ12/OQ13), recommended best-guess first on every question",
+      "answers": {
+        "OQ-A (MTP timing)": "Enable MTP now — OVERRIDE of the dormant best-guess; --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":1} ships in C01, envelope absorbs the -0.3..-0.5 GiB",
+        "OQ-E (interpretation ruling)": "MTP-head confirmed — 1M context stays on the llama.cpp q8-1m rung; scope closed",
+        "OQ-B (q4 default)": "int4_per_token_head — confirmed",
+        "OQ-C (MXFP4 fork scope)": "Reconsider fork path — OVERRIDE of the out-of-scope best-guess; the plan must explicitly evaluate the GGZ14 radiance-fork path (137.7 tok/s c=1) against the official FP8 stock path and shape the decision, keeping requirement #1 (official FP8 checkpoint as the served path) as the primary constraint",
+        "OQ-D (q8 value)": "fp8 / e4m3 — confirmed (live-verified dtype)",
+        "OQ3 (envelope)": "ratified — util 0.98 + 2 max-num-seqs + 262144 + --kv-cache-memory-bytes lever; owner context note: 'the RDNA3 card will eventually have 48GB, but we should make the q4 kv the default because of this' — q4 default carries that rationale",
+        "OQ4 (overlay)": "Retire overlay — confirmed",
+        "OQ5 (weights)": "500Gi llama-swap claim, sha c3a462cc3d38cf351f3b26cbd763469eeb74ef81 pinned, tools-sidecar staging — confirmed",
+        "OQ6 (served name)": "Keep qwen3.8-27b-vllm @ 262144 — confirmed",
+        "OQ9 (vision metadata)": "Add picker metadata now — OVERRIDE of the deferred best-guess; the vllm catalog rows gain capabilities.input image in the same commit",
+        "OQ10 (probe)": "150 failureThreshold / ~26 min — confirmed",
+        "OQ11 (watermark)": "Keep 0.05 — confirmed",
+        "OQ12 (ViT env)": "Set it explicitly — OVERRIDE of the omit best-guess; FLASH_ATTENTION_TRITON_AMD_ENABLE pinned in the pod env (5-var set becomes 6)",
+        "OQ13 (262144 startup)": "Ship 262144 + documented dual-edit contingency — confirmed"
+      },
+      "overrides_for_rework": [
+        "OQ-A MTP enabled now (C01 recipe + envelope + C03 runbook smoke)",
+        "OQ-C fork path reconsidered (plan-level scope decision to shape + record)",
+        "OQ9 catalog capabilities.input image now (C03 or the chunk owning the llama-swap catalog re-pin)",
+        "OQ12 FLASH_ATTENTION_TRITON_AMD_ENABLE explicit (C02 env carry 5->6 vars + runbook)"
+      ]
+    },
+    "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md, .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C01.md, .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C02.md, .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C03.md, .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/STATE.json (extended, seeded keys kept), .agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/DECISIONS.md (plan section D1-D9 appended)]\ncommands_run: [read-only repo grounding (charts/vllm values/tests, services/gpu-ai values, containers/vllm-rocm, vllm-render-tests.yaml, runbook + vllm-runbook.sh, surface.sh M3/M4/M7, opencode.jsonc catalog rows, llama-swap PEER_VLLM + tools sidecar, cf-105 x2 DECISIONS, templates) => pass, webfetch HF API model root (sha c3a462cc3d38cf351f3b26cbd763469eeb74ef81, public/ungated, 28.77 GiB re-confirmed) => pass, date (STATE.json stamp 2026-11-07T21:59Z) => pass, python3 STATE.json extension + JSON re-parse => pass]\ndeviations: none (the kickoff directed inheriting RESEARCH's Q1-Q5 as OQ-A..OQ-E verbatim — done, text verbatim, labels per the kickoff's naming)\nfriction: HF's /api/models/<repo>/commit/main endpoint 404s — the commit sha comes from the model-API root's `sha` field instead (recorded in the plan's Ground section so the staging step cites the right source)\nopen_questions: OQ-A '1m heads' = enable MTP now vs dormant (best guess: dormant now — envelope can't absorb +1 GDN block/seq; zero-cost resident head; impact: serveArgs flag, envelope -0.3..-0.5 GiB, runbook smoke step). OQ-B q4 default int4_per_token_head vs turboquant_4bit_nc (best guess: int4 — TQ+MTP documented-garbage on RDNA; impact: default string + the TRITON_ATTN pin decision). OQ-C MXFP4-fork out of scope (best guess: yes; impact: none). OQ-D q8 value fp8 vs fp8_e5m2 (best guess: keep fp8; impact: cosmetic). OQ-E if '1m heads' meant 1M-context parity (best guess: owner confirms Reading B; impact: scope-defining — infeasible on this card per L2.4, llama.cpp q8-1m rung owns 1M). OQ3 envelope re-derivation (plan-owned, resolved: util 0.98 + 2 seqs + 262144 kept + watermark kept + kv-cache-memory-bytes as documented on-target lever; impact: C01 recipe + C03 constants). OQ4 overlay retirement (plan-owned, resolved: RETIRE — upstream digest-pinned image, PYTORCH_ALLOC_CONF-only env carry; impact: C02). OQ5 weight placement (plan-owned, resolved: stage on the 500Gi llama-swap claim, snapshot-sha pinned, tools-sidecar staging; impact: C01 dual-edit + C03 step 2.0/2.1). OQ6 served name + catalog rows (plan-owned, resolved: KEEP qwen3.8-27b-vllm @ 262144 — no catalog/surface/golden re-pin; impact: none, verified by C03 no-move commands). OQ9 multimodal limits (plan-owned, resolved: image=4 ships, no catalog capabilities.input change — owner follow-up after the smoke; impact: C01 recipe + C03 step 3.4). OQ10 startup probe sizing (new: 150 = 26 min, weights pre-staged off-pod; impact: C02 + runbook 1.2). OQ11 watermark 0.05 at near-full pool (new: keep — preemption buffer > 5% of the residual; impact: C01 recipe). OQ12 ViT backend env (new: omit FLASH_ATTENTION_TRITON_AMD_ENABLE — default Torch SDPA valid, tuning surface in runbook 3.4 if-fails; impact: C02 env stays 5 vars). OQ13 262144 vs pool-capacity startup behavior (new: ship 262144 per HR3 + byte-stable law; runbook documents the operator dual-edit contingency + owner-ruling catalog re-pin if the engine hard-rejects; impact: runbook step 3/6).\nnext_suggested: coordinator runs the batched owner question round with OQ-A..OQ-E + the plan-owned OQ resolutions (all best-guesses recorded), then the HIL Planning stop: present plan + chunk table for approval; on any owner override (notably OQ-A enable-now or OQ-B TQ) relaunch planning for the one-line re-plan, otherwise approve as written and launch the test session (all three chunks' re-pins in one session, before any dev)",
+    "rework": {
+      "round": "batched plan-question round (owner rulings 2026-11-07 — recorded in DECISIONS.md 'Owner rulings' section, kept as-is by the coordinator)",
+      "confirmations": "OQ-B, OQ-D, OQ-E, OQ3 (with the OQ-A interaction delta), OQ4, OQ5, OQ6, OQ10, OQ11, OQ13 — ten total, no plan change beyond the cross-deltas",
+      "owner_context_note_OQ3": "the RDNA3 card will eventually have 48 GB — the q4 KV default is deliberate for that headroom (carried into D4/D2 + the runbook honest-envelope block)",
+      "overrides": {
+        "OQ-A": "MTP ENABLED NOW — recipe ships --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":1} (C01), enableMtp: true with the symmetric off-toggle (DECISIONS R2); envelope util 0.98 -> 0.99 (the 0.98/MTP band flips sign in the estimate error; the 0.99/MTP band +0.15..+0.75 GiB is robust — R1); runbook gains the first-serve spec_decode verification (step 3) + the acceptance-rate smoke (step 6.8); probe 150 re-checked against the 0.44 GiB draft load + fused-MTP-decode JIT and holds (R6)",
+        "OQ-C": "MXFP4 fork RECONSIDERED ON THE RECORD — new D10 (R3): official FP8 stock path ships as PRIMARY (requirement #1 mandates the official checkpoint; the fork is 'early dev, experimental, not production hardened' with out-of-tree maintenance); the fork is documented in the runbook's 'measured alternative' section with its enumerated re-scope work; follow-up card recommended at approval (owner's call)",
+        "OQ9": "catalog picker metadata NOW — the three vLLM rows gain capabilities {input: [text, image], output: [text]} (no tools key) in .opencode/opencode.jsonc + the surface.sh M3 additive re-pin, both in C03 where the surface pins live (R4); D9's invariant set reworks to the rows' modelID/body.priority/limit.context as the protected set",
+        "OQ12": "FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE set explicitly — the pod env is 6 vars, not 5 (C02 env task + test re-pin + runbook 3.4 if-fails leg inversion; R5)"
+      },
+      "rework_entries": "DECISIONS.md 'Plan rework — batched-round deltas' R1-R7 (+ new D10)",
+      "files": [
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C03.md",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/DECISIONS.md"
+      ],
+      "at": "2026-11-07T22:15:53+00:00"
+    },
+    "at_rework": "2026-11-07T22:15:53+00:00",
+    "chunks_superseded_by_replan": {
+      "C01": {
+        "status": "pending",
+        "wave": 1,
+        "size": "M",
+        "depends_on": [],
+        "title": "FP8 serve recipe: KV-dtype values key, FP8 weights, vision, re-derived envelope"
+      },
+      "C02": {
+        "status": "pending",
+        "wave": 2,
+        "size": "M",
+        "depends_on": [
+          "C01"
+        ],
+        "title": "Retire the GGUF overlay: upstream digest-pinned image, env carry, first-run probe, CI paths"
+      },
+      "C03": {
+        "status": "pending",
+        "wave": 3,
+        "size": "M",
+        "depends_on": [
+          "C02"
+        ],
+        "title": "Runbook + vllm-runbook.sh re-pin for the FP8+vision shape"
+      }
+    },
+    "chunks_superseded_note": "round-1 FP8-official plan (D1-D10 + rework R1-R7) — REJECTED by the owner re-scope ruling (plan.approval); the chunk map below is the MXFP4-fork re-plan",
+    "replan": {
+      "trigger": "owner re-scope ruling 2026-11-07 (plan.approval + DECISIONS.md 'Re-scope ruling'): the MXFP4 fork (GGZ14 radiance-vllm-mxfp4 over stilldeadcode/vllm-radiance:0.9.3, vLLM 0.27.1) is the shipping path; the official-checkpoint mandate is dropped; the fork follow-up card is declined ('do it in this work')",
+      "ground": "RESEARCH.md R2 (L711+, round-2 commission 2026-11-07) — the authority; R1 stays supporting context (L4.5 STAY/DROP table is the re-derivation record)",
+      "d_disposition": "D1-D10 + rework R1-R7 disposition table + new decisions D11-D22 in DECISIONS.md 'Full re-plan — MXFP4 fork scope' section",
+      "pin_set": {
+        "fork_repo": "codeberg.org/ggz14/radiance-vllm-mxfp4 main @ df0af7cf6bacaf9c305102d758d70a408b2cc4dd (2026-10-30, VERSION 0.13.0; the GitHub mirror is stale + divergent — never build from it)",
+        "base_image": "stilldeadcode/vllm-radiance:0.9.3 @ sha256:45694209177a55a1ab3ba6702fe6e978b1b66a6e66ae3fc066f8d579f7bc4c25 (pullable, live deprecation warning — the successor watch: magiccodingman/vllm-radiance 0.30 = follow-up-ticket candidate, research Q10)",
+        "libr4d": "b9e42ab (codeberg.org/StillDeadcode/libr4d), build key b9e42ab-rx9 at TP=1 (the one documented deviation from the .top's rx6 bake — D11)",
+        "checkpoint": "amd/Qwen3.8-27B-Quark-AWQ-MXFP4 main-sha 93245f7c00f1a8964b66a97c6e02e2fd09080be4 (18.41 GiB, public/ungated) + the fp8_mtp.py rewrite output /models/Qwen3.8-27B-MXFP4-mtpfp8 (research Q8: rewrite KEPT)",
+        "drafter": "tcclaviger/Qwen3.8-27B-DFlash2-FP8 (1.97 GiB) at /models/Qwen3.8-27B-DFlash2-FP8/ (research Q1 dflash assumption)"
+      },
+      "open_questions_carried_to_batched_round": "Q1-Q8 inherited from RESEARCH R2 (research best guesses as starting points; plan refinements recorded in the plan's Open questions) + Q9-Q10 new plan-level (Q9 staging actor: setup init container vs R2's Job shape — best guess the init container, D14; Q10 the base-successor follow-up ticket — best guess ledger watch now, ticket at the owner's call post-merge)",
+      "assumptions_ride_best_guesses": "Q1 dflash / Q2 Shape A / Q3 limit.context 65536 / Q4 new vllm-radiance-mxfp4 name / Q5 fp8 default + int4 documented-experimental-OFF / Q6 no tools marker / Q7 priority+watermark carry, sleep-mode+dev-mode+access-log drops / Q8 rewrite kept — every assumption's re-pin surface is marked per-chunk so a post-answer correction is one-line-per-chunk, not a re-plan",
+      "at": "2026-11-07T22:51:41+00:00"
+    },
+    "replan_handoff": {
+      "at": "2026-11-07T22:52:45+00:00 (coord record, verified workspace clock)",
+      "session": "ses_e47fe405affeek62gAUxD8ZHrQ (continued, re-plan round)",
+      "round2_owner_answers": "see plan.owner_batched_round_2 (recorded by coord after the hand-back: Q1 dflash confirmed, Q2 Shape B override, Q3 keep-262144 override, Q4 name confirmed, Q5 qualify-int4 override, Q6 tools-marker override, Q7 as-listed confirmed, Q8 raw-release override, Q9 init confirmed, Q10 0.30-base-in-this-work override -> round-3 research commission)",
+      "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-11-07-cf-131-feat-vllm-fp8-official.md (full re-plan in place: re-plan record header, Goal/Ground/Out-of-scope/Commands/5-chunk table/Wave order/Risks/Open questions Q1-Q10/Decisions D11-D22 summary), DECISIONS.md (appended 'Full re-plan — MXFP4 fork scope' section: the Re-scope ruling pointer, the D1-D10 + R1-R7 disposition table, new decisions D11-D22; the coord's Re-scope ruling section kept as-is), chunks/C01.md (rewritten: the fork overlay + vllm-rocm retirement + CI paths), chunks/C02.md (rewritten: the engine switch, L), chunks/C03.md (rewritten: the setup init container + storage restructure), chunks/C04.md (new: the catalog + surface M3), chunks/C05.md (new: the runbook + suite + no-move bar), STATE.json (plan.replan stamped: trigger/ground/disposition/pin-set/open-question record/assumption list; old round-1 chunk map preserved as plan.chunks_superseded_by_replan; new chunks C01-C05; plan_status stays draft; updated_at re-stamped on the workspace clock)]\ncommands_run: [read-only re-planning grounding (RESEARCH.md R2 L711+ in full, STATE.json plan.approval + research_round_2, DECISIONS.md Re-scope ruling + full decision record, the R1-plan surfaces: charts/vllm values/tests, services values, containers/vllm-rocm, workflows, runbook + its suite, surface.sh M3/M4, opencode.jsonc rows) => pass, R2 cross-checks: the L2.4 transcription flags vs the C02 recipe (all present + carries/drops accounted), the T3 d4-dict flags vs the C02 serveArgs (12/12 named), the pin-set constants (df0af7cf6b / 45694209 / 93245f7c / 6535819798 / 65536) grep-verified across all 5 chunks => pass, python3 STATE.json extend + JSON re-parse + seeded-key intact check (feature/plan_status/coord_session/test_session/current_wave/kickoff/pre_planning/research/research_round_2 all preserved) => pass, stale-reference sweep (FP8-primary residue in the plan file confirmed to sit only in the out-of-scope recorded-alternative context) => pass, date (workspace clock verification) => pass]\ndeviations: none — the re-plan follows the commission exactly (full re-plan on R2 ground; D-disposition on the record; one-folder-one-plan-file kept; plan_status left draft; the five chunk seams per the commission with the serve/data-plane split of seam (b) recorded in D22)\nfriction: (1) STATE.json updated_at display stamp reads 22:51:41Z, earlier than the coord's 23:10:00Z approval-round stamp — the workspace clock here is ~18 min behind the coord's; the convention says the stamp follows the workspace clock, so the value is honest; the coord may re-stamp at the next write. (2) Round-1 edit-tool whitespace mismatches recurred on the re-plan (the range-based python replacement pattern from the rework round was reused; staged scripts written inside the ticket folder and deleted after each run).\nopen_questions: Q1 spec default dflash (2 GiB drafter, the measured production path) vs mtp (SPEC=4, no drafter, the '1m heads' purist reading) — best guess dflash (all published numbers are dflash; the drafter cost is inside the measured pin; refinement: ships as the specMethod record key with BOTH spec JSONs documented — an mtp answer is the one-line serveArgs swap + the init drafter-skip, marked). Q2 TP=1 shape A (65536/4096/8, measured pin 6.09 GiB) vs B (220000/2560/3, user-reported pin 8.49 GiB, 're-measure before trusting') — best guess A (the only maintainer-measured row; refinement: the plan assumes A everywhere and marks the re-pin surface per chunk: C02's five serveArgs lines + testlib pairs, C04's 220000 two-digit edit, C05's envelope block + T3 dict + the calibrate-kv step). Q3 catalog limit.context re-pin 262144 -> 65536 under Shape A — the one sanctioned D9 breach (262144 does not fit at TP=1, the launcher's own record; the llama.cpp q8-1m rung keeps the long-context home) — best guess 65536, owner-visible at approval (a keep-262144 answer is physics-impossible on this card; the alternatives are 220000 or a bigger card). Q4 image/container naming — best guess the new containers/vllm-radiance-mxfp4 dir+image (dir-name-is-image-name law; the ledger stays unambiguous; refinement: the GitHub mirror is never a build source — stale + divergent, R2 L1.1). Q5 the KV requirement's new shape — q4 KV is NOT qualified under the fork (R4D refuses non-bf16/fp8 at startup; int4 exists at CLI level only, unmeasured) — best guess: fp8 default, bf16/auto tested toggles, int4_per_token_head documented-EXPERIMENTAL-OFF with its two-edit prerequisites recorded; the owner's round-1 48GB-RDNA3 q4-headroom note is recorded as attaching to a future stock card (the re-scope dropped the stock path) — does the owner agree, or keep the int4 leg warmer on this card? Q6 tool-calling surface — the fork ships the tool-calling flags FIXED in the recipe regardless (transcription fidelity) — does the owner want the three catalog rows to gain a tools capability marker this time? Best guess: NO marker (the 30/30 correctness record belongs to magiccodingman's 0.30 stack, not this image; the M3 absence guard pins the assumption; a yes is a one-line C04 flip). Q7 carried flags — best guesses: --scheduling-policy priority CARRY (the four-class wiring's engine half; unmeasured under the fork, scheduler-knob risk recorded), --watermark 0.05 CARRY (the R1 preemption-headroom rationale transfers), --enable-sleep-mode + VLLM_SERVER_DEV_MODE DROP (absent from the measured recipe; the calibrated pin assumes the non-sleep memory story; REFINEMENT: the drop reshapes the runbook step 8/9 from the HR6 sleep/wake time-sharing to the one-engine-per-card static coexistence law — Strata must not re-pin onto the R9700 while the vLLM pod is warm; the KVCACHE=ram tier is the documented escape hatch, off; a carry-sleep-mode answer is the marked re-pin: flag + dev-mode env + the 0.27.1 flag-surface spot-check becomes live + the step-8 resurrection), --disable-access-log-for-endpoints DROP (the launcher-fixed surface; re-add on observed log noise). Q8 the fp8_mtp.py rewrite step — best guess KEEP in the staging (the fork's qualified measured path is the rewrite output; the fp8 head holds acceptance 2.60-2.80 vs MXFP4's 2.21; the 2026-11-03 raw-release load is unverified; a skip answer is the init's one-step drop + the D13 served-dir rename, marked). Q9 (new, plan-level) the staging actor — the pod's setup init container (my re-judgment of R2 L4.3's standalone Job design) vs the Job: best guess the init container (deterministic ordering — a parallel Job races the pod start against a 40-min probe; sha-keyed marker = automatic re-stage on checkpoint bumps; no new manifest kind / no Job re-run impedance / no T2-guarded re-run phrasing; the setup script's idempotent-skip-first design is the init re-boot shape; refinement: the init is root-but-unprivileged, device-free, and its command override deliberately skips the entrypoint's GPU-touching sweep). Q10 (new, plan-level) the base-deprecation successor — mint the follow-up ticket for the magiccodingman/vllm-radiance 0.30 base migration now, or leave the watch on the ledger only? Best guess: ledger watch now (the D12 ledger + runbook step-10 note), the ticket mints post-merge as the owner's call (this ticket already carries the re-scope's full weight; the stilldeadcode standalone engine is out of scope — it loses the OpenAI surface the llama-swap hop needs).\nnext_suggested: coordinator runs the batched round-2 question call with Q1-Q10 exactly as returned above (the owner sees the two plan-level refinements worth explicit attention: Q7's one-engine-per-card consequence of the sleep-mode drop, and Q9's init-container-vs-Job actor judgment); on the answers, relaunch the plan session for the marked one-line-per-chunk corrections (or none, if all best guesses hold), then the HIL Planning presentation for final approval of the re-planned 5-chunk/4-wave shape"
+    },
+    "owner_batched_round_2": {
+      "at": "2026-11-07T22:55:00+00:00 (coord-estimated display stamp; see clock_note)",
+      "shape": "batched round 2 over the re-plan's Q1-Q10, recommended best-guess first on every question",
+      "answers": {
+        "Q1 (spec default)": "dflash — confirmed (the measured production path; mtp stays the one-line toggle)",
+        "Q2 (TP1 shape)": "SHAPE B — OVERRIDE: MAXLEN 220000 / CHUNK 2560 / MAXSEQS 3 (user-reported pin 8.49 GiB; the guide's re-measure gate stands — the plan must carry the on-target re-measure step before the numbers are trusted)",
+        "Q3 (limit.context)": "KEEP 262144 — OVERRIDE of the 65536 re-pin: the catalog rows stay byte-stable (the one sanctioned D9 breach does NOT happen). Combined with Q2 Shape B this is an OWNER-RULED divergence: the engine max-model-len is 220000 while the catalog advertises 262144 — the 220000-262144 band is engine-capped (oversized sessions preempt/reject; true long-context stays on the llama.cpp q8-1m rung). The runbook must document the band; if the owner instead meant the engine cap at 262144, that surfaces at the approval presentation",
+        "Q4 (overlay name)": "containers/vllm-radiance-mxfp4 — confirmed",
+        "Q5 (KV q4)": "QUALIFY INT4 NOW — OVERRIDE: the int4_per_token_head leg gains the on-target acceptance gate (the two-edit prerequisites grounded by R2: R4D off + the TRITON-class attention path) in this ticket; int4 remains non-default until the gate passes on target (the fp8 default + bf16/auto tested toggles stand); the 48GB-RDNA3 note stays ledgered for the future stock card",
+        "Q6 (tools marker)": "ADD TOOLS MARKER — OVERRIDE: the three catalog rows gain the tools capability marker in C04 (consistent with the Q10 base move — the 30/30 record is the magiccodingman 0.30 stack's)",
+        "Q7 (carried flags)": "As listed — confirmed (priority + watermark carry; sleep-mode + dev-mode + access-log drop; one-engine-per-card static coexistence law in the runbook)",
+        "Q8 (MTP rewrite)": "SKIP — RAW RELEASE — OVERRIDE: the fp8_mtp.py rewrite step is dropped from staging; AMD's 2026-11-03 config re-upload is the grounding; the D13 served-dir rename + the rewrite-re-land contingency (if the bf16-head load fails on target) are the marked re-pins",
+        "Q9 (staging actor)": "Init container — confirmed (the sha-keyed marker + the device-free root-but-unprivileged init)",
+        "Q10 (base successor)": "MIGRATE TO magiccodingman/vllm-radiance 0.30 AS PART OF THIS WORK — OVERRIDE: the stilldeadcode/vllm-radiance:0.9.3 base is NOT the ship target; the 0.30 stack is the base image for this ticket. Consequence: R2's 0.27.1-engine groundings (the dtype-qualified set, the flag carry/drop surface, the spec-method spellings, the shape pins, the .top bake + rx9 deviation) must be re-grounded against the 0.30 stack before the final plan rework — a round-3 research commission follows"
+      },
+      "overrides_for_rework": [
+        "Q2 Shape B (220000/2560/3) + the re-measure gate",
+        "Q3 keep 262144 (catalog byte-stable; the 220000-262144 band documented in the runbook)",
+        "Q5 int4 qualification gate in this ticket",
+        "Q6 tools capability marker on the three catalog rows",
+        "Q8 raw-release staging (rewrite step dropped, contingency recorded)",
+        "Q10 magiccodingman/vllm-radiance 0.30 base — round-3 research commission BEFORE the final rework"
+      ]
+    },
+    "final_rework_supersedes_chunk_map": {
+      "C01": {
+        "status": "pending",
+        "wave": 1,
+        "size": "M",
+        "depends_on": [],
+        "title": "The fork overlay: containers/vllm-radiance-mxfp4 (.top transcription + rx9 deviation + fp8_mtp.py keep) + the vllm-rocm retirement + CI paths"
+      },
+      "C02": {
+        "status": "pending",
+        "wave": 2,
+        "size": "L",
+        "depends_on": [
+          "C01"
+        ],
+        "title": "The engine switch: image pin @ first-build shape, the fork serve recipe (Shape A + carries/drops), the 9-var env law, the probe re-derivation, the values keys, the service twin, the test re-pins"
+      },
+      "C03": {
+        "status": "pending",
+        "wave": 3,
+        "size": "M",
+        "depends_on": [
+          "C02"
+        ],
+        "title": "The staging + storage switch: the setup init container (L2.3 transcription + sha-keyed marker), the persistence restructure (advancedMounts models ro/rw, /data -> /cache), the test re-pins"
+      },
+      "C04": {
+        "status": "pending",
+        "wave": 3,
+        "size": "M",
+        "depends_on": [
+          "C02"
+        ],
+        "title": "The catalog + surface: the three rows' limit.context 65536 (Q3 assumption) + the capabilities marker (OQ9/R4 carry) + the no-tools guard (Q6 assumption) + the surface.sh M3 re-pin"
+      },
+      "C05": {
+        "status": "pending",
+        "wave": 4,
+        "size": "M",
+        "depends_on": [
+          "C03",
+          "C04"
+        ],
+        "title": "The runbook + vllm-runbook.sh re-pin for the fork shape + the recorded alternatives + the no-move confirmation (the final-chunk bar)"
+      }
+    },
+    "final_rework": {
+      "trigger": "owner batched round-2 rulings (plan.owner_batched_round_2: Q2 Shape B + re-measure gate, Q3 keep-262144, Q5 int4 gate in-ticket, Q6 tools marker, Q8 raw-release, Q10 base move to magiccodingman/vllm-radiance 0.30) + the round-3 research commission (research_round_3: RESEARCH.md R3, L2183+) re-grounding R2's 0.27.1 engine findings against the 0.30 stack",
+      "ground": "RESEARCH.md R3 (L2183+) is the authority for this pass; R2 is the superseded-base record; R1 stays supporting context",
+      "pin_set_030": {
+        "base_image": "magiccodingman/vllm-radiance:1.0.397 (= latest = 1.0 = sha-5b99d66c844f) @ sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0 (source commit 5b99d66c844fd0a54e4a7eb93b40a1ece009a53d = the OCI revision label; engine vLLM 0.30.0 @ ced6857afa0ea7b2e3f0846a62e1394e90f15607; tag<->commit law = release-branch publishes only — the watch trigger is the next 1.0.<n>/sha pair, not main)",
+        "superseded_pins_record_only": "stilldeadcode/vllm-radiance:0.9.3 @ sha256:45694209... (the re-plan base, Q10-voided) + Codeberg ggz14/radiance-vllm-mxfp4 @ df0af7cf6b + libr4d b9e42ab (the GGZ14 launcher pin set — the launcher does not work against the 0.30 image, R3 L1.3; the runbook's recorded-alternative (a))",
+        "checkpoint": "amd/Qwen3.8-27B-Quark-AWQ-MXFP4 main-sha 93245f7c00f1a8964b66a97c6e02e2fd09080be4 (RAW release per round-2 Q8 — the fp8_mtp.py rewrite step stays dropped; post the 2026-11-03 mtp-exclude fix, strictly more loadable than the qualified revision 156be69f; the RADIANCE_QUARK_BF16_MTP mtp-profile load path + the rewrite re-land are the contingency ladder, R3 L2.6)",
+        "drafter": "tcclaviger/Qwen3.8-27B-DFlash2-FP8 @ qualified revision ee0cb26a8279b7910cc28d82a8a3e15e4728d56f (weight etag 7dbb99a8 identical to main f02593d0 — main is file-equivalent today, recorded; config byte-identical; native context 262144 covers the 220000 target)"
+      },
+      "round2_assumptions_ride_best_guesses": "Q1 dflash (confirmed) / Q2 Shape B (owner override) at the R3-Q2 util 0.90 start / Q3 262144 keep (owner override — the band law, D28) / Q4 name confirmed / Q5 int4 gate (owner override) with the fp8 default / Q6 tools marker (owner override) / Q7 flag set confirmed (0.30 spot-check done, R3 L2.5) / Q8 raw release (owner override) / Q9 init container confirmed / Q10 0.30 base (owner override) + R3-Q1..Q6 best guesses (thin overlay / 0.90 util / matched draft context / K4 mtp JSON / HSA var adopted / RADIANCE_QUARK_BF16_MTP coupled to the toggle)",
+      "open_questions_carried_to_batched_round_3": "R3-Q1..R3-Q6 inherited from RESEARCH R3 (research best guesses + the plan refinements in the plan's Open questions section) + Q11 new plan-level (the band-as-ruled vs engine-cap-262144 conditional from the round-2 Q3 answer)",
+      "d_disposition": "D11-D22 disposition pass (superseded/amend/keep) + new decisions D23-D30 in DECISIONS.md 'Final rework — the 0.30 base round'",
+      "files": [
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/2026-11-07-cf-131-feat-vllm-fp8-official.md (round-3 header record added; all sections reworked on the 0.30 ground)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C01.md (the thin-overlay story)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C02.md (the 0.30 recipe + Shape B + the 20-var env)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C03.md (the raw-release init + the drafter pin ee0cb26a)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C04.md (the tools marker + the byte-stable limit.context)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C05.md (the re-measure gate as the day-one envelope path + the band + the 30/30-caveat smoke)",
+        ".agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/DECISIONS.md (the final-rework section appended; every earlier section kept as-is)"
+      ],
+      "at": "2026-11-07T23:17:13+00:00"
+    },
+    "final_pass": {
+      "trigger": "owner batched round-3 rulings (top-level owner_batched_round_3, 2026-11-08): the six R3 questions CONFIRMED the final rework's best guesses (no chunk change) + the ONE override Q11 ENGINE CAP 262144 — the round-2 'Keep 262144' ruling consumed as the engine --max-model-len shipping at 262144; the 220000-262144 band law (D28) SUPERSEDED",
+      "ground": "DECISIONS.md 'Owner rulings — batched round 3' + 'Final pass — the Q11 engine-cap ruling' (D28 disposition + D31) + STATE.json top-level owner_batched_round_3 (all kept as-is)",
+      "d_disposition": "D28 SUPERSEDED by D31 (the band half dies; the Q3 limit.context keep + Q6 tools marker + OQ9/R4 input/output marker stand); new decision D31 = the engine-cap 262144 law + the Q11 chain (the R3-Q3 matched draft context re-binds to the drafter's native 262144) + the LIVE risk (R2 L3.5 'does not fit at TP=1' record now owner-ruled) + the three named backstops (40-min probe as loud gated refusal, the day-one re-measure gate re-bound to derive the pool at the shipped 262144/2560/3 shape with the 8.49 GiB pin demoted to the recorded 220000-class reference row, the runbook's startup contingency — the OQ13 dual-edit class, moves only the engine arg, catalog re-pin question resurfaces only if the owner wants the advertisement to follow)",
+      "legs_moved": "C02: serveArgs --max-model-len 220000 -> 262144 + the dflash specConfig JSON max_model_len 220000 -> 262144 + the testlib pair + AC/notes; C04: the true-axis comment wording (limit.context byte-stable, now true); C05: the day-one re-measure gate re-bound to 262144/2560/3, the true-axis note + LIVE risk + startup contingency replace the band documentation, the T3 12-flag dict + needles, the T5 needle set, the AC/notes. Untouched: the 20-var env, util 0.90, the probe, the seqs/chunk 3/2560, C01/C03, the catalog rows' protected fields.",
+      "open_questions": "none left open after this pass — R3-Q1..Q6 + Q11 all answered; the approval presentation carries the two RISK STATEMENTS (the LIVE 262144 pool outcome; the tools marker's TP2-only/29-30-mtp caveat)",
+      "at": "2026-11-08T14:51:44+00:00"
+    },
+    "test_wave_fold_in": {
+      "trigger": "coordinator dispositions D-T1..D-T8 (DECISIONS.md 'Test wave — fold-in and dispositions', STATE.test_wave.dispositions) applied to the chunks in the plan session's short fold-in pass: C01 D-T1 added test names (test_c01_thin_overlay_dockerfile / test_c01_readme_ledger / test_c01_vllm_rocm_retired) + the whole tests/containers/vllm-radiance-mxfp4.sh suite (t1-t6) + D-T2 (git rm tests/containers/vllm-rocm.sh, tests/services/vllm-dashboards.sh t4 LEDGER re-pin with the recorded follow-up — dashboards v0.33.0 pin stale-by-design + services/monitoring/prod/values.yaml ~L661 comment FLAGGED, not re-pinned) + Files-in-scope/AC1 scan-set + the R3-Q1 stale-note reword (answered: thin overlay confirmed); C02 D-T1 (test_c02_spec_and_kv_values_keys + the two AC8 comment-window tests) + D-T3 (probes block is an EDIT from the branch's cf-105 60/10/90 to 60/15/160, generation-branched test_render leg, Files-in-scope no-probe-edit clause dropped) + D-T4 (appVersion edit is branch 0.33.0 → 0.30.0, testlib generation witness 0.33.0 pre-flip / 0.30.0 post-flip); C03 D-T1 (test_c03_notes_point_at_the_030_shape) + D-T5 (advancedMounts keyed by container name: vllm.vllm ro / vllm.setup rw, not 'main') + D-T6 (NO-fp8_mtp pin scoped to executed lines — the echo narrative naming the skipped rewrite is permitted; task test leg + AC5 + Tests section); C04/C05 byte-untouched; D-T7/D-T8 accepted as recorded (no chunk edits). The plan file (2026-11-07-cf-131-feat-vllm-fp8-official.md) is unchanged — the fold-in touches chunks only.",
+      "session": "the plan session (continued — the coordinator-dispositioned fold-in pass)",
+      "at": "2026-11-08T17:16:28+00:00 (fresh workspace-clock call at the re-stamp)"
+    }
+  },
+  "owner_batched_round_3": {
+    "at": "2026-11-08T14:32:05+00:00 (verified workspace clock — the date rolled over between round 2's 23:17Z planner stamp and this owner answer)",
+    "shape": "batched round 3 over the final rework's R3-Q1..Q6 + Q11, recommended best-guess first on every question",
+    "answers": {
+      "R3-Q1 (image ship shape)": "Thin overlay — confirmed (containers/vllm-radiance-mxfp4 re-exports magiccodingman/vllm-radiance:1.0.397 @ sha256:b73bf3e4… under the repo CI law)",
+      "R3-Q2 (GPU_UTIL start)": "0.90 — confirmed (the 0.30 Quark capacity class; the re-measure gate owns the pool)",
+      "R3-Q3 (dflash draft context)": "Matched 220000 — confirmed AS ANSWERED under the then-current 220000 target; the Q11 override below re-binds the matched value to 262144 (still 'matched', and exactly the drafter's native 262144 — the plan records the chain)",
+      "R3-Q4 (mtp-toggle depth doc)": "K4 — confirmed (the only 0.30-measured MTP depth; the 29/30-tool caveat recorded)",
+      "R3-Q5 (HSA var)": "Adopt now — confirmed (HSA_TOOLS_DISABLE_REGISTER=1 as env var #20; the runbook's on-target confirmation leg + the PR #42 drop-condition watch)",
+      "R3-Q6 (BF16-MTP coupling)": "Coupled to the mtp toggle — confirmed (off by default; the dflash-shipped env does not carry it)",
+      "Q11 (band vs engine cap)": "ENGINE CAP 262144 — OVERRIDE of the band law: the owner's round-2 'Keep 262144' ruling is consumed as the engine max-model-len shipping at 262144, not the 220000-cap + advertised-262144 band. Consequences: the 220000-262144 engine-capped band is VOID (the catalog advertisement is true at the engine); C02's serveArgs max-model-len + the dflash draft context re-pin to 262144; the day-one re-measure gate re-binds its physics at 262144/2560/3 (the carried 8.49 GiB pin was the 220000 class — the gate derives the pool at the shipped shape); R2 L3.5's '262144 does not fit at TP=1' finding is now a LIVE owner-ruled risk — the plan's Risks section + the runbook's startup contingency (the OQ13 dual-edit re-pin class) carry it, with the probe + re-measure gate as backstops. D28 (the band law) is amended/superseded on the record"
+    },
+    "corrections_for_final_pass": [
+      "Q11 chain only — the six R3 confirmations needed no chunk changes (the final rework planned against every one of its best guesses)"
+    ]
+  },
+  "test_wave": {
+    "stage": "Test Writing",
+    "session": "ses_e44462844ffepO2mLc4sTneGwj",
+    "model": "openrouter/qwen/qwen3.8-flash",
+    "at": "2026-11-08T15:30:00+00:00 (coord-estimated display stamp — the workspace clock read 15:46:02 at the disposition write; ordering intact)",
+    "files": [
+      "charts/vllm/tests/vllm_testlib.py (re-pins + the init_container helper + the drafter-dir constant)",
+      "charts/vllm/tests/test_contract.py (ac7 want_paths re-pin + the 3 new container-surface tests + the ac6 generation branches)",
+      "charts/vllm/tests/test_render.py (recipe-verbatim + double-verb guard + 20-var env exact set + probes generation branch + ac4 advancedMounts legs + the setup-init test)",
+      "charts/vllm/tests/test_trio.py (exact two-override key set + the model-dir law)",
+      "tests/containers/vllm-radiance-mxfp4.sh (NEW — t1-t6, live registry probes)",
+      "tests/pipeline-models/surface.sh (M3 arm + header note only; M1-M2/M4-M7 byte-untouched)",
+      "tests/notes/vllm-runbook.sh (header + LEDGER var + T3 + T5; T1/T2/T4 byte-untouched)"
+    ],
+    "after_state": "designed-reds per chunk: charts/vllm suite 27 pass / 4 fail (exactly the C01 designed-reds) / 5 skip (the C02/C03 wave gates); llama-swap 415/9 skip untouched green; surface.sh M3 designed-red (9 named capability absences); vllm-runbook.sh designed-red (names the missing C01 ledger); vllm-radiance-mxfp4.sh t1 designed-red (names C01). FULL WAVE SIM (scratch tree from the chunk specs, removed after): post-C01 31 pass/5 skip -> post-C02 34 pass/2 skip -> post-C03 36 pass/0 skip; surface.sh M3+M4 post-C04 PASS; vllm-runbook.sh T1-T5 PASS; vllm-radiance-mxfp4.sh t1-t6 PASS incl. live probes. Live registry probes confirm the pin TODAY (the Hub digest + the OCI revision label = D23).",
+    "dispositions": "DECISIONS.md 'Test wave — fold-in and dispositions' D-T1..D-T8 (the added-test-name fold-in rides a short planner pass — the coordinator's edit grant covers STATE/DECISIONS/FRICTION only, chunk files are the plan session's surface; D-T2 stale suites land in C01; D-T3/D-T4 the C02 probes/appVersion wording; D-T5/D-T6 the C03 wording fixes; D-T7/D-T8 the test-author mechanisms accepted)",
+    "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [charts/vllm/tests/vllm_testlib.py, charts/vllm/tests/test_contract.py, charts/vllm/tests/test_render.py, charts/vllm/tests/test_trio.py, tests/containers/vllm-radiance-mxfp4.sh (new), tests/pipeline-models/surface.sh (M3 arm + header note only), tests/notes/vllm-runbook.sh (header + LEDGER var + T3 + T5; T1/T2/T4 byte-untouched)]\ncommands_run: [export PATH=$HOME/.local/bin:$PATH + helm dependency update charts/vllm => pass (fresh worktrees lack the gitignored app-template-5.0.1.tgz — without it the whole render suite reds), python3 -m pytest charts/vllm/tests -q => pass-27/fail-4/skip-5 (the 4 fails are exactly the C01 designed-reds: ac7 + the 3 container-surface tests; the 5 skips are the C02/C03 wave gates), helm lint charts/vllm + both renders (chart-defaults + service -f) => pass, python3 -m pytest charts/llama-swap/tests -q => pass (415/9 skip — the no-move witness untouched and green), bash tests/pipeline-models/surface.sh M3 (real tree) => designed-red as intended (names the 9 capability absences), bash tests/notes/vllm-runbook.sh (real tree) => designed-red naming the missing C01 ledger, bash tests/containers/vllm-radiance-mxfp4.sh t1 (real tree) => designed-red naming C01, FULL WAVE SIM (scratch tree under /tmp/opencode, rebuilt from chunk specs only, removed after): post-C01 pytest => 31 pass/5 skip; post-C02 => 34 pass/2 skip; post-C03 => 36 pass/0 skip; surface.sh M3+M4 (post-C04 catalog fixture) => PASS; vllm-runbook.sh T1..T5 (fixture runbook over the shipped sim values) => PASS 5 ok; vllm-radiance-mxfp4.sh t1..t6 => PASS 7 ok incl. live probes, live registry probes (curl/urllib, allowed read-only): Hub tags API digest for magiccodingman/vllm-radiance:1.0.397 = sha256:b73bf3e4…7313e0 (equals the ledger pin) + config-blob org.opencontainers.image.revision = 5b99d66c…a53d (equals D23) => pass, bash -n all three edited bash suites => pass, npx aislop ci --changes => pass (score 100, 0 errors/0 warnings; format/lint engines skipped — ruff not installed in this session)]\ndeviations: [WAVE-STAGING MECHANISM: one test session before wave 1 cannot also give C01's 'all other tests green UNCHANGED' bar with final-state assertions, so every leg C02/C03 re-pins BRANCHES on a generation witness read from the chart itself (image repository == vllm-radiance-mxfp4, plus the rendered pod's initContainers for C03). Each branch asserts the COMPLETE contract of its generation — nothing is diluted; a half-migrated state reds on both sides. C01-scope tests are unconditional designed-reds (C01 is wave 1). The sim proved each wave's full-suite green bar holds. / C02 task text says 'probes block UNCHANGED from the re-plan / this chunk makes no probe edit' and AC6 says 60/15/160 — but the re-plan never executed: the shipped probes are 60/10/90. I pinned AC6 (exact 15/160 on the cf131 branch); C02 dev MUST edit the probes block. Same wording trap for 'appVersion re-pin 0.27.1 → 0.30.0' (actual current appVersion is 0.33.0 — branch pins 0.33.0 pre-flip, 0.30.0 post). Both are re-plan-era phrasings, not constants disputes. / C03 'command contains NO fp8_mtp reference' contradicts the chunk's own verbatim command (its echo lines name the skipped rewrite). I scoped the absence to EXECUTED lines — echo/comment narrative may name it, no action line may. Sim-verified against the chunk's literal script. / Test-author phrase pins the chunks delegated to me: T3/T5 true-axis legs (limit.context…262144 line adjacency + the literal 'true at the engine', both taken verbatim from C05's names-block spec), 'one-engine-per-card' matched case-insensitively (the heading ships uppercase), T5 'mxfp4 staging:' and 'DRY_RUN' tokens added from C05's step-2/3 spec text, README stack-record tokens matched as independent words (a table layout breaks adjacency). / Tightenings within plan-stated scope: test_ac7 now asserts EXACT 4-path set equality (C01 '4 → 4, nothing else moves'); test_trio now asserts the app-template block's key set is exactly {modelPath, rocrVisibleDevices} (C02 AC9 'exactly its two overrides' — the cf-105 test never pinned the count).]\nfriction: [write tool permission-denied under /tmp/opencode for new files (the FRICTION-listed pattern) — sim fixtures written via shell heredoc instead; resolution: fine, recorded for the next test session / the retirement scan first matched the tests' own __pycache__/*.pyc (constant folding re-joins the assembled V.LEGACY_REF) — fixed by skipping compiled/vendored binaries, comment records why / fresh worktree needs `helm dependency update` before the chart suite (gitignored tgz) — without it 15 tests red on the untouched chart; AGENTS/commands say PATH but not this; suggest a FRICTION line / C03's advancedMounts phrasing ('main → /models') is not the library's key shape: app-template 5.0.1 keys advancedMounts.<controller>.<container> and the main container is named vllm — the literal transcription silently drops the mount (the sim caught it exactly this way); the test reds it, dev must key vllm.vllm + vllm.setup]\nopen_questions: [COORD FOLD-IN — tests the chunks do not list, which I added: test_c01_thin_overlay_dockerfile / test_c01_readme_ledger / test_c01_vllm_rocm_retired + the whole tests/containers/vllm-radiance-mxfp4.sh suite (C01's Tests section names only the ac7 re-pin; its AC1–AC3 otherwise had no test surface — the cf-105 C01 precedent was a container bash suite); test_c02_spec_and_kv_values_keys + the two AC8 comment-window tests; test_c03_notes_point_at_the_030_shape (AC7's greppable half — the 'no new surface claims' half stays a review read). / STALE SUITES vs the plan: tests/containers/vllm-rocm.sh asserts the C01-retired dir (t1 FAILs the moment C01 lands) and tests/services/vllm-dashboards.sh t4 couples the dashboard tag to containers/vllm-rocm/README.md (also breaks at C01). Neither file is in any chunk's scope. Recommend: C01 scope += git rm tests/containers/vllm-rocm.sh (it retires with its subject) and a dashboards-suite disposition (repin t4's LEDGER to the radiance README with a 'recorded follow-up, v0.33.0 pin stale by design' note, or retire it in C05). / C03 wording fix for the coordinator: the advancedMounts container keys are the CONTAINER names (vllm / setup), not 'main' — the chunk sentence should say so or every C01-era dev gets one red cycle (friction item 4; the test's message already points the way). / The probes edit ownership (deviation 2): should C02's task list gain an explicit probes line so the dev doesn't read 'this chunk makes no probe edit' as a prohibition? The AC + my pins make it mandatory either way. / No chunk claimed the services/monitoring dashboard entries' 'containers/vllm-rocm base image' comment (services/monitoring/prod/values.yaml ~L661) — it's outside C01's scan set (containers/, .github/, charts/vllm/tests/) and C05 leaves the dashboards to the owner; flagged for consistency, not re-pinned.]\nnext_suggested: coordinator folds the added-test names + the two stale-suite dispositions into the chunk records, then launches C01 dev on wave 1 (its green bar: charts/vllm suite fully green incl. the 4 designed-reds flipped + bash tests/containers/vllm-radiance-mxfp4.sh PASS with the live probes; the runbook/surface suites are intentionally red until their chunks)."
+  },
+  "final_rework_handoff": {
+    "at": "2026-11-07T23:20:00+00:00 (coord record; the planner's plan.final_rework stamp is 2026-11-07T23:17:13+00:00 on a fresh workspace-clock call — per the clock_note, that is the verified reference from that point)",
+    "session": "ses_e47fe405affeek62gAUxD8ZHrQ (continued, final rework round)",
+    "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-11-07-cf-131-feat-vllm-fp8-official.md (final rework in place: round-3 header record, Goal/Ground/Out-of-scope/Commands/5-chunk table/Wave order/Risks/Open questions R3-Q1..Q6+Q11/Decisions D23-D30 summary — one folder, one plan file), DECISIONS.md (appended 'Final rework — the 0.30 base round': the round-2/round-3 ruling pointers, the D11-D22 disposition pass, new decisions D23-D30; the Re-scope ruling + Owner rulings round-2 + all earlier sections kept as-is), chunks/C01.md (rewritten: the thin digest-pinned re-export over 1.0.397 + ledger + vllm-rocm retirement + CI paths), chunks/C02.md (rewritten: the 0.30 Shape-B recipe with args-start-with-model-path law, the 20-var env, the kvCacheDtype/specMethod/specConfig keys on the 0.30 ground, appVersion 0.30.0, no kv-pin, service twin to the raw-release dir, the test re-pins), chunks/C03.md (rewritten: the raw-release + drafter-revision ee0cb26a init staging, the both-sha marker, the Q8 no-rewrite pins, the persistence restructure carry), chunks/C04.md (rewritten: the capabilities marker + tools: true, the limit.context 262144 byte-stable per Q3, the M3 capability-only re-pin, the marker's honest grounding record), chunks/C05.md (rewritten: the 0.30 marker set + DRY_RUN-analog capture, the day-one re-measure gate as the SOLE envelope path, the band documentation, the int4 gate step, the tool smoke, the HSA watch, the one-engine-per-card step 8/9, the recorded alternatives on R3 L1.5's table, the T3 12-flag dict + kv-pin ABSENCE leg + T5 needle set, the no-move final-chunk bar), STATE.json (plan.final_rework stamped at 2026-11-07T23:17:13+00:00 fresh workspace-clock call: trigger/ground/pin_set_030/round-2 assumptions/open-questions record/disposition pointer; the re-plan chunk map preserved as plan.final_rework_supersedes_chunk_map; top-level chunks re-grounded C01-C05; plan_status stays draft; every seeded/extended key kept incl. clock_note)]\ncommands_run: [read-only grounding (STATE.json plan.owner_batched_round_2 + research_round_3 + clock_note + replan_handoff; RESEARCH.md R3 L2183-3649 in full incl. L1.1-L3.3, the contradiction map, the implications, R3-Q1..Q6, the R3 sources, the reliability notes; DECISIONS.md 'Owner rulings — batched round 2' section) => pass, R3 cross-checks: the D24 recipe flags vs the C05 T3 12-flag dict (12/12 + the kv-pin absence leg), the specConfig JSON identity C02 vs C05 (grep-identical), the both-sha marker constants across C02/C03/C05 (consistent), the 20-var env set vs R3 L3.1's delta list (all accounted: GDN_LAZY drop, HSA add, the MXFP4 set, the dflash prerequisites, the WEIGHT_QUANTIZATION seam name) => pass, stale-reference sweep (0.98-as-shipped, 65536, GDN_LAZY-as-shipped, df0af7cf6b-as-build-source, 0.9.3-as-ship-target — each confirmed to sit only in superseded/recorded context) => pass, python3 STATE.json extend + JSON re-parse + keep-every-key guard (feature/plan_status/coord_session/test_session/current_wave/kickoff/pre_planning/research/research_round_2/research_round_3/clock_note + plan.approval/rework/owner_batched_round_2/replan/replan_handoff all asserted present before write) => pass, date (the fresh stamp call, 2026-11-07T23:17:13+00:00) => pass, DECISIONS.md section-order check (8 sections, the ruling sections intact, the final-rework section appended last) => pass]\ndeviations: none — the round-3 instruction's five-chunk seam shape is kept exactly (C01 overlay / C02 engine switch / C03 staging+storage / C04 catalog+surface / C05 runbook+no-move bar); the 'your call on the record' item (R3-Q1 overlay-vs-direct-pin nuance + its chunk-shape effect) is recorded in D23 + the plan's R3-Q1 entry (best guess: keep the thin overlay; the chunk shape is unchanged either way — the marked one-line-per-chunk surface); the plan-level addition Q11 (the round-2 Q3 answer's own conditional) is carried to round 3 per the no-questions rule\nfriction: the workspace clock advanced past the coord's round-2 stamps between the re-plan and this pass (the clock_note's ~17-min skew resolved itself — the fresh 23:17:13Z call is now ahead of every earlier stamp); no edit-tool mismatches this round (all reworks were full-file rewrites via write + targeted appends, avoiding the round-1 whitespace-matching class)\nopen_questions: R3-Q1 overlay-or-direct-pin: thin containers/vllm-radiance-mxfp4 re-export (D23) vs chart-pinned docker.io upstream — best guess: keep the thin overlay (round-2 Q4 named the dir pre-Q10; the first-build :v<run> + PIN-ME law wants the in-repo artifact; CI changed-dir + test_ac6 assume the dir; the substance is a one-line FROM@digest + EXPOSE). Impact: C01's entire scope vs the chart-direct form (the marked one-line-per-chunk surface: C01 shrinks to the vllm-rocm retirement + the CI swap, the ledger moves to the chart comment + runbook step 10, C02's image repo string flips to docker.io). R3-Q2 Shape B GPU_UTIL start at 0.30 TP1: 0.85 (compose baseline) / 0.90 (the 0.30 Quark capacity class) / 0.98 (the 0.9.3 launcher ceiling — stack-specific, not verified at 0.30) — best guess: 0.90 (the 0.30-class allocation; the OOM boundary is engine-generation-specific). Impact: the C02 serveArgs constant + the re-measure target + the first-boot OOM-risk class (the probe is the backstop either way). R3-Q3 the dflash JSON draft max_model_len: matched 220000 (the README's matched-context requirement; the drafter's native 262144 covers it) vs their 8192 profile constant (an untested combination under the 220000 target) — best guess: matched 220000 (C02's specConfig JSON + the testlib pair + the C05 T3 dict leg ride it). R3-Q4 the documented mtp-toggle depth: K4 (the only 0.30-MEASURED MTP depth; the lane carries the 29/30 tool-FAIL class) vs K8 (the .env example's unmeasured general guidance) — best guess: K4 (the C02 specMethod comment JSON only — not the shipped default). R3-Q5 HSA_TOOLS_DISABLE_REGISTER=1 in the pod env (issue #6/#12: one core at ~100% idle + ~31.5 W package class on our shared 32-CPU node; reporter-verified on this stack lineage, metrics unaffected, PR #19/#42 both unmerged): adopt now vs watch for the fix — best guess: adopt (the D25 20-var set's var #20; the runbook carries the on-target confirmation leg + the drop-condition watch). Impact: the C02 env count + the test want-dict; a watch-instead answer is the one-var drop. R3-Q6 RADIANCE_QUARK_BF16_MTP coupling: off-by-default tied to the mtp toggle (the maintainer's documented line: 'only when selecting its MTP profile; non-spec and DFlash do not need that override') vs always-on (belt-and-suspenders on the raw release's bf16 head, an unqualified deviation from the baked default 0) — best guess: coupled to the toggle (the C02 specMethod comment procedure + the C05 runbook step 2.3 ladder; not in the shipped default env). Q11 (new, plan-level) the band as ruled vs the engine cap at 262144: the round-2 Q3 answer's own conditional ('if the owner instead meant the engine cap at 262144, that surfaces at the approval presentation') — best guess: the band as explicitly ruled (engine 220000 cap, catalog 262144 advertised, 220000-262144 engine-capped, the runbook documents it — D28/C05); an engine-262144 answer re-binds the re-measure gate's physics (the R2 L3.5 'does not fit at TP1' class re-opens as an owner ask) and re-pins the C02 serveArgs max-model-len + the dflash JSON + the C05 band text (the marked surface).\nnext_suggested: coordinator runs the batched round-3 question call over R3-Q1..Q6 + Q11 exactly as returned (the two items worth the owner's explicit attention at the approval presentation: R3-Q2's 0.90 util start riding the re-measure gate, and the Q6 tools marker's TP2-only/29-30-mtp caveat risk statement per R3 L3.2's confidence law); on the answers, relaunch the plan session for the marked one-line-per-chunk corrections (or none, if every best guess holds), then the approval presentation of the final 5-chunk/4-wave rework; on approval, set plan_status approved and launch the test session (all five chunks' re-pins in one session before any dev)"
+  },
+  "final_pass_handoff": {
+    "at": "2026-11-08T14:55:00+00:00 (coord record; the planner's plan.final_pass stamp is 2026-11-08T14:51:44+00:00 on a fresh workspace-clock call — the verified reference)",
+    "session": "ses_e47fe405affeek62gAUxD8ZHrQ (continued, Q11 correction pass)",
+    "result_verbatim": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-11-07-cf-131-feat-vllm-fp8-official.md (in place: title rounds 1+2+3, final-pass header record, Goal + Out-of-scope re-grounded to the 262144 engine cap, the LIVE 262144 risk bullet + re-measure/HSA re-words in Risks, Open questions restructured as the round-3 outcomes with nothing left open, Decisions intro + D28 SUPERSEDED + D31, C05 table row), DECISIONS.md (appended 'Final pass — the Q11 engine-cap ruling': the six-R3-confirmation no-change verification, D28 SUPERSEDED-by-D31, D31 with the Q11 chain + live risk + three named backstops; every earlier section kept as-is), chunks/C02.md (serveArgs --max-model-len 262144, dflash specConfig JSON max_model_len 262144 + the specMethod chain-record comment, testlib pair + AC2/AC8, the notes' live-risk statement, the R3-Q2/Q4/Q6 confirmed re-words), chunks/C04.md (true-axis wording: limit.context 262144 byte-stable AND accurate, M3 assert comment reworded, the Q11-answered notes + the presentation-ride change to the live risk), chunks/C05.md (title, the day-one re-measure gate re-bound to the shipped 262144/2560/3 shape with the 8.49 GiB pin demoted to the recorded reference row, the new STARTUP CONTINGENCY (OQ13 dual-edit class, engine-arg-only), the true-axis note + LIVE risk replacing the band documentation across names/envelope/T3/T5/AC/notes, step 3.2 max_model_len 262144, the T3 12-flag dict + true-axis needles), STATE.json (plan.final_pass stamped 2026-11-08T14:51:44+00:00 on a fresh workspace-clock call: trigger/ground/d_disposition/legs_moved/open_questions record; C05 top-level chunk title re-grounded; updated_at re-stamped; every seeded/extended key kept incl. clock_note; plan_status stays draft)]\ncommands_run: [round-3 record grounding (STATE.json top-level owner_batched_round_3 + plan keys, DECISIONS.md 'Owner rulings — batched round 3') => pass, stale-reference sweep before edits (every 220000/band occurrence mapped across plan + C02/C04/C05; C01/C03 confirmed clean) => pass, C02 10-point line-based rework + survivor check (3x 220000, all chain-record context) => pass, C04 7-point rework + survivor check (0x 220000; band words only as supersession records) => pass, C05 two-part line-based sweep (Part A: title/goal/names/envelope/step3.2/startup-contingency/re-measure gate; Part B: T3 dict + needles, T5 keep/swap, notes, AC3/AC4/AC7) + the flag-token restore + the T3 needle-tail restore => pass, plan-file sweep (final-pass header blockquote, Goal, Out-of-scope 1M bullet, C05 chunk-table row, Risks live-risk insert + re-measure/HSA re-words, Open-questions section replacement, Decisions intro + D28 SUPERSEDED + D31 append, title) => pass, DECISIONS.md append ('Final pass — the Q11 engine-cap ruling': confirmation record, D28 disposition, D31) + section-order check (9 sections, all earlier intact) => pass, STATE.json extend (plan.final_pass: trigger/ground/d_disposition/legs_moved/open_questions/at; top-level chunks C05 title; updated_at) with keep-every-key guard (all top-level + all plan.* keys asserted before write) => pass, cross-file consistency: the dflash specConfig JSON grep-identical C02 vs C05 at max_model_len 262144; the T3 12-flag dict's values match the C02 serveArgs recipe flag-for-flag; 220000 survivors in every file sit only in recorded-context (historical header records, the supersession chain, the 220000-class reference-row provenance); band-word survivors only as 'superseded on the record' / 'not a band half' chain records => pass, JSON re-parse STATE.json => pass, temp script cleanup => pass]\ndeviations: none — the round-3 instruction's leg scope is honored exactly (only the max-model-len leg + the band→true-axis documentation move; the 20-var env, util 0.90, probe, seqs/chunk 3/2560, staging, and all other C01–C05 constants untouched); the six R3 confirmations required no chunk change and that is verified on the record, not merely asserted\nfriction: the line-based replacement pattern (staged python scripts) hit the same whitespace/indent-mismatch class as round 1 — three assert-driven retry cycles to get the C05 splice line-maps exact; two splice artifacts were caught by post-write verification and repaired (a dropped T3-needle tail and a code-span flag token split across lines); all recovered with the final sweep verifying clean\nopen_questions: none genuinely open after this pass — R3-Q1..Q6 are confirmed (no chunk change needed, verified) and Q11 is answered (engine 262144, band law D28 SUPERSEDED by D31). The two approval-presentation RISK STATEMENTS ride the presentation, not the question log: (a) the LIVE 262144 pool outcome — R2 L3.5's 'does not fit at TP=1' record is now owner-ruled and no 0.30 TP1 measurement exists at any shape, so the KV pool at the 0.90 start is an on-target unknown until the day-one re-measure gate (backstops: the 40-min probe as a loud gated refusal, the gate's pool derivation + values-only --kv-cache-memory-bytes re-tune, the documented startup contingency that moves only the engine arg); (b) the tools marker's standing risk per R3 L3.2 (the 30/30 record is TP2-only, the mtp toggle carries the 29/30 tool-gate-FAIL class, the record is a synthetic wire gate — the on-target tool smoke is the closing gate)\nnext_suggested: the coordinator's HIL Planning stop — present the final 5-chunk/4-wave plan with the two risk statements above (the Q11 conditional is now answered, so the presentation carries the live risk in its place); on owner approval, set plan_status approved (owner's call, never the plan agent's) and launch the test session (all five chunks' re-pins in one session before any dev), then wave 1 with C01"
+  },
+  "clock_note": "workspace clock verified 2026-11-07T22:52:45+00:00 (date on the worktree); coord-estimated display stamps earlier in this file (22:35/22:40/23:05/23:10) ran up to ~17 min ahead of the workspace clock — the planner's 22:51:41 re-plan stamp is the verified reference from that point on; ordering of events is unaffected"
+}

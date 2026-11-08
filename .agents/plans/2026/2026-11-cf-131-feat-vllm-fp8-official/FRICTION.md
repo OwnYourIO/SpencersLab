@@ -1,0 +1,25 @@
+# FRICTION — cf-131-feat-vllm-fp8-official
+
+- 2026-11-07 · explore(EXPLORE) · readonly-ai-gpu-kubernetes answers `pods_list_in_namespace`/`resources_list` in tabular form (display rows) while `pods_get`/`resources_get` answer full objects — extraction code must branch on shape · resolution: grounded in EXPLORE.md §7 for all downstream agents; no repo-side repair surface this run · ignored
+
+- 2026-11-07 · coord(kickoff) · dev-boards MCP transport dropped in-flight three times during claim-time reads (empty `{}` / `undefined` rejections on get_card, list_cards_in_list, get_card_details, preload_board, and once on a move_card whose effect DID land) · resolution: wekan-mcp failure-mode playbook rules — verify board state before any retry, spend the sanctioned one-retry on idempotent reads, and for the lost move verified the card was already in Executing before proceeding (no re-move, no duplicate comment) · fixed
+
+- 2026-11-07 · coord(kickoff) · the v2.1.4 session PATCH route silently ignores the model field (four shapes tried; `time.updated` moved, `model` stayed) — the Provider: API session-model switch from the launch text cannot be applied to the running coordinator session · resolution: all subagent tiers of this run launch on the openrouter routes (plan openrouter/qwen/qwen3.8-27b, code openrouter/qwen/qwen3.8-flash); the limitation is recorded in the claim comment (KJ9TBv3jLpXgSiHdT), STATE.json kickoff.models_deviation, and will ride in the final RESULT · open
+
+- 2026-11-07 · research(Pre Research) · the edit tool failed twice on unicode-heavy blocks (en-dash/≈/→ content) when writing RESEARCH.md · resolution: in-session python line-range replacement; no repo-side impact, no further occurrence · fixed
+
+- 2026-11-07 · plan(Planning) · HF's /api/models/<repo>/commit/main endpoint 404s — the pinned commit sha must come from the model-API root's `sha` field instead · resolution: recorded in the plan's Ground section so the C01/C03 staging step cites the right source · fixed
+
+- 2026-11-07 · plan(rework) · the edit tool's whitespace matching failed twice on C03.md regions (the file's actual indentation differed from the read-rendering matched against) · resolution: anchored range-based python replacements (staged script deleted after run; no repo-side impact beyond the intended rework) · fixed
+
+- 2026-11-07 · research(R2) · Codeberg API /api/v1/repositories/… 404s (the /api/v1/repos/… path works); HF /commit/<sha> 404s as the R1 entry predicted (/commits/main is the working endpoint); the shell's portable scanner rejects very large heredocs; the Codeberg README webfetch truncated at 975/1185 lines · resolution: repos-path shape for Codeberg, /commits/main for HF shas, the ~30KB R2 block staged via the write tool into the feature folder and removed after append, README tail read from retained tool output · fixed
+
+- 2026-11-07 · plan(re-plan) · the round-1 edit-tool whitespace mismatches recurred on the re-plan rewrites · resolution: the range-based python replacement pattern from the rework round was reused (staged scripts in-ticket, deleted after each run) · fixed
+
+- 2026-11-07 · coord(records) · coord-estimated display stamps in STATE.json (the 22:35/22:40/23:05/23:10 round stamps) ran up to ~17 min ahead of the workspace clock — the stamps were written from run-pacing estimates rather than a date call after the session move · resolution: verified workspace clock 22:52:45Z recorded in STATE.json clock_note + the replan_handoff stamp; every later coord write stamps with a fresh date call; event ordering unaffected · open
+
+- 2026-11-07 · research(R3) · GitHub raw + HF resolve endpoints redirect (need -L); the Codeberg commit API rejects short SHAs (full SHA required); /tmp/opencode writes are permission-denied for pipeline subagents (the R2 in-ticket staging pattern recurs) · resolution: -L on the redirects, full SHAs for Codeberg, the ~45KB R3 block staged into the feature folder and removed after the append — the in-ticket staging pattern is the sanctioned path for this family · fixed
+
+- 2026-11-08 · test(test wave) · a fresh worktree needs `helm dependency update charts/vllm` before the chart suite — the app-template .tgz is gitignored, so without it 15 tests red on the UNTOUCHED chart (the repo's Commands conventions say PATH export but not this) · resolution: run `helm dependency update` first in every chart-suite session; AGENTS.md "Pipeline specifics" suggests a doc line (owner's call) · open
+
+- 2026-11-08 · test(test wave) · the retirement-scan regex first matched the test suites' own `__pycache__/*.pyc` (constant folding re-joins the assembled legacy-reference string) · resolution: skip compiled/vendored binaries in the scan; a comment in the suite records why · fixed
