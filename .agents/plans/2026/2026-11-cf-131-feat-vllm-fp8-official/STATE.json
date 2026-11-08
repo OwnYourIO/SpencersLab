@@ -265,7 +265,11 @@
   },
   "chunks": {
     "C01": {
-      "status": "dev_done",
+      "status": "review_approved",
+      "review_session": "ses_e439b47c4ffeuMYe08gjkZ2KK6 (fresh-context agent-review, code tier)",
+      "review_verdict": "APPROVED r1 (2026-11-08) — full green bar re-run fresh by the reviewer: pytest charts/vllm 31 pass / 5 designed-skips; tests/containers/vllm-radiance-mxfp4.sh 7 ok incl. live registry probes with ZERO drift vs D23; tests/services/vllm-dashboards.sh 5 ok; helm lint + chart-defaults + service-level renders with 0 OVERRIDE sentinels; npx aislop ci --changes 0/0; AC1 retirement grep clean across all five scan dirs; AC5 no-move verified byte-empty; independent live probe re-verified the manifest-bytes digest, the config-blob identity, and the entrypoint/User/ExposedPorts claims; docker build no-daemon CI-deferred (cf-77 gate shape). Zero blocking findings.",
+      "review_nit": "README.md ~L18-24 (AC2, non-blocking, deferred per house style): 're-run live by t6' overstates t6's coverage — t6 live-rechecks 2 of the 4 corroborations (Hub digest + OCI label); manifest-bytes recomputation and sibling-tag resolution are dev-probe-time records. Facts independently re-verified true by the review. Recorded in the chunk Review-notes; fix whenever the file next changes.",
+      "review_deferred_observation": "test_c01_vllm_rocm_retired (62fff096f) scans 3 of AC1's 5 dirs (missing tests/containers/ + tests/services/); both grep-clean at review; the dashboards file names the retired overlay by position to stay scan-clean. No action — a future hardening pass would ride the test file.",
       "wave": 1,
       "size": "M",
       "depends_on": [],
@@ -277,7 +281,7 @@
       "dev_at": "2026-11-08T18:16:15+00:00 (coord record on the fresh workspace clock)",
       "green_bar": "pytest charts/vllm 31 pass / 5 skip (the C02/C03 plane designed-skips); tests/containers/vllm-radiance-mxfp4.sh t1-t6 green incl. the live registry probes with ZERO drift (Hub digest b73bf3e4...7313e0 on all four sibling tags, full_size 4079863554 B, push 2026-10-18T06:35:03Z, OCI revision label 5b99d66c...); helm lint + chart-defaults + service-level renders green; chart byte-untouched (AC5); the AC1 functional-reference scan clean (no ghcr.io/ownyourio/vllm-rocm anywhere); npx aislop ci --changes 0 errors / 0 warnings; docker build no-daemon CI-deferred (the cf-77 gate shape)",
       "open_item": "tests/services/vllm-dashboards.sh t4 LEDGER re-pin (the D-T2 disposition; the chunk marks it '(test session, before dev)' — dev is permission-denied on test files) — ROUTED to the test session; lands with the C01 commit so the dashboards suite is green at commit time",
-      "next": "test-session re-pin -> coordinator commits C01 -> agent-review (fresh context) -> the Chunk Review HITL stop"
+      "next": "C01 feat commit (verdict in the message) -> commit-stamp chore(plans) -> the Chunk Review HITL stop (owner go-ahead) -> C02 dev (wave 2, size L — the engine switch)"
     },
     "C02": {
       "status": "pending",
