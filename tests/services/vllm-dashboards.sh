@@ -2,21 +2,36 @@
 # vLLM Grafana dashboard pins (2026/2026-11-cf-105-feat-implement-vllm, C05):
 # the two official vLLM dashboards land in the central Grafana via the repo's
 # proven grafana.dashboards url: convention, pinned to the vllm repo TAG
-# v0.33.0 — the same tag as the containers/vllm-rocm base image — with a
-# tag-coupling comment on each entry (renovate cannot track raw-URL pins, so
-# the two pins bump together by hand).
+# v0.33.0 — the same tag as the cf-105 GGUF-overlay base image — with a
+# tag-coupling comment on each entry (auto-update cannot track raw-URL pins,
+# so the two pins bump together by hand).
 # Contract source: chunks/C05.md "## Tests" (t1-t4).
+#
+# cf-131 C01 re-pin (the D-T2 disposition): t4's LEDGER follows the ledger
+# home to containers/vllm-radiance-mxfp4/README.md. RECORDED FOLLOW-UP, not
+# a re-pin of anything else here: the dashboards values' v0.33.0 base-image
+# pin is STALE BY DESIGN — the engine the dashboards observe is now the 0.30
+# Radiance stack, and the dashboards RE-IMPORT is owner/central-stack
+# territory (C05 step 7.3 records the need; it is not a repo edit in this
+# ticket). The same follow-up FLAGS services/monitoring/prod/values.yaml
+# ~L661 — the entry comment naming the RETIRED GGUF overlay's base image
+# (named by position, not by string: this file must stay clear of the
+# retirement grep's scan set, C01 AC1 extended) — flagged for the owner's
+# follow-up, not re-pinned. t4 keeps passing on this ground only because
+# the new ledger records the v0.33.0 base as its PREDECESSOR row
+# (vllm/vllm-openai-rocm:v0.33.0-rocm100) — a version-prefix match, until a
+# re-import retires this coupling entirely.
 #
 # t3 is network-gated (SKIP with warning on no egress); a real HTTP error
 # (e.g. 404 on the tag URL) is a FAIL — a tag-layout 404 at review time is
 # BLOCKED-with-evidence, never a silent repin to main (C05 notes).
 #
-# t4 is designed-red until C01 lands: it couples the dashboard tag to the
-# base-image tag in the C01 ledger (containers/vllm-rocm/README.md). The
-# ledger match is a version-prefix, not the full image:tag composite — the
-# C01 ledger is a tag→digest table and its own t2 only guarantees the bare
-# tag string in the README, which a table layout may keep off the image
-# name's line.
+# t4 was designed-red until C01 lands: it couples the dashboard tag to a
+# tag row in the C01 ledger (since cf-131: the predecessor row named
+# above). The ledger match is a version-prefix, not the full image:tag
+# composite — the C01 ledger is a tag→digest table and its own pairing test
+# only guarantees the bare tag string in the README, which a table layout
+# may keep off the image name's line.
 #
 # Run from the repo root:
 #   bash tests/services/vllm-dashboards.sh          # t1..t4
@@ -26,9 +41,11 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 VALS="services/monitoring/prod/values.yaml"
-LEDGER="containers/vllm-rocm/README.md"
-# The vllm repo tag the pin couples to — the C01 base image's tag (C01
-# ledger); t4 guards the coupling because the bump is manual.
+LEDGER="containers/vllm-radiance-mxfp4/README.md"
+# The vllm repo tag the pin couples to — the cf-105 base image's tag; since
+# cf-131 it matches the C01 ledger's PREDECESSOR row, not the live base tag
+# (see the recorded-follow-up note at the header). t4 guards the pairing
+# because the bump is manual.
 TAG="v0.33.0"
 URL_PERF="https://raw.githubusercontent.com/vllm-project/vllm/${TAG}/examples/observability/dashboards/grafana/performance_statistics.json"
 URL_QUERY="https://raw.githubusercontent.com/vllm-project/vllm/${TAG}/examples/observability/dashboards/grafana/query_statistics.json"
@@ -223,15 +240,15 @@ PY
     fail "t4: cannot derive the dashboard tag from $VALS (diagnostics above — see t1/t2)"
   fi
   if [ ! -f "$LEDGER" ]; then
-    fail "t4: $LEDGER missing — the C01 ledger the dashboard pin couples to is not landed (C01 is wave 1, so the ledger must exist by C05 dev — see C01 test t2)"
+    fail "t4: $LEDGER missing — the C01 ledger the dashboard pin couples to is not landed (C01 is wave 1, so the ledger must exist by C05 dev — see tests/containers/vllm-radiance-mxfp4.sh t3)"
   fi
   # Dots escaped for ERE: a near-match (v0x33x0) must not pass, and the
   # boundary class keeps v10.33.0 / av0.33.0 out.
   ver_re=${ver//./\\.}
   if ! hit=$(grep -E "(^|[^A-Za-z0-9.])${ver_re}([.-]|$)" "$LEDGER" | head -1); then
-    fail "t4: pin drift — the dashboards pin ${ver} but the C01 base-image ledger (${LEDGER}) names no base tag starting with ${ver} (the tag-coupling comment says bump the two TOGETHER)"
+    fail "t4: pin drift — the dashboards pin ${ver} but the C01 ledger (${LEDGER}) names no tag row starting with ${ver} (since cf-131 the match is the recorded predecessor row; the tag-coupling comment says bump the two TOGETHER — until the owner's re-import retires the pairing)"
   fi
-  ok "t4: the dashboard pin (${ver}) couples to the C01 base image tag in the ledger ($(printf '%s' "$hit" | sed 's/^[[:space:]]*//'))"
+  ok "t4: the dashboard pin (${ver}) couples to a tag row in the C01 ledger ($(printf '%s' "$hit" | sed 's/^[[:space:]]*//'))"
 fi
 
 printf 'PASS: vllm dashboard contract checks (%d ok)\n' "$checks"

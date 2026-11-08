@@ -12,13 +12,13 @@ on:
       - main
     paths:
       - 'charts/vllm/**'
-      - 'containers/vllm-rocm/**'
+      - 'containers/vllm-radiance-mxfp4/**'
       - 'services/gpu-ai/prod/values.yaml'
       - '.github/workflows/vllm-render-tests.yaml'
   pull_request:
     paths:
       - 'charts/vllm/**'
-      - 'containers/vllm-rocm/**'
+      - 'containers/vllm-radiance-mxfp4/**'
       - 'services/gpu-ai/prod/values.yaml'
       - '.github/workflows/vllm-render-tests.yaml'
 
