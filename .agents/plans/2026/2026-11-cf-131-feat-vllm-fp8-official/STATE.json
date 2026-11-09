@@ -43,7 +43,7 @@
   "coord_session": "ses_e4860e71bffeqHykL23nSUdAJk",
   "test_session": "ses_e44462844ffepO2mLc4sTneGwj",
   "current_wave": 1,
-  "updated_at": "2026-11-08T18:16:15+00:00",
+  "updated_at": "2026-11-09T00:15:20+00:00",
   "kickoff": {
     "card": "unDxRqcrNTfahp656",
     "card_number": 131,
@@ -284,13 +284,22 @@
       "next": "C01 feat commit (verdict in the message) -> commit-stamp chore(plans) -> the Chunk Review HITL stop (owner go-ahead) -> C02 dev (wave 2, size L — the engine switch)"
     },
     "C02": {
-      "status": "pending",
+      "status": "review_approved",
+      "review_session": "ses_e425d7b91ffe4UnBN5WyzEQzH3 (fresh-context agent-review, code tier)",
+      "review_verdict": "APPROVED r1 (2026-11-09) — green bar re-run fresh (34/2, lint 0, both renders 0 sentinels, aislop 0/0); AC1-AC9 machine-verified on both rendered planes (43-token verbatim D24 recipe, args[0] model-dir law, no verb tokens, no --kv-cache-memory-bytes, exact 20-var D25 env with the three absent pins, startup 60/15/160, image pin + PIN-ME + ledger mirror, appVersion 0.30.0 only, service twin exactly two overrides, sibling surfaces diff-empty, strict no-duplicate-keys YAML x3 — the dev's splice-artifact repairs independently verified clean).",
+      "deviation_adjudication": "enableSleepMode record-key removal — CORRECT, approved (the Q7 drop made its comment false; the pattern migrates into specMethod per D16; the re-enable surface home is the runbook C05 step 8; no consumer reads the key).",
+      "review_minor_fixed_pre_commit": "AC7 comment-side: the drop-record comment's lineage header reworded (cf-105 + the re-plan's D15 derivation) + the omitted --enforce-eager item with its D24 WHY added — dev follow-up (same session), green bar re-run proven inert.",
+      "dev_session": "ses_e4266e47fffeSk0r86Vxv4Vf6A (code tier; the comment fix rode the same session)",
+      "dev_at": "2026-11-09T00:07:27+00:00 (coord record on the fresh workspace clock — the date rolled over during the dev run)",
       "wave": 2,
       "size": "L",
       "depends_on": [
         "C01"
       ],
-      "title": "The engine switch: 0.30 image pin @ first-build shape, the Shape-B serve recipe (compose-baseline ground + the Q7 carries), the 20-var env law, the probe carry, the values keys, the service twin, the test re-pins"
+      "title": "The engine switch: 0.30 image pin @ first-build shape, the Shape-B serve recipe (compose-baseline ground + the Q7 carries), the 20-var env law, the probe carry, the values keys, the service twin, the test re-pins",
+      "green_bar": "pytest charts/vllm 34 passed / 2 skipped (the 2 = the C03-plane designed-skips); helm lint 0 failed; chart-defaults + service-level renders 0 OVERRIDE sentinels; rendered-surface greps pass (no vllm/serve/--model tokens, the seven dropped flags absent in both renders, startup 60/15/160, exact 20-var env); grep vllm-rocm clean across charts/vllm after the flip; strict no-duplicate-keys YAML parse of all three edited files; npx aislop ci --changes 0/0. Baseline pre-edit was 31/5 (exact C01 state).",
+      "deviation_for_review": "the enableSleepMode: true RECORD KEY was REMOVED with the serveArgs rewrite — a judgment call (the chunk's values task list names it neither changed nor unchanged): its comment asserted '--enable-sleep-mode ON by default … the flag rides serveArgs below', which the D24 rewrite (the Q7 sleep-mode drop) makes false — leaving it = a comment contradicting the code (comment-slop mode 6); the record-key pattern migrates into specMethod (D16/D24); the flag's re-enable surface home is the runbook (verified against C05's chunk text). No test reads the key; the suite green-proves the removal is contract-clean. Review audits this.",
+      "next": "C02 feat commit (verdict in the message) -> commit-stamp chore(plans) -> the Chunk Review HITL stop (wave 3) -> C03 + C04 (wave 3, parallel-eligible — both depend only on C02)"
     },
     "C03": {
       "status": "pending",
