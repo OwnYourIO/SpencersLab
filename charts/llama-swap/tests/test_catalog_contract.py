@@ -266,19 +266,20 @@ def test_c05_provider_settings_and_default_agent_untouched(catalog):
 
 
 def test_c05_default_route_flip_not_applied_without_a_repin():
-    """No user approval for the Q4-default flip is recorded, so the pipeline-
-    models default route stays `gpu-ai/qwen3.8-flash-next-strata`. If the user
-    rules it in, C05 re-routes AND re-pins tests/pipeline-models/surface.sh in
-    the same commit — this arm is the guard that a route flip never lands
-    without the test-session re-pin."""
+    """C05-era conditional guard; the Q4-default flip LANDED by the owner's
+    in-session ruling 2026-11-09, with the re-pin of tests/pipeline-models/
+    surface.sh carried in the same commit as the skill re-route — exactly the
+    discipline this arm predates. The needle stays (backtick-delimited, now
+    -q4-precise): deleting or re-keying the default route without a test-
+    session re-pin still reds here."""
     text = PIPELINE_MODELS_SKILL.read_text()
-    assert "gpu-ai/qwen3.8-flash-next-strata" in text, (
+    assert "gpu-ai/qwen3.8-flash-next-strata-q4" in text, (
         "pipeline-models default route changed without the approved flip + "
         "surface.sh re-pin (test-session property) — route this to coord"
     )
     rows = [ln for ln in text.splitlines() if ln.startswith("| `gpu-ai`")]
-    assert rows and any("qwen3.8-flash-next-strata" in r for r in rows), (
-        f"no gpu-ai favorites row routes to the Strata default: {rows}"
+    assert rows and any("qwen3.8-flash-next-strata-q4" in r for r in rows), (
+        f"no gpu-ai favorites row routes to the Strata q4 default: {rows}"
     )
 
 

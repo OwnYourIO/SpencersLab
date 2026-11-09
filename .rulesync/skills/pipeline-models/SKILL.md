@@ -31,7 +31,7 @@ The kickoff's model question is one multi-select over `Qwen Large` / `Qwen Dense
 
 - One model checked → both tiers. Several checked → largest checked = planning tier, smallest checked = code tier, anything between is unused.
 - `Qwen Dense` checked without `Local` → `openrouter/qwen/qwen3.8-27b` (the hosted dense route).
-- Combination rule (`Qwen Flash` alone stays `openrouter/qwen/qwen3.8-flash`): `Qwen Flash` + `Local` checked together → assume Qwen Flash Next: `gpu-ai/qwen3.8-flash-next-strata` (Strata default; `qwen3.8-flash-next-q3` remains a documented alternate — other flash-next quants only on explicit request). There is no plain-flash local route.
+- Combination rule (`Qwen Flash` alone stays `openrouter/qwen/qwen3.8-flash`): `Qwen Flash` + `Local` checked together → assume Qwen Flash Next: `gpu-ai/qwen3.8-flash-next-strata-q4` (Strata default, q4 quant per the owner ruling 2026-11-09; `qwen3.8-flash-next-q3` remains a documented alternate — other flash-next quants only on explicit request). There is no plain-flash local route.
 - `Local (gpu-ai)` checked → provider `gpu-ai`: Dense → `gpu-ai/qwen3.8-27b-q4` unless another quant is explicitly requested (q4 verified served in both the llama-swap chart catalog and the provider catalog); Large → `gpu-ai/qwen3.8-2.4t-a95b-q6` (q6 assumed, not catalog-verified — pre-existing); Flash → the combination rule above.
 - Only `Local` checked, no model → `gpu-ai/qwen3.8-27b-q4` for every role (the Local-only default follows the Dense local default).
 - NO item checked at all (a blank Model(s) answer) → `gpu-ai/qwen3.8-27b-q4` for both tiers — planning and code alike. The local dense route is the standard default; openrouter is what an explicit check selects, or the fallback when the local route is unavailable.
@@ -56,7 +56,7 @@ Local first: the self-hosted `gpu-ai`/`gpu-moe` rows are the default provider's 
 | Provider | Model | Usual role |
 |---|---|---|
 | `gpu-ai` | `qwen3.8-2.4t-a95b-q6` | local planning (kickoff `Local` option; q6 assumed, not catalog-verified — pre-existing) |
-| `gpu-ai` | `qwen3.8-flash-next-strata` | local fast for the Flash+Local combo — 180B-class MoE served by the dedicated Strata pod through the outer llama-swap `peers` seam (IQ3_S arena on the R9700; the first request pays a minutes-long arena pin, so cold start is expected; the `-strix` sibling is a manual/secondary fallback only, never an agent route) |
+| `gpu-ai` | `qwen3.8-flash-next-strata-q4` | local fast for the Flash+Local combo — 180B-class MoE served by the dedicated Strata pod through the outer llama-swap `peers` seam (UD-Q4_K_XL arena on the R9700; the first request pays a minutes-long arena pin, so cold start is expected; the `-strix` sibling is a manual/secondary fallback only, never an agent route) |
 | `gpu-ai` | `qwen3.8-27b-q4` | local code default (UD-Q4_K_XL + MTP; verified served in the chart catalog and the provider catalog) — also the Priority class table's background leg |
 | `gpu-ai` | `qwen3.8-27b-vllm` | local vLLM 27B default class (board `Priority` unset/`null`/`4`–`7`; `body.priority` 5, served through the llama-swap `peers.vllm` hop) |
 | `gpu-ai` | `qwen3.8-27b-vllm-urgent` | local vLLM 27B urgent class (board `Priority` 1–3; `body.priority` 1) |

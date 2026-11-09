@@ -248,8 +248,9 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   the largest drives planning (plan / research / final review), the smallest
   drives code (test / dev / chunk review). The combos are routes, not
   options: `Qwen Flash` + `Local` checked together → assume it's Qwen Flash
-  Next, `gpu-ai/qwen3.8-flash-next-strata` (Strata default; other flash-next quants
-  only on explicit request); `Qwen Dense` + `Local` → `gpu-ai/qwen3.8-27b-q4`
+  Next, `gpu-ai/qwen3.8-flash-next-strata-q4` (Strata default, q4 per the
+  owner ruling 2026-11-09; other flash-next quants only on explicit
+  request); `Qwen Dense` + `Local` → `gpu-ai/qwen3.8-27b-q4`
   unless another quant is explicitly requested; only **Local** checked →
   `gpu-ai/qwen3.8-27b-q4` for every role. Transition alias (temporary): a
   live card whose Model(s) checklist still names the dense item `Qwen 27b`
