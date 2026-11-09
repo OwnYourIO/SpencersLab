@@ -225,7 +225,7 @@ app-template:
             pullPolicy: Always
           args: *serveArgs
           env:
-            # The D25 19-var main-container law, D33-amended. The entrypoint's
+            # The D25 twenty-var main-container law, D34-restored. The entrypoint's
             # startup gates exit 64 on retired/experimental var mixes
             # [94 L10-64] — this exact set is the qualified combination,
             # and the exact-membership test is the risk control. The
@@ -256,6 +256,14 @@ app-template:
             TORCHINDUCTOR_CACHE_DIR: /cache/inductor
             TRITON_CACHE_DIR: /cache/triton
             AITER_ROOT_DIR: /cache/aiter
+            # D34 restoration on the R5 ground: the var is the flash-attn
+            # package's own Triton-binding selector (flash_attn_interface.py
+            # L11-15 [144]) AND the RDNA ViT gate (rocm.py L438) — REQUIRED
+            # WITH the image's flash-attn install layer: the var selects,
+            # the package is the payload (the round-1 OQ12 posture returns
+            # by owner ruling). The runtime var is chart-owned; the
+            # Dockerfile build-time flag stays inline-only.
+            FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"
             # The entrypoint seam [94 L182-198]: auto omits --quantization
             # entirely and lets vLLM consume the checkpoint's Quark
             # metadata — required for Quark OCP MXFP4. The .env.example

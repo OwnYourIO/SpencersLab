@@ -144,7 +144,12 @@ securityContext comment) — nothing here needs them changed.
 
 After ArgoCD syncs the merged branch, the pod must land on `ai-gpu` and
 pass the C02 startup probe (`/health`, 60 s initial delay + 15 s × 160
-failures — the 40-minute envelope, D18).
+failures — the 40-minute envelope, D18). The pod pulls the rolling `:main`
+and `docker-build.yaml`'s post-merge run is the build authority for its
+contents (cf-77): the D34 flash-attn layer reaches the pod only through
+that build — a pod whose pull predates it runs the pre-layer image, so
+the 3.1 ViT marker and the 3.4 install gate bind against the post-build
+pull, not the merge instant.
 
 **1.1 — Pod lands, node is ai-gpu.**
 
@@ -312,11 +317,11 @@ class):
 | Marker | Expected | If missing / wrong |
 |---|---|---|
 | Entrypoint banner | the `radiance_preamble.py` preamble/banner lines | a bare vLLM banner = the wrong image is running — verify the pin (names block) |
-| No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 19-var law (D33-amended) is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
+| No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 20-var law (D34-restored) is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
 | R4D engagement | the R4D report/selection lines: R4D target attention on the named backend, and the TRITON_ATTN drafter attention inside the spec config | R4D refused = backend/dtype drift (R4D's `validate_configuration` prints its reason and refuses rather than falling back) |
 | MXFP4 W4A8 GEMM engagement | the 0.30 analog of the 0.9.3 kernel-selection marker — RECORD THE EXACT STRING from the first serve (the qualified `RADIANCE_MXFP4_W4A8=1` set) | absent = the W4A8 lane did not engage — the env set is the suspect |
 | WRONG-ENGINE absence marker | the stock "default W8A8 Block FP8 kernel config" line must NOT appear — the 16 R9700-named tuned block-FP8 config JSONs are baked (R3 L1.2), so the generic line is the wrong-engine signal | it appears = the tuned configs were not picked up — record and stop |
-| ViT backend line | `Using Torch SDPA backend for ViT model.` — the rocm.py L776-777 TORCH_SDPA fallback the D33 drop lands the encoder on (the literal the maintainer's qualified 0.30 runs logged in all four publication runs, R4 addendum V1 [133]; the 0.30 vision record class "two vision requests passed" [109] is this SDPA path's record) | a Flash-Attention-Triton ViT line = `FLASH_ATTENTION_TRITON_AMD_ENABLE` leaked back into the pod env — the first-multimodal-request crash class (R4.2/R4.7), not a tuning signal; 3.4 is this row's gate |
+| ViT backend line | `Using Flash Attention (Triton backend) for ViT model on RDNA.` — the RDNA-branch literal (rocm.py L771-773 @ `ced6857a` [139]): with the image's flash-attn install layer (C01/D34) + the restored (8)-slot var the ViT lands on the FLASH_ATTN Triton path (the D34 re-pin inverts the D33-era SDPA expectation; the 0.30 vision record class "two vision requests passed" [109] was the SDPA path's record — the FA path is the owner-accepted, CI-qualified state, R5) | ABSENCE of this line = the package missing or the var dropped — an install/var surface drift, not tuning; 3.4 is this row's gate. A bare `Using Flash Attention backend for ViT model.` = the CDNA branch (L757-763) — the arch-view drift signal: `RADIANCE_GFX_ARCH` un-spoofed to gfx1250 running AITER's Triton mha, a different, unqualified config — recorded BARRED (R5.3) |
 | `Mamba cache mode` | align | drift = the serveArgs moved — 3.1a diff |
 | Spec-family registration | the `spec_decode_*` metric family EXPECTED at 0.30 (dflash rides the stock V2 dflash2 path, R3 L2.3); the `diffusion_*` family is the RECORDED fallback assertion — which one registers is what the capture closes | neither family = the speculative config did not load |
 | KV triple | `Available KV cache memory` / `GPU KV cache size` / `Maximum concurrency` — record VERBATIM (the 3.5 re-measure gate's input; no pre-registered target, the gate derives it) | triple absent = boot died before the pool — 1.2/3.1b |
@@ -416,16 +421,28 @@ curl -sS http://127.0.0.1:8000/v1/chat/completions \
 
 Expected: HTTP 200 + a completion — the multimodal model, no
 text-only stripping.
-If it fails: the ViT leg — the off-switch tuning surface is retired (D33:
-the off posture IS the shipped posture). Re-adding
-`FLASH_ATTENTION_TRITON_AMD_ENABLE` reproduces the on-target crash pair —
-`ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` then the
+If it fails: the ViT leg — the crash-#2b ImportError is CLOSED by the
+install (D34): with the image's flash-attn layer + the restored var the
+`fa_utils.py` L51-52 tail resolves, so if
 `ImportError: ROCm platform requires upstream flash-attn to be installed.`
-(one class, R4.7 — its FLASH_ATTN tail needs the upstream flash-attn the
-image does not carry, R4.2/R4.5): record and stop. This smoke IS the D33
-crash-gate — it must pass after the drop. The documented future performance
-alternative is the `TRITON_ATTN` encoder-pin class (R4.5(c)), gated on its
-own on-target vision smoke.
+PERSISTS post-build, the layer did not land: record and stop. The
+crash-#2a `ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` stays
+listed as the R5-Q2 UNATTRIBUTED trace — its raiser string exists in no
+reachable source of this stack and no install candidate carries such a
+guard (resurrection risk LOW per R5.1: the Triton port's grid shape
+structurally cannot overflow the AMD caps); its provenance is an open
+owner question, not a named mitigation leg. NO CUDA-graph-disable leg:
+encoder CUDA graphs are default-OFF under the shipped
+`{"cudagraph_mode":"PIECEWISE"}` law (compilation.py L550 [142]) — nothing
+to disable, crash #3's mitigation surface is MOOT (R5 priced option (d′)
+and rejected it on that evidence — recorded retirement). The documented
+future performance alternative stays the `TRITON_ATTN` encoder-pin class
+(R4.5(c)), gated on its own on-target vision smoke. This smoke IS the
+install's crash-gate and proves THREE things at once: the 3.1
+Flash-(Triton)-on-RDNA marker line, the no-ImportError/no-ValueError
+multimodal success at `{"image": 4}`, and the ViT numerical sanity of the
+padded-Triton port (head_dim 72 → 128-wide tiles — correctness
+qualified-for-CI, performance NOT claimed, R5 Implications).
 
 **3.5 — THE DAY-ONE RE-MEASURE GATE (the owner's Q2 standing condition —
 the SOLE envelope path at 0.30, R3 L2.4 — re-bound by the Q11 ruling to

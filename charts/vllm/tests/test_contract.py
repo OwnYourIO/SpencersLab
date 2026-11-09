@@ -6,7 +6,8 @@
 # serveArgs recipe (D4 order, then the cf-131 D24 order), the cf-131 values
 # record keys + comment law, the monitoring-annotations gate, the per-chart CI
 # workflow ladder, and the C01 container surface: the thin re-export overlay
-# and the retirement of the GGUF overlay it replaces.
+# + its one sanctioned flash-attn layer (the D34 amendment) and the retirement
+# of the GGUF overlay it replaces.
 # Generation branching is explained in vllm_testlib (cf-131 header); the C01
 # container/retirement legs are unconditional because C01 is wave 1 — they are
 # the designed-red that C01's own dev edit turns green.
@@ -362,15 +363,38 @@ def test_scaffold_common_loader_and_notes():
 CONTAINER_DIR = V.REPO_ROOT / "containers" / "vllm-radiance-mxfp4"
 
 
+def _dockerfile_logical_lines(text: str) -> list:
+    """The Dockerfile's executed instructions, one entry each: comments and
+    blanks dropped, backslash continuations joined — the shape law counts
+    LOGICAL instructions (the sanctioned flash-attn RUN spans four physical
+    lines), so walking raw lines would red on the layer itself."""
+    merged, buf = [], ""
+    for raw in text.splitlines():
+        ln = raw.strip()
+        if not buf and (not ln or ln.startswith("#")):
+            continue
+        buf = f"{buf} {ln}".strip() if buf else ln
+        if buf.endswith("\\"):
+            buf = buf[:-1]
+            continue
+        merged.append(buf)
+        buf = ""
+    if buf:
+        merged.append(buf)
+    return merged
+
+
 def test_c01_thin_overlay_dockerfile():
-    """C01 AC1/AC2: the re-export Dockerfile is the thin digest-pinned FROM
-    (+ the record's EXPOSE 8000) and nothing else — the 0.30 image is a
-    self-contained terminal build (R3 L1.2), so any COPY/RUN/ENV/USER would
-    re-introduce the build story the base move deleted."""
+    """C01 AC1 (D34-amended): the re-export Dockerfile is the thin digest-
+    pinned FROM, the ONE sanctioned flash-attn layer (two ARGs + a single
+    RUN — tests/containers/vllm-radiance-mxfp4.sh t7 pins their content),
+    and the record's EXPOSE 8000, in that order and nothing else — the 0.30
+    image is a self-contained terminal build (R3 L1.2), so a second RUN/ARG
+    or any COPY/ENV/USER re-introduces the build story the base move
+    deleted."""
     df = CONTAINER_DIR / "Dockerfile"
     assert df.is_file(), "C01 AC1: containers/vllm-radiance-mxfp4/Dockerfile missing"
     text = df.read_text()
-    lines = text.splitlines()
     assert re.search(
         rf"^FROM[ \t]+docker\.io/{re.escape(V.UPSTREAM_IMAGE)}:{V.UPSTREAM_TAG}@{re.escape(V.UPSTREAM_DIGEST)}[ \t]*$",
         text, re.M,
@@ -381,10 +405,19 @@ def test_c01_thin_overlay_dockerfile():
     assert re.search(r"^EXPOSE[ \t]+8000[ \t]*$", text, re.M), (
         "C01 AC1: no EXPOSE 8000 record line (serve = health = metrics, the port-8000 law)"
     )
-    instructions = [ln for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
-    offenders = [ln for ln in instructions if not re.match(r"^(FROM|EXPOSE)\b", ln)]
+    keywords = [ln.split(None, 1)[0].upper() for ln in _dockerfile_logical_lines(text)]
+    offenders = [k for k in keywords if k not in ("FROM", "ARG", "RUN", "EXPOSE")]
     assert not offenders, (
-        f"C01 AC1: the re-export law allows only FROM + EXPOSE instructions, got {offenders}"
+        f"C01 AC1: instructions outside the sanctioned FROM/ARG/RUN/EXPOSE set: {offenders} "
+        "— COPY/ENV/USER or a second RUN forks the pinned terminal build (the re-export law, D34-scoped)"
+    )
+    assert keywords[:1] == ["FROM"] and keywords[-1:] == ["EXPOSE"], (
+        f"C01 AC1: the flash-attn layer must sit between the FROM(+ledger) block and EXPOSE "
+        f"(the R5.2 placement), got the instruction sequence {keywords}"
+    )
+    counts = {k: keywords.count(k) for k in ("FROM", "ARG", "RUN", "EXPOSE")}
+    assert counts == {"FROM": 1, "ARG": 2, "RUN": 1, "EXPOSE": 1}, (
+        f"C01 AC1 (D34): the law allows EXACTLY the flash-attn ARG-pair + single RUN, got {keywords}"
     )
     # The ledger header names what the FROM line cannot: the source commit,
     # the engine identity, the artifact size and the push date (C01 task).

@@ -4,24 +4,30 @@ A digest-pinned re-export of the upstream `magiccodingman/vllm-radiance`
 0.30 image under the repo's `ghcr.io/ownyourio` namespace. The upstream
 image is a self-contained terminal build (RESEARCH R3 L1.2): the 35
 release overlays, the R4D/MXFP4 kernels and the RDNA4-tuned block-FP8 GEMM
-configs are already baked, so the Dockerfile adds nothing and the CI build
-is a minutes-class layer copy. The cluster pulls the in-repo artifact
-because `docker-build.yaml`'s first-build `:v<run>` law needs one (D23);
-the interface contract C02 builds against is below.
+configs are already baked. Since D34 (2026-11-09, the owner's flash-attn
+install ruling) the build shape is "copy + FA layer" (R5.4), not a pure
+digest copy: the Dockerfile adds exactly ONE sanctioned flash-attn pip
+layer and nothing else, so the CI build stays minutes-class — the
+base-layer copy plus a pure-Python install with no CK/HIP compilation —
+with the final cost and size delta CI-owned (cf-77). The cluster pulls the
+in-repo artifact because `docker-build.yaml`'s first-build `:v<run>` law
+needs one (D23); the interface contract C02 builds against is below.
 
 ## Tag -> digest ledger (manual)
 
 | What | Pin | Digest / SHA | Verified (probed 2026-11-08) |
 |---|---|---|---|
 | Radiance image | `docker.io/magiccodingman/vllm-radiance:1.0.397` (= `latest` = `1.0` = `sha-5b99d66c844f`) | `sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0` | Docker Hub tags API: `full_size` 4,079,863,554 B, `tag_last_pushed` 2026-10-18T06:35Z, `tag_status` active, amd64/linux; source commit `5b99d66c844fd0a54e4a7eb93b40a1ece009a53d` (config-blob `org.opencontainers.image.revision` label); engine vLLM **0.30.0 @ `ced6857afa0ea7b2e3f0846a62e1394e90f15607`** = the v0.30.0 tag commit |
+| flash-attn layer (D34) | `jpvillam-amd/flash-attention`, branch `jpvillam/gfx1250_wip` — the source vLLM's own gfx1250 base recipe builds (`ARG FLASH_ATTN_REPO`/`FLASH_ATTN_REF`) | commit `aa743c5933560d097d8aa5e833ca10153ed7f6bb` (the 2.8.3 port + the gfx1250 `is_cdna` whitelist add, R5 146) | manual pin: the branch carries NO tags and the repo ZERO releases [R5 146], so no auto datasource exists — see the pin law below; installed `--no-deps --no-build-isolation` with the build-time-inline Triton flag (pure-Python wheel, no CK/HIP compilation) |
 
 Four-source corroboration of the pin (R3 L1.1), each re-verified at the dev
-probe and re-run live by `tests/containers/vllm-radiance-mxfp4.sh` t6: the
+probe: the
 Hub tags API `digest`; the registry manifest probe (anonymous pull-scope
 token + manifest fetch — HTTP 200, single-arch docker manifest v2,
 sha256-of-manifest-bytes equals the Hub digest); the sibling tags
 `sha-5b99d66c844f` and `latest` resolving to the same digest; and the
-config blob's OCI revision label naming the source commit.
+config blob's OCI revision label naming the source commit. The Hub digest and
+the OCI label are re-run live by `tests/containers/vllm-radiance-mxfp4.sh` t6.
 
 Stack record baked inside the image (R3 L1.2, three-way agreement between
 the repo README, `DOCKERHUB.md` and `.radiance/stack.yaml`): vLLM 0.30.0 ·
@@ -100,6 +106,16 @@ authority. Bumping is three steps; every edit lands together:
    image comment (the values-side mirror in `charts/vllm/values.yaml`). The
    bump is not done until the runbook's first-serve step and benchmark step
    pass on the R9700.
+
+**The flash-attn pin law (D34).** The `jpvillam/gfx1250_wip` branch head is
+NOT auto-tracked: a `git-refs`-form datasource would follow the `_wip`
+churn — barred (R5.2) — so `FLASH_ATTN_REF` rides the same manual-bump law
+as the base pin, and no auto-update directive goes on the layer. The
+`github-tags depName=Dao-AILab/flash-attention` + `flash-attn==2.8.3.post2`
+substitution is licensed ONLY if the R5-Q3 pod probe reports gfx1201 AND
+the owner accepts it. Every base bump carries the FA re-verify duty (R5.4):
+the layer still builds against the new base, the built image still imports
+`flash_attn`, and the runbook step-3 ViT marker line still logs.
 
 ## Interface contract (what C02 builds against)
 

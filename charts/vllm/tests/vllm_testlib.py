@@ -73,8 +73,9 @@ MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 # ---------------------------------------------------------------------------
 # The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
 # Every constant here is copied from the cf-131 plan of record: the round-3
-# header + DECISIONS D23-D31 + the C01/C02/C03 chunk recipes. They are the
-# ground truth dev must satisfy; a re-pin changes the plan first.
+# header + DECISIONS D23-D34 + the C01/C02/C03 chunk recipes (the dated
+# amendments included). They are the ground truth dev must satisfy; a
+# re-pin changes the plan first.
 # ---------------------------------------------------------------------------
 
 # The C01 thin-re-export target and the C02 flip of the chart image pin
@@ -171,12 +172,15 @@ DROPPED_FLAGS_CF131 = (
     "--override-generation-config",
 )
 
-# The D25 19-var main-container env law as amended by D33 (the OQ12 ViT var
-# is out — its FLASH_ATTN tail imports the upstream flash-attn this image
-# does not carry, so setting it crashes the first multimodal request; the
-# exact set — the entrypoint's exit-64 combination gates make any var drift
-# a boot failure, so equality IS the risk control). ROCR_VISIBLE_DEVICES
-# splices from the service values key, the rest are literal.
+# The D25 20-var main-container env law, D34-restored: the OQ12 ViT var is
+# back at its (8) slot because the image now carries the flash-attn package
+# it binds — C01's pip layer ports vLLM's own official gfx1250 recipe.
+# While the package was missing, setting the var crashed the first
+# multimodal request with an ImportError — D33's drop was right then, and
+# the owner's install ruling overturned it. The exact set — the
+# entrypoint's exit-64 combination gates make any var drift a boot
+# failure, so equality IS the risk control. ROCR_VISIBLE_DEVICES splices
+# from the service values key, the rest are literal.
 def env_want_cf131(rocr_value: str) -> dict:
     return {
         "ROCR_VISIBLE_DEVICES": str(rocr_value),
@@ -186,6 +190,7 @@ def env_want_cf131(rocr_value: str) -> dict:
         "TORCHINDUCTOR_CACHE_DIR": "/cache/inductor",   # C03's mount lands the target
         "TRITON_CACHE_DIR": "/cache/triton",
         "AITER_ROOT_DIR": "/cache/aiter",
+        "FLASH_ATTENTION_TRITON_AMD_ENABLE": "TRUE",    # (8) slot (D34): the var selects, the C01 package is the payload
         "RADIANCE_WEIGHT_QUANTIZATION": "auto",         # the entrypoint seam name (D25)
         "RADIANCE_MXFP4": "1",
         "RADIANCE_MXFP4_W4A8": "1",
@@ -202,13 +207,13 @@ def env_want_cf131(rocr_value: str) -> dict:
 
 # Named individually because AC5 calls them out — the dict equality above
 # already excludes them, but a failure message must name WHICH drop leaked.
-# The FLASH entry names the D33 drop, so a regression that re-adds the var
-# reads as the ViT crash class it is rather than an anonymous set diff.
+# FLASH_ATTENTION_TRITON_AMD_ENABLE left this trio at D34: the exact set
+# now REQUIRES it (the package it binds is installed in the image), so
+# removing the var fails the dict equality above instead of leaking here.
 DROPPED_ENV_CF131 = (
     "RADIANCE_GDN_LAZY",
     "HUGGINGFACE_HUB_CACHE",
     "VLLM_SERVER_DEV_MODE",
-    "FLASH_ATTENTION_TRITON_AMD_ENABLE",
 )
 
 # Probe budget on the 0.30 boot class (D18 amended): 60 s + 15 s x 160 = the

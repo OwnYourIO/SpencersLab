@@ -1,29 +1,40 @@
 #!/usr/bin/env bash
 # vllm-radiance-mxfp4 container contract (2026/2026-11-cf-131-feat-vllm-fp8-
-# official, C01): the THIN digest-pinned re-export of the 0.30 Radiance stack
-# (magiccodingman/vllm-radiance:1.0.397 @ sha256:b73bf3e4...) under the repo's
-# docker-build.yaml first-build law, plus the ledger README (tag→pin table,
-# tag↔commit release-branch watch, manual-bump procedure, interface contract).
-# The image is a self-contained terminal build (RESEARCH R3 L1.2) — the
-# re-export adds NOTHING (no COPY/RUN/ENV/USER), which is why the thinness
-# leg (t2) exists: a future COPY would silently fork the pinned stack.
-# Contract source: chunks/C01.md Tasks + AC1-AC3 (the chart-side test_ac7
-# re-pin and the retirement scan live in charts/vllm/tests/test_contract.py).
+# official, C01): the digest-pinned re-export of the 0.30 Radiance stack
+# (magiccodingman/vllm-radiance:1.0.397 @ sha256:b73bf3e4...) plus the ONE
+# sanctioned flash-attn pip layer (the D34 amendment — the port of vLLM's
+# own official gfx1250 recipe, RESEARCH R5), plus the ledger README (tag→pin
+# table, tag↔commit release-branch watch, manual-bump procedure, interface
+# contract, FA-layer rider). The image is a self-contained terminal build
+# (RESEARCH R3 L1.2) — the re-export adds EXACTLY that layer and nothing
+# else, which is why the shape leg (t2) exists: a second RUN/ARG or any
+# COPY/ENV/USER silently forks the pinned stack.
+# Contract source: chunks/C01.md Tasks + AC1-AC3 + AC6 (the D34 amendment:
+# the layer pins live in t7, the README rider legs in t4; the chart-side
+# test_ac7 re-pin and the retirement scan live in
+# charts/vllm/tests/test_contract.py).
 #
 # The pin is a MANUAL ledger by the D12-amended law: zero auto-update
-# directives anywhere in the container dir — the upstream publishes are
-# release-branch-only 1.0.<n>/sha-… pairs, which no datasource tracks; t5
-# counts case-insensitive "renovate" lines and requires ZERO, so the README
-# note must phrase the law WITHOUT the literal word (say "auto-update
-# directives" — same trap the retired overlay's suite recorded).
+# DIRECTIVES anywhere in the container dir — the upstream publishes are
+# release-branch-only 1.0.<n>/sha-… pairs and the D34 flash-attn pin sits
+# on a `_wip` branch head; neither may be auto-tracked. t5 scans for the
+# directive FORM (`renovate:` / `datasource=`) the custom manager actually
+# parses and requires ZERO: stating the law in prose is fine (C01's D34
+# amendment words the rider that way), only a parseable directive breaks
+# the ledger. (History: the retired overlay's suite recorded the
+# bare-word trap that made the rider first phrase the law without naming
+# the tool — the amendment supersedes that phrasing constraint.)
 #
 # docker build is CI-primary (no docker daemon in agent sessions): the suite
 # never builds. t6 is network-gated — SKIP with warning on no egress; an HTTP
 # error (e.g. 404 for the tag) or a live/ledger digest mismatch is a FAIL,
-# naming both values (a digest drift = stop + flag, the C01 note).
+# naming both values (a digest drift = stop + flag, the C01 note). t7's AC6
+# import probe is likewise gated: a not-yet-built image reads as the designed
+# `no-daemon, CI-deferred` SKIP (cf-77), only contradicting published state
+# FAILs.
 #
 # Run from the repo root:
-#   bash tests/containers/vllm-radiance-mxfp4.sh          # t1..t6
+#   bash tests/containers/vllm-radiance-mxfp4.sh          # t1..t7
 #   bash tests/containers/vllm-radiance-mxfp4.sh t1 t2    # subset
 set -euo pipefail
 
@@ -37,6 +48,9 @@ TAG="1.0.397"
 DIGEST="sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0"
 SRC_COMMIT="5b99d66c844fd0a54e4a7eb93b40a1ece009a53d"
 HUB_URL="https://hub.docker.com/v2/repositories/${IMAGE}/tags/${TAG}"
+# The D34 flash-attn layer pins (C01's dated amendment, verbatim per R5.2):
+FA_REPO_URL="https://github.com/jpvillam-amd/flash-attention.git"
+FA_REF="aa743c5933560d097d8aa5e833ca10153ed7f6bb"
 
 checks=0
 
@@ -56,10 +70,10 @@ skip() {
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 6); do WANT["t$i"]=1; done
+  for i in $(seq 1 7); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t[1-6]$ ]] || fail "unknown test id '$a' (expected t1..t6)"
+    [[ "$a" =~ ^t[1-7]$ ]] || fail "unknown test id '$a' (expected t1..t7)"
     WANT["$a"]=1
   done
 fi
@@ -100,17 +114,50 @@ if want t1; then
   ok "t1: the Dockerfile FROM-pins ${IMAGE}:${TAG}@${DIGEST:0:19}…"
 fi
 
-# --- t2: the re-export law — only FROM + EXPOSE, port 8000 recorded -----------
+# --- t2: the re-export law — FROM + the ONE sanctioned FA layer + EXPOSE ------
 if want t2; then
   [ -f "$DF" ] || fail "t2: $DF missing (see t1)"
   if ! grep -Eq "^EXPOSE[[:space:]]+8000([[:space:]]|$)" "$DF"; then
     fail "t2: no EXPOSE 8000 record line (serve = health = metrics; the upstream declares no ports, the record is ours — C01 AC1)"
   fi
-  offenders=$(grep -vE '^[[:space:]]*(#|$)' "$DF" | grep -vE '^(FROM|EXPOSE)([[:space:]]|$)' || true)
+  # The D34 amendment grew the shape law from FROM+EXPOSE to FROM, the
+  # flash-attn layer (two ARGs + one RUN — t7 pins their content), EXPOSE.
+  # The sanctioned RUN spans continuation lines, so the counts walk LOGICAL
+  # instructions, not physical ones.
+  offenders=$(python3 - "$DF" <<'PY'
+import sys
+merged, buf = [], ""
+for raw in open(sys.argv[1]).read().splitlines():
+    ln = raw.strip()
+    if not buf and (not ln or ln.startswith("#")):
+        continue
+    buf = f"{buf} {ln}".strip() if buf else ln
+    if buf.endswith("\\"):
+        buf = buf[:-1]
+        continue
+    merged.append(buf)
+    buf = ""
+if buf:
+    merged.append(buf)
+kw = [m.split(None, 1)[0].upper() for m in merged]
+bad = []
+if kw[:1] != ["FROM"]:
+    bad.append(f"first instruction {kw[:1] or ['(none)']}, want FROM")
+if kw[-1:] != ["EXPOSE"]:
+    bad.append(f"last instruction {kw[-1:] or ['(none)']}, want EXPOSE")
+for k, n in (("FROM", 1), ("ARG", 2), ("RUN", 1), ("EXPOSE", 1)):
+    if kw.count(k) != n:
+        bad.append(f"{k} x{kw.count(k)}, want x{n}")
+extra = sorted({k for k in kw if k not in ("FROM", "ARG", "RUN", "EXPOSE")})
+if extra:
+    bad.append(f"unexpected instructions {extra}")
+print("; ".join(bad))
+PY
+)
   if [ -n "$offenders" ]; then
-    fail "t2: the re-export law allows only FROM + EXPOSE instructions, got: $(printf '%s' "$offenders" | tr '\n' ';') — the 0.30 image is a self-contained terminal build (R3 L1.2), any COPY/RUN/ENV/USER forks the pinned stack"
+    fail "t2: the D34 re-export law allows FROM + the flash-attn ARG-pair/RUN + EXPOSE only, got: $offenders — the 0.30 image is a self-contained terminal build (R3 L1.2), any instruction beyond the sanctioned layer forks the pinned stack (C01 AC1)"
   fi
-  ok "t2: the Dockerfile is thin — FROM + EXPOSE only, no COPY/RUN/ENV/USER"
+  ok "t2: the Dockerfile is the sanctioned shape — FROM, the one ARG-pair + RUN layer, EXPOSE; no COPY/ENV/USER, no second RUN/ARG"
 fi
 
 # --- t3: the ledger is full and paired, both surfaces carry the record --------
@@ -158,16 +205,26 @@ if want t4; then
     || fail "t4: the chat-template absence (checkpoint-native default at 0.30) is not recorded (C01 AC3)"
   grep -qiE 'root' "$README" \
     || fail "t4: the root posture is not recorded (C01 AC3)"
-  ok "t4: the README carries the release-branch watch, the three-step manual bump, and the interface contract (entrypoint / model-path args / mounts / root / AITER / no chat template)"
+  # The D34 ledger rider (C01's amended README task): the re-export is no
+  # longer a pure digest-copy — "copy + FA layer" — the FLASH_ATTN_REF
+  # manual pin rides beside the base pin, and every base bump carries the
+  # re-verify duty (layer builds, image imports flash_attn, marker logs).
+  for token in 'FLASH_ATTN_REF' 'aa743c59' 'flash_attn'; do
+    grep -qF "$token" "$README" \
+      || fail "t4: the README lacks the flash-attn rider token '$token' (the manual pin recorded beside the base pin + the import named in the base-bump re-verify duty — C01 AC2/D34)"
+  done
+  grep -qiE 're-verif' "$README" \
+    || fail "t4: the base-bump re-verify duty is not stated (the layer still builds, the image still imports flash_attn, the runbook step-3 marker line still logs — C01 AC2/D34)"
+  ok "t4: the README carries the release-branch watch, the three-step manual bump, the interface contract (entrypoint / model-path args / mounts / root / AITER / no chat template), and the D34 flash-attn rider"
 fi
 
 # --- t5: zero auto-update directives — the manual-ledger law (D12-amended) ----
 if want t5; then
   [ -d "$DIR" ] || fail "t5: $DIR missing — C01 is not implemented"
-  mapfile -t hits < <(grep -rin 'renovate' "$DIR" 2>/dev/null || true)
+  mapfile -t hits < <(grep -rinE 'renovate:|datasource[[:space:]]*=' "$DIR" 2>/dev/null || true)
   if [ "${#hits[@]}" -ne 0 ]; then
     got=$(printf '%s; ' "${hits[@]}")
-    fail "t5: 'grep -ri renovate $DIR/' returns ${#hits[@]} hits, want ZERO — the release-branch sha-pair publishes are a manual ledger (D12-amended); the README note must say 'auto-update directives' without the literal word (got: ${got})"
+    fail "t5: auto-update directive lines in $DIR (${#hits[@]} hits), want ZERO — the base sha-pair publishes and the D34 FLASH_ATTN_REF pin are both manual ledgers (D12-amended; R5.2 bars a branch-head datasource); prose may name the tool, a parseable directive may not appear (got: ${got})"
   fi
   ok "t5: no auto-update directive lines in the container dir — the manual-ledger contract holds"
 fi
@@ -245,6 +302,87 @@ PY
     MISMATCH*) fail "t6: ${out#MISMATCH } — the four-source pin corroboration disagrees (stop + flag, C01 note)";;
     SKIP*) skip "t6-label: ${out#SKIP } — the OCI revision cross-check was not run";;
     *) skip "t6-label: the probe produced no verdict ($out) — the OCI revision cross-check was not run";;
+  esac
+fi
+
+# --- t7: the D34 flash-attn layer pins + the AC6 import corroboration ---------
+if want t7; then
+  [ -f "$DF" ] || fail "t7: $DF missing (see t1)"
+  # C01's dated amendment records the layer lines VERBATIM per R5.2 (the
+  # port of vLLM's own official gfx1250 recipe): the jpvillam branch source
+  # at its commit pin, the Triton flag BUILD-TIME-INLINE (the runtime var
+  # stays chart-owned — the restored 20-var law), the stack-atomicity flags
+  # protecting the pinned torch/triton, and the provenance comment.
+  grep -qxF "ARG FLASH_ATTN_REPO=${FA_REPO_URL}" "$DF" \
+    || fail "t7: no FLASH_ATTN_REPO ARG pinning ${FA_REPO_URL} (the jpvillam-amd gfx1250_wip source the official vLLM base builds — C01 AC1/D34)"
+  grep -qxF "ARG FLASH_ATTN_REF=${FA_REF}" "$DF" \
+    || fail "t7: no FLASH_ATTN_REF ARG at the commit pin (manual-bump law — a drift here changes the installed source, not a bump — C01 AC1/D34)"
+  grep -qF 'FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE python3 -m pip install' "$DF" \
+    || fail "t7: the FA install does not carry the build-time-INLINE Triton flag (baked as ENV it forks the chart-owned runtime var; absent, the wheel compiles CK kernels — C01/D34)"
+  grep -qF -- '--no-deps --no-build-isolation' "$DF" \
+    || fail "t7: the FA install lacks the stack-atomicity flags (--no-deps --no-build-isolation protect the stack-pinned torch/triton — C01/D34)"
+  grep -qF 'flash-attn @ git+${FLASH_ATTN_REPO}@${FLASH_ATTN_REF}' "$DF" \
+    || fail "t7: the FA install does not consume the ARG pair through the git+repo@ref form (C01 AC1/D34)"
+  grep -qF 'Dockerfile.rocm_base_gfx1250' "$DF" \
+    || fail "t7: the layer comment block does not name the port provenance (vLLM's own docker/Dockerfile.rocm_base_gfx1250 @ v0.30.0 — the WHY of the source choice, C01/D34)"
+  ok "t7: the flash-attn layer carries the D34 verbatim contract — jpvillam source + commit pin + inline-only Triton flag + stack-atomicity flags + ARG consumption + provenance comment"
+  # AC6: the built image must import flash_attn. The suite never builds —
+  # docker-build.yaml on the pushed branch is the build authority (cf-77).
+  # When the published ghcr re-export is reachable, its config-blob layer
+  # history corroborates the install at the pinned ref; unpublished,
+  # private, or unreachable answers are the designed no-daemon,
+  # CI-deferred SKIP — only a contradicting published history FAILs.
+  out=$(python3 - "$FA_REF" <<'PY' || true
+import json, re, sys, urllib.error, urllib.request
+
+want_ref = sys.argv[1]
+REPO = "ownyourio/vllm-radiance-mxfp4"
+BASE = f"https://ghcr.io/v2/{REPO}"
+ACCEPT = ("application/vnd.oci.image.index.v1+json,"
+          "application/vnd.docker.distribution.manifest.list.v2+json,"
+          "application/vnd.oci.image.manifest.v1+json,"
+          "application/vnd.docker.distribution.manifest.v2+json")
+
+def get(url, accept=None, token=None):
+    headers = {}
+    if accept:
+        headers["Accept"] = accept
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
+    return json.load(urllib.request.urlopen(req, timeout=30))
+
+try:
+    tok = get(f"https://ghcr.io/token?service=ghcr.io&scope=repository:{REPO}:pull")["token"]
+    m = get(f"{BASE}/manifests/main", ACCEPT, tok)
+    if "manifests" in m:
+        child = next((x for x in m["manifests"]
+                      if x.get("platform", {}).get("architecture") == "amd64"
+                      and x.get("platform", {}).get("os") == "linux"), None)
+        if child is None:
+            print("SKIP no amd64/linux child in the index"); sys.exit(0)
+        m = get(f"{BASE}/manifests/{child['digest']}",
+                "application/vnd.oci.image.manifest.v1+json,"
+                "application/vnd.docker.distribution.manifest.v2+json", tok)
+    cfg = get(f"{BASE}/blobs/{m['config']['digest']}", None, tok)
+    history = cfg.get("history") or []
+    if not history:
+        print("SKIP the published image carries no build history (config shape)"); sys.exit(0)
+    fa = [h for h in history if re.search(r"flash-attn(?!ion)", h.get("created_by", ""))]
+    if not fa:
+        print("SKIP the published :main predates the D34 layer — the CI rebuild on the pushed branch is the authority"); sys.exit(0)
+    if not any(want_ref in h.get("created_by", "") for h in fa):
+        print(f"MISMATCH the published flash-attn install does not name the pinned {want_ref} — the image and the Dockerfile diverged"); sys.exit(2)
+    print("MATCH flash-attn install at the pinned ref in the published layer history")
+except (urllib.error.URLError, OSError, KeyError, ValueError, json.JSONDecodeError) as ex:
+    print(f"SKIP transport/parse: {ex}")
+PY
+)
+  case "$out" in
+    MATCH*) checks=$((checks + 1)); printf 'ok: t7 — the published ghcr re-export records the flash-attn install at the pinned ref (AC6 live corroboration)\n';;
+    MISMATCH*) fail "t7: ${out#MISMATCH } — stop + flag, never ship a diverged import AC (C01 note)";;
+    SKIP*) skip "t7 AC6: ${out#SKIP } — docker build => no-daemon, CI-deferred (the designed passing shape, cf-77)";;
+    *) skip "t7 AC6: the probe produced no verdict ($out) — CI-deferred";;
   esac
 fi
 

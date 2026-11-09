@@ -4329,3 +4329,563 @@ The owner's bring-up produced TWO encoder-failure traces minutes apart on pod `v
 - **11:56:01** `ValueError in vision.py: ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` — the Triton flash-attn kernel's grid guard (the var routes the encoder INTO `flash_attn_varlen_func`, which raises it).
 - **11:59:01** `ImportError: ROCm platform requires upstream flash-attn to be installed.` — R4's documented trace (the availability-gate path on the retry).
 Both are the SAME crash class: the single var `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE` puts the ViT encoder on the FLASH_ATTN path, which this image cannot serve (kernel grid limit; and no upstream flash-attn import). Dropping the var routes the encoder to TORCH_SDPA, which calls neither — the D33 fix covers BOTH traces. R4's evidence base (written from the second paste) documented only the ImportError; this addendum records the ValueError half so the runbook's "before-fix" symptom row matches the owner's actual first paste.
+
+# R5 — Installing flash-attention on this ROCm stack — the exact ship surface (2026-11-09)
+
+Round-5 research commission for board card #131, 2026-11-09, by
+`agent-research`, RE-SCOPED by the owner's ruling (after on-target crash
+#3): **"The error is clear, we need to install flash attention, not remove
+it."** D33 (the `FLASH_ATTENTION_TRITON_AMD_ENABLE` drop, R4) is OVERTURNED:
+the var returns; the fix for the crash-#2b ImportError is a working
+flash-attention IN the image. This section keeps R4's source facts
+([118]–[135] stand as facts — rocm.py L438/L433-436 gate, fa_utils
+L51-52/L59 tail, the maintainer Dockerfile/compose record, torch
+`USE_FLASH_ATTENTION=0` [126]) and re-disposes only the DISPOSITION (R4
+fix-(d)-rejection → now the chosen path).
+
+Method: local clones re-read at the exact pins — vLLM `v0.30.0` @
+`ced6857afa0ea7b2e3f0846a62e1394e90f15607`, ROCm/aiter @ the image's
+`fc2e5d57…` (plus main `51ca4216`), jpvillam-amd/flash-attention @ the
+vLLM-pinned branch tip `aa743c59…`, ROCm/flash-attention (tridao/main/3.0
+branches + releases API), the PyPI `flash-attn` 2.8.3.post2 sdist,
+libr4d @ `e8de4bc1…`, magiccodingman/vllm-radiance release @ `5b99d66c`
+(unchanged tip) + main @ `1d2e248` + Docker Hub tags API, and the repo
+surfaces. Citations continue at [136].
+
+## TL;DR (5 lines)
+
+1. **"Upstream flash-attn" = the separate pip package `flash_attn`** (Dao
+   flash-attention 2.8.x lineage; `fa_utils.py` L52 `from flash_attn import
+   flash_attn_varlen_func` @ ced6857a [140]). Installing it does NOT
+   require rebuilding torch — the package's only deps are `torch`+`einops`
+   [144], both already in the image; torch's own `USE_FLASH_ATTENTION=0`
+   build flag [126] is an unrelated, orthogonal switch. The whole fix is
+   ONE pip layer on the re-export.
+2. **The var is the flash-attn package's OWN ROCm switch, and vLLM's
+   official gfx1250 image sets it**: `flash_attn/flash_attn_interface.py`
+   L11-15 binds `flash_attn_varlen_func` to the pure-Triton AMD port
+   (`flash_attn_triton_amd/interface_fa.py`) when
+   `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE`, else to the compiled
+   `flash_attn_2_cuda` CK extension (which cannot exist for gfx12x);
+   `setup.py` L65-66/L321 skips all C compilation at build time when the
+   flag is on [144]. Inside vLLM @ ced6857a the ONLY writer is
+   `docker/Dockerfile.rocm_base_gfx1250` L37 — the official AMD gfx1250
+   base image [136].
+3. **vLLM at the pin ships a complete, citable recipe (option e):** build
+   `flash-attn` from `jpvillam-amd/flash-attention` branch
+   `jpvillam/gfx1250_wip` (@ `aa743c59`, one commit "simple gfx1250
+   enablement": adds gfx1250 to the Triton port's arch list) with the flag
+   set, producing a NO-KERNEL-COMPILE wheel, and `pip install` it into the
+   base [136][146]. No prebuilt ROCm wheel exists anywhere (PyPI has sdist
+   only; both forks' release assets are CUDA-named or empty [145][146]);
+   no magiccodingman tag newer than 1.0.397 exists and their in-flight
+   1.1.0-rc1 still ships torch `USE_FLASH_ATTENTION=0` with no FA stage
+   [149][150] — option (a) is DEAD, the pip layer is ours to write.
+4. **R5.1 verdict (honest):** the install deterministically kills crash
+   #2b (the ImportError stub); for crash #2a the string `total_mblocks
+   exceeds MAX_PROGRAM_GRID_SIZE` exists in NO reachable source — not in
+   vLLM@ced6857a, not in either flash-attention fork or the PyPI sdist,
+   not in aiter (pin or main), not in libr4d, not in the overlays, zero
+   GitHub issue hits [143][144][145][146][147][148] — so installing any
+   candidate cannot resurrect that exact error; its provenance is an OPEN
+   question for the owner (the pinned image as published cannot have
+   raised it either). Crash #3's frames do not exist in the pinned stack
+   at all (no `vision_utils/transformers.py`, no "CUDA Graph is out of
+   memory" text, encoder graphs default-OFF): its mechanism is moot here,
+   but that means the paste is of different provenance — R5-Q2 [142][143].
+5. **Recommended ship shape:** one `RUN` layer in
+   `containers/vllm-radiance-mxfp4/Dockerfile` installing
+   `flash-attn @ git+…jpvillam-amd/flash-attention@aa743c59` with
+   `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE` inline, `--no-deps
+   --no-build-isolation` (stack atomicity), no ENV baked (the var stays
+   chart-owned via the 20-var law) — exact lines in R5.4. Verification
+   marker under the baked gfx1201 view reverts to `"Using Flash Attention
+   (Triton backend) for ViT model on RDNA."` [139].
+
+## R5.1 — What "upstream flash-attn" concretely means for vLLM 0.30 on ROCm
+
+**The exact import vLLM attempts.** `vllm/v1/attention/backends/fa_utils.py`
+@ ced6857a, ROCm branch at module-import time (L38-62): after `from
+vllm.platforms.rocm import on_gfx1250` (L43) — `if on_gfx1250(): from
+aiter.ops.triton.mha import flash_attn_varlen_func` (L47-50); `else: from
+flash_attn import flash_attn_varlen_func` (L51-52) — the UPSTREAM pip
+package `flash_attn`; on ImportError the stub is installed and raises L59
+with the package string branched at L58 (`"aiter" if on_gfx1250() else
+"flash-attn"`, stub def L57, raise L59) — so the pod's observed
+"…requires upstream **flash-attn**…" message also PROVES
+that process had the non-gfx1250 (i.e. spoofed gfx1201) arch view [140].
+The ViT call chain to this tail is R4's, unchanged ([118][121] stand).
+
+**Separate package — no torch rebuild.** `flash-attn`'s PKG-INFO requires
+only `torch` and `einops` [144]; its setup.py consumes the installed torch
+for hipify/detection but never rebuilds it. torch's `USE_FLASH_ATTENTION=0`
+in the base build [126] only disables TORCH's internal flash backend — it
+says nothing about the `flash_attn` package, which is a distinct module
+(`flash_attn/__init__.py` imports its own `flash_attn_interface`) [144].
+**The whole fix shape is therefore a pip layer, not a stack rebuild** —
+this is the decision the commission asked to confirm.
+
+**What the var changes inside the package.** Three readers, all in the
+package, none invented by vLLM:
+- `flash_attn/flash_attn_interface.py` L11-15 (2.8.3.post2 / gfx1250_wip):
+  `USE_TRITON_ROCM = os.getenv("FLASH_ATTENTION_TRITON_AMD_ENABLE",
+  "FALSE") == "TRUE"` → import `flash_attn_triton_amd.interface_fa` as
+  `flash_attn_gpu`, else `import flash_attn_2_cuda` [144].
+- `setup.py` L65-66: same flag + `SKIP_CK_BUILD` (defaults TRUE when the
+  flag is on) → the ROCm branch (L315+) "Skips CK C++ extension
+  compilation if using Triton Backend" (comment L320) — the wheel becomes
+  pure Python + Triton JIT sources, no hipcc compile at all [144].
+- `flash_attn/flash_attn_triton_amd/utils.py` L19 (+ `bench.py` env list).
+The flag's ORIGIN is the flash-attention AMD Triton port itself (present
+identically in Dao-AILab upstream, the ROCm fork, and jpvillam's branch —
+even in `hopper/setup.py` L47 [145]); **the only SETTER inside the vLLM
+tree @ ced6857a is `docker/Dockerfile.rocm_base_gfx1250` L37** (`ENV
+FLASH_ATTENTION_TRITON_AMD_ENABLE="TRUE"`, under the comment "TODO: Unset
+these when support is available for gfx1250") — i.e. vLLM's own official
+gfx1250 launcher image ships the var, exactly what the commission
+expected from "launcher scripts" [136][143]. vLLM's only READER is still
+rocm.py L438 (the RDNA gate, R4 [119]) — unchanged.
+
+**Runtime arch semantics (decides WHICH source to pin).** The Triton port
+keys its own arch lists off TRITON's device target — the REAL silicon —
+not off vLLM's `_GCN_ARCH` (which the image spoofs to gfx1201 via
+`RADIANCE_GFX_ARCH` [149][151]): PyPI 2.8.3.post2 `utils.py` L768 `is_cdna
+= arch in ('gfx908'…'gfx950')` and L772 `is_rdna = arch in ("gfx1030",
+"gfx11xx", "gfx1200", "gfx1201")` — **gfx1250 is in NEITHER list**;
+jpvillam's `gfx1250_wip` branch is exactly the one-line change adding
+`'gfx1250'` to the is_cdna list (branch tip `aa743c59`, 2026-07-13, "Initial
+commit for simple gfx1250 enablement"; rest of the tree matches 2.8.3)
+[144][146]. If our R9700 enumerates to Triton as gfx1250 (the commission's
+"R9700/gfx1250" + vLLM's own gfx1250 image line + AMD's existence of this
+fork all point that way), the PyPI wheel runs UNWHITELISTED (neither CDNA
+nor RDNA tile settings — untested combo) and the jpvillam branch is the
+supported one; if it enumerates gfx1201, PyPI 2.8.3 already whitelists it.
+The 30-second arbiter is one pod-side probe (R5-Q3): `python -c "import
+triton; print(triton.runtime.driver.active.get_current_target())"`.
+
+**Crash #2a's `ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` —
+the exhaustive hunt.** Searched for the strings `MAX_PROGRAM_GRID_SIZE` /
+`total_mblocks exceeds` / `total_mblocks` in: vLLM @ ced6857a (full tree:
+ZERO hits) [143]; ROCm/flash-attention branch `tridao` (tip 54b044c8),
+`main`, `3.0`, `flash_attention_for_rocm3` (git-grep: `total_mblocks` only
+in the NVIDIA `hopper/flash_api.cpp`/`heuristics.h` split-KV code and the
+CUDA-only `flash_attn/cute/config.py`; `PROGRAM_GRID` nowhere) [145];
+jpvillam-amd `gfx1250_wip` @ aa743c59 (ZERO) [146]; the PyPI sdist
+2.8.3.post2 (ZERO) [144]; ROCm/aiter @ the pin fc2e5d57 AND latest main
+51ca4216 (ZERO — including the vendored
+`aiter/ops/triton/_triton_kernels/flash_attn_triton_amd/{interface_v2,
+interface_v3,fwd_prefill,fwd_decode,bwd,utils}.py` and the
+`attention/mha.py:842 flash_attn_varlen_func` wrapper the gfx1250 branch
+would call — the wrapper dispatches into the vendored Triton kernels with
+`grid=(cdiv(max_seqlen, BLOCK_M), nheads_q, batch)`, dimensions ≤ a few
+hundred for our shapes, structurally nowhere near AMD's grid caps, and
+containing no such raise) [147]; libr4d @ e8de4bc1 and every radiance
+overlay @ 5b99d66c (ZERO) [149]; the vLLM `v0.31.0…v0.34.1`+main tags (no
+`vision_utils`, no such text) [143]. GitHub issue-search API: `"MAX_
+PROGRAM_GRID_SIZE"` → total 0; `"total_mblocks"` → 12 hits, all NVIDIA
+FA3/CuTe split-KV scheduling (unrelated text) [148].
+**Determination: the pinned image AS PUBLISHED CANNOT raise that
+ValueError** — no code inside it contains the string, and the gfx1201-view
+tail fails at the import (which is exactly the #2b trace). The most
+plausible provenance of the 11:56:01 trace is an on-pod experiment outside
+the published image contents (e.g. an ad-hoc `pip install flash-attn`/
+wheel swap during bring-up from a source that DID carry such a guard — the
+string's author is unlocatable in any public repo reachable), or a garbled
+re-quote. What changes when a full flash_attn install is present: the
+package's varlen fwd launch is the grid lambda above — there is no grid
+guard in any candidate version to resurrect, and no "ROCm/Triton backend
+version bump" is even needed because the limit-in-question exists in
+nothing we can inspect.
+
+**HONEST verdict — does install plausibly fix BOTH crash-#2 traces and
+retire crash #3?**
+- Crash #2b (ImportError): **YES, deterministically** — `from flash_attn
+  import flash_attn_varlen_func` stops failing; with the var TRUE the
+  binding is the Triton port [140][144]; with the var TRUE, the rocm.py L438
+  gate + L433-436 spec (now satisfied by BOTH layouts) keeps ViT = FLASH_ATTN
+  [119][139].
+- Crash #2a (ValueError): **cannot be made worse by install** (no install
+  candidate contains the guard — exhaustive above), and **cannot be
+  verified as fixed** either, since its raiser is not in any reachable
+  source. Resurrection risk: LOW, honestly labelled un-attributed; R5-Q2
+  asks the owner for the full 11:56 traceback + any pip actions taken live.
+- Crash #3 (CUDA-graph OOM at `vision_utils/transformers.py`): the pinned
+  stack contains neither the file nor the message, and its encoder-graph
+  machinery is default-OFF and not enabled by our serveArgs (R5.3) — on
+  THIS image there is no graph to fall over; the install is still worth
+  doing for #2b, but the owner must confirm crash #3's actual provenance
+  before the "SDPA fallback broke, FA fixes it" chain of reasoning gets
+  recorded as fact (R5-Q2) [142][143].
+
+## R5.2 — The install surface for `containers/vllm-radiance-mxfp4`
+
+The base re-export (`FROM docker.io/magiccodingman/vllm-radiance:1.0.397@
+sha256:b73bf3…`, venv `/opt/vllm`, python 3.12, PATH head `/opt/vllm/bin`
+[126][152]) means a plain `pip install` line targets the right interpreter.
+Evaluated options:
+
+**(a/d) A newer magiccodingman tag already carrying flash-attn, or an
+install-time knob — REFUTED, dead end.** Docker Hub `tags/?ordering=
+last_updated`: newest publish = `1.0.397`/`1.0`/`latest`/`sha-5b99d66c844f`
+all 2026-10-18 — nothing newer than our pin [150]. The release branch tip
+is still `5b99d66c` (fresh fetch) [152-adj]. The `main` branch (tip
+`1d2e248`, VERSION `1.1.0-rc1.vllm0.30.0`) still builds torch with
+`USE_FLASH_ATTENTION=0` (Dockerfile L101) and has NO flash-attn stage and
+no FA knob anywhere (grep) [149]. `radiance-rs/vllm-radiance` does not
+exist (GitHub API Not Found) — the org name in the commission is a
+mislabel; the source repo remains `magiccodingman/vllm-radiance` [150].
+**If a future publish bakes FA, re-evaluate (watch line stands); today the
+cheapest legal path does not exist and the layer is ours.**
+
+**(b) AMD fork `ROCm/flash-attention` as the pip source.** Its default
+branch `tridao` is the upstream Dao mirror; its release assets are either
+empty or CUDA-named wheels (`flash_attn-2.8.0.post2+cu12torch2.4…whl`) —
+**no ROCm prebuilt wheel is published there** [145]. Source-install
+(`git+https://github.com/ROCm/flash-attention.git@<sha>`) lands on the same
+pure-Triton path as (c), but its shipped arch whitelist (PyPI-identical,
+no gfx1250) makes it the weaker choice if the silicon is gfx1250 (above).
+
+**(c) Prebuilt wheel from any source — none exists.** PyPI `flash-attn`
+2.8.3.post2 ships sdist only; the sdist's own GitHub-release wheel lookup
+(`BASE_WHEEL_URL`, Dao releases) is CUDA-only [144]. jpvillam-amd/flash-
+attention has ZERO releases [146]. The vLLM-project org ships
+`vllm-project/flash-attention` for CUDA only (the bundled
+`vllm.vllm_flash_attn`, no ROCm artifact for RDNA) [140-adj]; AMD's
+`repo.radeon.com/rocm/manylinux/` probe (rocm-rel-6.4 listing) surfaced no
+flash-attn asset — partial probe, recorded as "not found at the index
+class we checked" [ref [136] index: the vLLM gfx1250 base itself pulls
+torch/triton from `rocm.devreleases.amd.com/whl-multi-arch/`, not FA]
+[136]. **A wheel-only install is not currently possible; source-layer it
+is.**
+
+**(e) vLLM's own ROCm recommendation @ ced6857a — THE citable recipe.**
+Two artifacts, both at the pin:
+- `docker/Dockerfile.rocm_base_gfx1250`: `ARG FA_BRANCH="jpvillam/
+  gfx1250_wip"`, `ARG FA_REPO="…/jpvillam-amd/flash-attention.git"` (L11-12);
+  base `rocm/vllm-dev` family, `ENV PYTORCH_ROCM_ARCH=gfx1250` (L28-29);
+  `ENV FA_GPU_ARCHS=gfx942;gfx950;gfx1250` (L36); **`ENV
+  FLASH_ATTENTION_TRITON_AMD_ENABLE="TRUE"` (L37)** under "TODO: Unset these
+  when support is available for gfx1250"; the `build_fa` stage clones the
+  branch and builds `GPU_ARCHS=<list minus gfx1xxx> python3 setup.py
+  bdist_wheel` (L236-246) — the flag makes setup.py skip CK compilation,
+  so the "wheel" is the pure-Python Triton port; the `final` stage `pip
+  install /install/*.whl` (L302-304) and records FA_REPO/FA_BRANCH in
+  `/app/versions.txt` (L309-321) [136]. The `padroute` triton fork clone
+  (L39-40, L169-176, `TRITON_KERNELS_SRC_DIR` = `python/triton_kernels/`)
+  is the OpenAI `triton_kernels` MoE library patched — NOT a prerequisite
+  for the FA Triton port [136].
+- `docs/getting_started/installation/gpu.rocm.inc.md` L266-274: "Optionally,
+  if you choose to use CK flash attention, you can install flash attention
+  for ROCm … (v2.8.0) … git clone https://github.com/Dao-AILab/
+  flash-attention.git" — the CK variant (compiled hip kernels, CDNA-class);
+  not our route (no RDNA device code; radiance's own kernel docstring says
+  the same [138][149]).
+What their tooling pip-installs: exactly the branch-built wheel — no PyPI
+flash-attn, no separate triton fork install for FA [136].
+
+**RECOMMENDED SHIP LAYER** (repo container-creation conventions: ARG pins
+with a renovate comment where a datasource exists; `git` availability in
+the base is proven — the base image's own build uses it, and the runtime
+image ships it for the entrypoint helpers; if the CI build turns up no
+`git` in the final image the line still works via pip's git+https only if
+git exists — first CI run is the authority, cf-77 law):
+
+```dockerfile
+# flash-attn for the ViT FLASH_ATTN path (owner ruling 2026-11-09, D33
+# overturned — RESEARCH R5): the pure-Triton AMD port, the SAME source the
+# official vLLM ROCm gfx1250 base image builds
+# (docker/Dockerfile.rocm_base_gfx1250 @ v0.30.0: jpvillam-amd/
+# flash-attention, branch jpvillam/gfx1250_wip) — chosen over the PyPI
+# wheel because the PyPI 2.8.3 arch list omits gfx1250 (the R9700's
+# enumeration per the commission; the gfx1201 probe result would equally
+# license `flash-attn==2.8.3.post2`). With FLASH_ATTENTION_TRITON_AMD_
+# ENABLE=TRUE at build time the package compiles NO extension (setup.py
+# SKIP_CK_BUILD default) — kernels JIT via Triton at runtime; the flag is
+# deliberately inline-only, the runtime var stays chart-owned (20-var law).
+# --no-deps --no-build-isolation protect the stack-pinned torch/triton
+# (stack.yaml atomicity law); setup.py imports torch+packaging+setuptools
+# +wheel, hence the prep. No tag exists upstream → no auto datasource;
+# manual bump with the base-pin law (D12-amended shape).
+ARG FLASH_ATTN_REPO=https://github.com/jpvillam-amd/flash-attention.git
+ARG FLASH_ATTN_REF=aa743c5933560d097d8aa5e833ca10153ed7f6bb
+RUN python3 -m pip install --no-cache-dir setuptools wheel packaging \
+ && FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE python3 -m pip install \
+      --no-cache-dir --no-deps --no-build-isolation \
+      "flash-attn @ git+${FLASH_ATTN_REPO}@${FLASH_ATTN_REF}"
+```
+
+Placement: after `FROM` (and its ledger comment), before `EXPOSE 8000` —
+the layer is change-invalidating-cheap above the static EXPOSE [152].
+**Compile-time cost on CI:** no HIP/CK compilation (flag skips it) — the
+expensive part is the git fetch of a ~200 MB-class repo working tree (no
+submodule needed on the Triton path); estimate **minutes**, not the
+hours-class of a CK build — CI measurement owns the final number
+(`docker-build.yaml` on the branch, build-only on PRs). **Image size
+delta:** pure-Python package ≈ low tens of MB (the `flash_attn/` tree incl.
+`flash_attn_triton_amd/*.py`; the sdist itself is ~1 MB compressed) —
+again CI-verified. **Renovate note:** branch heads on a `_wip` branch must
+NOT be auto-tracked (`git-refs` datasource would follow churn — wrong
+here); keep the commit pin + manual bump, optionally a
+`datasource=github-tags depName=Dao-AILab/flash-attention` pin ONLY if the
+PyPI/Dao variant (`flash-attn==2.8.3.post2`) is chosen after R5-Q3 resolves
+gfx1201.
+
+## R5.3 — Verification law + crash #3's fate
+
+**The startup marker.** Exact @ ced6857a strings, rocm.py
+`get_vit_attn_backend` (L753-777) [139]: CDNA branch (gfx1250-VIEW only,
+and its gate is `find_spec("flash_attn")`, not the var): `"Using Flash
+Attention backend for ViT model."` (L762). RDNA Triton branch (OUR branch
+— the image's baked `RADIANCE_GFX_ARCH=gfx1201` view): `"Using Flash
+Attention (Triton backend) for ViT model on RDNA."` (L771-773). Fallback:
+`"Using Torch SDPA backend for ViT model."` (L776). So the runbook
+step-3 marker REVERTS to the Flash-(Triton)-on-RDNA line (the OQ12-era
+line R4 replaced), NOT the bare "Using Flash Attention backend" line the
+commission quoted — that wording belongs to the CDNA branch and is only
+reachable if someone un-spoofs `RADIANCE_GFX_ARCH` to gfx1250 (then
+branch 3 + the installed package would log it and run AITER's Triton mha
+via the alias finder [147] — a different, unqualified config — record as
+barred). Per-layer confirm line (unchanged mechanism): `"Using
+AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention."` (mm_encoder_
+attention.py L372 [118][133]). The runbook "a Flash line means the var
+leaked back" row (C05 L152-158 post-D33 wording) must flip to "the Flash
+line is REQUIRED; its absence = package missing or var dropped".
+
+**Does the FLASH_ATTN encoder path go through `forward_with_cuda_graph`?**
+**The wrapper the commission cites does not exist in this stack.**
+`vllm/model_executor/models/vision_utils/` is not a path in vLLM @
+ced6857a, nor v0.31.0/0.32.0/0.33.0/0.34.0/v0.34.1, nor `main` (raw 404 +
+API tree listing + local greps) [143]; nor in the radiance overlay set
+(repo-wide grep) [149]; and the message text "CUDA Graph is out of
+memory. Try to lower number of frames or resolution, or disable CUDA
+graphs for ViT or encoder models." greps zero in 0.30, 0.33 and the 0.33
+main-line clone. In 0.30 the encoder-CUDA-graph machinery exists but is
+gated OFF-by-default: `cudagraph_mm_encoder: bool = False`
+(compilation.py L550), enabled only via `--compilation-config`; the V2
+runner gates `not enforce_eager AND cudagraph_mm_encoder AND
+supports_encoder_cudagraph(model)` (model_states/interface.py L69-76) —
+Qwen3.5 DOES implement `SupportsEncoderCudaGraph` (qwen3_vl.py L1794,
+protocol methods L1972+) but our `-cc` is `{"cudagraph_mode":"PIECEWISE"}`
+(values.yaml L290), which does NOT set `cudagraph_mm_encoder` → encoder
+graphs are never captured, and `compile_mm_encoder` (L542, same default
+False, the `enable_if` on the ViT's `@support_torch_compile` decorators
+qwen3_vl.py L365-370/decorators.py L53-55) → the ViT runs EAGER. Proven:
+no graph wrapper on the pinned stack ⇒ the SDPA-vs-FA "graph capture
+memory profile for {"image":4}" question is undefined here — nothing to
+bite, nothing to moot. ASSUMED (labelled): that the owner's 11:54:54
+trace came from some other build (an rc1 candidate or another image) —
+R5-Q2. One genuine memory note survives either way: the base's torch is
+built `USE_FLASH_ATTENTION=0 USE_MEM_EFF_ATTENTION=0 USE_AOTRITON=0`
+[126], so the TORCH_SDPA fallback resolves to torch's MATH-form SDPA
+(segment-materialized attention matrices); the FLASH_ATTN Triton port is
+tiled and never materializes them — the install is memory-FAVOURABLE for
+the ViT regardless of graphs [144][149].
+
+**The real 0.30 knob for "disable CUDA graphs for ViT or encoder models":**
+`--compilation-config '{"cudagraph_mm_encoder": false}'` — already the
+default in our law; `--mm-encoder-attn-backend` is confirmed NOT a graph
+switch (it only overrides the attention-backend choice, arg_utils L1399-
+1403 [125], via vision.py→rocm.py L741-747 [119][122]). Related shape
+budgets if a future build enables encoder graphs:
+`encoder_cudagraph_token_budgets` / `encoder_cudagraph_max_vision_items_
+per_batch` / `encoder_cudagraph_max_frames_per_batch` (compilation.py
+L555-575) — the "lower number of frames or resolution" half of the quoted
+message maps to these [142].
+
+## R5.4 — Options table, the owner question, the proposed diff
+
+| Option | Shape | Evidence | CI cost | Verdict |
+|---|---|---|---|---|
+| (a) newest magiccodingman tag w/ FA | base re-pin | none newer than 1.0.397; 1.1.0-rc1 still `USE_FLASH_ATTENTION=0`, no FA stage [149][150] | — | **does not exist** — re-check every base bump (watch) |
+| (b) ROCm/flash-attention source layer | pip layer, git-pinned | same pure-Triton code; arch whitelist lacks gfx1250 [145] | minutes | viable IF the R5-Q3 probe says gfx1201; else (e) |
+| (c) prebuilt ROCm wheel | pip layer, wheel URL | **no ROCm wheels exist** (PyPI sdist-only; both forks' releases CUDA/empty) [144][145][146] | — | not currently possible |
+| (e) vLLM-official gfx1250 recipe ported | pip layer: jpvillam branch `aa743c59`, flag-inline, `--no-deps --no-build-isolation` | exactly the official `Dockerfile.rocm_base_gfx1250` FA stage + install, minus their torch/aiter stack [136][146] | minutes; low-tens-of-MB (CI-measured) | **RECOMMENDED** |
+| (d') keep SDPA + disable encoder CUDA graphs | values-only | encoder graphs are ALREADY off in our law; the quoted crash-#3 text/file is not in this stack at all [142][143] | zero | priced, rejected on evidence: it disables nothing that exists — and the owner already ruled for install |
+
+**R5-Q1 (the single owner question, with recommendation):** install
+flash-attention into `containers/vllm-radiance-mxfp4` as the ONE pure-
+Triton pip layer of option (e) — the same source branch vLLM's own gfx1250
+image pins (`jpvillam-amd/flash-attention @ aa743c59`) — together with the
+D33 reversion (var back into the 20-var law) — **recommendation: YES, (e)
+as written; substitute `flash-attn==2.8.3.post2` from PyPI only if R5-Q3's
+pod probe reports gfx1201.** Best guess taken per alternative: (a) would
+have been cheapest but is empty [150]; (c) does not exist [144-146];
+(d') addresses a mechanism absent from the pinned stack [142][143].
+**R5-Q2:** the provenance of the two traces the re-scoping rests on —
+the owner's FULL 11:56:01 ValueError traceback (its raiser string exists
+in no public artifact of this stack — was an ad-hoc package installed in
+the running pod first?) and the 11:54:54 CUDA-graph OOM frames
+(`vision_utils/transformers.py` is not in this image or any vLLM tag) —
+which image was the pod running at 11:54:54? **R5-Q3:** run on the pod:
+`python3 -c "import triton; print(triton.runtime.driver.active.
+get_current_target())"` (and, post-install, `pip show flash-attn`) —
+gfx1250 vs gfx1201 selects between (e) and (b).
+
+**Exact proposed container diff (recommended option):**
+
+```dockerfile
+# containers/vllm-radiance-mxfp4/Dockerfile — insert between FROM(+ledger) and EXPOSE:
+ARG FLASH_ATTN_REF=aa743c5933560d097d8aa5e833ca10153ed7f6bb
+RUN python3 -m pip install --no-cache-dir setuptools wheel packaging \
+ && FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE python3 -m pip install \
+      --no-cache-dir --no-deps --no-build-isolation \
+      "flash-attn @ git+https://github.com/jpvillam-amd/flash-attention.git@${FLASH_ATTN_REF}"
+```
+(comment block above it as in R5.2). Companion reversion surfaces the
+coordinator owns (NOT written by this section): `charts/vllm/values.yaml`
+re-add `FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"` at the (8) slot (after
+`AITER_ROOT_DIR`, values.yaml L258 region) with the R5-ground comment (var
++ package are BOTH required: the var is the selector, the package is the
+payload); `charts/vllm/tests/vllm_testlib.py` `env_want_cf131` 19-var
+re-pin → 20-var AND the L205-211 "barred entry" comment/`
+FLASH_ATTENTION_TRITON_AMD_ENABLE` list item removed (the exact-set now
+must CONTAIN it); `chunks/C05.md` step-3 marker → the RDNA-Triton Flash
+line (REQUIRED), step-3.4 first-multimodal smoke = the crash-gate for the
+install, and the "var leaked back" row inverted; `README.md` ledger note:
+the re-export is no longer a pure digest-copy (D23 collapses to "copy +
+FA layer"; on every base bump re-verify the FA layer still imports and the
+marker line still logs), plus DECISIONS entry recording D33 OVERTURNED by
+the owner ruling and R4's fix-(d) rejection re-disposed by R5.
+
+## Contradictions and how to weigh them (R5 conflict map)
+
+1. **Commission/owner frame "crash #3 = the SDPA fallback's HIP-graph
+   capture failure" vs the pinned tree** — the file, message and (default)
+   mechanism do not exist in this stack [142][143]. Weight: the tree is
+   dispositive for what CAN have happened on 1.0.397; the ruling to
+   INSTALL is honoured regardless (it stands on #2b alone), but the
+   causal sentence "graph capture failed under SDPA, FA will moot it"
+   cannot be recorded as verified — R5-Q2.
+2. **Coordinator note "MAX_PROGRAM_GRID_SIZE lives in flash_attn's triton
+   code" vs the exhaustive greps** — present in no reachable flash-
+   attention tree (PyPI 2.8.3.post2, ROCm fork ×4 branches, jpvillam
+   branch), no aiter, no vLLM, zero GitHub issue hits [143-148]. Weight:
+   recorded as an unverified premise; the install options were evaluated
+   so that NO candidate introduces the string — the "resurrection" worry
+   is answered "not by these sources", which is the strongest defensible
+   statement without the owner's full traceback.
+3. **Commission "R9700/gfx1250" vs the image's own law "gfx1201 (R9700 /
+   RDNA4)"** [149] — resolved as TWO arch views of the SAME card: the
+   radiance ENV spoofs vLLM's PYTHON view to gfx1201, while the package/
+   Triton view keys off real silicon enumeration (gfx1250-class per the
+   commission, the reason AMD shipped the gfx1250_wip FA branch and vLLM
+   shipped a gfx1250 base line). Weigh: act on both — pin the fork source
+   that whitelists gfx1250 and keep the gfx1201 ENV untouched; settle the
+   fact with the R5-Q3 probe.
+4. **R4's rejection of install ("stack-atomicity violation; overrides
+   the authors' design") vs the owner ruling** — R4's FACTS stand (no FA
+   in the base, authors build torch without flash); its DISPOSITION is
+   overturned by the owner, who outranks the design-alignment argument.
+   The atomicity concern is mitigated (not voided) by `--no-deps
+   --no-build-isolation` + a commit-pinned pure-Python layer that touches
+   no stack member [144][146]; the authors' `USE_FLASH_ATTENTION=0` remains
+   irrelevant to the separate package (§R5.1).
+
+## Implications for the plan
+
+- C01 surface grows from pure digest-copy to digest-pin + ONE pip layer;
+  the README ledger/bump-procedure text must record the FA re-verify duty
+  on base bumps; the pin `FLASH_ATTN_REF` is manual-bump (no datasource)
+  unless (b)+gfx1201 lets it move to `github-tags depName=Dao-AILab/
+  flash-attention`.
+- D33 formally OVERTURNED (owner ruling — coord records); the D25 20-var
+  law is restored exactly as it was (the var is REQUIRED WITH the package:
+  it is simultaneously the selector (rocm.py L438) and the package's own
+  Triton-binding switch (§R5.1) — the "var alone was the bug" story was
+  only true BECAUSE the package was missing).
+- The C05 crash-gate (step 3.4) now proves THREE things at once: the
+  Flash-Triton marker line, the first-multimodal success (no ImportError,
+  no grid ValueError on {"image": 4}), and ViT numerical sanity (the
+  Triton port pads head_dim 72 → 128-wide tiles — the exact "padding
+  waste" radiance wrote r4d to avoid [149]; correctness yes, efficiency
+  NOT claimed — this is now the QUALIFIED-for-CI path, not the
+  maintainer-qualified one: R4.3's "SDPA is the qualified path" sentence
+  stays TRUE historically; the owner accepted the trade).
+- `pip install` does NOT touch decoder behaviour: R4D stays pinned in
+  serveArgs; only three code sites import/gate `flash_attn` in the tree
+  (§R5.1 blast radius; qwen2_5_omni_thinker is a different model) [140].
+
+## Open questions (no-questions-rule log — round 5, for coord → owner/plan)
+
+- **R5-Q1** — approve the (e) container diff above (single FA layer,
+  jpvillam branch `aa743c59`, inline flag, `--no-deps
+  --no-build-isolation`) as the ship surface for the owner's install
+  ruling? Best guess taken: YES (it is vLLM's own gfx1250 recipe,
+  gfx1250-safe and gfx1201-safe in one pin).
+- **R5-Q2** — provenance of the 11:56:01 ValueError and the 11:54:54
+  CUDA-graph frames (full tracebacks; which image the pod ran at 11:54:54;
+  any on-pod pip installs during bring-up). Both strings/files are absent
+  from the published stack; the re-scoping premise needs this grounding
+  before the narrative is written into DECISIONS.
+- **R5-Q3** — one pod-side probe decides (e)-vs-(b) pin choice:
+  `triton.runtime.driver.active.get_current_target()`.
+
+## Sources (R5)
+
+All reads 2026-11-09, at the exact pins. vLLM line numbers re-verified in
+the local `v0.30.0` clone (`git rev-parse HEAD` = `ced6857a…`).
+
+136. vLLM v0.30.0 @ ced6857a — `docker/Dockerfile.rocm_base_gfx1250` — L1-3 `BASE_IMAGE=ubuntu:24.04` + `ROCM_WHEEL_INDEX=https://rocm.devreleases.amd.com/whl-multi-arch/` (L2) + `ROCM_SDK_VERSION=7.14.0a20260623` / `TRITON_VERSION=3.7.1+git110cd8e2.rocm7.14…`; L11-12 `ARG FA_BRANCH="jpvillam/gfx1250_wip"` `ARG FA_REPO="https://github.com/jpvillam-amd/flash-attention.git"`; L28-36 `PYTORCH_ROCM_ARCH=gfx1250`, `FA_GPU_ARCHS=gfx942;gfx950;gfx1250`; **L34-37 "TODO: Unset these when support is available for gfx1250" + `ENV FLASH_ATTENTION_TRITON_AMD_ENABLE="TRUE"`**; L39-40 `TRITON_KERNEL_BRANCH="padroute"` / `TRITON_KERNEL_REPO=jpvillam-amd/triton`; L169-176 the padroute clone = `python/triton_kernels/` (MoE lib, `TRITON_KERNELS_SRC_DIR` set-only-never-consumed-for-FA); L228-246 `build_fa`: `GPU_ARCHS=$(… sed strips gfx1[0-9]{3} …) python3 setup.py bdist_wheel`; L279-304 debs/final `pip install /install/*.whl`; L309-321 `/app/versions.txt` records FA_REPO/FA_BRANCH — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/docker/Dockerfile.rocm_base_gfx1250
+137. vLLM v0.30.0 @ ced6857a — `docker/Dockerfile.rocm_gfx1250` — `ARG BASE_IMAGE=rocm/vllm-dev:base`, `ARG PYTORCH_ROCM_ARCH=gfx1250` (the vLLM layer atop the gfx1250 base) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/docker/Dockerfile.rocm_gfx1250
+138. vLLM v0.30.0 @ ced6857a — `docs/getting_started/installation/gpu.rocm.inc.md` L266-274 — "Optionally, if you choose to use CK flash attention, you can install flash attention for ROCm … (v2.8.0) … git clone https://github.com/Dao-AILab/flash-attention.git" — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/docs/getting_started/installation/gpu.rocm.inc.md
+139. vLLM v0.30.0 @ ced6857a — `vllm/platforms/rocm.py` — L207 `_ON_GFX1X=any(gfx11/gfx12)`; L217 `_ON_GFX1250`; **L219-221 `_ON_CDNA = any(…["gfx9","gfx1250"])` + "RDNA = gfx11/gfx12 minus the CDNA-classified gfx1250"**; L296-297 `on_gfx1x() = _ON_GFX1X and not _ON_CDNA`; L316-317 `on_gfx1250`; L353-361 `get_cdna_version()` (gfx1250→5); L415-446 `flash_attn_triton_available()` (L417 gfx1x-only, L433-436 both specs, L438 var gate); ViT selector exact logs: L753-755 `"Using AITER Flash Attention backend for ViT model."` / L757-763 `on_cdna() and find_spec("flash_attn")` → **`"Using Flash Attention backend for ViT model."`** / L765-774 → **`"Using Flash Attention (Triton backend) for ViT model on RDNA."`** / L776-777 `"Using Torch SDPA backend for ViT model."` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/platforms/rocm.py
+140. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/backends/fa_utils.py` — L38-42 the ROCm comment block ("On ROCm we use AITER's Triton flash-attention; the upstream flash-attn package is not installed/available"); L43 `from vllm.platforms.rocm import on_gfx1250`; L47-50 gfx1250 → `from aiter.ops.triton.mha import flash_attn_varlen_func`; L51-52 else → `from flash_attn import flash_attn_varlen_func`; L55-62 `except ImportError` — L57 stub def, **L58 `package = "aiter" if on_gfx1250() else "flash-attn"`**, L59 raise (the pod message branch-proves the gfx1201 view) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/backends/fa_utils.py
+141. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/ops/vit_attn_wrappers.py` — L27 `flash_attn_maxseqlen_wrapper`; **L38-41 `is_rocm_aiter` → `from aiter import flash_attn_varlen_func`** (NOT exported by the pinned aiter — dead branch here, R5.1); L43-46 else `from …fa_utils import flash_attn_varlen_func`; L48-62 cu_seqlens/max_seqlen `.item()`/L62 call; L100/L111 the vit wrapper; L234 `apply_sdpa` / L255 `torch_sdpa_wrapper` (the surface radiance swaps, R5.3 note); L152-161 `triton_attn_wrapper` → `context_attention_fwd` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/ops/vit_attn_wrappers.py
+142. vLLM v0.30.0 @ ced6857a — the encoder-CUDA-graph machinery — `vllm/config/compilation.py` **L542 `compile_mm_encoder: bool = False`**, **L550 `cudagraph_mm_encoder: bool = False`**, L555-575 `encoder_cudagraph_token_budgets`/`encoder_cudagraph_max_vision_items_per_batch: int = 0`/`encoder_cudagraph_max_frames_per_batch`; `vllm/v1/worker/gpu/model_states/interface.py` L69-76 `enable_encoder_cuda_graph = not enforce_eager and cudagraph_mm_encoder and supports_encoder_cudagraph(model)`; `vllm/v1/worker/gpu_model_runner.py` L6625-6635 same gate; `vllm/v1/worker/gpu/model_runner.py` L997-1009 capture gating + skip-warning; `vllm/config/vllm.py` L1310-1321 `language_model_only`×`cudagraph_mm_encoder` conflict; `vllm/compilation/decorators.py` L53-55 `should_torch_compile_mm_encoder` = `compile_mm_encoder`; `vllm/model_executor/models/qwen3_vl.py` L365-370 ViT `@support_torch_compile(enable_if=should_torch_compile_mm_encoder, is_encoder=True)`, L1794 + L1972-2090 `SupportsEncoderCudaGraph` implementation (present, but never engaged at our `-cc`) — greps: the strings "CUDA Graph is out of memory" / "Try to lower number of frames" ABSENT (0 hits) in this tag, in the v0.33-line clone @4ba787ec, and on `main` (`vllm/compilation/cuda_graph.py`, `vllm/v1/worker/gpu/model_runner.py`)
+143. vLLM @ ced6857a + upstream tags — negative tree facts — `vllm/model_executor/models/vision_utils/` does not exist in v0.30.0 (dir listing), nor raw paths at `v0.31.0/v0.32.0/v0.33.0/v0.34.0/v0.34.1/main` (HTTP 404 ×6), nor the models-dir listing on `main` (GitHub contents API); `MAX_PROGRAM_GRID_SIZE`/`total_mblocks`: 0 hits across the v0.30.0 tree; `FLASH_ATTENTION_TRITON_AMD_ENABLE` setter: exactly `docker/Dockerfile.rocm_base_gfx1250:37` (grep of the full repo incl. docs/.buildkite/tools); `flash_attn` import/gate sites: exactly 3 (rocm.py L759, fa_utils L52, qwen2_5_omni_thinker L112)
+144. PyPI `flash-attn` **2.8.3.post2** sdist (latest; sha-fetched + unpacked) — PKG-INFO Requires-Dist: `torch`, `einops` ONLY; no pyproject.toml (legacy setuptools backend → build isolation would break on `import torch`; hence `--no-build-isolation`); `flash_attn/__init__.py` L3-10 interface exports; **`flash_attn/flash_attn_interface.py` L11-15 `USE_TRITON_ROCM = getenv("FLASH_ATTENTION_TRITON_AMD_ENABLE")=="TRUE"` → `from .flash_attn_triton_amd import interface_fa` ELSE `import flash_attn_2_cuda`**; `setup.py` L28-51 IS_ROCM via `torch.version.hip`/`BUILD_TARGET`, **L65-66 flag + `SKIP_CK_BUILD` (default TRUE when flag on)**, L315-321 "Skips CK C++ extension compilation if using Triton Backend" (ck_tile codegen + hipcc path L322+ skipped entirely), GPU_ARCHS `--offload-arch` CK path (skipped); `flash_attn/flash_attn_triton_amd/` file tree (interface_fa, fwd_prefill, fwd_decode, bwd*, utils, …); **`utils.py` L759-775 `get_arch()` from `triton.runtime.driver.active.get_current_target()`, `is_cdna` list `gfx908…gfx950` (NO gfx1250), `is_rdna` list incl. `gfx1200, gfx1201`**; `interface_fa.py` L592-601 `grid = (triton.cdiv(max_seqlens_q, BLOCK_M), nheads_q, batch)`; guard string: 0 hits — https://pypi.org/project/flash-attn/
+145. ROCm/flash-attention — default branch `tridao` @54b044c8 + `origin/main` + `origin/3.0` + `origin/flash_attention_for_rocm3` (git greps) — flag readers identical (interface L12, setup L71 `ROCM_BACKEND = "triton" if …flag… else "ck"`, hopper copies); `total_mblocks` ONLY in NVIDIA hopper C++ + `flash_attn/cute/config.py` (FA4 CuTe, CUDA); `PROGRAM_GRID` nowhere; releases API: `v2.8.4.1-cktile`/`v2.8.4-cktile`/`v2.7.4-cktile`/`v2.7.0-cktile` = **no assets**, `v2.8.0-cktile`/`v3.0.0.r1-cktile`/`v2.7.3-cktile`/`v2.6.*-cktile` assets all `flash_attn-…+cu12torch…`/`+cu118…` CUDA-named wheels — no ROCm wheel exists — https://github.com/ROCm/flash-attention (+ api.github.com/repos/ROCm/flash-attention/releases)
+146. jpvillam-amd/flash-attention — branch `jpvillam/gfx1250_wip` @ `aa743c5933560d097d8aa5e833ca10153ed7f6bb` (2026-07-13, "Initial commit for simple gfx1250 enablement"; the source vLLM's gfx1250 base pins) — `diff -r` vs the PyPI 2.8.3.post2 sdist: `flash_attn_triton_amd/utils.py` **L768 the ONLY semantic triton_amd change: is_cdna list + `'gfx1250'`** (plus a `bwd_prefill_fused.py` tweak and added local Dockerfile/README); `__init__.py` `__version__ = "2.8.3"`; releases: **zero** (API) — https://github.com/jpvillam-amd/flash-attention/tree/jpvillam/gfx1250_wip
+147. ROCm/aiter @ `fc2e5d57…` (the image's AITER 0.1.20 pin; depth-fetch clone; plus latest main `51ca4216` re-grep) — `aiter/ops/triton/attention/mha.py` L842 `flash_attn_varlen_func` (wraps the vendored `_triton_kernels/flash_attn_triton_amd/{interface_v2,interface_v3,fwd_prefill,fwd_decode,bwd,common,utils}.py`, listing); **`aiter/ops/triton/__init__.py` L97-100 alias map `"mha": "attention.mha"` + L153-189 `__getattr__` + L189 `sys.meta_path.insert(0, …_backward_compat_find_spec)` → `from aiter.ops.triton.mha import …` RESOLVES at the pin**; top-level `from aiter import flash_attn_varlen_func` does NOT resolve (no export — the ROCM_AITER_FA wrapper path is import-dead at this pin, moot on our view); guard strings: 0 hits in BOTH pin and main — https://github.com/ROCm/aiter
+148. GitHub issues search API — `q="MAX_PROGRAM_GRID_SIZE"` → `total_count: 0`; `q="total_mblocks" in:body` → 12, all NVIDIA FA3/CuTe split-KV scheduling items (vllm #64058, Dao #2445/#2920/#2926/#2406/#2503, sgl-project #46/#29551, …) — no ROCm/RDNA hit, no such ValueError text anywhere public — https://api.github.com/search/issues
+149. magiccodingman/vllm-radiance @ release `5b99d66c` + main `1d2e248` (fresh fetches: release tip UNCHANGED since the pin) — `patch_gfx1201.py` docstring **"gfx1201 (R9700 / RDNA4) platform discovery patch"** + "Do not widen the CDNA AITER gate: that would expose gfx1201 to CK/MFMA/ASM kernels without RDNA device code" + the A0 `RADIANCE_GFX_ARCH`/`VLLM_ROCM_GCN_ARCH` insert into `_get_gcn_arch` ("amdsmi's asic_info 'target_graphics_version' is empty for gfx1201"); `Dockerfile` L228-232 the ENV law `RADIANCE_GFX_ARCH=${GFX_ARCH}` (+PYTORCH/HIP/AMDGPU/GPU_ARCHS), L352 `RADIANCE_USE_R4D=1`; `radiance_vit_attn.py` L1-13 ("On RDNA4 the CK / aiter flash-attention kernels are unavailable … torch SDPA falls back to a non-tiled path that runs at a small fraction of peak"; the r4d head_dim-72 kernel; padding-waste quote) + `install()` L186-209 (gfx12x-gated swap of `vit_attn_wrappers.apply_sdpa`); `patch_r4d.py` L30-36 (the "Triton kernel for vision attention" is radiance's own r4d-era fallback naming; libr4d @ `e8de4bc1` `codeberg.org/StillDeadcode/libr4d` — guard strings 0 hits there too); main VERSION `1.1.0-rc1.vllm0.30.0`, main Dockerfile L101 still `USE_FLASH_ATTENTION=0`, no FA stage/knob in either branch (grep)
+150. Docker Hub tags API — `hub.docker.com/v2/repositories/magiccodingman/vllm-radiance/tags/?ordering=last_updated`: `latest`, `sha-5b99d66c844f`, `1.0`, `1.0.397` ALL 2026-10-18T06:35Z (= our pin), next `1.0.394` 2026-10-09 → **no publish newer than the pin**; GitHub API `repos/radiance-rs/vllm-radiance` → `Not Found`
+151. magiccodingman/vllm-radiance @ release — `benchmarks/results/20260830T0424Z_mxfp4-rx3/*/manifest.json` (the 0.9.3-era candidates, read locally) — baked container config shows the ENV law in force verbatim (`RADIANCE_GFX_ARCH=gfx1201`, `PYTORCH_ROCM_ARCH=gfx1201`, `GPU_ARCHS=gfx1201`) and the OCI labels `org.opencontainers.image.description = "vLLM inference server for AMD Radeon AI PRO R9700"`, source `gitlab.sayou.io/lance-wright/vllm-radiance` (private) — the publish mirror we read is GitHub
+152. [repo] the post-D33 surfaces this round reverses — `charts/vllm/values.yaml` env block L255-296 (19-var law; the FLASH slot absent; `RADIANCE_COMPILATION_CONFIG: '{"cudagraph_mode":"PIECEWISE"}'` L290); `charts/vllm/tests/vllm_testlib.py` L174-211 (`env_want_cf131` = "the D25 19-var … amended by D33"; **L205-211 the exact-set BARS `FLASH_ATTENTION_TRITON_AMD_ENABLE` as a regression entry** — must invert to require it); `chunks/C05.md` L152-158 (marker law `Using Torch SDPA backend for ViT model.` + "a Flash-Attention-Triton line now means the var leaked back" — inverts) and L196 ("its FLASH_ATTN tail needs the upstream flash-attn the…" — becomes satisfied); `chunks/C02.md` L18/L170/L214/L314-317/L378 (19-var exact-set legs — re-pin 20); `containers/vllm-radiance-mxfp4/Dockerfile` (FROM digest + EXPOSE 8000 only — the FA layer inserts above EXPOSE)
+
+## Reliability notes (R5 self-review)
+
+- **High confidence (source @ exact pin):** the tail's binding and
+  stub-message branch (fa_utils L47-58 — the "aiter"-vs-"flash-attn"
+  message discriminator is a NEW, self-consistent fact: the pod's
+  flash-attn wording proves the gfx1201-view at 11:59) [140]; package
+  independence from torch + flag semantics + no-compile build (sdist +
+  both forks read in-tree) [144][145][146]; the gfx1250 recipe of the
+  official base [136]; the 0.30 encoder-graph/compile default-OFF gates
+  and Qwen3.5's implement-but-ungated status [142]; the aiter pin's
+  backward-compat finder [147]; no-newer-tag / no-FA-in-either-branch
+  [149][150].
+- **Medium confidence:** the R9700's real Triton-enumerated arch (the
+  commission says gfx1250; the image says gfx1201-for-vLLM; both can be
+  true of one card — resolved by the 3-line R5-Q3 probe, and the
+  recommended pin is safe under either outcome); crash-#2a "cannot be
+  resurrected" (strong negative search — five repos, four branches, the
+  sdist, both aiter states, plus 0 GitHub issue hits — but absence across
+  REACHABLE sources is not metaphysical certainty; if the owner's
+  experiment used a private wheel the answer changes — R5-Q2).
+- **Low confidence / explicit gaps:** crash #3's provenance (the cited
+  file+message exist nowhere public at any vLLM line we could reach —
+  including main; we could NOT inspect the maintainer's private
+  gitlab.sayou.io tree, and the 1.1.0-rc1 image does not exist publicly
+  yet); the exact CI minutes and size delta of the FA layer (no docker
+  daemon — `docker-build.yaml` on the pushed branch is the authority,
+  cf-77 law); that the Triton-AMD fwd kernel is numerically/
+  performance-good at head_dim 72 on our silicon (no public RDNA4 datum;
+  the runbook's first-multimodal gate owns it — and radiance's own docs
+  call the padded-Triton approach slower than their r4d kernel, which
+  runs the SDPA-labelled path — a performance footnote, not a correctness
+  one) [149].
+- **Weakest claim of the round:** "install deterministically kills #2b"
+  rests on the pod's view staying gfx1201 (baked ENV [149][151]) AND the
+  var staying TRUE (the 20-var law restoration); either surface drifting
+  flips which branch runs (gfx1250-view ⇒ AITER's Triton mha, a DIFFERENT
+  unqualified path [139][147]) — the runbook marker lines in R5.3 are the
+  guard rail.
+- **Perspective weighting:** the pinned trees dominate all secondary
+  accounts (R4's method preserved); the owner ruling is authoritative on
+  WHAT to do (install) and non-authoritative on the causal story (crash
+  #3 framing), which is why R5-Q2 exists.
+- **Blind spots (stated):** no GPU session executed anything here — every
+  verdict is code-static; the private GitLab candidate line
+  (gitlab.sayou.io) is unreadable; `rocm-rel-*` manylinux index probing
+  was one-release-deep.
