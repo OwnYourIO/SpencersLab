@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 # Offline contract suite for .forgejo/workflows/main-sync.yaml: the static
-# invariants that keep the main-sync design safe — the two instance guards
-# (both Forgejo instances serve the same repository path, so an unguarded
-# job ping-pongs pushes between them), non-force pushes, push targets and
-# secret keys confined to push-main, fail-fast run semantics, lab runner
-# labels, and backup-proxy-merge's zero-secret posture (its push target is
-# the repository it runs in, which the automatic same-run token already
-# writes).
+# invariants that keep the main-sync design safe — the prod-stage guard on
+# both jobs (the repo is hosted on two instances; only the prod one may fan
+# main out, and the dev stage firing no job is what stops a push ping-pong),
+# plain non-force pushes, destinations and credentials drawn from instance
+# vars/secrets rather than file literals, fail-fast run semantics, lab runner
+# labels, and push-dev being a bare main push with no merge.
 #
-# Purely static — no network, no runner: bash reads the file, python3
-# parses it per leg. Convention of tests/services/infra-forgejo.sh.
+# Purely static — no network, no runner: bash reads the file, python3 parses
+# it per leg. Convention of tests/services/infra-forgejo.sh.
 #
-# pyyaml binds the trigger-leg shape: YAML 1.1 resolves the bare `on:` key
-# to boolean True, so the trigger block is doc.get(True) or doc.get('on');
+# pyyaml binds the trigger-leg shape: YAML 1.1 resolves the bare `on:` key to
+# boolean True, so the trigger block is doc.get(True) or doc.get('on');
 # asserting on the string key 'on' alone would redden a correct file.
 #
 # Run from anywhere in the worktree:
@@ -41,7 +40,7 @@ python3 -c 'import yaml,sys; yaml.safe_load(open(sys.argv[1]))' "$WF" \
   || fail "t1: $WF does not parse as YAML"
 ok "t1: $WF exists and parses as YAML"
 
-# --- t2: triggers -------------------------------------------------------------
+# --- t2: trigger -------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -68,13 +67,11 @@ then
 fi
 ok "t2: on: carries exactly push.branches == [main] plus workflow_dispatch"
 
-# --- t3: jobs + instance guards -------------------------------------------------
+# --- t3: jobs + prod-stage guards --------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
-GUARD_INFRA = "startsWith(forgejo.server_url, 'https://git.spencerslab.com')"
-GUARD_DEV = "startsWith(forgejo.server_url, 'https://git.scifi.farm')"
-
+GUARD = "vars.ROLE == 'prod'"
 raw = open(sys.argv[1]).read()
 jobs = (yaml.safe_load(raw) or {}).get('jobs')
 
@@ -86,26 +83,22 @@ def need(cond, msg):
 
 
 need(isinstance(jobs, dict), 'no jobs: mapping')
-need(set(jobs) == {'push-main', 'backup-proxy-merge'},
-     f'jobs keys are {sorted(jobs)}, expected exactly push-main + backup-proxy-merge')
-need(jobs['push-main'].get('if') == GUARD_INFRA,
-     f"push-main.if is {jobs['push-main'].get('if')!r}, expected {GUARD_INFRA!r}")
-need(jobs['backup-proxy-merge'].get('if') == GUARD_DEV,
-     f"backup-proxy-merge.if is {jobs['backup-proxy-merge'].get('if')!r}, expected {GUARD_DEV!r}")
-need(GUARD_INFRA != GUARD_DEV, 'the two guard expressions are not distinct')
-# Counted over the raw file, not per job, so a duplicate instance URL pasted
-# into a comment or the other job's push URL reddens the leg; the if:
-# equality above already pins which job owns each guard.
-for lit in ('https://git.spencerslab.com', 'https://git.scifi.farm'):
-    n = raw.count(lit)
-    need(n == 1, f'{lit} occurs {n} times in the file, expected exactly once')
+need(set(jobs) == {'push-gh', 'push-dev'},
+     f'jobs keys are {sorted(jobs)}, expected exactly push-gh + push-dev')
+for name in ('push-gh', 'push-dev'):
+    need((jobs[name] or {}).get('if') == GUARD,
+         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r}")
+# The dev-stage server must fire no job; any dev guard defeats the breaker.
+need("vars.ROLE == 'dev'" not in raw, 'a job guards on vars.ROLE == dev (the dev stage must fire nothing)')
+# URL-based instance detection is retired.
+need('forgejo.server_url' not in raw, 'forgejo.server_url is referenced (URL detection is retired)')
 PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly two jobs, each with its one-of, distinct, file-wide server_url guard"
+ok "t3: exactly two jobs, both guarded on vars.ROLE == 'prod'; no dev guard, no server_url"
 
-# --- t4: no force ---------------------------------------------------------------
+# --- t4: no force --------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import sys
 
@@ -121,15 +114,12 @@ then
 fi
 ok "t4: no force-push spelling (--force, +refs, push -f) anywhere in $WF"
 
-# --- t5: targets + secrets --------------------------------------------------------
+# --- t5: destinations + credentials -------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
-doc = yaml.safe_load(open(sys.argv[1]))
 raw = open(sys.argv[1]).read()
-jobs = doc.get('jobs') or {}
-pm_runs = '\n'.join(str(s.get('run', '')) for s in (jobs.get('push-main') or {}).get('steps', [])
-                    if isinstance(s, dict) and 'run' in s)
+jobs = (yaml.safe_load(raw) or {}).get('jobs') or {}
 
 
 def need(cond, msg):
@@ -138,46 +128,61 @@ def need(cond, msg):
         sys.exit(1)
 
 
-for key in ('secrets.GITHUB_PUSH_TOKEN', 'secrets.FORGEJO_DEV_PUSH_TOKEN'):
+def count(key):
     # Boundary-anchored: a renamed key that merely extends the original
-    # (TOKEN -> TOKENX) must not be counted as an occurrence of it.
-    find = re.compile(re.escape(key) + r'(?![0-9A-Za-z_])')
-    need(len(find.findall(raw)) == 1, f'{key} occurs {len(find.findall(raw))} times file-wide, expected exactly once')
-    need(len(find.findall(pm_runs)) == 1, f'{key} is not used in a push-main run step')
-for dst in ('github.com/OwnYourIO/SpencersLab', 'git.scifi.farm/CuratedForest/SpencersLab'):
-    need(dst in pm_runs, f'{dst} is not a push destination in push-main')
-# The automatic per-run token is scoped to its own repository, so it can
-# never credential one of these external pushes; checked file-wide so the
-# reference cannot hide in a with: block or a comment.
-for tok in ('GITHUB_TOKEN', 'FORGEJO_TOKEN'):
+    # (PUSH_TOKEN_GH -> PUSH_TOKEN_GHX) must not count as an occurrence.
+    return len(re.findall(re.escape(key) + r'(?![0-9A-Za-z_])', raw))
+
+
+for key, job in (('vars.PUSH_URL_GH', 'push-gh'), ('secrets.PUSH_TOKEN_GH', 'push-gh'),
+                 ('vars.PUSH_URL_DEV', 'push-dev'), ('secrets.PUSH_TOKEN_DEV', 'push-dev')):
+    n = count(key)
+    need(n == 1, f'{key} occurs {n} times file-wide, expected exactly once')
+    need(key in yaml.dump(jobs.get(job) or {}), f'{key} is not referenced under {job}')
+    other = 'push-dev' if job == 'push-gh' else 'push-gh'
+    need(key not in yaml.dump(jobs.get(other) or {}), f'{key} is referenced under {other}')
+# No repo destination URL literal; the bare https:// scheme is the only
+# allowed fragment of a URL in the file.
+for host in ('github.com/', 'git.scifi.farm/'):
+    need(host not in raw, f'repo URL literal {host} is in the file (destinations are instance-side vars)')
+need('forgejo.server_url' not in raw, 'forgejo.server_url is in the file')
+# No reserved-prefix key: a secret or var starting with GITHUB_ / FORGEJO_.
+reserved = re.findall(r'(?:secrets|vars)\.((?:GITHUB|FORGEJO)[A-Za-z0-9_]*)', raw)
+need(not reserved, f'reserved-prefix key reference(s): {", ".join(reserved)}')
+# The automatic per-run token is same-repo-only, so it can never credential
+# one of these external pushes; checked file-wide so it cannot hide in a
+# with: block or a comment.
+for tok in ('FORGEJO_TOKEN', 'GITHUB_TOKEN'):
     need(tok not in raw, f'the automatic token {tok} is referenced in the file')
 PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: both external targets and each push credential exactly once, confined to push-main; no automatic-token pushes"
+ok "t5: each PUSH_URL_*/PUSH_TOKEN_* key exactly once under its own job; no URL literal, no reserved-prefix key, no automatic-token push"
 
-# --- t6: failure semantics (push-main) ----------------------------------------------
+# --- t6: failure semantics (every run block in both jobs) -----------------------
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
-steps = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs', {}).get('push-main', {}).get('steps', [])
-runs = [s['run'] for s in steps if isinstance(s, dict) and 'run' in s]
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+runs = [(jn, s['run']) for jn, job in jobs.items()
+        for s in (job or {}).get('steps', [])
+        if isinstance(s, dict) and 'run' in s]
 
 if not runs:
-    print('FAIL: t6: push-main has no run: steps', file=sys.stderr)
+    print('FAIL: t6: no run: blocks found', file=sys.stderr)
     sys.exit(1)
-for i, r in enumerate(runs):
-    if not r.lstrip().startswith('set -euo pipefail'):
-        print(f'FAIL: t6: run step {i + 1} does not begin with set -euo pipefail', file=sys.stderr)
+for jn, r in runs:
+    if not (isinstance(r, str) and r.lstrip().startswith('set -euo pipefail')):
+        print(f'FAIL: t6: {jn} run block does not begin with set -euo pipefail', file=sys.stderr)
         sys.exit(1)
 PY
 then
   fail "t6: see the t6 detail above"
 fi
-ok "t6: every push-main run: block begins with set -euo pipefail"
+ok "t6: every run block in both jobs begins with set -euo pipefail"
 
-# --- t7: runner labels ---------------------------------------------------------------
+# --- t7: runner labels ------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -195,30 +200,37 @@ then
 fi
 ok "t7: every job runs on an advertised lab runner label"
 
-# --- t8: backup-proxy-merge hygiene ------------------------------------------------------
+# --- t8: push-dev hygiene -----------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
-job = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs', {}).get('backup-proxy-merge')
-
+raw = open(sys.argv[1]).read()
+if 'backup-proxy' in raw:
+    print('FAIL: t8: backup-proxy appears in the workflow (retired from the active design)', file=sys.stderr)
+    sys.exit(1)
+if 'git merge' in raw:
+    print('FAIL: t8: git merge appears in the workflow (push-dev must be a plain push)', file=sys.stderr)
+    sys.exit(1)
+job = (yaml.safe_load(raw) or {}).get('jobs', {}).get('push-dev')
 if not isinstance(job, dict):
-    print('FAIL: t8: no backup-proxy-merge job', file=sys.stderr)
+    print('FAIL: t8: no push-dev job', file=sys.stderr)
     sys.exit(1)
-dumped = yaml.dump(job)
-if 'secrets.' in dumped:
-    print('FAIL: t8: backup-proxy-merge references a secret key', file=sys.stderr)
+steps = job.get('steps', [])
+if not any(isinstance(s, dict) and str(s.get('uses', '')).startswith('actions/checkout@') for s in steps):
+    print('FAIL: t8: push-dev has no actions/checkout step', file=sys.stderr)
     sys.exit(1)
-if 'github.com/' in dumped:
-    print('FAIL: t8: backup-proxy-merge contains a github.com URL', file=sys.stderr)
+runs = '\n'.join(str(s.get('run', '')) for s in steps if isinstance(s, dict) and 'run' in s)
+if 'HEAD:refs/heads/main' not in runs:
+    print('FAIL: t8: push-dev does not do a plain main push (HEAD:refs/heads/main)', file=sys.stderr)
     sys.exit(1)
-runs = '\n'.join(str(s.get('run', '')) for s in job.get('steps', []) if isinstance(s, dict) and 'run' in s)
-if 'backup-proxy' not in runs:
-    print('FAIL: t8: no run step names the backup-proxy branch', file=sys.stderr)
-    sys.exit(1)
+for bad in ('git merge', 'git branch', 'checkout -B'):
+    if bad in runs:
+        print(f'FAIL: t8: push-dev run blocks carry branch/merge logic: {bad!r}', file=sys.stderr)
+        sys.exit(1)
 PY
 then
   fail "t8: see the t8 detail above"
 fi
-ok "t8: backup-proxy-merge is secret-free and github-free, and its steps name backup-proxy"
+ok "t8: push-dev is a bare main push — no merge, no backup-proxy, no branch creation"
 
 printf 'PASS: forgejo-main-sync checks (%d ok)\n' "$checks"

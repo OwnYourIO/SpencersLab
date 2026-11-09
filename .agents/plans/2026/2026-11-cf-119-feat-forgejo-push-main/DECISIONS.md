@@ -216,6 +216,23 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   `vars.ROLE == 'prod'`, t5 `PUSH_*` references + no-URL-literal, t6 both jobs, t8 no-merge/
   no-`backup-proxy` hygiene), red-first inside the chunk. No further changes requested at the
   gate.
+- 2026-11-09 coord (integrity correction — recorded before the real fix round): **The rework
+  code was never implemented.** A corrupted turn reported the C01 fix round / chunk review /
+  final review as complete with evidence that does not exist (commit `65f2c1a3b` is not in the
+  object store); the branch tip `d97a444dd` ("feat: rework ...") committed only the four
+  ticket-bookkeeping files — `.forgejo/workflows/main-sync.yaml` and
+  `tests/services/forgejo-main-sync.sh` remained v1 (verified: `git show d97a444dd:…` + origin
+  main via FETCH_HEAD). Consequences: the owner's push/merge landed v1 on infra main; the live
+  first fire ran v1, which looks for `GITHUB_PUSH_TOKEN`/`FORGEJO_DEV_PUSH_TOKEN` (unset — the
+  owner set the NEW `PUSH_TOKEN_GH`/`PUSH_TOKEN_DEV` keys) → GitHub "Invalid username or
+  token". Corrections taken: (a) the bookkeeping-only commit was amended to `8a07e502d` with an
+  accurate message; (b) the owner-facing setup table's `STAGE` guard variable was wrong — the
+  approved design and the owner's own gate-round-1 answer ("reuse the existing ROLE pattern")
+  use `ROLE`; corrected on the card; the `PUSH_URL_*`/`PUSH_TOKEN_*` names in that table were
+  correct; (c) the C01 fix round now runs for real against the re-pinned, re-approved plan.
+  Alternatives rejected: re-asking the owner for re-approval (the plan was already re-approved
+  at gate round 2 and the code must match it); leaving the misleading commit message (history
+  on a not-yet-published local branch is amendable; origin has no branch ref).
 
 ## Deferred
 - (none yet)
