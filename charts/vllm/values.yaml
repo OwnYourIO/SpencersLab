@@ -82,13 +82,17 @@ app-template:
   # chain — draft and target share the native ceiling (the 8192 profile
   # constant stays the recorded alternative). The drafter's own attention is
   # stock TRITON_ATTN (R3 L2.3); disable_padded_drafter_batch true is the
-  # single-stream lever, the compose-class default pair. Omitted keys are
+  # single-stream lever, the compose-class default pair. The kv_cache_dtype
+  # key is the D39 fix for crash #6: if absent, the global int4 is
+  # inherited by the by-design non-causal drafter and the int4 kernel's
+  # causal-only assert kills the boot. The key is valid at both pins
+  # (0.30 shipped, 0.33 on the watch) — the bridge key. Omitted keys are
   # 0.30 defaults: draft_tensor_parallel_size (TP1 — their TP2 profile sets
   # 2) and draft_sample_method ("greedy" — the explicit 0.9.3 JSON value is
   # optional now). The model path is the C03-staged drafter tree at
   # revision ee0cb26a (D13/D26). Single-quoted YAML so the inner double
   # quotes survive rendering.
-  specConfig: &specConfig '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}'
+  specConfig: &specConfig '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","kv_cache_dtype":"auto","disable_padded_drafter_batch":true}'
 
   # D8: the two k8s.grafana.com/* pod annotations, gated. 60 s scrape
   # interval is the k8s-monitoring v4 annotationAutodiscovery feature

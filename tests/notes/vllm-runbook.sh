@@ -75,6 +75,16 @@
 # the 48 GB-RDNA3 re-enable rider). T1/T2/T4 unaffected; the env law moves
 # 20 -> 21 vars (the f2 var) — that leg lives in charts/vllm/tests, not
 # here.
+# D39 amendment re-pin (2026-11-09, the per-drafter KV-dtype key, route A′
+# on the R9/R10 ground — the owner's R10-Q1 "A′ now + C on watch", DECISIONS
+# D39): crash #6 (the by-design non-causal drafter inheriting the global
+# int4 into the causal-only assert) closes with ONE key inside the existing
+# spec-JSON token — serveArgs stay 44, the d12 dict stays 12 keys — so the
+# T3 --speculative-config VALUE re-pins to the shipped 7-key literal
+# (verbatim copy, independent of the chart testlib constant) and T5 gains
+# the 3.6 assert-marker-pair needle riding the dev's new row (the runbook
+# records both readings: ABSENCE = the fix line, PRESENCE = the key lost).
+# T1/T2/T4 unaffected.
 #
 # Designed-RED window: T3/T5 name artifacts the cf-131 waves land in order —
 # the ledger (C01), the chart constants (C02/C03), the runbook text (C05).
@@ -238,7 +248,7 @@ d12 = {
     "--mamba-ssm-cache-dtype": "bfloat16",
     "--scheduling-policy": "priority",
     "--watermark": "0.05",
-    "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}',
+    "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","kv_cache_dtype":"auto","disable_padded_drafter_batch":true}',
 }
 for flag, want in d12.items():
     got = serve_flag(args, flag)
@@ -528,6 +538,7 @@ need("RETIRED BY D38", "step 3.4 (the retirement marker — the multimodal smoke
 need_re(r"(?i)re-measure gate", "the day-one gate heading (the SOLE envelope path, D29)")
 need_re(r"(?is)int4_per_token_head.{0,400}TRITON_ATTN|TRITON_ATTN.{0,400}int4_per_token_head", "the int4 gate (the two 0.30 edits as the shipped boot config, D36)")
 need_re(r"(?i)boot-config qualification", "the 3.6 gate's D36 promotion — the gate binds the ship path, no longer a day-one flip experiment")
+need("AssertionError: INT4_PER_TOKEN_HEAD only supports causal attention", "step 3.6 leg 1 (the D39 assert marker pair — the runbook's new row records both readings of the shipped kv_cache_dtype key: ABSENCE is the fix line, PRESENCE means the key was lost; the operator greps it verbatim)")
 need("keypress", "the tool smoke (the keypress_auto/keypress_parallel fixture cases — the synthetic wire gate, never-executes-tools)")
 need_re(r"(?i)tool[ \-]?smoke", "the tool smoke step (the round-2 Q6 marker's closing gate, D29)")
 
@@ -577,7 +588,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the runbook step content is incomplete (C05 AC4/AC5 — the named commands, the 0.30 marker set, the day-one gates, the one-engine-per-card law, or the honest envelope are missing; diagnostics above)"
   fi
-  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set incl. the D38 text-only marker + ViT ABSENCE pair + the 3.4 retirement marker + the DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
+  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set incl. the D38 text-only marker + ViT ABSENCE pair + the 3.4 retirement marker + the DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates + the D39 3.6 assert marker pair, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
 fi
 
 printf 'PASS: vllm runbook contract checks (%d ok)\n' "$checks"

@@ -544,7 +544,19 @@ the transient-peak headroom, NOT additive [R8b 229]; ONE boot line
 settles it. The BARS: expected pool 4.74 + δ vs the grouped 5.06 wants
 δ ≥ 0.32 (the plain check X ≥ 5.06); the full-session admission
 (0.95·pool ≥ 5.06) wants δ ≥ 0.59 (X ≥ 5.33) — likely with f2, not
-certain. The engine's disabled-branch WARNING — `CUDA graph memory is
+certain. **THE MEASURED CLOSE (D39, the owner's boot paste): X = 5.73
+⇒ δ = 0.99 — clears the δ ≥ 0.32 bar (the plain check X ≥ 5.06
+HELD) and the full-session watermark 0.95 × 5.73 = 5.44 ≥ 5.06
+ADMITS a full 262144 session; 262144 SIZING PASSED (`GPU KV cache
+size: 297,049 tokens` = 1.133×262,144; `Maximum concurrency 1.13x`)
+and every D38-priced marker fired verbatim (the f2 disabled-branch
+WARNING, the single 60.00% padding pair, the LMO text-only
+`model_type=qwen3_5_text` warmup [R9 252]) — D38's BOOT MATH IS
+CLOSED.** The pool prints BEFORE sizing, so it is dtype-INDEPENDENT:
+the D39 A′ shape inherits 5.73 exactly [R9.4] — what the next boot
+decides is only the grouped NEEDD line (the D39 re-read in the
+arithmetic below). The engine's disabled-branch WARNING — `CUDA
+graph memory is
 not accounted for during KV cache allocation, which may require lowering
 --gpu-memory-utilization to avoid OOM` — is the EXPECTED-AND-PRICED line
 of the shipped bet [R8 209]. Surviving detectors of the bet, 3.4
@@ -587,7 +599,16 @@ Boot bar δ ≥ 0.32; the pathological sampler/drafter-binding tail misses
 5.06 by ≈0.16 — there the 262144 boot still refuses and PRINTS the
 fresh cap: the print law at the C+f2 pool class is ≥243k + δ (f2 alone
 re-printed ≈243k at the 4.74 pool; δ moves it up), and the print drives
-the B cap ruling exactly as D37 ruled. Donor rows retired on evidence:
+the B cap ruling exactly as D37 ruled. THE D39 MIXED-DTYPE RE-READ of
+this demand bar: the drafter slice int4→bf16 costs ×3.77 on its ~0.11
+GiB slice of the grouped bar → est demand 5.4–5.5; THE BAR IS
+UNCHANGED — X ≥ 5.06 against the MEASURED 5.73 pool, comfortably held
+(est margin ~0.25) — and THE ENGINE'S GROUPED PRINT STILL ARBITRATES
+(the D37 law continues). R9's weakest-claim caveat rides this exact
+read: if the drafter bf16 page forces pool-wide page inflation beyond
++0.44, A′ MISSES and PRINTS the cap (the ≥243k + δ class) — the
+mixed-page tell is the bs/page INFO and the `Setting attention block
+size…` line [R9.2][R9 reliability]. Donor rows retired on evidence:
 D36's `{"image": 1}` profile-day knob is RETIRED by R8's one-dummy law
 (the warmup profiles ONE maximum-feature-size dummy whatever the limit
 — 0 GiB freed), and the mtp-K4 lane (−~2.0 at its 29/30 tool caveat)
@@ -618,13 +639,26 @@ gate legs are unchanged and now BIND the ship path IFF THE BOOT HAPPENS
 B fall-through BEFORE these legs run), in order:
 
 1. Startup acceptance: the boot at 262144 — the `int4_per_token_head` KV
-   info line appears and no refusal-shaped startup death occurs (an
+   info line appears, TARGET-ONLY under the D39 A′ shape (the spec-JSON
+   `kv_cache_dtype:auto` moves the 5 draft groups to auto/bf16 while the
+   16 target FA groups keep int4 — the q4 mandate holds where the bytes
+   matter) — and no refusal-shaped startup death occurs (an
    R4D-configured pod under int4 would print its refusal and die —
-   R4D's supported list at the pin is auto/bfloat16/fp8/fp8_e4m3 [171]);
-   on refusal the engine PRINTS its estimated-max-length line — the 3.1b
-   sanctioned B fall-through, not a crash class. Re-record the 3.1 KV
-   triple: the ~16.5 KiB/token class should widen the pool over the
-   crash-#4 fp8 datum (record, do not assume).
+   R4D's supported list at the pin is auto/bfloat16/fp8/fp8_e4m3 [171]).
+   THE D39 ASSERT MARKER PAIR: ABSENCE of
+   `AssertionError: INT4_PER_TOKEN_HEAD only supports causal attention`
+   = THE D39 FIX LINE (booted with 16 target FA groups on int4 + 5 draft
+   groups on auto/bf16 — all three open int4 defect classes structurally
+   sidestepped, they all live on the drafter side [R9]); PRESENCE = THE
+   KEY LOST — the splice or the render dropped it and the pre-D39 crash
+   #6 reproduces verbatim: record and stop, re-check the verbatim legs,
+   do NOT improvise a shape change. The grouped NEEDD + bs INFO lines
+   re-read under the mixed shape (the unify-vs-Phase-3 page path was not
+   re-derived — the print is the authority). On refusal the engine
+   PRINTS its estimated-max-length line — the 3.1b sanctioned B
+   fall-through, not a crash class. Re-record the 3.1 KV triple: the
+   ~16.5 KiB/token class should widen the pool over the crash-#4 fp8
+   datum (record, do not assume).
 2. The 3.3 smoke (the 3.4 vision smoke retired with D38 — no separate
    vision-quality sub-leg existed here to retire).
 3. The acceptance-rate smoke (the 6.4 either-family counters).
@@ -1063,6 +1097,14 @@ idle-spin fix into the production default) landing in a new pin — until
 then the reporter-verified mitigation IS our pin. The watch's caution
 stands with it: "do not promote the experimental runtime to a production
 default on this evidence" [98].
+
+**The bench-day reading list** (added under D39 — R10's C05 assignment;
+reading entries, NOT gates): the two 0.33-era OPEN gfx1201×TRITON_ATTN
+items — #65963, the decode split-K threshold snap (PR, our
+backend×arch×graph lane), and #65734, the dense-attention
+`torch.empty` graph-padding poison (issue, our PIECEWISE lane)
+[R10 269]. Read them on the bench day against the live kernel
+behavior, and on the C-watch bump-day re-bench.
 
 **The release-branch cadence**: the bump trigger is the next
 `1.0.<n>`/`sha-…` pair on the upstream release line — NOT main's movement

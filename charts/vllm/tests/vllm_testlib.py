@@ -73,7 +73,7 @@ MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 # ---------------------------------------------------------------------------
 # The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
 # Every constant here is copied from the cf-131 plan of record: the round-3
-# header + DECISIONS D23-D38 + the C01/C02/C03 chunk recipes (the dated
+# header + DECISIONS D23-D39 + the C01/C02/C03 chunk recipes (the dated
 # amendments included). They are the ground truth dev must satisfy; a
 # re-pin changes the plan first.
 # ---------------------------------------------------------------------------
@@ -107,12 +107,17 @@ STAGED_MARKER = f".staged-mxfp4-{TARGET_SHA}-{DRAFTER_SHA}"      # both-sha-keye
 
 # The shipped dflash spec JSON (D24: the R3 L2.3 0.30-native keys, K7 the
 # top measured lane, draft max_model_len re-bound to the target's 262144 by
-# the round-3 Q11 engine-cap chain). The single-quoted YAML must render this
-# byte-for-byte into the arg string — a quote drift reds the verbatim test.
+# the round-3 Q11 engine-cap chain — D39-amended: the per-drafter
+# kv_cache_dtype auto key after attention_backend closes crash #6 (the
+# non-causal drafter inheriting the global int4 into the causal-only
+# assert) and is valid at both pins, the bridge key for the 0.33 watch).
+# The single-quoted YAML must render this byte-for-byte into the arg
+# string — a quote drift reds the verbatim test.
 SPEC_CONFIG_DFLASH = (
     '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8",'
     '"num_speculative_tokens":7,"max_model_len":262144,'
-    '"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}'
+    '"attention_backend":"TRITON_ATTN","kv_cache_dtype":"auto",'
+    '"disable_padded_drafter_batch":true}'
 )
 # The mtp toggle JSON is a values-COMMENT record, never the shipped splice
 # (D16/D24); the comment test matches whitespace-stripped fragments.

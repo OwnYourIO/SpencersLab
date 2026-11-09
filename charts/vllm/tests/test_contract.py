@@ -223,7 +223,8 @@ def test_c02_spec_and_kv_values_keys_carry_the_d24_record():
         "Q1 confirmed shipped lane, native V2 DFlash2Speculator at 0.30)"
     )
     assert app.get("specConfig") == V.SPEC_CONFIG_DFLASH, (
-        "C02 AC8: app-template.specConfig diverges from the shipped dflash JSON (D24/Q11 chain — "
+        "C02 AC8: app-template.specConfig diverges from the shipped dflash JSON (D24/Q11 chain, "
+        "D39 per-drafter kv_cache_dtype key — "
         f"got {app.get('specConfig')!r}"
     )
     assert str(app.get("rocrVisibleDevices")) == "0", (
