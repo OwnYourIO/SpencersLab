@@ -18,6 +18,8 @@
 #   t9   sentinel sweeps at the pinned baselines + app-JSON sentinel-free   AC6 (green across)
 #   t10  trio survives                                                      AC5 (green across)
 #   t11  blast radius: shared gateway + runner + infra/gpu custom-values    AC5 (new clause red-first)
+#   t12  C02 SSA posture: dev+infra charts.forgejo "true", runner boundary  cf-122 C02 AC1/AC5 (red-first)
+#        "false" on dev forgejo-runner-dev + gpu forgejo-runner-gpu
 #
 # Red-first by design: the run STOPS at its first failing leg — on the
 # pre-C01 tree that is t2 (the gate does not exist yet, so the bare render
@@ -32,6 +34,13 @@
 # equality (the C01 chunk updates the ESO header comment, and comments are
 # not part of object identity); inline-config sections compare as exact
 # strings (their stringData values are raw ini, no comments).
+#
+# The oracle is era-aware: the A9 four-item delta is only measurable
+# against a fork base that predates C01 (the base chart renders the ESO
+# ungated). Against a post-C01 base the base and working charts differ by
+# nothing C02 may change, so t3 compares the gate-open ESO against the
+# base's own gate-open capture and t6 asserts whole-render object
+# invariance instead of the historical delta.
 #
 # Blast-radius and oracle legs diff against the FORK base (the point where
 # this branch left main), not main itself: main has moved ahead of the fork
@@ -55,7 +64,7 @@
 # umbrella services are copied to /tmp/opencode and dependency-built there —
 # the worktree is never written (charts/**/charts is gitignored). An
 # unreachable registry SKIPS the render legs instead of failing them; the
-# static legs (t7, t8, t10, t11) always run.
+# static legs (t7, t8, t10, t11, t12) always run.
 #
 # Run from the repo root (or anywhere in the worktree):
 #   bash tests/services/forgejo-lfs.sh
@@ -70,6 +79,7 @@ DEVUMB="services/dev/prod"
 INFRAUMB="services/infra/prod"
 DEV_VALUES="$DEVUMB/values.yaml"
 INFRA_VALUES="$INFRAUMB/values.yaml"
+GPU_VALUES="services/gpu/prod/values.yaml"
 DEV_CV="custom-values/dev/prod-values.yaml"
 INFRA_CV="custom-values/infra/prod-values.yaml"
 SWD_VALUES="charts/seaweedfs/values.yaml"
@@ -199,6 +209,21 @@ skip_helm=0
 fj_copy="" devumb_copy="" infraumb_copy=""
 pre_ok=0   # 1 once the A9 oracle (pre-change chart + renders) is ready
 
+# The gate-open values file: t3's working render and t1's pre-gate oracle
+# capture share it, so the ESO invariance compares like-for-like (same
+# activation keys, same u5 sentinel — an indexed --set is never used, it
+# nulls list entries).
+gate_vals="$WORK/gate-open-values.yaml"
+cat >"$gate_vals" <<'VALS'
+forgejo:
+  gitea:
+    config:
+      lfs:
+        STORAGE_TYPE: minio
+        MINIO_ENDPOINT: s3.spencerslab.com
+        MINIO_USE_SSL: true
+VALS
+
 # --- t1: harness (dependency builds on copies + A9 oracle) ------------------
 if [ -z "$helm_bin" ]; then
   skip "t1: no helm binary on PATH or in /tmp/opencode, and none could be downloaded; the render legs (t2-t7, t9) were not run"
@@ -217,7 +242,9 @@ else
   else
     # A9 oracle: the pre-change chart at the fork base, rendered the same way
     # as the working renders below, so t3/t4/t5/t6 can prove their
-    # byte-identity and delta claims against the actual pre-C01 state.
+    # byte-identity and delta claims against the actual fork-base state
+    # (era-aware: pre-C01 bases carry the ungated ESO in the bare render,
+    # post-C01 bases gate it closed — t3/t6 pick the matching comparison).
     if [ -n "$DIFF_BASE" ]; then
       mkdir -p "$WORK/pre-root"
       if git archive "$DIFF_BASE" "$FJ_CHART" 2>"$WORK/pre-archive.err" | tar -x -C "$WORK/pre-root"; then
@@ -228,6 +255,7 @@ else
           pre_bare_err="$WORK/pre-bare.err"
           pre_dev_err="$WORK/pre-dev.err"
           pre_infra_err="$WORK/pre-infra.err"
+          pre_gate_err="$WORK/pre-gate.err"
           if "$helm_bin" template dev "$WORK/pre-root/$FJ_CHART" \
               --set domain=scifi.farm --set clusterName=dev \
               --set bitwardenIds.forgejo=u1 --set bitwardenIds.forgejo-admin=u2 \
@@ -240,10 +268,16 @@ else
             && "$helm_bin" template infra "$WORK/pre-root/$FJ_CHART" \
               -f "$WORK/forgejo-infra-slice.yaml" \
               --set domain=spencerslab.com --set clusterName=infra \
-              >"$WORK/pre-infra.yaml" 2>"$pre_infra_err"; then
+              >"$WORK/pre-infra.yaml" 2>"$pre_infra_err" \
+            && "$helm_bin" template dev "$WORK/pre-root/$FJ_CHART" \
+              -f "$gate_vals" \
+              --set domain=scifi.farm --set clusterName=dev \
+              --set bitwardenIds.forgejo=u1 --set bitwardenIds.forgejo-admin=u2 \
+              --set bitwardenIds.forgejo-pg=u3 --set bitwardenIds.forgejo-sso=u4 \
+              --set bitwardenIds.forgejo-s3=u5 >"$WORK/pre-gate.yaml" 2>"$pre_gate_err"; then
             pre_ok=1
           else
-            tail -n 30 "$pre_bare_err" "$pre_dev_err" "$pre_infra_err" 2>/dev/null >&2 || true
+            tail -n 30 "$pre_bare_err" "$pre_dev_err" "$pre_infra_err" "$pre_gate_err" 2>/dev/null >&2 || true
             fail "t1: a pre-change oracle render failed (logs kept at $WORK/pre-*.err)"
           fi
         else
@@ -400,20 +434,12 @@ PY
     fi
 
     # ---- t3: gate-open render (AC2) ----------------------------------------
-    # A values file (NEVER an indexed --set — it nulls list entries) opts the
-    # render into S3 with exactly the three activation keys. The ESO body is
-    # byte-untouched by C01, so it must come out object-identical to the
-    # pristine capture; the shape Secret carries the four A14 constants.
-    gate_vals="$WORK/gate-open-values.yaml"
-    cat >"$gate_vals" <<'VALS'
-forgejo:
-  gitea:
-    config:
-      lfs:
-        STORAGE_TYPE: minio
-        MINIO_ENDPOINT: s3.spencerslab.com
-        MINIO_USE_SSL: true
-VALS
+    # The shared gate-open values file (never an indexed --set — it nulls
+    # list entries) opts the render into S3 with exactly the three activation
+    # keys. The ESO body must come out object-identical to the fork-base
+    # gate-open capture (pre-C01 bases carry it ungated in every render,
+    # post-C01 bases gate it — t1 captures it gate-open either way); the
+    # shape Secret carries the four A14 constants.
     gate_out="$WORK/gate-render.yaml"
     gate_err="$WORK/gate-render.err"
     if ! "$helm_bin" template dev "$fj_copy" -f "$gate_vals" \
@@ -426,10 +452,10 @@ VALS
       fail "t3: helm template of $FJ_CHART with the gate-open values file failed (log kept at $gate_err)"
     fi
     [ -s "$gate_out" ] || fail "t3: the gate-open render produced nothing"
-    if python3 - "$gate_out" "$WORK/pre-bare.yaml" "$WORK/t3-count" <<'PY'
+    if python3 - "$gate_out" "$WORK/pre-gate.yaml" "$WORK/t3-count" <<'PY'
 import sys, yaml
 
-render, pre_bare, count_file = sys.argv[1:4]
+render, pre_gate, count_file = sys.argv[1:4]
 ok_n = 0
 
 def ok(msg):
@@ -519,15 +545,15 @@ try:
             bad(f't3: {key} reads property {rprop!r}, expected {want_prop!r}')
         if (conv, dec, meta) != ('Default', 'None', 'None'):
             bad(f't3: {key} boilerplate is {(conv, dec, meta)!r}, expected (Default, None, None)')
-    if pre_bare:
-        pre_es = [d for d in docs_of(pre_bare) if d.get('kind') == 'ExternalSecret'
+    if pre_gate:
+        pre_es = [d for d in docs_of(pre_gate) if d.get('kind') == 'ExternalSecret'
                   and (d.get('metadata') or {}).get('name') == 'forgejo-s3-secret']
         if len(pre_es) != 1:
-            bad(f't3: the pristine capture carries {len(pre_es)} forgejo-s3-secret ExternalSecrets, expected exactly one (the A9 oracle broke)')
+            bad(f't3: the fork-base gate-open capture carries {len(pre_es)} forgejo-s3-secret ExternalSecrets, expected exactly one (the A9 oracle broke)')
         d = diff_paths(pre_es[0], es)
         if d:
-            bad(f't3: the gate-open ESO differs from the pristine capture at {d[:8]} — C01 must leave the ESO body byte-untouched (plan A9)')
-    ok('t3: the gate-open render carries the forgejo-s3-secret ESO, object-identical to the pristine capture (remoteRef u5, LOGIN mapping, ESO boilerplate)' if pre_bare
+            bad(f't3: the gate-open ESO differs from the fork-base gate-open capture at {d[:8]} — the ESO body must stay object-invariant against the fork base (plan A9)')
+    ok('t3: the gate-open render carries the forgejo-s3-secret ESO, object-identical to the fork-base gate-open capture (remoteRef u5, LOGIN mapping, ESO boilerplate)' if pre_gate
        else 't3: the gate-open render carries the forgejo-s3-secret ESO with the pinned LOGIN mapping and ESO boilerplate')
 
     shape = [d for d in docs if d.get('kind') == 'Secret'
@@ -965,11 +991,15 @@ try:
         bad('t6: the public gateway host appears in the infra render — that is the hairpin through the local Traefik entry that the in-cluster endpoint exists to avoid (RESEARCH Q5)')
     ok('t6: no storage/attachment/picture section and no https://s3.spencerslab.com hairpin in the infra render')
 
-    # A9: the whole-render delta vs the pristine capture is exactly the
-    # four-item list — (i) [lfs] loses the four shape lines, (ii) the shape
-    # Secret is the only new object, (iii) the Deployment env gains the four
-    # shape legs + optional on the two cred legs, (iv) the checksum/config
-    # annotation changes. Anything else moving is a regression.
+    # A9: against a pre-C01 fork base the whole-render delta vs the pristine
+    # capture is exactly the four-item list — (i) [lfs] loses the four shape
+    # lines, (ii) the shape Secret is the only new object, (iii) the
+    # Deployment env gains the four shape legs + optional on the two cred
+    # legs, (iv) the checksum/config annotation changes. Anything else
+    # moving is a regression. Against a post-C01 base the base chart already
+    # carries the gate and C02 touches no chart code (the pg-forgejo header
+    # comment changes no manifest object), so the delta is empty by law and
+    # the whole render must be object-invariant instead.
     if pre_infra:
         pre_docs = docs_of(pre_infra)
         def index_docs(ds):
@@ -977,100 +1007,116 @@ try:
         pre_idx, post_idx = index_docs(pre_docs), index_docs(docs)
         added = set(post_idx) - set(pre_idx)
         removed = set(pre_idx) - set(post_idx)
-        if removed:
-            bad(f't6 A9: objects REMOVED from the infra render vs the pristine capture: {sorted(removed)} — C01 adds artifacts, it does not prune infra')
-        if added != {('Secret', 'forgejo-lfs-shape')}:
-            bad(f't6 A9: objects added are {sorted(added)}, expected exactly {("Secret", "forgejo-lfs-shape")} (A9 item ii)')
-        inline_key = next(k for k in post_idx if k[0] == 'Secret' and str(k[1]).endswith('-forgejo-inline-config'))
-        dep_key = next(k for k in post_idx if k[0] == 'Deployment')
-        for key, post_o in post_idx.items():
-            if key in (inline_key, dep_key) or key not in pre_idx:
-                continue
-            d = diff_paths(pre_idx[key], post_o)
-            if d:
-                bad(f't6 A9: object {key} differs from the pristine capture at {d[:8]} — the delta is pinned to the four-item list, nothing else may move')
         pre_sd, post_sd = inline_secs(pre_infra), secs
-        if set(pre_sd) != set(post_sd):
-            bad(f't6 A9: the inline-config section set changed ({sorted(pre_sd)} -> {sorted(post_sd)}) — only the [lfs] CONTENT may change')
-        for k in pre_sd:
-            if k != 'lfs' and pre_sd[k] != post_sd[k]:
-                bad(f't6 A9: inline-config section [{k}] is not byte-identical to the pristine capture')
-        pre_lfs_lines = [l for l in (pre_sd.get('lfs') or '').splitlines() if l.strip()]
-        post_lfs_lines = [l for l in (post_sd.get('lfs') or '').splitlines() if l.strip()]
-        shape_lines = sorted(f'{k}={v}' for k, v in SHAPE.items())
-        lost = [l for l in pre_lfs_lines if l not in post_lfs_lines]
-        gained = [l for l in post_lfs_lines if l not in pre_lfs_lines]
-        if sorted(lost) != shape_lines:
-            bad(f't6 A9: [lfs] lost {sorted(lost)}, expected exactly the four shape lines {shape_lines} (A9 item i)')
-        if gained:
-            bad(f't6 A9: [lfs] gained lines {gained} — the inline section may only SHRINK by the four shape lines')
-        if post_lfs_lines != [l for l in pre_lfs_lines if l not in set(shape_lines)]:
-            bad(f't6 A9: the remaining [lfs] lines {post_lfs_lines!r} are not the pristine lines minus the shape lines (order-preserving subset expected)')
-        if ini(pre_sd.get('lfs', '')) != record7:
-            bad(f't6 A9: the pristine capture [lfs] is {ini(pre_sd.get("lfs", ""))!r}, not the 7-key record {record7!r} — the fork base is wrong or the oracle broke')
+        if not any(k in ini(pre_sd.get('lfs', '')) for k in SHAPE):
+            # Post-C01 fork base: the base [lfs] carries no shape lines, so
+            # the historical four-item delta is not measurable here — the
+            # invariance claim is the same teeth at this era.
+            if removed:
+                bad(f't6 A9: objects REMOVED from the infra render vs the fork-base render: {sorted(removed)} — C02 is services-only + comment-only chart, it does not prune infra')
+            if added:
+                bad(f't6 A9: objects ADDED to the infra render vs the fork-base render: {sorted(added)} — C02 touches no chart code, so no object may appear or vanish')
+            for key, post_o in post_idx.items():
+                if key not in pre_idx:
+                    continue
+                d = diff_paths(pre_idx[key], post_o)
+                if d:
+                    bad(f't6 A9: object {key} differs from the fork-base render at {d[:8]} — C02 touches only the pg-forgejo header comment, which changes no manifest object')
+            ok('t6: the infra render is object-invariant against the fork-base render (post-C01 base; C02 is services-only + comment-only chart)')
+        else:
+            if removed:
+                bad(f't6 A9: objects REMOVED from the infra render vs the pristine capture: {sorted(removed)} — C01 adds artifacts, it does not prune infra')
+            if added != {('Secret', 'forgejo-lfs-shape')}:
+                bad(f't6 A9: objects added are {sorted(added)}, expected exactly {("Secret", "forgejo-lfs-shape")} (A9 item ii)')
+            inline_key = next(k for k in post_idx if k[0] == 'Secret' and str(k[1]).endswith('-forgejo-inline-config'))
+            dep_key = next(k for k in post_idx if k[0] == 'Deployment')
+            for key, post_o in post_idx.items():
+                if key in (inline_key, dep_key) or key not in pre_idx:
+                    continue
+                d = diff_paths(pre_idx[key], post_o)
+                if d:
+                    bad(f't6 A9: object {key} differs from the pristine capture at {d[:8]} — the delta is pinned to the four-item list, nothing else may move')
+            if set(pre_sd) != set(post_sd):
+                bad(f't6 A9: the inline-config section set changed ({sorted(pre_sd)} -> {sorted(post_sd)}) — only the [lfs] CONTENT may change')
+            for k in pre_sd:
+                if k != 'lfs' and pre_sd[k] != post_sd[k]:
+                    bad(f't6 A9: inline-config section [{k}] is not byte-identical to the pristine capture')
+            pre_lfs_lines = [l for l in (pre_sd.get('lfs') or '').splitlines() if l.strip()]
+            post_lfs_lines = [l for l in (post_sd.get('lfs') or '').splitlines() if l.strip()]
+            shape_lines = sorted(f'{k}={v}' for k, v in SHAPE.items())
+            lost = [l for l in pre_lfs_lines if l not in post_lfs_lines]
+            gained = [l for l in post_lfs_lines if l not in pre_lfs_lines]
+            if sorted(lost) != shape_lines:
+                bad(f't6 A9: [lfs] lost {sorted(lost)}, expected exactly the four shape lines {shape_lines} (A9 item i)')
+            if gained:
+                bad(f't6 A9: [lfs] gained lines {gained} — the inline section may only SHRINK by the four shape lines')
+            if post_lfs_lines != [l for l in pre_lfs_lines if l not in set(shape_lines)]:
+                bad(f't6 A9: the remaining [lfs] lines {post_lfs_lines!r} are not the pristine lines minus the shape lines (order-preserving subset expected)')
+            if ini(pre_sd.get('lfs', '')) != record7:
+                bad(f't6 A9: the pristine capture [lfs] is {ini(pre_sd.get("lfs", ""))!r}, not the 7-key record {record7!r} — the fork base is wrong or the oracle broke')
 
-        pre_dep = next(d for d in pre_docs if d.get('kind') == 'Deployment')
-        post_dep = next(d for d in docs if d.get('kind') == 'Deployment')
-        def pod_template(dep):
-            return (dep.get('spec') or {}).get('template') or {}
-        def norm_dep(dep):
-            d = yaml.safe_load(yaml.safe_dump(dep))
-            ann = (pod_template(d).get('metadata') or {}).get('annotations') or {}
-            if 'checksum/config' in ann:
-                ann['checksum/config'] = '<checksum>'
-            return d
-        # The checksum/config annotation lives on the POD template metadata;
-        # normalize it away, then the ONLY remaining difference may be the
-        # initContainers list (diff_paths compares lists atomically).
-        d = diff_paths(norm_dep(pre_dep), norm_dep(post_dep))
-        allowed = {'spec.template.spec.initContainers'}
-        if set(d) - allowed:
-            bad(f't6 A9: the Deployment differs beyond the initContainers list at {sorted(set(d) - allowed)[:8]} (checksum normalized away)')
-        if not (set(d) & allowed):
-            bad('t6 A9: the Deployment initContainers did not change at all — the four shape legs + the two optional lines are missing (A9 item iii)')
-        pre_inits = {c.get('name'): c for c in pod_template(pre_dep).get('spec', {}).get('initContainers', [])}
-        post_inits = {c.get('name'): c for c in pod_template(post_dep).get('spec', {}).get('initContainers', [])}
-        if set(pre_inits) != set(post_inits):
-            bad(f't6 A9: init container sets differ: {sorted(set(pre_inits) ^ set(post_inits))}')
-        for cname in sorted(set(pre_inits) & set(post_inits)):
-            cd = diff_paths(pre_inits[cname], post_inits[cname])
-            if cd and cname != 'init-app-ini':
-                bad(f't6 A9: init container {cname!r} differs at {cd[:6]} — only init-app-ini may change')
-            if cd and cd != ['env']:
-                bad(f't6 A9: init-app-ini differs beyond its env list at {cd[:6]}')
-        P = {e.get('name'): e for e in (pre_inits.get('init-app-ini') or {}).get('env') or []}
-        Q = {e.get('name'): e for e in (post_inits.get('init-app-ini') or {}).get('env') or []}
-        if set(P) - set(Q):
-            bad(f't6 A9: env entries removed vs the pristine capture: {sorted(set(P) - set(Q))}')
-        new = set(Q) - set(P)
-        want_new = {'FORGEJO__LFS__MINIO_BUCKET', 'FORGEJO__LFS__MINIO_BUCKET_LOOKUP',
-                    'FORGEJO__LFS__MINIO_CHECKSUM_ALGORITHM', 'FORGEJO__LFS__SERVE_DIRECT'}
-        if new != want_new:
-            bad(f't6 A9: env entries added are {sorted(new)}, expected exactly the four shape legs {sorted(want_new)} (A9 item iii)')
-        for n in new:
-            want = {'name': n, 'valueFrom': {'secretKeyRef': {'name': 'forgejo-lfs-shape', 'key': n.split('FORGEJO__LFS__')[1], 'optional': True}}}
-            if Q[n] != want:
-                bad(f't6 A9: new leg {n} is {Q[n]!r}, expected {want!r}')
-        changed = [n for n in set(P) & set(Q) if P[n] != Q[n]]
-        if sorted(changed) != sorted(CRED):
-            bad(f't6 A9: env entries changed are {sorted(changed)}, expected exactly the two cred legs {sorted(CRED)}')
-        for n in changed:
-            pk = dict(P[n]['valueFrom']['secretKeyRef'])
-            qk = dict(Q[n]['valueFrom']['secretKeyRef'])
-            gained = qk.get('optional')
-            pk.pop('optional', None)
-            qk.pop('optional', None)
-            if pk != qk:
-                bad(f't6 A9: {n} changed more than the optional flag: {P[n]!r} -> {Q[n]!r}')
-            if gained is not True:
-                bad(f't6 A9: {n} gained optional={gained!r}, expected true')
-        if pod_template(pre_dep).get('spec', {}).get('containers') != pod_template(post_dep).get('spec', {}).get('containers'):
-            bad('t6 A9: the main containers list changed vs the pristine capture')
-        pre_ann = (pod_template(pre_dep).get('metadata') or {}).get('annotations', {}).get('checksum/config')
-        post_ann = (pod_template(post_dep).get('metadata') or {}).get('annotations', {}).get('checksum/config')
-        if pre_ann == post_ann:
-            bad('t6 A9: the checksum/config annotation did not change (A9 item iv) — the inline-config change must roll a new checksum')
-        ok('t6: the whole-render delta vs the pristine capture is exactly the A9 four-item list (shape Secret added; [lfs] loses the 4 shape lines; +4 env legs + 2 optional lines; checksum/config rolls)')
+            pre_dep = next(d for d in pre_docs if d.get('kind') == 'Deployment')
+            post_dep = next(d for d in docs if d.get('kind') == 'Deployment')
+            def pod_template(dep):
+                return (dep.get('spec') or {}).get('template') or {}
+            def norm_dep(dep):
+                d = yaml.safe_load(yaml.safe_dump(dep))
+                ann = (pod_template(d).get('metadata') or {}).get('annotations') or {}
+                if 'checksum/config' in ann:
+                    ann['checksum/config'] = '<checksum>'
+                return d
+            # The checksum/config annotation lives on the POD template metadata;
+            # normalize it away, then the ONLY remaining difference may be the
+            # initContainers list (diff_paths compares lists atomically).
+            d = diff_paths(norm_dep(pre_dep), norm_dep(post_dep))
+            allowed = {'spec.template.spec.initContainers'}
+            if set(d) - allowed:
+                bad(f't6 A9: the Deployment differs beyond the initContainers list at {sorted(set(d) - allowed)[:8]} (checksum normalized away)')
+            if not (set(d) & allowed):
+                bad('t6 A9: the Deployment initContainers did not change at all — the four shape legs + the two optional lines are missing (A9 item iii)')
+            pre_inits = {c.get('name'): c for c in pod_template(pre_dep).get('spec', {}).get('initContainers', [])}
+            post_inits = {c.get('name'): c for c in pod_template(post_dep).get('spec', {}).get('initContainers', [])}
+            if set(pre_inits) != set(post_inits):
+                bad(f't6 A9: init container sets differ: {sorted(set(pre_inits) ^ set(post_inits))}')
+            for cname in sorted(set(pre_inits) & set(post_inits)):
+                cd = diff_paths(pre_inits[cname], post_inits[cname])
+                if cd and cname != 'init-app-ini':
+                    bad(f't6 A9: init container {cname!r} differs at {cd[:6]} — only init-app-ini may change')
+                if cd and cd != ['env']:
+                    bad(f't6 A9: init-app-ini differs beyond its env list at {cd[:6]}')
+            P = {e.get('name'): e for e in (pre_inits.get('init-app-ini') or {}).get('env') or []}
+            Q = {e.get('name'): e for e in (post_inits.get('init-app-ini') or {}).get('env') or []}
+            if set(P) - set(Q):
+                bad(f't6 A9: env entries removed vs the pristine capture: {sorted(set(P) - set(Q))}')
+            new = set(Q) - set(P)
+            want_new = {'FORGEJO__LFS__MINIO_BUCKET', 'FORGEJO__LFS__MINIO_BUCKET_LOOKUP',
+                        'FORGEJO__LFS__MINIO_CHECKSUM_ALGORITHM', 'FORGEJO__LFS__SERVE_DIRECT'}
+            if new != want_new:
+                bad(f't6 A9: env entries added are {sorted(new)}, expected exactly the four shape legs {sorted(want_new)} (A9 item iii)')
+            for n in new:
+                want = {'name': n, 'valueFrom': {'secretKeyRef': {'name': 'forgejo-lfs-shape', 'key': n.split('FORGEJO__LFS__')[1], 'optional': True}}}
+                if Q[n] != want:
+                    bad(f't6 A9: new leg {n} is {Q[n]!r}, expected {want!r}')
+            changed = [n for n in set(P) & set(Q) if P[n] != Q[n]]
+            if sorted(changed) != sorted(CRED):
+                bad(f't6 A9: env entries changed are {sorted(changed)}, expected exactly the two cred legs {sorted(CRED)}')
+            for n in changed:
+                pk = dict(P[n]['valueFrom']['secretKeyRef'])
+                qk = dict(Q[n]['valueFrom']['secretKeyRef'])
+                gained = qk.get('optional')
+                pk.pop('optional', None)
+                qk.pop('optional', None)
+                if pk != qk:
+                    bad(f't6 A9: {n} changed more than the optional flag: {P[n]!r} -> {Q[n]!r}')
+                if gained is not True:
+                    bad(f't6 A9: {n} gained optional={gained!r}, expected true')
+            if pod_template(pre_dep).get('spec', {}).get('containers') != pod_template(post_dep).get('spec', {}).get('containers'):
+                bad('t6 A9: the main containers list changed vs the pristine capture')
+            pre_ann = (pod_template(pre_dep).get('metadata') or {}).get('annotations', {}).get('checksum/config')
+            post_ann = (pod_template(post_dep).get('metadata') or {}).get('annotations', {}).get('checksum/config')
+            if pre_ann == post_ann:
+                bad('t6 A9: the checksum/config annotation did not change (A9 item iv) — the inline-config change must roll a new checksum')
+            ok('t6: the whole-render delta vs the pristine capture is exactly the A9 four-item list (shape Secret added; [lfs] loses the 4 shape lines; +4 env legs + 2 optional lines; checksum/config rolls)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -1425,7 +1471,10 @@ fi
 # already enforced by the filer-backed store, so this leg pins the file and
 # forbids the back door. The new clause pins the rest of the blast radius:
 # nothing under services/, charts/forgejo-runner/ or the infra/gpu
-# custom-values may carry a single diff line against the fork base.
+# custom-values may carry a single diff line against the fork base, except
+# the two C02 flip files (services/{dev,infra}/prod/values.yaml) — the
+# exclusion is path-based (git diff --name-only); their CONTENT is pinned by
+# t12.
 if [ -z "$DIFF_BASE" ]; then
   skip "t11: no fork-base ref to diff against; the blast-radius leg was not run (set LFS_DIFF_BASE)"
 else
@@ -1471,10 +1520,14 @@ try:
         bad(f't11: bucket-provisioning machinery appeared in the deployed surface (jobs: {jobs.strip()[:200]!r}, cmds: {bucket_cmds.strip()[:200]!r}) — identity and bucket creation are User actions UA1-UA3 against the gateway shell, never a repo Job')
     ok('t11: no weed/bucket Job or shell command introduced in services or charts/seaweedfs')
 
-    moved = git('diff', '--name-only', base, '--', 'services', 'charts/forgejo-runner', 'custom-values/infra', 'custom-values/gpu').split()
+    # C02's in-scope set (the forgejo SSA flip, pinned by t12) legitimately
+    # touches exactly the dev + infra service values; every other path in
+    # this clause stays byte-pinned against the fork base.
+    c02_in_scope = {'services/dev/prod/values.yaml', 'services/infra/prod/values.yaml'}
+    moved = [m for m in git('diff', '--name-only', base, '--', 'services', 'charts/forgejo-runner', 'custom-values/infra', 'custom-values/gpu').split() if m not in c02_in_scope]
     if moved:
-        bad(f't11: {moved} changed against the fork base {base} — the service umbrellas, the runner chart and the infra/gpu custom-values are out of scope for this ticket (C01 Files-in-scope: only the forgejo wrapper + the dev slice)')
-    ok('t11: services/, charts/forgejo-runner/ and custom-values/{infra,gpu}/ have zero diff lines against the fork base')
+        bad(f't11: {moved} changed against the fork base {base} — out of scope for this ticket (C01: only the forgejo wrapper + the dev slice; C02: only the two forgejo values entries, pinned by t12)')
+    ok('t11: services/ (minus the two C02 flip files), charts/forgejo-runner/ and custom-values/{infra,gpu}/ have zero diff lines against the fork base')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -1488,6 +1541,90 @@ PY
   else
     exit 1
   fi
+fi
+
+# --- t12: the C02 SSA posture — dev + infra forgejo apply server-side, the
+# runner boundary stays client-side (cf-122 C02 AC1/AC5) --------------------
+# Static: no helm. This suite is the LFS contract's home and t11's
+# blast-radius leg is its sibling, so the SSA posture pins here. Mechanism,
+# not incident narrative: on the first post-flip sync ArgoCD's CSA→SSA
+# managedFields migration (the kubectl apply library under the explicit
+# argocd-controller manager) unions the CSA-era Update entry — including the
+# orphaned data.lfs key of the inline-config Secret — into the Apply entry,
+# and the re-sent SSA patch prunes it; the client-side three-way apply that
+# left the orphan can never remove it (k8s#99003, argo-cd#29109; cf-122
+# RESEARCH incident section 2). The flip is a one-time orphan cleanup +
+# future-prune-enablement for fields the app declares — NOT the durable
+# class fix (upstream forgejo-helm data: rendering, STATE deferred).
+# The runner entries deliberately stay client-side: a runner-app SSA flip
+# would re-render the config surface that dev-forgejo-runner.sh t5's
+# comment-window leg pins (the gpu values carry their own client-only
+# exemption comment) — a separate ticket if ever wanted.
+# The infra half complements infra-forgejo.sh t3, which pins the same flag
+# in the rendered umbrella: static-vs-rendered together prove the flag
+# reaches the generated Application through the umbrella.
+if python3 - "$DEV_VALUES" "$INFRA_VALUES" "$GPU_VALUES" "$WORK/t12-count" <<'PY'
+import re, sys, yaml
+
+dev_values, infra_values, gpu_values, count_file = sys.argv[1:5]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def load(path):
+    # t10's anchor-rewrite convention: REDEFINED anchors are legal YAML
+    # (helm/Go accept them; PyYAML raises ComposerError), so only the
+    # value-position markers are rewritten; alias targets are never
+    # asserted here, so the ANCHOR_REF placeholders are inert.
+    lines = []
+    with open(path) as f:
+        for line in f:
+            line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+            line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+            lines.append(line)
+    return yaml.safe_load(''.join(lines)) or {}
+
+def entry_of(path, key):
+    entry = ((load(path).get('charts') or {}).get(key))
+    if not isinstance(entry, dict):
+        bad(f't12: {path} has no charts.{key} entry (the SSA posture pin needs the entry to exist)')
+    return entry
+
+try:
+    got = entry_of(dev_values, 'forgejo').get('ServerSideApply')
+    if got != 'true':
+        bad(f't12: {dev_values} charts.forgejo.ServerSideApply is {got!r}, expected the quoted string "true" (cf-122 C02 flip: the app now applies server-side, so the first post-flip sync runs the CSA->SSA migration that prunes the orphaned data.lfs — k8s#99003, argo-cd#29109)')
+    ok(f't12: {dev_values} charts.forgejo applies server-side (ServerSideApply "true" — cf-122 C02)')
+
+    for path, key in ((dev_values, 'forgejo-runner-dev'), (gpu_values, 'forgejo-runner-gpu')):
+        got = entry_of(path, key).get('ServerSideApply')
+        if got != 'false':
+            bad(f't12: {path} charts.{key}.ServerSideApply is {got!r}, expected "false" — the C02 boundary is forgejo only: a runner-app SSA flip would re-render the config surface that dev-forgejo-runner.sh t5 comment-window leg pins; a separate ticket if ever wanted')
+    ok(f't12: the runner boundary stays client-side — {dev_values} charts.forgejo-runner-dev and {gpu_values} charts.forgejo-runner-gpu both carry ServerSideApply "false" (cf-122 C02 scope is forgejo only)')
+
+    got = entry_of(infra_values, 'forgejo').get('ServerSideApply')
+    if got != 'true':
+        bad(f't12: {infra_values} charts.forgejo.ServerSideApply is {got!r}, expected the quoted string "true" (cf-122 C02 flip; infra rides the same CSA->SSA migration — complements infra-forgejo.sh t3, which pins the flag in the rendered umbrella)')
+    ok(f't12: {infra_values} charts.forgejo applies server-side (ServerSideApply "true" — cf-122 C02, static half of the t3 static-vs-rendered pair)')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as e:
+    bad(f't12: the SSA-posture check could not be evaluated ({type(e).__name__}: {e})')
+PY
+then
+  checks=$((checks + $(cat "$WORK/t12-count")))
+else
+  exit 1
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

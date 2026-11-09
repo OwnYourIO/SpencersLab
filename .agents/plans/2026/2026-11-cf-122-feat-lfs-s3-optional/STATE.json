@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-122-feat-lfs-s3-optional",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "plan_status_note": "reopened 2026-11-09 (was 'complete' after the C01 final review): user directive 2026-11-09 adds ONE follow-up change — flip the forgejo elements to ServerSideApply: \"true\" — as chunk C02 (S, wave 2, depends_on []; chart-agnostic, rides on C01 already merged to main as 483bf1607). C01's record (merged) is untouched; the delta planning pass (openrouter/qwen/qwen3.8-27b) wrote chunks/C02.md, the plan's 'Delta round 2' section, and this state.",
   "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
   "test_session": "ses_e4c1dc783ffe1iuOj76fuGc3u7",
@@ -35,12 +35,42 @@
   },
   "chunks": {
     "C02": {
-      "status": "pending",
+      "status": "review-approved",
       "wave": 2,
       "depends_on": [],
       "size": "S",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "test_session": "ses_e3f52d6b2ffeTqA5RuBechs8up",
+      "dev_session": "ses_e3f489fcaffe5XEdCYIZ96ijIP",
+      "review_session": "ses_e3f446b61ffeXLIi2IVjX1yp18",
+      "last_verdict": "APPROVED — re-measured solo: dev+infra appset elements carry charts.forgejo ServerSideApply \"true\" (both runner entries pinned \"false\"; the appset-charts.yaml:31 quote -> child syncOption traced end-to-end); forgejo-lfs exit 0 / 40 ok (t1-t11 37 era-aware + t12 3 ok / 4 assertions), infra-forgejo 0/33, ssh-gateway 1/63 red-only-t11, dev-runner 1/34 red-only-pinned-t5 (new comment provably outside the window), full regression at pins, lint 0 failed, aislop 0/0/0, blast radius = 3 code + 2 test + folder. Post-review MINOR closed in-run: inherited 'every other CNPG cluster is SSA' overreach (5 CSA clusters measured) replaced with the anchored pg-coder precedent (pg-coder.yaml:12); suite held 40. CONTRACT RE-PIN: forgejo-lfs post-C02 = 0/40 (pre-C02 37).",
       "planned": "2026-11-09 delta planning pass (user directive: flip the forgejo elements to ServerSideApply: \"true\"). Fork base for C02 = 96eeb668d (main HEAD 2026-11-09, contains the C01 merge 483bf1607 49 commits below; branch = fork base + acd75dbb6 (incident research, RESEARCH.md only) + C02 commits). Scope: services/{dev,infra}/prod/values.yaml charts.forgejo flip + why-comments, charts/forgejo/templates/pg-forgejo.yaml header comment truth-up (annotation STAYS), test contract = infra-forgejo.sh t3 expectation flip + new forgejo-lfs.sh static t12; runners (forgejo-runner-dev/-gpu) NOT touched — separate ticket (t5 comment-window pin + gpu exemption comment). AC7 rollout truth: the flip alone does not restore dev — the post-merge manual sync chain + one-time app.ini [lfs] strip + local-LFS oracle verify (see rollout_c02). The flip is a one-time orphan cleanup + future-prune-enablement, NOT the durable stringData→data class fix (upstream forgejo-helm data:-rendering — see deferred[0]).",
-      "handoffs": []
+      "handoffs": [
+        {
+          "at": "2026-11-09T14:20:00+0000",
+          "role": "agent-test",
+          "status": "DONE (red-first contract)",
+          "chunk": "C02",
+          "files_changed": ["tests/services/infra-forgejo.sh (t3 expectation false->true; other 32 legs byte-untouched)", "tests/services/forgejo-lfs.sh (new static t12; era-aware A9 repair: t1 pre-gate capture + t3/t6 era branches)"],
+          "commands_run_headline": "unflipped: lfs 1/34 red ONLY t12; infra-forgejo red early at t3 (designed intermediate); both-era proofs; hostile probes pass (dev false -> fail, runner true -> boundary fail); aislop clean"
+        },
+        {
+          "at": "2026-11-09T14:40:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": ["services/dev/prod/values.yaml (flip + why-comment above the forgejo entry)", "services/infra/prod/values.yaml (flip + comment replacing the false must-not-SSA block)", "charts/forgejo/templates/pg-forgejo.yaml (comment truth-up; per-resource annotation KEPT)"],
+          "commands_run_headline": "lfs 0/40, infra-forgejo 0/33, ssh-gateway 1/63 red-only-t11, dev-runner 1/34 red-only-t5, regression at pins, AC1 renders + sweeps 1/1/1, lint 0 failed, aislop clean"
+        },
+        {
+          "at": "2026-11-09T15:00:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (+1 MINOR closed by dev post-review)",
+          "chunk": "C02",
+          "verdict": "All ACs green on independent re-measurement; the pg-forgejo 'every other CNPG cluster' overreach (pre-existing, inherited) fixed post-review to the anchored pg-coder precedent; annotation byte-untouched; suite held 0/40."
+        }
+      ]
     },
     "C01": {
       "status": "review-approved",

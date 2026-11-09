@@ -219,9 +219,9 @@ try:
         bad('t3: the values blob has no charts.forgejo entry (the infra Forgejo app is not wired into the umbrella)')
     if cf.get('namespace') != 'default':
         bad(f't3: charts.forgejo.namespace is {cf.get("namespace")!r}, expected "default"')
-    if str(cf.get('ServerSideApply')) != 'false':
-        bad(f't3: charts.forgejo.ServerSideApply is {cf.get("ServerSideApply")!r}, expected "false"')
-    ok('t3: values blob has charts.forgejo (namespace default, ServerSideApply "false")')
+    if str(cf.get('ServerSideApply')) != 'true':
+        bad(f't3: charts.forgejo.ServerSideApply is {cf.get("ServerSideApply")!r}, expected "true"')
+    ok('t3: values blob has charts.forgejo (namespace default, ServerSideApply "true" — cf-122 C02 flip)')
 
     subs = (vals.get('ingress') or {}).get('subdomains') or {}
     for host in ('git', 'forgejo'):

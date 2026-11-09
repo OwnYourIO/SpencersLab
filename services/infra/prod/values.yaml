@@ -12,12 +12,21 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-  # Internal chart (charts/forgejo) — versioned by CI, not renovate. The
-  # chart's CNPG Cluster carries its own ServerSideApply=true sync-option
-  # annotation; the app itself must not SSA (same as dev).
+  # Internal chart (charts/forgejo) — versioned by CI, not renovate.
+  # cf-122 follow-up (user directive 2026-11-09): the app now applies
+  # server-side, riding the same CSA→SSA managedFields migration as
+  # dev — the first post-flip sync unions the CSA-era entry into the
+  # argocd-controller Apply entry, prunes any stringData-born `data`
+  # orphan it left, and from then on prunes declared Secret fields
+  # the app stops rendering (k8s#99003, argo-cd#29109; cf-122 RESEARCH
+  # incident section 2). infra-forgejo is already OutOfSync against
+  # main on the cf-122 C01 render delta; the syncOptions flip adds
+  # one more expected diff to that same apply. The chart's CNPG
+  # Cluster keeps its own ServerSideApply=true sync-option
+  # annotation — see charts/forgejo/templates/pg-forgejo.yaml.
   forgejo:
     namespace: default
-    ServerSideApply: "false"
+    ServerSideApply: "true"
   k8s-monitoring:
     #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/

@@ -73,9 +73,21 @@ bitwardenIds:
 # Each chart can have: namespace, ServerSideApply, version, repository
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
+  # cf-122 follow-up (user directive 2026-11-09): the dev-forgejo app
+  # applies server-side. On its first post-flip sync ArgoCD's CSA→SSA
+  # managedFields migration unions the CSA-era entry — including the
+  # orphaned `data.lfs` key of the dev-forgejo-inline-config Secret —
+  # into the argocd-controller Apply entry, where that first sync
+  # prunes it: the client-side three-way apply that left the orphan
+  # can never remove it (k8s#99003, argo-cd#29109; cf-122 RESEARCH
+  # incident section 2). The flip is a one-time orphan cleanup +
+  # future-prune for fields the app declares — the durable fix for
+  # the stringData→data orphan class is upstream forgejo-helm
+  # rendering `data:` instead of `stringData:` (STATE deferred,
+  # RESEARCH OQ-3).
   forgejo:
     namespace: default
-    ServerSideApply: "false"
+    ServerSideApply: "true"
   gpt-researcher:
     namespace: default
     ServerSideApply: "false"

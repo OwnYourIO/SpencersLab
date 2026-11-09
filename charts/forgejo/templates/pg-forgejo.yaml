@@ -4,11 +4,13 @@ kind: Cluster
 metadata:
   name: pg-forgejo
   annotations:
-    # The dev-forgejo Application applies with client-side apply (the
-    # forgejo subchart keeps ServerSideApply=false), but CNPG's mutating
-    # webhook defaults drift against the last-applied annotation under CSA —
-    # every other CNPG cluster in the repo is server-side applied for this
-    # reason. Per-resource override keeps only the Cluster on SSA.
+    # The forgejo Applications now apply server-side (cf-122
+    # follow-up, user directive 2026-11-09), so this per-resource
+    # override is redundant for them — it stays because it is
+    # decisive if the app-level flag is ever reverted: CNPG's
+    # mutating webhook defaults drift against the last-applied
+    # annotation under client-side apply — the pg-coder cluster keeps
+    # the same override for this reason.
     argocd.argoproj.io/sync-options: ServerSideApply=true
 spec:
   instances: 1
