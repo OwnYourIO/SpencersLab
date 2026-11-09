@@ -403,7 +403,9 @@ class).
 
 **3.4 — Multimodal 1-image smoke.** Requirement 3's owner-visible proof
 under the 0.30 stack — the vision tower serves unquantized (the
-`image=4` limit + the 0.30 vision records). A tiny data-URL image (1×1
+`{"image": 4}` limit — the 0.30 CLI's JSON-dict form, its
+`--limit-mm-per-prompt` converter is json.loads — + the 0.30 vision
+records). A tiny data-URL image (1×1
 PNG):
 
 ```

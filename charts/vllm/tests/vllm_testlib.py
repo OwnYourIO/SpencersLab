@@ -151,7 +151,12 @@ RECIPE_CF131 = [
     # the Q7 carries appended after the compose-baseline block (round-2):
     ("--scheduling-policy", "priority"),
     ("--watermark", "0.05"),
-    ("--limit-mm-per-prompt", "image=4"),
+    # The 0.30 stock CLI's --limit-mm-per-prompt converter is json.loads:
+    # the value is a JSON dict, single-quoted in YAML so the braces survive
+    # to the rendered arg. The 0.27.1 fork launcher's `image=4` passthrough
+    # form is NOT the stock CLI's — it dies at CLI parse, not at runtime
+    # (verified on target at the first boot, 2026-11-09 transcription fix).
+    ("--limit-mm-per-prompt", '{"image": 4}'),
 ]
 
 # The D24 drop list — AC7's absence side. Each of these rode the cf-105

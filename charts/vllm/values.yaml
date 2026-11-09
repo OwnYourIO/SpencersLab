@@ -169,13 +169,17 @@ app-template:
     - "8000"
     # The Q7 carries, appended after the compose-baseline block (round-2
     # ruling, 0.30 spot-checked R3 L2.5): the priority-wiring engine half,
-    # the preemption headroom, the vision requirement.
+    # the preemption headroom, the vision requirement. The 0.30 CLI parses
+    # --limit-mm-per-prompt through json.loads — the value is a JSON dict,
+    # single-quoted like the specConfig. The 0.27.1 fork launcher's own
+    # `image=4` passthrough form is NOT the stock CLI's: it dies at
+    # argument parse before the engine starts (observed on-target).
     - "--scheduling-policy"
     - "priority"
     - "--watermark"
     - "0.05"
     - "--limit-mm-per-prompt"
-    - "image=4"
+    - '{"image": 4}'
 
   global:
     nameOverride: &chartName vllm

@@ -209,7 +209,11 @@ d12 = {
     "--attention-backend": "R4D",
     "--scheduling-policy": "priority",
     "--watermark": "0.05",
-    "--limit-mm-per-prompt": "image=4",
+    # The mm limit rides the 0.30 stock JSON-dict form (the converter is
+    # json.loads; the 0.27.1-era `image=4` passthrough died at CLI parse on
+    # target — the DRY_RUN-analog class, fixed 2026-11-09). Byte-exact
+    # against the rendered arg string.
+    "--limit-mm-per-prompt": '{"image": 4}',
     "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}',
 }
 for flag, want in d12.items():
