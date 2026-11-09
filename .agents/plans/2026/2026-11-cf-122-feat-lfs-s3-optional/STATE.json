@@ -1,6 +1,7 @@
 {
   "feature": "2026/2026-11-cf-122-feat-lfs-s3-optional",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "plan_status_note": "reopened 2026-11-09 (was 'complete' after the C01 final review): user directive 2026-11-09 adds ONE follow-up change — flip the forgejo elements to ServerSideApply: \"true\" — as chunk C02 (S, wave 2, depends_on []; chart-agnostic, rides on C01 already merged to main as 483bf1607). C01's record (merged) is untouched; the delta planning pass (openrouter/qwen/qwen3.8-27b) wrote chunks/C02.md, the plan's 'Delta round 2' section, and this state.",
   "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
   "test_session": "ses_e4c1dc783ffe1iuOj76fuGc3u7",
   "approval": {
@@ -8,8 +9,8 @@
     "approved_at": "2026-11-07T02:35:00+0000",
     "claim": "card prBBEA8JnJDx7cHfy (#122) held on the default pipeline (setId 8c121a8e-36c4-4e19-85f8-4b39d7fb8ae4, claimed 2026-11-06; heartbeat ok 2026-11-07T01:53Z); card in Executing with the claim comment; slug field set at claim time (cf-104's D11-gap lesson)."
   },
-  "current_wave": 1,
-  "updated_at": "2026-11-07T04:45:00+00:00",
+  "current_wave": 2,
+  "updated_at": "2026-11-09T14:25:00+00:00",
   "kickoff": {
     "slug": "cf-122-feat-lfs-s3-optional",
     "card": "prBBEA8JnJDx7cHfy",
@@ -24,6 +25,7 @@
       "code": "openrouter/qwen/qwen3.8-27b"
     },
     "models_note": "ALL tiers on openrouter/qwen/qwen3.8-27b per the user's standing instruction (2026-11-05, re-confirmed for this run) — the card's Model(s) checklist carries Qwen Dense; the card's Local gpu-ai provider was 503ing during cf-104's tail. The board's Model(s) checklist item and the pipeline-models local mapping both point at the gpu-ai provider, so this run explicitly overrides it; the override is user-instruction, not routing.",
+    "models_delta_note": "2026-11-09 delta pass (C02 planning) also ran on openrouter/qwen/qwen3.8-27b — the gpu-ai provider refused connection this run (earlier rounds incl. the incident-research session same session lineage). For the record, the owner ruling 2026-11-09 in AGENTS.md (pipeline-worker section) names gpu-ai/qwen3.8-flash-next-strata-q4 as the board-worker loop's runner model; that ruling governs the scheduled loop, not this in-session delta pass. Both facts recorded as-is.",
     "local": true,
     "local_note": "commit-only posture (one-PR landing, cf-104 pattern); no push without explicit user ask",
     "run_tag": null,
@@ -32,6 +34,14 @@
     "coord_session_note": "coord session id not carried in the launch message — null until the coord records it; the slug custom field on card #122 carries this run's session link for resume (D11-style)"
   },
   "chunks": {
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [],
+      "size": "S",
+      "planned": "2026-11-09 delta planning pass (user directive: flip the forgejo elements to ServerSideApply: \"true\"). Fork base for C02 = 96eeb668d (main HEAD 2026-11-09, contains the C01 merge 483bf1607 49 commits below; branch = fork base + acd75dbb6 (incident research, RESEARCH.md only) + C02 commits). Scope: services/{dev,infra}/prod/values.yaml charts.forgejo flip + why-comments, charts/forgejo/templates/pg-forgejo.yaml header comment truth-up (annotation STAYS), test contract = infra-forgejo.sh t3 expectation flip + new forgejo-lfs.sh static t12; runners (forgejo-runner-dev/-gpu) NOT touched — separate ticket (t5 comment-window pin + gpu exemption comment). AC7 rollout truth: the flip alone does not restore dev — the post-merge manual sync chain + one-time app.ini [lfs] strip + local-LFS oracle verify (see rollout_c02). The flip is a one-time orphan cleanup + future-prune-enablement, NOT the durable stringData→data class fix (upstream forgejo-helm data:-rendering — see deferred[0]).",
+      "handoffs": []
+    },
     "C01": {
       "status": "review-approved",
       "wave": 1,
@@ -100,10 +110,31 @@
     "infra": "infra-forgejo Running 1/1, 0 restarts, 29h; ESO forgejo-s3-secret Ready=True SecretSynced (transition 2026-11-05T21:15Z, next refresh due 2026-11-07T02:15Z); seaweedfs-s3 Deployment present — infra's S3 LFS healthy.",
     "consequence": "this ticket's dev flip removes dev's dependency on the failing store path (ESO pruned, refs optional); the store failure itself stays a separate user/admin incident (plan Q1)."
   },
+  "rollout_c02": {
+    "note": "Post-C02-merge, USER-OWNED, in this order (AC7). The flip alone does NOT restore dev: dev's API chain went fresh at the 2026-11-09 13:23:47 sync, but the residual [lfs] section in the PVC app.ini (written 13:29:33 from a node-stale volume) keeps the pod fatal-looping on 'Bucket name cannot be empty' — environment-to-ini is add-only, so the strip is still required even though the overlay stopped re-adding the fragment.",
+    "steps": [
+      "1. Sync the `dev` umbrella application (manual — dev child apps have no automated block; RESEARCH incident section 1 §3 race 2): the appset regen re-bakes the dev-forgejo child spec's syncOptions to ServerSideApply=true.",
+      "2. Sync `dev-forgejo` (manual): the first SSA apply runs the CSA→SSA managedFields migration (migrateToSSAIfNecessary under the explicit argocd-controller manager unions the argocd-controller/Update fields — including the orphaned data.lfs of dev-forgejo-inline-config — into the Apply entry, then re-sends the SSA patch), so the orphan is pruned on that FIRST post-flip sync (k8s#99003-era behavior; RESEARCH incident section 2 §3). Verify (user-side kubectl; the MCP tier strips managedFields and cannot read Secrets): data.lfs empty on dev-forgejo-inline-config; Apply entry with no f:data.f:lfs and no Update entry (RESEARCH §6 actions 1/3). If the live CSA entry is under an unexpected manager: RESEARCH §6 action 3 one-off JSON patch fallback.",
+      "3. infra-forgejo rides the same apply: it is already OutOfSync against main 96eeb668d on the C01 A9 four-item delta (live-verified 2026-11-09); the syncOptions flip adds ONE more expected diff to that same manual sync. Infra's still-declared lfs fragment (infra keeps S3) SURVIVES the migration — ownership transfers, no prune on infra.",
+      "4. One-time [lfs] strip from /data/gitea/conf/app.ini on PVC forgejo (RESEARCH incident section 1 §5 step 1 — user-owned scratch-pod recipe; RWO local-path hostPath mount).",
+      "5. Pod delete → verify the local-LFS oracles: init-app-ini log shows no 'lfs' under 'Processing inlines'; main log shows 'Initialising LFS storage with type: local' + 'Creating new Local Storage at /data/lfs' (plan A7); app Synced/Healthy."
+    ],
+    "guardrails": [
+      "NEVER add key-level ignoreDifferences to these Secrets: argo-cd#29644 (open, v3.5.x regression window) — with the app's RespectIgnoreDifferences=true, a key-level ignore on a stringData Secret drops the WHOLE data map on sync (RESEARCH incident section 2 §4 claim 3c).",
+      "The flip is a one-time orphan cleanup + future-prune-enablement for SSA-declared fields, NOT the durable class fix: the upstream forgejo-helm data:-rendering PR (RESEARCH incident section 2 OQ-3) is deferred — see deferred[0]; until it lands, every future gitea.config key removal needs the one-off /data/<key> JSON patch to stay clean.",
+      "Open threads, none blocking (RESEARCH incident section 2 OQ-1/OQ-2/OQ-3): OQ-1 the live managedFields check = step 2's verify (user-owned); OQ-2 argo-cd#29109 closed without a fix — the diff-masking half stays open, the flip does not retroactively surface hidden orphans; OQ-3 = deferred[0]. The incident section 1 lab-wiring threads (annotation ownership of services.dev.*.customValues; automated {prune, selfHeal} on dev child apps) stay out of C02 scope — they are why this chain is manual and ordered."
+    ]
+  },
   "blocked": [],
   "coord_adjudications": [
     "DIFF_BASE = the fork base (git merge-base HEAD main; LFS_DIFF_BASE env override), not literal main — ADOPTED 2026-11-07: main drifted 5 commits past the fork (renovate wekan-mcp in services/{dev,gpu} + vllm fixes), which would false-red the new t11 blast-radius clause; the fork base is the semantically correct pre-ticket state and survives future main drift. Re-base at PR time if main conflicts (the clause self-maintains: after a rebase, merge-base == the new fork point).",
     "ESO 'byte-identical' = PARSED-OBJECT identity (whole objects) + exact string equality for inline ini sections — ADOPTED: the C01 chunk sanctions an ESO header-comment update, which raw-line identity would forbid; object identity is the correct semantics (comments are not behavior)."
   ],
-  "deferred": []
+  "deferred": [
+    {
+      "item": "Upstream forgejo-helm `data:` (base64) rendering of the inline-config Secret — the DURABLE class fix for the stringData→data orphan (RESEARCH incident section 2 §4(b)/OQ-3: k8s#99003 + the k8s Secrets docs note + argo-cd#29109 citations; the SpencersLab wrapper cannot patch the subchart's stringData rendering — plan A1). The C02 SSA flip is only the one-time orphan cleanup + future-prune-enablement; until the upstream change lands, every future `gitea.config` key removal needs the one-off /data/<key> JSON patch (RESEARCH §6 action 3) to stay clean.",
+      "recorded": "2026-11-09",
+      "owner": "upstream (forgejo-helm); the user declined a follow-up card for this run"
+    }
+  ]
 }

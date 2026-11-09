@@ -3,6 +3,7 @@
 feature: 2026/2026-11-cf-122-feat-lfs-s3-optional
 card: #122 `prBBEA8JnJDx7cHfy` (AI-Dev)
 round: 1 (user-directed in-session run — the user's instruction IS the approval; `plan_status` stays `draft` until the coord flips it, gate-honest)
+round: 2 (2026-11-09 delta planning pass — C01 merged to main as 483bf1607, ticket reopened `approved` for the user-directed follow-up chunk C02: flip the forgejo elements to `ServerSideApply: "true"`. See the "Delta round 2" section below; C01's record is untouched.)
 
 ## Goal
 
@@ -155,7 +156,8 @@ trace in the dev file (the stance comment avoids the literals `forgejo-s3`,
 
 | id | title | size | wave | depends_on | why the dependency |
 |----|-------|------|------|------------|--------------------|
-| C01 | Chart gating (helper + gated shape Secret + gated ESO + optional env legs) + dev-slice local stance | M | 1 | [] | One subsystem (the forgejo wrapper + the dev slice) that must land atomically: the chart gate and the dev slice edit are one render — splitting them creates a state (gated chart + still-minio dev slice, or ungated chart + dev slice without the shape keys) that neither the ACs nor the live cluster wants |
+| C01 | Chart gating (helper + gated shape Secret + gated ESO + optional env legs) + dev-slice local stance | M | 1 | [] | One subsystem (the forgejo wrapper + the dev slice edit) that must land atomically: the chart gate and the dev slice edit are one render — splitting them creates a state (gated chart + still-minio dev slice, or ungated chart + dev slice without the shape keys) that neither the ACs nor the live cluster wants |
+| C02 | Flip `charts.forgejo.ServerSideApply` to `"true"` on dev + infra (with the comment truth-ups); runner entries untouched | S | 2 | [] | Chart-agnostic values/comment-only flip: it rides on cf-122 already merged to main (483bf1607), so no interface or data dependency on C01 — user directive 2026-11-09 (the 2026-11-09 incident research verdict: the first post-flip sync's CSA→SSA managedFields migration prunes the orphaned `data.lfs`; one-time cleanup, not the durable class fix). Wave 2 = after C01's merge, topologically independent |
 
 (The test deltas are the test-writing stage, not a chunk — coord ruling.)
 
@@ -391,3 +393,116 @@ ticket) — or accept loss.
 - cf-104's standing follow-ups (renovate coverage for the OCI dep, the
   storm-runs/ red suites, the dev-forgejo-runner t5 false positive) —
   unchanged, not touched here.
+
+## Delta round 2 (2026-11-09): C02 — flip the forgejo apps to `ServerSideApply=true`
+
+**User directive (2026-11-09):** "flip the forgejo elements to
+`ServerSideApply: "true"`" — one follow-up change on the completed
+ticket, grounded in the 2026-11-09 incident research (RESEARCH, both
+sections): the first post-flip sync of each forgejo app runs ArgoCD's
+CSA→SSA managedFields migration (kubectl-apply library, explicit
+`argocd-controller` manager; `migrateToSSAIfNecessary` unions the
+CSA-era `Update` fields — including the orphaned `data.lfs` key of
+`dev-forgejo-inline-config` — into the `Apply` entry and the re-sent SSA
+patch prunes it; k8s#99003, argo-cd#29109/#9368). The flip is a
+**one-time orphan cleanup + future-prune-enablement for SSA-declared
+fields, NOT the durable class fix** — the durable fix is upstream
+forgejo-helm rendering the inline-config Secret as `data:` instead of
+`stringData:` (RESEARCH incident section 2, §4(b)/OQ-3; the wrapper
+cannot patch the subchart — A1). The user declined a follow-up card; the
+item lives in STATE `deferred`.
+
+**Scope (full detail in `chunks/C02.md`):**
+- `services/dev/prod/values.yaml` — `charts.forgejo.ServerSideApply`
+  `"false"` → `"true"` + a new why-comment (the entry had none; the
+  false choice predates the incident).
+- `services/infra/prod/values.yaml` — same flip + the stale
+  "the app itself must not SSA (same as dev)" comment rewritten to the
+  new stance (infra rides the same mechanism; `infra-forgejo` is
+  OutOfSync against main on the C01 A9 four-item delta already, the flip
+  adds one more expected diff to that same apply — live-verified
+  2026-11-09).
+- `charts/forgejo/templates/pg-forgejo.yaml` — header comment truth-up
+  only: the per-resource `ServerSideApply=true` annotation on the CNPG
+  Cluster STAYS (harmless when the app applies SSA, decisive if the
+  app-level flag is ever reverted; it keeps CNPG's webhook-defaulted
+  fields out of the annotation-drift class every other CNPG cluster in
+  the repo avoids).
+- **The runner entries are NOT touched** (`forgejo-runner-dev` on dev,
+  `forgejo-runner-gpu` on gpu — user scope is forgejo only; the
+  `dev-forgejo-runner.sh` t5 comment-window pin + the gpu exemption
+  comment make a runner flip a separate ticket anyway).
+- No `custom-values/` edit (no file carries the flag — verified), no
+  `charts/forgejo/values.yaml` edit.
+
+**Guardrails (rollout truth, AC7 in the chunk):**
+- Never add key-level `ignoreDifferences` to these Secrets —
+  argo-cd#29644 (open, v3.5.x window): with the app's
+  `RespectIgnoreDifferences=true`, a key-level ignore on a stringData
+  Secret drops the whole `data` map on sync (RESEARCH §4 claim 3c).
+- Post-merge sync chain (user-owned, in order): sync `dev` umbrella
+  (manual; appset regen re-bakes the child spec) → sync `dev-forgejo`
+  (first SSA apply = the CSA→SSA migration prunes the orphan) → the
+  one-time `[lfs]` strip from `/data/gitea/conf/app.ini` on PVC
+  `forgejo` (RESEARCH incident section 1 §5 step 1 — `environment-to-ini`
+  never deletes, so the strip is still required even though the init
+  overlay stopped re-adding the fragment at the 13:23:47 sync) → pod
+  delete → verify the local-LFS oracles (plan A7).
+
+**Test contract (delta):** `infra-forgejo.sh` t3 flips its
+`ServerSideApply` expectation `"false"` → `"true"` (the leg already
+parses the rendered appset values blob — no count change, stays 0/33);
+`forgejo-lfs.sh` gains a static t12 (dev `charts.forgejo` == `"true"`,
+dev `charts.forgejo-runner-dev` == `"false"` boundary pin, infra
+`charts.forgejo` == `"true"`); `forgejo-ssh-gateway.sh` and
+`dev-forgejo-runner.sh` change NOTHING (verified: no leg greps the
+rewritten comment text; their pinned reds t11/t5 are pre-existing and
+characterized in the chunk's AC2/AC3).
+
+**C02 commands (delta; the C01 Commands block stays the record for C01):**
+
+```bash
+export PATH=$HOME/.local/bin:$PATH
+W=/tmp/opencode/cf122-c02; rm -rf $W; mkdir -p $W
+cp -R services/dev/prod $W/umb-dev   && (cd $W/umb-dev && helm dependency build .)   # no deps — no-op
+cp -R services/infra/prod $W/umb-infra && (cd $W/umb-infra && helm dependency build .)
+helm template dev   $W/umb-dev   -f custom-values/dev/prod-values.yaml   --set domain=scifi.farm       --set clusterName=dev   > $W/dev-umb.yaml
+helm template infra $W/umb-infra -f custom-values/infra/prod-values.yaml --set domain=spencerslab.com  --set clusterName=infra > $W/infra-umb.yaml
+# ASSERT (AC1): in each render, the <label>-appset generator element (the
+# base element's `values` JSON = the whole service values) carries
+#   dev-appset:   charts.forgejo.ServerSideApply == "true",
+#                 charts.forgejo-runner-dev.ServerSideApply == "false" (unchanged)
+#   infra-appset: charts.forgejo.ServerSideApply == "true"
+# sentinel sweeps unchanged at the A12 pins: dev=1, infra=1 OVERRIDE_ lines
+helm lint services/dev/prod                                  # 0 failed (in place — no vendored deps)
+# (infra umbrella lints on the /tmp copy — AC5; the tracked Chart.lock stays byte-identical)
+git diff --name-only 96eeb668d | grep -vE '^(services/(dev|infra)/prod/values\.yaml|charts/forgejo/templates/pg-forgejo\.yaml|tests/services/(infra-forgejo|forgejo-lfs)\.sh|\.agents/plans/2026/2026-11-cf-122-feat-lfs-s3-optional/)'   # => EMPTY (AC5)
+# suites (solo; post-C02 targets — N re-pinned as measured by the test session):
+bash tests/services/infra-forgejo.sh        # exit 0 / 33 ok (t3 flipped)
+bash tests/services/forgejo-lfs.sh         # exit 0 / <37 + t12's measured ok>
+bash tests/services/forgejo-ssh-gateway.sh  # exit 1 / 63 ok, red ONLY pinned t11 (untouched)
+bash tests/services/dev-forgejo-runner.sh   # exit 1 / 34 ok, red ONLY pinned t5 (untouched)
+bash tests/services/gpu-forgejo-runner.sh   # exit 0 / 18 ok (untouched)
+# regression per the A12 pins: dev-git-auth 0/36, gpu-coder-sso 0/15, dev-wiring 0/9, audit-trail 1/0 pinned t1
+npx --yes aislop@0.18.1 ci --changes --base 96eeb668d   # 0 errors, 0 fixable warnings (AC6)
+```
+
+**C02 open threads (best-guess-first, none blocking — no `question` calls
+in this run):**
+- OQ-1 (RESEARCH incident section 2): the live `managedFields` read on
+  `dev-forgejo-inline-config` (predicted `argocd-controller/Update`) is
+  user-owned (the MCP tier strips managedFields + cannot read Secrets) —
+  the AC7 chain's step-2 verify covers it; if the live entry is under an
+  unexpected manager, the RESEARCH §6 action 3 one-off JSON patch is the
+  fallback (still user-owned).
+- OQ-2 (incident section 2): argo-cd#29109 closed without a fix — the
+  diff-masking half stays open; the flip does not retroactively surface
+  hidden orphans.
+- OQ-3 (incident section 2): the upstream forgejo-helm `data:`-rendering
+  PR = the durable class fix — deferred in STATE (user declined a card);
+  until it lands, every future `gitea.config` key removal needs the
+  one-off `/data/<key>` JSON patch to stay clean.
+- The lab-wiring threads (incident section 1 OQ-2/OQ-3: annotation
+  ownership of `services.dev.*.customValues` + `automated {prune,
+  selfHeal}` on dev child apps) stay open, out of C02 scope — they are
+  why the AC7 chain is manual and ordered.
