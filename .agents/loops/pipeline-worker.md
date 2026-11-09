@@ -8,7 +8,8 @@ agent: agent-board-coord
 
 <!--
 Single scheduled runner (cf-106 C10). The model is the owner-ruled runner
-literal gpu-ai/qwen3.8-27b-q4 (cf-106 OQ-14, 2026-11-03); the catalog
+literal gpu-ai/qwen3.8-flash-next-strata-q4 (owner ruling 2026-11-09,
+confirmed in-session; supersedes cf-106 OQ-14 2026-11-03); the catalog
 churns, so it moves only by a fresh owner ruling.
 
 Live state, verified 2026-10-29 against OpenChamber scheduledTasks: this

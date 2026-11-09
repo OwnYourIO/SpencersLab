@@ -160,7 +160,7 @@ describe("T2 the loop file — OpenChamber shape, one scheduled task (C10)", () 
     }
     assert.equal(fields.name, "pipeline-worker", "ONE scheduled runner: the surviving task keeps this name (C10 retires pipeline-worker-local)");
     assert.equal(fields.agent, "agent-board-coord", "the tick session runs as the board-coord ALIAS (D15)");
-    assert.equal(fields.model, "gpu-ai/qwen3.8-27b-q4", "single authority: the loop-file bytes (OpenChamber syncs from the main checkout). cf-106 OQ-14 owner ruling 2026-11-03 moved the runner to the Dense/local default (supersedes cf-86 652ba904c's flash-next-strata); the catalog churns, so this byte moves only by a fresh user ruling — a re-flip re-pins it, never deletes the assertion");
+    assert.equal(fields.model, "gpu-ai/qwen3.8-flash-next-strata-q4", "single authority: the loop-file bytes (OpenChamber syncs from the main checkout). Owner ruling 2026-11-09 (in-session confirmation of b438e1684) moved the runner to the Strata q4 route (supersedes cf-106 OQ-14 2026-11-03's Dense/local default, which itself superseded cf-86 652ba904c's flash-next-strata); the catalog churns, so this byte moves only by a fresh user ruling — a re-flip re-pins it, never deletes the assertion");
     assert.equal(fields.schedule, "0 * * * *", "hourly cadence spans the 2 h stale window twice (D21); C10's single task means ONE schedule, not a staggered pair");
     // The literal tracks the LANDED toggle, not a frozen default: the owner
     // flipped false -> true on main 080c9878a (2026-10-30). The AC-3 duty is

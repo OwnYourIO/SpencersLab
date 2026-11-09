@@ -285,7 +285,8 @@ OpenChamber loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as
 synced and enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo
 file ships `enabled: true` — the owner's own toggle, landed via main
 080c9878a; scheduler hygiene stays human-owned) running the owner-ruled
-runner model `gpu-ai/qwen3.8-27b-q4` (cf-106 OQ-14, 2026-11-03 — the
+runner model `gpu-ai/qwen3.8-flash-next-strata-q4` (owner ruling
+2026-11-09, confirmed in-session; supersedes cf-106 OQ-14 2026-11-03 — the
 catalog churns, so the literal moves only by a fresh user ruling), and
 `/pipeline-boards-hourly` + its gate stay the documented fallback. The
 Provider label is per-card routing inside the run: the one task serves both

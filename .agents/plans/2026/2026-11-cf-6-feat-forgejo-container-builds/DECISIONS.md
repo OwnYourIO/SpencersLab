@@ -29,3 +29,21 @@ Append-only log of decisions, rejected alternatives, conventions. Coord writes.
 - Rejected alternative: widening the flip to the loop-file/runner literal —
   out of scope of the ruling (subagent routing only), and scheduler/model
   literals move only by an explicit owner ruling.
+
+## 2026-11-09 — runner literal re-pinned to the Strata q4 route (owner ruling)
+
+- The owner confirmed b438e1684 (`model: gpu-ai/qwen3.8-flash-next-strata-q4`
+  in `.agents/loops/pipeline-worker.md`) AS the fresh ruling the
+  `pipeline-locks-tick` test demands, so the re-pin side landed: the test's
+  model byte + provenance comment, `.rulesync/rules/overview.md` (regenerated
+  AGENTS.md), and the loop file's stale header comment now read
+  `gpu-ai/qwen3.8-flash-next-strata-q4`. Supersedes cf-106 OQ-14
+  (2026-11-03). Tick suite 15/15 green. This entry supersedes the previous
+  entry's "widening" rejection — the owner ruled that widening explicitly.
+- Owner-side follow-up: the loop-file body edit rotates OpenChamber's
+  loopApprovals fingerprint — if the scheduled task shows
+  `loopApproval: outdated`, re-approve it once (the frontmatter model byte
+  itself was already landed by b438e1684).
+- Still untouched (pre-existing reds on main, separate owner eyes):
+  `test_c05_hygiene_ids_registered`, `test_c05_no_phantom_catalog_entries`,
+  `test_c05_ornith_strata_id_present_only_where_it_should_be`.
