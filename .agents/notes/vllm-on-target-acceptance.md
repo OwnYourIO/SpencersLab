@@ -1,65 +1,150 @@
 # vLLM on target — acceptance runbook (operator-owned)
 
-**Provenance.** WeKan card cf-105 (`R4EjaHtDeHMjAkDpf`), branch
-`cf-105-feat-implement-vllm`; feature folder
-`.agents/plans/2026/2026-11-cf-105-feat-implement-vllm/` — plan of record
-`2026-11-04-feat-cf-105-feat-implement-vllm.md`, `DECISIONS.md`, `RESEARCH.md`
-(cited by section), `chunks/C06.md`. This file is C06: what to verify on the
-ai-gpu node after the branch merges and ArgoCD syncs. The first deploy is a
-benchmark/acceptance run, not a service flip (R1 top risk 3 — RDNA-vLLM
-software maturity). Its measured numbers feed follow-up card #2 (alert
-thresholds) and step 10 (the image pin).
+**Provenance.** WeKan card #131 (`cf-131-feat-vllm-fp8-official`), the
+cf-105 successor (`R4EjaHtDeHMjAkDpf`), whose shape this file documented
+until the owner's re-scope ruling ("you need to include the MXFP4 fork in
+the R9700 image. I've dropped the official checkpoint mandate") and the
+round-2/round-3 batched rulings moved the shipping path. Feature folder
+`.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/` — plan of
+record `2026-11-07-cf-131-feat-vllm-fp8-official.md`, `DECISIONS.md`
+(D23–D31), `RESEARCH.md` (cited `R2/R3 L<n>.<m>` + bracketed source ids),
+`chunks/C05.md`. This file is C05: what to verify on the ai-gpu node after
+the branch merges and ArgoCD syncs; it documents the 0.30-fork shape over
+R3's ground. The official-FP8 stock path (round 1) and the 0.9.3 + GGZ14
+base (the re-plan) are the RECORDED ALTERNATIVES — the section after step
+10 — not this runbook's subject. The first deploy is a benchmark/acceptance
+run, not a service flip (the RDNA-vLLM software-maturity risk class carries
+from cf-105); its measured numbers feed follow-up card #2 (alert
+thresholds) and the step-10 re-pin surfaces.
 
-**Ground rules.** The cluster's only input is git — ArgoCD applies everything,
-and no step here mutates cluster objects. The one sanctioned exception is
-step 5b, a temporary values flip that is a GIT change to
-`charts/vllm/values.yaml` picked up by ArgoCD's own reconciliation (human-run);
-step 10 is likewise a values-only commit. Agent sessions have no pod-exec
-tier (EXPLORE §7), so every pod-internal command is operator-run through the
-operator's own pod access, and every node-side command runs on the `ai-gpu`
-node.
+**Citation shapes.** Bare cf-105-era references in this file (`R<n> §x`,
+`R<n> Qx`, `R<n> OQx`, `Post Research Vx`, `EXPLORE §x`, the `D`/`HR` law
+ids) resolve in the cf-105 folder's `RESEARCH.md`/`EXPLORE.md`. cf-131
+findings are the explicit `R2 L<n>.<m>` / `R3 L<n>.<m>` forms and the
+`[n]` source ids in the cf-131 `RESEARCH.md`.
 
-**The honest envelope (D4, HR3/Q3 override) — the benchmark expectations in
-step 6 are pre-registered against this, not vibes:**
-
-- One session up to the model's full 256k context: ≈7.8 GiB of fp8 KV —
-  fits with headroom on the R9700's 32 GiB (R1 §3).
-- Simultaneous sessions share the ~13.4 GiB fp8-KV pool the Q4 weights
-  leave; 4×100k ≈ 12.2 GiB runs at the edge.
-- When the pool exhausts, vLLM priority-preempts the lower-priority class by
-  recompute. That preemption is intended behavior — the arbitration the
-  card-Priority work (C03/C04) exists to provide.
-- 256k × 3–4 simultaneously is impossible on one 32 GiB card (R1 §3:
-  4×256k = 31.2 GiB of KV alone). No step in this runbook claims it.
+**Ground rules.** The cluster's only input is git — ArgoCD applies
+everything, and no step here mutates cluster objects. The sanctioned change
+class is a values-only GIT change picked up by ArgoCD's own reconciliation
+(human-run): the optional 5.2 fcfs negative proof, the 3.6 int4-gate flip,
+and step 10's pin. Agent sessions have no pod-exec tier (EXPLORE §7), so
+every pod-internal command is operator-run through the operator's own pod
+access, and every node-side command runs on the `ai-gpu` node.
 
 **Names used throughout (no placeholders).** Pod selector
 `app.kubernetes.io/name=vllm`, namespace `default`, release `gpu-ai-vllm`,
-node `ai-gpu`. Engine service `gpu-ai-vllm.default.svc.cluster.local:8000`.
-Public FE chain `https://llama.spencerslab.com/v1`. Served model name
-`qwen3.8-27b-vllm`; urgent class row `qwen3.8-27b-vllm-urgent`, low class
-row `qwen3.8-27b-vllm-low`. Image `ghcr.io/ownyourio/vllm-rocm:main`
-until step 10 pins the first `:v<run>`.
-Central stack: Prometheus `prometheus.spencerslab.com`, Grafana
-`grafana.spencerslab.com`, Loki `loki.spencerslab.com`.
+node `ai-gpu`. Engine service
+`gpu-ai-vllm.default.svc.cluster.local:8000`. Public FE chain
+`https://llama.spencerslab.com/v1`. Served model name `qwen3.8-27b-vllm`;
+urgent class row `qwen3.8-27b-vllm-urgent`, low class row
+`qwen3.8-27b-vllm-low` — both UNCHANGED from cf-105 (the fork's alias trio
+`Qwen3.8 Qwen3.6 Qwen3.8-MXFP4` is dropped — the single
+`--served-model-name` law, the R2 record carries). Central stack:
+Prometheus `prometheus.spencerslab.com`, Grafana `grafana.spencerslab.com`,
+Loki `loki.spencerslab.com`.
+
+Image `ghcr.io/ownyourio/vllm-radiance-mxfp4:main` — the first-build shape;
+step 10's PIN-ME follow-through flips it to the first `:v<run>`. THE single
+ledger pin (one record, three surfaces: this block, the chart image comment,
+the `containers/vllm-radiance-mxfp4/README.md` ledger): upstream
+`magiccodingman/vllm-radiance:1.0.397` @ digest
+`sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0`,
+source commit `5b99d66c844f` (the image's OCI `revision` label), engine
+vLLM 0.30.0 @ `ced6857a` (the exact tag commit, no post-release
+follow-ups). Tag↔commit law: publishes run on the upstream `release`
+branch only — `1.0.<pipeline-IID>` pairs with `sha-<commit>` (R3 L1.1).
+Release-branch watch: the next `1.0.<n>`/`sha-…` pair is the bump trigger,
+NOT main's movement (step 10).
+
+Weight set (the round-2 Q8 raw-release ruling): the raw release
+`/models/Qwen3.8-27B-Quark-AWQ-MXFP4` (source
+`amd/Qwen3.8-27B-Quark-AWQ-MXFP4` @ main-sha `93245f7c…`, the 2026-11-03
+mtp-exclude-fix revision) + the drafter
+`/models/Qwen3.8-27B-DFlash2-FP8/` @ revision `ee0cb26a…` (the qualified
+pin; the weight etag is identical to current main, recorded) + the marker
+file `/models/.staged-mxfp4-<both shas>` keyed on the pair. No HF_TOKEN:
+both checkpoints are public/ungated — the cf-86 ruling carries.
+
+TRUE-AXIS note: the catalog `limit.context` 262144 == the engine
+`--max-model-len` 262144 — the advertisement is true at the engine (the
+round-2 Q3 keep + the round-3 Q11 engine-cap ruling; the re-plan's band law
+is superseded on the record, D31). LIVE RISK one-liner: the 262144 ceiling
+at TP=1 is the owner-ruled risk class — the 0.9.3-stack "does not fit at
+TP=1" record (R2 L3.5) plus no 0.30 TP1 measurement anywhere (R3 L2.4).
+The 3.5 re-measure gate owns the pool; the 3.1b startup contingency owns the
+hard-reject class.
+
+**The honest envelope (the owner's Q2 standing condition re-bound by the
+round-3 Q11 ruling; the cf-105 D4/HR3-class envelope law on this ground) —
+the benchmark expectations in steps 3.5 and 6 are pre-registered against
+this, not vibes. These are expectations, not claims: the R3 L3.3
+weakest-claim law says no 0.30 TP1 measurement exists in any published
+form — the on-target run is the first datum:**
+
+- Weight side: MXFP4 raw release 18.41 GiB + DFlash2 drafter 1.97 GiB
+  ≈ 20.4 GiB resident at TP=1 before the KV pool gets anything.
+- Shipped shape: `--max-model-len 262144` / `--max-num-seqs 3` /
+  `--max-num-batched-tokens 2560` — the round-2 Q2 Shape-B seqs/chunk
+  constants + the round-3 Q11 engine-cap 262144, the model's native
+  ceiling, the owner-ruled PLAN shape. Util `0.90` start (R3-Q2, round-3
+  confirmed; recorded alternatives: the 0.85 compose default and the 0.98
+  0.9.3-stack ceiling, not carried).
+- The 8.49 GiB KV pin is the recorded REFERENCE ROW, nothing more: the
+  220000-class, 0.9.3-stack (vLLM 0.27.1-era) user-reported profile pin —
+  provenance only, NO 0.30 validity (R3 L1.3/L2.4). It ships as NO pin:
+  the chart carries no `--kv-cache-memory-bytes` (the re-measure-gate law,
+  D24) and the 3.5 gate DERIVES the pool at the shipped 262144 shape.
+- The 3.5 re-measure gate is the SOLE envelope path: no 0.30 measurement
+  exists at any TP1 shape (R3 L2.4); the 0.30 TP2 Quark capacity table is
+  the calibration CLASS, not the TP1 constant.
+- The LIVE RISK (the Q11 consequence, D31): at 262144 the KV pool at the
+  0.90 start may be small, or the engine may compute a degenerate pool —
+  R2 L3.5's "262144 does not fit at TP=1" record, now owner-ruled, not a
+  hypothetical. Backstops: the 40-min startup probe (a refusal is a loud,
+  GATED failure — the pod fails at startup, it does not silently
+  mis-serve), the 3.5 gate (the pool's truth + the values-only
+  `--kv-cache-memory-bytes` re-tune), and the 3.1b startup contingency
+  (the OQ13 dual-edit class).
+- The true axis means the ADVERTISEMENT is true, not that the physics are:
+  sessions beyond the DERIVED POOL still reject/preempt at arrival — the
+  vLLM admission behavior is pool-governed, not cap-governed. A
+  full-context 262144-class pool on one 32 GiB card is impossible: three
+  262144-token sessions ≈ 24 GiB of fp8 attention KV alone (the ~32
+  KiB/token class, the cf-105 R1 §3 arithmetic re-run at the shipped
+  shape), on a card whose allocatable class after the 20.4 GiB weights is
+  small. One 256k-class session is a pool question, not a cap question.
+  True long-context beyond the 262144 native ceiling stays on the
+  llama.cpp `qwen3.8-27b-q8-1m` rung (the R1 OQ-E ruling).
+- Preemption is intended: when the pool exhausts, vLLM
+  priority-preempts the lower-priority class by recompute — the four-class
+  victim order low(9) → default(5), never urgent(1) (the §5 constants are
+  byte-stable).
+- Power-policy caveat up front: the 0.9.3 TP1 137.7/416 class is the
+  ANCHOR CLASS on the same card signature — provenance: measured at the
+  65536 Shape-A context on the 0.9.3 stack at the 210 W cap −75 mV —
+  the context-class reference, NOT the like-for-like 262144 datum. The
+  0.30 TP1 numbers at the shipped shape are the on-target UNKNOWN.
 
 ## 0. Host gates
 
 Operator commands on the `ai-gpu` node, before the vLLM pod is expected to
 commit anything. Record every result; the `free -h` reading is the RAM-law
 baseline (EXPLORE §8.6: ~125 GiB usable shared by Strata's 116 Gi-limit
-pod, the llama.cpp trio, and the OS).
+pod, the llama.cpp trio, and the OS). The device-node group facts (GID 486,
+the hostPath pair) are the pod-shape record's ground (charts/vllm
+securityContext comment) — nothing here needs them changed.
 
 | # | Check | Command | Gate / record |
 |---|---|---|---|
 | 0.1 | GPU enumeration | `rocminfo` | the agent list shows `gfx1201` and the R9700 is enumerated as device 0 (the 8060S is gfx1151, device 1) — the host driver sees the chip the pod will claim |
-| 0.2 | amdgpu driver | `modinfo amdgpu \| grep version` | record the version against the ROCm 10.0 expectations R1 OQ5 names — a driver too old for the v0.33.0-rocm100 runtime is the first suspect for every later GPU failure |
-| 0.3 | RAM baseline | `free -h` | record `available` — the node-RAM headroom baseline before vLLM commits anything (EXPLORE §8.6); steps 6e and 9 compare against this |
+| 0.2 | amdgpu driver | `modinfo amdgpu \| grep version` | record the version against the ROCm 7.14 userspace the 0.30 image bundles (R3 L1.2) — the host-driver/userspace expectation class is R1 OQ5's; a driver too old for the bundled userspace is the first suspect for every later GPU failure |
+| 0.3 | RAM baseline | `free -h` | record `available` — the node-RAM headroom baseline before vLLM commits anything (EXPLORE §8.6); steps 6 and 9 compare against this |
 
 ## 1. Pod facts
 
-After ArgoCD syncs the merged branch, the pod must land on `ai-gpu` and pass
-the C02 startup probe (`/health`, 60 s initial delay + 10 s period × 90
-failures — the 15-minute envelope).
+After ArgoCD syncs the merged branch, the pod must land on `ai-gpu` and
+pass the C02 startup probe (`/health`, 60 s initial delay + 15 s × 160
+failures — the 40-minute envelope, D18).
 
 **1.1 — Pod lands, node is ai-gpu.**
 
@@ -68,25 +153,30 @@ kubectl -n default get pod -l app.kubernetes.io/name=vllm -o wide
 ```
 
 Expected: one pod, node column `ai-gpu`, `READY 1/1` (or `0/1` inside the
-15-minute probe window — see 1.2).
-If it fails: `Pending` or a different node means the `amd.com/gpu: 1`
-request or node placement is wrong — the chart values are the fix surface,
-not this runbook.
+40-minute probe window — see 1.2).
+If it fails: `Pending` or a different node means node placement is wrong —
+the chart values are the fix surface, not this runbook.
 
-**1.2 — Startup duration against the probe envelope.**
+**1.2 — Startup duration against the probe envelope (the D18 two-class
+window).**
 
 ```
 kubectl -n default get pod -l app.kubernetes.io/name=vllm \
   -o jsonpath='{.items[0].status.startTime}'
 kubectl -n default logs -l app.kubernetes.io/name=vllm --tail=100
+kubectl -n default logs -l app.kubernetes.io/name=vllm -c setup --tail=20
 ```
 
-Expected: the engine startup lines (weights loaded, model served) well
-inside the 15-minute C02 envelope. Record the measured start→ready
-duration — the first pull is ~18 GiB plus Triton JIT, and the number feeds
+Expected, the two classes: FIRST deploy ~40–60 min — the init staging (the
+two `local_dir` downloads, ~20.4 GiB) plus the cold-cache serve boot
+(the first-use AITER JIT — there is NO 0.30 pre-bake, R3 L1.2 — plus the
+PIECEWISE graph capture) — inside the 40-minute probe envelope (staging is
+init-container time, pod-level, not probe failure). RE-BOOT ~7–10 min —
+the marker skip plus the warm boot. Record both classes; the number feeds
 the follow-up probe sizing.
-If it fails: restarting past the 90-failure window means the engine never
-reached `/health` — the step 3 gates localize which leg.
+If it fails: restarting past the 160-failure window means the engine never
+reached `/health` — 3.1's marker set localizes which leg; the
+startup-refusal class (a hard reject at the 262144 ceiling) is 3.1b.
 
 **1.3 — The chip actually selected (confirms the `ROCR_VISIBLE_DEVICES`
 spelling — R1 OQ4).**
@@ -98,86 +188,182 @@ kubectl -n default logs -l app.kubernetes.io/name=vllm | grep -i -m 5 'gfx\|devi
 Expected: the log names exactly one chip — `gfx1201` (the R9700).
 If it fails: if the env was ignored, the pod sees BOTH chips and the run is
 aborted — fix the values key (`rocrVisibleDevices`, under `app-template:`
-in `charts/vllm/values.yaml` and `services/gpu-ai/prod/values.yaml`),
-not the template. The variable's semantics (device index or UUID, ROCm 10)
-confirmed (Post Research V2); only the index is target-verified.
+in `charts/vllm/values.yaml` AND the `services/gpu-ai/prod/values.yaml`
+twin — the dual-edit path law), not the template. The
+`HIP_VISIBLE_DEVICES: "0"` twin is the 8060S-exclusion half of the D25
+env law: the entrypoint's NUMA helper reads the HIP/ROCR/CUDA visible-device
+lists, and the auto-detect path would count both render nodes on this
+arch-mixed pair (R2 L4.3) — never leave the TP=1 pin to detection. The
+variable's semantics (device index or UUID, ROCm 10) confirmed (Post
+Research V2); only the index is target-verified.
 
-**1.4 — Image-side `rocminfo` (the C01 image's OWN ROCr enumeration).**
+**1.4 — Image-side `rocminfo` (the C01 re-export's OWN ROCr
+enumeration).**
 
 Step 0.1 proves the host driver; this one-shot container run of the pulled
-image proves the image's enumeration — under the v0.33.0-rocm100 image the
-R9700 must sit at index 0, which is what `ROCR_VISIBLE_DEVICES: "0"`
-targets (the Post Research V2 residual fact). Node-side, on `ai-gpu`
-(containerd via k3s; the pod has already pulled the image into the
-`k3s.io` namespace):
+image proves the image's enumeration — under the 0.30 re-export the R9700
+must sit at index 0, which is what `ROCR_VISIBLE_DEVICES: "0"` targets.
+Node-side, on `ai-gpu` (containerd via k3s; the pod has already pulled the
+image into the `k3s.io` namespace):
 
 ```
 ctr -n k3s.io run --rm \
   --entrypoint rocminfo \
   --device /dev/kfd --device /dev/dri --group-add 44 \
-  ghcr.io/ownyourio/vllm-rocm:main
+  ghcr.io/ownyourio/vllm-radiance-mxfp4:main
 ```
 
 (docker equivalent, if the node has it:
 `docker run --rm --entrypoint rocminfo --device /dev/kfd --device /dev/dri
---group-add 44 ghcr.io/ownyourio/vllm-rocm:main`.)
+--group-add 44 ghcr.io/ownyourio/vllm-radiance-mxfp4:main`.)
 
-Expected: the gfx1201 R9700 at ROCr index 0.
+Expected: the gfx1201 R9700 at ROCr index 0 (the R9700-at-index-0 law).
 If it fails: a different index means `ROCR_VISIBLE_DEVICES: "0"` targets
-the wrong chip — retarget the values key, then re-run 1.3.
+the wrong chip — retarget the values key (dual edit), then re-run 1.3.
+Record alongside: the 0.30 image's own backgrounded `rocm-bandwidth-test`
+sweep at serve start is the 0.30-class enumeration record (R3 L3.1) — its
+output lands at the 3.1 capture.
 
-## 2. Weight + cache
+## 2. Weights + staging facts
 
-**2.1 — Weight presence (RESEARCH Post Research V3).** The exact Q4 file on
-the shared 500 GiB PVC: `Qwen3.8-27B-UD-Q4_K_XL.gguf` (16.35 GiB,
-`unsloth/Qwen3.8-27B-GGUF`), populated by llama.cpp's `-hf` auto-fetch at
-the `LLAMA_CACHE=/models` root (llama.cpp's cache layout — no `hub/`
-segment; that is the `HUGGINGFACE_HUB_CACHE` convention, not llama.cpp's):
+The `setup` init container is the staging actor (D14/D26); the pod log's
+`mxfp4 staging:` lines are the authority — they say skip or download, per
+tree:
 
 ```
-# run inside the vllm pod — the operator's own pod access (no agent tier grants it, EXPLORE §7)
-find /models -name 'Qwen3.8-27B-UD-Q4_K_XL.gguf'
+kubectl -n default logs -l app.kubernetes.io/name=vllm -c setup
 ```
 
-Expected: exactly the path the chart renders as `--model`
-(`/models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q4_K_XL.gguf`).
-The find output IS the `--model` value — if it differs from the chart's
-rendered `modelPath`, that is a values-only fix: record the actual path.
-If it fails: file absent means the llama.cpp rung never fetched it — the
-weight leg is down, not the engine.
+**2.1 — The trees, the marker, and the drafter.**
 
-**2.2 — Triton cache under `/data`.** `TRITON_CACHE_DIR=/data/triton` on
-the vLLM-cache PVC: record the 1.2 startup duration of the FIRST pod, then
-restart the pod once (owner's own rollout trigger — a values no-op touch,
-human-run) and record the second duration.
-Expected: the second restart is measurably faster (JIT kernels cached).
-If it fails: no speedup means the `/data` cache is not persisting — check
-the `vllm-cache` claim binding before blaming the kernels.
+```
+# run inside the vllm main container — the operator's own pod access (no agent tier grants it, EXPLORE §7)
+ls /models/Qwen3.8-27B-Quark-AWQ-MXFP4
+ls /models/Qwen3.8-27B-DFlash2-FP8
+ls -la /models/.staged-mxfp4-*
+```
+
+Expected: the raw-release tree (the 18.41 GiB `model.safetensors` +
+`config.json`), the drafter tree, and ONE marker file whose name keys both
+shas: `/models/.staged-mxfp4-93245f7c00f1…-ee0cb26a8279…` (full
+40-char pair). The `--model` value is the plain dir
+`/models/Qwen3.8-27B-Quark-AWQ-MXFP4` — no HF-snapshot-hash segment: the
+SHA pins the source, the PATH pins the output; this listing is the path
+authority, a divergence is a values-side dual edit, never a template fix.
+If it fails: trees absent = the init has not completed — the engine legs
+are down, read the `-c setup` log above; a marker naming different shas = a
+stale tree under moved pins — reconcile the chart's staging command (values
+side), owner-visible.
+
+**2.2 — Partial-tree remedy (node-side, never a cluster change).**
+
+A pod kill mid-download leaves a partial tree. The automatic cover is by
+construction: the marker `touch` is the command's LAST step (a partial
+stage leaves no marker) and the `local_dir` layout resumes completed files
+(HF downloader), so the pod's own init restart re-stages without operator
+action. Where files are corrupted and the resume does not self-heal, the
+operator's remedy is node-side on the local-path host directory behind the
+`llama-swap` claim (the runbook's standing operator-access pattern — a node
+command, no cluster instruction):
+
+```
+# on ai-gpu: the claim's host dir (k3s local-path convention, the llama-swap claim):
+ls -d /var/lib/rancher/k3s/storage/pvc-e4f5adf3*_default_llama-swap
+# then remove ONLY the partial tree so the next pod re-stages it whole:
+rm -rf '<host-dir>/Qwen3.8-27B-Quark-AWQ-MXFP4'
+```
+
+**2.3 — The mtp-profile contingency ladder (the Q8 ruling's if-fails).**
+
+The shipped dflash default does not touch the MTP load path — "Non-spec and
+DFlash do not need that override" [84]: the recipe sets no
+`RADIANCE_QUARK_BF16_MTP`. If a serve on the mtp profile dies at the MTP
+head load: (1) verify `RADIANCE_QUARK_BF16_MTP=1` is set for that profile —
+the baked `patch_quark_bf16_mtp` load path is the documented first step
+(R3 L2.6: the raw release's embedded MTP tensors are BF16, and the
+2026-11-03 module-name fix at `93245f7c` makes this revision strictly MORE
+loadable than the `156be69f` revision the stack was qualified on); (2) if
+that still dies, the `fp8_mtp.py` rewrite RE-LAND is the next rung — 0.27.1
+tooling, two generations away from the shipped stack: the recorded fallback,
+the owner's call, a re-scope decision, never a runbook improvisation.
+
+**2.4 — The GGUF-stays line.**
+
+`Qwen3.8-27B-UD-Q4_K_XL.gguf` STAYS on this claim — the class-10 llama.cpp
+rung serves it (the D9 invariant). Do not delete it with any staging
+cleanup.
 
 ## 3. Engine smoke (first engine gate)
 
-The first on-RDNA engine proof: does the patched plugin actually load the
-qwen3_5 GGUF on gfx1201? No public RDNA run exists (RESEARCH Post Research
-V1) — the import probe below is the gate, and a failure here is a C01 image
-defect, not a config issue.
+The first on-RDNA proof of the 0.30 stack: does the recipe actually run as
+planned? The GGUF-era plugin probe retires with its format — the marker
+set below is the gate, and the recipe's source-verified-but-never-executed
+status (R3's medium-confidence flag) is closed by the 3.1a capture.
 
-**3.1 — Patched-plugin import probe (node-side one-shot).**
+**3.1 — FIRST-ENGINE GATE: the 0.30 marker set (grep the pod log).**
 
 ```
-ctr -n k3s.io run --rm \
-  --entrypoint python \
-  ghcr.io/ownyourio/vllm-rocm:main \
-  -c "import vllm_gguf_plugin"
+kubectl -n default logs -l app.kubernetes.io/name=vllm --tail=5000
 ```
 
-(docker equivalent:
-`docker run --rm --entrypoint python ghcr.io/ownyourio/vllm-rocm:main -c
-"import vllm_gguf_plugin"`.)
+Record every row from the first serve (R3 implications, the [94]/[92]
+class):
 
-Expected: exit 0, no traceback — the `vllm.general_plugins` registration
-chain does not ModuleNotFoundError on the pinned base (the carry patch
-absorbs the vLLM #60623 import skew, Post Research V1).
-If it fails: stop here and report the traceback — do not continue to 3.2/3.3.
+| Marker | Expected | If missing / wrong |
+|---|---|---|
+| Entrypoint banner | the `radiance_preamble.py` preamble/banner lines | a bare vLLM banner = the wrong image is running — verify the pin (names block) |
+| No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 20-var law is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
+| R4D engagement | the R4D report/selection lines: R4D target attention on the named backend, and the TRITON_ATTN drafter attention inside the spec config | R4D refused = backend/dtype drift (R4D's `validate_configuration` prints its reason and refuses rather than falling back) |
+| MXFP4 W4A8 GEMM engagement | the 0.30 analog of the 0.9.3 kernel-selection marker — RECORD THE EXACT STRING from the first serve (the qualified `RADIANCE_MXFP4_W4A8=1` set) | absent = the W4A8 lane did not engage — the env set is the suspect |
+| WRONG-ENGINE absence marker | the stock "default W8A8 Block FP8 kernel config" line must NOT appear — the 16 R9700-named tuned block-FP8 config JSONs are baked (R3 L1.2), so the generic line is the wrong-engine signal | it appears = the tuned configs were not picked up — record and stop |
+| ViT backend line | the `FLASH_ATTENTION_TRITON_AMD_ENABLE` observation (the OQ12 var's on-target record; the 0.30 vision record class is "two vision requests passed" [109]) | Torch SDPA = the var not honored — the 3.4 if-fails leg owns this |
+| `Mamba cache mode` | align | drift = the serveArgs moved — 3.1a diff |
+| Spec-family registration | the `spec_decode_*` metric family EXPECTED at 0.30 (dflash rides the stock V2 dflash2 path, R3 L2.3); the `diffusion_*` family is the RECORDED fallback assertion — which one registers is what the capture closes | neither family = the speculative config did not load |
+| KV triple | `Available KV cache memory` / `GPU KV cache size` / `Maximum concurrency` — record VERBATIM (the 3.5 re-measure gate's input; no pre-registered target, the gate derives it) | triple absent = boot died before the pool — 1.2/3.1b |
+| Graph capture | the PIECEWISE compilation/graph lines (the `RADIANCE_COMPILATION_CONFIG` seam appends `--compilation-config {"cudagraph_mode":"PIECEWISE"}`) | eager/other mode = the seam not honored — record |
+| Startup complete | `Application startup complete` (the vLLM-standard line, the FASTBOOT-class log-read carries [52]) | absent = never reached serving — 1.2's failure class |
+| Topology sweep | the backgrounded `rocm-bandwidth-test` output [94] — the 0.30-class enumeration record | absent = record why |
+
+The spec-method toggle (the record, not a day-one lane): swapping the
+`specMethod` key to `mtp` is three coupled values edits — the specConfig
+JSON `{"method":"mtp","num_speculative_tokens":4,…}` (K4, the measured
+depth), the main env's `RADIANCE_QUARK_BF16_MTP=1` (the raw release's
+BF16-head load path, the R3-Q6 coupling), and the C03 init's drafter-skip
+record. The MTP K4 lane carries a 29/30 tool-gate FAIL caveat [108] — the
+toggle is not tool-qualified. Every gate below runs on the shipped dflash
+default.
+
+**3.1a — DRY_RUN-analog capture (closes R3's "no execution of the 0.30
+recipe" medium-confidence flag).** The guide's standing DRY_RUN rule
+translated to this surface — a READ, then a diff:
+
+```
+kubectl -n default get pod -l app.kubernetes.io/name=vllm \
+  -o jsonpath='{.items[0].spec.containers[?(@.name=="vllm")].args}'
+```
+
+Record the rendered args, the startup-log resolution lines, and the
+entrypoint seam outputs (the appended `--compilation-config`, the
+`RADIANCE_WEIGHT_QUANTIZATION=auto`'s omission of `--quantization`), and
+DIFF against the plan's D24 recipe — the chart's serveArgs is the expected
+side. A diff is a values-only fix at the C02 surface (the dual-edit path
+law: chart serveArgs + the service twin), recorded here. The pod args
+start with the MODEL PATH (the entrypoint supplies the verb) — a
+`vllm serve` token in the args is the double-verb transcription error, the
+capture's first check.
+
+**3.1b — THE STARTUP CONTINGENCY (the OQ13 dual-edit class, the D31
+live-risk backstop — recorded, not improvised).** If the engine
+hard-rejects at startup at the 262144 ceiling — the KV-pool-degenerate
+class, R2 L3.5's "does not fit at TP=1" record materializing, and by the
+envelope's own law the failure is loud and probe-gated (1.2), never a
+silent mis-serve — then: the operator lowers `--max-model-len` on target
+to the pool-fitting class as the values dual edit (the C02 serveArgs line +
+the service twin), and records the engine-log KV triple before/after. The
+catalog/surface re-pin becomes a FRESH OWNER RULING: the catalog was
+already 262144, the contingency moves ONLY THE ENGINE ARG; the
+advertisement-following-the-engine-down question re-opens only if the
+owner wants it (the D31 record).
 
 **3.2 — In-cluster `curl` to the vLLM service.** Operator-run, from any
 machine with cluster access (read-only probe):
@@ -189,13 +375,19 @@ curl -sS http://127.0.0.1:8000/v1/models
 ```
 
 Expected: `/health` → 200; `/v1/models` lists the served name
-`qwen3.8-27b-vllm` with `max_model_len: 262144`.
+`qwen3.8-27b-vllm` with `max_model_len: 262144` — the engine cap == the
+catalog axis: the true axis is readable on both sides (the Q11 ruling).
 If it fails: `/health` down = the pod is not actually serving (1.2); a
-different served name = `--served-model-name` drift in the serveArgs.
+different served name = `--served-model-name` drift in the serveArgs;
+a SMALLER `max_model_len` = 3.1a's diff or 3.1b firing — which side moves,
+and whether the advertisement follows the engine down, is the owner's
+call.
 
-**3.3 — One 1-token chat completion.** The GGUF serve + first-token proof —
-weights loaded from the step-2 q4 GGUF through the patched adapter, not a
-stock safetensors path:
+**3.3 — One 1-token chat completion.** The MXFP4 serve + first-token
+proof — weights load from the step-2 raw-release tree through the native
+Quark MXFP4/W4A8 path (the `RADIANCE_WEIGHT_QUANTIZATION=auto` seam
+omits `--quantization`; vLLM consumes the checkpoint's Quark metadata),
+not a GGUF-plugin or stock-safetensors path:
 
 ```
 curl -sS http://127.0.0.1:8000/v1/chat/completions \
@@ -204,16 +396,124 @@ curl -sS http://127.0.0.1:8000/v1/chat/completions \
 ```
 
 Expected: HTTP 200 with one generated token.
-If it fails: the weights loaded but decode dies — with `--enforce-eager`
-already set, the next suspect is the GDN Triton kernel path on gfx1201
-(report the log lines; that is the R1 software-maturity risk materializing).
+If it fails: the weights loaded but decode dies — the recipe runs graphed
+(PIECEWISE, no `--enforce-eager`), so the suspects are the W4A8 GEMM / GDN
+kernel lanes on gfx1201 (report the log lines; the software-maturity
+class).
+
+**3.4 — Multimodal 1-image smoke.** Requirement 3's owner-visible proof
+under the 0.30 stack — the vision tower serves unquantized (the
+`image=4` limit + the 0.30 vision records). A tiny data-URL image (1×1
+PNG):
+
+```
+curl -sS http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3.8-27b-vllm","max_tokens":16,"messages":[{"role":"user","content":[{"type":"text","text":"Reply with the single word: ok"},{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="}}]}]}'
+```
+
+Expected: HTTP 200 + a completion — the multimodal model, no
+text-only stripping.
+If it fails: the ViT leg — the OQ12 var's off-switch is the tuning surface
+(dropping `FLASH_ATTENTION_TRITON_AMD_ENABLE` back to the default Torch
+SDPA — values side, record the result of both postures).
+
+**3.5 — THE DAY-ONE RE-MEASURE GATE (the owner's Q2 standing condition —
+the SOLE envelope path at 0.30, R3 L2.4 — re-bound by the Q11 ruling to
+the SHIPPED 262144/2560/3 shape).** BEFORE any step-6 number is trusted:
+
+(a) Record the 3.1 KV triple (the pool's birth certificate —
+`Available KV cache memory` / `GPU KV cache size` / `Maximum concurrency`).
+(b) Drive the shipped-shape load class: the three-session saturation
+drive at the step-5/6 class — 262144-class contexts within the DERIVED
+pool (`--max-num-seqs 3` is the Shape-B constant that saturates it).
+(c) Read the pool headroom and the preemption behavior (the 6.6
+signals).
+(d) Optional post-calibration: `--kv-cache-memory-bytes <int-bytes>` as a
+values-only swap — the flag exists at 0.30, int bytes, "when not-None
+ignores gpu_memory_utilization" (R3 L2.5). The gate DERIVES the pool at
+the shipped shape; the 8.49 GiB reference row is the 220000-class 0.9.3
+artifact — a provenance datum, NOT the target, and the chart deliberately
+ships no pin.
+(e) The re-measured constants are the follow-up re-pin. Marked surfaces:
+the C02 serveArgs util/KV-pin lines, the testlib pairs, and this
+runbook's envelope block.
+
+PASS = the shipped 262144/2560/3 plan shape is for this node (record the
+derived pool). FAIL = the values re-pin to the measured pool; and if the
+failure was a hard reject rather than a tight pool, that is the 3.1b
+contingency's class. Owner-visible at the presentation either way.
+
+**3.6 — THE INT4 GATE (the round-2 Q5 ruling — in this ticket, a day-one
+step; D27).** The two 0.30 edits, as ONE values change — the operator's
+git-only path (the sanctioned 5.2-style flip): the `kvCacheDtype` values →
+`int4_per_token_head` AND the `--attention-backend TRITON_ATTN` swap in
+the C02 serveArgs (R4D's baked gate refuses per-(token,head) KV scales at
+startup; the explicit CLI-named backend wins over the baked R4D seam,
+R3 L2.2/L2.5). Commit on the ticket branch; ArgoCD's own reconciliation
+picks it up — no manual sync (sync is not a runbook step). Then the gate
+legs, in order:
+
+1. Startup acceptance: the R4D-refusal message must NOT appear (the
+   TRITON_ATTN leg engages) and the `int4_per_token_head` KV info line
+   appears; re-record the 3.1 KV triple — the ~16 KiB/token class should
+   widen the pool (record, do not assume).
+2. The 3.3 and 3.4 smokes.
+3. The acceptance-rate smoke (the 6.4 either-family counters).
+4. The quality leg: a GSM8K-class probe against the 97.6–98.4% reference
+   row of the 0.9.3-era MXFP4 record [45] — the reference class NAMED,
+   recorded not claimed (int4 changes the KV path that reference ran on).
+5. The tool smoke (3.7) — int4 changes the KV path the 30/30 record
+   exercised, which is fp8-only [108].
+
+Gate PASS → int4 is promoted to a documented-tested toggle value (the
+values comment + this block's re-pin, values-only). Gate FAIL → int4 stays
+experimental-OFF (the status quo; the 48 GB-RDNA3 forward-looking note's
+home, the future stock card, stands). REVERT to the fp8 default after the
+gate either way — the fp8 default is the ship state; the gate is a
+measurement step, not a config flip (revert the commit, reconciliation
+restores, re-run 3.3 to confirm).
+
+**3.7 — THE TOOL SMOKE (the round-2 Q6 marker's closing gate — the
+TP2→TP1 transfer, R3 L3.2's confidence statement).** The
+keypress-fixture class against the live pod, via the public chain (step 4's
+route). The 3-tool browser-style fixture set (`click` / `keypress` /
+`assert`, each with typed required fields `reasoning` / `confidence` /
+`stepComplete` + per-tool key/condition/ref); the two cases are
+`keypress_auto` (tool_choice=auto, parallel_tool_calls, two independent
+calls) and `keypress_parallel` (tool_choice=required, two calls). These are
+the synthetic wire regressions — NEVER execute the generated tools [112];
+inspect the wire. Operator-constructed `keypress_auto` request:
+
+```
+curl -sS https://llama.spencerslab.com/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3.8-27b-vllm","temperature":1,"stream":true,"parallel_tool_calls":true,"tool_choice":"auto","messages":[{"role":"user","content":"On the search box (ref 12), press Enter, then press Tab. Call keypress once per key."}],"tools":[{"type":"function","function":{"name":"click","description":"Click an element on the page","parameters":{"type":"object","properties":{"reasoning":{"type":"string"},"confidence":{"type":"number"},"stepComplete":{"type":"boolean"},"ref":{"type":"string"}},"required":["reasoning","confidence","stepComplete","ref"]}}},{"type":"function","function":{"name":"keypress","description":"Press a key in the focused element","parameters":{"type":"object","properties":{"reasoning":{"type":"string"},"confidence":{"type":"number"},"stepComplete":{"type":"boolean"},"key":{"type":"string"}},"required":["reasoning","confidence","stepComplete","key"]}}},{"type":"function","function":{"name":"assert","description":"Assert page state","parameters":{"type":"object","properties":{"reasoning":{"type":"string"},"confidence":{"type":"number"},"stepComplete":{"type":"boolean"},"condition":{"type":"string"}},"required":["reasoning","confidence","stepComplete","condition"]}}}]}'
+```
+
+For `keypress_parallel`: same request with `"tool_choice":"required"`.
+Expected: tool-call JSON validity — exact tool names, exact/typed
+arguments, no unexpected fields, `finish_reason` ∈ {stop, tool_calls}, and
+the complete SSE stream (incremental `data:` events, no stream error,
+`data: [DONE]` at the end). Repeat both cases several times and RECORD THE
+PASS/FAIL COUNTS as the TP1 tool datum — the first one that exists (the
+upstream 30/30 record is TP2-only: two GPUs "is the only configuration
+tested so far" [91]) — the `tools: true` marker's standing risk closes or
+re-opens on this leg.
+If it fails: the marker's owner-visible reconsideration — the `tools: true`
+row key is the C04 surface (the three catalog rows); the revert is a
+values+M3 re-pin, the owner's call, recorded not improvised.
 
 ## 4. FE chain smoke
 
 Through the public chain `https://llama.spencerslab.com/v1` — the peers.vllm
 hop is the only client route (D7; the gpu-ai generic-ingress injects the
 `llama-timeouts` ServersTransport, `responseHeaderTimeout: 0`, on every
-subdomain Ingress, so deep prefills do not 499).
+subdomain Ingress, so deep prefills do not 499). The whole step carries
+UNCHANGED through the base move — the hop is byte-stable: the recipe keeps
+the engine on port 8000 (the service, probes, peer hop, and catalog all sit
+on it), and the upstream launcher's 8080 default never reaches the pod
+(R3 L1.3; D20/D28).
 
 **4.1 — Models list: qualified AND unqualified.**
 
@@ -269,8 +569,10 @@ row / peer name is wrong in `.opencode/opencode.jsonc` or the peer block.
 
 ## 5. Priority proof (R4 acceptance lines)
 
-The engine runs `--scheduling-policy priority` (C02 serveArgs), so a
-non-zero body priority is legal; the peer floor `filters.setParams
+The engine runs `--scheduling-policy priority` — the D24 CARRIED flag,
+0.30-verified (R3 L2.5): the four-class wiring's engine half. The
+scheduler knob is unmeasured under this stack — that risk stands and this
+step is its measurement. The peer floor `filters.setParams
 "priority?": 5` puts non-priority clients in the default class. The class
 rows (the four-class contract, cf-105-vllm-followup D1): urgent class row
 `qwen3.8-27b-vllm-urgent` (priority 1), default class row
@@ -303,55 +605,72 @@ rows). Run it only if the owner wants the negative proof:
    Expected: vLLM REJECTS it with the non-zero-priority error (the fcfs
    gate, R4 Q1) — proving the body field survived both OpenCode's merge
    AND llama-swap's proxy end-to-end.
-3. Flip the values back to `priority`; re-sync; re-run 5.1 to confirm 200.
-   Do not leave `fcfs` in place.
+3. Flip the values back to `priority`; let reconciliation restore the pod;
+   re-run 5.1 to confirm 200. Do not leave `fcfs` in place.
 
-**5.3 — Behavioral: two classes saturating the pool** (R4 acceptance
-line 2). Drive two concurrent sessions of different classes until the
-pool is saturated (≥100k prefills at `--max-num-seqs 4`), then read the
-preemption split in central Prometheus:
+**5.3 — Behavioral: the classes saturating the pool** (R4 acceptance
+line 2). The `--max-num-seqs 3` drive (the Shape-B constant — three
+concurrent sessions saturate the re-measured pool, the 3.5 gate reads its
+truth): drive long-context sessions of the low and default classes
+concurrently, keep an urgent-class request running as the control, until
+the pool saturates; then read the preemption split in central Prometheus:
 
 ```
 sum by (model_name) (increase(vllm:num_preemptions_total[10m]))
-histogram_quantile(0.5, sum by (le) (rate(vllm:request_num_preemptions_bucket[30m])))
 ```
 
-Expected: the urgent class shows NO preemptions while the default class
-does. A PASS is the priority split holding — preemption under exhaustion
-is the design (D4), not a fault. Under KV exhaustion the four-class victim
-order is low(9) → default(5), never urgent(1): vLLM force-preempts the
-highest-numbered priority first (R4 Q1: victim = `max (priority,
-arrival_time)`).
+Expected: the urgent class shows NO preemptions while the default/low
+classes do. A PASS is the priority split holding — preemption under
+exhaustion is the design (the envelope block), not a fault. Under KV
+exhaustion the four-class victim order is low(9) → default(5), never
+urgent(1): vLLM force-preempts the highest-numbered priority first (R4 Q1:
+victim = `max (priority, arrival_time)`); the carried `--watermark 0.05`
+preserves the arbitration headroom.
 If it fails: urgent-class preemptions mean the class values did not reach
 the engine (check 4.4 and the row's `body` merge); zero preemptions
-anywhere = the pool never saturated (drive longer contexts).
+anywhere = the pool never saturated (drive longer contexts — at the 262144
+cap the pool is the binding side, not the cap, per the envelope).
 
-## 6. Benchmark (pre-registered — the D4/Q3 envelope)
+## 6. Benchmark (pre-registered expectations — NOT claims)
 
-The expectations below are registered BEFORE the numbers: one 256k
-(≈7.8 GiB KV) fits, 4×100k (≈12.2 GiB) sits at the ~13.4 GiB pool edge,
-256k × 3–4 simultaneously is impossible on one 32 GiB card (R1 §3).
-Record every number — they are the follow-up card #2 thresholds.
+Registered BEFORE the numbers, on the R3 L3.3 weakest-claim ground stated at
+the envelope block: no 0.30 TP1 measurement exists in any published form,
+so what follows is anchor classes and sanity rows; the 0.30 TP1 dflash
+numbers at the shipped shape are the ON-TARGET UNKNOWN, and the 3.5
+re-measure gate owns them. Record every number — they are the follow-up
+card #2 thresholds and the 3.5(e) re-pin input.
 
-**6.1 — Single-session 256k-prefill TTFT** (the envelope's headline case —
-one full-context request must complete). A 262144-token prompt, small
-`max_tokens`; time to first byte is the number. Expect minutes-scale
-physics: R1 §4 measured 131.5 s TTFT at 128K and 320.7 s at 256K on the
-8060S even under llama.cpp — the R9700 is faster but the same KV physics.
-The peer `responseHeader: 1800` covers the end-to-end first byte; the C02
-startup probe is unaffected (it hits `/health`, not a completion).
+**6.1 — The 0.9.3 TP1 ANCHOR CLASS (same-card-signature record, the
+0.27.1-era stack):** single-stream combined decode **137.7 t/s** /
+c=8 aggregate **416.3 t/s** / update p99 **35.7 ms** / TTFT p50 **95 ms** /
+prefill **2.5–2.8k t/s** — measured on the `1x7551-32624` card signature
+at the 65536 Shape-A context, at the 210 W cap −75 mV [49]. Provenance
+caveats ride: a different engine generation, a different (smaller) context
+shape, the reference box's power conditions — the context-class reference,
+NOT the like-for-like 262144 datum.
 
-**6.2 — 100k-prefill TTFT, single session.**
+**6.2 — The 0.30 TP2 cross-stack SANITY class (record only):** the
+publication table [108] — non-spec 53.9 weighted / DFlash K7 186.7
+weighted; acceptance MTP 55.79% / K5 51.92% / K7 42.26%; accepted-plus-
+bonus tokens per draft 3.596 (DFlash K5) / 3.958 (K7). Topology-confounded
+against our TP1 pod (their qualified configurations are TP2 — R3 L3.3) —
+same engine family, different topology; a sanity row, never an expectation.
 
-**6.3 — 2–4 concurrent ≈100k sessions, aggregate tok/s.** The R1 §4
-measured-pattern comparison point (32B-FP8 on 2×R9700: ~3× single-stream
-at c=3, ~7× at c=8). This card is one R9700 at `max-num-seqs 4` — expect
-within that pattern's 2–4× band, and record where 4×100k actually lands
-relative to the pool edge.
+**6.3 — The on-target drive (the unknown's first datum):** single-stream
+tok/s, c=3 aggregate at the shipped shape, prefill rate, TTFT — at the
+262144/2560/3 constants within the 3.5-derived pool. These numbers are the
+3.5(e) re-pin input and the follow-up card #2 thresholds.
 
-**6.4 — Single-stream tok/s.** The llama.cpp-parity expectation is ≈30 on
-the R9700 (R1 §4: llama.cpp 27B Q4_K_M 29–33 tok/s; vLLM 32B-FP8
-1-stream 25.8–29.1 on 2×R9700 eager).
+**6.4 — Acceptance smoke (the shipped K7 dflash lane):** the either-family
+counters from 3.1's capture — `spec_decode_*` expected (stock V2 dflash2
+path, R3 L2.3), `diffusion_*` the recorded fallback:
+
+```
+sum(rate(vllm:spec_decode_num_accepted_tokens_total[5m])) > 0
+```
+
+(re-run under whichever family 3.1 says registered). Anchor class for the
+K7 lane: the TP2 42.26% / 3.958 row [108] — sanity, not expectation.
 
 **6.5 — Node RAM headroom after full load.**
 
@@ -370,11 +689,25 @@ until `vllm:kv_cache_usage_perc` (central Prometheus) peaks:
 vllm:kv_cache_usage_perc{model_name="qwen3.8-27b-vllm"}
 ```
 
-Expected: the gauge peaks, the lower-priority class is preempted +
-recomputed while the urgent class is unimpeded. A PASS when the priority
-split holds — the Q3 trade-off working as designed (preemption is
-intended; the recompute cost is R4 OQ6 territory, recorded for the
-follow-up).
+The gauge is a fraction 0–1 (the R2 L4.5 name, presumed stable at 0.30 —
+the first-serve `/metrics` scrape at 3.1 confirms the name). Expected: the
+gauge peaks, the lower-priority class is preempted + recomputed while the
+urgent class is unimpeded. A PASS when the priority split holds —
+preemption is intended; the recompute cost is R4 OQ6 territory (the
+prefix-caching interaction, the carried `--enable-prefix-caching`),
+recorded for the follow-up.
+
+**The step-7 queries' name set** (the 0.27.1-verified class, presumed
+stable at 0.30 — the 3.1 `/metrics` scrape is the confirmation):
+`vllm:time_to_first_token_seconds`, `vllm:inter_token_latency_seconds`,
+`vllm:num_preemptions` (exposition `vllm:num_preemptions_total`),
+`vllm:request_success`, plus `vllm:kv_cache_usage_perc` above.
+
+**The power-policy caveat (carried from the envelope):** the anchor rows
+were measured under the reference box's 210 W cap −75 mV; this node runs
+BOCO runtime power management on the R9700 (EXPLORE §1) — different
+conditions, prefill is same-card-only comparable. 6.1/6.2 are anchor
+classes, not expectations.
 
 ## 7. Monitoring check (R5 deploy confirmations)
 
@@ -392,22 +725,26 @@ If it fails: `up` absent = the pod annotations did not land (7.6);
 `up{job="..."}` under a different job name = the fallback chain broke.
 
 **7.2 — The histograms are quantile-computable** (RW 0.1 classic-histogram
-integrity through the remote-write into central Prometheus 3.6.0, R5 Q2):
+integrity through the remote-write into central Prometheus 3.6.0, R5 Q2),
+on the step-6 name set:
 
 ```
 histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket[10m])))
 ```
 
-Expected: a finite number once 6.1–6.2 have produced TTFT samples (not
-NaN, not empty).
+Expected: a finite number once 6.3 has produced TTFT samples (not NaN, not
+empty).
 
-**7.3 — Both dashboards render in the central Grafana**
-(`grafana.spencerslab.com` → `default` folder):
-`vllm-performance-statistics` + `vllm-query-statistics` (C05's `url:`-pinned
-entries, tag v0.33.0). This is the R5-weakest-claim closure: the import was
-verified by inspection only (no Grafana write tier in the research
-session) — opening both panels is the execution.
-Expected: both render with data after the step 6 benchmarks.
+**7.3 — Dashboards: the re-pin need (NOT this ticket's bar).** The
+central Grafana's vLLM dashboard entries (the cf-105-era `url:`-pinned
+imports, upstream tag v0.33.0) do NOT fit this engine — the metric names
+drifted (this stack's 0.27.1/0.30-class set vs the v0.33 panels). The
+re-import is a CENTRAL-STACK edit — the owner's surface, not this repo's:
+this step records the re-pin need + the step-6 name set as the follow-up
+action (the recorded follow-up of the D-T2 disposition: the dashboards
+values' v0.33.0 base-image pin is stale by design until the owner
+re-imports). The repo-side bar for step 7 is the central-Prometheus legs of
+6.6/7.1/7.2 only.
 
 **7.4 — The Loki stream for the pod** (`loki.spencerslab.com`, LogQL):
 
@@ -415,10 +752,12 @@ Expected: both render with data after the step 6 benchmarks.
 {container="vllm"}
 ```
 
-Expected: the engine log lines (periodic engine stat line, which
-self-demotes to DEBUG when idle) plus uvicorn access lines WITHOUT the
-suppressed `/health`, `/metrics`, `/ping` noise (the
-`--disable-access-log-for-endpoints` flag, R5 Q3).
+Expected: the engine log lines (the periodic engine stat line, which
+self-demotes to DEBUG when idle) plus uvicorn access lines — note the
+`--disable-access-log-for-endpoints` flag is NOT in the shipped recipe (the
+round-2 Q7 drop — the flag exists at 0.30, the drop is a choice, R3 L2.5),
+so `/health` and `/metrics` access lines DO appear with the probe traffic:
+record their volume, it is noise, not a fault.
 
 **7.5 — `finished_reason` enum values** observed in central Prometheus:
 
@@ -439,107 +778,158 @@ kubectl -n default get pod -l app.kubernetes.io/name=vllm \
 
 Expected: `k8s.grafana.com/scrape: "true"` and
 `k8s.grafana.com/metrics.portNumber: "8000"` — and the ABSENCE of a
-`metrics.scrapeInterval` annotation (Q5 ruling: the 60 s scrape is the
-k8s-monitoring v4 annotationAutodiscovery feature default; the absence is
-the contract).
+`metrics.scrapeInterval` annotation (the cf-105 scrape ruling: the 60 s
+scrape is the k8s-monitoring v4 annotationAutodiscovery feature default;
+the absence is the contract).
 If it fails: a third `k8s.grafana.com/*` key = an annotation crept into
 `charts/vllm/values.yaml`; an enabled value that is not `"true"`/`"8000"` =
 the `app-template.monitoring.annotations` gate is mis-rendered.
 
-## 8. Sleep-mode check + the R9700 time-sharing sequence (D5/HR6)
+## 8. Coexistence — the ONE-ENGINE-PER-CARD law
 
-The documented sequence — NOT a bare sleep/wake pair. The dev endpoints
-exist because C02 sets `VLLM_SERVER_DEV_MODE: "1"` (v0.33.0 attaches
-`/sleep`, `/wake_up`, `/is_sleeping`, `/release_kv_cache_memory` only in
-dev mode — Post Research V5). Level-1 sleep keeps the offloaded weights
-but discards KV + the GDN recurrent/conv state, re-created on wake
-(in-tree regression-tested). Strata stays evicted from the R9700 for the
-whole window; it comes back only in 8.3. Use the 3.2 port-forward.
+The static coexistence law (the round-2 Q7 ruling's consequence; unchanged
+in substance from the re-plan, re-scoped here): **one engine per card.**
+The vLLM pod holds the R9700 at its 0.90-util / Shape-B footprint
+permanently — its KV + GDN-state pool, graph workspace, and AITER cache
+are sized to be resident, not to time-share. Strata's arena must NOT be
+re-pinned onto the R9700 while the vLLM pod is warm; the llama-swap/strata
+roster is the fix surface if it is.
 
-**8.1 — `POST /sleep` (level 1).**
+The sleep/wake time-sharing sequence is GONE: cf-105's D5/HR6
+`/sleep`/`/wake_up` procedure and its `VLLM_SERVER_DEV_MODE` dev-route
+pair are dropped from the recipe by the Q7 ruling, and the 2×-peak
+VRAM-reclaim OOM caveat retired with them. The `--enable-sleep-mode` flag
+EXISTS at 0.30 (R3 L2.5) and is the documented re-enable surface — the
+owner's follow-up call if the one-engine discipline bites; not this
+runbook's step.
 
-```
-curl -sS -X POST 'http://127.0.0.1:8000/sleep?level=1'
-```
+The escape hatch (the memory-pressure valve, default OFF): the 0.30
+`--kv-offloading-size` / `RADIANCE_KV_OFFLOADING_SIZE` seam (R3 L2.2 — the
+0.9.3 `KVCACHE=ram` tier's successor). Enabling it moves pool pages into
+host RAM and re-opens the 16Gi-shm headroom question — the 8Gi shm emptyDir
+was kept (D19) on the stated condition that the offload tier stays off;
+enabling the seam is an owner-visible decision with that condition
+re-argued, not a runbook step.
 
-Expected: 200; then `curl -sS http://127.0.0.1:8000/is_sleeping` reports
-sleeping at level 1.
-
-**8.2 — Verify VRAM reclamation on the R9700 BEFORE waking (the gate).**
-
-```
-# central Prometheus:
-vllm:engine_sleep_state{model_name="qwen3.8-27b-vllm"}
-# on the ai-gpu node:
-rocm-smi --showmeminfo vram
-```
-
-Gate: `vllm:engine_sleep_state` shows `weights_offloaded` AND the R9700's
-free VRAM is back up in the node reading.
-Documented ROCm caveat (Post Research V5, the vLLM GDN sleep/wake
-regression-test docstring): on some amdgpu drivers the VRAM discarded by
-`sleep()` is not returned to the free pool before `wake_up()` re-creates
-it, so the woken allocation must coexist with the not-yet-reclaimed one —
-~2x peak. With `gpu_memory_utilization` at 0.95 (D4), that coexistence
-OOMs in `cuMemCreate` on wake.
-- Gate passes → proceed to 8.3.
-- Gate fails → do not wake. Record the `rocm-smi` free-VRAM numbers
-  before/after the sleep (the on-target measurement for the Post Research
-  open question 5) and stop the sequence — the time-sharing discipline is
-  suspended until the owner rules on the driver/limit interaction.
-
-**8.3 — `POST /wake_up` (only when the 8.2 gate passed).**
+Observation legs (read-only):
 
 ```
-curl -sS -X POST 'http://127.0.0.1:8000/wake_up'
+# on ai-gpu:
+rocm-smi --showmeminfo vram    # one compute tenant on the R9700
+free -h                        # the RAM-law read (EXPLORE §8.6)
 ```
-
-Expected: `vllm:engine_sleep_state` back to `awake`, and a 1-token
-completion (the 3.3 command) still succeeds. THEN allow the Strata
-re-pin on the R9700 (step 9 observes the coexistence afterwards). Record
-the wake-up duration — the R9700/Strata time-sharing cost that feeds the
-Q6 ruling.
-If it fails: a `cuMemCreate` OOM on wake is the 8.2 caveat materializing
-(reclaim did not actually complete despite the gate reading — re-run 8.2's
-record and stop); a hung wake = report the engine logs.
 
 ## 9. Strata coexistence observation
 
-With Strata warm (arena re-pinned on the R9700 per 8.3), one vLLM request
-completes without node-level OOM. The two chips are separate (R9700 vs
-8060S); the RAM claim is what to watch (EXPLORE §8.6) — record the node's
-`available` before/after:
+The one-engine-per-card read, not a coexistence-success test: "Strata warm
+on the R9700 while vLLM is up" is the VIOLATION to catch, not the target to
+hold. The `free -h` RAM-law leg carries:
 
 ```
+# on ai-gpu, before/after one public-chain request:
 free -h
 curl -sS https://llama.spencerslab.com/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{"model":"qwen3.8-27b-vllm","max_tokens":8,"messages":[{"role":"user","content":"Reply: ok"}]}'
 free -h
+rocm-smi --showmeminfo vram
 ```
 
 Expected: the request completes; no OOM-kill of either pod; the
-`available` delta stays inside the vLLM pod's 32 Gi limit.
-If it fails: node-level pressure means the two pods' RAM budgets do not
-coexist — that is the EXPLORE §8.6 law biting, and it is a sizing change
-(chart values), not a runbook fix.
+`available` delta stays inside the vLLM pod's 32 Gi limit; and the R9700
+shows the vLLM pod as its single heavy VRAM tenant while warm.
+If it fails: a second heavy R9700 tenant (Strata's arena re-pinned while
+vLLM is up) is the law broken — restore the roster discipline (the
+llama-swap/strata side), owner-visible. Node-level RAM pressure means the
+pods' budgets do not coexist — that is the EXPLORE §8.6 law biting, and it
+is a sizing change (chart values), not a runbook fix.
 
 ## 10. PIN-ME follow-through
 
 After the CI build lands (`docker-build.yaml` pushes `:v<run_number>`
-(immutable) + `:main` (rolling) on the merge):
+(immutable) + `:main` (rolling) on the merge touching
+`containers/vllm-radiance-mxfp4/**`):
 
 1. In `charts/vllm/values.yaml`, pin the image `tag` to the first
    `:v<run_number>` (the immutable tag — never `:main` steady-state) and
    drop `pullPolicy` to the default (delete the `pullPolicy: Always` line).
 2. Delete the PIN-ME comment.
-3. Re-run C01's ledger note: record the new versioned tag in the
-   tag→digest ledger of `containers/vllm-rocm/README.md` (its manual-bump
-   procedure; the base tag `v0.33.0-rocm100` + plugin git ref + import
-   patch are unchanged — only the overlay image gains a version).
+3. Re-record the ledger: the `containers/vllm-radiance-mxfp4/README.md`
+   tag→pin table — the single base pin is now the tag/digest/source-commit
+   triple of the upstream `magiccodingman/vllm-radiance` row, plus our
+   first `:v<run>` (the D12-amended dual surface: the README ledger + the
+   chart image comment — both move in the same change).
 4. Record which leg this landed as: a values-only commit on the ticket
    branch BEFORE the PR (if the `:v<run>` exists at review time) — or the
    owner's first post-merge follow-up commit.
+
+**The manual-bump procedure** (for a future base move — three reads plus
+one re-bench, every edit landing together):
+
+- Read 1: the Hub tags API for the upstream tag (`curl
+  https://hub.docker.com/v2/repositories/magiccodingman/vllm-radiance/tags/<tag>`
+  — the `digest` field is the ledger value; the README carries the exact
+  shape).
+- Read 2: the registry manifest + config-blob probe (anonymous pull-scope
+  token; sha256-of-manifest-bytes must equal the Hub digest; the config's
+  `org.opencontainers.image.revision` label names the source commit).
+- Read 3: the tag↔commit law read — the upstream `release`-branch tip
+  paired with the `1.0.<n>` pipeline-IID cross-check (a `main`-only
+  movement is NOT a publish).
+- Then the on-target re-bench: the 3.1 marker set + the 3.5 re-measure gate
+  + the 6.x anchors + the 3.7 tool smoke. The bump is not done until those
+  pass on the R9700.
+
+**The issue watch** (R3 L1.4): issues #6/#12 (the HSA idle-CPU spin — one
+native thread pinning a core at idle) are OPEN; the mitigation
+`HSA_TOOLS_DISABLE_REGISTER=1` is in the pod env (the R3-Q5 adoption —
+reporter-verified on this stack lineage, no functional impact on serving,
+metrics, or GPU monitoring). The drop condition: PR #19 merge (the
+in-repo DOCS for the override) or PR #42 promotion (the experimental ROCr
+idle-spin fix into the production default) landing in a new pin — until
+then the reporter-verified mitigation IS our pin. The watch's caution
+stands with it: "do not promote the experimental runtime to a production
+default on this evidence" [98].
+
+**The release-branch cadence**: the bump trigger is the next
+`1.0.<n>`/`sha-…` pair on the upstream release line — NOT main's movement
+(main carries test-only merges that never reach an image; R3 L1.1 /
+conflict #4). Do not conflate the source `VERSION` string
+(`1.1.0-rc1.vllm0.30.0`) with the published `1.0.<n>` tag series.
+
+## The recorded alternatives (not a step)
+
+The R3 L1.5 three-stack table, kept apart on purpose (the card's own
+instruction). This section is documentation — none of it is wired in this
+ticket.
+
+- **(a) The stilldeadcode `vllm-radiance:0.9.3` base + the GGZ14 launcher
+  recipe — the SUPERSEDED base** (the round-2 Q10 ruling's record). Its
+  pin set (R2): Codeberg `df0af7cf6b…` + `stilldeadcode/vllm-radiance:0.9.3`
+  @ digest `sha256:45694209…` + the libr4d `b9e42ab-rx9` build key + the
+  `Dockerfile.ggz14.top` transcription overlay. Its measured record: the
+  Shape-A/B 0.27.1-era pins, the 137.7/416 TP1 numbers (the step-6.1
+  anchor class), the 6.09 GiB (Shape A) / 8.49 GiB (Shape B) KV rows —
+  the reference row this runbook demotes to provenance. Restoring it would
+  need the re-plan's full substance: the D11-as-replanned overlay, the D15
+  recipe, the D17 9-var env, and the `fp8_mtp.py` rewrite staging. The
+  line is deprecated + frozen upstream, and its start-time patch machinery
+  does not run against the 0.30 image (R3 L1.3).
+- **(b) The round-1 official-FP8 stock path — the owner-REJECTED
+  alternative** (the re-scope ruling: "I've dropped the official
+  checkpoint mandate"). Its evidence class (R1): the v0.33.0 stock image @
+  `sha256:4fcd39b7…`, the `Qwen/Qwen3.8-27B-FP8` checkpoint, the 2×R9700
+  25.8 tok/s c=1 anchor with issue #28649's open FP32-dequant-fallback
+  caveat, and the 0.99/2seq/MTP-k=1 envelope — the rejected-plan record.
+- **(c) The capicua25x `vllm-rocm-rdna4` degraded fallback** — the guide's
+  one-flag-swap (R2 L1.4). It runs a DIFFERENT checkpoint:
+  `Capicua25x/Qwen3.8-27B-MXFP4-Quark-RDNA4`, their own quantization pass
+  (different excludes/naming) — stock `TRITON_ATTN`, no R4D, MTP-3, vLLM
+  0.26.1-era. The degraded path IF the 0.30 image proves unrunnable on
+  target; NOT wired, NOT pinned in this ticket.
+- **(d) The stilldeadcode standalone `radiance` engine — OUT OF SCOPE**:
+  not an OpenAI-shaped surface, so it cannot sit behind the llama-swap
+  hop's contract (R2 L1.2/L1.5, R3 L1.1).
 
 ## If the owner wants a public host later (not a step)
 
