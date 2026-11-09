@@ -3,7 +3,7 @@
 # metadata on the new-chart rule, the committed dependency lock + vendored tgz,
 # the first-build image pin shape (on the pre-switch image until C02 flips it,
 # then on the 0.30 re-export with its upstream ledger mirror), the values-level
-# serveArgs recipe (D4 order, then the cf-131 D24 order), the cf-131 values
+# serveArgs recipe (D4 order, then the cf-131 D24 order, D36-amended), the cf-131 values
 # record keys + comment law, the monitoring-annotations gate, the per-chart CI
 # workflow ladder, and the C01 container surface: the thin re-export overlay
 # + its one sanctioned flash-attn layer (the D34 amendment, install source
@@ -213,9 +213,10 @@ def test_c02_spec_and_kv_values_keys_carry_the_d24_record():
         f"C02 AC8: app-template.modelPath is {app.get('modelPath')!r}, want the raw-release dir "
         f"{V.MODEL_DIR} (the round-2 Q8 ruling; the dual edit's chart side)"
     )
-    assert app.get("kvCacheDtype") == "fp8", (
-        f"C02 AC8: app-template.kvCacheDtype is {app.get('kvCacheDtype')!r}, want fp8 — the "
-        "qualified default splices into --kv-cache-dtype (D24, the compose baseline's literal)"
+    assert app.get("kvCacheDtype") == "int4_per_token_head", (
+        f"C02 AC8: app-template.kvCacheDtype is {app.get('kvCacheDtype')!r}, want "
+        "int4_per_token_head — the D36 ship default (the owner's R6-Q1 ruling) splices into "
+        "--kv-cache-dtype; fp8 is the documented toggle + the recorded fp8+R4D alternative"
     )
     assert app.get("specMethod") == "dflash", (
         f"C02 AC8: app-template.specMethod is {app.get('specMethod')!r}, want dflash (the round-2 "
@@ -252,18 +253,22 @@ def _comment_block_before(lines: list, idx: int) -> str:
 
 @c02_plane
 def test_c02_kv_cache_dtype_comment_carries_the_qualified_set():
-    """AC8 comment leg: the kvCacheDtype key's comment records the qualified
-    serving set (fp8/bf16/auto), the int4 experimental leg with its two-edit
-    prerequisites (the dtype value + the TRITON_ATTN swap) and the owner's
-    48GB-RDNA3 headroom note — the round-2 Q5 ruling's shape."""
+    """AC8 comment leg (D36-amended): the kvCacheDtype key's comment records
+    the ship default int4_per_token_head in TRITON_ATTN-only territory (the
+    per-token-head family and fp8_e5m2 — R4D refuses them at the pin), the
+    fp8/bf16/auto documented toggles as the R4D-capable set with the
+    fp8+R4D recorded alternative, the boot-config gate reference (the 3.6
+    promotion) and the owner's 48GB-RDNA3 headroom note."""
     lines = (CHART_DIR / "values.yaml").read_text().splitlines()
     idxs = [i for i, ln in enumerate(lines) if re.match(r"^\s*kvCacheDtype\s*:", ln)]
     assert idxs, "C02 AC8: no kvCacheDtype key in charts/vllm/values.yaml"
     window = " ".join(_comment_block_before(lines, i) for i in idxs)
-    for token in ("int4_per_token_head", "bf16", "TRITON_ATTN", "48"):
+    for token in ("int4_per_token_head", "fp8_e5m2", "TRITON_ATTN", "bf16",
+                  "ALTERNATIVE", "3.6", "48"):
         assert token in window, (
-            f"C02 AC8: the kvCacheDtype comment block lacks {token!r} — the qualified set + the "
-            "int4 two-edit prerequisite + the 48GB note are that key's record (D24/D27)"
+            f"C02 AC8: the kvCacheDtype comment block lacks {token!r} — the D36 shape (ship "
+            "default + TRITON-only territory, the R4D-capable toggles + recorded alternative, "
+            "the 3.6 boot-config gate reference, the 48GB note) is that key's record"
         )
 
 

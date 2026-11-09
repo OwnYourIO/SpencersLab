@@ -27,21 +27,24 @@ app-template:
   # here (values), never in a template.
   modelPath: &modelPath /models/Qwen3.8-27B-Quark-AWQ-MXFP4
 
-  # KV-cache dtype, spliced into --kv-cache-dtype. The qualified serving set
-  # at 0.30 is fp8 (the default: the compose baseline's literal + the
-  # "mandatory FP8 KV" record, R3 L2.2), bf16 / auto (the tested toggles
-  # [91]). int4_per_token_head is DOCUMENTED-EXPERIMENTAL behind an
-  # ON-TARGET qualification gate carried in this ticket (the round-2 Q5
-  # ruling, D27): R4D's baked 0.30 gate refuses per-(token,head) KV scales
-  # at startup (R3 L2.2), so the int4 leg is a two-edit switch — (1) this
-  # value to int4_per_token_head, (2) the target attention off R4D to
-  # --attention-backend TRITON_ATTN (the 0.30-verified supported value
-  # [102]; the CLI's named-backend request wins over the baked R4D seam).
-  # int4 stays NON-DEFAULT until the gate passes on target (the runbook's
-  # day-one int4 step: the two edits + the acceptance/quality/tool legs).
-  # The owner's 48GB-RDNA3 q4-headroom note (round-1 OQ3) stays ledgered
-  # for the future stock card (the round-2 Q5 ruling).
-  kvCacheDtype: &kvCacheDtype fp8
+  # KV-cache dtype, spliced into --kv-cache-dtype. SHIP DEFAULT (D36, the
+  # owner's R6-Q1 ruling "q4 default, boot at 262144"): int4_per_token_head
+  # — 16,896 B/token, the ~4 GiB attention leg at 262144 — served ONLY by
+  # TRITON_ATTN: the per-token-head family and fp8_e5m2 are TRITON_ATTN-only
+  # territory; R4D's supported list at the fork pin is
+  # auto/bfloat16/fp8/fp8_e4m3 and it refuses the per-(token,head) scales
+  # AND e5m2 at startup [171] (the D27-era refusal law survives — the
+  # fp8+R4D SHIP pairing does not). fp8 is the documented toggle (the pre-D36
+  # default: the compose baseline's literal + the "mandatory FP8 KV" record,
+  # R3 L2.2/L1.3) AND the recorded ALTERNATIVE pairing with R4D should the
+  # runbook's 3.6 quality/tool legs fail on target — the original D27 gate
+  # logic inverted on evidence; that return forces its own D31(e)-class cap
+  # ruling, fp8@262144 being arithmetically dead on this card (R6).
+  # bf16 / auto stay the tested toggles [91], R4D-capable. The D27 two-edit
+  # gate now binds the BOOT CONFIG (the 3.6 promotion — the two edits ship,
+  # no longer a non-default experiment). The owner's 48GB-RDNA3
+  # q4-headroom note (round-1 OQ3) stays ledgered.
+  kvCacheDtype: &kvCacheDtype int4_per_token_head
 
   # ROCr device index of the R9700 (D2). With the hostPath device pattern
   # the index is HOST enumeration — 0 = R9700, 1 = 8060S — so the pin is
@@ -93,15 +96,24 @@ app-template:
 
   # The D24 serve recipe on the compose-baseline ground [92] with the
   # owner-ruled Shape-B constants, the flag order contract-pinned by the
-  # test suite. --max-model-len 262144 is the round-3 Q11 ENGINE-CAP ruling
-  # — the model's native ceiling, the catalog advertisement true at the
-  # engine (only the 220000 leg moved). The ABSENCE of
-  # --kv-cache-memory-bytes is the re-measure-gate law (D24): no pool pin is
-  # verified on 0.30 at the shipped shape, so the day-one re-measure gate
-  # owns the pool and the engine's own calibration at the 0.90 util start
-  # (R3-Q2, round-3 confirmed; the recorded alternatives are the 0.85
-  # compose default and the 0.98 0.9.3-stack ceiling, not carried) rides
-  # until then.
+  # test suite (the D36 q4 package moves exactly four values: the
+  # kvCacheDtype anchor, the target-attention backend, the ssm-dtype pair,
+  # the util literal). --max-model-len 262144 is the round-3 Q11 ENGINE-CAP
+  # ruling — the model's native ceiling and, per D36, the BOOT GOAL: the
+  # catalog advertisement stays true at the engine iff this boot holds — if
+  # the boot refuses, the engine prints its estimated-max-length line [155]
+  # and the owner caps the arg at that number: a fresh D31(e)-class ruling
+  # after the refusal, the sanctioned B fall-through — the designed outcome
+  # path, not a crash class. The ABSENCE of --kv-cache-memory-bytes is the
+  # re-measure-gate law (D24): no pool pin is verified on 0.30 at the
+  # shipped shape, so the day-one re-measure gate owns the pool and the
+  # engine's own calibration rides until then. Util 0.98 is the D36 ceiling
+  # start: 0.99 is startup-dead on this card (asks 31.54 > 31.46 free
+  # [158]), 0.95 stands recorded as the conservative rung, the 0.85 compose
+  # default stays recorded. Honest boot arithmetic: the pool at 0.98 is
+  # ~3.67 GiB vs the int4 + ssm-bf16 demand ~4.93 — the 262144 boot still
+  # needs ~1.3 GiB out of the padding/graph-profiling levers or a named
+  # margin donor (D36; runbook 3.5 owns the verdict).
   # The args START with the model dir: the base image's entrypoint
   # (/opt/radiance_entrypoint.sh) execs `vllm serve "$@"` itself — a verb
   # token in the args would double it (R3 L1.3/L3.1). The list renders
@@ -122,7 +134,9 @@ app-template:
   # qualified lane runs graphed — PIECEWISE rides the env seam below), the
   # GDN dtype flags (the
   # 0.30 qualified-lane defaults — --mamba-cache-mode align is the carried
-  # lever), --enable-sleep-mode + VLLM_SERVER_DEV_MODE +
+  # lever; D36 re-lands the ssm half as --mamba-ssm-cache-dtype bfloat16,
+  # the conv half --mamba-cache-dtype stays not carried),
+  # --enable-sleep-mode + VLLM_SERVER_DEV_MODE +
   # --disable-access-log-for-endpoints (the sleep/wake + dev-route story:
   # the flag exists at 0.30 and is the documented re-enable surface,
   # runbook-owned), --override-generation-config + --chat-template (the
@@ -140,16 +154,18 @@ app-template:
     - "--max-model-len"
     - "262144"
     - "--gpu-memory-utilization"
-    - "0.90"
+    - "0.98"
     - "--max-num-batched-tokens"
     - "2560"
     - "--kv-cache-dtype"
     - *kvCacheDtype
     - "--attention-backend"
-    - "R4D"
+    - "TRITON_ATTN"
     - "--enable-prefix-caching"
     - "--mamba-cache-mode"
     - "align"
+    - "--mamba-ssm-cache-dtype"
+    - "bfloat16"
     - "--no-async-scheduling"
     - "--enable-auto-tool-choice"
     - "--tool-call-parser"

@@ -7,7 +7,8 @@ the R9700 image. I've dropped the official checkpoint mandate") and the
 round-2/round-3 batched rulings moved the shipping path. Feature folder
 `.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/` — plan of
 record `2026-11-07-cf-131-feat-vllm-fp8-official.md`, `DECISIONS.md`
-(D23–D31), `RESEARCH.md` (cited `R2/R3 L<n>.<m>` + bracketed source ids),
+(D23–D36), `RESEARCH.md` (cited `R2/R3 L<n>.<m>` + the later-round
+`R5.x`/`R6.x` section forms + bracketed source ids),
 `chunks/C05.md`. This file is C05: what to verify on the ai-gpu node after
 the branch merges and ArgoCD syncs; it documents the 0.30-fork shape over
 R3's ground. The official-FP8 stock path (round 1) and the 0.9.3 + GGZ14
@@ -20,13 +21,16 @@ thresholds) and the step-10 re-pin surfaces.
 **Citation shapes.** Bare cf-105-era references in this file (`R<n> §x`,
 `R<n> Qx`, `R<n> OQx`, `Post Research Vx`, `EXPLORE §x`, the `D`/`HR` law
 ids) resolve in the cf-105 folder's `RESEARCH.md`/`EXPLORE.md`. cf-131
-findings are the explicit `R2 L<n>.<m>` / `R3 L<n>.<m>` forms and the
+findings are the explicit `R2 L<n>.<m>` / `R3 L<n>.<m>` / `R5.x` / `R6.x`
+forms and the
 `[n]` source ids in the cf-131 `RESEARCH.md`.
 
 **Ground rules.** The cluster's only input is git — ArgoCD applies
 everything, and no step here mutates cluster objects. The sanctioned change
 class is a values-only GIT change picked up by ArgoCD's own reconciliation
-(human-run): the optional 5.2 fcfs negative proof, the 3.6 int4-gate flip,
+(human-run): the optional 5.2 fcfs negative proof, a 3.6-FAIL return to
+the recorded fp8+R4D alternative (a values edit plus the fresh cap ruling
+it forces — D36),
 and step 10's pin. Agent sessions have no pod-exec tier (EXPLORE §7), so
 every pod-internal command is operator-run through the operator's own pod
 access, and every node-side command runs on the `ai-gpu` node.
@@ -68,11 +72,16 @@ both checkpoints are public/ungated — the cf-86 ruling carries.
 TRUE-AXIS note: the catalog `limit.context` 262144 == the engine
 `--max-model-len` 262144 — the advertisement is true at the engine (the
 round-2 Q3 keep + the round-3 Q11 engine-cap ruling; the re-plan's band law
-is superseded on the record, D31). LIVE RISK one-liner: the 262144 ceiling
-at TP=1 is the owner-ruled risk class — the 0.9.3-stack "does not fit at
-TP=1" record (R2 L3.5) plus no 0.30 TP1 measurement anywhere (R3 L2.4).
-The 3.5 re-measure gate owns the pool; the 3.1b startup contingency owns the
-hard-reject class.
+is superseded on the record, D31). The D36 q4 ruling re-frames the axis
+as the q4 BOOT GOAL: it stays TRUE iff the 262144 boot holds — if the boot
+refuses, the 3.1b contingency is the SANCTIONED B fall-through (the engine
+prints its estimated-max-length line and the owner caps the engine arg at
+that number, a fresh D31(e)-class ruling). LIVE RISK one-liner: the 262144
+ceiling at TP=1 was the owner-ruled risk class — the 0.9.3-stack "does not
+fit at TP=1" record (R2 L3.5) plus no 0.30 TP1 measurement anywhere
+(R3 L2.4) — crash #4 materialized it at the fp8 shape, and the R6 round +
+the owner's q4 ruling RESOLVED the line (D36). The 3.5 re-measure gate
+owns the pool; the 3.1b startup contingency owns the refusal class.
 
 **The honest envelope (the owner's Q2 standing condition re-bound by the
 round-3 Q11 ruling; the cf-105 D4/HR3-class envelope law on this ground) —
@@ -86,9 +95,14 @@ form — the on-target run is the first datum:**
 - Shipped shape: `--max-model-len 262144` / `--max-num-seqs 3` /
   `--max-num-batched-tokens 2560` — the round-2 Q2 Shape-B seqs/chunk
   constants + the round-3 Q11 engine-cap 262144, the model's native
-  ceiling, the owner-ruled PLAN shape. Util `0.90` start (R3-Q2, round-3
-  confirmed; recorded alternatives: the 0.85 compose default and the 0.98
-  0.9.3-stack ceiling, not carried).
+  ceiling, the owner-ruled PLAN shape and (D36) the q4 BOOT GOAL — the
+  advertisement holds iff the boot holds, else 3.1b's sanctioned B
+  fall-through caps the engine arg at the printed estimate. Util `0.98`
+  start (the D36 raise of the R3-Q2 0.90 start — the pre-D36 0.90 state
+  is where the crash-#4 1.12 GiB pool datum landed): 0.99 is
+  startup-dead on this card (asks 31.54 > 31.46 free [158]), 0.98 is the
+  ceiling, 0.95 stands recorded as the conservative rung, and the 0.85
+  compose default stays recorded.
 - The 8.49 GiB KV pin is the recorded REFERENCE ROW, nothing more: the
   220000-class, 0.9.3-stack (vLLM 0.27.1-era) user-reported profile pin —
   provenance only, NO 0.30 validity (R3 L1.3/L2.4). It ships as NO pin:
@@ -97,21 +111,25 @@ form — the on-target run is the first datum:**
 - The 3.5 re-measure gate is the SOLE envelope path: no 0.30 measurement
   exists at any TP1 shape (R3 L2.4); the 0.30 TP2 Quark capacity table is
   the calibration CLASS, not the TP1 constant.
-- The LIVE RISK (the Q11 consequence, D31): at 262144 the KV pool at the
-  0.90 start may be small, or the engine may compute a degenerate pool —
-  R2 L3.5's "262144 does not fit at TP=1" record, now owner-ruled, not a
-  hypothetical. Backstops: the 40-min startup probe (a refusal is a loud,
-  GATED failure — the pod fails at startup, it does not silently
-  mis-serve), the 3.5 gate (the pool's truth + the values-only
-  `--kv-cache-memory-bytes` re-tune), and the 3.1b startup contingency
-  (the OQ13 dual-edit class).
+- The LIVE RISK (the Q11 consequence, D31) — RESOLVED by the R6 round +
+  the D36 q4 ruling: crash #4 was its materialization (the fp8 shape at
+  262144 computed a 1.12 GiB degenerate pool and died at the KV check —
+  the R2 L3.5 "does not fit at TP=1" record is now observed fact, not a
+  hypothetical), and the q4 boot config is the owner's answer. Backstops
+  unchanged: the 40-min startup probe (a refusal is a loud, GATED failure
+  — the pod fails at startup, it does not silently mis-serve), the 3.5
+  gate (the pool's truth + the values-only `--kv-cache-memory-bytes`
+  re-tune), and the 3.1b startup contingency — under D36 the sanctioned
+  engine-estimate fall-through: with the q4 floor the refusal PRINTS the
+  cap number instead of dying silent [155].
 - The true axis means the ADVERTISEMENT is true, not that the physics are:
   sessions beyond the DERIVED POOL still reject/preempt at arrival — the
   vLLM admission behavior is pool-governed, not cap-governed. A
   full-context 262144-class pool on one 32 GiB card is impossible: three
-  262144-token sessions ≈ 24 GiB of fp8 attention KV alone (the ~32
-  KiB/token class, the cf-105 R1 §3 arithmetic re-run at the shipped
-  shape), on a card whose allocatable class after the 20.4 GiB weights is
+  262144-token sessions ≈ 24 GiB of attention KV alone at the fp8 class
+  (the ~32 KiB/token, the cf-105 R1 §3 arithmetic), ≈ 12.4 GiB at the
+  shipped int4 class (the ~16.5 KiB/token [163]) — either way on a card
+  whose allocatable class after the 20.4 GiB weights is
   small. One 256k-class session is a pool question, not a cap question.
   True long-context beyond the 262144 native ceiling stays on the
   llama.cpp `qwen3.8-27b-q8-1m` rung (the R1 OQ-E ruling).
@@ -318,7 +336,7 @@ class):
 |---|---|---|
 | Entrypoint banner | the `radiance_preamble.py` preamble/banner lines | a bare vLLM banner = the wrong image is running — verify the pin (names block) |
 | No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 20-var law (D34-restored) is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
-| R4D engagement | the R4D report/selection lines: R4D target attention on the named backend, and the TRITON_ATTN drafter attention inside the spec config | R4D refused = backend/dtype drift (R4D's `validate_configuration` prints its reason and refuses rather than falling back) |
+| Target-attention engagement (the D36 re-pin — pre-D36 this row pinned the R4D report/selection lines) | the TRITON_ATTN engagement on the named backend + the `int4_per_token_head` KV info line; the GDN kernel lines STAY (the named-backend swap moves the target attention only [171]); the crash-#4 paste's `attn_*_h256_gqa6_fp8kv` prefill + decode kernel lines (5.7 MiB split-KV scratch) proved the fp8+R4D shape honored — that kernel pair is the recorded ALTERNATIVE's signature, not the shipped shape | TRITON_ATTN not engaged = backend/dtype drift — and under the int4 default an R4D-configured pod dies at startup rather than serving: R4D's `validate_configuration` prints its reason and refuses rather than falling back, its supported list at the pin being auto/bfloat16/fp8/fp8_e4m3 [171] |
 | MXFP4 W4A8 GEMM engagement | the 0.30 analog of the 0.9.3 kernel-selection marker — RECORD THE EXACT STRING from the first serve (the qualified `RADIANCE_MXFP4_W4A8=1` set) | absent = the W4A8 lane did not engage — the env set is the suspect |
 | WRONG-ENGINE absence marker | the stock "default W8A8 Block FP8 kernel config" line must NOT appear — the 16 R9700-named tuned block-FP8 config JSONs are baked (R3 L1.2), so the generic line is the wrong-engine signal | it appears = the tuned configs were not picked up — record and stop |
 | ViT backend line | `Using Flash Attention (Triton backend) for ViT model on RDNA.` — the RDNA-branch literal (rocm.py L771-773 @ `ced6857a` [139]): with the image's flash-attn install layer (C01/D34) + the restored (8)-slot var the ViT lands on the FLASH_ATTN Triton path (the D34 re-pin inverts the D33-era SDPA expectation; the 0.30 vision record class "two vision requests passed" [109] was the SDPA path's record — the FA path is the owner-accepted, CI-qualified state, R5) | ABSENCE of this line = the package missing or the var dropped — an install/var surface drift, not tuning; 3.4 is this row's gate. A bare `Using Flash Attention backend for ViT model.` = the CDNA branch (L757-763) — the arch-view drift signal: `RADIANCE_GFX_ARCH` un-spoofed to gfx1250 running AITER's Triton mha, a different, unqualified config — recorded BARRED (R5.3) |
@@ -357,18 +375,24 @@ start with the MODEL PATH (the entrypoint supplies the verb) — a
 `vllm serve` token in the args is the double-verb transcription error, the
 capture's first check.
 
-**3.1b — THE STARTUP CONTINGENCY (the OQ13 dual-edit class, the D31
-live-risk backstop — recorded, not improvised).** If the engine
-hard-rejects at startup at the 262144 ceiling — the KV-pool-degenerate
-class, R2 L3.5's "does not fit at TP=1" record materializing, and by the
-envelope's own law the failure is loud and probe-gated (1.2), never a
-silent mis-serve — then: the operator lowers `--max-model-len` on target
-to the pool-fitting class as the values dual edit (the C02 serveArgs line +
-the service twin), and records the engine-log KV triple before/after. The
-catalog/surface re-pin becomes a FRESH OWNER RULING: the catalog was
-already 262144, the contingency moves ONLY THE ENGINE ARG; the
-advertisement-following-the-engine-down question re-opens only if the
-owner wants it (the D31 record).
+**3.1b — THE STARTUP CONTINGENCY — THE SANCTIONED B FALL-THROUGH (the
+OQ13 dual-edit class, the D31 live-risk backstop — re-framed by D36:
+recorded, not improvised).** If the engine refuses at startup at the
+262144 ceiling — the KV-pool-degenerate class, and by the envelope's own
+law the failure is loud and probe-gated (1.2), never a silent mis-serve —
+then, under the shipped q4 boot config, this is the DESIGNED OUTCOME PATH,
+not a crash class: with `--mamba-ssm-cache-dtype bfloat16` the fixed
+admission floor fits (the crash-#4 silence — a zero estimate, no number —
+was the fp8/fp32-ssm shape, R6.1.2), so the refusal PRINTS the engine's
+estimated-max-length line (`estimate_max_model_len`, emitted only when a
+positive length fits [155]) — RECORD that number, it is the cap value.
+The owner rules the cap AFTER the refusal (a fresh D31(e)-class ruling)
+and the operator applies it as the values dual edit (the C02 serveArgs
+line + the service twin), recording the engine-log KV triple before/after.
+The catalog/surface re-pin follows the same ruling: the contingency moves
+ONLY THE ENGINE ARG; the advertisement-following-the-engine-down question
+re-opens only if the owner wants it (the D31 record — the 262144
+advertisement stays TRUE iff the boot holds, D36).
 
 **3.2 — In-cluster `curl` to the vLLM service.** Operator-run, from any
 machine with cluster access (read-only probe):
@@ -465,40 +489,88 @@ ships no pin.
 the C02 serveArgs util/KV-pin lines, the testlib pairs, and this
 runbook's envelope block.
 
-PASS = the shipped 262144/2560/3 plan shape is for this node (record the
-derived pool). FAIL = the values re-pin to the measured pool; and if the
-failure was a hard reject rather than a tight pool, that is the 3.1b
-contingency's class. Owner-visible at the presentation either way.
+The D36 amendment adds three NAMED INVESTIGATION legs (flagged levers —
+no prescribed edits on the runbook's authority):
 
-**3.6 — THE INT4 GATE (the round-2 Q5 ruling — in this ticket, a day-one
-step; D27).** The two 0.30 edits, as ONE values change — the operator's
-git-only path (the sanctioned 5.2-style flip): the `kvCacheDtype` values →
-`int4_per_token_head` AND the `--attention-backend TRITON_ATTN` swap in
-the C02 serveArgs (R4D's baked gate refuses per-(token,head) KV scales at
-startup; the explicit CLI-named backend wins over the baked R4D seam,
-R3 L2.2/L2.5). Commit on the ticket branch; ArgoCD's own reconciliation
-picks it up — no manual sync (sync is not a runbook step). Then the gate
-legs, in order:
+(f1) The KV-grouping/padding lever — the crash-#4 paste's new lever,
+unpriced by R6: the `[radiance] kv cache groups: size 8, 9 groups, 378
+blocks/request (upstream would pick size 5)` line + the `WARNING
+kv_cache_utils.py:1617 Add 3 padding layers, may waste at most 60.00% KV
+cache memory` warning (twice in the paste) — governed by the fork's
+`patch_kv_group_size` surface at the pin [172]. Investigate WITH the
+60%-max-waste quote; do not edit blind.
+(f2) The graph-profiling pre-tax — the paste's `gpu_worker.py:655`
+advisory (the then-shipped 0.9000 was equivalent to 0.8605 without
+CUDA-graph memory profiling; 0.9395 maintained the previous effective KV
+size; disable via `VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0`) against
+the REAL capture (`Graph capturing finished in 4 secs, took 1.26 GiB`) —
+well below R6.1.4's worst-case residual guesses. The env knob is
+values-side, DIAGNOSTIC-ONLY: PRICED NOT SHIPPED (adding it would
+re-open the 20-var env law). The advisory's raise-util half is already
+the shipped state — the D36 0.98.
+(f3) THE MODEL-LOADING-LINE ASK — the crash-#4 paste window began at
+`Available KV cache memory: 1.12 GiB` (`gpu_worker.py:640`) and did NOT
+include `Model loading took X GiB` (it prints before the KV check): the
+ask STANDS for the log TOP [160], the weights datum stays formally open.
+The bounds argument (reaching the KV check ⇒ resident ≤ ~25.9 GiB; the
+INT2 draft head at 0.33 GiB/rank corroborates the packed-load side)
+keeps hypothesis (a) favored. The optional `VLLM_LOGGING_LEVEL: "DEBUG"`
+diagnostic re-boot (values-side, removable, NOT ship shape — R6.2
+item 4) rides the same day to split the ~27.5 GiB held.
 
-1. Startup acceptance: the R4D-refusal message must NOT appear (the
-   TRITON_ATTN leg engages) and the `int4_per_token_head` KV info line
-   appears; re-record the 3.1 KV triple — the ~16 KiB/token class should
-   widen the pool (record, do not assume).
+The arithmetic this gate owns (D36, tightening R6.1.4): non-KV held
+~27.5 GiB (28.67 asked − 1.12 pool at the pre-D36 0.90 start); the pool
+at 0.98 is ~3.67 GiB vs the int4 + ssm-bf16 demand ~4.93 — the 262144
+boot still needs ~1.3 GiB out of the (f1)/(f2) levers or a named margin
+donor (the mtp-K4 lane −~2.0 at its 29/30 tool caveat, the `{"image": 1}`
+profile-day knob — recorded, neither shipped).
+
+PASS = the shipped 262144/2560/3 q4 plan shape boots and holds for this
+node (record the derived pool). FAIL = the values re-pin to the measured
+pool; and if the failure was a hard reject rather than a tight pool, that
+is the 3.1b contingency's class — under D36 the loud refusal printing the
+estimate IS the sanctioned B fall-through. Owner-visible at the
+presentation either way.
+
+**3.6 — THE INT4 GATE — BOOT-CONFIG QUALIFICATION (the round-2 Q5 ruling +
+the D36 promotion — the owner's R6-Q1 answer "A — q4 default, boot at
+262144").** The two 0.30 edits are no longer a day-one VALUES experiment:
+they ARE the shipped boot config — the `kvCacheDtype` default is
+`int4_per_token_head`, the C02 serveArgs carry `--attention-backend
+TRITON_ATTN` + `--mamba-ssm-cache-dtype bfloat16` + util 0.98, and ArgoCD
+boots the shape. There is no flip step to run anymore (the pre-D36 flip
+recipe — the sanctioned 5.2-style git-only pair + ArgoCD's own
+reconciliation, no manual sync — stands as the superseded record). The
+gate legs are unchanged and now BIND the ship path, in order:
+
+1. Startup acceptance: the boot at 262144 — the `int4_per_token_head` KV
+   info line appears and no refusal-shaped startup death occurs (an
+   R4D-configured pod under int4 would print its refusal and die —
+   R4D's supported list at the pin is auto/bfloat16/fp8/fp8_e4m3 [171]);
+   on refusal the engine PRINTS its estimated-max-length line — the 3.1b
+   sanctioned B fall-through, not a crash class. Re-record the 3.1 KV
+   triple: the ~16.5 KiB/token class should widen the pool over the
+   crash-#4 fp8 datum (record, do not assume).
 2. The 3.3 and 3.4 smokes.
 3. The acceptance-rate smoke (the 6.4 either-family counters).
 4. The quality leg: a GSM8K-class probe against the 97.6–98.4% reference
    row of the 0.9.3-era MXFP4 record [45] — the reference class NAMED,
-   recorded not claimed (int4 changes the KV path that reference ran on).
+   recorded not claimed (int4 changes the KV path that reference ran on);
+   the upstream int4 defect classes — #53086 (wrong-values, open at the
+   tag) and #48721 (the SWA-crash class our 5 sliding drafter layers sit
+   in) [168][169] — make this leg the LOCAL AUTHORITY.
 5. The tool smoke (3.7) — int4 changes the KV path the 30/30 record
    exercised, which is fp8-only [108].
 
-Gate PASS → int4 is promoted to a documented-tested toggle value (the
-values comment + this block's re-pin, values-only). Gate FAIL → int4 stays
-experimental-OFF (the status quo; the 48 GB-RDNA3 forward-looking note's
-home, the future stock card, stands). REVERT to the fp8 default after the
-gate either way — the fp8 default is the ship state; the gate is a
-measurement step, not a config flip (revert the commit, reconciliation
-restores, re-run 3.3 to confirm).
+Gate PASS → the q4 ship shape holds and the 262144 advertisement stays
+TRUE. Gate FAIL (quality/tool on target) → the fp8 + R4D pairing returns
+as the recorded ALTERNATIVE — the original D27 gate logic inverted on
+evidence — and that return forces its own D31(e)-class cap ruling,
+fp8@262144 being arithmetically dead on this card (R6). The D27-era close
+("Revert to the default after the gate either way — the fp8 default is the
+ship state; the gate is a measurement step, not a config flip") is
+SUPERSEDED — recorded, not erased. The 48 GB-RDNA3 note stays ledgered
+either way.
 
 **3.7 — THE TOOL SMOKE (the round-2 Q6 marker's closing gate — the
 TP2→TP1 transfer, R3 L3.2's confidence statement).** The
@@ -815,7 +887,7 @@ the `app-template.monitoring.annotations` gate is mis-rendered.
 
 The static coexistence law (the round-2 Q7 ruling's consequence; unchanged
 in substance from the re-plan, re-scoped here): **one engine per card.**
-The vLLM pod holds the R9700 at its 0.90-util / Shape-B footprint
+The vLLM pod holds the R9700 at its 0.98-util / Shape-B footprint
 permanently — its KV + GDN-state pool, graph workspace, and AITER cache
 are sized to be resident, not to time-share. Strata's arena must NOT be
 re-pinned onto the R9700 while the vLLM pod is warm; the llama-swap/strata

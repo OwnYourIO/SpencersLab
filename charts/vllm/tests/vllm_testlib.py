@@ -73,7 +73,7 @@ MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 # ---------------------------------------------------------------------------
 # The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
 # Every constant here is copied from the cf-131 plan of record: the round-3
-# header + DECISIONS D23-D34 + the C01/C02/C03 chunk recipes (the dated
+# header + DECISIONS D23-D36 + the C01/C02/C03 chunk recipes (the dated
 # amendments included). They are the ground truth dev must satisfy; a
 # re-pin changes the plan first.
 # ---------------------------------------------------------------------------
@@ -122,8 +122,11 @@ SPEC_CONFIG_MTP = (
 )
 
 # The D24 serve recipe (cf-131 plan of record + round-3 Q11 engine-cap
-# ruling): exact flag order and values, rendered at the SERVICE level where
-# only modelPath/rocrVisibleDevices are overridden. The recipe starts at
+# ruling, D36-amended: the int4_per_token_head anchor, the TRITON_ATTN
+# target backend, the ssm-bf16 pair after align, the 0.98 util ceiling —
+# the owner's R6-Q1 q4 boot config): exact flag order and values,
+# rendered at the SERVICE level where only modelPath/rocrVisibleDevices
+# are overridden. The recipe starts at
 # --served-model-name because flag_pairs() skips the leading non-flag token
 # — the args-START-with-the-model-path law (D24: the 0.30 entrypoint does
 # `exec vllm serve "$@"`, so a `vllm`/`serve` token would double the verb)
@@ -133,12 +136,13 @@ RECIPE_CF131 = [
     ("--tensor-parallel-size", "1"),
     ("--max-num-seqs", "3"),
     ("--max-model-len", "262144"),
-    ("--gpu-memory-utilization", "0.90"),
+    ("--gpu-memory-utilization", "0.98"),
     ("--max-num-batched-tokens", "2560"),
-    ("--kv-cache-dtype", "fp8"),
-    ("--attention-backend", "R4D"),
+    ("--kv-cache-dtype", "int4_per_token_head"),
+    ("--attention-backend", "TRITON_ATTN"),
     ("--enable-prefix-caching", None),
     ("--mamba-cache-mode", "align"),
+    ("--mamba-ssm-cache-dtype", "bfloat16"),
     ("--no-async-scheduling", None),
     ("--enable-auto-tool-choice", None),
     ("--tool-call-parser", "qwen3_coder"),

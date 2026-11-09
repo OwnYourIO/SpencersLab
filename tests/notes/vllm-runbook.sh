@@ -50,8 +50,18 @@
 # kv-offloading escape hatch, and the 8.49/137.7/416.3 recorded numbers.
 # T1/T2/T4: no structural edits (the recorded-alternatives + public-host
 # tail are non-numbered sections, T1-inert; the day-one gates ride as
-# sub-steps of groups 3/5/6; the int4 flip is a GIT-vals step and the
-# DRY_RUN capture a `kubectl get` read — both T2-sanctioned shapes).
+# sub-steps of groups 3/5/6; the 3.6-FAIL fp8+R4D return is a GIT-vals
+# step and the DRY_RUN capture a `kubectl get` read — both T2-sanctioned
+# shapes).
+# D36 amendment re-pin (2026-11-09, the q4 KV package — the owner's R6-Q1
+# ruling "A — q4 default, boot at 262144"): T3's shipped-shape dict is the
+# 13-flag q4 set (kv-cache-dtype int4_per_token_head, attention-backend
+# TRITON_ATTN, gpu-memory-utilization 0.98, the new --mamba-ssm-cache-dtype
+# bfloat16 pair); the T3/T5 needles follow — 0.90 → 0.98, the R4D
+# target-backend leg → TRITON_ATTN, the int4 gate reads as boot-config
+# qualification (the fp8+R4D pair survives in the runbook as the recorded
+# ALTERNATIVE's signature, not barred). The 20-var env law, the mm JSON and
+# the 262144 pins are untouched by D36; T1/T2/T4 unaffected.
 #
 # Designed-RED window: T3/T5 name artifacts the cf-131 waves land in order —
 # the ledger (C01), the chart constants (C02/C03), the runbook text (C05).
@@ -187,26 +197,28 @@ except yaml.YAMLError as ex:
 
 args = ((cv or {}).get("app-template") or {}).get("serveArgs") or []
 
-# The D24 shipped-shape flags the chart must carry (cf-131 C05 re-pin): the
-# round-2 Q2 Shape-B seqs/chunk constants, the round-3 Q11 engine-cap 262144
-# on the max-model-len leg (and the dflash JSON's matched draft context — the
-# same 262144, the drafter's native ceiling), the util 0.90 start (R3-Q2,
-# round-3 confirmed), the fp8 default + R4D target and the three Q7/OQ9
-# carries. The tool trio and the sampling surface are pinned by the pytest
-# render-verbatim suite (charts/vllm/tests); this dict is the envelope +
-# spec + carry cross-check between the runbook prose and the chart values.
-# str()-normalize: an unquoted 262144 / 3 / 2560 parses as a number; the
-# contract is the rendered arg string, and a util that lost its quotes
-# parses 0.9 — a drift this leg reds on purpose.
-d12 = {
+# The shipped-shape flags the chart must carry (cf-131 C05 re-pin,
+# D36-amended): the round-2 Q2 Shape-B seqs/chunk constants, the round-3 Q11
+# engine-cap 262144 on the max-model-len leg (and the dflash JSON's matched
+# draft context — the same 262144, the drafter's native ceiling), the D36 q4
+# package (int4_per_token_head + the TRITON_ATTN target + the ssm-bf16 pair,
+# util at the 0.98 ceiling), and the three Q7/OQ9 carries. The tool trio and
+# the sampling surface are pinned by the pytest render-verbatim suite
+# (charts/vllm/tests); this dict is the envelope + spec + carry cross-check
+# between the runbook prose and the chart values.
+# str()-normalize: an unquoted 262144 / 3 / 2560 parses as a number — it
+# must still compare equal to the rendered arg string; quote survival on
+# the util value is the pytest verbatim suite's law, not this leg's.
+d13 = {
     "--served-model-name": "qwen3.8-27b-vllm",
     "--tensor-parallel-size": "1",
     "--max-num-seqs": "3",
     "--max-model-len": "262144",
     "--max-num-batched-tokens": "2560",
-    "--gpu-memory-utilization": "0.90",
-    "--kv-cache-dtype": "fp8",
-    "--attention-backend": "R4D",
+    "--gpu-memory-utilization": "0.98",
+    "--kv-cache-dtype": "int4_per_token_head",
+    "--attention-backend": "TRITON_ATTN",
+    "--mamba-ssm-cache-dtype": "bfloat16",
     "--scheduling-policy": "priority",
     "--watermark": "0.05",
     # The mm limit rides the 0.30 stock JSON-dict form (the converter is
@@ -216,12 +228,12 @@ d12 = {
     "--limit-mm-per-prompt": '{"image": 4}',
     "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}',
 }
-for flag, want in d12.items():
+for flag, want in d13.items():
     got = serve_flag(args, flag)
     if got is None:
-        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe)")
+        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe, D36-amended)")
     elif str(got) != want:
-        errs.append(f"charts/vllm serveArgs {flag} is {str(got)!r}, want {want!r} (C02 D24)")
+        errs.append(f"charts/vllm serveArgs {flag} is {str(got)!r}, want {want!r} (C02 D24, D36)")
 
 # The re-measure-gate law (D24): the chart ships NO KV-pool pin — the day-one
 # gate derives the pool at the shipped shape; a --kv-cache-memory-bytes line
@@ -250,14 +262,14 @@ if "220000" not in rb:
     errs.append("the runbook never names 220000 — the recorded reference row's provenance class (the 8.49 GiB pin's 220000-class 0.9.3 origin; C05 names-block + envelope spec)")
 if not re.search(r"max-num-seqs.{0,12}\b3\b", rb):
     errs.append("the runbook never states max-num-seqs 3 (the Shape-B constant, round-2 Q2; C05 AC)")
-if "0.90" not in rb:
-    errs.append("the runbook never names the 0.90 gpu-memory-utilization start (R3-Q2, round-3 confirmed; C05 AC)")
+if "0.98" not in rb:
+    errs.append("the runbook never names the 0.98 gpu-memory-utilization start (the D36 ceiling — 0.99 startup-dead on this card; C05 AC)")
 if "fp8" not in rb:
-    errs.append("the runbook never names the fp8 KV-cache dtype default (the qualified set, D24; C05 AC)")
+    errs.append("the runbook never names fp8 — the documented KV toggle + the recorded fp8+R4D ALTERNATIVE under D36 (C05 AC)")
 if "int4_per_token_head" not in rb:
-    errs.append("the runbook never names int4_per_token_head — the round-2 Q5 ruling puts the int4 qualification gate in THIS ticket's day-one steps (D27)")
-if "R4D" not in rb:
-    errs.append("the runbook never names the R4D target attention backend (the shipped --attention-backend value, D24; C05 step-3 marker set)")
+    errs.append("the runbook never names int4_per_token_head — the D36 ship default, whose 3.6 gate is boot-config qualification binding the ship path")
+if "TRITON_ATTN" not in rb:
+    errs.append("the runbook never names the TRITON_ATTN target attention backend (the shipped --attention-backend value, D36 — R4D survives as the recorded alternative's wording; C05 step-3 marker set)")
 if "spec_decode" not in rb or "diffusion" not in rb:
     errs.append("the runbook's spec-decode counter family is not the either-family law (spec_decode_* EXPECTED at 0.30 with the diffusion_* recorded fallback, R3 L2.3 — the on-target capture closes it; C05 step-3 spec)")
 if "re-measure" not in rb.lower():
@@ -332,7 +344,7 @@ PY
   elif [ "$rc" -ne 0 ]; then
     fail "T3: runbook constants do not match the shipped values (C05 AC3 — diagnostics above)"
   fi
-  ok "T3: runbook constants match the shipped values (served name, the 12-flag 0.30 shipped-shape dict, the --kv-cache-memory-bytes ABSENCE leg, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
+  ok "T3: runbook constants match the shipped values (served name, the 13-flag D36 q4 shipped-shape dict, the --kv-cache-memory-bytes ABSENCE leg, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
 fi
 
 # --- T4: research citations resolve into RESEARCH.md ---------------------------
@@ -408,10 +420,11 @@ fi
 # cf-131 C05 named commands/constants: the 0.30 first-engine marker set +
 # the DRY_RUN-analog capture surface, the staging facts (raw release +
 # revision-pinned drafter + the both-sha marker), the day-one gates
-# (re-measure / int4 two-edit / tool smoke), the one-engine-per-card
-# coexistence law, the recorded anchor classes and the honest envelope
-# (pool-governed at the 262144 engine cap). Each assertion below is an exact
-# string the C05 chunk's step list names the runbook must ship.
+# (re-measure / int4 boot-config qualification / tool smoke), the
+# one-engine-per-card coexistence law, the recorded anchor classes and the
+# honest envelope (pool-governed at the 262144 engine cap). Each assertion
+# below is an exact string the C05 chunk's step list names the runbook must
+# ship.
 if want t5; then
   [ -f "$RUNBOOK" ] || fail "T5: $RUNBOOK missing (see T1)"
   rc=0
@@ -464,7 +477,7 @@ need("RADIANCE_QUARK_BF16_MTP", "step 2.3 (the Q8 contingency ladder's first run
 need_re(r"first[ \t-]+engine[ \t-]+gate", "step 3 (the gate is the first on-RDNA 0.30-stack proof)", re.I)
 need("Application startup complete", "step 3 (the vLLM-standard startup-complete marker)")
 need("PIECEWISE", "step 3 (the dflash lane's compilation mode — the entrypoint-appended --compilation-config value)")
-need("R4D", "step 3 (the target-attention engagement lines of the marker set)")
+need("TRITON_ATTN", "step 3 (the target-attention engagement marker — the D36 q4 package: int4 is served only by TRITON_ATTN; the R4D+fp8kv kernel pair survives in the runbook as the recorded ALTERNATIVE's signature, not a barred string)")
 need("Using Flash Attention (Triton backend) for ViT model on RDNA.", "step 3 (the ViT marker row's expected line post-D34 — the installed flash-attn Triton path on RDNA)")
 need("mxfp4 staging:", "step 2 (the init container's log-line authority — the pod log IS the staging record)")
 need("DRY_RUN", "step 3 (the analog capture: the rendered args + startup-log resolution lines diffed against the plan recipe — the R3 medium-confidence close)")
@@ -476,11 +489,13 @@ need_re(r"3\.4", "step 3.4 (the multimodal smoke's numbered step)")
 need_re(r"(?i)multimodal[^\n]{0,40}smoke", "step 3.4 (the 1-image smoke heading)")
 need("data-URL", "step 3.4 (the small image payload the operator pastes)")
 
-# The day-one gates (the round-2 Q5/Q6 rulings + the Q2 standing condition):
-# re-measure heading, the int4 gate's TWO-EDIT phrasing (dtype + TRITON_ATTN
-# swap in one passage), the tool smoke's keypress-fixture class.
+# The day-one gates (the round-2 Q5/Q6 rulings + the Q2 standing condition,
+# D36-amended): re-measure heading, the int4 gate as BOOT-CONFIG
+# QUALIFICATION (dtype + TRITON_ATTN stated together — the shipped pairing
+# that binds the ship path), the tool smoke's keypress-fixture class.
 need_re(r"(?i)re-measure gate", "the day-one gate heading (the SOLE envelope path, D29)")
-need_re(r"(?is)int4_per_token_head.{0,400}TRITON_ATTN|TRITON_ATTN.{0,400}int4_per_token_head", "the int4 gate (the two 0.30 edits stated as the prerequisite pair, D27)")
+need_re(r"(?is)int4_per_token_head.{0,400}TRITON_ATTN|TRITON_ATTN.{0,400}int4_per_token_head", "the int4 gate (the two 0.30 edits as the shipped boot config, D36)")
+need_re(r"(?i)boot-config qualification", "the 3.6 gate's D36 promotion — the gate binds the ship path, no longer a day-one flip experiment")
 need("keypress", "the tool smoke (the keypress_auto/keypress_parallel fixture cases — the synthetic wire gate, never-executes-tools)")
 need_re(r"(?i)tool[ \-]?smoke", "the tool smoke step (the round-2 Q6 marker's closing gate, D29)")
 
