@@ -73,8 +73,8 @@ the served name + four-class priority wiring byte-stable — the catalog
 make the advertisement accurate (the final rework's band law, D28, is
 superseded — D31; its LIVE risk + backstops ride the plan Risks and
 C05's runbook record).
-(incl. the class-10 GGUF rung) are untouched; the old GGUF overlay
-retires.
+The llama.cpp roster (incl. the class-10 GGUF rung) is untouched; the old
+GGUF overlay retires.
 
 ## Ground
 
@@ -399,8 +399,14 @@ from the 0.30 stack; the entrypoint combination gates as the risk
 control) · D26 the staging re-grounding (the Q8 raw release @
 `93245f7c` + the drafter revision pin `ee0cb26a` + the both-shas marker +
 the Q8 contingency ladder) · D27 the int4 qualification gate (the round-2
-Q5 ruling: the two 0.30 edits + the gate legs + the promote/stay-
-D28 the catalog surface + the
+Q5 ruling, 0.30-grounded: `int4_per_token_head` ships
+documented-experimental + non-default, with the ON-TARGET acceptance gate
+in this ticket (the D29 day-one runbook step) — the two 0.30 edits + the
+gate legs + the promote/stay-experimental outcome (gate PASS → promoted
+to the documented-tested toggle value, values-only re-pin; gate FAIL →
+stays experimental-OFF, the status quo — the 48GB-RDNA3 note's home
+stands); the fp8 default + the `bf16`/`auto` tested toggles untouched by
+the gate) · D28 the catalog surface + the
 band law — SUPERSEDED by D31 (the band half died with the round-3 Q11
 engine-cap ruling; the Q3 `limit.context` keep + the Q6 `tools: true`
 marker + the OQ9/R4 input/output marker stand) · D29
