@@ -43,7 +43,9 @@ app-template:
   # bf16 / auto stay the tested toggles [91], R4D-capable. The D27 two-edit
   # gate now binds the BOOT CONFIG (the 3.6 promotion — the two edits ship,
   # no longer a non-default experiment). The owner's 48GB-RDNA3
-  # q4-headroom note (round-1 OQ3) stays ledgered.
+  # q4-headroom note (round-1 OQ3) stays ledgered — the D38 vision drop
+  # rides the same reversibility: the serveArgs re-enable rider carries
+  # the removed mm pair verbatim for that card's restore.
   kvCacheDtype: &kvCacheDtype int4_per_token_head
 
   # ROCr device index of the R9700 (D2). With the hostPath device pattern
@@ -110,13 +112,19 @@ app-template:
   # engine's own calibration rides until then. Util 0.98 is the D36 ceiling
   # start: 0.99 is startup-dead on this card (asks 31.54 > 31.46 free
   # [158]), 0.95 stands recorded as the conservative rung, the 0.85 compose
-  # default stays recorded. Honest boot arithmetic: the pool at 0.98 is
-  # ~3.67 GiB vs the boot gate's own GROUPED print — the gate sums
-  # blocks × S × page, so the shipped shape (S=8, bs 1696 predicted,
-  # 368 blocks/request) prints ≈5.06 grouped (R7); the raw per-layer
-  # 4.93/5.63 stand as bounds, not the bar. The 262144 boot still needs
-  # ~1.40 GiB out of the padding/graph-profiling levers or a named
-  # margin donor (D36/D37; runbook 3.5 owns the verdict).
+  # default stays recorded. Honest boot arithmetic (the D38 re-pin on
+  # the boot data — D37's predicted ~3.67 landed 3.47 MEASURED): the bar
+  # is the gate's own GROUPED print — blocks × S × page, S=8, bs 1696,
+  # 368 blocks/request → 5.06 — UNCHANGED by the vision drop (the mm
+  # rehearsal contributes no KV spec, R8b.2); the raw per-layer 4.93/5.63
+  # stand as bounds, not the bar. The shipped C+f2 shape: f2's pre-tax
+  # removal moves the expected pool to 4.74 + δ, where δ ∈ [0.16, 2.1]
+  # is the removed encoder rehearsal — a phase-max competitor inside the
+  # transient-peak headroom, NOT an additive line [R8b 229]. Boot bar:
+  # δ ≥ 0.32. Only the pathological sampler/drafter-binding tail misses
+  # 5.06 by ≈0.16 — then the refusal PRINTS the fresh cap (≥243k + δ
+  # class) and the print drives the B cap ruling (D37's running path;
+  # runbook 3.5 owns the verdict).
   # The args START with the model dir: the base image's entrypoint
   # (/opt/radiance_entrypoint.sh) execs `vllm serve "$@"` itself — a verb
   # token in the args would double it (R3 L1.3/L3.1). The list renders
@@ -144,8 +152,13 @@ app-template:
   # the flag exists at 0.30 and is the documented re-enable surface,
   # runbook-owned), --override-generation-config + --chat-template (the
   # 0.30 sampling surface replaces the pair — --generation-config auto on
-  # the checkpoint-native template, R3 L1.3), --language-model-only (the
-  # vision tower serves: --limit-mm-per-prompt carries).
+  # the checkpoint-native template, R3 L1.3) — and the D38 swap:
+  # --limit-mm-per-prompt + '{"image": 4}' now DROPPED and
+  # --language-model-only SHIPPED in the carries tail instead (the owner's
+  # vision drop: the 0.858 GiB ViT tower loads unconditionally at the
+  # qwen3_5 arch, so the flag buys the removed startup REHEARSAL, never
+  # weight [R8]; the removed pair rides verbatim in the re-enable rider
+  # below).
   serveArgs: &serveArgs
     - *modelPath
     - "--served-model-name"
@@ -188,7 +201,27 @@ app-template:
     - "8000"
     # The Q7 carries, appended after the compose-baseline block (round-2
     # ruling, 0.30 spot-checked R3 L2.5): the priority-wiring engine half,
-    # the preemption headroom, the vision requirement. The 0.30 CLI parses
+    # the preemption headroom, and the vision requirement's D38
+    # replacement — --language-model-only takes the removed mm-pair slot.
+    # The flag choice is LOAD-BEARING (the image-0 trap): it zeroes every
+    # modality limit at the getter and trips the registry's text-only
+    # short-circuit [R8b 226], while a bare {"image": 0} would NOT —
+    # qwen3_5 supports {image, video} and an absent modality defaults to
+    # 999, so the warmup profiles a max-size VIDEO dummy instead: same
+    # 16,384-token class, same peak, zero saving [R8b 227]. The D32
+    # json.loads law goes UNEXERCISED at the shipped shape (a bool flag
+    # needs no JSON value) — its record stands and its text rides the
+    # rider below verbatim.
+    # 48 GB-RDNA3 RE-ENABLE RIDER (the OQ3/48GB ledger, R8b.4e): on the
+    # 48 GB card the vision carry returns as these two lines, verbatim
+    # (serveArgs list indentation applies), replacing the single token —
+    # together with the "image" input leg on the three C04 catalog rows
+    # and the C05 marker rows. A copy-back, not archaeology. The choice
+    # is BINARY: full pair or the LMO token — no `{"image": 0}`-style
+    # half-measure, the video-999 default above makes it zero-saving.
+    #     - "--limit-mm-per-prompt"
+    #     - '{"image": 4}'
+    # The removed pair's parse law, recorded with it: the 0.30 CLI parses
     # --limit-mm-per-prompt through json.loads — the value is a JSON dict,
     # single-quoted like the specConfig. The 0.27.1 fork launcher's own
     # `image=4` passthrough form is NOT the stock CLI's: it dies at
@@ -197,8 +230,7 @@ app-template:
     - "priority"
     - "--watermark"
     - "0.05"
-    - "--limit-mm-per-prompt"
-    - '{"image": 4}'
+    - "--language-model-only"
 
   global:
     nameOverride: &chartName vllm
@@ -244,7 +276,10 @@ app-template:
             pullPolicy: Always
           args: *serveArgs
           env:
-            # The D25 twenty-var main-container law, D34-restored. The entrypoint's
+            # The D25 twenty-one-var main-container law, D34-restored and
+            # D38-extended (f2 joins; the other 20 vars byte-stable, the
+            # (8)-slot FLASH var among them — decorative-but-harmless at
+            # text-only serving, D38 records it kept). The entrypoint's
             # startup gates exit 64 on retired/experimental var mixes
             # [94 L10-64] — this exact set is the qualified combination,
             # and the exact-membership test is the risk control. The
@@ -281,7 +316,9 @@ app-template:
             # WITH the image's flash-attn install layer: the var selects,
             # the package is the payload (the round-1 OQ12 posture returns
             # by owner ruling). The runtime var is chart-owned; the
-            # Dockerfile build-time flag stays inline-only.
+            # Dockerfile build-time flag stays inline-only. Kept by the
+            # exit-64 exact-set law; the ViT it gates never runs at
+            # text-only serving (D38).
             FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"
             # The entrypoint seam [94 L182-198]: auto omits --quantization
             # entirely and lets vLLM consume the checkpoint's Quark
@@ -321,6 +358,15 @@ app-template:
             # condition, runbook watch: PR #19 (docs) / PR #42 (fix
             # promotion) landing in a new pin.
             HSA_TOOLS_DISABLE_REGISTER: "1"
+            # The D38 f2 leg — the CUDA-graph memory-profiling PRE-TAX is
+            # removed from the KV sizing: the profiler no longer deducts
+            # its ~1.27 GiB estimate up front (expected pool 3.47 measured
+            # → 4.74 before δ). The graphs STILL capture at runtime and
+            # land on allocator slack AFTER the sizing — the recorded
+            # capture-bet; the engine's disabled-branch WARNING is the
+            # expected-and-priced line [R8 209], and runbook 3.5 owns the
+            # δ readout and the bet's surviving detectors.
+            VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS: "0"
           ports:
             - name: http
               containerPort: 8000

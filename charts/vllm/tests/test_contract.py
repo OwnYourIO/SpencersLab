@@ -3,7 +3,7 @@
 # metadata on the new-chart rule, the committed dependency lock + vendored tgz,
 # the first-build image pin shape (on the pre-switch image until C02 flips it,
 # then on the 0.30 re-export with its upstream ledger mirror), the values-level
-# serveArgs recipe (D4 order, then the cf-131 D24 order, D36-amended), the cf-131 values
+# serveArgs recipe (D4 order, then the cf-131 D24 order, D36/D38-amended), the cf-131 values
 # record keys + comment law, the monitoring-annotations gate, the per-chart CI
 # workflow ladder, and the C01 container surface: the thin re-export overlay
 # + its one sanctioned flash-attn layer (the D34 amendment, install source
@@ -253,7 +253,7 @@ def _comment_block_before(lines: list, idx: int) -> str:
 
 @c02_plane
 def test_c02_kv_cache_dtype_comment_carries_the_qualified_set():
-    """AC8 comment leg (D36-amended): the kvCacheDtype key's comment records
+    """AC8 comment leg (D36-amended, D38-extended): the kvCacheDtype key's comment records
     the ship default int4_per_token_head in TRITON_ATTN-only territory (the
     per-token-head family and fp8_e5m2 — R4D refuses them at the pin), the
     fp8/bf16/auto documented toggles as the R4D-capable set with the

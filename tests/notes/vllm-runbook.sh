@@ -62,6 +62,19 @@
 # qualification (the fp8+R4D pair survives in the runbook as the recorded
 # ALTERNATIVE's signature, not barred). The 20-var env law, the mm JSON and
 # the 262144 pins are untouched by D36; T1/T2/T4 unaffected.
+# D38 amendment re-pin (2026-11-09, the vision-drop + f2 package on the
+# R8/R8b ground — the owner's R8-Q1 "C — drop vision" + R8b-Q1 "C + f2",
+# DECISIONS D38): T3's shipped-shape dict drops the --limit-mm-per-prompt
+# entry (the d13 form becomes the d12 form, recounted at the shipped list;
+# the ssm leg stays) and gains the --language-model-only token-presence leg
+# plus the mm-flag ABSENCE leg; the T5 3.4/multimodal/data-URL needle trio
+# retires with the smoke — the runbook marks 3.4 RETIRED BY D38 and that
+# marker is the new leg — and the step-3 marker legs invert: the registry
+# text-only INFO line is the positive marker, the Flash-(Triton)-on-RDNA
+# and MMEncoderAttention literals the recorded ABSENCE pair (verbatim for
+# the 48 GB-RDNA3 re-enable rider). T1/T2/T4 unaffected; the env law moves
+# 20 -> 21 vars (the f2 var) — that leg lives in charts/vllm/tests, not
+# here.
 #
 # Designed-RED window: T3/T5 name artifacts the cf-131 waves land in order —
 # the ledger (C01), the chart constants (C02/C03), the runbook text (C05).
@@ -198,18 +211,22 @@ except yaml.YAMLError as ex:
 args = ((cv or {}).get("app-template") or {}).get("serveArgs") or []
 
 # The shipped-shape flags the chart must carry (cf-131 C05 re-pin,
-# D36-amended): the round-2 Q2 Shape-B seqs/chunk constants, the round-3 Q11
-# engine-cap 262144 on the max-model-len leg (and the dflash JSON's matched
-# draft context — the same 262144, the drafter's native ceiling), the D36 q4
-# package (int4_per_token_head + the TRITON_ATTN target + the ssm-bf16 pair,
-# util at the 0.98 ceiling), and the three Q7/OQ9 carries. The tool trio and
+# D36-amended, D38-recounted): the round-2 Q2 Shape-B seqs/chunk constants,
+# the round-3 Q11 engine-cap 262144 on the max-model-len leg (and the dflash
+# JSON's matched draft context — the same 262144, the drafter's native
+# ceiling), the D36 q4 package (int4_per_token_head + the TRITON_ATTN target
+# + the ssm-bf16 pair, util at the 0.98 ceiling), the two Q7 carries, and
+# the D38 shipped-shape swap. The mm pair LEFT the dict with D38's vision
+# drop (its json.loads record now rides the values re-enable rider verbatim)
+# and the D38 legs below take its place: the single-token
+# --language-model-only presence + the mm-flag absence. The tool trio and
 # the sampling surface are pinned by the pytest render-verbatim suite
 # (charts/vllm/tests); this dict is the envelope + spec + carry cross-check
 # between the runbook prose and the chart values.
 # str()-normalize: an unquoted 262144 / 3 / 2560 parses as a number — it
 # must still compare equal to the rendered arg string; quote survival on
 # the util value is the pytest verbatim suite's law, not this leg's.
-d13 = {
+d12 = {
     "--served-model-name": "qwen3.8-27b-vllm",
     "--tensor-parallel-size": "1",
     "--max-num-seqs": "3",
@@ -221,17 +238,12 @@ d13 = {
     "--mamba-ssm-cache-dtype": "bfloat16",
     "--scheduling-policy": "priority",
     "--watermark": "0.05",
-    # The mm limit rides the 0.30 stock JSON-dict form (the converter is
-    # json.loads; the 0.27.1-era `image=4` passthrough died at CLI parse on
-    # target — the DRY_RUN-analog class, fixed 2026-11-09). Byte-exact
-    # against the rendered arg string.
-    "--limit-mm-per-prompt": '{"image": 4}',
     "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}',
 }
-for flag, want in d13.items():
+for flag, want in d12.items():
     got = serve_flag(args, flag)
     if got is None:
-        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe, D36-amended)")
+        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe, D36/D38 shape)")
     elif str(got) != want:
         errs.append(f"charts/vllm serveArgs {flag} is {str(got)!r}, want {want!r} (C02 D24, D36)")
 
@@ -240,6 +252,18 @@ for flag, want in d13.items():
 # here would silently pre-empt the gate's measurement.
 if "--kv-cache-memory-bytes" in args:
     errs.append("charts/vllm serveArgs carries --kv-cache-memory-bytes — the re-measure gate owns the pool (D24); the chart ships no pin")
+
+# The D38 vision swap (the owner's R8-Q1 + R8b-Q1 rulings): the bool token
+# ships in the carries tail as a single arg — no JSON value, so it takes a
+# presence leg, not a dict entry — and the removed mm pair must stay OUT of
+# the shipped shape; it returns only with the 48 GB-RDNA3 re-enable
+# copy-back recorded in the values serveArgs comment. The flag choice is
+# load-bearing: without it the image-0 trap (video defaults to 999) keeps
+# the encoder rehearsal alive at the same peak [R8b 227].
+if "--language-model-only" not in args:
+    errs.append("charts/vllm serveArgs lacks --language-model-only — the D38 text-only token; its absence re-arms the multimodal warmup rehearsal the vision drop paid away")
+if "--limit-mm-per-prompt" in args:
+    errs.append("charts/vllm serveArgs carries --limit-mm-per-prompt — D38 dropped the mm pair; it may return only with the 48 GB-RDNA3 re-enable rider (values comment + catalog input leg + runbook rows copy back together)")
 
 # Served name also on the peer route (the FE hop lists it explicitly — peers
 # is not a blanket URL proxy) and in the runbook.
@@ -344,7 +368,7 @@ PY
   elif [ "$rc" -ne 0 ]; then
     fail "T3: runbook constants do not match the shipped values (C05 AC3 — diagnostics above)"
   fi
-  ok "T3: runbook constants match the shipped values (served name, the 13-flag D36 q4 shipped-shape dict, the --kv-cache-memory-bytes ABSENCE leg, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
+  ok "T3: runbook constants match the shipped values (served name, the 12-flag shipped-shape dict recounted at the D38 list, the --kv-cache-memory-bytes ABSENCE leg, the D38 --language-model-only presence + mm-flag absence legs, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
 fi
 
 # --- T4: research citations resolve into RESEARCH.md ---------------------------
@@ -467,27 +491,35 @@ need("RADIANCE_QUARK_BF16_MTP", "step 2.3 (the Q8 contingency ladder's first run
 # absence markers (no gguf plugin import, no stock-FP8 default-kernel line)
 # are runbook prose asserted as ABSENT in the log, not as needles in the
 # document — the present marker lines below are the pins (C05 T5 spec).
-# The ViT needle is the D34 amendment's re-pin (2026-11-09, the R5 ground):
-# with C01's flash-attn layer and the restored (8)-slot var the encoder
-# lands on the RDNA Triton path — this exact literal (rocm.py L771-773 @
-# ced6857a [R5 139]). The drift sense inverted with the install: ABSENCE of
-# this line now means the package or the var went missing (the D33-era SDPA
-# expectation is superseded, not leaked); the bare CDNA-form Flash line is
-# the arch-view drift signal the runbook records BARRED (R5.3).
+# The D38 amendment (vision drop, the owner's R8-Q1/R8b-Q1 rulings) INVERTS
+# the ViT legs: at text-only serving the ViT never runs, so the runbook
+# records the Flash-(Triton)-on-RDNA literal (rocm.py L771-773 @ ced6857a
+# [139]) and the per-layer MMEncoderAttention confirm as an ABSENCE PAIR —
+# their PRESENCE would mean the --language-model-only token was lost — and
+# the literals stay recorded verbatim for the 48 GB-RDNA3 re-enable rider
+# [R8b.4e]. The NEW positive marker is the registry's text-only INFO line
+# (registry.py L146-149 @ ced6857a, R8b 226; the R8.1c compute_mm_encoder_budget
+# WARNING correction rides the same runbook row). The bare CDNA-form Flash
+# line stays the arch-view drift signal the runbook records BARRED (R5.3),
+# that reading standing whenever the ViT runs.
 need_re(r"first[ \t-]+engine[ \t-]+gate", "step 3 (the gate is the first on-RDNA 0.30-stack proof)", re.I)
 need("Application startup complete", "step 3 (the vLLM-standard startup-complete marker)")
 need("PIECEWISE", "step 3 (the dflash lane's compilation mode — the entrypoint-appended --compilation-config value)")
 need("TRITON_ATTN", "step 3 (the target-attention engagement marker — the D36 q4 package: int4 is served only by TRITON_ATTN; the R4D+fp8kv kernel pair survives in the runbook as the recorded ALTERNATIVE's signature, not a barred string)")
-need("Using Flash Attention (Triton backend) for ViT model on RDNA.", "step 3 (the ViT marker row's expected line post-D34 — the installed flash-attn Triton path on RDNA)")
+need("All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.", "step 3 (the D38 positive text-only marker — the registry INFO-once line the boot day greps)")
+need("Using Flash Attention (Triton backend) for ViT model on RDNA.", "step 3 (the D38 ABSENCE pair, first literal — recorded in the runbook's absence-expected row, verbatim for the re-enable rider; PRESENCE of this line in the pod log = the text-only token was lost)")
+need("Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.", "step 3 (the D38 absence pair's per-layer confirm — same absent-by-design reading at text-only serving)")
 need("mxfp4 staging:", "step 2 (the init container's log-line authority — the pod log IS the staging record)")
 need("DRY_RUN", "step 3 (the analog capture: the rendered args + startup-log resolution lines diffed against the plan recipe — the R3 medium-confidence close)")
 
-# Steps 3.2-3.4: served-surface checks.
+# Steps 3.2-3.3: served-surface checks. The 3.4 leg became the retirement
+# MARKER — the D38 ruling killed the multimodal smoke (its former
+# 3.4/multimodal/data-URL needle trio retired with it) and an operator
+# walking the step list must find the death entry, not hunt for a procedure;
+# the data-URL payload text survives only inside the re-enable rider.
 need("/v1/models", "step 3.2 (the in-cluster served-name + max_model_len check)")
 need("1-token", "step 3.3 (the serve + first-token proof completion)", case=False)
-need_re(r"3\.4", "step 3.4 (the multimodal smoke's numbered step)")
-need_re(r"(?i)multimodal[^\n]{0,40}smoke", "step 3.4 (the 1-image smoke heading)")
-need("data-URL", "step 3.4 (the small image payload the operator pastes)")
+need("RETIRED BY D38", "step 3.4 (the retirement marker — the multimodal smoke must read dead, with the 3.3 serve gate alive beside it)")
 
 # The day-one gates (the round-2 Q5/Q6 rulings + the Q2 standing condition,
 # D36-amended): re-measure heading, the int4 gate as BOOT-CONFIG
@@ -545,7 +577,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the runbook step content is incomplete (C05 AC4/AC5 — the named commands, the 0.30 marker set, the day-one gates, the one-engine-per-card law, or the honest envelope are missing; diagnostics above)"
   fi
-  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set + DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
+  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set incl. the D38 text-only marker + ViT ABSENCE pair + the 3.4 retirement marker + the DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
 fi
 
 printf 'PASS: vllm runbook contract checks (%d ok)\n' "$checks"

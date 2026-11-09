@@ -81,6 +81,20 @@
 # red until C04's catalog edit lands (the capabilities key is absent on the
 # rows until then); the other arms HOLD green across the window.
 #
+# cf-131 D38 amendment re-pin (2026-11-09, the vision-drop + f2 package on
+# the R8/R8b ground — the owner's R8-Q1 "C — drop vision" + R8b-Q1 "C + f2",
+# DECISIONS D38): M3's input deep-equal flips ['text','image'] -> ['text']
+# on the three vLLM class rows — the shipped --language-model-only zeroes
+# every modality and the engine refuses image inputs at validation, so the
+# honest-grounding law that made the marker TRUE under vision-on forces it
+# FALSE now (the marker reflects what the engine serves, never the reverse).
+# Byte-stable under D38: the output leg ['text'], tools: true (tool
+# parsing/serving is text-side — the round-2 Q6 override unchanged, the 3.7
+# on-target smoke stays the marker's lease), the modelID/name/body.priority
+# /262144 legs, every non-vLLM row, and every other arm. The 48 GB-RDNA3
+# re-enable returns the "image" leg TOGETHER with the values serveArgs pair
+# + the runbook marker rows (copy-back, R8b.4e).
+#
 # Red posture (cf-83): M1, M2 and M5 are red before the C01 dev edit — the
 # sources still route Flash+Local to q3, so the strata route needles and the
 # q3/strix absence guards name the missing re-route (never a harness fault).
@@ -377,7 +391,9 @@ fi
 # shadow-free against the local llama-swap model ids (R3 Q5.2). cf-131 C04
 # re-pins the vLLM loop additively: the capabilities marker (input/output —
 # the round-1 OQ9/R4 carry; tools — the round-2 Q6 override) and the
-# true-axis record below; the context assert itself stays byte-verbatim.
+# true-axis record below; cf-131 D38 re-pins the input leg to text-only
+# (the owner's vision-drop ruling — see the suite header), the context
+# assert itself stays byte-verbatim.
 if want m3; then
   [ -f "$CAT" ] || fail "M3[HOLD]: $CAT missing"
   cat >"$TMP/catalog.js" <<'JS'
@@ -420,6 +436,10 @@ for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flas
 // gains the capabilities marker (round-1 OQ9/R4 input/output + round-2 Q6
 // tools: true, the 0.30 stack's own 30/30 tool record with its TP2-only
 // and mtp-29/30 caveats — the runbook's on-target tool smoke closes it).
+// cf-131 D38 (the owner's R8-Q1 vision-drop ruling): the input leg goes
+// text-only — the shipped --language-model-only makes the engine refuse
+// image inputs, and the honest-grounding law forces the marker to what the
+// engine serves; tools: true STAYS (tool parsing/serving is text-side).
 const capEq = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
 for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
   const e = cur[k];
@@ -429,7 +449,7 @@ for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1]
   if (!e.body || e.body.priority !== prio) errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
   const caps = e.capabilities || {};
-  if (!capEq(caps.input, ['text', 'image'])) errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text","image"] (cf-131 C04 — the 0.30 stack serves vision: records [109] + [91])`);
+  if (!capEq(caps.input, ['text'])) errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text"] (cf-131 D38 — the shipped --language-model-only makes the engine refuse image inputs at validation: the text-only marker per DECISIONS D38, the owner's R8-Q1 vision-drop ruling)`);
   if (!capEq(caps.output, ['text'])) errs.push(`${k}: capabilities.output is ${JSON.stringify(caps.output)}, want ["text"] (cf-131 C04)`);
   if (caps.tools !== true) errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true (cf-131 round-2 Q6 override — the tools marker on the shipped dflash lane)`);
 }
@@ -456,7 +476,7 @@ ids = model_ids(chart.get("config") or {})
 ids |= model_ids((svc.get("llama-swap") or {}).get("config") or {})
 assert "qwen3.8-27b-vllm" not in ids, "qwen3.8-27b-vllm is a local model id in the chart or gpu-ai overlay config"
 PY
-  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, body.priority 5/1/9, the 262144 context on the TRUE axis (catalog == engine cap, cf-131 round-2 Q3 + round-3 Q11) and the capabilities marker (input [text, image], output [text], tools true — cf-131 C04 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
+  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, body.priority 5/1/9, the 262144 context on the TRUE axis (catalog == engine cap, cf-131 round-2 Q3 + round-3 Q11) and the capabilities marker (input [text] + output [text] + tools true — cf-131 C04, D38-amended: the owner's vision-drop ruling makes the text-only marker the honest one, the tools leg text-side and unchanged); the peer wire name is shadow-free (R3 Q5.2)"
 fi
 
 # --- M4: serving-fact cross-check (AC8) -------------------------------------------

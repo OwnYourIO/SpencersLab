@@ -7,7 +7,7 @@ the R9700 image. I've dropped the official checkpoint mandate") and the
 round-2/round-3 batched rulings moved the shipping path. Feature folder
 `.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/` — plan of
 record `2026-11-07-cf-131-feat-vllm-fp8-official.md`, `DECISIONS.md`
-(D23–D36), `RESEARCH.md` (cited `R2/R3 L<n>.<m>` + the later-round
+(D23–D38), `RESEARCH.md` (cited `R2/R3 L<n>.<m>` + the later-round
 `R5.x`/`R6.x` section forms + bracketed source ids),
 `chunks/C05.md`. This file is C05: what to verify on the ai-gpu node after
 the branch merges and ArgoCD syncs; it documents the 0.30-fork shape over
@@ -167,9 +167,11 @@ pass the C02 startup probe (`/health`, 60 s initial delay + 15 s × 160
 failures — the 40-minute envelope, D18). The pod pulls the rolling `:main`
 and `docker-build.yaml`'s post-merge run is the build authority for its
 contents (cf-77): the D34 flash-attn layer reaches the pod only through
-that build — a pod whose pull predates it runs the pre-layer image, so
-the 3.1 ViT marker and the 3.4 install gate bind against the post-build
-pull, not the merge instant.
+that build — a pod whose pull predates it runs the pre-layer image. Post
+D38 this ordering is RECORDS-ONLY: the layer is decorative at text-only
+serving, the 3.4 install gate it fed is retired, and the step-3 ViT rows
+read ABSENCE-expected — the positive step-3 marker is the registry
+text-only INFO line.
 
 **1.1 — Pod lands, node is ai-gpu.**
 
@@ -337,11 +339,12 @@ class):
 | Marker | Expected | If missing / wrong |
 |---|---|---|
 | Entrypoint banner | the `radiance_preamble.py` preamble/banner lines | a bare vLLM banner = the wrong image is running — verify the pin (names block) |
-| No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 20-var law (D34-restored) is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
+| No exit-64 gate trip | the entrypoint's startup gates hard-exit 64 on retired/experimental var combinations [94 L10-64]; the D25 21-var law (D34-restored, D38-extended) is gate-clean, so NO exit-64 appears | an exit-64 = the pod env drifted from the qualified combination — the env block is the values-side fix |
 | Target-attention engagement (the D36 re-pin — pre-D36 this row pinned the R4D report/selection lines) | the TRITON_ATTN engagement on the named backend + the `int4_per_token_head` KV info line; the GDN kernel lines STAY (the named-backend swap moves the target attention only [171]); the crash-#4 paste's `attn_*_h256_gqa6_fp8kv` prefill + decode kernel lines (5.7 MiB split-KV scratch) proved the fp8+R4D shape honored — that kernel pair is the recorded ALTERNATIVE's signature, not the shipped shape | TRITON_ATTN not engaged = backend/dtype drift — and under the int4 default an R4D-configured pod dies at startup rather than serving: R4D's `validate_configuration` prints its reason and refuses rather than falling back, its supported list at the pin being auto/bfloat16/fp8/fp8_e4m3 [171] |
 | MXFP4 W4A8 GEMM engagement | the 0.30 analog of the 0.9.3 kernel-selection marker — RECORD THE EXACT STRING from the first serve (the qualified `RADIANCE_MXFP4_W4A8=1` set) | absent = the W4A8 lane did not engage — the env set is the suspect |
 | WRONG-ENGINE absence marker | the stock "default W8A8 Block FP8 kernel config" line must NOT appear — the 16 R9700-named tuned block-FP8 config JSONs are baked (R3 L1.2), so the generic line is the wrong-engine signal | it appears = the tuned configs were not picked up — record and stop |
-| ViT backend line | `Using Flash Attention (Triton backend) for ViT model on RDNA.` — the RDNA-branch literal (rocm.py L771-773 @ `ced6857a` [139]): with the image's flash-attn install layer (C01/D34) + the restored (8)-slot var the ViT lands on the FLASH_ATTN Triton path (the D34 re-pin inverts the D33-era SDPA expectation; the 0.30 vision record class "two vision requests passed" [109] was the SDPA path's record — the FA path is the owner-accepted, CI-qualified state, R5) | ABSENCE of this line = the package missing or the var dropped — an install/var surface drift, not tuning; 3.4 is this row's gate. A bare `Using Flash Attention backend for ViT model.` = the CDNA branch (L757-763) — the arch-view drift signal: `RADIANCE_GFX_ARCH` un-spoofed to gfx1250 running AITER's Triton mha, a different, unqualified config — recorded BARRED (R5.3) |
+| Text-only serving marker (the D38 NEW positive step-3 line) | the INFO-once `All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.` (registry.py L146-149 @ `ced6857a`, R8b 226) — the shipped `--language-model-only` zeroes every modality limit at the getter and trips the registry's text-only short-circuit, so the encoder rehearsal never runs. R8b.1 correction on the record: the `compute_mm_encoder_budget` WARNING that R8.1c predicted does NOT fire on this path (the whole MultiModalBudget build is skipped before it) — the INFO is the line the boot day greps | absent = `--language-model-only` lost from the serveArgs — the 3.1a args diff localizes; a bare `{"image": 0}` restore is the known WRONG shape (the video-999 default keeps the encoder rehearsal alive on a max-size VIDEO dummy with this line absent — the image-0 trap, R8b q1) |
+| ViT backend lines — ABSENCE-EXPECTED (the D38 inversion of the D34-era row) | both the RDNA FA literal `Using Flash Attention (Triton backend) for ViT model on RDNA.` (rocm.py L771-773 @ `ced6857a` [139]) and the per-layer `Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.` confirm are ABSENT BY DESIGN at text-only serving — the ViT never runs, so absence IS the shipped state. The drift reading INVERTS: a Flash/Triton-ViT line now means the `--language-model-only` flag was LOST — record and stop. The two literals stay recorded verbatim here for the 48 GB-RDNA3 re-enable rider (R8b.4e): together with the C02 serveArgs pair and the C04 `input` leg they copy back, and this row's expectation flips to PRESENT | the PRESENCE of either literal = the serveArgs moved (3.1a). A bare `Using Flash Attention backend for ViT model.` = the CDNA branch (L757-763) — the arch-view drift signal: `RADIANCE_GFX_ARCH` un-spoofed to gfx1250 running AITER's Triton mha, a different, unqualified config — recorded BARRED (R5.3), that reading standing whenever the ViT runs |
 | `Mamba cache mode` | align | drift = the serveArgs moved — 3.1a diff |
 | Spec-family registration | the `spec_decode_*` metric family EXPECTED at 0.30 (dflash rides the stock V2 dflash2 path, R3 L2.3); the `diffusion_*` family is the RECORDED fallback assertion — which one registers is what the capture closes | neither family = the speculative config did not load |
 | KV triple | `Available KV cache memory` / `GPU KV cache size` / `Maximum concurrency` — record VERBATIM (the 3.5 re-measure gate's input; no pre-registered target, the gate derives it) | triple absent = boot died before the pool — 1.2/3.1b |
@@ -395,11 +398,14 @@ The catalog/surface re-pin follows the same ruling: the contingency moves
 ONLY THE ENGINE ARG; the advertisement-following-the-engine-down question
 re-opens only if the owner wants it (the D31 record — the 262144
 advertisement stays TRUE iff the boot holds, D36). D37 promotes this row
-to THE RUNNING PATH (the boot-now / B-on-the-print ruling): with the
-grouped 5.06 bar the 262144 attempt is EXPECTED to refuse unless f2 plus
-a donor recover ~1.40 GiB — so the printed estimate (≈171k predicted at
-S=8, a prediction not a promise) is the cap-ruling source and the route
-to walk, not a failure to dodge.
+to THE RUNNING PATH (the boot-now / B-on-the-print ruling); D38 ships
+the donor package that ruling anticipated — f2 + the vision drop,
+expected pool 4.74 + δ against the grouped 5.06 bar (the 3.5 f2 row
+owns the δ readout) — so the 262144 attempt now clears UNLESS the
+pathological sampler/drafter-binding tail misses it by ≈0.16; there the
+printed estimate (the C+f2 print law: ≥243k + δ, a prediction not a
+promise) is the cap-ruling source and the route to walk, not a failure
+to dodge.
 
 **3.2 — In-cluster `curl` to the vLLM service.** Operator-run, from any
 machine with cluster access (read-only probe):
@@ -437,43 +443,41 @@ If it fails: the weights loaded but decode dies — the recipe runs graphed
 kernel lanes on gfx1201 (report the log lines; the software-maturity
 class).
 
-**3.4 — Multimodal 1-image smoke.** Requirement 3's owner-visible proof
-under the 0.30 stack — the vision tower serves unquantized (the
-`{"image": 4}` limit — the 0.30 CLI's JSON-dict form, its
-`--limit-mm-per-prompt` converter is json.loads — + the 0.30 vision
-records). A tiny data-URL image (1×1
-PNG):
+**3.4 — RETIRED BY D38: the multimodal 1-image smoke (the vision-drop
+ruling).** Requirement #3's owner-visible proof DIES WITH VISION by the
+owner's own ruling (R8-Q1 "C — drop vision"; DECISIONS D38): the shipped
+`--language-model-only` makes the engine refuse image inputs at
+validation and the catalog `input.image` marker is FALSE. DO NOT RUN a
+multimodal smoke — an image request is REFUSED at input validation BY
+DESIGN and the refusal proves nothing about the install. The FA
+crash-gate class of crash #2 is
+NO LONGER REACHABLE: 3.4 was the first-multimodal-request DETECTOR for
+the D34/D35 flash-attn install + the (8)-slot var surfaces, and at
+text-only serving no request can ever reach the ViT path. The D33–D35
+records above stand as history — record, don't erase: the install layer
+and the var are DECORATIVE-BUT-HARMLESS (C01's dated line; the var stays
+in the 21-var law), and R5-Q2 (the crash-#2a `ValueError:
+total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` provenance) stays OPEN with
+its crash class now permanently unreachable. 3.3 the 1-token completion
+STAYS as the serve gate. The `TRITON_ATTN` encoder-pin future-performance
+alternative (R4.5(c)) rides the re-enable below, gated on its own
+vision smoke.
 
-```
-curl -sS http://127.0.0.1:8000/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{"model":"qwen3.8-27b-vllm","max_tokens":16,"messages":[{"role":"user","content":[{"type":"text","text":"Reply with the single word: ok"},{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="}}]}]}'
-```
-
-Expected: HTTP 200 + a completion — the multimodal model, no
-text-only stripping.
-If it fails: the ViT leg — the crash-#2b ImportError is CLOSED by the
-install (D34): with the image's flash-attn layer + the restored var the
-`fa_utils.py` L51-52 tail resolves, so if
-`ImportError: ROCm platform requires upstream flash-attn to be installed.`
-PERSISTS post-build, the layer did not land: record and stop. The
-crash-#2a `ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` stays
-listed as the R5-Q2 UNATTRIBUTED trace — its raiser string exists in no
-reachable source of this stack and no install candidate carries such a
-guard (resurrection risk LOW per R5.1: the Triton port's grid shape
-structurally cannot overflow the AMD caps); its provenance is an open
-owner question, not a named mitigation leg. NO CUDA-graph-disable leg:
-encoder CUDA graphs are default-OFF under the shipped
-`{"cudagraph_mode":"PIECEWISE"}` law (compilation.py L550 [142]) — nothing
-to disable, crash #3's mitigation surface is MOOT (R5 priced option (d′)
-and rejected it on that evidence — recorded retirement). The documented
-future performance alternative stays the `TRITON_ATTN` encoder-pin class
-(R4.5(c)), gated on its own on-target vision smoke. This smoke IS the
-install's crash-gate and proves THREE things at once: the 3.1
-Flash-(Triton)-on-RDNA marker line, the no-ImportError/no-ValueError
-multimodal success at `{"image": 4}`, and the ViT numerical sanity of the
-padded-Triton port (head_dim 72 → 128-wide tiles — correctness
-qualified-for-CI, performance NOT claimed, R5 Implications).
+48 GB-RDNA3 re-enable rider (R8b.4e): the restore is a copy-back across
+three surfaces — the C02 values.yaml serveArgs comment carries the
+removed `--limit-mm-per-prompt` + `'{"image": 4}'` pair VERBATIM with
+its D32-era parse law (the 0.30 CLI parses the flag through json.loads —
+a single-quoted JSON dict; the 0.27.1 launcher's `image=4` passthrough
+dies at argument parse, observed on-target), the C04 catalog rows'
+`input` leg returns to `["text", "image"]`, and this step's smoke + the
+step-3 ViT marker row return — the literals are recorded verbatim in
+that row. The restored smoke shape: the `{"image": 4}` limit, a tiny
+data-URL 1×1-PNG request, HTTP 200 + completion expected with no
+text-only stripping, and the 3.1 Flash-(Triton)-on-RDNA marker row
+expected PRESENT again (absence = package or var drift — the D34-era
+reading returns). NEVER restore with a partial zeroing: `{"image": 0}`
+alone leaves video at its 999 default and the warmup profiles a
+max-size VIDEO dummy instead — the image-0 trap, zero saving (R8b q1).
 
 **3.5 — THE DAY-ONE RE-MEASURE GATE (the owner's Q2 standing condition —
 the SOLE envelope path at 0.30, R3 L2.4 — re-bound by the Q11 ruling to
@@ -522,15 +526,32 @@ by X%`; 368 blocks/request ⇒ prefill-checkpoint-blocks 0 (374 ⇒ 1) —
 closes R6's blind spot. The force-S alternatives F1-1..F1-4 are
 recorded-priced-not-shipped (R7.5 + the R7.3(e) S-sweep: no legal S boots
 262144, max recovery 0.021 GiB paid in 69 block tables).
-(f2) The graph-profiling pre-tax — the paste's `gpu_worker.py:655`
-advisory (the then-shipped 0.9000 was equivalent to 0.8605 without
-CUDA-graph memory profiling; 0.9395 maintained the previous effective KV
-size; disable via `VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0`) against
-the REAL capture (`Graph capturing finished in 4 secs, took 1.26 GiB`) —
-well below R6.1.4's worst-case residual guesses. The env knob is
-values-side, DIAGNOSTIC-ONLY: PRICED NOT SHIPPED (adding it would
-re-open the 20-var env law). The advisory's raise-util half is already
-the shipped state — the D36 0.98.
+(f2) The graph-profiling pre-tax — **SHIPPED UNDER D38**: the row
+re-pins from advisory-quote to shipped-shape readout.
+`VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS: "0"` joins the main-container
+env law (the 20-var exact set becomes the 21-var law — the C02 pair);
+the PRICED-NOT-SHIPPED status ENDS. The turn-off adds the FULL estimate
+to the check-time pool (~1.27 at this capture set — the `gpu_worker.py:655`
+advisory's disabled half and the `Graph capturing finished in 4 secs,
+took 1.26 GiB` real capture stand as the shape record), NOT
+"estimate − real": the graphs STILL capture at runtime and land on
+allocator slack AFTER the KV sizing — the recorded capture-bet. The
+δ-READOUT LAW: the boot prints `Available KV cache memory: X`; the C+f2
+pool decomposes X = 3.47 (the measured D36-combo pool) + ~1.27 (f2,
+deterministic) + δ, so δ = X − 3.47 − 1.27 = X − 4.74, where δ ∈ [0.16,
+2.1] is the removed encoder rehearsal — a phase-max competitor inside
+the transient-peak headroom, NOT additive [R8b 229]; ONE boot line
+settles it. The BARS: expected pool 4.74 + δ vs the grouped 5.06 wants
+δ ≥ 0.32 (the plain check X ≥ 5.06); the full-session admission
+(0.95·pool ≥ 5.06) wants δ ≥ 0.59 (X ≥ 5.33) — likely with f2, not
+certain. The engine's disabled-branch WARNING — `CUDA graph memory is
+not accounted for during KV cache allocation, which may require lowering
+--gpu-memory-utilization to avoid OOM` — is the EXPECTED-AND-PRICED line
+of the shipped bet [R8 209]. Surviving detectors of the bet, 3.4
+retired: the boot-day WARNING/δ readout + the first long session — f2's
+honest residual risk, on the record; the f1 marker pair is UNAFFECTED
+(R8b.2) and the f4 host datum carries. The advisory's raise-util half is
+already the shipped state — the D36 0.98.
 (f3) THE MODEL-LOADING-LINE ASK — the crash-#4 paste window began at
 `Available KV cache memory: 1.12 GiB` (`gpu_worker.py:640`) and did NOT
 include `Model loading took X GiB` (it prints before the KV check): the
@@ -545,28 +566,41 @@ sampled during the load window (R6.2 item 5): host-side ground truth of
 the held-vs-pool split for the f3 ledger. Human-run — the repo's
 no-agent-pod-exec law; no agent tier grants it and none is asked.
 
-The arithmetic this gate owns (the D37 gate-bar correction on D36's
-R6.1.4 tightening): non-KV held ~27.5 GiB splits as resident ~21–22
-(weights + HIP context) plus ~5–6 GiB of STARTUP-REHEARSAL INSURANCE —
-the dummy 262k + 4-image profiling peak, the graph capture 1.26 and the
-estimate pre-tax ~1.27 — which the engine deducts from the pool before
-sizing it and keeps deducted (the insurance-vs-resident ledger, D37's
-answer to the owner's space question); the pool at 0.98 is ~3.67 GiB vs
-the gate's own GROUPED print ~5.06 GiB (S=8, predicted bs 1696, 368
-blocks/request — D36's raw 4.93/5.63 stand as the BOUNDS); the 262144
-boot still needs ~1.40 GiB out of the (f1)/(f2) levers or a named margin
-donor (the mtp-K4 lane −~2.0 at its 29/30 tool caveat, the `{"image": 1}`
-profile-day knob — recorded, neither shipped); f2 alone is provably ~0.12
-short (3.67 + 1.27 = 4.94 < 5.06): it converts the refusal from silent
-to printed, not to booted.
+The arithmetic this gate owns (the D38 re-pin ON THE BOOT DATA — D37's
+insurance-vs-resident ledger stands as amended): the shipped D36-combo
+boot printed needed 5.06 GiB / available 3.47 GiB / estimated maximum
+model length 164,512 — requested ceil(31.86·0.98) = 31.22 ⇒ held
+≈ 27.75 — splitting as resident ~21–22 (weights incl. the PERMANENT
+0.858 GiB ViT tower — the vision drop frees insurance, never the tower
+[R8] — plus HIP context) and ~5–6 GiB of STARTUP-REHEARSAL INSURANCE
+the engine deducts before sizing: the profiling-dummy peak (pure-LLM
+dummy + drafter propose + sampler at 2560 tokens — 262144 lives only in
+the check formula [R8b.1] — plus, pre-D38, the mm encoder's one max-item
+rehearsal), the graph estimate pre-tax ~1.27. The D38 shape ships TWO
+insurance legs off that ledger: f2 returns the full ~1.27, and
+`--language-model-only` removes the encoder rehearsal (δ ∈ [0.16, 2.1],
+phase-max, not additive — the f2 row owns the δ readout) — expected
+pool 4.74 + δ vs the GROUPED bar 5.06 (S=8, bs 1696, 368 blocks/request
+— the bar UNCHANGED by the vision drop, R8b.2; the raw per-layer
+4.93/5.63 stand as BOUNDS; D37's predicted ~3.67 landed 3.47 measured).
+Boot bar δ ≥ 0.32; the pathological sampler/drafter-binding tail misses
+5.06 by ≈0.16 — there the 262144 boot still refuses and PRINTS the
+fresh cap: the print law at the C+f2 pool class is ≥243k + δ (f2 alone
+re-printed ≈243k at the 4.74 pool; δ moves it up), and the print drives
+the B cap ruling exactly as D37 ruled. Donor rows retired on evidence:
+D36's `{"image": 1}` profile-day knob is RETIRED by R8's one-dummy law
+(the warmup profiles ONE maximum-feature-size dummy whatever the limit
+— 0 GiB freed), and the mtp-K4 lane (−~2.0 at its 29/30 tool caveat)
+stays the named-not-shipped donor.
 
 PASS = the shipped 262144/2560/3 q4 plan shape boots and holds for this
 node (record the derived pool). FAIL = the values re-pin to the measured
 pool; and if the failure was a hard reject rather than a tight pool, that
 is the 3.1b contingency's class — under D37 the loud refusal printing the
 estimate is the OWNER-RULED RUNNING PATH (the boot-now / B-on-the-print
-ruling: record the printed number — R7 predicts ≈171k at S=8, a
-prediction not a promise — the owner caps the engine arg there as a fresh
+ruling: record the printed number — at the shipped C+f2 shape the print
+law is ≥243k + δ (R8b), a prediction not a promise — the owner caps the
+engine arg there as a fresh
 D31(e)-class ruling), not a failure to dodge. Owner-visible at the
 presentation either way.
 
@@ -591,7 +625,8 @@ B fall-through BEFORE these legs run), in order:
    sanctioned B fall-through, not a crash class. Re-record the 3.1 KV
    triple: the ~16.5 KiB/token class should widen the pool over the
    crash-#4 fp8 datum (record, do not assume).
-2. The 3.3 and 3.4 smokes.
+2. The 3.3 smoke (the 3.4 vision smoke retired with D38 — no separate
+   vision-quality sub-leg existed here to retire).
 3. The acceptance-rate smoke (the 6.4 either-family counters).
 4. The quality leg: a GSM8K-class probe against the 97.6–98.4% reference
    row of the 0.9.3-era MXFP4 record [45] — the reference class NAMED,

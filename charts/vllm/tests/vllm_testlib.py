@@ -73,7 +73,7 @@ MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 # ---------------------------------------------------------------------------
 # The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
 # Every constant here is copied from the cf-131 plan of record: the round-3
-# header + DECISIONS D23-D36 + the C01/C02/C03 chunk recipes (the dated
+# header + DECISIONS D23-D38 + the C01/C02/C03 chunk recipes (the dated
 # amendments included). They are the ground truth dev must satisfy; a
 # re-pin changes the plan first.
 # ---------------------------------------------------------------------------
@@ -122,9 +122,11 @@ SPEC_CONFIG_MTP = (
 )
 
 # The D24 serve recipe (cf-131 plan of record + round-3 Q11 engine-cap
-# ruling, D36-amended: the int4_per_token_head anchor, the TRITON_ATTN
-# target backend, the ssm-bf16 pair after align, the 0.98 util ceiling —
-# the owner's R6-Q1 q4 boot config): exact flag order and values,
+# ruling, D36-amended — the int4_per_token_head anchor, the TRITON_ATTN
+# target backend, the ssm-bf16 pair after align, the 0.98 util ceiling,
+# the owner's R6-Q1 q4 boot config — and D38-amended: the vision drop
+# swaps the mm pair for the --language-model-only token, 45 -> 44):
+# exact flag order and values,
 # rendered at the SERVICE level where only modelPath/rocrVisibleDevices
 # are overridden. The recipe starts at
 # --served-model-name because flag_pairs() skips the leading non-flag token
@@ -156,35 +158,61 @@ RECIPE_CF131 = [
     # the Q7 carries appended after the compose-baseline block (round-2):
     ("--scheduling-policy", "priority"),
     ("--watermark", "0.05"),
-    # The 0.30 stock CLI's --limit-mm-per-prompt converter is json.loads:
-    # the value is a JSON dict, single-quoted in YAML so the braces survive
-    # to the rendered arg. The 0.27.1 fork launcher's `image=4` passthrough
-    # form is NOT the stock CLI's — it dies at CLI parse, not at runtime
-    # (verified on target at the first boot, 2026-11-09 transcription fix).
-    ("--limit-mm-per-prompt", '{"image": 4}'),
+    # The D38 swap (the owner's R8-Q1 "C — drop vision" + R8b-Q1 "C + f2"):
+    # the bool token ships IN PLACE OF the mm pair. The flag choice is
+    # load-bearing (the image-0 trap): a bare {"image": 0} leaves qwen3_5's
+    # other supported modality at its 999 default and the warmup profiles a
+    # max-size VIDEO dummy — same peak, zero saving; --language-model-only
+    # zeroes every modality limit at the getter and trips the registry's
+    # text-only short-circuit [R8 201, R8b 226-227].
+    # 48 GB-RDNA3 RE-ENABLE RIDER (the values serveArgs comment is the
+    # authority — a copy-back, not archaeology [R8b.4e]): the pair returns
+    # verbatim as
+    #     ("--limit-mm-per-prompt", '{"image": 4}'),
+    # replacing this token, together with the "image" input leg on the
+    # three C04 catalog rows and the C05 marker rows. Its parse law rides:
+    # the 0.30 stock CLI parses --limit-mm-per-prompt through json.loads —
+    # a single-quoted JSON dict so the braces survive to the rendered arg;
+    # the 0.27.1 fork launcher's `image=4` passthrough is NOT the stock
+    # CLI's — it dies at CLI parse (verified on target at the first boot).
+    ("--language-model-only", None),
 ]
 
-# The D24 drop list — AC7's absence side. Each of these rode the cf-105
-# recipe and must be GONE from the 0.30 render, not merely unreferenced.
+# The D24 drop list — AC7's absence side. Each entry must be GONE from the
+# shipped render, not merely unreferenced. Two classes among the D24-era
+# six: the cf-105 trio at the top rode that recipe and died with the D24
+# rewrite (shipped, then dropped); the three after it are never-shipped
+# D24-era named bars — absent from every shipped recipe, the bar IS their
+# whole contract. The list INVERTS on the D38 pair,
+# the same shape the DROPPED_ENV_CF131 comment recorded for D34:
+# --language-model-only went OUT (cf-105 rode it, D24 dropped it, the
+# owner's vision ruling ships it again — its LOSS fails the recipe-verbatim
+# equality above), --limit-mm-per-prompt came IN (the D38 drop — its
+# presence is the drift the values re-enable rider bars until the
+# 48 GB-RDNA3 card restores the pair).
 DROPPED_FLAGS_CF131 = (
     "--enforce-eager",
     "--enable-sleep-mode",
     "--disable-access-log-for-endpoints",
-    "--language-model-only",
     "--kv-cache-memory-bytes",   # the re-measure-gate law (D24): the chart ships NO pool pin
     "--mamba-cache-dtype",
     "--override-generation-config",
+    "--limit-mm-per-prompt",
 )
 
-# The D25 20-var main-container env law, D34-restored: the OQ12 ViT var is
-# back at its (8) slot because the image now carries the flash-attn package
-# it binds — C01's pip layer ports vLLM's own official gfx1250 recipe.
-# While the package was missing, setting the var crashed the first
-# multimodal request with an ImportError — D33's drop was right then, and
-# the owner's install ruling overturned it. The exact set — the
-# entrypoint's exit-64 combination gates make any var drift a boot
-# failure, so equality IS the risk control. ROCR_VISIBLE_DEVICES splices
-# from the service values key, the rest are literal.
+# The D25 21-var main-container env law, D34-restored and D38-extended:
+# f2's VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS joins at the tail (the
+# CUDA-graph pre-tax comes off the KV sizing; the graphs still capture at
+# runtime and land on allocator slack — the recorded capture-bet, the
+# engine's disabled-branch WARNING expected-and-priced [R8 209]). The
+# other 20 vars are byte-stable — including the (8)-slot OQ12 ViT var:
+# restored at D34 because the image carries the flash-attn package it
+# binds, kept by D38 although text-only serving never runs the ViT that
+# package qualifies (decorative-but-harmless; the exact-set law does not
+# retire it). The exact set — the entrypoint's exit-64 combination gates
+# make any var drift a boot failure, so equality IS the risk control.
+# ROCR_VISIBLE_DEVICES splices from the service values key, the rest are
+# literal.
 def env_want_cf131(rocr_value: str) -> dict:
     return {
         "ROCR_VISIBLE_DEVICES": str(rocr_value),
@@ -194,7 +222,7 @@ def env_want_cf131(rocr_value: str) -> dict:
         "TORCHINDUCTOR_CACHE_DIR": "/cache/inductor",   # C03's mount lands the target
         "TRITON_CACHE_DIR": "/cache/triton",
         "AITER_ROOT_DIR": "/cache/aiter",
-        "FLASH_ATTENTION_TRITON_AMD_ENABLE": "TRUE",    # (8) slot (D34): the var selects, the C01 package is the payload
+        "FLASH_ATTENTION_TRITON_AMD_ENABLE": "TRUE",    # (8) slot, D34-restored; kept decorative at text-only serving (D38)
         "RADIANCE_WEIGHT_QUANTIZATION": "auto",         # the entrypoint seam name (D25)
         "RADIANCE_MXFP4": "1",
         "RADIANCE_MXFP4_W4A8": "1",
@@ -207,6 +235,7 @@ def env_want_cf131(rocr_value: str) -> dict:
         "RADIANCE_FAST_DRAFT": "1",
         "RADIANCE_COMPILATION_CONFIG": '{"cudagraph_mode":"PIECEWISE"}',
         "HSA_TOOLS_DISABLE_REGISTER": "1",    # issue #6/#12 mitigation (R3-Q5)
+        "VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS": "0",  # the D38 f2 leg (the shipped capture-bet, header)
     }
 
 # Named individually because AC5 calls them out — the dict equality above

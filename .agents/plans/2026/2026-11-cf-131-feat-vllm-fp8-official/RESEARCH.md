@@ -5980,3 +5980,696 @@ statement lines — the numbers below include its outputs [195]).
   (scheduler-side 5% reserve — f2/donor-round scope, one-line adjacent note
   here); radiance's internal patch for GLM-5.3-Flash kpool tail exclusions
   (seen in the coordinator's comment, not in our path).
+
+---
+
+# R8 — The donor ledger, priced
+
+(The owner's second on-target round: the D36 combo BOOTS-to-the-check and PRINTS — boot data
+`needed 5.06 GiB / available 3.47 GiB / estimated maximum model length 164,512`, the D37
+B-on-print materializing exactly as ratified. Owner question: ~1.6 GiB freed so the 262144
+boot holds — "Maybe drop vision? Is there anything else we can do?" This round prices every
+named donor and several that turn out not to be donors, against the pinned trees and the
+now-boot-pinned arithmetic. No GPU session executed; everything is source-static except where
+marked measured.)
+
+## R8.0 — TL;DR (5 lines)
+
+- Vision is NOT a weight donor at our pins: `--language-model-only` and `{"image": 0}` exist
+  but only zero the modality limits — the shipped `Qwen3_5ForConditionalGeneration` builds and
+  loads the visual tower unconditionally; exact tower residency **0.858 GiB bf16** stays put.
+  What dropping vision frees is the encoder REHEARSAL peak (≈1.5–2.2 GiB, estimate) — and the
+  catalog marker's truth [200][201][203][204][206][211].
+- `{"image": 1}` frees **0.0 GiB**: the warmup profiles ONE maximum-feature-size dummy item no
+  matter the limit, because the encoder budget is exactly one max item at our constants — the
+  boot log prints "profiled with **1** image items of the maximum feature size." D36's
+  profile-day `{image:1}` donor is RETIRED [202][203][205].
+- The drafter file is exactly **1.9735 GiB** (2,118,882,784 B [213]) — but we ship
+  `RADIANCE_FAST_DRAFT=1`, which runtime-packs the draft linears fp8→W4 and keeps an INT2 head
+  (0.33 GiB at TP1): effective drafter residency ≈ **1.2–1.5 GiB, not 1.97 + extras**. mtp-K4 is
+  therefore margin-NEGATIVE (its 17th full-attention layer RAISES grouped demand 5.06→5.27), and
+  only full no-spec is a real donor (+~1.4 GiB, demand −0.66 → boots with nothing else, at the
+  OQ-A mandate's price) [218][219][220].
+- The R7 law is now boot-confirmed to the byte: `needed = (58 + 2·⌈L/1696⌉) × 8 × 1,845,248 B`
+  reproduces BOTH pasted numbers — 5.06 at 262144 and the printed 164,512 ↔ pool 3.465 [195→209].
+  f2 at the measured pool buys the full estimate (+≈1.27, NOT estimate−real) → 4.74: still
+  **−0.32 short** of 5.06 (R7 predicted −0.12 at the 3.67 pool; the pool landed 0.2 low).
+- The smallest-sacrifice combo that CLEARS 262144 with vision and dflash TRUE is
+  **f2 + `--mm-processor-kwargs {"max_pixels": 4194304}`** (pool ≈ 6.0 vs 5.06 boot ✓, 0.95·pool
+  vs 5.06 admission ✓, scheduler self-consistent by construction); the zero-quality-sacrifice
+  alternative stays on D37's B-on-print track: **f2 alone re-prints the cap at ≈ 243k** [201][207][209].
+
+## R8.1 — VISION decomposed
+
+### R8.1(a) — Does ANY 0.30 flag skip LOADING the visual tower? NO. (verified @ ced6857a + fork)
+
+| flag | exists @ the pin | what it actually does | tower loaded? |
+|---|---|---|---|
+| `--language-model-only` | YES — `arg_utils.py` field L586, registered L1367, threaded L1855 → `ModelConfig` InitVar L395/L528/L796 → `MultiModalConfig.language_model_only` | docstring verbatim: "If True, **disables all multimodal inputs by setting all modality limits to 0**. Equivalent to setting `--limit-mm-per-prompt` to 0 for every modality" (`config/multimodal.py` L91-93; `get_limit_per_prompt` returns 0 L483-484) | **YES — unchanged** |
+| `--limit-mm-per-prompt '{"image": 0}'` | YES (JSON dict, D32 law) | same zero-limit surface; validator accepts `count=0` (`BaseDummyOptions count ≥ 0`, L23-27, L255-277) | **YES — unchanged** |
+| `--convert` | YES (`arg_utils.py` L879) | task conversion (embed/classify…), not a modality switch | YES |
+| `--skip-mm-profiling` | YES — L621 field, L1424 registered → `MultiModalConfig.skip_mm_profiling` (L208) | skips the ENCODER + ENCODER-CACHE **memory profiling** only (`profile_run` guard, V2 `gpu/model_runner.py` L941: "Skipping memory profiling for multimodal encoder and encoder cache.") — admission and real serving untouched | YES |
+| radiance fork surface | none | the repo carries NO qwen3_5 overlay file (tree scan: zero `qwen3_5` paths [216]); the 35-patch chain + runtime modules never gate the tower; entrypoint/`.env.example` mention no vision switch [214][215] | YES |
+
+Mechanism, cited: `Qwen3_5ForConditionalGeneration.__init__` builds
+`with self._mark_tower_model(vllm_config, {"image","video"}): self.visual = Qwen3_VisionTransformer(...)`
+unconditionally (`model_executor/models/qwen3_5.py` L513-519), and its `load_weights` is a bare
+`AutoWeightsLoader(self).load_weights(weights, mapper=hf_to_vllm_mapper)` (L438-440) whose mapper
+drops ONLY `mtp.*` (`orig_to_new_prefix={"mtp.": None}`, L478 / L322) — no limit or LMO check
+anywhere in the module. The capability EXISTS in the tree for other classes and was not applied
+here: `vllm/models/qwen4_exp/{amd,nvidia}/model.py` L877-878/900/954/1016 build the tower
+conditionally and map `{"visual.": None}` under `language_model_only`, and `qwen3_next.py` L365
+reads `text_only = mm_config is None or mm_config.language_model_only` — the contrast confirms
+the switch's real semantic (input zeroing + per-class opt-in), and qwen3_5 simply never opted in
+[206][208].
+
+One incompatibility guard to know before reaching for `--language-model-only`: with
+`cudagraph_mm_encoder=True` it raises a ValueError ("incompatible … since it disables all
+multimodal inputs and the multimodal encoder is never run", `config/vllm.py` L1311-1321 [208]) —
+inert for our PIECEWISE-no-encoder-graphs posture but binding if encoder graphs are ever enabled.
+
+**Verdict: the 0.858 GiB tower (exact, R8.1-b header) is not liberable by any flag at our pins.**
+"Drop vision" prices as a REHEARSAL-PEAK donor (≈1.5–2.2 GiB estimate, next subsection) plus the
+C04 marker flip — never as a weights donor.
+
+### R8.1(b) — The profile-dummy: what the warmup materializes, and the limit's real effect
+
+Chain @ ced6857a (V2 runner, ours): `Worker.determine_available_memory` →
+`profile_run` (V2 `gpu/model_runner.py` L938) → `MultiModalBudget` →
+`get_dummy_encoder_profile_inputs` → `encoder_runner.profile_encoder_cache(dummy_inputs, budget)`
+(`gpu/mm/encoder_runner.py` L111-148) → `execute_mm_encoder` on the dummy batch → outputs held
+in the encoder cache (`tmp_i`) until the reset [204][205][203].
+
+The COUNT is not the limit — it is the encoder budget [202][203]:
+- max tokens per image item = the checkpoint's own geometry: `preprocessor_config.json`
+  `size.longest_edge = 16,777,216 px`, patch 16, merge 2, temporal 2 [212] →
+  max image = **16,384 merged tokens** (px/(16²·2²) = px/1024), 65,536 pre-merge patches;
+- `compute_mm_encoder_budget`: `compute = max(max_num_batched_tokens=2560, 16384) = 16384`,
+  `cache = max(2560, 16384) = 16384`, budget = min = 16384 tokens [202];
+- `_get_max_items`: `items_per_batch = max(1, min(16384//16384 = 1, max_num_reqs(3) × items_per_prompt))`
+  = **1**, and `get_dummy_encoder_profile_inputs` repeats that ONE dummy item
+  `max_items_per_batch` times — one copy, once, at any limit ≥ 1 [203];
+- the decoder-side dummy materializes no mm data on our path
+  (`_dummy_mm_kwargs` early-returns unless raw-input-only, V1 L1736-1747; the V2 `_dummy_run` is
+  token-only [204][205]).
+
+**So `{"image": 4}` vs `{"image": 1}` costs the SAME ~1 max-item rehearsal peak, and the
+`{"image":1}` saving = 3×that is 0×that = 0.0 GiB.** The boot-day marker line settles it on
+evidence: `Encoder cache will be initialized with a budget of 16384 tokens, and profiled with
+1 image items of the maximum feature size.` [205] (log this from the pod's TOP on boot day —
+it is the f3-window paste's next neighbor).
+
+Per-image peak price from the checkpoint's `vision_config` (depth 27, hidden 1152, heads 16 →
+head_dim 72, MLP 4304, out_hidden 5120, bf16 [211]) at the 65,536-patch dummy [ESTIMATE class —
+input and output terms are arithmetic, activation coexistence is not code-pinned]:
+
+| term | bytes | GiB |
+|---|---|---|
+| pixel_values input (65,536 × 3·2·16·16=1536, bf16) | 201,326,592 | **0.19** |
+| ViT activations, per-layer worst set (hidden 0.134; qkv 0.40; fc1+gelu 0.50×2; out 0.134) | — | ≈ **1.2–1.8** |
+| encoder-cache output embeds (16,384 × 5120 bf16) | 167,772,160 | 0.16 |
+| **max-item rehearsal peak** | | **≈ 1.5–2.2, mid ≈ 1.9** |
+
+(No N² score buffers in either attention path at this shape: the r4d `attn_vit_h72_bf16` kernel
+— active when `RADIANCE_USE_R4D=1`, which is image-baked — processes per-segment flash-style
+[221], as does the Triton port whose 72→128 tile padding may add ~0.3 of operand slack.)
+
+### R8.1(c) — Capabilities fallout (the C04 honesty law)
+
+- `{"image": 0}` (≡ `--language-model-only`): the engine refuses image inputs at validation →
+  the catalog rows' `capabilities.input.image` marker goes **FALSE** — the C04 honest-grounding
+  law (the marker reflects what the engine serves) forces the three-row re-pin + the `surface.sh`
+  M3 re-pin, retires runbook 3.4 (the owner-visible requirement-#3 proof), orphans the D34/D35
+  flash-attn install layer (the ViT it qualifies is never executed), and contradicts card
+  requirement #3 ("keep vision") — an owner-ruling-grade trade, which is exactly what was asked.
+  Also a distinct boot marker to expect: `WARNING … All non-text modalities supported by the
+  model have been explicitly disabled via limit_mm_per_prompt. Encoder cache will not be
+  initialized.` [202]
+- `{"image": 1}`: marker stays TRUE — and buys nothing (R8.1b).
+- `--skip-mm-profiling` / max_pixels cap (R8.4): marker TRUE, 3.4 smoke intact — the cost is
+  elsewhere (unaccounted or capped runtime peak, respectively).
+
+## R8.2 — The drafter, priced
+
+**Exact residency of `tcclaviger/Qwen3.8-27B-DFlash2-FP8` @ `ee0cb26a…`:** single
+`model.safetensors` = **2,118,882,784 B = 1.9734 GiB** (no index file — a whole-file repo),
+payload = BF16 params 194,254,080 (×2 B) + F8_E4M3 params 1,730,150,400 (×1 B) = 2,118,658,560 B
++ 224,224 header; plus `model-kvscales.safetensors` 1,324 B (the fp8-KV calibration sidecar —
+inert for int4) [213]. R6's 1.97 GiB guess was right as a FILE datum; as a RESIDENCY datum it is
+wrong under our shipped `RADIANCE_FAST_DRAFT=1`:
+
+**What FAST_DRAFT actually does to residency** [219][220]:
+- draft linears: "radiance_w4 packs block-fp8 weights to 4 bits from inside
+  `process_weights_after_loading`, which is the only point where the fp8 weight exists" —
+  i.e. at load the F8_E4M3 bulk (1.61 GiB of the file) is REPLACED by W4 + g128 scales
+  (≈ 0.81 + ~0.015 GiB) [220];
+- draft head: INT2 head 0.167 GiB/RANK at TP2's half-vocab shard; TP1 full 248,320 cols ≈
+  **0.33 GiB** (the D36-quoted figure — now sourced: `radiance_drafthead.py` docstring L4-7)
+  [219];
+- the FAST=0 alternative is NOT cheaper: the stock path keeps the fp8 linear bulk (1.61, not
+  0.81) and shares the target's bf16 lm_head (zero residency but 1.18 GiB READ per draft slot,
+  ~2002 µs/call vs INT2's ~473 µs) [219]. **`RADIANCE_FAST_DRAFT=0` is an ANTI-LEVER: net
+  residency +≈0.5 GiB (estimate: 1.61−0.83−0.33) plus an unmeasured draft lane (every published
+  DFlash/MTP number is the "Fast" lane [218]) and a `-fast-draft` graph-cache-namespace change
+  (full Triton/AITER recompile on the next boot, entrypoint L22-24/L82-85 [216]).**
+
+**Donor arithmetic at the shipped int4 shape, via the boot-pinned R7 law**
+(`needed = blocks × S × page`, page = bs × 1088; the law reproduces the boot paste:
+`368 × 8 × 1,845,248 = 5.06 GiB` needed AND `252 × 8 × 1,845,248 = 3.465 → "3.47"` at L = 164,512
+— the printed estimate is the same grouped sum solved backwards [195][209]):
+
+| spec lane | buckets | num_spec | GDN page | bs | groups/S | blocks/req @262144 | needed @262144 | Δ resident (vs shipped dflash-K7-fast) |
+|---|---|---|---|---|---|---|---|---|
+| **dflash-K7 (shipped)** | 48/16/5 | 7 | 1,777,664 | **1696** (boot ✓) | S=8, 9 gr | 368 | **5.06** (boot ✓) | — |
+| dflash-K5 | 48/16/5 | 5 | 1,736,704 | 1648 | S=8, 9 gr | 366 | **4.89** | ±0 (same drafter; acceptance 51.92% > K7's 42.26%, weighted 172.3 vs 186.7 [218]) |
+| dflash-K4 | 48/16/5 | 4 | 1,716,224 | 1632 | S=8, 9 gr | 362 | **4.79** | ±0 — not a published lane [218] |
+| **mtp-K4 (the recorded donor JSON)** | 48/**17**/0 | 4 | 1,716,224 | 1632 | S=6, 11 gr | 531 | **5.27 — RAISES the bar** | ≈ −0.2…−0.7 (drop 1.25-1.5 of packed drafter, ADD the +1 mtp layer resident: the checkpoint's `mtp.*` bf16 island = **0.791 GiB** [211], today DROPPED by the mapper's `"mtp.": None` [206]) |
+| no-spec (spec flag absent) | 48/16/0 | 0 | 1,634,304 | 1552 | S=16, 4 gr, **zero padding layers** | 175 | **4.40** | −1.25…−1.6 (drafter pack + INT2 head; mtp island stays unloaded) |
+
+**The mtp-K4 donor is margin-NEGATIVE at int4@262144** — the D36 ledger ("mtp-K4 −2.0, demand
+−0.45") is corrected by two facts R6 could not see: (i) the shipped FAST_DRAFT pack already
+shrank the drafter, and (ii) the MTP head's own full-attention layer lands in the FA bucket
+(48:17:0 mix) and costs 0.21 GiB of grouped demand — the docs' "eagle introduces one full
+attention layer" case [198→195] — while its GDN/SWA savings (9→6 blocks, −4) buy back less.
+Pool-wise it adds ≤0.7 (estimate) against +0.21 demand: even with f2 (3.47+1.27+0.46 = 5.20)
+the 262144 boot still misses 5.27. And the lane carries the whole caveat stack:
+- **29/30 scope**: the tool-gate FAIL is the **MTP-K4 lane only** — the publication's 30/30 row
+  set: Non-spec 30/30 PASS, MTP K4 **29/30 FAIL** (attempt 006: unfinished `click` JSON object),
+  DFlash K5 30/30, DFlash K7 30/30 — all at TP2/FP8-KV/8K/C8/85%/prefix-off [218]. Our shipped
+  lane is a 30/30-record lane; switching to mtp-K4 breaks the C04 tools marker's grounding
+  sentence directly (the marker's lease is 3.7's tool smoke either way, but the toggle would be
+  choosing the record's FAILING lane).
+- the recorded donor JSON needs two further edits to even boot at int4: `attention_backend`
+  R4D→**TRITON_ATTN** (R4D refuses int4_pth outright [171→R6]) and the
+  `RADIANCE_QUARK_BF16_MTP=1` env flip (D25/R3-Q6 coupling) — an env-law amendment + the C03
+  drafter-skip re-stage (D26) [R6][STATE].
+- (the baked `patch_mtp_mm_mask` fix DOES qualify mtp+vision — "Enables multimodal serving with
+  MTP speculative decoding" under `disable_padded_drafter_batch` [222] — that leg is not the
+  blocker; the arithmetic is).
+
+**no-spec is the only demand-AND-residency donor**: needed 4.40 (−0.66) and pool +1.3…1.6
+(estimate) → boots at 262144 **without** f2 (~4.9–5.1 ≥ 4.40; admit-check 0.95·4.9 = 4.65 ≥ 4.40
+✓ thin; with f2 6.2 vs 4.40 = solid). Its price: the measured-lane speed collapse (weighted
+186.7 → 53.9, c1 per-request 204.5 → 53.7, the published TP2 table [218]) and the OQ-A owner
+mandate ("the 1 MTP head ships active from day one" — the re-scope kept it as spec-on, Q1 chose
+dflash). Note the one upside: non-spec is the PUBLISHED 30/30 tool lane [218], so the tools
+marker's grounding improves (subject, as always, to int4-KV + TP1 re-qualification at 3.6/3.7).
+
+Decode-speed summary for the donor menu (TP2-published, TP1-transfer labelled estimate):
+drop K7→K5 costs ~−8% weighted (172.3) and RAISES acceptance; K4-mtp −27% (135.6) + the 29/30;
+no-spec −71% (53.9). Prefill is flat across lanes (4.0-4.5k tok/s [218]) — the donors only
+tax decode.
+
+## R8.3 — Mechanics: f2 re-arbitrated at pool 3.47; allocator env sweep
+
+### f2 — `VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0`, re-arbitrated on measured numbers
+
+Code path @ ced6857a (exact) [209]: `determine_available_memory` runs `profile_cudagraph_memory()`
+whenever the mode ≠ NONE (the estimate is COMPUTED regardless — V2 `gpu/cudagraph_utils.py`
+L847+: throwaway graph pool, minimal KV, sampled FULL + measured PIECEWISE/spec captures,
+discarded), then:
+
+```
+peak_activation = transient_peak_headroom + est_applied          (est_applied = est if ENV=1 else 0)
+available_kv    = requested − non_kv_cache_memory − est_applied
+```
+
+so turning the env OFF adds the FULL estimate to the check-time pool — it does NOT buy
+"estimate − real": the real capture happens LATER (`compile_or_warm_up_model` → `capture_model`,
+gpu_worker L816) and lands on whatever physical/allocator slack remains, which is exactly why
+the engine's own disabled-branch prints the WARNING: "CUDA graph memory is not accounted for
+during KV cache allocation, which may require lowering --gpu-memory-utilization to avoid OOM"
+(L672-680 [209]).
+
+At the measured boot: requested = ceil(31.86·0.98) = 31.22 GiB; pool 3.47 ⇒ **held ≈ 27.75** ✓
+(the commission's 27.76). Estimate at the int4 boot: the fp8 boot's advisory pinned
+Δutil 0.0395 → 1.2585 GiB with real capture "took 1.26 GiB" (D36 record); the int4/TRITON boot's
+estimate is read live from its own advisory line (`equiv 0.9800 → 0.86xx`) — same capture set
+(PIECEWISE, K7 spec, 3-seq decode), assume ≈ 1.26 ± 0.05 [evidence-adjacent estimate]:
+
+- pool@check with f2 ≈ **4.73–4.79**; needed 5.06 → **f2 alone STILL FAILS — by ≈ 0.28–0.33,
+  not 0.12**: R7's 0.12 was computed at the predicted 3.67 pool; the real pool landed 0.2 low.
+  It converts the silent refusal into the printed ≈243k estimate (law: L = 1696·(4.74 GiB ÷
+  14,761,984 − 58) ÷ 2 ≈ **243.4k**), never a boot.
+- Post-boot arithmetic if f2 ships: engine footprint at steady state ≈ resident (~20.6–21.5:
+  weights 18.438 [211] + packed drafter ~1.25 + INT2 0.33 + HIP ctx 1.2–1.6) + KV pool + graphs
+  1.26 + real activation peaks ≤ (measured headroom − est… the est-OFF lane bets the capture on
+  the allocator's reserved-unallocated slack + the 0.24 outside-requested). Labelled: the capture
+  itself would ride cached blocks the dummy phase already reserved — the risk is the COMBINATION
+  (capture + real peak), which the engine explicitly warns about. Moderate risk, not reckless;
+  the 3.4 smoke + first long session are the detectors.
+- 21-var amendment class: same "PRICED NOT SHIPPED → additive env" shape D36 already framed
+  (testlib env pair, T3 dict, AC8 window, runbook 3.5-f2 row promotion).
+
+### PYTORCH_HIP_ALLOC_CONF / expandable_segments — what the evidence says HERE
+
+- Sweep for allocator env in the shipped surfaces: the fork's compose, `.env.example` and both
+  Dockerfiles carry **NO** `PYTORCH_*ALLOC*` variable anywhere [214][215][216]; our 20-var law
+  carries none either (the retired stock-era overlay's `PYTORCH_ALLOC_CONF=expandable_segments:True`
+  died with D7/D25 — cf-105 R1 Q5.5 recorded it as "material on this allocator").
+- vLLM's own position @ the pin: (i) the engine DOES bracket weight loading with a
+  fragmentation guard `_scoped_allocator_max_split(20 MiB)` — and it early-returns
+  `if not current_platform.is_cuda(): yield; return` → **ROCm gets no weight-load allocator
+  guard** (gpu_worker L336-341, L505 [209]); (ii) the expandable×KV-connector hard reject reads
+  only the `PYTORCH_CUDA_ALLOC_CONF` NAME (config/vllm.py L1091-1108 [209]) — the unified-name
+  fix is PR #54351, **OPEN, not in the tag** [223]; (iii) the known incompatibility axes are the
+  CuMem allocator / sleep mode (pytorch #147851: expandable + MemPool unsupported; vLLM
+  historically error-ed the combo, PR #14189) — **both inert for us** (no sleep mode shipped, Q7
+  drop) — and KV connectors (none shipped).
+- PyTorch on ROCm: the HIP OOM runtime hint itself prescribes
+  `PYTORCH_HIP_ALLOC_CONF=expandable_segments:True` (torch's own message text in vLLM ROCm OOM
+  reports [223]); upstream vLLM ROCm OOM threads (#6512 et al.) show the standard fragmentation
+  signature (GBs reserved-but-unallocated) that expandable segments reclaim.
+- Bearing on THIS ledger: the boot check is arithmetic (pool = requested − measured − est), and
+  expandable segments changes neither the weights nor the estimate — it reduces
+  allocator RESERVE waste, which is partially what `total_consumed`/`transient_peak_headroom`
+  measure (the ROCm fallback path sizes from `torch_memory` = RESERVED [209]). So it can
+  recover pool GiB ONLY to the extent real fragmentation waste exists at our boot — unmeasured
+  here; no datum says how much (the fp8 paste's "5.7 MiB split-KV scratch" line argues small,
+  the missing DEBUG MemorySummary is the only way to know). **Verdict: legitimate boot-day
+  experiment (f5 candidate: `PYTORCH_HIP_ALLOC_CONF=expandable_segments:True`, additive env,
+  values-side removable), evidence class: mechanism = cited, GiB = pure estimate, no public RDNA4
+  datum; do NOT pre-count it in any combo below.**
+
+## R8.4 — THE COMPOSE DIFF (fork-published 256K recipe @ 5b99d66c vs our shipped list)
+
+Their published "working 256K" — stated plainly first [214][215][217]: docker-compose.yml ships
+FP8-KV/R4D non-spec TP2 @ **GPU_UTIL 0.85**, seqs 8, len 16384, batched 4096, APC+align; the
+header comments record the measured 256K rows:
+- `FP8+DFlash @0.85`: **256K:1** seq (the "8K:8 … 256K:1" conservative pair list);
+- `MXFP4+DFlash @0.90, APC OFF (+mamba none, K5, batched 4096)`: **256K:2**, min physical
+  headroom **5.28 GiB PER GPU** (COMPOSE_CAPACITY requalification on OUR exact checkpoint —
+  "amd/…(18.44 GiB) + tcclaviger drafter (1.97 GiB)") [217];
+- recommended production profile: **128K:4** with APC+align (576,001 KV tokens reported at TP2).
+**Every row is TP2** — two cards halve weights (9.22/GPU), state and attention pages; at
+0.85–0.90 they carry 5+ GiB/GPU physical headroom, the regime where none of R8's donors is
+needed. Their 256K recipe imports to TP1 as an ARITHMETIC DEAD END: nothing in the compose frees
+GiB for us that we do not already have — the diff is instructive about WHAT NOT to expect.
+
+Full env/flag delta list (their compose defaults + `.env.example` vs our 20-var + 45-token ship):
+
+| delta | theirs @ 5b99d66c | ours shipped | what it would free for us |
+|---|---|---|---|
+| `--tensor-parallel-size` | 2 | 1 | n/a — the caveat, restated |
+| `--gpu-memory-utilization` | 0.85 default; 0.90 at the 256K rows | **0.98** | their numbers were never tight; nothing |
+| `--max-num-batched-tokens` | 4096 | 2560 | raising ours grows the profile dummy + spec in-flight (demand UP) — never a donor |
+| `--max-num-seqs` | 8 (capacity rows: 1-4) | 3 | raising grows nothing at the check (fixed-floor uses 3); lowering barely moves `items_per_batch` — no donor |
+| `--kv-cache-dtype` / `--attention-backend` | fp8 / R4D | int4_pth / TRITON_ATTN | shipped D36 — the dtype IS our donor |
+| **`--limit-mm-per-prompt`** | **ABSENT** (→ defaults 999/modality [201]) | `{"image": 4}` | removing it frees NOTHING (profile = 1 item at both limits, R8.1b); keeping 4 is fine — our cap is already tighter than their recipe's 999 |
+| `--scheduling-policy priority` / `--watermark 0.05` | absent | present (Q7 carries) | watermark −0.05 does not raise the pool (it is admission reserve — see R8.5's admit column); policy priority costs nothing |
+| `--swap-space` | **does not exist at 0.30** — zero `swap_space`/`--swap-space` matches tree-wide [200] | n/a | nothing — the V0-era flag is gone; commission question CLOSED as flag-absent |
+| `VLLM_ROCM_USE_AITER` + `…_UNIFIED_ATTENTION` (+7 siblings 0) | compose-SET (not baked [216]) | unset → default False [envs L134/L148] | 0 GiB; a kernel-path delta we should know about: their triton-quant/GDN-prefill legs ride the AITER env; our TRITON_ATTN+int4 lane has never been published under their AITER combo — boot-day marker row (3.3) arbitrates |
+| `RADIANCE_FAST_DRAFT` | compose default **0**; their DFlash/MTP blocks and ALL published numbers use 1 | 1 | FAST=0 = anti-lever (R8.2 — net +≈0.5 GiB estimate) |
+| `RADIANCE_VERIFY_HEAD=1 (+GLOBAL_TOPK=256)` | compose-set, baked 1 | unset (baked 1 reaches us) — ACTIVE via FAST=1 | their own text: "TP2 retains full head; **TP1 shortlist is experimental**", "Global selection is not certified lossless" [214] — our TP1 pod runs the experimental verify path at zero memory cost; `RADIANCE_VERIFY_HEAD=0` is the conservative flip (sampling-aware fallback documented) |
+| `RADIANCE_DYNAMIC_DRAFT=1` + SCHEDULE/TAU | baked/compose | unset (baked reaches us) | inert for dflash ("MTP only and inert for DFlash" [214]) — no action |
+| AITER/NCCL/CPU-side: `NCCL_PROTO=Simple`, `TORCHINDUCTOR_COMPILE_THREADS=4`, `HIP_FORCE_DEV_KERNARG=0`, `TORCH_BLAS_PREFER_HIPBLASLT=0`, `RADIANCE_FUSE_RMS_QUANT=1`, `TRITON_CACHE_AUTOTUNING=1` | compose-set or baked | image-baked where it matters [216] | 0 GPU GiB each |
+| `RADIANCE_AR_MAX_KB=49152` (+AR_QNT/QNB baked) | TP2 staging buffers | unset | TP1: R4D-AR path unused (single rank) — ≈0 |
+| `RADIANCE_KV_OFFLOADING_SIZE` | off by default ("keep disabled unless long-context") | unset | NOT live-KV capacity (R6 Option 5 — their own doc); post-boot relief valve only |
+| `RADIANCE_FP8_KV_SCALES` sidecar | optional (fp8 lane quality) | unset | inert at int4 |
+| `RADIANCE_SPECULATIVE_CONFIG`/`RADIANCE_COMPILATION_CONFIG` env seams | how they pass spec/graph JSON | our CLI-splice + env seam equivalents | transport only |
+| healthcheck `start_period: 1800s` | 30 min | probe 40 min | budget parity ✓ |
+| **max_pixels / mm-processor-kwargs** | absent from the recipe | absent from ours | **the sweep's real find** [207]: `--mm-processor-kwargs '{"max_pixels": P}'` is honored on BOTH sides of the mm machinery at the pin — the dummy builder (`get_image_size_with_most_features` merges `max_pixels`/`min_pixels`/`size` into the processor's `longest_edge`, qwen2_vl.py L969-998, inherited by Qwen3_5ProcessingInfo via Qwen3VLProcessingInfo [207]) AND real request processing (`_get_vision_info`, qwen3_vl.py L957-963) — so the rehearsal peak, the encoder budget and the runtime worst case all shrink CONSISTENTLY with the cap: dummy = ⌈P/1024⌉ tokens, self-compatible (no stall), marker TRUE. At P = 4,194,304 (2048×2048): mm peak 1.9 → ≈0.5 ⇒ **frees ≈ 1.3 GiB of insurance (estimate)** with the sacrifice "images larger than 2048² are auto-downscaled". P = 1,048,576 (1024²): frees ≈1.6, cap 1 MP. |
+| `ImageDummyOptions` width/height (`{"image": {"count": 4, "width": W, "height": H}}`) | n/a (they set no limit at all) | n/a | shrinks ONLY the dummy — and thereby re-derives the encoder budget DOWN to `max(2560, W·H/1024)`, while real images up to 16,384 tokens still arrive → the single oversized item exceeds the derived cache budget and **risks never being schedulable** (code-static hazard read of `compute_mm_encoder_budget`'s max-guard being fed the shrunk dummy [202][203]). FLAGGED UNTESTED — do not ship without boot-day proof. The safe expression of the same intent is max_pixels. |
+
+`RADIANCE_GFX_ARCH`, the MXFP4 W4A8 seven-var block, `RADIANCE_WEIGHT_QUANTIZATION=auto`,
+V2-runner, PIECEWISE — already byte-matched in our law (D25/D34/D36); no further delta exists
+between the shipped env and the published recipe.
+
+## R8.5 — The combo table + the ONE owner question
+
+Bar re-pinned from the boot: pool 3.47, needed 5.06 → the 262144 boot needs **+1.59 GiB**; the
+gate below is `pool ≥ 5.06` (check) AND `0.95·pool ≥ 5.06` (watermark admission of one full
+session — the printed 164,512 does NOT include the watermark reserve: today's pool admits a
+max session of ≈ 0.95-law → **~154k**, a one-line correction to D37's B-cap ruling source).
+
+| # | combo | class of each Δ | pool | needed | boot 262144 | full-session admit | sacrificed | evidence |
+|---|---|---|---|---|---|---|---|---|
+| 0 | shipped as-is (D37 running path) | — | 3.47 (measured) | 5.06 | ✗ → prints 164,512 (measured) | ≈154k @0.95 | cap (B) | measured |
+| 1 | **f2 alone** | estimate pre-tax | ≈4.74 | 5.06 | ✗ → prints **≈243k** | ≈231k | cap (B, better) | est (law-based) |
+| 2 | `{"image":1}` | — | 3.47 | 5.06 | ✗ | — | multi-image prompts, **for 0 GiB** | evidence [203][205] |
+| 3 | `{"image":0}` / `--language-model-only` alone | rehearsal-peak | ≈5.1–5.7 | 5.06 | borderline ✗/✓ | ✗ without f2 | **vision FALSE** + req#3/C04/M3/3.4/D34-orphan | est [201][202][203] |
+| 4 | f2 + `{"image":0}` | estimate+peak | ≈6.4–7.0 | 5.06 | ✓ | ✓ | vision FALSE | est |
+| 5 | f2 + `--skip-mm-profiling` | estimate+peak | ≈6.4–7.0 | 5.06 | ✓ | ✓ | insurance OFF: a real full-size (16.7 MP) image arrives with ~1.9 GiB unreserved — first-large-image runtime-OOM exposure, vision TRUE | evidence of the skip [204]; risk = estimate |
+| 6 | **f2 + `--mm-processor-kwargs {"max_pixels": 4194304}`** ← recommended | estimate+cap | ≈**6.0–6.3** | 5.06 | ✓ | ✓ (5.9 ≥ 5.33) | image-resolution ceiling 2048² (larger auto-downscaled); scheduler self-consistent; vision TRUE; K7/tools TRUE | evidence that the cap flows to both dummy+real [207]; GiB = estimate |
+| 7 | f2 + no-spec | estimate+resident | ≈6.0–6.4 | **4.40** | ✓ | ✓ ✓ 1.6 margin | **spec decode off** (−71% c1 [218]; OQ-A mandate); 20-var law unchanged (specConfig splice out), drafter dir inert | law-computed needed; est resident |
+| 8 | f2 + mtp-K4 | mixed | ≈5.0–5.5 | **5.27** | ✗/borderline | ✗ | −27% c1 + the 29/30 TOOL-FAIL lane + 2 extra edits (JSON backend re-pin, BF16_MTP env) — **the worst trade on the board; retire it as a boot donor** | law-computed [195][209][218][219] |
+| 9 | `RADIANCE_FAST_DRAFT=0` | ANTI-lever | −0.4…−0.8 | 5.06 | ✗ worse | — | +fp8-vs-W4 residency, unpublished lane, graph-cache recompile | est [219][220] |
+| 10 | `PYTORCH_HIP_ALLOC_CONF=expandable_segments:True` (+f2) | allocator waste | +0…+? | 5.06 | unpriced | — | none intrinsic; mechanism cited, magnitude unmeasured on RDNA4 — f5 experiment, same day as the DEBUG re-boot (f3) | cited mechanism [209][223], GiB = no datum |
+| 11 | K5 depth swap (values-only JSON) | needed −0.17 | 3.47 | 4.89 | ✗ | — | −8% weighted, acceptance UP (55.79 class) [218]; a companion to #6/#7, not a standalone | law-computed |
+| 12 | compose imports (all rows of R8.4) | — | 0 | — | ✗ | — | the published recipe frees nothing for TP1 — the 256K rows live on TP2's halved residency | evidence [217] |
+
+**The "donors + higher-B-cap package" leg (owner's parenthetical):** if ANY 262144 sacrifice is
+too expensive, the pure-B ladder rises with the donors: no donor → cap 164,512 (measured print);
+f2-only → cap ≈ 243k (estimated print, zero surface sacrifice except the f2 env + its capture
+bet); f2+max_pixels → 262,144 itself holds (row 6), i.e. the cap ladder reaches the true axis
+before any vision or spec sacrifice. There is no reason to accept 164,512 if the owner wants
+262144 — but the cap choice is now a priced menu.
+
+### R8-Q1 — the one owner question (one answer requested)
+
+**"Which donor package do you rule for the 262144 boot?"** (bar: pool 3.47 → 5.06, +1.59 GiB;
+the "drop vision?" instinct is priced: it does NOT free the 0.858 GiB tower — only the ≈1.9 GiB
+rehearsal — and it kills requirement #3, so it is row 4, not a shortcut):
+
+- **(A — recommended): f2 + `--mm-processor-kwargs {"max_pixels": 4194304}`** — boots 262144,
+  keeps vision + dflash-K7 + tools + the 262144 advertisement TRUE; pays a 2048×2048 image
+  ceiling (larger images downscale — pick the cap with the owner's actual photo use; 2 MP and
+  1 MP variants free ≈1.0/≈1.3) + the f2 capture-bet; ship surface = 21-var env + 47-token
+  serveArgs (testlib + T3 + AC8 + runbook re-pins — the standard amendment loop).
+- **(B): f2 + `--skip-mm-profiling`** — same boot math with NO quality cap, but the first
+  full-resolution image can OOM the running pod (insurance off). Vision TRUE on paper, risky on
+  the wire.
+- **(C): f2 + `{"image": 0}`** — the owner's literal "drop vision": boots clean (≈6.4–7.0),
+  but the marker flips FALSE, requirement #3 falls, the flash-attn install is orphaned, 3.4
+  retires.
+- **(D): no donor, cap at the print** — today's designed path (D37): cap = the printed number,
+  ≈154k effective after the watermark (or lower `--watermark` to make the print honest).
+- **(E): f2 alone + cap on the re-print** — ≈243k effective ~231k (estimated print), only the
+  f2 env ships, no quality or vision sacrifice, the cap stays below the true axis.
+- (Row 7 — f2 + spec-off — is on the board but named-ugly: −71% decode against the whole "1m
+  heads" mandate; listed for completeness.)
+
+Best guess: **(A)** — it is the only combo that clears 262144 with every card requirement TRUE
+and no runtime-OOM exposure; if the owner refuses the resolution cap, (E) buys ~243k for one env
+var and no other edit.
+
+## Contradictions and how to weigh them (R8 conflict map)
+
+1. **D36/D37 ledger ("`{"image":1}` profile-day knob", "INT2 head 0.33", "mtp-K4 −2.0")** vs
+   this round's encoder-budget clamp, FAST_DRAFT-packed residency, and mtp-K4 demand-raise: the
+   earlier entries were reasonable at their information state (they priced the FILE and assumed
+   the limit scaled the dummy). Weigh: the pinned code + the fork's own drafthead docstring —
+   `{image:1}` saves 0, `FAST_DRAFT=0` is negative, mtp-K4 is boot-irrelevant. The D36 ledger
+   sentence "the donors stay named-not-shipped" survives only for no-spec and image:0.
+2. **"Drop vision" as a weight story (owner framing; R6's "vision ≈0.6" figure)** vs the
+   header-exact 0.858 GiB that NO flag unloads: both under-count what the owner expects and
+   over-count what is liberable — the real vision-side donor is the ≈1.9 GiB rehearsal, not the
+   weights at all. Weigh: safetensors header read + qwen3_5 source [206][211] are the authority;
+   the Qwen4Exp conditional-tower precedent shows upstream CAN do the skip — qwen3_5 at our tag
+   simply does not [208].
+3. **The fork publishes a working 256K row** vs our TP1 arithmetic dead end: TP2 halves
+   weights/state/pages and they run 0.85-0.90 with 5.28 GiB/GPU physical headroom — no
+   contradiction, different planet (R6 conflict #5 carried and re-confirmed by COMPOSE_CAPACITY's
+   own conditions [217]).
+4. **Engine printed 164,512 vs R7's predicted ~171k**: the law fit is exact at the measured
+   pool (252 blocks × 14,761,984 = 3.465 ↔ 3.47); the −7% miss is the pool landing 3.47 not
+   3.67, not the grouping model. The grouping/geometry verdict stands re-confirmed on target.
+5. **"expandable_segments helps on ROCm" (torch hint, cf-105 era)** vs zero datum at our shape:
+   mechanism cited, magnitude none — kept out of every combo total.
+
+## Implications for the plan (coord/plan own these; this round wrote only RESEARCH.md)
+
+- **(A)-answer follow-on** is a one-pair+one-var values amendment (same leg shape as D36's
+  named-not-shipped f2 promotion + a new `--mm-processor-kwargs` token pair): values serveArgs +
+  env, testlib env_want/serveArgs pairs, C02 AC7/AC8 comment windows, T3 dict + T5 needles, C05
+  3.5 f2-row rewrite ("f2 + max_pixels shipped, boot arithmetic: pool ≈6.0 vs 5.06") and the
+  envelope block's mm row; the runbook gains the 4-MP image ceiling as a documented behavior and
+  the 3.4 smoke keeps full force. No C01/C03/C04 change (marker TRUE, tower story unchanged).
+- The D36 "donors named" ledger line is SUPERSEDED on two entries: `{image:1}` → 0 GiB;
+  mtp-K4 → demand-negative. Replace with the R8.5 table.
+- f3's ask GAINS a second settling line: the `Encoder cache will be initialized with a budget of
+  16384 tokens, and profiled with 1 image items…` INFO [205] — one paste closes both the weights
+  datum AND the mm-peak class.
+- B-print honesty law: the engine's estimated-max-length is PRE-watermark — the cap ruling
+  should target ~0.90–0.95× the print or drop `--watermark` at the capped shape (row 0/D math).
+- The TP1 verify-head shortlist discovery (`RADIANCE_VERIFY_HEAD=1` baked + our FAST=1 →
+  experimental global-256 TP1 path live in our pod [214][215][216]) is a NEW adjacent
+  qualification note for the 3.6/3.7 gate day (zero memory; correctness-path note — it self-
+  falls-back for grammar-constrained/logprobs steps per the .env comment).
+- renovate/CI/no-surface laws unaffected; every row above is values-side.
+
+## Open questions (no-questions-rule log — round 8, for coord → owner)
+
+- **R8-Q1** (one question, options (A)-(E) + recommendation) — see R8.5.
+- Non-blocking asks carried: the f3 paste pair (Model-loading line + the encoder-budget INFO) and,
+  if (D)/(E) is chosen, one fresh engine-print capture at the f2 shape before the cap ruling.
+- Carried untouched: R5-Q2 (crash-#2a ValueError provenance) still open; D37 running path stands
+  until R8-Q1 answers.
+
+## Sources (R8)
+
+All reads 2026-11-09 at the exact pins: vLLM @ `ced6857afa0ea7b2e3f0846a62e1394e90f15607` (= the
+v0.30.0 tag commit; whole-tree tarball fetched + extracted this session), radiance @
+`5b99d66c844fd…` (tree + compose + docs + overlay sources), HF revisions `93245f7c…` /
+`ee0cb26a…` (safetensors HEADERS read by HTTP Range — tensor tables, not guesses).
+
+200. vLLM @ ced6857a — `vllm/engine/arg_utils.py` — `--language-model-only` L586/L1367/L1855; `--limit-mm-per-prompt` L587/L1370; `--mm-processor-kwargs` L595/L1379; `--skip-mm-profiling` L621/L1424/L1860; `--convert` L879; **negative sweep: `--swap-space` / `swap_space` zero matches tree-wide incl. this file — the flag does not exist at 0.30** — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/engine/arg_utils.py
+201. Same — `vllm/config/multimodal.py` — `language_model_only` L91-93 verbatim ("…by setting all modality limits to 0. Equivalent to `--limit-mm-per-prompt` to 0 for every modality"); `BaseDummyOptions/VideoDummyOptions/ImageDummyOptions/AudioDummyOptions` L23-52; configurable limit format L103-108; validator L255-277; `get_limit_per_prompt` L478-492 (0 under LMO; **999 default for an absent modality** — the fork's unset-limit posture); `skip_mm_profiling` L208; `mm_ipc_gpu_memory_gb` default 0 [180-carried] — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/config/multimodal.py
+202. Same — `vllm/v1/core/encoder_cache_manager.py` L293-339 — `compute_mm_encoder_budget`: the all-limits-0 WARNING + `return 0,0`; `budget = max(max_num_encoder_input_tokens, max_tokens_per_mm_item)` with both scheduler fields = `max_num_batched_tokens` (`vllm/config/scheduler.py` L284-285), the disable-chunked-mm ValueError guard — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/v1/core/encoder_cache_manager.py
+203. Same — `vllm/multimodal/encoder_budget.py` (read in full) — `MultiModalBudget`: tower vs embed-only modality sets, `mm_counts = fromkeys(active, 1)` max-token derivation, `_get_max_items` (`items_per_prompt = max(1, min(limit, seq//max_item))`, `items_per_batch = max(1, min(enc//max_item, reqs×prompt))` — **the clamp that makes 4 ≡ 1 for the profile batch**); `get_dummy_encoder_profile_inputs` (one item × items_per_batch copies) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/multimodal/encoder_budget.py
+204. Same — `vllm/v1/worker/gpu/model_runner.py` L938-975 — **V2 runner** `profile_run`: `skip_mm_profiling` guard → MultiModalBudget(enable_cache=False) → get_dummy_encoder_profile_inputs → `profile_encoder_cache` → `_dummy_run(max_num_tokens, skip_attn=True, is_profile=True)` — the exact path our V2 pod runs; `profile_cudagraph_memory` delegating to cudagraph_utils L983 — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/v1/worker/gpu/model_runner.py
+205. Same — `vllm/v1/worker/gpu/mm/encoder_runner.py` L111-155 — `profile_encoder_cache`: budget≤0 early return, the embedding-only skip line, the boot-day INFO marker `"Encoder cache will be initialized with a budget of %s tokens, and profiled with %s %s items of the maximum feature size."`, execute + cache tmp_i; V1 counterparts `_dummy_mm_kwargs` raw-input-only guard (L1736-1747), V1 profile_run same text (`gpu_model_runner.py` L6464-6560) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/v1/worker/gpu/mm/encoder_runner.py
+206. Same — `vllm/model_executor/models/qwen3_5.py` — `Qwen3_5ForConditionalGeneration.__init__` L486-528: tower built UNCONDITIONALLY inside `_mark_tower_model(vllm_config, {"image","video"})` (L513-519); `load_weights` L438-440 bare AutoWeightsLoader; `hf_to_vllm_mapper` drops ONLY `mtp.` (L322, L478); zero `language_model_only` references in the module; registry: `Qwen3_5ForConditionalGeneration → ("qwen3_5", …)` (`models/registry.py` L597) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/model_executor/models/qwen3_5.py + …/registry.py
+207. Same — `vllm/model_executor/models/qwen2_vl.py` L969-1000 + `qwen3_vl.py` L940-1200 — `get_image_size_with_most_features(max_pixels=None)`: merges ctx mm-kwargs `size/min_pixels/max_pixels` over `image_processor.size` (both the dummy path L1128-1129 AND the real `_get_vision_info` L957-963 honor the override → **self-consistent cap**); `get_dummy_mm_data` builds at the max-feature size; `Qwen3_5ProcessingInfo(Qwen3VLProcessingInfo)` (qwen3_5.py L106); `vllm/multimodal/processing/dummy_inputs.py` `_get_dummy_images`: ImageDummyOptions width/height = shrink-only, dummy-time ONLY (with the R8.4 budget-coupling hazard note) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/model_executor/models/qwen2_vl.py + qwen3_vl.py + …/processing/dummy_inputs.py
+208. Same — `vllm/config/vllm.py` L1311-1321 (LMO × `cudagraph_mm_encoder` ValueError); `vllm/models/qwen4_exp/{amd,nvidia}/model.py` L877-954 + L1016/1047 (`language_model_only` conditionally building the tower and mapping `{"visual.": None}`) + `qwen3_next.py` L365 `text_only` — the existence-proof that the skip-load pattern exists upstream but not for qwen3_5; `config/model.py` L395/477/528/796 LMO plumbing (hash factor + config threading only) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/config/vllm.py + model trees
+209. Same — `vllm/v1/worker/gpu_worker.py` L113-140, L330-365, L455-700, L773-905 — `maybe_rocm_profiling_fallback` (ROCm sizes from torch RESERVED on measured release, #45490); `_scoped_allocator_max_split` (20 MiB max_split during `load_model` L505) **CUDA-only early-return L338-341**; `determine_available_memory`: estimate computed when mode≠NONE (ROCm included, #44825 comment), `est_applied = est if VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS else 0`, `available = requested − non_kv − est_applied`, `peak_activation = headroom + est_applied`, enabled-advisory INFO (equiv/suggested util lines) and the DISABLED-branch WARNING ("may require lowering --gpu-memory-utilization to avoid OOM"); `compile_or_warm_up_model`: capture AFTER sizing, the actual-vs-estimated INFO line, the 150 MiB redundancy note + the consumed/peak/CUDAGraph breakdown msg — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/v1/worker/gpu_worker.py
+210. Same — `vllm/v1/worker/gpu/cudagraph_utils.py` L847-925 — `profile_cudagraph_memory`: throwaway-pool estimate, "PIECEWISE, encoder and speculator graphs are measured in full", FULL sampled+extrapolated, captures discarded — the estimate is a faithful pre-capture of the SAME set that captures later (why est ≈ real 1.26 on this lane) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/v1/worker/gpu/cudagraph_utils.py
+211. HF `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` @ `93245f7c…` — `config.json` full fetch: `architectures ["Qwen3_5ForConditionalGeneration"]`, **top-level `language_model_only: false`**, `vision_config {depth 27, hidden 1152, num_heads 16 (=head_dim 72), intermediate 4304, out_hidden 5120, patch 16, merge 2, temporal 2, dtype bfloat16, deepstack []}`; `text_config` re-verified (64 layers/interval 4/head 256/kv 4/linear 16-48×128/conv 4/ssm float32/mtp layers 1/vocab 248320/untied); QUANT `exclude` 127 — plus the **safetensors header HTTP-Range read of `model.safetensors`**: total 19,797,976,544 B = 18.438 GiB; buckets: `model.visual.*` 333 tensors **921,460,192 B = 0.858 GiB**; `mtp.*` 15 tensors **849,398,784 B = 0.791 GiB**; `lm_head` 2,542,796,800 B (2.368 GiB); embed 2,542,796,800 B; dtypes {BF16 703, U8 992 (packed fp4 + e8m0 scales)} — https://huggingface.co/amd/Qwen3.8-27B-Quark-AWQ-MXFP4/raw/93245f7c…/config.json + …/resolve/93245f7c…/model.safetensors (bytes 0-219,639 range-read; header length 219,632)
+212. Same repo/revision — `preprocessor_config.json` — `Qwen2VLImageProcessorFast`, patch 16, merge 2, temporal 2, `size {longest_edge: 16,777,216, shortest_edge: 65,536}` → max image = 16,384 merged vision tokens — https://huggingface.co/amd/Qwen3.8-27B-Quark-AWQ-MXFP4/raw/93245f7c…/preprocessor_config.json
+213. HF `tcclaviger/Qwen3.8-27B-DFlash2-FP8` @ `ee0cb26a…` (repo sha f02593d0, weight etag-identity carried [R3]) — model API `?blobs=true` + tree: `model.safetensors` **2,118,882,784 B** single file (sha256 7dbb99a8…), `model-kvscales.safetensors` 1,324 B, `kv_calibration_report_mtp.json`, config 3,256 B; safetensors metadata: BF16 194,254,080 params + F8_E4M3 1,730,150,400 (total 1,924,404,480) = 2,118,658,560 B payload; `DFlash2DraftModel` config geometry carried [167] — https://huggingface.co/api/models/tcclaviger/Qwen3.8-27B-DFlash2-FP8?blobs=true + …/tree/ee0cb26a…
+214. magiccodingman/vllm-radiance @ 5b99d66c — `docker-compose.yml` (read in full) — args block: TP `${TP:-2}`, seqs 8, len 16384, util `${GPU_UTIL:-0.85}`, batched 4096, kv fp8, backend R4D, APC+align (+ the 1664-bs-note comment — R7 conflict #3 carrier), no-async, tool trio, generation auto + xhigh, trust, host/port, **no `--limit-mm-per-prompt` and no `--swap-space` anywhere**; env: measured pair tables ("8K:8 … 256K:1" FP8; "32K:8 64K:6 128K:4 256K:2" MXFP4@0.90-APC-off), AITER family (9 vars), RADIANCE_USE_R4D master + siblings, DYNAMIC_DRAFT=1 (MTP-only, inert dflash), FAST_DRAFT `${:-0}`, VERIFY_HEAD=1/GLOBAL_TOPK 256 ("TP1 shortlist experimental"), AR trio, KV-offload trio, FP8_KV_SCALES, V2-runner `${:-0}`, PIECEWISE seam, NCCL_PROTO/COMPILE_THREADS/caches, start_period 1800s, zero `PYTORCH_*ALLOC*` — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/docker-compose.yml
+215. Same pin — `.env.example` (read in full) — MXFP4 block (auto + W4A8 set), **MTP block: `RADIANCE_SPECULATIVE_CONFIG='{"method":"mtp","num_speculative_tokens":8,"attention_backend":"R4D","disable_padded_drafter_batch":true}'` + FAST_DRAFT=1 + BF16_MTP "only when selecting its MTP profile"**, DFlash2 block: heretic-ara + `draft_tensor_parallel_size:2` + `max_model_len:8192` reproduction ("the measured dual-R9700 K7 lane"), target-matched tcclaviger pointer for Quark checkpoints, PREFIX_CACHING_FLAG/MAMBA_CACHE_MODE benchmark-override notes, selector-topk, tool-grammar flags 0 — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/.env.example
+216. Same pin — `Dockerfile` + git-tree API — pins (TORCH 2.12.0@6bbd2602, TRITON 3.7.1@f0b55c07, AITER 0.1.20@fc2e5d57, R4D v0.5.0@e8de4bc1, VLLM ced6857a/0.30.0); ENV L342-347 (gfx/arch/`SAFETENSORS_FAST_GPU`/autotuning — NO allocator env, NO AITER env) and the baked flags block L352-366 (`RADIANCE_USE_R4D=1 … RADIANCE_KV_GROUP_OPT=1 … RADIANCE_DYNAMIC_DRAFT=1 … RADIANCE_DRAFT_RERANK=64 RADIANCE_VERIFY_HEAD=1 R4D_ATTN_FP8=0 RADIANCE_FAST_DRAFT=0 RADIANCE_RUN_BWTEST=1`); the 35-patch application order incl. `patch_mtp_mm_mask`; COPY list (`radiance_vit_attn.py`, `radiance_drafthead.py`, `radiance_w4.py`…); tree scan: NO qwen3_5 overlay files — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/Dockerfile + api.github.com git/trees
+217. Same pin — `docs/COMPOSE_CAPACITY.md` — the qualification conditions (TP2 2×R9700; MXFP4 continuation on `amd/Qwen3.8-27B-Quark-AWQ-MXFP4 (18.44 GiB)` + `tcclaviger DFlash2 (1.97 GiB)`, **K5 drafts, draft TP2, TRITON_ATTN, mandatory FP8 KV, 90% alloc, APC-off + mamba-none for the high-capacity sweep**; 256K:2 burst 1,969.6 total TPS, **min physical headroom 5.28 GiB/GPU**; recommended production 128K:4 with APC+align, "576,001 usable KV tokens / 4.39x"; the 12.8× prefix-TTFT datum; "DFlash2 remains experimental … strict greedy-equivalence fails" + non-transferability warning) — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/docs/COMPOSE_CAPACITY.md
+218. Same pin — `docs/V030_PUBLICATION_20260922.md` — mode comparison (Weighted/c1/c8: non-spec 53.9/53.7/304.1; MTP K4 135.6/140.6/463.9 **tool FAIL 29/30** — attempt 006 unfinished `click` JSON; DFlash K5 172.3/182.4/610.4; K7 186.7/204.5/510.2); acceptance table (K4 55.79% log-scope, K5 51.92%, K7 42.26%, 3.596/3.958); prefill 4.0-4.5k flat; conditions (TP2, FP8 KV, 8K/C8, 85%, 4096, prefix off, WPERM/NT-safe, FAST lanes: MTP = V2 MTPSpeculator/Qwen3_5MTP + INT2-g128 exact-top-64); "PUBLICATION_SET_COMPLETE_WITH_MTP_TOOL_QUALIFICATION_FAILURE"; the four-MODE lane list incl. `mtp-k4` [108-carried, re-read] — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/docs/V030_PUBLICATION_20260922.md
+219. Same pin — `radiance_drafthead.py` — FAST gate docstring: "0: nothing installs; stock bf16 head shared with the target (`_maybe_share_lm_head` … costs no extra memory) reads **1.18 GiB/rank** per draft slot, ~2002 µs/call; 1: INT2 head **0.167 GiB/rank** @ the TP2 half-vocab W[5120,124160] → TP1 full 248,320 cols ≈ 0.33 GiB, ~473 µs incl. exact rerank"; RERANK default 32 (image bakes 64); the DFlash top-k hard-ceiling datum (R=32: acc/draft 1.904→1.804, 2R too tight for K=16); the shared-lm_head packing-reuse note (L287-289) — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/radiance_drafthead.py
+220. Same pin — `patch_dflash_w4.py` — "radiance_w4 packs block-fp8 weights to 4 bits from inside process_weights_after_loading, **the only point where the fp8 weight exists**"; the `set_model_tag("dflash_head")` bracket (drafter-only discriminator) — the W4-replaces reading for the R8.2 residency delta — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/patch_dflash_w4.py
+221. Same pin — `radiance_vit_attn.py` — the head-dim-72 native ViT attention kernel, "installed as a drop-in for the ViT SDPA per-segment apply … **Active on gfx12x with RADIANCE_USE_R4D on**"; fall-through rules — the tower-attention route on our pod (R8.1b peak-shape corroboration) — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/radiance_vit_attn.py
+222. Same pin — `patch_mtp_mm_mask.py` — the MTP + disable_padded_drafter_batch mm-placeholder-mask crash fix, "Enables multimodal serving with MTP speculative decoding" — the vision-on-mtp capability leg — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c…/patch_mtp_mm_mask.py
+223. Allocator web cluster (read today): vLLM issue **#6512** (ROCm docker; the HIP-OOM text "…4.72 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting `PYTORCH_HIP_ALLOC_CONF=expandable_segments:True`…"); issue **#27706** (Qwen3-VL profile_run OOM 256 GiB on the torch-SDPA ViT fallback — the no-flash-attention peak class, closed by flash-attn/aiter installs — our D34 posture's cousin); vLLM **PR #54351** **OPEN** (created 2026-08-29, `merged_at: null`; "the two safeguards inspect only `PYTORCH_CUDA_ALLOC_CONF`" → the unified `PYTORCH_ALLOC_CONF`/`PYTORCH_HIP_ALLOC_CONF` names are invisible to them at our tag); pytorch **#147851** (expandable_segments × CUDAPluggableAllocator/MemPool unsupported — the sleep-mode/cumem axis, inert for us); vLLM PR #14189/commit 71c4b40 (the historic sleep-mode × expandable error-out) — https://github.com/vllm-project/vllm/issues/6512 + /issues/27706 + /pull/54351 + https://github.com/pytorch/pytorch/issues/147851
+224. Boot data (the commission's given pair, the owner's live paste): `needed 5.06 / available 3.47 / estimated maximum model length 164,512` @ the D36 int4 boot — law-fitted: 368×8×1,845,248 = 5.06 GiB (bs 1696 confirmed) and 252×8×1,845,248 = 3.465 → "3.47" at L = 164,512 = 1696×97 exactly [195-continuation; repo: C02 values at HEAD, D36/D37 records, STATE d36/d37 legs]
+
+## Reliability notes (R8 self-review)
+
+- **High confidence (source @ exact pins, read this session end-to-end):** no flag skips the
+  tower LOAD for qwen3_5 — unconditional build + bare loader + mapper-drops-mtp-only, triple-
+  cited [206][208][211]; `{"image":1}` ≡ `{"image":4}` for the profile batch (the budget chain
+  is mechanical: 16384/16384 = 1 item [202][203][205]); the f2 formula and ordering (est
+  computed-then-not-applied; capture after sizing [209][210]); the drafter file bytes and param
+  split [213]; FAST_DRAFT's W4-replaces + INT2 sizes [219][220]; the compose's 256K-rows-all-TP2
+  and absent mm/swap/allocator flags [214][215]; the max_pixels override flowing to BOTH dummy
+  and real paths [207]; the published speed/tool table incl. the 29/30 lane-scope [218]; the
+  boot paste fitting the grouped law exactly (both numbers) [195][224].
+- **Medium confidence:** the ≈1.9 GiB max-item rehearsal peak (input/output terms pinned;
+  activation coexistence is a modelling estimate ±0.4 — one DEBUG re-boot prices it exactly);
+  the no-spec/mtp-K4 residency deltas (the W4-replaces reading is a docstring, not a memory
+  trace: ranges given, f3's Model-loading line arbitrates); the mtp-K4 48:17:0 bucketing (the
+  docs' eagle-+1-full-attn pattern + the fetched mtp geometry; boot log settles it); f2's
+  estimate ≈1.26 at the int4 boot (the fp8 measurement transfers; the advisory line is the
+  check); the cap-ladder numbers (243k/154k/231k — linear-law reads, ±3% with bs).
+- **Low confidence / explicit gaps:** the ImageDummyOptions width/height STALL hazard is a
+  code-static read (no test executed — flagged "do not ship unproven"); zero measured
+  fragmentation datum for the expandable_segments row (mechanism cited only); the int4+TRITON
+  engine estimate was never pasted; no GPU session — every GiB is arithmetic or estimate; the
+  radiance internal line stays unreadable [R5 precedent].
+- **Weakest claim of the round:** the R8.5 row-6 (recommended) margin — pool ≈6.0 depends on
+  the mm-peak estimate (1.5-2.2 range → pool 5.7-6.4 vs bar 5.06; clears across the whole
+  range, which is why (A) pairs f2 — row 3's alone column flips sign inside that range).
+  Stated plainly: (A) is robust; single-lever image-0 is not.
+- **Perspective weighting:** the pinned code + the boot paste outrank the records we are
+  correcting (D36's ledger priced the FILE and assumed the limit scaled the dummy — reasonable
+  then, superseded now); the fork's own docs/compose decide WHAT their 256K was, the arithmetic
+  decides whether it transfers (it does not).
+- **Blind spots (stated):** the V2 spec-drafter's own profile path (the drafter dummy-run peak
+  is inside the measured held, unseparately priced — the f2 estimate covers its graphs); the W4
+  requant's transient staging (load-window, folded into "±"); the `patch_dflash_fused_kv_fp8`
+  overlay's interaction with our int4 pool (3.6's startup leg is the detector);
+  `--enable-mm-embeds` as the limit-0 escape (exists [201], not relevant at our surface); the
+  exact encoder-cache tmp-tensor lifetime inside the peak measurement; whether the fork's AITER
+  default differs from the stock False inside the entrypoint preamble (grep-clean, assumed no).
+
+---
+
+# R8b — image-0 verification: does dropping vision actually clear 5.06 — and what the boot gate does WITHOUT the mm rehearsal
+
+(The owner ruled **C — drop vision** from R8-Q1. This round closes the one arithmetic class R8
+left open — the mm rehearsal is a TRANSIENT peak inside the insurance term, so the question is
+not "what is the dummy worth" but "does removing it move the binding max". Verdict lines first,
+mechanics after.)
+
+**VERDICT LINES** — (1) the encoder dummy IS skipped at image-0, but ONLY if the flag zeros
+EVERY supported modality — qwen3_5 supports {image, video} [227], so bare `{"image": 0}` leaves
+video at its 999 default and the rehearsal PROFILES A VIDEO MAX-ITEM INSTEAD (same class, same
+cost); ship `--language-model-only` (or the explicit `{"image": 0, "video": 0}` pair) [226][227].
+(2) The KV group composition is mm-INDEPENDENT: needed stays **5.06** (the encoder cache is
+activations, not KV [229]). (3) C-pure lands pool = 3.47 + δ with δ bounded ≈[0.16, 2.1] and
+binding-uncertain → a COIN FLIP (clears only if the encoder phase is the binding profile peak
+by ≥1.59); **the minimum pairing that likely clears is C + f2** (needs only δ ≥ 0.32; worst-case
+δ still misses 5.06 by ~0.16), and the only δ-certain pairing keeps dflash dropped (C+no-spec).
+δ closes in ONE boot line. (4) Fallout is a clean values-scope amendment; the 0.858 GiB tower
+stays resident — C buys insurance, never weight (restated for exact owner expectation).
+
+## R8b.1 — Does profile_run still create the mm dummy at limit-0? NO — via the text-only short-circuit (exact chain, V2 runner = ours)
+
+- `supports_mm_inputs = mm_registry.supports_multimodal_inputs(model_config)` — V2 runner
+  `gpu/model_runner.py` L262-264; the V2 `profile_run` mm block opens
+  `if self.supports_mm_inputs and self.is_first_pp_rank:` (L938-941 [204]).
+- `registry.py` L108-149 [226]: docstring "Returns True if the model is multimodal with any
+  non-zero supported modalities, otherwise returns False, **effectively running in text-only
+  mode**"; the check is
+  `if all(mm_config.get_limit_per_prompt(m) == 0 for m in info.supported_mm_limits)` →
+  `return False` (unless `enable_mm_embeds`), logging the true boot marker
+  `All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.`
+  (INFO-once, L146-149). **R8.1c's marker note is CORRECTED here**: the
+  `compute_mm_encoder_budget` WARNING [202] does NOT fire on this path — the whole
+  MultiModalBudget build is skipped before it; the INFO above is the line to grep on boot day.
+- **The flag choice twist** — `supported_mm_limits` for our arch: `Qwen2VLProcessingInfo.get_supported_mm_limits()`
+  returns **`{"image": None, "video": None}`** (`qwen2_vl.py` L869-870), inherited verbatim
+  through `Qwen3VLProcessingInfo` (`qwen3_vl.py` L910 [207]) and `Qwen3_5ProcessingInfo`
+  (`qwen3_5.py` L106) — video IS a supported modality. An absent modality in the user limit
+  dict defaults to **999** (`config/multimodal.py` get_limit_per_prompt L487-492 [201]), so
+  `{"image": 0}` alone is NOT all-zero → supports stays TRUE → the budget runs on
+  `tower_modalities = {video}` (the `>0` filter, `encoder_budget.py` L80-88 [203]), and
+  `get_dummy_encoder_profile_inputs` builds the max video dummy — the qwen3_vl dummy path
+  spreads the whole `longest_edge` budget over ≥2 frames (`qwen3_vl.py` L1162-1190 [207]) →
+  the SAME ≈16,384-token max-item class, ≈ the same peak, **and the C04 fallout still applies
+  to image while the memory saving is zero-effectiveness-adjacent (you freed the image dummy
+  and replaced it with a video one)**. `--language-model-only` zeroes EVERY modality at the
+  getter (L483-484 [201]) → all-zero → text-only, dummy skipped, `{"image": 0, "video": 0}` is
+  the equivalent explicit pair. **Ship `--language-model-only`.** (Video is NOT advertised in
+  our catalog rows — R8b.4b — so dropping it costs nothing beyond the image ruling itself.)
+- With the block skipped, the remaining profile peak = the pure-LLM phases:
+  `_dummy_run(max_num_tokens=2560, is_profile)` — note: **2560, not 262k** (no 262k-token dummy
+  ever runs; 262144 lives only in the check formula) — INCLUDING the V2 drafter's full dummy
+  `speculator.propose(..., dummy_run=True)` (L860-912 [228]) and the sampler run
+  (`_dummy_sampler_run`, rows = `hidden_states[logits_indices]`, L916-930 [228]); encoder
+  inputs/activations/cache-outputs are simply never allocated.
+
+## R8b.2 — KV group composition at image-0: needed UNCHANGED at 5.06
+
+The kv-cache spec dict is built from the language-side attention layers only — 16 FA
+(FullAttentionSpec) + 48 GDN (MambaSpec) + 5 drafter (SlidingWindowSpec) [155][156][172]; the
+vision encoder contributes NO KV spec anywhere (its output embeddings are ACTIVATIONS merged
+into inputs_embeds per step; the encoder cache is a scheduler-budgeted activation store,
+`encoder_cache_size` in tokens [202][226]). The `bs = 1696` derivation is mamba-page vs
+attention-bytes only (interface.py L923-925 [184]) — mm-independent. The 58-block fixed floor
+(6 GDN groups × 9 + 1 SWA × 4) contains no mm term. Therefore the boot gate at image-0:
+`needed = (58 + 2·⌈262144/1696⌉) × 8 × 1,845,248 B = **5.06 GiB — unchanged**, S=8/9-groups/
+60.00%-padding marker pair unchanged, watermark behavior unchanged. (The 0.858 GiB tower keeps
+sitting in `total_consumed` regardless [206][211] — permanent, unfreed.)
+
+## R8b.3 — The boot arithmetic: what the pool actually gains, and the minimum pairing
+
+Exact accounting @ ced6857a (`utils/mem_utils.py` L283-321 [229], worker side [209]):
+- `total_consumed = free_before − free_after` (physical, permanent: weights incl. tower + HIP
+  ctx + persistent buffers); `transient_peak_headroom = torch_peak − torch_allocated` AT THE
+  END of profile_run (peak reset at profile start L286; the peak is the MAX over the SEQUENTIAL
+  phases: encoder-run → LLM-dummy+drafter-propose → sampler); `non_kv = total_consumed +
+  transient_peak_headroom`; `available = requested − non_kv − est_applied`.
+- ⇒ the mm rehearsal lives in the **headroom term as a phase-max competitor**, not an additive
+  line: dropping it removes δ = (peak_with_mm − peak_without_mm), with
+  - **upper bound** δ ≈ the encoder phase itself, **1.5–2.1 GiB** (R8.1b table [211][212]:
+    pixel 0.19 + per-layer acts 1.2–1.8 + embeds) — reached only if the encoder phase was the
+    binding peak;
+  - **floor** δ ≈ 0.164 GiB — the encoder-cache tmp outputs [225-carry: encoder_runner
+    L144-146] stay allocated through the drafter/sampler phases (reset at profile_run's end,
+    V2 L971-973 [204]), so they inflate every other phase's peak by ≈ their size;
+  - which bound applies is NOT decidable statically: the K7 drafter's full dummy propose over
+    2560 tokens is exactly the competing peak R8's reliability notes flagged blind. Estimate-class,
+    range-bounded, **one boot line settles it: `Available KV cache memory: X` vs the shipped
+    3.47 ⇒ δ = X − 3.47.**
+- Pool arithmetic at C: requested 31.22 held 27.75 pool 3.47 ⇒ pool_C = **3.47 + δ ∈
+  [3.63, 5.57]**; boot needs δ ≥ **1.59** — possible, NOT guaranteed: **C-pure is a coin flip.**
+- Pool at C+f2 = 4.74 + δ ∈ [4.90, 6.84]: needs δ ≥ 0.32 — clears on any realistic
+  encoder-near-binding case, misses by ≈0.16 only in the pathological sampler/drafter-binding
+  tail; full-session admission (0.95·pool ≥ 5.06 [R8.5]) wants δ ≥ 0.85 — likely with f2, not
+  certain. **⇒ MINIMUM PAIRING (verdict): C + f2**, both in one amendment (f2 was already the
+  D36-priced companion; the owner's C ruling does not remove the need for it).
+- δ-certain pairings require the spec drop: **C + no-spec** clears at ANY δ (needed 4.40 ≤
+  worst pool 4.93 + the freed drafter/INT2 resident 1.3–1.6 [R8.2]) — the one combination that
+  needs no f2, no hope, and no boot-day arithmetic. If C+no-spec is the fall-through, say so
+  before the ship pass.
+
+## R8b.4 — C-scenario fallout, record-grade
+
+- **(a) ship form**: `--language-model-only` as a single token REPLACES the
+  `("--limit-mm-per-prompt", '{"image": 4}')` pair (values.yaml L200-201, shipped 45-token
+  serveArgs → 44) — bool flag at the pin (arg_utils L1367 [200]), so the D32 JSON law is simply
+  not exercised; the L147-148 "vision tower serves" comment block is a re-pin target (it now
+  states the opposite), and the `kvCacheDtype`/48GB-RDNA3 comment (L45) gains the vision-drop
+  rider (R8b.4e).
+- **(b) C04 catalog**: the three vLLM rows `.opencode/opencode.jsonc` L795-813 carry
+  `capabilities: {input:["text","image"], output:["text"], tools:true}` (L798/805/812, verified)
+  → `input` drops to `["text"]` on all three (the image leg goes FALSE by the honest-grounding
+  law — engine refuses images); **no audio/video legs exist** to change; **`tools:true` STAYS**
+  (tool parsing/serving is text-side: the `qwen3_coder` parser + tool trio ride unchanged; the
+  3.7 smoke remains the marker's lease). `tests/pipeline-models/surface.sh` M3 capability asserts
+  re-pin (C04 surface); `limit.context 262144` untouched. Requirement #3 ("keep vision") is
+  superseded BY THE OWNER'S OWN RULING — the DECISIONS entry must carry the verbatim.
+- **(c) runbook rows killed/re-pinned** (`.agents/notes/vllm-on-target-acceptance.md` + the
+  `vllm-runbook.sh` L488-490 needles): step-3 **ViT backend marker row L344** (the RDNA FA
+  literal + the MMEncoderAttention per-layer confirm) → ABSENT by design, its "absence = drift"
+  reading INVERTS (absence becomes the expected state; the new positive marker is the registry
+  INFO "running in text-only mode" [226]); **3.4 multimodal smoke L440-444** + the 3.6-legs list
+  "2. The 3.3 and 3.4 smokes" (L594) → 3.4 retired, 3.3/1-token stays; the D34/D35 flash-attn
+  pip layer + the (8)-slot env var become **decorative-but-harmless** (the package has no
+  caller — the ViT never runs; the 20-var law stays byte-identical, the var goes inert);
+  crash-#2's whole ViT-FA class is dead by absence (footnote in the 3.4 retirement line). The
+  **f1 marker pair is unaffected** (R8b.2), the KV triple + estimate rows unchanged in kind,
+  the mm-IPC reserve stays 0 [201 L253].
+- **(d) what the owner does NOT get**: no weight bytes — the staged 18.438 GiB file is what it
+  is, the loader builds and loads the visual island anyway [206][211]: **0.858 GiB resident
+  dead weight persists** and the ONLY C-side memory effect is the δ slice of the insurance term
+  (R8b.3). Expectation sentence: "dropping vision frees boot-time insurance (≈0.2–2.1 GiB of
+  the held), never the tower."
+- **(e) reversibility**: the full drop-and-restore is values-side — the serveArgs token pair,
+  the three catalog rows, the M3 asserts, the runbook rows; a future 48 GB card (the OQ3/
+  48GB-RDNA3 ledger note, values L45 + D36's rider) restores the exact removed lines — record
+  them VERBATIM in the amendment (the `{"image": 4}` pair + L344 marker row text) so the
+  re-enable is a copy-back, not an archaeology.
+
+## R8b-Q1 (one line, for the coordinator to put to the owner)
+
+**"C ships PAIRED with f2 (`VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0`) — pure-C boots a coin
+flip (δ ∈ [0.16, 2.1], bar δ ≥ 1.59), C+f2 needs only δ ≥ 0.32 and any refusal still prints a
+fresh cap (≥243k + δ) — or go certain with C+no-spec (−71% decode, δ-immune)?"** (No second
+question; the δ answer arrives with the boot's `Available KV cache memory:` line either way.)
+
+## Sources (R8b)
+
+225. Carried R8 artifacts re-read at this round's line targets: `vllm/v1/worker/gpu/mm/encoder_runner.py`
+  L111-155 (profile_encoder_cache; tmp outputs stored into `encoder_cache.encoder_outputs`
+  L144-146) + V2 `gpu/model_runner.py` profile_run L938-973 (encoder-cache reset AFTER the LLM
+  dummy + sampler runs — the coexistence that floors δ at ≈0.164 GiB) — ced6857a tree [204][205].
+226. vLLM @ ced6857a — `vllm/multimodal/registry.py` L108-149 — `supports_multimodal_inputs`:
+  docstring "effectively running in text-only mode" L112-113; the **all-supported-modalities-
+  zero check** L137-141 (`all(get_limit_per_prompt(m) == 0 for m in info.supported_mm_limits)`),
+  the enable_mm_embeds exemption, the INFO-once text-only marker L146-149 — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/multimodal/registry.py
+227. Same — `vllm/multimodal/processing/context.py` L455-491 (`supported_mm_limits`/`allowed_mm_limits`
+  definitions: omitted modality = unsupported, `None` = unlimited → user limit wins) +
+  `qwen2_vl.py` L869-870 (`get_supported_mm_limits → {"image": None, "video": None}`) +
+  `qwen3_vl.py` L910 / `qwen3_5.py` L106 (the inheritance chain that gives OUR arch a video
+  modality) — the bare-`{"image":0}`-profiles-a-video-dummy finding — https://raw.githubusercontent.com/vllm-project/vllm/ced6857a…/vllm/multimodal/processing/context.py + …/qwen2_vl.py
+228. Same — `vllm/v1/worker/gpu/model_runner.py` L262-264 (supports_mm_inputs ← registry call),
+  L860-912 (V2 `_dummy_run` runs the FULL `speculator.propose(..., dummy_run=True, is_profile=…)`
+  inside the profile — the competing peak), L916-930 (`_dummy_sampler_run`, rows = logits_indices,
+  the NOTE that profile-time sampling skips top_k/top_p/logprobs = less memory than real) — [204-file, line-targeted re-read].
+229. Same — `vllm/utils/mem_utils.py` L283-321 — `memory_profiling`: peak-stats reset at profile
+  start L286; `after_profile.measure()` at context exit; `total_consumed = before_create.free −
+  after_profile.free` L312-314; **`transient_peak_headroom = torch_peak − torch_allocated`**
+  L316-319 ("add only the transient peak headroom to avoid double-counting");
+  `non_kv_cache_memory = total_consumed + transient_peak_headroom` L321 — the formula that makes
+  the mm rehearsal a phase-max competitor, not an additive donor.
+230. Repo at HEAD (re-verified at this write): `charts/vllm/values.yaml` L200-201 (the shipped
+  `--limit-mm-per-prompt '{"image": 4}'` pair), L147-148 (the "vision tower serves" comment —
+  re-pin target), L45 (48GB-RDNA3 note); `.opencode/opencode.jsonc` L795-813 (the three vLLM
+  rows, capabilities L798/805/812 = `{input:["text","image"],output:["text"],tools:true}`,
+  context 262144); `.agents/notes/vllm-on-target-acceptance.md` L344 (ViT marker row) / L440-444
+  (3.4 smoke) / L594 (3.6 legs "3.3 and 3.4"); `tests/notes/vllm-runbook.sh` L488-490 (the 3.4/
+  multimodal/data-URL needles) — repo paths as cited.
+
+## Reliability notes (R8b self-review)
+
+- High: the text-only short-circuit + all-limits check [226]; the video-supported inheritance
+  chain → the flag-choice twist [227]; headroom = phase-max formula [229]; needed/bs/group
+  mm-independence [226][155][184 re-applied]; the boot-marker correction (INFO, not WARNING)
+  [226]; the repo-side re-pin inventory [230].
+- Medium: the δ bounds [0.164, ~2.1] (coexistence floor + encoder-peak ceiling — both
+  mechanism-cited, exact value boot-pending); the C+f2 "likely clears" read (needs the encoder
+  phase within ~0.3 of binding — the K7 drafter-propose peak is its only plausible rival).
+- Low: nothing new; no GPU run (again) — δ, the estimate line, and the rival peak all close on
+  the first image-0 boot paste.
+- Weakest claim: the δ floor 0.164 assumes the tmp embeds were allocated at full 0.164 during
+  the later phases (true at image:4 max-item; self-correcting once the `Model loading` +
+  `Available KV` pair arrives). If the drafter phase binds, C-pure fails nearly the FULL 1.59 —
+  stated plainly: **do not ship C without f2.**

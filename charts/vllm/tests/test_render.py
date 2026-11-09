@@ -2,9 +2,9 @@
 # vllm C02 — AC1-AC4; re-pinned by cf-131 C02/C03): extract the service `vllm:`
 # subtree, render with --set domain/clusterName, and assert AC2/AC3/AC4 line by
 # line — the full contract serve recipe verbatim (the cf-105 D4 recipe until
-# the C02 flip, the cf-131 D24 0.30 Shape-B recipe, D36-amended, after it),
-# the complete container env set (four vars, then the D25 twenty-var law,
-# D34-restored), probes, securityContext, the privileged+hostPath device shape, GPU/RAM/shm
+# the C02 flip, the cf-131 D24 0.30 Shape-B recipe, D36/D38-amended, after it),
+# the complete container env set (four vars, then the D25 twenty-one-var law,
+# D34-restored and D38-extended), probes, securityContext, the privileged+hostPath device shape, GPU/RAM/shm
 # pod shape, the exactly-two scrape annotations, the peer-hop Service name,
 # the persistence legs (globalMounts until C03, the advancedMounts ro/rw split +
 # the /cache move after it) and the C03 setup init container. Generation
@@ -45,7 +45,7 @@ def test_ac1_render_produces_deployment_without_sentinels(service):
 def test_ac2_serve_args_are_the_contract_recipe_verbatim():
     """The rendered args equal the contract recipe in order: pre-flip the
     cf-105 D4 list with the service modelPath spliced at --model; from the
-    C02 flip the cf-131 D24 list (D36-amended values) with the model PATH
+    C02 flip the cf-131 D24 list (D36/D38-amended values) with the model PATH
     as args[0] — the 0.30 entrypoint does `exec vllm serve "$@"`, so a
     vllm/serve token or a --model flag would double the verb the image
     already supplies (R3 L1.3).
@@ -92,13 +92,14 @@ def test_ac2_serve_args_are_the_contract_recipe_verbatim():
 
 def test_ac2_container_env_is_exactly_the_contract_set():
     """The FULL env set: pre-flip the four cf-105 contract vars; from the C02
-    flip the D25 twenty-var law exactly (D34-restored) — and the three named
+    flip the D25 twenty-one-var law exactly (D34-restored, D38-extended: the
+    f2 profiler var joins) — and the three named
     drops (RADIANCE_GDN_LAZY absent because the feature is not in the 0.30
     stack; HUGGINGFACE_HUB_CACHE / VLLM_SERVER_DEV_MODE dropped with the GGUF
-    and sleep-mode stories). FLASH_ATTENTION_TRITON_AMD_ENABLE is a REQUIRED
-    member of the set, not a drop: the D33-era four-name bar inverted with
-    the owner's install ruling — the var and the package C01 installs into
-    the image are both required for the ViT FLASH_ATTN path."""
+    and sleep-mode stories). FLASH_ATTENTION_TRITON_AMD_ENABLE stays a
+    REQUIRED member, not a drop: the D33-era four-name bar inverted with the
+    owner's install ruling, and the exit-64 exact-set law keeps the var even
+    though D38's text-only serving never runs the ViT path it selects."""
     docs, _ = _service_render()
     env = V.env_map(V.main_container(V.deployment(docs)))
     block = V.service_vllm_block()
@@ -115,7 +116,7 @@ def test_ac2_container_env_is_exactly_the_contract_set():
     if V.cf131_plane():
         want = V.env_want_cf131(str(sub["rocrVisibleDevices"]))
         assert env == want, (
-            f"C02 (cf-131) AC5: container env diverges from the D25 twenty-var set (D34-restored)\n  got:      {env}\n  expected: {want}"
+            f"C02 (cf-131) AC5: container env diverges from the D25 twenty-one-var set (D34-restored, D38-extended)\n  got:      {env}\n  expected: {want}"
         )
         leaked = [name for name in V.DROPPED_ENV_CF131 if name in env]
         assert not leaked, (
