@@ -600,16 +600,16 @@ llama-swap:
 # the llama host as the sole client route.
 vllm:
   app-template:
-    # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
-    # Research V3), in llama.cpp's cache layout at the LLAMA_CACHE=/models
-    # root of the shared 500Gi llama-swap PVC — no hub/ segment (that is
-    # the HUGGINGFACE_HUB_CACHE convention, not llama.cpp's). The hash is
-    # the live snapshot discovered on target 2026-11-07. A retarget is the
-    # dual edit of the chart's modelPath/serveArgs with this re-pin kept
-    # in sync — the chart's anchored serveArgs splices the chart-level
-    # modelPath (anchors resolve per-document), so this key alone does not
-    # change the rendered --model; the suite's --model == service modelPath
-    # assert guards the divergence.
-    modelPath: /models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q4_K_XL.gguf
+    # The RAW RELEASE dir of the served Quark MXFP4 checkpoint — identical
+    # to the chart's modelPath (the round-2 Q8 ruling drops the rewrite
+    # tree; the chart's modelPath comment carries the full record, and the
+    # source pin 93245f7c00f1a8964b66a97c6e02e2fd09080be4 lives in the C03
+    # staging marker + the chart comment + the runbook, NOT in the path). A
+    # retarget is the dual edit of the chart's modelPath/serveArgs with this
+    # re-pin kept in sync — the chart's anchored serveArgs splices the
+    # CHART-level modelPath (anchors resolve per-document), so this key
+    # alone does not change the rendered args; the suite's
+    # args[0] == service modelPath assert guards the divergence.
+    modelPath: /models/Qwen3.8-27B-Quark-AWQ-MXFP4
     # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
     rocrVisibleDevices: "0"

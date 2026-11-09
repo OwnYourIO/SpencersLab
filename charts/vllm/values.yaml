@@ -8,15 +8,40 @@
 cachePvcSize: 10Gi
 
 app-template:
-  # --model value: the Q4 GGUF the live qwen3.8-27b-q4 rung references
-  # (unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL), auto-fetched by llama.cpp into
-  # its cache layout at the LLAMA_CACHE=/models root of the shared 500Gi
-  # llama-swap PVC — no hub/ segment (that is the HUGGINGFACE_HUB_CACHE
-  # convention, not llama.cpp's). The hash is the live snapshot discovered
-  # on target 2026-11-07; a re-fetch of the weights re-pins this key — a
-  # wrong path is an operator-visible startup error fixed here (values),
-  # never in a template (the C06 step-2 find is the path authority).
-  modelPath: &modelPath /models/models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q4_K_XL.gguf
+  # The served model dir, spliced as the FIRST serveArgs item (the
+  # positional model — the image entrypoint supplies the verb): the RAW
+  # RELEASE dir of amd/Qwen3.8-27B-Quark-AWQ-MXFP4 on the shared 500Gi
+  # llama-swap claim. The fp8_mtp.py rewrite step is dropped (the round-2
+  # Q8 ruling): AMD's 2026-11-03 module-name mtp-exclude fix makes this
+  # revision strictly more loadable than the 156be69f revision the 0.30
+  # stack was qualified on, and RADIANCE_QUARK_BF16_MTP=1 is the documented
+  # mtp-profile load path (D25/D26); the rewrite re-land is the
+  # two-generations-removed fallback (runbook steps 2/3). The dir is PLAIN —
+  # no HF-snapshot-hash segment: stable by construction (the R2 D13 path
+  # law). The source revision pin is main-sha
+  # 93245f7c00f1a8964b66a97c6e02e2fd09080be4: the SHA pins the SOURCE and
+  # the PATH pins the OUTPUT, and a re-fetch moves all three homes together
+  # (this comment, the C03 staging marker, the runbook). The C03 `setup`
+  # init container is the staging actor; the runbook step-2 `ls` is the
+  # path authority — a wrong path is an operator-visible startup error fixed
+  # here (values), never in a template.
+  modelPath: &modelPath /models/Qwen3.8-27B-Quark-AWQ-MXFP4
+
+  # KV-cache dtype, spliced into --kv-cache-dtype. The qualified serving set
+  # at 0.30 is fp8 (the default: the compose baseline's literal + the
+  # "mandatory FP8 KV" record, R3 L2.2), bf16 / auto (the tested toggles
+  # [91]). int4_per_token_head is DOCUMENTED-EXPERIMENTAL behind an
+  # ON-TARGET qualification gate carried in this ticket (the round-2 Q5
+  # ruling, D27): R4D's baked 0.30 gate refuses per-(token,head) KV scales
+  # at startup (R3 L2.2), so the int4 leg is a two-edit switch — (1) this
+  # value to int4_per_token_head, (2) the target attention off R4D to
+  # --attention-backend TRITON_ATTN (the 0.30-verified supported value
+  # [102]; the CLI's named-backend request wins over the baked R4D seam).
+  # int4 stays NON-DEFAULT until the gate passes on target (the runbook's
+  # day-one int4 step: the two edits + the acceptance/quality/tool legs).
+  # The owner's 48GB-RDNA3 q4-headroom note (round-1 OQ3) stays ledgered
+  # for the future stock card (the round-2 Q5 ruling).
+  kvCacheDtype: &kvCacheDtype fp8
 
   # ROCr device index of the R9700 (D2). With the hostPath device pattern
   # the index is HOST enumeration — 0 = R9700, 1 = 8060S — so the pin is
@@ -24,11 +49,41 @@ app-template:
   # at the C06 rocminfo gate — retarget this key, never the template.
   rocrVisibleDevices: "0"
 
-  # D5/Q6: --enable-sleep-mode ON by default (the operator time-sharing
-  # lever with Strata). The app-template args field renders verbatim (no
-  # tpl), so the flag rides serveArgs below; this key records the default
-  # and the C06 runbook surface, and toggling it is a serveArgs edit.
-  enableSleepMode: true
+  # The shipped spec method (record key, the D16/R2-D6 pattern; round-2 Q1
+  # confirmed: the measured production path — native at 0.30 as the V2
+  # DFlash2Speculator, not the 0.27.1 patch-registered method, R3 L2.3).
+  # The two documented JSONs: dflash = the shipped specConfig below (K7, the
+  # top measured lane: 42.26% acceptance / 3.958 accepted-plus-bonus tokens
+  # per draft [108] — recorded, not claimed); mtp =
+  # {"method":"mtp","num_speculative_tokens":4,"attention_backend":"R4D","disable_padded_drafter_batch":true}
+  # (K4 = the only 0.30-MEASURED MTP depth, R3-Q4; the .env example's K8 is
+  # unmeasured general guidance; the mtp K4 lane carries a 29/30
+  # TOOL-GATE-FAIL caveat [108] — the toggle is not tool-qualified). The
+  # toggle procedure is three coupled edits: swap the specConfig splice
+  # below; flip RADIANCE_QUARK_BF16_MTP=1 in the main env — the raw
+  # release's bf16 MTP-head load path, baked default 0, needed "only when
+  # selecting its MTP profile; non-spec and DFlash do not need that
+  # override" [84] (the R3-Q6 coupling); and apply the C03 init's
+  # drafter-skip record (the mtp lane needs no drafter). Counter-family
+  # expectation: the spec_decode_* family (dflash rides the stock V2 dflash2
+  # path, R3 L2.3); the diffusion_* alternative is the recorded fallback —
+  # the on-target capture closes it.
+  specMethod: "dflash"
+
+  # The shipped --speculative-config JSON, spliced by anchor (all keys
+  # native at 0.30, R3 L2.3). K7 = the top measured lane [108]. The draft's
+  # max_model_len 262144 is the drafter's native max_position_embeddings:
+  # the R3-Q3 "matched to the target" ruling re-bound by the Q11 engine-cap
+  # chain — draft and target share the native ceiling (the 8192 profile
+  # constant stays the recorded alternative). The drafter's own attention is
+  # stock TRITON_ATTN (R3 L2.3); disable_padded_drafter_batch true is the
+  # single-stream lever, the compose-class default pair. Omitted keys are
+  # 0.30 defaults: draft_tensor_parallel_size (TP1 — their TP2 profile sets
+  # 2) and draft_sample_method ("greedy" — the explicit 0.9.3 JSON value is
+  # optional now). The model path is the C03-staged drafter tree at
+  # revision ee0cb26a (D13/D26). Single-quoted YAML so the inner double
+  # quotes survive rendering.
+  specConfig: &specConfig '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}'
 
   # D8: the two k8s.grafana.com/* pod annotations, gated. 60 s scrape
   # interval is the k8s-monitoring v4 annotationAutodiscovery feature
@@ -36,37 +91,91 @@ app-template:
   monitoring:
     annotations: true
 
-  # The D4 serve recipe (HR3: 262144 = the model's native ceiling).
-  # Rendered VERBATIM from this list (app-template 5.0.1's args field is
-  # not templated), with the --model value spliced from the *modelPath
-  # anchor of THIS document. Anchors resolve per-document, so the service
-  # block's modelPath re-pin does not reach this render: a retarget is
-  # the dual edit — the chart modelPath/serveArgs plus the service re-pin
-  # kept in sync (the suite's --model == service modelPath assert guards
-  # the divergence). Flag order is contract-pinned by the test suite.
+  # The D24 serve recipe on the compose-baseline ground [92] with the
+  # owner-ruled Shape-B constants, the flag order contract-pinned by the
+  # test suite. --max-model-len 262144 is the round-3 Q11 ENGINE-CAP ruling
+  # — the model's native ceiling, the catalog advertisement true at the
+  # engine (only the 220000 leg moved). The ABSENCE of
+  # --kv-cache-memory-bytes is the re-measure-gate law (D24): no pool pin is
+  # verified on 0.30 at the shipped shape, so the day-one re-measure gate
+  # owns the pool and the engine's own calibration at the 0.90 util start
+  # (R3-Q2, round-3 confirmed; the recorded alternatives are the 0.85
+  # compose default and the 0.98 0.9.3-stack ceiling, not carried) rides
+  # until then.
+  # The args START with the model dir: the base image's entrypoint
+  # (/opt/radiance_entrypoint.sh) execs `vllm serve "$@"` itself — a verb
+  # token in the args would double it (R3 L1.3/L3.1). The list renders
+  # VERBATIM (app-template 5.0.1's args field is not templated); the anchor
+  # splices *modelPath, *kvCacheDtype and *specConfig are the only
+  # templating mechanism, and the JSON values are single-quoted YAML so
+  # their inner double quotes survive rendering. Anchors resolve
+  # per-document, so the service block's modelPath re-pin does not reach
+  # this render: a retarget is the dual edit — the chart
+  # modelPath/serveArgs plus the service re-pin kept in sync (the suite's
+  # args[0] == service modelPath assert guards the divergence).
+  # Dropped vs the cf-105 recipe and the re-plan's D15 derivation (the Q7
+  # round-2 set + the 0.30 surface, R3 L2.5): the vllm serve prefix (the
+  # entrypoint IS the verb), the
+  # --kv-cache-memory-bytes pin (the re-measure-gate law above), the
+  # --compilation-config CLI (PIECEWISE rides the
+  # RADIANCE_COMPILATION_CONFIG env seam, D25), --enforce-eager (the 0.30
+  # qualified lane runs graphed — PIECEWISE rides the env seam below), the
+  # GDN dtype flags (the
+  # 0.30 qualified-lane defaults — --mamba-cache-mode align is the carried
+  # lever), --enable-sleep-mode + VLLM_SERVER_DEV_MODE +
+  # --disable-access-log-for-endpoints (the sleep/wake + dev-route story:
+  # the flag exists at 0.30 and is the documented re-enable surface,
+  # runbook-owned), --override-generation-config + --chat-template (the
+  # 0.30 sampling surface replaces the pair — --generation-config auto on
+  # the checkpoint-native template, R3 L1.3), --language-model-only (the
+  # vision tower serves: --limit-mm-per-prompt carries).
   serveArgs: &serveArgs
-    - "--model"
     - *modelPath
     - "--served-model-name"
     - "qwen3.8-27b-vllm"
-    - "--scheduling-policy"
-    - "priority"
+    - "--tensor-parallel-size"
+    - "1"
+    - "--max-num-seqs"
+    - "3"
     - "--max-model-len"
     - "262144"
-    - "--max-num-seqs"
-    - "4"
-    - "--kv-cache-dtype"
-    - "fp8"
     - "--gpu-memory-utilization"
-    - "0.95"
+    - "0.90"
+    - "--max-num-batched-tokens"
+    - "2560"
+    - "--kv-cache-dtype"
+    - *kvCacheDtype
+    - "--attention-backend"
+    - "R4D"
     - "--enable-prefix-caching"
-    - "--language-model-only"
-    - "--enforce-eager"
+    - "--mamba-cache-mode"
+    - "align"
+    - "--no-async-scheduling"
+    - "--enable-auto-tool-choice"
+    - "--tool-call-parser"
+    - "qwen3_coder"
+    - "--reasoning-parser"
+    - "qwen3"
+    - "--generation-config"
+    - "auto"
+    - "--default-chat-template-kwargs"
+    - '{"reasoning_effort":"xhigh"}'
+    - "--trust-remote-code"
+    - "--speculative-config"
+    - *specConfig
+    - "--host"
+    - "0.0.0.0"
+    - "--port"
+    - "8000"
+    # The Q7 carries, appended after the compose-baseline block (round-2
+    # ruling, 0.30 spot-checked R3 L2.5): the priority-wiring engine half,
+    # the preemption headroom, the vision requirement.
+    - "--scheduling-policy"
+    - "priority"
     - "--watermark"
     - "0.05"
-    - "--enable-sleep-mode"
-    - "--disable-access-log-for-endpoints"
-    - "/health,/metrics,/ping"
+    - "--limit-mm-per-prompt"
+    - "image=4"
 
   global:
     nameOverride: &chartName vllm
@@ -94,31 +203,113 @@ app-template:
       containers:
         vllm:
           image:
-            # In-repo overlay over vllm/vllm-openai-rocm:v0.33.0-rocm100
-            # (containers/vllm-rocm — the GGUF plugin overlay, C01).
-            repository: ghcr.io/ownyourio/vllm-rocm
-            # PIN-ME: the image has no versioned build yet — pin to the
-            # first :v<run> once containers/vllm-rocm's docker-build CI has
-            # run on main (C06 step 10), then drop pullPolicy Always.
+            # The C01 thin re-export (containers/vllm-radiance-mxfp4) of
+            # the 0.30 Radiance stack. The upstream pin it carries:
+            # magiccodingman/vllm-radiance:1.0.397 @
+            # sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0 —
+            # source commit 5b99d66c844fd0a54e4a7eb93b40a1ece009a53d (the
+            # image's OCI revision label), engine vLLM 0.30.0 @ ced6857a
+            # (the exact v0.30.0 tag commit).
+            # containers/vllm-radiance-mxfp4/README.md is the ledger home;
+            # this comment is the values-side mirror (D23).
+            # PIN-ME: the re-export has no versioned build yet — pin the
+            # first :v<run> once docker-build.yaml has run on main, then
+            # drop pullPolicy: Always (the cf-105 C06 step-10 law; the
+            # runbook carries the follow-through).
+            repository: ghcr.io/ownyourio/vllm-radiance-mxfp4
             tag: main
             pullPolicy: Always
           args: *serveArgs
           env:
+            # The D25 twenty-var main-container law. The entrypoint's
+            # startup gates exit 64 on retired/experimental var mixes
+            # [94 L10-64] — this exact set is the qualified combination,
+            # and the exact-membership test is the risk control. The
+            # image's baked RADIANCE_* profile [86] is NOT re-declared
+            # except where the recipe varies it (R3 L3.1's surface
+            # choice). RADIANCE_GDN_LAZY is ABSENT on purpose: the
+            # lazy-GDN feature was deliberately not ported into the 0.30
+            # stack — the multi-turn corruption law holds structurally
+            # (R3 L2.3).
             # String values are tpl'd by the library, so the chip index
             # splices from the values key — the template never changes when
             # the R9700 index changes (D2).
             ROCR_VISIBLE_DEVICES: '{{ .Values.rocrVisibleDevices }}'
-            TRITON_CACHE_DIR: /data/triton
-            HUGGINGFACE_HUB_CACHE: /data/hf
-            # v0.33.0 attaches /sleep, /wake_up, /is_sleeping and
-            # /release_kv_cache_memory only when this env is true — without
-            # it --enable-sleep-mode has no HTTP surface (Post Research V5).
-            VLLM_SERVER_DEV_MODE: "1"
+            # The 8060S-exclusion twin: the entrypoint's NUMA helper reads
+            # the HIP/ROCR/CUDA visible-device lists [94 L263].
+            HIP_VISIBLE_DEVICES: "0"
+            # The serve pod loads two local dirs (target + drafter) — no
+            # hub access at boot (the R2 law carries).
+            HF_HUB_OFFLINE: "1"
+            # The image's entrypoint defaults the caches to /root/.cache/*
+            # + /tmp/torchinductor [94 L88-89]; the re-declarations move
+            # them onto the vllm-cache claim (C03's mount lands the target)
+            # and pin the env-to-mount-path coupling (the repo cache law).
+            # The entrypoint's per-lane cache suffix ("-fast-draft",
+            # [94 L82-85]) makes one-cache-per-config structural and
+            # isolates the dflash lane.
+            VLLM_CACHE_ROOT: /cache/vllm
+            TORCHINDUCTOR_CACHE_DIR: /cache/inductor
+            TRITON_CACHE_DIR: /cache/triton
+            AITER_ROOT_DIR: /cache/aiter
+            # Still the live RDNA ViT attention gate in 0.30's rocm.py
+            # [102] — the round-1 OQ12 owner ruling pins it explicitly; the
+            # 0.30 vision record "two vision requests passed" [109] is the
+            # same on-target-observation class.
+            FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"
+            # The entrypoint seam [94 L182-198]: auto omits --quantization
+            # entirely and lets vLLM consume the checkpoint's Quark
+            # metadata — required for Quark OCP MXFP4. The .env.example
+            # spells the knob WEIGHT_QUANTIZATION; the entrypoint reads the
+            # RADIANCE_-prefixed seam, and that seam name is the pin.
+            RADIANCE_WEIGHT_QUANTIZATION: "auto"
+            # The qualified RX5-safe MXFP4 W4A8 decode subset [84][91]: the
+            # RX4/RX5 experimental tiers stay OFF — the entrypoint
+            # hard-gates their combinations [94 L26-64] and the
+            # publication ran them off [108]. W4A8_MIN_M stays 0: the
+            # generic AITER W4A4 fallback is numerically incorrect for one
+            # qualified Qwen GDN projection [84].
+            RADIANCE_MXFP4: "1"
+            RADIANCE_MXFP4_W4A8: "1"
+            RADIANCE_MXFP4_W4A8_MIN_M: "0"
+            RADIANCE_MXFP4_DECODE_MAX_M: "64"
+            RADIANCE_MXFP4_TN4_MIN_M: "2048"
+            RADIANCE_MXFP4_WPERM: "1"
+            RADIANCE_MXFP4_DECODE_NT: "1"
+            # The 0.30 dflash lane's prerequisites (R3 L2.3): the V2 model
+            # runner hosts the DFlash2/MTP speculators (0.30's default is
+            # V1 — the compose knob sets it), and the measured lane runs
+            # the INT2-g128 exact-rerank draft head (baked default 0 [86];
+            # its graph-cache isolation is the -fast-draft suffix above).
+            VLLM_USE_V2_MODEL_RUNNER: "1"
+            RADIANCE_FAST_DRAFT: "1"
+            # The measured dflash graph mode [91] — the entrypoint appends
+            # it as --compilation-config unless the CLI wins [94]; the
+            # recipe carries no CLI form, so this env seam decides. The
+            # re-plan's derived capture-size list is NOT the 0.30 form
+            # (R3 L2.3).
+            RADIANCE_COMPILATION_CONFIG: '{"cudagraph_mode":"PIECEWISE"}'
+            # The issue #6/#12 HSA idle-spin mitigation:
+            # reporter-verified on this stack lineage, ordinary metrics +
+            # GPU monitoring unaffected (R3 L1.4; adopted per R3-Q5). Drop
+            # condition, runbook watch: PR #19 (docs) / PR #42 (fix
+            # promotion) landing in a new pin.
+            HSA_TOOLS_DISABLE_REGISTER: "1"
           ports:
             - name: http
               containerPort: 8000
               protocol: TCP
           probes:
+            # The startup budget is the D18 re-derivation on the 0.30 boot
+            # class: 60 s + 15 s x 160 = the 40-min conservative envelope
+            # (the compose start_period 1800 s is the maintainer's generic
+            # budget; the 0.30 cold-cache boot is the 0.9.3 FASTBOOT class
+            # minus the gone GDN fp32 autotune plus the V2 capture-gc
+            # fasten [100][91], and the first-use AITER JIT — no 0.30
+            # pre-bake, R3 L1.2 — is the boot cost the warm /cache
+            # amortizes; on-target first boot is the datum, runbook 1.2).
+            # It is also the LIVE 262144 pool risk's loud gated refusal
+            # (D31): a reject fails startup, it never mis-serves silently.
             startup:
               enabled: true
               custom: true
@@ -127,8 +318,8 @@ app-template:
                   path: /health
                   port: 8000
                 initialDelaySeconds: 60
-                periodSeconds: 10
-                failureThreshold: 90
+                periodSeconds: 15
+                failureThreshold: 160
             liveness:
               enabled: true
               custom: true

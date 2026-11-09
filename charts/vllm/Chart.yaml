@@ -1,7 +1,7 @@
 apiVersion: v2
 name: vllm
 version: 1.0.0
-appVersion: "0.33.0"
+appVersion: "0.30.0"
 dependencies:
 # The repo app-template idiom: the single dep bundles the common chart
 # internally (which generates no k8s objects of its own), so the workload
