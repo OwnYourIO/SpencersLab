@@ -171,10 +171,12 @@ DROPPED_FLAGS_CF131 = (
     "--override-generation-config",
 )
 
-# The D25 20-var main-container env law (the exact set — the entrypoint's
-# exit-64 combination gates make any var drift a boot failure, so exact
-# equality IS the risk control). ROCR_VISIBLE_DEVICES splices from the
-# service values key, the rest are literal.
+# The D25 19-var main-container env law as amended by D33 (the OQ12 ViT var
+# is out — its FLASH_ATTN tail imports the upstream flash-attn this image
+# does not carry, so setting it crashes the first multimodal request; the
+# exact set — the entrypoint's exit-64 combination gates make any var drift
+# a boot failure, so equality IS the risk control). ROCR_VISIBLE_DEVICES
+# splices from the service values key, the rest are literal.
 def env_want_cf131(rocr_value: str) -> dict:
     return {
         "ROCR_VISIBLE_DEVICES": str(rocr_value),
@@ -184,7 +186,6 @@ def env_want_cf131(rocr_value: str) -> dict:
         "TORCHINDUCTOR_CACHE_DIR": "/cache/inductor",   # C03's mount lands the target
         "TRITON_CACHE_DIR": "/cache/triton",
         "AITER_ROOT_DIR": "/cache/aiter",
-        "FLASH_ATTENTION_TRITON_AMD_ENABLE": "TRUE",    # the round-1 OQ12 owner ruling
         "RADIANCE_WEIGHT_QUANTIZATION": "auto",         # the entrypoint seam name (D25)
         "RADIANCE_MXFP4": "1",
         "RADIANCE_MXFP4_W4A8": "1",
@@ -201,7 +202,14 @@ def env_want_cf131(rocr_value: str) -> dict:
 
 # Named individually because AC5 calls them out — the dict equality above
 # already excludes them, but a failure message must name WHICH drop leaked.
-DROPPED_ENV_CF131 = ("RADIANCE_GDN_LAZY", "HUGGINGFACE_HUB_CACHE", "VLLM_SERVER_DEV_MODE")
+# The FLASH entry names the D33 drop, so a regression that re-adds the var
+# reads as the ViT crash class it is rather than an anonymous set diff.
+DROPPED_ENV_CF131 = (
+    "RADIANCE_GDN_LAZY",
+    "HUGGINGFACE_HUB_CACHE",
+    "VLLM_SERVER_DEV_MODE",
+    "FLASH_ATTENTION_TRITON_AMD_ENABLE",
+)
 
 # Probe budget on the 0.30 boot class (D18 amended): 60 s + 15 s x 160 = the
 # 40-min conservative envelope for the first-deploy (init staging + cold

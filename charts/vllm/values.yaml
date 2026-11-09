@@ -225,7 +225,7 @@ app-template:
             pullPolicy: Always
           args: *serveArgs
           env:
-            # The D25 twenty-var main-container law. The entrypoint's
+            # The D25 19-var main-container law, D33-amended. The entrypoint's
             # startup gates exit 64 on retired/experimental var mixes
             # [94 L10-64] — this exact set is the qualified combination,
             # and the exact-membership test is the risk control. The
@@ -256,11 +256,6 @@ app-template:
             TORCHINDUCTOR_CACHE_DIR: /cache/inductor
             TRITON_CACHE_DIR: /cache/triton
             AITER_ROOT_DIR: /cache/aiter
-            # Still the live RDNA ViT attention gate in 0.30's rocm.py
-            # [102] — the round-1 OQ12 owner ruling pins it explicitly; the
-            # 0.30 vision record "two vision requests passed" [109] is the
-            # same on-target-observation class.
-            FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"
             # The entrypoint seam [94 L182-198]: auto omits --quantization
             # entirely and lets vLLM consume the checkpoint's Quark
             # metadata — required for Quark OCP MXFP4. The .env.example

@@ -3647,3 +3647,685 @@ references R1/R2/EXPLORE as in the prior rounds.
   defaults [108]) — part of the re-measure, not assumed; the stilldeadcode
   0.9.3 image's idle-CPU behavior (the Q10 move is recorded as an
   operational improvement on the #6 axis, unmeasured on the old base).
+
+---
+
+# R4 — on-target ViT flash-attn crash + exact fix (2026-11-09)
+
+Round-4 research commission for board card #131 (run
+`cf-131-feat-vllm-fp8-official`), 2026-11-09, by `agent-research`.
+Tightly-scoped: ONE code path, ONE fix. The on-target pod (the C02 shape,
+the 0.30 image) crashed at the first multimodal request with:
+
+```
+File ".../vllm/model_executor/layers/attention/mm_encoder_attention.py", line 581, in _forward_fa
+    output = vit_flash_attn_wrapper(
+File ".../vllm/v1/attention/ops/vit_attn_wrappers.py", line 111, in vit_flash_attn_wrapper
+    return torch.ops.vllm.flash_attn_maxseqlen_wrapper(
+File ".../torch/_ops.py", line 1275, in __call__
+File ".../vllm/v1/attention/ops/vit_attn_wrappers.py", line 62, in flash_attn_maxseqlen_wrapper
+    output = flash_attn_varlen_func(
+File ".../vllm/v1/attention/backends/fa_utils.py", line 59, in flash_attn_varlen_func
+    raise ImportError(
+ImportError: ROCm platform requires upstream flash-attn to be installed. Please install flash-attn first.
+```
+
+Owner on-target note (verbatim): *"magiccodingman's published image bakes
+in upstream flash-attn (the ROCm port), which makes (2) importable and lets
+the ViT use the FlashAttentionBackend. Our image (a thin re-export of the
+same magiccodingman image) should also have flash-attn baked in — but the
+on-target crash indicates that in our image either the Triton path is
+preferred (head_dim 72 is in the supported set) or flash-attn is missing."*
+
+Method: local clone of the vLLM `v0.30.0` tag (`git rev-parse HEAD` =
+`ced6857afa0ea7b2e3f0846a62e1394e90f15607` — the pin's exact commit [99]),
+read of the magiccodingman `release`-branch build (the pin's source branch,
+`5b99d66c` [114]), live checkpoint `config.json`, and the repo's C02
+surface. Every claim carries file + line + ref. Citation keys continue
+R3's numbering at [118].
+
+## TL;DR (5 lines)
+
+1. **The exact fix: drop `FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"` from
+   the pod env law** (charts/vllm/values.yaml:263 + the tests/vllm_testlib.py:187
+   exact-set re-pin; 20-var → 19-var). In v0.30.0 that env var is the SOLE
+   gate between the ViT's `FLASH_ATTN` path and the `TORCH_SDPA` fallback
+   on RDNA (rocm.py L438, L765-777) — without it the ViT takes
+   `TORCH_SDPA` → `F.scaled_dot_product_attention`, the exact path
+   magiccodingman's own reference recipe runs (their compose never sets the
+   var), and the flash-attn import is never touched. Values-only (C02
+   surface); no image change, no engine-arg change.
+2. **The owner's premise is refuted on both counts by the build source:**
+   magiccodingman/vllm-radiance:1.0.397 does NOT bake upstream flash-attn —
+   the release-branch Dockerfile builds torch with `USE_FLASH_ATTENTION=0`
+   and has no flash-attn stage/install anywhere — and the reference 2×R9700
+   box avoids the crash precisely because its recipe omits the env var
+   (ViT = SDPA). "head_dim 72 in the supported set" is also refuted:
+   `get_vit_attn_backend`'s `head_size` parameter is UNUSED in 0.30.0 —
+   there is no head-dim gate in the ViT selection at all.
+3. **The crash chain is line-exact against the tag** (pod trace
+   581/111/62/59 == stock `v0.30.0` lines) — the 35 overlays do not touch
+   the crash-path files. On gfx1201 the `FLASH_ATTN` ViT path's tail
+   (fa_utils.py L52) requires `from flash_attn import
+   flash_attn_varlen_func` — the upstream package, absent from the image
+   (not in vLLM's ROCm requirements either) → stub raise at first ViT
+   forward.
+4. **Mechanism:** our D25 20-var env law carries `FLASH_ATTENTION_TRITON_
+   AMD_ENABLE=TRUE` (the round-1 OQ12 owner ruling, carried verbatim R1→R2→
+   R3) + the image's AITER 0.1.20 provides the Triton-AMD kernel spec →
+   `flash_attn_triton_available()` True → ViT = `FLASH_ATTN` → first image
+   request hits the stub. The var is read in EXACTLY ONE place in the
+   v0.30.0 tree (rocm.py L438) — dropping it touches nothing but the ViT
+   path (decoder R4D attention unaffected).
+5. **Hardening variant (plan call, R4-Q1):** also pin
+   `--mm-encoder-attn-backend TORCH_SDPA` in serveArgs — the 0.30 CLI flag
+   (arg_utils L1399-1402) short-circuits the whole env/spec logic
+   (rocm.py L741-747) and keeps the OQ12 "pin explicitly" posture in flag
+   form. Rejected: installing flash-attn into the re-export (premise
+   false; heavy build; stack-atomicity violation), and the
+   `TRITON_ATTN` ViT pin (works, but not the stack's qualified vision
+   path).
+
+## R4.1 — The exact ViT attention backend selection logic (v0.30.0 @ ced6857a)
+
+The ViT's per-block attention is `MMEncoderAttention` (CustomOp,
+"Multi-headed attention without any cache, used for multimodal
+encoder"). The Qwen3.5 ViT reaches it via
+`Qwen3_5ForConditionalGeneration(Qwen3VLForConditionalGeneration)` (
+qwen3_5.py L473) → `Qwen3_VisionBlock` (qwen3_vl.py L449, `self.attn =
+Qwen2_5_VisionAttention(` L465) → `Qwen2_5_VisionAttention` (qwen2_5_vl.py
+L393-398: `self.attn = MMEncoderAttention(num_heads=…,
+head_size=self.hidden_size_per_attention_head, …)`). **The ViT head_dim is
+72**, from the served checkpoint's `config.json` (live fetch,
+`vision_config`: `hidden_size 1152`, `num_heads 16`, `depth 27` →
+1152/16 = 72; `out_hidden_size 5120`) [129] — matching the R2 L3.2
+"head_dim-72 ViT" record.
+
+Selection happens ONCE per layer at model init (mm_encoder_attention.py
+L353-356):
+
+```
+self.attn_backend = get_vit_attn_backend(head_size=head_size, dtype=dtype)
+```
+
+`get_vit_attn_backend` (vllm/model_executor/models/vision.py) first reads
+the **override** `mm_cfg.mm_encoder_attn_backend` (set by the 0.30 CLI
+flag `--mm-encoder-attn-backend`, arg_utils.py L1399-1402), then calls the
+platform method. `RocmPlatform.get_supported_vit_attn_backends()` =
+`[FLASH_ATTN, ROCM_AITER_FA, TRITON_ATTN, TORCH_SDPA]` (rocm.py L726-732).
+`RocmPlatform.get_vit_attn_backend(head_size, dtype, backend=None)` (rocm.py
+L734-777) — the EXACT selection logic:
+
+1. **L741-747 — explicit override:** if `backend is not None`: assert it
+   is in the four-backend supported list, log `Using backend {backend} for
+   vit attention`, return it verbatim. (No availability check of any kind —
+   whatever is named is what runs.)
+2. **L753-755 — AITER MHA (CDNA only):**
+   `rocm_aiter_ops.is_mha_enabled() and on_cdna()` → `ROCM_AITER_FA`
+   ("Using AITER Flash Attention backend for ViT model."). **Never fires
+   on our gfx1201** (RDNA, not CDNA).
+3. **L757-763 — CDNA flash-attn:**
+   `on_cdna() and find_spec("flash_attn") is not None and dtype ∈
+   {float16, bfloat16}` → `FLASH_ATTN`. **Never fires on gfx1201.**
+4. **L765-774 — RDNA "Flash Attention Triton" (OUR branch):**
+   `on_gfx1x() and flash_attn_triton_available() and dtype ∈ {float16,
+   bfloat16}` → `FLASH_ATTN`, log (L771-773):
+   `"Using Flash Attention (Triton backend) for ViT model on RDNA."`
+5. **L776-777 — fallback (THE REFERENCE BOX'S branch):** `TORCH_SDPA`, log
+   `"Using Torch SDPA backend for ViT model."`
+
+`flash_attn_triton_available()` (rocm.py L415-446, `@cache`) is the whole
+RDNA gate:
+
+- L417: `if not on_gfx1x(): return False` (gfx11xx/gfx12xx only — ours ✓);
+- L433-436: the Triton-AMD kernels must be locatable —
+  `find_spec("flash_attn.flash_attn_triton_amd")` (old flash-attn ROCm
+  port layout) **OR**
+  `find_spec("aiter.ops.triton._triton_kernels.flash_attn_triton_amd")`
+  (the post-`3f94643` AITER layout);
+- L438: `if os.environ.get("FLASH_ATTENTION_TRITON_AMD_ENABLE") != "TRUE":
+  return False` (+ L439-442 info-once: `"Set
+  FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE to enable Flash Attention Triton
+  backend on RDNA."`);
+- L444: `return True`.
+
+**Answers to the commission's sub-questions:**
+
+- **Is the Triton path selected by head_dim being in a supported set? NO.**
+  The `head_size` parameter is accepted by `get_vit_attn_backend` and
+  NEVER referenced in its body (L734-777). There is no head-dim "supported
+  set" anywhere in the 0.30.0 ViT selection. head_dim 72 passes through
+  unexamined. (The owner's hypothesis (2) is refuted at the source.)
+- **What env var / condition controls the selection?** On RDNA:
+  `FLASH_ATTENTION_TRITON_AMD_ENABLE == "TRUE"` (the exact string) AND the
+  Triton-AMD kernel spec present AND the ViT dtype fp16/bf16 → `FLASH_ATTN`;
+  otherwise the selection falls to `TORCH_SDPA`. The only reader of this
+  env var in the entire v0.30.0 tree is rocm.py L438 (grep of `vllm/` +
+  `docs/`: one reader, one log line).
+- **Which forward runs per enum** (mm_encoder_attention.py; ROCm dispatches
+  through `forward_cuda` because `RocmPlatform.device_type = "cuda"`,
+  rocm.py L491; dispatch at L783, `elif self.is_flash_attn_backend:` at
+  L795):
+  - `FLASH_ATTN` / `ROCM_AITER_FA` → `is_flash_attn_backend = True`
+    (L358-361) → `_forward_fa` (L559) → `output = vit_flash_attn_wrapper(
+    …, is_rocm_aiter=(self.attn_backend == ROCM_AITER_FA), …)` (L581).
+  - `TRITON_ATTN` → `_forward_triton` (L596) → `vit_triton_attn_wrapper`
+    (L618) → `context_attention_fwd` (triton_prefill_attention.py L217) —
+    pure Triton prefill kernel, NO flash-attn import, no head-dim gate.
+  - `TORCH_SDPA` → `_forward_sdpa` (L530) → `vit_torch_sdpa_wrapper`
+    (L547) → `torch_sdpa_wrapper` → `F.scaled_dot_product_attention` —
+    no flash-attn import; handles head_dim 72 without restriction.
+
+**The FLASH_ATTN tail (where the crash lives):** `vit_flash_attn_wrapper`
+(vit_attn_wrappers.py L100) → `torch.ops.vllm.flash_attn_maxseqlen_wrapper`
+(L111) → `flash_attn_maxseqlen_wrapper` (L27): `is_rocm_aiter=False` (our
+case — the backend is `FLASH_ATTN`, not `ROCM_AITER_FA`) → L44 `from
+vllm.v1.attention.backends.fa_utils import flash_attn_varlen_func` →
+L62 `output = flash_attn_varlen_func(…)`. `fa_utils.py` resolves that
+symbol AT MODULE IMPORT TIME (L38-62, the `current_platform.is_rocm()`
+branch): L43 `from vllm.platforms.rocm import on_gfx1250`; L46-54 `try:` —
+L47-50 if `on_gfx1250()`: `from aiter.ops.triton.mha import
+flash_attn_varlen_func`; **L51-52 else (our gfx1201): `from flash_attn
+import flash_attn_varlen_func`** — the UPSTREAM flash-attn package; L54
+`_ROCM_FLASH_ATTN_AVAILABLE = True`; L55-62 `except ImportError:` —
+installs a stub `flash_attn_varlen_func(*args, **kwargs)` that at first
+call raises **L59-61: `ImportError("ROCm platform requires upstream
+{package} to be installed. Please install {package} first.")`** with
+`package = "flash-attn"` (L58) — the pod's exact message. The
+`is_flash_attn_varlen_func_available()` helper (L342+) reports
+`_ROCM_FLASH_ATTN_AVAILABLE` — False in our image.
+
+## R4.2 — The magiccodingman/vllm-radiance:1.0.397 image: no flash-attn (owner premise refuted)
+
+The pin's source is the repo's `release` branch @ `5b99d66c` (R3 L1.1,
+pipeline #397 [87][114]); the read below is of that branch's
+`Dockerfile` + `docker-compose.yml` (fetched 2026-11-09) [126][127]:
+
+- **The 4-stage build has no flash-attn anywhere.** Stage 1 (builder)
+  compiles, from source, exactly: torch (`ARG TORCH_COMMIT=6bbd2602…`,
+  torch 2.12.0) with the explicit flag set
+  **`USE_MAGMA=0 USE_MKLDNN=1 BUILD_TEST=0 USE_NCCL=1 USE_RCCL=1
+  USE_FLASH_ATTENTION=0 USE_MEM_EFF_ATTENTION=0 USE_AOTRITON=0`** (the
+  file's own comment: "AOTriton off: … vLLM never uses torch SDPA-flash"),
+  AMD Triton 3.7.1, torchvision 0.27.1, AITER 0.1.20
+  (`ARG AITER_COMMIT=fc2e5d57…`, `GPU_ARCHS=gfx1201 PREBUILD_KERNELS=0`),
+  vLLM (`ARG VLLM_COMMIT=ced6857afa0ea7b2e3f0846a62e1394e90f15607`,
+  `ARG VLLM_VERSION=0.30.0`), and rocm-bandwidth-test. Stage 3 (assemble)
+  installs ONLY those wheels (`pip install --no-deps /wheels/{torch,
+  triton,torchvision,aiter}.whl`; `pip install /wheels/vllm-*.whl
+  "transformers==5.15.0" "xgrammar==0.2.3"`) plus `flydsl==0.3.1`,
+  `/opt/rocm/share/amd_smi`, `pillow`, `pybind11`. **No flash-attn source
+  build, no `pip install flash-attn`, no flash-attn wheel** — and
+  upstream vLLM never lists it: `flash-attn` is absent from
+  `requirements/rocm.txt` AND `requirements/common.txt` at the v0.30.0
+  tag (grep: zero matches) [120]. It is an optional out-of-tree dependency
+  on ROCm, and this stack deliberately does not carry it (torch itself is
+  built with flash-attention integration OFF).
+- **The image's own ENV (final stage) carries only the `RADIANCE_*`
+  feature flags** (R3 [86]'s config-blob record) — no
+  `FLASH_ATTENTION_TRITON_AMD_ENABLE`. So the var in the crashed pod came
+  from OUR chart (charts/vllm/values.yaml:263), not the image.
+- **Consequence for the owner's note:** "magiccodingman's published image
+  bakes in upstream flash-attn" is FALSE at the build source; "our image
+  … should also have flash-attn baked in" inherits the error (a thin
+  re-export contains exactly the base's component set). The second
+  horn — "flash-attn is missing" — is the true half of the note.
+- **The AITER half of the gate IS present:** at the image's pinned AITER
+  commit `fc2e5d57`, the package tree contains
+  `aiter/ops/triton/_triton_kernels/flash_attn_triton_amd/` (GitHub
+  directory listing at the pinned commit) [128] — so in our image
+  `flash_attn_triton_available()`'s spec half is TRUE, and
+  `FLASH_ATTENTION_TRITON_AMD_ENABLE` is the SOLE decider. (The on-target
+  crash independently corroborates: it could only have occurred with BOTH
+  the spec and the env var true.)
+
+## R4.3 — How the reference 2×R9700 box avoids the crash
+
+The repo's `docker-compose.yml` (release branch — the pin's source)
+`environment:` block sets ~60 vars (the full `RADIANCE_*` set, the
+`VLLM_ROCM_USE_AITER=1` + `_UNIFIED_ATTENTION=1` + all-other-AITER-0 set,
+the cache dirs, `VLLM_USE_V2_MODEL_RUNNER`, …) [127] and **does NOT set
+`FLASH_ATTENTION_TRITON_AMD_ENABLE`**. On that box:
+`flash_attn_triton_available()` → False at rocm.py L438 → `get_vit_attn_
+backend` falls to L776-777 → **`TORCH_SDPA`** → `F.scaled_dot_product_
+attention`. The `flash_attn` import is never attempted, so the ABSENCE of
+the flash-attn package is inert. Their 0.30 vision qualification
+("JSON/tool/recompute and two vision requests passed" [109]; "Text and
+vision both work" [91]) is therefore an **SDPA-path record** — the ViT
+backend our pod SHOULD run. (The box would crash exactly like ours if
+someone added the env var: no flash-attn in the image, same selection
+logic.)
+
+## R4.4 — The on-target crash, line-by-line against the tag
+
+| pod trace frame | v0.30.0 @ ced6857a (local clone) | match |
+|---|---|---|
+| mm_encoder_attention.py L581 `_forward_fa`: `output = vit_flash_attn_wrapper(` | L581, identical | exact |
+| vit_attn_wrappers.py L111 `vit_flash_attn_wrapper`: `return torch.ops.vllm.flash_attn_maxseqlen_wrapper(` | L111, identical | exact |
+| vit_attn_wrappers.py L62 `flash_attn_maxseqlen_wrapper`: `output = flash_attn_varlen_func(` | L62, identical | exact |
+| fa_utils.py L59 `flash_attn_varlen_func`: `raise ImportError(` | L59, identical (`"ROCm platform requires upstream flash-attn to be installed. Please install flash-attn first."`) | exact |
+
+All four frames land on byte-identical stock lines → the image's 35
+overlays do not touch these four crash-path files; the on-target tree
+IS the tag for this code path. The full causal chain:
+
+1. Pod env `FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"` — shipped by C02's
+   20-var env law (charts/vllm/values.yaml:263, pinned at
+   tests/vllm_testlib.py:187) — the round-1 **OQ12 owner ruling** ("set
+   explicitly — override of the omit best-guess", DECISIONS.md L15),
+   carried verbatim R2 (D7-rework L85, D17 L131) → R3 (final D25 L174:
+   "OQ12 ViT var carry verbatim"; R3 L2.5: "still the live RDNA gate in
+   0.30's rocm.py [102] — the OQ12 env carry stands").
+2. gfx1201 + AITER 0.1.20 spec (R4.2) + env `TRUE` → `flash_attn_
+   triton_available()` True (rocm.py L415-446).
+3. ViT init (27 blocks, head_size 72, dtype bfloat16) → rocm.py L765-774 →
+   `FLASH_ATTN` (log: `"Using Flash Attention (Triton backend) for ViT
+   model on RDNA."`).
+4. fa_utils module import (ROCm, not gfx1250) → L52 `from flash_attn
+   import flash_attn_varlen_func` → ImportError → stub installed,
+   `_ROCM_FLASH_ATTN_AVAILABLE = False` — silently, at import time.
+5. **First multimodal request** → `forward_cuda` (L783) → L795
+   `is_flash_attn_backend` → `_forward_fa` (L559→L581) → wrappers
+   L111/L62 → stub L59 → the pod's exact ImportError. (Text-only requests
+   never touch the ViT — hence "first multimodal request".)
+
+## R4.5 — The exact fix
+
+**(a) PRIMARY (recommended): drop `FLASH_ATTENTION_TRITON_AMD_ENABLE:
+"TRUE"` from the pod env law.**
+
+- Mechanism: `flash_attn_triton_available()` → False at rocm.py L438
+  (info-once line `"Set FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE to enable
+  Flash Attention Triton backend on RDNA."` appears in the startup log) →
+  `get_vit_attn_backend` falls to L776-777 → **`TORCH_SDPA`** →
+  `_forward_sdpa` → `F.scaled_dot_product_attention` (head_dim 72: no
+  restriction; SDPA is the standard Qwen-VL-on-ROCm path). The flash-attn
+  import is never attempted. Startup marker becomes `"Using Torch SDPA
+  backend for ViT model."`.
+- Scope: the var has ONE reader in the tree (rocm.py L438) — the change
+  touches nothing but the ViT path; decoder R4D attention, the MXFP4 W4A8
+  GEMMs, GDN, dflash — all unaffected. No image rebuild, no base re-pin,
+  no engine-arg change.
+- Ground: this is EXACTLY the state of the stack's own qualified 2×R9700
+  recipe (R4.3) — i.e. the fix makes our pod's ViT path identical to the
+  one that passed the 0.30 vision qualification.
+- Surfaces (plan amendment, values-only): charts/vllm/values.yaml:263
+  (delete the var + amend the comment) and tests/vllm_testlib.py:187
+  (20-var exact set → 19) — the C02 surface; runbook C05's ViT-backend
+  marker line changes from the OQ12 "Triton" observation to the SDPA log
+  line, and the first-multimodal-request smoke (runbook step 3.4 class)
+  becomes the crash-gate for this fix (must pass after the drop).
+- Note: the OQ12 ruling was an explicit OWNER ruling; dropping the var is
+  a formal reversal of it, now source-grounded (R4-Q1 carries it to the
+  owner batch).
+
+**(b) HARDENING (plan call, optional): also pin `--mm-encoder-attn-backend
+TORCH_SDPA` in serveArgs.** The 0.30 CLI flag exists (arg_utils.py
+L1399-1402); the override branch (rocm.py L741-747) short-circuits ALL
+env/spec/CDNA logic and returns the named backend verbatim (it is in the
+supported list, L726-732) — immune to any future env leak. This keeps the
+OQ12 "pin the ViT backend explicitly" posture in FLAG form rather than
+env form. Recommend ONLY if the owner wants the explicit pin; the minimal
+stack-aligned state is (a) alone (the reference recipe sets neither).
+
+**(c) Rejected — `--mm-encoder-attn-backend TRITON_ATTN` (the "force the
+Triton path" option).** It would work mechanically: `_forward_triton`
+(L596) → `vit_triton_attn_wrapper` (L618) → `context_attention_fwd`
+(triton_prefill_attention.py L217) is a self-contained Triton prefill
+kernel — no flash-attn import, no head-dim gate (the ViT selection has
+none, R4.1; the kernel takes head_dim as a tensor dimension). But it is
+NOT the path the 0.30 stack qualified vision on (their record is SDPA,
+R4.3) — i.e. an unqualified numerics change for a performance gain the
+ticket has not measured. Keep as the documented future performance
+alternative (would need an on-target vision smoke first), not the fix.
+
+**(d) Rejected — install upstream flash-attn (ROCm port) into the image.**
+(i) The premise is refuted (R4.2): the base does not carry flash-attn, and
+the reference box works fine without it — there is no "should also have
+it" state to restore. (ii) It converts the thin digest-pinned re-export
+(C01, minutes-scale layer copy, R3 L3.1) into a gfx1201 source build of a
+heavy HIP extension — opposite of the owner-ruled D23 collapse. (iii) It
+violates the stack's atomicity policy (stack.yaml: "Treat as a coordinated
+compatibility stack; do not independently bump members" [90]) and the
+image authors' deliberate `USE_FLASH_ATTENTION=0` torch build. (iv) It
+would put the ViT on the `FLASH_ATTN` path — an UNqualified vision numerics
+path for this stack (the qualification record is SDPA).
+
+## Contradictions and how to weigh them (R4 conflict map)
+
+1. **Owner note "the image bakes in upstream flash-attn (the ROCm port)"
+   vs the release-branch Dockerfile.** The build source (the pin's own
+   source branch, 4 stages, zero flash-attn stages, torch built with
+   `USE_FLASH_ATTENTION=0`) + the reference
+   recipe (no env var) + the vision-qualification record (SDPA path)
+   outweigh the note. Most plausible provenance of the note: conflation
+   with the SUPERSEDED 0.9.3 fork, whose DOCKERHUB/README record a "native
+   head_dim-72 ViT flash kernel baked" (R2 L3.2 [45][51]) — that kernel is
+   the stilldeadcode fork's OWN Triton ViT kernel (a different artifact,
+   in a different image), not the upstream flash-attn package, and it is
+   not in the 0.30 image. Weigh: source + box-recipe beat memory; the note
+   is recorded as a misattribution, not an error to smooth over.
+2. **Owner note "the Triton path is preferred (head_dim 72 is in the
+   supported set)" vs the selection source.** `get_vit_attn_backend`
+   never references `head_size` (R4.1) — there is no supported set, and
+   head_dim 72 is the model's native ViT head dim, handled unconditionally
+   by the SDPA and Triton paths. The crash is env-driven, not
+   head-dim-driven. Weigh: the source is dispositive.
+3. **R3's re-grounding ("FLASH_ATTENTION_TRITON_AMD_ENABLE is still the
+   live RDNA gate in 0.30's rocm.py [102] — the OQ12 env carry (D17)
+   remains a real surface at 0.30") vs R4.** Not a contradiction — a
+   blind spot: R3 verified the GATE EXISTS at 0.30 (correct: rocm.py
+   L415-446, L438) but did not trace the FLASH_ATTN path's TAIL
+   (fa_utils.py L52's `from flash_attn import …`) against the 0.30 image's
+   component set (no flash-attn). R1's L1.4 item 5 described the same
+   selection correctly for v0.33.0 and offered the var as an "optional"
+   carry without flagging the import requirement; the cross-generation
+   check (R4.6) shows the tail is identical at v0.33.0 too — the var was
+   never verified on any RDNA image in either generation. Weigh: recorded
+   as the re-grounding gap that produced the on-target crash; the plan
+   should treat "an env var that exists in the source" and "an env var
+   whose downstream path is import-satisfied in the pinned image" as
+   different verification classes.
+
+## R4.6 — Cross-generation check (why the carry felt safe; v0.33.0 comparison)
+
+Read of the `v0.33.0` tag (the R1 generation): `rocm.py`
+`get_vit_attn_backend` + `flash_attn_triton_available` are
+structurally IDENTICAL to 0.30.0 (same four branches, same
+`FLASH_ATTENTION_TRITON_AMD_ENABLE == "TRUE"` gate, same "Using Flash
+Attention (Triton backend) for ViT model on RDNA." log) [130], and
+`fa_utils.py`'s ROCm branch is identical — including `from flash_attn
+import flash_attn_varlen_func` + the same stub [130]. The official
+`Dockerfile.rocm` at v0.33.0 also has no flash-attn build/install stage
+[131]. Conclusion: on the v0.33.0 path the var would have selected the
+SAME import-incomplete path — the OQ12 carry was never a verified-safe
+state on either engine generation; it only "worked" while the pod served
+text-only. (This also means: had the owner kept the R1 official-FP8
+plan, the same var would have crashed the first vision request on the
+v0.33.0 image too — the bug is in the carried var, not the base move.)
+
+## Implications for the plan (C02/C05 amendment + D25/D17)
+
+- **D25/D17 env law amendment:** the 20-var exact set loses
+  `FLASH_ATTENTION_TRITON_AMD_ENABLE` (→ 19 vars). The values.yaml comment
+  where L263 sits records the R4 ground in one line: "0.30's RDNA ViT
+  FLASH_ATTN path requires the upstream flash-attn package this stack
+  deliberately does not carry (Dockerfile `USE_FLASH_ATTENTION=0`, no
+  flash-attn stage); the maintainer's own recipe runs the ViT on
+  TORCH_SDPA — see RESEARCH R4."
+- **C02 surface (values-only re-pin):** charts/vllm/values.yaml:263 delete
+  + tests/vllm_testlib.py:187 exact-set re-pin (20→19). No other C02
+  surface moves (serveArgs unchanged unless (b) is chosen; C03/C04
+  untouched).
+- **C05 runbook:** the step-3 ViT-backend marker line becomes
+  `"Using Torch SDPA backend for ViT model."` (replacing the OQ12-
+  observation leg); the first-multimodal smoke (step 3.4 class) is the
+  crash-gate for the fix; the "recorded alternatives" section can carry
+  (c) TRITON_ATTN-pin as the documented future performance option (with
+  its smoke precondition) and (d) flash-attn install as the rejected
+  heavy-build alternative.
+- **Owner ruling dimension:** OQ12 was an explicit owner ruling ("set
+  explicitly"); R4 (a) reverses it with the build-source ground, and
+  (b) offers the flag-form preservation of the "pin explicitly" posture.
+  Both go to the owner batch as R4-Q1 (no-questions rule) — the fix
+  itself is the same either way (the var goes; the question is only
+  whether the explicit pin re-lands as a serveArg).
+- **Watch (no action this ticket):** if a future magiccodingman release
+  adds a flash-attn build to the base, the var becomes re-evaluable — the
+  runbook's recorded-alternatives line notes the condition.
+
+## Open questions (no-questions-rule log — round 4, for coord → owner/plan)
+
+- **R4-Q1 — Formal reversal of the OQ12 ruling: drop
+  `FLASH_ATTENTION_TRITON_AMD_ENABLE` from the pod env (fix (a)), and do
+  we also pin `--mm-encoder-attn-backend TORCH_SDPA` (fix (b))?** Best
+  guess taken: **drop the var (YES — both owner-note horns refuted at the
+  build source; the drop makes the pod's ViT path identical to the stack's
+  own qualified 2×R9700 recipe); NO to the flag pin** (the reference
+  recipe sets neither — the minimal state IS the qualified state; if the
+  owner wants the "pin explicitly" posture preserved, (b) is the form).
+  Impact: the 20-var→19-var exact set (values.yaml + testlib), the C05
+  ViT marker line, and the D25/D17 amendment.
+- **R4-Q2 (record, no action expected): SDPA ViT latency on the R9700
+  has no datum in this ticket.** The 0.30 stack's vision record is
+  correctness-only ("two vision requests passed"); if the owner ever cares
+  about ViT prefill latency, the `TRITON_ATTN` ViT pin (fix (c)) is the
+  performance alternative and needs its own on-target vision smoke —
+  out of scope for this crash fix.
+
+## Sources (R4)
+
+All web/source reads accessed 2026-11-09; `[repo …]` cross-references
+R1-R3, EXPLORE.md and the repo surfaces as in prior rounds. vLLM line
+numbers are from a local clone of the `v0.30.0` tag (verified
+`git rev-parse HEAD` = `ced6857afa0ea7b2e3f0846a62e1394e90f15607`) and
+match the pod crash trace frame-for-frame (R4.4).
+
+118. vLLM v0.30.0 @ ced6857a — `vllm/model_executor/layers/attention/mm_encoder_attention.py` — `MMEncoderAttention.__init__` L353-356 `self.attn_backend = get_vit_attn_backend(head_size=head_size, dtype=dtype)`; L358-361 `is_flash_attn_backend = attn_backend in {FLASH_ATTN, ROCM_AITER_FA}`; L372 selection log; L530/547 `_forward_sdpa` → `vit_torch_sdpa_wrapper`; L559 `def _forward_fa`, **L581** `output = vit_flash_attn_wrapper(`; L596/618 `_forward_triton` → `vit_triton_attn_wrapper`; L783 `def forward_cuda`, L795 `elif self.is_flash_attn_backend: return self._forward_fa(…)` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/model_executor/layers/attention/mm_encoder_attention.py
+119. vLLM v0.30.0 @ ced6857a — `vllm/platforms/rocm.py` — L491 `device_type: str = "cuda"`; L415-446 `flash_attn_triton_available()` (`@cache`; L417 `on_gfx1x()`; L433-436 `find_spec("flash_attn.flash_attn_triton_amd")` OR `find_spec("aiter.ops.triton._triton_kernels.flash_attn_triton_amd")`; **L438** `os.environ.get("FLASH_ATTENTION_TRITON_AMD_ENABLE") != "TRUE"` → False; L439-442 the info-once hint); L726-732 `get_supported_vit_attn_backends() = [FLASH_ATTN, ROCM_AITER_FA, TRITON_ATTN, TORCH_SDPA]`; L734-777 `get_vit_attn_backend(head_size, dtype, backend)` — L741-747 override (assert membership, return verbatim); L753-755 AITER-MHA → ROCM_AITER_FA (CDNA only); L757-763 CDNA `find_spec("flash_attn")` → FLASH_ATTN; L765-774 `on_gfx1x() and flash_attn_triton_available() and dtype∈{fp16,bf16}` → **FLASH_ATTN** ("Using Flash Attention (Triton backend) for ViT model on RDNA."); L776-777 fallback → TORCH_SDPA ("Using Torch SDPA backend for ViT model."); **`head_size` parameter unused in the body**; the ONLY tree reader of the env var — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/platforms/rocm.py
+120. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/backends/fa_utils.py` — L38-62 module-import ROCm branch: L43 `on_gfx1250` import; L47-50 gfx1250 → `aiter.ops.triton.mha.flash_attn_varlen_func`; **L51-52 else (gfx1201): `from flash_attn import flash_attn_varlen_func`** (upstream package); L54 `_ROCM_FLASH_ATTN_AVAILABLE = True`; L55-62 `except ImportError` stub; **L58-61 stub raise: "ROCm platform requires upstream flash-attn to be installed. Please install flash-attn first."** (L59 = the pod frame); L342+ `is_flash_attn_varlen_func_available()`; ALSO `flash-attn` absent from `requirements/rocm.txt` + `requirements/common.txt` at the tag (grep: zero matches) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/backends/fa_utils.py
+121. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/ops/vit_attn_wrappers.py` — L27 `def flash_attn_maxseqlen_wrapper`; L40 aiter import (`is_rocm_aiter` branch); L44 `from vllm.v1.attention.backends.fa_utils import flash_attn_varlen_func`; **L62** `output = flash_attn_varlen_func(`; L100 `def vit_flash_attn_wrapper`; **L111** `return torch.ops.vllm.flash_attn_maxseqlen_wrapper(`; `triton_attn_wrapper` → `context_attention_fwd` (no flash-attn import); `torch_sdpa_wrapper` → `F.scaled_dot_product_attention` (no flash-attn import) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/ops/vit_attn_wrappers.py
+122. vLLM v0.30.0 @ ced6857a — `vllm/model_executor/models/vision.py` — `get_vit_attn_backend(head_size, dtype)` reads the override `mm_cfg.mm_encoder_attn_backend` → `current_platform.get_vit_attn_backend(head_size, dtype, backend=attn_backend_override)` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/model_executor/models/vision.py
+123. vLLM v0.30.0 @ ced6857a — the ViT construction chain: `vllm/model_executor/models/qwen3_5.py` L473 `class Qwen3_5ForConditionalGeneration(Qwen3VLForConditionalGeneration, IsHybrid)`; `vllm/model_executor/models/qwen3_vl.py` L449 `class Qwen3_VisionBlock`, L465 `self.attn = Qwen2_5_VisionAttention(`; `vllm/model_executor/models/qwen2_5_vl.py` L393-398 `self.attn = MMEncoderAttention(num_heads=…, head_size=self.hidden_size_per_attention_head, …)` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/model_executor/models/qwen2_5_vl.py
+124. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/ops/triton_prefill_attention.py` — L217 `def context_attention_fwd(` (the TRITON_ATTN ViT path's kernel; takes head_dim as a tensor dimension; no head-dim gate) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/ops/triton_prefill_attention.py
+125. vLLM v0.30.0 @ ced6857a — `vllm/engine/arg_utils.py` — L1399-1402 `multimodal_group.add_argument("--mm-encoder-attn-backend", …)` (the 0.30 override flag) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/engine/arg_utils.py
+126. magiccodingman/vllm-radiance — `Dockerfile` @ `release` branch (the pin's source branch, `5b99d66c` [114]) — 4 stages; builder: torch 2.12.0 built with `USE_FLASH_ATTENTION=0` (+ `USE_MAGMA=0 USE_MKLDNN=1 BUILD_TEST=0 USE_NCCL=1 USE_RCCL=1 USE_MEM_EFF_ATTENTION=0 USE_AOTRITON=0`), triton 3.7.1, torchvision 0.27.1, AITER 0.1.20 @ `fc2e5d57` (`GPU_ARCHS=gfx1201 PREBUILD_KERNELS=0`), vLLM `ARG VLLM_COMMIT=ced6857afa0ea7b2e3f0846a62e1394e90f15607` / `ARG VLLM_VERSION=0.30.0`; assemble: `pip install --no-deps` the four wheels + `/wheels/vllm-*.whl` + `transformers==5.15.0` + `xgrammar==0.2.3` + `flydsl==0.3.1` + amdsmi + pillow + pybind11 — **no flash-attn stage/install anywhere**; final-stage ENV = RADIANCE_* flags only (no FLASH_ATTENTION_TRITON_AMD_ENABLE) — https://github.com/magiccodingman/vllm-radiance/blob/release/Dockerfile
+127. magiccodingman/vllm-radiance — `docker-compose.yml` @ `release` branch — the reference 2×R9700 recipe: `environment:` ≈ 60 vars (RADIANCE_* set, `VLLM_ROCM_USE_AITER=1` + `_UNIFIED_ATTENTION=1` + all-other-AITER-0, caches, `VLLM_USE_V2_MODEL_RUNNER`, …) — **no `FLASH_ATTENTION_TRITON_AMD_ENABLE`** → the box's ViT takes the rocm.py L776-777 TORCH_SDPA fallback (R4.3) — https://github.com/magiccodingman/vllm-radiance/blob/release/docker-compose.yml
+128. ROCm/aiter — `aiter/ops/triton/_triton_kernels/` directory listing @ the image's pinned AITER commit `fc2e5d57fb5b8ad8e7e23f7103071dde798ea618` — contains the `flash_attn_triton_amd/` subpackage → the spec half of `flash_attn_triton_available()` is TRUE in the pinned image (the env var is the sole decider) — https://api.github.com/repos/ROCm/aiter/contents/aiter/ops/triton/_triton_kernels?ref=fc2e5d57fb5b8ad8e7e23f7103071dde798ea618
+129. Hugging Face — `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` `config.json` @ main (live fetch 2026-11-09) — `vision_config`: `hidden_size 1152`, `num_heads 16`, `depth 27`, `out_hidden_size 5120` → **ViT head_dim = 1152/16 = 72**, 27 attention blocks (matches R2 L2.1/L3.2 [65][45]) — https://huggingface.co/amd/Qwen3.8-27B-Quark-AWQ-MXFP4/resolve/main/config.json
+130. vLLM **v0.33.0** @ tag — `vllm/platforms/rocm.py` + `vllm/v1/attention/backends/fa_utils.py` (cross-generation check, R4.6) — `get_vit_attn_backend` / `flash_attn_triton_available` structurally identical to 0.30.0 (same env gate L438-equivalent, same four branches, same log strings); fa_utils ROCm branch identical (same `from flash_attn import flash_attn_varlen_func` + same stub) — https://raw.githubusercontent.com/vllm-project/vllm/v0.33.0/vllm/platforms/rocm.py (+ …/v1/attention/backends/fa_utils.py)
+131. vLLM **v0.33.0** @ tag — `docker/Dockerfile.rocm` (official ROCm image) — no flash-attn build/install stage (vLLM installs from the ROCm wheel set; flash-attn remains an out-of-tree optional) — https://raw.githubusercontent.com/vllm-project/vllm/v0.33.0/docker/Dockerfile.rocm
+132. [repo] the on-target surface — `charts/vllm/values.yaml:263` `FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"` (C02 20-var env law, D25) + `charts/vllm/tests/vllm_testlib.py:187` (exact-set pin) + `DECISIONS.md` L15 (OQ12 ruling verbatim: "set explicitly — override of the omit best-guess"), L85/L131 (R2 D7-rework/D17 carries), L174 (final D25: "OQ12 ViT var carry verbatim") + R3 L2.5 (the "still the live RDNA gate at 0.30" re-grounding, the blind-spot record) — the fix's amendment targets
+
+## Reliability notes (R4 self-review)
+
+- **High confidence (source @ exact commit, mutually consistent):**
+  the selection logic (rocm.py L415-446, L726-777 — read in the local
+  clone of the tag, frame-for-frame matching the pod trace [118-121]);
+  the import requirement at the FLASH_ATTN tail (fa_utils.py L51-62,
+  including the exact error string) [120]; the image's absence of
+  flash-attn (release-branch Dockerfile, the pin's own source — [126]
+  plus the `flash-attn`-absent-from-requirements grep at the tag [120]);
+  the reference recipe's absence of the env var ([127] — the box's crash-
+  avoidance is therefore mechanical, not empirical); the ViT head_dim 72
+  ([129] + the construction chain [123]); the single-reader fact for the
+  env var (tree grep) [119]; the crash-line exactness (R4.4 table — the
+  on-target tree for these files IS the tag).
+- **Medium confidence:** (a) that AITER 0.1.20's `find_spec` resolves
+  the triton-kernels subpackage AT RUNTIME in the image — grounded by the
+  directory listing at the pinned commit [128] plus the on-target crash
+  itself (which is only possible with spec-true AND env-true) — high in
+  practice, recorded medium only because the runtime `find_spec` call was
+  not executed here. (b) The v0.33.0 official image's runtime flash-attn
+  state [130][131] — the Dockerfile shows no install stage, but the image
+  was not unpacked (cf-77 law); the R4.6 conclusion (the OQ12 var was
+  never verified-safe on either generation) holds either way, because the
+  SELECTION is identical and the 0.30 tail's import requirement is
+  established.
+- **Weakest claim:** "the box's 0.30 vision qualification ran on the
+  SDPA path" [109][91][127] — inferred from (env var absent) + (selection
+  logic) + (no flash-attn in the image); the qualification report does not
+  name the ViT backend. The inference is airtight given the two source
+  facts (it is the ONLY reachable branch), but it is an inference from
+  configuration, not a logged observation.
+- **Perspective weighting:** the pinned-source reads dominate (they are
+  the exact artifact); the owner note is treated as claims-to-verify and
+  both of its load-bearing claims refuted at the source — recorded as a
+  misattribution (R4 conflict #1), not smoothed.
+- **Blind spot (stated, not found):** no execution of the pod's python
+  (no GPU session) — the fix's proof is (i) the selection-logic read
+  (deterministic given env/arch/dtype) and (ii) the on-target
+  first-multimodal smoke after the env drop (the runbook crash-gate,
+  C05); no public RDNA4 datum exists for SDPA-ViT latency vs the
+  FLASH_ATTN-ViT path (R4-Q2).
+
+## R4 verification addendum — independent re-verification (2026-11-09)
+
+Independent re-verification of the R4 section above (already written
+earlier on 2026-11-09 by a prior research pass on this same commission).
+Method: fresh reads of the same pinned artifacts — the local clone of the
+`v0.30.0` tag (`git rev-parse HEAD` re-verified today =
+`ced6857afa0ea7b2e3f0846a62e1394e90f15607`), the local clone of the
+magiccodingman `release` branch at the pin's source commit `5b99d66c844f`
+(re-verified today), a live GitHub API listing of the AITER tree at the
+pinned commit, the live checkpoint `config.json` (cached fetch), and this
+branch's C02 repo surfaces. Every load-bearing R4 claim was re-checked
+line-for-line; **no correction was needed**. Two new findings — V1
+UPGRADES R4.3's weakest claim from inference to logged observation, V2
+TIGHTENS R4.4's wording.
+
+### Verified (re-checked 2026-11-09)
+
+1. **Selection logic (R4.1)** — `rocm.py`: `flash_attn_triton_available()`
+   L415-446 (`on_gfx1x()` L417; the two `find_spec` locations L433-436;
+   env gate **L438** `!= "TRUE"` → False; info-once L439-442; `return
+   True` L444); `get_supported_vit_attn_backends()` L726-732 =
+   [FLASH_ATTN, ROCM_AITER_FA, TRITON_ATTN, TORCH_SDPA];
+   `get_vit_attn_backend` L734-777 — override branch L741-747 (assert
+   membership, return verbatim, no availability check), CDNA AITER-MHA,
+   CDNA `find_spec("flash_attn")`, RDNA L765-774 → FLASH_ATTN ("Using
+   Flash Attention (Triton backend) for ViT model on RDNA."), fallback
+   L776-777 → TORCH_SDPA. **`head_size` is never referenced in the body**
+   (re-grep: zero uses after the signature) — the "head_dim 72 supported
+   set" hypothesis is refuted, re-confirmed.
+2. **Single reader of the env var** — tree grep (`vllm/` + `docs/`): one
+   reader (rocm.py L438); L440 is the log string, not a read. Re-confirmed.
+3. **The crash tail, frame-for-frame (R4.4)** — `fa_utils.py`: L52
+   `from flash_attn import flash_attn_varlen_func` (the non-gfx1250
+   branch); stub L55-62, the raise at **L59** with the exact pod message
+   (L58-61); `vit_attn_wrappers.py` L27/L44/**L62**/L100/**L111**;
+   `mm_encoder_attention.py` L353/L358/L530/L547/**L559**/
+   **L581**/L596/L618/L783/L795 — all four pod-trace frames land on
+   byte-identical stock lines. Re-confirmed (line numbers re-grepped).
+4. **The override surface (R4.1/fix (b))** — `vision.py` L85-117
+   (`get_vit_attn_backend` reads `mm_cfg.mm_encoder_attn_backend` →
+   `current_platform.get_vit_attn_backend(…, backend=override)`); the
+   flag registration `arg_utils.py` L1399-1403. Re-confirmed.
+5. **The TRITON_ATTN path is import-free (fix (c) ground)** —
+   `triton_prefill_attention.py` L217 `context_attention_fwd(` (pure
+   Triton kernel; head_dim a tensor dimension; no head-dim gate).
+   Re-confirmed.
+6. **The ViT construction chain + head_dim 72** — `qwen3_5.py` L473 →
+   `qwen3_vl.py` L449/L465 → `qwen2_5_vl.py` L393; the live checkpoint
+   `vision_config`: hidden 1152 / heads 16 / depth 27 / out 5120 →
+   head_dim 72. Re-confirmed.
+7. **The image has no flash-attn (R4.2, the core premise refutation)** —
+   the release-branch `Dockerfile` @ `5b99d66c`: 4 stages (builder /
+   rocmprune / assemble / final); NO flash-attn stage, NO `pip install
+   flash-attn`, NO flash-attn wheel (every `flash` hit is DFlash or the
+   torch flag); torch built with **`USE_FLASH_ATTENTION=0`**
+   (+`USE_MEM_EFF_ATTENTION=0 USE_AOTRITON=0`); AITER @ `fc2e5d57`
+   (`GPU_ARCHS=gfx1201 PREBUILD_KERNELS=0`); vLLM @ `ced6857a` /
+   `VLLM_VERSION=0.30.0`; the assemble stage installs exactly: the four
+   wheels `--no-deps`, the vllm wheel, `transformers==5.15.0
+   xgrammar==0.2.3`, `flydsl==0.3.1`, amd_smi/pillow/pybind11. `flash-
+   attn` absent from vLLM's `requirements/rocm.txt` AND `common.txt` at
+   the tag (grep: zero matches). **Conclusion re-confirmed: the image —
+   and therefore the thin re-export — does NOT carry upstream flash-
+   attn. The base never had it; the re-export lost nothing, and the
+   owner's "their image bakes in upstream flash-attn" premise is false at
+   the build source.**
+8. **The reference recipe omits the var (R4.3)** — release-branch
+   `docker-compose.yml`: no `FLASH_ATTENTION_TRITON_AMD_ENABLE` (the
+   AITER set is `VLLM_ROCM_USE_AITER=1` + `_UNIFIED_ATTENTION=1` +
+   all-other-AITER-0). Repo-wide grep: the string appears ONLY in
+   captured benchmark server logs (all of them the info-once "Set … to
+   enable" lines — i.e. UNSET in every maintainer run); zero hits in any
+   config surface (Dockerfile / compose / .env.example / docs) [135].
+9. **The gate's spec half is TRUE in the pinned image (R4.2 last bullet)**
+   — the AITER tree @ the pinned commit `fc2e5d57` contains
+   `aiter/ops/triton/_triton_kernels/flash_attn_triton_amd/` (live
+   GitHub API directory listing) → the env var is the SOLE decider.
+   Re-confirmed.
+10. **The repo surfaces the fix amends (R4.5)** — this branch:
+    `charts/vllm/values.yaml:263` = `FLASH_ATTENTION_TRITON_AMD_ENABLE:
+    "TRUE"` (with the OQ12 comment); `charts/vllm/tests/vllm_testlib.py`
+    `env_want_cf131` = the 20-var exact set INCLUDING the var (L187) —
+    the drop is 20→19. Re-confirmed on the current tree.
+11. **Cross-generation (R4.6)** — v0.33.0 `rocm.py` + `fa_utils.py`
+    (cached reads): `get_vit_attn_backend` structurally identical (the
+    AITER-MHA branch gains a dtype check — immaterial on RDNA), same env
+    gate, same four branches, same log strings; the fa_utils ROCm branch
+    is identical (`from flash_attn import …` + the same stub). Conclusion
+    stands.
+
+### New finding V1 — the reference box's SDPA ViT is LOGGED, not inferred
+
+The radiance repo commits its 0.30-publication benchmark logs under
+`benchmarks/results/20260922-v030-publication/`. In ALL FOUR runs
+(non-spec, dflash-k5, dflash-k7, mtp-k4 — the 2×R9700 TP2 box,
+2026-09-22, the same vLLM 0.30.0 the pin builds), the worker log records
+at model load [133]:
+
+```
+[rocm.py:443] Set FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE to enable Flash Attention Triton backend on RDNA.
+[rocm.py:780] Using Torch SDPA backend for ViT model.
+[mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+```
+
+The first line fires ONLY when the Triton-AMD spec is present AND the env
+var is not `"TRUE"` (the spec-absent path returns before it); the second
+is the L776-777 fallback. So the maintainer's own 0.30 qualification runs
+LOGGED ViT = TORCH_SDPA — R4.3's "SDPA-path record" (flagged in R4's
+reliability notes as the weakest claim, inferred from configuration) is
+now a directly logged observation from the reference box. Collateral for
+the fix: the post-fix startup marker is literally the string the
+qualified runs logged.
+
+### New finding V2 — the overlay's rocm.py line-shift is fully accounted for
+
+The image's rocm.py coordinates run exactly +4 vs the tag (the release
+log's L443/L780 vs the tag's L439/L776). `patch_gfx1201.py` (A0) is the
+ONLY overlay that touches `vllm/platforms/rocm.py`: it inserts a 4-line
+`RADIANCE_GFX_ARCH` env read into `_get_gcn_arch` [134] — which accounts
+for the +4 shift exactly, in an unrelated function. The selection logic
+and all its log strings are tag-identical, and the pod's four crash
+frames match tag line numbers byte-for-byte. R4.4's "the 35 overlays do
+not touch the four crash-path files" holds; this refines it: rocm.py IS
+touched (4-line unrelated insert), the other three crash-frame files are
+not.
+
+### Conclusion (independent verification)
+
+**R4's exact fix stands, verified.** (a) PRIMARY: drop
+`FLASH_ATTENTION_TRITON_AMD_ENABLE: "TRUE"` from the pod env law
+(`charts/vllm/values.yaml:263` + `tests/vllm_testlib.py` 20→19 re-pin) —
+the ViT then takes the TORCH_SDPA fallback (rocm.py L776-777 →
+`F.scaled_dot_product_attention`), the flash-attn import is never
+attempted, and the pod's ViT path becomes byte-identical to the
+reference recipe's — now with the box's OWN logs as the record (V1).
+(b) HARDENING (optional): pin `--mm-encoder-attn-backend TORCH_SDPA` in
+serveArgs (flag verified at arg_utils L1399-1403; the override branch
+short-circuits the whole selection). (c) Rejected: the TRITON_ATTN pin
+(works mechanically — verified import-free at triton_prefill_attention
+L217 — but unqualified numerics). (d) Rejected: installing upstream
+flash-attn (the premise is refuted — the image never had it, V7 above;
+heavy gfx1201 HIP build; stack-atomicity violation; torch built with
+`USE_FLASH_ATTENTION=0` by design). Direct answer to the commission's
+question 4: **our image does NOT have upstream flash-attn, and never
+did** — the crash is the carried env var selecting an import-incomplete
+path, and the one-line values fix (the var drop) is the exact fix.
+
+### Sources (verification addendum)
+
+133. magiccodingman/vllm-radiance @ `release`/`5b99d66c` —
+    `benchmarks/results/20260922-v030-publication/{non-spec,dflash-k5,
+    dflash-k7,mtp-k4}/logs/server-ready.log` (the 0.30-publication
+    2×R9700 TP2 runs) — the three-line marker quoted in V1 (non-spec
+    L233-236; dflash-k5/k7 L251; mtp-k4 L253) — read in the local clone
+    `/tmp/opencode/cf131-r4/radiance-src`.
+134. magiccodingman/vllm-radiance @ `release`/`5b99d66c` —
+    `patch_gfx1201.py` (A0) — the only overlay touching
+    `vllm/platforms/rocm.py`; its 4-line `RADIANCE_GFX_ARCH` insert into
+    `_get_gcn_arch` accounts for the tag→image +4 line shift (V2).
+135. magiccodingman/vllm-radiance @ `release`/`5b99d66c` — repo-wide
+    grep `FLASH_ATTENTION_TRITON_AMD_ENABLE`: hits ONLY in captured
+    benchmark logs (all info-once "Set … to enable" lines); ZERO hits in
+    Dockerfile / docker-compose.yml / .env.example / docs config
+    surfaces (V8 re-check).
+
+### R4.7 — coordination addendum (2026-11-09T12:11Z, the coordinator): the on-target trace PAIR
+The owner's bring-up produced TWO encoder-failure traces minutes apart on pod `vllm-dev/a0556179-c629-452c-b7d2-114767a9f61d` (source stack `vllm/model_executor/models/utils.py:432` / `vision.py:522 embed_multimodal`):
+- **11:56:01** `ValueError in vision.py: ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE` — the Triton flash-attn kernel's grid guard (the var routes the encoder INTO `flash_attn_varlen_func`, which raises it).
+- **11:59:01** `ImportError: ROCm platform requires upstream flash-attn to be installed.` — R4's documented trace (the availability-gate path on the retry).
+Both are the SAME crash class: the single var `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE` puts the ViT encoder on the FLASH_ATTN path, which this image cannot serve (kernel grid limit; and no upstream flash-attn import). Dropping the var routes the encoder to TORCH_SDPA, which calls neither — the D33 fix covers BOTH traces. R4's evidence base (written from the second paste) documented only the ImportError; this addendum records the ValueError half so the runbook's "before-fix" symptom row matches the owner's actual first paste.

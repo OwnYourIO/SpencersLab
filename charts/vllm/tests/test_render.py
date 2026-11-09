@@ -3,10 +3,10 @@
 # subtree, render with --set domain/clusterName, and assert AC2/AC3/AC4 line by
 # line — the full contract serve recipe verbatim (the cf-105 D4 recipe until
 # the C02 flip, the cf-131 D24 0.30 Shape-B recipe after it), the complete
-# container env set (four vars, then the D25 twenty-var law), probes,
-# securityContext, the privileged+hostPath device shape, GPU/RAM/shm pod shape,
-# the exactly-two scrape annotations, the peer-hop Service name, the
-# persistence legs (globalMounts until C03, the advancedMounts ro/rw split +
+# container env set (four vars, then the D25 nineteen-var law, D33-amended),
+# probes, securityContext, the privileged+hostPath device shape, GPU/RAM/shm
+# pod shape, the exactly-two scrape annotations, the peer-hop Service name,
+# the persistence legs (globalMounts until C03, the advancedMounts ro/rw split +
 # the /cache move after it) and the C03 setup init container. Generation
 # branching is explained in vllm_testlib; the deliberately-unchanged legs
 # (security/devices/resources/annotations/Service/hand-written PVC) are every
@@ -91,10 +91,12 @@ def test_ac2_serve_args_are_the_contract_recipe_verbatim():
 
 def test_ac2_container_env_is_exactly_the_contract_set():
     """The FULL env set: pre-flip the four cf-105 contract vars; from the C02
-    flip the D25 twenty-var law exactly — and the three named drops
-    (RADIANCE_GDN_LAZY absent because the feature is not in the 0.30 stack;
-    HUGGINGFACE_HUB_CACHE / VLLM_SERVER_DEV_MODE dropped with the GGUF and
-    sleep-mode stories)."""
+    flip the D25 nineteen-var law exactly (D33-amended) — and the four named
+    drops (RADIANCE_GDN_LAZY absent because the feature is not in the 0.30
+    stack; HUGGINGFACE_HUB_CACHE / VLLM_SERVER_DEV_MODE dropped with the GGUF
+    and sleep-mode stories; FLASH_ATTENTION_TRITON_AMD_ENABLE dropped by D33
+    because the image carries no upstream flash-attn for its FLASH_ATTN
+    tail)."""
     docs, _ = _service_render()
     env = V.env_map(V.main_container(V.deployment(docs)))
     block = V.service_vllm_block()
@@ -111,13 +113,15 @@ def test_ac2_container_env_is_exactly_the_contract_set():
     if V.cf131_plane():
         want = V.env_want_cf131(str(sub["rocrVisibleDevices"]))
         assert env == want, (
-            f"C02 (cf-131) AC5: container env diverges from the D25 twenty-var set\n  got:      {env}\n  expected: {want}"
+            f"C02 (cf-131) AC5: container env diverges from the D25 nineteen-var set (D33-amended)\n  got:      {env}\n  expected: {want}"
         )
         leaked = [name for name in V.DROPPED_ENV_CF131 if name in env]
         assert not leaked, (
             f"C02 AC5: dropped env vars leaked into the render: {leaked} — RADIANCE_GDN_LAZY "
-            "names a feature absent from the 0.30 stack, the other two die with the GGUF "
-            "cache and the sleep-mode surface"
+            "names a feature absent from the 0.30 stack, HUGGINGFACE_HUB_CACHE/"
+            "VLLM_SERVER_DEV_MODE die with the GGUF cache and the sleep-mode surface, and "
+            "FLASH_ATTENTION_TRITON_AMD_ENABLE is the D33 drop whose re-add puts the ViT on "
+            "the flash-attn path this image cannot import"
         )
         return
     want = {

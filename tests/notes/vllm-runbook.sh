@@ -453,11 +453,15 @@ need("RADIANCE_QUARK_BF16_MTP", "step 2.3 (the Q8 contingency ladder's first run
 # Step 3: the FIRST-ENGINE GATE is the 0.30 marker set. The wrong-engine
 # absence markers (no gguf plugin import, no stock-FP8 default-kernel line)
 # are runbook prose asserted as ABSENT in the log, not as needles in the
-# document — the present trio below is the pin (C05 T5 spec).
+# document — the present marker lines below are the pins (C05 T5 spec).
+# The ViT needle is the D33 amendment's re-pin (2026-11-09): with the OQ12
+# env var out of the law the encoder falls back to Torch SDPA — the literal
+# the maintainer's qualified 0.30 runs logged.
 need_re(r"first[ \t-]+engine[ \t-]+gate", "step 3 (the gate is the first on-RDNA 0.30-stack proof)", re.I)
 need("Application startup complete", "step 3 (the vLLM-standard startup-complete marker)")
 need("PIECEWISE", "step 3 (the dflash lane's compilation mode — the entrypoint-appended --compilation-config value)")
 need("R4D", "step 3 (the target-attention engagement lines of the marker set)")
+need("Using Torch SDPA backend for ViT model.", "step 3 (the ViT marker row's expected line post-D33 — the TORCH_SDPA fallback, not the flash-attn path)")
 need("mxfp4 staging:", "step 2 (the init container's log-line authority — the pod log IS the staging record)")
 need("DRY_RUN", "step 3 (the analog capture: the rendered args + startup-log resolution lines diffed against the plan recipe — the R3 medium-confidence close)")
 
