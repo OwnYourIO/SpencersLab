@@ -111,9 +111,12 @@ app-template:
   # start: 0.99 is startup-dead on this card (asks 31.54 > 31.46 free
   # [158]), 0.95 stands recorded as the conservative rung, the 0.85 compose
   # default stays recorded. Honest boot arithmetic: the pool at 0.98 is
-  # ~3.67 GiB vs the int4 + ssm-bf16 demand ~4.93 — the 262144 boot still
-  # needs ~1.3 GiB out of the padding/graph-profiling levers or a named
-  # margin donor (D36; runbook 3.5 owns the verdict).
+  # ~3.67 GiB vs the boot gate's own GROUPED print — the gate sums
+  # blocks × S × page, so the shipped shape (S=8, bs 1696 predicted,
+  # 368 blocks/request) prints ≈5.06 grouped (R7); the raw per-layer
+  # 4.93/5.63 stand as bounds, not the bar. The 262144 boot still needs
+  # ~1.40 GiB out of the padding/graph-profiling levers or a named
+  # margin donor (D36/D37; runbook 3.5 owns the verdict).
   # The args START with the model dir: the base image's entrypoint
   # (/opt/radiance_entrypoint.sh) execs `vllm serve "$@"` itself — a verb
   # token in the args would double it (R3 L1.3/L3.1). The list renders

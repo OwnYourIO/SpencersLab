@@ -5441,3 +5441,542 @@ HF revisions `93245f7c…` (target) / `ee0cb26a…` (drafter).
   and the whole 9.51/1.09 arithmetic it anchors — was tested on the CURRENT
   image. No stale-artifact doubt attaches to crash #4: the pod that died
   was running the post-D35 `:main`.
+
+---
+
+# R7 — F1: the kv-cache grouping
+
+## R7. F1 — the kv-cache grouping: where the 8 comes from, what it wastes, what knob is real
+
+(The owner's directive round: crash #4's `[radiance] kv cache groups: size 8, 9 groups,
+378 blocks/request (upstream would pick size 5)` @ `kv_cache_utils.py:1477` and
+`WARNING kv_cache_utils.py:1617 Add 3 padding layers, may waste at most 60.00% KV
+cache memory` are ACCEPTED REAL MECHANICS; this round is C05 3.5(f1) — the named
+investigation, executed off the pinned trees, no GPU session.)
+
+### R7.0 TL;DR (5 lines)
+
+- Both pasted strings are reproduced EXACTLY from the pinned trees: the fork's
+  `patch_kv_group_size.py` helper + upstream's un-padded warning math on our
+  [48 GDN, 16 FA, 5 drafter-SWA] bucket mix — and the line numbers themselves
+  (`:1477`, `:1617`) match a reconstructed installed tree (upstream @ ced6857a
+  + the two overlay edits) to the line, proving which code the crashed pod ran [182][189][190][191][195].
+- The 60.00% is a per-bucket headline, not a pool quantity: the three dummy
+  slots ride ONLY the drafter's 4 blocks/request, so the paid tax is 12 dead
+  slot-pages = **0.038 GiB (fp8) / 0.021 GiB (int4)** per max request — and
+  the engine's demand line INCLUDES it (the paste's 9.51 is exactly the
+  grouped sum 9.5054 at bs 1648; the un-grouped sum would print 9.47)
+  [183][195].
+- `size 8` is the fork search's own optimum at our shape, and the search's
+  objective (`group_size × blocks/request`) is exactly what the boot check
+  spends: **every** legal alternative is worse (upstream's 5: +1.08 GiB int4
+  demand) or ~0.4% better with 69 block tables (1); the 24-group cap
+  (`RADIANCE_KV_GROUP_MAX_GROUPS`, default 24) is what excludes the latter —
+  the fork's own rejection, on our numbers too [189][195].
+- f1's standalone boot contribution at 262144/0.98 is **≤ 0.021 GiB against a
+  1.40 GiB gap: no S makes the boot hold.** The grouped-demand correction
+  also moves the 3.5 gate bar: the engine will print ~**5.06 GiB** (S=8,
+  predicted bs 1696), not D36's raw 4.93 — the f2 (graph-estimate ≈1.27)
+  half alone is now provably ~0.12 GiB short; the B fall-through's
+  engine-estimate lands ≈171k tokens (R6's 120–180k band, S=8 shape) [184][187][195].
+- There IS a real env surface — `RADIANCE_KV_GROUP_OPT/SIZE/MAX_GROUPS`,
+  baked `OPT=1` in the image ENV — but its only positive-valued settings
+  recover 0.02 GiB at bookkeeping prices, so the honest ship-surface literal
+  is: **no edit; close f1 as "S=8 optimal at the pins; OPT=0 recorded as the
+  anti-lever (+1.08 GiB if set); the 1.4 GiB question is f2/donors/B's"**
+  [191][192][193].
+
+### R7.1 — the mechanism @ ced6857a: what grouping is, the 3-and-60% arithmetic, where 8 comes from
+
+**The uniform-group rule (upstream, un-patched).** `_get_kv_cache_groups_uniform_page_size`
+is defined at `vllm/v1/core/kv_cache_utils.py:1435`; its docstring states the
+assumptions that force grouping: physical memory per block must be identical
+across all KV cache groups (assumption 1, L1465-1467), one `block_size` for all
+layers (assumption 2, L1468-1471), and **"Number of layers per group:
+Currently assumed the same"** (assumption 4, L1476-1478) [182]. Layers are first
+bucketed by identical `KVCacheSpec` (L1500-1526) — for our served shape the
+buckets are exactly the fork's documented table, re-verified against the two
+fetched configs: **48 linear_attention (GDN, MambaSpec) / 16 full_attention
+(FullAttentionSpec; 64 layers ÷ `full_attention_interval 4` [166]) / 5 drafter
+(SlidingWindowSpec, window 2048, 8 heads × 128 [167])** — 69 layers total.
+
+**Upstream's group-size pick.** L1540-1551:
+
+```python
+min_num_layers = min([len(layers) for layers in layer_buckets])   # = 5
+group_size = min_num_layers
+max_num_layers = max([len(layers) for layers in layer_buckets])   # = 48
+if max_num_layers < min_num_layers * 1.5:                          # 48 < 7.5? NO
+    group_size = max_num_layers
+```
+
+with the FIXME at L1533-1539 admitting the rule is an n:1-pattern heuristic
+("Gemma3 5:1, LLaMA4 3:1 … Need a better strategy if we want to support more
+complex patterns"). Our mix is 48:16:5 — not n:1 — so the 1.5 escape (written
+for gpt-oss-20b + eagle drafter cases, L1546-1550) does not fire and **upstream
+picks `group_size = 5`** — exactly the fork log's "(upstream would pick size 5)"
+parenthetical [182][189].
+
+**The padding + warning arithmetic.** Per bucket, L1553-1560:
+
+```python
+num_padding_layers = group_size - len(layers) % group_size
+if num_padding_layers != group_size:      # only if the last group is partial
+    logger.warning("Add %d padding layers, may waste at most %.2f%% KV cache memory",
+                   num_padding_layers, num_padding_layers / len(layers) * 100)
+```
+
+Plugging our buckets at the fork's `S = 8` (the patched path — see below):
+GDN `48 % 8 = 0` → skip (pad would read 8 == group_size); FA `16 % 8 = 0` →
+skip; SWA `5 % 8 = 5` → `pad = 8 − 5 = 3`, waste = `3 / 5 × 100 = 60.00`.
+**Reproduced string-for-string: `Add 3 padding layers, may waste at most 60.00%
+KV cache memory`** [182][195]. The denominator is the PADDED BUCKET's layer
+count (3 dummy slots on top of 5 real drafter layers), not the pool — the
+percentage can read absurdly (at S=16 it says 220.00%, S=48 says 860.00%) —
+which is the first half of why the headline ≠ the damage (R7.2).
+And the string is upstream's own text (the fork patch does not add it) — the
+padded slots materialize on the supply side, in the pool's uniform blocks, not
+as layer entries: `create_kv_cache_group_specs` receives the real layer names
+(`grouped_layers.append(layers[i::num_groups])`, L1573-1574), and
+`get_kv_cache_configs` asserts every layer lands in exactly one group (L2748,
+"Some layers are not assigned to any group") — so a group of 5 layers lives in
+blocks sized to the 8-layer MAX group (`_get_kv_cache_bytes_per_block` =
+`max(sum of per-layer pages over groups)`, L1588-1611): the 3 dummies are dead
+bytes per block of the drafter group [182][183].
+Under upstream's own S=5 the same formula emits the fork docs' witnessed pair:
+GDN `5 − 48%5 = 2` → `2/48 = 4.17%`, FA `5 − 16%5 = 4` → `4/16 = 25.00%`, SWA
+exact — `Add 2 padding layers, may waste at most 4.17%` + `Add 4 … 25.00%`
+— which is verbatim the [172] live witnesses [182][189][195].
+
+**Where 8 comes from — the fork patch, in full.** `patch_kv_group_size.py` @
+5b99d66c (157 lines, read in full [189]): a build-time, anchor-exact source
+patch (its `_patchlib.apply()` replaces three unique anchor strings in the
+installed `kv_cache_utils.py` and refuses to write a file that fails
+`ast.parse`; unique-anchor-or-die semantics [190]) that (i) threads
+`vllm_config` into `_get_kv_cache_groups_uniform_page_size` (anchor at
+upstream L1435-1437 — the CALL anchor at L2318 `groups =
+_get_kv_cache_groups_uniform_page_size(filtered_spec)` re-verified
+character-exact [182][189]); (ii) inserts the helper `_radiance_pick_group_size`
+which searches every `g` in `1..max(bucket)` and keeps only CANONICAL sizes
+(`max(cdiv(L, cdiv(L,g))) == g`, so the returned value equals the group size the
+allocator recomputes downstream); costs each candidate by
+`g × Σ_b cdiv(L_b,g) × cost_b` where `cost_b = max(cdiv(spec.max_memory_usage_bytes(vllm_config), page))`
+— the per-request BLOCK footprint, i.e. exactly what the boot check later
+spends; caps at `RADIANCE_KV_GROUP_MAX_GROUPS` (default 24); and
+`logger.info("[radiance] kv cache groups: size %d, %d groups, %d blocks/request
+(upstream would pick size %d)", …)`; (iii) env exits: `RADIANCE_KV_GROUP_OPT=0`
+restores upstream, `RADIANCE_KV_GROUP_SIZE=<n>` forces a size (bypassing both
+the search and its canonical/cap guards), everything default-OFF → the search
+runs. The Dockerfile bakes `RADIANCE_KV_GROUP_OPT=1` into the image ENV at L363
+— the optimization is ON by construction on our pod, and our entrypoint/chart
+set none of the three [191][193]; the fork's own docker-compose passes
+`RADIANCE_KV_GROUP_OPT: "${RADIANCE_KV_GROUP_OPT:-1}"` [192].
+
+**The 378 is the search's own ledger, reproduced.** At the crash-boot shape
+(fp8, R4D, ssm-fp32, K7, batched-2560, no-async, 262144): the platform raises
+the attention `block_size` to 1648 (R7.3) so one FA/SWA page = 3,375,104 B ≥
+the GDN page 3,350,528 B; `page` in the search = 3,375,104 for every spec
+after unification; costs (blocks per group per max request, from the pinned
+`max_memory_usage_bytes` implementations [187]): FA `cdiv(262144, 1648) = 160`;
+GDN align-mode `2 + num_speculative_blocks(7) + num_prefill_checkpoint_blocks(0)
+= 9` [156→187]; SWA `cdiv(window−1 + extra + in-flight(2560), 1648) + 1 = 4`
+(the +1 straddle rule of `max_admission_blocks_per_request` [187]). Candidate
+keys (`S × blocks`, group-capped at 24): S=1→3012 (69 gr, capped out),
+S=2→3016 (35 gr, capped out), S=3→3336, **S=4→3024 (18 gr), S=8→3024 (9 gr)**
+— tie broken by fewer groups → **S=8, groups = 6+2+1 = 9, blocks =
+6×9 + 2×160 + 1×4 = 378** — the pasted INFO triple, re-derived from source and
+confirmed by a scripted sweep of the exact patch formula [195]. (The fork's own
+TP2 measurement — "full-attention group costs 160 blocks, a GDN group 2+spec =
+9, the drafter 8", 382 blk/req — is the same computation in a TP2 frame with a
+different in-flight term [172→189]; the paste's GDN=9 also settles R6's
+blind-spot on `num_prefill_checkpoint_blocks`: at the crashed boot it evaluated
+to **0**, not the 1 R6's demand decomposition assumed — 48×10×3,350,528 = 1.498
+GiB was really 48×9×… = 1.35, see R7.2's exact fit.)
+
+**The line numbers themselves — the strongest corroboration of the round.**
+Reconstructing the installed tree (raw `kv_cache_utils.py` @ ced6857a + the
+three `patch_kv_group_size` string replacements, the same order and semantics
+the Dockerfile applies them in — L266, before the `kv_offload` patches whose
+insertion points sit BELOW both statements [191]) puts the `logger.info(` of
+the radiance line at **line 1477** and the padding `logger.warning(` at
+**line 1617** — matching the pasted `@ kv_cache_utils.py:1477` and
+`kv_cache_utils.py:1617` exactly, on this machine, from the pins, without
+fitting [195]. (Upstream-unpatched positions: the helper insert nets +54 lines
+at the def anchor L1435 with `logger.info(` its 42nd line → 1435+42 = 1477;
+the tail insert nets +7 before the warning at L1556 → 1556+54+7 = 1617.) The paste's `WARNING … (×2)` = two grouping passes in the log
+window — one `get_kv_cache_groups` call emits one pair; the pinned v0.30.0
+boot flow calls it once per `get_kv_cache_configs` pass (L2687 global; the
+per-worker projection at L2692 reuses it, no re-emit) [183], so ×2 says two
+passes (restart/re-attempt class) — immaterial to the verdicts, flagged as a
+minor open residue.
+
+### R7.2 — the waste: is the 60% actually paid, and does DEMAND include the tax?
+
+**Demand includes it — and the paste proves it numerically.** There are two
+need-check paths at the pin: (1) the raw per-layer sum
+`max_memory_usage_bytes(vllm_config, kv_cache_spec.values())` feeding
+`_check_enough_kv_cache_memory` via `check_enough_kv_cache_memory` (L912-918,
+L975-1009) — no groups, no padding; (2) the engine-core path inside
+`get_kv_cache_configs`: `check_memory = avail − _pool_bytes_per_block(groups)`
+(one uniform block reserved for the pool's null block, L2725-2728) then
+`_check_enough_kv_cache_memory(check, _max_memory_usage_bytes_from_groups…)`
+(L2737-2743), where `_max_memory_usage_bytes_from_groups` — docstring verbatim:
+**"This correctly accounts for padding in hybrid models"** — returns
+`bytes_per_block × Σ_groups blocks_per_request`, i.e. **grouped demand =
+blocks(S) × S × page**, padding slots included [183]. Which path printed
+crash #4? Both formats live in the same message function (L899-909, the
+owner's `:899`), so decide by arithmetic at `format_gib = round(x, 2)` [159]:
+
+| path | bytes | GiB | prints | paste |
+|---|---|---|---|---|
+| raw per-layer sum (fp8 boot) | 10,159,069,… | 9.4677 | `9.47` | ✗ |
+| grouped sum, S=8, blocks=378, page 3,375,104 | 10,206,314,496 | **9.5054** | **`9.51`** | ✓ [195] |
+| available (worker line 1.12 − null block 0.0252) | — | 1.0908 | `1.09` | ✓ |
+
+The crashed message's BOTH numbers (9.51 needed, 1.09 available) land on the
+GROUPED path simultaneously — the 1.12-vs-1.09 delta the D36 record called a
+"display/rounding class" is actually the null-block reservation, and the
+9.51-vs-R6's-9.518 is not noise but the S=8 grouped sum at GDN=9/SWA=4/FA-160,
+block-rounded. **Verdict: f1 moves DEMAND (the boot gate quantity), not only
+supply.** The pool side (worker `available = requested − non-KV − graph-estimate`
+[157]) is S-independent; the gate `needed(S) ≤ pool − S×page` is decided by
+`needed(S) = S × blocks(S) × page`.
+
+**What the tax is, in GiB, at our shapes.** The S=8 dummy slots are 3 pages ×
+the drafter group's 4 blocks/request = 12 dead slot-pages: **0.0377 GiB fp8,
+0.0206 GiB int4** (page 1,845,248 B at the predicted int4 bs, R7.3). The same
+tax at upstream's 5 is 640 dead FA slot-pages (4 pad layers riding the 160
+blocks of four FA groups) + 18 dead GDN pages: **11.536 GiB vs 9.505 fp8
+(+2.03), 6.135 vs 5.059 int4 (+1.08)** — 21.3% worse per request, matching the
+fork's measured "+20.7% tokens" when their patch replaced 5 with 8 (739,544 →
+892,799 tokens is exactly the reciprocal of this footprint ratio)
+[189][195]. The headline's inversion is the whole story: **60.00% sounds
+catastrophic because the % is per-drafter-bucket; the pool-fatal pattern was
+the 25% (FA-bucket) one, and the fork default already kills it** — "Padding
+count is not the objective; where the padding lands is" [189]. The
+un-padded absolute floor (S=1, 69 groups: 3012/2932 slot-pages) sits only
+0.4%/0.7% below S=8: our pasted 3024-slot footprint is within 12 slots of the
+zero-padding optimum [195].
+
+### R7.3 — the knobs at the pins (existence law: a knob that does not exist @ ced6857a is worth nothing)
+
+**(a) `--mamba-block-size` / any CLI that controls group size. `--mamba-block-size`
+EXISTS** at 0.30 (`arg_utils.py` field L738, parser L1306, plumbing L2113) — and
+is **dead for our purposes**: the platform's hybrid alignment
+(`Platform._align_hybrid_block_size`, `vllm/platforms/interface.py:778-965`)
+runs before specs are built; under `mamba_cache_mode == "align"` it FORCES
+`cache_config.mamba_block_size = cache_config.block_size` (L939-940) after
+computing the attention block size as the kernel-aligned cover of the mamba
+page: `attn_block_size = align × cdiv(mamba_page, align × attn_bytes_per_token)`
+(L923-925), `align = max(min supported kernel block, DEFAULT_BLOCK_SIZE=16)`
+— TRITON_ATTN supports `MultipleOf(16)` (L307-308 of triton_attn.py) and R4D
+"Exactly 16" (fork file L235-238 [194]) → **bs = 1648 for the fp8 crash boot
+(16 × cdiv(3,350,528, 32,768) = 16×103) — reproducing the fork's measured 1648
+— and bs = 1696 predicted for the shipped int4 boot (16 ×
+cdiv(1,777,664, 16,896) = 16×106)**, with the INFO markers "Setting attention
+block size to %d tokens" (L934) and "Padding mamba page size by %.2f%%" (L958;
+0.73% fp8 / 0.75% int4) printed in every boot log [184][195]. Group size S is
+in NO CacheConfig field and no CLI at this pin — the only 0.30 CLI that could
+name it, `--min-kv-cache-group-layers`, is PR #58207's addition and does NOT
+exist at ced6857a (searched arg_utils/envs/kv_cache_utils: zero hits; the PR is
+still open) [188][197]. `--block-size` exists (L1268) but the alignment may
+only RAISE it (interface L930-936 "if cache_config.block_size <
+attn_block_size") — any value ≥ 1696 grows every attention page ∝ bs while the
+GDN pool is SSM-state-fixed, so raising it can only ADD demand; lowering is a
+no-op. `--mamba-block-size` + prefix caching-off is a hard ValueError
+(config/vllm.py L3197-3207) — irrelevant either way. **Verdict (a): no CLI
+group-size knob exists; bs is platform-derived and already at its minimum.**
+**(b) `--kv-cache-metrics` EXISTS (L1543) — observability only** (an
+ObservabilityConfig sampling flag threaded to the coordinator's metrics
+collector); zero effect on grouping or bytes. Non-knob [188].
+**(c) radiance ENVs — the real f1 surface.** `RADIANCE_KV_GROUP_OPT`
+(baked `=1` in image ENV, Dockerfile L363 [191]; compose passthrough
+`${RADIANCE_KV_GROUP_OPT:-1}` [192]), `RADIANCE_KV_GROUP_SIZE`,
+`RADIANCE_KV_GROUP_MAX_GROUPS` (defaults as per-helper). None appears in
+`radiance_entrypoint.sh` or `.env.example` (zero matches — the entrypoint's
+RADIANCE_* list carries no group var [193]); our chart sets none — so today's
+effective state is the search itself. These are ADDITIVE env: a pod that sets
+one re-opens the D25 20-var exact-law amendment (same class as f2's
+"PRICED NOT SHIPPED" env), so every value below is a values-surface event with
+a byte-stability cost. **Legality law: forcing a NON-canonical S is a trap —
+`RADIANCE_KV_GROUP_SIZE=9` builds groups the allocator then RE-derives to 8
+(max group layer-count), so the forced value does not survive to the block
+math; the patch's own comment (L44-46) restricts its search to canonical sizes
+for exactly this consistency. Canonical set for [48,16,5]:
+{1,2,3,4,5,6,7,8,10,12,16,24,48}** — the whole sweep [195] (non-canonical:
+9,11,13,14,15,17..23,25..47). TRITON page compatibility is S-independent (the
++1-straddle and MultipleOf(16) laws bind at bs, not at S); the drafter group is
+the same SlidingWindowSpec packing at any S; the HYBRID-packaging question the
+docs flag ("HybridKVCacheCoordinator handles exactly two groups" —
+hybrid_kv_cache_manager page) is STALE at our pin: the pinned coordinator
+class builds per-group managers for N groups (L615-699; the multi-group
+asserts that bite are DCP-only, dcp=1 for us) [196][198].
+**(d) Forking the patch in our overlay — BARRED, and the bar is structural,
+not cosmetic.** Our container is the C01 thin re-export: "The upstream image
+is a SELF-CONTAINED terminal build … the overlay adds NOTHING" apart from the
+one sanctioned flash-attn PIP layer (D34/D35) — the sanctioned injection is
+installing PACKAGES into `/opt/vllm`, not editing the vLLM sources the radiance
+patch chain owns [199]. An overlay source-edit would (i) sit as a FOURTH-order
+editor of a file three radiance patches already anchor-edit (the kv_offload
+restore patch edits the same `kv_cache_utils.py` after L266-268 [191]) — every
+future `1.0.<n>` bump risks silent anchor drift in OUR layer, which `_patchlib`'s
+ast/unique guards exist to catch in THEIRS and nothing catches in ours; (ii)
+re-implement a constant the maintainers already exposed as an env (SIZE/OPT/
+MAX_GROUPS) — the env IS the sanctioned fork-the-patch surface [189][192];
+(iii) break the container-suite byte-stability ACs (C01 law). Cost-benefit
+against the recovery it would enable: 0.02 GiB (S=1 at MAX_GROUPS=69 — a
+trade the FORK itself declines in writing: "0.8% over group size 8… so
+RADIANCE_KV_GROUP_MAX_GROUPS caps the search" [189]). Barred [199].
+**(e) Downsides of "clean-dividing" sizes + the upstream threads.** Enumerated
+legally-possible S for our exact geometry at the shipped int4 shape
+(costs 155/9/4, predicted bs 1696, page 1,845,248; `needed = S×blocks×page`;
+Δ = vs S=8; pads per [GDN,FA,SWA] bucket with their warning strings) [195]:
+
+| S | canonical | groups | blk/req | pads | warning text | needed GiB | Δ vs S=8 |
+|---|---|---|---|---|---|---|---|
+| 1 | ✓ | 69 (>cap) | 2932 | [0,0,0] | none | 5.039 | −0.021 |
+| 2 | ✓ | 35 (>cap) | 1468 | [0,0,1] | 20.00% | 5.046 | −0.013 |
+| 3 | ✓ | 24 | 1082 | [0,2,1] | 12.50%+20.00% | 5.578 | +0.519 |
+| 4 | ✓ | 18 | 736 | [0,0,3] | **60.00%** | 5.059 | ±0 |
+| 5 | ✓ | 15 (upstream) | 714 | [2,4,0] | 4.17%+**25.00%** | 6.135 | **+1.076** |
+| 6 | ✓ | 12 | 541 | [0,2,1] | 12.50%+20.00% | 5.578 | +0.519 |
+| 7 | ✓ | 11 | 532 | [1,5,2] | 2.08%+31.25%+40% | 6.400 | +1.341 |
+| **8** | ✓ | **9 ← chosen** | 368 | [0,0,3] | **60.00%** | **5.059** | — |
+| 9,11 | ✗ | — | — | — | forced ≠ allocator-recomputed | — | trap |
+| 10 | ✓ | 8 | 359 | [2,4,5] | 4.17%+25%+100% | 6.170 | +1.111 |
+| 12 | ✓ | 7 | 350 | [0,8,7] | 50%+140% | 7.218 | +2.159 |
+| 16 | ✓ | 5 | 186 | [0,0,11] | 220% | 5.114 | +0.055 |
+| 24 | ✓ | 4 | 177 | [0,8,19] | 50%+380% | 7.300 | +2.241 |
+| 48 | ✓ | 3 | 168 | [0,32,43] | 200%+860% | 13.858 | +8.799 |
+
+Why "divides cleanly" misleads: what must divide is the LAYER MIX, and 69-layer
+mixes like ours (48/16/5, pairwise gcd(48,16,5)=1) make EVERY size above 1 pad
+someone (S=2 by one slot, S=8 by three, upstream's 5 by six) — the question is
+only WHO pays (FA pads ×160 blocks =
+fatal; GDN pads ×9 = annoying; SWA pads ×4 = noise). S=16 "looks" cleaner than
+S=8 (zero GDN/FA pad) yet still lands +0.055 GiB (its 11 SWA pads cost 11×4 =
+44 slots vs S=8's 12); S=4 ties S=8 exactly and loses the tiebreak on group
+count (18 vs 9). Upstream is converging on precisely our fork's position but
+none of it is IN our pin: **#46462** (closed, 2026-06-23 — the origin bug:
+"DFlash+Qwen3.6-35B-A3B, invalid gpu kv cache usage", exactly our model family
++ drafter), **#56445** (OPEN PR 2026-09-11, unmerged — `math.gcd(*counts)` fix
+"eliminat[ing] KV cache dummy padding", body verbatim cites "up to 60% KV
+cache memory waste on dummy padding layers" and the FIXME — **even merged it
+would not move us: its gcd(48,16,5)=1 falls back to the 1.5 logic → still
+size 5**), **#58207** (OPEN PR 2026-09-22, unmerged — bytes-based search +
+`--min-kv-cache-group-layers`: the upstream shape of the fork patch),
+**#65490** (OPEN PR 2026-11-03, unmerged — exclude draft-only buckets from
+min_num_layers), **#59117** (OPEN RFC 2026-09-29 — "KV-cache pool collapse
+when a draft model introduces a new cache spec type (hybrid GDN + DFlash)" —
+the crash-class RFC, verbatim our shape: draft's spec type "fragments grouping,
+inflates per-request block demand"), **#58638** (OPEN RFC 2026-09-25, grouping
+for hybrid+drafters), **#64401** (OPEN RFC 2026-10-29, "one KV cache group per
+spec" — the endgame design), **#66451** (OPEN 2026-11-09, drafter pool waste at
+DCP), **#52895** (align-branch comment clarification) — and the stable docs
+page itself: case 3's padding example ends "The solution has some memory waste
+and is not perfect. Please report any cases where padding overhead becomes
+unacceptable" + case 4 documents the bs-raise/pad algorithm verbatim (with its
+own "work in progress" caveat) [197][198]. **Adjacent (not f1, recorded):**
+`--disable-hybrid-kv-cache-manager` (exists, L655) promotes the SWA specs to
+FullAttention (window caps LOST → +5 layers of full-length KV) and pads to
+[0,0,15]-style groups — measured strictly worse (+~30% footprint, no sliding
+economy) — anti-lever, never [182][188].
+
+### R7.4 — the price at our shape, and the boot question
+
+Pool/demand recap at the shipped combo (int4_pth + TRITON_ATTN + ssm-bf16 +
+0.98, D36): pool(0.98) ≈ 3.67 GiB held-constant-non-KV [D36]; predicted
+grouped demand at the default S=8: **5.06 GiB** (1696-bs assumption;
+5.04–5.06 across the bs-uncertainty variants; the boot log's
+`Setting attention block size to N` + `[radiance] … X blocks/request` lines
+re-pin it exactly: `needed = blocks × S × (bs × 1088)`).
+
+| S | needed GiB | recovered vs S=8 | boot 262144 @0.98 | risk |
+|---|---|---|---|---|
+| **8 (default, shipped)** | 5.059 | — | **FAIL** (gap 1.40 vs pool−null 3.656) | none — today's behavior |
+| 4 | 5.059 | 0.000 | FAIL | 18 tables for zero bytes |
+| 16 | 5.114 | −0.055 | FAIL | worse |
+| 1 (forced, or MAX_GROUPS≥69) | 5.039 | **+0.021** | FAIL | 69 block tables + per-step Python bookkeeping; fork's own rejection |
+| 5 (OPT=0 = upstream) | 6.135 | −1.076 | FAIL | the anti-lever: also halves concurrency (734-blk requests) |
+| 3/6/7/10/12/24/48 | 5.58–13.86 | −0.52…−8.80 | FAIL | strictly worse |
+
+**The honest sentence the brief asked for: `size 8` is (near-)optimal given
+constraints we cannot move — the [48,16,5] layer mix (fixed by checkpoint +
+drafter), the platform bs ≥ mamba-page-cover (1648/1696), the canonical-rule
+and the ≤24-group cap — and the entire recoverable distance from it to the
+absolute zero-padding bound is 0.021 GiB, paid in 69 block tables. NO legal S
+makes 262144 boot at 0.98 without the fall-through.** f1's standalone boot
+contribution is ≈ 0 GiB; D36's "the 262144 boot still needs ~1.3 GiB out of
+(f1)/(f2) or a named margin donor" re-shapes on this round's numbers: the
+donor need is ~**1.40 GiB** (the gate bar moves up 0.13 by the grouped-demand
+correction faster than any S moves it down), of which **f2's graph-estimate
+half (~1.26-1.27 GiB nominal) is now provably insufficient ALONE** (3.67+1.27
+= 4.94 < 5.06) — it converts the refusal from silent to printed, not to booted;
+closing still needs a real donor from the D36 ledger (mtp-K4 ≈ −2.0 non-KV at
+the 29/30 caveat; the `{"image":1}` profile-day knob) or the sanctioned B
+fall-through. B-path calibration: at S=8 the engine's own estimate line would
+print ≈ **171k** at pool 3.67 (R6's 120–180k band, top third — the S-choice
+bends this by only ~±4%: 176k at S=1, 141k at upstream-5, rough linear reads
+[195]). Capacity after boot (the concurrency view): S=8 maximizes usable
+tokens/block among legal ≤24-group values by the same table (each max request
+reserves 368 of `pool/14.08 MiB` blocks; at a f2+donor pool of 6.2 GiB that is
+~1.2 concurrent 262k sessions vs 0.9 at S=5) [195].
+
+### R7.5 — options, the verification law, and the ONE owner question (R7-Q1)
+
+- **Option F1-0 (recommended) — CLOSE f1 with NO ship-surface edit.** The
+  best f1 move is the one already running: keep the baked `RADIANCE_KV_GROUP_OPT=1`
+  default, add NOTHING to serveArgs/env — **the ship-surface literal is the
+  empty diff** (values byte-stable everywhere, the D25 20-var law and the D36
+  recipe untouched). The 3.5 runbook f1-row gains the resolution text:
+  PASS-marker pair = `[radiance] kv cache groups: size 8, 9 groups, N
+  blocks/request (upstream would pick size 5)` present AND the absence of the
+  4.17%/25.00% upstream pair (the single 60.00% line is EXPECTED and priced at
+  0.021 GiB — do not treat it as a defect), plus the re-pin law
+  `engine demand GiB = blocks × S × bs × 1088` read live from the boot lines
+  ("Setting attention block size to N tokens" → bs; the grouped refusal or the
+  `GPU KV cache size` line → capacity). Anti-lever recorded (never set):
+  `RADIANCE_KV_GROUP_OPT=0` = +1.08 GiB demand/+21% footprint at our shape.
+- **Option F1-1 — force `RADIANCE_KV_GROUP_SIZE=1` (or `MAX_GROUPS=69`):**
+  recovers 0.021 GiB of demand and 0.4% footprint; costs 69 per-request block
+  tables and a new env var against the 20-var law; the fork declines this
+  exact trade in writing; verdict: NO.
+- **Option F1-2 — `MAX_GROUPS` in the 24-68 window:** no legal S appears
+  between (S=2 is the only sub-24 canonical at 35 groups — still above 24;
+  values 25..34 change nothing, 35+ admits S=2 for −0.013 GiB): no.
+- **Option F1-3 — overlay-patch the constant:** barred — R7.3(d).
+- **Option F1-4 — wait for upstream (#56445/#58207/#65490/#64401):** none is
+  merged at the pin (and #56445's GCD rule does not help THIS shape); the
+  fork env already implements the #58207 direction; no schedule to build on.
+- **The transferred question.** f1 closes at ≈0 — so the owner's real
+  decision stays what D36 framed: the 262144 boot is f2+donor arithmetic
+  (≈1.40 GiB now), with the B fall-through printed-estimate ≈171k as the
+  designed path. **R7-Q1 (one question, one recommended answer):** ratify
+  closing f1 as NO-OP (F1-0: no edit, the marker pair + grouped-demand
+  re-pin enter the 3.5 runbook row, OPT=0 enters the recorded anti-levers) —
+  or direct one of F1-1..F1-4 (each priced above; each recovers ≤ 0.021 GiB
+  or costs ≥ 1.076 GiB). Best guess: ratify F1-0 — there is no knob here that
+  moves the boot verdict, and manufacturing one (SIZE=1) pays in scheduler
+  bookkeeping for a twenty-megabyte rebate.
+
+### Contradictions and how to weigh them (R7 conflict map)
+
+1. **D36/C05's "4.93 GiB demand" vs the grouped 5.06:** the round-1/R6 numbers
+   were the raw per-layer sums; the engine's actual gate at our pin is the
+   grouped sum (proven by the exact 9.51/1.09 paste fit). Weigh: pinned source
+   + paste arithmetic — the 3.5 bar re-pins to the grouped print (the
+   boot-day marker reads it from the log; the correction also refits R6's own
+   GDN 1.498 to 1.35+pad and SWA 0.020 to 0.063 at bs-1648 rounding).
+2. **"60% waste" (fork log, scary) vs "≈0.02 GiB waste" (this round):** both
+   true; different denominators (bucket layers vs pool slot-pages). Weigh the
+   slot-page math — it is what the allocator charges, and it is the fork's OWN
+   stated position ("where the padding lands", "the wasted slots are the
+   small half of the cost") [189].
+3. **compose's "block size 1664 + one extra state block" comment [192] vs the
+   boot-fitted 1648/GDN-9 (fp8 paste) and the formula-predicted 1696/GDN-9
+   (int4):** the paste's own numbers (378 exact, 9.51/1.09 exact) beat the
+   prose comment; the comment may describe their current build/dtype mix.
+   Weigh: arithmetic from the pinned code, and let the boot log's two INFO
+   lines arbitrate on the day.
+4. **Upstream docs "exactly two groups" coordinator caveat vs the pinned
+   multi-group HybridKVCacheCoordinator:** the docs page self-flags as
+   commit-dated ("may change"); the pin's code is authority [196][198].
+5. **R6's "pool 1.12 vs check 1.09 = display/rounding class" vs null-block
+   reserve:** this round identifies the mechanism (one uniform block reserved
+   before the check, L2725-2728) — a resolution, not a contradiction.
+
+### Implications for the plan
+
+- C05 3.5 f1-provision: closes with **no values edit**; the runbook gains the
+  marker-pair law + the `needed = blocks×S×bs×1088` re-pin formula + the
+  OPT=0 anti-lever note (the f1-row of the 3.5 gains the f1-resolution, as the
+  commission frames). No env-law amendment (nothing ships).
+- The D36 gap sentence tightens: 1.3 → **~1.40 GiB** (grouped bar 5.06), f2
+  alone now provably ~0.12 short; the donor ledger (mtp-K4 / `{"image":1}`)
+  and the sanctioned B remain THE answer path — unchanged in kind, corrected
+  in magnitude, with the B printed estimate ≈171k (S=8).
+- DECISIONS: D36's paste-quants stand; this round adds the f1 verdict (an
+  R7 entry when the coordinator logs it) and the two corrections above; no new
+  question to the owner besides R7-Q1's ratification.
+
+### Open questions (no-questions-rule log — round 7, for coord → owner/plan)
+
+- **R7-Q1** (ratify F1-0 close, else F1-1..4 priced) — see R7.5.
+- Minor residue (not blocking): the paste's `WARNING … (×2)` — one pair per
+  grouping pass at the pin, so ×2 = two passes in the log window; a restart
+  class, flagged for whoever re-reads the full pod log (the f3 log-TOP ask
+  already pending covers it).
+- The `num_prefill_checkpoint_blocks` assignment site was NOT located in the
+  fetched tree (grep-near miss); its VALUE at our boots is pinned by arithmetic
+  (GDN cost 9 ⇒ 0 at the fp8 boot; re-check at the int4 boot via the printed
+  blocks/request — 368 ⇒ 0, 374 ⇒ 1).
+
+### Sources (R7)
+
+All raw-fetches 2026-11-09 at the exact pins (method: the fetched trees + a
+local reconstruction script; the reconstruction applies the fork's three
+string replacements to raw @ ced6857a in Dockerfile order and reads the
+statement lines — the numbers below include its outputs [195]).
+
+182. vLLM v0.30.0 @ ced6857a — `vllm/v1/core/kv_cache_utils.py` L1435-1575 — `_get_kv_cache_groups_uniform_page_size`: docstring assumptions L1464-1493 (uniform block bytes / one block_size / layers-per-group "currently assumed the same"); spec-bucketing L1500-1526; the n:1 FIXME L1533-1539 ("Need a better strategy"); min-bucket + 1.5-max heuristic L1540-1551; **padding + warning L1553-1560** (`pad = group_size − len%group_size`, skip-if-full-mod rule, `%.2f%% = pad/len(layers)`); strided layer-slicing `layers[i::num_groups]` L1571-1574 — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/v1/core/kv_cache_utils.py
+183. Same file — the check/capacity machinery: `_check_enough_kv_cache_memory` L872-909 (shared message, format_gib both numbers); raw `max_memory_usage_bytes` L912-918 + `check_enough_kv_cache_memory` L975-1009 (groups a COPY + null-block reserve — raw path, no callers found in the boot flow at the pin); `unify_kv_cache_spec_page_size` L1365-1427 (bs-ratio branch L1411-1414, MambaSpec page-pad branch L1399-1408, non-MLA strided pad L1415-1418); `_get_kv_cache_bytes_per_block` L1588-1611 (pool block = MAX group layer-page sum); `get_kv_cache_groups` dispatcher L2252-2344 (L2312 unify, L2318 the patched call — anchor verified character-exact); `get_kv_cache_configs` flow L2617-2760: extra_retained tagging L2672-2682 (`num_spec−1` iff multi-module MTP else 0), GLOBAL grouping L2687, per-worker projection L2692 (no re-emit), `num_gpu_blocks_override` L2703-2716, **null-block `check_memory` L2725-2728**, **the grouped boot check L2737-2743** (`_max_memory_usage_bytes_from_groups` — "correctly accounts for padding" L2412-2417, `bytes_per_block × Σ cdiv(group usage, page)` L2449-2461), layer-coverage assert L2748; the `Maximum concurrency` INFO ~L2395-2402 — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/v1/core/kv_cache_utils.py
+184. vLLM v0.30.0 @ ced6857a — `vllm/platforms/interface.py` — `update_block_size_for_backend` L609-651 (Phase 1 backend-preferred bs, Phase 2 hybrid align "may override user settings", Phase 3 skip-layer align); `_align_hybrid_block_size` L778-965: attn 1-token page via `backend_cls.customize_spec` L~850, mamba page L868-881, `kernel_block_alignment_size` = max(min supported, CacheConfig.block_size) L889-896, align-mode bs formula L923-925, **"Setting attention block size to %d tokens" L934**, **align forces `mamba_block_size = block_size` L939-940**, **"Padding mamba page size by %.2f%%" L958** — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/platforms/interface.py
+185. vLLM v0.30.0 @ ced6857a — `vllm/config/cache.py` — `DEFAULT_BLOCK_SIZE = 16` L71; `user_specified_block_size/_mamba_block_size` derived flags L76-79; `mamba_page_size_padded` L158-159; `mamba_block_size` field L166; align-mode docstring L178-186 ("only cache the mamba state of the last token of each scheduler step and when the token is at position i * block_size. This is the default when prefix caching…"); fine-grained-prefix flag L187-191 — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/config/cache.py
+186. vLLM v0.30.0 @ ced6857a — `vllm/config/vllm.py` — `max_concurrent_batches` L589-599 (async/V2 → 2 else PP=1 → 1; our `--no-async-scheduling` pins in-flight to ONE batch), `max_in_flight_tokens` L601-610 (`= concurrent × max_num_batched_tokens` = 2560 — the term that makes the drafter group cost 4), `validate_mamba_block_size` L3196-3208 (--mamba-block-size REQUIRES prefix caching) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/config/vllm.py
+187. vLLM v0.30.0 @ ced6857a — `vllm/v1/kv_cache_interface.py` — `num_states = block_size // tokens_per_state` L191-198; `AttentionSpec` page algebra (unpadded page = heads×states×cell) L477-537; `FullAttentionSpec.max_memory_usage_bytes` L559-566 [carry 156]; **`SlidingWindowSpec` L807-856**: `extra_retained_tokens` field + `max_admission_blocks_per_request = cdiv(window−1+extra+in_flight, block_size) + 1` (the "+1 straddle") + `max_memory_usage_bytes = max_blocks × page`; `MambaSpec` L993-1053 (align: `page × (2 + num_speculative_blocks + num_prefill_checkpoint_blocks)` L1040-1043; `page_size_padded` L1025-1028) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/v1/kv_cache_interface.py
+188. vLLM v0.30.0 @ ced6857a — `vllm/engine/arg_utils.py` — `--block-size` L1268, `--mamba-block-size` L738/L1306/L2113, `--kv-cache-metrics(_sample)` L682-684/L1543 (observability), `disable_hybrid_kv_cache_manager` L655-656; **negative search: no group-size flag at the pin** (`--min-kv-cache-group-layers` matches ZERO in arg_utils/envs/kv_cache_utils @ ced6857a; it is PR #58207's unmerged addition) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/engine/arg_utils.py
+189. magiccodingman/vllm-radiance @ 5b99d66c — `patch_kv_group_size.py` (157 lines, read in full) — the docstring: bucket table 48/16/5 + "upstream picks 5, which divides neither 48 nor 16, and pads to 10+4+1 = 15 groups holding 75 layer slots" + live witnesses `:1261 Add 2/4 padding layers (4.17%/25.00%)` + TP2 cost table (160/9/8, 382 blk/req, +20.7% tokens, "group size 1 is the true optimum — 0.8% over size 8 so MAX_GROUPS caps the search", "Padding count is not the objective; where the padding lands is", canonical-size restriction L44-46) — and the CODE: `_radiance_pick_group_size` search L70-121 (OPT=0 exit L75-76, SIZE force L77-79, cost = `max(cdiv(spec.max_memory_usage_bytes(vllm_config), page))` L89-92, key `(g×blocks, ngroups)` L107, cap default 24 L96, the `:1477` INFO format L113-120); anchors SIG L65-69 / TAIL L131-135 / CALL L150 — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/patch_kv_group_size.py
+190. Same pin — `_patchlib.py` — `apply()`: unique-anchor-or-fatal, sentinel-skip idempotence, `ast.parse` write guard — the semantics our overlay could never inherit — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/_patchlib.py
+191. Same pin — `Dockerfile` — patch order L256-269: `patch_kv_group_size` at L266 (after `patch_ar_maxbytes`, before `patch_kv_offload_*` — whose `patch_kv_offload_restore` edits the SAME `kv_cache_utils.py` at `def _annotate_eagle_groups` = upstream L2126, i.e. BELOW both pasted statements → the 1477/1617 line math is set by the group_size patch alone); **ENV default bake `RADIANCE_KV_GROUP_OPT=1` L363**; the venv/SP lines [carry 181] — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/Dockerfile
+192. Same pin — `docker-compose.yml` — L160 `RADIANCE_KV_GROUP_OPT: "${RADIANCE_KV_GROUP_OPT:-1}"`; L38-47 the prefix-caching+align comment ("raises the attention block size to 1664 tokens and uses one extra state block per linear-attn layer" — weighed vs the paste-fitted 1648/GDN-9 at conflict-map #3); L48 `${PREFIX_CACHING_FLAG:---enable-prefix-caching}` — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/docker-compose.yml
+193. Same pin — `radiance_entrypoint.sh` + `.env.example` — zero `KV_GROUP` matches in either (entrypoint passes the baked ENV; .env.example lists no group var; only L119 `# MAMBA_CACHE_MODE=none` commented) — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/radiance_entrypoint.sh + …/.env.example
+194. Same pin — `radiance_r4d_attn.py` L235-238 — `get_supported_kernel_block_sizes: Exactly 16, not a multiple of it… how this works alongside the 2240-token pages a GDN hybrid needs for --mamba-cache-mode=align` — the kernel alignment that produced bs 1648 at the crash boot — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/radiance_r4d_attn.py
+195. Reconstruction + sweep artifact (this round, /tmp/opencode/cf131-r7): raw @ ced6857a + the three [189] replacements → `logger.info(` = 1477, `logger.warning(` = 1617 (paste-exact); costs (FA cdiv(262144,bs); GDN 2+7+0; SWA cdiv(2047+2560+~6, bs)+1) at bs 1648 (fp8, 160/9/4) and bs 1696 = 16×⌈1,777,664/(16×1,056)⌉ (int4, 155/9/4); fork search reproduces `size 8 / 9 groups / 378` (fp8) and predicts `size 8 / 9 groups / 368` (int4); grouped demand fp8 S=8 = 378×8×3,375,104 = 10,206,314,496 B = **9.5054 → prints 9.51 ✓ paste**, raw = 9.4677 → 9.47 ✗; available 1.12−0.0252 = 1.0908 → **1.09 ✓ paste**; int4 S=8 = 368×8×1,845,248 = **5.059 → "5.06"**; S-table + pads + warning-%s per R7.3(e)/R7.4 (S=1 5.039, S=5 6.135, …); B-estimates ≈176k/171k/141k at S=1/8/5 (pool 3.67, rough)
+196. vLLM v0.30.0 @ ced6857a — `vllm/v1/core/kv_cache_coordinator.py` — `get_kv_cache_coordinator` L1014-1058 + `HybridKVCacheCoordinator` L615-770: N-group managers, cacheable-block/hash divisibility asserts L660-673, DCP-only spec-type restriction L675-684, align partial-hash path L685-704 — the multi-group + prefix-caching shape our 9-group config lands on; the docs' "exactly two groups" caveat is stale at the pin (conflict-map #4) — https://raw.githubusercontent.com/vllm-project/vllm/ced6857afa0ea7b2e3f0846a62e1394e90f15607/vllm/v1/core/kv_cache_coordinator.py
+197. GitHub API (issue records, read 2026-11-09): **#46462** closed 2026-06-23-origin (DFlash+Qwen3.6-35B-A3B A800: "invalid gpu kv cache usage, low decode speed"); **#56445** OPEN unmerged (GCD-of-layer-counts; body cites the FIXME + "up to 60% KV cache memory waste on dummy padding layers"; gcd(48,16,5)=1 → falls back to the 1.5 logic → size 5 for US even if merged); **#58207** OPEN unmerged 2026-09-22 (bytes-based search + `--min-kv-cache-group-layers`; flags the min-bucket→1 collapse "Qwen3.6-35B-A3B + DFlash ends up with 46 groups"); **#65490** OPEN unmerged 2026-11-03 (exclude draft-only buckets from min_num_layers); **#59117** OPEN RFC 2026-09-29 "KV-cache pool collapse when a draft model introduces a new cache spec type (hybrid GDN + DFlash)" — "the draft's spec type fragments grouping, inflates per-request block demand" (verbatim our crash class); **#58638** OPEN RFC 2026-09-25 (grouping for hybrid + speculative drafters); **#64401** OPEN RFC 2026-10-29 (one group per spec — endgame); **#66451** OPEN 2026-11-09 (drafter pool waste under DCP); **#52895** (align-branch comment clarification); **#45238** (align-mode prefix-hit 0 — adjacent) — https://api.github.com/repos/vllm-project/vllm/issues/{n} + search endpoint
+198. docs.vllm.ai (stable, page-dated 2026-10-13) — `design/hybrid_kv_cache_manager/` — case 3 (min-count grouping + "Group 6: 2 sw + 8 padding"; "The solution has some memory waste and is not perfect. Please report any cases where padding overhead becomes unacceptable"; the "eagle speculative decoding which introduce one full attention layer" instance), case 4 (the mamba bs-raise/pad algorithm + ">400 block_size" caveat + "work in progress"), Memory Layout (m buffers shared by n groups — the uniform-block model our math assumes); `api/vllm/config/cache/` — mamba_block_size / mamba_page_size_padded prose — https://docs.vllm.ai/en/stable/design/hybrid_kv_cache_manager/ + …/api/vllm/config/cache/
+199. Repo artifacts at this run's worktree — `charts/vllm/values.yaml`: the shipped serveArgs (TP1, 262144, util 0.98, int4_pth, TRITON_ATTN, `--enable-prefix-caching`, `--mamba-cache-mode align`, `--mamba-ssm-cache-dtype bfloat16`, `--no-async-scheduling`, batched 2560, watermark 0.05, `{"image": 4}`; NO --block-size/--mamba-block-size/--disable-hybrid); env section (VLLM_CACHE_ROOT et al. — no RADIANCE_* re-declared, the image-baked profile stays authority); `containers/vllm-radiance-mxfp4/Dockerfile` L1-30 (the thin re-export law: "the overlay adds NOTHING" beyond the D34/D35 flash-attn PIP layer) — the R7.3(d) bar ground — repo paths as cited
+
+### Reliability notes (R7 self-review)
+
+- **High confidence (source @ exact pins, paste-fitted):** the group-size
+  mechanism + warning arithmetic + the 1477/1617 reconstruction (both strings
+  and both line numbers reproduce from the pinned trees with zero free
+  parameters [182][189][190][191][195]); demand-includes-padding (the 9.51/1.09
+  double fit is decisive vs the raw 9.47 alternative [183][195]); the fork env
+  surface + baked OPT=1 [189][191][192][193]; TRITON/R4D kernel alignment 16 →
+  bs 1648 fp8 exact, 1696 int4 formula-derived [184][194]; the legality table
+  (canonical set, cap semantics, force-bypasses-guard but canonical-only is
+  consistent) [189][195]; upstream threads' merged-at status re-read today
+  [197]; coordinator multi-group at the pin [196].
+- **Medium confidence:** int4 bs 1696 + blocks 368 (the compose 1664 note and
+  any dtype-mix we did not model could move ±3% — the boot log's two INFO
+  lines arbitrate; all verdicts invariant across the 1648/1664/1712 sweep);
+  GDN cost 9 (ckpt term 0) at the FUTURE int4 boot (proven 0 at the fp8 boot
+  by 378-fit, re-verification is one log read on the day); the rough B-band
+  estimates (141–176k, linear-in-slots); "the ×2 pair = two boot passes"
+  reading of the paste (restart-class, not traced to a second caller).
+- **Low confidence / explicit gaps:** the exact 9.5054→"9.51" vs any
+  alternative page assumption we did not model (the fit is to the display
+  pair, not a re-measurement); the checkpoint-block assignment site (grep-miss;
+  value inferred from arithmetic); every number is code-static — no GPU run
+  (the 3.5 day's boot lines re-pin all of it in one read).
+- **Weakest claim of the round:** "no legal S makes the 262144 boot hold" —
+  it is arithmetic, but it inherits R6's held-constant pool (3.67 @ 0.98 with
+  non-KV 27.55). If the int4 boot's non-KV differs (TRITON_ATTN's compile
+  profile ≠ R4D's, the f2 estimate interaction), pool moves — yet the
+  required move is ~1.4 GiB, and no grouping value contributes more than
+  0.02; the direction of the conclusion is robust even under ±0.3 pool
+  uncertainty.
+- **Perspective weighting:** the engine's own code at the pin + the pasted
+  numbers outrank both prose layers we found (the fork's compose comment,
+  the stale docs caveat); the upstream RFC/PR cluster confirms the mechanism
+  reading rather than adding new authority.
+- **Blind spots (stated):** the runtime block-table bookkeeping cost at
+  S=1/2 (why 24 groups is "the right cap" — the fork asserted, nobody
+  measured); whether dflash's own kernels assume S-uniformity beyond the
+  allocator (none found; the drafter KV is plain SlidingWindowSpec pages);
+  the `--watermark 0.05` interaction with the grouped admission floor
+  (scheduler-side 5% reserve — f2/donor-round scope, one-line adjacent note
+  here); radiance's internal patch for GLM-5.3-Flash kpool tail exclusions
+  (seen in the coordinator's comment, not in our path).

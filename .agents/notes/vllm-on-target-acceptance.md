@@ -102,7 +102,9 @@ form — the on-target run is the first datum:**
   is where the crash-#4 1.12 GiB pool datum landed): 0.99 is
   startup-dead on this card (asks 31.54 > 31.46 free [158]), 0.98 is the
   ceiling, 0.95 stands recorded as the conservative rung, and the 0.85
-  compose default stays recorded.
+  compose default stays recorded. D37 (2026-11-09): the owner re-ruled
+  0.98 KEPT after an explicit headroom review — the shipped ceiling
+  stands, it is not a pending question.
 - The 8.49 GiB KV pin is the recorded REFERENCE ROW, nothing more: the
   220000-class, 0.9.3-stack (vLLM 0.27.1-era) user-reported profile pin —
   provenance only, NO 0.30 validity (R3 L1.3/L2.4). It ships as NO pin:
@@ -392,7 +394,12 @@ line + the service twin), recording the engine-log KV triple before/after.
 The catalog/surface re-pin follows the same ruling: the contingency moves
 ONLY THE ENGINE ARG; the advertisement-following-the-engine-down question
 re-opens only if the owner wants it (the D31 record — the 262144
-advertisement stays TRUE iff the boot holds, D36).
+advertisement stays TRUE iff the boot holds, D36). D37 promotes this row
+to THE RUNNING PATH (the boot-now / B-on-the-print ruling): with the
+grouped 5.06 bar the 262144 attempt is EXPECTED to refuse unless f2 plus
+a donor recover ~1.40 GiB — so the printed estimate (≈171k predicted at
+S=8, a prediction not a promise) is the cap-ruling source and the route
+to walk, not a failure to dodge.
 
 **3.2 — In-cluster `curl` to the vLLM service.** Operator-run, from any
 machine with cluster access (read-only probe):
@@ -489,16 +496,32 @@ ships no pin.
 the C02 serveArgs util/KV-pin lines, the testlib pairs, and this
 runbook's envelope block.
 
-The D36 amendment adds three NAMED INVESTIGATION legs (flagged levers —
-no prescribed edits on the runbook's authority):
+The D36 amendment adds the NAMED INVESTIGATION legs below (flagged
+levers — no prescribed edits on the runbook's authority); D37 adds f4,
+the owner-run host datum:
 
-(f1) The KV-grouping/padding lever — the crash-#4 paste's new lever,
-unpriced by R6: the `[radiance] kv cache groups: size 8, 9 groups, 378
-blocks/request (upstream would pick size 5)` line + the `WARNING
-kv_cache_utils.py:1617 Add 3 padding layers, may waste at most 60.00% KV
-cache memory` warning (twice in the paste) — governed by the fork's
-`patch_kv_group_size` surface at the pin [172]. Investigate WITH the
-60%-max-waste quote; do not edit blind.
+(f1) The KV-grouping/padding lever — CLOSED as the R7 deep-dive's F1-0
+resolution (DECISIONS D37), records-only, NO ship edit:
+`RADIANCE_KV_GROUP_OPT=1` / size 8 stays image-baked, no new env (one
+would re-open the 20-var law).
+The PASS marker PAIR: PRESENT — `[radiance] kv cache groups: size 8, 9
+groups, ~368-378 blocks/request (upstream would pick size 5)` (378 proven
+at the fp8 crash boot, 368 predicted at the int4 boot — the boot log
+arbitrates); ABSENT — the upstream pair `Add 2 padding layers … 4.17%` +
+`Add 4 … 25.00%`: its presence means `RADIANCE_KV_GROUP_OPT` got flipped
+= the anti-lever (+1.08 GiB grouped demand, halved concurrency, never
+set): record and stop. The single `Add 3 padding layers, may waste at most
+60.00% KV cache memory` (`kv_cache_utils.py:1617`) is EXPECTED-AND-PRICED
+at 0.021 GiB per max request (3 SWA dummy slots × 4 blocks — the % is
+per-bucket, not per-pool: where the padding lands is what matters, the
+fork's law); its ×2 in the crash-#4 paste = two grouping passes, restart
+class, covered by the f3 log-top ask. The re-pin law reads live off the
+boot log: `needed GiB = blocks × S × bs × 1088` (int4 shape), arbitrated
+by `Setting attention block size to N tokens` + `Padding mamba page size
+by X%`; 368 blocks/request ⇒ prefill-checkpoint-blocks 0 (374 ⇒ 1) —
+closes R6's blind spot. The force-S alternatives F1-1..F1-4 are
+recorded-priced-not-shipped (R7.5 + the R7.3(e) S-sweep: no legal S boots
+262144, max recovery 0.021 GiB paid in 69 block tables).
 (f2) The graph-profiling pre-tax — the paste's `gpu_worker.py:655`
 advisory (the then-shipped 0.9000 was equivalent to 0.8605 without
 CUDA-graph memory profiling; 0.9395 maintained the previous effective KV
@@ -517,19 +540,34 @@ INT2 draft head at 0.33 GiB/rank corroborates the packed-load side)
 keeps hypothesis (a) favored. The optional `VLLM_LOGGING_LEVEL: "DEBUG"`
 diagnostic re-boot (values-side, removable, NOT ship shape — R6.2
 item 4) rides the same day to split the ~27.5 GiB held.
+(f4) The owner-run host datum — `rocm-smi --showmeminfo vram` on ai-gpu,
+sampled during the load window (R6.2 item 5): host-side ground truth of
+the held-vs-pool split for the f3 ledger. Human-run — the repo's
+no-agent-pod-exec law; no agent tier grants it and none is asked.
 
-The arithmetic this gate owns (D36, tightening R6.1.4): non-KV held
-~27.5 GiB (28.67 asked − 1.12 pool at the pre-D36 0.90 start); the pool
-at 0.98 is ~3.67 GiB vs the int4 + ssm-bf16 demand ~4.93 — the 262144
-boot still needs ~1.3 GiB out of the (f1)/(f2) levers or a named margin
+The arithmetic this gate owns (the D37 gate-bar correction on D36's
+R6.1.4 tightening): non-KV held ~27.5 GiB splits as resident ~21–22
+(weights + HIP context) plus ~5–6 GiB of STARTUP-REHEARSAL INSURANCE —
+the dummy 262k + 4-image profiling peak, the graph capture 1.26 and the
+estimate pre-tax ~1.27 — which the engine deducts from the pool before
+sizing it and keeps deducted (the insurance-vs-resident ledger, D37's
+answer to the owner's space question); the pool at 0.98 is ~3.67 GiB vs
+the gate's own GROUPED print ~5.06 GiB (S=8, predicted bs 1696, 368
+blocks/request — D36's raw 4.93/5.63 stand as the BOUNDS); the 262144
+boot still needs ~1.40 GiB out of the (f1)/(f2) levers or a named margin
 donor (the mtp-K4 lane −~2.0 at its 29/30 tool caveat, the `{"image": 1}`
-profile-day knob — recorded, neither shipped).
+profile-day knob — recorded, neither shipped); f2 alone is provably ~0.12
+short (3.67 + 1.27 = 4.94 < 5.06): it converts the refusal from silent
+to printed, not to booted.
 
 PASS = the shipped 262144/2560/3 q4 plan shape boots and holds for this
 node (record the derived pool). FAIL = the values re-pin to the measured
 pool; and if the failure was a hard reject rather than a tight pool, that
-is the 3.1b contingency's class — under D36 the loud refusal printing the
-estimate IS the sanctioned B fall-through. Owner-visible at the
+is the 3.1b contingency's class — under D37 the loud refusal printing the
+estimate is the OWNER-RULED RUNNING PATH (the boot-now / B-on-the-print
+ruling: record the printed number — R7 predicts ≈171k at S=8, a
+prediction not a promise — the owner caps the engine arg there as a fresh
+D31(e)-class ruling), not a failure to dodge. Owner-visible at the
 presentation either way.
 
 **3.6 — THE INT4 GATE — BOOT-CONFIG QUALIFICATION (the round-2 Q5 ruling +
@@ -541,7 +579,9 @@ TRITON_ATTN` + `--mamba-ssm-cache-dtype bfloat16` + util 0.98, and ArgoCD
 boots the shape. There is no flip step to run anymore (the pre-D36 flip
 recipe — the sanctioned 5.2-style git-only pair + ArgoCD's own
 reconciliation, no manual sync — stands as the superseded record). The
-gate legs are unchanged and now BIND the ship path, in order:
+gate legs are unchanged and now BIND the ship path IFF THE BOOT HAPPENS
+(the D37 rider: a 262144 refusal routes the day through the 3.1b
+B fall-through BEFORE these legs run), in order:
 
 1. Startup acceptance: the boot at 262144 — the `int4_per_token_head` KV
    info line appears and no refusal-shaped startup death occurs (an
