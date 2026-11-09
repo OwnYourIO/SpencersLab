@@ -202,7 +202,7 @@ app-template:
         reloader.stakater.com/auto: "true"
       containers:
         vllm:
-          image:
+          image: &engineImage
             # The C01 thin re-export (containers/vllm-radiance-mxfp4) of
             # the 0.30 Radiance stack. The upstream pin it carries:
             # magiccodingman/vllm-radiance:1.0.397 @
@@ -375,6 +375,78 @@ app-template:
               add:
                 - SYS_PTRACE
 
+      initContainers:
+        setup:
+          # The staging actor (D14): the same image as the serve plane, by
+          # anchor — the script runs this image's own python + huggingface_hub
+          # and writes the trees the engine then loads, so two separate image
+          # blocks would be one drift surface (stage under one build, serve
+          # under another). The suite pins the rendered triple equal.
+          image: *engineImage
+          # The D26 staging command: the RAW release download (the round-2
+          # Q8 ruling dropped the rewrite step) plus the revision-pinned
+          # drafter, both with local_dir so the ~20.4 GiB lands directly on
+          # the claim and never transits the pod's root FS.
+          # Idempotent-skip-first: the marker keys on BOTH shas, so a re-pin
+          # of either artifact re-stages while a same-pair re-boot skips in
+          # ~10 s; the per-tree config.json guards are the secondary checks.
+          # The echo lines name the skipped rewrite as narrative only: no
+          # action line invokes it. This step list changes when the Q8 ruling
+          # changes — the rewrite's re-land is the runbook's recorded
+          # contingency, never an in-place fix.
+          # command REPLACES the image entrypoint (k8s semantics, args
+          # append): the 0.30 entrypoint's NUMA bind + rocm bandwidth sweep +
+          # banner is serve-plane work that reaches for the GPU device path,
+          # and this container is device-free by design — staging is pure
+          # network + disk IO, no GPU work, and no build step left to run
+          # (the libr4d kernels and the 35 release overlays are baked into
+          # the C01 image).
+          # The body is ONE YAML value: the line breaks are the shell's, not
+          # argv splits (a multi-line element renders as a single string).
+          command:
+            - sh
+            - -c
+            - |-
+              set -e
+              TSRC=93245f7c00f1a8964b66a97c6e02e2fd09080be4
+              TDRAFT=ee0cb26a8279b7910cc28d82a8a3e15e4728d56f
+              MARKER=/models/.staged-mxfp4-$TSRC-$TDRAFT
+              TARGET=/models/Qwen3.8-27B-Quark-AWQ-MXFP4
+              DRAFTER=/models/Qwen3.8-27B-DFlash2-FP8
+              if [ -f "$MARKER" ] && [ -f "$TARGET/config.json" ] && [ -f "$DRAFTER/config.json" ]; then
+                echo "mxfp4 staging: marker + trees present — skipping"; exit 0
+              fi
+              echo "mxfp4 staging: raw release target (amd/Qwen3.8-27B-Quark-AWQ-MXFP4 @ $TSRC — the 2026-11-03 mtp-exclude fix; the fp8_mtp.py rewrite is SKIPPED per the round-2 Q8 ruling, RADIANCE_QUARK_BF16_MTP is the mtp-profile load path)"
+              python3 -c "from huggingface_hub import snapshot_download; snapshot_download(\"amd/Qwen3.8-27B-Quark-AWQ-MXFP4\", revision=\"$TSRC\", local_dir=\"$TARGET\")"
+              echo "mxfp4 staging: drafter (tcclaviger/Qwen3.8-27B-DFlash2-FP8 @ $TDRAFT — the qualified revision; the weight etag is identical to main f02593d0)"
+              python3 -c "from huggingface_hub import snapshot_download; snapshot_download(\"tcclaviger/Qwen3.8-27B-DFlash2-FP8\", revision=\"$TDRAFT\", local_dir=\"$DRAFTER\")"
+              touch "$MARKER"
+              echo "mxfp4 staging: complete"
+          resources:
+            # D14's modest pin: both steps are IO-bound hub downloads, so the
+            # budget is the hub client's buffering, not the tree sizes.
+            requests:
+              cpu: 2
+              memory: 4Gi
+            limits:
+              memory: 8Gi
+          securityContext:
+            # runAsUser 0 here is the claim-ownership fact: the /models trees
+            # and the marker on the 500Gi llama-swap claim are root-owned, and
+            # this container is the one that writes them. It is NOT the main
+            # container's GID-486 device law — the init opens no device, so it
+            # takes the repo privilege standard in full (drop ALL, no
+            # escalation, no privileged): the approved privileged deviation
+            # stays confined to the serve container.
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          # No env: the image's baked defaults govern, and the serve plane's
+          # HF_HUB_OFFLINE=1 must not reach this container — a pinned-offline
+          # downloader is the one failure mode the staging step cannot survive.
+
   service:
     vllm:
       controller: *chartName
@@ -383,21 +455,40 @@ app-template:
           port: 8000
 
   persistence:
-    # Weights: the EXISTING 500Gi llama-swap claim mounted whole and
-    # read-only — the vLLM pod reads the same GGUF the llama.cpp rungs
-    # serve (HR7). RWO same-node double mount is the single-node pattern.
+    # Weights: the EXISTING 500Gi llama-swap claim, mounted per ACTOR —
+    # advancedMounts keyed by CONTAINER NAME (app-template 5.0.1's
+    # advancedMounts.<controller>.<container>; this controller's serve
+    # container is `vllm`, not `main`). The split is the two planes' laws:
+    # the engine reads the trees read-only (the D1 read law), the `setup`
+    # init writes them (the D14 staging law). What the claim carries: the
+    # raw-release tree /models/Qwen3.8-27B-Quark-AWQ-MXFP4, the drafter tree
+    # /models/Qwen3.8-27B-DFlash2-FP8, and the
+    # .staged-mxfp4-<target-sha>-<drafter-sha> marker. The GGUF file the
+    # llama.cpp rungs serve stays on the claim — do-not-delete (the class-10
+    # rung's ground). RWO same-node double mount is the single-node pattern.
     models:
       existingClaim: llama-swap
-      globalMounts:
-        - path: /models
-          readOnly: true
-    # Triton + HF caches: the hand-written vllm-cache claim
+      advancedMounts:
+        vllm:
+          vllm:
+            - path: /models
+              readOnly: true
+          setup:
+            - path: /models
+    # The 0.30 compile caches on the hand-written vllm-cache claim
     # (templates/pvc-vllm-cache.yaml) — the library renders no PVC for
-    # existingClaim entries, so the claim itself is hand-written.
+    # existingClaim entries, so the claim itself is hand-written. The mount
+    # moved /data → /cache to land the four /cache/* paths the D25 env names
+    # (VLLM_CACHE_ROOT, TORCHINDUCTOR_CACHE_DIR, TRITON_CACHE_DIR,
+    # AITER_ROOT_DIR). The path move IS the fresh subtree: one cache
+    # directory per image+model+config, so the GGUF-era /data content stays
+    # on the claim unmounted and inert — a directory that replays graphs
+    # traced under the old settings fails the new boot (D19; the entrypoint's
+    # per-lane cache suffix then isolates the dflash lane within it).
     cache:
       existingClaim: vllm-cache
       globalMounts:
-        - path: /data
+        - path: /cache
     # HIP shared memory for the single GPU worker (R1 Q5 shm sizing).
     shm:
       type: emptyDir

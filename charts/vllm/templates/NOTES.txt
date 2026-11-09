@@ -16,7 +16,9 @@ Debug access from outside the cluster (kubectl only — not a client path)
   kubectl -n default port-forward svc/{{ $svc }} 8000:8000
   curl -s http://127.0.0.1:8000/health
 
-Next step — the C06 on-target acceptance runbook
+Next step — the on-target acceptance runbook
 (.agents/notes/vllm-on-target-acceptance.md) — the rocminfo R9700 index
-gate, the weight find, the first-token probe, and the sleep/wake
-time-sharing sequence against Strata.
+gate, the setup init container's raw-release + drafter staging on the
+claim, the DRY_RUN-analog capture of the rendered args against the shipped
+recipe, the day-one re-measure gate for the KV pool, and the first-token
+probe.

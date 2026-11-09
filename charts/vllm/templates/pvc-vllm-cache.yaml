@@ -8,6 +8,10 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      # Triton JIT + HF hub cache scratch; the weights themselves live on
-      # the shared llama-swap claim (mounted read-only at /models).
+      # The 0.30 compile caches, not the weights: the container env points
+      # VLLM_CACHE_ROOT, TORCHINDUCTOR_CACHE_DIR, TRITON_CACHE_DIR and
+      # AITER_ROOT_DIR at /cache/*, which is this claim mounted whole (the
+      # weights live on the shared llama-swap claim at /models). Graph and
+      # JIT output only — one directory per image+model+config, which is why
+      # the mount lands on a fresh subtree instead of the GGUF-era /data.
       storage: {{ .Values.cachePvcSize | default "10Gi" }}
