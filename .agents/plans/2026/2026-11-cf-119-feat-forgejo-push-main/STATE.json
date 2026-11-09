@@ -1,7 +1,31 @@
 {
   "feature": "2026/2026-11-cf-119-feat-forgejo-push-main",
   "plan_file": "2026-11-06-cf-119-feat-forgejo-push-main.md",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "rework": {
+    "at": "2026-11-09T13:05:00+00:00",
+    "by": "owner (in-session: 'reviewed the work, it needs rework'; card sent Review -> Rework by the owner, back in Executing under this run's CICD claim)",
+    "fixes": [
+      "1. No URL detection: the startsWith(forgejo.server_url, ...) guards are rejected — each Forgejo server is given a STAGE (prod|dev) as instance-side config; job decisions key off the stage",
+      "2. No repo URLs in the workflow file: push destinations come from instance-side env vars (repo variables), not literals",
+      "3. Key names may not start with GITHUB or FORGEJO (reserved prefixes): GITHUB_PUSH_TOKEN / FORGEJO_DEV_PUSH_TOKEN get renamed",
+      "4. No backup-proxy merge: the second job was misunderstood — for now it is the same kind of push to the dev main branch as the GitHub one (plain non-force main push, fails on refusal)"
+    ],
+    "lock": "PIPELINE LOCK LOST fired at rework start (reap timer 2026-11-09T10:45:30Z marked the holder failed); owner approved continuation; the engine's claim answer names THIS session as the CICD holder (setId 70d41e5d) and the force-beat is accepted — the run continues under that claim, no card-id takeover",
+    "run_shape": "same run, same slug, same branch/worktree (owner-directed live rework in the completing session — the D11 <slug>-1 sequence keys on board-walk re-picks, not on in-session owner rework; recorded in DECISIONS)",
+    "models": "all rework launches on openrouter/qwen/qwen3.8-27b (standing mid-run owner override)",
+    "plan_reworked": "2026-11-09 — plan of record reworked in place (same file, same single chunk): stage mechanism grounded on the v15.0 line (repo variable STAGE read via vars.* in job-level if: — reference Availability table); both jobs now plain non-force main pushes (push-gh -> GitHub, push-dev -> dev main), both guarded by vars.STAGE == 'prod' (the dev-stage server fires no job = ping-pong breaker); destinations from vars.PUSH_URL_GH / vars.PUSH_URL_DEV, tokens from secrets.PUSH_TOKEN_GH / secrets.PUSH_TOKEN_DEV (renamed — no GITHUB_/FORGEJO_ prefixes, per the owner's fix 3 and the v15.0 name constraints); no URL literals, no forgejo.server_url, no backup-proxy/merge anywhere in the active design; contract suite legs t3/t5/t6/t8 re-pinned; UA3 re-shaped to set STAGE + PUSH_URL_* + PUSH_TOKEN_* on the instances; OQ-6 (stage key/scope/values) + OQ-7 (URL var names/shapes) open for the re-approval round, recommendations first",
+    "gate_round_1": {
+      "at": "2026-11-09T13:18:58+00:00",
+      "answer": "Lets reuse the existing ROLE pattern.",
+      "folded": "Discriminator key renamed STAGE -> ROLE (the documented Forgejo mirror convention, vars.ROLE) across plan, chunks, UA3 (confirm-or-set), OQ-6 (values prod/dev per fix-1 wording remain the residual confirm), risks; both jobs pin if: vars.ROLE == 'prod'; OQ-7 (PUSH_URL_* names + values) still open for the re-approval round; plan_status stays draft"
+    },
+    "gate_round_2": {
+      "at": "2026-11-09T13:25:54+00:00",
+      "answer": "Approve the reworked plan (Recommended)",
+      "effect": "plan_status approved; OQ-6/OQ-7 closed with the plan (ROLE values prod/dev + PUSH_URL_GH/PUSH_URL_DEV names and URL shapes accepted); C01 fix round authorized"
+    }
+  },
   "final_review": {
     "verdict": "APPROVED",
     "session": "ses_e4c1eab3bffeIkN15mbN1J7u8b",
@@ -13,7 +37,7 @@
   "coord_session": "ses_e4ced1b7bffedxEKEV4qpH6dGk",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-07T02:52:00+00:00",
+  "updated_at": "2026-11-09T13:25:54+00:00",
   "chunks": {
     "C01": {
       "status": "done",
@@ -134,7 +158,7 @@
   "blocked": [],
   "deferred": [],
   "approval": {
-    "state": "APPROVED 2026-11-07 at the plan-approval gate (user answer: 'Approve the plan (Recommended)') — the single C01 chunk loop may start",
+    "state": "APPROVED 2026-11-09 at the re-approval gate round 2 (user answer: 'Approve the reworked plan (Recommended)') — reworked plan of record (four owner fixes + gate-round-1 ROLE answer folded in) approved for execution; OQ-6 residual (ROLE values prod/dev, confirm-or-set via UA3) and OQ-7 (PUSH_URL_* key names + the two https clone URL shapes) closed with the approval (recommendations accepted); the single C01 fix round may start",
     "answered_at": "2026-11-06T23:56:16+00:00",
     "answers": {
       "OQ-1": "No mirror — manual flow (best guess confirmed: bootstrap = owner's manual push / existing GitHub→Forgejo path per UA5; UA4 stays the defensive disable-if-found check)",
@@ -147,6 +171,8 @@
       "P-3": "Keep the cf-NN plan-file name (2026-11-06-cf-119-feat-forgejo-push-main.md stands)"
     },
     "plan_edits": "Goal, Out of scope (backup-proxy line), Design merge step, Secrets-of-record, UA2, UA5, V3, V4, Open questions (closed-round rewrite), Follow-ups, chunks/C01.md P-1 note — all folded; no chunk/suite logic rework (merge step already branch-agnostic; t8 re-verified accurate)",
-    "approved_at": "2026-11-07T00:01:07+00:00"
+    "approved_at": "2026-11-07T00:01:07+00:00",
+    "superseded_at": "2026-11-09T13:15:24+00:00",
+    "reapproved_at": "2026-11-09T13:25:54+00:00"
   }
 }

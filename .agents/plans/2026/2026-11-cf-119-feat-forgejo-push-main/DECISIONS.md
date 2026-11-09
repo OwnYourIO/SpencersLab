@@ -126,5 +126,96 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   `openrouter/qwen/qwen3.8-flash` and its recorded RESULT stands. Alternatives rejected:
   re-running dev on the 27b (its validation evidence is recorded green; a re-run buys nothing).
 
+- 2026-11-09 human (in-session, rework of the approved plan): **FOUR owner fixes supersede the
+  Design of record** — the card was sent back to Rework and is reworked in this SAME run
+  (same slug, same branch/worktree; the D11 `<slug>-1` sequence keys on board-walk re-picks,
+  not on in-session owner-directed rework). The fixes:
+  1. **No URL detection.** The `startsWith(forgejo.server_url, ...)` guards are rejected — the
+     workflow must not tell which instance it serves by the repo URL. Instead each Forgejo
+     server is given a STAGE (`prod`|`dev`) and the jobs decide on that. Consequence: the two
+     job guards move from `forgejo.server_url` to the stage value (instance-side config); the
+     ping-pong invariant (exactly one job fires per instance) is preserved by the stage being
+     a per-instance value, and the guard-literal contract leg (t3) re-pins the two stage
+     comparisons.
+  2. **No repo URLs in the workflow file.** The push destinations (GitHub `main` and dev
+     `main`) must come from env vars (repo variables / instance-side), not literals.
+     Consequence: the two `git push` URL targets and the t5 "targets" leg move from URL
+     literals in-file to env-var references; a new leg asserts no `https://` repo URL literal
+     appears in the workflow file.
+  3. **Key naming.** Env/secret names may not start with `GITHUB` or `FORGEJO` (reserved
+     prefixes). `GITHUB_PUSH_TOKEN` / `FORGEJO_DEV_PUSH_TOKEN` get renamed; the t5 secret
+     leg re-pins the new names.
+  4. **No backup-proxy merge.** The `backup-proxy-merge` job was a misread of the card — "for
+     now, just do the same kind of push to the dev main branch as you do for github."
+     Consequence: the merge job (ls-remote/--no-ff/create-from-main) is replaced by a plain
+     non-force `main`→dev-`main` push, the same shape as the GitHub push. The OQ-2
+     "backup-proxy exists" answer and the merge-semantics design are retired (kept in this
+     log as history). The dev leg's token/URL are still instance-side env.
+  Net shape after rework: ONE workflow, still two jobs, but both are plain non-force main
+  pushes (GitHub + dev-main), each keyed off the instance STAGE instead of `server_url`, with
+  destinations and credentials from env vars. The offline contract suite and the human-ops
+  rollout (UA) items are updated to match (renamed secrets + new stage/URL variables). The
+  expected-red window and all other non-design decisions (single chunk, red-first, workflow
+  dispatch smoke affordance, cf-NN plan name) stand unless the re-plan says otherwise.
+  Alternatives rejected: keeping `server_url` guards (owner explicitly rejected URL-based
+  detection); a merge into backup-proxy (deferred — "for now").
+- 2026-11-09 plan: **Reworked design of record — stage mechanism + key names.** The verified
+  mechanism for "give the server a stage" is a **repo-level variable `STAGE`** read in the job
+  guards as `if: vars.STAGE == 'prod'` — grounded on the v15.0 line (the running instances are
+  15.0.10): the reference's Contexts table lists `vars` ("a map of the repository variables"),
+  and its Availability table row `jobs.<job-id>.if` lists `vars` among the accessible contexts
+  (so job-level `if:` on `vars` is documented-supported); repo variables are set instance-side
+  at `/{owner}/{repo}/settings/actions/variables` (v15.0 basic-concepts "Custom variables"),
+  values mutable after creation. Forgejo itself uses the same pattern on its mirrors
+  (repo `vars.ROLE` switches which workflows run — codeberg discussion #440). Both jobs
+  (`push-gh`, `push-dev`) carry the SAME prod guard: the prod-stage server (infra) fires both;
+  the dev-stage server (`STAGE=dev`) fires NONE — that is the new ping-pong breaker replacing
+  the retired `startsWith(forgejo.server_url, …)` guards (unset `STAGE` → `''` → no fire,
+  fail-safe). Key names (all pass the v15.0 name constraints — no `FORGEJO_`/`GITHUB_`/
+  `GITEA_` prefix, not `CI`, `[A-Za-z0-9_]`): stage `STAGE`; destination variables
+  `PUSH_URL_GH` / `PUSH_URL_DEV` (full `https://` clone URLs, no credentials, per OQ-7
+  recommendation); token secrets `PUSH_TOKEN_GH` / `PUSH_TOKEN_DEV` (scheme
+  `PUSH_<KIND>_<TARGET>`; the GitHub token = new fine-grained PAT per UA1; the dev token = the
+  value of the existing `forgejo-token` Bitwarden item, closed OQ-5 — only the KEY NAME
+  changed). `push-dev` is a plain non-force `main`→dev-`main` push (owner fix 4); the
+  `backup-proxy` merge (ls-remote/`--no-ff`/create-if-absent) is retired from the active
+  design. Contract suite re-pinned in place: t3 now asserts the two stage guards (each job's
+  `if` exactly `vars.STAGE == 'prod'`, no `vars.STAGE == 'dev'` job, no `forgejo.server_url`
+  anywhere); t5 asserts the `vars.PUSH_URL_*`/`secrets.PUSH_TOKEN_*` references (new names,
+  confined to the right job) PLUS the new no-`https://`-repo-URL-literal / no-`server_url`
+  assertion; t6 covers both jobs' push run-blocks; t8 re-scoped to `push-dev` hygiene (no
+  `git merge`, no `backup-proxy` string anywhere, plain-push shape). Alternatives rejected:
+  `env.STAGE` via a workflow-level `env:` block (a file literal — identical on both instances,
+  so it cannot differ per server); org/user-scoped variables (repo scope is the per-instance
+  copy's own setting and avoids the shadowing precedence); step-level `if:` instead of job
+  level (job-level is documented and keeps the dev-server run empty, not merely no-oped).
+  Open for the re-approval round: OQ-6 (accept `STAGE` key + repo scope + `prod`/`dev` values)
+  and OQ-7 (accept `PUSH_URL_*` key names + the two URL shapes) — both recommendations-first.
+- 2026-11-09 human (re-approval gate round 1): **"Lets reuse the existing ROLE pattern."** The
+  owner chose the key: the instance discriminator is `ROLE` — the documented Forgejo mirror
+  convention (repo `vars.ROLE` switches which workflows run on a repo's mirrors, codeberg
+  discussion #440; cited in the plan's Authority table) — NOT a new `STAGE` variable (the
+  previous entry's OQ-6 recommendation is withdrawn by this answer). Folded into the plan +
+  chunk in place: both jobs pin `if: vars.ROLE == 'prod'`; `ROLE=prod` on the infra repo,
+  `ROLE=dev` on the dev repo (values per the fix-1 "prod|dev" wording — the one hard
+  requirement is infra `ROLE=prod`; the dev instance needs any value ≠ `prod`); UA3 is written
+  confirm-or-set (if `ROLE` already exists on an instance, align its value, don't invent a
+  second key); OQ-6 restated as the values confirmation (recommendation: `prod`/`dev`); t3
+  re-pins `vars.ROLE == 'prod'` × 2 and the absence of any `vars.ROLE == 'dev'` job. OQ-7
+  (`PUSH_URL_*` key names + URL shapes) remains open for the next gate round,
+  recommendation-first. No structural change — the mechanism (repo variable in a job-level
+  `if:`) was already verified; only the key name moved.
+- 2026-11-09 human (re-approval gate round 2): **REWORKED PLAN APPROVED** — "Approve the reworked
+  plan (Recommended)". The reworked plan of record (owner's four design fixes + the gate-round-1
+  `ROLE` answer folded in; same file, same single chunk) is approved for execution: `plan_status`
+  set to `approved` (reapproved_at 2026-11-09T13:25:54+00:00). OQ-6 residual (ROLE values
+  `prod`/`dev`, confirm-or-set per UA3) and OQ-7 (`PUSH_URL_GH` / `PUSH_URL_DEV` key names + the
+  two full `https://` clone URL shapes) closed WITH the approval — recommendations accepted. The
+  C01 fix round is authorized: dev rewrites `.forgejo/workflows/main-sync.yaml` +
+  `tests/services/forgejo-main-sync.sh` to the re-pinned contract (t3 stage guards on
+  `vars.ROLE == 'prod'`, t5 `PUSH_*` references + no-URL-literal, t6 both jobs, t8 no-merge/
+  no-`backup-proxy` hygiene), red-first inside the chunk. No further changes requested at the
+  gate.
+
 ## Deferred
 - (none yet)
