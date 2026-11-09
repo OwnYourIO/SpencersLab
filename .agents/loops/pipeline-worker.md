@@ -2,7 +2,7 @@
 name: pipeline-worker
 schedule: 0 * * * *
 enabled: true
-model: gpu-ai/qwen3.8-27b-q4
+model: gpu-ai/qwen3.8-flash-next-strata-q4
 agent: agent-board-coord
 ---
 
