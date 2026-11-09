@@ -54,10 +54,36 @@
     "findings": "NONE BLOCKING, NONE OPEN — the run is complete against the approved plan with all three ruling rounds' substance implemented.",
     "next": "the owner's single check-in point (the hil_override ruling): the whole-branch presentation for the owner's checkout; on the checkout-pass, card #131 moves to Review + pipeline_release(outcome: done)."
   },
+  "research_round_4": {
+    "at": "2026-11-09T12:11Z (workspace clock; round ran 11:5x-12:0x after the owner's second on-target crash paste)",
+    "session": "the research role's round-4 session (fresh; recorded via the RESEARCH.md R4 section itself)",
+    "trigger": "on-target bring-up crash #2: ViT encoder failure under the pod's FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE — the owner's paste pair at 11:56:01Z (ValueError: total_mblocks exceeds MAX_PROGRAM_GRID_SIZE) and 11:59:01Z (ImportError: ROCm platform requires upstream flash-attn) on vllm-dev pod a0556179-c629; both recorded as ONE crash class in RESEARCH.md R4 + the R4.7 coordination addendum (trace pair, same call site, the same single-var route).",
+    "finding": "the var's only reader is vllm/platforms/rocm.py L438 (@ ced6857a), routing the ViT encoder to FLASH_ATTN only when TRUE; --mm-encoder-attn-backend reads no env var (arg_utils L1399-1403 -> mm_cfg -> rocm L741-747); the maintainer's own qualified recipe sets NEITHER (magiccodingman compose @ 5b99d66c) and their image builds torch USE_FLASH_ATTENTION=0 (Dockerfile @ 5b99d66c) — the four 0.30-publication benchmark logs record the SDPA fallback (V1/[133]); without the var the encoder lands on TORCH_SDPA (rocm L776-777). The owner's 'image bakes flash-attn' premise refuted; R5/D17(5)/D25(8) OQ12 adoption formally reversed by D33.",
+    "disposition": "R4.5 options -> (a) drop the var (adopted, D33, owner R4-Q1 CONFIRMED in-session 2026-11-09 ~12:15Z: 'Drop the var'); (b) --mm-encoder-attn-backend TORCH_SDPA pin: DECLINED (best guess stood; the reference recipe sets neither); (c) TRITON_ATTN encoder-pin stays the documented future performance alternative gated on its own vision smoke."
+  },
+  "post_review_amendments": [
+    {
+      "id": "D32 (mm-per-prompt JSON)",
+      "at": "2026-11-09, commit 2c41ce797",
+      "note": "the on-target CLI-parse crash fix (image=4 -> {\"image\": 4}), full dev/test/review/commit loop — see the C05 amendment trail."
+    },
+    {
+      "id": "D33 (ViT flash-attn env-var drop)",
+      "at": "2026-11-09T~12:40Z, commit 46775131f",
+      "surface": "values.yaml env 20->19 (FLASH_ATTENTION_TRITON_AMD_ENABLE + its 4-line OQ12 comment deleted; L228 header reworded 'D25 19-var law, D33-amended'); vllm_testlib.py env_want 19 + DROPPED_ENV 4th named entry; test_render.py wording; tests/notes/vllm-runbook.sh T5 SDPA needle; the operator runbook's three rows (step-3 ViT marker -> 'Using Torch SDPA backend for ViT model.', exit-64 19-var, 3.4 off-switch leg retired with the R4.7 crash pair); records: DECISIONS D33 + confirmation, C02/C05 amendment entries + confirmations, RESEARCH R4 + R4.7.",
+      "serveArgs": "byte-stable — no --mm-encoder-attn-backend per the owner's R4-Q1 ruling",
+      "validation": "charts/vllm/tests 36 passed; vllm-runbook.sh T1..T5 ok; helm lint 0 failed; aislop 0/0 (91 files); 19-key set-equality chart-vs-testlib verified independently; tree-wide zero stale 20-count on live surfaces.",
+      "review": "fresh-context agent-review (ses_e3fb3f147ffeeIp5fXGDaOCbxR) on the uncommitted diff = APPROVED, zero blockers; the commit landed mid-review and the reviewer verified the committed content byte-identical to the reviewed artifact (its finding 1); finding 2 adjudicated non-defect: the C02 title/r1-note 20-var wording is the recorded history-retention choice, every normative provision reads 19-var."
+    }
+  ],
+  "lock_takeover": {
+    "at": "2026-11-09T~12:05Z",
+    "note": "the owner stripped card #131's labels and moved it Executing -> Not Started (Features bucket) during the bring-up pause; the registry's next reap dropped the run's Pipeline: AI lock set (b6547d73) — pipeline_status showed no AI holder. Per the takeover protocol the coordinator re-claimed under the card-id lock (owner-instructed 'Resume this run'): setId f49f044d, pipelines [default] (the card now derives the default pipeline — no Pipeline: labels), heartbeating since; the C02/C05 Review-notes transcription of the D33 review findings is folded in the commit trail."
+  },
   "coord_session": "ses_e4860e71bffeqHykL23nSUdAJk",
   "test_session": "ses_e44462844ffepO2mLc4sTneGwj",
   "current_wave": 5,
-  "updated_at": "2026-11-09T02:21:34+00:00 (final record pass complete: plan_status complete, current_wave 5, final_review recorded, N1 --gpus one-liner corrected, N1b stamp message amended ed449cfa4, N2/N3/N4 fixed in the plan pass)",
+  "updated_at": "2026-11-09T12:45Z (workspace clock): research_round_4 + post_review_amendments (D32, D33) + lock_takeover recorded; the D33 amendment committed 46775131f with the fresh review APPROVED; card #131 re-claimed under the default pipeline per the owner's resume ruling. (prior, 2026-11-09T02:21:34+00:00: final record pass complete: plan_status complete, current_wave 5, final_review recorded, N1 --gpus one-liner corrected, N1b stamp message amended ed449cfa4, N2/N3/N4 fixed in the plan pass)",
   "kickoff": {
     "card": "unDxRqcrNTfahp656",
     "card_number": 131,
