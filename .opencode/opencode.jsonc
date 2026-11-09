@@ -795,18 +795,21 @@
         "qwen3.8-27b-vllm": {
           "modelID": "qwen3.8-27b-vllm",
           "name": "Qwen3.8 27B (vLLM, R9700) - default priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
           "limit": { "context": 262144 },
           "body": { "priority": 5 }
         },
         "qwen3.8-27b-vllm-urgent": {
           "modelID": "qwen3.8-27b-vllm",
           "name": "Qwen3.8 27B (vLLM, R9700) - urgent",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
           "limit": { "context": 262144 },
           "body": { "priority": 1 }
         },
         "qwen3.8-27b-vllm-low": {
           "modelID": "qwen3.8-27b-vllm",
           "name": "Qwen3.8 27B (vLLM, R9700) - low priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
           "limit": { "context": 262144 },
           "body": { "priority": 9 }
         }
