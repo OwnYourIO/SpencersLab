@@ -40,6 +40,11 @@
       }
     }
   },
+  "hil_override": {
+    "at": "2026-11-09T00:20:00+00:00 (the C02 chunk-review stop, owner in-session)",
+    "ruling": "the per-chunk HITL Chunk Review stops are RETIRED for the remainder of this run — owner verbatim: 'stop asking me to review the chunks and instead have me check it out after the final review.'",
+    "effect": "C03/C04/C05 each keep the fresh agent-review + the coordinator's per-chunk commit discipline (unchanged); NO owner question between chunk reviews; the owner's single check-in point moves to AFTER the final whole-plan review — the coordinator presents the whole-branch state (commit list + per-chunk verdicts + the risk statements) for the owner's checkout; on the owner's checkout-pass the card moves to Review + pipeline_release(outcome: 'done'). DECISIONS.md carries the ruling section."
+  },
   "coord_session": "ses_e4860e71bffeqHykL23nSUdAJk",
   "test_session": "ses_e44462844ffepO2mLc4sTneGwj",
   "current_wave": 1,
@@ -302,22 +307,31 @@
       "next": "C02 feat commit (verdict in the message) -> commit-stamp chore(plans) -> the Chunk Review HITL stop (wave 3) -> C03 + C04 (wave 3, parallel-eligible — both depend only on C02)"
     },
     "C03": {
-      "status": "pending",
+      "status": "review_approved",
+      "review": "APPROVED r1 (2026-11-09, fresh-context agent-review, code tier; the wave-3 review pair ran as parallel sessions — the Review-notes follow-up chain for both C03+C04 ran through ses_e425d7b91ffe4UnBN5WyzEQzH3). Full green bar re-run fresh (36/0, lint 0, both renders 0 sentinels, aislop 0/0, llama-swap 415/9 no-move). All AC1-AC7 verified on the rendered manifest. ADJUDICATION of the recorded deviation: ACCEPT-INERT — the init's inherited globalMounts (kfd/dri/8Gi-shm) are a recorded residual, not a defect (the strict-minimalist move would restructure the committed security-shape test legs; the exposure is inert by construction: non-privileged, drop-ALL, no caps, no SYS_PTRACE, no GPU work — the command override never touches the nodes); the residual risk is on the record: any future change giving the init elevated privileges or GPU work makes the minimalist move MANDATORY first. Nits (3, non-blocking, deferred): the NOTES.txt stale-adjacent reloader line (C05 may retarget), the init shm volumeMount's missing distinguishing comment, the &engineImage anchor's informational comment.",
+      "dev_session": "ses_e4249a836ffeLUQs3LHl9iSXMq (code tier, parallel with C04)",
       "wave": 3,
       "size": "M",
       "depends_on": [
         "C02"
       ],
-      "title": "The staging + storage switch: the setup init container (the raw-release + drafter-revision staging, Q8), the persistence restructure (advancedMounts models ro/rw, /data -> /cache), the test re-pins"
+      "title": "The staging + storage switch: the setup init container (the raw-release + drafter-revision staging, Q8), the persistence restructure (advancedMounts models ro/rw, /data -> /cache), the test re-pins",
+      "green_bar": "pytest charts/vllm 36 passed / 0 skipped (the two C03 designed-skips resolved); helm lint 0 failed; both renders 0 sentinels; rendered surface verified (initContainers[0]=setup / containers[0]=vllm, init image triple == main via the &engineImage anchor, /models ro on main + rw on init on llama-swap, /cache on vllm-cache, no /data anywhere); the rendered init command proven by stub run: sh -n clean, cold run lands both trees + the both-sha marker, warm skip 0.002s, drafter re-pin re-stages; llama-swap 415/9 no-move witness; aislop 0/0.",
+      "deviation_for_review": "the init container INHERITS the globalMounts (/dev/kfd + /dev/dri device paths + the 8Gi shm emptyDir) — app-template attaches globalMounts to every container of the controller, which is exactly why the models leg moved to advancedMounts. The init is drop-ALL + non-privileged + device-free (the command's sh -c OVERRIDES the GPU-touching entrypoint), so the nodes are inert; dev LEFT them (D19 keeps the legs unchanged, the chunk scoped it to models+cache). The alternative — kfd/dri/shm -> advancedMounts keyed vllm.vllm — is the strict-minimalist form. Reviewer adjudicates: accept-inert (recorded) or request the move.",
+      "deviation_minor": "the NOTES Next-step line dropped a stale 'C06' chunk label as part of the mandated 0.30-shape reword."
     },
     "C04": {
-      "status": "pending",
+      "status": "review_approved",
+      "review": "APPROVED r1 (2026-11-09, fresh-context agent-review, code tier; Review-notes follow-up through ses_e425d7b91ffe4UnBN5WyzEQzH3). surface.sh M1..M7 all green (9 ok); the catalog diff is exactly three added capabilities keys at the visual-rung precedent position with every D28 protected field byte-identical and no other row moved; the no-move bar holds diff-empty over services/gpu-ai, charts/llama-swap, .rulesync, custom-values/gpu-ai, services/gpu; AC4 adjusted form honored (the M3 arm rode the committed test wave). The marker's HONEST GROUNDING is on the record (R3 L3.2 confidence law): the 30/30 record is the 0.30 stack's own + same checkpoint family/drafter + covers the shipped default mode — but NOT the mtp toggle (K4 = 29/30 tool-gate FAIL), measured at TP2 not our TP1, and a synthetic wire gate; the marker asserts the engine SHIPS the tool surface (the D24 tool trio — plan fact); the caveats ride the runbook's on-target tool smoke (C05) + the post-final-review presentation. Nit (1, non-blocking, deferred to a future test-session surface.sh touch): the M3 arm's suite-header note 'stays VERBATIM — no re-pin' framing is one re-plan round stale post-Q11 (should read 'stays 262144 — the true axis'; the assert itself is correct and green).",
+      "dev_session": "ses_e4249a832ffeJvmnIPDYEudr0W (code tier, parallel with C03)",
       "wave": 3,
       "size": "M",
       "depends_on": [
         "C02"
       ],
-      "title": "The catalog + surface: the capabilities marker (input/output + tools: true, the round-2 Q6 override) + the surface.sh M3 re-pin; the limit.context 262144 stays (the Q3 keep-ruling voids the re-plan's breach)"
+      "title": "The catalog + surface: the capabilities marker (input/output + tools: true, the round-2 Q6 override) + the surface.sh M3 re-pin; the limit.context 262144 stays (the Q3 keep-ruling voids the re-plan's breach)",
+      "green_bar": "surface.sh M1..M7 ALL green (9 ok, exit 0 — M3 on its re-pinned state: the capability+tools asserts green, the 262144 context assert green UNMODIFIED, M1/M2/M4-M7 byte-untouched and green); .opencode/opencode.jsonc diff = exactly three added capabilities keys (one per vLLM row, the visual-rung precedent shape), the D28 protected fields byte-untouched; no-move verification diff-empty over services/gpu-ai, charts/llama-swap, .rulesync, custom-values/gpu-ai, services/gpu; aislop 0/0.",
+      "deviation_note": "AC4's two-file bar rode the launcher's post-test-wave adjustment — the M3 arm was already committed in the test wave (62fff096f), so the chunk's working diff is exactly one file (.opencode/opencode.jsonc)."
     },
     "C05": {
       "status": "pending",
