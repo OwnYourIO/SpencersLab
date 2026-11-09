@@ -4889,3 +4889,555 @@ the local `v0.30.0` clone (`git rev-parse HEAD` = `ced6857a…`).
   verdict is code-static; the private GitLab candidate line
   (gitlab.sayou.io) is unreadable; `rocm-rel-*` manylinux index probing
   was one-release-deep.
+
+---
+
+# R6 — The KV quant mandate vs the shipped fp8 — the numbers, the real q4 surface, the pool arithmetic (2026-11-09)
+
+Commission: round 6, the fourth on-target crash (crash #4). Post-D35 deploy,
+the engine core died AT STARTUP on the vllm-dev pod:
+`vllm/v1/core/kv_cache_utils.py:899 _check_enough_kv_cache_memory → ValueError:
+To serve at least one request with the model's max seq len (262144), 9.51 GiB
+KV cache is needed, which is larger than the available KV cache memory
+(1.09 GiB). Try increasing gpu_memory_utilization (which also controls CPU
+memory on the CPU backend) or decreasing max_model_len when initializing the
+engine` — installed path `/opt/vllm/lib/python3.12/site-packages/vllm`, the
+radiance image's prefix, @ vLLM 0.30 @ `ced6857a` [155]. The owner's verbatim
+expectation (ruling-grade): **"But on a 32GB GPU, I'm expecting ~18GB for the
+model (Q4) and another 4GB per 256k KV (again q4). What I'm seeing is that
+you've implemented Q8 and I _need_ q4."**
+
+## TL;DR (5 lines)
+
+- The crash message IS the dtype proof: 9.51 GiB = 8.00 GiB of fp8 KV
+  (exactly 262144 tok × 32 KiB at the checkpoint's 16×4×256 GQA geometry) +
+  ~1.50 GiB GDN align-mode state + ~0.02 GiB drafter window — the shipped
+  `--kv-cache-dtype fp8` was honored; the "Q8" the owner sees is fact [155][156][166][167].
+- fp8 KV at 262144 is **arithmetically impossible on this card even with a
+  perfect 4-bit load**: best-case pool 28.67 − 20.4 ≈ 8.3 GiB < the 9.51 GiB
+  one max-length request demands — D31's live risk, concrete; and the C05 3.6
+  int4 gate could NEVER run because boot refuses first (the plan's
+  boot-order trap, R6.0) [157].
+- 1.09 GiB back-calculates ~27.58 GiB of non-KV consumption vs the ~21.9–22
+  "weights + normal overhead" expectation → favors hypothesis (a): weights
+  ARE 4-bit, ~5.5–5.7 GiB extra went to profiling peak + CUDA-graph estimate +
+  spec/mm extras — a bf16-dequant (b) would have died at LOADING, not at the
+  KV check [157][159][160]; the two settling log lines are on the R6.2
+  ask-for list.
+- The real q4 surface at our pins is STOCK `int4_per_token_head` (16,896
+  B/token = 4.125 GiB attention — the owner's "4GB" is exactly the attention
+  leg) served ONLY by TRITON_ATTN: R4D refuses it AND `fp8_e5m2` [171]; the
+  radiance fork ships NO q4 KV kernel (its NVFP4 program is a weights
+  converter [174]); upstream carries three OPEN int4_pth defects, one of them
+  the SWA-crash class our 5-layer sliding drafter sits in [168][169].
+- Even q4 needs pool surgery: demand 5.63 (4.93 with
+  `--mamba-ssm-cache-dtype bfloat16`) vs 1.09 observed → the honest ship
+  candidate is the four-edit combo (int4 + TRITON_ATTN + ssm-bf16 + util
+  0.95/0.98) + recovering 1.3–3.0 GiB of the mystery overhead; R6-Q1 asks the
+  owner to rule the package before the dev pass.
+
+## R6.0 — How fp8 became the ship state (the mandate trace)
+
+1. **Original card (requirement #2):** "KV-q4 default / q8 toggle" — recorded
+   verbatim in DECISIONS (Re-scope ruling: "requirements 2 … stand unless the
+   re-scope's evidence says otherwise"). The round-1 plan honored it: D2 =
+   `kvCacheDtype` default `int4_per_token_head` (the R1 L1.2 v0.33.0 table,
+   16.5 KiB/token) on the official-FP8 stock path.
+2. **The re-scope to the MXFP4 fork (2026-11-07):** R2 L3.1 — the 0.27.1
+   fork's R4D backend **refuses per-(token,head) KV scales at startup**. The
+   re-plan's D2-AMEND flipped the default to `fp8` and DEMOTED int4 to
+   documented-experimental with the two-edit prerequisites (dtype value +
+   `--attention-backend TRITON_ATTN`). The q4 mandate was not dropped — it was
+   parked behind an on-target qualification, because the qualified backend
+   could not carry it.
+3. **Round-2 Q5 ruling (owner override): "QUALIFY INT4 NOW"** → D27 landed the
+   int4 acceptance gate into THIS ticket as a day-one runbook step (C05 3.6):
+   the two values edits, then startup/1-token/mm/acceptance/quality/tool legs;
+   "int4 stays non-default until the gate passes on target … Revert to the
+   default after the gate either way (the fp8 default is the ship state — the
+   gate is a measurement step, not a config flip)."
+4. **Round-3 Q11 override → D31:** engine `--max-model-len` ships at 262144
+   (the true axis) with the LIVE owner-ruled risk — "the pool at the 0.90
+   start may be small or the engine may compute a degenerate pool" — the
+   day-one re-measure gate (3.5) + the 40-min probe + the startup contingency
+   as named backstops.
+5. **Crash #4 is that risk, in a shape no backstop anticipated:** the engine
+   never reaches the day-one gates — the KV BOOT check refuses
+   (`needed 9.51 > available 1.09`) and the engine core dies before serving.
+   The int4 gate could not be run because running it required booting the
+   engine, and booting required the fp8 default it was supposed to replace.
+   **The gate design silently assumed the fp8 boot survives; at 262144 on
+   32 GiB it mathematically cannot** (R6.1.4). D31's contingency (lower
+   max-model-len) is the fp8 path and breaks Q11; the owner's fresh verbatim
+   names the other path — q4 — as the requirement, not the experiment.
+
+## R6.1 — The formula, the geometry derivation, the 9.51/1.09 arithmetic
+
+### R6.1.1 — The formula @ ced6857a (the owner's :899 verified)
+
+At the v0.30.0 tag commit (`ced6857a`, tagged 2026-09-21 [178]),
+`vllm/v1/core/kv_cache_utils.py` [155]:
+
+- `_check_enough_kv_cache_memory` is DEFINED at L872; the owner's message text
+  is assembled at L898–910, and line 899 lands inside that raise block — the
+  installed radiance tree carries the overlay's earlier top-of-file edits
+  (±few-line drift, the same fully-accounted class as R4 verification-addendum
+  V2). The pasted sentence matches the tag's construction modulo truncation.
+- `needed_memory = get_needed_memory()` = `max_memory_usage_bytes(vllm_config,
+  kv_cache_spec.values())` (L912) = **sum over every layer's spec** of what
+  ONE request of `max_model_len` needs — grouped with per-group block
+  round-ups. The per-class formulas [156][164][165]:
+  - `FullAttentionSpec`: `cdiv(max_model_len, block) × page`,
+    page = `num_kv_heads × block × (head_size + head_size_v) × dtype_size`
+    ⇒ **attention bytes/token (16 layers) = 2 × 16 × 4 × 256 × dtype_size**;
+    at fp8 (1 B) that is 32,768 B/token → 262144 × 32,768 = **8.000 GiB
+    exactly** (the block size cancels).
+  - `MambaSpec`, align mode (shipped `--mamba-cache-mode align`):
+    `page × (2 + num_speculative_blocks + num_prefill_checkpoint_blocks)` —
+    **request-FIXED, length-independent**. Page = the GDN state pair at TP1:
+    conv `(2·2048 + 6144 = 10240) × (kernel−1 + num_spec = 3+7 = 10)` bf16 =
+    204,800 B + recurrent `(48,128,128)` **fp32** (`mamba_ssm_dtype:
+    float32` in the checkpoint [166]; `_mamba_state_dtype` auto→float32
+    [164]) = 3,145,728 B ⇒ 3,350,528 B per layer-block. `num_spec = 7` is
+    read straight from the shipped spec JSON (`GDNAttentionMetadataBuilder`
+    [165]) — the number itself proves the dflash K7 config parsed and
+    engaged.
+  - `SlidingWindowSpec` (the drafter's 5 layers, window 2048 [167]): capped
+    at window + in-flight terms, ≈ 129–130 blocks × 32,768 B × 5 layers ≈
+    **0.02 GiB**.
+- On failure the check runs `estimate_max_model_len` (binary search L925) and
+  adds "the estimated maximum model length is X" **only when X > 0** [155].
+
+### R6.1.2 — The forensic detail inside the owner's own paste
+
+The pasted ValueError carries **no** estimated-max-length clause ⇒ the binary
+search returned 0 ⇒ **even a 1-token request does not fit**: the fixed floor
+(GDN 48 × 3,350,528 × 10 blocks + drafter ≈ 1.51 GiB) already exceeds the
+1.09 GiB pool. The pool fell below the model's admission FLOOR, not merely
+below the 262144 requirement — the most severe shape of this failure class,
+readable for free from the paste. It also means: with `--mamba-ssm-cache-dtype
+bfloat16` (floor → ≈0.81 GiB) a q4 boot would finally PRINT the engine's own
+capacity estimate — a free probe for the re-measure (R6.3-1).
+
+### R6.1.3 — Which 9.51 proves which dtype AND which geometry
+
+Naive division (9.51 GiB ÷ 262144 = 38.0 KiB/token) misleads — the needed sum
+is not linear. Decomposed at the shipped recipe (C02) + fetched configs
+[166][167]:
+
+| component | math | GiB |
+|---|---|---|
+| 16 full-attn layers × 4 KV heads × head 256, **fp8 = 1 B/elem** | 262144 × 32,768 B | **8.000** exact |
+| 48 GDN layers, align, fp32 ssm, blocks (2 + 7 + 1) | 48 × 3,350,528 × 10 | 1.498 |
+| 5 drafter sliding layers (window 2048, 8 heads, head 128, fp8) | ≈130 × 32,768 × 5 | 0.020 |
+| **predicted** | | **9.50–9.52** (±: in-flight term, conv orientation, display rounding) |
+| **observed** | | **9.51 ✓** |
+
+Every alternative dtype is off by whole GiB: `auto/bf16` → 16.00 + 1.52 =
+**17.52**; `int8_per_token_head`/`fp8_per_token_head` (33,280 B/token) →
+**9.64**; `int4_per_token_head` (16,896) → **5.63**; and the naive
+"bf16-geometry-only" reads would demand ≥16. So the message uniquely selects
+{fp8 at 1 B/elem} × {16×4×256 GQA full attention + 48 GDN fp32-state layers ×
+(2+K7+ckpt) + 5×2048-window drafter} — exactly the shipped checkpoint +
+shipped DFlash2 drafter + shipped spec config. **The crash message is
+therefore machine-level evidence that (i) `--kv-cache-dtype fp8` was HONORED —
+the owner's "you've implemented Q8" is correct; (ii) the model geometry loaded
+is the one in the staged trees — the MXFP4 checkpoint's own `config.json`
+(`num_hidden_layers 64`, `full_attention_interval 4`, `head_dim 256`,
+`num_key_value_heads 4` [166]) and the drafter's (`5 × sliding_attention`,
+`sliding_window 2048`, 8×128 [167]).**
+
+The full per-token/demand table at this geometry with the flag-existence
+columns (CacheDType literal @ ced6857a [161]; TRITON_ATTN
+`supported_kv_cache_dtypes` + the 264 B/head packing re-verified in-tree
+[163]; R4D list at the fork pin [171]):
+
+| `--kv-cache-dtype` | B/token (16 L) | attn GiB @262144 | total demand | parses @0.30 | R4D (shipped) | TRITON_ATTN |
+|---|---|---|---|---|---|---|
+| `auto`/`bfloat16` | 65,536 | 16.00 | 17.52 | yes | yes | yes |
+| **`fp8`/`fp8_e4m3`** | **32,768** | **8.00** | **9.51 ← the crash** | yes | **yes** | yes |
+| `fp8_e5m2` | 32,768 | 8.00 | 9.51 | yes | **refused** [171] | yes |
+| `int8_per_token_head`, `fp8_per_token_head` | 33,280 | 8.13 | 9.64 | yes | refused | yes [163] |
+| **`int4_per_token_head`** | **16,896** | **4.125** | **5.63** | yes | **refused** | **yes** [163] |
+| `turboquant_4bit_nc` | 16,768 [R1 10] | 4.09 | ~5.60 | yes | refused | own backend only |
+| `nvfp4*` / `nvfp4_4over6` | — | — | — | literal | no RDNA backend (R1 L1.2) | no |
+
+The GDN/drafter aux is KV-dtype-INDEPENDENT (it is a separate mamba pool at
+its own dtypes) — hence the "~4 GB per 256k q4" the owner expects (correct for
+attention) carries a hidden +1.5 GiB hybrid-state tax that no KV dtype shrinks
+(except by the mamba-ssm-dtype lever below, which halves the GDN half).
+
+### R6.1.4 — The pool side: what 1.09 GiB says was consumed
+
+Worker math @ ced6857a: `requested = ceil(total × util)` [158] =
+ceil(31.86 × 0.90) = **28.67 GiB** (the 31.86 visible / 31.46 free constants
+are EXPLORE §1's measured pair — and they independently re-derive the 0.9.3
+launcher's record that **0.99 asks for 31.54 > 31.46 free and fails at
+startup** [158][R2 S L422-425]: on this card 0.98 is the ceiling, not a
+choice). `available = requested − non_kv_cache_memory −
+cudagraph_estimate_applied − mm_ipc_reserve` [157]; the mm-IPC reservation is
+**0 at default** [180] (excluded as a suspect);
+`VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS` defaults to **1** — the CUDA-graph
+pool is subtracted from the KV budget BEFORE the check [157][159]. Observed
+1.09 ⇒ **non-KV ≈ 27.58 GiB**.
+
+| account | expectation | evidence |
+|---|---|---|
+| MXFP4 target weights, resident-as-packed | 18.41 | the raw-release file [R2 L2.1]; the checkpoint stores `export.weight_format: real_quantized` fp4-group32-e8m0 with ONLY visual/lm_head/mtp/embed bf16-excluded [166] — the file size IS the resident layout (embed 2.36 + lm_head 2.36 + vision ≈0.6 + mtp ≈0.4 bf16 islands inside the 18.41; "pure 4-bit" would be ~13.5 — the owner's 18GB expectation matches the file) |
+| DFlash2 drafter | 1.97 | C05 envelope; fp8 e4m3 blockwise [167] |
+| non-torch (HIP/ROCm ctx) | 1.15–1.6 | EXPLORE §1 measured class (text-only, pre-spec) |
+| profile-run peak + graph estimate | **≈5.5–5.7 (residual)** | unmeasured; candidates below |
+| **sum** | **~27.6 = observed** | |
+
+Candidate consumers of the ~5.7 GiB residual (named for the re-measure, none
+yet priced): the CUDA-graph ESTIMATE under PIECEWISE + dflash V2 lanes
+(real capture happens AFTER sizing — the estimate is a pre-tax [157]); the
+multimodal profiling dummy with `{"image": 4}` (ViT peak, bf16 tower); the
+`RADIANCE_FAST_DRAFT=1` INT2 head + draft-linear W4 runtime-requant staging
+(buffers duplicating the source tensors during conversion [172][175]); the
+W4A8 dynamic-activation workspaces; the K7 spec dummy-run itself. **Decisive
+regardless of attribution: fp8@262144 needs pool ≥ 9.51 ⇒ non-KV ≤ 19.16 GiB
+— less than the weights alone. The fp8 shape is over the cliff even in the
+perfect case; the owner's q4 demand is the only dtype class with a path at
+the Q11 cap** (bf16 is worse by design; int8/fp8-per-head sits in the same
+dead zone as fp8; only the ~16.5-KiB classes go under water-line).
+
+## R6.2 — The weights-residency check: (a) vs (b), and the two lines that settle it
+
+- **(b) in its strong form — "AWQ/Quark dequant landing bf16" — is refuted by
+  the failure's LOCATION:** a ~50 GiB bf16 weight set cannot load; the loader
+  raises "Failed to load model - not enough GPU memory…" [160] or the startup
+  assert fires [158] — the KV check is never reached. Reaching
+  `_check_enough_kv_cache_memory` bounds weights+overhead at 27.58 with the
+  non-torch+peak floor (≥ ~1.7) ⇒ resident weights ≤ ~25.9 GiB; a
+  full-"fp8-intermediate" loader (24.5+2 = 26.5) is already over that bound;
+  full bf16 dequant exceeds the card. Also: `quark` and `mxfp4` are both
+  REGISTERED quant methods at the tag — an unknown-quant path would RAISE,
+  not silently dequant [162]; `RADIANCE_WEIGHT_QUANTIZATION: "auto"` omits
+  `--quantization` so the checkpoint's `quant_method: quark` drives loading
+  [166]; the MXFP4 W4A8 engagement marker (C05 step-3) rides the same pod log.
+- **(b) survives only as loader-duplication variants** (requant/permute
+  staging that leaves 21–24 GiB resident) — behaviorally an (a)-neighbour:
+  the model is 4-bit, the POOL is small because of loader/profiler mechanics.
+- **Which hypothesis 1.09 favors: (a)** — weights ARE 4-bit-ish, the
+  overhead ate the pool — at medium-high confidence, one paste short of proof.
+- **ASK-FOR list — the owner pastes from the crashed pod's log; every line
+  below is emitted BEFORE the ValueError (existence verified at the tag):**
+  1. `Model loading took <X> GiB memory and <Y> seconds` — INFO-once,
+     `gpu_model_runner.py` L5416 [160]. THE weights datum: ~20.5–21.5 ⇒ (a)
+     confirmed; ≳23 ⇒ the (b)-variant loader investigation opens; the drafter
+     may emit a second occurrence — paste all.
+  2. `Available KV cache memory: <Z> GiB` — INFO-once, `gpu_worker.py` L641
+     [157]. THE pool-side datum immediately preceding the crash (expect the
+     pasted 1.09 to appear in this very line).
+  3. Free same-log corroboration (no re-run): the `non-default args` dump
+     (confirms `kv_cache_dtype='fp8'`, `max_model_len=262144`,
+     `gpu_memory_utilization=0.9`, the spec JSON), the entrypoint banner +
+     the MXFP4 W4A8 GEMM engagement line, and the fork's own
+     `[radiance] kv cache groups:` line [172].
+  4. For the exact split (weights / non_torch / torch_peak / graph-estimate —
+     the `MemorySummary` dataclass carries every field but logs at DEBUG
+     [159]): ONE diagnostic re-boot with pod env
+     `VLLM_LOGGING_LEVEL: "DEBUG"` added (values-side, removable, NOT ship
+     shape) — fold it into the 3.5 gate day.
+  5. Optional host-side, owner-run (the repo's no-agent-pod-exec rule):
+     `rocm-smi --showmeminfo vram` sampled during the load window; and the
+     read-only staged-tree dtype check inside the container — parse the
+     safetensors header of `/models/Qwen3.8-27B-Quark-AWQ-MXFP4/model.safetensors`
+     and print the distinct dtype set: packed fp4/uint8 payloads + fp8/e8m0
+     scales + BF16 for exactly the 127 excluded tensors [166]; any surprise
+     large BF16 *linear* set = the (b)-variant on disk (not loader).
+
+## R6.3 — The honest options to deliver q4-KV at 262144 on 32 GiB
+
+Demand recap: `needed = attn + aux`, aux = 1.52 GiB (GDN fp32 + drafter) or
+0.81 GiB with `--mamba-ssm-cache-dtype bfloat16` [161][164]. Supply recap
+(observed non-KV held): pool(u) = ceil(31.86·u) − 27.58 → **1.09 @0.90, 2.69
+@0.95, 3.64 @0.98** (0.99 fails at startup [158]).
+
+### Option 1 — the real q4: `int4_per_token_head` on TRITON_ATTN (D27's two-edit, promoted to the default)
+
+- **Ship-surface literals** (`charts/vllm/values.yaml`, the sanctioned
+  values-only pair of C05 3.6 + its T3/testlib/AC8 re-pins, exactly the D27
+  documented surface):
+  - `kvCacheDtype: &kvCacheDtype int4_per_token_head`
+  - serveArgs: `- "--attention-backend" - "TRITON_ATTN"` (replacing `"R4D"`;
+    the CLI's named backend wins over the baked seam [171], GDN kernels stay)
+  - stack-mate: `- "--mamba-ssm-cache-dtype" - "bfloat16"` (aux −0.71)
+  - stack-mate: `- "--gpu-memory-utilization" - "0.95"` (0.98 for the last
+    1.6 GiB; the R3-Q2 start + the recorded 0.85/0.98 alternatives make this
+    a values decision, not a flag-surface risk)
+- **Flags exist:** int4_pth parses @ 0.30 [161]; TRITON_ATTN lists it
+  (264 B/head packing verified in-tree [163]). R4D refuses it AND `fp8_e5m2`
+  [171] — the values comment "bf16/auto/fp8 qualified on R4D" survives; the
+  per-token-head family + e5m2 are TRITON-only territory (comment correction
+  rides).
+- **Arithmetic:** demand 5.63 (or 4.93 w/ ssm-bf16) vs 1.09 observed — does
+  NOT boot at today's overhead; pool-vs-cap: @0.95 int4 boots to ≈75k ctx
+  (120k w/ ssm-bf16); @0.98 ≈135k (≈180k) — below the 262144 cap, so the
+  engine would PRINT its estimate instead of dying silently [155]. To boot AT
+  262144: recover 1.3–3.0 GiB of the R6.1.4 residual (ssm-bf16 + 0.98 are 2.0
+  of it; the rest = a cheaper profile: `{"image": 4}`→`{"image": 1}` for the
+  profile day, or `RADIANCE_FAST_DRAFT=0`, or the mtp lane) — the day-one 3.5
+  re-measure owns the verdict.
+- **Support state (ROCm/RDNA) + accuracy/perf:** upstream int4_pth is BETA —
+  three OPEN defects at our tag: write-kernel wrong-values flakers (#53086,
+  filed pre-tag, unfixed; head-64/128 shapes fail, head-256 unenumerated)
+  [168]; the **SWA crash class** (#48721 open; fix PR #48842 UNMERGED — our
+  drafter IS 5 sliding layers) [169]; the RHT first-use sync guard (#62946
+  unmerged, enforce-eager trigger — inert for our PIECEWISE pod) [170]. AMD's
+  own 4-bit-KV productionization is CDNA/LMCache, not RDNA4 in-engine
+  [176][177]. The fork adds NO q4 KV kernel [174][175]. Accuracy: per-token
+  fp32 scale + RHT 4-bit (R1 L1.2 [4]); the gemma-4 fix-PR's own eval shows a
+  −9.2pp gsm8k move at a 256-dim head [169] — the C05 3.6 quality leg (GSM8K
+  class) and tool leg (the 30/30 record is fp8-KV-only [108]) were written
+  for exactly this promotion and bind. Perf: R4D→TRITON_ATTN moves the target
+  attention onto Triton's unified kernel — #54438-class data measured TRITON
+  +1.28–10.74× vs ROCM_ATTN at head 256 on RDNA [26], but vs radiance's
+  hand-written R4D the delta is UNMEASURED; the 186.7 tok/s anchor is an
+  R4D+fp8 lane — re-bench at step 6, expect movement.
+- **Risk ladder:** startup refusal persists (loud, probe-gated, the
+  estimated-length line prices the fallback); the SWA-int4 class crashes at
+  layer-build (also startup-loud — 3.6 leg-1 catches it); accuracy/tool drift
+  (3.6 legs). **Best guess: the option** — the only dtype class under the
+  physical ceiling at 262144, the owner's literal mandate, and this ticket
+  already ships its acceptance gate verbatim.
+
+### Option 2 — fp8 KV + reduced max-model-len (CONTRADICTS the Q11/D31 ruling — priced honestly)
+
+- At the observed non-KV: **no ctx fits @0.90** (pool < fixed floor — exactly
+  the silent-rejection shape seen); @0.95 fp8 boots to ≈**38k**; @0.98
+  ≈**70k**; ssm-bf16 buys fp8 only ≈ +20k (aux 1.52→0.81, attention unchanged
+  at 32 KiB/token).
+- Shipping it = the D31 "only legs that move": the serveArgs max-model-len +
+  the dflash JSON `max_model_len` + the testlib pair + the T3 d12 dict — and
+  the catalog 262144 advertisement goes FALSE again (the D28 band-law
+  resurrection; the true-axis note dies; a fresh owner ruling per D31(e)).
+- **Best guess: rejected as the primary** — ≤70k on a card the owner is
+  asking to serve 262144, while the owner's own q4 demand exists verbatim.
+  It is the D31 contingency shape ONLY if Option 1's boot math refuses.
+
+### Option 3 — weights-side fixes (lives or dies on the R6.2 paste)
+
+- Paste ≈ 20–21 ⇒ (b) CLOSED; nothing weights-side; the residual is
+  profile/graph/spec-side and Option 1's stack-mates own it.
+- Paste ≳ 23 ⇒ loader investigation on the fork's seams (W4A8 runtime-requant
+  staging, `RADIANCE_MXFP4_WPERM` permute copies, fast-draft buffers
+  [172][175]) — upstream maintainer territory; could recover the 1.3–3 GiB
+  without util or ssm surgery and make int4@262144 comfortable.
+- **Best guess: 4-bit residency confirmed — keep the ask, expect closure.**
+
+### Option 4 — util raise 0.90 → 0.95/0.98 (a contributor, never a solution)
+
+- Buys exactly 0.05/0.08 × 31.86 = **1.59/2.55 GiB**; 0.99 is startup-dead on
+  this card [158]; alone fits nothing (fp8 needs +8.4 over observed pool,
+  int4 +4.5). As an Option-1 stack-mate it is essential; the startup assert
+  keeps any over-commit loud (pod fails at startup — the D31 backstop class
+  intact).
+
+### Option 5 — adjacent surfaces, priced and NOT the answer
+
+- `--kv-offloading-size` / `RADIANCE_KV_OFFLOADING_SIZE`: the fork's own 256K
+  baseline says it is an **external prefix-cache tier, not extra live GPU KV
+  capacity** [173] — the boot check is GPU-side, so it cannot even silence
+  crash #4; it makes admitted long prefixes cheap to restore (58.1 vs 60.2
+  tok/s). Keep as the runbook's post-boot relief valve.
+- mtp K4 lane (drop the 1.97 GiB drafter; num_spec 7→4 shrinks the GDN page +
+  blocks): non-KV −~2.0–2.3, demand −0.45 — a real margin donor for Option 1
+  at the price of the 29/30 tool-gate-FAIL caveat [108] + the
+  `RADIANCE_QUARK_BF16_MTP=1` coupling; values-only.
+- `turboquant_4bit_nc`: 4.09 GiB attention — same capacity class, needs its
+  own TURBOQUANT backend (in 0.30's ROCm priority list [102] but with zero
+  radiance qualification and CDNA-centric upstream work [176][177]) — more
+  unknowns than Option 1, no capacity win. Not recommended.
+
+## R6.4 — The ONE owner question
+
+**R6-Q1 — the q4 package ruling (one question, three answers).** fp8@262144 is
+proven arithmetically dead on 32 GiB (9.51 needed > the ~8.3 GiB best-case
+pool — and the observed pool is 1.09). Which ship shape do you rule?
+**(A — recommended):** q4-default = the Option-1 combo (int4_per_token_head +
+TRITON_ATTN + ssm-cache bfloat16 + util 0.95-or-0.98), boot at 262144 and let
+C05's 3.5 re-measure + the 3.6 int4 gate (whose legs were written for exactly
+this promotion) qualify on target — residual risk: the three open upstream
+int4 defects + the unrecovered-overhead margin question, both loud-at-startup
+classes;
+**(B):** same q4 edits, but pre-emptively cap `--max-model-len` at the engine
+estimate (the likely ~120–180k without overhead recovery) — re-breaks the
+Q11/D31 true axis (your call on the catalog);
+**(C):** keep fp8 as the default ONLY at a ≤70k cap (the D31 contingency
+branch) and move the q4 mandate to the future 48 GiB card (the OQ3 ledger
+note).
+Recommendation: **(A)**, falling through to **(B)** on the engine's own
+printed estimate; and please send the R6.2 paste (items 1–2) first so the
+weights-side is closed on evidence, not on arithmetic bounds.
+
+## Contradictions and how to weigh them (R6 conflict map)
+
+1. **Owner's arithmetic model vs the hybrid engine's:** "4GB per 256k KV
+   (again q4)" is right for the attention pool; the GDN hybrid state (+1.5
+   GiB/request, KV-dtype-independent) + the drafter window are invisible to a
+   transformer-only reading. Weigh: the engine formula at the shipped pin
+   [155][156] + the fetched configs [166][167] are the authority — the demand
+   is satisfiable, but at ~4.9–5.6, not 4.0.
+2. **C05's ship law ("the fp8 default is the ship state — the gate is a
+   measurement step") vs crash #4:** the boot check inverts the dependency —
+   measurement requires boot, fp8 boot at 262144 cannot happen. The plan text
+   is superseded by physics + the fresh ruling-grade demand; Option 1 makes
+   the gate the boot config.
+3. **Round-2 Q5's "int4 stays non-default until the gate passes" vs "QUALIFY
+   INT4 NOW":** the ruling always intended a day-one flip on PASS; crash #4 is
+   the gate's leg-0 failing for FP8 (startup acceptance), not for int4. Weigh
+   Option 1 as the sanctioned continuation, not a scope break.
+4. **R1's int4-quality comfort (v0.33 table, "MTP-safe by negative evidence")
+   vs R6's three open defects:** the upstream state DEGRADED between the two
+   reads (#53086 Aug, #48721 Jul, fix PRs unmerged). Weigh: pinned-source
+   truth at our tag [163] + open-issue state [168][169][170]; the 3.6 quality
+   leg is the local authority — the round-1 comfort note is historical.
+5. **radiance publishes a working 256K-fp8 reference; our TP1 dies on it:**
+   their runs are TP2 (weights + state + attention all halve per GPU) [173] —
+   nobody has published this shape at TP1 (R3 L2.4 law persists). Weigh as:
+   their numbers are calibration-class, never a TP1 feasibility promise.
+6. **"Model resident ≈18GB (owner) vs 27.58 consumed (log)" is NOT
+   contradiction #5 but the whole R6.2 open loop — pending the paste.**
+
+## Implications for the plan
+
+- An R6-Q1 answer of (A)/(B) is a fresh values+test pass, not a re-scope: it
+  moves exactly the D27/D31-marked surfaces — the `kvCacheDtype` default, the
+  `--attention-backend` pair, a new `--mamba-ssm-cache-dtype` pair, the util
+  literal, the testlib recipe pairs + the C05 T3 d12 dict + AC8/AC7 comments
+  (fp8 demotes to "documented toggle"), the kvCacheDtype key comment (int4
+  promoted, the gate legs reworded from "flip and measure" to "shipped and
+  qualify"), and DECISIONS entries superseding D27's default posture + D31's
+  risk statement resolution. The coordinator/plan own those surfaces — this
+  round wrote nothing outside RESEARCH.md.
+- The 3.5 gate acquires a hard PASS/FAIL bar derivable from public code:
+  pool ≥ demand-by-dtype (the R6.1.3 table) — and the engine now prints its
+  own estimate whenever the fixed floor fits (ssm-bf16 changes silence into a
+  number [155] — free calibration).
+- The runbook's util story gains a verified ceiling fact: 0.99 is
+  startup-dead on this card (31.54 > 31.46 free) [158]; 0.98 is the recorded
+  max-start.
+- The tool-accuracy story: if q4 ships as the default, the C04 `tools: true`
+  marker's grounding sentence ("the 30/30 record is fp8-KV-only") becomes a
+  live re-qualification dependency, not a caveat footnote — 3.6's tool smoke
+  gate is the marker's lease.
+
+## Open questions (no-questions-rule log — round 6, for coord → owner/plan)
+
+- **R6-Q1** (the single question, with options + recommendation) — see R6.4.
+- Not blocking it: the R6.2 ask-for paste items 1–2 (settle (a) vs (b)),
+  item 4 (decompose the 27.58), item 5 (close the on-disk format story).
+- Carried: R5-Q2 (the crash-#2a ValueError provenance) stays OPEN untouched;
+  R5-Q3 CLOSED (D35). D35's "day-one gates 3.5/3.6/3.7 unchanged" provision is
+  what this round reports as UNEXECUTABLE in the fp8 order — the gate order
+  itself (boot first, then flip) is the process finding.
+
+## Sources (R6)
+
+All reads 2026-11-09 at the exact pins: vLLM @ v0.30.0 = `ced6857a` (tag
+commit 2026-09-21T22:32Z [178]); radiance @ `5b99d66c844fd0a54e4a7eb93b40a1ece009a53d`;
+HF revisions `93245f7c…` (target) / `ee0cb26a…` (drafter).
+
+155. vLLM v0.30.0 @ ced6857a — `vllm/v1/core/kv_cache_utils.py` — `_check_enough_kv_cache_memory` L872, message assembly L898–910 (the owner's :899 lands in the raise; overlay line-drift class of R4-V2), `estimate_max_model_len` clause gated on > 0; `check_enough_kv_cache_memory` L976–1009 (null-block reservation, per-layer spec sum); `max_memory_usage_bytes` L912; `estimate_max_model_len` binary search L925–968; second call site L2737 — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/core/kv_cache_utils.py
+156. vLLM v0.30.0 @ ced6857a — `vllm/v1/kv_cache_interface.py` — `KVQuantMode` L39–134; `num_states = block_size // tokens_per_state` L192–198; `AttentionSpec` page algebra L479–537; `FullAttentionSpec.max_memory_usage_bytes` L559–566; `SlidingWindowSpec.max_admission_blocks_per_request` (window + extra_retained + in-flight) L620+; `MambaSpec` L993–1052 — align: `page × (2 + num_speculative_blocks + num_prefill_checkpoint_blocks)`; `tp_replicated` (GDN shards) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/kv_cache_interface.py
+157. vLLM v0.30.0 @ ced6857a — `vllm/v1/worker/gpu_worker.py` — `requested_memory` L452; `determine_available_memory` L528–685: `available = requested − non_kv_cache_memory − cudagraph_estimate_applied` (L621), `kv_cache_memory_bytes` skip-profiling branch L542–561 (the D24 lever: "does not respect gpu_memory_utilization"), ROCm profiling fallback L596–611, `Available KV cache memory: %s GiB` INFO-once L641, graph-estimate util-equivalence advisories L645–683 — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/worker/gpu_worker.py
+158. vLLM v0.30.0 @ ced6857a — `vllm/v1/worker/utils.py` — `request_memory` L534–554: `requested = ceil(total_memory × util)` + the "Free memory on device (X/Y GiB) on startup is less than desired GPU memory utilization" raise. Cross-check: 0.99 × 31.86 = 31.54 > 31.46 free ⇒ the 0.9.3 launcher's "0.99 asks 31.54 and fails at startup" record re-derives on identical constants — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/worker/utils.py
+159. vLLM v0.30.0 @ ced6857a — `vllm/utils/mem_utils.py` + `vllm/envs.py` — `MemorySnapshot` (non_torch = cuda − torch, L159), `MemorySummary` fields + `format_gib = round(b/GiB, 2)` L31 + the summary line L219–224 (weights/non-torch/peak decomposition, DEBUG-level); `VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS` default **1** (envs.py L317, L2109) — the graph pool is pre-deducted from the KV budget — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/utils/mem_utils.py + …/vllm/envs.py
+160. vLLM v0.30.0 @ ced6857a — `vllm/v1/worker/gpu_model_runner.py` — `Model loading took %s GiB memory and %.6f seconds` INFO-once at L5416–5418 (`model_memory_usage` = loader torch delta); the OutOfMemory except-branch "Failed to load model - not enough GPU memory…" L5405 — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/worker/gpu_model_runner.py
+161. vLLM v0.30.0 @ ced6857a — `vllm/config/cache.py` — `CacheDType` = the 18-value literal L39–58 (auto/float16/bfloat16/fp8/fp8_e4m3/fp8_e5m2/fp8_inc/fp8_ds_mla/nvfp4_ds_mla/turboquant_{k8v4,4bit_nc,k3v4_nc,3bit_nc}/int4_per_token_head/int8_per_token_head/fp8_per_token_head/nvfp4/nvfp4_4over6) — re-verified identical to R3's [101]; `MambaDType auto|float32|float16|bfloat16` L61; `MambaCacheMode all|align|none` L62; `KVOffloadingBackend native|lmcache` L64 — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/config/cache.py
+162. vLLM v0.30.0 @ ced6857a — `vllm/model_executor/layers/quantization/__init__.py` — registered methods L16–48 include `quark` AND `mxfp4`/`gpt_oss_mxfp4`; unregistered names RAISE at L112–113 — no silent-dequant fallback exists at this tag — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/model_executor/layers/quantization/__init__.py
+163. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/backends/triton_attn.py` — `customize_spec` L275–288: INT4_PER_TOKEN_HEAD ⇒ `(hs_k//2 + hs_v//2) + 2·fp32-scale` = 264 B/head at head 256 (the R1 L1.2 derivation in-tree); `supported_kv_cache_dtypes` L294–304 incl. int4/int8/fp8_per_token_head; `supports_head_size ≥ 32` L351; kernel `triton_reshape_and_cache_flash_per_token_head_quant` import L40 + decode branch L609; no ROCm exclusion on the quant path (the aiter rope-and-cache branch is AITER-env-gated, L804/827) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/backends/triton_attn.py
+164. vLLM v0.30.0 @ ced6857a — `vllm/model_executor/layers/mamba/mamba_utils.py` + `.../mamba/gdn/qwen_gdn_linear_attn.py` — `gated_delta_net_state_shape` L274–296 (conv_dim = 2·key_dim + value_dim = 10,240 @TP1; conv slots = kernel−1+num_spec; temporal (48,128,128)); `gated_delta_net_state_dtype` L122+ (`auto` ssm → float32); model wiring reads `linear_num_key_heads/linear_num_value_heads/linear_key_head_dim/linear_value_head_dim/linear_conv_kernel_dim` + `num_spec` — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/model_executor/layers/mamba/mamba_utils.py + …/qwen_gdn_linear_attn.py
+165. vLLM v0.30.0 @ ced6857a — `vllm/v1/attention/backends/gdn_attn.py` — `GDNAttentionMetadataBuilder` L97–116: `num_spec = speculative_config.num_speculative_tokens` (the K7 → the conv+spec-block inflation inside 9.51; the spec JSON demonstrably parsed); `decode_cudagraph_max_bs = max_num_seqs × (K+1)` (the graph-estimate's spec shape) — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/v1/attention/backends/gdn_attn.py
+166. HF `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` @ `93245f7c00f1a8964b66a97c6e02e2fd09080be4` — `config.json` (fetched) — `num_hidden_layers 64`, `full_attention_interval 4`, `head_dim 256`, `num_attention_heads 24`/`num_key_value_heads 4`, `linear_num_key_heads 16`/`linear_num_value_heads 48`, `linear_{key,value}_head_dim 128`, `linear_conv_kernel_dim 4`, `mamba_ssm_dtype float32`, `mtp_num_hidden_layers 1`, vocab 248320, `tie_word_embeddings false`; `quantization_config`: `quant_method: quark`, fp4 weights group32 + `scale_format e8m0` (MXFP4), `export.weight_format: real_quantized`, `export.pack_method: reorder`, `kv_cache_quant_config {}` (no baked KV scales), `exclude` = 127 entries: all `model.visual.*` + `lm_head` + `mtp.*` + embeds (the bf16 islands ≈ 5.7 GiB inside the 18.41 GiB file; "pure 4-bit" would be ≈13.5 — the owner's "~18GB" matches the file, both readings reconcile) — https://huggingface.co/amd/Qwen3.8-27B-Quark-AWQ-MXFP4/raw/93245f7c00f1a8964b66a97c6e02e2fd09080be4/config.json
+167. HF `tcclaviger/Qwen3.8-27B-DFlash2-FP8` @ `ee0cb26a…` — `config.json` (fetched) — `DFlash2DraftModel`: `num_hidden_layers 5`, `layer_types = sliding_attention ×5`, `sliding_window 2048`, `num_key_value_heads 8`, `head_dim 128`, `max_position_embeddings 262144`, fp8 e4m3 blockwise [128,128], `dflash_config {block_size 8, target_layer_ids [5,19,33,47,61], selector_top_k 16}` — https://huggingface.co/tcclaviger/Qwen3.8-27B-DFlash2-FP8/raw/ee0cb26a8279b7910cc28d82a8a3e15e4728d56f/config.json
+168. vLLM issue **#53086** — OPEN, filed 2026-08-20 (one month BEFORE the v0.30.0 tag; still open at this read): "int4 per-token-head KV cache: triton_reshape_and_cache_flash_per_token_head_quant returns wrong values" — deterministic 54.7% round-trip mismatch at [int4, block16, head64, 1kv, 42tok] + flaky combos (NVIDIA-H200 repro on main; all int8/fp8 pass; head-256 unenumerated) — https://github.com/vllm-project/vllm/issues/53086
+169. vLLM issue **#48721** (OPEN, 2026-07-15): "v0.25.1 int4_per_token_head crashes with SWA models" + fix PR **#48842** (created 2026-07-16, **UNMERGED** — `merged_at: null` at this read; authored against gemma-4's head dims 256/512 + the stride-mismatch crash; its eval table shows gsm8k bf16 0.6535 → int4-pth 0.5618, a −9.2pp datum) — bears directly on our 5 sliding drafter layers and the 3.6 quality leg — https://github.com/vllm-project/vllm/issues/48721 + https://github.com/vllm-project/vllm/pull/48842
+170. vLLM PR **#62946** (created 2026-10-21, **UNMERGED** — post-v0.30.0): "[Bugfix][Attention] Allow the one-time sync when building INT4 RHT signs" — the `_get_rht_signs` CPU→GPU first-use copy trips `VLLM_GPU_SYNC_CHECK` under enforce-eager; seen in **amd-ci** (MI300X); inert for our non-eager PIECEWISE pod — https://github.com/vllm-project/vllm/pull/62946
+171. magiccodingman/vllm-radiance @ `5b99d66c844f` — `radiance_r4d_attn.py` **L220**: `supported_kv_cache_dtypes = ["auto", "bfloat16", "fp8", "fp8_e4m3"]` — R4D at the shipped pin refuses int4_pth AND **fp8_e5m2** (the R3 L2.2 record re-verified at source); `patch_r4d.py` docstring — backend opt-in by name; `RADIANCE_USE_R4D=0` declines every hook (GDN prologue included); `--attention-backend TRITON_ATTN` therefore moves ONLY the target attention, the GDN kernels stay — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/radiance_r4d_attn.py + …/patch_r4d.py
+172. Same pin — `patch_kv_group_size.py` docstring — the fork's own bucket table: "**48 linear_attention (GDN, MambaSpec) / 16 full_attention / 5 drafter (SlidingWindowSpec, window 2048)**"; per-request group costs "a full-attention group costs 160 blocks, a GDN group costs **2 + num_speculative_blocks = 9**, and the drafter's sliding-window group costs 8" (their TP2 frame — R6.1.3 is the TP1 translation); live-log witnesses `kv_cache_utils.py:1261 Add 2/4 padding layers…` + `:2235 GPU KV cache size: 739,544 tokens`; knobs `RADIANCE_KV_GROUP_OPT/SIZE/MAX_GROUPS` — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844f/patch_kv_group_size.py
+173. Same pin — `docs/ROCM_KV_OFFLOAD_LONG_CONTEXT_BASELINE.md` — native CPU KV offload is "a fast **external prefix-cache tier, not extra live GPU KV capacity**"; the reference envelope is **TP2, 90% allocation, FP8 KV, 256K limit** (why the maintainers never met crash #4 — weights+state+attention all halve per GPU); restore 58.10 vs local-hit 60.20 tok/s; "`max-num-seqs=4` is an admission ceiling, not a promise that four maximum-length sequences fit on GPU" — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844f/docs/ROCM_KV_OFFLOAD_LONG_CONTEXT_BASELINE.md
+174. Same pin — `docs/V030_GGZ14_MXFP4_NVFP4.md` — the fork's NVFP4 program is a WEIGHTS converter (`RADIANCE_NVFP4_MXFP4=1`, default-off, fail-closed A16, both-R9700 native fixtures); **no 4-bit KV kernel surface exists in the fork**; `.env.example` L23–38 — `RADIANCE_KV_OFFLOADING_SIZE` "Keep disabled unless long-context", `RADIANCE_FP8_KV_SCALES` (calibrated FP8 sidecar) — their quality investment is fp8-KV, not q4; the full entrypoint `RADIANCE_*` list carries no KV-dtype knob — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844f/docs/V030_GGZ14_MXFP4_NVFP4.md + …/.env.example + …/radiance_entrypoint.sh
+175. [carry] ship-state ground audited: C02 serveArgs/env (fp8 default, R4D, 262144, util 0.90, dflash K7 JSON, `{"image": 4}`, PIECEWISE, the 20-var law), C03 staging (the two revision pins), C05 3.5/3.6/3.7 gate text + the startup contingency, DECISIONS D2/D2-AMEND/D24/D25/D27/D31, R1 L1.2/L1.5 (per-token table + the 31.86/1.15/0.54 measured classes), R2 L3.1 + [S L422-425] (the 0.98/0.99 launcher records), R3 [101][102][103][108]
+176. AMD ROCm blogs — "Productionizing TurboQuant on AMD GPUs for KV-Cache Agentic Workloads" (TurboQuant KV on AMD, fork snapshot `3cc38a1b`, MI-series) + "4-bit KV Caching in LMCache … on AMD MI355X" (offload-connector 4-bit KV) — AMD's public 4-bit-KV maturation is CDNA + LMCache-connector territory, not RDNA4 in-engine — https://rocm.blogs.amd.com/artificial-intelligence/turboquant-vllm-agentic/README.html + https://rocm.blogs.amd.com/software-tools-optimization/4bit-KV-LMcache/README.html
+177. vLLM issue **#38171** (the TurboQuant support thread) + the #53299 docs thread — upstream TQ dtype-family status context; third-party TQ ports (NVIDIA GB10 forum, Intel 32-GB blog) corroborate the 16.4-KiB class exists; no RDNA4 in-engine qualification anywhere public — https://github.com/vllm-project/vllm/issues/38171
+178. GitHub API — `repos/vllm-project/vllm/git/ref/tags/v0.30.0` → `ced6857afa0ea7b2e3f0846a62e1394e90f15607`; commit date **2026-09-21T22:32:49Z** — fixes the timeline reads on #53086 (pre-tag-open) and #62946/#48842 status — https://api.github.com/repos/vllm-project/vllm/git/ref/tags/v0.30.0
+179. GitHub search API — `repo:vllm-project/vllm int4_per_token_head` → total_count 38; the family's live-beta texture at this moment: #51691 (offload-certification for per-token-head layouts, open PR), #65815 (quantized-cache KL benchmark, open PR), #63081 (first-layer key-bias startup warning, open PR), #59674 (int4 key-bias fix, open) — https://api.github.com/search/issues
+180. vLLM v0.30.0 @ ced6857a — `vllm/config/multimodal.py` L244 (`mm_ipc_gpu_memory_gb: Field(default=0)`) + `vllm/multimodal/gpu_ipc_memory.py` `reserve_mm_ipc_gpu_memory` L155–185 — the frontend mm reservation is **0 at default**: the pool shrink is NOT mm-IPC — https://raw.githubusercontent.com/vllm-project/vllm/v0.30.0/vllm/multimodal/gpu_ipc_memory.py
+181. magiccodingman/vllm-radiance @ `5b99d66c844f` — `Dockerfile` (fetched fresh at this write, R6.5) — L195 "Only the resulting /opt/vllm venv is carried into the release image", **L205 `ENV VIRTUAL_ENV=/opt/vllm`**, L206 `RUN python3 -m venv /opt/vllm`, L207 `ENV PATH=/opt/vllm/bin:$PATH`, **L208 `ENV SP=/opt/vllm/lib/python3.12/site-packages`**, L302 the `.so` pruning law inside that venv — the paste path of crash #4 is this tree; the D34/D35 flash-attn pip layer lands in the same SP — https://raw.githubusercontent.com/magiccodingman/vllm-radiance/5b99d66c844fd0a54e4a7eb93b40a1ece009a53d/Dockerfile
+
+## Reliability notes (R6 self-review)
+
+- **High confidence (source @ exact pins):** the needed-memory formula and the
+  fp8/geometry attribution of 9.51 [155][156][164][165][166][167] — the
+  decomposition is predicted from public code + fetched configs and lands on
+  the observed value at display precision while every alternative dtype is
+  off by whole GiB (robust discrimination); the missing-estimated-length
+  forensic [155]; R4D's dtype refusals incl. the `fp8_e5m2` surprise [171];
+  int4_pth exists at the CLI + TRITON_ATTN [161][163]; the dequant-(b)
+  refutation-by-failure-location [160]; the 0.99-ceiling re-derivation [158];
+  the fork's 48/16/5 bucket table [172]; "offload = tier, not capacity"
+  [173]; graph-estimate pre-deduction default-ON [157][159].
+- **Medium confidence:** the exact 1.52-aux split (±0.02 GiB: in-flight term,
+  conv orientation — immaterial to the verdict); the (a)-lean at 1.09
+  (bounded arithmetic, not measurement — the R6.2 paste closes it); the
+  pool-vs-cap table (it holds non-KV constant at 27.58; changing the spec
+  lane/mm limit/backend moves it — directionally right, magnitudes pending
+  re-measure); int4 accuracy at THIS model (the −9.2pp datum is a different
+  model class [169]; the 3.6 quality leg owns ours).
+- **Low confidence / explicit gaps:** whether the SWA+int4 crash class still
+  bites at v0.30.0 with our drafter (unverified claim; the 3.6 startup leg is
+  the detector); whether 1.3–3.0 GiB of overhead is recoverable in practice
+  (zero measured decomposition; the DEBUG re-boot is the cheap step);
+  TRITON_ATTN-vs-R4D perf at head 256 (no public datum; step 6 re-bench owns
+  it); no GPU session executed anything — every verdict is code-static; the
+  private GitLab radiance line stays unreadable [R5 precedent].
+- **Weakest claim of the round:** "q4@262144 is achievable at ALL" — it
+  rests on overhead recovery to a 4.9–5.6 GiB pool AND the int4 write path
+  being correct at head_dim 256 on gfx1201 with sliding draft layers; two of
+  the three legs have open upstream defects and zero public RDNA4 data.
+  Stated plainly: the honest ship sentence is "q4-default per the owner's
+  ruling; 262144 is the BOOT GOAL and the day-one gate's pool line is the
+  verdict; ~120–180k is the arithmetic-blessed fallback band at 0.95–0.98
+  without further surgery."
+- **Perspective weighting:** the engine's own formula + the fetched configs
+  outrank every narrative (the owner's mental model, the plan's gate design,
+  the fork's TP2 publications); the owner's ruling is authoritative on WHAT
+  (q4), the sources on whether-physics (R6.1.3/4).
+- **Blind spots (stated):** the measured non-KV decomposition at our shape
+  (graph estimate vs mm profile vs fast-draft staging — the DEBUG re-boot);
+  the TP1 drafter-group accounting (the fork's cost table is TP2-framed
+  [172]); int4-pth numerical behavior on GDN-hybrid + spec-recompute paths
+  (only the on-target 3.6 legs answer); prefix-caching's
+  `num_prefill_checkpoint_blocks` term folded into the 10-block estimate
+  without a source-verified assignment site.
+
+### R6.5 — coordination addendum (2026-11-09T16:1xZ, the coordinator): D35 landed by the owner on main; the pod path prefix is the base image's
+
+- **(a) The R6 evidence arrived with the owner's FIRST post-D35 deployment
+  already running.** The D35 flash-attn install is LANDED on main by the
+  owner's own hand: `ac8a65c98`, authored Spencer 2026-11-09T15:40:58Z, the
+  single squash carrying the run's shipped files including the records
+  commit's (run tip `4936564b6`; byte-identity verified at this write —
+  `git diff 4936564b6 ac8a65c98` EMPTY over every cf-131 shipped surface:
+  the container dir, the chart, the container + runbook suites, the service
+  values twin, the catalog file; the 29-file tree delta sits wholly in other
+  tickets' main-side drift). CI republished `:main` with the FA layer: the
+  D35 amendment review's container-suite run 2 showed the LIVE t7 MATCH —
+  the AC6 flash-attn-import bar discharged on registry evidence.
+- **(b) Crash #4's stack path is the BASE IMAGE's own vLLM prefix.** The
+  pasted `/opt/vllm/lib/python3.12/site-packages/vllm` is the magiccodingman
+  base image's install tree — its Dockerfile builds the venv explicitly
+  there: `ENV VIRTUAL_ENV=/opt/vllm`, `RUN python3 -m venv /opt/vllm`,
+  `ENV SP=/opt/vllm/lib/python3.12/site-packages` [181] — the radiance fork
+  ships vLLM unpackaged at `/opt/vllm`, NOT a system pip vLLM. Every fork
+  patch operates inside that same tree (`sysconfig.get_paths()["purelib"]`
+  anchors, [172]), and the D34/D35 flash-attn pip layer installs into that
+  same SP — so the paste independently corroborates the D34/D35 install
+  stack it was produced by.
+- **(c) Consequence for R6's verdict:** the "shipped fp8 honored" finding —
+  and the whole 9.51/1.09 arithmetic it anchors — was tested on the CURRENT
+  image. No stale-artifact doubt attaches to crash #4: the pod that died
+  was running the post-D35 `:main`.
