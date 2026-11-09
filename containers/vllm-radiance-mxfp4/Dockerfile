@@ -5,12 +5,12 @@
 # commit) + libr4d 0.5.0 + the 35 release overlays + the R4D/MXFP4 kernels +
 # 16 RDNA4-tuned block-FP8 GEMM configs (device_name=AMD_Radeon_R9700), all
 # baked. There is no build story left to transcribe: apart from the one
-# sanctioned flash-attn layer below (D34), the overlay adds NOTHING — we
-# re-export it under the repo's ghcr namespace because the cluster's pull
-# target must be an in-repo-ledgered artifact and docker-build.yaml's
-# first-build `:v<run>` law needs its target (D23). The chart-direct
-# upstream pin stays rejected: it would orphan that artifact and move the
-# ledger home out of README.md.
+# sanctioned flash-attn layer below (D34, source re-pinned by D35), the
+# overlay adds NOTHING — we re-export it under the repo's ghcr namespace
+# because the cluster's pull target must be an in-repo-ledgered artifact and
+# docker-build.yaml's first-build `:v<run>` law needs its target (D23). The
+# chart-direct upstream pin stays rejected: it would orphan that artifact and
+# move the ledger home out of README.md.
 #
 # Pin law: the DIGEST is the pin, written tag+digest (the maintainers' own
 # sha-pinned tag convention, guide Part 2.3 / R2 L1.3). Tag<->commit law
@@ -34,27 +34,32 @@
 #         AITER 0.1.20 / libr4d 0.5.0 @ e8de4bc1 / ROCm 7.14)
 FROM docker.io/magiccodingman/vllm-radiance:1.0.397@sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0
 
-# flash-attn for the ViT FLASH_ATTN path (owner ruling 2026-11-09, D33
-# overturned — RESEARCH R5): the pure-Triton AMD port, the SAME source the
-# official vLLM ROCm gfx1250 base image builds
-# (docker/Dockerfile.rocm_base_gfx1250 @ v0.30.0: jpvillam-amd/
-# flash-attention, branch jpvillam/gfx1250_wip) — chosen over the PyPI
-# wheel because the PyPI 2.8.3 arch list omits gfx1250 (the R9700's
-# enumeration per the commission; the gfx1201 probe result would equally
-# license `flash-attn==2.8.3.post2`). With FLASH_ATTENTION_TRITON_AMD_
-# ENABLE=TRUE at build time the package compiles NO extension (setup.py
-# SKIP_CK_BUILD default) — kernels JIT via Triton at runtime; the flag is
-# deliberately inline-only, the runtime var stays chart-owned (20-var law).
-# --no-deps --no-build-isolation protect the stack-pinned torch/triton
-# (stack.yaml atomicity law); setup.py imports torch+packaging+setuptools
-# +wheel, hence the prep. No tag exists upstream → no auto datasource;
-# manual bump with the base-pin law (D12-amended shape).
-ARG FLASH_ATTN_REPO=https://github.com/jpvillam-amd/flash-attention.git
-ARG FLASH_ATTN_REF=aa743c5933560d097d8aa5e833ca10153ed7f6bb
+# flash-attn for the ViT FLASH_ATTN path (owner ruling 2026-11-09, D35 — the
+# install-source switch on the D34 layer; the install itself and the D33
+# overturn stand): the OFFICIAL released package from PyPI — the same
+# pure-Triton AMD port vLLM's own gfx1250 recipe builds
+# (docker/Dockerfile.rocm_base_gfx1250 @ v0.30.0), in its released form.
+# D34 pinned jpvillam-amd/flash-attention branch jpvillam/gfx1250_wip @
+# aa743c5933560d097d8aa5e833ca10153ed7f6bb only because the PyPI arch list
+# omits gfx1250; the owner's pod probe enumerated the Triton target as
+# gfx1201 (RDNA4) — whitelisted by this release — so the fork reason fell
+# away and R5's licensed PyPI substitution was ruled in. Residual: if the
+# node/stack ever enumerates gfx1250, this release's arch list fails it and
+# the jpvillam pin above returns as the recorded fallback (DECISIONS D35).
+# With FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE at build time the sdist
+# compiles NO HIP/CK extension (setup.py SKIP_CK_BUILD default) — kernels
+# JIT via Triton at runtime; the flag is deliberately inline-only, the
+# runtime var stays chart-owned (20-var law). --no-deps --no-build-isolation
+# protect the stack-pinned torch/triton (stack.yaml atomicity law); setup.py
+# imports torch+packaging+setuptools+wheel, hence the prep. Renovate tracks
+# the version: the Dao GitHub tags mirror the PyPI releases (the repo's
+# ARG/directive pin pattern).
+# renovate: datasource=github-tags depName=Dao-AILab/flash-attention
+ARG FLASH_ATTN_VERSION=2.8.3.post2
 RUN python3 -m pip install --no-cache-dir setuptools wheel packaging \
  && FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE python3 -m pip install \
       --no-cache-dir --no-deps --no-build-isolation \
-      "flash-attn @ git+${FLASH_ATTN_REPO}@${FLASH_ATTN_REF}"
+      "flash-attn==${FLASH_ATTN_VERSION}"
 
 # serve = health = metrics on one port: the chart probes /health here and
 # scrapes /metrics from it. The upstream image config declares no

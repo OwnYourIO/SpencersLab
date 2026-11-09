@@ -15,10 +15,10 @@ needs one (D23); the interface contract C02 builds against is below.
 
 ## Tag -> digest ledger (manual)
 
-| What | Pin | Digest / SHA | Verified (probed 2026-11-08) |
+| What | Pin | Digest / SHA | Verified (probed 2026-11-08; FA row: D35 probes 2026-11-09) |
 |---|---|---|---|
 | Radiance image | `docker.io/magiccodingman/vllm-radiance:1.0.397` (= `latest` = `1.0` = `sha-5b99d66c844f`) | `sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0` | Docker Hub tags API: `full_size` 4,079,863,554 B, `tag_last_pushed` 2026-10-18T06:35Z, `tag_status` active, amd64/linux; source commit `5b99d66c844fd0a54e4a7eb93b40a1ece009a53d` (config-blob `org.opencontainers.image.revision` label); engine vLLM **0.30.0 @ `ced6857afa0ea7b2e3f0846a62e1394e90f15607`** = the v0.30.0 tag commit |
-| flash-attn layer (D34) | `jpvillam-amd/flash-attention`, branch `jpvillam/gfx1250_wip` — the source vLLM's own gfx1250 base recipe builds (`ARG FLASH_ATTN_REPO`/`FLASH_ATTN_REF`) | commit `aa743c5933560d097d8aa5e833ca10153ed7f6bb` (the 2.8.3 port + the gfx1250 `is_cdna` whitelist add, R5 146) | manual pin: the branch carries NO tags and the repo ZERO releases [R5 146], so no auto datasource exists — see the pin law below; installed `--no-deps --no-build-isolation` with the build-time-inline Triton flag (pure-Python wheel, no CK/HIP compilation) |
+| flash-attn layer (D34; source re-pinned by D35) | the official PyPI release `flash-attn==2.8.3.post2` behind `ARG FLASH_ATTN_VERSION`, renovate-tracked by the required `datasource=github-tags depName=Dao-AILab/flash-attention` directive (the Dao tags mirror the PyPI releases) | sdist sha256 `d0f9f0b08a986cdeadbffcf5ec8b3a8f514366c68ad1853d3ab061bc83cc340b` (8,453,127 B; sdist-only — no wheel exists) | D35 probes 2026-11-09, PyPI JSON API + upstream tag `v2.8.3.post2` (sdist files byte-identical to the tag): the Triton port's `utils.py` `is_rdna` whitelist carries **gfx1201** — the pod probe's enumeration — and gfx1250 is in NEITHER arch list (residual: if the node ever enumerates gfx1250 this pin fails it and the jpvillam pin `aa743c5933560d097d8aa5e833ca10153ed7f6bb` returns as the recorded fallback, DECISIONS D35); installed `--no-deps --no-build-isolation` with the build-time-inline Triton flag (pure-Python wheel, no CK/HIP compilation) |
 
 Four-source corroboration of the pin (R3 L1.1), each re-verified at the dev
 probe: the
@@ -79,10 +79,12 @@ published tags are the release line's `1.0.<n>` series.
 
 ## Manual-bump procedure
 
-This dir carries **zero auto-update directives** by contract: the
-release-branch sha-pair publishes have no datasource an auto-updater can
-track (D12-amended), so the ledger is manual and the CI build is the
-authority. Bumping is three steps; every edit lands together:
+The base `FROM` pin carries **no auto-update directive** by contract:
+the release-branch sha-pair publishes have no datasource an auto-updater
+can track (D12-amended), so the base ledger row is manual and the CI
+build is the authority. (The FA layer carries the dir's one sanctioned
+renovate directive — the pin law below.) Bumping the base is three
+steps; every edit lands together:
 
 1. **Watch the Hub tags API** for the next release-branch publish:
 
@@ -107,15 +109,20 @@ authority. Bumping is three steps; every edit lands together:
    bump is not done until the runbook's first-serve step and benchmark step
    pass on the R9700.
 
-**The flash-attn pin law (D34).** The `jpvillam/gfx1250_wip` branch head is
-NOT auto-tracked: a `git-refs`-form datasource would follow the `_wip`
-churn — barred (R5.2) — so `FLASH_ATTN_REF` rides the same manual-bump law
-as the base pin, and no auto-update directive goes on the layer. The
-`github-tags depName=Dao-AILab/flash-attention` + `flash-attn==2.8.3.post2`
-substitution is licensed ONLY if the R5-Q3 pod probe reports gfx1201 AND
-the owner accepts it. Every base bump carries the FA re-verify duty (R5.4):
-the layer still builds against the new base, the built image still imports
-`flash_attn`, and the runbook step-3 ViT marker line still logs.
+**The flash-attn pin law (D35, superseding D34's source).** The layer is
+renovate-tracked by the required `# renovate: datasource=github-tags
+depName=Dao-AILab/flash-attention` directive above
+`ARG FLASH_ATTN_VERSION`. D34's "no auto datasource" clause is retired:
+its bar — a `git-refs` datasource following `_wip`-branch churn (R5.2) —
+cannot govern a released version. The installed artifact is the PyPI
+sdist, but no Dockerfile ARG-pin manager in the repo's `renovate.json`
+parses a `datasource=pypi` directive: the managers parse
+github-tags/github-releases, git-refs, and a narrow tool enum. So
+renovate tracks the Dao GitHub tags, which mirror the PyPI releases,
+and bumps `FLASH_ATTN_VERSION`. Every base bump carries the FA
+re-verify duty (R5.4): the layer still builds against the new base,
+the built image still imports `flash_attn`, and the runbook step-3 ViT
+marker line still logs.
 
 ## Interface contract (what C02 builds against)
 

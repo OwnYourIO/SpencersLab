@@ -6,8 +6,9 @@
 # serveArgs recipe (D4 order, then the cf-131 D24 order), the cf-131 values
 # record keys + comment law, the monitoring-annotations gate, the per-chart CI
 # workflow ladder, and the C01 container surface: the thin re-export overlay
-# + its one sanctioned flash-attn layer (the D34 amendment) and the retirement
-# of the GGUF overlay it replaces.
+# + its one sanctioned flash-attn layer (the D34 amendment, install source
+# re-pinned to the PyPI release by the D35 amendment — the one-ARG shape)
+# and the retirement of the GGUF overlay it replaces.
 # Generation branching is explained in vllm_testlib (cf-131 header); the C01
 # container/retirement legs are unconditional because C01 is wave 1 — they are
 # the designed-red that C01's own dev edit turns green.
@@ -385,13 +386,13 @@ def _dockerfile_logical_lines(text: str) -> list:
 
 
 def test_c01_thin_overlay_dockerfile():
-    """C01 AC1 (D34-amended): the re-export Dockerfile is the thin digest-
-    pinned FROM, the ONE sanctioned flash-attn layer (two ARGs + a single
-    RUN — tests/containers/vllm-radiance-mxfp4.sh t7 pins their content),
-    and the record's EXPOSE 8000, in that order and nothing else — the 0.30
-    image is a self-contained terminal build (R3 L1.2), so a second RUN/ARG
-    or any COPY/ENV/USER re-introduces the build story the base move
-    deleted."""
+    """C01 AC1 (D34-amended, D35 source re-pin): the re-export Dockerfile is
+    the thin digest-pinned FROM, the ONE sanctioned flash-attn layer (one
+    version ARG + a single RUN — tests/containers/vllm-radiance-mxfp4.sh t7
+    pins their content; the D35 block replaced D34's git ARG pair), and the
+    record's EXPOSE 8000, in that order and nothing else — the 0.30 image is
+    a self-contained terminal build (R3 L1.2), so a second RUN/ARG or any
+    COPY/ENV/USER re-introduces the build story the base move deleted."""
     df = CONTAINER_DIR / "Dockerfile"
     assert df.is_file(), "C01 AC1: containers/vllm-radiance-mxfp4/Dockerfile missing"
     text = df.read_text()
@@ -409,15 +410,16 @@ def test_c01_thin_overlay_dockerfile():
     offenders = [k for k in keywords if k not in ("FROM", "ARG", "RUN", "EXPOSE")]
     assert not offenders, (
         f"C01 AC1: instructions outside the sanctioned FROM/ARG/RUN/EXPOSE set: {offenders} "
-        "— COPY/ENV/USER or a second RUN forks the pinned terminal build (the re-export law, D34-scoped)"
+        "— COPY/ENV/USER or a second RUN forks the pinned terminal build (the re-export law, D35 shape)"
     )
     assert keywords[:1] == ["FROM"] and keywords[-1:] == ["EXPOSE"], (
         f"C01 AC1: the flash-attn layer must sit between the FROM(+ledger) block and EXPOSE "
         f"(the R5.2 placement), got the instruction sequence {keywords}"
     )
     counts = {k: keywords.count(k) for k in ("FROM", "ARG", "RUN", "EXPOSE")}
-    assert counts == {"FROM": 1, "ARG": 2, "RUN": 1, "EXPOSE": 1}, (
-        f"C01 AC1 (D34): the law allows EXACTLY the flash-attn ARG-pair + single RUN, got {keywords}"
+    assert counts == {"FROM": 1, "ARG": 1, "RUN": 1, "EXPOSE": 1}, (
+        f"C01 AC1 (D35): the law allows EXACTLY the flash-attn version ARG + single RUN "
+        f"(the D34 git ARG pair is superseded), got {keywords}"
     )
     # The ledger header names what the FROM line cannot: the source commit,
     # the engine identity, the artifact size and the push date (C01 task).
