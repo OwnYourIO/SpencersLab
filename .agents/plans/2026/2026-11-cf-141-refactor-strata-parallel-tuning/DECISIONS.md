@@ -223,9 +223,23 @@ alternatives rejected, why.
   era sentence is era-consistent: C02 states 32768 (true at its gate), C03 re-moves to the
   row-H/8-everywhere truth before PR-1 merges.
 
+## Approval (human, 2026-11-10)
+
+- 2026-11-10 human: **plan APPROVED — option (a) stands** (Q17 resolved with the approval
+  itself, not by a separate round). Consequences as written: C03 ships 8 slots on all four
+  flash-next rungs at the 0.2.9 pin with the per-rung boot-read gates and pre-written revert
+  lines; PR-1 = C01+C02+C03; PR-2 = C04, gated on the same-day crash-cluster re-fetch plus the
+  post-merge soak watch. Rejected at approval: (b) defer the slot raise to C04 (loses the
+  at-pin row-H win), (c) primary-only (contradicts the owner's Q9 word). The owner explicitly
+  accepts crash-and-scale-back as the at-pin posture for strix/orca/q4.
+- 2026-11-10 human (Q12, standing): the U3-v2 cgroup-detection probe is **not** run in this
+  ticket; row-G's premise therefore stays unmeasured and any future row-G authorization must
+  carry its own probe leg.
+
 ## Deferred (round-3 status)
 
-- Q17 (crash-and-scale-back scope at the pin): plan written on (a); (b)/(c) answers re-wave
+- Q17 RESOLVED (see approval entry at end of Decisions): plan APPROVED with (a) —
+  crash-and-scale-back at the pin ships as written; (b)/(c) re-wave
   or shrink C03 before execution — nothing else in the plan changes.
 - row-G file-tier q4@8 experiment — owner-authorized **as experiment only** (Q11), premise
   unmeasured (Q12 declined), post-C04 subject: its own probe leg, its own PR, its own
