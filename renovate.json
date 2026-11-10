@@ -6,8 +6,8 @@
   "timezone": "America/Denver",
   "ignoreTests": true,
   "labels": ["dependencies"],
-  "prHourlyLimit": 2,
-  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
   "semanticCommits": "disabled",
   "customManagers": [
     {

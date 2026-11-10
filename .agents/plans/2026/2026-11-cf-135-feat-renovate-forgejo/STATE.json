@@ -78,13 +78,18 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "dev_session": "ses_e397248ceffeMZh2QdJUeRuKOK",
+      "review_rounds": 1,
+      "review_session": "ses_e396d5a21ffeAWnfpZBUijCsxr",
+      "last_verdict": "APPROVED (r1, 2026-11-10: two zeros at renovate.json:9-10, keys preserved, no rules/legs/comments; zeros-vs-absent grounded in vendored dist + resolved-config dry-run; baseline fingerprints exact; m6 designed-skip carried to C02's gate)",
+      "handoffs": [
+        "RESULT (dev, ses_e397248ceffeMZh2QdJUeRuKOK, coord-compressed faithfully) status: DONE chunk: C01 files_changed: [renovate.json (only; 4 ++--)] commands_run: [forgejo-move-config.sh => pass (m1-m5 ok, m6 designed skip, 'PASS: forgejo-move-config checks (5 ok)', exit 0); renovate-config-validator@44.181.5 => pass (exit 0, RE2 WARN cosmetic per FRICTION); forgejo-main-sync 8 ok / dockerfile-pins 36/0 / system-upgrade-controller 3 ok => pass baselines; kubernetes-mcp-version-floor => fail-as-baseline (only pre-existing k2 9!=8, untouched per D14); chart-yaml-legs => fail-as-baseline (only pre-existing k5+k10); offline dry-run --platform=local --dry-run=lookup => pass (exit 0, ERROR=0, 215 package files, resolved config shows both limits 0, noise classes unchanged x53/x7); aislop ci --changes => pass (100, 0/0, 91 files, honest bash/JSON scope note); git diff => renovate.json only] deviations: none (no rules/legs/comments; tests untouched; nothing committed) friction: none open_questions: none next_suggested: coord commits C01; review re-runs verbatim; m6 designed-skip until C02",
+        "RESULT (review r1, ses_e396d5a21ffeAWnfpZBUijCsxr, coord-compressed faithfully) status: DONE chunk: C01 verdict: APPROVED files_changed: [chunks/C01.md (Review notes only)] commands_run: [forgejo-move-config.sh => pass (5 ok, m6 designed skip); config-validator => pass (exit 0); forgejo-main-sync 8 ok / dockerfile-pins 36/0 / system-upgrade 3 ok => baselines green; kubernetes-mcp-version-floor => fail-as-baseline (k2 ONLY 9!=8 pre-existing); chart-yaml-legs => fail-as-baseline (k5+k10 ONLY); offline dry-run re-run by reviewer => pass (exit 0, ERROR=0, 215 package files, resolved limits 0/0 in all config dumps, noise x53/x7 exact); aislop => pass (100, 0/0, 91 files); git diff scope => pass (renovate.json 4++-- + bookkeeping + reviewer notes only)] deviations: none — D12/D13 absence verified by grep + config-wide github-actions count 0; no validations weakened friction: none new open_questions: none next_suggested: commit C01; C02 dev; C02 review carries the m6-flip-to-6-ok obligation + D13 native-extraction proof"
+      ]
     },
     "C02": {
       "status": "pending",
