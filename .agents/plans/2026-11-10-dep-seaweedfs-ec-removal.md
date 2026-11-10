@@ -21,6 +21,8 @@ echo "lock; volume.list; unlock" | weed shell … | grep -iE "read.?only|not fou
 #   {cluster="monitoring", app_kubernetes_io_name="loki"} |~ "NoSuchKey" |~ "load chunk"
 # s3 pod: retry loop gone:
 kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"   # → 0 after pod restart
+# admin: maintenance scanner off (exact lines from admin_server.go / config_toml.go):
+kubectl -n default logs sts/seaweedfs-admin | grep -E "Applied \[maintenance\] settings from admin.toml \(enabled: false\)|Maintenance system is disabled by configuration"
 # repo render for the ingress typo fix (already on fix branch):
 helm template infra services/infra/prod --set domain=spencerslab.com --set clusterName=infra \
   -s templates/generic-ingress.yaml | grep -A3 "name: \"seaweedfs-filer\""
@@ -28,27 +30,31 @@ helm template infra services/infra/prod --set domain=spencerslab.com --set clust
 
 ## Phase 0 — stop the churn (do this first, before touching data)
 
-The EC maintenance loop runs in the **admin server** (no `weed worker` exists; the chart's
-`worker.enabled=false`, which is why tasks are detected, queued, never executed, and never
-persisted — `admin.dataDir` is empty → in-memory state → `invalid task ID` × ~8k/day).
+The EC maintenance loop runs in the **admin server** (`worker.enabled=false`, but the admin
+process runs detection/scheduling itself). Its `ec_balance` proposals can never be persisted:
+the task IDs embed `host:8080` and the ID sanitizer (`^[A-Za-z0-9_.-]+$`) rejects colons →
+`Failed to save/delete task state ... invalid task ID` × ~8k/day, re-proposing every scan.
+Note `ec_balance` has **no** admin.toml/env key of its own (only `vacuum`, `balance`,
+`erasure_coding` sections exist), so the `maintenance.enabled` master switch is what reliably
+stops it. `admin.data` is a PVC in this repo's values, so `-dataDir` is set and the toml/env
+overlay applies (it is required for persistence).
 
-1. In the admin UI → **Workers / plugin lanes pages** (`/plugin/lanes/default`, `/plugin/lanes/heavy`):
-   set **Enabled = false** for `erasure_coding` and `ec_balance` (leave `vacuum` ON — you need it
-   in Phase 3).
-2. Make it survive restarts — in the seaweedfs subchart values for infra:
+1. **Merged on branch `dep/seaweedfs-disable-ec-maintenance`** — `charts/seaweedfs/values.yaml`
+   `admin.extraEnvironmentVars`:
    ```yaml
-   admin:
-     extraEnvironmentVars:
-       WEED_MAINTENANCE_ERASURE_CODING_ENABLED: "false"
-       WEED_MAINTENANCE_EC_BALANCE_ENABLED: "false"
+   WEED_MAINTENANCE_ENABLED: "false"                    # master switch: stops the scanner
+   WEED_MAINTENANCE_ERASURE_CODING_ENABLED: "false"     # keeps EC proposals off if maintenance is re-enabled
    ```
-   (env names follow admin.toml's `[maintenance.*]` sections uppercased with dots→underscores;
-   confirm exact keys with `weed scaffold -config=admin` inside any weed container before
-   merging. Optionally also set `admin.dataDir`/persistence so task state stops re-proposing.)
-3. Verify: admin-0 restarts (ArgoCD sync) → `W… detection.go` / `E… maintenance_queue.go` lines
-   stop; master log should show `Skipping master maintenance scripts because admin server is
-   connected` (the master's built-in 17-min `ec.encode` script — the thing that EC'd these
-   volumes in the first place — stays suppressed while admin is connected).
+   (names verified against `weed/admin/dash/config_toml.go` + `weed/command/scaffold/admin.toml`;
+   precedence env/toml > UI-saved values.)
+2. Until the sync lands, the same effect via UI: `/plugin` maintenance pages → disable
+   `ec_balance` and `erasure_coding` (leave `vacuum` ON for Phase 3 automation — the env master
+   switch will disable vacuum too once synced; Phase 3 uses explicit `volume.vacuum`, fine).
+3. Verify after ArgoCD sync: admin-0 restarts, `W… detection.go` / `E… maintenance_queue.go`
+   lines stop; master log shows `Skipping master maintenance scripts because admin server is
+   connected` — the master's built-in 17-min script (which contains `ec.encode` — what EC'd
+   these volumes originally) stays suppressed while admin is connected, and with
+   `[maintenance] enabled=false` no new EC proposals come from either plane.
 
 ## Phase 1 — decode the recoverable EC volumes
 
@@ -62,8 +68,9 @@ ec.decode -collection=default     # if "no matches", retry with -collection="" (
 volume.list
 unlock
 ```
-Expected: the five groups above decode OK; groups 4, 5, 446, 447, 449 fail with
-"not enough shards" — that is the confirm-unrecoverable answer; leave them for Phase 2.
+Expected: the five groups above decode OK; groups 4, 5, 446, 447, 449 fail — with fewer than
+the 10 data shards that 10+4 needs to reconstruct, decode is mathematically impossible, and
+that failure is the confirm-unrecoverable answer; leave them for Phase 2.
 
 ## Phase 2 — purge the unrecoverable remnants (groups 4, 5, 446, 447, 449)
 
