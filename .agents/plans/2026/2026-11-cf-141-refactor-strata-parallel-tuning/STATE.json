@@ -1,0 +1,148 @@
+{
+  "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
+  "plan_status": "draft",
+  "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-10T23:13:59+00:00",
+  "kickoff": {
+    "slug": "cf-141-refactor-strata-parallel-tuning",
+    "card": "pjLoQbzXpT2NemCSm",
+    "card_number": 141,
+    "board": "TNQJ2BrXenZovngTS",
+    "card_title": "Tune Strata for parallel performance",
+    "type": "refactor",
+    "service": "gpu-ai",
+    "run_tag": null,
+    "worktree": "cf-141-refactor-strata-parallel-tuning",
+    "branch": "cf-141-refactor-strata-parallel-tuning",
+    "branch_minted_at": "a6e493b78",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "research": "openrouter/qwen/qwen3.8-flash",
+      "test": "openrouter/qwen/qwen3.8-flash",
+      "dev": "openrouter/qwen/qwen3.8-flash",
+      "review": "openrouter/qwen/qwen3.8-flash"
+    },
+    "provider": "API",
+    "local": false,
+    "push": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/",
+    "origin_dir": "/home/coder/SpencersLab",
+    "stages": {
+      "done_upstream": ["Exploration (EXPLORE.md R1+R2)", "Agent-Decides Research (RESEARCH.md R1+R2, two rounds)"],
+      "execute": ["Planning (R3 finalized draft)", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+      "unchecked": ["Deployment", "Single Session"]
+    },
+    "hitl": ["Final Review"],
+    "priority": { "raw": null, "class": "default" },
+    "claim": {
+      "set_id": "49ddfd41-14dd-451d-bb16-5d4449b1f7f3",
+      "pipelines": ["AI"],
+      "card_id": "pjLoQbzXpT2NemCSm"
+    },
+    "board_context": {
+      "collected_at": "2026-11-10T21:29:37.966Z",
+      "via": "dev-boards",
+      "preload": { "at_claim": "2026-11-10", "scope": "cards board-wide", "degraded": false },
+      "card_details": { "at_claim": "2026-11-10", "tool": "get_card_details", "degraded": false }
+    }
+  },
+  "plan_round": {
+    "status": "awaiting-round3-question(Q17)-and-approval",
+    "plan_session": "ses_e38a2309affeRESASVSQ34VK0r",
+    "plan_file": "2026-11-10-refactor-cf-141-refactor-strata-parallel-tuning.md",
+    "round1": {
+      "questions_answered": "Q1-Q8 (owner, 2026-11-10)",
+      "frame_overrides": { "Q5": "Open the envelope to 8 slots", "Q8": "No — re-plan with bump/envelope" },
+      "confirmations": {
+        "Q1": "yes — ship L2 STRATA_MMQ_KQ=1",
+        "Q2": "yes — L1 documented, not shipped",
+        "Q3": "yes — L3 env form documented",
+        "Q4": "no — --kv q4_0 stays owner-gated",
+        "Q6": "yes — new .agents/notes/strata-parallel-tuning-runbook.md",
+        "Q7": "yes — four stale-doc corrections with law moves"
+      }
+    },
+    "round2": {
+      "questions_answered": "Q9-Q16 (owner, 2026-11-10/11)",
+      "answers_verbatim": {
+        "Q13": "(a) Pin-first, bump gated",
+        "Q9": "8 slots everywhere. I know it won't fit, but I also know I won't be running 8 sessions at full context. I'd rather crash it and scale back from there.",
+        "Q10": "Yes — as planned (full row-H shape for the primary)",
+        "Q11": "Authorize as experiment only (row-G; no chunk pre-committed)",
+        "Q12": "No (U3-v2 cgroup-detection user leg NOT run; row-G premise stays unmeasured — declined, recorded)",
+        "Q14": "Fold them in (doc-fix total seven: four confirmed + alpine/72Gi into C04, PIN-ME into C02)",
+        "Q15": "Two PRs (A+B merged): PR-1 = C01+C02+C03, PR-2 = C04",
+        "Q16": "After bumping, have them present, but leave a comment they are experimental (STRATA_MMQ_KQ=1 + drafting:mtp, experimental-flag comments, not settled intent-pinning)"
+      },
+      "open_question": {
+        "id": "Q17",
+        "text": "Q9xQ13(a) tension — 8-everywhere at the CURRENT pin ships strix/orca/q4 knowingly over their pin arithmetic (walkdown grace exists only at 0.1.59); expected outcomes are engine fit-down, park refusals, or contained cgroup kills until a per-rung scale-back.",
+        "options": {
+          "a": "ship 8-everywhere at the pin now with per-rung boot-read gates + revert lines (PLAN'S WRITTEN SHAPE — best guess, honors Q9 verbatim)",
+          "b": "8-everywhere but landing the slot raise with C04 (walkdown grace); pin stays safe",
+          "c": "primary-only per Q10 (reverts Q9 to the recommendation)"
+        },
+        "gate": "C03 dev start is held until coord folds Q17; (b) re-waves C03 behind C04; (c) shrinks C03 to the round-2 shape"
+      }
+    },
+    "landing_shape": "PR-1 = C01+C02+C03 (owner lands after boot-read gates are written); PR-2 = C04 gated (same-day crash-cluster re-fetch + post-merge soak watch + binding stop condition). Commits stay coord's on the cf-141 branch; no pushes.",
+    "doc_fix_roster": ["service L207 ttl wording", "chart L1524 description", "README rung-5 conv", "runbook §4 phrasing", "values PIN-ME comment (C02)", "containers README alpine 3.22→3.24 (C04)", "containers README 72Gi→110Gi (C04)"],
+    "baseline_at_mint": {
+      "charts_suite": "417 passed / 9 skipped / 0 failed",
+      "containers_suite": "24 passed / 0 failed",
+      "helm": "v3.16.4",
+      "measured": "2026-11-10"
+    },
+    "handoffs": []
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "gate": "Q17 folded (plan written on best-guess a; b re-waves behind C04, c shrinks to primary-only)",
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C01", "C02", "C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "gate": "Q13(a): lands after PR-1; same-day gate-1 crash-cluster re-fetch recorded before ready",
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "row-G q4 file-tier 8x262K — experiment-only authorization (Q11); premise UNMEASURED (Q12 declined — future authorization must run its own cgroup-detection probe); own PR, own rollback, own planning round",
+    "per-rung scale-back PRs if boot-reads degrade (explicit in-round owner word required; ladder lines pre-written)",
+    "L1 / L3 / L5 / L6'(STRATA_PREFILL_CPU_SHARE_BATCH) follow-up arm PRs",
+    "per-rung L2 extension beyond q4",
+    "U1-v2 / --plan / soak / re-bench on-target legs — user-owned, ride the owner's merges"
+  ]
+}
