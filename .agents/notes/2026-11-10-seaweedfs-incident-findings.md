@@ -18,9 +18,16 @@ All times UTC. Cluster: infra (weed v4.50 `ec8f97935`, 8 volume servers, 5 filer
 
 ## ALL bad files (confirmed unrecoverable / permanently failing)
 
-Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
+Only **one live unreadable file** exists in 7 days of logs (≈8M lines swept), plus one
+already-cleaned-up loss:
 
-1. **Loki chunk object in bucket `logs`**
+0. **LIVE: Loki TSDB index object** `/buckets/logs/index/loki_index_20765/fake/1794147797505872010-compactor-1794085698030-1794147325922-a373bee8.tsdb.gz`
+   — one 64,836-byte chunk whose file_id IS the lost `1982649,ffcb4cee151f1745a60afc08`
+   (verified via admin `/api/files/properties`). Written 11-08 14:23, corrupted in the 14:40
+   crash window; hit 251× over 7d (`failed to stream logs/index …`). **This is what drives the
+   s3 retry loop** — every Loki query touching the Nov 8 index table GETs it and hangs.
+   Delete with `fs.rm` (runbook Phase 4), then restart `seaweedfs-s3`.
+1. **Loki chunk object in bucket `logs` (entry already gone — nothing to delete)**
    - Object key: `fake/681e07742c8440a8/1a1bb915381:1a1bb93f591:358a4ee9`
      (full S3 path `/buckets/logs/fake/681e07742c8440a8/1a1bb915381:1a1bb93f591:358a4ee9`)
    - Contains stream-hash `681e07742c8440a8`, log window **2026-11-06 07:21:46 → 07:26:57** (a ~5 min slice of one stream's logs).
@@ -28,13 +35,11 @@ Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
      and the s3 gateway retry loop on chunk `fid 1982649,ffcb4cee151f1745a60afc08` —
      404 from BOTH replicas (volume-2 and volume-3) of volume `1982649` (logs collection),
      even with `readDeleted=true`.
-   - **Action to take (superseded 11-10 14:30 UTC — see runbook Phase 4):** the filer entry is
+   - **Action to take (final, 11-10 15:30 UTC — see runbook Phase 4):** the filer entry is
      *already gone* (admin properties API: `no entry is found in filer store`) — nothing to
-     delete. The retry loop respawned after the s3 pod's own 13:00 restart, so it is
-     client-driven: run `volume.fsck -findMissingChunksInFiler -verifyNeedles -collection logs
-     -volumeId 1982649` to prove no live entry references the lost chunk, restart
-     `seaweedfs-s3`, and if the loop returns, trace the GetObject source in Traefik's s3-route
-     access logs (monitoring-cluster Loki queriers are the prime suspect).
+     delete here. The retry loop's live carrier turned out to be the index object in item 0
+     (same lost fid); deleting it stops the loop's driver. `volume.fsck` would have found it
+     too, but only after an `-v`-silent, hours-long full-filer walk.
 
 2. **Stuck pending-deletion (garbage, not a live file): `fid 10,ffcb4cee151762199b65ca24`**
    - media-collection volume `10` (28.5GB, live) was flagged **read only** → filer could not

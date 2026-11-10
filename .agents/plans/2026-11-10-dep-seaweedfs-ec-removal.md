@@ -24,40 +24,40 @@ kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"   # → 0 
 # lost Loki object: entry presence check (no shell needed):
 curl -sk "https://seaweedfs-admin.infra.spencerslab.com/api/files/properties?path=%2Fbuckets%2Flogs%2Ffake%2F681e07742c8440a8%2F1a1bb915381%3A1a1bb93f591%3A358a4ee9"
 #   {"error":"...filer: no entry is found in filer store"} → entry gone (11-10 verified)
-# admin: maintenance scanner off (exact lines from admin_server.go / config_toml.go):
-kubectl -n default logs sts/seaweedfs-admin | grep -E "Applied \[maintenance\] settings from admin.toml \(enabled: false\)|Maintenance system is disabled by configuration"
+# admin: EC proposals suppressed (exact lines from config_toml.go / master source):
+kubectl -n default logs sts/seaweedfs-admin | grep -E "Applied \[maintenance.erasure_coding\] settings from admin.toml"
+kubectl -n default logs sts/seaweedfs-master-0 | grep "Skipping master maintenance scripts because admin server is connected"
 # repo render for the ingress typo fix (already on fix branch):
 helm template infra services/infra/prod --set domain=spencerslab.com --set clusterName=infra \
   -s templates/generic-ingress.yaml | grep -A3 "name: \"seaweedfs-filer\""
 ```
 
-## Phase 0 — stop the churn (do this first, before touching data)
+## Phase 0 — stop the EC churn (owner directive 11-10: global maintenance stays ON)
 
-The EC maintenance loop runs in the **admin server** (`worker.enabled=false`, but the admin
-process runs detection/scheduling itself). Its `ec_balance` proposals can never be persisted:
-the task IDs embed `host:8080` and the ID sanitizer (`^[A-Za-z0-9_.-]+$`) rejects colons →
-`Failed to save/delete task state ... invalid task ID` × ~8k/day, re-proposing every scan.
-Note `ec_balance` has **no** admin.toml/env key of its own (only `vacuum`, `balance`,
-`erasure_coding` sections exist), so the `maintenance.enabled` master switch is what reliably
-stops it. `admin.data` is a PVC in this repo's values, so `-dataDir` is set and the toml/env
-overlay applies (it is required for persistence).
+The EC proposal loop runs in the **admin server** (`worker.enabled=false`, but the admin process
+detects/schedules itself). Its `ec_balance` proposals can never be persisted: task IDs embed
+`host:8080` and the ID sanitizer (`^[A-Za-z0-9_.-]+$`) rejects colons →
+`Failed to save/delete task state ... invalid task ID` × ~8k/day.
 
 1. **Merged on branch `dep/seaweedfs-disable-ec-maintenance`** — `charts/seaweedfs/values.yaml`
    `admin.extraEnvironmentVars`:
    ```yaml
-   WEED_MAINTENANCE_ENABLED: "false"                    # master switch: stops the scanner
-   WEED_MAINTENANCE_ERASURE_CODING_ENABLED: "false"     # keeps EC proposals off if maintenance is re-enabled
+   WEED_MAINTENANCE_ERASURE_CODING_ENABLED: "false"   # [maintenance.erasure_coding] enabled
    ```
-   (names verified against `weed/admin/dash/config_toml.go` + `weed/command/scaffold/admin.toml`;
-   precedence env/toml > UI-saved values.)
-2. Until the sync lands, the same effect via UI: `/plugin` maintenance pages → disable
-   `ec_balance` and `erasure_coding` (leave `vacuum` ON for Phase 3 automation — the env master
-   switch will disable vacuum too once synced; Phase 3 uses explicit `volume.vacuum`, fine).
-3. Verify after ArgoCD sync: admin-0 restarts, `W… detection.go` / `E… maintenance_queue.go`
-   lines stop; master log shows `Skipping master maintenance scripts because admin server is
-   connected` — the master's built-in 17-min script (which contains `ec.encode` — what EC'd
-   these volumes originally) stays suppressed while admin is connected, and with
-   `[maintenance] enabled=false` no new EC proposals come from either plane.
+   Verified against `weed/admin/dash/config_toml.go` + `weed/command/scaffold/admin.toml`.
+   `WEED_MAINTENANCE_ENABLED` is deliberately **not set** — the maintenance system stays on, so
+   auto-vacuum keeps draining the delete backlog.
+2. Residual `ec_balance` log noise: `ec_balance` has **no** admin.toml/env key of its own (the
+   overlay covers only `vacuum` / `balance` / `erasure_coding`), so it keeps re-proposing the
+   existing EC groups. Nothing executes (no worker; the proposals can't even persist) — it is
+   log-only churn that **dies out automatically once Phases 1–2 remove every EC group**. If you
+   want it silent in the meantime, the toggle exists only in the admin UI (persisted to the
+   `/data` PVC): `/plugin` → EC Shard Balance → Enabled off (one-time action, survives restarts).
+3. Verify after ArgoCD sync: admin-0 restarts and logs
+   `Applied [maintenance.erasure_coding] settings from admin.toml`; no new *encode* proposals.
+   The master's built-in 17-min maintenance script (which contains `ec.encode` — what EC'd these
+   volumes originally) stays suppressed while admin is connected — check the master log once for
+   `Skipping master maintenance scripts because admin server is connected`.
 
 ## Phase 1 — decode the recoverable EC volumes
 
@@ -164,45 +164,69 @@ Notes on the flag choices (all source-verified against weed 4.50/master):
 - `volume.fix.replication -n` output goes into the tee'd log — skim it before the `-apply`
   line runs; drop the `-n` pair if you want full dry-run first passes.
 
-## Phase 4 — the lost Loki chunk + the s3 retry loop
+## Phase 4 — the ONE bad file: a live Loki TSDB index object (located definitively)
 
-**Status change (verified 11-10 14:30 UTC): the filer entry is already gone.** The admin
-file-properties API for the exact path returns `filer: no entry is found in filer store` —
-that is *why* `fs.ls` shows nothing, and why Loki now gets `NoSuchKey` for the object. There
-is no filer entry left to delete; the object died mid-vacuum during the 11-08 reboot and its
-entry was cleaned up afterwards. Two things remain:
+**Updated 11-10 ~15:30 UTC — the retry loop's carrier is now named, with the old "entry is
+gone" understanding corrected.** Two distinct casualties of the 11-08 crash window:
 
-1. **Prove nothing else still references lost chunks**, then restart the gateway:
-
-   ```bash
-   kubectl -n default exec -i seaweedfs-master-0 -c seaweedfs -- \
-     weed shell -master=localhost:9333 -filer=seaweedfs-filer-client.default:8888 <<'EOF'
-   lock
-   volume.fsck -findMissingChunksInFiler -verifyNeedles -collection logs -volumeId 1982649
-   unlock
-   EOF
+1. **Gone (already cleaned):** chunk group `logs/fake/681e07742c8440a8/1a1bb915381:…:358a4ee9`
+   — its filer entry no longer exists (`no entry is found in filer store`); it returns
+   `NoSuchKey` fast. Nothing to delete; ~5 min of Nov 6 07:21–07:27 logs lost.
+2. **LIVE bad file (delete this):**
    ```
-   Anything it prints is a live filer path whose needle is gone — those are your true
-   "bad files"; delete each with `fs.rm <printed-path>` (under the same lock). Empty output
-   = the filer is clean.
-
-2. **Restart the gateway and watch whether the loop respawns.** The s3 pod already restarted
-   with the node at ~13:00 UTC and the `1982649,ffcb4cee151f1745a60afc08` retry loop came
-   back within minutes — so it is **client-driven**, not orphaned in-process state:
-
-   ```bash
-   kubectl -n default rollout restart deploy seaweedfs-s3
-   kubectl -n default rollout status  deploy seaweedfs-s3
-   sleep 120 && kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"
+   /buckets/logs/index/loki_index_20765/fake/1794147797505872010-compactor-1794085698030-1794147325922-a373bee8.tsdb.gz
    ```
-   - Count stays `0` → done.
-   - It grows again → some client keeps issuing GetObject for an object whose chunk is lost.
-     The requests reach the gateway through Traefik (source NAT'd to the calling cluster's
-     node IP; the `logs` bucket traffic comes from the monitoring cluster, i.e. Loki
-     queriers). Find the culprit in Traefik's access log on the s3 route for the object key,
-     then stop it at the source (pinned Loki dashboard/alert re-running a query over that
-     stream window, or a stuck query frontend retry). Until then, the loop is cosmetic
-     error spam — reads of that key already return `NoSuchKey` fast.
+   Evidence: the s3 gateway's stuck retry targets `1982649,ffcb4cee151f1745a60afc08`
+   (ModifiedTsNs 2026-11-08 14:23:17); this object's filer entry **exists**, is exactly one
+   64,836-byte chunk, and that chunk's file_id **is the lost fid** (via
+   `/api/files/properties`). 7-day sweep of `failed to stream logs/index`: this key 251×, the
+   only persistent offender (one `loki_index_20749` hit = transient). This is why the loop
+   "respawned" after the s3 restart at ~13:00: every Loki query touching table
+   `loki_index_20765` (Nov 8) GETs this index file, the gateway blocks retrying the dead
+   chunk, the querier times out and re-issues. It is also why `fs.ls` in `fake/<streamhash>/`
+   never showed anything: the carrier is under `index/`, not `fake/`.
+
+**Delete it (pasteable):**
+
+```bash
+kubectl -n default exec -i seaweedfs-master-0 -c seaweedfs -- \
+  weed shell -master=localhost:9333 -filer=seaweedfs-filer-client.default:8888 <<'EOF'
+lock
+fs.meta.cat /buckets/logs/index/loki_index_20765/fake/1794147797505872010-compactor-1794085698030-1794147325922-a373bee8.tsdb.gz
+fs.rm /buckets/logs/index/loki_index_20765/fake/1794147797505872010-compactor-1794085698030-1794147325922-a373bee8.tsdb.gz
+unlock
+EOF
+kubectl -n default rollout restart deploy seaweedfs-s3
+sleep 120 && kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"
+```
+
+`fs.meta.cat` first prints the chunk list so you confirm the fid before deleting (it also
+proves the object is one chunk = nothing else shares it). Impact: the index slice it carries
+(window ≈ 11-07 21:08 → 11-08 14:15) is already unreadable-by-hang, so queryability of that
+window does not decrease — after deletion, queries covering Nov 8 return results minus that
+window instead of stalling on it; the underlying chunk data stays on disk (index entry lost,
+data orphaned — reclaimable only by full chunk-scan tooling, not worth it).
+
+**Why the earlier `volume.fsck` attempt "didn't do anything" (for the record):** source shows
+the reverse mode's progress lines (`checking directory …`, `find missing file chunks in …`)
+are `-v`-gated and the **first finding can only print after it has collected set A from the
+volumes AND walked the entire filer** (`collectFilerFileIdAndPaths` traverses from `/` — every
+bucket, 43M+ media chunk references). Without `-v` it is a silent, hours-long job; it would
+*have* eventually reported this index object. Skipped here because targeted proof was already
+in hand; run an overnight `-v` pass if you want the belt-and-braces sweep:
+
+```bash
+echo 'lock
+volume.fsck -findMissingChunksInFiler -verifyNeedles -collection logs -volumeId 1982649 -v
+unlock' | kubectl -n default exec -i seaweedfs-master-0 -c seaweedfs -- \
+  weed shell -master=localhost:9333 -filer=seaweedfs-filer-client.default:8888 2>&1 | tee /tmp/fsck_1982649.log
+```
+
+Also cleared from the to-do list: no stale multipart uploads exist (`/buckets/logs/.uploads`
+and `/.uploads` return "no entry is found"), so `s3.clean.uploads` is optional hygiene only.
+The read-only flags are mostly self-cleared by the 11-10 restarts too — only `1982649` still
+logs `is read only` (2× since reboot), so trim the Phase 3 mark list to that volume unless
+`volume.list` shows otherwise.
 
 ## Phase 5 — never accidentally EC again
 
