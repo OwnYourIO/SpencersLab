@@ -100,13 +100,19 @@ PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 # a rate without an arena label is how the ~500-vs-2,800 confusion started.
 REQUEST_LINES_ENV = "STRATA_REQUEST_LINES=1"
 
+# 2026-11-10 envelope round, on EVERY arena env: glibc retains evicted
+# conversation-cache parks in the heap, so the engine's RAM gate refuses
+# forever (Strata #5697, open); mmap-backed large allocations return on free.
+MALLOC_MMAP_ENV = "MALLOC_MMAP_THRESHOLD_=1048576"
+
 # The pod cgroup and the per-rung declared caps. Declared HERE rather than in
 # the envelope block below because PRIMARY_REQUIRED_PAIRS needs the value at
 # definition time. U14 (owner ruling 2026-11-01): the flagship declared 92160
 # against term-sums of ~91.84 GiB — 46.84 arena + 32 conversation cache + ~13
 # worst-case 4-slot KV — so parking was refused inside its own number while the
-# node sat idle; 110592 (107.25 GiB) inside the 116Gi cgroup keeps the reserve
-# style the q4 rung already rides.
+# node sat idle; 110592 (108 GiB) inside the cgroup — 116Gi at U14, lowered
+# to 110Gi by the 2026-11-10 envelope round — keeps the reserve style the q4
+# rung already rides.
 PRIMARY_MEMORY_LIMIT_MIB = 110592
 
 # Era-mapped frozen captures for the byte-unchanged preservation arms
@@ -311,12 +317,15 @@ CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
 ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 
 # C06 FINAL envelope, re-pinned at the executed on-target gate (2026-11-01,
-# owner half-restore ruling) and raised AGAIN by U14 the same day. The pod
+# owner half-restore ruling), raised AGAIN by U14 the same day, and LOWERED
+# 116Gi -> 110Gi by the 2026-11-10 envelope round — the container must die
+# before the node (that day's SystemOOM crashloop), and no cap moved. The pod
 # cgroup is ONE number for the whole strata container (STRATA_CGROUP_LIMIT —
 # named Q4_* until U14, when the flagship started riding it too), and the
 # declared caps are PER-RUNG inside it: 110592 primary, 103680 q4, 92160 orca.
-# #1601's law is declared <= cgroup, and every leg keeps its own reserve: q4
-# rides ~12 GiB above its terms, primary ~15. The conv term moved 8192 -> 16384
+# #1601's law is declared <= cgroup, and every leg keeps its own reserve: at
+# 110Gi the cgroup sits ~8.75 GiB above the q4 cap and 2 GiB above the
+# primary's. The conv term moved 8192 -> 16384
 # when the claim-compiled HIP engine rejected --slot-save-path at argv (session
 # files are CUDA-trial: the Round-3 caveat, now measured), which voided the
 # trim's U8 compensation; --slot-save-path is a NEGATIVE pin (Q4_SESSION_FLAG).
@@ -328,7 +337,7 @@ ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 # (PRIMARY_MEMORY_LIMIT_MIB lives with the contract literals above — the
 # PRIMARY_REQUIRED_PAIRS table needs it at definition time.)
 Q4_MEMORY_LIMIT_MIB = 103680
-STRATA_CGROUP_LIMIT = "116Gi"
+STRATA_CGROUP_LIMIT = "110Gi"
 Q4_CGROUP_LIMIT = STRATA_CGROUP_LIMIT  # deprecated alias; the cgroup is pod-level
 Q4_CONV_CACHE_MIB = 16384
 Q4_CONV_CACHE_SLOTS = 16
@@ -338,6 +347,13 @@ Q4_SESSION_FLAG = "--slot-save-path"
 # -files build, asserted by the init/image suites.
 Q4_SESSION_DIR = "/models/strata/sessions"
 Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
+
+# 2026-11-10 envelope round (the SystemOOM crashloop): the q4 arena is
+# single-flighted — llama-swap answers HTTP 429 beyond the limit, it never
+# queues — and its profile parallel is halved, dropping the full-262k KV worst
+# case 13.4 -> 6.7 GiB.
+Q4_CONCURRENCY_LIMIT = 1
+Q4_PARALLEL = 2
 
 # Inner model id -> the run-config file its cmd's --profile names. The
 # strata-profile ConfigMap's key set must equal exactly this table for the

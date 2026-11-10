@@ -30,6 +30,13 @@
 # (test_catalog_contract.py::test_c05_ornith_strata_id_present_only_where_it_
 # should_be — the C09 flip of the old Shape-B absence arm) and the q4 catalog
 # entry + no-phantom law (same file).
+#
+# 2026-11-10 envelope round re-pins (owner-approved, post-SystemOOM-crashloop:
+# cgroup + node floor exceeded the 125.1 GiB node; Strata #5697 heap
+# retention): cgroup 116 -> 110Gi with NO cap moving (STRATA_CGROUP_LIMIT),
+# q4 profile parallel 4 -> 2, NEW q4 model concurrencyLimit 1, and
+# MALLOC_MMAP_THRESHOLD_=1048576 on all five arena envs. The gate-era history
+# above stays the record; this round's pins ride their own arms below.
 
 from __future__ import annotations
 
@@ -161,12 +168,18 @@ def test_c06_profile_shape_and_ud_q4_k_xl_paths():
             f"{flag} = {val!r} carries no Q4 class marker — the Round-2 UD-Q4_K_XL inventory "
             "lays weights under a Q4-class dir; a name-guess here is the wrong weights"
         )
-    for key in ("exe", "cwd", "lib_dirs", "backend", "gpu", "parallel", "host"):
+    for key in ("exe", "cwd", "lib_dirs", "backend", "gpu", "host"):
         if key in prof:
             assert prof[key] == S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE).get(key), (
                 f"q4 profile {key} diverges from the primary — the engine build/paths are "
                 "per-node, not per-rung; only the data paths may differ"
             )
+    # parallel left the byte-identical set at the 2026-11-10 envelope round:
+    # the q4 arena runs half the primary's slots (KV worst case 13.4 -> 6.7 GiB).
+    assert prof.get("parallel") == S.Q4_PARALLEL, (
+        f"q4 profile parallel = {prof.get('parallel')!r}, want {S.Q4_PARALLEL} — the "
+        "2026-11-10 ruling halved it; the primary keeps 4"
+    )
 
 
 @helm
@@ -176,9 +189,10 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
     --prompt-cache 0 stay out as retired session-file guard rails (now default
     posture, not protection). --ple-io ram makes the 28.8 GiB n-gram table
     RAM-resident (the OOM that killed system pods on 2026-10-29). --batch is
-    NOT a profile pin: the arm's parallel 4 reaches the engine as --batch
-    through serve itself (2026-11-01 first-boot argv), so the old session-file
-    rationale for banning it was doubly moot once the feature compiled out."""
+    NOT a profile pin: the arm's parallel reaches the engine as --batch
+    through serve itself (the 2026-11-01 first-boot argv read --batch 4), so
+    the old session-file rationale for banning it was doubly moot once the
+    feature compiled out."""
     joined = " ".join(S.arg_tokens(_profile()))
     tokens = set(S.cmd_flag_tokens(joined))
     banned_flags = {"--layer-split", "--ple-io"}
@@ -228,18 +242,56 @@ def test_c06_cgroup_108gi_and_engine_cap_lockstep():
     res = ctr.get("resources") or {}
     limits, requests = res.get("limits") or {}, res.get("requests") or {}
     assert limits.get("memory") == S.Q4_CGROUP_LIMIT, (
-        f"limits {limits} — the q4 arm rides the 108Gi cgroup; the pair is "
-        f"(108Gi, {S.Q4_MEMORY_LIMIT_MIB}) since the 2026-11-01 gate"
+        f"limits {limits} — the q4 arm rides the pod cgroup; the shipped pair is "
+        f"({S.Q4_CGROUP_LIMIT}, {S.Q4_MEMORY_LIMIT_MIB}) since the 2026-11-10 "
+        "envelope round lowered the ceiling 116Gi -> 110Gi with no cap moving"
     )
     assert requests.get("memory") == "64Gi", f"requests {requests} must stay 64Gi"
     cap = int(dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_Q4_FILE))).get("--memory-limit-mib", "0"))
-    assert cap < 108 * 1024, f"engine cap {cap} MiB is not inside the 108Gi cgroup (#1601 pairing)"
+    assert cap < 110 * 1024, f"engine cap {cap} MiB is not inside the 110Gi cgroup (#1601 pairing)"
     assert cap == S.Q4_MEMORY_LIMIT_MIB
     pod_spec = S.strata_pod(_docs())["spec"]
     assert pod_spec.get("terminationGracePeriodSeconds") == GRACE_SECONDS, (
         f"grace must stay {GRACE_SECONDS} (the 420 > 180+30 invariant is off-limits to C06): "
         f"{pod_spec.get('terminationGracePeriodSeconds')!r}"
     )
+
+
+# --- 2026-11-10 envelope round: single-flight, halved parallel, malloc arena --
+
+
+@helm
+def test_2026_11_10_q4_single_flight_and_halved_parallel():
+    """Two concurrent ~99k-token prefills on the q4 arena were the kill shape
+    of the 2026-11-10 SystemOOM crashloop. The arena is single-flighted —
+    llama-swap answers HTTP 429 beyond the limit, it never queues — and the
+    profile parallel is halved, dropping the full-262k KV worst case from
+    13.4 to 6.7 GiB."""
+    assert _model().get("concurrencyLimit") == S.Q4_CONCURRENCY_LIMIT, (
+        f"q4 model concurrencyLimit = {_model().get('concurrencyLimit')!r}, want "
+        f"{S.Q4_CONCURRENCY_LIMIT} — excess requests must 429 at once (the 2026-11-10 "
+        "kill was two concurrent ~99k prefills)"
+    )
+    assert _profile().get("parallel") == S.Q4_PARALLEL, (
+        f"q4 profile parallel = {_profile().get('parallel')!r}, want {S.Q4_PARALLEL}"
+    )
+
+
+@helm
+def test_2026_11_10_malloc_mmap_threshold_on_every_arena_env():
+    """Strata #5697 (open): evicted conversation-cache parks stay in the glibc
+    heap, so the engine's RAM admission gate refuses forever and MemAvailable
+    never recovers. The one-env-line workaround rides every arena's model env
+    (the retention is engine-wide behavior, not a per-rung property)."""
+    models = S.inner_config(_docs())["models"]
+    arenas = [i for i in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID) if i in models]
+    assert len(arenas) == 5, f"expected five arenas, rendered {sorted(arenas)}"
+    for aid in arenas:
+        env = set(S.env_list(models[aid]))
+        assert S.MALLOC_MMAP_ENV in env, (
+            f"{aid} model env lacks {S.MALLOC_MMAP_ENV} — evicted parks stay in the "
+            "glibc heap and the engine's RAM gate refuses forever (Strata #5697)"
+        )
 
 
 @helm

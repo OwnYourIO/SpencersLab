@@ -40,16 +40,17 @@ class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB.
 Memory is a PAIRED cap, not the DOCKER.md default of none: the pod cgroup and
 the engine's `--memory-limit-mib` move as one unit (#1601's informed-limit
 posture) — the 2026-10-29 node OOM harvest ended the uncapped-pinning era on a
-node the trio also lives on. ONE cgroup bounds the pod — `limits.memory 116Gi`
-since U14, 2026-11-01 — and the declared cap is per-rung inside it: the cgroup is the
+node the trio also lives on. ONE cgroup bounds the pod — `limits.memory 110Gi`
+(U14 raised it to 116Gi on 2026-11-01; the 2026-11-10 envelope round lowered it
+to 110Gi so the container dies before the node) — and the declared cap is per-rung inside it: the cgroup is the
 pod's, the cap belongs to whichever arena is loaded, so raising the ceiling does
 not enlarge any rung's budget. The
 `qwen3.8-flash-next-strata-q4` arena (unsloth UD-Q4_K_XL) declares `103680`
-under that `116Gi` cgroup — 71.7 GiB
+under that `110Gi` cgroup — 71.7 GiB
 pinned experts + 16 GiB conversation cache + ~13 GiB worst-case KV (its pair
 moved 100Gi/95232 → 108Gi/103680 at the executed 2026-11-01 first-boot gate;
 U14 later raised the cgroup to 116Gi without touching this rung's cap) — and
-the flagship declares `110592` inside the same `116Gi`: U14 moved it off the
+the flagship declares `110592` inside the same `110Gi`: U14 moved it off the
 original `96Gi` + `92160` shape because 92160 never covered the primary's own
 term-sums (46.84 arena + 32 conv + ~13 KV ≈ 91.84 GiB), so parking was being
 refused inside its own declaration while the node's MemAvailable read 40 GiB.

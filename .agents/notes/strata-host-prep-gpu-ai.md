@@ -284,7 +284,7 @@ escape (§4).
   arena read measured 46.84 GiB + the conversation-cache budget (the
   shipped primary declares an explicit 32768 MiB x 16-slot conversation
   cache; the engine's own default ceiling is 8192 MiB) + KV/pack headroom,
-  which the `64Gi` request inside the pod's `116Gi` cgroup encodes
+  which the `64Gi` request inside the pod's `110Gi` cgroup encodes
   (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment — the
   2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with the
   paired 96Gi cgroup + `--memory-limit-mib 92160`; cf-86 C06 raised the cgroup
@@ -311,19 +311,23 @@ escape (§4).
 - The container's memory **limit** ships PAIRED with the engine's
   `--memory-limit-mib` — #1601's informed-limit posture, adopted after the
   2026-10-29 node OOM made uncapped pinning an unacceptable failure mode.
-  The cgroup has moved four times and the caps move PER-RUNG inside it. The
+  The cgroup has moved five times and the caps move PER-RUNG inside it. The
   pre-C06 pair was `96Gi` + `92160`; C06 raised the pod's cgroup to `100Gi`
   with a `95232` cap for the UD-Q4_K_XL arena (both since superseded figures);
   the 2026-11-01 first-boot gate re-pinned that rung to `108Gi` + `103680`; and
   U14 the same day raised the cgroup to `116Gi` while moving ONLY the
   flagship's cap, `92160` → `110592`, because its terms never fitted the number
-  it declared. So today: one cgroup `116Gi`, caps `110592` primary / `103680`
+  it declared. The 2026-11-10 envelope round then LOWERED the cgroup `116Gi` →
+  `110Gi` without touching any cap — the container must die before the node
+  (cgroup + node floor exceeded node RAM that day; the SystemOOM harvest
+  followed). So today: one cgroup `110Gi`, caps `110592` primary / `103680`
   Q4 / `92160` orca. Never move one leg without the other, and never read one leg as
   the whole pod's budget: the cgroup is the pod's, the cap belongs to
   whichever arena is loaded.
 
-As shipped after cf-86 C09 and the 2026-11-01 post-gate q4 re-pin — one pod
-cgroup (`116Gi`), the cap per rung;
+As shipped after cf-86 C09, the 2026-11-01 post-gate q4 re-pin and the
+2026-11-10 envelope round — one pod
+cgroup (`110Gi`), the cap per rung;
 `--plan` (§3.4) still finalizes what actually becomes resident:
 
 | Rung (profile) | `--memory-limit-mib` | conversation cache | pinned arena read |
@@ -539,8 +543,8 @@ preallocation is what harvested the node); the other four Strata arenas are
 bigger or comparable — orca 57.7 GiB, q4 71.7 GiB (the largest), ornith
 ~40–48 GiB class (R5 estimate) — and all five ride the same
 `(p | s | o | q | n)` alternation. The cgroup cap keeps strata's own worst
-case inside its own container (one `116Gi` cgroup since U14 on the 2026-11-01
-gate day;
+case inside its own container (one `110Gi` cgroup — U14's `116Gi` on the
+2026-11-01 gate day, lowered 2026-11-10 so the container dies before the node;
 the cap inside it is per
 rung — 110592 primary, 92160 orca, 103680 Q4, none declared for strix and ornith
 until their §3.4 `--plan` finalizes them). Therefore:
@@ -628,15 +632,17 @@ ignore lands (future ticket, STATE.json `deferred`).
   7.14.1/hipBLASLt 1.4.1 fine without a table — table ABSENCE on this arch
   is expected, no action (ladder rung 2).
 - **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
-  2026-10-29 OOM: the container carries ONE cgroup, `limits.memory 116Gi`, and
+  2026-10-29 OOM: the container carries ONE cgroup, `limits.memory 110Gi`, and
   the engine's declared cap is PER-RUNG inside it — `--memory-limit-mib 110592`
   on the IQ3_S flagship, `103680` on the UD-Q4_K_XL arena, `92160` on orca;
   strix and ornith declare none (their §3.4 `--plan` gates finalize them).
   Superseded shapes, kept for provenance: the original `96Gi` + `92160` pair,
-  the C06-era `100Gi` + `95232` pair, and the first-boot `108Gi` + `103680`
+  the C06-era `100Gi` + `95232` pair, the first-boot `108Gi` + `103680`
   pair, retired when U14 moved the cgroup to 116Gi and the flagship's cap to
   110592 — 92160 never covered its own
-  46.84 + 32 + ~13 ≈ 91.84 GiB term-sum. §3.3 carries
+  46.84 + 32 + ~13 ≈ 91.84 GiB term-sum — and the U14-era `116Gi` cgroup
+  itself, lowered to `110Gi` on 2026-11-10 so the container dies before the
+  node (that day's SystemOOM crashloop). §3.3 carries
   the shipped pairs. The pair is the posture, never one
   leg without the other. The uncapped-arena era lived while strata owned
   the box's rhythm; shared residency ended it.

@@ -225,7 +225,8 @@ def test_c01_memory_cgroup_and_engine_cap():
     # cf-86 lockstep law (#1601; DECISIONS "cf-86 envelope + timing decisions",
     # re-pinned at the U12 first-boot gate and the U14 ruling on 2026-11-01):
     # the pod carries ONE cgroup — 96Gi → 100Gi at C06 → 108Gi at U12 → 116Gi
-    # at U14 — and the declared --memory-limit-mib values are PER-RUNG inside
+    # at U14 → 110Gi at the 2026-11-10 envelope round (container before node)
+    # — and the declared --memory-limit-mib values are PER-RUNG inside
     # it. Neither leg moves alone: the cgroup is the containment, the caps are
     # what each engine sizes itself to. U14 moved the ceiling for the
     # flagship's term-sum WITHOUT re-tuning the rungs that were never bumping

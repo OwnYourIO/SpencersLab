@@ -1292,24 +1292,29 @@ app-template:
             # (71.7 pinned experts + 16 conv + ~13 KV ≈ 100.7, the owner-ruled
             # half-restore), 92160 orca (U9.2 zero-growth law) — each leg stays
             # ≥ its terms and ≤ this limit, which is the #1601 pairing.
-            # Why 116Gi is safe on this VM, measured rather than assumed
-            # (Grafana/prometheus, 2026-11-01): allocatable 125.1 GiB with the
-            # kubelet reserving effectively nothing, so the gap IS the OS
-            # margin; kube-system containers peak at 0.31 GiB over 7 d, and the
-            # node's own floor (all non-strata workloads running) measured
-            # ~7.3 GiB total — i.e. OS + k3s + containerd + kernel ≈ 2–3 GiB.
-            # 125.1 − 116 leaves ~9 GiB for that, ~6 GiB genuinely spare. Two
-            # standing caveats the operator owns: swap is 2.0 GiB with 1.7 free,
-            # so this cgroup is the ONLY containment; and requests stay 64Gi,
-            # so the scheduler can still pack a neighbour here — the time-share
+            # Why 110Gi (owner ruling 2026-11-10, supersedes U14's 116Gi): the
+            # container must die BEFORE the node. 110Gi + the measured node
+            # floor ~7-8 GiB (all non-strata workloads ~7.3 GiB on the
+            # 2026-11-01 Grafana reads, kube-system peaking 0.31 GiB over 7 d;
+            # OS + k3s + containerd + kernel ≈ 2-3 GiB of it) + a transient
+            # margin fits the 125.1 GiB allocatable — 116Gi plus that floor did
+            # not. On 2026-11-10 two concurrent ~99k-token prefills on the q4
+            # arena stacked ~25 GiB of parking/heap transient on its ~90-99 GiB
+            # steady working set; node MemAvailable bottomed at 0.7 GiB; the
+            # kernel harvested strata 11 times (four node-wide SystemOOM
+            # events) and took metrics-server, argocd, alloy and toolhive
+            # with it. Every declared per-rung cap stays inside: 110592
+            # primary (= 108 GiB), 103680 q4 (= 101.25 GiB), 92160 orca
+            # (= 90 GiB). Two standing
+            # caveats the operator owns: swap is 2.0 GiB with 1.7 free, so this
+            # cgroup is the ONLY containment; and requests stay 64Gi, so the
+            # scheduler can still pack a neighbour here — the time-share
             # discipline (ttl 3600 + the matrix alternation) is what keeps the
-            # big llama.cpp rungs off a warm arena, not this number. The
-            # observed worst inside 108Gi was a 99.2 GiB working set during the
-            # 288 GB provisioning boot, with node MemAvailable bottoming at
-            # 17.3 GiB; page cache (54.6 GiB measured now) is reclaimable, so
-            # the kernel takes cache before it takes victims.
+            # big llama.cpp rungs off a warm arena, not this number. Observed
+            # worst steady set stays the 99.2 GiB of the 288 GB provisioning
+            # boot (then inside the 108Gi cap).
             limits:
-              memory: 116Gi
+              memory: 110Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1565,6 +1570,11 @@ strata:
           # same definition the published R9700 numbers use. Logging only —
           # changes no serving behavior.
           - "STRATA_REQUEST_LINES=1"
+          # Shared by all five arena envs: glibc retains evicted conversation-
+          # cache parks in the heap, so the engine's RAM gate refuses forever
+          # (Strata #5697, open); this makes large allocations mmap-backed and
+          # returnable on free.
+          - "MALLOC_MMAP_THRESHOLD_=1048576"
           - "STRATA_PF_FUSED=1"
           - "STRATA_PF_GEMM=1"
           - "STRATA_PA_FAST=1"
@@ -1605,6 +1615,7 @@ strata:
         # allow-list (same DNS-rebinding reason as the primary).
         env:
           - "STRATA_REQUEST_LINES=1"
+          - "MALLOC_MMAP_THRESHOLD_=1048576"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
         # Rounds differ from the primary's output: the §5 switches are
         # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
@@ -1629,11 +1640,12 @@ strata:
         # index.
         env:
           - "STRATA_REQUEST_LINES=1"
+          - "MALLOC_MMAP_THRESHOLD_=1048576"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
       qwen3.8-flash-next-strata-q4:
         name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
-        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 116Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 110Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
         # Same serve wrapper as the primary, byte-for-byte except the profile
         # file (the suite asserts exactly this equality — the ulimit wrapper is
         # load-bearing, and a per-rung wrapper drift is invisible until fd
@@ -1647,11 +1659,16 @@ strata:
         ttl: 3600
         unloadTimeout: 180
         checkEndpoint: /health
+        # Single-flight (owner ruling 2026-11-10): llama-swap answers HTTP 429
+        # at once beyond the limit — it does not queue. The 2026-11-10 kill was
+        # two concurrent ~99k-token prefills stacking on this arena.
+        concurrencyLimit: 1
         # Engine defaults like the other R9700 rungs: no PR/strix switch set
         # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
         # the ROCR entry is injected by the template from the global index.
         env:
           - "STRATA_REQUEST_LINES=1"
+          - "MALLOC_MMAP_THRESHOLD_=1048576"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
       ornith-1.5-122b-strata-q4:
@@ -1669,6 +1686,7 @@ strata:
         checkEndpoint: /health
         env:
           - "STRATA_REQUEST_LINES=1"
+          - "MALLOC_MMAP_THRESHOLD_=1048576"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
           # q36's dense projections take the int8 MMQ path when this is on:
           # +47-67 % prompts measured on q36 HIP hardware (upstream #3926),
@@ -1782,11 +1800,17 @@ strata:
         # arena ~50 + conversation cache 32 + KV ~13", an arithmetic slip
         # summing to 95 — and the engine reported the consequence at its first
         # parking attempt: "need 1960 MiB plus 2560 MiB floor, 3259 MiB
-        # available". 107.25 GiB declared inside the 116Gi cgroup keeps the
-        # ~9 GiB reserve style the q4 pair already rides. KV-int8 math here is
-        # ~13 KiB/token (only 12 of 48 layers carry full attention), so a
-        # full 256k park costs ~3.3 GiB and the 32768 MiB budget parks
-        # roughly 9-10 of those — or dozens of typical 30-50k sessions.
+        # available". 108 GiB (110592 MiB) declared inside the 110Gi cgroup.
+        # Host-RAM KV law (int8): 13 KV-bearing layers (the 12 full-attention
+        # QSA layers + the MTP draft) × 1,056 B = 13,728 B per context token
+        # per slot — 1.28 GiB per 100k tokens, 3.35 GiB a full 262k park,
+        # 13.4 GiB at the 4-slot worst case (4 × 262,144 × 13,728 B — the
+        # budget's counted "~13 GiB", now derived). --kv-resident below is NOT
+        # that budget: it keeps 32,768 KV cells per QSA layer in VRAM
+        # (~0.4 GiB VRAM/slot), and the host-RAM cost is context × 13,728 B
+        # per slot regardless of it. The 32768 MiB conversation-cache budget
+        # below parks roughly 9-10 full-262k sessions — or dozens of typical
+        # 30-50k turns.
         - --kv-resident 32768
         # T3 (owner ruling 2026-11-01): bare `auto` on gfx12 Linux means
         # 16,384-token chunks; 32,768 is the prompt chunk PR #3636 ran on
@@ -1994,7 +2018,7 @@ strata:
     # this rung's 92160 declared cap ONLY with the conversation cache trimmed
     # to 8192 — 57.7 arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈
     # 84.7 GiB, while conv 32 would declare 108.7 — past this rung's own 90
-    # GiB declaration (the pod cgroup has since grown to 116Gi, but the cap is
+    # GiB declaration (the pod cgroup is now 110Gi, but the cap is
     # what bounds an arena, and U9.2 pinned orca's envelope as zero-growth).
     # Slots stay 16 and the cap stays 92160 (the #1601 law is
     # declared ≤ cgroup, and the cgroup raises were the Q4 arm's lockstep);
@@ -2022,7 +2046,8 @@ strata:
       # carries no secret reference of any kind.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/parallel/host to the primary and the Q4 rung.
+      # backend/gpu/parallel/host to the primary (the Q4 rung shares every one
+      # of these except parallel, halved at the 2026-11-10 envelope round).
       exe: /models/strata/Strata/engine/strata
       env: {}
       cwd: /models/strata/Strata
@@ -2054,9 +2079,12 @@ strata:
         - --mtp /models/strata/Strata-data/mtp/rt
         - --max-context 262144
         - --kv int8
-        # KV-streaming RAM budget byte-equal to the serving rungs: the
-        # budget already counts the worst-case ~13 GiB 4-slot KV; the rung
-        # shift moved only the conversation-cache term below.
+        # Byte-equal to the serving rungs; the rung shift moved only the
+        # conversation-cache term below. The flag is a VRAM cell window —
+        # 32,768 KV cells per QSA layer, ~0.4 GiB VRAM/slot — not a host-RAM
+        # budget: host-RAM KV is context × 13,728 B per slot regardless (int8:
+        # 13 KV-bearing layers × 1,056 B), so the counted ~13 GiB worst-case
+        # 4-slot KV is 13.4 GiB derived.
         - --kv-resident 32768
         - --prefill auto
         # THE DECLARED CAP stays 92160 for this rung (the #1601 law is
@@ -2113,8 +2141,9 @@ strata:
       # arm.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/parallel/host to the primary and the orca rung (the
-      # suite asserts this equality; only data paths may differ).
+      # backend/gpu/host to the primary and the orca rung (the suite asserts
+      # this equality; of that set only parallel may differ — the 2026-11-10
+      # envelope round halved it on this rung).
       exe: /models/strata/Strata/engine/strata
       env: {}
       cwd: /models/strata/Strata
@@ -2150,9 +2179,12 @@ strata:
         - --mtp /models/strata/Strata-data/mtp/rt
         - --max-context 262144
         - --kv int8
-        # KV-streaming RAM budget byte-equal to the serving rungs: the budget
-        # below already counts the worst-case ~13 GiB 4-slot KV, and C06's
-        # ruling moved only the conversation-cache term.
+        # Byte-equal to the serving rungs; C06's ruling moved only the
+        # conversation-cache term. The flag is a VRAM cell window — 32,768 KV
+        # cells per QSA layer, ~0.4 GiB VRAM/slot — not a host-RAM budget:
+        # host-RAM KV is context × 13,728 B per slot regardless (int8: 13 KV-
+        # bearing layers × 1,056 B) — 3.35 GiB a full 262k park, 6.7 GiB at
+        # this rung's parallel-2 worst case.
         - --kv-resident 32768
         - --prefill auto
         # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory above, this cap
@@ -2167,10 +2199,11 @@ strata:
         # same day (for the flagship's term-sum, see its profile), and q4 keeps
         # 103680 — its envelope gains nothing from a ceiling it was never
         # bumping against, and the reserve above it grows from ~7 to ~12 GiB.
-        # The full 32768 conv restore stays CLOSED, not deferred: at 116Gi it
-        # still computes 71.7 + 32 + 13 = 116.7 — over both the 107.25 GiB
-        # largest declared cap on the pod and the cgroup itself, so U12's
-        # half-restore was never an artifact of a timid ceiling. The orca
+        # The full 32768 conv restore stays CLOSED, not deferred: it still
+        # computes 71.7 + 32 + 13 = 116.7 — over the pod's largest declared
+        # cap (108 GiB) and over the cgroup itself (116Gi when this was ruled,
+        # 110Gi since the 2026-11-10 round), so U12's half-restore was never
+        # an artifact of a timid ceiling. The orca
         # profile keeps its 92160 declaration inside the same cgroup.
         - --memory-limit-mib 103680
         # Conversation-cache 16384 (slots unchanged at 16). History: the rung
@@ -2234,7 +2267,11 @@ strata:
       aliases:
         - qwen3.8-flash-next-unsloth
       gpu: [0]
-      parallel: 4
+      # Half the primary's 4 (owner ruling 2026-11-10): halves the full-262k
+      # worst-case KV (4 × 3.35 → 2 × 3.35 = 6.7 GiB) and caps concurrent
+      # deep-prefill transient stacking — the 2026-11-10 SystemOOM shape was
+      # two concurrent ~99k prefills on this arena.
+      parallel: 2
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
@@ -2315,7 +2352,7 @@ strata:
         - ornith-1.5-122b-strata
       gpu: [0]
       # One request at a time until the on-target gate measures it: q36 keeps a
-      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 4 the
+      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 2 the
       # flash-next q4 arena runs (int8 KV) would multiply a KV cost this path
       # cannot pay yet.
       parallel: 1

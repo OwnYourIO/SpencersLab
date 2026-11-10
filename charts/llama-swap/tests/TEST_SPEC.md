@@ -2721,6 +2721,50 @@ be called first.
   `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
   implemented.
 
+### 9.27 2026-11-10 envelope round — cgroup 116→110Gi, q4 parallel 4→2 + concurrencyLimit 1, MALLOC_MMAP_THRESHOLD_ on all five arenas (2026-11-10)
+
+Owner-approved envelope repair after the same-day q4 SystemOOM crashloop
+(11 container restarts, node MemAvailable bottoming at 0.7 GiB, collateral
+harvest of metrics-server / argocd / alloy / toolhive): the 116Gi cgroup plus
+the measured ~7-8 GiB node floor exceeded the 125.1 GiB node, so the NODE died
+before the container could. Amplifier: Strata #5697 (open) — evicted
+conversation-cache parks stay in the glibc heap, so the engine's RAM admission
+gate refuses forever and MemAvailable never recovers. Records:
+`.agents/plans/2026-11-10-debug-strata-q4-oom-crashloop.md` +
+`.agents/plans/2026-11-10-research-strata-q3-q4-rungs.md`.
+
+- **Shipped:** pod `limits.memory 110Gi` (was 116Gi; NO cap moved — 110592
+  primary / 103680 q4 / 92160 orca all stay inside), q4 profile
+  `parallel 4 -> 2` (full-262k KV worst case 13.4 -> 6.7 GiB; the kill shape
+  was two concurrent ~99k prefills), q4 model `concurrencyLimit: 1`
+  (llama-swap answers HTTP 429 immediately beyond the limit — it never
+  queues), and `MALLOC_MMAP_THRESHOLD_=1048576` on all five arena model envs
+  (the #5697 workaround: mmap-backed large allocations are returnable on
+  free). The other four rungs are otherwise untouched.
+- **Re-pins:** `STRATA_CGROUP_LIMIT` 116Gi -> 110Gi (the `Q4_CGROUP_LIMIT`
+  alias stays); `test_c06_cgroup_108gi_and_engine_cap_lockstep` checks the
+  cap inside the 110Gi ceiling; `test_c06_profile_shape_and_ud_q4_k_xl_paths`
+  drops `parallel` from the byte-identical-to-primary loop (the q4 arena now
+  legitimately diverges there) and pins the new value; DOC_PAIRS re-pins the
+  shipped pairs to `110Gi ↔ 110592` and `103680 ↔ 110Gi` in both docs (the
+  116Gi history sentences stay as records); the test_strata_render cgroup
+  chain grows one step. New testlib constants `MALLOC_MMAP_ENV`,
+  `Q4_CONCURRENCY_LIMIT`, `Q4_PARALLEL`; new arms
+  `test_2026_11_10_q4_single_flight_and_halved_parallel` and
+  `test_2026_11_10_malloc_mmap_threshold_on_every_arena_env`.
+- **kv-resident comment law corrected (values comments only; NO flag value
+  moved):** `--kv-resident 32768` is a VRAM cell window (32,768 KV cells per
+  QSA layer, ~0.4 GiB VRAM/slot), not a host-RAM budget; host-RAM KV costs
+  context × 13,728 B per slot regardless (int8: 13 KV-bearing layers ×
+  1,056 B), so the budgets' counted ~13 GiB worst-case 4-slot KV is 13.4 GiB
+  derived (4 × 262,144 × 13,728 B).
+- **Goldens unaffected:** the goldens capture the OUTER llama-swap config,
+  where the strata arenas appear only as the `peers.strata.models` list; this
+  round's keys (model env, concurrencyLimit, profile parallel, pod limit)
+  render inside the `strata-config` / `strata-profile` ConfigMaps and the
+  strata Deployment, which the parity suite proves leave the goldens
+  byte-identical.
+
 ## 10. cf-105 C03 — gpu-ai golden re-capture note (dev session, 2026-11-05)
 
 `golden/gpu-ai.config.yaml` re-captured per the §1 command pattern (extract the

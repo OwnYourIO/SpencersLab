@@ -268,15 +268,17 @@ DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
 # Per doc: every shipped cap must appear PAIRED with the cgroup it rides (either
 # word order — the docs state them in different orders), and the pod-vs-rung
 # distinction must stay readable when the render carries ONE cgroup. U14 moved
-# the cgroup to 116Gi and the flagship's cap to 110592, leaving q4 at 103680 and
-# orca at 92160; the pre-C06 96Gi + 92160 shape stays named as the original the
-# history sections cite. Windows are period-free and short so a pairing cannot
-# be manufactured across a sentence.
+# the cgroup to 116Gi and the flagship's cap to 110592, leaving q4 at 103680
+# and orca at 92160; the 2026-11-10 envelope round lowered the cgroup to
+# 110Gi with NO cap moving (the container must die before the node); the
+# pre-C06 96Gi + 92160 shape stays named as the original the history sections
+# cite. Windows are period-free and short so a pairing cannot be manufactured
+# across a sentence.
 DOC_PAIRS: tuple[tuple[str, str], ...] = (
-    (r"116Gi[^.]{0,140}?110592|110592[^.]{0,140}?116Gi",
-     "the flagship pair: the 116Gi cgroup + the 110592 cap U14 moved it to"),
-    (r"103680[^.]{0,140}?116Gi|116Gi[^.]{0,140}?103680",
-     "the Q4 pair: its 103680 cap riding the 116Gi cgroup"),
+    (r"110Gi[^.]{0,140}?110592|110592[^.]{0,140}?110Gi",
+     "the flagship pair: the 110Gi cgroup + the 110592 cap U14 moved it to"),
+    (r"103680[^.]{0,140}?110Gi|110Gi[^.]{0,140}?103680",
+     "the Q4 pair: its 103680 cap riding the 110Gi cgroup"),
     (r"96Gi[^.]{0,140}?92160", "the original pre-C06 pair, kept named in the history"),
 )
 PER_RUNG_DOCTRINE = (
