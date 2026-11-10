@@ -67,7 +67,7 @@ ingress:
 
     seaweedfs-filer:
       serviceName: seaweedfs-filer.infra
-      service: seadweedfs-filer
+      service: seaweedfs-filer
       port: 8888
 
     seaweedfs-volume:
