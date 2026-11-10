@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-135-feat-renovate-forgejo",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "approval": {
     "at": "2026-11-10T17:05:00Z",
     "by": "owner, in the batched plan-question round ('Approve — run all waves', conditional on folding the Q3/Q4 rulings — folded by the plan fold pass, see DECISIONS Round-2 D12–D16)",
@@ -9,7 +9,15 @@
   "coord_session": "ses_e39eb7bc4ffectkAy9nSpDDzuF",
   "test_session": "ses_e397ed47affePXlRjDO6EI0ly9",
   "current_wave": 1,
-  "updated_at": "2026-11-10T16:35:00Z",
+  "updated_at": "2026-11-10T19:40:00Z",
+  "final_review": {
+    "at": "2026-11-10T19:30:00Z",
+    "session": "ses_e3958145dffeAVvcOgIq2jN33F",
+    "model": "openrouter/qwen/qwen3.8-flash (planning tier — the run's routed model; final review is the last judgment call)",
+    "verdict": "APPROVED",
+    "summary": "Whole-plan review green. Deterministic battery shown pass: forgejo-move-config 6 ok (m6 green), forgejo-renovate 8 ok + t9 designed skip, FORGEJO_RENOVATE_PROBE=1 9 ok (post-merge belt DISCHARGED — the pre-commit discovery gap confirmed an ordering property not a test defect), config-validator exit 0, offline dry-run exit 0/ERROR=0/❌=0 limits 0×3 with the D13 native-manager proof (one manager claims the workflow, 2 deps: ghcr renovate 44.181.5->44.227.0 + ubuntu runs-on 24.04->26.04, depName once no double-match), adjacent-suite baselines exact zero-new-failures, aislop 100. Scope: whole-branch feature diff = renovate.json + .forgejo/workflows/renovate.yaml + two tests/ suites; D12/D13/D5 honored; no plaintext secrets; no blocker/major/minor (one informational .agents suppression note)."
+  },
+  "plan_status_note": "complete — both chunks dev-DONE + review-APPROVED r1 + final whole-plan review APPROVED; branch cf-135-feat-renovate-forgejo local-only (HITL=Final Review stop honored at the card's own check; no Deployment stage → no PR by this run). Out-of-repo owner User actions (UA1 bot PAT->RENOVATE_TOKEN, UA2 dev-github Bitwarden->RENOVATE_GITHUB_COM_TOKEN copy, UA3 disable GitHub Renovate app, UA4 repair dev forge runner, UA5 first-fire watch) remain open and gate live execution.",
   "kickoff": {
     "slug": "cf-135-feat-renovate-forgejo",
     "type": "feat",
