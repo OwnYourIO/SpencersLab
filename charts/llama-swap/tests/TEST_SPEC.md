@@ -2721,7 +2721,7 @@ be called first.
   `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
   implemented.
 
-### 9.27 2026-11-10 envelope round — cgroup 116→110Gi, q4 parallel 4→2 + concurrencyLimit 1, MALLOC_MMAP_THRESHOLD_ on all five arenas (2026-11-10)
+### 9.27 2026-11-10 envelope round — cgroup 116→110Gi, MALLOC_MMAP_THRESHOLD_ on all five arenas; parallel 4→2 + concurrencyLimit 1 reverted same day by owner ruling (2026-11-10)
 
 Owner-approved envelope repair after the same-day q4 SystemOOM crashloop
 (11 container restarts, node MemAvailable bottoming at 0.7 GiB, collateral
@@ -2764,6 +2764,19 @@ gate refuses forever and MemAvailable never recovers. Records:
   render inside the `strata-config` / `strata-profile` ConfigMaps and the
   strata Deployment, which the parity suite proves leave the goldens
   byte-identical.
+- **Same-day OWNER RULING reverted two of the four levers** (parallel +
+  concurrencyLimit), with the regression risk explicitly presented and
+  accepted — a ruling, not an accident: q4 keeps `parallel 4` and NO
+  `concurrencyLimit`; the suite reflects that as the restored
+  byte-identical-to-primary loop and the new negative arm
+  `test_2026_11_10_q4_carries_no_concurrency_limit` (the `Q4_PARALLEL` /
+  `Q4_CONCURRENCY_LIMIT` constants went back out with the revert). The
+  retained 2026-11-10 protections are the 110Gi cgroup (the container dies
+  before the node) + `MALLOC_MMAP_THRESHOLD_` (#5697) + the
+  serialized-deep-prompts traffic law; the two-concurrent-deep-prefill shape
+  is accepted risk — it can recur, and what changes is that the kill stays
+  inside the container instead of a node-wide SystemOOM harvest. Everything
+  else in this section ships unchanged.
 
 ## 10. cf-105 C03 — gpu-ai golden re-capture note (dev session, 2026-11-05)
 

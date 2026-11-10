@@ -1659,10 +1659,6 @@ strata:
         ttl: 3600
         unloadTimeout: 180
         checkEndpoint: /health
-        # Single-flight (owner ruling 2026-11-10): llama-swap answers HTTP 429
-        # at once beyond the limit — it does not queue. The 2026-11-10 kill was
-        # two concurrent ~99k-token prefills stacking on this arena.
-        concurrencyLimit: 1
         # Engine defaults like the other R9700 rungs: no PR/strix switch set
         # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
         # the ROCR entry is injected by the template from the global index.
@@ -2046,8 +2042,7 @@ strata:
       # carries no secret reference of any kind.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/parallel/host to the primary (the Q4 rung shares every one
-      # of these except parallel, halved at the 2026-11-10 envelope round).
+      # backend/gpu/parallel/host to the primary and the Q4 rung.
       exe: /models/strata/Strata/engine/strata
       env: {}
       cwd: /models/strata/Strata
@@ -2141,9 +2136,8 @@ strata:
       # arm.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/host to the primary and the orca rung (the suite asserts
-      # this equality; of that set only parallel may differ — the 2026-11-10
-      # envelope round halved it on this rung).
+      # backend/gpu/parallel/host to the primary and the orca rung (the
+      # suite asserts this equality; only data paths may differ).
       exe: /models/strata/Strata/engine/strata
       env: {}
       cwd: /models/strata/Strata
@@ -2183,8 +2177,8 @@ strata:
         # conversation-cache term. The flag is a VRAM cell window — 32,768 KV
         # cells per QSA layer, ~0.4 GiB VRAM/slot — not a host-RAM budget:
         # host-RAM KV is context × 13,728 B per slot regardless (int8: 13 KV-
-        # bearing layers × 1,056 B) — 3.35 GiB a full 262k park, 6.7 GiB at
-        # this rung's parallel-2 worst case.
+        # bearing layers × 1,056 B) — 3.35 GiB a full 262k park, 13.4 GiB at
+        # this rung's 4-slot worst case.
         - --kv-resident 32768
         - --prefill auto
         # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory above, this cap
@@ -2267,11 +2261,10 @@ strata:
       aliases:
         - qwen3.8-flash-next-unsloth
       gpu: [0]
-      # Half the primary's 4 (owner ruling 2026-11-10): halves the full-262k
-      # worst-case KV (4 × 3.35 → 2 × 3.35 = 6.7 GiB) and caps concurrent
-      # deep-prefill transient stacking — the 2026-11-10 SystemOOM shape was
-      # two concurrent ~99k prefills on this arena.
-      parallel: 2
+      # Owner ruling 2026-11-10 (reverts the envelope round's 4→2): q4 keeps parallel 4,
+      # NO concurrencyLimit; protections = 110Gi cgroup + MALLOC_MMAP_THRESHOLD_ (#5697)
+      # + the serialized-deep-prompts law — two concurrent deep prefills is accepted risk.
+      parallel: 4
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
@@ -2352,7 +2345,7 @@ strata:
         - ornith-1.5-122b-strata
       gpu: [0]
       # One request at a time until the on-target gate measures it: q36 keeps a
-      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 2 the
+      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 4 the
       # flash-next q4 arena runs (int8 KV) would multiply a KV cost this path
       # cannot pay yet.
       parallel: 1

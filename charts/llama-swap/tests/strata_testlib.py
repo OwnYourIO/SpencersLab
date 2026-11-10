@@ -348,13 +348,6 @@ Q4_SESSION_FLAG = "--slot-save-path"
 Q4_SESSION_DIR = "/models/strata/sessions"
 Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
 
-# 2026-11-10 envelope round (the SystemOOM crashloop): the q4 arena is
-# single-flighted — llama-swap answers HTTP 429 beyond the limit, it never
-# queues — and its profile parallel is halved, dropping the full-262k KV worst
-# case 13.4 -> 6.7 GiB.
-Q4_CONCURRENCY_LIMIT = 1
-Q4_PARALLEL = 2
-
 # Inner model id -> the run-config file its cmd's --profile names. The
 # strata-profile ConfigMap's key set must equal exactly this table for the
 # arenas the inner config serves — a profile with no arena (or an arena with

@@ -33,10 +33,14 @@
 #
 # 2026-11-10 envelope round re-pins (owner-approved, post-SystemOOM-crashloop:
 # cgroup + node floor exceeded the 125.1 GiB node; Strata #5697 heap
-# retention): cgroup 116 -> 110Gi with NO cap moving (STRATA_CGROUP_LIMIT),
-# q4 profile parallel 4 -> 2, NEW q4 model concurrencyLimit 1, and
-# MALLOC_MMAP_THRESHOLD_=1048576 on all five arena envs. The gate-era history
-# above stays the record; this round's pins ride their own arms below.
+# retention): cgroup 116 -> 110Gi with NO cap moving (STRATA_CGROUP_LIMIT)
+# and MALLOC_MMAP_THRESHOLD_=1048576 on all five arena envs. Same-day OWNER
+# RULING reverted the round's q4 parallel 4 -> 2 and concurrencyLimit 1: q4
+# keeps parallel 4 (the byte-identical-to-primary loop below) and NO
+# concurrencyLimit — the protections are the 110Gi cgroup + the malloc env +
+# the serialized-deep-prompts traffic law; the two-concurrent-deep-prefill
+# shape is accepted risk. The gate-era history above stays the record; this
+# round's pins ride their own arms below.
 
 from __future__ import annotations
 
@@ -168,18 +172,12 @@ def test_c06_profile_shape_and_ud_q4_k_xl_paths():
             f"{flag} = {val!r} carries no Q4 class marker — the Round-2 UD-Q4_K_XL inventory "
             "lays weights under a Q4-class dir; a name-guess here is the wrong weights"
         )
-    for key in ("exe", "cwd", "lib_dirs", "backend", "gpu", "host"):
+    for key in ("exe", "cwd", "lib_dirs", "backend", "gpu", "parallel", "host"):
         if key in prof:
             assert prof[key] == S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE).get(key), (
                 f"q4 profile {key} diverges from the primary — the engine build/paths are "
                 "per-node, not per-rung; only the data paths may differ"
             )
-    # parallel left the byte-identical set at the 2026-11-10 envelope round:
-    # the q4 arena runs half the primary's slots (KV worst case 13.4 -> 6.7 GiB).
-    assert prof.get("parallel") == S.Q4_PARALLEL, (
-        f"q4 profile parallel = {prof.get('parallel')!r}, want {S.Q4_PARALLEL} — the "
-        "2026-11-10 ruling halved it; the primary keeps 4"
-    )
 
 
 @helm
@@ -189,10 +187,9 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
     --prompt-cache 0 stay out as retired session-file guard rails (now default
     posture, not protection). --ple-io ram makes the 28.8 GiB n-gram table
     RAM-resident (the OOM that killed system pods on 2026-10-29). --batch is
-    NOT a profile pin: the arm's parallel reaches the engine as --batch
-    through serve itself (the 2026-11-01 first-boot argv read --batch 4), so
-    the old session-file rationale for banning it was doubly moot once the
-    feature compiled out."""
+    NOT a profile pin: the arm's parallel 4 reaches the engine as --batch
+    through serve itself (2026-11-01 first-boot argv), so the old session-file
+    rationale for banning it was doubly moot once the feature compiled out."""
     joined = " ".join(S.arg_tokens(_profile()))
     tokens = set(S.cmd_flag_tokens(joined))
     banned_flags = {"--layer-split", "--ple-io"}
@@ -257,23 +254,22 @@ def test_c06_cgroup_108gi_and_engine_cap_lockstep():
     )
 
 
-# --- 2026-11-10 envelope round: single-flight, halved parallel, malloc arena --
+# --- 2026-11-10 envelope round: malloc arena + the owner's reverted levers ---
 
 
 @helm
-def test_2026_11_10_q4_single_flight_and_halved_parallel():
-    """Two concurrent ~99k-token prefills on the q4 arena were the kill shape
-    of the 2026-11-10 SystemOOM crashloop. The arena is single-flighted —
-    llama-swap answers HTTP 429 beyond the limit, it never queues — and the
-    profile parallel is halved, dropping the full-262k KV worst case from
-    13.4 to 6.7 GiB."""
-    assert _model().get("concurrencyLimit") == S.Q4_CONCURRENCY_LIMIT, (
-        f"q4 model concurrencyLimit = {_model().get('concurrencyLimit')!r}, want "
-        f"{S.Q4_CONCURRENCY_LIMIT} — excess requests must 429 at once (the 2026-11-10 "
-        "kill was two concurrent ~99k prefills)"
-    )
-    assert _profile().get("parallel") == S.Q4_PARALLEL, (
-        f"q4 profile parallel = {_profile().get('parallel')!r}, want {S.Q4_PARALLEL}"
+def test_2026_11_10_q4_carries_no_concurrency_limit():
+    """Same-day OWNER RULING (2026-11-10) reverted the envelope round's
+    concurrencyLimit 1 + parallel 4 -> 2 with the regression risk explicitly
+    presented and accepted: q4 keeps parallel 4 (the byte-identical-to-primary
+    loop above) and NO concurrencyLimit — the protections are the 110Gi cgroup
+    (container dies before the node), MALLOC_MMAP_THRESHOLD_ (#5697) and the
+    serialized-deep-prompts traffic law; two concurrent deep prefills is
+    accepted risk."""
+    assert "concurrencyLimit" not in _model(), (
+        f"q4 model carries concurrencyLimit = {_model().get('concurrencyLimit')!r} — "
+        "the owner's same-day ruling removed it; the protections are the 110Gi "
+        "cgroup + the malloc env, not single-flighting"
     )
 
 

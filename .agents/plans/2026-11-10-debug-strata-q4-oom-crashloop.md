@@ -97,8 +97,14 @@ Corrected per the research file §2A, cheapest first:
 2. Single-flight the q4 arena: `concurrencyLimit: 1` on the q4 model —
    excess requests get HTTP 429 immediately (clients must back off/retry;
    llama-swap does not queue).
+   **REVERTED by owner ruling 2026-11-10** (shipped, then reverted same day
+   with the regression risk explicitly presented and accepted): q4 ships NO
+   concurrencyLimit; retained protections = MALLOC env + 110Gi cgroup.
 3. Right-size from the verified KV arithmetic: `parallel: 4 → 2` halves the
-   4-slot worst-case KV (13.4 → 6.7 GiB) and the transient stacking; and/or
+   4-slot worst-case KV (13.4 → 6.7 GiB) and the transient stacking —
+   **REVERTED by the same owner ruling** (q4 keeps parallel 4; the
+   two-concurrent-deep-prefill shape is accepted risk, the kill now stays
+   inside the container); and/or
    `--conversation-cache-mib 16384 → 8192` (note: 8192 was the U8 value,
    half-reverted at the 2026-11-01 owner gate — re-trimming needs a fresh
    ruling). Leave `--kv-resident` alone for RAM purposes (it is VRAM).
