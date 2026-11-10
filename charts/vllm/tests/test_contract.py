@@ -3,7 +3,7 @@
 # metadata on the new-chart rule, the committed dependency lock + vendored tgz,
 # the first-build image pin shape (on the pre-switch image until C02 flips it,
 # then on the 0.30 re-export with its upstream ledger mirror), the values-level
-# serveArgs recipe (D4 order, then the cf-131 D24 order, D36/D38-amended), the cf-131 values
+# serveArgs recipe (D4 order, then the cf-131 D24 order, D36/D38/D40-amended), the cf-131 values
 # record keys + comment law, the monitoring-annotations gate, the per-chart CI
 # workflow ladder, and the C01 container surface: the thin re-export overlay
 # + its one sanctioned flash-attn layer (the D34 amendment, install source
@@ -224,7 +224,7 @@ def test_c02_spec_and_kv_values_keys_carry_the_d24_record():
     )
     assert app.get("specConfig") == V.SPEC_CONFIG_DFLASH, (
         "C02 AC8: app-template.specConfig diverges from the shipped dflash JSON (D24/Q11 chain, "
-        "D39 per-drafter kv_cache_dtype key — "
+        "D40-reverted pre-D39 literal — "
         f"got {app.get('specConfig')!r}"
     )
     assert str(app.get("rocrVisibleDevices")) == "0", (

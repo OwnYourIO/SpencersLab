@@ -375,7 +375,12 @@ entrypoint seam outputs (the appended `--compilation-config`, the
 `RADIANCE_WEIGHT_QUANTIZATION=auto`'s omission of `--quantization`), and
 DIFF against the plan's D24 recipe — the chart's serveArgs is the expected
 side. A diff is a values-only fix at the C02 surface (the dual-edit path
-law: chart serveArgs + the service twin), recorded here. The pod args
+law: chart serveArgs + the service twin), recorded here. THE D40 CAPTURE
+EXPECTS the pair `--kv-cache-dtype-skip-layers` + `sliding_window`
+DIRECTLY AFTER the `--kv-cache-dtype` pair in the 46-token args list
+(C02's D40 final list is the expected side); a missing pair there =
+values drift, fixed values-only at the C02 surface — the capture's
+standing law. The pod args
 start with the MODEL PATH (the entrypoint supplies the verb) — a
 `vllm serve` token in the args is the double-verb transcription error, the
 capture's first check.
@@ -510,8 +515,10 @@ resolution (DECISIONS D37), records-only, NO ship edit:
 would re-open the 20-var law).
 The PASS marker PAIR: PRESENT — `[radiance] kv cache groups: size 8, 9
 groups, ~368-378 blocks/request (upstream would pick size 5)` (378 proven
-at the fp8 crash boot, 368 predicted at the int4 boot — the boot log
-arbitrates); ABSENT — the upstream pair `Add 2 padding layers … 4.17%` +
+at the fp8 crash boot, 368 predicted at the int4 boot; the D40 shape
+predicts 376 — the SWA group moves 4→12 blocks while FA/GDN stay —
+riding INSIDE the recorded band — the boot log arbitrates as ever);
+ABSENT — the upstream pair `Add 2 padding layers … 4.17%` +
 `Add 4 … 25.00%`: its presence means `RADIANCE_KV_GROUP_OPT` got flipped
 = the anti-lever (+1.08 GiB grouped demand, halved concurrency, never
 set): record and stop. The single `Add 3 padding layers, may waste at most
@@ -599,16 +606,35 @@ Boot bar δ ≥ 0.32; the pathological sampler/drafter-binding tail misses
 5.06 by ≈0.16 — there the 262144 boot still refuses and PRINTS the
 fresh cap: the print law at the C+f2 pool class is ≥243k + δ (f2 alone
 re-printed ≈243k at the 4.74 pool; δ moves it up), and the print drives
-the B cap ruling exactly as D37 ruled. THE D39 MIXED-DTYPE RE-READ of
-this demand bar: the drafter slice int4→bf16 costs ×3.77 on its ~0.11
-GiB slice of the grouped bar → est demand 5.4–5.5; THE BAR IS
-UNCHANGED — X ≥ 5.06 against the MEASURED 5.73 pool, comfortably held
-(est margin ~0.25) — and THE ENGINE'S GROUPED PRINT STILL ARBITRATES
-(the D37 law continues). R9's weakest-claim caveat rides this exact
-read: if the drafter bf16 page forces pool-wide page inflation beyond
-+0.44, A′ MISSES and PRINTS the cap (the ≥243k + δ class) — the
-mixed-page tell is the bs/page INFO and the `Setting attention block
-size…` line [R9.2][R9 reliability]. Donor rows retired on evidence:
+the B cap ruling exactly as D37 ruled. THE D40 RE-PIN of this demand
+row (the D39 est 5.4–5.5 is SUPERSEDED — its slice-priced ×3.77 model
+FALSIFIED): the A′ key did its drafter-side job, but the drafter's
+bf16 SWA page (6,946,816 B) then BECAME the model max page and
+`unify_kv_cache_spec_page_size` strided-PADS all groups when
+4096/1088 does not integer-divide — block counts are pad-invariant,
+so the bar scaled as ONE unit: 368 × 8 × 6,946,816 = 19.05 GiB =
+5.06 × (4096/1088) exactly (crash #7). The spec-key route is
+PROVABLY DEAD at 262144 on 32 GiB — every non-causal-legal dtype has
+page ≥ 2048 B/token ⇒ demand ≥ ~9.5 > the pool, and the only value
+clearing capacity IS crash #6's assert. At the SHIPPED D40 shape
+(skip-layers IN, spec key OUT) the recomputed demand is ≈5.17 (Σ 376
+blocks: FA 310 int4 + GDN/state 54 + SWA-bf16 12 at block 448;
+bytes_per_block unchanged at 8 × 1,845,248; 5.15–5.25 on the
+in-flight span) vs the MEASURED pool 5.69, and the watermark-admit
+check 0.95 × 5.69 = 5.41 ≥ 5.17 holds (full-session admission
+expected). THE BOOT ⇔ PRINT LAW CONTINUES UNCHANGED IN FORM (the D37
+authority) — the bar to record against is now the 5.69 CLASS, not
+the 5.73 one; δ stays CLOSED at the measured 5.73/0.99 (supply-side
+— the 5.69 is the pool's own A′-boot re-measurement, a −0.04 drift,
+a DIFFERENT quantity from the demand bar). THE HONEST CAVEAT rides
+this gate reading: the skip-layers × dflash combo is UNTESTED
+upstream (their dflash2 test passes an EMPTY skip list; only
+test_fp8/test_turboquant exercise the machinery, never with a spec)
+and it rides the fork's grouping patch — honest boot odds ~80%; a
+3.5/3.6 FAIL may be the COMBO class (a sizing refusal, or a
+scheduling error at the bs-448 × 1696 pairing), NOT necessarily
+values drift — the print stays the arbiter either way. Donor rows
+retired on evidence:
 D36's `{"image": 1}` profile-day knob is RETIRED by R8's one-dummy law
 (the warmup profiles ONE maximum-feature-size dummy whatever the limit
 — 0 GiB freed), and the mtp-K4 lane (−~2.0 at its 29/30 tool caveat)
@@ -639,24 +665,49 @@ gate legs are unchanged and now BIND the ship path IFF THE BOOT HAPPENS
 B fall-through BEFORE these legs run), in order:
 
 1. Startup acceptance: the boot at 262144 — the `int4_per_token_head` KV
-   info line appears, TARGET-ONLY under the D39 A′ shape (the spec-JSON
-   `kv_cache_dtype:auto` moves the 5 draft groups to auto/bf16 while the
-   16 target FA groups keep int4 — the q4 mandate holds where the bytes
-   matter) — and no refusal-shaped startup death occurs (an
+   info line appears, TARGET-ONLY under the D40 shape (the serveArgs
+   pair `--kv-cache-dtype-skip-layers sliding_window` moves the
+   drafter's 5 SWA groups to auto/bf16 PER-LAYER while the 16 target
+   FA groups keep int4 — the q4 mandate holds literally: every target
+   FA layer at 1088 B/token, only the drafter's window-bounded group
+   pays bf16) — and no refusal-shaped startup death occurs (an
    R4D-configured pod under int4 would print its refusal and die —
    R4D's supported list at the pin is auto/bfloat16/fp8/fp8_e4m3 [171]).
-   THE D39 ASSERT MARKER PAIR: ABSENCE of
+   THE ASSERT MARKER PAIR (D40: the needle UNCHANGED, the drift sense
+   RE-PINNED): ABSENCE of
    `AssertionError: INT4_PER_TOKEN_HEAD only supports causal attention`
-   = THE D39 FIX LINE (booted with 16 target FA groups on int4 + 5 draft
-   groups on auto/bf16 — all three open int4 defect classes structurally
-   sidestepped, they all live on the drafter side [R9]); PRESENCE = THE
-   KEY LOST — the splice or the render dropped it and the pre-D39 crash
-   #6 reproduces verbatim: record and stop, re-check the verbatim legs,
-   do NOT improvise a shape change. The grouped NEEDD + bs INFO lines
-   re-read under the mixed shape (the unify-vs-Phase-3 page path was not
-   re-derived — the print is the authority). On refusal the engine
+   = THE D40 LINE HOLDING (booted with 16 target FA groups on int4 +
+   the drafter's 5 SWA groups forced auto/bf16 by the type-name
+   matcher — the target has ZERO SWA layers, so the match is
+   drafter-exact — and Phase-3-aligned onto the int4 page); PRESENCE =
+   THE SKIP-LAYERS PAIR LOST — the splice dropped the pair or its
+   value mis-matched, the drafter's 5 groups inherited the global int4
+   and crash #6 reproduces verbatim: re-check the rendered args for
+   the pair FIRST (3.1a), do NOT improvise a shape change, and do NOT
+   re-add the D39 spec key — A′ is FALSIFIED, its return would put the
+   pool back on the crash-#7 pad path — hand back per the ruling.
+   THE MIXED-PAGE TELL re-pins under D40: the EXPECTED boot shows NO
+   `Setting attention block size…` INFO — Phase-3's no-bump evaluation
+   is exact arithmetic at this shape (the skip pages align onto the
+   int4 page, unification sees EQUAL pages, no padding): the INFO's
+   ABSENCE is the no-bump confirmation marker; PRESENCE = the bump
+   branch fired (the shape drifted from R11.3's arithmetic — record
+   the printed N and RE-DERIVE the demand before trusting 5.17). The
+   per-layer matcher line is DEBUG-only — its absence at default
+   verbosity is the expected shape, not a failure signal. The print
+   stays the authority. On refusal the engine
    PRINTS its estimated-max-length line — the 3.1b sanctioned B
-   fall-through, not a crash class. Re-record the 3.1 KV triple: the
+   fall-through, not a crash class; if the print REFUSES the skip
+   shape, the ONE pre-recorded next step behind it is route A — the
+   values pair-out of `("--speculative-config", *specConfig)`
+   (46 → 44 tokens; needed 4.40, ~99% boot, δ-immune, the three int4
+   defect classes vanish with no drafter; −71% decode class
+   186.7→53.9 c1; the skip pair rides INERT — zero SWA target layers
+   means the type-name match hits nothing, harmless, and it stays as
+   the dflash re-enable bridge; the reverted spec JSON stands verbatim
+   on C02's D40 entry for re-enable). The operator RECORDS the print
+   and HANDS BACK — the pair-out is pre-recorded, NOT operator-run;
+   do not improvise. Re-record the 3.1 KV triple: the
    ~16.5 KiB/token class should widen the pool over the crash-#4 fp8
    datum (record, do not assume).
 2. The 3.3 smoke (the 3.4 vision smoke retired with D38 — no separate

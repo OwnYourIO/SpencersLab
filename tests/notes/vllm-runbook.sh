@@ -85,6 +85,21 @@
 # the 3.6 assert-marker-pair needle riding the dev's new row (the runbook
 # records both readings: ABSENCE = the fix line, PRESENCE = the key lost).
 # T1/T2/T4 unaffected.
+# D40 amendment re-pin (2026-11-09, the skip-layers fix on the R11 ground
+# — the owner's R11-Q1 "skip-layers in, A′ out", DECISIONS D40): crash #7
+# falsified A′ on-target — the spec key made the drafter's bf16 page the
+# model MAX page and the pages do not integer-divide, so page unification
+# strided-pads the WHOLE pool (demand ×3.7647, the 19.05-vs-5.69 sizing
+# ValueError). The T3 shipped-shape dict therefore re-pins the
+# --speculative-config VALUE back to the reverted pre-D39 literal and
+# GAINS the --kv-cache-dtype-skip-layers sliding_window entry — the pair
+# forces exactly the 5 drafter SWA layers to auto/bf16 per-layer and
+# Phase-3 aligns their pages onto the int4 page, no padding anywhere.
+# d12 becomes d13, recounted at the shipped list; serveArgs move 44 -> 46
+# (the render-verbatim pin lives in charts/vllm/tests). The T5 assert
+# needle STAYS as the crash-#6 literal, its drift sense re-reads:
+# PRESENCE now means the skip-layers pair was lost (never re-add the D39
+# key). T1/T2/T4 unaffected.
 #
 # Designed-RED window: T3/T5 name artifacts the cf-131 waves land in order —
 # the ledger (C01), the chart constants (C02/C03), the runbook text (C05).
@@ -221,12 +236,18 @@ except yaml.YAMLError as ex:
 args = ((cv or {}).get("app-template") or {}).get("serveArgs") or []
 
 # The shipped-shape flags the chart must carry (cf-131 C05 re-pin,
-# D36-amended, D38-recounted): the round-2 Q2 Shape-B seqs/chunk constants,
+# D36-amended, D38-recounted, D40-grown): the round-2 Q2 Shape-B seqs/chunk constants,
 # the round-3 Q11 engine-cap 262144 on the max-model-len leg (and the dflash
 # JSON's matched draft context — the same 262144, the drafter's native
 # ceiling), the D36 q4 package (int4_per_token_head + the TRITON_ATTN target
-# + the ssm-bf16 pair, util at the 0.98 ceiling), the two Q7 carries, and
-# the D38 shipped-shape swap. The mm pair LEFT the dict with D38's vision
+# + the ssm-bf16 pair, util at the 0.98 ceiling), the two Q7 carries, the
+# D38 shipped-shape swap, and the D40 skip-layers pair entry
+# (--kv-cache-dtype-skip-layers sliding_window) beside the D40-reverted
+# --speculative-config value: the pair forces the 5 drafter SWA layers to
+# auto/bf16 per-layer and Phase-3 aligns their pages onto the int4 page,
+# the per-drafter spec key D39 shipped is OUT (its bf16 MAX page
+# strided-padded the whole pool — crash #7). The mm pair LEFT the dict with
+# D38's vision
 # drop (its json.loads record now rides the values re-enable rider verbatim)
 # and the D38 legs below take its place: the single-token
 # --language-model-only presence + the mm-flag absence. The tool trio and
@@ -236,7 +257,7 @@ args = ((cv or {}).get("app-template") or {}).get("serveArgs") or []
 # str()-normalize: an unquoted 262144 / 3 / 2560 parses as a number — it
 # must still compare equal to the rendered arg string; quote survival on
 # the util value is the pytest verbatim suite's law, not this leg's.
-d12 = {
+d13 = {
     "--served-model-name": "qwen3.8-27b-vllm",
     "--tensor-parallel-size": "1",
     "--max-num-seqs": "3",
@@ -244,16 +265,17 @@ d12 = {
     "--max-num-batched-tokens": "2560",
     "--gpu-memory-utilization": "0.98",
     "--kv-cache-dtype": "int4_per_token_head",
+    "--kv-cache-dtype-skip-layers": "sliding_window",
     "--attention-backend": "TRITON_ATTN",
     "--mamba-ssm-cache-dtype": "bfloat16",
     "--scheduling-policy": "priority",
     "--watermark": "0.05",
-    "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","kv_cache_dtype":"auto","disable_padded_drafter_batch":true}',
+    "--speculative-config": '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8","num_speculative_tokens":7,"max_model_len":262144,"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}',
 }
-for flag, want in d12.items():
+for flag, want in d13.items():
     got = serve_flag(args, flag)
     if got is None:
-        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe, D36/D38 shape)")
+        errs.append(f"charts/vllm serveArgs lacks {flag} (C02 D24 recipe, D36/D38/D40 shape)")
     elif str(got) != want:
         errs.append(f"charts/vllm serveArgs {flag} is {str(got)!r}, want {want!r} (C02 D24, D36)")
 
@@ -378,7 +400,7 @@ PY
   elif [ "$rc" -ne 0 ]; then
     fail "T3: runbook constants do not match the shipped values (C05 AC3 — diagnostics above)"
   fi
-  ok "T3: runbook constants match the shipped values (served name, the 12-flag shipped-shape dict recounted at the D38 list, the --kv-cache-memory-bytes ABSENCE leg, the D38 --language-model-only presence + mm-flag absence legs, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
+  ok "T3: runbook constants match the shipped values (served name, the 13-flag shipped-shape dict recounted at the D40 list incl. the skip-layers pair and the reverted spec JSON, the --kv-cache-memory-bytes ABSENCE leg, the D38 --language-model-only presence + mm-flag absence legs, the true-axis + recorded-row phrase needles, scrapeInterval absence, priority 1/5/9 + floor 5, the 0.30 base tag across runbook/chart/ledger + the digest pairing)"
 fi
 
 # --- T4: research citations resolve into RESEARCH.md ---------------------------
@@ -538,7 +560,7 @@ need("RETIRED BY D38", "step 3.4 (the retirement marker — the multimodal smoke
 need_re(r"(?i)re-measure gate", "the day-one gate heading (the SOLE envelope path, D29)")
 need_re(r"(?is)int4_per_token_head.{0,400}TRITON_ATTN|TRITON_ATTN.{0,400}int4_per_token_head", "the int4 gate (the two 0.30 edits as the shipped boot config, D36)")
 need_re(r"(?i)boot-config qualification", "the 3.6 gate's D36 promotion — the gate binds the ship path, no longer a day-one flip experiment")
-need("AssertionError: INT4_PER_TOKEN_HEAD only supports causal attention", "step 3.6 leg 1 (the D39 assert marker pair — the runbook's new row records both readings of the shipped kv_cache_dtype key: ABSENCE is the fix line, PRESENCE means the key was lost; the operator greps it verbatim)")
+need("AssertionError: INT4_PER_TOKEN_HEAD only supports causal attention", "step 3.6 leg 1 (the D39-era assert marker pair, D40-reworded — the runbook's row records both readings of the shipped skip-layers pair: ABSENCE is the D40 skip-layers line, PRESENCE means the pair was lost and the drafter re-inherited the global int4; the operator greps it verbatim)")
 need("keypress", "the tool smoke (the keypress_auto/keypress_parallel fixture cases — the synthetic wire gate, never-executes-tools)")
 need_re(r"(?i)tool[ \-]?smoke", "the tool smoke step (the round-2 Q6 marker's closing gate, D29)")
 
@@ -588,7 +610,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the runbook step content is incomplete (C05 AC4/AC5 — the named commands, the 0.30 marker set, the day-one gates, the one-engine-per-card law, or the honest envelope are missing; diagnostics above)"
   fi
-  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set incl. the D38 text-only marker + ViT ABSENCE pair + the 3.4 retirement marker + the DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates + the D39 3.6 assert marker pair, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
+  ok "T5: the step content is present (0.30 on-target facts + re-export enumeration, staging trees/marker/shas + the Q8 contingency rung, the 0.30 first-engine marker set incl. the D38 text-only marker + ViT ABSENCE pair + the 3.4 retirement marker + the DRY_RUN-analog capture, the day-one re-measure/int4/tool-smoke gates + the D40-reworded 3.6 assert marker pair, the priority proof, the one-engine-per-card law + kv-offloading hatch, the recorded anchor classes + the pool-governed envelope)"
 fi
 
 printf 'PASS: vllm runbook contract checks (%d ok)\n' "$checks"

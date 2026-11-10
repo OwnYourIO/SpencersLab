@@ -73,7 +73,7 @@ MODEL_FILENAME = "Qwen3.8-27B-UD-Q4_K_XL.gguf"
 # ---------------------------------------------------------------------------
 # The cf-131 (0.30 Radiance fork) generation contract — plan-derived pins.
 # Every constant here is copied from the cf-131 plan of record: the round-3
-# header + DECISIONS D23-D39 + the C01/C02/C03 chunk recipes (the dated
+# header + DECISIONS D23-D40 + the C01/C02/C03 chunk recipes (the dated
 # amendments included). They are the ground truth dev must satisfy; a
 # re-pin changes the plan first.
 # ---------------------------------------------------------------------------
@@ -107,17 +107,22 @@ STAGED_MARKER = f".staged-mxfp4-{TARGET_SHA}-{DRAFTER_SHA}"      # both-sha-keye
 
 # The shipped dflash spec JSON (D24: the R3 L2.3 0.30-native keys, K7 the
 # top measured lane, draft max_model_len re-bound to the target's 262144 by
-# the round-3 Q11 engine-cap chain — D39-amended: the per-drafter
-# kv_cache_dtype auto key after attention_backend closes crash #6 (the
-# non-causal drafter inheriting the global int4 into the causal-only
-# assert) and is valid at both pins, the bridge key for the 0.33 watch).
+# the round-3 Q11 engine-cap chain — D40-reverted to the pre-D39 literal:
+# the per-drafter kv_cache_dtype key is OUT; the drafter-side bf16 page
+# becomes the model MAX page and 4096/1088 is not an integer, so
+# unify_kv_cache_spec_page_size strided-pads ALL groups to it — the
+# spec-key route inflates demand ×3.7647, dead at 262144 on this card.
+# The drafter's bf16 arrives through the serveArgs pair
+# --kv-cache-dtype-skip-layers sliding_window instead: the type name
+# matches exactly the 5 drafter SWA layers (the target has zero), forces
+# them auto/bf16 per-layer, and Phase-3 aligns their pages onto the int4
+# page — equal pages, no padding, no block-size bump at this shape).
 # The single-quoted YAML must render this byte-for-byte into the arg
 # string — a quote drift reds the verbatim test.
 SPEC_CONFIG_DFLASH = (
     '{"method":"dflash","model":"/models/Qwen3.8-27B-DFlash2-FP8",'
     '"num_speculative_tokens":7,"max_model_len":262144,'
-    '"attention_backend":"TRITON_ATTN","kv_cache_dtype":"auto",'
-    '"disable_padded_drafter_batch":true}'
+    '"attention_backend":"TRITON_ATTN","disable_padded_drafter_batch":true}'
 )
 # The mtp toggle JSON is a values-COMMENT record, never the shipped splice
 # (D16/D24); the comment test matches whitespace-stripped fragments.
@@ -130,7 +135,11 @@ SPEC_CONFIG_MTP = (
 # ruling, D36-amended — the int4_per_token_head anchor, the TRITON_ATTN
 # target backend, the ssm-bf16 pair after align, the 0.98 util ceiling,
 # the owner's R6-Q1 q4 boot config — and D38-amended: the vision drop
-# swaps the mm pair for the --language-model-only token, 45 -> 44):
+# swaps the mm pair for the --language-model-only token, 45 -> 44, and
+# D40-amended: the owner's R11-Q1 ruling puts the
+# --kv-cache-dtype-skip-layers sliding_window pair directly after the
+# --kv-cache-dtype pair, 44 -> 46 (the pair's why is on the
+# SPEC_CONFIG_DFLASH header):
 # exact flag order and values,
 # rendered at the SERVICE level where only modelPath/rocrVisibleDevices
 # are overridden. The recipe starts at
@@ -146,6 +155,7 @@ RECIPE_CF131 = [
     ("--gpu-memory-utilization", "0.98"),
     ("--max-num-batched-tokens", "2560"),
     ("--kv-cache-dtype", "int4_per_token_head"),
+    ("--kv-cache-dtype-skip-layers", "sliding_window"),
     ("--attention-backend", "TRITON_ATTN"),
     ("--enable-prefix-caching", None),
     ("--mamba-cache-mode", "align"),

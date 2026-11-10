@@ -2,7 +2,7 @@
 # vllm C02 — AC1-AC4; re-pinned by cf-131 C02/C03): extract the service `vllm:`
 # subtree, render with --set domain/clusterName, and assert AC2/AC3/AC4 line by
 # line — the full contract serve recipe verbatim (the cf-105 D4 recipe until
-# the C02 flip, the cf-131 D24 0.30 Shape-B recipe, D36/D38-amended, after it),
+# the C02 flip, the cf-131 D24 0.30 Shape-B recipe, D36/D38/D40-amended, after it),
 # the complete container env set (four vars, then the D25 twenty-one-var law,
 # D34-restored and D38-extended), probes, securityContext, the privileged+hostPath device shape, GPU/RAM/shm
 # pod shape, the exactly-two scrape annotations, the peer-hop Service name,
@@ -45,7 +45,7 @@ def test_ac1_render_produces_deployment_without_sentinels(service):
 def test_ac2_serve_args_are_the_contract_recipe_verbatim():
     """The rendered args equal the contract recipe in order: pre-flip the
     cf-105 D4 list with the service modelPath spliced at --model; from the
-    C02 flip the cf-131 D24 list (D36/D38-amended values) with the model PATH
+    C02 flip the cf-131 D24 list (D36/D38/D40-amended values) with the model PATH
     as args[0] — the 0.30 entrypoint does `exec vllm serve "$@"`, so a
     vllm/serve token or a --model flag would double the verb the image
     already supplies (R3 L1.3).
