@@ -31,6 +31,21 @@ seaweedfs:
     # introduce auth.
     allowInsecureBind: true
 
+    # EC decommission (plan 2026-11-10-dep-seaweedfs-ec-removal). EC 10+4 needs 14
+    # placement targets; this cluster has 8 volume servers on one rack, so EC can
+    # never be satisfied here and already lost shard groups. This key maps to the
+    # admin.toml [maintenance.erasure_coding] enabled toggle (config_toml.go): it
+    # stops EC *encode* proposals permanently — the EC groups that exist today are
+    # decommissioned manually via ec.decode (runbook Phases 1-2), and nothing new
+    # gets encoded afterwards. Note ec_balance has no admin.toml/env key at all
+    # (not in pluginConfigSections): its proposal churn is log noise that dies on
+    # its own once the groups are decoded, and it never executes (no weed worker).
+    # WEED_MAINTENANCE_ENABLED deliberately NOT set: global maintenance stays on
+    # so auto-vacuum keeps draining the delete backlog (owner directive 11-10).
+    # Re-applies over any UI-saved value on every start (admin.data is a PVC).
+    extraEnvironmentVars:
+      WEED_MAINTENANCE_ERASURE_CODING_ENABLED: "false"
+
     data:
       type: "persistentVolumeClaim"
       claimName: "admin-data-seaweedfs-admin-0"
