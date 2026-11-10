@@ -91,7 +91,12 @@ Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
    `Failed to save/delete task state for ec_balance_*: invalid task ID` (~7.9k E/W lines/24h on admin-0).
    EC shard distribution: v0 17, v1 21, v2 22, v3 6, v4 14, v5 9, v6 6, v7 3 shards — the imbalance is
    the rebalancer thrashing against the impossible placement.
-5. **Media PVs are replication `001`** (single copy) — one dead volume server takes media data with it.
+5. **Media PVs are replication `001` = two copies** (1 original + 1 extra; the master volume
+   table shows every media volume on exactly 2 locations, so the "single copy" framing in the
+   first pass was wrong). The real durability caveats: both copies live on **one physical host**
+   (all 8 volume "servers" are pods on the single infra node, backed by the same 5 HDDs), and
+   replica pairs drift after interrupted compaction (1981163: 445 vs 450; 1981164: 476 vs 479;
+   the logs-collection deltas below are the extreme case).
 
 ## Filer / master / s3 / admin status
 
@@ -133,9 +138,10 @@ Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
    (`weed volume.markReadonly` on each affected server) so the deletion queue + vacuum can drain.
 4. **Clean husk volumes** (8 B/0 file, "not enough copies"): `volume.delete.empty` or
    `vacuum -force` per volume, which also unblocks the 461 delete_count anomaly.
-5. **Fix repo hygiene**: `seadweedfs-filer` typo in `services/infra/prod/values.yaml:70`;
-   add `collection` parameters to the dynamic StorageClasses or pin EC away from them;
-   raise media PV replication to `002`.
+5. **Fix repo hygiene**: `seadweedfs-filer` typo in `services/infra/prod/values.yaml:70`
+   (fixed on branch `fix/seaweedfs-filer-ingress-typo`); add `collection` parameters to the
+   dynamic StorageClasses so new CSI data never lands in the EC-eligible unnamed/default pool.
+   (Media `001` is already two copies — no bump needed; see the replication note above.)
 6. **Harden the reboot path**: a pve-infra reboot currently takes master+volumes+filers+s3 down
    simultaneously mid-vacuum/mid-EC-move — that is what broke the shards and diverged the replicas.
    Ordered shutdown on the VM (stop master first), plus podDisruptionBudgets on the weed
