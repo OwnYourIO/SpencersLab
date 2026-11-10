@@ -1,0 +1,101 @@
+{
+  "feature": "2026/2026-11-cf-135-feat-renovate-forgejo",
+  "plan_status": "approved",
+  "approval": {
+    "at": "2026-11-10T17:05:00Z",
+    "by": "owner, in the batched plan-question round ('Approve — run all waves', conditional on folding the Q3/Q4 rulings — folded by the plan fold pass, see DECISIONS Round-2 D12–D16)",
+    "rounds": "batched round 1 (Q1–Q8): Q1/Q2/Q5/Q6/Q7/Q8 recommended stands; Q3 OVERRIDE no containment; Q4 donor direction → exploration-2 (EXPLORE-renovate-mcp-token.md) → folded; approval granted with the fold"
+  },
+  "coord_session": "ses_e39eb7bc4ffectkAy9nSpDDzuF",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-10T16:35:00Z",
+  "kickoff": {
+    "slug": "cf-135-feat-renovate-forgejo",
+    "type": "feat",
+    "card": "grj3HFxsi3WzM5y96",
+    "card_number": 135,
+    "run_tag": null,
+    "worktree": "cf-135-feat-renovate-forgejo",
+    "branch": "cf-135-feat-renovate-forgejo",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "priority": { "raw": null, "class": "default" },
+    "claim": {
+      "cardId": "grj3HFxsi3WzM5y96",
+      "pipelines": ["CICD"],
+      "derived_from": "board label 'Pipeline: CICD' on card #135",
+      "setId": "12855aae-2126-450c-8edf-7122ab5217e2",
+      "lock_file": "/home/coder/SpencersLab/.pipeline/locks/CICD.json",
+      "claimed_at": "2026-11-10T15:31Z",
+      "card_move": "Not Started (XhDyShvuwhGWzWH2z) -> Executing (qZ9CLZqCRbv7NQQ6R)",
+      "claim_comment": "Nko2MSgJvBSoJzH6h",
+      "history": [
+        "2026-11-10 ~15:31Z claimed at pickup; moved to Executing + claim comment under the held claim",
+        "2026-11-10 ~16:2xZ PIPELINE LOCK LOST banner fired mid plan-session drain; stopped the step per contract; pipeline_status showed setId 12855aae still LIVE under this session (age ~25s, no reap — lastReap 05:06Z pre-dated the claim); the one sanctioned question was answered YES (owner: continue) -> pipeline_heartbeat ok, beaten [CICD]; run continues under the ORIGINAL CICD key — no card-id takeover (the engine never lost attribution; flap class of the cf-123 claim.history pattern)"
+      ]
+    },
+    "board_context": {
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Pipeline: CICD": "NHvBk5",
+        "Bucket: CICD": "25Mfu5",
+        "Provider: API": "f3sKNX"
+      }
+    }
+  },
+  "preload": {
+    "at": "2026-11-10T15:31Z",
+    "tool": "dev-boards preload_board",
+    "cards": 0,
+    "degraded": true,
+    "note": "payload answered without lists grouping; launch block + get_card/get_card_details served the run; dependency gate evaluated from preload dependencies (two related-to edges elsewhere, PASS)"
+  },
+  "card_details": {
+    "degraded": true,
+    "reason": "block did not ride the claim answer; coord called get_card_details once directly"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
