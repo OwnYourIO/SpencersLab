@@ -21,6 +21,9 @@ echo "lock; volume.list; unlock" | weed shell … | grep -iE "read.?only|not fou
 #   {cluster="monitoring", app_kubernetes_io_name="loki"} |~ "NoSuchKey" |~ "load chunk"
 # s3 pod: retry loop gone:
 kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"   # → 0 after pod restart
+# lost Loki object: entry presence check (no shell needed):
+curl -sk "https://seaweedfs-admin.infra.spencerslab.com/api/files/properties?path=%2Fbuckets%2Flogs%2Ffake%2F681e07742c8440a8%2F1a1bb915381%3A1a1bb93f591%3A358a4ee9"
+#   {"error":"...filer: no entry is found in filer store"} → entry gone (11-10 verified)
 # admin: maintenance scanner off (exact lines from admin_server.go / config_toml.go):
 kubectl -n default logs sts/seaweedfs-admin | grep -E "Applied \[maintenance\] settings from admin.toml \(enabled: false\)|Maintenance system is disabled by configuration"
 # repo render for the ingress typo fix (already on fix branch):
@@ -97,55 +100,109 @@ that failure is the confirm-unrecoverable answer; leave them for Phase 2.
 
 ## Phase 3 — heal the logs/media volume damage (the read-only + husk cleanup)
 
-Order matters: mark writable **before** vacuum/checks, fix divergence **before** deleteEmpty.
-Investigate state first, then apply.
+Re-verified 11-10 14:25 UTC after the node reboot: only **1982649 is still read-only** (the
+other flags cleared with the volume-server restarts; filer delete retries are back to zero),
+and the holder map below is the current one. The `volume.mark` lines are all idempotent, so
+the full list is safe to paste even if most flags already cleared.
 
-```
+Order matters: mark writable **before** `check.disk` (it skips read-only replicas unless you
+pass the experimental `-fixReadOnly`) and before `deleteEmpty` (source: it silently skips
+read-only candidates). Paste as one block; run in a tmux/screen — the check.disk pass takes
+hours on 13–24k-entry indexes:
+
+```bash
+kubectl -n default exec -i seaweedfs-master-0 -c seaweedfs -- \
+  weed shell -master=localhost:9333 -filer=seaweedfs-filer-client.default:8888 \
+  2>&1 | tee /tmp/sw_heal_$(date +%Y%m%d_%H%M).log <<'EOF'
 lock
-# 3a. inspect: which locations carry readOnly, current replica counts
-volume.list | tee /tmp/vol_before.txt
-
-# 3b. clear read-only flags — targeted (each of the 8 logs volumes, on BOTH replica nodes;
-#     the pairs are volume-1/volume-4 for 1982750–754, volume-2/volume-3 for 1982649/1982885/1982886)
+volume.mark -node seaweedfs-volume-2.seaweedfs-volume.default:8080 -volumeId 1982649 -writable
+volume.mark -node seaweedfs-volume-3.seaweedfs-volume.default:8080 -volumeId 1982649 -writable
 volume.mark -node seaweedfs-volume-1.seaweedfs-volume.default:8080 -volumeId 1982750 -writable
-… (all 16 node×volume combinations, plus:)
-volume.mark -node <holder> -volumeId 1982649 -writable     # v2 and v3
-volume.mark -node <holder> -volumeId 1982885 -writable     # v2 and v3
-volume.mark -node <holder> -volumeId 1982886 -writable     # v2 and v3
-volume.mark -node <holder> -volumeId 10 -writable          # media volume 10 (holders: volume-6/volume-7)
-# blunt alternative if the above is tedious: volume.mark -collection logs -writable
-
-# 3c. reconcile each diverged replica pair — diff + heal the smaller copy from the larger:
-volume.check.disk -v -apply -slow -volumeId 1982750 -nonRepairThreshold 0 -syncDeleted
-… repeat for 1982649, 1982751, 1982752, 1982753, 1982754, 1982885, 1982886
-# (per the wiki recipe for exactly this "chunk Not Found" symptom; -nonRepairThreshold 0 =
-#  no tolerance for drift on a divergent pair; expect long runtime on 13–24M-entry indexes)
-
-# 3d. replicas that are missing entirely / over-replicated:
-volume.fix.replication -n        # dry run — will list the "not enough copies" volumes (1982360–82 etc.)
-volume.fix.replication -apply    # adds the missing copy; removes stray misplaced ones
-
-# 3e. husk volumes (8 B / 0 files — the "skip vacuuming" ones):
-volume.deleteEmpty -quietFor=1h -apply      # (older docs: -force; current name -apply)
-
-# 3f. drain the stuck delete backlog now instead of waiting for 03:29 vacuum cycles:
+volume.mark -node seaweedfs-volume-4.seaweedfs-volume.default:8080 -volumeId 1982750 -writable
+volume.mark -node seaweedfs-volume-1.seaweedfs-volume.default:8080 -volumeId 1982751 -writable
+volume.mark -node seaweedfs-volume-4.seaweedfs-volume.default:8080 -volumeId 1982751 -writable
+volume.mark -node seaweedfs-volume-1.seaweedfs-volume.default:8080 -volumeId 1982752 -writable
+volume.mark -node seaweedfs-volume-4.seaweedfs-volume.default:8080 -volumeId 1982752 -writable
+volume.mark -node seaweedfs-volume-1.seaweedfs-volume.default:8080 -volumeId 1982753 -writable
+volume.mark -node seaweedfs-volume-4.seaweedfs-volume.default:8080 -volumeId 1982753 -writable
+volume.mark -node seaweedfs-volume-1.seaweedfs-volume.default:8080 -volumeId 1982754 -writable
+volume.mark -node seaweedfs-volume-4.seaweedfs-volume.default:8080 -volumeId 1982754 -writable
+volume.mark -node seaweedfs-volume-2.seaweedfs-volume.default:8080 -volumeId 1982885 -writable
+volume.mark -node seaweedfs-volume-3.seaweedfs-volume.default:8080 -volumeId 1982885 -writable
+volume.mark -node seaweedfs-volume-2.seaweedfs-volume.default:8080 -volumeId 1982886 -writable
+volume.mark -node seaweedfs-volume-3.seaweedfs-volume.default:8080 -volumeId 1982886 -writable
+volume.mark -node seaweedfs-volume-3.seaweedfs-volume.default:8080 -volumeId 10 -writable
+volume.mark -node seaweedfs-volume-6.seaweedfs-volume.default:8080 -volumeId 10 -writable
+volume.check.disk -v -apply -slow -volumeId 1982649 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982750 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982751 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982752 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982753 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982754 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982885 -nonRepairThreshold 1 -syncDeleted
+volume.check.disk -v -apply -slow -volumeId 1982886 -nonRepairThreshold 1 -syncDeleted
+volume.fix.replication -n
+volume.fix.replication -apply
+volume.deleteEmpty -quietFor=24h -apply
 volume.vacuum -garbageThreshold=0.1
-
-# 3g. stale S3 multipart cruft from interrupted writes (optional but recommended):
-s3.clean.uploads
+s3.clean.uploads -timeAgo=24h
 unlock
+EOF
 ```
 
-## Phase 4 — the known-lost Loki object + loop stop
+Notes on the flag choices (all source-verified against weed 4.50/master):
+- `-nonRepairThreshold 1`: default is **0.3**, and these pairs diverge up to 46%
+  (1982751: 13,385 vs 24,685) — repair would be *refused* at the default. `1` = no cap.
+- `volume.check.disk` only reconciles **replicated** volumes; logs pair count = 2 locations
+  with rep `001` → treated as replicated ✓. It appends entries present in one replica and
+  missing in the other (mutual heal), and `-syncDeleted` also syncs delete marks.
+- `volume.deleteEmpty -quietFor=24h -apply` (`-force` is a deprecated alias): skips
+  read-only + remote-backed volumes by design — which is why the marks above must succeed
+  first. The 8 B/0-file husks on 1982360–1982382 etc. qualify (untouched > 24 h).
+- If the pipe breaks mid-run, the cluster stays locked: re-run with `lock` replaced by
+  nothing, or `echo "unlock" | weed shell …` first.
+- `volume.fix.replication -n` output goes into the tee'd log — skim it before the `-apply`
+  line runs; drop the `-n` pair if you want full dry-run first passes.
 
-1. Delete the unreadable object entry: admin UI → File Browser →
-   `/buckets/logs/fake/681e07742c8440a8/1a1bb915381:1a1bb93f591:358a4ee9` → delete
-   (or `fs.rm` in shell). It is already `NoSuchKey` for reads — losing it loses nothing new;
-   it's the ~5 min log slice from 11-06 07:21–07:27 UTC.
-2. Restart the s3 deployment (clears the in-process eternal retry): ArgoCD → `seaweedfs-s3`
-   → hard refresh/restart pods, or `kubectl -n default rollout restart deploy seaweedfs-s3`
-   (user-run; not a repo change).
-3. Verify: `retry reading` gone from s3 logs; Loki shows no new `NoSuchKey`.
+## Phase 4 — the lost Loki chunk + the s3 retry loop
+
+**Status change (verified 11-10 14:30 UTC): the filer entry is already gone.** The admin
+file-properties API for the exact path returns `filer: no entry is found in filer store` —
+that is *why* `fs.ls` shows nothing, and why Loki now gets `NoSuchKey` for the object. There
+is no filer entry left to delete; the object died mid-vacuum during the 11-08 reboot and its
+entry was cleaned up afterwards. Two things remain:
+
+1. **Prove nothing else still references lost chunks**, then restart the gateway:
+
+   ```bash
+   kubectl -n default exec -i seaweedfs-master-0 -c seaweedfs -- \
+     weed shell -master=localhost:9333 -filer=seaweedfs-filer-client.default:8888 <<'EOF'
+   lock
+   volume.fsck -findMissingChunksInFiler -verifyNeedles -collection logs -volumeId 1982649
+   unlock
+   EOF
+   ```
+   Anything it prints is a live filer path whose needle is gone — those are your true
+   "bad files"; delete each with `fs.rm <printed-path>` (under the same lock). Empty output
+   = the filer is clean.
+
+2. **Restart the gateway and watch whether the loop respawns.** The s3 pod already restarted
+   with the node at ~13:00 UTC and the `1982649,ffcb4cee151f1745a60afc08` retry loop came
+   back within minutes — so it is **client-driven**, not orphaned in-process state:
+
+   ```bash
+   kubectl -n default rollout restart deploy seaweedfs-s3
+   kubectl -n default rollout status  deploy seaweedfs-s3
+   sleep 120 && kubectl -n default logs deploy/seaweedfs-s3 | grep -c "retry reading"
+   ```
+   - Count stays `0` → done.
+   - It grows again → some client keeps issuing GetObject for an object whose chunk is lost.
+     The requests reach the gateway through Traefik (source NAT'd to the calling cluster's
+     node IP; the `logs` bucket traffic comes from the monitoring cluster, i.e. Loki
+     queriers). Find the culprit in Traefik's access log on the s3 route for the object key,
+     then stop it at the source (pinned Loki dashboard/alert re-running a query over that
+     stream window, or a stuck query frontend retry). Until then, the loop is cosmetic
+     error spam — reads of that key already return `NoSuchKey` fast.
 
 ## Phase 5 — never accidentally EC again
 

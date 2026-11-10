@@ -28,12 +28,18 @@ Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
      and the s3 gateway retry loop on chunk `fid 1982649,ffcb4cee151f1745a60afc08` —
      404 from BOTH replicas (volume-2 and volume-3) of volume `1982649` (logs collection),
      even with `readDeleted=true`.
-   - **Action to take:** delete the filer entry (admin UI → File Browser → bucket `logs` → `fake/681e07742c8440a8/…`),
-     then restart `seaweedfs-s3` deployment — the in-process reader retries forever until the pod restarts.
+   - **Action to take (superseded 11-10 14:30 UTC — see runbook Phase 4):** the filer entry is
+     *already gone* (admin properties API: `no entry is found in filer store`) — nothing to
+     delete. The retry loop respawned after the s3 pod's own 13:00 restart, so it is
+     client-driven: run `volume.fsck -findMissingChunksInFiler -verifyNeedles -collection logs
+     -volumeId 1982649` to prove no live entry references the lost chunk, restart
+     `seaweedfs-s3`, and if the loop returns, trace the GetObject source in Traefik's s3-route
+     access logs (monitoring-cluster Loki queriers are the prime suspect).
 
 2. **Stuck pending-deletion (garbage, not a live file): `fid 10,ffcb4cee151762199b65ca24`**
-   - media-collection volume `10` (28.5GB, live) is flagged **read only** → filer can never write
-     the delete mark; retried forever. Fix by clearing volume 10's read-only flag (below), not by deleting a file.
+   - media-collection volume `10` (28.5GB, live) was flagged **read only** → filer could not
+     write the delete mark; retried forever. Cleared by the 11-10 12:58 volume-server restarts
+     (delete-retry errors back to zero since) — no action needed beyond the Phase 3 marks.
 
 3. **Potentially bad (no reads failed yet — but unreadable if touched): EC groups with >4/14 shards lost**
    in collection `default` (dynamic-CSI PVCs: `seaweedfs-extra/-important/-backups/-backup-important`
@@ -126,23 +132,29 @@ Only **one real lost data file** exists in 7 days of logs (≈8M lines swept):
 
 ## Recommended remediation (order matters)
 
-1. **Stop the retry storm**: delete `/buckets/logs/fake/681e07742c8440a8/1a1bb915381:1a1bb93f591:358a4ee9`
-   (admin File Browser or `weed filer.delete`), restart the `seaweedfs-s3` pod.
-2. **Decide on EC**: 10+4 on 8 servers/1 rack can never satisfy placement, and it already cost data.
-   Either disable EC for `default` (admin UI → EC config / `file.configure.save`), or re-provision
-   EC to 6+2 with the reality that a host reboot degrades every group. Then `ec.rebuild.*` for the
-   recoverable groups 1, 440, 448.
-3. **Repair diverged logs replicas**: keep the *larger* copy per pair (1982649: keep v3 81019;
-   1982750-754: keep volume-4 copy; 1982885/886: either), delete the other replica via
-   `volume.delete -force` on the losing server, let replication recopy. Then clear read-only flags
-   (`weed volume.markReadonly` on each affected server) so the deletion queue + vacuum can drain.
-4. **Clean husk volumes** (8 B/0 file, "not enough copies"): `volume.delete.empty` or
-   `vacuum -force` per volume, which also unblocks the 461 delete_count anomaly.
-5. **Fix repo hygiene**: `seadweedfs-filer` typo in `services/infra/prod/values.yaml:70`
+**Superseded by the runbook** — `.agents/plans/2026-11-10-dep-seaweedfs-ec-removal.md` — which
+corrects several first-pass guesses here (verified command names via weed source: `volume.mark`
+(not `volume.markReadonly`), `ec.decode` (not `file.configure.save`), EC detection off via
+`WEED_MAINTENANCE_*` env, the lost Loki filer entry already deleted, most read-only flags
+cleared by the 11-10 12:58 restart). Summary of the now-correct order:
+
+1. **Stop the churn**: env vars `WEED_MAINTENANCE_ENABLED=false` +
+   `WEED_MAINTENANCE_ERASURE_CODING_ENABLED=false` on the admin server (merged on branch
+   `dep/seaweedfs-disable-ec-maintenance`).
+2. **Get off EC**: `ec.decode` the five recoverable groups (1, 440, 441, 448, 461); fsck +
+   `fs.rm` + shard-delete the five unrecoverable ones (4, 5, 446, 447, 449).
+3. **Heal diverged logs replicas**: `volume.mark … -writable` then
+   `volume.check.disk -apply -slow -volumeId … -nonRepairThreshold 1 -syncDeleted` per pair
+   (mutual append — no need to pick a "winner").
+4. **Clean husks / drain vacuum backlog**: `volume.fix.replication -apply`,
+   `volume.deleteEmpty -quietFor=24h -apply`, `volume.vacuum -garbageThreshold=0.1`.
+5. **Retry loop**: verify no live entry references the lost chunk (fsck on 1982649), restart
+   `seaweedfs-s3`; if it respawns, trace the client in Traefik's s3-route access logs.
+6. **Fix repo hygiene**: `seadweedfs-filer` typo in `services/infra/prod/values.yaml:70`
    (fixed on branch `fix/seaweedfs-filer-ingress-typo`); add `collection` parameters to the
    dynamic StorageClasses so new CSI data never lands in the EC-eligible unnamed/default pool.
    (Media `001` is already two copies — no bump needed; see the replication note above.)
-6. **Harden the reboot path**: a pve-infra reboot currently takes master+volumes+filers+s3 down
+7. **Harden the reboot path**: a pve-infra reboot currently takes master+volumes+filers+s3 down
    simultaneously mid-vacuum/mid-EC-move — that is what broke the shards and diverged the replicas.
    Ordered shutdown on the VM (stop master first), plus podDisruptionBudgets on the weed
    StatefulSets, would prevent the next occurrence.
