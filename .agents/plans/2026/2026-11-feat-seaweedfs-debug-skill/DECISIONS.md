@@ -75,6 +75,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 
 - 2026-11-11 coord (C03 review minor1 ruling): for the invalid-task-ID/ec_balance signature, runbook Phase 0 **item 2 is normative** (per §R1: ec_balance has no env key; its proposals continue until Phases 1–2 remove the EC groups; the env key suppresses EC *encode* only). Item 3's verification bullet must be read against item 2 — hedge/fix on next touch of either file (error-signatures:23 + runbook Phase 0 item 3).
 - 2026-11-11 coord: C03 review minors 1–2 + nit + ResourceExhausted-row: all DEFERRED (next-touch fixes; row omission ruled correct-by-sources-discipline).
+- 2026-11-11 human (friction round): the plans-root `edit`-deny narrowing is worked in THIS run (mode: current session) — lands as new chunk **C07** (STATE records it; it is plan/permission machinery, never a re-open of done chunks). Rejected at this call: follow-up card (user wanted it done now), plan-only/new-session.
 
 ## Deferred
 - Final review (2026-11-11): runbook Phase 2 prose "`-collection=_default` (or `""`)" for fsck contradicts the matcher law (`""`=all; equivalence is ec.decode's exception) — fix at next runbook touch via C01 dev session; STATE `updated_at` staleness nit; C01 review notes now backfilled in chunks/C01.md.

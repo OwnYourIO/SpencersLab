@@ -19,8 +19,14 @@ opencode:
     - action: edit
       resource: tests/**
       effect: deny
+      # Ticket bookkeeping stays closed while plans-root dated deliverables
+      # fall through to the broad allow: the shipped matcher's `*` crosses
+      # `/`, so `*/*` reads "depth >= 2 under .agents/plans/" (per-ticket
+      # folders + templates). A name-shaped allow cannot work — plan-of-
+      # record files share the dated name at every depth. Position after
+      # the test-path denies is load-bearing (last match wins).
     - action: edit
-      resource: .agents/plans/**
+      resource: .agents/plans/*/*
       effect: deny
       # Context files dev may update when a chunk needs it — report under deviations
     - action: edit

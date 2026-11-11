@@ -323,7 +323,16 @@ COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/de
 # retired `Deploy` stage cite now reads `Deployment`. Admitted EXACTLY,
 # never as a blanket skip: the TB form still rides (pre-merge trees)
 # and the pinned settled form rides; anything else reddens.
-DEV_DEPLOY_SETTLED = """| dev-deploy | everything EXCEPT the test paths (`charts/**/tests/**`, `containers/**/tests/**`, top-level `tests/**`) and `.agents/plans/**`, plus the context-file rules below — the block mirrors `agent-dev-local` verbatim plus the cleanup grant (cf-90 C06) | none — and nothing launches them either yet: the pair ships DEFINITION ONLY (cf-90), the coord step-8b Deployment-stage hook under a checked Lifecycle `Deployment` is the only future launch surface (the boards Stage map governs) | as dev-local — git reads, `git add`/`git commit`/`git push` denied (the coordinator commits), trailing `ls *` allow, `helm lint/template` | as plan, plus the workspace-isolation trio (`opencode_worktree_create`/`opencode_worktree_list`/`opencode_session_move`) AND the cleanup row `opencode_worktree_remove` (the deploy fixer closes its OWN worktree at hand-back; branch stays coord-owned, landing-gated) — still NO `execute` row (no deny baseline: interactive runs approve Code Mode once, unattended pipeline runs stay blocked from minting coordinator-owned surfaces) |"""
+# seaweedfs-debug C07 (2026-11-11) re-pin: the dev-deploy EDIT cell moved a
+# second time — the dev-family plans deny became the depth-2 `.agents/plans/*/*`
+# and this row's wording moves with it in the same commit (the agents-sync law:
+# a permission change is only done when its matrix rows moved). The byte below
+# is that post-C07 row. Walking posture: pre-landing the still-unchanged TB
+# row rides and t4 stays green; the settled admission engages the moment C07
+# dev moves permissions.md, so a drifted row — not exactly these bytes —
+# reddens. t7 in tests/seaweedfs-debug/surface.sh greps for this constant so
+# the re-pin cannot be skipped.
+DEV_DEPLOY_SETTLED = """| dev-deploy | everything EXCEPT the test paths (`charts/**/tests/**`, `containers/**/tests/**`, top-level `tests/**`) and everything below `.agents/plans/` root (depth-2 deny `.agents/plans/*/*` — plans-root dated deliverables stay dev-editable; ticket folders with STATE/chunks/FRICTION/DECISIONS/plan-of-record and `templates/` stay closed), plus the context-file rules below — the block mirrors `agent-dev-local` verbatim plus the cleanup grant (cf-90 C06) | none — and nothing launches them either yet: the pair ships DEFINITION ONLY (cf-90), the coord step-8b Deployment-stage hook under a checked Lifecycle `Deployment` is the only future launch surface (the boards Stage map governs) | as dev-local — git reads, `git add`/`git commit`/`git push` denied (the coordinator commits), trailing `ls *` allow, `helm lint/template` | as plan, plus the workspace-isolation trio (`opencode_worktree_create`/`opencode_worktree_list`/`opencode_session_move`) AND the cleanup row `opencode_worktree_remove` (the deploy fixer closes its OWN worktree at hand-back; branch stays coord-owned, landing-gated) — still NO `execute` row (no deny baseline: interactive runs approve Code Mode once, unattended pipeline runs stay blocked from minting coordinator-owned surfaces) |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
@@ -350,7 +359,7 @@ for r in b:
             print(f"dev-deploy row is neither the TB form nor the pinned settled form (cf-96 final-review Deploy->Deployment vocabulary sweep) — got {cur}; the admission is byte-exact"); sys.exit(1)
         print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, cf-90 C06's deploy-pair rows + coord roster cell, the byte-exact coord-pr settled admission, and the cf-96 dev-deploy Deploy->Deployment re-pin; nothing else may drift"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, cf-90 C06's deploy-pair rows + coord roster cell + the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too); with the deploy pair shipped, both dev-deploy matchers must be present"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, cf-90 C06's deploy-pair rows + coord roster cell + the byte-exact coord-pr settled admission, and seaweedfs-debug C07's dev-deploy edit-cell depth-2 move with its byte-exact DEV_DEPLOY_SETTLED re-pin) and carries the agent-board row (era-gated presence — post-landing it rides the base too); with the deploy pair shipped, both dev-deploy matchers must be present"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----

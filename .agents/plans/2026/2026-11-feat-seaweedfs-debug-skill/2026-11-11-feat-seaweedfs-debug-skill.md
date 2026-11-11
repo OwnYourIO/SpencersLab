@@ -29,16 +29,20 @@ AGENTS.md via rulesync.
 ## Commands
 Validation suite for this plan (repo-local; no cluster access; npx pins match CI):
 
-- test: `bash tests/seaweedfs-debug/surface.sh` — arms `t1..t6` map to chunks C01..C06
-  (statics-only per the `tests/wekan-mcp/skill-surface.sh` precedent; subset: `bash
-  tests/seaweedfs-debug/surface.sh t2 t4`). agent-test writes it before any dev; each chunk's
-  `## Tests` names its arm. If C06 is dropped at approval, arm t6 is not written.
+- test: `bash tests/seaweedfs-debug/surface.sh` — arms `t1..t5` map to chunks C01..C05 and
+  arm `t7` maps to C07 (friction-round addition 2026-11-11, DECISIONS human ruling — mode:
+  current session). Arm `t6` stays unwritten (C06 declined at approval; its number is never
+  reassigned). (Statics-only per the `tests/wekan-mcp/skill-surface.sh` precedent; subset:
+  `bash tests/seaweedfs-debug/surface.sh t2 t4`.) agent-test writes arms before any dev; each
+  chunk's `## Tests` names its arm.
 - lint: `npx --yes aislop@0.20.0 scan skills/seaweedfs-debug` — report honestly: markdown is
   NOT scoreable (`scoreable:false`, score null — EXPLORE §2.4), so prose cannot fail the CI
   floor; any scorable file (`.py`) must clear floor 80 with zero errors → the probe script is
   bash, and `aislop scan` takes a DIRECTORY, never a file.
 - lint: `npx --yes rulesync@37.0.0 generate --check` — drift gate; green at plan time
-  (verified 2026-11-11, exit 0); must stay green after C05.
+  (verified 2026-11-11, exit 0); must stay green after C05 and after C07 (C07 re-runs
+  `rulesync generate`; only the seven dev-family agent mirrors + the agents-sync
+  permissions.md mirror may move).
 - typecheck: none — no typed code in this plan.
 - smoke (discovery + pointer claims, EXPLORE-grounded):
   - `test -f skills/seaweedfs-debug/references/mcp-server-spec.md && grep -Fq
@@ -54,6 +58,22 @@ Validation suite for this plan (repo-local; no cluster access; npx pins match CI
 - smoke (C06 ONLY, if opted in): `export PATH=$HOME/.local/bin:$PATH && helm lint
   charts/seaweedfs && helm template charts/seaweedfs >/dev/null` — no other chunk touches
   `charts/`, so no helm render belongs to C01–C05.
+- C07 (permission machinery; friction-round addition 2026-11-11, rides THIS branch per the
+  human's current-session ruling):
+  - `npx --yes rulesync@37.0.0 generate` after the 7-source edit — `git status` may show
+    ONLY the seven dev-family agent mirrors + the agents-sync permissions.md mirror.
+  - `npx --yes rulesync@37.0.0 generate --check` — exit 0; an immediate second `generate`
+    is a no-op (idempotence).
+  - `bash tests/seaweedfs-debug/surface.sh t7` — C07's arm (byte-identical row across all
+    7 sources + 7 mirrors, ordering invariant, policy.py verdict arms, generate gate).
+  - pair-equality regressions: `bash tests/standalone-agents/surface.sh s2 s3 s10`
+    (dev==dev-local alias parity + delta-aware pipeline-vs-standalone equality + source/mirror
+    honesty), `bash tests/agent-dev-deploy/surface.sh` (deploy twins == baseline + the one
+    cleanup row), `bash tests/agent-perms/surface.sh a1 a2 a3` (edit-pivot contracts + row
+    needles), `bash tests/wekan-mcp/board-context.sh t4` (matrix walk — green only after the
+    test wave's DEV_DEPLOY_SETTLED re-pin).
+  - `bash tests/seaweedfs-debug/surface.sh t1 t2 t3 t4 t5` — C01–C05 arms unchanged
+    (regression; the suite file itself is untouched by C07's dev round).
 
 ## Chunks
 | id  | title | size | wave | depends_on | why the dependency |
@@ -64,12 +84,17 @@ Validation suite for this plan (repo-local; no cluster access; npx pins match CI
 | C04 | Skill entry: `SKILL.md` + `endpoints-and-probes.md` + `loki-recipes.md` + `scripts/health-probe.sh` | M | 3 | [C02, C03] | interface: SKILL.md indexes every reference file — all must exist first |
 | C05 | rulesync regen: `.rulesync/rules/overview.md` + generated `AGENTS.md`, drift check | S | 4 | [C04] | registration needs the finished skill under its final name |
 | C06 | OPTIONAL (human opts in at approval) — duplicate-Services fix in `charts/seaweedfs` per R1 §Q6 | M | 4 | [] | independent; last so declining it leaves no hole in earlier waves |
+| C07 | Dev-family plans-root deliverable fix — depth-2 deny `.agents/plans/*/*` replaces the `.agents/plans/**` sweep on all 7 dev sources + regenerated mirrors + permissions.md rows (friction-round addition) | S | 5 | [] | independent: agent-permission machinery, touches no skill/chart files; rides THIS branch per the human's 2026-11-11 current-session ruling |
 
 ## Wave order
 1. C01, C02 — independent (different files, different RESEARCH sections); run in id order if serial.
 2. C03
 3. C04
-4. C05; and C06 only if the human opted in at approval (independent of C05).
+4. C05; and C06 only if the human opted in at approval (independent of C05). C06 was DECLINED
+   at approval — its number stays unused and is never reassigned.
+5. C07 — friction-round addition (DECISIONS 2026-11-11, human ruling, mode: current session):
+   independent of C01–C05 (agent-permission sources + mirrors only); the sanctioned exception
+   to one-branch-one-concern, recorded in the chunk's boundary note.
 
 ## Risks / assumptions
 - **Distillation volume** (C03/C04): ~500–700 lines each of dense markdown for a flash-class dev
@@ -93,6 +118,14 @@ Validation suite for this plan (repo-local; no cluster access; npx pins match CI
   at approval (Open questions #1).
 - `RepeatedResourceWarning` persists after the Phase-0 sync unless C06 lands — warning-only,
   sync succeeds anyway (11-09 proof, R1 §R1.6). C01's checklist says so explicitly.
+- **C07 rides the shipped OpenCode matcher semantics** (verified 2026-11-11 against the
+  installed v2.2.6 binary + opencode.ai/docs/permissions): `*` matches any character
+  INCLUDING `/` (whole-value anchored; `**` ≡ `*` — there is no globstar). The depth-2 deny
+  shape is correct under exactly those semantics; if upstream ever ships segment-scoped
+  globs, `.agents/plans/*/*` silently narrows to exactly-2-segment paths and depth-3+
+  bookkeeping falls through to allow. Guard: t7's verdict arms run through the repo's
+  fnmatch-based simulator (byte-faithful to the shipped matcher) — an upstream matcher
+  change reddens loudly at the next suite run instead of silently opening ticket records.
 
 ## Open questions
 Accumulated per the no-questions-until-final rule; best guesses applied throughout. The human
@@ -127,3 +160,18 @@ resolves any of these at plan approval (coord relays).
    no chunk assumes answers. Impact: none on chunk structure; the human gathers answers at run time.
 8. **Arm t6 when C06 is declined.** Best guess: agent-test does not write t6; surface.sh usage
    block lists t1..t5 (+t6 only when present). Impact: trivial.
+9. **C07 shape (friction-round addition — grounded correction of the FRICTION proposal).**
+   Best guess: the depth-2 deny — `.agents/plans/*/*` REPLACES the `.agents/plans/**` deny on
+   all SEVEN dev-family sources (the brief-enumerated five plus `agent-dev-deploy(-pr)`,
+   which `tests/agent-dev-deploy/surface.sh` t2 pins byte-equal to their baselines plus one
+   row — editing five alone reddens a suite this plan promises green). Why not the proposed
+   `edit .agents/plans/*-*.md` allow: the shipped OpenCode matcher's `*` crosses `/`
+   (verified 2026-11-11, chunks/C07.md "Grounded semantics"), so placed before the deny it is
+   dead code (last match wins) and placed after it also re-opens every per-ticket
+   plan-of-record (identical dated-name shape; the matcher is depth-blind). The depth-2 deny
+   is the only shape that opens root deliverables while STATE/chunks/FRICTION/DECISIONS/
+   plan-of-record/templates stay denied. Impact if overridden: none feasible — see C07.
+10. **Multi-repo port re-sync (C07, informational).** The ported repos (HomeAssistant etc.)
+    keep the old `.agents/plans/**` deny until their next port; the `tests/multi-repo/
+    port-*.sh` t5 pins assert each ported repo's own landed state, which C07 does not touch.
+    Best guess: fold into the next scheduled port; no action in this ticket.

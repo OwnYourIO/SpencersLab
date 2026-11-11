@@ -20,7 +20,7 @@ permissions:
     resource: tests/**
     effect: deny
   - action: edit
-    resource: .agents/plans/**
+    resource: .agents/plans/*/*
     effect: deny
   - action: edit
     resource: skills/**

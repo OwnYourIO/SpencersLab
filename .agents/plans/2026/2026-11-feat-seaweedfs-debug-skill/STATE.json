@@ -9,7 +9,7 @@
     "verdict": "DONE"
   },
   "current_wave": 1,
-  "updated_at": "2026-11-11T07:05:00+00:00",
+  "updated_at": "2026-11-11T08:40:00+00:00",
   "kickoff": {
     "slug": "seaweedfs-debug-skill",
     "type": "feat",
@@ -135,6 +135,31 @@
       "review_rounds": 0,
       "last_verdict": "human-declined at approval (2026-11-11): duplicate Services left as-is; RepeatedResourceWarnings stay cosmetic, manual sync still lands Phase 0",
       "handoffs": []
+    },
+    "C07": {
+      "status": "done",
+      "wave": 5,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "human_rulings": "friction-round mode=current session; Q9 depth-2 replacement CONFIRMED (2026-11-11)",
+      "last_verdict": "APPROVED (review r1 — zero blockers/majors/minors; matcher semantics independently re-derived; board-context full-run red ruled PRE-EXISTING cross-ticket scope)",
+      "test_session_2": "ses_e34d7af75ffePZOIJRNrqG3JNp",
+      "dev_session": "ses_e34c5bc21ffeWJIMuJUpdWbxHF",
+      "handoffs": [
+        { "role": "test(C07)", "at": "2026-11-11T07:40:00+00:00", "status": "DONE", "chunk": "C07",
+          "files_changed": ["tests/seaweedfs-debug/surface.sh (t7 arms)", "tests/wekan-mcp/board-context.sh (DEV_DEPLOY_SETTLED re-pin)"],
+          "commands_run": "coord shell cannot execute suites (by design); reviewer ran all C07 gates independently and got green",
+          "deviations": "re-pin landed on tests/wekan-mcp/board-context.sh (not agent-dev-deploy/surface.sh as planner guessed).", "friction": "none.", "open_questions": "none" },
+        { "role": "dev", "at": "2026-11-11T08:10:00+00:00", "status": "DONE", "chunk": "C07",
+          "files_changed": ["7 .rulesync/subagents dev sources", "7 .opencode/agents mirrors", "agents-sync permissions.md source+generated"],
+          "commands_run": "t7 5/5; full surface.sh 34/34; rulesync check+idempotence; deploy 6/6 twin; standalone s2/s3/s10; agent-perms 3/3; board-context t4 green (full exit 1 ruled pre-existing); aislop 100",
+          "deviations": "permissions.md context-source edit chunk-mandated; drift-entry de-literalized after t4.7 caught the slug (test never touched).",
+          "friction": "t4.7 slug-gate catch — self-resolved.", "open_questions": "none" },
+        { "role": "review", "at": "2026-11-11T08:30:00+00:00", "verdict": "APPROVED", "chunk": "C07", "session": "ses_e34bba8e4ffeoYN6Awl7v0aZqH",
+          "commands_run": "all suites re-run incl 34/34 + idempotence; md5 block identity across 14; last-match-wins full-list audit; matcher re-derivation; non-dev 15 files untouched; scope exactly 16+2+bookkeeping",
+          "findings": "zero blockers/majors/minors; nit: comment wording 'test-path denies' vs 'broad edit-allow pivot' — non-blocking; board-context red attribution VERIFIED pre-existing (t14 offenders = this ticket's bookkeeping only)." }
+      ]
     }
   },
   "blocked": [],
