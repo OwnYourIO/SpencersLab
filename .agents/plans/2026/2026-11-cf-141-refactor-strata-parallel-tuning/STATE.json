@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
   "test_session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-11-11T00:20:00+00:00",
   "test_wave": {
     "at": "2026-11-11T00:20:00+00:00",
@@ -122,13 +122,35 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2, fresh session ses_e37e1bdc0ffe69IJX2jIEUcfwS; r1 CHANGES_REQUESTED — §10.6 rows 1+5 restored in dev r2)",
+      "dev_session": "ses_e37ffb276ffeAFEtuLH11bKxF6",
+      "handoffs": [
+        {
+          "at": "2026-11-11 dev (session ses_e37ffb276ffeAFEtuLH11bKxF6)",
+          "role": "agent-dev-local",
+          "result": "RESULT status: DONE chunk: C01 files_changed: [.agents/notes/strata-parallel-tuning-runbook.md (354 lines; sole tree change; no commits)] commands_run: [export PATH + helm dependency update charts/llama-swap => pass, helm lint charts/llama-swap => pass (0 failed), helm template charts/llama-swap => pass, pytest tests/test_strata_tuning_runbook.py -q => 14 passed / 3 failed (the 3 naming C02/C03/C04 by design) => design-pass, pytest tests/ -q (charts/llama-swap) => 446 passed / 9 skipped / 21 failed — §9.28 map moved by exactly its predicted C01 delta (10 legs cleared; test_cf141_c03_envelope_shipped_in_legs_per_rung re-named C03; test_cf141_c04_runbook_shipped_state_leg stays red naming C04; ZERO reds name C01) => design-pass, pytest tests/ -q (containers/strata) => 25 passed / 3 failed unchanged (C04 ledger reds), npx aislop ci --changes => pass (0 errors / 0 warnings, 94 files), npx aislop scan .agents/notes => 0 files scored (markdown outside aislop's set — gate vacuously clean for the note)] deviations: none — single write target honored, no grants widened; the anticipated .agents/notes/** write denial did NOT occur (write landed directly; shell-heredoc fallback unused) friction: [hard-wrap mid-token trap: some note-law windows require raw token adjacency (e.g. 'zero maintainer replies'), so a line wrap inside such a token fails the leg — cost one edit round, carry into C02/C03 note touches, single-file pytest without PATH export silently skips the 5 helm-guarded legs (FRICTION re-confirmed), aislop does not score markdown and untracked files sit out of --changes (known)] open_questions: none next_suggested: coord commits C01 (note + records), launches C01 chunk review, then C02 dev — q4 env edit must byte-agree with the note's L2 row (validator ties them; c02 shipped-in leg flips green at C02's capture round)"
+        },
+        {
+          "at": "2026-11-11 review r1 (session ses_e37eee8f9ffeWLy4354xqBjlU6)",
+          "role": "agent-review",
+          "result": "RESULT status: CHANGES_REQUESTED chunk: C01 — MAJOR (AC7): §5 stop-criteria block dropped the guide's §10.6 rows 1 (batch_slots < requested) and 5 (aggregate rise < 5% = the parallel-limit row), passing repo-local rules off as §10.6; fix spec (five-row law-green layout) written into chunks/C01.md Review notes; optional MINOR Leg-A clarifying clause left non-endorsed. All validations re-run green: charts 446P/9S/21F (attribution read from bodies: 7×C02/6×C03/8×C04, zero C01), containers 25P/3F, helm lint/template pass, STATE parses, aislop 0/0/94. Honest legs all passed (row-H 99.0 math, Q9 annotations, U3-v2 absence, 0.1.59-crash facts verbatim, ladder, arm-table paths resolve)."
+        },
+        {
+          "at": "2026-11-11 dev r2 (same session ses_e37ffb276ffeAFEtuLH11bKxF6)",
+          "role": "agent-dev-local",
+          "result": "RESULT status: DONE chunk: C01 (round 2) — §5 block now carries the guide's true rows 1–5 localized (row 1 tied to the boot-read gate; row 5 restores the <5% parallel-limit row); §3.4a bar + near-tie flip moved to an explicitly-labeled repo-additions paragraph outside the numbered list; note 354→368 lines; charts suite 446P/9S/21F zero-C01-named unchanged; aislop 0/0; MINOR clause skipped per instruction (not coord-endorsed)."
+        },
+        {
+          "at": "2026-11-11 review r2 (fresh session ses_e37e1bdc0ffe69IJX2jIEUcfwS)",
+          "role": "agent-review",
+          "result": "VERDICT: APPROVED (round 2). §5 re-audited against the live card §10.6 (Code-Mode slice): membership exactly the guide's five rows in order, header claim now matches, repo additions explicitly labeled; all other ACs still met (row-H 98.99→99.0 recomputed, U3-v2 four-decline-mentions only, ladder intact). Validations re-run: helm dep/lint/template pass; charts 446P/9S/21F attribution-verified zero-C01-named; tuning-runbook 14P/3F with all 12 test_c01_* green; containers 25P/3F naming C04; STATE valid; aislop 0/0/94; scope = note + records only. Reviewer made no edits (launch's never-edit directive); this record transcribed by coord into STATE."
+        }
+      ]
     },
     "C02": {
       "status": "pending",
