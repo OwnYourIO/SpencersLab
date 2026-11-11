@@ -273,6 +273,20 @@ alternatives rejected, why.
 
 ## Coord rulings (2026-11-11)
 
+- 2026-11-11 coord: **C05 r3 — the mirror endpoint becomes `https://mirrors.edge.kernel.org`.**
+  The unconditional re-point landed and did its job (CI fetched kernel.org URLs), but the runner
+  could not connect on **:80** (connection timed out after resolution succeeded) — egress HTTP/80
+  to that edge is filtered from the runner network, while the same URL over **https** answered
+  200 in this workspace's probes (both rounds recorded the https leg: noble + noble-security
+  serveable, unchanged sizes). Canonical itself stays out: its names do not resolve from either
+  network (zone/provider outage). Pre-ship verification obligation: the base image must carry a
+  CA store for apt TLS (`/etc/ssl/certs/ca-certificates.crt` in the gfx120x rootfs layer —
+  the layer-0 read recipe is already established); if that read shows no CA bundle, stop and
+  report rather than shipping a build-time https failure. Standby second candidate if :443 to
+  kernel.org also drops from the runner: `mirror.rackspace.com` (own DNS zone) with a per-stanza
+  serveability check first. The law stays a single unconditional sed re-point; only the
+  replacement URL changes.
+
 - 2026-11-11 coord: **the official-first shape ruling for C05 is WITHDRAWN — CI evidence proves
   it dead.** The landed guarded step ran (`apt-get update || { sed → mirror && update; }`) and
   the CI log shows no mirror line at all: apt's `apt-get update` exits 0 even when every
