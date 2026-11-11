@@ -155,13 +155,27 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh ses_e37b221a3ffep65p8UjM0eES5l)",
+      "dev_session": "ses_e37d37e54ffeXfTMrvr0IqvKhq",
+      "handoffs": [
+        {
+          "at": "2026-11-11 dev", "role": "agent-dev-local",
+          "result": "DONE — q4 env STRATA_MMQ_KQ:\"1\" byte-agreeing runbook L2 row (+ Q16-experimental why-comment with citations/revert line); five C02 doc corrections render-derived (service RAM-law, chart description 110592/32768, README rung-5 + L244 settlement, host-prep §4, PIN-ME→rolling-tag law); render delta confined to {env}+description. Post-edit map 449P/9S/18F with 3 era arms re-gated on the missing cf141-l2 capture (§9.28 by-name test-session move) + 1 unsatisfiable arm (S.dig dotted-key + shadowed duplicate) routed as validation_at_fault. Deviations 1-4 (service L200 same-file falsification, 9-line comment, sibling comment left to C03, orca 90GiB left true)."
+        },
+        {
+          "at": "2026-11-11 validation", "role": "agent-test (ses_e37bc3487ffeIrEx9f275aR2P2)",
+          "result": "DONE — §9.28 C02 capture landed (evidence/strata-profiles-cf141-l2/{strata-q4.json,PROVENANCE.md}: pre-write delta==exactly{env} proven, double-capture byte-clean, sha 80a2077…); three re-gated era arms flipped green; mechanical validation repair: testlib dotted-key dig + shadowed duplicate removal in test_strata_runbook.py (assertion semantics unchanged, probes still bite). Suite 453P/9S/14F (all reds name C03/C04/era-steps-cf141-q4parallel8)."
+        },
+        {
+          "at": "2026-11-11 review r1", "role": "agent-review (fresh ses_e37b221a3ffep65p8UjM0eES5l)",
+          "result": "APPROVED — all six offline ACs re-derived reviewer-own (26-check render-verify script: era delta exactly {env}, capture==render bytes+sha, moved objects == {strata-profile,strata-config} with all others + strata-deployment 110Gi/grace420 byte-identical; doc truths live-true incl ghcr 13-tags re-read); test repairs strictly mechanical (4 mutation probes reddened owning arms, controls re-green); PROVENANCE honest (2 apparent fails resolved as newline/shuffle artifacts). Zero blockers/majors; nits + 3 Deferred carry-items into C03's brief (mirror-comment rewrite chiefly)."
+        }
+      ]
     },
     "C03": {
       "status": "pending",
