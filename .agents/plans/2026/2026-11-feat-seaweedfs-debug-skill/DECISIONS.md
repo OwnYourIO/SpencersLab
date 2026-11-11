@@ -74,6 +74,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   (cross-file drift) and live-network smoke (suites are statics-only by design).
 
 ## Deferred
+- C02 review minor (deferred by coord, verdict was APPROVED): `mcp-server-spec.md` §9 "verbatim" quote silently drops the "(such as a NetworkPolicy or service mesh)" parenthetical — restore on next touch of that file.
 - Re-enabling `services.infra.selfHeal` cluster annotation (owner decision; affects every infra
   charts-appset app, not just seaweedfs) — surfaced by R1 §R1.6, out of this plan's scope.
 - Answering R1 §R1.10 U1–U7 live unknowns — human-run probes during the repair; docs instruct

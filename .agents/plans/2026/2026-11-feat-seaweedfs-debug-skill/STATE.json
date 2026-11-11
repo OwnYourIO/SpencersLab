@@ -51,13 +51,24 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review r1; 1 minor deferred: §9 quote drops a parenthetical)",
+      "dev_session": "ses_e37428180ffe2KoK3ESbkReKkR",
+      "handoffs": [
+        { "role": "dev", "at": "2026-11-11T04:20:00+00:00", "status": "DONE", "chunk": "C02",
+          "files_changed": ["skills/seaweedfs-debug/references/mcp-server-spec.md (new, 447 ln)"],
+          "commands_run": "surface.sh t1 t2 => pass 12/12; full suite fail-fast t3.1 (C03 unstarted, honest); aislop scan => not-scoreable clean; scope checks pass; no write denials under skills/",
+          "deviations": "provenance path uses current 2026/ layout (chunk header carried legacy spelling); Appendix A has 15 deltas not 13 (items 14/15 per brief, anchored).",
+          "friction": "none; gotcha for C03/C04: brace-shorthand route tables silently miss arms' literal-token greps — spell primary routes out.",
+          "open_questions": "four §12 owner decisions are follow-up-card inputs." },
+        { "role": "review", "at": "2026-11-11T04:35:00+00:00", "verdict": "APPROVED", "chunk": "C02", "session": "ses_e373609c3ffeDSDmYWLsqc4Mv0",
+          "commands_run": "surface.sh t1 t2 PASS 12/12 re-run; working-tree-aware negatives re-run; pins byte-checked vs §R2.12; scope-clean",
+          "findings": "0 blocker/0 major; minor: §9 'verbatim' quote silently drops the NetworkPolicy parenthetical (deferred); nits: fsck-collection anchor completeness, chunk-header path spelling, §R2-ONLY source note wording — notes appended to chunks/C02.md" }
+      ]
     },
     "C03": {
       "status": "pending",
