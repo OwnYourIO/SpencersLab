@@ -1,0 +1,276 @@
+{
+  "feature": "2026/2026-11-cf-124-feat-checklist-locks-dependency",
+  "plan": "2026-11-11-feat-cf-124-feat-checklist-locks-dependency.md",
+  "plan_status": "approved",
+  "approval": {
+    "at": "2026-11-11T14:29Z (owner message timestamp; workspace clock at record: 2026-11-11T15:05Z)",
+    "by": "owner, in-session",
+    "verdict": "APPROVED with exactly one amendment (D28 — the uncommitted-in-place mint-skip posture); the owner then waived further check-backs: 'Once you've accounted for that, get started with tests and coding, no need to checkback.'",
+    "coord_note": "The approval came from the owner's explicit words, not the coordinator's judgment. The plan-approval pause is satisfied; the remaining stop for this run is HITL `Final Review`."
+  },
+  "coord_session": "ses_e3898c639ffek4WKeesBx5rhoe",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-11T15:05:00Z",
+  "plan_rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-11",
+      "what": "plan of record written; OQ1-OQ14 raised for one batched owner round"
+    },
+    {
+      "round": 2,
+      "at": "2026-11-11",
+      "what": "all 14 answered by the owner; plan, chunks (re-derived to eight, D27) and DECISIONS reworked in place; three rulings override the planner's recommendation (OQ1/OQ2 genuine gates, OQ7 Priority write-ban lifted, OQ9 both-lists Services)"
+    },
+    {
+      "round": 3,
+      "at": "2026-11-11",
+      "what": "Owner APPROVED with exactly ONE amendment, recorded as DECISIONS D28: an unchecked `Worktree Creation` means work done UNCOMMITTED IN PLACE in whatever checkout/branch the run lands in (main included) with zero commits by the coordinator — the earlier stop-with-NEEDS_INFO branch precondition is withdrawn. Plan, DECISIONS, FRICTION, C01 and C05 updated in place; waves, chunk ids and the other 13 rulings unchanged. plan_status stays draft: the coordinator flips it to approved."
+    }
+  ],
+  "plan_handoffs": [
+    {
+      "round": "plan-1 (draft)",
+      "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
+      "note": "the round-1 RESULT text never reached the coordinator ('Subagent completed without a text response'); the artifacts were verified on disk and read from there instead, and that loss is recorded in FRICTION.md",
+      "result": "status: DONE | 6 chunks / 3 waves | 14 open questions accumulated for one batched round, none asked in-session | plan_status left draft"
+    },
+    {
+      "round": "plan-2 (all 14 owner rulings folded)",
+      "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
+      "note": "coord-compressed faithfully from the received RESULT (the harness truncates very long single lines — cf-58 precedent); full text lives in that session",
+      "result": "status: DONE | plan_status draft (approval owed) | plan REWRITTEN in place (rulings-at-a-glance, OQ5 no-filing ask, two new ground facts, 8-chunk table, ruled Test-ownership, per-chunk Commands, 9 USER-owned steps, every Open question annotated ANSWERED with its D-pointer, round-1 text verbatim), DECISIONS appended D15…D27 (+ 'Closed by the round'; D2/D3/D10/D13 marked superseded), FRICTION appended the rework round, chunks C01–C08, STATE (kickoff.stage_exceptions[0] = OQ8 exception PENDING coord action, priority.note, plan_rounds, 8-chunk table) | chunk_set: C01 L w1 checklist-generation cutover (13-name Lifecycle/HITL with the two gated leaders, nine-stage blank default, Services = folders ∪ fixed six, provision engine, artifact board-rules-v12.77-13item.json, AGENTS.md) · C02 M w1 lock doctrine + LOCK_LOST_STOP string · C03 M w1 Priority ban-lift + boundary + write-back stamp leg + M7 re-cut · C04 S w2 Repo: fifth row CuratedForest.com + exact-spelling law · C05 M w2 gated-kickoff run-shape · C06 L w2 related-to gate + inbound-edge grouping · C07 M w2 backfill script + runbook (owner-run --apply) · C08 M w3 parent_id AND child→parent fixes edge | OQ1/OQ2 design as delivered then: blank default keeps today's behaviour; an omitted mint bound the git law by a branch precondition + NEEDS_INFO stop (SUPERSEDED same round by D28, below); an omitted rename degrades four named consumers (coord_session, in-work mark, claim-comment token, bare-slug stack line the resume rule already parses) | commands_run: grep verification of every new pin (M7 is a whole-file phrase bar at tests/pipeline-models/surface.sh:636-640, so C03 re-cuts rather than deletes); checklist-cutover Services law + provision drift function read at file:line (the 19-item spec makes the CURRENT live rule report drift and stops the matching fixture matching → re-cut, not relaxed); boards-deps t1/t3/t4 confirmed as the arms C06/C08 invert while wekan-mcp/dependencies.sh keeps the seven-type tool surface green; mirror topology verified (boards skill has exactly two copies) → C02's file list corrected; STATE re-parses with the 8-chunk dependency map; aislop scan on the folder → nothing scoreable (markdown); helm N/A; no board read or write by this session; nothing filed upstream; nothing pushed | deviations: none | open_questions: none — no ruling unimplemented; two coordinator actions pending (the OQ8 test-session launch, the approval word) and one plan POSITION (D20c: stamp Priority 5 on #124 at the write-back — vetoable at USER-owned step 7) | notes: chunk ids renumbered (D27: round-1 C03→C04, C04→C06, C05→C07, C06→C08); wave 1's three chunks edit DIFFERENT sections of the same boards source, so execute strictly one chunk at a time with one regen each; C01 reddens cf96-lifecycle t6 + the checklist-cutover pointer/Services arms and their fixture BY DESIGN — that is the OQ8 dependency, not a dev failure; the nine pre-existing reds stay red and the roster family (c19/S5/t6) must not be touched"
+    },
+    {
+      "round": "plan-3 (targeted correction at approval)",
+      "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
+      "result": "status: DONE | plan_status left draft for the coordinator to flip | the owner APPROVED with exactly ONE amendment: a run with `Worktree Creation` unchecked does its work UNCOMMITTED IN PLACE in whatever checkout/branch it lands in (main included) — no branch precondition, no NEEDS_INFO stop; the never-advance-main law is honoured by the ABSENCE of commits (coordinator commits nothing, reviews read the working diff, step 10 has no surfaces to remove) and never by refusing to work | files: DECISIONS D28 (supersedes D15's guard half; D15's gate law, rename-degrade and cleanup halves stand), FRICTION round-3 entry, plan (OQ1 row + ANSWERED annotation, ask→chunk row, chunk table, Risks, Decisions summary, surface Command), chunks/C01.md (the Stage-map `Worktree Creation` row clause) + chunks/C05.md REWRITTEN, STATE (plan_rounds round 3, stages_basis cites D28, C05 title) | C05's replacement AC 2 is one posture with no precondition and no stop, plus a new AC 3 negative sweep; the negative test arm means the withdrawn stop wording cannot survive a prose re-wrap | consistency sweep: the only surviving assertions of the withdrawn design are three labelled HISTORY entries (plan OQ1 paragraph, D15, FRICTION round-2), each overlaid by the amendment record; no chunk, row, AC or Command asserts a stop/precondition for an unminted run | `Session Rename`'s degrade design untouched | commands_run: in-place rewrites with exact-match asserts, python3 json.load STATE, residue greps ×3 patterns, aislop scan (markdown → nothing to score), helm N/A | deviations: none | open_questions: none"
+    }
+  ],
+  "kickoff": {
+    "slug": "cf-124-feat-checklist-locks-dependency",
+    "slug_origin": "RESUMED — worktree and branch already exist; nothing re-minted. The card's `slug` custom field is unset (the two crashed runs never reached the post-plan write-back), so the coordinator appends this run's line after plan approval per the boards Post-plan card write-back.",
+    "card": "QZPzjuGT4u6aQvq6C",
+    "card_number": 124,
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "cf-124-feat-checklist-locks-dependency",
+    "branch": "cf-124-feat-checklist-locks-dependency",
+    "branch_base": "a6e493b78",
+    "origin_dir": "/home/coder/SpencersLab",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata-q4",
+      "code": "gpu-ai/qwen3.8-flash-next-strata-q4",
+      "note": "Model(s) checklist carries Qwen Flash + Local (gpu-ai); the pipeline-kickoff combination rule (Flash+Local → assume Qwen Flash Next) resolves both tiers to gpu-ai/qwen3.8-flash-next-strata-q4, and the owner's carried word for this run is 'keep Flash for every subagent'. That combination rule plus the carried word supersede the card's `Provider: API` label routing FOR THIS RUN ONLY — the labels are human-owned and were not changed. The runner-model ruling (AGENTS.md worker paragraph) is untouched by this run.",
+      "supersedes_label": "Provider: API"
+    },
+    "priority": {
+      "raw": null,
+      "class": "default",
+      "note": "Read as unset at claim (null = the default class, gpu-ai/qwen3.8-27b-vllm). Post-OQ7/D20 the agent write-ban is revoked, so the coordinator PROPOSES stamping Priority 5 on card #124 at the post-plan write-back (plan position D20c; USER-owned step 7 records the owner's confirmation). The ~90-card value sweep stays the owner-run backfill (OQ6/D19)."
+    },
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "stages": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "Checked-stages-only, card order: the six checked Lifecycle items ARE this run's stage list (the boards Stage map is the single authority). Unchecked and therefore skipped end to end: `Agent Decides Research` (the Pre Research round was commissioned instead), `Post Research`, `Test Writing`, `Deployment`, `Single Session`. Round-2 note: after OQ1/OQ2 (D15/D16) `Session Rename` and `Worktree Creation` are genuine gated stages and are unchecked on this card, which costs this run nothing — it is a RESUMED run whose worktree and branch already exist (the mint is idempotent) and whose session was renamed and id-captured at its original kickoff (`coord_session` above), so neither skip path (D28's uncommitted-in-place posture, D15's rename degrade) applies retroactively. The OQ8 ruling resolves the Test Writing gap as a recorded stage exception — see `stage_exceptions`.",
+    "stage_exceptions": [
+      {
+        "id": "OQ8-test-writing",
+        "stage": "Test Writing",
+        "ruling": "Owner 2026-11-11 (OQ8, DECISIONS D21): the coordinator runs ONE `agent-test` session BEFORE C01 despite `Test Writing` being unchecked on card #124, landing every chunk's `tests/**` re-pin in one pass; mid-flight pin repairs route back to that `test_session`, never into a dev session.",
+        "state": "PENDING — the coordinator's action after the owner's approval word; `test_session` stays null until that session is launched. If the launch is impossible (ask-denied unattended), the coordinator records it honestly here and affected chunks report missing pins as `not-run`, never closing green.",
+        "owner": "agent-coord"
+      }
+    ],
+    "hitl": [
+      "Final Review"
+    ],
+    "services": [
+      "agent context"
+    ],
+    "claim": {
+      "cardId": "QZPzjuGT4u6aQvq6C",
+      "derived_pipelines": [
+        "Context"
+      ],
+      "takeover_key": "QZPzjuGT4u6aQvq6C",
+      "setId": "9f61477b-d0a3-4eed-9c8d-e8e9c2e6fc18",
+      "history": [
+        "Context claim refused occupied by the crashed run's still-live holder ses_e490c1708ffeHpuuwIqQJ5nNnf; claimed under the card-id lock per the takeover protocol on the owner's explicit word (setId ba7e9803-3d55-4e0e-8e45-0120b782c0a6)",
+        "2026-11-11: PIPELINE LOCK LOST — the card-id claim ba7e9803 was reaped at 06:58:57.661Z while the run waited on the plan-approval question (the 2 h clock keeps ticking through stop points, D20/D21). The sanctioned one-question gate was answered by the owner's same-turn words ('get started with tests and coding, no need to checkback'), so the run re-claimed under the SAME card-id key (never the reaped label): setId 9f61477b-d0a3-4eed-9c8d-e8e9c2e6fc18, heartbeat ok:true. Card verified still in Executing; no commit and no board move happened during the gap. Root cause rides FRICTION as the approval-pause keep-alive class (cf-106 OQ-11 family)."
+      ]
+    },
+    "board_context": {
+      "source": "coordinator launch block (ids as supplied at claim; the block is a starting context, never a freeze — re-resolve live per the boards Board-context consumer rule)",
+      "board": "TNQJ2BrXenZovngTS",
+      "board_name": "AI-Dev",
+      "swimlanes": {
+        "In Process": "jLzy39L7djCRr67SF"
+      },
+      "lists": {
+        "In Process / Test": "jNYNdCPPkX8Bs95s4",
+        "In Process / Cancelled": "52dS3k7Kdk9EB5cJj",
+        "Backlog / Inbox": "PjEZ39rXBdpNcpncs"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Pipeline: Context": "3PGnrD",
+        "Provider: API": "f3sKNX",
+        "Bucket: Context": "jXX4GM"
+      }
+    },
+    "preload": {
+      "at": "claim (coordinator's reads; the plan session performed no board read of its own)",
+      "tool": "none — preload_board NOT called; the launch block's per-list snapshot served the walk and its ids were re-confirmed by get_card per candidate (the block is a starting context, never a freeze), so no whole-board export was spent this run",
+      "degraded": false,
+      "card_details": {
+        "at": "claim",
+        "tool": "get_card_details",
+        "degraded": false,
+        "note": "the claim answer carried no card-details block, so the coordinator called the tool itself once for the claimed card — the sanctioned non-degraded path"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "title": "Checklist-generation cutover: 13-item Lifecycle/HITL with the two gated leading stages, the nine-stage blank default, Services = folders + fixed six, engine + artifact + AGENTS.md",
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "title": "Lock doctrine: continuation prompt answers the lock-lost question; Executing membership alone means locked (boards bullets + LOCK_LOST_STOP string)",
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "title": "Priority doctrine: write ban lifted with its owner-direction boundary, the post-plan write-back stamp leg, class-table truth kept",
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "title": "Repo worker-repo table: fifth row CuratedForest.com, exact-spelling law, silent-unclaimable trap, provision spelling capture",
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "title": "Gated-kickoff run-shape: conditional rename/mint legs, the uncommitted-in-place zero-commit posture (D28), the degrade records, the step-10 no-surfaces clause",
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "title": "Dependency gate on related-to: source-is-dependent, sole gating type, mutual-pair tie-break, pickup-only scope, grouping by inbound edges",
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "title": "Backfill engine + runbook: scripts/board-checklist-backfill.py (additive, in-place sorted inserts, dry-run default, owner-run --apply)",
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01",
+        "C03"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C08": {
+      "title": "Follow-up-card lineage: parent_id AND child-to-parent fixes edge, superseding the parentId-only ruling",
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C06"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "plan_handoffs": [
+    {
+      "round": "plan-1 (draft)",
+      "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
+      "note": "The round-1 hand-back LOST its RESULT text in transport ('Subagent completed without a text response'); the artifacts were verified on disk instead (plan 37KB, 6 chunks, STATE/DECISIONS/FRICTION) and re-read for the batched round, so the record below is reconstructed from the landed files, not from a received RESULT. Full provenance: that session id.",
+      "result": "status DONE (recovered from disk) | 6 chunks / 3 waves | 14 open questions accumulated for the batched round, none asked in-session | plan_status left draft"
+    },
+    {
+      "round": "plan-2 (finalized with all 14 owner rulings folded)",
+      "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
+      "note": "coord-compressed faithfully from the received RESULT (the coord harness truncates very long single lines; cf-58 precedent recorded the same exception). Full text lives in that session.",
+      "result": "status: DONE | chunk: plan round 2 | plan_status: draft (owner's approval word still owed; nothing self-approved) | files: plan of record REWRITTEN in place (rulings-at-a-glance OQ→ruling→D→chunk, out-of-scope incl. the OQ5 no-filing ask, two new round-2 ground facts, 8-chunk table + waves, ruled Test-ownership, per-chunk Commands, risks with the mint guard as the safety hinge, 9 USER-owned steps, every Open question annotated ANSWERED with its D-pointer, round-1 text preserved verbatim); DECISIONS.md appended D15…D27 (genuine gates + mint guard + rename degrade + step-10 clause; nine-stage default with Deployment DECLINED on the owner's word; OQ4 confirms D5; OQ5 non-action; OQ6 confirms D7; Priority ban-lift with (a)-(d) incl. the proposed #124 stamp; OQ8 test session; both-lists Services law + CuratedForest.com + the CurateForest.com list-name nit; OQ10/OQ11 confirmed; related-to sole type + pickup-only superseding the blocks-only law; parent_id + fixes superseding the parentId-only ruling; edges gate at merge; 8-chunk re-derivation) + a 'Closed by the round' section, D3/D2/D10/D13 marked superseded; FRICTION.md appended the rework round (session_rename's return IS the sanctioned sessionID capture, so gating the rename gates the id; a skipped mint collides with the git law AND step-10 cleanup; pipeline-models M7 is the ban's whole-file lock not a wording pin; the both-lists ruling inverts checklist-cutover.sh:381-382 + checklist_extras_drift() + the matching fixture; session-origin s2/s3 byte-windows sit on C07's bullets); chunks/C01-C08 rewritten/created; STATE kickoff.stages_basis updated, NEW kickoff.stage_exceptions[0] = the OQ8 test-session exception PENDING coord action, priority.note, plan_rounds, 8-chunk table, deferred trimmed. | chunk_set: C01 L w1 checklist-generation cutover (13-name Lifecycle/HITL, two gated leaders, nine-stage blank default, Services = folders ∪ fixed six, Stage-map rows, engine Services 15→19, new artifact board-rules-v12.77-13item.json, AGENTS.md, provision skill); C02 M w1 lock doctrine + LOCK_LOST_STOP string only; C03 M w1 Priority ban-lift + boundary + write-back stamp leg + M7 re-cut; C04 S w2(←C01) Repo: fifth row CuratedForest.com + exact-spelling law; C05 M w2(←C01) gated-kickoff run-shape (conditional rename/mint, launch-checkout guard NEEDS_INFO never-main, degrade records, step 0/10, AGENTS.md git-law clause); C06 L w2(←C02) related-to gate + inbound-edge grouping; C07 M w2(←C01,C03) scripts/board-checklist-backfill.py + references/checklist-backfill-runbook.md (additive, negative sorts, no delete, dry-run default, owner-run --apply, numeric Priority leg); C08 M w3(←C06) parent_id AND child→parent fixes edge. | OQ1/OQ2 design: blank default keeps today's behaviour (both names in → ordinary card still mints+renames, zero new per-run prose); omitting Worktree Creation skips mint+warm+session_move and binds the git law — continue in the launch checkout only if it already sits on a non-main, non-detached branch (git rev-parse --abbrev-ref HEAD ≠ main/HEAD), else STOP RESULT NEEDS_INFO naming D15 and the owner's two options; no mint 'anyway', no checkout -b/switch -c under another name there, no commit while the check fails; resumed runs unaffected (idempotent mint); STATE worktree null + branch_source 'launch-checkout (Worktree Creation unchecked)'; step 10 may never remove surfaces it did not mint. Omitting Session Rename leaves the title and degrades four consumers (coord_session null + session-rename-skipped, in-work mark skipped, claim comment 'unnamed' token, slug-stack line written as the BARE slug which the resume rule already parses, no agent-fuser hand-back). Both Stage-map rows carry 'what runs' (citing pipeline-kickoff) + the unchecked consequence, giving c18 a needle per row. | commands_run: grep verification of every new pin (input-only/NEVER written back → only boards:270 + an unrelated plugin comment → M7 is a whole-file phrase bar at tests/pipeline-models/surface.sh:636-640 → C03 re-cuts, roster needles kept); checklist-cutover.sh:363-382,450-474 Services law + CHECKLIST_SPEC/checklist_extras_drift() at provision-board.py:89/224/299 (19-item spec makes the CURRENT live rule report drift and stops the matching fixture matching → both re-cut, not relaxed); boards-deps t1 (:160/:174-177) t3 (:250) t4 (:273-278) confirmed as the arms C06/C08 invert, wekan-mcp/dependencies.sh:200 seven-type surface stays green (doctrine ≠ tool contract), grouping pins live only in boards-deps (cf96-siblings does not test it → replaced in C06's Commands by cf96-coord + board-context/pipeline-locks-reap node suites); repo-label-filter.sh:125 spelling arm + port-*.sh windows located → C04 arms named; mirror topology verified (boards skill has exactly two copies) → C02's file list corrected; git status (folder untracked at a6e493b78) + STATE parses (8 chunks, deps C04←C01, C05←C01, C06←C02, C07←[C01,C03], C08←C06, stage_exceptions[0]=PENDING, plan_status draft); npx aislop@0.20.0 scan on the folder → nothing scoreable (markdown; the code gate runs on C07's script in its own chunk); helm N/A; docker build => no-daemon, CI-deferred (no container work); no board data read or written by this session, nothing filed upstream, nothing pushed or merged. | deviations: none | friction: none new | open_questions: none — no ruling unimplemented; two coordinator actions pending (the OQ8 test-session launch before C01, and the owner's approval word), and one plan POSITION rather than a question: D20c — the coordinator stamps Priority 5 on card #124 at the post-plan write-back (legal now, single-card, that card is already written there), vetoable by the owner at USER-owned step 7. | notes: chunk ids RENUMBERED (D27) — round-1 C03→C04, C04→C06, C05→C07, C06→C08; new C03 = Priority, new C05 = gated-kickoff run-shape. Wave 1's three chunks edit DIFFERENT sections of .rulesync/skills/boards/SKILL.md (C01 L18-58, C02 L100-160, C03 L265-271) → execute strictly one chunk at a time with one regen each, never parallelize wave 1. C01 reddens cf96-lifecycle t6 + the checklist-cutover pointer/Services arms and the matching fixture BY DESIGN; if the test session's re-pins have not landed, C01 cannot close green — that is the OQ8 dependency, not a dev failure. The nine pre-existing reds stay red and c19/S5/t6 (the custom-field roster family) must not be touched. | next_suggested: coordinator seeks the owner's approval word (plan-approval pause), records plan_status approved + the post-plan write-back, then launches the ONE agent-test session (OQ8 exception) before C01's dev."
+    }
+  ],
+  "blocked": [],
+  "card_write_back": {
+    "at": "2026-11-11T15:2xZ (post-approval)",
+    "plan_approved_comment": "iikzXPPnDjGrksGbk (plan path, 8-chunk/3-wave shape, the D28 amendment, the OQ8 stage exception, and the lock-takeover record naming setId 9f61477b and the reaped ba7e9803)",
+    "slug_field": "set (upsert, attached=true) on card QZPzjuGT4u6aQvq6C — the field read null immediately before the write (the crashed runs never reached this step), so this run's combined line is the stack's first entry",
+    "value": "[cf-124-feat-checklist-locks-dependency](https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_e3898c639ffek4WKeesBx5rhoe)",
+    "consistency_check": "PASS — the link host equals kickoff.session_origin (the claim-once value)",
+    "priority_field": "stamped 5 (the field's own NUMBER type was confirmed live before the write; value sent as \"5\" per the tool's typed str signature) — legal since the owner lifted the agent write-ban (OQ7/D20); this card only, the ~90-card sweep stays the owner-run backfill (OQ6/D19)",
+    "deleted_unchecked_items": 37,
+    "surviving_checklist_items": {
+      "Model(s)": ["Qwen Flash", "Local (gpu-ai)"],
+      "Services": ["agent context"],
+      "Type": ["feat"],
+      "Lifecycle": ["Exploration", "Pre Research", "Planning", "Chunk Development", "Chunk Review", "Final Review"],
+      "Human in the Loop": ["Final Review"]
+    },
+    "note": "the retired `session` field was neither read nor written; the two earlier crashed-run comments and this run's takeover comment are frozen history, untouched"
+  },
+  "deferred": [
+    "Whether the backfill engine grows a tick leg (isFinished PUTs) to deliver literal checks on existing cards — out of this ticket by OQ4/OQ6; needs its own ruling (DECISIONS 'Deferred').",
+    "Sibling repos' own boards-skill ports and tests/multi-repo/port-* copies for the fifth worker repo (each repo's own ticket).",
+    "Human-owned board triage the backfill reports rather than repairs: the retired `session` custom field's removal (card #73), the missing Timeout list, renaming the live Planning list titled CurateForest.com (D22 nit; the ruled label spelling is CuratedForest.com), and the anomaly cards #57, #71 (no Lifecycle), #65, #66 (duplicated checklist sets).",
+    "The custom-field roster-count posture (cf-106 OQ-15) — this ticket changes the Priority write law only; the roster sentence and its three red arms (rulesync-surface c19, wekan-mcp S5, board-context t6) stay untouched.",
+    "Live-board legs (USER-owned steps 3-7): rules artifact import, backfill --apply --yes --backup-confirmed, the Priority posture on #124 plus the live field's automaticallyOnCard choice, related-to edge re-draw (#56 to #135, #73 to #140, #126 to #124, and the mutual #126/#140 report), Repo: label creation with the exact ruled spellings."
+  ]
+}
