@@ -207,19 +207,45 @@ def test_c01_ac5_profile_is_valid_json_rendered_verbatim():
 
 @helm
 def test_c01_ac5_required_arg_pairs():
+    """The r9700-arena-pf32k seed minus the ruled exclusions, required pair by
+    pair. cf-141 era move (C03 landing round, TEST_SPEC §9.28): flags whose
+    shipped number a ruling legitimately moves resolve their value from the
+    primary's era-chain tip — a static table copy went stale at row-H and
+    reddened with no ruling to blame it (validation-at-fault class); the
+    membership law itself is unchanged."""
     profile = S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)
     pairs = S.arg_pairs(profile)
-    for flag, value in S.PRIMARY_REQUIRED_PAIRS:
-        assert (flag, value) in pairs, (
-            f"{flag} {value} missing — the r9700-arena-pf32k seed (run-1 RESEARCH §5) minus "
-            f"the ruled exclusions; pairs present: {pairs}"
-        )
+    problems = S.required_pair_violations(dict(pairs), S.primary_required_pairs())
+    assert not problems, (
+        "required arg pair missing — the r9700-arena-pf32k seed (run-1 RESEARCH §5) "
+        f"minus the ruled exclusions, era-scoped values resolved from the chain tip; "
+        f"problems: {problems}; pairs present: {pairs}"
+    )
     toks = set(S.arg_tokens(profile))
     for flag in S.PRIMARY_REQUIRED_FLAGS:
         assert flag in toks, (
             f"{flag} missing — the seed carries it and no ruling excluded it "
             "(its value stays values-configurable, so only presence is pinned)"
         )
+
+
+@helm
+def test_cf141_required_pair_resolution_probe():
+    """Teeth for the era resolution (both directions, era-agnostic): the
+    chain tip's own conv value must clear the membership law, and a render
+    carrying any other number — pre-row-H 32768 today — must be rejected by
+    name. Proves the arm pins presence-at-the-shipped-captured-number, not a
+    remembered literal."""
+    required = dict(S.primary_required_pairs())
+    era_conv = required["--conversation-cache-mib"]
+    wrong = dict(required)
+    wrong["--conversation-cache-mib"] = "32768" if era_conv != "32768" else "99999"
+    violations = S.required_pair_violations(wrong, list(required.items()))
+    assert any("--conversation-cache-mib" in v for v in violations), (
+        f"a wrong-era conv value ({wrong['--conversation-cache-mib']}) must redden the law"
+    )
+    assert not S.required_pair_violations(required, list(required.items())), \
+        "the era's own pair set must satisfy the law"
 
 
 @helm

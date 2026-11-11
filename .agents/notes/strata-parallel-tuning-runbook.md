@@ -29,7 +29,7 @@ rendered echo).
 | 2026-11-10/11 | ruling Q15 | two PRs: PR-1 = C01+C02+C03 (runbook + lever + envelope), PR-2 = C04 (the bump) |
 | 2026-11-10/11 | ruling Q12 | the U3-v2 cgroup-detection user leg is declined — not run in this ticket (see §3's standing note) |
 | 2026-11-10/11 | approval Q17 | plan approved, option (a) stands: crash-and-scale-back at the pin with per-rung boot-read gates and pre-written revert lines |
-| pending C03 | shipped row (will flip) | per-rung parallel 8/8/8/8/1 (primary, strix, orca, q4 raised; ornith stays 1); primary conv 16384 + `STRATA_PLE_AUTO_RAM=0` |
+| 2026-11-11 | shipped (PR-1, C03) | per-rung parallel 8/8/8/8/1 (primary, strix, orca, q4 raised; ornith stays 1 by its surface law); primary conv 16384 + `STRATA_PLE_AUTO_RAM=0` (row-H trio); the §6 ladder rows are the live shipped state, boot-read evidence fills from the owner's post-merge runs |
 | pending C04 | shipped row (will flip) | Strata 0.2.13 / engine 0.1.59 via merge→CI `:main` (PR-2), gated by §4 gates 1–5 |
 
 Pointer: the bump-evaluation plan `.agents/plans/2026-11-10-dep-strata-engine-0213-eval.md`
@@ -188,8 +188,9 @@ precede every round.
 
 Suites at the pin: `standard-v1` baseline passes; `parallel-mixed-v1` sweeps
 (both exist in the 0.2.9 cli choices [31]). Sweep sets per rung: the primary
-sweeps {1, 2, 4, 8} post-C03 because row H genuinely fits; every other rung
-sweeps ONLY after its **boot-read gate** confirmed real 8-slot service — a
+sweeps {1, 2, 4, 8} — C03 shipped row H, which genuinely fits at the pin;
+every other rung sweeps ONLY after its **boot-read gate** confirmed real
+8-slot service — a
 degraded `batch_slots` rung sweeps to its REAL serving count with that recorded
 (sweeping past the confirmed count is exactly the self-deception the guide's
 read-back law forbids). The ornith sweep stays {1} — its `parallel: 1` is a
@@ -231,7 +232,11 @@ counted as guide rows: the host-runbook §3.4a prompt-rate bar (≈2,519 tok/s
 
 Rows are [E] arithmetic on [M-node] arena terms, per RESEARCH R2-C/R2 tables —
 cited, not invented. "Shipped anyway" rows are NOT fits: Q9 authorizes
-crashing into them; the boot-read gates decide what actually serves.
+crashing into them; the boot-read gates decide what actually serves. As of
+C03's landing this table IS the shipped envelope: row H fits at the pin, the
+strix/orca/q4 raises ride it knowingly over budget, ornith's 1 stands — the
+per-rung boot-reads the owner runs after PR-1 merges are the first real
+verdicts on these rows.
 
 | row | shape | host terms (GiB) | verdict |
 | --- | --- | --- | --- |
@@ -255,8 +260,9 @@ before the expert cache auto-sizes (slots-before-cache order at both tags
 (0.1.59-only floor path) — that asymmetry is exactly why Q17's (a) was stated
 as crash-and-scale-back at the pin [60].
 
-Scale-back ladder — C03 fills the shipped rows with boot-read evidence; the
-structure and expected values are written here. Discipline: scale-back
+Scale-back ladder — the shipped rows below ARE the live envelope values
+(C03 landed them); boot-read evidence fills from the owner's post-merge
+runs. Discipline: scale-back
 executes ONLY on an explicit in-round owner word, one rung per commit, never
 agent discretion; a degraded boot-read is recorded, not success (plan law 3).
 

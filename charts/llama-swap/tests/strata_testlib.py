@@ -208,13 +208,48 @@ PRIMARY_REQUIRED_PAIRS = [
     # pod cgroup grew to 116Gi the same day.
     ("--memory-limit-mib", str(PRIMARY_MEMORY_LIMIT_MIB)),
     # Owner budget ruling 2026-10-29: 32 GiB parked-conversation budget,
-    # 16 slots (IQ3_S full-256k park ~= 3.3 GiB of it).
+    # 16 slots (IQ3_S full-256k park ~= 3.3 GiB of it). cf-141 C03 landing
+    # round (§9.28): the conv-mib value is the one entry a ruling moves
+    # without a re-pin ritual (row-H shipped 16384; a future scale-back
+    # moves it again), so the SHIPPED number resolves from the primary's
+    # era-chain tip — see primary_required_pairs(). The stored value is the
+    # 2026-10-29 ruling's number, kept as the pre-row-H readable history;
+    # consumers must use the resolver.
     ("--conversation-cache-mib", "32768"),
     ("--conversation-cache-slots", "16"),
 ]
 PRIMARY_REQUIRED_FLAGS = [
     "--pack", "--native", "--ple-gguf", "--expert-profile", "--mtp",
 ]
+
+# cf-141 C03 landing round (TEST_SPEC §9.28): the era-resolved pair values —
+# flags whose shipped number a ruling legitimately moves (row-H: conv
+# 32768→16384). The arm's law intent — "required-arg-pair presence at the
+# SHIPPED number" — must survive literal churn: resolving from the chain tip
+# keeps the pin anchored to the captured ledger (each step's delta is law-
+# verified) instead of a table copy that goes stale at the next ruling — the
+# validation-at-fault class the static entry produced at C03.
+PRIMARY_ERA_RESOLVED_FLAGS = ("--conversation-cache-mib",)
+
+
+def primary_required_pairs() -> list[tuple[str, str]]:
+    tip = dict(arg_pairs(profile_fixture(PROFILE_PRIMARY_FILE)))
+    out = []
+    for flag, value in PRIMARY_REQUIRED_PAIRS:
+        if flag in PRIMARY_ERA_RESOLVED_FLAGS:
+            assert flag in tip, (
+                f"the primary's era-chain-tip capture carries no {flag} pair — "
+                "the required-pair law cannot resolve its shipped value"
+            )
+            value = tip[flag]
+        out.append((flag, value))
+    return out
+
+
+def required_pair_violations(present: dict, required) -> list[str]:
+    """Pure membership check shared by the arm and its mutation probe."""
+    return [f"{flag} {want!r} missing — render reads {present.get(flag)!r}"
+            for flag, want in required if present.get(flag) != want]
 
 # run-1 RESEARCH §7 verbatim eight-set — spellings are upstream literals;
 # normalizing them (case, prefixes) breaks the engine's env parsing.

@@ -282,8 +282,9 @@ escape (§4).
 - `grep MemAvailable /proc/meminfo` plus `free -g` with the llama.cpp trio
   idle: MemAvailable must cover the shipped profile's implied budget —
   arena read measured 46.84 GiB + the conversation-cache budget (the
-  shipped primary declares an explicit 32768 MiB x 16-slot conversation
-  cache; the engine's own default ceiling is 8192 MiB) + KV/pack headroom,
+  shipped primary declares an explicit 16384 MiB x 16-slot conversation
+  cache since the row-H 8-slot ruling; the engine's own default ceiling is
+  8192 MiB) + KV/pack headroom,
   which the `64Gi` request inside the pod's `110Gi` cgroup encodes
   (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment — the
   2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with the
@@ -299,10 +300,18 @@ escape (§4).
   cache at 16384 MiB x 16 (the executed 2026-11-01 gate: the HIP engine
   refuses --slot-save-path, so the conv-8 trim lost its session-file
   compensation and the owner ruled a half-restore; the full 32768 uplift
-  would declare ~116.7) — 71.7 GiB pinned experts + 16 GiB cache +
-  ~13 GiB worst-case KV ≈ 100.7 GiB inside the 125 GiB node. MemAvailable
+  would declare ~116.7) — 71.7 GiB pinned experts + 16 GiB cache + ~13 GiB
+  worst-case KV ≈ 100.7 GiB was the 4-slot-era reading; at the shipped
+  8-slot envelope the (N+1) term is nine pinned 262k sessions ≈ 30.15 GiB
+  and the sum reads ≈ 123.9 — over the 110Gi cgroup, owner Q9's authorized
+  overshoot with the boot-read gate as the control (tuning runbook §6 row
+  A′). MemAvailable
   before a Q4 request must clear THAT number, not the ~47 GiB IQ3_S figure
-  above. The caps table below states the shipped per-rung state.
+  above — and clearing ≈ 123.9 inside 125.08 GiB allocatable leaves nothing
+  for the ~7.3 GiB non-strata floor: the 2026-10-29 OOM shape, which is why
+  Q9's 8-slot word ships with the boot-read gate and the scale-back ladder,
+  recorded not glossed. The caps table below states the shipped per-rung
+  state.
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
@@ -332,7 +341,7 @@ cgroup (`110Gi`), the cap per rung;
 
 | Rung (profile) | `--memory-limit-mib` | conversation cache | pinned arena read |
 |---|---|---|---|
-| primary (`strata-iq3_s.json`) | 110592 | 32768 MiB x 16 slots | 46.84 GiB (IQ3_S pair) |
+| primary (`strata-iq3_s.json`) | 110592 | 16384 MiB x 16 slots (row-H, Q10) | 46.84 GiB (IQ3_S pair) |
 | strix (`strata-strix-iq3_s.json`) | none declared | engine default | `--expert-cache 24576` + `--resident-budget-gib 55` |
 | orca (`strata-orca-iq4_xs.json`) | 92160 | 8192 MiB x 16 slots | 57.7 GiB experts (90.78 GiB staged) |
 | q4 (`strata-q4.json`) | 103680 | 16384 MiB x 16 slots | 71.7 GiB of the 111,334,654,784 B set |
@@ -347,10 +356,15 @@ orca row is the tier the U9.2 owner ruling moved to IQ4_XS under the
 unchanged ID `qwen3.8-flash-next-strata-orca`: `strata-data/orca` IQ4_XS,
 three shards at the flat repo root — 44,766,155,936 + 44,735,995,008 +
 7,971,004,256 B, Σ 97,473,155,200 B (90.78 GiB; the 97.47 GB of RESEARCH
-R4 [B7]) — gated bytes through model-fetch. It fits 92160 ONLY with the
-cache trimmed to 8192: 57.7 GiB pinned experts + 8 GiB cache + ~13 GiB
-worst-case KV + ~6 GiB supervisor ≈ 84.7, while conv 32 would declare
-108.7, past its own 92160 declaration. `iq_pack` writes its own copy under
+R4 [B7]) — gated bytes through model-fetch. It fit 92160 ONLY with the
+cache trimmed to 8192 at the 4-slot posture the U9.2 ruling counted:
+57.7 GiB pinned experts + 8 GiB cache + ~13 GiB worst-case KV + ~6 GiB
+supervisor ≈ 84.7, while conv 32 would declare 108.7, past its own 92160
+declaration. At the shipped 8-slot envelope (owner Q9) the (N+1) term is
+nine pinned sessions ≈ 30.15 GiB and the sum reads ≈ 101.9 even with the
+trim — over the declaration, the authorized overshoot of tuning runbook
+§6; the cap and conv stay pinned, no ruling re-opens them. `iq_pack`
+writes its own copy under
 `Strata-data/packs/orca-iq4_xs`, so `df -h /models/strata` before and
 after the first `orca` token gates that growth the way the q4 token's does.
 
@@ -396,8 +410,9 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
 What the five runs **finalize** (the shipped values this gate is gated on):
 
 - Primary (`strata-iq3_s.json`): `--expert-cache auto` → the resolved slot
-  count for this node; the `--conversation-cache-mib 32768` × 16 slots
-  budget against real 128 GB RAM (C02 sizing, R3); the tokenizer-shard and
+  count for this node; the `--conversation-cache-mib 16384` × 16 slots
+  budget (row-H, owner Q10 — halved with the 8-slot raise; C02-era sizing
+  ran 32768) against real 128 GB RAM (R3); the tokenizer-shard and
   packaged-`lib_dirs` VERIFY markers (C02 declared them hypotheses for this
   gate).
 - Strix (`strata-strix-iq3_s.json`): the `--expert-cache 24576 /
@@ -538,7 +553,10 @@ Acceptance runs the PR's one-at-a-time arm, with
 Q2). The rejection did not close the engine path: the run-config key
 `parallel:` maps to `--batch` via `parallel_args` (settled OQ-1 reading,
 tuning runbook §10 corrections ledger), so every flash-next arena ships
-batch slots spelled config-side. What this section disciplines is traffic
+batch slots spelled config-side — since the cf-141 envelope ruling at 8
+slots on every flash-next rung (owner Q9's crash-and-scale-back word,
+per-rung boot-read gates in the tuning runbook §6; ornith's 1 stands by its
+surface law). What this section disciplines is traffic
 across the time-shared arenas, not argv. The operational law
 follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 ~47 GiB page-locked arena stays resident for up to an hour of idle

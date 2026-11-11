@@ -238,8 +238,11 @@ def test_c04_parent_readme_homes_the_image_contract():
 # while the render itself shows only one cgroup — so the docs are the only
 # place the two-pair doctrine exists, and a doc drift there is invisible to the
 # render arms. Each doc is pinned AS WRITTEN: the note spells the conversation
-# cache "32768 MiB x 16-slot" and the README "32 GiB × 16 slots"; that is house
-# style, so the token sets are per-file and no doc is edited to unify them.
+# cache "16384 MiB x 16-slot" and the README "16 GiB × 16 slots" (the row-H
+# value cf-141 C03 moved both docs with the shape — §9.28's by-name flip of
+# these two house-style rows from the 32768/32-GiB U14-era numbers); that is
+# house style, so the token sets are per-file and no doc is edited to unify
+# them.
 #
 # Docs hard-wrap, so a pair can straddle a line break; the pairing checks run on
 # paragraph-joined text (wrapped lines joined, blank-line paragraph breaks kept)
@@ -248,7 +251,7 @@ def test_c04_parent_readme_homes_the_image_contract():
 
 DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
     "runbook note": (
-        (r"32768 MiB\s+x 16-slot conversation cache", "note's IQ3-class cache shape (MiB spelling)"),
+        (r"16384 MiB\s+x 16-slot conversation cache", "note's IQ3-class cache shape (MiB spelling; row-H value, cf-141 C03)"),
         (r"16384 MiB\s+x 16", "note's Q4 cache (post-gate half-restore)"),
         (r"135[\u2013-]160\s*GB", "the q3-era area budget, kept (run-1 RESEARCH §4)"),
         (r"111,334,654,784\s*B", "the Q4 family byte total the budget grows by"),
@@ -258,7 +261,7 @@ DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
         (r"packs/orca-iq4_xs", "the IQ4_XS pack path the profile serves and the df gate measures"),
     ),
     "parent README": (
-        (r"32\s*GiB\s+.\s+16\s*slots", "README's IQ3-class cache shape (GiB spelling)"),
+        (r"16\s*GiB\s+.\s+16\s*slots", "README's IQ3-class cache shape (GiB spelling; row-H value, cf-141 C03)"),
         (r"16\s*GiB\s+.\s+16", "README's Q4 cache (post-gate half-restore)"),
         (r"135[\u2013-]160\s*GB", "the capacity budget survived the pair rewrite"),
         (r"unsloth\s+UD-Q4_K_XL", "the README names the Q4 arena's source family"),

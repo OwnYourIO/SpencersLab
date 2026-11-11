@@ -3007,3 +3007,60 @@ untouched-profiles arms, strata-config/Deployment/goldens byte arms,
 DOC_PAIRS, alternation-count, four-surface label law at 0.2.9 (until C04
 moves it), goldens + outer config byte-identical, the c09 migration-order
 and version-free enumeration laws.
+
+### 9.29 cf-141 C03 landing round — envelope captures + the two credited doc moves + one missed table (2026-11-11)
+
+C03's validation round (test session; dev's C03 tree uncommitted at HEAD
+`8789f33d4`). Postures moved:
+
+- **Four era steps captured** after programmatic §9.16 delta verification
+  BEFORE writing (fresh double-render, byte-clean):
+  `evidence/strata-profiles-cf141-rowh/` (primary shape step — delta exactly
+  `{args, env, parallel}`, args membership held with exactly the
+  `--conversation-cache-mib` 32768→16384 pair, slots 16 held, env `{}` →
+  `{"STRATA_PLE_AUTO_RAM":"0"}`), `-cf141-strix8/` / `-cf141-orca8/` /
+  `-cf141-q4parallel8/` (each delta exactly `{parallel}` vs their chain tips;
+  q4's TWO-STEP chain `{env}`→`{parallel}` now machine-verified end to end —
+  the proof these are separate Q1/Q9 rulings, not one smuggled change).
+  Captures store canonical `json.dumps` bytes (the cf141-l2 convention); each
+  dir carries ONLY the file its step moved (`CF141_ERA_FILES`), sha re-read
+  off stored bytes in its PROVENANCE. Chain-tip consumption is automatic —
+  `profile_fixture`'s era resolution cleared seven capture-gated arms with no
+  constant edits (q4/orca/primary/strix preservation arms, the config-schema
+  env table, the t0 tail, the c08 conv consumer, the two tuning-runbook era
+  gates).
+- **The two credited DOC_TOKENS flips** (`test_strata_runbook.py`): the
+  house-style cache rows move WITH the docs dev re-moved to row-H truth —
+  note `32768 MiB x 16-slot` → `16384 MiB x 16-slot conversation cache`,
+  README `32 GiB × 16 slots` → `16 GiB × 16 slots`. The q4-row values,
+  DOC_PAIRS, and the alternation-count law are untouched (caps/cgroup did not
+  move); the comment block states the flip's era provenance.
+- **One missed by-name move, repaired here** (§9.28's C03 inventory omitted
+  it): `strata_testlib.PRIMARY_REQUIRED_PAIRS`' static
+  `("--conversation-cache-mib","32768")` fed `test_c01_ac5_required_arg_pairs`
+  and went falsified by row-H in a way no capture clears — the
+  validation-at-fault class. Re-expressed per the era-chain doctrine:
+  `primary_required_pairs()` resolves era-scoped flags
+  (`PRIMARY_ERA_RESOLVED_FLAGS`) from the primary's chain-tip capture, so the
+  arm keeps its law intent (required-pair PRESENCE at the SHIPPED number)
+  without a table copy that must be re-remembered every ruling. The stored
+  32768 stays as the readable 2026-10-29-ruling history. New probe
+  `test_cf141_required_pair_resolution_probe` proves teeth both directions
+  era-agnostically: the tip's own value clears, any other value (32768 today)
+  reddens by name.
+- **Post-round map:** charts 459 passed / 9 skipped / 9 failed — every
+  remaining red names C04: the seven `test_cf141_c04_*` version legs,
+  `test_cf141_c04_runbook_shipped_state_leg`, and
+  `test_cf141_era_steps_are_one_delta_each`, whose body now prints ONLY the
+  un-landed `strata-profiles-cf141-bump` step for all four rungs (§9.28's
+  credited C04-era leg). Containers 25/3 unchanged (C04 ledger legs).
+  helm lint/template clean; aislop ci 0/0/0.
+- **C04 landing-round restatement** (unchanged inventory + one): flip the
+  pre-bump constants (test_dockerfile STRATA_VERSION/FLAVOR_PINS/ENGINE_
+  VERSION/STALE_*, c09_carry marker regex + TAG_DIGEST dict +
+  `strata_testlib.CHECKOUT_MARKER`, thin_init current/retired labels), write
+  `strata-profiles-cf141-bump/` (four flash files; strix's per-file step
+  `{exe, lib_dirs, drafting}` via `CF141_ERA_STEP_FILE`, others `{drafting}`),
+  move the tuning note's shipped-state board row — and note that
+  `primary_required_pairs()` now auto-tracks the bump era (drafting is not an
+  args flag; no conv move pending).

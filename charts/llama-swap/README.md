@@ -47,18 +47,25 @@ pod's, the cap belongs to whichever arena is loaded, so raising the ceiling does
 not enlarge any rung's budget. The
 `qwen3.8-flash-next-strata-q4` arena (unsloth UD-Q4_K_XL) declares `103680`
 under that `110Gi` cgroup — 71.7 GiB
-pinned experts + 16 GiB conversation cache + ~13 GiB worst-case KV (its pair
+pinned experts + 16 GiB conversation cache + ~30 GiB worst-case KV at the
+shipped 8-slot envelope (nine pinned 262k sessions; ≈ 123.9 total — Q9's
+authorized overshoot, not a fit, tuning runbook §6 row A′; its pair
 moved 100Gi/95232 → 108Gi/103680 at the executed 2026-11-01 first-boot gate;
 U14 later raised the cgroup to 116Gi without touching this rung's cap) — and
 the flagship declares `110592` inside the same `110Gi`: U14 moved it off the
 original `96Gi` + `92160` shape because 92160 never covered the primary's own
 term-sums (46.84 arena + 32 conv + ~13 KV ≈ 91.84 GiB), so parking was being
 refused inside its own declaration while the node's MemAvailable read 40 GiB.
-Orca keeps `92160` (the
-`qwen3.8-flash-next-strata-orca` IQ4_XS arena: 57.7 GiB
-experts only fit under its own 8 GiB conversation trim, and caps do not drift
-with the cgroup). Conversation cache: 32 GiB × 16 slots
-on the IQ3-class flagship (IQ3_S parks ~3.3 GiB per full 256k conversation);
+At the shipped row-H shape the flagship's terms are 46.84 + 16 conv + ~30 KV
++ ~6 ≈ 99.0 ≤ 108 ≤ 110 — the one flash-next rung that genuinely fits 8×262K
+int8 at the pin (owner Q10, tuning runbook §6 row H). Orca keeps `92160` (the
+`qwen3.8-flash-next-strata-orca` IQ4_XS arena: its 8 GiB conversation trim is
+the U9.2 arithmetic — at the shipped 8-slot envelope the terms read ≈ 101.9,
+past that declaration, Q9's authorized overshoot with park refusals expected
+— runbook §6; caps do not drift with the cgroup). Conversation cache:
+16 GiB × 16 slots
+on the IQ3-class flagship (row-H halved the budget with the slot raise,
+owner Q10; IQ3_S parks ~3.3 GiB per full 256k conversation);
 the orca arena trims it to 8 GiB × 16 — arena arithmetic, not tuning — while
 the Q4 rung holds 16 GiB × 16 (half-restore at the 2026-11-01 gate): engine
 session files under `/models/strata/sessions` were the other half of that
@@ -245,7 +252,8 @@ Acceptance gate: within **~10%** of RESEARCH §5's **one-at-a-time** column
 rejected is the literal `--batch` argv element and that bench posture, not
 the engine path: the run-config key `parallel:` maps to `--batch` via
 `parallel_args` — the settled OQ-1 reading, tuning runbook §10 corrections
-ledger): decode ≈80
+ledger, now shipping 8 slots on every flash-next rung under owner Q9's
+crash-and-scale-back ruling (runbook §6): decode ≈80
 tok/s @64K; short 570-token prompts 429–443 tok/s with the CPU share vs 224
 control; 64K/128K/200K prompt ≈2,519 tok/s. The primary's chunk cap now matches
 that posture (`--prefill auto:32768`, owner T3 ruling 2026-11-01; bare `auto`
@@ -260,7 +268,8 @@ table differs from these cited figures the card is superseded.
 
 **5 — Conversation-cache reuse.** Send the same ~30K-token conversation
 twice; the second pass must land materially faster (the primary's
-`--conversation-cache-mib 32768` × 16-slot budget and the q4 rung's
+`--conversation-cache-mib 16384` × 16-slot budget — row-H, owner Q10 — and
+the q4 rung's
 `--conversation-cache-mib 16384` × 16 working, RESEARCH §2/§5 —
 not `--prompt-cache`, which is not shipped: #4206 makes it a no-op at the
 `--prefill 32768` edge).

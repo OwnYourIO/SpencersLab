@@ -1,0 +1,41 @@
+{
+  "aliases": [
+    "qwen3.8-flash-next-unsloth"
+  ],
+  "api_key": "none",
+  "args": [
+    "--pack /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl",
+    "--native /models/strata/Strata-data/models/unsloth-UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+    "--expert-profile /models/strata/Strata/data/expert-profile.bin",
+    "--expert-cache auto",
+    "--spec 4",
+    "--spec-min-p 0.5",
+    "--mtp /models/strata/Strata-data/mtp/rt",
+    "--max-context 262144",
+    "--kv int8",
+    "--kv-resident 32768",
+    "--prefill auto",
+    "--memory-limit-mib 103680",
+    "--conversation-cache-mib 16384",
+    "--conversation-cache-slots 16"
+  ],
+  "backend": "hip",
+  "cwd": "/models/strata/Strata",
+  "env": {
+    "STRATA_MMQ_KQ": "1"
+  },
+  "exe": "/models/strata/Strata/engine/strata",
+  "gpu": [
+    0
+  ],
+  "host": "127.0.0.1",
+  "lib_dirs": [
+    "/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib",
+    "/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib"
+  ],
+  "log": "/models/strata/Strata/strata-q4.log",
+  "model_name": "qwen3.8-flash-next-unsloth-ud-q4_k_xl",
+  "parallel": 8,
+  "tokenizer": "/models/strata/Strata-data/packs/unsloth-ud-q4_k_xl/tokenizer",
+  "user_args": []
+}
