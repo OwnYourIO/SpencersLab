@@ -91,13 +91,23 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02", "C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review r1; 2 minors deferred next-touch; 400-for-/dir/config deviation ruled FAITHFUL to §R2.4)",
+      "dev_session": "ses_e371abfe6ffeKx633lzXPAmi6u",
+      "handoffs": [
+        { "role": "dev", "at": "2026-11-11T05:50:00+00:00", "status": "DONE", "chunk": "C04",
+          "files_changed": ["skills/seaweedfs-debug/SKILL.md (108)", "references/endpoints-and-probes.md (135)", "references/loki-recipes.md (173)", "scripts/health-probe.sh (143, exec)"],
+          "commands_run": "surface.sh t1-t4 => 25/25; bash -n + mock matrix (jq/no-jq/unreachable-1/all-green/500-WARN) => pass; aislop 0 scoreable; discovery proven (skill surfaced live, zero config edits)",
+          "deviations": "/dir/config rendered as measured 400 (brief said 404-negatives) — reviewer ruled faithful; self-caught slop fixes pre-handback (unsourced changelog claim, 251x attribution, exit semantics).",
+          "friction": "none", "open_questions": "none" },
+        { "role": "review", "at": "2026-11-11T06:05:00+00:00", "verdict": "APPROVED", "chunk": "C04", "session": "ses_e370c107effel1w9Wc4lESMzv2",
+          "commands_run": "t1-t4 25/25 re-run; bash -n; scope-clean; hooks vs files; LogQL syntax checks; script boundary greps",
+          "findings": "minor1: health-probe.sh:123 'weed fix' pointer names runbook Phase 3 which never contains it (home: mcp-server-spec §5); minor2: master /stats/* 404 measured-row absent (sibling-consistent); 2 nits — all Deferred; card-pointer path byte-exact re-confirmed" }
+      ]
     },
     "C05": {
       "status": "pending",
