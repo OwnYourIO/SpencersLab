@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
-  "plan_status": "approved",
-  "plan_status_note": "reopened 2026-11-11 (was complete after the final-review fold): owner in-session directive — CI apt-mirror fallback for the strata build (Canonical mirrors unreachable at build time). Delta chunk C05 (cf-122 precedent); base landed — all 14 ticket commits verified on origin/main (rebase-merged), branch rebased clean. Ticket's card #141 stays in Review per owner's flow; lock re-claimed under AI (setId 7e3fc8dc).",
+  "plan_status": "complete",
+  "plan_status_note": "complete incl. the 2026-11-11 CI delta (C05 mirror-fallback, review APPROVED; AC6 = PR-3 CI build, owner leg). Original close-out: all four chunks review-APPROVED, final whole-plan review closed on fold; base landed — all ticket commits verified on origin/main (rebase-merged), branch rebased clean, C05 delta stacked on top.",
   "final_review": {
     "at": "2026-11-11",
     "session": "ses_e36ffc873ffeCe8qd0sz89Te1O (planning tier, openrouter/qwen/qwen3.8-27b per standing owner model directive)",
@@ -12,7 +12,7 @@
   "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
   "test_session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
   "current_wave": 4,
-  "updated_at": "2026-11-11T05:30:00+00:00",
+  "updated_at": "2026-11-11T15:15:39+00:00",
   "test_wave": {
     "at": "2026-11-11T00:20:00+00:00",
     "session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
@@ -244,12 +244,14 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh ses_e34dfd9ebffel9xrDRBcQ7vUmx; AC6 on-target = PR-3 CI build, owner leg)",
+      "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
+      "handoff_note": "dev 590f5b9db: probes kernel.org noble/noble-security/noble-updates all 200 → default both-host fallback shipped (stanza-drop unused); dash outage/healthy/both-fail behavioral proofs; base ubuntu.sources deb822 confirmed via GHCR layer-0 read; README L26 moved. Review re-derived independently incl. own live probes (Canonical still 000 — outage persists, fallback load-bearing) and 4 mutation bites.",
       "note": "delta chunk (owner directive 2026-11-11): strata Dockerfile apt official-first + kernel.org fallback; DECISIONS 'Owner directive — CI delta' is the authority; C01-C04 landings untouched",
       "handoffs": []
     }

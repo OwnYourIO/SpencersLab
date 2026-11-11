@@ -215,3 +215,7 @@ curl -sSI https://mirrors.edge.kernel.org/ubuntu/dists/noble-security/InRelease 
 npx aislop ci --changes                               # 0/0 on the touched files
 # docker build => no-daemon, CI-deferred; docker-build.yaml on the PR-3 branch is the authoritative build proof
 ```
+
+Closure (2026-11-11): C05 dev `590f5b9db` + review **APPROVED r1** (full record in
+`chunks/C05.md`); AC6 — the authoritative build proof — rides PR-3's CI `docker-build.yaml`
+success.
