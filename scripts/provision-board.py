@@ -62,29 +62,39 @@ RULE_TITLE_SEP = " — "
 SNAPSHOT_SCHEMA = "wekan-board-snapshot/1"
 SNAPSHOT_SCHEMA_V2 = "wekan-board-snapshot/2"
 
-# The Lifecycle stage names exactly as C07 landed them in the boards skill
-# (`.rulesync/skills/boards/SKILL.md`) — that text is the authority, copied
-# not retyped (the cf96 cutover suite pins the equality and fails loudly on
-# drift). Ten stages plus Single Session LAST (OQ6 ruling), Human in the
-# Loop mirrors the same eleven names (OQ6 derived), and the createCard
-# extras arrive with ONLY Model(s) → Qwen Dense checked (OQ13's single-check
-# posture, Dense default by the cf-106 OQ-7 ruling) so blank
-# Lifecycle/HITL defaults govern. Services/Type carry the v1 rule's item
-# sets (`.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/
-# board-rules-v12.64.json`); Model(s) carries the current vocabulary
+# The Lifecycle stage names exactly as the boards skill (`.rulesync/skills/
+# boards/SKILL.md`) lands them — that text is the authority, copied not
+# retyped (the cf96 cutover suite pins the equality and fails loudly on
+# drift). Thirteen names in card order: the two gated kickoff stages LEAD
+# (genuine gates — cf-124 D15) and `Human in the Loop` closes; `Single
+# Session` keeps its OQ6 slot; the research-round names are NOT stage names
+# (they reach a run only as legacy transition timing). The Human in the Loop
+# checklist mirrors the same thirteen. The createCard extras arrive with
+# ONLY Model(s) → Qwen Dense checked (OQ13's single-check posture, Dense
+# default by the cf-106 OQ-7 ruling) so the blank nine-stage Lifecycle
+# default (D16) and the blank Final Review HITL default govern.
+# Services is the SPLIT law (cf-124 D22): the folder half is DERIVED from
+# `ls services/` — the surface test regenerates it from the repo, so folder
+# drift reddens loudly (D9) — while the six non-folder work targets are
+# FIXED text, deliberately not folder-derived. The four worker-repo names
+# are real checklist targets, not a typo for a later reader to "fix"; their
+# spellings are shared with the boards skill's `Repo:` table. Type carries
+# the seven shipped kinds; Model(s) carries the current vocabulary
 # generation — cf-106 renamed the dense label only, no model id moved.
 LIFECYCLE_ITEMS = [
+    "Session Rename",
+    "Worktree Creation",
     "Exploration",
     "Agent Decides Research",
-    "Pre Research",
     "Planning",
-    "Post Research",
     "Test Writing",
     "Chunk Development",
     "Chunk Review",
     "Final Review",
     "Deployment",
     "Single Session",
+    "Follow-up cards created",
+    "Human in the Loop",
 ]
 CHECKLIST_SPEC = {
     "Services": {
@@ -104,6 +114,10 @@ CHECKLIST_SPEC = {
             "proxy-remote",
             "home-assistant",
             "agent context",
+            "HomeAssistant",
+            "Home-Assistant-Label-based-Features",
+            "brother-ptouch-automation",
+            "CuratedForest.com",
         ],
         "checked": [],
     },
@@ -120,11 +134,15 @@ CHECKLIST_SPEC = {
 }
 # The rules-import artifact the drift action points the human at: the CURRENT
 # vocabulary generation, re-issued by the ticket that moved the vocabulary
-# (cf-106's Dense generation). Modify-only and never applied by an agent —
-# the owner imports it after a board backup (the boards runbook governs); the
-# cf-96 board-rules-v12.65.json it re-issues stays as the applied history.
+# (cf-124's 13-item generation, named for the real v12.77 pin, D11).
+# Modify-only and never applied by an agent — the owner imports it after a
+# board backup (the boards runbook governs); the cf-106
+# board-rules-v12.65-dense.json and the cf-96 board-rules-v12.65.json it
+# re-issues stay as the applied history. The import re-titles its rule and
+# rule-title matching is case-insensitive, so until the owner lands the
+# import the next dry-run reports drift — the engine telling the truth.
 RULES_ARTIFACT = (
-    ".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"
+    ".agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/board-rules-v12.77-13item.json"
 )
 
 

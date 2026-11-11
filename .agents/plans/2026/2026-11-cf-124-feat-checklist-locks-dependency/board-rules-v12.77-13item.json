@@ -1,0 +1,42 @@
+{
+  "rules": [
+    {
+      "title": "Std checklists + defaults (v12.77 · 13 items)",
+      "trigger": {
+        "activityType": "createCard"
+      },
+      "action": {
+        "actionType": "addChecklistWithItems",
+        "checklistName": "Model(s)",
+        "checklistItems": "Qwen Large,Qwen Dense,Qwen Flash,Local (gpu-ai)"
+      },
+      "extraActions": [
+        {
+          "actionType": "checkItem",
+          "checklistName": "Model(s)",
+          "checkItemName": "Qwen Dense"
+        },
+        {
+          "actionType": "addChecklistWithItems",
+          "checklistName": "Services",
+          "checklistItems": "backups,dev,gpu,gpu-ai,grow,home,infra,media,monitoring,personal,proxy-backup,proxy-local,proxy-remote,home-assistant,agent context,HomeAssistant,Home-Assistant-Label-based-Features,brother-ptouch-automation,CuratedForest.com"
+        },
+        {
+          "actionType": "addChecklistWithItems",
+          "checklistName": "Type",
+          "checklistItems": "feat,bug,debug,dep,refactor,chore,docs"
+        },
+        {
+          "actionType": "addChecklistWithItems",
+          "checklistName": "Lifecycle",
+          "checklistItems": "Session Rename,Worktree Creation,Exploration,Agent Decides Research,Planning,Test Writing,Chunk Development,Chunk Review,Final Review,Deployment,Single Session,Follow-up cards created,Human in the Loop"
+        },
+        {
+          "actionType": "addChecklistWithItems",
+          "checklistName": "Human in the Loop",
+          "checklistItems": "Session Rename,Worktree Creation,Exploration,Agent Decides Research,Planning,Test Writing,Chunk Development,Chunk Review,Final Review,Deployment,Single Session,Follow-up cards created,Human in the Loop"
+        }
+      ]
+    }
+  ]
+}

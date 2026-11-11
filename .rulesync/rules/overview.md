@@ -253,10 +253,11 @@ role × permission matrix is in the `agents-sync` skill references
   values (newest LAST — this run's slug is its last non-empty line) supply the
   kickoff answers — the
   checked Lifecycle items are the stages the run executes
-  (checked-stages-only; the 11-item checklist ends with the kept
-  `Single Session` opt-in, and nothing checked runs the standard
+  (checked-stages-only; the 13-item checklist leads with the two gated
+  stages `Session Rename` and `Worktree Creation` and keeps
+  `Single Session` as an opt-in, and nothing checked runs the standard
   default loop — the `boards` Stage map's Blank defaults section
-  names its seven stages), the Model(s) checklist alone
+  names its nine stages), the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
   run tags are retired for every flavor (cf-90) — both families name the

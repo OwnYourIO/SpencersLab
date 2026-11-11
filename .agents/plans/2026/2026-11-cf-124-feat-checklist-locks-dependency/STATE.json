@@ -143,14 +143,29 @@
   },
   "chunks": {
     "C01": {
-      "title": "Checklist-generation cutover: 13-item Lifecycle/HITL with the two gated leading stages, the nine-stage blank default, Services = folders + fixed six, engine + artifact + AGENTS.md",
-      "status": "pending",
+      "title": "Checklist-generation cutover: 13-name Lifecycle/HITL with the two gated leading stages, the nine-stage blank default, Services = folders + fixed six, engine + artifact + AGENTS.md",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e3408be88ffea9Q7uEw22BQsep",
+      "review_session": "ses_e33e64fcdffe2Iz69ggmA4DVvk",
+      "last_verdict": "APPROVED (round 1, fresh session; every C01 arm re-run green at arm level, all eleven pre-existing reds byte-verbatim vs a detached base worktree, artifact≡engine≡skill parity re-proved by AST, c11 derivation half probed still-biting in a scratch copy, rulesync regen no-op on a byte-proven-unchanged tree, aislop 0/0)",
+      "handoffs": [
+        {
+          "at": "2026-11-11T18:4xZ",
+          "role": "dev",
+          "session": "ses_e3408be88ffea9Q7uEw22BQsep",
+          "result": "status: DONE | files: .rulesync/skills/boards/SKILL.md + .opencode mirror, .rulesync/rules/overview.md + AGENTS.md, scripts/provision-board.py (LIFECYCLE_ITEMS 13, CHECKLIST_SPEC Services 19, RULES_ARTIFACT), skills/wekan-board-provision/SKILL.md, new artifact board-rules-v12.77-13item.json | C01 arms green (cf96 t1/t2/t3/t6, rulesync c11/c18 with only c19 red, agents-md c9 with c11 + C05's c12 red, checklist-cutover t1-t10, provision surface, py_compile, matching→zero actions / drift→one update naming the cf-124 artifact, regen x2 + --check clean, aislop 0/0) and every other designed-red still red; two arms ADVANCED their first-missing needle legitimately (session-origin s3 → worktree-creation-skipped = C05's carry; repo-label-filter t1 → four-vs-five rows = C04's) | deviations 1-7: D31's seven-item Type landed over the chunk's '3'; D32 honoured (the rename row omits the `unnamed` claim, still carrying its three needles); the sixth `Research`/`singleRow:false` task line DROPPED as unsatisfiable with a flag rather than bending t7 (→ D34); four in-file consistency edits beyond the enumerated line ranges (Follow-up Timing cite, the research-only trigger sentence, its step-2 cite, and a paragraph split that restored slug-stack S4); applied-history artifact names kept as history clauses with the current pointer at cf-124; rule re-titled so the engine's own drift detector reports the expected drift; the artifact generated FROM the engine's constants by an in-session AST read rather than hand-typed | friction: slug-stack S4's line-scoped (session|slug)+backfill ban means later Priority/backfill prose must keep those words off one line (C03 and C07 both write such sentences); three chunk directives lost to shipped law; fail-fast suites need per-arm re-runs"
+        },
+        {
+          "at": "2026-11-11T19:2xZ",
+          "role": "review",
+          "session": "ses_e33e64fcdffe2Iz69ggmA4DVvk",
+          "result": "verdict APPROVED | validations re-run from scratch: C01 arms green; the eleven pre-existing reds confirmed byte-verbatim against a detached worktree at 1e548ae37; slug-stack and pipeline-models batteries byte-identical base↔current (S4 green again, M7 verbatim); the two needle advances legitimate and unweakened; parity re-proved by AST (artifact ≡ engine ≡ skill, name and order, all five carriers in card order) and source↔mirror bodies; c11's derivation half still bites live-folder-drift and non-enumeration probes in a scratch copy; stale-capture sweep clean (no seven/eight/11-item or v12.65 current pointer, no `unnamed`); regen proven no-op on a sha256-verified unchanged tree; aislop 0/0; helm/docker N/A verified from the diff's file list | adjudication: deviation 3's drop is CORRECT (t7's exact-five assert is real; RESEARCH [26] is the custom-field attach finding; the chunk line is the defect → D34, no test re-cut owed); deviations 1/2 correct; the four extra consistency edits judged minimal and pin-preserving | one INFO handed to C08's launch (back-cite the gated Follow-up cards created row in the Follow-up section opener)"
+        }
+      ]
     },
     "C02": {
       "title": "Lock doctrine: continuation prompt answers the lock-lost question; Executing membership alone means locked (boards bullets + LOCK_LOST_STOP string)",

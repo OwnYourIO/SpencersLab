@@ -1,6 +1,6 @@
 ---
 name: wekan-board-provision
-description: "Provision or update the AI-Dev WeKan board structure idempotently — mirror Planning's lists from Backlog, ensure one Bucket: <list> label plus a createCard/moveCard rule pair per Planning list, ensure the Provider: API / Provider: Local and Research: Parallel labels, ensure Inbox exists in Backlog, and diff the createCard rule's checklist extras (11-item Lifecycle + Human in the Loop mirror, Model(s) → Qwen Dense default-checked) against the spec via a schema-2 snapshot. Use when asked to (re-)provision the board, when /wekan-board-provision runs, or when the action plan of scripts/provision-board.py must be applied through dev-boards or raw REST."
+description: "Provision or update the AI-Dev WeKan board structure idempotently — mirror Planning's lists from Backlog, ensure one Bucket: <list> label plus a createCard/moveCard rule pair per Planning list, ensure the Provider: API / Provider: Local and Research: Parallel labels, ensure Inbox exists in Backlog, and diff the createCard rule's checklist extras (13-item Lifecycle + Human in the Loop mirror, Model(s) → Qwen Dense default-checked) against the spec via a schema-2 snapshot. Use when asked to (re-)provision the board, when /wekan-board-provision runs, or when the action plan of scripts/provision-board.py must be applied through dev-boards or raw REST."
 ---
 
 # WeKan board provisioning
@@ -37,20 +37,23 @@ the apply steps below, gated by a human-confirmed plan.
   `Bucket:` label or a rule pair — cards parked in Inbox stay
   unbucketed by design.
 - **createCard checklist extras** (schema `wekan-board-snapshot/2` only):
-  the multi-action createCard rule carries five extras — Services (15
-  items), Type (7), Model(s) (4, arriving with `Qwen Dense` checked),
-  Lifecycle (the 11 stage names in card order, `Single Session` last,
-  unchecked so the blank Lifecycle default governs), and Human in the
-  Loop (the same 11 names, unchecked; the OQ6/OQ13 rulings). Against a
+  the multi-action createCard rule carries five extras — Services (19
+  items: the derived `ls services/` folder half plus the six fixed
+  non-folder work targets), Type (7), Model(s) (4, arriving with `Qwen Dense`
+  checked), Lifecycle (the 13 stage names in card order, `Session Rename`
+  first and `Human in the Loop` last, unchecked so the blank nine-stage
+  Lifecycle default governs), and Human in the Loop (the same 13 names,
+  unchecked; the OQ6/OQ13 rulings). Against a
   schema-2 snapshot the engine diffs the captured extras against this
   spec and, on drift, emits ONE `update_createcard_checklists` action
   naming the current-generation rules-import artifact
-  `.agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json`
-  (the artifact is re-issued by whichever ticket moved the Model(s)
-  vocabulary; the cf-96 `board-rules-v12.65.json` it re-issues is the
-  applied history). A board still carrying a retired Model(s) item name IS
-  drift against this spec — the boards skill's transition alias governs how
-  a card is *consumed*, never what the spec accepts.
+  `.agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/board-rules-v12.77-13item.json`
+  (the artifact is re-issued by whichever ticket moved the checklist
+  vocabulary; the cf-106 `board-rules-v12.65-dense.json` is applied history,
+  and so is the cf-96 `board-rules-v12.65.json` it re-issued). A board still
+  carrying a retired Model(s) item name IS drift against this spec — the
+  boards skill's transition alias governs how a card is *consumed*, never
+  what the spec accepts.
   Against a schema-1 snapshot the spec is UNVERIFIABLE and the engine
   prints only a runbook note on stderr — a note is not an action.
 
@@ -122,8 +125,8 @@ through the WeKan UI wizard or Rules → Import JSON, never through any REST
 or MCP call — that is why this leg exists as a runbook action. The agent
 emits the recipe and stops: the owner takes a board backup FIRST, then
 WeKan UI → Rules → Import JSON of the artifact the plan names
-(`.agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json`,
-the Dense vocabulary generation), which replaces the createCard rule's
+(`.agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/board-rules-v12.77-13item.json`,
+the 13-item vocabulary generation), which replaces the createCard rule's
 extras with the five-checklist v2 shape (`Model(s)` → `Qwen Dense` the only
 default check). This mirrors the boards skill's "Board-side cutover" steps:
 checklist renames and the label ensures stay human-owned too — an agent
