@@ -172,3 +172,23 @@ envelope-table/shipped-in legs re-pin with it) before any execution.
 - Recorded, NOT asked: **Q12's "No"** leaves the row-G cgroup-detection premise unmeasured —
   future row-G authorization must carry its own probe leg (noted in plan Out-of-scope,
   DECISIONS, and the runbook's row-G cell so no later run mistakes it for answered).
+
+## Review record (final whole-plan)
+
+- 2026-11-11 · final review (fresh session ses_e36ffc873ffeCe8qd0sz89Te1O) ·
+  **CHANGES_REQUESTED → CLOSED-APPROVED-ON-FOLD.** Finding 1 (MAJOR, fold-now): one
+  doc-truth clause — the `containers/strata/README.md` Publishing posture — fixed prose-only
+  by dev, suites re-verified unchanged (charts 466 passed / 9 skipped / 0 failed; containers
+  25 / 0; aislop 0 errors / 0 warnings). Two MINOR items are pure bookkeeping and closed by
+  this records pass (C03 Review-notes transcription from the STATE r1 handoff, cf-131 C09
+  precedent; the 2026-11-11 coord waiver re-shelved under its own `## Coord rulings
+  (2026-11-11)` heading in DECISIONS). Everything else the verdict rested on — era-chain
+  deltas, owner-round records, ledger digests, gate-1 claims — was independently
+  re-derived green by the reviewer. The approval's HITL point is satisfied by the owner's
+  standing rulings; the plan itself is not re-opened.
+- **Remaining owner legs (unchanged by the final review):** PR-1 (C01+C02+C03) lands before
+  PR-2 (C04) per Q13(a); landing-day gate-1 crash-cluster re-fetch against the runbook row
+  law; the P1 probe trio (research Round 3 — `--families`/`--geometry` reads + ornith
+  load-smoke, both refusal strings checked) as user legs post-branch-build; U1-v2 capture +
+  §3.4 `--plan` re-checks + post-merge soak watch (binding stop condition) + re-bench
+  attribution sheet; row-G stays deferred (Q11 experiment-only, Q12 premise unmeasured).

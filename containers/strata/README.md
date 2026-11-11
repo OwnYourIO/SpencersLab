@@ -164,9 +164,13 @@ self-tunes with `tools/hip/tune_hipblaslt.cpp` (PR #3636 ran gfx1201 on
 (build-only, never pushes) and on merges to `main`/`dev` pushes
 `:v<run_number>` (immutable, monotonic) + `:main` (rolling). There is no
 version or tag to bump by hand here. The in-chart strata controller of
-`charts/llama-swap` follows the repo's new-container rule: `:main` +
-`pullPolicy: Always` with a pin-me note until the first `:v<run>` exists,
-then Renovate-pinned `:v<run>`. Bundle size: the gfx120x base is ~2.8 GB
+`charts/llama-swap` rides a deliberate rolling-tag posture, not a pending
+chore: `:main` + `pullPolicy: Always` is law — the boot guard's self-heal
+window rests on the Always re-pull after CI's `:main` push, and
+`test_strata_thin_init.py`'s rolling-pair arm enforces the pair. `:v<run>`
+builds already exist for this image; adopting one is a Renovate chores
+decision, never a hand-bump here (values twin: the chart's rolling-tag law
+comment). Bundle size: the gfx120x base is ~2.8 GB
 on disk and the added halo engine root measures
 ~0.65 GB uncompressed (layer-listing arithmetic, 2026-10-28) plus the
 supervisor's single Go binary — the accepted price of one image serving

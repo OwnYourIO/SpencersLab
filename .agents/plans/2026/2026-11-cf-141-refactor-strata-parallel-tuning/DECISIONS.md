@@ -225,12 +225,6 @@ alternatives rejected, why.
 
 ## Approval (human, 2026-11-10)
 
-- 2026-11-11 coord: **per-rung commit split WAIVED for C03** (review r1 open question): the
-  envelope landed as one commit 2e1ee3a20 against §9.28's four-commit control; branch is
-  unpushed and PR-1 landing is the owner's act — the runbook ladder's per-rung revert lines
-  keep the drop-a-rung option fully available pre-merge without rewriting recorded history.
-  Owner objects → a mechanical split is one coordination round away.
-
 - 2026-11-10 human: **plan APPROVED — option (a) stands** (Q17 resolved with the approval
   itself, not by a separate round). Consequences as written: C03 ships 8 slots on all four
   flash-next rungs at the 0.2.9 pin with the per-rung boot-read gates and pre-written revert
@@ -254,3 +248,11 @@ alternatives rejected, why.
   pre-written by C01/C03).
 - L1 / L3 / L5 / L6' follow-up arms; per-rung L2 extension; v3.1 routing; engram table;
   `--resident-experts`; replica mode — all as in round-2 Deferred, unchanged.
+
+## Coord rulings (2026-11-11)
+
+- 2026-11-11 coord: **per-rung commit split WAIVED for C03** (review r1 open question): the
+  envelope landed as one commit 2e1ee3a20 against §9.28's four-commit control; branch is
+  unpushed and PR-1 landing is the owner's act — the runbook ladder's per-rung revert lines
+  keep the drop-a-rung option fully available pre-merge without rewriting recorded history.
+  Owner objects → a mechanical split is one coordination round away.
