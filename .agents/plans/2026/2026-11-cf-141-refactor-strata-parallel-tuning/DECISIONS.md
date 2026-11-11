@@ -273,6 +273,17 @@ alternatives rejected, why.
 
 ## Coord rulings (2026-11-11)
 
+- 2026-11-11 coord: **the official-first shape ruling for C05 is WITHDRAWN — CI evidence proves
+  it dead.** The landed guarded step ran (`apt-get update || { sed → mirror && update; }`) and
+  the CI log shows no mirror line at all: apt's `apt-get update` exits 0 even when every
+  stanza host is unresolvable (it prints `W: … ignored, or old ones used instead` and
+  succeeds), so the `||` branch never fires and the step dies later at the install's
+  `E: Unable to locate package`. The dash behavioral proof stubbed update as failing — real
+  apt doesn't. Reinstated: the owner's verbatim form — sed re-points BOTH stanza hosts to
+  `http://mirrors.edge.kernel.org` UNCONDITIONALLY before the single `apt-get update`. The
+  kernel.org noble + noble-security serveability probes (both 200, dev + reviewer passes) are
+  what make the direct form safe; the "never the primary path" ideal is ceded — this base
+  image's builds take the mirror, and that is now the documented posture, not a fallback.
 - 2026-11-11 coord: **per-rung commit split WAIVED for C03** (review r1 open question): the
   envelope landed as one commit 2e1ee3a20 against §9.28's four-commit control; branch is
   unpushed and PR-1 landing is the owner's act — the runbook ladder's per-rung revert lines
