@@ -1,0 +1,658 @@
+# EXPLORE.md — cf-143 feat-radiance-replaces-strata (board card AD-143)
+
+Scout grounding for the planner + researcher. Read-only pass over the repo
+(worktree `cf-143-feat-radiance-replaces-strata`, branch of the same name, HEAD
+`0d9b41785`) and the live gpu-ai cluster (`readonly-ai-gpu-kubernetes` probes).
+Every claim below carries the file:line or cluster-read it came from. The card's
+deployment-guide claims (pod security, memlock/nofile, pinned-RAM accounting,
+TP2) are NOT evaluated here — flagged to research at the end.
+
+Naming landmine up front: **"Radiance" already names two different surfaces in
+this repo** — the vLLM fork image `magiccodingman/vllm-radiance:1.0.397` and its
+re-export `ghcr.io/ownyourio/vllm-radiance-mxfp4` behind `charts/vllm` (every
+`RADIANCE_*` env var in `charts/vllm/values.yaml` belongs to that fork). The
+card's target is a third, unrelated project: `stilldeadcode/radiance`
+(`docker.io/stilldeadcode/radiance`, 1.17.0, digest-pinned) replacing Strata
+(`Niko1221/Strata`). Plan/research must keep these namespaces distinct or half
+the tests/comments will attach to the wrong "radiance".
+
+---
+
+## 1. Strata-in-llama-swap peer wiring TODAY
+
+### 1a. The peer block (outer instance) — `services/gpu-ai/prod/values.yaml`
+
+- `llama-swap.config.peers.strata` — **lines 520-533**:
+  `proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080`
+  (line 522), five `models:` ids (525-530):
+  `qwen3.8-flash-next-strata`, `qwen3.8-flash-next-strata-strix`,
+  `qwen3.8-flash-next-strata-orca`, `qwen3.8-flash-next-strata-q4`,
+  `ornith-1.5-122b-strata-q4`; `timeouts.responseHeader: 1800`,
+  `timeouts.connect: 30` (531-533). No `apiKey` (keyless C-A ruling; comments
+  505-519: no `/v1` suffix — the request path appends verbatim; peer models stay
+  OUT of the outer matrix; models must be listed explicitly — peers is not a
+  blanket URL proxy).
+- `llama-swap.config.peers.vllm` — **lines 534-560**:
+  `proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000` (552),
+  `models: [qwen3.8-27b-vllm]` (553-554), same timeouts (555-557), and the only
+  `filters:` on the board — `setParams."priority?": 5` (558-560; the `?` suffix
+  is part of the key = set-if-undefined floor; schema semantics at
+  `charts/llama-swap/tests/schema/config-schema.v266.json:775-780`).
+- Outer enablement context: `llama-swap:` block starts line 95;
+  `config.families` full-on table 270-308; per-model overrides 318-454;
+  `hooks.on_startup.preload: []` 502-504 (owner ruling 2026-11-02: nothing
+  boots resident because llama-swap cannot evict across instances — the RAM law
+  comment 493-501); outer `matrix.sets.main/solo` 561-599 (gpu-ai narrows the
+  chart sets; peer engines are not matrix members).
+- The peers subtree renders verbatim into the ConfigMap:
+  `charts/llama-swap/templates/configmap-llama-swap.yaml` (whole file, 10 lines)
+  → helper `llama-swap.declaredConfig` in
+  `charts/llama-swap/templates/_helpers-llama-swap.tpl` (`.Values.config`
+  passthrough; comment lines 35-36: macros/matrix/hooks pass through, only
+  `models:` is derived).
+- Golden echo of both peers: `charts/llama-swap/tests/golden/gpu-ai.config.yaml`
+  line 1359 `peers:` — strata block then `vllm:` block with
+  `priority?: 5`. Any peers edit forces a golden re-capture (TEST_SPEC §1
+  pattern, header of `charts/llama-swap/tests/test_vllm_peer.py`).
+
+### 1b. The strata engine pod — NOT a standalone chart
+
+Strata is the **second controller of the llama-swap Application** (cf-77 run-2
+consolidation). There is no `charts/strata/` directory. Definitions:
+
+- `charts/llama-swap/values.yaml`:
+  - controller `app-template.controllers.strata` — **lines 1087-1336**,
+    default `enabled: false` (1088); `strategy: Recreate` (1093, pinned-RAM
+    double-arena law); `pod.terminationGracePeriodSeconds: 420` (1104, invariant
+    420 > unloadTimeout 180 + drain 30 + slack, comment 1100-1103);
+    `pod.securityContext.supplementalGroups: []` (1106-1110, numeric GIDs
+    resolved on-target per C04 runbook — still empty in the live pod),
+    `seccompProfile.type: Unconfined` (1112-1117).
+  - init `model-fetch` — 1153-1204: image `ghcr.io/ownyourio/strata:main`,
+    `pullPolicy: Always` (1155-1164); `command: [/opt/strata/bin/fetch_models.sh]`
+    exec-form boot guard (1165-1171); env `STRATA_QUANTS: "q3"` chart default
+    (1172-1183); resources requests 200m/2Gi, limit 32Gi (1184-1196);
+    `privileged: true` (1197-1204, HIP detection during setup).
+  - main container `strata` — 1205-1336: image `ghcr.io/ownyourio/strata:main`
+    + `Always` (rolling-pair law enforced by `test_strata_thin_init.py`,
+    1207-1217); `args: ["-config", "/app/config/config.yaml"]` (1221-1223);
+    **zero container env** — keyless C-A ruling deleted the secret chain
+    (1224-1228); probes all `GET /health:8080` with startup 150×10s
+    (1229-1259, probe law: never probe a model/upstream endpoint — it triggers
+    loads); resources `requests: {cpu: 8, memory: 64Gi}`
+    `limits: {memory: 110Gi}` (1260-1325, the full OOM post-mortem + owner
+    rulings 2026-10-29 → 2026-11-10 are in that comment block);
+    `privileged: true` (1326-1336) — **deliberate NOT-via-device-plugin
+    posture**: "the plugin advertises by count and cannot name gfx1201 vs the
+    8060S on this mixed APU+dGPU node" (1327-1335); chip hiding happens inside
+    via `ROCR_VISIBLE_DEVICES`.
+  - service — `app-template.service.strata` 1344-1355: `enabled: false`, port
+    8080, ClusterIP, **no ingress** (Q4 internal-only ruling).
+  - persistence — 1357-1460: `config`/`tools` via `advancedMounts` (directory
+    mounts, never subPath — hot-reload law, 1359-1371/1407-1409);
+    `models`: `existingClaim: *chartName` (= `llama-swap`) + `globalMounts
+    [/models]` (1394-1402 — the ONE entry that stays globalMounts; strata
+    shares the claim, Q3 ruling); `strata-config` + `strata-profile`
+    (configMap directory mounts at `/app/config`, `/profile`; gated templates
+    `configmap-strata.yaml`, `configmap-strata-profile.yaml`);
+    `strata-kfd` hostPath `/dev/kfd` CharDevice + `strata-dri` hostPath
+    `/dev/dri` Directory (both mounted into `strata` AND `model-fetch`,
+    1427-1450); `strata-shm` emptyDir `medium: Memory` `sizeLimit: 2Gi` at
+    `/dev/shm` (1451-1460, DOCKER.md `--shm-size 2g` equivalent).
+  - **seven-flag enable set** (controller + service + five persistence flips
+    TOGETHER; partial set hard-fails the render — comment 1076-1086): service
+    values flip them on at `services/gpu-ai/prod/values.yaml:121-197`
+    (controller `enabled: true` 135-136; init env override
+    `STRATA_QUANTS: "q3,orca,q4,orn"` + `STRATA_MODEL_ORCA/Q4/ORN` + gated
+    `HF_TOKEN` secretKeyRef on the init only, 170-183; `service.strata.enabled`
+    184-186; five persistence enabled 187-197). Scalars-only override law
+    (lists deep-merge REPLACE — comment 129-134).
+  - workload DATA `strata:` — `charts/llama-swap/values.yaml:1473-2504`:
+    `rocrVisibleDevices: "0"` (1477) + `rocrVisibleDevicesByModel`
+    strix=`"1"` (1490-1491, PR #3636 enumeration; dGPU first); inner
+    supervisor config 1502-1527 (`healthCheckTimeout: 1800`, `startPort: 10001`,
+    `globalTTL: 0`, `apiKeys: []`, `logToStdout: "both"`); five inner models
+    1529-1700 (each: `cmd: bash -c 'ulimit -n 524288; exec
+    /opt/strata/terminal/bin/strata serve --profile /profile/<f>.json --host
+    127.0.0.1 --port ${PORT}'` — the ulimit wrapper is load-bearing (no 0.2.x
+    self-raises nofile, PR #2399 open), `ttl: 3600` (1800 strix),
+    `unloadTimeout: 180`, `checkEndpoint: /health`, env list with
+    `STRATA_REQUEST_LINES=1`, `MALLOC_MMAP_THRESHOLD_=1048576` (#5697),
+    `STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,...` (DNS-rebinding guard
+    allow-list — a Radiance peer will need the same or its engine refuses the
+    forwarded Host); primary rungs also carry the `STRATA_PF_FUSED/GEMM,
+    STRATA_PA_FAST, STRATA_HIP_WMMA, STRATA_SELECT_WMMA,
+    STRATA_PREFILL_CPU_SHARE` set (1570-1592) and ornith adds
+    `STRATA_DENSE_MMQ=1` (1700)); inner matrix `(p | s | o | q | "n")` —
+    alternatives never co-resident (1702-1726; the quoted `"n"` is YAML-1.1
+    boolean-`n` hygiene, 1719-1724); five run-config profiles
+    `engineProfile` 1741-1946, `engineProfileStrix` 1957-2073,
+    `engineProfileOrca` 2113-2215, `engineProfileStrataQ4` 2233-2414,
+    `engineProfileStrataOrnith` 2433-2504 — every tuning knob lives here
+    (`exe: /models/strata/Strata/engine/strata` claim-compiled vs the packaged
+    `/opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo/strata` for
+    strix; `--memory-limit-mib` per rung 110592/92160/103680 vs the 110Gi
+    cgroup; `parallel: 8` everywhere except ornith `1`; `host: "127.0.0.1"`;
+    `api_key: "none"`).
+  - gated templates: `charts/llama-swap/templates/configmap-strata.yaml`
+    (renders `.Values.strata.config` minus `engineProfile*` keys, injects the
+    per-model `ROCR_VISIBLE_DEVICES` from `rocrVisibleDevices` /
+    `rocrVisibleDevicesByModel` — lines 34-52) and
+    `configmap-strata-profile.yaml` (the five `engineProfile*` → pretty JSON
+    into one ConfigMap `strata-profile` — lines 20-28).
+- The peer-shape authority file:
+  `charts/llama-swap/tests/evidence/strata-peers-expected.yaml` (75 lines) —
+  header law: "This file is the SINGLE source for the peers shape; the C03 dev
+  edits services/gpu-ai/prod/values.yaml to MATCH it, never the reverse";
+  `models_states` is an append-only history of exact sanctioned lists (current
+  five-id state at lines 73-75). A radiance run must re-author this or its
+  successor (it is test-writer property — dev may not edit it).
+
+### 1c. Outer chart-side model/matrix surface (`charts/llama-swap/values.yaml`)
+
+Outer config head 13-51 (`healthCheckTimeout: 3600`, `apiKeys: []` line 43,
+`globalTTL: 0`, `unloadTimeout: 30`); macros 52-101; `filterPresets` 121-132;
+`tagCultures` 139-~208; families catalog 209-873 (the served GGUF rungs, incl.
+all flash-next/ornith rungs — peer model ids are NOT in here); outer matrix vars
+875-954 + chart default sets 955-962. `app-template.controllers.llama-swap` main
+container 972-1050: image `ghcr.io/mostlygeek/llama-swap`
+`tag: unified-vulkan-266` (1005-1007, digest history comment 984-998:
+`sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045`),
+env `LLAMA_CACHE: /models`, `LLAMA_SWAP_CONFIG: /app/config/config.yaml`,
+`LLAMA_SWAP_WATCH_CONFIG: "true"` (1010-1019), probes `/health:8080`
+(1025-1039), resources `requests {cpu: 1000m, memory: 4Gi}` +
+`limits {amd.com/gpu: 1}` (1040-1045), drop-ALL secCtx (1046-1050); `tools`
+sidecar default-off 1056-1074 (gpu-ai enables it, service values 110-120).
+`HF_TOKEN` injection pattern for gated downloads: service values 104-120
+(secretKeyRef name `hf-token` key `token`) fed by the ExternalSecret template
+(§5).
+
+---
+
+## 2. `charts/vllm/**` — full surface (this is the chart to DISABLE)
+
+Files (all of them): `Chart.yaml`, `Chart.lock`, `values.yaml` (597 lines),
+`templates/pvc-vllm-cache.yaml`, `templates/NOTES.txt`,
+`tests/{vllm_testlib.py,test_trio.py,test_render.py,test_contract.py}`.
+No secret templates (keyless in-cluster engine).
+
+- `Chart.yaml`: `name: vllm`, `version: 1.0.0`, `appVersion: "0.30.0"`,
+  single dep `app-template 5.0.1` from `https://bjw-s-labs.github.io/helm-charts/`
+  (repo idiom, comment lines 6-9). `Chart.lock` digest
+  `sha256:0ea7893a…`, generated 2026-11-06. NOTE: the "vendored tgz" leg of
+  `test_contract.py` reads the lock; there is no `charts/vllm/charts/` dir
+  present in the worktree (dependency fetched by CI via
+  `helm dependency update`, workflow line 45).
+- `values.yaml` anchors:
+  - `cachePvcSize: 10Gi` line 8 (parent-only key — the hand-written PVC template
+    reads chart top level, comment 5-7).
+  - `app-template.modelPath: &modelPath /models/Qwen3.8-27B-Quark-AWQ-MXFP4`
+    line 28 (raw release `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` @
+    `93245f7c00f1a8964b66a97c6e02e2fd09080be4`; the **dual-edit law** — chart
+    modelPath + service re-pin must move together because YAML anchors resolve
+    per-document, comments 18-27 + the suite's `args[0] == service modelPath`
+    assert).
+  - `kvCacheDtype: &kvCacheDtype int4_per_token_head` line 49 (TRITON_ATTN-only;
+    fp8 documented toggle).
+  - `rocrVisibleDevices: "0"` line 55 (host enumeration; C06 rocminfo gate
+    retargets the key, never the template).
+  - `specMethod: "dflash"` line 76; `specConfig` JSON line 101 (draft
+    `/models/Qwen3.8-27B-DFlash2-FP8` @ `ee0cb26a…`, K7).
+  - `monitoring.annotations: true` line 106-107 (the two
+    `k8s.grafana.com/*` ternary pod annotations, 262-264).
+  - `serveArgs: &serveArgs` lines 172-245 — args START with the model dir
+    (image entrypoint `/opt/radiance_entrypoint.sh` execs `vllm serve "$@"` —
+    a verb token double-verbs it); served name `qwen3.8-27b-vllm` (174-175);
+    `--tensor-parallel-size 1` (176-177); `--max-model-len 262144`; util 0.98;
+    `--kv-cache-dtype-skip-layers sliding_window`; `--attention-backend
+    TRITON_ATTN`; tool/reasoning parsers `qwen3_coder`/`qwen3`;
+    `--scheduling-policy priority` + `--watermark 0.05` +
+    `--language-model-only` (241-245, the priority-wiring half); the commented
+    48 GB re-enable rider 227-240.
+  - `global.createDefaultServiceAccount: false` line 252 (tokenless pod,
+    home-assistant/mosquitto precedent).
+  - `defaultPodOptions.hostIPC: true` line 256.
+  - container image 272-288: `ghcr.io/ownyourio/vllm-radiance-mxfp4`,
+    `tag: main`, `pullPolicy: Always`, **PIN-ME comment** 282-285 (pin the first
+    `:v<run>` once docker-build ran on main, then drop Always — cf-105 C06
+    step-10 law). Upstream ledger comment 273-281:
+    `magiccodingman/vllm-radiance:1.0.397 @
+    sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0`,
+    OCI revision `5b99d66c…`, engine vLLM 0.30.0 @ `ced6857a`.
+  - env 290-381 — the 21-var law: `ROCR_VISIBLE_DEVICES` (tpl'd from the values
+    key, 307), `HIP_VISIBLE_DEVICES: "0"` (310), `HF_HUB_OFFLINE: "1"` (313),
+    the four `/cache/*` pins (321-324), `FLASH_ATTENTION_TRITON_AMD_ENABLE`
+    (334), `RADIANCE_WEIGHT_QUANTIZATION: auto` (340), `RADIANCE_MXFP4*` family
+    (347-353), `VLLM_USE_V2_MODEL_RUNNER`, `RADIANCE_FAST_DRAFT` (359-360),
+    `RADIANCE_COMPILATION_CONFIG` (366), `HSA_TOOLS_DISABLE_REGISTER` (372),
+    `VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS: "0"` (381).
+  - probes 386-420: `/health:8000`, startup 60s + 15s×160 (40-min envelope).
+  - resources 421-428: requests 4 CPU/16Gi, **limits memory 32Gi** ("the cap
+    that keeps the 125Gi node undisturbed while Strata's pod coexists" — RAM law
+    comment references EXPLORE 8.6 of the cf-105 folder).
+  - securityContext 429-460: `privileged: true`, `seccompProfile Unconfined`,
+    `runAsUser 0`, `runAsGroup 44`, `capabilities.add: [SYS_PTRACE]`; the
+    comment is the richest pod-security precedent in the repo (GID-486 vs image
+    `video`=44 on openSUSE, runc capability-drop on setuid, the 2026-11-07
+    crash-loop where the **device plugin allocated the 8060S**, why no
+    `allowPrivilegeEscalation: false` next to `privileged: true`).
+  - init `setup` 462-532: same image by anchor; `sh -c` staging script with the
+    two revision shas as marker key (`TSRC=93245f7c…`,
+    `TDRAFT=ee0cb26a…`, marker `/models/.staged-mxfp4-$TSRC-$TDRAFT`,
+    493-508); resources 2/4Gi–8Gi; non-privileged `runAsUser 0` + drop-ALL
+    (517-529); **no env** so `HF_HUB_OFFLINE` can't reach the downloader
+    (530-532).
+  - service 534-539 (`http` port 8000); persistence 541-597: `models` =
+    `existingClaim: llama-swap` with per-container `advancedMounts`
+    (`vllm` read-only, `setup` read-write — comment 542-552 incl. the
+    do-not-delete GGUF warning), `cache` = `existingClaim: vllm-cache` mounted
+    `/cache` (562-575), `shm` emptyDir Memory **8Gi** (576-582), `kfd`/`dri`
+    hostPaths (583-597).
+  - `templates/pvc-vllm-cache.yaml`: hand-written RWO PVC
+    (`existingClaim` entries render no PVC — library law), size from
+    `cachePvcSize`, `/cache` subtree rationale comments.
+  - `templates/NOTES.txt`: prints the exact peer URL
+    `http://{{ .Release.Name }}.default.svc.cluster.local:8000` + port-forward
+    debug + pointer to the on-target runbook.
+- Service wiring (`services/gpu-ai/prod/values.yaml`): `charts.vllm:
+  {namespace: default, ServerSideApply: "false"}` lines 35-37;
+  `ingress.subdomains` deliberately has NO vllm host (comment 48-52, D7/Q4
+  ruling); top-level `vllm:` block 601-619 — exactly two overrides
+  (`app-template.modelPath` 617, `app-template.rocrVisibleDevices: "0"` 619).
+- `custom-values/gpu-ai/prod-values.yaml`: **zero vllm keys** (whole file 22
+  lines: base argocd/cert-manager ids, hivetools mcp-sso, and
+  `llama-swap.bitwardenIds.hf-token: 2ebdd082-4996-440b-a8c1-b4de01130738`
+  line 22). `services/gpu/prod/values.yaml`: 0 hits for
+  strata|vllm (checked) — both engines are gpu-ai-only.
+- Grafana dashboards (vllm's monitoring tail):
+  `services/monitoring/prod/values.yaml` lines 659-667 —
+  `vllm-performance-statistics` + `vllm-query-statistics` url-pinned to
+  `vllm-project/vllm/v0.33.0/examples/observability/dashboards/...` (the tag
+  couples to the retired `containers/vllm-rocm` base per the comment).
+- `.github/workflows/vllm-render-tests.yaml` (59 lines): triggers on
+  `charts/vllm/**`, `containers/vllm-radiance-mxfp4/**`,
+  `services/gpu-ai/prod/values.yaml`, itself; steps = `helm dependency update
+  charts/vllm` + `pytest charts/vllm/tests -v` + `helm lint` + `helm template`
+  chart defaults + `helm template` with the service `vllm:` subtree extracted
+  by an inline python one-liner (lines 56-59). A disabled-but-commented chart
+  must keep this workflow's extraction line from choking (it reads
+  `d['vllm']` — a missing top-level `vllm:` key throws and fails the job).
+- Provider catalog (`.opencode/opencode.jsonc`, provider `gpu-ai` starts
+  line 76: `baseURL https://llama.spencerslab.com/v1`, `headerTimeout`/
+  `chunkTimeout` 7200000 — 88-93): the three vllm rows at **795-815** —
+  `qwen3.8-27b-vllm` (`body.priority: 5`), `qwen3.8-27b-vllm-urgent`
+  (`modelID` still `qwen3.8-27b-vllm`, `priority: 1`), `qwen3.8-27b-vllm-low`
+  (same modelID, `priority: 9`); all `{input: [text], output: [text], tools:
+  true}`, context 262144 (D38 text-only honesty marker).
+  Strata rows at **656-719**: `qwen3.8-flash-next-strata`,
+  `…-strata-orca`, `…-strata-q4`, `ornith-1.5-122b-strata-q4` (context 262144,
+  tools true, the `-strix` id is NOT cataloged — manual fallback only).
+- `tests/pipeline-models/surface.sh` M-arms pinning the catalog: M3 (379-479:
+  HOLD-presence of the rows incl. the three vllm rows' shared wire modelID,
+  `body.priority` 5/1/9, and the negative "qwen3.8-27b-vllm must NOT be a local
+  llama-swap model id" — 463), M4 (482-500: serving-fact cross-check — the id
+  must appear in the serving authority, which today is
+  `peers.vllm.models`), M7 (581-708: cf-105 priority wiring; the class-table
+  needle rows at 699-708 pin urgent→`…-vllm-urgent`/1, default→`…-vllm`/5,
+  low→`…-vllm-low`/9). **These needles live against the .rulesync/boilerplate
+  tables** — see §5e.
+
+---
+
+## 3. The amd GPU device plugin — in-repo entry + live cluster truth
+
+- In-repo: it is an **external chart** (`charts/` has no amd-gpu directory).
+  `services/gpu-ai/prod/values.yaml:40-44` — `charts.amd-gpu: {version: 0.22.0,
+  repository: https://rocm.github.io/k8s-device-plugin/, namespace: default,
+  ServerSideApply: "true"}`. Grepping `services/`+`charts/` for
+  `amd.com/gpu`: only the llama-swap chart's `limits.amd.com/gpu: 1`
+  (`charts/llama-swap/values.yaml:1045`); the strata controller and charts/vllm
+  never reference it (both use privileged hostPath instead — §1b/§2).
+- Live (readonly-ai-gpu-kubernetes, 2026-11-11):
+  - Node `ai-gpu` (single node, k3s v1.36.5, openSUSE Tumbleweed, kernel
+    7.3.0-1-default, containerd 2.3.4-k3s1.36):
+    **capacity = allocatable = `amd.com/gpu: 2`** — the plugin reports BOTH
+    cards (R9700 gfx1201 + Strix 8060S gfx1151). `cpu: 32`,
+    `memory: 131151328Ki` (≈125.08 GiB allocatable), `pods: 110`, swap
+    2,148,204,544 B (~2.0 GiB — matches the "swap is 2.0 GiB, cgroup is the ONLY
+    containment" law). Node labels: **only stock k3s labels — no custom GPU
+    label**; no taints visible in spec.
+  - DaemonSet `amd-gpu-device-plugin-daemonset` (ns `default`, 33d, 1/1 ready):
+    container `amd-gpu-dp-cntr`, image `docker.io/rocm/k8s-device-plugin:1.31.0.9`,
+    selector `name=amd-gpu-dp-ds`, nodeSelector `<none>`.
+  - Pods consuming GPU today:
+    - `gpu-ai-llama-swap-74467df97b-zkvbf` (Running): main container
+      requests+limits `amd.com/gpu: 1` (live-verified) — plugin-allocated; it
+      runs llama.cpp on the unified-memory 8060S (service values comment
+      486-488), i.e. the plugin handed it the 8060S. drop-ALL, non-privileged.
+    - `gpu-ai-llama-swap-strata-6cd875db6d-sr5m2` (Running):
+      does NOT request `amd.com/gpu` — privileged + hostPath `/dev/kfd`+`/dev/dri`,
+      pod seccomp Unconfined, `terminationGracePeriodSeconds: 420`, container
+      requests 8 CPU/64Gi limit 110Gi, init `model-fetch` privileged
+      (live-pod read; matches chart). `supplementalGroups` NOT set on the live
+      pod either (chart ships `[]`). **The R9700 is occupied by the strata pod's
+      five time-shared arenas** (ttl 3600/1800 lazy unloads; preload list empty).
+    - `gpu-ai-vllm` Deployment exists (Argo Application `gpu-ai-vllm` exists)
+      but **`spec.replicas: 0`, no pods running**; strategy Recreate; last
+      condition transition 2026-11-11T14:11:24Z "Deployment has minimum
+      availability" (Available=True at 0/0). The chart never sets replicas →
+      the scale-to-zero was applied out-of-band (kubectl scale or an Argo
+      operation; the repo has no replica key). Treat as: vllm is ALREADY not
+      serving; the card's "disable" makes that GitOps-permanent. (Open question
+      — §Open: who zeroed it; whether re-enabling the vllm chart later should
+      carry `replicas: 0` in values or the chart default 1.)
+  - PVCs (ns default): `llama-swap` Bound 500Gi (`pvc-e4f5adf3-…`),
+    `vllm-cache` Bound 10Gi (`pvc-f986a778-…`). Provisioner:
+    `local-path-provisioner` (kube-system).
+  - Node image cache (useful digests): `ghcr.io/ownyourio/vllm-radiance-mxfp4:main`
+    @ `sha256:887962d04f8a570ffbb0801f9edde5806f59c900fd7b745ccde97257b83e79a8`
+    (+ prior `3b981e9c…`), `ghcr.io/ownyourio/strata:main` @
+    `sha256:ded0447b500f17d423c88e2cbec927772391a4d8a48af5afdc1a3b439775814b`
+    (+ `de8ccd35…`, `d95db6db…`), `ghcr.io/mostlygeek/llama-swap:unified-vulkan-266`
+    @ `sha256:0cc42f10…` (chart-pinned digest confirmed on-node), plus the
+    retired-era `ghcr.io/ownyourio/vllm-rocm:main` @ `452091b4…` (18 GB, still
+    cached — the cf-105 v1 image; nothing references it except the
+    monitoring-dashboard comment).
+
+---
+
+## 4. Strata pod-spec details to replace (consolidated from §1b + live pod)
+
+- nodeSelector/tolerations: **none** (single-node k3s; control-plane pod
+  scheduling allowed — every workload pod runs on `ai-gpu`).
+- hostPath mounts: `/dev/kfd` (CharDevice), `/dev/dri` (Directory) — each into
+  the serve container AND the staging init.
+- privileged: `true` on both containers (serve + init model-fetch); pod level:
+  `seccompProfile Unconfined`, `supplementalGroups []` (unresolved on-target;
+  DOCKER.md wants video+render GIDs — the chart comment 1106-1110 defers them
+  to the C04 runbook gate; live pod confirms never set).
+- shm: emptyDir `medium: Memory` 2Gi at `/dev/shm` (vllm's equivalent is 8Gi —
+  the Radiance guide's shm claims are a research item).
+- `/models`: `existingClaim: llama-swap` (the outer chart's own
+  `pvc-llama-swap-default.yaml` 500Gi claim on local-path; mounted whole via
+  `globalMounts`; RWO same-node double-mount across the llama-swap + strata +
+  vllm pods is the established single-node pattern — chart values 1394-1402,
+  vllm values 542-552).
+- probes: supervisor `/health` at 8080 (startup 150×10s; liveness+readiness
+  plain). No container env, no secrets, args just `-config`
+  `/app/config/config.yaml`.
+- strategy Recreate; grace 420 s tied to `unloadTimeout 180` + engine drain 30.
+- reloader: `reloader.stakater.com/auto: "true"` pod annotation on both
+  controllers (config hot-reload belt; reloader deployment
+  `gpu-ai-reloader-reloader` is live in-cluster).
+
+---
+
+## 5. Repo patterns a Radiance run will reuse
+
+a. **OpenAI-compatible peer block**: copy the shape from `peers.vllm` (service
+   values 534-560) — `proxy` (cluster DNS, port, NO `/v1`), `models` (explicit
+   ids), `timeouts {responseHeader: 1800, connect: 30}`, optional
+   `filters.setParams`. Schema authority: `config-schema.v266.json:734-810`
+   (peer keys: `proxy`+`models` required; `apiKey`, `tailcatKey`, `filters`
+   (stripParams/setParams), `timeouts` (connect/keepalive/responseHeader/
+   tlsHandshake)). Keep the evidence-file law in mind (§1b end).
+
+b. **ExternalSecret/Bitwarden pattern**: `charts/llama-swap/templates/
+   secret-hf-token.yaml` (30 lines) is the template to mirror — guarded on
+   `bitwardenIds`, `external-secrets.io/v1`, `storeRef: bitwarden-login
+   (SecretStore)`, `remoteRef.key` = Bitwarden item UUID, `property: password`.
+   charts/vllm ships NO secret template; strata's keyless ruling means the only
+   in-cluster API-key precedent for a peer is… none (both peers are keyless;
+   outer `apiKeys: []` chart values line 43). UUIDs live in
+   `custom-values/gpu-ai/prod-values.yaml` (`llama-swap.bitwardenIds.hf-token`
+   line 22). The header comment names `charts/audiomuse-ai` as the repo-wide
+   pattern home.
+
+c. **Chart entry shape in the ApplicationSet values**: add to
+   `services/gpu-ai/prod/values.yaml` `charts:` — internal chart (no
+   version/repository, renders from `charts/`) = `{namespace: default,
+   ServerSideApply: "false"}` (the llama-swap/vllm precedent, lines 22-24,
+   35-37); external = `version` + `repository` (+ the commented `# renovate:
+   datasource=helm …` idiom on lines 26-27/31-32 where pinned). The
+   ApplicationSet machinery itself: `services/gpu-ai/prod/templates/appset.yaml`
+   (clusters×list matrix, `baseChartVersion: 1.0.198` with a
+   `# renovate: datasource=helm` comment, templatePatch resolves per-chart
+   Applications from `Values.charts`). Trio rule: chart entry + service values
+   entry + proxy entry — with the **documented skip** for internal-only engines
+   (no ingress host; the strata Q4 / vllm D7 comments, service values 48-58,
+   are the precedent text to mirror verbatim for radiance).
+
+d. **Test layout**: per-chart pytest `charts/<chart>/tests/` (run
+   per-directory: `python3 -m pytest charts/llama-swap/tests -v` — basenames
+   duplicate across suites) with a `<name>_testlib.py` render helper
+   (`helm_ready()` skip gate; the repo lesson: export
+   `PATH=$HOME/.local/bin:$PATH` or helm-guarded tests silently mass-skip),
+   evidence YAMLs + a byte-golden under `tests/golden/`, plus bash contract
+   scripts under `tests/<group>/` (`tests/notes/vllm-runbook.sh` T1-T5,
+   `tests/services/vllm-dashboards.sh` t1-t4,
+   `tests/containers/vllm-radiance-mxfp4.sh` t1-t7,
+   `tests/pipeline-models/surface.sh` M1-M7 — none wired into GitHub workflows;
+   the pipeline test sessions run them). CI shape for a new chart = clone
+   `.github/workflows/vllm-render-tests.yaml`.
+
+e. **Operator docs to mirror for a Radiance runbook**:
+   `.agents/notes/vllm-on-target-acceptance.md` (the 0.30 acceptance runbook —
+   ~1,200 lines: names-block pin ledger, rocminfo gate §1, staging, DRY_RUN
+   args capture, re-measure gate, catalog/priority steps 4-5, KV watch §6,
+   Strata-coexistence observation §9 lines 1080-1101, issue watch §10),
+   `.agents/notes/strata-host-prep-gpu-ai.md` (host prep + enablement, operator
+   owned), `.agents/notes/strata-parallel-tuning-runbook.md` (cf-141 tuning
+   runbook: pin & envelope board §1, gates §4, ladder §6),
+   `charts/llama-swap/README.md` (interface freeze table + peers URL + per-rung
+   caps; lines 6-71), `containers/strata/README.md` (image ledger),
+   `containers/vllm-radiance-mxfp4/README.md` (tag→digest pin table).
+
+f. **Skill/agent-context surfaces naming the vllm/strata ids** (comment, don't
+   delete, per the launch hint; surface.sh M1/M2/M5 pin these strings):
+   `.rulesync/skills/pipeline-models/SKILL.md` — combination rule line 34
+   (Flash+Local → `gpu-ai/qwen3.8-flash-next-strata-q4`), Priority class table
+   lines 45-48 (the vllm rows), favorited-table rows 59-63
+   (`…-strata-q4` row + the three `…-vllm*` rows);
+   `.rulesync/skills/pipeline-kickoff/SKILL.md` line 26 (route derivation);
+   `.rulesync/skills/boards/SKILL.md` line 251 (Strata default route). Edits go
+   in `.rulesync/` then `rulesync generate` (never hand-edit
+   `.opencode/skills/`) — M6 (surface.sh 552-567) checks mirror integrity.
+   Also the runner-model literal in AGENTS.md ("Pipeline worker iterations":
+   `gpu-ai/qwen3.8-flash-next-strata-q4` — owner-ruling-owned, not a
+   pipeline-agent edit).
+
+---
+
+## 6. Renovate handling of the vllm/strata/llama-swap image pins
+
+- `renovate.json` (302 lines, packageRules tail): the ONE relevant rule is
+  lines 284-293 — `ghcr.io/mostlygeek/llama-swap` scoped
+  `versioning: "regex:^unified-vulkan-(?<major>\d+)$"` because the built-in
+  `helm-values` manager extracts the `repository:`/`tag:` pair from
+  `charts/llama-swap/values.yaml` and default docker versioning can't parse the
+  tag family. No rule exists for strata, vllm-radiance-mxfp4, or the
+  magiccodingman upstream.
+- Pin comment shapes in use:
+  `charts/llama-swap/values.yaml:1006` —
+  `# renovate: datasource=docker depName=ghcr.io/mostlygeek/llama-swap` above
+  `tag: unified-vulkan-266`.
+  `charts/vllm/values.yaml` — NO renovate comment: `ghcr.io/ownyourio/*`
+  re-exports are rolling `:main` + `Always` by the first-build/PIN-ME law
+  (282-285); versioned `:v<run>` adoption is "a Renovate chores decision, never
+  a hand-bump" (chart values 1157-1164/1209-1215 for strata's image too).
+  `containers/strata/Dockerfile:8-14` — explicit **no renovate comment** ruling
+  (coord ruling (b): no manager extracts the ARG pin; the README's tag→digest
+  ledger + manual bump procedure is the cadence owner; #3421 and the
+  unified-vulkan-262 in-place rebuild are the cited why).
+  `containers/vllm-radiance-mxfp4/Dockerfile:58` —
+  `ARG FLASH_ATTN_VERSION=2.8.3.post2` (the one sanctioned overlay layer).
+  `services/gpu-ai/prod/values.yaml:26-27,31-32,42-44,appset 33` —
+  `# renovate: datasource=helm registryUrl=…` idiom on external chart versions
+  (amd-gpu `0.22.0` is a live, renovate-visible version entry).
+- Consequence for the card's target: a `docker.io/stilldeadcode/radiance:1.17.0`
+  digest pin is a NEW datasource. The repo has two sanctioned postures — (i)
+  renovate-comment + tag on the upstream public image (llama-swap precedent),
+  or (ii) thin re-export under `containers/` with rolling `:main` + ledger
+  (strata/vllm precedent, docker-build.yaml pushes `:v<run>` + `:main`). Which
+  posture Radiance takes is a planning decision; research should verify the
+  upstream image's tag/digest hygiene (the values 984-998 comment is the
+  cautionary record: tags CAN be rebuilt in place).
+
+---
+
+## 7. Second-R9700 / TP2 notes already in-repo
+
+- `charts/vllm/values.yaml:176-177` — shipped `--tensor-parallel-size 1`;
+  `:96-97` — omitted `draft_tensor_parallel_size` ("TP1 — their TP2 profile
+  sets 2").
+- `.agents/notes/vllm-on-target-acceptance.md` — line 114 ("exists at any TP1
+  shape (R3 L2.4); the 0.30 TP2 Quark capacity table is …"), 736 and 758
+  (the 30/30 tool record is TP2-only — "two GPUs is the only configuration
+  tested so far"), 910-931 (the 0.30 TP2 cross-stack SANITY class — record,
+  not expectation; K7 TP2 row 42.26%/3.958 = sanity bar).
+- cf-131 chunk records: `.agents/plans/2026/2026-11-cf-131-feat-vllm-fp8-official/chunks/C04.md:130`,
+  `chunks/C05.md:20-21,88,363,488`.
+- cf-141 RESEARCH (`…cf-141-refactor-strata-parallel-tuning/RESEARCH.md:386-414,
+  465-471`) — gfx1201 issue cluster incl. **#3364**: open, "[Engine]
+  expert-cache auto does not reserve memory for --batch slots", reporter box
+  **2× R9700 gfx1201** — the only published twin of a TP2-class Strix-Halo+R9700
+  setup in the repo's evidence.
+- Node today reports `amd.com/gpu: 2` = {R9700, 8060S} — a second physical R9700
+  would make 3 devices / change host enumeration and the
+  `rocrVisibleDevices`/`ROCR_VISIBLE_DEVICES` index law in EVERY engine (chart
+  values 1480-1491 strix-index comment is the enumeration record). Nothing in
+  the repo documents a second R9700 as purchased/planned — the TP2 story is all
+  upstream-capability, not local-hardware. Card-guide verification: research.
+
+---
+
+## 8. llama-swap's own deployment + appset entry shapes
+
+- Deployment: single Application `gpu-ai-llama-swap` (live), chart
+  `charts/llama-swap` (app-template 5.0.1 umbrella; Chart.yaml 8 lines,
+  `version 1.0.0`+lock), two controllers (§1), services
+  `gpu-ai-llama-swap:8080` + `gpu-ai-llama-swap-strata:8080`, ingress surface:
+  `services/gpu-ai/prod/values.yaml:59-73` — `ai-llama-swap` subdomain (direct)
+  + `llama` subdomain (`clusterBase: true` + `serviceName: llama` → renders
+  `llama.gpu-ai.<domain>` internal hop AND public `llama.<domain>`); the
+  timeout chain: `services/gpu-ai/prod/templates/generic-ingress.yaml`
+  (annotation `traefik.ingress.kubernetes.io/service.serverstransport:
+  default-llama-timeouts@kubernetescrd`, lines 15-17) +
+  `servicestransport-llama.yaml` (same dir; long-load timeouts). Public chain:
+  `services/proxy-local/prod/values.yaml:286-298` (llama → gpu-ai reroute, SSO
+  redirect to `/ui/`) and `services/proxy-remote/prod/values.yaml:92-97`.
+  The gpu-ai provider's `baseURL` (`https://llama.spencerslab.com/v1`) rides
+  that chain — so peer models served via llama-swap automatically reach
+  OpenCode without provider URL changes; only catalog ROWS change.
+- Peer reach: pure cluster DNS service names (chart values 1350-1355:
+  "app-template fullname + controller key… read it from NOTES, keep the no-/v1
+  suffix shape"); NO apiKeys env anywhere (outer `apiKeys: []`, inner
+  `apiKeys: []`, profiles `api_key: "none"`); profiles/hooks: outer
+  `hooks.on_startup.preload: []` (service 502-504), inner preload commented-off
+  shape (chart values 1593-1598), engine profiles = the five
+  `engineProfile*` (§1b).
+- New-chart entry shape to copy: `charts:` map entry (§5c) + top-level `<name>:`
+  values block + `ingress.subdomains` skip comment; internal chart →
+  `charts/<name>/` with the app-template dep trio (Chart.yaml/Chart.lock via
+  `helm dependency update`, values.yaml, templates/, tests/).
+
+---
+
+## Gotchas (established, each with its source)
+
+1. **subPath never hot-reloads**: every ConfigMap mount in this chart is a
+   DIRECTORY, never subPath (chart values 1359-1365, 1407-1409; the 2026-10-17
+   whisper incident). A radiance config/profile mount follows the same law.
+2. **advancedMounts vs globalMounts**: `advancedMounts` naming a DISABLED
+   controller hard-fails the render, and a globalMount attaches to EVERY
+   enabled controller (collision with strata's own `/app/config` — why
+   config/tools enumerate). Only `models` stays global. (chart values 1076-1086,
+   1366-1371, 1395-1402.)
+3. **Helm deep-merge REPLACES lists wholesale**: service values may flip
+   strata scalars only — never engineProfile args / model env lists / mount
+   lists (service values 129-134). A radiance service block inherits this law.
+4. **YAML 1.1 boolean gotcha**: bare `n:` matrix var key parses to `False` —
+   quote it (chart values 1719-1724). Same family: `on_startup` etc. quoted
+   where needed.
+5. **`OVERRIDE_VIA_CUSTOM_VALUES` / `OVERRIDE_VIA_APPSET` sentinels**: chart
+   values `domain: OVERRIDE_VIA_APPSET` line 1; service values lines 9-10;
+   `bitwardenIds.hf-token: OVERRIDE_VIA_CUSTOM_VALUES` service line 98 — the
+   suite (`test_ac1_render_produces_deployment_without_sentinels`,
+   charts/vllm/tests/test_render.py AC1) fails any render still carrying an
+   `OVERRIDE_` string. Secret templates guard on the id so clusters without one
+   render clean (secret-hf-token.yaml line 7).
+6. **ServerSideApply**: vllm/llama-swap entries use `"false"`; SSA +
+   list-shaped controller data was the drift class — match `"false"` for a
+   llama-swap-family chart (service values 22-24, 35-37).
+7. **Anchors resolve per-document**: the vllm service re-pin does NOT reach the
+   chart's serveArgs splice — retarget is a dual edit guarded by
+   `args[0] == service modelPath` (vllm values 18-27/144-148; service values
+   607-616). A radiance chart using anchors copies this trap.
+8. **`exec`-form init commands as boot guards**: `/bin/sh -c` fallbacks are the
+   rejected alternative; loud-fail at container start is the design
+   (chart values 1143-1152, 1165-1171).
+9. **SanitizeCommand strips backslash continuations**: multi-line `cmd:` values
+   must stay one physical line inside `/bin/sh -c` scripts (service values
+   436-442).
+10. **Probe law**: kubelet probes hit the SUPERVISOR `/health` only — probing a
+    model/upstream endpoint triggers loads and isn't probe-safe (chart values
+    1229-1234).
+11. **DNS-rebinding guard / allowed hosts**: engine `*_ALLOWED_HOSTS` must
+    enumerate the peer-forwarded Service DNS forms (chart values 1564-1570,
+    1592) — a radiance peer gets a new service name → new allow-list entries.
+12. **Peers truth lives in the evidence file, not values**
+    (`strata-peers-expected.yaml` header): dev edits values to match the
+    evidence; the evidence is test-session property. Golden re-capture is the
+    companion obligation (test_vllm_peer.py header T4).
+13. **vllm is currently scale-0 out-of-band** (§3): the GitOps tree still says
+    1 replica; commenting-out vs leaving the Deployment zero matters — an Argo
+    sync with selfHeal could resurrect it (the `gpu-ai-vllm` Application is
+    live). No `replicas:` key exists in the chart or service values today.
+14. **workflow path-triggers**: `.github/workflows/vllm-render-tests.yaml` keys
+    on `services/gpu-ai/prod/values.yaml` — edits for radiance/strata will also
+    run the vllm workflow, and its inline `d['vllm']` extraction fails if the
+    top-level `vllm:` key is deleted (workflow 56-59). "Leave commented-out
+    entries" keeps that green only if the `vllm:` key itself remains or the
+    workflow is amended.
+15. **rolling `:main` + `pullPolicy: Always` is LAW on ownyourio re-exports**
+    (thin-init pair test, boot-guard self-heal rationale) — a digest-pinned
+    `docker.io/stilldeadcode/radiance` is a posture CHANGE; the repo's digest-
+    pin precedents are comments/ledgers, not `image.digest` fields (no
+    `digest:` usage in either chart's image blocks — app-template's image
+    schema supports repository/tag/pullPolicy here).
+
+## Open ground not covered (hand-offs)
+
+- **Research (AD-143 guide verification)**: every claim of the card's deployment
+  guide (stilldeadcode/radiance 1.17.0 image + digest, memlock/nofile,
+  pinned-RAM accounting, supplementalGroups/seccomp/IPC_LOCK, per-profile
+  flags, TP2 section) — none of it is in-repo; only the equivalents for
+  Strata/vllm are grounded above. Also: whether `stilldeadcode/radiance` is the
+  renamed/successor of `Niko1221/Strata` (same-author hypothesis — would change
+  the replacement story's semantics) and how it relates to `magiccodingman/
+  vllm-radiance` (different project per all repo evidence; confirm).
+- **Coord/owner facts**: who/when scaled `gpu-ai-vllm` to 0 and whether the
+  "disable" should carry an explicit `replicas: 0` (commented) or GitOps prune;
+  whether the owner intends the radiance pod to REPLACE strata in the
+  llama-swap Application (second controller, the cf-77 consolidation shape) or
+  ship as its own chart+Application (the card says "NEW chart" — but the strata
+  peer wiring it says to mirror lives inside the llama-swap chart; that
+  structural tension is a planning decision, not a repo fact).
+- **Not grounded (depth)**: amd-gpu helm chart internals (external repo, not
+  vendored); the `services/gpu` box's disabled-override pattern detail
+  (chart values line 960 reference); live Grafana dashboard provisioning state
+  for the two vllm dashboards beyond the values pin; Argo Application health
+  fields (MCP list returned names only); whether the runner model literal
+  `gpu-ai/qwen3.8-flash-next-strata-q4` (AGENTS.md + loops file) is in scope
+  for the switchover — owner-ruling-owned.
+- **Test-authority obligations on any peers change**: re-capture
+  `tests/golden/gpu-ai.config.yaml`, re-author `strata-peers-expected.yaml`
+  (or its successor evidence), M-arm re-pins in `tests/pipeline-models/
+  surface.sh` for whatever replaces the strata route strings, and the
+  `rulesync generate` round-trip for `.rulesync/skills/*` edits (§5f).
+
+RESULT
+status: DONE
+chunk: exploration
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/EXPLORE.md]
+commands_run: [repo reads/globs/greps (values, workflows, tests, notes, containers, renovate.json, opencode.jsonc, .rulesync skills) => pass; git status/log read => pass (branch cf-143-feat-radiance-replaces-strata @ 0d9b41785, clean-ish, no writes); readonly-ai-gpu-kubernetes: nodes+capacity (amd.com/gpu:2, 125.08GiB, 32cpu), DaemonSet list (amd-gpu-device-plugin 1/1 @ rocm/k8s-device-plugin:1.31.0.9), pods default ns, strata+llama-swap pod specs, gpu-ai-vllm deployment (replicas 0), PVCs (llama-swap 500Gi Bound, vllm-cache 10Gi Bound), Application list => pass]
+deviations: none — stayed read-only; wrote only EXPLORE.md in the ticket folder.
+friction: readonly-ai-gpu-kubernetes resources_list returns flattened summary objects (Name/Images/… keys), not raw manifests; use pods_get/resources_get for spec detail. Application list carries no health fields through that MCP. The vllm-render workflow's inline python depends on the top-level vllm: key — noted as gotcha 14 rather than friction.
+open_questions: [Needs research: yes — verify stilldeadcode/radiance 1.17.0 guide claims + its identity vs Niko1221/Strata and vs magiccodingman/vllm-radiance (namespace collision). Coord/owner: why is gpu-ai-vllm scaled to 0 today and should the disabled shape carry replicas:0?; should the new radiance chart be a llama-swap second controller (strata-consolidation shape) or its own ApplicationSet entry (card's "NEW chart")?; is the strata route string in AGENTS.md/loops/pipeline-models tables in scope this run?]
+next_suggested: agent-research on the card guide + radiance identity, then agent-plan; plan should read §Gotchas 12-15 and the open structural question before chunking.

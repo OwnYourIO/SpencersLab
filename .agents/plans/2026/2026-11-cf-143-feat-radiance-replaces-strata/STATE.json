@@ -1,0 +1,238 @@
+{
+  "feature": "2026/2026-11-cf-143-feat-radiance-replaces-strata",
+  "plan_status": "approved",
+  "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
+  "test_session": null,
+  "current_wave": 0,
+  "updated_at": "2026-11-11T21:10:00+00:00",
+  "kickoff": {
+    "card": "Na5LxMaY3ptABWhAy",
+    "card_number": 143,
+    "card_title": "Implement Radiance instead of Strata",
+    "slug": "cf-143-feat-radiance-replaces-strata",
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "cf-143-feat-radiance-replaces-strata",
+    "branch": "cf-143-feat-radiance-replaces-strata",
+    "branch_minted_at": "0d9b41785fccbf6448a55479e9367150f2447462",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 1 — launch-carried 'Session origin:' line (resolved)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "research": "openrouter/qwen/qwen3.8-flash",
+      "test": "openrouter/qwen/qwen3.8-flash",
+      "dev": "openrouter/qwen/qwen3.8-flash",
+      "review": "openrouter/qwen/qwen3.8-flash"
+    },
+    "models_basis": "Model(s) checklist exactly one checked (Qwen Flash) -> that model every tier; card label Provider: API -> hosted openrouter routing.",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "local": false,
+    "stages": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Post Research",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "card's checked Lifecycle items in card order; Deployment + Single Session + Agent Decides Research unchecked (commit-only coord, no deploy loop)",
+    "hitl": [
+      "Post Research",
+      "Final Review"
+    ],
+    "checklist_answers": {
+      "services": [
+        "gpu-ai"
+      ],
+      "type": [
+        "feat"
+      ],
+      "models_checked": [
+        "Qwen Flash"
+      ],
+      "lifecycle_checked": [
+        "Exploration",
+        "Pre Research",
+        "Planning",
+        "Post Research",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review"
+      ],
+      "human_in_loop_checked": [
+        "Post Research",
+        "Final Review"
+      ]
+    },
+    "claim": {
+      "cardId": "Na5LxMaY3ptABWhAy",
+      "pipelines": [
+        "AI"
+      ],
+      "setId": "b60c418b-d45f-4f73-948e-cce3ca140f14",
+      "claimed_at": "2026-11-11T18:35:00+00:00",
+      "card_move": "Not Started -> Executing",
+      "claim_comment": "ScuCbTjPoNouvjkfg"
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_Backlog": {
+        "Inbox": "PjEZ39rXBdpNcpncs"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Bucket Color": "yBfNJJ",
+        "Pipeline: Context": "3PGnrD",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: Local": "PnhFKk",
+        "Provider: API": "f3sKNX",
+        "Pipeline: AI": "ezGduq",
+        "Bucket: Features": "m4EN6C",
+        "Bucket: Context": "jXX4GM",
+        "Bucket: Research": "CRWg9m",
+        "Bucket: Outside Process": "eyqxPC",
+        "Bucket: Dev Env": "2tc8ds",
+        "Bucket: Home Assistant": "s6xmDW",
+        "Bucket: CICD": "25Mfu5",
+        "Bucket: Wekan": "z8hkS5",
+        "Research: Parallel": "Nd5h6R"
+      }
+    },
+    "preload": {
+      "at": "2026-11-11T18:34:00+00:00",
+      "tool": "degraded: list_cards_in_list + get_card",
+      "cards": "not counted board-wide",
+      "degraded": true,
+      "note": "launch block carried per-list cards snapshot; dependency gate evaluated from get_card_dependencies on the candidate => zero edges, no blocking spellings; board-wide edge sweep not needed for a single-card walk"
+    },
+    "card_details": {
+      "at": "2026-11-11T18:36:00+00:00",
+      "tool": "get_card_details",
+      "degraded": false
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C01",
+        "C04"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C02",
+        "C04"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "handoffs": [
+    {
+      "stage": "Exploration",
+      "at": "2026-11-11T18:44:00+00:00",
+      "session": "ses_e341790adffeDeLdSrmt1QWE7N",
+      "result": "RESULT status: DONE chunk: exploration files_changed: [EXPLORE.md (658 lines, sole artifact)] highlights: [strata is NOT a chart — second controller of the llama-swap Application (charts/llama-swap/values.yaml:1087-1336 pod shape, :1473-2504 workload data, enabled via services/gpu-ai/prod/values.yaml:121-197, peer route :520-533); vllm chart image is ghcr.io/ownyourio/vllm-radiance-mxfp4 = magiccodingman/vllm-radiance — a DIFFERENT project from the card's stilldeadcode/radiance (three-way naming collision vs Niko1221/Strata); cluster: amd.com/gpu allocatable 2 (R9700+8060S) via healthy plugin DaemonSet, llama-swap holds one slot (8060S), R9700 held by privileged hostPath strata pod (five arenas); gpu-ai-vllm scaled to 0 out-of-band TODAY with no replicas: key in GitOps — how 'disabled (commented-out)' lands is an owner question; tests that break on vllm disable enumerated with line numbers: charts/vllm/tests/**, test_vllm_peer.py, gpu-ai golden + strata-peers-expected.yaml, tests/notes/vllm-runbook.sh, tests/services/vllm-dashboards.sh, surface.sh M3/M4/M7, .rulesync/pipeline-models vllm routes] deviations: none friction: readonly-kubernetes list endpoints flattened (get-by-name needed) open_questions: [Needs research: yes — verify card guide claims + radiance identity (three-way collision); coord/human: vllm disabled shape (gpu-ai-vllm already 0 out-of-band — why); chart structure: llama-swap second controller (strata precedent) vs own ApplicationSet entry (card wording); scope over strata route strings in AGENTS.md/loops/skills tables] next_suggested: agent-research on the guide + identity, then agent-plan (resolve controller-vs-own-chart structure; read Gotchas 12-15 before chunking)"
+    },
+    {
+      "stage": "Pre Research",
+      "at": "2026-11-11T19:55:00+00:00",
+      "session": "ses_e340cb94effeseZAPh7XIEnT0D",
+      "result": "RESULT status: DONE chunk: research files_changed: [RESEARCH.md (850 lines, ~160 citation-bearing)] highlights: [RQ0 identity RESOLVED: StillDeadcode/radiance = standalone C++/HIP engine, successor to the vllm-radiance fork (magiccodingman continues THAT); Strata unrelated — collision maps three ways; 1.17.0@sha256:6fb0e99b verified (amd64-manifest vs index nuance); all three packs ungated with sizes+shas; RQ1 capacity: KV-to-RAM maps onto two real mechanisms (--kv-resident QSA streaming, --prefix-cache-mib finished-session tier), wall for fn-TP1×8 long sessions is VRAM pool + x4 link (measured ~454 tok/s prefill @55k on Gen4 x4; q27 link-immune); guide numbers corrected vs shipped v1.17.0 recipes; RQ2 INVERTS the card's fear: radiance HAS vLLM-model priority + preemption, OPPOSITE POLARITY (higher wins) — the urgent=1/low=9 table would run backwards, that IS the graceful-handling question; RQ3/4 live-cluster verified: kfd group 486, nodeId-ascending APU-first allocation (repo's 8060S crash as evidence), k3s nofile already 1M, product naming merged in plugin v1.31.0.12 (guide stale); RQ5 structure: peer/own-pod = production shape, child mode works (#1255 + ulimit idiom) and is the ONLY one-card swap option — owner trade-off] deviations: storm interviews inline (skill fallback); intermediates /tmp/opencode/radiance-research friction: L1T JSON fetch shape; Codeberg API raw path; AMD_GPU_DEVICE_COUNT UNVERIFIABLE-Med open_questions: [priority polarity flip vs FIFO (owner); structure A peer / B llama-swap second controller / C child one-card swap (owner); on-target TP1 receipts (kv-resident at 8×200K, x4 prefill actuals, kfd-GID/memlock non-privileged posture — one on-target run); t1m.me plugin/kernel-7.1.3 claim unlocatable — pin or drop; who-zeroed-vllm + runner-literal scope from EXPLORE] next_suggested: agent-plan consumes RESEARCH.md (TLDR → Serving envelope → Guide corrections → Structural options); Post-Research/plan question round asks owner priority polarity + A/B/C structure with the ~450-600 tok/s x4 prefill figure as framing fact"
+    },
+    {
+      "stage": "Planning",
+      "at": "2026-11-11T20:05:00+00:00",
+      "session": null,
+      "note": "session id filled by coord at handoff write (plan agent cannot know its own launch id)",
+      "result": "RESULT status: DONE chunk: plan files_changed: [2026-11-11-feat-cf-143-feat-radiance-replaces-strata.md, chunks/C01..C06.md, DECISIONS.md (D1-D11+deferred), FRICTION.md (template), STATE.json (extended: chunks, handoff)] highlights: [6 chunks, 3 waves; best-guess structure A (own charts/radiance + peers.radiance, Q1 forks C02/C04); fn TP1 200Kx8 profile pinned to RESEARCH Serving envelope (--kv-resident 32768, pool 43000, chunk 4096, ngram disk, no stale guide flags); priority FLIP 9/5/1 higher-wins (Q2); vllm disabled commented-out + empty-key + workflow hardening (Q3/D6); strata service-level retirement, chart-side dormant (D5); honest new id qwen3.8-flash-next-radiance (Q4/D7 — runner-literal re-ruling is an owner PRE-MERGE gate, loops+AGENTS exempt from cleanup); no secret surface (D8); privileged hostPath posture pending on-target GID gate (Q7/D9); TP2 expansion doc chunk C03 feeds the run-end Inbox card; runbook C06 owns the 8-session refusal ladder + polarity live-check]; deviations: none friction: none open_questions: Q1 structure A/B/C; Q2 priority flip-vs-strip; Q3 vllm disable shape + who-zeroed + re-enable replicas; Q4 new ids vs id-stability + runner-literal timing; Q5 strata cleanup scope (deletion deferred); Q6 follow-up-card content (+extras?); Q7 privileged vs non-privileged + memlock; Q8 catalog text-only honesty next_suggested: Test Writing (agent-test writes all six chunk suites, designed-red where docs land later), then chunk loop in wave order; batched question round before approval"
+    },
+    {
+      "stage": "Planning (rework, owner round 2)",
+      "at": "2026-11-11T21:10:00+00:00",
+      "session": null,
+      "note": "owner batched-round answers Q1-Q8 applied in place; session id filled by coord at handoff write",
+      "result": "RESULT status: DONE chunk: plan (rework) files_changed: [plan file (rewritten: coexistence goal, Q1=A closed, shadow profile, Q9/Q10/Q11 open), chunks/C02.md (non-priv plugin+Guaranteed+supplementalGroups[486], shadow scalars, init QoS pair), chunks/C04.md (ADDITIVE peers.radiance, strata byte-untouched, sibling radiance-peers-expected.yaml per D13), chunks/C05.md (strata rows/routes KEEP, radiance trio 9/5/1 + [text,image] + ctx 65536, pipeline-models per-engine polarity note only), chunks/C06.md (MANDATORY pre-deploy host gates step-0, PCI allocation gate, coexistence-envelope section, image-smoke leg, sole-tenant ladder documented), chunks/C01.md (peers.strata-remains wording), chunks/C03.md (TP2 coexistence-relief + product-naming-prerequisite bullets), DECISIONS.md (owner rulings verbatim + D12-D16, supersedes noted, Deferred rewritten), STATE.json (extended)] highlights: [Q5+Q7 arithmetic FORCED the shadow profile: Guaranteed <=~52Gi beside strata's 64Gi request => ship 8x64K/pool28000, full 8x200K profile = documented post-retirement ladder (Q10 best guess); Q9 new gap: plugin 1.31.0.9 APU-first mis-allocation risk => mandatory startup PCI/gfx1201 gate + Recreate-retry, product-named resources deferred (TP2 prerequisite); Q11: one-engine-per-card VRAM contention between resident radiance and strata R9700 arenas documented in runbook as the owner's metrics observation, no GitOps mitigation; evidence law RESOLVED per-key: strata file stays valid+unedited, radiance sibling file joins (D13); runner-model literal stays valid — NO pre-merge owner gate this run; waves/deps unchanged (C01,C02,C03 -> C04 -> C05,C06)] deviations: D3/D5/D7-gate/D9/D11 supersessions recorded append-only in DECISIONS (owner rulings, not plan drift) friction: none open_questions: [Q9 named-card guarantee during coexistence (best guess: amd.com/gpu claim + PCI boot gate + deferred product-naming bump; alternative hostPath-env idiom contradicts Q7 — needs owner word if preferred); Q10 shadow-profile sizing under Guaranteed coexistence (best guess 52Gi/pool28000/8x64K with runbook pre-sum + ladders; alternatives: trim strata requests (against Q5) / burstable (against Q7) / smaller first boot); Q11 contention posture while both lanes live (best guess: observe, runbook envelope, no auto-mitigation — the runner strata-q4 route may arena-fail during radiance windows)] next_suggested: plan-approval pause with Q9/Q10/Q11 surfaced (round-1 answers already applied); then Test Writing (all six chunk suites, designed-red where docs land later), chunk loop waves 1->3, final review, two follow-up Inbox cards at run end"
+    },
+    {
+      "stage": "Plan-approval round (owner)",
+      "at": "2026-11-11T20:40:00+00:00",
+      "session": null,
+      "result": "OWNER RULINGS round 2 (Q9/Q10/Q11 + approval, verbatim): Q9 = 'Do another round of research on this. I'd like to have apu and the R9700 have different resource names. the APU should stay assigned to the llama-swap pod' -> Post Research stage commissioned for exactly this (per-device/product-named GPU resources via plugin >=1.31.0.12 or equivalent; llama-swap keeps the APU; radiance claims the R9700-named resource; plan folds the outcome). Q10 = 'I will manually scale down strata when testing and using radiance.' -> the shadow-profile shrink is VOID: ship the FULL RESEARCH serving envelope (pool 43000 / 60Gi class, 8-session fn-TP1); the runbook documents the owner's manual strata scale-down as the pre-radiance step + restore-back. Q11 = 'Observe, no auto-mitigate'. APPROVAL = 'Approve — run the plan' -> plan_status: approved (user's explicit word; coordinator records)."
+    }
+  ]
+}
