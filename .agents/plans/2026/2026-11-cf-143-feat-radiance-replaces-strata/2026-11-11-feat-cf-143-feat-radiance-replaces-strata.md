@@ -1,149 +1,165 @@
 # PLAN: Radiance replaces Strata on gpu-ai (AD-143)
 feature: 2026/2026-11-cf-143-feat-radiance-replaces-strata
-owner rulings 2026-11-11 (batched round, Q1–Q8) applied; see "Open questions & rulings".
+Owner rulings 2026-11-11: round-2 (Q1–Q8) · approval round (Q9→research, Q10, Q11, APPROVE) ·
+R6 round (Q9 OPTION 1 + "fold and run on"). All folded below; DECISIONS.md is the verbatim ledger.
 
 ## Goal
 Land a new `charts/radiance` (engine: `stilldeadcode/radiance` v1.17.0 — the C++/HIP one,
-NOT the vllm-radiance fork behind `charts/vllm` and unrelated to Strata) as a non-privileged,
-device-plugin-allocated, Guaranteed-QoS peer Deployment serving the Flash-Next lane, joined
-to llama-swap via an ADDITIVE `peers.radiance` block — Strata stays fully live alongside it
-(owner ruling Q5: "Strata shouldn't be disabled yet. Once I get good metrics from Rediance,
-then we'll look at what to do with Strata") — while the vLLM chart+peer+catalog lane is
-disabled commented-out, the agent-context catalog gains radiance rows with radiance's
-flipped priority polarity, and the runbook + TP2-expansion doc land as artifacts.
+NOT the vllm-radiance fork behind `charts/vllm`, unrelated to Strata) as a non-privileged,
+Guaranteed-QoS peer Deployment that claims the R9700 **by name** (`amd.com/gpu-ai-pro-r9700`,
+made possible by a vendored `charts/amd-gpu` fork enabling the plugin's `product` naming
+strategy — the llama-swap APU claim flips to `amd.com/gpu-8060s` in the same wave), serving
+the FULL Flash-Next 8-session profile, joined ADDITIVELY to llama-swap via `peers.radiance`
+while Strata stays fully live (Q5) — the owner scales strata down manually when testing
+radiance (Q10). The vLLM chart+peer+catalog lane is disabled commented-out; the agent-context
+catalog gains radiance rows with radiance's flipped priority polarity; runbook + TP2-expansion
+doc land as artifacts.
 
-Out of scope (explicit): Strata retirement/disabled-state of any kind (this run adds beside
-it; retirement rides the owner's metrics decision — Deferred); any on-target deploy or
-mutation (Deployment stage unchecked — host-prep gates + acceptance runbook are OWNER-run
-artifacts); deleting `charts/vllm` or `containers/vllm-radiance-mxfp4` (disabled-commented
-only, owner circles back); the physical second R9700 (docs + follow-up cards only); the
-runner-model literals in `.agents/loops/pipeline-worker.md` + AGENTS.md text — they STAY
-VALID this run (strata survives, Q5/Q4) — a re-ruling is the later cutover's step, Deferred;
-Grafana dashboard re-import (follow-up card #2, Q6); IQR-V4 pack adoption.
+Out of scope: Strata retirement of any kind (rides the owner's post-metrics decision);
+on-target deploy/mutation (host-prep + acceptance gates are OWNER-run runbook artifacts — the
+manual strata scale-down is owner's own lane, never a GitOps change); deleting
+`charts/vllm`/`containers/vllm-radiance-mxfp4`; the physical second R9700 (C03 doc +
+follow-up cards); runner-model literals (loops/AGENTS — stay valid, strata serves); Grafana
+re-import (follow-up card #2); IQR-V4 adoption; the DRA-driver alternative (R6 option 2 —
+ranked #2, rejected for this run by the Option-1 ruling; recorded as the natural TP2 lane).
 
-## Structure — RULED (Q1=A)
-Own `charts/radiance` + llama-swap peer. The B (controller) / C (child-swap) options are
-closed; no chunk forks on structure any more.
+## Structure & naming — RULED
+Q1=A (own chart + peer). Q9=**Option 1: vendored charts/amd-gpu + product naming** —
+per-name kubelet pools make the R9700 claim deterministic (the round-2 mis-allocation
+runtime-retry gate is SUPERSEDED; a startup-report assert stays as belt-and-braces, it also
+catches the fallback trap). No structural forks remain in any chunk.
 
-## Key pinned facts (RESEARCH.md authority, restated for coexistence)
-- Engine: `docker.io/stilldeadcode/radiance:1.17.0`, amd64 image-manifest digest
+## Key pinned facts (RESEARCH authority incl. §R6)
+- Engine: `docker.io/stilldeadcode/radiance:1.17.0`; amd64 image-manifest digest
   `sha256:6fb0e99b…` (index `sha256:c2acbaa3…` — ledger both, name which); no `serve` verb;
   OpenAI on 8000; `/health` key-exempt.
-- **Shadow profile (coexistence-governed — Q5+Q7 arithmetic, see Risks)**:
-  `--tp 1 --max-model-len 65536 --max-num-seqs 8 --placement expert_tiered
-  --host-pool-mib 28000 --gpu-headroom-mib 96 --kv-cache-dtype fp8 --kv-resident 32768
-  --num-speculative-tokens 3 --max-num-batched-tokens 4096 --checkpoint-interval 4096
-  --ngram-placement disk --served-model-name qwen3.8-flash-next-radiance --host :: --port 8000`
-  — host pins ≈ 27.3 (pool) + ≈4.1 (kv-resident copy 8×64K×12.3 KiB/token) + ≈0.9 (slots)
-  + ≈1.5 (embed/vision/rows) ≈ 34 GiB under a 52Gi Guaranteed cgroup (≥4 GiB-free rule +
-  burst margin). The 8-session ask is met at 64K ctx; the **full sole-tenant profile
-  (pool 43000, 200K, 8 seqs, ≈110Gi cgroup) is the documented post-retirement ladder**
-  (runbook), NOT this run's shipped values. No `--prefix-cache-mib` (exclusive with
-  kv-resident), no `--expert-vs-cache-ratio`, no api-key.
-- Pod shape (Q7 override): plugin claim `amd.com/gpu: 1`; NO privileged, NO hostPath
-  kfd/dri; `seccompProfile: Unconfined`; `capabilities.drop: [ALL]` + `add: [IPC_LOCK]`;
-  `supplementalGroups: [486]` (kfd, live-verified) + runbook-gated render/video additions;
-  Guaranteed requests==limits (mem 52Gi, cpu 8, gpu 1); dedicated non-root runAsUser +
-  fsGroup (fresh per-UID io_uring memlock budget — llmkube precedent); Recreate; grace 180;
-  no ROCR/HIP env (plugin injects devices, sets no env — don't rely on host enumeration);
-  no nodeSelector/tolerations (single untainted k3s node — EXPLORE §4).
-- Priority (Q2 ruling): radiance higher-wins + preemption-by-recompute; rows carry
-  9/5/1, peer floor `priority?: 5`, pipeline-models keeps a per-engine polarity note.
-- Catalog (Q4+Q8): new honest id `qwen3.8-flash-next-radiance` (+ `-urgent`/`-low`
-  wire-siblings sharing modelID); rows advertise `in: [text, image]` (vision in-pack) and
-  context 65536 (shadow-served truth; 200000 rides the retirement ladder).
-- Pack: `qwen3.8-next-flash-fp8-iq4r-moe.rad` 113.60 GiB, ungated, lfs `0af5e962…`, staged
-  on the shared `llama-swap` claim by the fetch-init (sha marker).
+- **FULL profile (Q10 ruling — shadow VOID)**: `--tp 1 --max-model-len 200000
+  --max-num-seqs 8 --placement expert_tiered --host-pool-mib 43000 --gpu-headroom-mib 96
+  --kv-cache-dtype fp8 --kv-resident 32768 --num-speculative-tokens 3
+  --max-num-batched-tokens 4096 --checkpoint-interval 4096 --ngram-placement disk
+  --served-model-name qwen3.8-flash-next-radiance --host :: --port 8000`. Host pins ≈
+  42 (pool) + ≈19.3 (kv-resident copy 8×200K×~12.3 KiB/token) + ≈8.9 (checkpoint slots) +
+  misc ≈ 60 GiB-class per the owner's ruling (exact cgroup byte receipt-gated — Q12);
+  `guaranteedMemoryGi` ships at **64** as a single scalar with the arithmetic + receipt
+  note. No `--prefix-cache-mib` (exclusive with kv-resident), no stale guide flags, no
+  api-key. Schedulability requires strata scaled down (64+64+4 > 125.08 allocatable ⇒
+  radiance sits **Pending** beside live strata — loud, safe, the designed handshake;
+  restore-back after radiance testing, runbook step 9).
+- Pod shape (Q7, per-name pool per Q9): `requests/limits: {amd.com/gpu-ai-pro-r9700: 1}`
+  (extended resources require equal pairs — Guaranteed preserved); NO privileged, NO
+  hostPath kfd/dri; seccomp Unconfined; drop ALL + IPC_LOCK; supplementalGroups [486]
+  (kfd; render/video runbook-gated); Recreate; grace 180; dedicated UID + fsGroup (init
+  ALSO requests==limits — pod-class law, D15); no ROCR/HIP env; no nodeSelector.
+- GPU naming (Q9): vendored `charts/amd-gpu` (upstream 0.22.0 copy + ~10-line args hook,
+  CMD restated incl `-v=5`; `dp.extraArgs: ["-resource_naming_strategy=product"]`;
+  `dp.image.tag: 1.31.0.12` + renovate docker comment + amd64 digest `sha256:6437c74f…`
+  ledger); `gpu-ai-amd-gpu` Application switches repo→git-path with identical object
+  names; node then advertises `amd.com/gpu-ai-pro-r9700: 1` + `amd.com/gpu-8060s: 1`,
+  `amd.com/gpu` GONE — any stray bare claim becomes Pending-forever (loud by design).
+  Fallback trap: unknown (device,revision) pair → bare `amd.com/gpu` — five C06 step-0
+  receipts gate it (sysfs pair, plugin log, node-status assert, llama-swap post-rollout,
+  radiance PCI belt-and-braces).
+- Priority (Q2): higher-wins flip — rows 9/5/1, peer floor `priority?: 5`, per-engine
+  polarity note in pipeline-models.
+- Catalog (Q4+Q8+Q10): `qwen3.8-flash-next-radiance` (+ `-urgent`/`-low` sharing the
+  modelID), `in: [text, image]`, `limit.context: 200000` (full profile restored — the
+  shadow-65536 mirror from round 2 is void).
+- Packs: fn `qwen3.8-next-flash-fp8-iq4r-moe.rad` 113.60 GiB, ungated, lfs `0af5e962…`,
+  fetch-init staged on the shared `llama-swap` claim (sha marker).
 
-## Commands (validation battery — repo has no unit-test suite; this IS the proof)
+## Commands (validation battery)
 Every agent: `export PATH=$HOME/.local/bin:$PATH` first (helm-guarded pytest mass-skips without it).
-- chart: `helm dependency update charts/radiance && helm lint charts/radiance && helm template charts/radiance --debug`
-- chart suites (per-directory): `python3 -m pytest charts/radiance/tests -v`;
-  `python3 -m pytest charts/llama-swap/tests -v` (strata suites MUST stay green untouched —
-  coexistence is the regression test for Q5); `python3 -m pytest charts/vllm/tests -v` (green — chart intact)
-- service values: `python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml'))"`
-  + greps: `charts.radiance` entry, `peers.radiance` present, `peers.strata` PRESENT-UNCHANGED
-  (byte-diff its block vs pre-ticket), top-level `vllm: {}` empty-key shape, no radiance
-  ingress subdomain + skip comment; `helm template charts/llama-swap -f <extracted llama-swap:
-  block>` renders peers.strata AND peers.radiance, no `OVERRIDE_` strings.
-- CI-shape parity: `.github/workflows/vllm-render-tests.yaml` extraction leg (`d.get('vllm') or {}`)
-  + `radiance-render-tests.yaml` extraction leg run locally against the live service values.
-- contract suites: `bash tests/pipeline-models/surface.sh`; `bash tests/notes/radiance-runbook.sh` (new);
-  `bash tests/notes/radiance-tp2.sh` (new); `bash tests/services/vllm-dashboards.sh` (stays green — untouched);
-  `tests/notes/vllm-runbook.sh` retired by C01 — absence-checked.
-- catalog round-trip: `npx rulesync generate && npx rulesync generate --check`; second generate is a no-op.
-- quality gate: `npx aislop ci --changes`.
-- No container chunk (upstream image) — `docker build => no-daemon, CI-deferred` is N/A;
-  renovate tracking verified via the `global-renovate` dry-run tool (interactive, optional, C02).
+- charts: `helm dependency update charts/{radiance,amd-gpu} && helm lint … && helm template …` (both new charts)
+- chart suites (per-directory): `python3 -m pytest charts/radiance/tests -v`; `python3 -m pytest charts/amd-gpu/tests -v`;
+  `python3 -m pytest charts/llama-swap/tests -v` (strata suites green untouched — Q5; resources needle re-pinned to `gpu-8060s` — C07);
+  `python3 -m pytest charts/vllm/tests -v` (green — chart intact)
+- naming wave (C07): `helm template charts/amd-gpu` shows args incl `-resource_naming_strategy=product` + full restated CMD;
+  `grep -rn "amd.com/gpu:" charts/ services/` finds ZERO live bare claims post-flip (comments excluded — the suite's own pattern);
+  `grep -n "amd.com/gpu-8060s" charts/llama-swap/values.yaml` + `grep -n "amd.com/gpu-ai-pro-r9700" charts/radiance/values.yaml`;
+  cross-chart name-identity test (radiance claim string == the pool the vendored plugin produces for 7551/C0 per its pinned ledger)
+- service values: parses; `charts.radiance` + `charts.amd-gpu` (internal shape, SSA "true" kept) entries; `peers.radiance` AND
+  `peers.strata` both present (strata block byte-unchanged); `vllm: {}` empty-key shape; no radiance ingress key + skip comment;
+  renders with `OVERRIDE_`-free output
+- CI-shape: extraction legs of `vllm-render-tests.yaml` (`d.get('vllm') or {}`), `radiance-render-tests.yaml`, and the new
+  `amd-gpu-render-tests.yaml` run locally against live service values
+- contract suites: `bash tests/pipeline-models/surface.sh`; `bash tests/notes/radiance-runbook.sh`; `bash tests/notes/radiance-tp2.sh`;
+  `bash tests/services/amd-gpu-naming.sh` (new); `bash tests/services/vllm-dashboards.sh` (stays green — untouched);
+  `tests/notes/vllm-runbook.sh` retired by C01 — absence-checked
+- catalog round-trip: `npx rulesync generate && npx rulesync generate --check` (no-op on second run)
+- quality gate: `npx aislop ci --changes`; renovate tracking for BOTH new pins (radiance docker, amd-gpu docker) via
+  the `global-renovate` dry-run tool (interactive, optional)
 
 ## Chunks
 | id  | title | size | wave | depends_on | why the dependency |
 |-----|-------|------|------|------------|--------------------|
-| C01 | Disable vllm (commented-out) + retire its tails | L | 1 | [] | independent: vllm surface does not touch radiance chart |
-| C02 | New `charts/radiance` — non-priv plugin-allocated chart, shadow TP1 profile | L | 1 | [] | interface producer (served id, scalars, evidence targets) |
-| C03 | Second-GPU (TP2) expansion doc → follow-up card #1 body | S | 1 | [] | pure research synthesis; independent of the pod shape |
-| C04 | Service wiring: `peers.radiance` ADDITIVE + radiance appset entry + evidence/golden | M | 2 | [C02] | interface: chart scalars + served id the peer names; evidence/golden pair with the values edit |
-| C05 | Agent-context catalog: ADD radiance rows (9/5/1, text+image) — strata rows KEEP | M | 3 | [C01, C04] | data: M4 serving-fact reads peers.radiance (C04); same-file M-legs ordered after C01's vllm retirements |
-| C06 | Mandatory host-prep gates + on-target acceptance runbook + contract suite | M | 3 | [C02, C04] | test equality: runbook flags/URLs/GIDs must match the SHIPPED chart args (C02) + peer URL (C04) |
+| C01 | Disable vllm (commented-out) + retire its tails | L | 1 | [] | independent vllm surface |
+| C03 | Second-GPU (TP2) expansion doc → follow-up card #1 body | S | 1 | [] | research synthesis, independent |
+| C07 | Vendored `charts/amd-gpu` product-naming + llama-swap same-wave flip | M | 1 | [] | defines the cluster's resource-name interface; carries the flip in its own commit (same-wave law) |
+| C02 | New `charts/radiance` — non-priv Guaranteed chart, FULL fn profile | L | 2 | [C07] | interface: radiance claims `amd.com/gpu-ai-pro-r9700` — the name only exists once the vendored plugin chart lands; cross-chart name-identity test requires C07 in tree |
+| C04 | Service wiring: `peers.radiance` ADDITIVE + radiance appset entry + evidence/golden | M | 3 | [C02] | served-id + scalars from the chart; evidence/golden pair with the values edit |
+| C05 | Agent-context catalog: ADD radiance rows (9/5/1, text+image, 200000); strata KEEP | M | 4 | [C01, C04] | M4 reads peers.radiance (C04); same-file M-legs ordered after C01 |
+| C06 | Mandatory host-prep + naming gates + acceptance runbook + contract suite | M | 4 | [C02, C04, C07] | runbook equality needs the shipped chart args (C02), peer URL (C04) and the vendored-plugin facts (C07) |
 
-## Wave order
-1. C01, C02, C03 (independent; run in id order)
-2. C04
-3. C05, C06 (independent of each other; run in id order)
+## Wave order (fold-in note: ids C01–C06 are frozen for ruling-traceability; the amendment
+appends C07 rather than renumbering pending chunks)
+1. C01, C03, C07 (independent; run in id order)
+2. C02
+3. C04
+4. C05, C06 (independent of each other; run in id order)
 
-## Run-end actions (coordinator, not chunk work)
-1. Create TWO Inbox follow-up cards (Q6): (1) "Radiance second-GPU (TP2) expansion" — body
-   = C03's doc; (2) "Radiance metrics → Grafana dashboard re-import" — body = C06's
-   metrics-adjacent notes (the `/metrics` vllm-compat family makes the existing dashboards
-   cheap candidates). Drop the strata-deletion + IQR-V4 asks from the card content
-   (strata-deletion rides the owner's metrics decision naturally).
-2. No pre-merge owner gate: the runner-model literal `gpu-ai/qwen3.8-flash-next-strata-q4`
-   stays served (strata live). Record the cutover re-ruling as a Deferred item for the
-   future strata decision.
-3. Card write-back per the boards flow (slug stack, Lifecycle checkboxes, Review move) stays coord's.
+## Rollout notes (merge-time reality — one PR, Argo syncs all; per R6-Q4-4)
+- All flips land together on merge: vendored amd-gpu (new DS source, same object names,
+  plugin pod restart only — running GPU pods keep their allocations; seconds-long
+  deregistration window, single idle node ⇒ no scheduling storm) + llama-swap `gpu-8060s`
+  flip (its NEXT restart needs the new name; the running pod survives) + radiance chart
+  (Pending until strata is manually scaled down — owner's Q10 protocol).
+- Rollback = ONE `git revert` of the flip wave (plugin revert restores `amd.com/gpu: 2`;
+  the llama-swap flip MUST revert in lockstep — same values history). Rollback of the
+  radiance/peer legs alone = C01-style comment flips; never split the plugin+llama-swap pair.
+- Watch-once: `ignoreDifferences`/SSA field ownership on the DaemonSet `args` field when
+  the Application source flips repo→path (ServerSideApply "true" helps).
+- C06 step-0 enumerates the five naming receipts (a–e) + host-prep gates BEFORE first boot.
+
+## Run-end actions (coordinator)
+1. TWO Inbox follow-up cards (Q6): (1) TP2 expansion — body = C03's doc; (2) Grafana
+   dashboard re-import. Strata-deletion + IQR-V4 ride the owner's metrics decision, not cards.
+2. "Fold and run on": after this fold-in, Test Writing + the whole chunk loop proceed with
+   NO further owner pause until Final Review. Residual gaps below ship on best guesses.
+3. Card write-back per the boards flow stays coord's.
 
 ## Open questions & rulings
-Ruled (owner round 2026-11-11, verbatim in DECISIONS): Q1=A · Q2=flip-per-engine 9/5/1 +
-floor 5 + per-engine polarity note · Q3=comment entry+peer, `vllm: {}` kept, extraction
-hardened, charts/vllm byte-intact, NO explicit replicas:0, suites assert absence ·
-Q4=new honest id · Q5=STRATA NOT RETIRED — coexist, evidence law resolved as a separate
-radiance evidence file (D13) · Q6=two Inbox cards · Q7=non-privileged NOW (plugin +
-supplementalGroups + drop ALL + IPC_LOCK + Guaranteed; host-prep receipts become MANDATORY
-pre-deploy gates) · Q8=advertise `in: [text, image]`.
-NEW gaps created by the rulings (best guesses shipped, Q9/Q10 go to the next round):
-- **Q9 — named-card guarantee:** plugin 1.31.0.9 counts BOTH cards with nodeId-ascending
-  APU-first allocation and no occupancy persistence across restarts (19 observed) —
-  radiance can receive the 8060S after a shuffle. Best guess: ship `amd.com/gpu: 1` + a
-  MANDATORY runbook startup gate asserting the startup-report PCI/gfx id is the R9700
-  (delete-pod retry on mis-allocation); product-named resources (plugin ≥1.31.0.12 →
-  `amd.com/Radeon-AI-PRO-R9700`) recorded as the clean fix, deferred (chart bump = own
-  concern). Alternative if owner prefers: pin via hostPath-env idiom for radiance only
-  (contradicts Q7 — needs the word).
-- **Q10 — shadow-profile sizing under Guaranteed coexistence:** node allocatable ≈125.08 GiB
-  minus strata's 64Gi request − llama-swap 4Gi − sidecars/reloader leaves ≤ ~52 Gi
-  requestable for a Guaranteed radiance pod — the full 8×200K envelope (~80 GiB pinned)
-  does not fit while Strata keeps its exact requests. Best guess: ship 52Gi/8×64K/pool-28000
-  (single scalar pair, receipt-adjustable one-edit knobs, downward ladder documented);
-  alternatives: trim strata requests (against Q5's "exactly as is"), burstable radiance
-  (against Q7's Guaranteed), or smaller first-boot until the owner's decision.
-- Q11 — VRAM contention posture: radiance resident (~28–30 GiB of 31.86) + Strata's
-  R9700 arenas cannot both be hot (one-engine-per-card law; the runner route may arena-fail
-  during radiance windows). Best guess: ship additive, runbook documents the contention
-  matrix + owner's metrics window; no auto-mitigation in GitOps (owner's call per Q5).
+RULED: Q1=A · Q2=flip 9/5/1 + floor 5 + per-engine note · Q3=commented disable,
+`vllm: {}` kept, extraction hardened, no replicas:0, absence-asserting suites · Q4=honest
+new id · Q5=STRATA LIVES (additive radiance) · Q6=two cards · Q7=non-priv NOW + mandatory
+pre-deploy host gates · Q8=`in: [text,image]` + retire-on-failure smoke · Q9(20:40)=
+research round → R6 → **(final ruling): Option 1 vendored product-naming, same-wave flip** ·
+Q10="I will manually scale down strata when testing and using radiance" → FULL profile,
+60Gi-class, scale-down/restore in runbook · Q11=observe, no auto-mitigate · APPROVED
+(plan_status approved; fold-and-run-on).
+Residual (best guesses shipped, NON-BLOCKING per "fold and run on"):
+- **Q12 — exact Guaranteed memory byte**: owner's ruling pins the class ("60Gi-class",
+  pool 43000). Best guess: `guaranteedMemoryGi: 64` shipped; if the startup receipt shows
+  pins >60 GiB, the same scalar moves up (68/72 GiB — ≤~96 GiB schedulable with strata
+  down); runbook step-6's ladder owns the adjustment, one edit.
+- **Q13 — `amd-gpu:` service values block**: best guess NONE — vendored chart values own
+  the tag+extraArgs (renovate docker comment lives there); the service entry stays the
+  internal `{namespace, ServerSideApply: "true"}` shape. A service block appears only if a
+  per-cluster override is ever needed (gpu-ai-only today).
+- Fallback-trap decision tree if a card lands bare `amd.com/gpu` (unknown revision):
+  runbook (c) gate documents both remedies (pin the claim by the materialized name /
+  fix the flip list) — owner's on-target call, no repo speculation.
 
 ## Risks / assumptions
-- Coexistence is RAM-tight: Guaranteed 52Gi + strata requests 64Gi + outer 4Gi sits within
-  allocatable ONLY if the runbook's step-0 request-sum holds (Q10); the engine's own
-  ≥4 GiB-free-under-cgroup refusal + the Wilde pinned-demotion-burst class are the failure
-  modes to watch (runbook §9).
-- Cutover has none: merging lands radiance ADDITIVE; Argo creates gpu-ai-radiance beside the
-  live strata pod; first boot may refuse (VRAM/cgroup) until arenas idle — loud failure at
-  the engine, never a node-OOM bet, per the Guaranteed cap.
-- `--kv-resident` at 8×64K has not started on this host (RESEARCH OQ3 was about 8×200K —
-  smaller copy; the runbook's refusal ladder still owns it).
-- D38 honesty: catalog ctx 65536 mirrors the shadow profile; if the owner ships the full
-  profile earlier, C05's row + chart move together (dual-surface needle in surface.sh).
-- Plugin mis-allocation (Q9) is a real boot-shape risk on a mixed node; the startup PCI gate
-  is mandatory, and Recreate + delete-retry is the sanctioned remedy.
-- Assumed-unchanged from round 1 except where rulings overrode: image posture D2 (upstream
-  pin + ledger), keyless/no-secrets D8, fetch-init staging D10, evidence/golden laws.
+- The flip wave is the ticket's only cluster-wide behavioral change beyond adding radiance:
+  `amd.com/gpu` disappearing strays ANY future bare claim to Pending-forever (loud by
+  design, R6-Q4-3); a llama-swap pod rescheduled between plugin-flip and its own flip lands
+  Pending — same-wave law + single-PR merge is the mitigation, runbook (d) verifies after.
+- Strata stays privileged hostPath on the R9700's *physical* card inside the named pool
+  (naming ≠ VRAM arbitration — Q11's law stands; manual scale-down protocol governs).
+- kv-resident 8×200K start remains an on-target unknown (RESEARCH OQ3 — the refusal
+  precedent was a smaller host); the runbook's down-ladder (pool → ctx → 4-seqs → owner-
+  sign-off prefix-cache swap) covers it at the single scalars.
+- `--kv-resident` excludes the prefix-cache tier: idle-session re-prefill pays the x4-link
+  wall (~450–600 tok/s @55k) — honest-envelope note in runbook + TP2 doc.
+- amdgpu.ids revision assumption (R9700 C0 → `gpu-ai-pro-r9700`; 8060S C1/C3/C6/D1 →
+  `gpu-8060s`) is computed, not yet receipted on-target — the five step-0 gates close it.

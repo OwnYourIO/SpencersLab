@@ -130,24 +130,105 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   SUPERSEDED by the Q5/Q7/Q4 rulings above (entries kept for the record, append-only law);
   D11's ctx-200000/text-only stance is superseded by D12 (65536 shadow truth) + the Q8
   `[text, image]` ruling; D3's mechanism survives, its shipped numbers move to D12.
+- 2026-11-11 human (approval-round rulings, recorded here retroactively — the coord logged
+  them at 20:40 while the round-2 rework was in flight and round 2 had not yet folded the
+  Q10 half): Q9 = "Do another round of research on this. I'd like to have apu and the R9700
+  have different resource names. the APU should stay assigned to the llama-swap pod" →
+  §R6 commissioned; Q10 = "I will manually scale down strata when testing and using
+  radiance." → "the shadow-profile shrink is VOID: ship the FULL RESEARCH serving envelope
+  (pool 43000 / 60Gi class, 8-session fn-TP1); the runbook documents the owner's manual
+  strata scale-down as the pre-radiance step + restore-back"; Q11 = "Observe, no
+  auto-mitigate"; APPROVAL = "Approve — run the plan" (plan_status approved).
+- 2026-11-11 human (R6 round, post-research stop — verbatim rulings): Q9 FINAL = "**Option
+  1: per-device PRODUCT NAMING via a VENDORED charts/amd-gpu chart** (the ~10-line fork
+  adding the args/command hook the released chart lacks; image tag dp.image.tag
+  values-reachable; plugin v1.31.0.12 with -resource_naming_strategy=product). Node lands
+  amd.com/gpu-ai-pro-r9700 (radiance claims it) + amd.com/gpu-8060s (llama-swap flips to it
+  in the SAME wave — mandatory same-wave, old amd.com/gpu disappears), plus unknown-revision
+  fallback trap (bare amd.com/gpu) gated by runbook step-0 sysfs receipts. Vendored-chart
+  governance DECISIONS line owed." · PROCESS = "**Fold and run on**: after this fold-in,
+  Test Writing + the whole chunk loop proceed (no further owner pause until Final Review)."
+- 2026-11-11 plan D17 (supersedes D12's shipped numbers; restores D3's profile; folds the
+  Q10 ruling the round-2 rework had not yet applied): SHIP THE FULL fn-TP1 8-session
+  profile — pool 43000, 200K ctx, 8 seqs, kv-resident 32768, chunks 4096, ngram disk;
+  guaranteedMemoryGi 64 as the single scalar honoring the owner's "60Gi-class" (the
+  arithmetic spans 60–70 GiB-class pins; the C06 receipt ladder decides up (64→96Gi,
+  schedulable only while strata is manually scaled down — 64+64+4 > 125.08 allocatable
+  ⇒ Pending beside live strata is the designed handshake, loud and safe) or down (pool →
+  ctx → last-resort prefix-tier with owner sign-off)). Catalog rows return to
+  `limit.context: 200000` (served-truth honesty, D38 pattern). Rejected: keeping any
+  shadow sizing; GitOps-izing the scale-down (owner lane, Q5 letter).
+- 2026-11-11 plan D18 (supersedes D14/round-2-Q9 best-guess — the runtime PCI-retry gate):
+  named-pool determinism via `-resource_naming_strategy=product` (plugin 1.31.0.12, PR
+  #246, per-name kubelet pools verified from source, RESEARCH §R6-Q1): radiance requests
+  `amd.com/gpu-ai-pro-r9700: 1`, llama-swap flips to `amd.com/gpu-8060s: 1` in the SAME
+  wave (old name disappears — stray bare claims Pending-forever = loud by design; strata/
+  vllm hostPath pods have NO plugin interaction, confirmed R6-Q4-3). The startup-report
+  PCI/gfx1201 assert SURVIVES only as belt-and-braces (catches the unknown-revision
+  fallback-to-bare trap), moved from C02 runtime-gate framing into C06 step gates (a)–(e).
+  Rejected per owner ruling + R6 ranking: DRA-driver option 2 (strongest determinism,
+  zero llama-swap churn — recorded in Deferred as the TP2-era alternative and the R6
+  witness path, dsluo `r9700-x2`), squat generic-device-plugin minor-path pin ("never
+  ship while 1/2 exist"), two-DaemonSet filtering (source-verified DEAD), waiting on
+  upstream PR #122 (stale 19+ months).
+- 2026-11-11 plan D19 (the vendored-chart governance line §R6-open-question-3 owes):
+  `charts/amd-gpu` is a VENDORED third-party chart — copy of upstream chart 0.22.0
+  (helm index digest 791ada88…, @ tag amd-gpu-helm-0.22.0; template identical at .12 tag
+  and master) + an EXACT ~10-line delta: the `args:` hook in deviceplugin-daemonset.yaml
+  restating the image CMD fully (`-logtostderr=true`, `-stderrthreshold=INFO`, `-v=5` —
+  `-v=5` is runbook-log-bearing, not cosmetic) + `dp.extraArgs` values plumbing;
+  Chart.yaml `name: amd-gpu` PINNED (templates hardcode .Chart.Name — rendered object
+  names must stay byte-identical across the Application source-flip repo→git-path so
+  `gpu-ai-amd-gpu` swaps without orphan-prune); `version: 1.0.0` (brand-new entry, repo
+  version law), `appVersion: "1.31.0.12"`; image pin moves values-owned
+  (`dp.image.tag` + renovate `datasource=docker` comment + amd64 digest ledger
+  6437c74f…) — the `# renovate: datasource=helm` comment LEAVES the service entry.
+  REFRESH POLICY: on any upstream chart release ≥0.23 or PR #122 merge, re-copy upstream,
+  re-apply the args delta by hand, diff against the recorded fork-point, bump via a
+  fresh dated decision line (never a silent overwrite); until then the fork is a
+  self-owned liability logged here and in the chart's header comment.
+- 2026-11-11 plan D20 (delivery chunking + wave reorder): the naming delivery is its OWN
+  chunk C07 (vendored chart + service entry swap + llama-swap flip + `tests/services/
+  amd-gpu-naming.sh` + render CI), NOT folded into C02 — different chart family,
+  different blast radius (whole-node resource accounting), and a reviewer can reject the
+  cluster-wide flip independently of the radiance chart. Same-wave cohesion holds inside
+  C07's single commit (flip + vendored chart + entry swap land together). Waves become:
+  1 → C01, C03, C07 · 2 → C02 [dep C07: the name it claims must exist in tree for the
+  cross-chart name-identity test] · 3 → C04 · 4 → C05, C06. Ids C01–C06 stay frozen
+  (ruling-traceability across three owner rounds); the appended C07 bends the
+  "ids-in-wave-order" convention once, deliberately, recorded here. ArgoCD merge-time
+  sync coherence + the lockstep-revert law are the plan's Rollout notes, the on-target
+  receipts are C06's gates — chunk waves are BRANCH order only, not sync order.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
-  ticket re-authors the peers evidence chain, flips the strata enable-set + peer, and moves
-  radiance up the sole-tenant ladder (pool 43000 / 200K ctx / ≈110Gi cgroup — chart+catalog
-  honesty pair together) with it.
+  ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
+  8×200K profile SHIPS NOW under the owner's manual scale-down protocol (Q10/D17), so the
+  cutover no longer gates the profile — it only ends the scale-down dance.
 - Runner-model literal re-ruling (loops file + AGENTS.md): NOT needed this run (strata
   survives, Q5); rides the cutover above as an owner ruling.
 - Chart-side strata surface deletion — rides the cutover decision naturally (Q6 dropped it
   as a standalone card ask).
-- Plugin bump for product-named resources (`amd.com/Radeon-AI-PRO-R9700` claims; needs
-  plugin ≥1.31.0.12 — lab runs 1.31.0.9) — clean fix for the mis-allocation class (D14/Q9);
-  near-prerequisite at TP2 (C03); own-concern branch.
+- Plugin bump for per-product resources — REALIZED this run by C07 (D18/D19: vendored
+  0.22.0 + args hook + plugin 1.31.0.12; names `amd.com/gpu-ai-pro-r9700` /
+  `amd.com/gpu-8060s`; the earlier bullet's name form `Radeon-AI-PRO-R9700` was
+  CORRECTED by R6 — the sanitizer lowercases, drops "Radeon", prefixes `gpu-`).
+- Upstream amd-gpu chart refresh (≥0.23 or PR #122 merge): re-copy + re-apply the args
+  delta per the D19 refresh policy; watch, don't wait.
+- Plugin occupancy PRs #243/#247 (opt-in KFD occupancy): upstream concedes the
+  no-occupancy class; a future bump could make within-bucket choice occupancy-aware —
+  watch (moot while each bucket holds one device).
+- DRA route (ROCm/k8s-gpu-dra-driver v1.0.1, dsluo `r9700-x2` CEL-claim shape) — R6's
+  ranked-2 alternative, rejected for this run by the Option-1 ruling; the natural TP2
+  claim-based lane if the owner ever prefers it (C03 records it as the documented
+  alternative).
 - supplementalGroups render/video extension + k3s LimitMEMLOCK drop-in — gated on C06
   step-0 host receipts (owner-run); one-edit service-block override when/if needed.
 - Grafana dashboard re-import / radiance-native dashboard — FOLLOW-UP CARD #2 (Q6):
   `/metrics` is vllm-compat-family, the two existing dashboards are cheap candidates.
 - q27-on-radiance second lane + IQR-V4 pack adoption — unlocks with card 2 (TP2) /
   post-cutover (C03 doc).
-- `AMD_GPU_DEVICE_COUNT` / t1m.me plugin-claim pin-or-drop (RESEARCH UNVERIFIABLE items;
-  owner if a citation exists).
+- `AMD_GPU_DEVICE_COUNT` / t1m.me plugin-claim — CLOSED by §R6: the .12 binary implements
+  neither `AMD_GPU_DEVICE_COUNT` nor `CONFIG_FILE_PATH` (docs lead code; a count cap
+  could never choose a card anyway); the t1m.me kernel-7.1.3 story stays dropped unless
+  the owner produces the citation.

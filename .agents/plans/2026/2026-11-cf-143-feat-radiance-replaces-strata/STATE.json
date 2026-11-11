@@ -4,7 +4,7 @@
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": null,
   "current_wave": 0,
-  "updated_at": "2026-11-11T21:10:00+00:00",
+  "updated_at": "2026-11-11T22:05:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -147,8 +147,10 @@
     },
     "C02": {
       "status": "pending",
-      "wave": 1,
-      "depends_on": [],
+      "wave": 2,
+      "depends_on": [
+        "C07"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -165,7 +167,7 @@
     },
     "C04": {
       "status": "pending",
-      "wave": 2,
+      "wave": 3,
       "depends_on": [
         "C02"
       ],
@@ -176,7 +178,7 @@
     },
     "C05": {
       "status": "pending",
-      "wave": 3,
+      "wave": 4,
       "depends_on": [
         "C01",
         "C04"
@@ -188,11 +190,21 @@
     },
     "C06": {
       "status": "pending",
-      "wave": 3,
+      "wave": 4,
       "depends_on": [
         "C02",
-        "C04"
+        "C04",
+        "C07"
       ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -239,6 +251,13 @@
       "at": "2026-11-11T21:35:00+00:00",
       "session": "ses_e33ad21f5ffefU7d6WbIcFRHQg",
       "result": "RESULT status: DONE chunk: plan files_changed: [RESEARCH.md §R6 (lines 852-1273, pure append)] findings: [1. THE PLUGIN CAN: -resource_naming_strategy=product (merged 2026-10-19, first ship v1.31.0.12 2026-11-06) buckets per sanitized marketing name from the baked amdgpu.ids table — JS port run against the vendored 752-row table yields EXACTLY: amd.com/gpu-ai-pro-r9700:1 (7551/C0) + amd.com/gpu-8060s:1 (1586), amd.com/gpu GONE; per-name plugin pools => scheduler determinism. 2. NO RELEASED HELM CHART CAN ENABLE IT: 0.22.0 (latest + .12 tag + master) has zero args/command hook (upstream fix = stale open PR #122); image tag IS values-reachable (dp.image.tag) — delivery needs ~10-line vendored charts/amd-gpu fork (appset renders internal charts natively) or ArgoCD postRender. 3. Two-DaemonSet filtering DEAD (no selection surface). STRONG ALTERNATIVE: ROCm k8s-gpu-dra-driver v1.0.1 (DRA GA on k3s 1.36.5) pins by CEL attribute, witnesses on THIS exact card incl non-root restricted-pod kfd+render via CDI on k3s 1.36.6 + dsluo r9700 ResourceClaimTemplate — zero llama-swap churn, costs a second GPU subsystem + open reboot-CDI bug (mitigated dsluo persistent cdi.dynamicPath). 4. Plan consequences tabulated (R6-Q4): radiance resource line; MANDATORY same-wave llama-swap flip under option 1 (old name unschedulable after switch); strata non-interaction confirmed; migration/rollback ordering; five new C06 step-0 gates (sysfs revision receipts; unknown-revision -> bare amd.com/gpu fallback trap documented).] deviations: none (DRA ranked #2 finding beyond the option list, honestly noted) friction: guessed template filenames 404'd -> recursive git-trees per ref; helm-index regex oldest-first -> re-parsed; code-search auth -> tree+raw open_questions: [owner lane OPTION 1 (vendored amd-gpu chart + product naming: literal per-device names, llama-swap flips to amd.com/gpu-8060s same-wave) vs OPTION 2 (DRA claims: zero llama-swap churn, second subsystem + reboot-CDI caveat); on-target sysfs device+revision receipts (which card under which name; the fallback trap); DRA gfx1151 enumeration unevidenced (matters only for option 2); vendored-chart governance DECISIONS line if option 1] next_suggested: coord puts option-1-vs-2 + receipts posture to the owner (HITL Post Research stop), on the ruling amend D14/Q9 + C02 (gpu resource line + plugin-facts comment) + C06 step-0 gates via agent-plan fold-in, then Test Writing"
+    },
+    {
+      "stage": "Plan amendment (R6 Q9 fold-in)",
+      "at": "2026-11-11T22:05:00+00:00",
+      "session": null,
+      "note": "owner R6-round rulings folded: Option 1 product-naming (C07) + full-profile Q10 retro-fold (D17) + governance line (D19); session id filled by coord at handoff write",
+      "result": "RESULT status: DONE chunk: plan (amendment fold-in, R6 Q9 round + retro-Q10) files_changed: [plan file (rewritten: named-pool goal + full profile + C07 chunk/waves 1-4 + Rollout notes + Q12/Q13 residuals), chunks/C07.md (NEW: vendored charts/amd-gpu args-hook fork 0.22.0+1.31.0.12 product naming, gpu-ai-amd-gpu repo->git-path entry swap, llama-swap same-wave flip to amd.com/gpu-8060s, tests/services/amd-gpu-naming.sh, render CI, D19 governance needles), chunks/C02.md (wave 2 dep C07; claim amd.com/gpu-ai-pro-r9700; FULL profile scalars 64Gi/pool43000/200K/x8; plugin-facts comment rewritten determinism-first; PCI-retry gate removed -> C06 belt-and-braces), chunks/C04.md (wave 3; scalars-default-full wording; AC1 diff inventory names C07+C01 landed sites; charts/llama-swap ownership note -> flip is C07's line only), chunks/C05.md (wave 4; ctx needles 65536->200000 everywhere; shadow-promote wording fixed; favorited-row prose full-profile), chunks/C06.md (wave 4 dep +C07; step-0 gains R6 gates a-e incl sysfs-revision receipts + fallback-trap decision tree + Pending-by-design scale-down handshake; owner manual strata scale-down/restore protocol steps; full-sizing 8-session gate + up/down ladder; lockstep-revert rollback; T1-T5 needles updated), chunks/C03.md (TP2 pool-count-2 under product naming + revision receipt carries to new card + DRA alternative lane; name-form corrected gpu-ai-pro-r9700), DECISIONS.md (approval-round Q9/Q10/Q11 verbatim recorded retroactively; R6-round Option-1 + fold-and-run-on verbatim; D17 full-profile supersedes D12; D18 named-pools supersedes D14/round-2 Q9 retry gate; D19 vendored-chart governance line - the R6 OQ3 debt: fork point 0.22.0/791ada88 + exact ~10-line args delta incl -v=5 law + name-pinned Chart.yaml + refresh policy; D20 C07 chunking + frozen-ids wave reorder; Deferred updated: product-naming REALIZED, AMD_GPU_DEVICE_COUNT CLOSED by R6, occupancy PRs + upstream-refresh watches, DRA TP2 lane), STATE.json (chunks + C07, waves/deps per D20, handoff appended; plan_status KEPT approved)] highlights: [named kubelet pools eliminate the mis-allocation class (scheduler determinism, not runtime retry); old amd.com/gpu disappears at the flip wave -> stray bare claims Pending-forever loud-by-design, llama-swap flip same-commit + lockstep git-revert law; Q10 retro-fold: shadow VOID — full 8x200K kv-resident profile ships, 64Gi Guaranteed scalar + receipt ladder, radiance-Pending-beside-live-strata is the designed handshake of the owner's manual scale-down protocol; cross-chart name-identity test is the only executable C07->C02 dependency; waves 1-4 re-ordered with frozen ids (recorded bend of the ids-in-wave-order convention); 'fold and run on' — next stop Test Writing, no further owner pause until Final Review] deviations: the 20:40 approval-round Q10 ruling had not been folded by the round-2 rework (in-flight race) — folded now as D17 with the retroactive verbatim record; R6-Q4-1's '(52Gi pair unchanged)' parenthetical is stale-vs-owner-verbatim and explicitly superseded friction: none open_questions: [Q12 exact Guaranteed memory byte — best guess 64Gi shipped, receipt ladder 64->96 up (only while strata manually down) / pool+ctx step-down, non-blocking per fold-and-run-on; Q13 no amd-gpu: service block — best guess chart values own tag+extraArgs, non-blocking; fallback-trap remedy is the owner's on-target call under runbook gate (a), decision tree recorded] next_suggested: Test Writing (agent-test authors all SEVEN chunk suites red-first — incl charts/amd-gpu render/provenance, the cross-chart name-identity, evidence/golden peers pair, surface.sh M-legs, runbook+tp2+amd-gpu-naming bash contracts), then chunk loop wave order C01/C03/C07 -> C02 -> C04 -> C05/C06, per-chunk review, Final Review (next owner touchpoint)"
     }
   ]
 }
