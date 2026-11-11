@@ -73,6 +73,9 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   per the `tests/wekan-mcp/skill-surface.sh` precedent. Rejected: per-chunk script files
   (cross-file drift) and live-network smoke (suites are statics-only by design).
 
+- 2026-11-11 coord (C03 review minor1 ruling): for the invalid-task-ID/ec_balance signature, runbook Phase 0 **item 2 is normative** (per §R1: ec_balance has no env key; its proposals continue until Phases 1–2 remove the EC groups; the env key suppresses EC *encode* only). Item 3's verification bullet must be read against item 2 — hedge/fix on next touch of either file (error-signatures:23 + runbook Phase 0 item 3).
+- 2026-11-11 coord: C03 review minors 1–2 + nit + ResourceExhausted-row: all DEFERRED (next-touch fixes; row omission ruled correct-by-sources-discipline).
+
 ## Deferred
 - C02 review minor (deferred by coord, verdict was APPROVED): `mcp-server-spec.md` §9 "verbatim" quote silently drops the "(such as a NetworkPolicy or service mesh)" parenthetical — restore on next touch of that file.
 - Re-enabling `services.infra.selfHeal` cluster annotation (owner decision; affects every infra

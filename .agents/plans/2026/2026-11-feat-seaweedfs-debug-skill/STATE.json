@@ -71,13 +71,24 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review r1; 2 minors + 1 nit deferred; ResourceExhausted-row omission ruled correct-by-discipline)",
+      "dev_session": "ses_e372f0ab4ffejW8XqxjgOxIZGp",
+      "handoffs": [
+        { "role": "dev", "at": "2026-11-11T05:00:00+00:00", "status": "DONE", "chunk": "C03",
+          "files_changed": ["skills/seaweedfs-debug/references/error-signatures.md (18 rows)", "weed-shell.md (122 ln)", "collections-and-ec.md (146 ln)"],
+          "commands_run": "surface.sh t1 t2 t3 => 18/18; full fail-fast t4.1 (red-as-designed); aislop md not-scoreable; negatives empty; rulesync untouched green",
+          "deviations": "exit-code law stated from sources (PR #11117, 2026-09-03) not the brief's unsourced ≥4.46 — reviewer confirmed brief was wrong; 18 rows vs 13 floor sanctioned.",
+          "friction": "none; brace-shorthand/tee traps avoided per DECISIONS.",
+          "open_questions": "corrupted-mount row legacy-pointer labeling." },
+        { "role": "review", "at": "2026-11-11T05:15:00+00:00", "verdict": "APPROVED", "chunk": "C03", "session": "ses_e3723a1afffeEiMhEgUGD8Cevf",
+          "commands_run": "t1 t2 t3 PASS 18/18; scope-clean; semantic trace AC2-AC6 vs §R1/§R2/runbook",
+          "findings": "minor1: error-signatures:23 'Phase 0 suppresses new proposals' vs runbook item-2 truth (ec_balance unsuppressed until Phases 1-2) — upstream wording collision, coord ruled item 2 normative (DECISIONS); minor2: legacy pointer label should read upgrade-window precedent (one word); nit: vacuum.disable qualifier. All Deferred per coord." }
+      ]
     },
     "C04": {
       "status": "pending",
