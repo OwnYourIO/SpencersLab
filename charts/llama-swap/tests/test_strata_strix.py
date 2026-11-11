@@ -197,11 +197,12 @@ def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
 
     cf-141 widens this law to STEP KINDS (DECISIONS round 2, "row-H is a
     law-move chunk"): the strix chain continues through the landed cf-141
-    steps — C03's envelope step moves exactly {parallel}, C04's engine step
-    (cf141-engine59) exactly {exe, lib_dirs}, C04's bump-config step exactly
-    {drafting} — every step-set pinned in strata_testlib.CF141_ERA_STEP;
-    nothing else rides any step. Un-landed steps stop the walk; the envelope
-    and bump arms name the missing capture."""
+    steps — C03's envelope step moves exactly {parallel}; C04's merged bump
+    step moves {exe, lib_dirs, drafting} (the per-file widening in
+    CF141_ERA_STEP_FILE: the bump arms drafting on every flash-next rung and
+    moves strix's packaged root in the same render state) — nothing else may
+    ride any step. Un-landed steps stop the walk; the envelope and bump arms
+    name the missing capture."""
     chain = [
         ("era 1 pre-cf86",
          json.loads((S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()),

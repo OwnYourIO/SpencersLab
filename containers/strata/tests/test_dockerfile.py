@@ -28,31 +28,38 @@ README = CONTAINER_DIR / "README.md"
 
 STRATA_DEP = "ghcr.io/niko1221/strata"
 LLAMA_SWAP_DEP = "ghcr.io/mostlygeek/llama-swap"
-# C09 (U10.2/U11) re-pin: v0.2.9 (app 0.2.9 + engine packages 0.1.55) rides
-# the vendored-constants carry rebuild (chunks/C09.md a). Designed-red until
-# dev lands the re-pin: the tag/digest/pairing arms below read these
-# constants, so they name the moved pin, not a weakened law. Digests from
-# RESEARCH R5 [C2] (GHCR 0.2.9 pair, chained re-verification, R3 law — dev
-# re-reads live at landing).
-STRATA_VERSION = "0.2.9"
+# C09 (U10.2/U11) re-pin: v0.2.9 (app 0.2.9 + engine packages 0.1.55) rode
+# the vendored-constants carry rebuild (chunks/C09.md a). cf-141 C04 re-pin
+# (TEST_SPEC §9.28/§9.30 by-name move, executed at the C04 test round):
+# STRATA_VERSION/ENGINE_VERSION/STALE_* now state the TARGET pair
+# (0.2.13 / 0.1.59), so every tag/digest/label/stale arm below reads the
+# bumped contract and reddens naming C04 until the Dockerfile/README land.
+# The digest slot is deliberately NOT a constant: ledger digests are live
+# re-reads the landing round owes (anonymous token + manifest HEAD — the
+# README's recorded method), so the arms pin FRESHNESS STRUCTURE instead:
+# 64-hex, paired, not a retired value (the copied-not-re-read class).
+STRATA_VERSION = "0.2.13"
 FLAVOR_PRIMARY = "rocm-gfx120x"
 FLAVOR_STRIX = "rocm-gfx1151"
-# RESEARCH §1 measured digests — the pin VALUES that survive every ruling.
-# Under the 2026-10-27 coordination ruling (b) their recorded home is the
-# C01 README contract (in-place-rebuild guard, the unified-vulkan-262 crash-
-# loop class; issue #3421 is the documented WHY, contradictions #6/#7).
+# The [C2]-era 0.2.9 pair — retired by the bump, kept as the guard every
+# pairing arm checks a "new" digest against.
+RETIRED_FLAVOR_PINS = {
+    "0.2.9-rocm-gfx120x": "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39",
+    "0.2.9-rocm-gfx1151": "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a",
+}
 FLAVOR_PINS = {
-    # flavor tag suffix -> (full literal tag, recorded digest)
-    FLAVOR_PRIMARY: (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39"),
-    FLAVOR_STRIX: (f"{STRATA_VERSION}-{FLAVOR_STRIX}", "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a"),
+    # flavor tag suffix -> (full literal tag, live-re-read obligation)
+    FLAVOR_PRIMARY: (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", "live re-read day-of-ready"),
+    FLAVOR_STRIX: (f"{STRATA_VERSION}-{FLAVOR_STRIX}", "live re-read day-of-ready"),
 }
 # C09 re-pin: engine package labels baked via COPY --from + verify test -x
-# (0.1.54 retires with the v0.2.8 era), and the source-checkout clone tag the
+# (0.1.54 retired with the v0.2.8 era), and the source-checkout clone tag the
 # setup.sh provisioning runs against — the strata-src stage also applies
-# carry/ornith-q36.patch (the two-hunk constants carry).
-ENGINE_VERSION = "0.1.55"
-STALE_STRATA_TAGS = ("0.2.7", "0.2.4", "0.2.5", "0.2.6", "0.2.8")
-STALE_ENGINE_VERSION = "0.1.54"
+# carry/ornith-q36.patch (the two-hunk constants carry, re-cut at v0.2.13 per
+# RESEARCH Round 3; its byte laws live in test_strata_c09_ornith_carry.py).
+ENGINE_VERSION = "0.1.59"
+STALE_STRATA_TAGS = ("0.2.4", "0.2.5", "0.2.6", "0.2.7", "0.2.8", "0.2.9")
+STALE_ENGINE_VERSION = "0.1.55"
 ENGINE_ROOT = "/opt/strata/components/engine"
 SERVE_ENTRY = "/opt/strata/terminal/bin/strata"
 FETCH_ENTRY = "/opt/strata/bin/fetch_models.sh"
@@ -225,32 +232,57 @@ def test_ac2_no_strata_renovate_pin_comment(dockerfile):
     assert not offenders, f"renovate comment(s) on the strata depName: {offenders} — ruling (b) retired them"
 
 
+def _readme_tag_digests(readme: str) -> dict[str, set]:
+    """Parse the ledger: tag -> the 64-hex digest(s) recorded on its row or
+    within two lines (the pairing legibility law). Shared by the pairing arms
+    so the README is read as ONE source, never re-derived per arm."""
+    lines = readme.splitlines()
+    out: dict[str, set] = {}
+    for flavor, (full_tag, _obligation) in FLAVOR_PINS.items():
+        found: set = set()
+        for i, ln in enumerate(lines):
+            if full_tag in ln:
+                found |= set(re.findall(r"sha256:[0-9a-f]{64}",
+                                        "\n".join(lines[max(0, i - 2): i + 3])))
+        out[full_tag] = found
+    return out
+
+
 def test_ac2_readme_records_tag_digest_pairing(readme):
     """The in-place-rebuild guard's home under ruling (b): the README contract
-    pairs each literal flavor tag with its RESEARCH §1 digest (#3421 is the
-    WHY of recording at all — asserted by test_readme_documents_image_interface).
-    Pairing must be legible: same line, or the digest within two lines of a
-    line naming the tag."""
-    lines = readme.splitlines()
-    for flavor, (full_tag, digest) in FLAVOR_PINS.items():
-        idxs = [i for i, ln in enumerate(lines) if full_tag in ln]
-        assert idxs, f"README never names {full_tag} (ruling (b) records the pin contract here)"
-        assert any(digest in "\n".join(lines[max(0, i - 2): i + 3]) for i in idxs), (
-            f"{full_tag}: RESEARCH §1 digest {digest[:19]}… not paired with its tag in the README"
+    pairs each literal flavor tag with a digest (#3421 is the WHY of recording
+    at all — asserted by test_readme_documents_image_interface). Pairing must
+    be legible: same line, or the digest within two lines of a line naming the
+    tag. cf-141 C04 made the VALUES live re-reads (the constant keeps the
+    obligation, not a remembered digest), so the pairing law is shape: a
+    FRESH 64-hex digest — a retired-pair value under a bumped tag is the
+    copied-not-re-read class the guard exists to catch."""
+    pairing = _readme_tag_digests(readme)
+    retired = set(RETIRED_FLAVOR_PINS.values())
+    for full_tag, digests in pairing.items():
+        assert full_tag in readme, f"README never names {full_tag} (ruling (b) records the pin contract here)"
+        assert digests, f"{full_tag}: no 64-hex digest paired with its tag in the README"
+        assert not digests <= retired, (
+            f"{full_tag}: paired only with retired-pair digests {sorted(digests)[:1]} — "
+            "a bump ledger re-reads live (anonymous token + manifest HEAD), it does not copy"
         )
 
 
-def test_ac2_dockerfile_digest_pins_match_the_record(dockerfile):
+def test_ac2_dockerfile_digest_pins_match_the_record(dockerfile, readme):
     """A FROM line MAY pin @sha256 directly (belt over the README-only record)
-    — then it must equal the recorded pair. Two surfaces carrying different
-    digests is how an in-place rebuild survives re-recording of one of them."""
-    recorded = {t: dg for t, dg in FLAVOR_PINS.values()}
-    tags = "|".join(re.escape(t) for t in recorded)
+    — then it must equal the README's recorded pair. Two surfaces carrying
+    different digests is how an in-place rebuild survives re-recording of one
+    of them. Since cf-141 C04 the value is no longer a constant either side:
+    the cross-check is README-ledger vs FROM-line directly (one fact, two
+    surfaces — the comparison must not depend on a third remembered copy)."""
+    pairing = _readme_tag_digests(readme)
+    tags = "|".join(re.escape(t) for t in pairing)
     for tag, hex64 in re.findall(
         re.escape(STRATA_DEP) + r":(" + tags + r")@sha256:([0-9a-f]{64})", dockerfile
     ):
-        assert recorded[tag] == f"sha256:{hex64}", (
-            f"{tag}: FROM pins sha256:{hex64[:16]}… but the record says {recorded[tag][:22]}…"
+        assert f"sha256:{hex64}" in pairing[tag], (
+            f"{tag}: FROM pins sha256:{hex64[:16]}… but the README ledger records "
+            f"{sorted(pairing[tag])[:2]} — two surfaces, two truths"
         )
 
 
@@ -581,156 +613,83 @@ def test_c07_readme_ledger_homes_the_moved_pins(readme):
     checkout tag) must show the moved values, and the fetch entry joins the
     interface freeze — the chart now binds to /opt/strata/bin/fetch_models.sh,
     so the image contract table is where an operator reads it (three-homes
-    pairing with the Dockerfile pin the thin init's boot guard checks)."""
-    for tok in (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", f"{STRATA_VERSION}-{FLAVOR_STRIX}"):
-        assert tok in readme, f"README never names the moved flavor tag {tok}"
-    for digest in (dg for _, dg in FLAVOR_PINS.values()):
-        assert digest in readme, f"README never records digest {digest[:19]}…"
+    pairing with the Dockerfile pin the thin init's boot guard checks).
+    cf-141 C04: the digest VALUES are the landing round's live re-reads, so
+    the loop pins the FRESH-PAIR shape (non-retired 64-hex, dated re-read
+    record, com.strata.engine 0.1.59 proof) plus the folded Q14 doc-truth
+    spots (alpine 3.24, 110Gi) — everything the pre-bump constants no longer
+    state. This is the moved arm of §9.28's inventory; the cf141_* siblings
+    that duplicated it were retired into here (§9.30)."""
+    pairing = _readme_tag_digests(readme)
+    retired = set(RETIRED_FLAVOR_PINS.values())
+    for tag, digests in pairing.items():
+        assert tag in readme, f"README never names the moved flavor tag {tag}"
+        assert digests, f"README never pairs a 64-hex digest with {tag}"
+        assert not digests <= retired, f"{tag}: ledger digests are the retired 0.2.9 pair — copied, not re-read"
+    if not re.search(r"com\.strata\.engine[^\n]{0,300}" + re.escape(ENGINE_VERSION)
+                     + r"|" + re.escape(ENGINE_VERSION) + r"[^\n]{0,300}com\.strata\.engine",
+                     readme, re.S):
+        raise AssertionError(f"the ledger records no com.strata.engine {ENGINE_VERSION} label proof")
+    if not re.search(r"(anonymous token|manifest HEAD|re-read)[^\n]{0,200}\d{4}-\d{2}-\d{2}"
+                     r"|\d{4}-\d{2}-\d{2}[^\n]{0,200}(re-read|anonymous token|manifest HEAD)",
+                     readme):
+        raise AssertionError("no dated live re-read record for the bumped pair (the landing day's obligation)")
     assert FETCH_ENTRY in readme, f"README interface table lacks {FETCH_ENTRY}"
+    assert "alpine:3.22" not in readme, "stale builder-base claim survives (Q14 fold, R2-E7)"
+    assert "alpine:3.24" in readme, "the builder-base row must state the Dockerfile's 3.24 truth"
+    assert "72Gi" not in readme, "the stale 'caps the container at 72Gi' claim survives (Q14 fold, R2-E7)"
+    assert "110Gi" in readme, "the cgroup sentence must state the shipped 110Gi"
     stale_rows = [ln for ln in readme.splitlines() if STALE_ENGINE_VERSION in ln or "v0.2.7" in ln]
     assert not stale_rows, f"README rows still carry retired pins: {stale_rows}"
 
 
 # ---------------------------------------------------------------------------
-# cf-141 C04 — the bump era (Strata 0.2.13 / engine 0.1.59), designed RED
-# until PR-2 lands. These legs pin the TARGET state so dev has a byte-exact
-# contract; the pre-bump constants above stay at 0.2.9 until this chunk's
-# landing round, where the TEST SESSION flips them by name (TEST_SPEC §9.28
-# inventory) and the two generations of arms merge back into one. Digest
-# VALUES are live re-reads (anonymous token + manifest HEAD, agent-capable,
-# no daemon — the ledger's recorded method), so these arms pin the ledger's
-# STRUCTURE: fresh pair, distinct 64-hex digests, engine-label proof, dated
-# re-read — never remembered numbers.
+# cf-141 C04 — non-vacuity probes for the re-pinned constants above.
+# The §9.28 landing-round move is DONE here: STRATA_VERSION/ENGINE_VERSION/
+# STALE_* flipped and the digest slot converted to a live-re-read obligation,
+# so the pre-existing arms (flavor pair, clone↔README pairing, four-surface
+# label law, README ledger) ARE the bump-era contract — the earlier cf141_*
+# twin arms and the local BUMP_* duplicate constants were retired into them
+# (§9.30), keeping one generation of each law. These probes exercise the same
+# parsers/shape the arms use, on synthetic states, so a half-moved mutant can
+# never slip through the constant flip.
 # ---------------------------------------------------------------------------
-
-BUMP_STRATA_VERSION = "0.2.13"
-BUMP_ENGINE_VERSION = "0.1.59"
-BUMP_CLONE_TAG = f"v{BUMP_STRATA_VERSION}"
-BUMP_FROM_TAGS = {f"{BUMP_STRATA_VERSION}-{FLAVOR_PRIMARY}", f"{BUMP_STRATA_VERSION}-{FLAVOR_STRIX}"}
-BUMP_LABELS = {f"{BUMP_ENGINE_VERSION}-linux-x86_64-hip-rx9070",
-               f"{BUMP_ENGINE_VERSION}-linux-x86_64-hip-halo"}
-# Today's digests: surviving them as the CURRENT rows would be the
-# copied-not-re-read failure class C04's AC2 forbids.
-PRE_BUMP_DIGESTS = {dg for _, dg in FLAVOR_PINS.values()}
-# Q14 fold-ins that ride this PR's files (owner round-3 answer):
-STALE_README_SPOTS = (("alpine:3.22", "builder-base truth is alpine:3.24 (R2-E7)"),
-                      ("72Gi", "the cgroup sentence must state the shipped 110Gi (R2-E7)"))
-
-
-def _bump_ledger_violations(readme: str) -> list[str]:
-    """Pure structure law for the bump-era ledger (shared with the probes):
-    each bumped tag pairs with a 64-hex digest that is NOT a pre-bump value,
-    within a window naming the engine-label proof and a dated re-read."""
-    out = []
-    for tag in sorted(BUMP_FROM_TAGS):
-        idxs = [i for i, ln in enumerate(readme.splitlines()) if tag in ln]
-        if not idxs:
-            out.append(f"ledger names no bumped tag {tag}")
-            continue
-        for i in idxs:
-            window = "\n".join(readme.splitlines()[max(0, i - 2):i + 4])
-            hex64 = re.findall(r"sha256:[0-9a-f]{64}", window)
-            if not hex64:
-                out.append(f"{tag}: no 64-hex digest paired within the ledger window")
-            elif all(d in PRE_BUMP_DIGESTS for d in hex64):
-                out.append(f"{tag}: digest pair is the pre-bump one — copied, not re-read")
-            if not re.search(r"(re-read|fetched|manifest HEAD)[^\n]{0,80}\d{4}-\d{2}-\d{2}"
-                             r"|\d{4}-\d{2}-\d{2}[^\n]{0,80}(re-read|fetched)", window):
-                out.append(f"{tag}: ledger window carries no dated re-read record")
-    if not re.search(r"com\.strata\.engine[^\n]{0,300}" + re.escape(BUMP_ENGINE_VERSION)
-                     + r"|" + re.escape(BUMP_ENGINE_VERSION) + r"[^\n]{0,300}com\.strata\.engine",
-                     readme, re.S):
-        out.append(f"no com.strata.engine {BUMP_ENGINE_VERSION} label proof recorded for the new pair")
-    return out
 
 
 def _bump_flavor_pair(dockerfile: str) -> list[str]:
-    """The FROM pair as a pure check (also used by the half-bump probe)."""
+    """The FROM pair through the SAME parser test_ac2 uses (also the
+    half-bump probe's eye)."""
     deps = [d for d in _builtin_dockerfile_deps(dockerfile) if STRATA_DEP in d["expanded"]]
-    tags = {_tag_of(d["expanded"]) for d in deps}
-    return sorted(tags)
-
-
-def test_cf141_c04_flavor_pair_clone_and_labels_at_the_bump(dockerfile):
-    """Ledger law (plan law 6, C04 AC2): BOTH FROM tags, the clone tag and
-    both engine label dirs move together — a half-moved surface reddens by
-    name (the tether class: one FROM at 0.2.13, one at 0.2.9 builds a
-    two-stage image carrying two different apps)."""
-    tags = _bump_flavor_pair(dockerfile)
-    assert tags == sorted(BUMP_FROM_TAGS), (
-        f"FROM strata tags {tags} != the bumped pair {sorted(BUMP_FROM_TAGS)} — C04 not landed "
-        "or half-moved"
-    )
-    clones = re.findall(r"git clone[^\n&;]*--branch\s+(\S+)", dockerfile)
-    assert clones and all(c == BUMP_CLONE_TAG for c in clones), f"clone tags {clones}, want v0.2.13"
-    labels = {m.group(0) for m in re.finditer(r"\d+\.\d+\.\d+-linux-x86_64-hip-\w+", dockerfile)}
-    assert labels == BUMP_LABELS, f"engine labels {sorted(labels)} != the bumped pair {sorted(BUMP_LABELS)}"
-    stale = [ln for ln in _exec_lines(dockerfile)
-             if re.search(r"strata:0\.2\.9\b|0\.1\.55-linux", ln)]
-    assert not stale, f"pre-bump literals in executable lines: {stale[:3]}"
-
-
-def test_cf141_c04_engine_labels_stay_one_fact_across_four_surfaces(dockerfile, readme):
-    """The four-surface label law at the bumped value (C04 test-move, by
-    name): Dockerfile + containers README + chart values strix exe/lib_dirs +
-    chart README table must all name 0.1.59 — the bump reddens the existing
-    0.2.9-era arm at landing and this arm is its successor state; green only
-    when the whole commit-set moved together."""
-    surfaces = {
-        "Dockerfile": dockerfile,
-        "README": readme,
-        "values.yaml": (REPO_ROOT / "charts" / "llama-swap" / "values.yaml").read_text(),
-        "chart README": (REPO_ROOT / "charts" / "llama-swap" / "README.md").read_text(),
-    }
-    for name, text in surfaces.items():
-        found = {m.group(0) for m in re.finditer(r"\d+\.\d+\.\d+-linux-x86_64-hip-\w+", text)}
-        assert BUMP_LABELS <= found or (name == "values.yaml"
-                                        and {f"{BUMP_ENGINE_VERSION}-linux-x86_64-hip-halo"} <= found), (
-            f"{name} does not name the 0.1.59 engine labels ({sorted(found)}) — C04 not landed"
-        )
-        assert found <= BUMP_LABELS, (
-            f"{name} carries an engine label outside the bumped pair: {sorted(found - BUMP_LABELS)}"
-        )
-
-
-def test_cf141_c04_readme_ledger_fresh_pair_and_q14_truth(readme):
-    """C04 AC2 + the folded Q14 spots: the bump-era ledger pair is fresh,
-    method- and date-stamped, engine-label proved; the builder-base row says
-    alpine:3.24 and the cgroup sentence says 110Gi (both stale today — this
-    red names C04)."""
-    problems = _bump_ledger_violations(readme)
-    for tok, why in STALE_README_SPOTS:
-        if tok in readme:
-            problems.append(f"stale README spot {tok!r}: {why}")
-    assert not problems, "cf-141 C04 ledger/doc truth unsatisfied:\n" + "\n".join(problems)
+    return sorted({str(_tag_of(d["expanded"])) for d in deps})
 
 
 def test_cf141_c04_bump_era_probes_redden_the_owning_laws():
-    """C04 non-vacuity (offline, pure): the half-moved FROM pair, the digest
-    copied not re-read, and a ledger with no dated re-read each fail their
-    validator by name; a synthetic fresh ledger clears it."""
+    """C04 non-vacuity (offline, pure): the half-moved FROM pair must not read
+    as the flipped pair; a 0.2.13 row paired with a RETIRED digest must trip
+    the freshness condition the pairing arms check; a synthetic fresh ledger
+    must satisfy it."""
+    want_pair = sorted(t for t, _ in FLAVOR_PINS.values())
     half = ("FROM ghcr.io/niko1221/strata:0.2.13-rocm-gfx120x AS a\n"
             "FROM ghcr.io/niko1221/strata:0.2.9-rocm-gfx1151 AS b\n")
-    assert _bump_flavor_pair(half) == ["0.2.13-rocm-gfx120x", "0.2.9-rocm-gfx1151"], \
-        "the half-bump must read as a pair mismatch, never as complete"
-    copied = ("| `ghcr.io/niko1221/strata:0.2.13-rocm-gfx120x` | "
+    assert _bump_flavor_pair(half) != want_pair, "half-bump must never read as the pinned pair"
+    retired = set(RETIRED_FLAVOR_PINS.values())
+    copied = (f"| `ghcr.io/niko1221/strata:{want_pair[0]}` | "
               "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39 "
-              "(re-read 2026-11-20) engine label 0.1.59-linux-x86_64-hip-rx9070 |")
-    assert any("copied, not re-read" in v for v in _bump_ledger_violations(copied)), \
-        "a 0.2.13 row carrying the 0.2.9 digest must redden the fresh-pair law"
-    undated = ("| `ghcr.io/niko1221/strata:0.2.13-rocm-gfx120x` | "
-               "sha256:1111111111111111111111111111111111111111111111111111111111111111 "
-               "| engine label 0.1.59-linux-x86_64-hip-rx9070 |")
-    assert any("dated re-read" in v for v in _bump_ledger_violations(undated)), \
-        "a ledger row with no dated re-read must redden"
+              "(re-read 2026-11-20; com.strata.engine label 0.1.59-linux-x86_64-hip-rx9070) |")
+    pairing = _readme_tag_digests(copied)
+    assert pairing[want_pair[0]] and pairing[want_pair[0]] <= retired, (
+        "the copied-not-re-read mutant must be caught by the pairing arms' retired-guard condition"
+    )
     fresh = (
-        "| `ghcr.io/niko1221/strata:0.2.13-rocm-gfx120x` | sha256:"
+        f"| `ghcr.io/niko1221/strata:{want_pair[0]}` | sha256:"
         "2222222222222222222222222222222222222222222222222222222222222222 "
         "(re-read 2026-11-20, anonymous token + manifest HEAD; com.strata.engine label "
         "0.1.59-linux-x86_64-hip-rx9070) |\n"
-        "| `ghcr.io/niko1221/strata:0.2.13-rocm-gfx1151` | sha256:"
+        f"| `ghcr.io/niko1221/strata:{want_pair[1]}` | sha256:"
         "3333333333333333333333333333333333333333333333333333333333333333 "
         "(same read; com.strata.engine label 0.1.59-linux-x86_64-hip-halo) |\n"
     )
-    assert not _bump_ledger_violations(fresh), "the synthetic fresh ledger must satisfy the law"
+    fresh_pairing = _readme_tag_digests(fresh)
+    assert all(digs and not digs <= retired for digs in fresh_pairing.values()), \
+        "the synthetic fresh ledger must satisfy the pairing law"
 

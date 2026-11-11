@@ -131,8 +131,9 @@ def test_t0_request_lines_on_every_arena_model_env():
         assert S.REQUEST_LINES_ENV in env, f"{aid} model env lacks {S.REQUEST_LINES_ENV} — its rates are unmeasurable"
     primary_profile = S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)
     assert primary_profile.get("env") == S.cf141_expected_profile_env(S.PROFILE_PRIMARY_FILE), (
-        f"primary profile-layer env grew ({primary_profile.get('env')!r}) — T0 rides the model env, "
-        "and the era chain pins this layer empty until C03's row-H step arms STRATA_PLE_AUTO_RAM"
+        f"primary profile-layer env diverged from its era-chain tip ({primary_profile.get('env')!r}) "
+        "— T0 rides the MODEL env; the profile layer is {} pre-row-H and "
+        "{\"STRATA_PLE_AUTO_RAM\": \"0\"} from the cf141-rowh capture on (C-A keyless survives either way)"
     )
 
 

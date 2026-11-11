@@ -362,9 +362,15 @@ INNER_MATRIX_VARS = {
 # C02 gated-pack marker (manual-pack idempotency contract).
 ORCA_PACK_MARKER = "/models/strata/.pack-orca"
 # C09 claim-checkout migration: marker carries image-version + carry-N so a
-# future bump re-fires; the completeness marker for the GGUF-direct ornith
-# leg (no .pack-* equivalent — q36 has no iq_pack step).
-CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
+# future bump re-fires. cf-141 C04 re-pin: the pair below IS the bumped
+# literals (content-compared; the tail assert keeps the two spellings — this
+# constant and the CF141 block at the file tail — one fact). The laws that
+# consume them: test_strata_c09_ornith_carry.py (keyed + content-compared +
+# ordering) and the runbook/host-prep marker surface.
+CHECKOUT_MARKER = "/models/strata/.checkout-0.2.13-carry1"
+CHECKOUT_MARKER_ID = "0.2.13-carry-1"
+# Completeness marker for the GGUF-direct ornith leg (no .pack-* equivalent —
+# q36 has no iq_pack step).
 ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 
 # C06 FINAL envelope, re-pinned at the executed on-target gate (2026-11-01,
@@ -1028,6 +1034,8 @@ CF141_ENGINE_HALO_LABEL = f"{CF141_ENGINE_VERSION}-linux-x86_64-hip-halo"
 CF141_ENGINE_RX9070_LABEL = f"{CF141_ENGINE_VERSION}-linux-x86_64-hip-rx9070"
 CF141_CLONE_TAG = f"v{CF141_STRATA_VERSION}"
 CF141_FROM_TAGS = (f"{CF141_STRATA_VERSION}-rocm-gfx120x", f"{CF141_STRATA_VERSION}-rocm-gfx1151")
+# Spelled here and at the CHECKOUT_MARKER constant above; the tail assert keeps
+# the two spellings one fact (C04 flips both, era chain as the ledger).
 CF141_CHECKOUT_MARKER = "/models/strata/.checkout-0.2.13-carry1"
 CF141_CHECKOUT_MARKER_ID = "0.2.13-carry-1"
 CF141_PREVIOUS_STRATA_VERSION = "0.2.9"
@@ -1237,3 +1245,41 @@ def cf141_expected_profile_env(file: str) -> dict:
     if file == PROFILE_ORNITH_FILE:
         return {}
     return profile_fixture(file).get("env") or {}
+
+
+# The C04-era spellings are one fact across the two blocks of this file.
+assert CHECKOUT_MARKER == CF141_CHECKOUT_MARKER
+assert CHECKOUT_MARKER_ID == CF141_CHECKOUT_MARKER_ID
+
+
+def ledger_pair_violations(readme: str, tags, retired_digests, engine_version: str) -> list[str]:
+    """The bump-era tag→digest ledger as a pure STRUCTURE law (offline by
+    doctrine — the digest VALUES are live re-reads the landing round owes the
+    ledger's recorded method: anonymous token + manifest HEAD): every bumped
+    flavor tag pairs within its ledger window with a 64-hex digest that is
+    NOT one of the retired pair (copied-not-re-read), the dated re-read is
+    recorded, and the com.strata.engine label names the engine version.
+    Shared with test_strata_c09_ornith_carry.py; the containers suite keeps a
+    deliberate twin (the two suites cannot import each other by design)."""
+    out = []
+    for tag in tags:
+        if tag not in readme:
+            out.append(f"ledger never names the bumped flavor tag {tag}")
+            continue
+        idx = readme.index(tag)
+        window = readme[max(0, idx - 300): idx + 800]
+        digests = set(re.findall(r"sha256:[0-9a-f]{64}", window))
+        if not digests:
+            out.append(f"{tag}: no 64-hex digest paired in its ledger window")
+        elif digests <= set(retired_digests):
+            out.append(f"{tag}: every digest by its row is a retired pair value — "
+                       "copied, not re-read")
+    if not re.search(r"com\.strata\.engine[^\n]{0,300}" + re.escape(engine_version)
+                     + r"|" + re.escape(engine_version) + r"[^\n]{0,300}com\.strata\.engine",
+                     readme, re.S):
+        out.append(f"no com.strata.engine {engine_version} label proof recorded")
+    if not re.search(r"(anonymous token|manifest HEAD|re-read)[^\n]{0,200}\d{4}-\d{2}-\d{2}"
+                     r"|\d{4}-\d{2}-\d{2}[^\n]{0,200}(re-read|anonymous token|manifest HEAD)",
+                     readme):
+        out.append("no dated re-read record for the new pair")
+    return out

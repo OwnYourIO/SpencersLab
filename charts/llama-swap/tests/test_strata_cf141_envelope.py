@@ -259,8 +259,9 @@ def test_cf141_q4_orca_overshoot_derivations_stand():
         prof = S.profile_json(docs, file)
         pairs = dict(S.arg_pairs(prof))
         if prof.get("parallel") != 8:
-            pytest.fail(f"cf-141 C03 not landed: the {rung} {named} overshoot row is 8-slot "
-                        "arithmetic and this rung still reads the pre-C03 state")
+            pytest.fail(f"cf-141 C04-era derivation waits on the envelope: the {rung} {named} row is "
+                        "8-slot arithmetic and this rung does not read parallel 8 (a sanctioned "
+                        "scale-back re-pins this arm with its ruling-table row — TEST_SPEC §9.28)")
         total = S.cf141_host_total_gib(rung, prof["parallel"], int(pairs["--conversation-cache-mib"]))
         assert abs(total - named) <= 0.5, (
             f"{rung} at 8 slots derives {total:.1f} GiB from the render, the runbook row names "

@@ -12,7 +12,10 @@ helm v3.16.4+g7877b45.
   `70be38a0f71da4e4c44fb2213e32a8dca10dd0ead8b1e539513b24fcea3cd066`
 - File: `strata-orca-iq4_xs.json` — sha256
   `c1c5da557abe88ba7987a35f287ad1fb6dc617d19bf021b0560cee1f3d1d6b01`
-- Determinism: double-capture diffed clean.
+- Determinism: double-capture diffed clean — two independent `helm template`
+  runs with the parsed `strata-profile` ConfigMap DATA compared equal at
+  object level (all five data keys) before this file was written; the stored
+  file is that data's canonical encoding, re-verified against the render.
 
 ## Why these two rungs get an anchor capture now
 
@@ -41,7 +44,8 @@ from them.
 
 Chain law home: `test_strata_cf141_envelope.py::test_cf141_era_steps_are_one_delta_each`
 (step sets and per-dir file membership pinned in `strata_testlib`
-`CF141_ERA_CHAIN` / `CF141_ERA_STEP` / `CF141_ERA_FILES`). Step dirs are
+`CF141_ERA_CHAIN` / `CF141_ERA_STEP` / `CF141_ERA_STEP_FILE` /
+`CF141_ERA_FILES`). Step dirs are
 created by the test session at each chunk's landing round after programmatic
 delta verification (the §9.16/§9.25 ritual); the values above are the plan's
 rulings (Q1/Q9/Q10/Q16/Q17-(a)), not measurements — the captures prove the

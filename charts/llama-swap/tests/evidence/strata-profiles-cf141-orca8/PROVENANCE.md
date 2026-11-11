@@ -10,7 +10,9 @@ the orca chain renders are directly comparable.
   `49d74c558fe354d64b4901d9bb04b66489284bf1709de9db01ed234310f9af44`
   (digest re-read live off the stored bytes, per provenance_violations)
 - Determinism: double-capture diffed clean — two independent `helm template`
-  runs byte-compared (full render and CM data) before this file was written.
+  runs with the parsed `strata-profile` ConfigMap DATA compared equal at
+  object level (all five data keys) before this file was written; the stored
+  file is that data's canonical encoding, re-verified against the render.
 - Tree state: branch `cf-141-refactor-strata-parallel-tuning` at HEAD
   `8789f33d4`; the capture was taken against the UNCOMMITTED C03 working tree
   (values.yaml/README/notes carry dev's C03 edits awaiting the coordinator's

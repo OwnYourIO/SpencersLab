@@ -10,7 +10,9 @@ the two renders are directly comparable.
   `80a207759844e179b4443c67c6198fcd90ab5d66a9d1ff48c688f187efb1d1ff`
   (digest re-read live off the stored bytes, per provenance_violations)
 - Determinism: double-capture diffed clean — two independent `helm template`
-  runs byte-compared (full render and CM data) before this file was written.
+  runs with the parsed `strata-profile` ConfigMap DATA compared equal at
+  object level (all five data keys) before this file was written; the stored
+  file is that data's canonical encoding, re-verified against the render.
 - Tree state: branch `cf-141-refactor-strata-parallel-tuning` at HEAD
   `0cf2e7a3f`; the capture was taken against the UNCOMMITTED C02 working tree
   (values.yaml/README/service-values/notes carry dev's C02 edits awaiting the

@@ -3064,3 +3064,84 @@ C03's validation round (test session; dev's C03 tree uncommitted at HEAD
   move the tuning note's shipped-state board row — and note that
   `primary_required_pairs()` now auto-tracks the bump era (drafting is not an
   args flag; no conv move pending).
+
+### 9.30 cf-141 C04 test-move round — re-cut carry laws + the by-name constant flips (2026-11-11)
+
+C04 dev r1 returned NEEDS_INFO (carry tripwire fired at v0.2.13), research R3
+settled verdict (a) with a re-cut inventory, and this round makes the
+CONTRACTS the dev re-launch satisfies. No implementation file touched; the
+era chain (author: this session) grew its re-pin doctrine into the
+container-side constants.
+
+**Carry patch re-cut laws (`test_strata_c09_ornith_carry.py`).** Byte
+fixtures from the live d2f09647 tree (read 2026-11-11, cross-checked against
+RESEARCH [86][87][92]): `HUNK1_PREIMAGE_TERNARY` / `HUNK1_POSTIMAGE_TERNARY`
+(the kNativeHBytes geometry ternary; re-cut = floor 1024→2048 in BOTH spots,
+one line of substance, the `kNativeHBytes =` declaration survives as context,
+an added comment ties the floor to `native_act_bytes_for` + #3574 per R3-2),
+`HUNK2_PREIMAGE/POSTIMAGE_D_Q6K|_PLAIN` + `GU_FMTS_Q6K_LINE` (hunk 2
+UNCHANGED — preimages byte-identical at offset 853, one X(12) addition per
+branch, the GU-instantiates-12 census kept checkable). The exactly-2-hunks
+law, the #3574-per-hunk provenance law and the re-watch trigger are KEPT
+untouched. New header law `test_c09_patch_header_is_re_anchored_to_v0213`:
+the generation-tree claim moves to v0.2.13 (R3-5.5), the bare "against the
+v0.2.9 tree" sentence may not survive unqualified. The Dockerfile verify-layer
+arm re-anchors with the constant (R3-5.2): the 2048 grep must prove the
+ternary floor and the retired `kNativeHBytes = 2048` single-line grep must be
+GONE (it greps a line that no longer exists — a silent pass on a 1024 tree).
+`git apply --check` at v0.2.13 stays the dev-run acceptance; these arms are
+its law, written first, currently DESIGNED RED against the v0.2.9 patch.
+
+**§9.28 by-name constant flips (executed — they were this round's, not dev's).**
+`containers/strata/tests/test_dockerfile.py`: STRATA_VERSION→0.2.13,
+ENGINE_VERSION→0.1.59, STALE_STRATA_TAGS+=0.2.9, STALE_ENGINE_VERSION→0.1.55;
+`FLAVOR_PINS`' digest slot became a LIVE-RE-READ OBLIGATION (dev r1's open
+question answered: the pairing arms pin freshness STRUCTURE — 64-hex paired
+digest, not-a-retired-value, dated re-read record, com.strata.engine 0.1.59
+proof — via the new shared `_readme_tag_digests` parser; the FROM-line arm now
+cross-checks README vs Dockerfile directly instead of a remembered constant).
+`RETIRED_FLAVOR_PINS` keeps the 0.2.9 pair exactly for the copied-not-re-read
+guard. `test_c07_readme_ledger_homes_the_moved_pins` absorbed the Q14 folds
+(alpine 3.24, 110Gi). The two generations merged as §9.29 promised: the
+cf141_* flavor/four-surface/ledger arms were retired into the flipped generic
+arms (one generation each); the probes arm stays and exercises the same
+parsers. `strata_testlib.CHECKOUT_MARKER` + new `CHECKOUT_MARKER_ID` flipped
+to the 0.2.13 pair (tail assert ties the spellings — the §9.29 value-bearing-
+TABLES lesson applied preemptively). `test_strata_thin_init.py`: strix current
+label → the CF141 constant, retired set gains 0.1.55. c09 marker STRUCTURE
+arms went version-agnostic (mechanism), the pinned pair moved to the new
+`test_c09_checkout_marker_pair_is_one_fact_driver_and_host_prep` (content-
+compared pair in the driver AND the host-prep §2 refresh sentence — the R2-B
+"note L239" surface; a stale marker in the note is a dead operator trail).
+`test_strata_strix.py`: chain docstring restated for the merged bump step
+(per-file `CF141_ERA_STEP_FILE`); the halo tether keeps its mid-bump
+half-edit teeth untouched — moved values vs frozen fixture vs Dockerfile
+label are three chances for a half-landing to redden.
+
+**Post-round map (helm on PATH, gates off).** C03's carried minors landed
+with this round: m1 — the six cf141-era PROVENANCE determinism lines now
+state what was actually compared (parsed ConfigMap DATA at object level +
+canonical re-verification, not "full render byte-compared"); m2 — the
+config_schema t0-tail and the envelope overshoot-arm messages dropped their
+stale pre-C03 tense (era-chain-tip wording; the scale-back re-pin route named
+instead). **Post-round map:** Charts 455 passed / 9 skipped /
+11 failed — every red names a not-yet-landed C04 dev literal (bodies
+verified): c09 hunk1/header/verify-layer/README-ledger/marker-pair (5), bump
+strix-root/drafting/Q16-comments (3), era-steps (walk prints ONLY the
+un-landed cf141-bump step ×4), thin_init strix-label, tuning-runbook
+shipped-state leg; 4 previously-green arms flipped by the re-anchor (hunk1,
+verify, README-ledger, thin_init-strix) — that is the ledger working, the
+dev round's acceptance targets. Containers 18 passed / 7 failed, all 7
+naming the pre-bump Dockerfile/README literals. `test_c09_hunk2_adds_X12…`
+stays GREEN against the old patch as designed — hunk 2's preimages are
+byte-identical at both tags, which is exactly R3's finding.
+
+**C04 landing round now owes (by name):** values drafting×4 + Q16 comments +
+strix root; Dockerfile pair/clone/labels + verify-grep re-pin; README ledger
+live re-read (digest VALUES + date) + Q14 rows; fetch_models.sh marker pair;
+host-prep §2/§3.3/§6/§7 surfaces if touched; the n1 comment fold (values,
+coordinated text delivered in the test RESULT); capture
+`evidence/strata-profiles-cf141-bump/` with the per-file step sets (§9.28's
+shape design-call), PROVENANCE on the m1 wording; then `test_cf141_*`
+era/runbook legs clear and the gate-1 same-day re-fetch + P1 probe trio
+(RESEARCH R3-3, user leg) stand before ready.

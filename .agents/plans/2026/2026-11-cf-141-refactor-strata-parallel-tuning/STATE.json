@@ -204,11 +204,21 @@
       "status": "pending",
       "wave": 4,
       "depends_on": ["C01", "C02", "C03"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "gate": "Q13(a): lands after PR-1; same-day gate-1 crash-cluster re-fetch recorded before ready",
-      "handoffs": []
+      "last_verdict": "NEEDS_INFO r1 resolved by research R3 (verdict a) — test re-cut first, then C04 re-launch",
+      "gate": "Q13(a): lands after PR-1; same-day gate-1 re-fetch BEFORE declaring ready (r1 fetch 2026-11-11 ~01:45Z: cluster all-open, #5701 first maintainer touch = reproduction request, no deterioration ⇒ passed at r1; MUST re-fetch day-of-ready per the recorded row law)",
+      "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
+      "handoffs": [
+        {
+          "at": "2026-11-11 dev r1", "role": "agent-dev-local",
+          "result": "NEEDS_INFO (chunk's own branch, tree clean, zero edits): Gate 1 PASS (table recorded — runbook gate-row text delivered; #5701 first maintainer reply is a repro request whose own 0.1.59 run did not fail; no fix named; no new gfx1201 class ⇒ no deterioration; cluster still 0.1.59-in-failing-set for #5559/#5635). Carry tripwire FIRED: hunk-1 preimage gone at v0.2.13 (kNativeHBytes now compile-time geometry expr), hunk 2 byte-clean; control clean at v0.2.9 ⇒ drift real. Held inventory §3 complete (FROM pair, clone tag, labels, markers, README ledger + Q14 folds, drafting×4 Q16 comments, strix 0.1.59 root); digest re-reads deferred to landing round (by-design). C03 carry m1/m2/n1 delivered verbatim for the landing round. Geometry-load question raised."
+        },
+        {
+          "at": "2026-11-11 research r3", "role": "agent-research (ses_e38980ee0ffe2MqslWY2c0Qtmi continued; RESEARCH.md Round 3)",
+          "result": "VERDICT (a) — flash_next-compiled 0.2.13 loads+serves ornith Q4_K_XL WITH the floor re-cut: q36 family routed before all new geometry mechanisms (unreachable; same as 0.2.9; #3574 community report corroborates). Walls: W1 pool floor (re-cut = ternary 1024→2048, one line, 2-hunk law preserved; act side passes 3504≤4096) + W2 format list (hunk 2 unchanged, preimage byte-identical offset 853). P1 on-target confirmation probe = user leg post-branch-build (--families/--geometry + ornith load-smoke, two refusal strings); P2 soak-parity folded into bump re-bench. Re-pin inventory: patch 2 hunks re-anchored at v0.2.13, Dockerfile verify grep 2048, c09 byte arms, header provenance."
+        }
+      ]
     }
   },
   "blocked": [],

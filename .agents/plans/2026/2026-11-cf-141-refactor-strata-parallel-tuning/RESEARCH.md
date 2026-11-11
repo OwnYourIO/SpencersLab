@@ -792,3 +792,249 @@ cgroup'd + 8×262144 + UD-Q4) — every row above inherits that single missing m
 77. Repo: `EXPLORE.md` Round-2 section R2-A…R2-E (gates, bump surface literals, envelope math, validation reality, blockers incl. the stale "0.1.57 clean" and "#5317/#5341" citations corrected here) [R].
 78. Repo: `.agents/plans/2026-11-10-dep-strata-engine-0213-eval.md` gate list (as quoted in EXPLORE R2-A) [R].
 79. `serve/server.py` @v0.2.13 `engine_args` L3781-3830: `drafting.apply(...)` called **unconditionally** (no 0.2.9-style guard), with `detect_hardware()`, `slots=parallel_n` (Auto→MTP with ≥2 slots), `engine=exe` flag-capability shaping; retry paths L1274-1301: VRAM-short restart **without drafter**, DFlash2-didn't-start restart **with the MTP**, `drafting_note` via /metrics; `vram_fit.fit_start` wired into args shaping. [V]
+
+---
+
+# Round 3 — v0.2.13 geometry-load question (C04 re-cut gate)
+
+Round 3 — agent-research, 2026-11-11. The carry-patch tripwire fired at v0.2.13 (hunk 1's
+preimage gone: `kNativeHBytes = 1024;` became a `kCompiledGeometry` expression). The settled
+question, answered from the v0.2.13 tarball @`d2f0964` (round 2's tree [56]) plus live GitHub
+reads: **does a flash_next-geometry-compiled 0.2.13 engine load and serve the ornith
+Q4_K_XL GGUF, with and without a widened pool floor?** Sources continue from [80].
+
+## TL;DR
+
+1. **The family switch saves ornith**: at 0.2.13 `main()` detects `qwen35moe` from the GGUF
+   header and `return`s into `strata::qwen35::run` **before any of the q4exp engine's state
+   exists** [83]. Every compiled-geometry refusal the bump added (`geometry_unsupported`'s
+   19 pins incl. `expert_feed_forward_length`, `compiled_geometry_mismatch`, the verify /
+   remote-experts / native_moe / fused_gr / qsa / ngram pins) lives on the q4exp side and is
+   **unreachable for ornith** — same structure as 0.2.9, where our patched engine proves it
+   live [82][83][89].
+2. **Exactly two walls remain at 0.2.13, identical in kind to the v0.2.9 ones**: (W1) the CPU
+   expert pool's `kNativeHBytes` floor — now `max(native_act_bytes_for(kCompiledGeometry.n_ff),
+   1024)` = **1024** under the flash_next geometry vs ornith's runtime down-activation
+   Q8_K(1024)=**1168 B** → the same "activation larger than the pool's buffers" refusal, just
+   expressed through the new constexpr [86][87]; (W2) `STRATA_D_FMTS` still lacks `X(12)` —
+   hunk 2's preimage survives byte-identical (line offset 846→853) [92]. **The re-cut that
+   changes only the ternary's floor (`1024`→`2048`, both spots on the kNativeHBytes line) plus
+   the unchanged hunk-2 body clears everything statically identifiable.**
+3. **Verdict: (a) — loads + serves with the 2-hunk-preserving re-cut**, high static
+   confidence, with a community field report that the exact same q36 path serves Ornith-1.5-
+   122B "loads and answers" with ~three small changes [94] and our 0.2.9 control (same two
+   walls, serving today). Verdict (c) "refuses regardless of floor" is **ruled out**: the only
+   reachable geometry refusal IS the floor wall. The remaining unknown is a runtime smoke,
+   not a static analysis — the one-command probe is named for the user leg.
+4. **Cluster side-note (feeds the bump gate table)**: #5701 got the cluster's first
+   maintainer reply (2026-11-10T23:22Z): the maintainer ran the reporter's 124K-token prompt
+   + quant + settings on an **R9700, Linux, engine 0.1.59** box and did **not** reproduce;
+   asks the reporter for `STRATA_DBG_NAN=1` output [96]. No ornith/geometry fix upstream
+   (#3574 still closed not_planned, no new comments since round 2; maintainer: "not in the
+   plan … we want to add it later" [94]); 0.2.13's per-shape engine-download law
+   (`strata-q4-<shape>`, `strata --geometry`) is the plumbing that would carry a per-geometry
+   ornith binary if the probe ever surprises [95].
+
+## R3-0. The runtime shape being adjudicated (ours, [R/V])
+
+`engineProfileStrataOrnith` (values.yaml L2391+): `exe: /models/strata/Strata/engine/strata`
+(the claim-compiled binary — the law in `test_strata_c09_ornith_arena.py` L276: "only the
+claim-compiled engine carries the patched constants" [98]), args
+`--native .../Ornith-1.5-122B-GGUF/UD-Q4_K_XL/…-00001-of-00003.gguf --max-context 131072
+--prefill auto --mtp 2`, `parallel: 1`, `env: {}`, `backend: hip`, no `--pack` (arena-from-
+GGUF native path), no `--kv` (fp16 KV), no `--expert-cache`. Build: `fetch_models.sh`
+compiles `-DSTRATA_ENABLE_HIP=ON -DSTRATA_PREFILL_MMQ=ON -DSTRATA_Q6K_EXPERTS=ON
+-DSTRATA_MMQ_KQUANTS=ON`, **no geometry flag → default `flash_next`** [92][98]; q36 support is
+linked for every HIP arch except gfx906 (`if(NOT STRATA_HIP_GFX906) … target_
+compile_definitions(strata PRIVATE STRATA_HAVE_QWEN35=1)`) — same gate at 0.2.9 and 0.2.13
+[84]. Ornith: 48×512 experts, FF **1024**, Q4_K (fmt 12) downs; a 122B GGUF's expert set
+never fits the 32 GB VRAM → **the CPU expert pool (hybrid mode) is always the live path** —
+the W1 wall is not a dead branch [84 note under STRATA_NATIVE_EXPERTS: "the hybrid mode
+(experts that do not all fit in VRAM): the CPU expert pool"].
+
+## R3-1. Gate map between pack-load and serve at 0.2.13
+
+Per gate: what is compared, ornith's value, verdict under a flash_next-compiled binary.
+**Reachability** is decided by the family switch: `qwen35moe` → `strata::qwen35::run` at
+`generate.cpp` L3369-3385, before q4exp state; the q4exp-only guards never see ornith [83].
+
+| # | Gate (0.2.13 site) | Compares | Ornith under flash_next geometry | Verdict pristine → re-cut |
+|---|---|---|---|---|
+| G1 | `model_family_not_supported` via `check_engine_architecture` (gguf_reader:862; also generate 4385-4394) | architecture known & runnable? | q36 IS a supported family (linked non-gfx906) [84][91] | PASS → PASS |
+| G2 | Family switch (generate:3382) | `general.architecture` == qwen35moe | routes to `qwen35::run` — everything below in this table that says "q4exp-only" is UNREACHED | n/a |
+| G3 | `check_architecture_qwen35moe` (gguf_reader:645-665) | 17 `qwen35moe.*` metadata keys present + numeric; `nextn < block_count`; `full_attention_interval ≥ 2` | our GGUF passed the equivalent guard at 0.2.9 (same function/lines at the control tag — [M-node]); keys unchanged | PASS → PASS |
+| G4 | `geometry_unsupported` (gguf_reader:805-846) | **19 runtime-vs-kCompiledGeometry pins incl. `expert_feed_forward_length`** | **q4exp-only** (family branch at :853 precedes it) — never runs for qwen35moe | UNREACHED |
+| G5 | `compiled_geometry_mismatch` (family_layout:96-108; sole caller generate:4879) | family + field pins ("n_expert and top-k are run-time sizes") | **q4exp driver only** (post-switch) — never runs for qwen35moe | UNREACHED |
+| G6 | `ArenaExpertSource::open` (expert_source:5885-5900) | `lay.n_layers/n_expert` (layout built from the same file) vs driver's runtime g — self-consistency, not compiled shape | 48×512 vs 48×512 (own values) | PASS → PASS |
+| G7 | `check_experts_gguf` (from_gguf native path, expert_source:~5898-5910) | every (file,offset) tensor = claimed type/dims/inside-file, vs the **runtime** layout | self-consistent | PASS → PASS |
+| G8 | **W1 — `native_fmt` pool floor** (native_expert.hpp:17-31 + native_expert.cpp:301-305; **called from q36_engine.cu:2973 with runtime `g.n_embd, g.n_ff`**) | `f.h_bytes = ggml_row_size(vdt_d, n_ff)` (ornith: Q8_K(1024)=**1168**) vs `kNativeHBytes = max(native_act_bytes_for(640)=720, 1024)=1024` | **FAIL** — "native experts: activation larger than the pool's buffers" (same wall as v0.2.9, new expression) | **FAIL → PASS with floor-2048 re-cut** (act side untouched: Q8_K(3072)=3504 ≤ `kNativeActBytes` 4096 ✓ [86][87]) |
+| G9 | q36 layout cross-check (q36_engine:2974-2976) | native_fmt's computed up_off/down_off/bytes == pack layout's | derived from the same table | PASS → PASS |
+| G10 | **W2 — `STRATA_D_FMTS` instantiation** (iq_kernels.cu:853-858, `STRATA_Q6K_EXPERTS` branch live in our build) | fmt 12 (Q4_K) compiled into the down-kernel list | **FAIL** — GU list has 12, D list lacks 12; q36 has no fallback for an unsupported expert pair (hard load refusal, per the patch header) | **FAIL → PASS with unchanged hunk-2 body** (preimage context byte-identical at :853/:855/:857; only line numbers drifted) [92] |
+| G11 | verify.cpp:930 / remote_experts.cpp:272 `kCompiledGeometry.n_expert_used` pins | compiled top-k (10) vs runtime k | q4exp artifact/remote machinery — un-reached (q36 owns its verify windows, `kVerify=8` locally [88]; our shape has no remote/peer) | UNREACHED |
+| G12 | static_assert pins in fused_gr/qsa/ngram/gdn_chunk/prefill kernels (the 18 files that gained kCompiledGeometry refs since 0.2.9 [89]) | compiled dims baked into kernels | of these, only `fused_gdn.cu` is in q36's include closure — its **single** pin is `ssm_state_size == 128` [89], which q36/ornith share ("same GDN + gated-attention 3:1 pattern, the same head dims" — model_family.hpp [91]); `native_moe_combine` appears in q36 only in a comment (q36 uses its own combine) [88] | PASS (or UNREACHED) |
+| G13 | q36 MMQ prompt arm (q36_engine:1374-1377) | `MMQ::supported(type) && MMQ::fits(type, 2*n_ff)` — capability bool | false → falls back to the non-MMQ prompt path (no refusal; `STRATA_Q36_NO_MMQ=1` forces off) | PASS-by-gate → PASS |
+| G14 | Pool buffer allocation (pool.hpp:367 `hq[MAXT][kNativeHBytes]`) | — | the re-cut enlarges per-worker activation buffers 1024→2048 B/row — tens of MiB across workers; no format arithmetic reads the constant (it sizes buffers; kernels use runtime `f.h_bytes`) | [E] cost trivial |
+
+## R3-2. Does the floor re-cut clear ONLY W1? Yes — and nothing else trips
+
+Enumerated above: the two walls G8+G10 are exactly the v0.2.9 walls re-verified at the new
+tag (same refusal strings, same mechanism — G10 byte-identical; G8 expressed differently).
+Every new 0.2.13 geometry mechanism (G4/G5/G11/G12-pins) sits on the q4exp side of the
+family switch or is capability-gated. The re-cut shape that preserves the 2-hunk law:
+
+- **Hunk 1** (new preimage): in `include/strata/kernels/cpu/native_expert.hpp`, the
+  `kNativeHBytes` ternary's floor constant — `... > 1024 ? native_act_bytes_for(...) : 1024;`
+  → the same two occurrences → `2048`, with the carry comment updated to reference
+  `native_act_bytes_for` ("#3574, closed not_planned"). One line of substance.
+- **Hunk 2**: unchanged content, regenerate offsets (add `X(12)` to both D_FMTS branches at
+  their new lines).
+
+Nothing else on q36's load path compares ornith's 1024 against a compiled value [V sweep:
+`grep kCompiledGeometry src/qwen35/ = 0 hits` [88]].
+
+## R3-3. Verdict and option analysis
+
+**(a) loads + serves with the 2-hunk re-cut** — as the default posture. Confidence
+[E-from-V] high: static enumeration is closed over q36's include/dependency set, the 0.2.9
+control shows the same two walls were the complete answer, and the community field report
+[kirinriki7777-sys, #3574] ran Ornith-1.5-122B on the q36 path with "three small changes" to
+"loads and answers" (24 GB card, hybrid mode — i.e., the pool path, our mode) [M-community]
+[94]. What static analysis cannot settle: q36 serve **quality/throughput on 0.2.13's q36
+engine changes** (e.g. #5465's in-flight flash-attention work targets 0.2.13+ q36 prompt
+paths) — that is re-bench material, not a load/refusal question [97].
+
+(b) silent-degrade/mis-serve: not the shape of the answer — geometry values all come from
+the file's own metadata at runtime (that is q36's whole design, [83][88]) and the engine's
+load-time self-checks (G6/G7/G9) are pack-vs-itself consistency. The docs' "refused …
+instead of mis-running" philosophy applies to q4exp; for q36 the pins just don't exist.
+
+(c) refuses regardless of floor: **no** — the floor wall IS the only reachable geometry
+refusal.
+
+Fallback options if the on-target probe surprises:
+
+- **O1 per-geometry/per-shape ornith binary** — mechanisms: (i) `-DSTRATA_GEOMETRY_FILE=<ornith
+  header>` (the day-one mechanism: a custom header with the model's shape auto-clears G8 —
+  `native_act_bytes_for(1024)=1168 > 1024` floor — but changes every q4exp kernel's
+  static_asserts, so it can only serve as a SECOND binary; G10 still needs hunk 2); (ii) just
+  compile the SAME v0.2.13 checkout twice (flash_next default for the four flash-next rungs,
+  one re-cut-applied build — actually the re-cut makes geometry irrelevant for q36, so O1
+  would only differ by patch set). Upstream's own law for new shapes is exactly this: "a
+  model of a new shape gets its own engine download (`strata-q4-<shape>`) beside the Strata
+  engine" + `strata --geometry` + Control manifest checks [95]. Repo cost: a second claim
+  path (`/models/strata/Strata/engine-ornith/strata`), a values `exe:` move that **breaks the
+  c09 arena law** (L276 pins ornith to THE claim-compiled engine) → test-session re-pin +
+  fetch_models second compile pass. Strictly worse than the re-cut unless the probe fails.
+- **O2 hold ornith at 0.1.55 while the other four bump: not expressible per-rung.** All five
+  rungs' engines are either the one claim-compiled binary (four rungs, version-free path —
+  one compile, one binary [R]) or the packaged root (strix only). There is no 0.1.55 engine
+  beside the 0.1.59 claim binary after migration (the claim re-syncs the checkout; marker
+  law re-fires recompile). O2 therefore means running the whole fleet at 0.2.9 or building
+  two claim engines (an O1 variant with a frozen v0.2.9 checkout — the checkout is "never
+  delete / one checkout" law, runbook). O2 is rejected as a shape; O1 is the escape hatch.
+
+**The probe that settles (d)-style residual risk (user leg, commands to run on the re-cut
+branch-built image or after a scratch claim-migration, per R2-D's deployment paths):**
+
+1. Capability lines (seconds): `…/engine/strata --families` → expect `qwen4exp qwen35moe`;
+   `…/engine/strata --geometry` → expect `flash_next` [83][95].
+2. Load-smoke (the decisive one): start the ornith run config against the re-cut engine on a
+   scratch port and watch the load phase for the two refusal strings
+   (`activation larger than the pool's buffers`, `cannot load format`/layout-refusal class):
+   `strata serve --config /profile/strata-ornith.json --port 8123` (or the --plan form runbook
+   §3.4). A clean "session is up"/READY → W1 cleared; then
+3. Answer-smoke: one `/v1/chat/completions` max_tokens 8 (same shape as the health script) →
+   serves; compare greedy output vs the 0.2.9 carry engine on one fixed prompt (quality
+   parity, [E]-optional but cheap).
+   Cost note: the load pulls the full 122B expert set — pool/arena RAM ~65-70 GiB; run it as
+   the pod's only arena (matrix time-share, or a scratch pod on the RWO claim).
+
+## R3-4. Upstream state on this exact question (fetched 2026-11-11)
+
+- **#3574 unchanged**: closed, state_reason **not_planned**, last human comment = the
+  maintainer's "not in the plan for the next release, but we want to add it later … the
+  report in this thread will help then" (2026-10-22) [94]. No geometry/ornith work landed in
+  0.2.10-0.2.13 releases or the notes around it (search hits are unrelated: #5465 q36
+  flash-attn proposal, #5391 cold-tier scope proposal, #5480 Windows hipMemcpy2D corruption
+  report, #5379 session-file identity, #5507 pack_gguf, #5717 update.sh build-cache) [97].
+- The 0.2.13 "Qwen4 groundwork" (selectable compiled geometries, `--geometry`, per-shape
+  engine downloads) is the upstream **mechanism** for this problem class — it does not add
+  first-class ornith support [95].
+- Therefore: **the carry stays, re-cut** — and RE-WATCH #3574 at every future pin (the
+  patch's own law: drop it the moment upstream ships ornith first-class).
+
+## R3-5. Repo-side re-pin inventory for the bump chunk (law, not research — recorded so the
+plan carries it):
+
+1. Re-cut `carry/ornith-q36.patch` at v0.2.13 (2 hunks preserved; hunk 1 re-expressed per
+   R3-2) [80].
+2. `containers/strata/Dockerfile` verify layer L130: grep `kNativeHBytes = 2048` → **stale by
+   construction** — re-pin to the new ternary shape (e.g. `grep -F '> 2048 ?'` +
+   `grep -F ': 2048;'` on the kNativeHBytes line); L131 `X(12)` still valid [98].
+3. `test_strata_c09_ornith_carry.py` hunk-shape/byte arms re-pin for the new hunks (the
+   exactly-2-hunks law holds); clone↔README pairing rows ride the version bump (R2-B) [98].
+4. `test_strata_c09_ornith_arena.py` L276 law: ornith keeps the claim-compiled exe → the
+   re-cut (not a second binary) is what this law wants; keep [98].
+5. Docs: README carry-patch row + the patch header's "generated as a real diff against the
+   v0.2.9 tree" provenance line → v0.2.13, and re-verify hunk 2's claim "GU_FMTS already
+   instantiates 12 … q36 has no fallback" still holds at the new tag (it does — checked) [92].
+
+## Contradictions (round 3)
+
+- The chunk brief said the family is "flash_next-geometry-compiled … serves the ORNITH pack";
+  the actual mechanism is stronger than expected: ornith never runs Flash-Next-compiled
+  kernels at all — the compiled geometry only sizes the pool constants it shares with the
+  q4exp path. "Geometry mismatch is fatal" (option c) is therefore **not** the right frame
+  for q36; the fatal-mismatch machinery (G4/G5) is q4exp's own contract. Weighed by direct
+  code reading at both tags + the 0.2.9 working control.
+- #5701 (round 2, 0.1.59 degradation) vs the maintainer's same-day non-reproduction on their
+  R9700/Linux/0.1.59 box [96]: reporter is Windows/WDDM/16 GB-card — both stand; it narrows
+  our soak's suspect surface (Linux 32 GB cards at least survived a 124K read in the
+  maintainer's hands [M-upstream-claim, unverified]).
+
+## Reliability notes (round 3)
+
+Strongest: G8's wall arithmetic (1056→1168 vs floor 1024 — pure constants from the file),
+the family-switch unreachability (one `return` statement, read at both tags), hunk-2
+preimage identity. Weakest claim: "nothing else trips" is a **negative over a code set** —
+I enumerated q36's dependency closure by includes + call grep, but a dim constant inside a
+kernel reached through the engine's own launch tables (not by name) could evade the sweep;
+the 0.2.9 control bounds the blast radius (serving today with the same two hunks ⇒ any new
+silent wall would have to arrive inside 0.2.10-13's q36 code). Confidence: 8/10 that the
+re-cut loads+serves; the probe lifts it to 10 for a few minutes of user time. Second-
+weakest: assuming the GGUF's `qwen35moe.*` key set matches G3 exactly at 0.2.13 (it was read
+under the 0.2.9 guard, whose key list is identical at both tags — low drift risk, probe
+settles).
+
+## Open questions (round 3 — on-target only)
+
+- **P1 (user, minutes)**: R3-3's probe trio (`--families` + `--geometry` + ornith load-smoke
+  with the re-cut engine; answer-smoke if load clears) — run on the branch-built image via
+  the workflow_dispatch vehicle or a scratch claim-migration pod. This is the gate BEFORE
+  landing the re-cut patch as law.
+- **P2 (user, soak)**: q36 prompt/decode parity 0.1.55-carry vs 0.1.59-recut on one fixed
+  prompt set (the re-bench already planned; ornith is cheap to fold in, GPU idle window).
+- Unresolvable from sources: whether unsloth's next Ornith re-upload changes the FF/keys
+  (would re-open G3/G8 arithmetic) — watch #3574.
+
+## Sources (round 3; [56]-[79] = round 2 above; [1]-[55] = round 1)
+
+80. Repo: `containers/strata/carry/ornith-q36.patch` (header law text + both hunks; hunk 1 preimage `kNativeHBytes = 1024;` @native_expert.hpp v0.2.9; hunk 2 X(12) both D_FMTS branches). [V]
+81. v0.2.13 `include/strata/core/geometry.hpp` L1-100 — ModelGeometry (runtime struct, defaults = Flash-Next, GGUF keys named per field); `kCompiledGeometry` = header chosen at configure (`-DSTRATA_GEOMETRY` / `-DSTRATA_GEOMETRY_FILE`); "a model file of another shape is refused at load with the metadata key that differs (geometry_unsupported) instead of mis-running". [V]
+82. v0.2.13 `include/strata/artifact/gguf_reader.hpp`:645-665 (`check_architecture_qwen35moe` — 17-key presence/numeric guard + nextn<block + interval≥2, NO compiled-shape pins), :805-846 (`geometry_unsupported` — 19 pins incl. `expert_feed_forward_length`; doc: "only the expert count and the experts per token are free"), :849-858 (`check_architecture`: family branch — Qwen35Moe → key-guard; else q4exp pins). Control @v0.2.9: same structure, `check_architecture` at gguf_reader.hpp:849 routes Qwen35Moe first (grep-verified). [V]
+83. v0.2.13 `src/program/generate.cpp`:3369-3385 — THE FAMILY SWITCH: `#if defined(STRATA_HAVE_QWEN35)` … reads `general.architecture` from `--native`/`--model` shard header "before any of this engine's state exists", `return strata::qwen35::run(argc, argv)`; :3307-3313 `--families` output (qwen4exp qwen35moe when built); :4875-4884 sole caller of `compiled_geometry_mismatch` (q4exp driver, post-switch). [V]
+84. v0.2.13 `cmake/strata_gpu_engine.cmake` L490-513 — q36 static lib linked + `STRATA_HAVE_QWEN35=1` on `strata` for every HIP arch **except gfx906** (#3172/#3271 cuBLAS/warp rationale); `STRATA_Q36_CPU_POOL=1` under `STRATA_NATIVE_EXPERTS`: "the hybrid mode (experts that do not all fit in VRAM): the CPU expert pool on ggml-cpu's arithmetic"; separate `strata-q36` executable. Control @0.2.9: CMakeLists.txt:889/:903 same gate. [V]
+85. v0.2.13 `include/strata/core/family_layout.hpp`:96-108 — `compiled_geometry_mismatch` (family pin + field pins; "n_expert and top-k are run-time sizes (the Coder ships 256 experts), and n_vocab is the embedding's business"). [V]
+86. v0.2.13 `include/strata/kernels/cpu/native_expert.hpp`:17-31 — `native_act_bytes_for(n) = max((n/256)*292, (n/32)*36)`; `kNativeActBytes = max(f(kCompiledGeometry.n_embd), 4096)`; `kNativeHBytes = max(f(kCompiledGeometry.n_ff), 1024)` → flash_next: f(640)=720 → **1024**. [V]
+87. v0.2.13 `src/kernels/cpu/native_expert.cpp`:296-306 — runtime `f.h_bytes = ggml_row_size(vdt_d, n_ff)`; refusal "native experts: activation larger than the pool's buffers" iff act/h bytes exceed the compiled constants. Ornith: h=Q8_K(1024)=1168 > 1024 FAIL; act=Q8_K(3072)=3504 ≤ 4096 PASS (patch header's own census [80]). [V]
+88. v0.2.13 `src/qwen35/q36_engine.cu` — `grep kCompiledGeometry` = 0 refs; :2973 `C::native_fmt(gu, d, g.n_embd, g.n_ff …)` (runtime → W1 reachable in the q36 path) + :2974-2976 pack-offset self-check "the CPU and GPU expert layouts differ"; :1374-1377 `MMQ::built/supported/fits` capability gate + `STRATA_Q36_NO_MMQ`; :1165 `kVerify = 8` (own windows); :151 comment-only mention of `native_moe_combine` (no call); `HD=256`, `S=128` constants. [V]
+89. `kCompiledGeometry` file-set diff: 15 files @v0.2.9 → 33 @v0.2.13; the additions (geometries/*, family_layout, geometry_checks, native_expert.hpp, ngram.hpp, qsa.hpp, moe_fused.hpp, remote_experts.cpp, verify.cpp:930, native_moe.cu:35 `KU=n_expert_used` static, gdn_chunk.cu, prefill kernels/cu, generate.cpp) are q4exp-side except `fused_gdn.cu`'s single pin (ssm_state_size==128 — shared by the q36 family per model_family.hpp). [V]
+90. v0.2.13 `src/core/expert_source.cpp`:5885-5900 — ArenaExpertSource geometry guard (`lay.n_layers/n_expert` vs driver runtime g; pack-vs-itself consistency), from_gguf native branch (`check_experts_gguf` tensor census before allocation). [V]
+91. v0.2.13 `include/strata/artifact/model_family.hpp` — families (`Qwen35Moe = "Qwen3.6-35B-A3B (Unsloth's MTP GGUFs): plain pre-norm residual, dense attention, nextn MTP block"`; same GDN/head dims claim in the file header); `model_family_runs` = Qwen4Exp-only (the q4exp driver's guard; unreachable for q36 via the switch [83]). [V]
+92. v0.2.13 `src/kernels/cuda/iq_kernels.cu`:849-859 — GU_FMTS has X(12) both branches; STRATA_D_FMTS lacks 12 in both branches (`STRATA_Q6K_EXPERTS` ON/OFF); preimage comment/context identical to the patch's hunk-2 (offset only). Repo: `fetch_models.sh` L157 compiles `-DSTRATA_Q6K_EXPERTS=ON` → the Q6K branch is the live one. [V]
+93. Pack-format parity: `tools/iq_pack.py` @v0.2.9 vs @v0.2.13 identical on the v3/v4/v5 native_experts.txt header lines (no pack-format drift → existing claim packs load under the new engine). [V]
+94. GitHub API #3574 live fetch (state + comments desc): closed, not_planned, closed 2026-10-26; kirinriki7777-sys 2026-10-21T18:29Z: "I tried Ornith-1.5-122B on the Qwen3.6 engine path (strata-q36). With three small changes it loads and answers; on a 24 GB card in the hybrid mode it is slow…"; Niko1221 2026-10-22T13:07Z: "Ornith 122B is not in the plan for the next release, but we want to add it later…". No activity since round-2's fetch. [V]
+95. v0.2.13 release body (re-mine): "A model of a new shape gets its own engine download (`strata-q4-<shape>`) beside the Strata engine, which stays as it is. The engine reports its shape with `strata --geometry`, and Control checks it against the signed manifest" + Qwen4-groundwork framing. [V]
+96. GitHub API #5701 comments 2026-11-10T23:22Z Niko1221: ran the 124,004-token prompt with the reporter's quant+settings on "our own RX 9070-class card (a 32 GB R9700, Linux, engine 0.1.59)" — did not fail, with own-card cache and with cache/chunk sized to the 16 GB card; requests `STRATA_DBG_NAN=1` capture; cluster's first maintainer touch. [V]
+97. GitHub API search `is:issue geometry created:>2026-11-05`: #5465 (q36 prompt flash attention, open), #5391 (managed cold tier below RAM budget — scope proposal, open), #5480/#5379/#5507/#5717 — no merged ornith/geometry fix upstream. [V]
+98. Repo: `charts/llama-swap/values.yaml` L2391+ ornith profile verbatim (native GGUF, 131072, --prefill auto, --mtp 2, parallel 1, env {}, backend hip, claim exe); `containers/strata/files/fetch_models.sh` L150-166 (hip compile flags, no geometry flag); `containers/strata/Dockerfile` L130-131 (verify greps — `kNativeHBytes = 2048` stale-by-recut, `X(12)` survives); `charts/llama-swap/tests/test_strata_c09_ornith_arena.py` L276 (claim-engine law), `test_strata_c09_ornith_carry.py` (hunk-shape arms), `test_strata_cf141_envelope.py` L111/L286-290 (ornith parallel-1 negative pins — Q9 read = flash-next rungs only). [R/V]

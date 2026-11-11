@@ -114,19 +114,21 @@ def test_c07_chart_side_sessions_mkdir_leaves_with_the_script():
 
 @helm
 def test_c07_strix_packaged_engine_legs_move_to_the_re_pinned_build():
-    """Chart side of the sanctioned engine re-pins (C07 then C09): the
-    engineProfileStrix exe + lib_dirs carry the CURRENT 0.1.55 halo label,
-    and no retired-era pin (0.1.52, 0.1.54) survives in the strix region
-    outside bump-explaining comments. The claim-compiled primary path is
-    version-free and untouched."""
+    """Chart side of the sanctioned engine re-pins (C07 then C09, and the
+    cf-141 C04 bump): the engineProfileStrix exe + lib_dirs carry the CURRENT
+    packaged halo label, and no retired-era pin (0.1.52, 0.1.54 — and since
+    C04's re-pin law, 0.1.55 too) survives in the strix region outside
+    bump-explaining comments. The claim-compiled primary path is version-free
+    and untouched."""
     text = _values_text()
     region = S.values_region(text, "engineProfileStrix")
-    assert "0.1.55-linux-x86_64-hip-halo" in region, (
-        f"strix profile did not move to the 0.1.55 packaged root:\n{region[:300]}"
+    assert S.CF141_ENGINE_HALO_LABEL in region, (
+        f"strix profile did not move to the {S.CF141_ENGINE_HALO_LABEL} packaged root "
+        "(C04 re-pin not landed): no current label in the strix region"
     )
     bare = [ln for ln in region.splitlines()
-            if re.search(r"0\.1\.5[24]", ln) and not ln.lstrip().startswith("#")]
-    assert not bare, f"retired-era pins (0.1.52/0.1.54) in executable strix lines: {bare}"
+            if re.search(r"0\.1\.5[245]\b", ln) and not ln.lstrip().startswith("#")]
+    assert not bare, f"retired-era pins (0.1.52/0.1.54/0.1.55) in executable strix lines: {bare}"
     primary = S.profile_json(S.render_on()[0], S.PROFILE_PRIMARY_FILE)
     assert primary["exe"] == "/models/strata/Strata/engine/strata", (
         "the claim-compiled primary exe path is version-free — the re-pin must not touch it"

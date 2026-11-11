@@ -4,17 +4,18 @@
 # the claim-compiled exe paths do NOT. Authority: owner Q8 (un-defer), Q13(a)
 # (pin-first, bump gated), Q16 (drafting + STRATA_MMQ_KQ stay present at
 # 0.1.59 with EXPERIMENTAL-flag comments, never settled-intent wording),
-# RESEARCH Round 2 OQ-R2b.5 item 1 / [79].
+# RESEARCH Round 2 OQ-R2b.5 item 1 / [79] and Round 3 (carry re-cut, verdict
+# (a) — its R3-5 re-pin inventory lives in test_strata_c09_ornith_carry.py,
+# the containers README ledger laws there too, and the flipped pre-bump
+# constants in containers/strata/tests/test_dockerfile.py + this suite's
+# test_strata_thin_init.py; TEST_SPEC §9.28/§9.30).
 #
-# Red posture: the version-reading legs (strix root, drafting keys, marker
-# pair, experimental comments) are DESIGNED RED until C04 lands — each names
-# C04 and the exact literal it waits for. The invariance legs (claim-compiled
-# exe version-free, supervisor tag untouched, envelope literals, services
-# clean) are GREEN now and become the tripwires if C04's single commit
-# over-reaches. Landing-round moves by the test session (TEST_SPEC §9.28
-# inventory): the pre-bump constants in test_dockerfile.py /
-# test_strata_c09_ornith_carry.py / test_strata_thin_init.py re-pin at the
-# same gate this wave's capture lands.
+# Red posture: the chart-surface version legs (strix root, drafting keys,
+# Q16 comments) are DESIGNED RED until C04 lands — each names C04 and the
+# exact literal it waits for; the era-chain walk adds the cf141-bump capture
+# red (§9.28-credited). The invariance legs (claim-compiled exe version-free,
+# supervisor tag untouched, envelope literals, services clean) are GREEN now
+# and become the tripwires if C04's single commit over-reaches.
 
 from __future__ import annotations
 
@@ -28,19 +29,6 @@ _ok, _reason = S.env_ready()
 helm = pytest.mark.skipif(not _ok, reason=_reason)
 
 DOCKERFILE = S.CONTAINER_DIR / "Dockerfile"
-IMAGE_README = S.CONTAINER_DIR / "README.md"
-
-# 0.2.9-era digests (containers README ledger today): the bump ledger must
-# show FRESH digests, so "digest copied not re-read" == still these values.
-PRE_BUMP_DIGESTS = (
-    "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39",
-    "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a",
-)
-
-
-def _exec_lines(text: str) -> list[str]:
-    return [ln.strip() for ln in text.splitlines() if ln.strip()
-            and not ln.strip().startswith("#")]
 
 
 def _flavor_tags(dockerfile: str) -> list[str]:
@@ -106,72 +94,11 @@ def test_cf141_c04_q16_experimental_comments_in_values_source():
             pytest.fail(f"values carries settled-intent wording (Q16 forbids): {ln.strip()[:90]!r}")
 
 
-def test_cf141_c04_checkout_marker_moves_to_the_0213_pair():
-    """C04: `fetch_models.sh` L74-75 marker literals become
-    `.checkout-0.2.13-carry1` / `0.2.13-carry-1` — content-compared, so the
-    first boot on merged main re-fires the claim migration (the recompile
-    lands the new engine at the SAME version-free path; the exe legs do not
-    move). The version-free migration laws stay pinned by
-    test_strata_c09_ornith_carry.py and must survive the string flip."""
-    problems = S.marker_pair_violations(S.read(S.FETCH_SH, "C04 moves the marker literals"))
-    assert not problems, ("cf-141 C04 marker pair not landed:\n" + "\n".join(problems))
-
-
-def test_cf141_c04_ledger_pair_fresh_digests_and_engine_proof():
-    """C04 AC2 offline shape (the digests themselves are live re-reads at the
-    landing round — pin STRUCTURE, not the network): the containers README
-    pairs BOTH 0.2.13 flavor tags with distinct 64-hex digests, records the
-    re-read method + date, and names the `com.strata.engine` label with the
-    0.1.59 proof; the 0.2.9 digest pair must not survive as the current
-    rows (the copied-not-re-read class)."""
-    readme = S.read(IMAGE_README, "C04's ledger-law move")
-    for tag in S.CF141_FROM_TAGS:
-        assert tag in readme, f"README never names the bumped flavor tag {tag} — C04 not landed"
-        idx = readme.index(tag)
-        window = readme[max(0, idx - 200): idx + 700]
-        digests = set(re.findall(r"sha256:[0-9a-f]{64}", window))
-        assert digests, f"{tag}: no 64-hex digest paired with it in the ledger window"
-        assert not any(d in PRE_BUMP_DIGESTS for d in digests) or len(digests) > 1, (
-            f"{tag}: the ledger still carries the 0.2.9 digest pair — a copied-not-re-read digest"
-        )
-    assert re.search(r"com\.strata\.engine[^\n]{0,200}" + re.escape(S.CF141_ENGINE_VERSION)
-                     + r"|" + re.escape(S.CF141_ENGINE_VERSION) + r"[^\n]{0,200}com\.strata\.engine",
-                     readme, re.S), "no com.strata.engine 0.1.59 label proof recorded"
-    assert re.search(r"(anonymous token|manifest HEAD)[^\n]{0,200}\d{4}-\d{2}-\d{2}"
-                     r"|\d{4}-\d{2}-\d{2}[^\n]{0,200}(re-read|re-read)", readme), \
-        "the ledger records no dated re-read method for the new pair"
-
-
-def test_cf141_c04_clone_and_dockerfile_labels_at_the_pair():
-    """C04 ledger law inside the Dockerfile: BOTH FROM tags == 0.2.13 pair
-    (a half-moved pair reddens — the two-stage image would carry two apps),
-    the clone is v0.2.13, both engine label dirs are 0.1.59, and no :0.2.9
-    reference survives in an executable line."""
-    dockerfile = S.read(DOCKERFILE, "C04's FROM/clone/label literals")
-    problems = S.flavor_pair_violations(_flavor_tags(dockerfile))
-    clones = re.findall(r"git clone[^\n&;]*--branch\s+(\S+)", dockerfile)
-    if not (clones and all(c == S.CF141_CLONE_TAG for c in clones)):
-        problems.append(f"clone tags {clones}, want v0.2.13")
-    if not (S.CF141_ENGINE_RX9070_LABEL in dockerfile and S.CF141_ENGINE_HALO_LABEL in dockerfile):
-        problems.append("the engine COPY/verify label dirs are not both at 0.1.59")
-    stale = [ln for ln in _exec_lines(dockerfile) if re.search(r"strata:0\.2\.9|0\.1\.55-linux", ln)]
-    if stale:
-        problems.append(f"pre-bump literals in executable lines: {stale[:3]}")
-    assert not problems, ("cf-141 C04 Dockerfile literals not at the bump:\n" + "\n".join(problems))
-
-
-def test_cf141_c04_q14_containers_readme_doc_truth():
-    """C04's folded Q14 spots (owner round-3, same-PR files): the containers
-    README builder-base row states alpine 3.24 (the Dockerfile truth), and
-    the cgroup sentence states the shipped 110Gi, not the stale 72Gi."""
-    readme = S.read(IMAGE_README, "C04 folds the two containers-README doc-truth fixes")
-    assert "alpine:3.22" not in readme, "the stale alpine:3.22 claim survives — R2-E7 spot 1, C04"
-    assert "alpine:3.24" in readme, "the builder-base row does not state the Dockerfile's 3.24 truth"
-    assert "72Gi" not in readme, "the stale 'caps the container at 72Gi' claim survives — R2-E7 spot 2, C04"
-    assert "110Gi" in readme, "the cgroup sentence must state the shipped 110Gi"
-
-
 # --- invariance legs: green now, the C04 tripwires ------------------------------
+# (The moved-out version legs live where their surfaces live: marker pair +
+# host-prep one-fact and the README ledger/Q14 laws in
+# test_strata_c09_ornith_carry.py; Dockerfile/README/clone literal flips in
+# the containers suite's re-pinned constants — TEST_SPEC §9.30.)
 
 
 @helm

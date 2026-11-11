@@ -48,14 +48,38 @@ CARRY_PATCH = S.CONTAINER_DIR / "carry" / "ornith-q36.patch"
 DOCKERFILE = S.CONTAINER_DIR / "Dockerfile"
 IMAGE_README = S.CONTAINER_DIR / "README.md"
 
-# The two hunks R5 verified (§Q3): constants-only, no new kernels. Values are
-# byte-exact law; only context lines may drift with v0.2.9 line numbers.
+# The two hunks R5 verified (§Q3), RE-CUT at v0.2.13 per RESEARCH Round 3
+# (verdict (a) with the re-cut inventory R3-5): constants-only, no new kernels.
+# Context lines and offsets may drift with the tag; the PRE/POST byte anchors
+# below are law — they are the real d2f09647 preimages (live reads
+# 2026-11-11) and the exact postimage lines the re-cut patch must carry.
 PATCH_HUNK_TARGETS = {
     "include/strata/kernels/cpu/native_expert.hpp",
     "src/kernels/cuda/iq_kernels.cu",
 }
-# R5 [C2] — verbatim GHCR pair for 0.2.9, chained re-verification (R3 law).
-TAG_DIGEST_029 = {
+# Hunk 1, v0.2.13 shape (R3-2): the constant became a geometry ternary, so the
+# re-cut is the ternary's floor — both 1024 occurrences on the kNativeHBytes
+# expression line become 2048; the `kNativeHBytes =` declaration line itself
+# survives as untouched context. One line of substance.
+HUNK1_PREIMAGE_TERNARY = ("    native_act_bytes_for(strata::core::kCompiledGeometry.n_ff)"
+                          " > 1024 ? native_act_bytes_for(strata::core::kCompiledGeometry.n_ff) : 1024;")
+HUNK1_POSTIMAGE_TERNARY = HUNK1_PREIMAGE_TERNARY.replace("1024", "2048")
+HUNK1_DECL_CONTEXT = "inline constexpr size_t kNativeHBytes ="
+# Hunk 2 (R3-2/R3 [92]): unchanged — the D_FMTS preimages are byte-identical
+# to the v0.2.9 ones (offset only), both branches gain exactly one X(12) after
+# X(8); the GU_FMTS context already instantiates 12 for gate/up.
+HUNK2_PREIMAGE_D_Q6K = ("#define STRATA_D_FMTS(X) X(20) X(23) X(42) X(7) X(6) X(2)"
+                        " X(3) X(8) X(13) X(14) X(40) X(144) X(146) X(147) X(148) X(149)")
+HUNK2_POSTIMAGE_D_Q6K = HUNK2_PREIMAGE_D_Q6K.replace("X(8) X(13)", "X(8) X(12) X(13)")
+HUNK2_PREIMAGE_D_PLAIN = ("#define STRATA_D_FMTS(X) X(20) X(23) X(42) X(7) X(6) X(2)"
+                          " X(3) X(8) X(13) X(40) X(144) X(146) X(147) X(148) X(149)")
+HUNK2_POSTIMAGE_D_PLAIN = HUNK2_PREIMAGE_D_PLAIN.replace("X(8) X(13)", "X(8) X(12) X(13)")
+GU_FMTS_Q6K_LINE = ("#define STRATA_GU_FMTS(X) X(16) X(17) X(18) X(21) X(22) X(23) X(29)"
+                    " X(42) X(12) X(13) X(6) X(2) X(3) X(8) X(40) X(144) X(145) X(147) X(148) X(149)")
+# The 0.2.9 pair, RETIRED by C04's ledger — kept as the copied-not-re-read
+# guard (a "fresh" 0.2.13 row carrying one of these digests is the failure
+# class R2-B's live re-read law exists to catch).
+RETIRED_TAG_DIGEST = {
     "0.2.9-rocm-gfx120x": "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39",
     "0.2.9-rocm-gfx1151": "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a",
 }
@@ -102,29 +126,113 @@ def test_c09_carry_patch_exists_with_exactly_two_hunks():
     assert targets == PATCH_HUNK_TARGETS, f"patch targets {sorted(targets)}, want the two R5 files"
 
 
-def test_c09_hunk1_bumps_kNativeHBytes_from_1024_to_2048():
-    """Ornith's FF-1024 down activation is Q8_K = 1,168 B > the 1024 B pool
-    buffer — the pool constant moves, byte-exact (native_expert.cpp L219 class
-    failure; the WHY comment must ride)."""
-    text = S.read(CARRY_PATCH, "hunk 1 of the carry")
-    hunk1 = text.split("src/kernels/cuda/iq_kernels.cu")[0]
-    assert re.search(r"^-\+?[^\n]*kNativeHBytes\s*=\s*1024", hunk1, re.M) or \
-        re.search(r"^-[^\n]*kNativeHBytes\s*=\s*1024", hunk1, re.M), \
-        "no removal of the 1024 constant in the native_expert hunk"
-    assert re.search(r"^\+[^\n]*kNativeHBytes\s*=\s*2048", hunk1, re.M), \
-        "no kNativeHBytes = 2048 addition — the pool would still refuse ornith's 1,168 B activation"
+def _hunk_section(text: str, start_marker: str, end_marker: str | None) -> str:
+    start = text.index(start_marker)
+    end = text.index(end_marker) if end_marker and end_marker in text[start:] else len(text)
+    return text[start:end]
+
+
+def _diff_lines(hunk: str, sign: str) -> list[str]:
+    """The hunk's added/removed payload lines, sign stripped (diff bodies are
+    what the byte anchors compare against — headers and context excluded)."""
+    return [ln[1:] for ln in hunk.splitlines() if ln.startswith(sign) and not ln.startswith(sign * 3)]
+
+
+def _hunk1_recut_violations(patch: str) -> list[str]:
+    """Pure law for RESEARCH R3-2's hunk 1: exactly the geometry ternary's
+    floor moves — one removed preimage line, one added 2048 line, the
+    declaration survives as context, the carry comment rides. The v0.2.9
+    single-line form (kNativeHBytes = 2048) must NOT come back: it does not
+    exist at v0.2.13 and a patch that adds it is the pre-tripwire shape."""
+    out = []
+    hunk1 = _hunk_section(patch, "native_expert.hpp", "iq_kernels.cu")
+    minus = _diff_lines(hunk1, "-")
+    plus = _diff_lines(hunk1, "+")
+    if HUNK1_PREIMAGE_TERNARY not in minus:
+        out.append("the removed lines do not include the d2f09647 kNativeHBytes ternary byte-exact")
+    if HUNK1_POSTIMAGE_TERNARY not in plus:
+        out.append("the added lines do not include the ternary with the floor at 2048 in BOTH spots")
+    ternary_minus = [ln for ln in minus if "native_act_bytes_for" in ln]
+    ternary_plus = [ln for ln in plus if "native_act_bytes_for" in ln]
+    if len(ternary_minus) != 1 or len(ternary_plus) != 1:
+        out.append(f"the substance must be ONE line (removed {len(ternary_minus)}, added {len(ternary_plus)})")
+    if HUNK1_DECL_CONTEXT not in hunk1:
+        out.append("the `inline constexpr size_t kNativeHBytes =` line is not carried as context "
+                   "— a one-line constant rewrite is the v0.2.9 shape, stale at v0.2.13")
+    if not any(ln.strip().startswith("//") and "#3574" in ln and "native_act_bytes_for" in ln for ln in plus):
+        out.append("no added comment ties the floor to native_act_bytes_for and cites #3574 (R3-2)")
+    return out
+
+
+def test_c09_hunk1_recut_floors_the_geometry_ternary_at_2048():
+    """RE-CUT LAW (RESEARCH R3, verdict (a)): ornith's FF-1024 down activation
+    is Q8_K = 1,168 B; at v0.2.13 the pool buffer is
+    `native_act_bytes_for(kCompiledGeometry.n_ff)` floored at 1024 —
+    flash_next's n_ff=640 computes 720, under the floor, so ornith still
+    refuses ("activation larger than the pool's buffers"). The carry moves
+    that floor to 2048 and NOTHING else on the line; the act side
+    (Q8_K(3072)=3,504) stays under kNativeActBytes 4096 untouched. Byte
+    anchors are the live v0.2.13 preimage."""
+    text = S.read(CARRY_PATCH, "C04 re-cuts carry/ornith-q36.patch at v0.2.13 (RESEARCH R3)")
+    problems = _hunk1_recut_violations(text)
+    assert not problems, ("cf-141 C04 carry re-cut hunk-1 law unmet:\n" + "\n".join(problems))
+
+
+def _hunk2_violations(patch: str) -> list[str]:
+    """Pure law for hunk 2 (unchanged content, R3 [92]): both branch D_FMTS
+    preimages are the v0.2.13 lines byte-exact, both postimages add X(12) in
+    the same spot, exactly one X(12) addition per branch, and the GU_FMTS
+    context proves gate/up already instantiated 12 (only the down list was
+    short — the r1-finding-1 correction's census stands at the new tag)."""
+    out = []
+    hunk2 = _hunk_section(patch, "iq_kernels.cu", None)
+    minus = _diff_lines(hunk2, "-")
+    plus = _diff_lines(hunk2, "+")
+    for want in (HUNK2_PREIMAGE_D_Q6K, HUNK2_PREIMAGE_D_PLAIN):
+        if want not in minus:
+            out.append(f"removed lines lack the v0.2.13 preimage byte-exact: {want[:60]}…")
+    for want in (HUNK2_POSTIMAGE_D_Q6K, HUNK2_POSTIMAGE_D_PLAIN):
+        if want not in plus:
+            out.append(f"added lines lack the X(12) postimage byte-exact: {want[:60]}…")
+    if sum(1 for ln in plus if "X(12)" in ln and "STRATA_D_FMTS" in ln) != 2:
+        out.append("exactly one X(12) addition per D_FMTS branch is the law (2 total)")
+    if GU_FMTS_Q6K_LINE not in hunk2:
+        out.append("the GU_FMTS context (which already instantiates 12) left the hunk — "
+                   "the 'only the down list is short' census must stay checkable")
+    return out
 
 
 def test_c09_hunk2_adds_X12_to_STRATA_D_FMTS():
     """UD-Q4_K_XL's routed expert downs need Q4_K (fmt 12 — X(12))
     down-supported (checkpoint census: routed downs ∈ {Q4_K(12), Q5_K(13)},
-    no Q3_K anywhere — the r1-finding-1 correction the landing commit carried;
-    the first wording said Q3_K_M). GU already instantiates 12 for gate/up —
-    only the down list is short: exactly ONE addition per branch."""
+    no Q3_K anywhere — the r1-finding-1 correction the landing commit
+    carried). GU already instantiates 12 for gate/up — only the down list is
+    short: exactly ONE addition per branch. Unchanged by C04's re-cut (the
+    preimage survived byte-identical at :853, RESEARCH [92]) — now asserted
+    byte-exact against both tags' lines, not just by pattern."""
     text = S.read(CARRY_PATCH, "hunk 2 of the carry")
-    hunk2 = text.split("iq_kernels.cu")[-1]
-    assert re.search(r"STRATA_D_FMTS", hunk2), "the D_FMTS macro left the hunk"
-    assert re.search(r"^\+[^\n]*X\(12\)", hunk2, re.M), "no + line adding X(12) — the D_FMTS gap stays"
+    assert re.search(r"STRATA_D_FMTS", text), "the D_FMTS macro left the patch"
+    problems = _hunk2_violations(text)
+    assert not problems, ("cf-141 C04 carry hunk-2 byte law unmet:\n" + "\n".join(problems))
+
+
+def test_c09_patch_header_is_re_anchored_to_v0213():
+    """R3-5 item 5 (re-pin inventory): the header's provenance sentence claims
+    the tree the diff was generated against — after the re-cut that is
+    v0.2.13, and the v0.2.9 claim survives only where a line also names the
+    re-cut tag. A header still asserting "generated as a real diff against
+    the v0.2.9 tree" unqualified is the stale-provenance class the patch's own
+    law-style comments exist to prevent."""
+    text = S.read(CARRY_PATCH, "header provenance of the re-cut carry")
+    comments = [ln for ln in text.splitlines() if ln.lstrip().startswith("#")]
+    blob = "\n".join(comments)
+    assert "v0.2.13" in blob, "the header never names v0.2.13 — the re-cut's tree is unrecorded"
+    stale = [ln.strip()[:90] for ln in comments
+             if re.search(r"generated as a real diff|diff against the v0\.2\.9 tree", ln)
+             and "v0.2.13" not in ln]
+    assert not stale, f"v0.2.9-generation claim survives unqualified: {stale}"
+    assert "d2f0964" in blob or "2 hunks" in blob or "Two constants-only hunks" in blob, (
+        "the header must keep the re-cut auditable (commit anchor or the 2-hunk statement)")
 
 
 def test_c09_each_hunk_is_commented_with_3574_and_the_rewatch_trigger():
@@ -166,30 +274,54 @@ def test_c09_verify_layer_reproves_the_carry_at_build_time():
     """CI does NOT compile HIP code — these greps are the ONLY pre-merge proof
     the patched tree is what compiled (the C01 curl-law class: fail the BUILD,
     not the boot). `--check --reverse` against the applied tree proves the
-    patch applied EXACTLY once with no upstream drift swallowed."""
+    patch applied EXACTLY once with no upstream drift swallowed. C04's re-cut
+    moved the constant into a geometry ternary, so the hunk-1 grep law
+    re-anchors with it (RESEARCH R3-5.2): it must prove the 2048 floor ON the
+    ternary (the hpp path named, or the '> 2048 ?' + ': 2048;' leg pair), and
+    the retired `kNativeHBytes = 2048` single-line grep must be gone — it
+    greps a line that no longer exists, so it would pass a tree that kept
+    1024. The X(12) grep (hunk 2) survives unchanged [R3-5.2]."""
     blob = "\n".join(m.group(1) for m in re.finditer(r"^RUN(.*)$", _dockerfile(), re.M | re.S))
     assert re.search(r"git\s+apply\s+--check\s+--reverse[^\n]*ornith-q36\.patch", blob), (
         "no git apply --check --reverse of the carry over the applied tree"
     )
-    assert re.search(r"grep[^\n]*kNativeHBytes[^\n]*2048", blob), (
-        "no grep assertion for kNativeHBytes = 2048 (native_expert.hpp)"
+    lines = [ln for _, ln in S.body_lines(blob)]
+    h_greps = [ln for ln in lines if "2048" in ln and "grep" in ln]
+    floor_proved = (any("native_expert.hpp" in ln or "kNativeHBytes" in ln for ln in h_greps)
+                    or (any(re.search(r"> 2048 \?", ln) for ln in h_greps)
+                        and any(re.search(r": 2048;", ln) for ln in h_greps)))
+    assert floor_proved, (
+        "no verify grep ties the pool floor to 2048 at the v0.2.13 ternary shape "
+        "(kNativeHBytes / native_expert.hpp mention, or the '> 2048 ?' + ': 2048;' pair — R3-5.2)"
     )
+    stale_grep = [ln.strip()[:90] for ln in lines if "kNativeHBytes = 2048" in ln]
+    assert not stale_grep, f"the retired single-line grep survives (a line that no longer exists): {stale_grep}"
     assert re.search(r"grep[^\n]*X\(12\)[^\n]*iq_kernels\.cu|grep[^\n]*iq_kernels\.cu[^\n]*X\(12\)", blob), (
         "no grep assertion for X(12) in the D_FMTS line (iq_kernels.cu)"
     )
 
 
-def test_c09_readme_ledger_carries_the_029_digest_pair_and_0155_exe_rows():
-    """README is the recorded home of the tag→digest pairing (ruling (b)) —
-    the [C2] digests verbatim — and the 0.1.55 exe rows the engine bump moves
-    (the containers suite's three-surface arm pairs them; this arm pins the
-    digest VALUES themselves, which only the README carries)."""
+def test_c09_readme_ledger_carries_the_0213_digest_pair_and_0159_exe_rows():
+    """README is the recorded home of the tag→digest pairing (ruling (b)).
+    C04's re-anchor: the ledger VALUES are live re-reads at the landing round
+    (the arm pins SHAPE — bumped tag, fresh 64-hex digest, dated re-read,
+    com.strata.engine 0.1.59 proof — plus the retired-pair guard that catches
+    a copied-not-re-read digest). The 0.1.55 exe rows move to 0.1.59 with the
+    bump, and the folded Q14 doc-truth spots (owner round-3, same-PR files)
+    state alpine 3.24 and the shipped 110Gi."""
     readme = _image_readme()
-    for tag, digest in TAG_DIGEST_029.items():
-        assert tag in readme, f"README never names the 0.2.9 flavor tag {tag}"
-        assert digest in readme, f"README never records the [C2] digest {digest[:19]}… for {tag}"
-    for label in ("0.1.55-linux-x86_64-hip-rx9070", "0.1.55-linux-x86_64-hip-halo"):
-        assert label in readme, f"README exe ledger lacks the 0.1.55 row {label}"
+    problems = S.ledger_pair_violations(readme, list(S.CF141_FROM_TAGS),
+                                        list(RETIRED_TAG_DIGEST.values()), S.CF141_ENGINE_VERSION)
+    for label in (S.CF141_ENGINE_RX9070_LABEL, S.CF141_ENGINE_HALO_LABEL):
+        if label not in readme:
+            problems.append(f"README exe ledger lacks the {label} row")
+    if "0.1.55-linux-x86_64-hip" in readme:
+        problems.append("the retired 0.1.55 exe ledger rows survived the bump")
+    if "alpine:3.22" in readme:
+        problems.append("the stale 'alpine:3.22' builder-base claim survived (Q14 fold, R2-E7)")
+    if "72Gi" in readme:
+        problems.append("the stale 'caps the container at 72Gi' sentence survived (Q14 fold, R2-E7)")
+    assert not problems, ("cf-141 C04 README ledger/doc truth unsatisfied:\n" + "\n".join(problems))
 
 
 # --- THE claim-checkout migration step (the landmine) -------------------------
@@ -200,17 +332,40 @@ def test_c09_migration_step_is_marker_keyed_and_rearming():
     re-fire on a bump — the name carries version+carryN precisely so the
     COMPARISON re-arms the step at the next bump). Variable-extracted like the
     C01 marker law so the guard/write shape can name the marker through a
-    variable, not only inline."""
+    variable, not only inline. The STRUCTURE laws are version-agnostic since
+    cf-141 C04 — the pinned literal pair lives in the marker-pair law below
+    (one home for the version, one home for the mechanism)."""
     text = _driver()
     body = _body()
-    m = re.search(r'^\s*(\w+)\s*=\s*"?[^\n"]*\.checkout-0\.2\.9-carry(\d+)?', text, re.M)
-    assert m, f"no marker assignment carrying .checkout-0.2.9-carryN (want {S.CHECKOUT_MARKER}) — the copy-once claim never refreshes"
+    m = re.search(r'^\s*(\w+)\s*=\s*"?[^\n"]*\.checkout-\d+\.\d+\.\d+-carry(\d+)?', text, re.M)
+    assert m, f"no marker assignment carrying .checkout-<version>-carryN (want {S.CHECKOUT_MARKER}) — the copy-once claim never refreshes"
     var = m.group(1)
     assert m.group(2), "the marker name lacks the carry-N counter — future carries must re-fire it"
     guards = [ln for _, ln in body
               if re.search(r"(cat|cmp|diff)[^\n]*\$?\{?" + var, ln)
               or re.search(r'\[\s*"[^"]*\$\{?' + var, ln)]
     assert guards, "the marker is only existence-tested, never content-compared — bumps would not re-fire"
+
+
+def test_c09_checkout_marker_pair_is_one_fact_driver_and_host_prep():
+    """cf-141 C04: the claim-refresh pair — CHECKOUT_MARKER=/models/strata/
+    .checkout-0.2.13-carry1 + CHECKOUT_MARKER_ID=0.2.13-carry-1 in the driver
+    (content-compared, so first boot after the merged bump re-fires sync →
+    build-hip wipe → recompile → marker; the recompile lands at the
+    version-free claim path, exe legs do NOT move), and the host-prep note's
+    refresh sentence names the SAME marker (the R2-B 'note L239 marker
+    surface' move — a stale marker in the note is an operator following a
+    dead trail)."""
+    problems = S.marker_pair_violations(_driver())
+    note = S.read(S.RUNBOOK_NOTE, "C04 moves the marker surface into the runbook too")
+    current = S.CHECKOUT_MARKER.rsplit("/", 1)[-1]
+    if current not in note:
+        problems.append(f"the host-prep note never names the current marker {current!r}")
+    retired = [ln.strip()[:90] for ln in note.splitlines()
+               if re.search(r"\.checkout-0\.2\.9-carry", ln)]
+    if retired:
+        problems.append(f"retired .checkout-0.2.9-carry1 marker survives in the note: {retired[:2]}")
+    assert not problems, ("cf-141 C04 marker pair/one-fact law unmet:\n" + "\n".join(problems))
 
 
 def test_c09_migration_syncs_image_tree_except_claim_data_state():
@@ -260,7 +415,7 @@ def test_c09_migration_marker_is_written_only_after_a_green_recompile():
     written early makes the half-built engine permanent — crash mid-compile
     must RE-ENTER (engine dir absent ⇒ no serving on a broken binary)."""
     body = _body()
-    m = re.search(r'^\s*(\w+)\s*=\s*"?[^\n"]*\.checkout-0\.2\.9-carry(\d+)?', _driver(), re.M)
+    m = re.search(r'^\s*(\w+)\s*=\s*"?[^\n"]*\.checkout-\d+\.\d+\.\d+-carry(\d+)?', _driver(), re.M)
     assert m, "no marker assignment to order against"
     var = m.group(1)
     guards = [n for n, ln in body
