@@ -3145,3 +3145,52 @@ coordinated text delivered in the test RESULT); capture
 shape design-call), PROVENANCE on the m1 wording; then `test_cf141_*`
 era/runbook legs clear and the gate-1 same-day re-fetch + P1 probe trio
 (RESEARCH R3-3, user leg) stand before ready.
+
+### 9.31 cf-141 C04 landing round — the hunk-1 count repair + the bump-era capture (2026-11-11)
+
+C04's landing round executed against dev r2's UNCOMMITTED tree at HEAD
+`1e20b574c` (tests/** only; no commits, no implementation edits).
+
+- **§9.30's validation_at_fault, repaired mechanically:**
+  `_hunk1_recut_violations` counted EVERY added/removed line containing
+  `native_act_bytes_for` toward the one-line-of-substance law, while its own
+  carry-comment clause requires an added line naming that function — no
+  valid patch could clear both. Fix: the substance count excludes comment
+  payload (`not ln.strip().startswith("//")`); the comment stays
+  law-required. Four-way verification ran the actual patch state and three
+  mutants: real patch GREEN; carry-comment stripped → comment clause RED;
+  a second substantive `+` ternary line → "ONE line" RED; the floor moved in
+  only one of the two spots → byte-exact RED. Law intent survives both
+  directions; the mutation probes stand.
+- **The cf141-bump capture** (the merged era §9.28 shape-devised; §9.30
+  owed): re-verified independently BEFORE capture — primary/orca/q4 delta
+  vs their C03-era tips == exactly `{drafting}` = `"mtp"`; strix ==
+  `{drafting, exe, lib_dirs}` per `CF141_ERA_STEP_FILE` (0.1.59 halo root +
+  the pin, one render state); ornith untouched, no file in the dir; env /
+  args / parallel / caps frozen everywhere; the q36 closed-world check holds.
+  Double render byte-clean (a first back-to-back pair differed at raw-stdout
+  level — reproduced not at all afterward; retried with two further
+  byte-equal pairs + object-equal CM data on every run, recorded in the
+  PROVENANCE rather than smoothed over — the m1-accurate wording). Four
+  canonical files + PROVENANCE (shas re-read off stored bytes, HEAD
+  `1e20b574c` + uncommitted-C04-tree note, closes the cf-141 chain: q4 era
+  3 / orca era 2 / primary+strix era 5 final).
+- **Final map:** charts 466 passed / 9 skipped / 0 FAILED — every leg that
+  was designed-red now passes by name (c09 re-cut five, bump chart legs,
+  era-steps walk, thin_init strix, tuning-runbook shipped-state leg); §9.30's
+  arithmetic (460 pre-round + 5 capture-gated + the 1 repaired c09 arm)
+  lands on 466, the "465" headline was one short of its own formula.
+  Containers 25 passed / 0 failed (the 7 flipped-constant reds cleared by
+  dev r2's Dockerfile/README; the probe arm keeps its teeth). helm lint +
+  template clean; `aislop ci --changes` 0 errors / 0 warnings / 0 fixable.
+- **n1 folded (verified by read, arms green):** the q4 values comment now
+  carries the "NO concurrencyLimit" line (values L2409); README ledger shows
+  the 0.2.13 fresh-digest pair with the 2026-11-11 dated re-read and the
+  com.strata.engine 0.1.59 proof; the halo tether binds the strix fixture to
+  the single 0.1.59 root the re-cut Dockerfile names.
+
+The cf-141 era chain is CLOSED. What remains is exactly what the plan always
+kept outside the offline claim: C04 review, the gate-1 same-day re-fetch
+refresh + P1 probe trio + soak watch (user legs), and the owner's PR-2
+landing. A future carry drop (upstream ships q36 first-class), any scale-back
+PR, or any further bump adds a step; nobody edits an era in place.

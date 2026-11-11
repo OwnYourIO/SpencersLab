@@ -152,8 +152,14 @@ def _hunk1_recut_violations(patch: str) -> list[str]:
         out.append("the removed lines do not include the d2f09647 kNativeHBytes ternary byte-exact")
     if HUNK1_POSTIMAGE_TERNARY not in plus:
         out.append("the added lines do not include the ternary with the floor at 2048 in BOTH spots")
-    ternary_minus = [ln for ln in minus if "native_act_bytes_for" in ln]
-    ternary_plus = [ln for ln in plus if "native_act_bytes_for" in ln]
+    # Comment payload is law-required by the carry-comment clause below, so it
+    # must not feed the one-line-of-substance count (a line that names the
+    # function in prose is not a second substantive change — C04 landing
+    # round's mechanical fix to this clause).
+    ternary_minus = [ln for ln in minus
+                     if "native_act_bytes_for" in ln and not ln.strip().startswith("//")]
+    ternary_plus = [ln for ln in plus
+                    if "native_act_bytes_for" in ln and not ln.strip().startswith("//")]
     if len(ternary_minus) != 1 or len(ternary_plus) != 1:
         out.append(f"the substance must be ONE line (removed {len(ternary_minus)}, added {len(ternary_plus)})")
     if HUNK1_DECL_CONTEXT not in hunk1:

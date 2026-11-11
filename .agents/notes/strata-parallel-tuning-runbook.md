@@ -30,7 +30,7 @@ rendered echo).
 | 2026-11-10/11 | ruling Q12 | the U3-v2 cgroup-detection user leg is declined — not run in this ticket (see §3's standing note) |
 | 2026-11-10/11 | approval Q17 | plan approved, option (a) stands: crash-and-scale-back at the pin with per-rung boot-read gates and pre-written revert lines |
 | 2026-11-11 | shipped (PR-1, C03) | per-rung parallel 8/8/8/8/1 (primary, strix, orca, q4 raised; ornith stays 1 by its surface law); primary conv 16384 + `STRATA_PLE_AUTO_RAM=0` (row-H trio); the §6 ladder rows are the live shipped state, boot-read evidence fills from the owner's post-merge runs |
-| pending C04 | shipped row (will flip) | Strata 0.2.13 / engine 0.1.59 via merge→CI `:main` (PR-2), gated by §4 gates 1–5 |
+| 2026-11-11 | shipped (PR-2, C04) | Strata 0.2.13 / engine 0.1.59 on the cf-141 branch in ONE ledger commit set: Dockerfile FROM pair + clone `v0.2.13` + 0.1.59 label dirs, README ledger with digests re-read 2026-11-11 (anonymous token + manifest HEAD), marker pair `.checkout-0.2.13-carry1`, carry patch re-cut at d2f0964 (RESEARCH R3 verdict (a)), drafting pins ×4 (Q16 experimental). Reaches the node only via merge→CI `:main` + the marker-keyed claim migration, then §3 U1-v2 and §4's soak watch with the binding stop condition — the on-target verdict is the bump's "done", not this row |
 
 Pointer: the bump-evaluation plan `.agents/plans/2026-11-10-dep-strata-engine-0213-eval.md`
 is **superseded-as-executed-by-AD-141** at its gate 6 — the owner un-deferred
@@ -121,11 +121,26 @@ compliance, not failure. Gate 1 and gate 2's digest re-reads are agent-capable
 reads (GitHub API; GHCR anonymous token + manifest HEAD — no daemon).
 
 Gate 1 — same-day crash-cluster re-fetch (must be re-run the day C04 lands
-ready; the cluster churns daily). Last fetch 2026-11-10: all open,
-zero maintainer replies; **0.1.59 confirmed in the failing set** (#5559 and
-#5635 reporter updates). The eval's "0.1.57 clean" premise is dead (the twin-box
-reporter corrected it [74]); its "#5317/#5341" citations correct to **#5327**
-(PR #5531, merged 2026-11-09 [68]).
+ready; the cluster churns daily). Last fetch 2026-11-11 (ready-day; second pass
+at commit-set assembly): all eight issues still open; the crash classes keep the
+zero maintainer-reply posture (#5559/#5608/#5635/#5558/#5564/#5629 comment
+authors are reporter-only).
+**0.1.59 confirmed in the failing set** (#5559 and #5635 reporter updates,
+unchanged). #5701 carries the cluster's first maintainer touch (Niko1221,
+2026-11-10 23:22Z): a reproduction request — their own run of the reporter's
+124K-token shape on a 32 GB R9700, Linux, engine 0.1.59 did not fail; not a
+"do not upgrade", no fix named. #5614 gained a reporter cross-reference to the
+same MES `REMOVE_QUEUE` wedge seen outside Strata on a single R9700 (cold-cache
+start, external project) — corroboration of the class, not a new Strata crash.
+New gfx1201 reports since 2026-11-10: none in the crash class — #5762
+(2026-11-11) is a benchmark, not a regression: DFlash2 does not prompt-stall
+on the R9700 at 0.1.59.1 (our rungs pin MTP; the 0.2.13 Known-problems DFlash2
+line stands as upstream wrote it). No release names a cluster fix; v0.2.13
+(2026-11-09) is still the newest — the candidate is not re-ordered. The eval's
+"0.1.57 clean" premise is dead (the twin-box reporter corrected it [74]); its
+"#5317/#5341" citations correct to **#5327** (PR #5531, merged 2026-11-09
+[68]). Ready-day verdict: NO deterioration; the soak's binding stop condition
+(gate 6's paragraph below) still governs after merge.
 
 | issue | class | engine-0.1.59 evidence |
 | --- | --- | --- |

@@ -71,8 +71,8 @@ SRC=/models/strata/Strata
 # file: the ~290 GB of provisioning state this step must survive; deleting
 # $SRC would re-download and re-pack all of it. An allowlist of source dirs
 # was tried first and went stale the moment upstream added a build input.
-CHECKOUT_MARKER=/models/strata/.checkout-0.2.9-carry1
-CHECKOUT_MARKER_ID=0.2.9-carry-1
+CHECKOUT_MARKER=/models/strata/.checkout-0.2.13-carry1
+CHECKOUT_MARKER_ID=0.2.13-carry-1
 if [ -d "$SRC" ] && [ "$( [ -f "$CHECKOUT_MARKER" ] && cat "$CHECKOUT_MARKER" )" != "$CHECKOUT_MARKER_ID" ]; then
   echo "model-fetch: the claim checkout predates the image - syncing sources (the engine recompiles below)"
   # Enumerate the IMAGE tree and sync everything except the claim's closed data

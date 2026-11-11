@@ -211,6 +211,10 @@
       "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
       "handoffs": [
         {
+          "at": "2026-11-11 test round", "role": "agent-test (ses_e383ce02fffeb7oMcZ5bUV1MR7 continued)", "commit": "1e20b574c",
+          "result": "DONE — C04 contracts landed: c09 re-cut byte fixtures at d2f09647 (hunk1 one-line floor law 1024→2048, 2-hunk law kept, hunk2 proved byte-identical both tags), §9.28 by-name constant flips (0.2.13/0.1.59, STALE sets, four-surface labels, marker pair, CHECKOUT_MARKER/era), digest slots as live-re-read OBLIGATION arms (freshness shape, no remembered values), merged cf141-bump era per-file step sets + halo tether, C03 carry m1/m2 done + n1 line text delivered for the dev brief, TEST_SPEC §9.30. Designed-red map: charts 455P/9S/11F + containers 18P/7F, all naming un-landed C04 literals."
+        },
+        {
           "at": "2026-11-11 dev r1", "role": "agent-dev-local",
           "result": "NEEDS_INFO (chunk's own branch, tree clean, zero edits): Gate 1 PASS (table recorded — runbook gate-row text delivered; #5701 first maintainer reply is a repro request whose own 0.1.59 run did not fail; no fix named; no new gfx1201 class ⇒ no deterioration; cluster still 0.1.59-in-failing-set for #5559/#5635). Carry tripwire FIRED: hunk-1 preimage gone at v0.2.13 (kNativeHBytes now compile-time geometry expr), hunk 2 byte-clean; control clean at v0.2.9 ⇒ drift real. Held inventory §3 complete (FROM pair, clone tag, labels, markers, README ledger + Q14 folds, drafting×4 Q16 comments, strix 0.1.59 root); digest re-reads deferred to landing round (by-design). C03 carry m1/m2/n1 delivered verbatim for the landing round. Geometry-load question raised."
         },

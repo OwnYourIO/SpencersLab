@@ -91,8 +91,8 @@ the pod, no Authorization header anywhere in the chain.
 | Surface | Value |
 |---|---|
 | serve CLI entry (what the llama-swap `cmd` execs) | `/opt/strata/terminal/bin/strata` |
-| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-rx9070/strata` |
-| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata` |
+| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.59-linux-x86_64-hip-rx9070/strata` |
+| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
 | Weight-staging entrypoint (what the `model-fetch` init execs) | `/opt/strata/bin/fetch_models.sh` — exec form so an image without the baked driver fails at container start; sources `/opt/strata/bin/byte_pins.env` and calls `/opt/strata/bin/hf_fetch.py`. The logic lives in `containers/strata/files/` and is build-verified; this chart states intent + the env contract (`STRATA_QUANTS`, `STRATA_MODEL_<TOK>` scalars, the gated rung's `HF_TOKEN` secretKeyRef on that init only) |
 
@@ -169,7 +169,8 @@ them as hypotheses until that output is read on this node.
 **Perf expectations — cite the epoch, not just the number.** The
 STRIX_HALO History row of 1,265 prompt / 59.1 decode tok/s @8K is
 engine-0.1.40-era (measured with no §5 env switches); the engine packaged in
-the image is 0.1.55-era (the flavor pin's engine package — the primary arena
+the image is 0.1.59-era (cf-141 C04's flavor-pin bump — the flavor pin's engine
+package; the primary arena
 runs whatever engine setup compiled into the claim checkout, which moves when
 the driver's marker-keyed migration recompiles it on first boot after a pin
 bump). The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749

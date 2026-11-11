@@ -1769,6 +1769,15 @@ strata:
         # stays forbidden (the 2026-10-29 OOM hazard law): env form only.
         # Revert = delete this entry (back to env: {}).
         STRATA_PLE_AUTO_RAM: "0"
+      # 0.2.13 runs drafting.apply() unconditionally on every serve start
+      # [79]; this key states the resolution explicitly — MTP is what Auto
+      # lands on gfx1201 (0.2.12 Auto→MTP, parallel>=2, no DFlash2 pack on
+      # the claim; the IQ3_S pack is not an MMQ-flip pack, the drafter is
+      # the staged mtp/rt runtime below). EXPERIMENTAL at the new engine per
+      # owner Q16: a pin, not settled intent. On-target check: the startup
+      # `[strata] drafting:` line (tuning runbook §3). Revert = delete this
+      # entry.
+      drafting: mtp
       # setup's own choices, kept verbatim: engine-relative cwd and the
       # progress log on the claim (the --plan-gate and unload-timing
       # evidence trail).
@@ -1956,15 +1965,15 @@ strata:
       # what that build's verify step test -x's — a root that drifts from
       # the image is a profile pointing at a path that does not exist).
       #
-      # The engine package version is the IMAGE pin, not a knob: the 0.2.9
-      # flavor bump (cf-86 C09) is what makes this dir 0.1.55, because that
-      # release's engine packages carry #4708 (the q36 warm-up no longer
-      # writes past the KV cache) and the chunked DeltaNet prompt kernels
-      # default-on for all-gfx12 Radeon (+3.5-6.1 % prompts on our card
-      # class), on top of what 0.2.8 already brought (#4518 conv cache vs the
-      # locked PLE table, #4051 engine memory handoff, #4420 idle-slot prefix
-      # keep). The off-unless-you-turn-it-on flag list is unchanged across the
-      # bump, so no profile args move with it. Only THIS profile runs a
+      # The engine package version is the IMAGE pin, not a knob: the 0.2.13
+      # flavor bump (cf-141 C04) is what makes this dir 0.1.59, because that
+      # release's engine packages carry the K-quant MMQ prompt defaults and
+      # the matrix-core QSA scorer on Linux-gfx12, the 8-slot KV-window
+      # walkdown grace, and unconditional drafting shaping [61][62][63][79],
+      # on top of the 0.1.55 era (cf-86 C09: #4708, chunked DeltaNet prompts).
+      # The flag diff 0.2.9→0.2.13 is additions only [65], so no profile args
+      # move with the bump — the one config obligation it does carry is the
+      # drafting pin below. Only THIS profile runs a
       # packaged root: the other arenas exec the engine setup compiles into
       # the claim checkout, and since cf-86 C09 that checkout is refreshed by
       # the image's own marker-keyed migration step on first boot after a bump
@@ -1973,7 +1982,15 @@ strata:
       # That recompiled engine is also the only one carrying the vendored
       # #3574 constants, which is why the ornith arena names it and this
       # packaged halo root cannot serve that rung.
-      exe: /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata
+      exe: /opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo/strata
+      # 0.2.13 runs drafting.apply() unconditionally on every serve start
+      # [79]; this key states the resolution explicitly — MTP is what Auto
+      # lands on gfx1201 (0.2.12 Auto→MTP, parallel>=2, no DFlash2 pack on
+      # the claim). EXPERIMENTAL at the new engine per owner Q16: an explicit
+      # pin, not settled intent. On-target check: the startup
+      # `[strata] drafting:` line (tuning runbook §3). Revert = delete this
+      # entry.
+      drafting: mtp
       # RESEARCH §7 verbatim eight-set — the spellings ARE upstream literals
       # (normalizing case or names silently no-ops the engine's env parsing,
       # AC2's bar). gfx1151 auto-enables much of this from §4; §5 sets them
@@ -2034,7 +2051,7 @@ strata:
       # The matching halo engine root for lib_dirs (the exe's ROCm runtime
       # ships inside it — same packaged-engine VERIFY as the primary).
       lib_dirs:
-        - /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo
+        - /opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo
       backend: hip
       aliases:
         - qwen3.8-flash-next
@@ -2106,6 +2123,14 @@ strata:
       # violate a cross-rung law.
       exe: /models/strata/Strata/engine/strata
       env: {}
+      # 0.2.13 runs drafting.apply() unconditionally on every serve start
+      # [79]; this key states the resolution explicitly — MTP is what Auto
+      # lands on gfx1201 (0.2.12 Auto→MTP, parallel>=2, no DFlash2 pack on
+      # the claim; the drafter is the shared mtp/rt runtime in args below).
+      # EXPERIMENTAL at the new engine per owner Q16: a pin, not settled
+      # intent. On-target check: the startup `[strata] drafting:` line
+      # (tuning runbook §3). Revert = delete this entry.
+      drafting: mtp
       cwd: /models/strata/Strata
       # Own progress log on the claim (the --plan-gate and unload-timing
       # evidence trail for THIS rung).
@@ -2219,16 +2244,27 @@ strata:
       # violate a cross-rung law.
       exe: /models/strata/Strata/engine/strata
       # L2 arm (owner Q1 2026-11-10): K-quant prompt kernels — R9700
-      # +10.3/14.3/16.8% prompts at 4K/8K/32K [36]; opt-in at 0.2.9 via
-      # getenv("STRATA_MMQ_KQ")[0]=='1' [32], hence the quoted "1" — the
-      # int form never fires the switch. Chunk rounding flips near-tie
+      # +10.3/14.3/16.8% prompts at 4K/8K/32K [36]. The opt-in switch is
+      # getenv("STRATA_MMQ_KQ")[0]=='1' [32], hence the quoted "1" — the int
+      # form never fires it. At 0.2.9 that opt-in WAS the lever; since the
+      # cf-141 C04 bump the engine's own Linux-gfx12 default applies it for
+      # UD-Q4-class packs [61][62] (user-set wins; the IQ3_S primary sits
+      # outside that flip), so this pin is intent, not lever — kept present
+      # as an EXPERIMENTAL pin per owner Q16, not settled intent, and its
+      # delta belongs to the bump's attribution sheet, not a separate win
+      # (runbook §4 gate 5: not double-counted). Chunk rounding flips near-tie
       # answers: retain-vs-revert rides the tuning runbook's §7 L2 round on
-      # fleet-agent traffic. At 0.1.59 this is the engine's own Linux-gfx12
-      # default for UD-Q4-class packs [61][62] (user-set wins; the IQ3_S
-      # primary sits outside that flip) — kept present as an experimental
-      # pin per owner Q16, not settled intent. Revert = delete this entry.
+      # fleet-agent traffic. Revert = delete this entry.
       env:
         STRATA_MMQ_KQ: "1"
+      # 0.2.13 runs drafting.apply() unconditionally on every serve start
+      # [79]; this key states the resolution explicitly — MTP is what Auto
+      # lands on gfx1201 (0.2.12 Auto→MTP, parallel>=2, no DFlash2 pack on
+      # the claim; the drafter is the shared mtp/rt runtime in args below).
+      # EXPERIMENTAL at the new engine per owner Q16: a pin, not settled
+      # intent. On-target check: the startup `[strata] drafting:` line
+      # (tuning runbook §3). Revert = delete this entry.
+      drafting: mtp
       cwd: /models/strata/Strata
       # Own progress log on the claim (the on-target --plan gate and the
       # session round-trip gate both read this file).
@@ -2307,10 +2343,11 @@ strata:
         # 1.7-3 min for now.
         - --conversation-cache-mib 16384
         - --conversation-cache-slots 16
-        # Session files are NOT passed: the claim-compiled HIP engine rejects
+        # Session files are NOT passed: the claim-compiled HIP engine rejected
         # --slot-save-path with "unknown argument" (exit 2 before ready,
-        # 2026-11-01 first boot), while the checkout's own DETAILS.md@0.2.9
-        # still documents it — the CUDA trial class the Round-3 caveat predicted
+        # 2026-11-01 first boot, at the 0.2.9 pin), while the checkout's own
+        # DETAILS.md still documents it (re-read at v0.2.13, cf-141 C04) —
+        # the CUDA trial class the Round-3 caveat predicted
         # at DECISIONS, now measured rather than assumed. Revisit only if
         # upstream ships the feature for HIP builds.
         # NEGATIVE PINS — flags that stay OUT of this arm (suite-pinned;
@@ -2369,16 +2406,21 @@ strata:
       # `INFO batch_slots` on this arena) decides what actually serves.
       # Scale-back = single-value `parallel: 4`, only on an explicit
       # in-round owner word (runbook §6 ladder). No cap moves (the 103680
-      # pair stays).
+      # pair stays). NO concurrencyLimit; protections = 110Gi cgroup +
+      # MALLOC_MMAP_THRESHOLD_ (#5697) + the serialized-deep-prompts law —
+      # the a6e493b78 ruling's line, kept through the Q9 raise; the suite
+      # enforces it as test_2026_11_10_q4_carries_no_concurrency_limit.
       parallel: 8
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
     # Ornith-1.5-122B on the engine's Qwen3.6 (qwen35moe) path — a DIFFERENT
     # engine surface from the four flash-next profiles above, so the shape
-    # here follows what setup.py@v0.2.9 GENERATES for the qwen36 family
+    # here follows what setup.py GENERATES for the qwen36 family
     # (install_own_path step 7): `--native <gguf> --max-context N --prefill
-    # auto --mtp N` plus a tokenizer DIRECTORY and no pack. The flash-next
+    # auto --mtp N` plus a tokenizer DIRECTORY and no pack — re-verified at
+    # the v0.2.13 tag (cf-141 C04; the claim was cut against v0.2.9). The
+    # flash-next
     # profile grammar deliberately does NOT appear here:
     # --conversation-cache*/--slot-save-path/--memory-limit-mib and the pack/
     # PLE/expert-cache family are qwen4exp-only flags (engine.hpp's q36 list

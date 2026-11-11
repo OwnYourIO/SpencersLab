@@ -236,7 +236,7 @@ run configs all live INSIDE that checkout while the `.setup-*`/`.pack-*`/
 `.dl-*` markers live outside it: after a deletion the driver re-copies the
 checkout, but the surviving markers suppress every recompile, and each
 claim-compiled arena then fails at serve time. The refresh is the driver's
-own step: a `.checkout-0.2.9-carry1` marker mismatch fires the first-boot
+own step: a `.checkout-0.2.13-carry1` marker mismatch fires the first-boot
 migration (source sync → `build-hip` wipe → recompile → engine install →
 marker only after a green compile).
 

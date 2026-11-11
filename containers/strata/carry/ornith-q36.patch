@@ -1,8 +1,14 @@
-# cf-86 C09 carry — Ornith-1.5-122B on Strata's q36 (qwen35moe) path at tag v0.2.9.
+# cf-86 C09 carry — Ornith-1.5-122B on Strata's q36 (qwen35moe) path; re-cut at
+# tag v0.2.13 (d2f0964) for cf-141 C04, on RESEARCH Round 3's verdict (a): the
+# q36 family switch at generate.cpp routes Ornith around every compiled-geometry
+# pin the 0.2.10-13 releases added, so the SAME two walls as at v0.2.9 are the
+# complete answer — the CPU expert pool's down-activation floor and the
+# down-format instantiation list.
 #
-# Two constants-only hunks, generated as a real diff against the v0.2.9 tree and
-# vendored from the community record on upstream issue #3574 (RESEARCH R5
-# [C6][C10] re-verified every line at the tag).  #3574 is closed not_planned —
+# Two constants-only hunks, regenerated as a real diff against the v0.2.13 tree
+# (d2f0964) — vendored from the community record on upstream issue #3574
+# (RESEARCH R3 [86][87][92] re-verified every line at the new tag; the v0.2.9
+# generation was RESEARCH R5 [C6][C10]).  #3574 is closed not_planned —
 # maintainer, 2026-10-22: "Ornith 122B is not in the plan for the next release,
 # but we want to add it later" — so this carry has no upstream home: RE-WATCH
 # #3574 and #4460, and DROP this file at the next pin bump as soon as upstream
@@ -12,48 +18,59 @@
 # Hunk 1 (#3574, wall 1): the CPU expert pool's activation buffer.  Ornith's FF
 # is 1024, so a routed down activation is Q8_K(1024) = 4 x 292 = 1,168 B, and
 # native_expert.cpp refuses the model ("activation larger than the pool's
-# buffers").  The activation side already fits: Q8_K(3072) = 12 x 292 = 3,504.
+# buffers").  At v0.2.13 the buffer constant became a compiled-geometry
+# ternary, native_act_bytes_for(kCompiledGeometry.n_ff) floored at 1024 — and
+# the claim build compiles the flash_next geometry (n_ff 640, under the floor),
+# so the refusal stands.  The re-cut moves ONLY that floor: 1024 -> 2048 in
+# both spots of the kNativeHBytes line.  The activation side already fits:
+# Q8_K(3072) = 12 x 292 = 3,504, under kNativeActBytes' 4096.
 #
 # Hunk 2 (#3574, wall 2): the down-format instantiation list.  unsloth's
 # UD-Q4_K_XL ladder routes Q4_K (fmt 12) downs (live GGUF tensor census) while
 # GU_FMTS already instantiates 12, so exactly one format is missing per branch;
 # q36 has no fallback for an unsupported expert pair (hard load refusal).  Both
 # branches move because setup.py compiles with -DSTRATA_Q6K_EXPERTS=ON and the
-# bare branch must not drift into a tree that cannot load the model.
+# bare branch must not drift into a tree that cannot load the model.  The
+# preimages are byte-identical to the v0.2.9 hunk's (line offset only —
+# RESEARCH R3 [92] — which is why the 0.2.9-era hunk 2 still passed
+# git apply --check at d2f0964).
 #
 # Applied in the Dockerfile's strata-src stage before .git is removed, and
-# re-proved in the verify layer (git apply --check --reverse + the two constant
-# greps): CI never compiles HIP, so those greps are the only pre-merge evidence
-# that the shipped tree is the patched tree.  A bump that moves these lines
-# fails the BUILD, not the pod.
+# re-proved in the verify layer (git apply --check --reverse + the ternary-floor
+# greps + the X(12) grep): CI never compiles HIP, so those checks are the only
+# pre-merge proof of the patched tree.  A bump that moves these lines fails the
+# BUILD, not the pod.
 
 diff --git a/include/strata/kernels/cpu/native_expert.hpp b/include/strata/kernels/cpu/native_expert.hpp
-index 2d2e43e..fe22b46 100644
+index 0663a79..ae58356 100644
 --- a/include/strata/kernels/cpu/native_expert.hpp
 +++ b/include/strata/kernels/cpu/native_expert.hpp
-@@ -15,8 +15,10 @@ namespace strata::kernels::cpu {
- 
- /// Bytes of the largest quantized activation any native layer uses (2560 values as Q8_K: 10 x 292).
- inline constexpr size_t kNativeActBytes = 4096;
--/// Bytes of the largest quantized down activation (640 values as Q8_0: 20 x 34, or Q8_K 3 x 292).
--inline constexpr size_t kNativeHBytes = 1024;
-+/// Bytes of the largest quantized down activation.  Sized for Flash-Next's FF 640 (Q8_0: 20 x 34,
-+/// or Q8_K 3 x 292); an Ornith-1.5-122B FF 1024 down activation is Q8_K 4 x 292 = 1,168 B, so the
-+/// pool rounds this buffer up to 2 KiB (carry for upstream #3574, closed not_planned).
-+inline constexpr size_t kNativeHBytes = 2048;
+@@ -25,10 +25,12 @@ constexpr size_t native_act_bytes_for(int64_t n) {
+ /// 4096 of the Flash-Next engine, and it grows with the compiled hidden size (4096 values need 4672).
+ inline constexpr size_t kNativeActBytes =
+     native_act_bytes_for(strata::core::kCompiledGeometry.n_embd) > 4096 ? native_act_bytes_for(strata::core::kCompiledGeometry.n_embd) : 4096;
+-/// Bytes of the largest quantized down activation (640 values as Q8_0: 20 x 34, or Q8_K 3 x 292); never below 1024,
+-/// and it grows with the compiled expert width (1024 values as Q8_K need 1168).
++/// Bytes of the largest quantized down activation (640 values as Q8_0: 20 x 34, or Q8_K 3 x 292).
++/// Carry for upstream #3574 (closed not_planned): the native_act_bytes_for floor moves
++/// 1024 -> 2048 so an Ornith-1.5-122B FF-1024 down (Q8_K(1024) = 1,168 B) fits the CPU pool;
++/// it still grows with the compiled expert width above 2048.
+ inline constexpr size_t kNativeHBytes =
+-    native_act_bytes_for(strata::core::kCompiledGeometry.n_ff) > 1024 ? native_act_bytes_for(strata::core::kCompiledGeometry.n_ff) : 1024;
++    native_act_bytes_for(strata::core::kCompiledGeometry.n_ff) > 2048 ? native_act_bytes_for(strata::core::kCompiledGeometry.n_ff) : 2048;
  
  /// Arithmetic fixed for one pool batch. WindowInvariant preserves the legacy singleton result at every width.
  enum class NativeArithmetic { Default, WindowInvariant };
 diff --git a/src/kernels/cuda/iq_kernels.cu b/src/kernels/cuda/iq_kernels.cu
-index 8262f56..97a3088 100644
+index c70ca9e..c0cb0ac 100644
 --- a/src/kernels/cuda/iq_kernels.cu
 +++ b/src/kernels/cuda/iq_kernels.cu
-@@ -846,10 +846,12 @@ STRATA_TQP_FMT(149)
+@@ -851,10 +851,12 @@ STRATA_TQP_FMT(149)
  #define STRATA_GU_FMTS(X) X(16) X(17) X(18) X(21) X(22) X(23) X(29) X(42) X(12) X(13) X(6) X(2) X(3) X(8) X(40) X(144) X(145) X(147) X(148) X(149)
  #endif
  // Q5_K / Q6_K downs: Qwen3.6-35B-A3B (FF 512, whole 256-blocks per row); Flash-Next's FF 640 never selects them
 +// Ornith-1.5-122B (unsloth UD-Q4_K_XL) routes Q4_K (fmt 12) downs, and GU_FMTS already instantiates 12,
-+// so only the down list is short (carry for upstream #3574, closed not_planned; re-verified at v0.2.9).
++// so only the down list is short (carry for upstream #3574, closed not_planned; re-verified at v0.2.13).
  #ifdef STRATA_Q6K_EXPERTS
 -#define STRATA_D_FMTS(X) X(20) X(23) X(42) X(7) X(6) X(2) X(3) X(8) X(13) X(14) X(40) X(144) X(146) X(147) X(148) X(149)
 +#define STRATA_D_FMTS(X) X(20) X(23) X(42) X(7) X(6) X(2) X(3) X(8) X(12) X(13) X(14) X(40) X(144) X(146) X(147) X(148) X(149)
