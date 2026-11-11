@@ -3305,3 +3305,37 @@ the test RESULT for dev byte-compatibility; the README L26 row and the
 comment block move with the step in the same chunk (docs law). The C04
 ledger/era/carry laws and every chart-side arm are untouched — charts suite
 NOT re-run with reason: no chart file moved this round (466P/9S/0F stands).
+**r3 addendum to §9.33 (2026-11-11, dated — not a rewrite).** The
+unconditional sed landed and worked (CI fetched kernel.org URLs) but the
+runner could not CONNECT on :80 — timeout after successful resolution — and
+the https leg of the same suites answered 200 in the serveability probes, so
+the coord ruling (DECISIONS, "C05 r3") moves the replacement endpoint and
+the law followed, one token per surface: old → new expectations
+`test_c05_apt_step_unconditional_repoint_before_single_update` replacement
+URL `http://mirrors.edge.kernel.org` → `https://mirrors.edge.kernel.org`
+with the http form now its OWN violation class ("re-pointed to PLAINTEXT…" —
+a plaintext fetch after the ruling is the regression, distinct from a
+missing re-point); `test_c05_readme_toolchain_row_tracks_the_apt_step`
+mirror literal follows (https required, the bare-http endpoint claim
+forbidden as a row still advertising a filtered path as live; the
+withdrawn-posture and baked-at-build tokens unchanged); the step's
+why-comment law stays scheme-agnostic (it pins the mechanism's why, and
+naming "the https kernel.org mirror" is the validated target wording, not
+an enforced token); fixtures `_C05_TARGET_RUN`/`_C05_GUARDED_RUN` + the
+synthetic target row re-armed at https, and a NEW probes mutant: the
+plaintext-replacement run must produce exactly two PLAINTEXT violations.
+Source-side stanza patterns keep matching the base's http URIs (the sed's
+left side is what Canonical ships; only the RIGHT side is https). Rackspace
+standby is a ruling contingency, not a law; the CA-store pre-verify
+(`/etc/ssl/certs/ca-certificates.crt` in the gfx120x rootfs, layer-0 read)
+is the dev round's evidence obligation before re-landing, and :443
+reachability from the runner is what the next CI run proves — no test
+precedes either. Step-shape, order/count (`C05_BASELINE_STEPS` unmoved) and
+every preservation arm unchanged. Map at r3 authoring: real tree 28 passed /
+2 failed — precisely shape + docs, bodies quoting the two PLAINTEXT host
+regressions and the row's http literal; /tmp scratch carrying the https form
+(comment + sed + row) 30 passed / 0 failed (REPO_ROOT-relative arms wired via
+charts/ + renovate.json symlinks — the §9.33 stale-copy artifact class is now
+pre-empted, not rediscovered); sh -n + dash -n clean on the joined https
+step. Deliverables: the exact target RUN and README row validated green on
+scratch ship in the test RESULT for dev byte-compatibility.

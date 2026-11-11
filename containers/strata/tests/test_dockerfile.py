@@ -703,10 +703,17 @@ def test_cf141_c04_bump_era_probes_redden_the_owning_laws():
 
 
 # ---------------------------------------------------------------------------
-# cf-141 C05 (CORRECTED 2026-11-11) — CI-resilient apt step: the runtime
-# stage re-points BOTH deb822 stanza hosts (Canonical) at the kernel.org
-# mirror UNCONDITIONALLY before its single apt-get update, then installs the
-# same gated set and cleans the lists — still exactly ONE ubuntu apt RUN.
+# cf-141 C05 (CORRECTED 2026-11-11; r3 SAME DAY) — CI-resilient apt step:
+# the runtime stage re-points BOTH deb822 stanza hosts (Canonical) at the
+# kernel.org mirror UNCONDITIONALLY before its single apt-get update, then
+# installs the same gated set and cleans the lists — still exactly ONE ubuntu
+# apt RUN. r3 (coord ruling, DECISIONS): the replacement endpoint is
+# https://mirrors.edge.kernel.org — the landed http:// form fetched correctly
+# in CI but the runner could not CONNECT on :80 (timeout after resolution);
+# https answered 200 in the serveability probes. A plaintext re-point is now
+# the regression this law reddens. Rackspace standby is a ruling
+# contingency, not a law, and the CA-store pre-verify is the dev round's
+# evidence obligation — neither gets a test.
 # The official-first ||-guard shape this section first contracted is WITHDRAWN:
 # CI (main build @ f58334ffe) proved `apt-get update` exits 0 even with every
 # stanza host unresolvable ("... ignored, or old ones used instead"), so a ||
@@ -789,15 +796,25 @@ def _step_order_violations(steps: list[str]) -> list[str]:
 
 
 def _repoint_regex(host: str) -> str:
-    return r"s\|https?://" + re.escape(host) + r"\|https?://" + re.escape(C05_MIRROR_HOST)
+    """r3 (coord 2026-11-11): the replacement URL is exactly the https form —
+    the runner's :80 egress to the mirror timed out after resolution
+    succeeded, and https answered 200. The SOURCE side stays scheme-flexible
+    (the base's deb822 URIs are Canonical http lines the sed must match)."""
+    return (r"s\|https?://" + re.escape(host) + r"\|https://" + re.escape(C05_MIRROR_HOST))
+
+
+def _plaintext_repoint_regex(host: str) -> str:
+    return (r"s\|https?://" + re.escape(host) + r"\|http://" + re.escape(C05_MIRROR_HOST))
 
 
 def _apt_repoint_violations(steps: list[str]) -> list[str]:
-    """The corrected unconditional-form law: inside the ONE ubuntu apt RUN, a
-    sed re-points BOTH deb822 stanza hosts to the kernel.org mirror in
-    /etc/apt/sources.list.d/ubuntu.sources BEFORE the single apt-get update;
-    no ||-guard text anywhere; install + lists-cleanup gated behind the pair
-    with the shipped content unchanged."""
+    """The unconditional-form law (r3 endpoint): inside the ONE ubuntu apt
+    RUN, a sed re-points BOTH deb822 stanza hosts to the HTTPS kernel.org
+    mirror in /etc/apt/sources.list.d/ubuntu.sources BEFORE the single
+    apt-get update; no ||-guard text anywhere; install + lists-cleanup gated
+    behind the pair with the shipped content unchanged. A plaintext
+    (http://mirror) re-point is the r3 regression: the :80 path is exactly
+    what the CI runner proved filtered."""
     apt = _apt_run_step(steps)
     if apt is None:
         return ["the runtime stage must keep exactly ONE ubuntu apt RUN step "
@@ -810,8 +827,13 @@ def _apt_repoint_violations(steps: list[str]) -> list[str]:
     if sed_at < 0:
         out.append("no sed re-point in the apt RUN — the Canonical hosts are still on the fetch path")
     for host in C05_OFFICIAL_HOSTS:
-        if not re.search(_repoint_regex(host), apt):
-            out.append(f"stanza host {host} is not re-pointed to {C05_MIRROR_HOST} in {C05_SOURCES_FILE}")
+        if re.search(_plaintext_repoint_regex(host), apt):
+            out.append(f"stanza host {host} is re-pointed to PLAINTEXT http://{C05_MIRROR_HOST} — "
+                       "r3 moved the endpoint to https:// (the runner's :80 egress timed out; "
+                       "a plaintext fetch after the ruling is the regression)")
+        elif not re.search(_repoint_regex(host), apt):
+            out.append(f"stanza host {host} is not re-pointed to https://{C05_MIRROR_HOST} "
+                       f"in {C05_SOURCES_FILE}")
     if C05_SOURCES_FILE not in apt:
         out.append(f"the re-point does not target the deb822 file {C05_SOURCES_FILE}")
     updates = [m.start() for m in re.finditer(r"apt-get update", apt)]
@@ -914,8 +936,11 @@ def _readme_row_consistency(readme: str) -> list[str]:
     if stale:
         out.append(f"toolchain row still claims the withdrawn posture: {stale} "
                    "(move the row with the law — C05 correction)")
-    if "kernel.org" not in low:
-        out.append("the row does not name the mirror the build re-points at")
+    if "https://mirrors.edge.kernel.org" not in low:
+        out.append("the row does not name the https mirror endpoint (r3: https://mirrors.edge.kernel.org)")
+    if "http://mirrors.edge.kernel.org" in low:
+        out.append("the row still advertises the plaintext mirror endpoint — r3 replaced it with "
+                   "https:// (the :80 path the runner proved filtered must not be documented as live)")
     if not re.search(r"unconditional", low):
         out.append("the row must state the re-point posture the step actually has (unconditional)")
     return out
@@ -977,8 +1002,8 @@ _C05_TARGET_COMMENT = (
     "# noble-security, probed at adoption); throwaway toolchain layer.\n"
 )
 _C05_TARGET_RUN = (
-    "RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|;\n"
-    "        s|http://security.ubuntu.com|http://mirrors.edge.kernel.org|'\n"
+    "RUN sed -i 's|http://archive.ubuntu.com|https://mirrors.edge.kernel.org|;\n"
+    "        s|http://security.ubuntu.com|https://mirrors.edge.kernel.org|'\n"
     "        /etc/apt/sources.list.d/ubuntu.sources \\\n"
     "    && apt-get update \\\n"
     "    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends\n"
@@ -987,8 +1012,8 @@ _C05_TARGET_RUN = (
 )
 _C05_GUARDED_RUN = (
     "RUN apt-get update \\\n"
-    "    || { sed -i 's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|;\n"
-    "           s|http://security.ubuntu.com|http://mirrors.edge.kernel.org|'\n"
+    "    || { sed -i 's|http://archive.ubuntu.com|https://mirrors.edge.kernel.org|;\n"
+    "           s|http://security.ubuntu.com|https://mirrors.edge.kernel.org|'\n"
     "           /etc/apt/sources.list.d/ubuntu.sources && apt-get update; } \\\n"
     "    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends\n"
     "        build-essential git ccache \\\n"
@@ -1011,8 +1036,13 @@ def test_c05_target_form_clears_every_law_and_guarded_mutants_redden():
     assert _readme_row_consistency(
         "| Compile toolchain (baked, not runtime-installed) | build-essential, git, ccache "
         "via apt — stanza hosts re-pointed unconditionally to "
-        "http://mirrors.edge.kernel.org before the single apt-get update; no pod-start apt |"
+        "https://mirrors.edge.kernel.org before the single apt-get update; no pod-start apt |"
     ) == []
+
+    plaintext = _C05_TARGET_RUN.replace("|https://mirrors", "|http://mirrors")
+    pv = _apt_repoint_violations(_dockerfile_steps(plaintext))
+    assert sum(1 for v in pv if "PLAINTEXT" in v) == 2, \
+        f"both plaintext re-pointed hosts must redden the shape law (r3), got {pv}"
 
     steps_guarded = _dockerfile_steps(_C05_GUARDED_RUN)
     gv = _apt_repoint_violations(steps_guarded)

@@ -76,15 +76,16 @@ FROM engine-primary AS runtime
 # make every pod start depend on mirror availability and ship a
 # non-reproducible image (container-creation: apt in the same RUN,
 # --no-install-recommends, lists cleaned).
-# The base image's deb822 stanza hosts are re-pointed at the kernel.org
-# mirror unconditionally, before the single apt-get update: update exits 0
-# even when every host is unresolvable (failed fetches are printed and
-# ignored), so a conditional retry cannot detect the failure that matters —
-# the install below is where an unreachable mirror actually kills the
-# build. kernel.org serves noble and noble-security (probed at adoption);
+# The base image's deb822 stanza hosts are re-pointed at the https
+# kernel.org mirror unconditionally, before the single apt-get update:
+# update exits 0 even when every host is unresolvable (failed fetches are
+# printed and ignored), so a conditional retry cannot detect the failure
+# that matters — the install below is where an unreachable mirror actually
+# kills the build. kernel.org serves noble and noble-security over TLS
+# (probed; the rootfs layer carries the CA store apt validates against);
 # the target is exactly the deb822 file the noble base layer carries. This
 # layer is a throwaway toolchain bake, not the serving image's trust path.
-RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|; s|http://security.ubuntu.com|http://mirrors.edge.kernel.org|' \
+RUN sed -i 's|http://archive.ubuntu.com|https://mirrors.edge.kernel.org|; s|http://security.ubuntu.com|https://mirrors.edge.kernel.org|' \
     /etc/apt/sources.list.d/ubuntu.sources \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential git ccache \
