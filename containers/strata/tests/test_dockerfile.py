@@ -598,8 +598,16 @@ def test_c07_build_never_executes_the_fetch_driver(dockerfile):
     """Verify by syntax + interface, never by running: executing the entrypoint
     at build time would start a ~183 GB download inside CI (the build context
     has no /models claim, no HF_TOKEN, and CI storage physics that DECISIONS
-    already ruled out for pre-baked packs)."""
-    blob = "\n".join(m.group(1) for m in re.finditer(r"^RUN(.*)$", dockerfile, re.M | re.S))
+    already ruled out for pre-baked packs). cf-141 C05 scoping (chunk Task
+    3): the blob excludes the runtime apt RUN step — this leg's subject is
+    the weight-fetch machinery (fetch_models.sh invocations, huggingface.co
+    URLs); the apt step's build-time mirror host is pinned by the test_c05_*
+    shape legs instead, and a future mirror-text edit must not redden a leg
+    that never spoke about apt. The executed-driver scan still spans every
+    other step."""
+    steps = _dockerfile_steps(dockerfile)
+    non_apt = [s for s in steps if "RUN" not in s[:4] or "apt-get" not in s or "apk" in s]
+    blob = "\n".join(s for s in non_apt if s.startswith("RUN"))
     executed = [ln for ln in _exec_lines(blob) if re.search(r"^\s*/opt/strata/bin/fetch_models\.sh|(?<!\w)hf_fetch\.py\s+(anon|gated)", ln)]
     assert not executed, f"build executes the fetch driver: {executed}"
     assert not re.search(r"huggingface\.co|resolve/main", blob), (
@@ -693,3 +701,223 @@ def test_cf141_c04_bump_era_probes_redden_the_owning_laws():
     assert all(digs and not digs <= retired for digs in fresh_pairing.values()), \
         "the synthetic fresh ledger must satisfy the pairing law"
 
+
+
+# ---------------------------------------------------------------------------
+# cf-141 C05 — CI-resilient apt step: official-first, kernel.org fallback
+# (owner directive 2026-11-11, coord shape ruling in DECISIONS). Red-first
+# contract authored before the dev round: the guard legs are DESIGNED RED
+# against the landed apt step; the prohibition/ordering/consistency legs are
+# GREEN tripwires that redden on the wrong shapes the chunk's probe list
+# names. All laws are structural regex over the Dockerfile text — the live
+# mirror/base-shape probes (Task 2) are the dev round's evidence, never a
+# test. No engine/version/label/marker/ledger literal moves here: the C04
+# landed arms above are the preservation run.
+# ---------------------------------------------------------------------------
+
+C05_MIRROR_HOST = "mirrors.edge.kernel.org"
+C05_OFFICIAL_HOSTS = ("archive.ubuntu.com", "security.ubuntu.com")
+C05_SOURCES_FILE = "/etc/apt/sources.list.d/ubuntu.sources"
+# The landed (pre-C05) logical step sequence, one rewrite-in-place away: the
+# fallback must occupy the ONE runtime apt RUN step, never add or reorder
+# (Dockerfile layer-cache + step-order laws; C04-era COPY/marker lines pinned
+# by their own arms above).
+C05_BASELINE_STEPS = [
+    "FROM", "FROM", "FROM", "FROM", "COPY", "RUN", "FROM", "RUN",
+    "COPY", "COPY", "COPY", "COPY", "COPY", "RUN", "RUN", "CMD",
+    "ENTRYPOINT", "HEALTHCHECK",
+]
+
+_STEP_KW_RE = re.compile(r"^(FROM|RUN|COPY|CMD|ENTRYPOINT|ENV|ARG|WORKDIR|USER"
+                         r"|LABEL|ADD|STOPSIGNAL|HEALTHCHECK|SHELL)\b")
+
+
+def _dockerfile_steps(text: str) -> list[str]:
+    """Logical steps with continuations joined (comment lines skipped). The
+    suite's idiom is text regex; this just gives the regex a per-step
+    subject so ordering claims are about one RUN, not the whole file."""
+    steps: list[str] = []
+    cur: list[str] | None = None
+    for raw in text.splitlines():
+        ln = raw.strip()
+        if not ln:
+            continue
+        if _STEP_KW_RE.match(ln):
+            if cur:
+                steps.append(" ".join(cur))
+            cur = [ln]
+        elif cur is not None and not ln.startswith("#"):
+            cur.append(ln)
+    if cur:
+        steps.append(" ".join(cur))
+    return steps
+
+
+def _apt_run_step(steps: list[str]) -> str | None:
+    cands = [s for s in steps if s.startswith("RUN") and "apt-get" in s and "apk" not in s]
+    return cands[0] if len(cands) == 1 else None
+
+
+def _official_first_violations(steps: list[str]) -> list[str]:
+    """C05 AC/Task 3 shape: exactly one ubuntu apt RUN; a BARE apt-get update
+    precedes the || guard; inside the guard a single sed rewrites BOTH
+    official stanza hosts to the kernel.org mirror in the deb822
+    ubuntu.sources and retries apt-get update; install + lists-cleanup stay
+    gated behind the update pair, unchanged in content."""
+    out = []
+    apt = _apt_run_step(steps)
+    if apt is None:
+        return ["the runtime stage must keep exactly ONE ubuntu apt RUN step "
+                "(the rewrite edits it in place — C05 shape)"]
+    guard = re.search(r"\|\|\s*\{", apt)
+    if not guard:
+        return ["no `|| {` fallback guard in the apt RUN — official-first-with-fallback not landed (C05)"]
+    if apt.find("apt-get update") >= guard.start():
+        out.append("the first apt-get update is not the plain official attempt before the guard")
+    branch = apt[guard.start():]
+    for host in C05_OFFICIAL_HOSTS:
+        if not re.search(r"s\|https?://" + re.escape(host) + r"\|https?://" + re.escape(C05_MIRROR_HOST), branch):
+            out.append(f"the fallback branch does not rewrite {host} to {C05_MIRROR_HOST} "
+                       "(C05 default form — the probe-gated stanza-drop alternative routes through the test session, never a silent edit)")
+    if C05_SOURCES_FILE not in branch:
+        out.append(f"the fallback does not target the deb822 file {C05_SOURCES_FILE}")
+    if "apt-get update" not in apt[guard.end():]:
+        out.append("no retry apt-get update inside the fallback branch")
+    if re.search(r"sed|kernel\.org", apt[:guard.start()]):
+        out.append("mirror-rewrite machinery is reachable on the success path")
+    gi = apt.find("apt-get install")
+    if gi < guard.end():
+        out.append("the install is not gated behind the update pair")
+    else:
+        if "DEBIAN_FRONTEND=noninteractive" not in apt or "--no-install-recommends" not in apt:
+            out.append("install flags must stay DEBIAN_FRONTEND=noninteractive + --no-install-recommends")
+        if not re.search(r"build-essential\s+git\s+ccache", apt):
+            out.append("the installed set must stay exactly build-essential git ccache")
+    if "rm -rf /var/lib/apt/lists/" not in apt or (gi >= 0 and apt.find("rm -rf /var/lib/apt/lists/") < gi):
+        out.append("the lists cleanup must stay after the install in the same step")
+    return out
+
+
+def _unconditional_mirror_violations(steps: list[str]) -> list[str]:
+    """The fallback is never the primary path: every kernel.org mention sits
+    AFTER the guard of the apt step — none in any other step, none before
+    the plain first update."""
+    out = []
+    apt = _apt_run_step(steps)
+    guard = re.search(r"\|\|\s*\{", apt) if apt else None
+    for i, s in enumerate(steps):
+        start = 0
+        while True:
+            j = s.find(C05_MIRROR_HOST, start)
+            if j < 0:
+                break
+            if s is not apt or guard is None or j < guard.end():
+                out.append(f"step {i} puts {C05_MIRROR_HOST} on an unconditional path: {s[:70]!r}")
+            start = j + 1
+    for s in steps:
+        if "apk" in s and (C05_MIRROR_HOST in s or any(h in s for h in C05_OFFICIAL_HOSTS)
+                           or "sources.list.d" in s):
+            out.append("the alpine apk step must stay untouched by the ubuntu mirror fallback")
+    return out
+
+
+def _step_order_violations(steps: list[str]) -> list[str]:
+    """One step rewritten in place: the keyword sequence (and every stage's
+    count) must equal the landed baseline."""
+    seq = [s.split(None, 1)[0] for s in steps]
+    if seq != C05_BASELINE_STEPS:
+        return [f"step sequence {seq} != the landed baseline {C05_BASELINE_STEPS} "
+                "(C05 edits the ONE apt RUN in place — no added/removed/reordered step)"]
+    return []
+
+
+def _readme_row_consistency(steps: list[str], readme: str) -> list[str]:
+    """Docs move with the law (same chunk): the runtime-split toolchain row
+    must describe the step that exists. With the guard landed, the row names
+    the fallback; the baked-at-build doctrine tokens stay either way."""
+    out = []
+    rows = [ln for ln in readme.splitlines() if "Compile toolchain" in ln]
+    if not rows:
+        return ["the README lost the toolchain row entirely (its pinning home)"]
+    row = rows[0]
+    for tok, why in (("baked", "baked-at-build doctrine"),
+                     ("apt", "the apt install mechanism"),
+                     ("no pod-start apt", "the owner ruling the row carries")):
+        if tok not in row:
+            out.append(f"toolchain row no longer states {why} ({tok!r})")
+    apt = _apt_run_step(steps)
+    guarded = bool(apt and re.search(r"\|\|\s*\{", apt))
+    if guarded and not (re.search(r"fallback", row, re.I)
+                        and (C05_MIRROR_HOST in row or re.search(r"official", row, re.I))):
+        out.append("the apt step carries the fallback but the README row does not — "
+                   "the shipped description must stay render-true (move the row with its step, C05)")
+    return out
+
+
+def test_c05_apt_step_official_first_with_fallback():
+    """DESIGNED RED until dev lands C05: the runtime apt RUN is official-first
+    with the kernel.org fallback INSIDE a ||-guarded brace group against the
+    deb822 ubuntu.sources, retrying the update; install flags/list-cleanup
+    unchanged behind the pair (Task 3 arm 1)."""
+    problems = _official_first_violations(_dockerfile_steps(DOCKERFILE.read_text()))
+    assert not problems, ("cf-141 C05 apt-step shape not landed:\n" + "\n".join(problems))
+
+
+def test_c05_no_unconditional_mirror_use():
+    """Prohibition leg (Task 3 arm 2's shape pin, both directions): the
+    kernel.org host is reachable ONLY on the failure path — never before the
+    plain first update, never in another step, never in the apk step (green
+    today; this is the leg that reddens if the fallback is ever mis-shipped
+    as an unconditional mirror pin)."""
+    problems = _unconditional_mirror_violations(_dockerfile_steps(DOCKERFILE.read_text()))
+    assert not problems, ("unconditional mirror use detected:\n" + "\n".join(problems))
+
+
+def test_c05_run_step_count_and_order_preserved():
+    """Task 3 arm 3: the rewrite occupies the ONE apt RUN in place — the
+    logical step sequence matches the landed baseline byte-for-keyword
+    (today green; red on any added/removed/reordered step)."""
+    problems = _step_order_violations(_dockerfile_steps(DOCKERFILE.read_text()))
+    assert not problems, "step order/count moved:\n" + "\n".join(problems)
+
+
+def test_c05_readme_toolchain_row_tracks_the_apt_step():
+    """README runtime-split arm (L26 row, chunk Task 3): the row stays
+    render-true — baked-at-build tokens always; once the apt step gains the
+    guard, the row must carry the fallback clause in the same chunk. Green
+    today (no guard), reddens if dev lands the step and forgets the row."""
+    problems = _readme_row_consistency(_dockerfile_steps(DOCKERFILE.read_text()), README.read_text())
+    assert not problems, "README toolchain-row consistency broken:\n" + "\n".join(problems)
+
+
+def test_c05_shape_probes_redden_the_owning_legs():
+    """The chunk's non-vacuity list, offline through the same validators:
+    sed hoisted before the first update reddens BOTH the official-first and
+    the unconditional legs; kernel.org on the primary path reddens the
+    unconditional leg; a RUN added reddens the count leg; the landed-good
+    synthetic shape clears all three."""
+    good = ('FROM x\nRUN apt-get update \\\n'
+            "    || { sed -i 's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|; "
+            "s|http://security.ubuntu.com|http://mirrors.edge.kernel.org|' "
+            "/etc/apt/sources.list.d/ubuntu.sources \\\n"
+            "         && apt-get update; } \\\n"
+            "    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "
+            "build-essential git ccache \\\n"
+            "    && rm -rf /var/lib/apt/lists/*\n")
+    steps = _dockerfile_steps(good)
+    assert _official_first_violations(steps) == [], _official_first_violations(steps)
+    assert _unconditional_mirror_violations(steps) == []
+    hoisted = good.replace(
+        "RUN apt-get update",
+        "RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|' "
+        "/etc/apt/sources.list.d/ubuntu.sources && apt-get update")
+    hs = _dockerfile_steps(hoisted)
+    assert _official_first_violations(hs), "hoisted sed must redden the official-first leg"
+    assert _unconditional_mirror_violations(hs), "hoisted sed must redden the unconditional leg"
+    extra = good + "\nRUN echo noise\n"
+    assert _step_order_violations(_dockerfile_steps(extra)), "an added RUN must redden the count leg"
+    dropped = "\n".join(ln for ln in good.splitlines() if "&& apt-get update; }" in ln)
+    assert _official_first_violations(_dockerfile_steps(dropped)), "a guard without its retry must redden"
+    unguarded = good.replace("|| {", "{ ")
+    assert _unconditional_mirror_violations(_dockerfile_steps(unguarded)), \
+        "the fallback outside a || guard is unconditional use"

@@ -3194,3 +3194,47 @@ kept outside the offline claim: C04 review, the gate-1 same-day re-fetch
 refresh + P1 probe trio + soak watch (user legs), and the owner's PR-2
 landing. A future carry drop (upstream ships q36 first-class), any scale-back
 PR, or any further bump adds a step; nobody edits an era in place.
+### 9.32 cf-141 C05 test round — official-first apt fallback, red-first (2026-11-11)
+
+Owner CI-delta directive (DECISIONS 2026-11-11) contracted into
+`containers/strata/tests/test_dockerfile.py` before the dev round (PR-3
+shape; no version/label/marker/ledger literal moves — the C04 landed arms are
+this chunk's preservation run and all still pass):
+
+- `test_c05_apt_step_official_first_with_fallback` — DESIGNED RED now (body:
+  "no `|| {` fallback guard in the apt RUN"): one ubuntu apt RUN; bare
+  `apt-get update` as the official-first attempt; inside the guard ONE sed
+  rewrites BOTH stanza hosts (archive + security) to
+  `http://mirrors.edge.kernel.org` in the deb822 `ubuntu.sources` and retries;
+  install flags (`DEBIAN_FRONTEND=noninteractive`, `--no-install-recommends
+  build-essential git ccache`) and lists-cleanup gated behind the pair. The
+  default both-host form is the coord ruling; if dev's Task 2.2 probe shows
+  kernel.org lacks `noble-security`, the stanza-drop alternative routes back
+  through the test session (this clause re-pins by name) — never a silent
+  relaxation.
+- `test_c05_no_unconditional_mirror_use` — green tripwire: every kernel.org
+  mention must sit after the guard of the apt step; nothing in the apk step;
+  red if the fallback is ever hoisted onto the primary path.
+- `test_c05_run_step_count_and_order_preserved` — the landed 18-step keyword
+  sequence pinned as `C05_BASELINE_STEPS`; the rewrite must occupy the one
+  apt RUN in place.
+- `test_c05_readme_toolchain_row_tracks_the_apt_step` — docs move with the
+  law, conditional both ways: baked-at-build tokens stay; once the step
+  carries the guard, the README L26 toolchain row must name the fallback +
+  mirror/official clause (the dev-brief row text was delivered in the test
+  RESULT; docs follow the step in the same chunk).
+- `test_c05_shape_probes_redden_the_owning_legs` — the chunk's non-vacuity
+  list runs offline through the same validators (hoisted sed reddens both
+  legs; added RUN reddens the count leg; guard-without-retry reddens; the
+  synthetic landed-good shape clears).
+- Scoping (chunk Task 3): `test_c07_build_never_executes_the_fetch_driver`
+  now builds its blob over logical steps minus the ubuntu apt RUN — the leg's
+  subject is the weight-fetch machinery; the apt mirror text is C05-leg
+  territory (scan assertions otherwise unchanged). A shared logical-step
+  parser `_dockerfile_steps` joins continuations so order claims speak about
+  one RUN, not the file.
+
+Map at authoring (no renders needed — this file is text-law only): containers
+29 passed / 1 failed — the single red names C05 with the guard-absence body;
+the C04-era 25 baseline legs unchanged and green. Chart suite untouched (no
+chart file moved; 466P/9S/0F stands from §9.31); aislop ci --changes clean.
