@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
   "plan_status": "complete",
-  "plan_status_note": "complete incl. the 2026-11-11 CI delta (C05 mirror-fallback, review APPROVED; AC6 = PR-3 CI build, owner leg). Original close-out: all four chunks review-APPROVED, final whole-plan review closed on fold; base landed — all ticket commits verified on origin/main (rebase-merged), branch rebased clean, C05 delta stacked on top.",
+  "plan_status_note": "complete incl. the C05 CORRECTION round (2026-11-11): the guarded official-first form died on CI (apt update exits 0 on wholly-failed fetches — guard dead, owner trace reproduced deterministically by review); owner's unconditional re-point reinstated per withdrawn ruling, review APPROVED (ses_e34ba713fffeGX7yJPyT1glawS). Outstanding AC6: CI docker-build on the owner's landing of b40e2ec4d.",
   "final_review": {
     "at": "2026-11-11",
     "session": "ses_e36ffc873ffeCe8qd0sz89Te1O (planning tier, openrouter/qwen/qwen3.8-27b per standing owner model directive)",
@@ -247,9 +247,9 @@
       "status": "done",
       "wave": 5,
       "depends_on": [],
-      "dev_rounds": 1,
-      "review_rounds": 1,
-      "last_verdict": "APPROVED (r1, fresh ses_e34dfd9ebffel9xrDRBcQ7vUmx; AC6 on-target = PR-3 CI build, owner leg)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "CORRECTION APPROVED (r2 ses_e34ba713fffeGX7yJPyT1glawS, commit b40e2ec4d; r1 guard-form withdrawn by CI evidence — review reproduced the owner's trace; AC6 = CI on the landing)",
       "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
       "handoff_note": "dev 590f5b9db: probes kernel.org noble/noble-security/noble-updates all 200 → default both-host fallback shipped (stanza-drop unused); dash outage/healthy/both-fail behavioral proofs; base ubuntu.sources deb822 confirmed via GHCR layer-0 read; README L26 moved. Review re-derived independently incl. own live probes (Canonical still 000 — outage persists, fallback load-bearing) and 4 mutation bites.",
       "note": "delta chunk (owner directive 2026-11-11): strata Dockerfile apt official-first + kernel.org fallback; DECISIONS 'Owner directive — CI delta' is the authority; C01-C04 landings untouched",
