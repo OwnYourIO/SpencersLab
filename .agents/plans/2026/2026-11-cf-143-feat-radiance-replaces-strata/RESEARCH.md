@@ -848,3 +848,426 @@ deviations: storm fan-out ran inline (no subagent harness in this session; per s
 friction: L1T forum HTML is JS-only — thread JSON API (/t/257789.json) is the working shape; Codeberg raw web path 404s — API /raw/{file}?ref=v1.17.0 with v-prefixed git tags (hub tags unprefixed) is the working shape; HF file blobs need /repo/tree?blobs=true; amd-gpu chart values.yaml 404 at guessed paths (chart detail left to plan); wildetech 404 on guessed post URL — real path is /blog/2026-11-08/what-a-gen4-board-costs…
 open_questions: [priority polarity flip vs FIFO-until-reclass (owner); structure A-vs-B-vs-C single-card trade (owner); on-target TP1 receipts incl. --kv-resident start-up refusal test at 8×200K, x4 prefill actuals, kfd GID/memlock posture for non-privileged pods (one on-target run closes); t1m.me plugin/kernel claim unlocatable; who-zeroed-vllm + runner-literal scope carried from EXPLORE unchanged]
 next_suggested: agent-plan reads RESEARCH.md §TLDR + Serving envelope + Guide corrections + Structural options; the plan question round should put the polarity flip and the A/B/C single-card structure to the owner with the fn-tp1 prefill measurement (≈450–600 tok/s @55k on x4) as the framing fact
+
+## R6 — Per-device GPU resource naming (owner Q9 round)
+
+Owner ask: apu and R9700 get **different resource names**; the APU stays assigned to
+llama-swap; radiance deterministically requests the R9700 — no vfio hiding.
+Round R6 reads the plugin source at released tags, the lab live, the repo GitOps
+plumbing, and two production witnesses (dsluo/homelab, an R9700 field report).
+Every claim cites [R6-S#] (accessed 2026-11-11). Verdicts: VERIFIED / CORRECTED /
+UNVERIFIABLE + confidence.
+
+### R6-TLDR (fold into the plan)
+
+Per-device resource names are **supported today by the shipped plugin binary** —
+`-resource_naming_strategy=product` (PR #246, merged 2026-10-19, first release
+v1.31.0.12, 2026-11-06) advertises every GPU under a sanitized marketing name from the
+`amdgpu.ids` table **baked into the image**, so on THIS node the kubelet pools become
+`amd.com/gpu-ai-pro-r9700: 1` (7551/C0) and `amd.com/gpu-8060s: 1` (1586/C1·C3·C6·D1) —
+computed by porting the naming code and running it against the vendored table (passes
+upstream's own test fixtures) [R6-S1..S5]. The earlier RESEARCH name shape
+`amd.com/Radeon-AI-PRO-R9700` was wrong (sanitizer lowercases, drops vendor/category
+words, prefixes `gpu-`). **But no released amd-gpu Helm chart can turn the flag on**:
+chart 0.22.0 (still master, still index-latest) has no args/command hook at all; the
+upstream fix is a stale open PR #122 [R6-S6,S7]. So option 1 = vendor the chart in-repo
+(the appset machinery renders internal charts from `charts/` with values fully under
+GitOps) + `dp.image.tag: 1.31.0.12` + args; ship `amd.com/gpu-ai-pro-r9700: 1` in
+charts/radiance and flip charts/llama-swap's `amd.com/gpu: 1` to `amd.com/gpu-8060s: 1`
+in the SAME sync wave (after the flip the old name is GONE from node status — a
+llama-swap pod rescheduled before its flip lands stays Pending). Strong alternative:
+ROCm's **k8s-gpu-dra-driver v1.0.1** (DRA is GA-stable on the lab's k3s v1.36.5) —
+ResourceClaimTemplate CEL-selects the R9700 by `deviceID == "0x7551"` with ZERO touch to
+llama-swap or the plugin; production witnesses run exactly this on this exact card, one
+on **k3s v1.36.6 with non-root pods receiving /dev/kfd+render via CDI** [R6-S8,S9,S10],
+at the cost of a second GPU subsystem and one open reboot-CDI bug (mitigated by the
+dsluo values: persistent `cdi.dynamicPath`) [R6-S11]. Two-DaemonSet device filtering:
+DEAD (no device-selection surface exists in the source). Fallback trap on option 1: a
+card whose sysfs device+revision pair misses the vendored table lands under bare
+`amd.com/gpu` — on-target revision receipts + a post-flip node-status gate are mandatory
+(C06 step 0).
+
+### R6-Q1 — THE PLUGIN'S CAPABILITY (VERIFIED from source at the released tag)
+
+**Strategy surface** [R6-S1][R6-S2][R6-S3]:
+- `cmd/k8s-device-plugin/main.go @ v1.31.0.12` reads exactly two flags: `-pulse` and
+  `-resource_naming_strategy` (default `single`; accepts `single|mixed|product`).
+  **No env var and no config file sets the strategy** in the .12 binary. (`docs/`
+  @ the same tag documents `AMD_GPU_DEVICE_COUNT` + `CONFIG_FILE_PATH`; the .12
+  main.go/plugin.go/amdgpu.go implement neither — docs lead code. For our decision the
+  distinction is moot: a *count* cap could never *choose* which card.)
+- `internal/pkg/naming/` **does not exist at v1.31.0.11 (404) and exists at v1.31.0.12**
+  — confirms "product first shipped in 1.31.0.12" (release published
+  2026-11-06T17:55:49Z; PR #246 merged 2026-10-19T19:21:59Z, title
+  "feat: add `product` resource naming strategy", closes #128) [R6-S2][R6-S3].
+
+**What `product` produces on a heterogeneous CONSUMER node (the exact question):**
+- `ResourceName(device, StrategyProduct)` = `ProductIndex.Name(deviceID, revisionID)` —
+  the **marketing name from the table**, not a partition style. Non-partitionable cards
+  simply get no style suffix (`partitionStyle()` returns "" when
+  `current_compute_partition`/`current_memory_partition` sysfs files are absent — true
+  for gfx1201/gfx1151; the docs' own example shows MI210 → `amd.com/gpu-mi210`)
+  [R6-S1][R6-S4]. **The earlier round's "reported under amd.com/gpu regardless" verdict
+  applied to `single`/`mixed` ONLY and does NOT carry over to `product`** — the PR body
+  states the purpose verbatim: "`amd.com/gpu` cannot express which product a workload
+  got … per-product quota and scheduling [impossible]", aimed at "clusters whose nodes
+  hold more than one GPU product" [R6-S3][R6-S4].
+- **Name formula** (`naming.go`+`products.go` @.12): read PCI `device`+`revision` attrs
+  from `/sys/module/amdgpu/drivers/pci:amdgpu/<bdf>/` (normalized `0x74a1`→`74A1`),
+  look the pair up in `/usr/share/libdrm/amdgpu.ids` — **which the Dockerfile bakes into
+  the image** (`COPY … cmd/k8s-node-labeller/amdgpu.ids /usr/share/libdrm/amdgpu.ids`,
+  with the comment "-resource_naming_strategy=product resolves product names from this
+  table") — then lowercase, replace non-`[a-z0-9.-]` with `-`, drop filler words
+  `{amd, ati, instinct, radeon, graphics, series}` (note: `pro` and `rx` are
+  *deliberately* kept), prefix `gpu-`, collapse `--`, truncate at 63 (after `amd.com/`)
+  without dangling separators. Unknown pair → bare `gpu`. Collision (two products
+  shorten alike) → both fall back to `qualify()` (category words kept) [R6-S1][R6-S5].
+- **Computed for THIS node** (faithful JS port of the two files run against the vendored
+  752-row table; the port reproduces upstream's fixture expectations — MI300X→
+  `gpu-mi300x`, MI300X-VF→`gpu-mi300x-vf`, MI210→`gpu-mi210`, the 540/540-Series
+  collision pair, and unknown-revision→`""` — all pass) [R6-S5]:
+  - R9700 (`7551, C0, AMD Radeon AI PRO R9700`) → **`amd.com/gpu-ai-pro-r9700`** (unique
+    claim, no collision; the R9700S row at C1→`gpu-ai-pro-r9700s` stays distinct).
+  - APU (`1586`, revisions C1/C3/C6/D1 → "AMD Radeon 8060S Graphics") →
+    **`amd.com/gpu-8060s`**. (Same row family yields `gpu-8050s` on C2/C4/D2/D4 — the
+    table keys on revision, so the live sysfs revision decides; see the fallback trap.)
+  - `amd.com/gpu` **disappears** (both devices bucket under product names; nothing
+    falls to the default bucket) — node advertises exactly the two names, 1 each.
+  - Earlier name-shape correction: not `amd.com/Radeon-AI-PRO-R9700` — the sanitizer
+    lowercases, drops "Radeon", prefixes `gpu-` [R6-S5].
+- **Allocation architecture under product** [R6-S1]: the binary runs kubevirt's
+  device-plugin-manager with the lister's `Discover` publishing the computed name list;
+  dpm instantiates **one plugin per name**, each `ListAndWatch` reporting only its own
+  bucket (`bucketDevices` groups by `ResourceName`), each `Allocate` injecting `/dev/kfd`
+  + the allocated card/render. So per-name kubelet pools → a pod requesting
+  `amd.com/gpu-ai-pro-r9700: 1` can only ever receive the R9700. nodeId-ascending
+  APU-first ordering becomes irrelevant for cross-card choice (it only picks *within* a
+  bucket). Determinism: **VERIFIED by source, HIGH confidence**; the plan's Q9 mis-
+  allocation class is eliminated, not gated.
+- PR #246 design note worth keeping: naming reads sysfs **directly, not through
+  libdrm**, because the device-plugin DaemonSet mounts only `/sys` (no `/dev/dri`) —
+  every lookup would fail via the libdrm path in the shipped image [R6-S3].
+
+### R6-Q2 — THE LAB'S CURRENT INSTALL + THE EXACT UPGRADE PATH (CORRECTED vs the PR-page optimism)
+
+- **In-repo owner**: `services/gpu-ai/prod/values.yaml:40-44` — `charts.amd-gpu:
+  {version: 0.22.0, repository: https://rocm.github.io/k8s-device-plugin/, namespace:
+  default, ServerSideApply: "true"}`; **no top-level `amd-gpu:` values block exists**
+  (chart renders at defaults). The base appset (`charts/base/templates/appset-charts.yaml`)
+  turns external-chart entries into Argo Applications with `valuesObject` (merged
+  custom/service/base values) and internal entries (`charts/` dir, no version/repository)
+  with a git `path:` source — so a vendored chart is a first-class shape here [repo read].
+- **Live** (readonly-ai-gpu-kubernetes, 2026-11-11): DaemonSet
+  `amd-gpu-device-plugin-daemonset` container `amd-gpu-dp-cntr` image
+  `docker.io/rocm/k8s-device-plugin:1.31.0.9`, **no command/args/env fields at all**
+  (image CMD runs `-logtostderr=true -stderrthreshold=INFO -v=5` — strategy defaults to
+  `single`); hostPath `/sys` + `/var/lib/kubelet/device-plugins` + health dir;
+  drop-ALL non-privileged. Node `ai-gpu`: capacity=allocatable `amd.com/gpu: 2`,
+  **zero amd.com/* node labels** (no labeller, no NFD feature labels — stock k3s only)
+  [R6-S12]. llama-swap live pod: main container requests cpu 1/mem 4Gi + **limits
+  `amd.com/gpu: 1`** (requests auto-mirror for extended resources) [R6-S12].
+- **The chart gap (decisive)**: the published helm index at
+  rocm.github.io/k8s-device-plugin lists **0.22.0 (appVersion 1.31.0.9, created
+  2026-09-02, digest `791ada88f09b…`) as the newest entry** — no chart release
+  post-dates plugin .12. The chart **at the v1.31.0.12 tag itself, and on master,
+  is still 0.22.0**: `Chart.yaml version: 0.22.0 / appVersion: "1.31.0.9"` and the
+  DaemonSet template contains **no `args:`/`command:`/config-map hook** — the container
+  block is image/securityContext/volumeMounts/resources only. values.yaml (0.22.0 and
+  master) exposes `dp.image.{repository,tag}`, `dp.resources`, `dp.updateStrategy`,
+  securityContext/tolerations/nodeSelector, labeller toggles — **nothing naming-related**
+  [R6-S6][R6-S7]. The upstream fix is **open PR #122 "Support args, command for helm
+  chart"** (created 2025-04-22, still unmerged) [R6-S7].
+  → **No values-only path to the flag exists today.** The image bump IS values-reachable
+  (`dp.image.tag: 1.31.0.12` — tag exists on Docker Hub, amd64 digest
+  `sha256:6437c74f6566…` [R6-S13]), the flag is not.
+- **Exact GitOps shape for option 1** (vendor route, repo-only):
+  1. New internal chart `charts/amd-gpu/` — copy of upstream 0.22.0 (templates
+     deviceplugin-daemonset/rbac/serviceaccount; `labeller.enabled: false`,
+     `nfd.enabled: false` as today) **plus** in `deviceplugin-daemonset.yaml`, inside
+     the container block:
+     ```yaml
+     args:
+       - -logtostderr=true
+       - -stderrthreshold=INFO
+       - -v=5
+       {{- with .Values.dp.extraArgs }}
+       {{- toYaml . | nindent 6 }}
+       {{- end }}
+     ```
+     (image CMD must be restated the moment `args:` is declared — Dockerfile CMD
+     `["./k8s-device-plugin","-logtostderr=true","-stderrthreshold=INFO","-v=5"]`
+     [R6-S5]; omitting `-v=5` silently drops the enumeration logs the runbook
+     needs). Values default `dp.extraArgs: ["-resource_naming_strategy=product"]`.
+  2. `services/gpu-ai/prod/values.yaml`: replace the `charts.amd-gpu` entry's
+     version/repository with an internal entry (name collision with the old external
+     release: the Application name derives from serviceName+appName — the
+     `gpu-ai-amd-gpu` Application just switches source from repo-chart to git-path;
+     same object, no orphan prune. The old *external* chart's resources keep identical
+     names (`amd-gpu-device-plugin-daemonset`, selector `name=amd-gpu-dp-ds`) because
+     the vendored templates hardcode `.Chart.Name` = amd-gpu — pin the vendored chart's
+     `name` field to `amd-gpu`), and add the top-level values block
+     `amd-gpu: { dp: { image: { tag: "1.31.0.12" } } }` (or bake the tag in the vendored
+     Chart.yaml appVersion). Follows AGENTS.md chart rules (vendored third-party chart
+     = a repo decision to log in DECISIONS; `version: 1.0.0` if created as a brand-new
+     chart entry).
+  3. Same wave: `charts/llama-swap/values.yaml:1045` flips `amd.com/gpu: 1` →
+     `amd.com/gpu-8060s: 1`, comment block 1331-1338 ("fallback once a naming-capable
+     plugin exists") retires as REALIZED.
+  - Alternatives for step 1: **Argo CD `postRender`** (kustomize) attached per
+    Application to inject the args — needs a small base-appset template addition and
+    keeps the upstream chart pinned; or wait for PR #122 / an upstream chart ≥0.23
+    (unbounded, PR stale 19+ months). Vendoring is the self-owned lane.
+
+### R6-Q3 — ALTERNATIVES, EVIDENCED AND RANKED
+
+(a) **Two plugin DaemonSets each pinned to one device — DEAD.** Source-verified: the .12
+    plugin has no device-selection surface (sysfs glob enumerates all bound devices;
+    no allowlist env/flag/config; `AMD_GPU_DEVICE_COUNT` is docs-only at this tag; the
+    dpm Lister derives the same name list from the same full enumeration in every
+    instance). Two DaemonSets would collide on identical resource names/sockets. The only
+    in-repo "filter" the plugin offers is which *names* it advertises, and `product`
+    already gives both cards their own names from ONE instance [R6-S1][R6-S2].
+
+(b) **generic-device-plugin sidecar (squat) — WORKING LAB PRECEDENT, weak pin.**
+    The repo already vendors `charts/generic-device-plugin` (app-template chart for
+    `ghcr.io/squat/generic-device-plugin`, privileged, config `devices.yaml`,
+    `DOMAIN=squat.ai`) and runs it in two clusters today: services/home/prod (zigbee
+    `/dev/ttyUSB1`, zwave, snd `/dev/snd`, ec25 by USB vendor/product) and
+    services/infra/prod (hdd paths with per-group `mountPath`) [repo reads]. Applied
+    here: a gpu-ai entry exposing one device `r9700` whose group paths
+    `/dev/kfd` + `/dev/dri/renderD<minor-of-R9700>` → pods request
+    `squat.ai/r9700: 1`, non-privileged, Guaranteed — radiance never touches the
+    amd pool; llama-swap untouched. Cons: the pin is by **render minor** (the lab's own
+    enumeration-order scars [S15] and DRA issue #83 (minors shift across reboots/
+    hotplug/mixed DRM) apply verbatim); the amd plugin still counts the R9700 inside
+    `amd.com/gpu: 2` (same cross-system double-book class as strata today); no
+    scheduler-level exclusivity. Effort: LOWEST (chart exists, values idiom proven).
+
+(c) **DRA via ROCm/k8s-gpu-dra-driver — PRODUCTION-PROVEN ON THIS CARD CLASS.**
+    - Driver: repo ROCm/k8s-gpu-dra-driver ("K8s DRA driver for AMD GPUs", active,
+      pushed today), releases v1.0.0 2026-05-20, **v1.0.1 2026-07-22**; published helm
+      repo `https://rocm.github.io/k8s-gpu-dra-driver` chart **v1.0.1** (kubeVersion
+      `>=1.32.0-0`, digest `0fc24145a327…`); image `docker.io/rocm/k8s-gpu-dra-driver:
+      v1.0.1` present [R6-S8][R6-S13]. DeviceClass `gpu.amd.com` created by default;
+      each full GPU is a DRA Device with attributes `type=amdgpu`, `deviceID`
+      (sysfs PCI id, e.g. `0x7551`), `productName`, `numaNode`,
+      `resource.kubernetes.io/pciBusID` (unique per card), `pcieRoot` + capacities
+      `memory`/`computeUnits`/`simdUnits`; claims CEL-select per device
+      [R6-S8-attrs].
+    - **k8s-side fits the lab**: DRA core GA in Kubernetes v1.34 (k8s blog 2025-09-01;
+      "stable since 1.35, gate locked"), lab k3s = **v1.36.5** → `resource.k8s.io/v1`
+      on by default. Kubelet plugins live under `/var/lib/kubelet/plugins{,_registry}`
+      (chart defaults) — same layout k3s uses [R6-S14][R6-S8].
+    - **Witness 1 (dsluo/homelab — the S11 production witness, mechanism now verified)**:
+      runs the driver (`amd-gpu-dra-driver` Flux HelmRelease, image
+      `ghcr.io/dsluo/k8s-gpu-dra-driver:v1.0.1-pr117@sha256:69ecc364…` — their fork for
+      an NVIDIA-mixed era, "drop on the next upstream release"; values pin
+      `cdi.dynamicPath: /var/cdi/dynamic`) and pins radiance to the R9700 with a
+      **ResourceClaimTemplate `r9700`**: `deviceClassName: gpu.amd.com` + CEL
+      `device.attributes["gpu.amd.com"].deviceID == "0x7551"` (+ `r9700-x2` with
+      `allocationMode: ExactCount, count: 2` for TP2). Its header comment is the answer
+      to the owner's exact topology question: "Pins the R9700 (1002:7551); the Raphael
+      iGPU (1002:164e), **which the driver also advertises**, is never allocated" —
+      i.e. heterogeneous APU+dGPU nodes advertise BOTH, selection is attribute-side,
+      and the pod consumes via `resources.claims`/`spec.resourceClaims`. Their radiance
+      Model CR (`qwen3-8-flash-next`) runs the same image pin the plan uses
+      (`docker.io/stilldeadcode/radiance:1.17.0@sha256:6fb0e99b…`) [R6-S9].
+    - **Witness 2 (driver issue #135 field report, VERIFIED-by-proxy)**: **Kubernetes
+      v1.36.6 (K3s)**, 2× Radeon AI PRO R9700 (gfx1201, 32 GB), driver v1.0.1:
+      discovery publishes both cards (`deviceID=0x7551, …, memory=32624Mi,
+      computeUnits=64`), **card selection via CEL on `pciBusID` works**, a **restricted
+      non-root, drop-ALL pod received exactly `/dev/kfd` + one `renderD*` through CDI
+      and PyTorch saw the single gfx1201 device** — the Q7 pod shape, end to end, on
+      the same runtime. Caveats from the same report: `productName` is EMPTY on Radeon
+      sysfs (select by deviceID/pciBusID, never productName); `driverVersion` omitted
+      on in-kernel amdgpu (v1.0.1 tolerates it — lab kernel 7.3.0 in-kernel amdgpu,
+      same case) [R6-S10].
+    - Open-bug ledger: #75 (CDI specs not restored from checkpoint after **node
+      reboot**; fix PRs #78/#86 open) — mitigated by persistent `cdi.dynamicPath`
+      (dsluo's exact values line); #83 (device names `gpu-<card>-<render>` are
+      minor-derived, unstable across reboots — claims referencing stale names can
+      prepare a different physical card; mitigated in practice because fresh claims
+      re-resolve at scheduling, and by pciBusID/deviceID selectors, but a long-lived
+      standalone shared claim + reboot is the exposure). No preemption for DRA pods
+      (k8s docs limitation) — irrelevant at replicas=1/Recreate.
+    - Refinement worth knowing: `deviceClass.extendedResourceName` (chart default
+      `amd.com/gpu`) maps **classic** `vendor/name` requests onto DRA classes with no
+      per-pod claim (KEP "DRA extended resources": alpha 1.35 → **beta 1.36** → GA
+      1.37 [R6-S15]) — so a lab variant could define a selector-constrained class
+      answering `amd.com/gpu-ai-pro-r9700` without touching pod specs. On k3s v1.36
+      that's beta-on-by-default (verify on-target). Not the primary shape (two
+      mechanisms mapping one name would fight the product-naming option; pick one).
+    - **Set `deviceClass.extendedResourceName: ""` if this runs ALONGSIDE the still-
+      single-strategy amd.com device plugin**, else the DRA class and the plugin both
+      claim `amd.com/gpu` (values comment: "Override to another name, or set "" to omit").
+
+(d) **Others checked**: AMD GPU Operator v1.5.1 ships the DRA driver as
+    `DeviceConfig.spec.draDriver.enable` with the device plugin disabled (the #135
+    reporter's actual install path) — heavyweight for one node [R6-S10].
+    Node labeller/NFD labels (`amd.com/gpu.product-name`) label nodes but are not
+    schedulable pools — cosmetic here, and the lab doesn't run the labeller at all
+    (live labels empty [R6-S12]). `mixed` strategy on this node yields exactly
+    `amd.com/gpu: 2` (both unpartitionable → default bucket) — a no-op, confirming the
+    earlier reading's scope.
+
+**Ranking for the owner's ask** (determinism · GitOps-only · llama-swap blast radius ·
+effort):
+| option | determinism | repo-only | llama-swap churn | effort |
+|---|---|---|---|---|
+| 1. plugin `product` + vendored chart | HIGH (kubelet per-name pools, choice at schedule+allocate) | YES (charts/ + services values) | **one request-line flip + its rollout** (see R6-Q4-2) | MED (small chart vendor) |
+| 2. DRA driver alongside plugin | HIGHEST (attribute CEL pin, witness on identical card+runtime) | YES (external chart entry + claim template in charts/radiance) | **ZERO** (llama-swap never touched) | MED-HIGH (second GPU subsystem; reboot-CDI bug + minor-name caveats to gate) |
+| 3. generic-device-plugin sidecar | MED (minor-path pin, no pool exclusion) | YES (chart already vendored) | ZERO | LOW |
+- **Recommendation: option 1** — it is the literal owner ask (two resource NAMES,
+  per-device), from the one mechanism upstream built precisely for "nodes holding more
+  than one GPU product" [R6-S3], keeping the single amd pool semantics; the chart gap
+  is a 10-line vendored template, and the llama-swap flip is what finally makes its APU
+  assignment *explicit* (today it is an accident of nodeId order, the very fragility
+  the card's Q9 names). Offer **option 2 as the strong alternative** (and the natural
+  TP2 path — dsluo's `r9700-x2` claim + `--tp 2` is exactly C03's expansion, already
+  in production) if the owner prefers zero llama-swap churn over literal naming.
+  Never ship option 3's minor-path pin while option 1/2 exist.
+
+### R6-Q4 — CONSEQUENCES FOR THE PLAN (table)
+
+Assumes option 1 unless noted. (DRA variant in the last row.)
+
+| # | Surface | Change |
+|---|---|---|
+| 1 | charts/radiance resources (C02) | `requests/limits: amd.com/gpu-ai-pro-r9700: 1` **instead of** `amd.com/gpu: 1` (cpu 8 / mem 52Gi pairs unchanged; extended resources still require equal request+limit for Guaranteed). The D14 "mis-allocation is possible" premise is **superseded** — with per-name pools the startup-report PCI gate demotes from MANDATORY-retry-gate to a cheap assert (keep it; it also catches the fallback-name trap). C02's plugin-facts comment block (APU-first, no occupancy) must be rewritten: strategy `product`, per-name pools, choice deterministic; "no occupancy check" stays TRUE (open PRs #243/#247) and strata's hostPath R9700 still sits inside the named pool's *physical* card — the radiance-vs-strata VRAM law (Q11) is unaffected by naming. |
+| 2 | llama-swap (charts/llama-swap/values.yaml:1045 + comment 1331-1338) | `limits.amd.com/gpu: 1` → `amd.com/gpu-8060s: 1` (requests auto-mirror). **After the strategy flip `amd.com/gpu` no longer exists on the node — a llama-swap pod recreated before this flip lands is unschedulable (Pending)**. The running pod keeps running through the plugin rollout (device allocations belong to the running container; kubelet does not evict on plugin-name changes [R6-S16]) but its NEXT restart needs the new name. Ship the flip in the same Argo wave as the plugin (Deployment keeps serving the old pod until the new one with `gpu-8060s` becomes Ready → scheduled to the APU bucket = exactly one device = the APU; owner ask satisfied explicitly). The comment's "fallback once a naming-capable plugin exists: amd.com/gpu + IPC_LOCK/SYS_RESOURCE + non-privileged" becomes realized-fact prose. |
+| 3 | strata / vllm hostPath pods | **No interaction, confirmed**: neither requests `amd.com/gpu` today (live: strata pod has no GPU extended-resource request [R6-S12]; charts/vllm sets ROCR/HIP env inside its privileged hostPath pod, never the plugin claim) — node status losing `amd.com/gpu` changes nothing for them. Q5 (strata stays) + Q10 (manual scale-down) stand untouched. The one nuance: with `product` the pool that llama-swap's *flipped* name reads is now the APU-only bucket — a future stray `amd.com/gpu: 1` request anywhere becomes Pending-forever instead of silently landing on a card (loud by design). |
+| 4 | migration risk | The DaemonSet rollout (image 1.31.0.9→1.31.0.12 + args + source now the vendored chart) restarts ONLY the plugin pod — running GPU pods are untouched (allocation is container-creation-time; the plugin already restarted 19× without moving pods [S14]). The real state change is node status: `amd.com/gpu: 2` → `amd.com/gpu-ai-pro-r9700: 1, amd.com/gpu-8060s: 1` **once the new plugin registers** (deregistration gap of seconds during pod swap: system-node-critical, no scheduling storm expected on a single-node idle cluster). Rollback = re-apply old chart pin (no args) — the flip restores `amd.com/gpu: 2`; a llama-swap pod already flipped to `gpu-8060s` must roll back in lockstep (values history is GitOps — one `git revert` of the same wave). Argo re-points `gpu-ai-amd-gpu` from the external repo-chart to the git-path chart with the SAME rendered object names — no orphaned resource; watch `ignoreDifferences`/SSA field ownership on the args field once (ServerSideApply: "true" today helps). |
+| 5 | C06 runbook step-0 gates (add) | (a) host receipt: `cat /sys/module/amdgpu/drivers/pci:amdgpu/*/device /sys/.../revision` per BDF c4/c5 → match against the vendored table rows (`7551 C0` expected for the R9700; `1586 C1/C3/C6/D1` for the 8060S) BEFORE relying on either name — mismatch means that card lands under bare `amd.com/gpu`; (b) plugin log receipt: "Loaded N GPU products from /usr/share/libdrm/amdgpu.ids" + "Reporting 1 devices as amd.com/gpu-…" lines (keep `-v=5`); (c) node-status assert: both expected names at 1 **and** decide explicitly whether `amd.com/gpu` should be absent (absent = both cards matched; present-1 = a fallback fired, fix the flip list or pin the claim by the name that materialized); (d) llama-swap post-rollout check: pod Running + startup log still names the unified-vulkan APU path; (e) radiance startup-report PCI/gfx1201 assert retained as belt-and-braces (now redundancy, was necessity). |
+| DRA variant | if option 2 wins instead | charts/radiance ships NO extended-resource GPU line at all: `spec.resourceClaims: [{name: gpu, resourceClaimTemplateName: radiance-r9700}]` + container `resources.claims: [{name: gpu}]` (claim template = CEL `deviceID == "0x7551"` — dsluo's exact shape [R6-S9]); llama-swap untouched (plugin stays 1.31.0.9/single); services adds chart entry `k8s-gpu-dra-driver` (repo rocm.github.io/k8s-gpu-dra-driver, version v1.0.1) with `deviceClass.extendedResourceName: ""`, `cdi.dynamicPath: /var/cdi/dynamic`, nodeAffinity-less (single node), image pinned by digest; runbook gates become: ResourceSlice lists both devices w/ attributes; container CDI injection check (non-root restricted pod precedent [R6-S10]); reboot-then-verify-claim prepared path (#75). Q4(5)-gates (b)(d)(e) carry over. |
+
+### R6-Q5 — VERIFICATION FACTS (receipts)
+
+- Plugin source: ROCm/k8s-device-plugin tag `v1.31.0.12` — `internal/pkg/naming/naming.go`
+  (Strategy consts incl. `StrategyProduct`; ResourceName product branch w/ style
+  suffix rule; 63-char truncate), `internal/pkg/naming/products.go` (IDsPath
+  `/usr/share/libdrm/amdgpu.ids`; filler set incl. radeon/graphics/series, `pro`/`rx`
+  deliberately kept; collision→qualify), `cmd/k8s-device-plugin/main.go` (flag
+  `-resource_naming_strategy` default `single`; **no** config-file/env strategy path),
+  `internal/pkg/plugin/plugin.go` (`bucketDevices` per-name; dpm one-plugin-per-name;
+  Allocate = `/dev/kfd`+card/render only, no env), `Dockerfile` (bakes
+  `cmd/k8s-node-labeller/amdgpu.ids` → IDsPath; CMD w/o strategy flag),
+  `k8s-ds-amdgpu-dp.yaml` (upstream raw DS: also no args). Tag v1.31.0.11:
+  `internal/pkg/naming/naming.go` → HTTP 404 [R6-S1,S2,S5].
+- PR #246 "feat: add `product` resource naming strategy", merged
+  2026-10-19T19:21:59Z (closes #128; body examples `amd.com/gpu-mi300x-cpx-nps4`,
+  `amd.com/gpu-mi210`) [R6-S3]. Release v1.31.0.12 published 2026-11-06T17:55:49Z;
+  image `docker.io/rocm/k8s-device-plugin:1.31.0.12` exists, amd64 digest
+  `sha256:6437c74f6566…` [R6-S2,S13].
+- Chart: `rocm.github.io/k8s-device-plugin/index.yaml` newest amd-gpu entry =
+  0.22.0, appVersion 1.31.0.9, created 2026-09-02T20:13Z, digest
+  `791ada88f09b5159ad89f2c006b61079d075d020f924cafd5fe3e31712232695` (then 0.21.0,
+  0.20.0, …) [R6-S6]. Chart.yaml @tag v1.31.0.12, @tag amd-gpu-helm-0.22.0 AND @master:
+  `version: 0.22.0 / appVersion: "1.31.0.9"`; DS template identical across all three —
+  no args hook; open PR #122 (2025-04-22) still unmerged [R6-S6,S7].
+- DRA driver: ROCm/k8s-gpu-dra-driver — releases v1.0.0 2026-05-20, v1.0.1
+  2026-07-22T18:46Z; helm index: chart v1.0.1 (appVersion v1.0.1),
+  `urls[0]=…/charts/k8s-gpu-dra-driver-v1.0.1.tgz`, digest
+  `0fc24145a3273c3448d53c0e909f7fa12825b67f569fd67074624a21fbcce589`, kubeVersion
+  `>=1.32.0-0`; image `docker.io/rocm/k8s-gpu-dra-driver:v1.0.1` exists; values:
+  `deviceClass.create: true`, `deviceClass.extendedResourceName: amd.com/gpu` (override
+  ""), `cdi.dynamicPath` default `/var/run/cdi` (dsluo pins `/var/cdi/dynamic`),
+  kubelet plugin dirs `/var/lib/kubelet/plugins{,_registry}`, privileged plugin+init
+  containers, busybox:1.36 init [R6-S8]. Attributes doc + issue #135 + dsluo
+  `resourceclaimtemplate.yaml`/`qwen3-8-flash-next.yaml`/`helmrelease.yaml` as cited
+  [R6-S8-attrs,S9,S10].
+- Node/hardware product strings: R9700 = PCI `1002:7551` — independently attested by the
+  engine's own rig doc ReBAR check `lspci -d 1002:7551 'Region 0'` [S3] and the vendored
+  table row `7551, C0, AMD Radeon AI PRO R9700`; 8060S = `1002:1586` [S17], table rows
+  `1586,C1/C3/C6/D1 = AMD Radeon 8060S Graphics` (audio function 1002:1640 [S17]). The
+  launch brief's bracket-style string "Advanced Micro Devices, Inc. [AMD/ATI] Strix…"
+  is the lspci *class* spelling, not the amdgpu.ids marketing column — naming uses the
+  table, so it cannot leak into resource names; and the fallback that WOULD name a card
+  `amd.com/gpu` is reserved for unknown (device,revision) pairs [R6-S5].
+- Live (readonly-ai-gpu-kubernetes, 2026-11-11): node `ai-gpu` capacity/allocatable
+  `amd.com/gpu: 2`, no `amd.com/*` labels; DS container spec as in R6-Q2 (no args/env,
+  image 1.31.0.9); llama-swap pod main container limits `amd.com/gpu: 1` (+ requests
+  cpu1/4Gi), tools sidecar GPU-free [R6-S12].
+- Repo request lines: `charts/llama-swap/values.yaml:1045` (`amd.com/gpu: 1`, the ONLY
+  in-repo claim today); strata block requests = cpu/mem only (110Gi/8 CPU class,
+  privileged hostPath, values ~1300-1338 incl. the naming-capable-plugin comment);
+  `charts/vllm/values.yaml:307,310,372` = ROCR/HIP env inside its hostPath pod (no
+  plugin claim); services amd-gpu entry 40-44; base appset charts generator + internal
+  path rendering (appset-charts.yaml:16-39, 64-70, 114-123).
+
+### R6 — Contradictions & corrections to earlier rounds
+
+- RESEARCH line 670 ("a chart bump gives per-product resources (amd.com/Radeon-AI-
+  PRO-R9700)"): both halves need correction — the name form is `amd.com/gpu-ai-pro-r9700`
+  and **no chart bump exists** (0.22.0 cannot render args; master still 0.22.0). The
+  mechanism is real; the Helm delivery isn't shipped upstream [R6-S5,S6,S7].
+- Earlier "product naming PR #246 merged → deferred as near-prerequisite" (D14):
+  this round upgrades the record from "clean fix, later" to "clean fix, blocked by a
+  stale upstream chart PR, deliverable now via a 10-line vendored chart" — the
+  own-concern Deferred framing (DECISIONS) understates that a repo-only path exists.
+- Plan D14/Q9 shipped posture (`amd.com/gpu: 1` + mandatory PCI-retry gate) is
+  **superseded by owner ruling** — the Q9 round exists precisely to replace the
+  best-guess with the named scheme; the gate survives as redundancy.
+- The docs' `AMD_GPU_DEVICE_COUNT`/`CONFIG_FILE_PATH` (configuration.md @.12) are not
+  implemented in the .12 binary (flag surface only) — earlier round's "not re-verified"
+  is now resolved; neither would have helped anyway (count ≠ choice) [R6-S2].
+
+### R6 — Adjacent (cheap, worth recording)
+
+- Occupancy: PRs #243 "Add opt-in KFD GPU occupancy check" + #247 "Kfd occupancy
+  prestart" are OPEN (2026-09/10) — upstream concedes the no-occupancy class; a future
+  bump could make even the within-bucket choice occupancy-aware. Watch, don't wait.
+- DRA extended-resource mapping (beta 1.36, GA 1.37) means the lab could later serve
+  *classic-named* per-card requests without per-pod claims — a clean migration lane if
+  the owner ever moves llama-swap (and the home clusters' squat.ai devices) onto the
+  DRA driver wholesale [R6-S14,S15].
+- `--prefill-interleave auto:1` landed post-1.17.0 (unchanged from earlier round) — no
+  interaction with naming.
+
+### R6 — Open questions (residual — ride the RESULT too)
+
+1. **On-target revision match**: the lab APU's sysfs `revision` must be one of
+   C1/C3/C6/D1 (→ `gpu-8060s`) and the R9700's C0 (→ `gpu-ai-pro-r9700`); unknown
+   revision = that card silently lands under bare `amd.com/gpu` (fallback). C06 step-0
+   receipt closes it (also fixes which render minor /dev paths would have needed for
+   option 3).
+2. **Owner lane choice**: vendored amd-gpu chart (recommended) vs DRA-alongside (zero
+   llama-swap churn, strongest determinism, second subsystem + open reboot-CDI bug) vs
+   squat sidecar. DRA-vs-plugin is a philosophy call the owner has not reserved; both
+   are repo-only.
+3. If option 1: the exact vendored-chart governance line (DECISIONS: third-party chart
+   vendored at digest/tag `amd-gpu-helm-0.22.0` + the args delta; future re-sync
+   procedure) — plan-level, not research-level.
+4. Strix APU enumeration under the DRA driver (gfx1151 via amd_smi) has no field
+   report located (Raphael iGPU advertised per dsluo; Radeon dGPU proven per #135) —
+   only relevant if option 2 wins; runbook ResourceSlice check settles it.
+
+### R6 — Sources (accessed 2026-11-11)
+
+| # | URL | What it is |
+|---|---|---|
+| R6-S1 | raw.githubusercontent.com/ROCm/k8s-device-plugin/v1.31.0.12/internal/pkg/naming/naming.go (+ …/plugin/plugin.go) | strategy constants, ResourceName/bucketDevices/dpm per-name plugin, Allocate surface |
+| R6-S2 | same tag: cmd/k8s-device-plugin/main.go, Dockerfile, docs/user-guide/configuration.md, k8s-ds-amdgpu-dp.yaml | flag surface (`-resource_naming_strategy` default single), IDs table baked at /usr/share/libdrm/amdgpu.ids, docs-vs-code drift (device_count/config-file not implemented) |
+| R6-S3 | api.github.com/repos/ROCm/k8s-device-plugin/pulls/246 | PR "feat: add `product` resource naming strategy", merged 2026-10-19T19:21:59Z, body rationale + name examples |
+| R6-S4 | same tag: docs/user-guide/configuration.md §Resource Naming Strategy + README.md | single/mixed/product semantics; MI300X/MI210 worked examples; heterogeneous-node definition |
+| R6-S5 | same tag: internal/pkg/naming/{products.go,products_test.go,naming_test.go} + cmd/k8s-node-labeller/amdgpu.ids | sanitizer/filler/collision rules + 752-row vendored table; JS port passing upstream fixtures; lab names gpu-ai-pro-r9700 / gpu-8060s |
+| R6-S6 | rocm.github.io/k8s-device-plugin/index.yaml + tag trees amd-gpu-helm-0.22.0 & v1.31.0.12 helm/amd-gpu/** | newest chart 0.22.0 (appVersion 1.31.0.9, digest 791ada88…); template has NO args hook; values keys dp.image.tag/resources |
+| R6-S7 | api.github.com ROCm/k8s-device-plugin pulls?state=open | open PR #122 "Support args, command for helm chart" (2025-04-22) + open occupancy PRs #243/#247 |
+| R6-S8 | ROCm/k8s-gpu-dra-driver repo: README, releases API, rocm.github.io/k8s-gpu-dra-driver/index.yaml, helm-charts-k8s/values.yaml, docs/driver-attributes.md, example/example.yaml | DRA driver v1.0.1; chart v1.0.1 digest 0fc24145…; DeviceClass gpu.amd.com; attributes (deviceID/pciBusID/type/capacity); claim-template + resources.claims shape; extendedResourceName default amd.com/gpu (override/"") |
+| R6-S9 | raw.githubusercontent.com/dsluo/homelab/main/kubernetes/apps/{ai/llmkube/models/resourceclaimtemplate.yaml, ai/llmkube/models/qwen3-8-flash-next.yaml, kube-system/amd-gpu-dra-driver/app/helmrelease.yaml} | production R9700 pin via CEL deviceID==0x7551 (+x2 TP2), radiance 1.17.0@6fb0e99b pod spec, driver fork image + persistent cdi.dynamicPath |
+| R6-S10 | api.github.com/repos/ROCm/k8s-gpu-dra-driver/issues/135 | field report: k3s v1.36.6 + 2×R9700 gfx1201, v1.0.1 works incl. restricted non-root pod /dev/kfd+renderD via CDI; productName empty on Radeon; gpu-operator v1.5.1 deploy path |
+| R6-S11 | api.github.com …/issues/{75,78,83,86} | reboot-CDI-restore bug + fix PRs open; minor-derived device names unstable |
+| R6-S12 | readonly-ai-gpu-kubernetes (live): Node ai-gpu, DaemonSet amd-gpu-device-plugin-daemonset, Pod gpu-ai-llama-swap-* | capacity amd.com/gpu:2, no amd.com labels, DS no args/env image 1.31.0.9, llama-swap limits.amd.com/gpu:1 |
+| R6-S13 | hub.docker.com/v2/repositories/rocm/{k8s-device-plugin/tags/1.31.0.12, k8s-gpu-dra-driver/tags/v1.0.1} | both images exist (amd64 digest 6437c74f… for the plugin) |
+| R6-S14 | kubernetes.io/blog/2025-09-01/kubernetes-v1-34-dra-updates + …/docs/concepts/resource-management/dynamic-resource-allocation | DRA core GA v1.34; stable/locked v1.35; no preemption for DRA pods |
+| R6-S15 | kubernetes.io/blog/2026-09-03/kubernetes-v1-37-dra-updates | DRA extended-resource mapping: alpha 1.35 / beta 1.36 / GA 1.37 |
+| R6-S16 | kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins | device-plugin framework semantics (Allocate at container creation; unhealthy-device pods keep assignments, counts change at scheduling; extended resources integer-only, no overcommit; ResourceHealthStatus beta 1.36) |
+
+RESULT
+status: DONE
+chunk: plan
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md]
+commands_run: [repo reads (services/gpu-ai/prod/values.yaml, charts/base/templates/appset-charts.yaml, charts/llama-swap values+grep, charts/generic-device-plugin, home/infra generic-device-plugin values, STATE.json, chunks/C02.md, charts/radiance existence) => pass; github api: ROCm/k8s-device-plugin releases+PRs(#246 merged, #122/#243/#247 open)+git-trees(v1.31.0.12, amd-gpu-helm-0.22.0, master)+raw source (main.go, naming.go, products.go, both tests, plugin.go, amdgpu.go, Dockerfile, helm values/Chart/dstpl@tag+master, configuration.md, k8s-ds yaml, amdgpu.ids 752 rows) => pass; JS port of naming/products against the vendored table + self-test vs upstream fixtures (5/5 pass) => pass; ROCm/k8s-gpu-dra-driver repo/releases/index/values/deviceclass/attrs-doc/example/issues 135/83/75 => pass; rocm.github.io indexes (amd-gpu 0.22.0 newest; dra-driver v1.0.1) => pass; dsluo/homelab raw manifests (claim template, flashnext Model+IS, dra HelmRelease) => pass; hub.docker.com tag checks (plugin 1.31.0.12, dra v1.0.1) => pass; readonly-ai-gpu-kubernetes: resources_get Node ai-gpu + DaemonSet amd-gpu-device-plugin-daemonset, pods_get gpu-ai-llama-swap-* (read-only throughout) => pass; websearch ×2 (DRA GA citations, containerd CDI) + webfetch k8s device-plugins docs => pass]
+deviations: storm fan-out inline again (no subagent harness); the "two DaemonSets with a device filter" alternative was researched-to-exhaustion from source rather than docs (no filter exists in the .12 binary); discovered and sourced a third real mechanism (ROCm DRA driver) beyond the brief's option list — it is the only production-evidenced path that gives per-device determinism WITHOUT touching llama-swap, so it is ranked #2 rather than parked in Adjacent.
+friction: raw.githubusercontent 404s on guessed template filenames (configmap.yaml / amd-gpu-device-plugin-daemonset.yaml) — resolved by recursive git-trees listing per ref (the templates are helm/amd-gpu/templates/{deviceplugin-daemonset,labeller,rbac,serviceaccount}.yaml + _helpers/NOTES only); helm index entries sort by version-descending but a naive regex matched the OLDEST entry first — re-parsed with an anchored regex; GitHub code-search API needs auth — replaced with targeted tree+raw reads; earlier-round note that chart "values.yaml 404'd" is explained: the chart lives at helm/amd-gpu/ in the tag tree, not repo-root.
+open_questions: [owner lane: option 1 (vendored amd-gpu chart + product naming, literal ask, one llama-swap request-line flip in-wave) vs option 2 (k8s-gpu-dra-driver v1.0.1 ResourceClaimTemplate pin, zero llama-swap churn, second GPU subsystem + open reboot-CDI bug mitigated by persistent cdi.dynamicPath) — R6 recommends 1, offers 2 as the strongest alternative and the natural TP2 path; on-target sysfs device+revision receipts for both cards decide the exact advertised names (fallback trap: unknown revision → bare amd.com/gpu); if option 2: gfx1151 APU enumeration by the DRA driver is unevidenced (Raphael iGPU + R9700 are) — ResourceSlice check gates it; if option 1: vendored-chart governance line for DECISIONS]
+next_suggested: coord folds R6 into the plan as the Q9 ruling round: replace D14/plan "Q9 best guess" with the two-option decision table (recommend option 1: vendored charts/amd-gpu at 0.22.0+args, dp.image.tag 1.31.0.12, radiance requests amd.com/gpu-ai-pro-r9700, llama-swap flips to amd.com/gpu-8060s same-wave, C06 step-0 gains the revision/name gates), and put option-1-vs-2 (plus the two runbook receipts) to the owner in the next batched question round before C02 starts.
