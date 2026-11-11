@@ -172,12 +172,19 @@ def test_c06_profile_shape_and_ud_q4_k_xl_paths():
             f"{flag} = {val!r} carries no Q4 class marker — the Round-2 UD-Q4_K_XL inventory "
             "lays weights under a Q4-class dir; a name-guess here is the wrong weights"
         )
-    for key in ("exe", "cwd", "lib_dirs", "backend", "gpu", "parallel", "host"):
+    for key in S.CF141_SIBLING_KEYS:
         if key in prof:
             assert prof[key] == S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE).get(key), (
                 f"q4 profile {key} diverges from the primary — the engine build/paths are "
                 "per-node, not per-rung; only the data paths may differ"
             )
+    # cf-141 C03 law move (owner Q9, plan-approved Q17(a)) executed by the test
+    # session: `parallel` LEAVES this byte-identical set — each rung's slot
+    # count is per-rung data pinned by CF141_PARALLEL_RULINGS so a later
+    # single-rung scale-back cannot violate a cross-rung law. The Q9 ruling
+    # itself is quoted at the values seam (engineProfileStrataQ4.parallel,
+    # landed with C03's dev round) and the table guard lives in
+    # test_strata_cf141_envelope.py::test_cf141_per_rung_parallel_table.
 
 
 @helm
@@ -303,6 +310,44 @@ def test_c06_peers_wave_is_the_final_id_set():
             "(four after C08's sweep; C09's ornith arena grows the fifth — the evidence wave "
             "chain records both states)"
         )
+
+
+# --- cf-141 C02: the L2 arm ships on the q4 arena (RED until C02 lands) -------
+
+
+@helm
+def test_cf141_q4_profile_env_carries_mmq_kq():
+    """C02 AC1: the rendered strata-q4.json `env` is the EXACT dict
+    {"STRATA_MMQ_KQ": "1"} — the JSON STRING "1" is the engine contract
+    (getenv(...)[0]=='1', RESEARCH [32]); int-form is the §9.12 keys-vs-
+    values class: YAML loads 1 as int, json.dumps emits bare 1, the engine
+    reads the first byte of the stringified value and an int-typed env is
+    coerced by the supervisor, NOT by the switch — the pin must be quoted at
+    the source. The note's L2 row ships-in leg is byte-checked against this
+    same state (test_strata_tuning_runbook.py)."""
+    env = _profile().get("env")
+    problems = S.env_pin_violations(env, S.CF141_Q4_ENV_ARMED)
+    assert not problems, ("cf-141 C02's L2 arm not shipped on strata-q4.json: "
+                          + "; ".join(problems))
+
+
+@helm
+def test_cf141_q4_env_arming_probes_reject_falsified_shapes():
+    """Non-vacuity for C02's AC1 + the widening (keys-vs-values class): the
+    pure env law must reject int 1, an extra key, and a second env key
+    riding the q4 pin; the sibling law must NOT reject divergent parallels
+    (that is C03's per-rung data), and must reject a leaked sibling."""
+    assert S.env_pin_violations({"STRATA_MMQ_KQ": 1}, S.CF141_Q4_ENV_ARMED), \
+        "int-form env value must redden the exact-dict law"
+    assert S.env_pin_violations({"STRATA_MMQ_KQ": "1", "STRATA_EXTRA": "9"}, S.CF141_Q4_ENV_ARMED), \
+        "a second key riding the L2 pin must redden the law"
+    assert S.env_pin_violations({}, S.CF141_Q4_ENV_ARMED), \
+        "the un-armed state must itself be a violation once the law is armed"
+    base = {"exe": "/e", "cwd": "/c", "lib_dirs": ["/l"], "backend": "hip", "gpu": [0], "host": "h"}
+    assert not S.sibling_divergences(base | {"parallel": 4}, base | {"parallel": 8}), \
+        "per-rung parallel divergence must NOT be a sibling violation (Q9 law move)"
+    assert S.sibling_divergences(base | {"backend": "hip"}, base | {"backend": "cuda"}), \
+        "a sibling key divergence must be caught — the loop cannot be quietly widened"
 
 
 # --- AC4: init wiring — q4 token, sessions dir, no new secrets ---------------

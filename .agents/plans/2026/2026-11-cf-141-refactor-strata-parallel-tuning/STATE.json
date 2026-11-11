@@ -2,9 +2,31 @@
   "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
   "plan_status": "approved",
   "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
-  "test_session": null,
+  "test_session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
   "current_wave": 1,
-  "updated_at": "2026-11-10T23:18:15+00:00",
+  "updated_at": "2026-11-11T00:20:00+00:00",
+  "test_wave": {
+    "at": "2026-11-11T00:20:00+00:00",
+    "session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
+    "posture": "charts suite 436 passed / 9 skipped / 31 failed; containers suite 25 passed / 3 failed. All 34 reds are designed-red and name their chunk: C01 13, C02 6, C03 5, C04 7 (chart) + 3 (containers). Baseline 417P/9S and 24P/0F unchanged; 19 new green legs are probe/satisfiability/invariance arms.",
+    "authoritative_ledger": "TEST_SPEC §9.28 (per-leg by-name map + landing-round move inventory, incl. the pre-bump constants in test_dockerfile.py / c09_carry / thin_init that flip only at C04 and the two DOC_TOKENS 32→16 moves at C03)",
+    "files": [
+      "charts/llama-swap/tests/TEST_SPEC.md",
+      "charts/llama-swap/tests/strata_testlib.py",
+      "charts/llama-swap/tests/test_strata_c08_rung_shifts.py",
+      "charts/llama-swap/tests/test_strata_cf141_bump.py",
+      "charts/llama-swap/tests/test_strata_cf141_envelope.py",
+      "charts/llama-swap/tests/test_strata_config_schema.py",
+      "charts/llama-swap/tests/test_strata_q4_rung.py",
+      "charts/llama-swap/tests/test_strata_runbook.py",
+      "charts/llama-swap/tests/test_strata_strix.py",
+      "charts/llama-swap/tests/test_strata_tuning_runbook.py",
+      "charts/llama-swap/tests/evidence/strata-profiles-cf141-pre/{PROVENANCE.md,strata-q4.json,strata-orca-iq4_xs.json}",
+      "containers/strata/tests/test_dockerfile.py"
+    ],
+    "test_deviations_accepted_by_coord": "1 (C01 absence as designed-red naming C01, not skip — strictly stronger), 2 (per-rung env law resolved through the era chain because the chunk's 'every other rung env=={}' wording is falsified by the live strix eight-set), 3 (one merged cf141-bump era with per-file step sets — an engine-only capture would need a render state that never exists), 4 (era-0 anchor capture dir added so C02 AC2's era delta is machine-verifiable), 5 (primary-conv literal → era-chain-tip read; DOC_TOKENS conv rows stay literal and move 32→16 at C03 per §9.28), 6 (pre-bump constants NOT flipped now; their flips are C04 landing-round by-name moves), 7 (q4/orca overshoot derivations corrected this pass to era-gated reds naming C03). All within the test session's authority; none weaken a baseline law.",
+    "open_questions": "none"
+  },
   "kickoff": {
     "slug": "cf-141-refactor-strata-parallel-tuning",
     "card": "pjLoQbzXpT2NemCSm",

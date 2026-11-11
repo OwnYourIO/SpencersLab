@@ -32,3 +32,15 @@ Agents report via RESULT `friction:`; coord appends (its own items included).
   resolution: read the era-tail rounds (§9.24–§9.27, §10–§11) and MEASURED the posture instead
   (417 passed / 9 skipped / 0 failed, ~25 s full suite) — measuring beats archaeology · fixed
   (recipe here).
+- 2026-11-11 · test(plan) · C02 chunk's env-law wording "every rung except q4 keeps env=={}"
+  is falsified as written by live reality (strix's PROFILE-layer env carries the eight-set, an
+  existing green law) · resolution: implemented as the exact per-rung env table resolved through
+  the era chain (strix checked exactly against its eight-set, no rung exempted); the chunk's
+  wording is the round-2-era simplification — later chunks' authors read the test, not the prose
+  · open (chunk-wording vs live-law class; a plan touch could amend C02's wording, tests already
+  authoritative).
+- 2026-11-11 · test(plan) · aislop-gate's first scan of the session reported "0 changed file(s)"
+  while files were still untracked at that moment · resolution: none needed — subsequent edits
+  tracked correctly (9 changed files); recorded so no reader treats the first clean run as an
+  un-scanned edit (untracked files stay out of `--changes` scope by design, same note cf-131
+  round-1 already carries).

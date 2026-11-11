@@ -127,12 +127,28 @@ PRIMARY_MEMORY_LIMIT_MIB = 110592
 PROFILE_FIXTURE_ERA = {
     PROFILE_PRIMARY_FILE: "strata-profiles-u14-repin",
     PROFILE_STRIX_FILE: "strata-profiles-c09-repin",
+    # cf-141 adds whole-file anchors for q4/orca (era 0 =
+    # "strata-profiles-cf141-pre", the CF141_PRE_ERA constant defined with the
+    # cf-141 block at the file tail and asserted equal there); profile_fixture
+    # resolves the chain TIP, so these entries are the fallback floor,
+    # consumed by the envelope/bump-era arms. The q4/orca key strings are
+    # spelled literally because the frozen-id constants they alias are defined
+    # further down (the tail assert keeps the two spellings one fact).
+    # Ornith has no capture and none is added (the ticket never moves it).
+    "strata-q4.json": "strata-profiles-cf141-pre",
+    "strata-orca-iq4_xs.json": "strata-profiles-cf141-pre",
 }
 
 
 def profile_fixture(file: str) -> dict:
-    """Parsed JSON of a profile's frozen-era capture (era map above)."""
-    return json.loads((EVIDENCE_DIR / PROFILE_FIXTURE_ERA[file] / file).read_text())
+    """Parsed JSON of a profile's CURRENT frozen-era capture: the newest
+    landed cf-141 chain step (contiguous from the rung's anchor) when the
+    ticket's era dirs exist, else the pre-cf-141 map era above. Consumption
+    moves to the new era automatically at each capture — a values move whose
+    step dir was never captured keeps reading the old era and goes red
+    naming the missing step (the era dirs are the ledger, cf-141 law 7)."""
+    era = cf141_era_tip(file) or PROFILE_FIXTURE_ERA[file]
+    return json.loads((EVIDENCE_DIR / era / file).read_text())
 
 # C01 interface contract (containers/strata/README.md freezes these; the
 # container itself is untouched by run 2 — RESEARCH §1).
@@ -839,3 +855,335 @@ def live_code_grep(needle: str) -> list[str]:
             if needle in path.read_text(errors="replace"):
                 hits.append(str(path.relative_to(REPO_ROOT)))
     return hits
+
+
+# ---------------------------------------------------------------------------
+# cf-141 tuning frame (AD-141) — plan 2026/2026-11-cf-141-refactor-strata-…
+#
+# The era dirs are the ledger: a landed capture step is what flips era-scoped
+# arms between a chunk's before-state and its after-state, so a dev edit and
+# its capture round gate as one unit and a moved value whose step dir was
+# never written stays red naming the missing step. The step sets and file
+# membership below are owner rulings (Q1 the L2 pin, Q9 the 8-everywhere
+# envelope with Q17(a) ship-at-the-pin, Q10 row-H, Q16 the experimental-flag
+# posture, Q13(a)/Q15 the two-PR landing) — the captures prove the render
+# matched the ruling, never the other way round.
+# ---------------------------------------------------------------------------
+
+TUNING_RUNBOOK = REPO_ROOT / ".agents" / "notes" / "strata-parallel-tuning-runbook.md"
+
+CF141_PRE_ERA = "strata-profiles-cf141-pre"           # era-0 anchor: q4/orca (C02/C03 chain head)
+CF141_ERA_L2 = "strata-profiles-cf141-l2"             # C02: delta exactly {env}
+CF141_ERA_ROWH = "strata-profiles-cf141-rowh"         # C03: shape step {args, env, parallel}
+CF141_ERA_STRIX8 = "strata-profiles-cf141-strix8"     # C03: delta {parallel}
+CF141_ERA_ORCA8 = "strata-profiles-cf141-orca8"       # C03: delta {parallel}
+CF141_ERA_Q4P8 = "strata-profiles-cf141-q4parallel8"  # C03: delta {parallel} (q4 step 2)
+CF141_ERA_BUMP = "strata-profiles-cf141-bump"         # C04: the merged bump era
+
+# Pinned step-set per cf-141 era dir (top-level run-config keys the step may
+# move; row-H is the one sanctioned multi-key step — a SINGLE owner ruling
+# (Q9+Q10) whose exact surface set is pinned, per DECISIONS round 2 "step
+# kinds"). Anything else riding a step is red by this table.
+CF141_ERA_STEP: dict[str, frozenset] = {
+    CF141_ERA_L2: frozenset({"env"}),
+    CF141_ERA_ROWH: frozenset({"args", "env", "parallel"}),
+    CF141_ERA_STRIX8: frozenset({"parallel"}),
+    CF141_ERA_ORCA8: frozenset({"parallel"}),
+    CF141_ERA_Q4P8: frozenset({"parallel"}),
+    CF141_ERA_BUMP: frozenset({"drafting"}),
+}
+
+# C04's bump is ONE merge (the ledger moves every version literal in one
+# commit, and the drafting config obligation rides the same PR-2 state), so
+# its era is one dir whose per-file step widens where the rung also moves:
+# strix alone changes its packaged root too — {exe, lib_dirs} riding the
+# {drafting} step (C04 chunks: "same dir or adjacent era ... test session
+# picks the shape" — picked: merged, because the render between the two
+# edits does not exist as a capturable state). The pure engine-re-pin era
+# law (c07/c09 never carry a primary file) survives; the bump era carries
+# every flash-next file because the bump arms drafting on all four.
+CF141_ERA_STEP_FILE: dict[tuple[str, str], frozenset] = {
+    (CF141_ERA_BUMP, PROFILE_STRIX_FILE): frozenset({"exe", "lib_dirs", "drafting"}),
+}
+
+
+def cf141_step_for(file: str, era_dir: str) -> frozenset:
+    return CF141_ERA_STEP_FILE.get((era_dir, file), CF141_ERA_STEP[era_dir])
+
+# Ordered era chain per rung profile file ((dir, owning chunk)); the anchor
+# entries exist from plan approval on, later steps land with their chunk's
+# capture round (§9.16 ritual). Ornith is absent on purpose: no step moves it.
+CF141_ERA_CHAIN: dict[str, tuple[tuple[str, str], ...]] = {
+    PROFILE_PRIMARY_FILE: ((CF141_ERA_ROWH, "C03"), (CF141_ERA_BUMP, "C04")),
+    PROFILE_STRIX_FILE: ((CF141_ERA_STRIX8, "C03"), (CF141_ERA_BUMP, "C04")),
+    PROFILE_ORCA_FILE: ((CF141_PRE_ERA, "anchor"), (CF141_ERA_ORCA8, "C03"),
+                         (CF141_ERA_BUMP, "C04")),
+    PROFILE_Q4_FILE: ((CF141_PRE_ERA, "anchor"), (CF141_ERA_L2, "C02"),
+                      (CF141_ERA_Q4P8, "C03"), (CF141_ERA_BUMP, "C04")),
+}
+
+# The JSON files each cf-141 era dir may carry (cross-file purity: the
+# engine-re-pin-no-primary law generalized — an era dir holding a file its
+# step did not move is a smuggled second change).
+CF141_ERA_FILES: dict[str, frozenset] = {
+    CF141_PRE_ERA: frozenset({PROFILE_Q4_FILE, PROFILE_ORCA_FILE}),
+    CF141_ERA_L2: frozenset({PROFILE_Q4_FILE}),
+    CF141_ERA_ROWH: frozenset({PROFILE_PRIMARY_FILE}),
+    CF141_ERA_STRIX8: frozenset({PROFILE_STRIX_FILE}),
+    CF141_ERA_ORCA8: frozenset({PROFILE_ORCA_FILE}),
+    CF141_ERA_Q4P8: frozenset({PROFILE_Q4_FILE}),
+    CF141_ERA_BUMP: frozenset({PROFILE_PRIMARY_FILE, PROFILE_STRIX_FILE,
+                               PROFILE_ORCA_FILE, PROFILE_Q4_FILE}),
+}
+
+# The shipped after-states, byte-pinned (values render AND note rows must
+# agree with these at their era). Quoted strings are the engine contract:
+# STRATA_MMQ_KQ reads getenv(...)[0]=='1' [RESEARCH 32], STRATA_PLE_AUTO_RAM
+# likewise [26] — an int-form pin is a silent engine-side default.
+CF141_Q4_ENV_ARMED = {"STRATA_MMQ_KQ": "1"}
+CF141_PRIMARY_ENV_ARMED = {"STRATA_PLE_AUTO_RAM": "0"}
+CF141_DRAFTING_VALUE = "mtp"
+FLASH_NEXT_PROFILES = (PROFILE_PRIMARY_FILE, PROFILE_STRIX_FILE,
+                       PROFILE_ORCA_FILE, PROFILE_Q4_FILE)
+
+# Per-rung slot rulings — `parallel` LEFT the cross-rung byte-identical set
+# by owner Q9 ("8 slots everywhere... crash it and scale back from there",
+# 2026-11-10/11, plan-approved Q17(a)); each count is per-rung data carrying
+# its own ruling so a later single-rung scale-back (parallel: 4) cannot
+# violate a cross-rung law. The citation strings are contract: the envelope
+# table arms print them and the runbook rows must match them.
+CF141_PARALLEL_RULINGS: dict[str, tuple[int, str]] = {
+    PROFILE_PRIMARY_FILE: (8, "Q9+Q10 row-H (owner 2026-11-10; conv 16384 + PLE-direct)"),
+    PROFILE_STRIX_FILE: (8, "Q9 8-everywhere at the pin (owner 2026-11-10/11; boot-read gate applies)"),
+    PROFILE_ORCA_FILE: (8, "Q9 8-everywhere at the pin (owner 2026-11-10/11; park refusals expected)"),
+    PROFILE_Q4_FILE: (8, "Q9 supersedes a6e493b78's 4-slot ruling (owner 2026-11-10/11)"),
+    PROFILE_ORNITH_FILE: (1, "q36 surface law survives Q9 (plan read re-confirmed by Q17; ornith is not a flash-next rung)"),
+}
+
+# The pre-envelope state (the C01/C02 waves' shipped truth, and every rung's
+# scale-back target per the runbook ladder).
+CF141_PARALLEL_PRE = {f: 4 for f in FLASH_NEXT_PROFILES} | {PROFILE_ORNITH_FILE: 1}
+
+# The cross-rung engine-identity siblings after cf-141's law move
+# (C03 task 2.1): per-node facts stay byte-identical, the slot count does
+# not. test_strata_q4_rung.py's loop iterates exactly this set, and the
+# envelope arms guard the membership.
+CF141_SIBLING_KEYS = ("exe", "cwd", "lib_dirs", "backend", "gpu", "host")
+
+# Bump-era literals (C04 lands them; PR-2). Version-free legs (claim-compiled
+# exe paths, the supervisor pin, the services block) do NOT move here.
+CF141_STRATA_VERSION = "0.2.13"
+CF141_ENGINE_VERSION = "0.1.59"
+CF141_ENGINE_HALO_LABEL = f"{CF141_ENGINE_VERSION}-linux-x86_64-hip-halo"
+CF141_ENGINE_RX9070_LABEL = f"{CF141_ENGINE_VERSION}-linux-x86_64-hip-rx9070"
+CF141_CLONE_TAG = f"v{CF141_STRATA_VERSION}"
+CF141_FROM_TAGS = (f"{CF141_STRATA_VERSION}-rocm-gfx120x", f"{CF141_STRATA_VERSION}-rocm-gfx1151")
+CF141_CHECKOUT_MARKER = "/models/strata/.checkout-0.2.13-carry1"
+CF141_CHECKOUT_MARKER_ID = "0.2.13-carry-1"
+CF141_PREVIOUS_STRATA_VERSION = "0.2.9"
+CF141_PREVIOUS_ENGINE_VERSION = "0.1.55"
+CF141_SUPERVISOR_TAG = "unified-vulkan-266"
+
+# Host-budget arithmetic (RESEARCH R2-C/R2 tables; the KV law 13,728 B/token
+# int8 = 13 KV-bearing layers x 1,056 B survives at BOTH pins [57][58][59]).
+# The arena terms are the [M-node] measured values; ~6 GiB is the supervisor +
+# misc term the rungs-research budget law counts. These numbers are what the
+# runbook's envelope rows must reproduce — the derivation arm recomputes them
+# from the RENDER (parallel/conv/cgroup are rendered facts; the arena bytes
+# are the measured constants), so a budget sentence is proven, not echoed.
+CF141_KV_BYTES_PER_TOKEN = 13728
+CF141_FLASHNEXT_CTX = 262144
+CF141_RUNG_ARENA_GIB = {"primary": 46.84, "orca": 57.7, "q4": 71.73}
+CF141_BUDGET_MISC_GIB = 6.0
+
+
+def cf141_host_total_gib(rung: str, parallel: int, conv_mib: int,
+                         ctx: int = CF141_FLASHNEXT_CTX) -> float:
+    """(N+1) full-context pinned-KV budget law: arena + (parallel+1) x ctx x
+    13,728 B + conversation cache + ~6 GiB, in GiB."""
+    kv_gib = (parallel + 1) * ctx * CF141_KV_BYTES_PER_TOKEN / 1024**3
+    return CF141_RUNG_ARENA_GIB[rung] + kv_gib + conv_mib / 1024 + CF141_BUDGET_MISC_GIB
+
+
+# C03's envelope step per rung file (ornith None: no step raises or moves it;
+# the scale-back of ONE rung re-pins CF141_PARALLEL_RULINGS' row — TEST_SPEC).
+CF141_ENVELOPE_STEP: dict[str, str | None] = {
+    PROFILE_PRIMARY_FILE: CF141_ERA_ROWH,
+    PROFILE_STRIX_FILE: CF141_ERA_STRIX8,
+    PROFILE_ORCA_FILE: CF141_ERA_ORCA8,
+    PROFILE_Q4_FILE: CF141_ERA_Q4P8,
+    PROFILE_ORNITH_FILE: None,
+}
+
+
+def cf141_era_landed(file: str, era_dir: str) -> bool:
+    return (EVIDENCE_DIR / era_dir / file).is_file()
+
+
+def cf141_chain_present(file: str) -> list[str]:
+    """The rung's contiguous landed chain (anchor included when present); a
+    gap stops the walk — the later step is not half-trusted. Rungs with no
+    cf-141 chain (ornith) walk empty."""
+    out = []
+    for d, _chunk in CF141_ERA_CHAIN.get(file, ()):
+        if cf141_era_landed(file, d):
+            out.append(d)
+        else:
+            break
+    return out
+
+
+def cf141_era_tip(file: str) -> str | None:
+    chain = cf141_chain_present(file)
+    return chain[-1] if chain else None
+
+
+def cf141_next_step(file: str) -> tuple[str, str] | None:
+    """First (dir, chunk) of the rung's chain not on disk yet — the name a
+    chain-arm red must print."""
+    for d, chunk in CF141_ERA_CHAIN.get(file, ()):
+        if not cf141_era_landed(file, d):
+            return d, chunk
+    return None
+
+
+def cf141_envelope_landed(file: str) -> bool:
+    """True once C03's step for this rung has captured — the gate every
+    per-rung before/after leg reads (the era chain is the ledger)."""
+    step = CF141_ENVELOPE_STEP[file]
+    return step is not None and cf141_era_landed(file, step)
+
+
+def era_delta(prev: dict, nxt: dict) -> frozenset:
+    """Top-level run-config keys whose values differ between two captures."""
+    return frozenset(k for k in set(prev) | set(nxt) if prev.get(k) != nxt.get(k))
+
+
+def render_parallel_map(docs) -> dict[str, int]:
+    return {file: profile_json(docs, file).get("parallel")
+            for file in INNER_PROFILE_FILES.values()}
+
+
+def parallel_violations(rendered: dict, rulings: dict) -> list[str]:
+    """(rung, wanted, got, citation) lines for a per-rung parallel table
+    mismatch. Driven by the ruling table, never a cross-rung loop — a
+    scale-back of ONE rung is a re-pin of the table row, not a law break."""
+    out = []
+    for file, (want, citation) in rulings.items():
+        got = rendered.get(file)
+        if got != want:
+            out.append(f"{file}: parallel {got!r}, ruling table says {want!r} ({citation})")
+    return out
+
+
+def sibling_divergences(a: dict, b: dict, keys=CF141_SIBLING_KEYS) -> list[str]:
+    """Cross-rung identity over the engine-sibling keys only; divergent
+    `parallel` is NOT a violation here by owner Q9 (cf-141 C03 law move)."""
+    return [f"{k}: {a.get(k)!r} != {b.get(k)!r}" for k in keys if a.get(k) != b.get(k)]
+
+
+def env_pin_violations(env, want: dict) -> list[str]:
+    """Exact-dict + JSON-string-value check for a profile-layer env pin
+    (keys-vs-values class: an int 1 or an extra key each fail by name)."""
+    if not isinstance(env, dict):
+        return [f"profile env is {env!r}, want the exact dict {want!r}"]
+    out = []
+    if set(env) != set(want):
+        out.append(f"env keys {sorted(env)} != the pinned {sorted(want)}")
+    for k, v in want.items():
+        if env.get(k) != v:
+            out.append(f"env[{k!r}] = {env.get(k)!r}, want the JSON string {v!r}")
+    return out
+
+
+def drafting_violations(profiles: dict[str, dict]) -> list[str]:
+    """C04's config obligation as a pure law: "drafting": "mtp" on exactly
+    the four flash-next profiles, no drafting key on the ornith q36 surface
+    (closed-world check). Shared by the render arm and the non-vacuity
+    probes so the mutant and the live check cannot drift apart."""
+    out = []
+    for file in FLASH_NEXT_PROFILES:
+        prof = profiles.get(file) or {}
+        if prof.get("drafting") != CF141_DRAFTING_VALUE:
+            out.append(f"{file}: drafting {prof.get('drafting')!r}, want the string "
+                       f"{CF141_DRAFTING_VALUE!r} (0.2.13 shapes drafting unconditionally [79])")
+    if "drafting" in (profiles.get(PROFILE_ORNITH_FILE) or {}):
+        out.append(f"{PROFILE_ORNITH_FILE}: drafting key rides the q36 surface — its ruling "
+                   "is separate (DECISIONS round 2)")
+    return out
+
+
+def flavor_pair_violations(tags: list[str]) -> list[str]:
+    """The ledger pair as a pure law: exactly the two bumped flavor tags, no
+    half-moved state (a two-stage image with one flavor of each release)."""
+    want = sorted(CF141_FROM_TAGS)
+    return [] if sorted(tags) == want else [f"FROM strata tags {sorted(tags)} != the bumped pair {want}"]
+
+
+def marker_pair_violations(script: str) -> list[str]:
+    """Bump-era marker law as a pure check: both marker literals at the
+    0.2.13 pair and the retired 0.2.9 spelling gone (content-compared, so
+    the first boot re-fires the migration)."""
+    out = []
+    if f"CHECKOUT_MARKER={CF141_CHECKOUT_MARKER}" not in script:
+        out.append(f"no CHECKOUT_MARKER={CF141_CHECKOUT_MARKER} assignment")
+    if f"CHECKOUT_MARKER_ID={CF141_CHECKOUT_MARKER_ID}" not in script:
+        out.append(f"no CHECKOUT_MARKER_ID={CF141_CHECKOUT_MARKER_ID} assignment")
+    if "0.2.9-carry" in script:
+        out.append("a retired 0.2.9-carry marker literal survives")
+    return out
+
+
+@functools.lru_cache(maxsize=1)
+def chart_values_dict() -> dict:
+    """The chart values parsed — the note validator resolves arm-table
+    key-paths against this (AC3's 'every row's key-path resolves')."""
+    return yaml.safe_load((CHART_DIR / "values.yaml").read_text())
+
+
+def provenance_violations(dirpath: Path, files) -> list[str]:
+    """An era dir's PROVENANCE.md must name every capture file it carries
+    (JSON set == `files`), record each file's live-recomputed sha256, state
+    the double-capture, and carry a date + commit ref (a copied-not-re-read
+    digest has no provenance to verify — the C04 non-vacuity class)."""
+    out = []
+    prov = dirpath / "PROVENANCE.md"
+    if not prov.is_file():
+        return [f"{dirpath.name}/PROVENANCE.md missing — era captures are provenance-first"]
+    text = prov.read_text()
+    present = {p.name for p in dirpath.glob("*.json")}
+    if present != set(files):
+        out.append(f"{dirpath.name} carries {sorted(present)}, expected {sorted(files)}")
+    for name in sorted(files):
+        fp = dirpath / name
+        if not fp.is_file():
+            out.append(f"{dirpath.name}/{name} missing")
+            continue
+        digest = hashlib.sha256(fp.read_bytes()).hexdigest()
+        if digest not in text:
+            out.append(f"{dirpath.name}/{name}: sha256 {digest} not recorded in PROVENANCE "
+                       "(re-read live vs a copied digest)")
+    if "double-capture" not in text.lower():
+        out.append(f"{dirpath.name}/PROVENANCE.md does not state the double-capture determinism")
+    if not re.search(r"\d{4}-\d{2}-\d{2}", text):
+        out.append(f"{dirpath.name}/PROVENANCE.md has no capture date")
+    if not re.search(r"`?[0-9a-f]{7,40}`?", text):
+        out.append(f"{dirpath.name}/PROVENANCE.md names no commit/tree ref")
+    return out
+
+
+# The PROFILE_FIXTURE_ERA anchor entries for q4/orca spell the anchor dir as
+# a literal (the map is defined before this block); this import-time check
+# keeps the two spellings one fact.
+assert PROFILE_FIXTURE_ERA[PROFILE_Q4_FILE] == CF141_PRE_ERA
+assert PROFILE_FIXTURE_ERA[PROFILE_ORCA_FILE] == CF141_PRE_ERA
+
+
+def cf141_expected_profile_env(file: str) -> dict:
+    """The profile-layer env the era chain says this rung renders with: the
+    chain-tip capture's env (armed states are DATA: q4 gets STRATA_MMQ_KQ at
+    the cf141-l2 step, the primary gets STRATA_PLE_AUTO_RAM at row-H), ornith
+    — the one rung with no capture — stays {} by its surface state."""
+    if file == PROFILE_ORNITH_FILE:
+        return {}
+    return profile_fixture(file).get("env") or {}

@@ -130,10 +130,30 @@ def test_t0_request_lines_on_every_arena_model_env():
         env = set(S.env_list(models[aid]))
         assert S.REQUEST_LINES_ENV in env, f"{aid} model env lacks {S.REQUEST_LINES_ENV} — its rates are unmeasurable"
     primary_profile = S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)
-    assert primary_profile.get("env") == {}, (
+    assert primary_profile.get("env") == S.cf141_expected_profile_env(S.PROFILE_PRIMARY_FILE), (
         f"primary profile-layer env grew ({primary_profile.get('env')!r}) — T0 rides the model env, "
-        "and the frozen-era capture asserts this layer stays empty"
+        "and the era chain pins this layer empty until C03's row-H step arms STRATA_PLE_AUTO_RAM"
     )
+
+
+@helm
+def test_cf141_profile_env_law_widened_armed_rungs_as_data():
+    """cf-141 C02: the primary-only profile-env=={} law becomes the exact
+    per-rung env table, resolved through the era chain (armed rungs are
+    DATA: q4 gains {"STRATA_MMQ_KQ": "1"} at the cf141-l2 step, the primary
+    gains {"STRATA_PLE_AUTO_RAM": "0"} at row-H). The widening must not
+    exempt strix/orca/ornith: strix's env is checked EXACTLY against its
+    frozen eight-set, orca/ornith against {}. A red before a step dir
+    exists means the values moved without its §9.16 capture — the era chain
+    is the ledger."""
+    docs = _docs()
+    problems = []
+    for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE, S.PROFILE_ORCA_FILE,
+                 S.PROFILE_Q4_FILE, S.PROFILE_ORNITH_FILE):
+        want = S.cf141_expected_profile_env(file)
+        got = S.profile_json(docs, file).get("env")
+        problems += S.env_pin_violations(got, want) and [f"{file}: env {got!r}, era table says {want!r}"]
+    assert not problems, "profile-env table violated:\n" + "\n".join(problems)
 
 
 @helm

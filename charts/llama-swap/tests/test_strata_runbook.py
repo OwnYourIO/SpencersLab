@@ -487,3 +487,199 @@ def test_c09_runbook_alternation_ties_to_the_rendered_sets_main():
         f"runbook alternation {sorted(set(stale))} drifted from the rendered sets.main "
         f"{expr!r} — the docs line must land WITH the values edit, never after"
     )
+
+
+# ---------------------------------------------------------------------------
+# cf-141 C02 — the doc-truth round (owner Q7 "Yes" + Q14 fold-in). Law shape
+# = presence-of-true-statement where satisfiable (§9.21 doctrine), with every
+# number re-derived from the live render so each chunk's docs stay true
+# against its own render gate (C03 re-moves the same windows to row-H truth
+# without an edit to these arms). DESIGNED RED until C02 lands: each red
+# names the falsified surface it waits for. The supersession-history
+# sentences outside these windows stay byte-untouched.
+# ---------------------------------------------------------------------------
+
+
+def _render_numbers() -> tuple[int, int]:
+    """(primary conv MiB, primary cap MiB) straight from the render — the
+    corrected prose must agree with these, never with remembered numbers."""
+    docs = S.render_on()[0]
+    pairs = dict(S.arg_pairs(S.profile_json(docs, S.PROFILE_PRIMARY_FILE)))
+    return int(pairs["--conversation-cache-mib"]), int(pairs["--memory-limit-mib"])
+
+
+def _rung5_violations(window: str, conv: int, cap: int) -> list[str]:
+    """Pure law for the README rung-5 window: no 24576 literal; the rendered
+    primary conv and the q4 conv stated. Shared by the arm and the probes."""
+    out = []
+    if "--conversation-cache-mib 24576" in window:
+        out.append("the stale `--conversation-cache-mib 24576` literal survives")
+    if str(conv) not in window:
+        out.append(f"window does not state the rendered primary conv {conv}")
+    if str(S.Q4_CONV_CACHE_MIB) not in window:
+        out.append(f"window does not state the q4 conv {S.Q4_CONV_CACHE_MIB}")
+    return out
+
+
+@helm
+def test_cf141_c02_readme_rung5_states_the_shipped_conv_pair():
+    """Correction 3 (chart README ~L259): rung 5 must state the RENDERED
+    primary conv (32768×16 at C02's gate, 16384×16 after C03's row-H) and
+    the q4 16384 — the stale `--conversation-cache-mib 24576` literal
+    "must not survive" (C02 Tests verbatim)."""
+    conv, cap = _render_numbers()
+    readme = S.read(S.PARENT_README, "C02 corrects the rung-5 conv citation")
+    start = readme.index("Conversation-cache reuse") if "Conversation-cache reuse" in readme else -1
+    assert start >= 0, "the README lost the rung-5 window entirely — the correction needs a home"
+    problems = _rung5_violations(readme[start:start + 600], conv, cap)
+    assert not problems, ("cf-141 C02 correction 3 pending:\n" + "\n".join(problems))
+
+
+def _description_violations(desc: str, conv: int, cap: int) -> list[str]:
+    """Pure law for the values arena description: the "90 GiB" engine-side
+    falsification gone, the rendered cap named, and the conversation-cache
+    GiB figure exactly the render's conv term."""
+    out = []
+    if "90 GiB" in desc:
+        out.append("description still caps the primary at 90 GiB engine-side")
+    if str(cap) not in desc and not (cap == 110592 and "108 GiB" in desc):
+        out.append(f"description does not name the rendered cap {cap}")
+    m = re.search(r"(\d+)\s*GiB conversation-cache", desc)
+    if not m or int(m.group(1)) * 1024 != conv:
+        out.append(f"description's conversation-cache figure does not match the rendered {conv} MiB")
+    return out
+
+
+@helm
+def test_cf141_c02_values_primary_description_is_render_true():
+    """Correction 2 (chart values ~L1524): the arena description must drop
+    the "capped at 90 GiB engine-side" falsification and state the rendered
+    cap (110592) plus a conversation-cache GiB figure equal to the render's
+    conv term — C03's row-H move re-tracks automatically, because the arm
+    reads the render, not the prose."""
+    conv, cap = _render_numbers()
+    ok, desc = S.dig(S.chart_values_dict(), "strata.config.models.qwen3.8-flash-next-strata.description")
+    assert ok, "the primary arena description vanished from values"
+    problems = _description_violations(desc, conv, cap)
+    assert not problems, ("cf-141 C02 correction 2 pending:\n" + "\n".join(problems))
+
+
+def _ram_law_violations(window: str) -> list[str]:
+    """Pure law for the service RAM-law comment: ttl 0 as a CURRENT claim is
+    gone (a history/negation marker on its own line is allowed — same
+    line-scoped discipline as the note's VOID-token arm), and the shipped
+    ttl: 3600 is named."""
+    bad = [ln for ln in window.splitlines()
+           if re.search(r"ttl:? 0", ln) and not re.search(r"never|not (the )?(shipped|posture)|superseded|was", ln, re.I)]
+    out = [f"states 'ttl 0' as current posture: {ln.strip()[:80]!r}" for ln in bad]
+    if "3600" not in window:
+        out.append("window does not name the shipped ttl: 3600")
+    return out
+
+
+@helm
+def test_cf141_c02_values_primary_description_is_render_true():
+    """Correction 2 (chart values ~L1524): the arena description must drop
+    the "capped at 90 GiB engine-side" falsification and state the rendered
+    cap (110592) plus a conversation-cache GiB figure equal to the render's
+    conv term — C03's row-H move re-tracks automatically, because the arm
+    reads the render, not the prose."""
+    conv, cap = _render_numbers()
+    vals = S.chart_values_dict()
+    ok, desc = S.dig(vals, "strata.config.models.qwen3.8-flash-next-strata.description")
+    assert ok, "the primary arena description vanished from values"
+    assert "90 GiB" not in desc, (
+        f"the description still caps the primary at 90 GiB engine-side (shipped {cap}): {desc[:120]!r}"
+    )
+    assert str(cap) in desc or str(cap // 1024) == "108" and "108 GiB" in desc, (
+        f"the L1524 window must carry the rendered cap {cap} (C02 Tests verbatim)"
+    )
+    m = re.search(r"(\d+)\s*GiB conversation-cache", desc)
+    assert m and int(m.group(1)) * 1024 == conv, (
+        f"description states a {m.group(1) if m else 'no'} GiB conversation-cache budget; "
+        f"the render says {conv} MiB (={conv // 1024} GiB) — docs move with the numbers"
+    )
+
+
+@helm
+def test_cf141_c02_service_ram_law_names_the_shipped_ttl():
+    """Correction 1 (services/gpu-ai/prod/values.yaml ~L207): "inner posture
+    is lazy + ttl 0" → the shipped time-share posture — the RAM-law comment
+    must carry ttl: 3600 (strix 1800, the matrix never-co-resident law and
+    the serialized-deep-prompts traffic law ride with it, per C02's task
+    text). The old sentence is a falsification, not history: no negation
+    window admits it."""
+    text = S.read(S.SERVICE_VALUES, "C02 corrects the RAM-law comment")
+    start = text.index("RAM law (Q2)") if "RAM law (Q2)" in text else -1
+    assert start >= 0, "the service RAM-law window lost its anchor (correction 1 needs a home)"
+    problems = _ram_law_violations(text[start:start + 900])
+    assert not problems, ("cf-141 C02 correction 1 pending:\n" + "\n".join(problems))
+
+
+@helm
+def test_cf141_c02_batch_settlement_windows():
+    """Corrections 3b + 4 (README ~L244; host-prep note §4): the settled
+    OQ-1 reading — `parallel:` ≡ `--batch` via `parallel_args`, Q2 rejected
+    the literal argv element — must be stated in both windows. Presence-of-
+    true-statement: the window needs the `parallel` spelling AND `--batch`
+    AND the settlement mechanism named in one paragraph (regex window, not a
+    blanket search — the §4 'no `--batch`' phrasing is exactly what fails
+    this today)."""
+    settlements = (
+        ("charts/llama-swap/README.md", S.PARENT_README, "posture was rejected, Q2"),
+        (".agents/notes/strata-host-prep-gpu-ai.md", S.RUNBOOK_NOTE, "## 4. RAM law"),
+    )
+    for label, path, anchor in settlements:
+        text = S.read(path, "C02's §4/L244 settlement corrections")
+        i = text.index(anchor) if anchor in text else -1
+        assert i >= 0, f"{label}: settlement anchor {anchor!r} vanished — the window has no home"
+        window = _flat(text[i:i + 1200])
+        assert re.search(r"parallel", window, re.I) and "--batch" in window \
+            and re.search(r"parallel_args|≡|equivalent|same engine path|maps to", window, re.I), (
+            f"{label}: the {anchor!r} window does not carry the settled "
+            "`parallel:` ≡ `--batch` (via parallel_args) reading (corrections 3b/4, owner Q7)"
+        )
+
+
+@helm
+def test_cf141_c02_dead_pin_me_obligation_replaced_by_rolling_tag_law():
+    """Correction 5 (Q14 fold, chart values ~L1209-1213): the dead "PIN-ME:
+    no :v<run> exists yet" obligation becomes the deliberate rolling-tag
+    posture — `:main` + Always is law (test_strata_thin_init.py's rolling-
+    pair arm is its enforcement home; historical pins existed and read as
+    history)."""
+    text = S.read(S.CHART_DIR / "values.yaml", "C02's PIN-ME correction")
+    assert "PIN-ME" not in text, "the dead PIN-ME obligation text survives (correction 5, owner Q14)"
+    i = text.index("repository: ghcr.io/ownyourio/strata")
+    window = text[max(0, i - 700):i + 700]
+    assert re.search(r"rolling", window, re.I), (
+        "the strata image comment must state the deliberate rolling-tag posture "
+        "(:main + Always is law), not a stale pin obligation"
+    )
+    assert re.search(r"Always", window), "the rolling-tag law comment must name the pullPolicy pair"
+
+
+def test_cf141_c02_doc_laws_have_teeth_on_mutants_and_clear_on_truth():
+    """Non-vacuity + satisfiability for the C02 doc laws (both directions on
+    pure validators, deterministic): the falsified shapes redden by name —
+    the 24576 survivor, the wrong conv number, the ttl-0-as-current claim,
+    the "90 GiB" falsification — while the shipped-truth shapes clear."""
+    conv, cap = 32768, 110592
+    stale_window = ("twice; the second pass must land materially faster (the\n"
+                    "`--conversation-cache-mib 24576` × 16-slot budget working)")
+    assert _rung5_violations(stale_window, conv, cap), "the stale rung-5 mutant must redden the law"
+    true_window = (f"twice — the `--conversation-cache-mib {conv}` × 16-slot budget on the\n"
+                   f"primary and `--conversation-cache-mib {S.Q4_CONV_CACHE_MIB}` on q4 working")
+    assert not _rung5_violations(true_window, conv, cap), "the render-true window must satisfy the law"
+    bad_desc = ("Strata engine, experts pinned in a page-locked RAM arena on the R9700, "
+                "capped at 90 GiB engine-side with a 32 GiB conversation-cache budget")
+    assert _description_violations(bad_desc, conv, cap), "the 90-GiB mutant must redden the law"
+    good_desc = ("Strata engine, experts pinned in a page-locked RAM arena on the R9700, "
+                 f"capped at {cap} MiB engine-side with a {conv // 1024} GiB conversation-cache "
+                 "budget inside the 110Gi cgroup")
+    assert not _description_violations(good_desc, conv, cap), "the render-true description must clear"
+    assert _ram_law_violations("RAM law: the inner posture is lazy + ttl 0 — permanent pin"), \
+        "the ttl-0-as-current mutant must redden the law"
+    assert not _ram_law_violations("RAM law: time-share posture, ttl: 3600 (strix 1800) — the old ttl 0 "
+                                   "pin was superseded after the 2026-10-29 OOM"), \
+        "a history-labeled ttl 0 sentence must stay legal (supersession sentences survive)"

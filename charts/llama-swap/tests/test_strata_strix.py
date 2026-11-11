@@ -190,34 +190,61 @@ def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
     it again (0.1.54 -> 0.1.55 with the 0.2.9 flavor image) — each time
     PROVENANCE routed the fixture re-pin to the test session. The
     byte-invariance law survives intact across the WHOLE chain: every
-    adjacent era delta is ONLY the sanctioned engine-root pair, and every era
+    adjacent era delta is ONLY the sanctioned step, and every era
     pins its captured root exactly, so the three preservation arms
     (abliterated/orca/q4) keep whole-file deep-equality with no exempt-key
-    hole."""
-    era1 = json.loads(
-        (S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()
+    hole.
+
+    cf-141 widens this law to STEP KINDS (DECISIONS round 2, "row-H is a
+    law-move chunk"): the strix chain continues through the landed cf-141
+    steps — C03's envelope step moves exactly {parallel}, C04's engine step
+    (cf141-engine59) exactly {exe, lib_dirs}, C04's bump-config step exactly
+    {drafting} — every step-set pinned in strata_testlib.CF141_ERA_STEP;
+    nothing else rides any step. Un-landed steps stop the walk; the envelope
+    and bump arms name the missing capture."""
+    chain = [
+        ("era 1 pre-cf86",
+         json.loads((S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()),
+         f"{S.ENGINE_ROOT}/0.1.52-linux-x86_64-hip-halo", None),
+        ("era 2 c07-repin",
+         json.loads((S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_STRIX_FILE).read_text()),
+         f"{S.ENGINE_ROOT}/0.1.54-linux-x86_64-hip-halo", {"exe", "lib_dirs"}),
+    ]
+    if S.cf141_era_landed(S.PROFILE_STRIX_FILE, S.CF141_ERA_STRIX8):
+        chain.append(("era 4 cf141-strix8",
+                      json.loads((S.EVIDENCE_DIR / S.CF141_ERA_STRIX8 / S.PROFILE_STRIX_FILE).read_text()),
+                      None, S.CF141_ERA_STEP[S.CF141_ERA_STRIX8]))
+    if S.cf141_era_landed(S.PROFILE_STRIX_FILE, S.CF141_ERA_BUMP):
+        chain.append(("era 5 cf141-bump",
+                      json.loads((S.EVIDENCE_DIR / S.CF141_ERA_BUMP / S.PROFILE_STRIX_FILE).read_text()),
+                      f"{S.ENGINE_ROOT}/{S.CF141_ENGINE_HALO_LABEL}",
+                      S.cf141_step_for(S.PROFILE_STRIX_FILE, S.CF141_ERA_BUMP)))
+    # era 3 (c09-repin) sits between era 2 and the cf-141 steps: engine-root
+    # delta; read it directly so the walk order is the CHAIN order, not the
+    # file order. It is also the fixture while no cf-141 strix step has
+    # landed, so the map and the chain can never silently disagree.
+    chain.insert(2, ("era 3 c09-repin",
+                     json.loads((S.EVIDENCE_DIR / "strata-profiles-c09-repin" / S.PROFILE_STRIX_FILE).read_text()),
+                     f"{S.ENGINE_ROOT}/0.1.55-linux-x86_64-hip-halo", {"exe", "lib_dirs"}))
+    for name, era, root, delta_in in chain:
+        if root is not None:
+            assert era["exe"] == f"{root}/strata" and era["lib_dirs"] == [root], (
+                f"{name} must pin its captured root {root!r} exactly — era files are "
+                "append-only history; a root moved without PROVENANCE is an unsanctioned re-pin"
+            )
+        if delta_in is not None:
+            prev = chain[chain.index((name, era, root, delta_in)) - 1]
+            moved = S.era_delta(prev[1], era)
+            assert moved == frozenset(delta_in), (
+                f"{prev[0]}->{name}: adjacent era delta is {sorted(moved)}, the step law "
+                f"pins {sorted(delta_in)} — anything else moving is an un-sanctioned re-tune "
+                "riding a re-pin (engine steps {exe,lib_dirs}, envelope {parallel}, "
+                "bump-config {drafting})"
+            )
+    assert S.profile_fixture(S.PROFILE_STRIX_FILE) == chain[-1][1], (
+        "profile_fixture must resolve to the newest LANDED strix era (chain tip) — "
+        "the era map and the cf-141 chain steps drifted apart"
     )
-    era2 = json.loads(
-        (S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_STRIX_FILE).read_text()
-    )
-    era3 = S.profile_fixture(S.PROFILE_STRIX_FILE)
-    captured = (
-        ("era 1", era1, "0.1.52-linux-x86_64-hip-halo"),
-        ("era 2", era2, "0.1.54-linux-x86_64-hip-halo"),
-        ("era 3", era3, "0.1.55-linux-x86_64-hip-halo"),
-    )
-    for name, era, label in captured:
-        root = f"{S.ENGINE_ROOT}/{label}"
-        assert era["exe"] == f"{root}/strata" and era["lib_dirs"] == [root], (
-            f"{name} must pin its captured root {label!r} exactly — era files are "
-            "append-only history; a root moved without PROVENANCE is an unsanctioned re-pin"
-        )
-    for (na, a, _), (nb, b, _) in zip(captured, captured[1:]):
-        moved = {k for k in a | b if a.get(k) != b.get(k)}
-        assert moved == {"exe", "lib_dirs"}, (
-            f"the sanctioned {na}->{nb} delta is exactly the engine-root pair, got "
-            f"{sorted(moved)} — anything else moving is an un-sanctioned re-tune riding the re-pin"
-        )
     assert not any(
         (S.EVIDENCE_DIR / d / S.PROFILE_PRIMARY_FILE).exists()
         for d in ("strata-profiles-c07-repin", "strata-profiles-c09-repin")
@@ -234,11 +261,14 @@ def test_primary_fixture_era_chain_is_one_owner_ruled_flag_per_step():
     declared cap: 92160 never covered the rung's own 46.84 + 32 + ~13 ≈ 91.84
     GiB, so parking was refused inside its own number while the node sat idle).
     This arm is what stops either move becoming the exempt-key hole the
-    engine-re-pin law above exists to prevent: EVERY adjacent era step must be
-    args-only, membership-identical, and exactly ONE flag value. An era step
-    with two flags, a dropped flag, a conv-cache move or a non-empty env is
-    red, and the pre-ruling eras stay append-only history."""
-    eras = (
+    engine-re-pin law above exists to prevent: every adjacent SINGLE-FLAG
+    step must be args-only, membership-identical, and exactly ONE flag
+    value, and cf-141's sanctioned step kinds (the row-H shape step with its
+    pinned {args, env, parallel} surface and single args pair, the bump
+    {drafting} step) are machine-verified against the same no-riders bar.
+    An era step with an unpinned key set, a dropped flag, or a rider is red,
+    and the pre-ruling eras stay append-only history."""
+    base_eras = (
         ("era 1 pre-cf86", S.EVIDENCE_DIR / "strata-profiles-pre-cf86",
          {"--prefill": "auto", "--memory-limit-mib": "92160"}),
         ("era 2 U13/T3", S.EVIDENCE_DIR / "strata-profiles-t03-repin",
@@ -247,34 +277,73 @@ def test_primary_fixture_era_chain_is_one_owner_ruled_flag_per_step():
          {"--prefill": "auto:32768", "--memory-limit-mib": str(S.PRIMARY_MEMORY_LIMIT_MIB)}),
     )
     loaded = []
-    for name, dirpath, expect in eras:
+    for name, dirpath, expect in base_eras:
         era = json.loads((dirpath / S.PROFILE_PRIMARY_FILE).read_text())
         flags = dict(S.arg_pairs(era))
         assert era["env"] == {}, f"{name}: primary profile-layer env must stay empty (C-A keyless; T0 rides the model env)"
         for flag, want in expect.items():
             assert flags.get(flag) == want, f"{name}: {flag} reads {flags.get(flag)!r}, captured era says {want!r}"
-        loaded.append((name, flags))
-    for (na, a), (nb, b) in zip(loaded, loaded[1:]):
+        loaded.append((name, flags, era))
+    for (na, a, _), (nb, b, _) in zip(loaded, loaded[1:]):
         assert set(a) == set(b), (
             f"{na}->{nb}: args membership changed ({sorted(set(b) ^ set(a))}) — an era step is a "
             "value ruling, not a flag add/remove"
         )
         diff = {k for k in a if a[k] != b[k]}
         assert len(diff) == 1, (
-            f"{na}->{nb} moved {sorted(diff)}; every sanctioned era step is exactly ONE flag "
-            "(U13 = --prefill, U14 = --memory-limit-mib)"
+            f"{na}->{nb} moved {sorted(diff)}; every sanctioned single-flag era step is exactly "
+            "ONE flag (U13 = --prefill, U14 = --memory-limit-mib)"
         )
         for untouched in ("--conversation-cache-mib", "--conversation-cache-slots", "--kv-resident", "--max-context"):
             assert a[untouched] == b[untouched], f"{na}->{nb}: {untouched} rode an unrelated era step"
+
+    # cf-141 step kinds (DECISIONS round 2): the row-H SHAPE step moves the
+    # pinned surface set {args, env, parallel} as ONE owner ruling (Q9+Q10) —
+    # args membership stays identical and exactly the conv-cache pair moves
+    # inside it; the bump-config step moves exactly {drafting}. Each is
+    # machine-verifiable against the same no-riders bar as the single-flag
+    # steps; unlanded steps stop the walk (the envelope/bump arms name them).
+    prev_name, prev_flags, prev_era = loaded[-1]
+    if S.cf141_era_landed(S.PROFILE_PRIMARY_FILE, S.CF141_ERA_ROWH):
+        rowh = json.loads((S.EVIDENCE_DIR / S.CF141_ERA_ROWH / S.PROFILE_PRIMARY_FILE).read_text())
+        flags = dict(S.arg_pairs(rowh))
+        assert S.era_delta(prev_era, rowh) == S.cf141_step_for(S.PROFILE_PRIMARY_FILE, S.CF141_ERA_ROWH), (
+            f"{prev_name}->cf141-rowh: shape-step delta {sorted(S.era_delta(prev_era, rowh))}, "
+            "pinned {args, env, parallel} — nothing else rides the row-H ruling"
+        )
+        assert set(flags) == set(prev_flags), "row-H changed args membership, not just the ruled value"
+        moved_pairs = {k for k in prev_flags if prev_flags[k] != flags.get(k)}
+        assert moved_pairs == {"--conversation-cache-mib"}, (
+            f"row-H moves exactly the conversation-cache pair (32768->16384), got {sorted(moved_pairs)}"
+        )
+        assert flags["--conversation-cache-mib"] == "16384" and flags["--conversation-cache-slots"] == "16"
+        assert rowh.get("env") == S.CF141_PRIMARY_ENV_ARMED, (
+            f"row-H env must be exactly {S.CF141_PRIMARY_ENV_ARMED!r} (Q10, quoted string), got {rowh.get('env')!r}"
+        )
+        assert rowh.get("parallel") == 8, f"row-H parallel {rowh.get('parallel')!r}, owner Q9 says 8"
+        prev_name, prev_flags, prev_era = "cf141-rowh", flags, rowh
+        loaded.append((prev_name, prev_flags, rowh))
+    if S.cf141_era_landed(S.PROFILE_PRIMARY_FILE, S.CF141_ERA_BUMP):
+        bump = json.loads((S.EVIDENCE_DIR / S.CF141_ERA_BUMP / S.PROFILE_PRIMARY_FILE).read_text())
+        assert S.era_delta(prev_era, bump) == S.cf141_step_for(S.PROFILE_PRIMARY_FILE, S.CF141_ERA_BUMP), (
+            f"{prev_name}->cf141-bump: delta {sorted(S.era_delta(prev_era, bump))}, the bump-config "
+            "step pins {drafting} — no envelope literal may ride the bump (C04 AC4)"
+        )
+        assert bump.get("drafting") == S.CF141_DRAFTING_VALUE, (
+            f"bump era drafting reads {bump.get('drafting')!r}, RESEARCH [79] obligation says 'mtp'"
+        )
+        loaded.append(("cf141-bump", dict(S.arg_pairs(bump)), bump))
+
     final = loaded[-1][1]
     cgroup_mib = int(str(S.STRATA_CGROUP_LIMIT).removesuffix("Gi")) * 1024
     assert int(final["--memory-limit-mib"]) <= cgroup_mib, (
         f"the captured primary cap {final['--memory-limit-mib']} MiB exceeds the {S.STRATA_CGROUP_LIMIT} "
         "cgroup — the #1601 pairing would be unshippable"
     )
-    assert S.profile_fixture(S.PROFILE_PRIMARY_FILE) == json.loads(
-        (S.EVIDENCE_DIR / "strata-profiles-u14-repin" / S.PROFILE_PRIMARY_FILE).read_text()
-    ), "PROFILE_FIXTURE_ERA must point at the newest primary era this chain ends in"
+    assert S.profile_fixture(S.PROFILE_PRIMARY_FILE) == loaded[-1][2], (
+        "profile_fixture must resolve to the newest LANDED primary era (chain tip) — the era map "
+        "and the cf-141 chain steps drifted apart"
+    )
 
 
 def test_c07_strix_fixture_ties_to_the_built_halo_root():

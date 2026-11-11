@@ -209,7 +209,13 @@ def test_c08_orca_envelope_fits_the_92160_cap_ONLY_with_the_conv_trim():
 def test_c08_the_other_three_profiles_stay_byte_unchanged_under_the_shift():
     """C08 touches ONLY the orca profile among the run-configs; the q4 arm's
     values are the POST-GATE pins (103680 / 16384, session flag absent — the
-    2026-11-01 half-restore), asserted here so neither shift can leak."""
+    2026-11-01 half-restore), asserted here so neither shift can leak.
+    cf-141 era move (C03 test-list, "byte-freeze consumption moves to new
+    eras"): the primary's conv value is read from its frozen-era chain tip
+    rather than spelled as a literal — strictly stronger than the literal
+    (the value is now pinned by the capture the era law itself verifies),
+    and the "orca trim must not propagate" intent survives: orca stays 8192
+    while the primary's own era value is whatever its rulings shipped."""
     docs = _on()
     q4 = dict(S.arg_pairs(S.profile_json(docs, S.PROFILE_Q4_FILE)))
     assert q4.get("--memory-limit-mib") == str(S.Q4_MEMORY_LIMIT_MIB)
@@ -217,9 +223,11 @@ def test_c08_the_other_three_profiles_stay_byte_unchanged_under_the_shift():
     assert S.Q4_SESSION_FLAG not in q4, (
         f"{S.Q4_SESSION_FLAG} is back in the q4 arm — the HIP engine refuses it (first boot, exit 2)"
     )
-    primary = S.profile_json(docs, S.PROFILE_PRIMARY_FILE)
-    assert dict(S.arg_pairs(primary)).get("--conversation-cache-mib") == "32768", (
-        "the primary's conv 32 is its own envelope — the orca trim must not propagate"
+    primary_conv = dict(S.arg_pairs(S.profile_fixture(S.PROFILE_PRIMARY_FILE)))["--conversation-cache-mib"]
+    rendered_primary = dict(S.arg_pairs(S.profile_json(docs, S.PROFILE_PRIMARY_FILE)))
+    assert rendered_primary.get("--conversation-cache-mib") == primary_conv, (
+        f"the render's primary conv {rendered_primary.get('--conversation-cache-mib')!r} diverged "
+        f"from its era-chain tip ({primary_conv}) — move the value WITH its captured era step"
     )
 
 

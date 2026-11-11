@@ -2876,3 +2876,134 @@ While touching this file: §10's fidelity count is corrected 15-line →
 10-line (the cf-105 C03 review measured the `peers.vllm` block's pre/post
 render delta as exactly 10 inserted lines, `1362a1363,1372` — the cf-105
 deferred item that rides this test touch).
+
+### 9.28 cf-141 tuning wave — the test-session contract (2026-11-10/11)
+
+Plan `2026-11-10-refactor-cf-141-refactor-strata-parallel-tuning` (approved,
+Q17 resolved to option (a)). One pre-dev test wave covering C01-C04; the
+implementation exists in none of its parts, so the wave ships a designed-red
+ledger, each red naming the earliest artifact it waits for. Everything is
+offline and deterministic; no network leg was added (digest VALUES stay
+live re-reads at the C04 landing round — the new container legs pin ledger
+STRUCTURE only).
+
+**Files.** New: `test_strata_tuning_runbook.py` (C01 note validator + era
+cross-legs), `test_strata_cf141_envelope.py` (C03), `test_strata_cf141_bump.py`
+(C04 chart-side), `evidence/strata-profiles-cf141-pre/` (q4/orca era-0 whole-
+file anchor + PROVENANCE). Modified: `strata_testlib.py` (the cf-141 block:
+runbook path, era dirs/step tables, ruling table with per-rung owner
+citations, env/pin constants, bump literals, pure validators, chain-tip
+`profile_fixture`), `test_strata_q4_rung.py` (interlock narrowing + C02 env
+arm + probes), `test_strata_config_schema.py` (env law widened to a per-rung
+exact table, armed rungs as data), `test_strata_strix.py` (both era chains
+accept the cf-141 step kinds), `test_strata_runbook.py` (C02's five doc-truth
+arms, render-derived where an era re-moves the number),
+`test_strata_c08_rung_shifts.py` (the primary-conv byte-freeze consumption
+now reads the era-chain tip — stronger than the old literal), and
+`containers/strata/tests/test_dockerfile.py` (C04 bump-era ledger legs).
+
+**Green/red map at write time** (helm v3.16.4 on PATH, `RUN_HF_CHECK` off):
+charts 436 passed / 9 skipped / 31 failed — baseline 417/9/0 intact, 19 new
+greens (probes, satisfiability, preservation/invariance legs), 31 designed
+reds. Containers 25 passed / 3 failed — baseline 24/0 intact, the 4th new
+test green (the probe arm). Reds by chunk:
+- C01 (13): the nine `test_c01_*` note-arm families, `test_cf141_c02_l2_shipped_in_leg`
+  (values env still `{}`), `test_cf141_c03_envelope_shipped_in_legs_per_rung`
+  and `test_cf141_c03_boot_read_gates_written` (note is the earliest missing
+  artifact; after C01 lands they re-name C03), `test_cf141_c04_runbook_shipped_state_leg`
+  (keys on the Dockerfile pair, names C04 directly).
+- C02 (6): `test_cf141_q4_profile_env_carries_mmq_kq` + the five doc arms
+  (rung-5 24576 survivor, description 90 GiB, service ttl 0, §4/L244
+  settlement, dead PIN-ME).
+- C03 (5): per-rung parallel table {8,8,8,8,1}, row-H shape trio, the era
+  chain (its q4 leg first names C02's un-landed `cf141-l2` step — chain
+  order is wave order), the row-H budget derivation (render still conv 32),
+  the q4/orca 8-slot overshoot derivations (era-gated `pytest.fail`).
+- C04 (7+3): strix 0.1.59 root, drafting ×4 + ornith absence, Q16
+  experimental comments, marker pair, ledger fresh-pair proof, Dockerfile
+  literals, containers-README Q14 spots (chart side) — mirrored by the three
+  container-suite legs.
+
+**Era chain = the ledger (plan law 7).** `CF141_ERA_CHAIN` per rung: q4
+`pre → cf141-l2 {env} → cf141-q4parallel8 {parallel} → cf141-bump
+{drafting}`; orca `pre → cf141-orca8 → bump`; primary `u14 → cf141-rowh
+{args,env,parallel} (shape step; args delta exactly the conv pair) → bump`;
+strix `c09 → cf141-strix8 → cf141-bump {exe,lib_dirs,drafting}`; ornith
+unmoved (negative pin). C04's shape choice (the chunk delegated "same dir or
+adjacent era — test session picks"): ONE merged bump dir — the bump arms
+drafting on all four flash rungs and moves strix's packaged root in the same
+render state; a separate engine59 dir would require capturing a state that
+never exists. Per-file step sets live in `CF141_ERA_STEP_FILE`; the pure
+engine-re-pin-era purity law (no primary file in c07/c09 dirs) survives
+unchanged. `profile_fixture` resolves the contiguous chain tip, so
+consumption moves automatically at each capture and a values move without
+its step dir stays red naming the missing step. `PROFILE_FIXTURE_ERA`
+gained the q4/orca anchor rows (tail assert keeps the spellings one fact).
+
+**Interlock narrowing (C03 law move 1, executed now).** `parallel` left the
+byte-identical sibling loop in `test_c06_profile_shape_and_ud_q4_k_xl_paths`
+by owner Q9; the loop iterates `CF141_SIBLING_KEYS`
+(= {exe,cwd,lib_dirs,backend,gpu,host} — a second key silently leaving
+reddens `test_cf141_interlock_dropped_parallel_leg`, and the loop file names
+Q9). Slot counts are per-rung data in `CF141_PARALLEL_RULINGS`, each row
+carrying its owner citation. Scale-back of ONE rung is a ruling-table row
+re-pin + its era capture — `test_cf141_scaleback_is_a_table_repin_probe`
+proves a 4-without-re-pin reddens naming exactly that rung (this is how the
+arm gets legitimately re-greened later, law 3: in-round owner word, one rung
+per commit, never the loop).
+
+**Runbook validator posture (deviation, recorded).** The chunk text says
+"absent = loud skip naming C01"; the launch brief's doctrine (and this
+suite's founding rule — strata_testlib header) requires designed RED for a
+missing artifact, never a quiet skip. Implemented as red naming C01, which
+is strictly stronger than a skip. Satisfiability is proven on the synthetic
+compliant note (`test_c01_synthetic_compliant_note_satisfies_every_law`),
+so no red in this file can be a broken law; falsified mutants redden by name
+(`test_c01_laws_reject_falsified_mutants`): U3-v2 probe inserted, bare
+workflow_dispatch, `strata update` as instruction, settled-intent wording,
+gate-6 removal, ladder rung dropped, supersession row dropped. The Q12
+decline is law-pinned both ways: `/proc`-cgroup probe needles are
+unwindowed-absent (a declined probe documented as a scheduled leg is the
+"mistaken for answered" class) AND the row-G UNMEASURED/own-probe sentence
+must exist (decline recorded ≠ silence).
+
+**Doc arms are render-derived on purpose** (rung-5 conv, values description
+cap/conv, service ttl window): C03 re-moves the same sentences to row-H
+truth before PR-1 merges, and the arms re-track without weakening (they
+pin "the prose equals the render", not one era's number). The static
+DOC_TOKENS house-style rows do move at the C03 landing round:
+`32768 MiB\s+x 16-slot` → `16384 MiB\s+x 16-slot` (note) and `32\s*GiB
+.\s+16\s*slots` → `16 GiB . 16 slots` (README) — the §9.27-precedent
+doc-with-law move, never a deletion. DOC_PAIRS, the alternation-count law,
+and the strix halo tether are untouched by this wave (C03/C04 preserve them
+by name).
+
+**Landing-round inventory (test-session property, by chunk gate):**
+- C02 capture round: write `evidence/strata-profiles-cf141-l2/` (verify the
+  delta vs pre == exactly `{env}` BEFORE capture, double-capture, PROVENANCE
+  with sha/date/commit/determinism lines). No constant edits.
+- C03 capture round: write the four envelope step dirs + PROVENANCE; flip
+  the two DOC_TOKENS conv rows above; the note's state-board shipped row,
+  envelope shipped-anyway rows and boot-read/ladder shipped rows move with
+  the same commit-set (the validator arms then clear together).
+- C04 landing round: re-pin `test_dockerfile.py` constants by name
+  (STRATA_VERSION 0.2.13, FLAVOR_PINS pair with LIVE re-read digests,
+  ENGINE_VERSION 0.1.59, STALE_STRATA_TAGS += 0.2.9, STALE_ENGINE_VERSION →
+  0.1.55) — the pre-bump arms and this wave's bump-era legs merge back into
+  one generation (my structure legs stay as the digest-provenance guard);
+  `test_strata_c09_ornith_carry.py` marker regex + `TAG_DIGEST_029` → the
+  bumped pair; `test_strata_thin_init.py` strix current label → 0.1.59 and
+  the retired set += 0.1.55; write `strata-profiles-cf141-bump/` with the
+  four flash files + PROVENANCE; move the note's shipped-state board row to
+  0.2.13/0.1.59 (its absence keeps `test_cf141_c04_runbook_shipped_state_leg`
+  red by design until then).
+- Any per-rung scale-back PR (deferred): edit the ONE ruling-table row +
+  citation, capture the new step dir, keep the sibling loop and
+  membership guard intact.
+
+**Preserved untouched by this wave** (all still green): q4 `cmd`
+byte-equality vs primary (env is not in the identity set — verified),
+untouched-profiles arms, strata-config/Deployment/goldens byte arms,
+DOC_PAIRS, alternation-count, four-surface label law at 0.2.9 (until C04
+moves it), goldens + outer config byte-identical, the c09 migration-order
+and version-free enumeration laws.
