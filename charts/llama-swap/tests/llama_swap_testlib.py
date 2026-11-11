@@ -815,24 +815,73 @@ CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
 CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 
 # ---------------------------------------------------------------------------
-# cf-105 frozen tables (C03 peers.vllm hop; DECISIONS D6/D7/D10). The vllm
-# peer block exactly as the C03 task spec renders it. Single source for the
-# arms that pin the block from the SPEC side (test_vllm_peer T1, the parity
-# _assert_strata_peers, the strata-wiring overlay arm); the blast-radius
-# carve pins it from the ERA side (the re-captured golden) instead, so a
-# later re-capture re-aligns that guard automatically.
-# cf-105-vllm-followup C01 re-pin (2026-11-06): the floor 10 -> 5 — the
-# four-class amendment moves the default class 10 -> 5 and the peer floor
-# follows the default class (its D2; cf-105 D6/HR2 superseded). No other
-# block key moves.
+# cf-143 radiance peer evidence (C04; DECISIONS D13 — the evidence law is
+# PER-PEER-KEY: strata-peers-expected.yaml stays valid and unedited, this
+# sibling file joins beside it with the same header law). The radiance peer
+# block is read LIVE from evidence/radiance-peers-expected.yaml by every
+# consumer (test_radiance_peer, the parity wave-leg, the flashnext
+# blast-radius carve, the coexistence arm), so a test-session re-author
+# re-aligns the sanctioned state automatically and dev conforms values to
+# the file, never the reverse.
+#
+# The cf-105-era PEER_VLLM constant retired with the cf-143 C01 vllm disable
+# (the peers.vllm leg became an ABSENCE needle — chunks/C01.md Tests); the
+# block's history lives in git and TEST_SPEC §12, its era-side golden pin
+# retired with it.
 # ---------------------------------------------------------------------------
 
-PEER_VLLM = {
-    "proxy": "http://gpu-ai-vllm.default.svc.cluster.local:8000",
-    "models": ["qwen3.8-27b-vllm"],
-    "timeouts": {"responseHeader": 1800, "connect": 30},
-    "filters": {"setParams": {"priority?": 5}},
-}
+RADIANCE_PEERS_EVIDENCE = TESTS_DIR / "evidence" / "radiance-peers-expected.yaml"
+
+
+def radiance_peers_evidence() -> dict:
+    """Load + self-validate the radiance peer evidence (the strata loader's
+    laws, copied: a non-empty duplicate-free models_states chain whose last
+    state equals models_allowed). Raises AssertionError naming the file —
+    fixture breakage is loud, never a silent default."""
+    if not RADIANCE_PEERS_EVIDENCE.is_file():
+        raise AssertionError(
+            f"{RADIANCE_PEERS_EVIDENCE.name} evidence is missing (cf-143 C04 — test-session property)"
+        )
+    data = yaml.safe_load(RADIANCE_PEERS_EVIDENCE.read_text())
+    if not isinstance(data, dict) or not isinstance(data.get("radiance"), dict):
+        raise AssertionError(f"{RADIANCE_PEERS_EVIDENCE.name} must carry a radiance: mapping")
+    ev = data["radiance"]
+    states = ev.get("models_states")
+    if not isinstance(states, list) or not states:
+        raise AssertionError(
+            f"{RADIANCE_PEERS_EVIDENCE.name} needs models_states — every wave's exact "
+            "ordered peer list is pinned so consumers stay wave-correct"
+        )
+    final = ev.get("models_allowed")
+    if not isinstance(final, list) or not final or states[-1] != final:
+        raise AssertionError(
+            f"{RADIANCE_PEERS_EVIDENCE.name}: last models_states must equal models_allowed "
+            "(the ruled final peer set)"
+        )
+    for i, ids in enumerate(states):
+        if not isinstance(ids, list) or not ids or len(set(ids)) != len(ids):
+            raise AssertionError(f"models_states[{i}] must be a non-empty duplicate-free list")
+        if not set(ids) <= set(final):
+            raise AssertionError(f"models_states[{i}] names a peer outside the final set")
+    return ev
+
+
+def expected_radiance_peer(ev: dict, models: list) -> dict:
+    """The sanctioned rendered peers.radiance block for one models list:
+    proxy/timeouts/filters verbatim from the evidence, models REQUIRED to be
+    one of the states lists (the wave law). The evidence file is the single
+    source — this derives nothing it does not read."""
+    if models not in ev["models_states"]:
+        raise AssertionError(
+            f"peers.radiance models {models} is not one of the sanctioned peer waves "
+            f"{ev['models_states']} — wave changes route through the test session"
+        )
+    return {
+        "proxy": ev["proxy"],
+        "models": models,
+        "timeouts": ev["timeouts"],
+        "filters": ev["filters"],
+    }
 
 
 # --- HF loader-pick simulation (llama.cpp common/download.cpp@889edf43) -----

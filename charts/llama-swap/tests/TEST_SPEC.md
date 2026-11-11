@@ -3339,3 +3339,127 @@ charts/ + renovate.json symlinks — the §9.33 stale-copy artifact class is now
 pre-empted, not rediscovered); sh -n + dash -n clean on the joined https
 step. Deliverables: the exact target RUN and README row validated green on
 scratch ship in the test RESULT for dev byte-compatibility.
+
+## 12. cf-143 feat-radiance-replaces-strata — the whole-wave test contract (test session, 2026-11-11)
+
+Plan `2026/2026-11-cf-143-feat-radiance-replaces-strata` (approved, owner rounds
+1-2 + approval + R6 fold-in; chunks C01..C07, waves 1-4). One pre-dev test wave:
+the implementation exists in none of its parts, so the wave ships a designed-red
+ledger, each red naming the earliest chunk that turns it green. No network legs.
+Naming law everywhere: "radiance" = the `stilldeadcode/radiance` ENGINE;
+`charts/vllm` is the magiccodingman/vllm-radiance FORK lane; Strata is unrelated
+and LIVES (Q5) — the re-pinned names say which.
+
+**Baseline (pre-wave, helm on PATH after `helm dependency update` on both charts):**
+`charts/llama-swap/tests` 466 passed / 9 skipped (the standing RUN_HF_CHECK /
+RUN_FLAG_AUDIT evidence gates) / 0 failed; `charts/vllm/tests` 36 passed;
+`bash tests/pipeline-models/surface.sh` M1..M7 all green;
+`bash tests/notes/vllm-runbook.sh` and `bash tests/services/vllm-dashboards.sh`
+PASS. Fresh-worktree 17-red on charts/vllm/tests WITHOUT the dependency fetch is
+the known mass-skip-adjacent shape — always export PATH + `helm dependency update`
+first (repo law).
+
+**Files written (chart `tests/` + top-level `tests/` only — zero implementation
+edits):**
+
+| file | chunk | kind |
+|---|---|---|
+| `charts/llama-swap/tests/evidence/radiance-peers-expected.yaml` | C04 | the sibling peer evidence (D13 per-key single source; dev conforms values to it) |
+| `charts/llama-swap/tests/evidence/cf143-pre-ticket-strata/gpu-ai.strata-docs.yaml` | C04 | pre-ticket strata render baseline (Q5 byte-identity; captured via `S.render_service_overlay` at clean tip `ee102d959`, 4 docs, parse-compare) |
+| `charts/llama-swap/tests/test_vllm_peer.py` | C01 | RE-PIN: the enable-era contract inverts to the DISABLE witness (peers.vllm ABSENT, peers.strata live-wave-pinned, golden vllm-free + byte-stable) |
+| `charts/llama-swap/tests/test_vllm_disable_contract.py` | C01 | new: AC1 three shapes (parse), AC2 workflow extraction BOTH directions (executes the workflow's own line), AC5 catalog loader, AC7 cf-143 markers per site, naming-landmine comment bar, runbook retirement pair |
+| `charts/llama-swap/tests/test_radiance_peer.py` | C04 | new: peers.radiance exact-from-evidence, peers.strata present-and-unchanged, golden two-peer shape, gpu-cluster HOLDs |
+| `charts/llama-swap/tests/test_coexistence_wiring.py` | C04 | new: strata render byte-equal to the pre-ticket baseline, seven-flag enable-set parse pin, charts.radiance internal shape + appset name evidence, service block scalars-only + dual-edit, ingress two-skip-comments, custom-values radiance-free, radiance-out-of-matrix |
+| `charts/llama-swap/tests/test_cf143_naming_flip.py` | C07 | new: the "render-suite re-pin" — the gpu-ai render pins the main container's limit to `amd.com/gpu-8060s: 1`, requests mirror-clean, values text has no live bare claim, the fallback comment retired to realized prose (golden ConfigMap unaffected — pod resources are not in it) |
+| `charts/llama-swap/tests/llama_swap_testlib.py` | C01/C04 | `PEER_VLLM` retired (era constant, consumers re-pinned; history here + git); added `RADIANCE_PEERS_EVIDENCE` loader + `expected_radiance_peer` (the wave-law validator) |
+| `charts/llama-swap/tests/test_config_parity.py` `_assert_strata_peers` | C01+C04 | RE-PIN: peer-key WAVE law {strata}/{strata, radiance}, radiance leg read live from the sibling evidence (strata legs byte-untouched) |
+| `charts/llama-swap/tests/test_flashnext_blast_radius.py` `_cf77_peers_carved` | C01+C04 | RE-PIN: the vllm-golden carve leg becomes the radiance-evidence carve leg; the strata legs read live (D13's "re-align automatically" property) |
+| `charts/llama-swap/tests/test_strata_wiring.py` | C01+C04 | RE-PIN: single-peer equality leg → the same wave law (test-listed: "anything that hardcodes peers-map equality gets the radiance carve-out") |
+| `charts/radiance/tests/{radiance_testlib,test_render,test_serve_args,test_contract,test_peers_stability,test_resource_name_identity,test_renovate_ledger}.py` | C02 | the FULL-profile chart contract: AC1/AC2 shape (privilege/hostPath ABSENCE load-bearing per Q7, Guaranteed pairs BOTH containers per D15, named-pool claim), AC3 set-equality + absence needles + scalar splices + dual-edit guard (C04-gated), AC4 cross-chart name identity vs C07's ledger, AC5/AC6 metadata+workflow, the single served-id authority |
+| `charts/amd-gpu/tests/{amd_gpu_testlib,test_render,test_provenance}.py` | C07 | vendored-chart render contract (args trio + product flag, `-v=5` asserted SEPARATELY, name-pinned objects / no orphan-rename, labeller+nfd render nothing) + the D19 governance machine-check (fork point 0.22.0/`amd-gpu-helm-0.22.0`/`791ada88…`, delta, refresh trigger, docker pin, 64-hex digest ledger, expected-names ledger block) |
+| `tests/services/amd-gpu-naming.sh` | C07 | n1 entry-internal shape + helm-pin-migrated + appset name evidence; n2 flip needle + OWNER-EXECUTED same-wave commit guard (review sets `AMD_GPU_FLIP_COMMIT=<sha>`); n3 whole-repo bare-claim sweep; n4 the ledger block C02 reads; n5 the render-CI clone |
+| `tests/pipeline-models/surface.sh` | C01+C05 | M3 HOLD→ABSENCE, M4 retirement negative needles, M7 vllm legs retired (background row + 10+ bar stay; the disable re-pinned parse-level); NEW M8 radiance arm — see posture below |
+| `tests/notes/radiance-runbook.sh` | C06 | T1-T5 designed-red against the step names the chunk sets (twelve groups 0-11, OWNER-EXECUTED command law, shipped-args == chart serveArgs single-block equality, digests pairing runbook↔charts↔renovate, higher-wins 9/5/1 BOTH runbook and catalog, five (a)-(e) gates + sysfs receipts + fallback-trap tree, T4 citations into §R6, the full T5 marker set) |
+| `tests/notes/radiance-tp2.sh` | C03 | T1-T3 designed-red (≥12 sections + cf-143 provenance + feeds-card line; the T4-shape citation resolver pointed at this folder's RESEARCH.md; the chunk's needle set incl. the two absence bars) |
+
+**surface.sh run posture (M8).** C01's AC6 requires the BARE run to PASS with the
+vllm legs retired and radiance legs not existing yet, so M8 joins the suite as an
+explicit-run arm: default set stays M1..M7; C05 and the final review run
+`M1..M7` bare PLUS `bash tests/pipeline-models/surface.sh M8` (the cf-105
+"M7-before-C04" posture, relocated so no bare intermediate run breaks). M8's
+M6-mirror extension is the DUALITY law: M6's pairsync + `generate --check` +
+second-generate-noop covers drift repo-wide, and every M8 table leg runs against
+`$PM_SRC` AND `$PM_GEN` — a half-regenerate cannot pass the arm pair (the chunk's
+"regenerate into a temp HOME" reading; deviation recorded: reusing M6's in-repo
+regeneration instead of a second temp-HOME machinery, the property is identical).
+
+**Golden/capture obligations (paired, dev-side).**
+- C01 re-captures `golden/gpu-ai.config.yaml` with the values comment-out (§1
+  pattern; the re-pinned `test_vllm_peer.py` T4 + parity era legs are red until
+  it lands, green at once after — the capture itself is the dev obligation,
+  cf-105 C03 precedent). This wave PRE-CAPTURED nothing: the golden still shows
+  the live vllm era, which is exactly what T4/parity name red.
+- C04 re-captures again for the two-peer shape (test_radiance_peer T3).
+- C07's one-line chart-values flip ALSO changes the default-OFF render, so
+  `evidence/off-parity/render-default.yaml` re-baselining is due in the C07
+  landing round per the §9.8-era cadence (test-session action, byte arm only,
+  never while the structural arm is red). It is NOT pre-applied here — the
+  baseline must keep matching the approved CURRENT state between chunks (the
+  cf-105-vllm C01-era chain). n3's sweep deliberately EXCLUDES
+  `charts/*/tests/**` fixtures (renders, guarded by that cadence, not by the
+  live-claim needle) — recorded reading, chunks/C07.md AC4's "comments exempt
+  per the suite's own pattern" extended to fixtures for the same reason.
+- Radiance's own golden: none named by C02 (render-verbatim tests instead).
+
+**Evidence law (D13) as executed:** `strata-peers-expected.yaml` is byte-untouched
+by this wave (its per-key scope keeps governing strata + the cf-77 additive
+delta); the radiance sibling is its first per-key extension. `test_strata_untouched.py`
+needed no re-pin (it carries no peers-map-equality leg — audited).
+
+**Red ledger at handoff (this session's additions; all name their chunk):**
+
+| red arms | chunk that greens them |
+|---|---|
+| test_vllm_peer T1+T4; test_vllm_disable_contract 8 of 9 legs (the scoped sentinel arm is the planned HOLD-green); parity gpu-ai era leg; blast-radius carve refusal leg; strata_wiring peers-map leg; surface.sh M3/M4/M7 | **C01** |
+| charts/radiance/tests: 37 arms | **C02** (the two cross-chart identity legs ALSO need C07's ledger; 2 arms skip LOUDLY naming C04) |
+| charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty | **C07** |
+| test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green | **C04** |
+| surface.sh M8 + tests/notes/radiance-tp2.sh T1-T3 | **C05 / C03** |
+| tests/notes/radiance-runbook.sh T1-T5 | **C06** |
+
+HOLD-green (must stay green across every wave): the coexistence baseline +
+enable-set + appset-name + custom-values + matrix legs, gpu/gpu.config golden
+hygiene, M1/M2/M5/M6, M7's boards/kickoff/background legs,
+charts/vllm/tests' 36 (the chart is byte-untouched by design — AC3),
+vllm-dashboards.sh (owner's follow-up, untouched).
+
+**Deviations/interpretations (plan- and DECISIONS-supported):**
+1. Sentinel-parity leg scoped to vllm/radiance lines: the FULL gpu-ai render
+   legitimately carries the hf-token `OVERRIDE_VIA_CUSTOM_VALUES` sentinel
+   (gotcha 5; the existing suite's sentinel arms are line-scoped for exactly
+   this reason). C01's bullet read against that law.
+2. M8 out of the default set (run posture above) — keeps C01 AC6's bare-PASS
+   honest while C05's legs exist from this wave up.
+3. `vllm: {}` pinned as the EXPLICIT empty flow map (parses to `{}`, not None):
+   the chunk's shape word `{}` + the extraction leg must dump `{}` for the helm
+   -f step, so the null variant is rejected.
+4. C05 "live-row set == {strata five-ish as today, radiance trio added, vllm
+   trio commented}" executed as the DELTA contract vs the frozen 86-key cf-143
+   base (added == radiance trio, removed == vllm trio) — the executable exact
+   reading of "as today" without freezing unrelated future growth into this
+   ticket.
+5. C03/C06 citation resolvers accept `RQ<n>` / `R6-Q<n>` / `R6-Q<n>-<row>`
+   (validated against the §R6-Q4 table rows) / `§R6` / `OQ<m>` (the main
+   Open-questions list) / `R6 OQ<m>` (the R6 residual list); bracketed `[S<n>]`
+   source ids stay T4-inert by the standing vllm design.
+6. The runbook's shipped-args equality contract: EXACTLY ONE fenced block
+   carrying `--served-model-name qwen3.8-flash-next-radiance` in the doc,
+   flag-set equality against the chart values. The chunk's "rendered args ==
+   chart needle set (read-only)" operationalized.
+7. OWNER-EXECUTED marker: the runbook's command-law exemption token for the
+   documented `kubectl scale` lines (same line or the previous one) — the
+   chunk's "the checker distinguishes 'owner runs' prose from repo commands"
+   shape; `kubectl exec` stays barred even owner-side (no pod-exec tier,
+   AGENTS MCP law), `argocd app sync` barred outright (vllm T2 law carried).
+8. docker build legs: N/A this ticket (no containers/ change) — recorded
+   honestly per the repo's CI-deferred posture.

@@ -167,9 +167,13 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
         "objects take the release prefix"
     )
     cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
-    # cf-105 C03: the vllm hop joins the peers block — exactly the sanctioned
-    # two (strata stays the original peer; a third or a missing one is drift).
-    assert set(cfg["peers"]) == {S.PEER_NAME, "vllm"}
+    # cf-143 C01+C04 wave law (test-session re-pin of the cf-105 two-peer
+    # pin): vllm retired to commented-out (Q3), radiance joins ADDITIVE
+    # (Q5) — exactly {strata} until C04 lands, then {strata, radiance}; a
+    # live vllm key, a third phantom, or a missing strata peer is drift.
+    assert set(cfg["peers"]) in ({S.PEER_NAME}, {S.PEER_NAME, "radiance"}), (
+        f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143 wave"
+    )
     # cf-86 wave law: the peers models list equals the sanctioned list for the
     # inner arenas this render actually serves (evidence models_states), so the
     # assertion stays correct at three, four and five ids.
@@ -181,13 +185,17 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     assert cfg["peers"][S.PEER_NAME]["proxy"] == S.PEERS_PROXY, (
         "service-overlay render must carry the consolidated peers URL"
     )
-    # cf-105 C03: the vllm hop is keyless in-cluster with an explicit models
-    # list — exactly the C03 task-spec block (no apiKey, no /v1 suffix, the
-    # one served name, the deep-prefill timeout, the priority floor).
-    vllm_peer = cfg["peers"]["vllm"]
-    assert vllm_peer == L.PEER_VLLM, (
-        f"vllm peer is {vllm_peer}, want {L.PEER_VLLM} — cf-105 C03 pins the exact hop"
-    )
+    # cf-143 C04: the radiance hop, keyless in-cluster (D8) with the
+    # evidence-pinned exact block — no /v1 suffix, the one served id, the
+    # cold-load timeout, the higher-wins-era priority? floor 5. Read live
+    # from evidence/radiance-peers-expected.yaml (test-session authority).
+    if "radiance" in cfg["peers"]:
+        ev = L.radiance_peers_evidence()
+        rad = cfg["peers"]["radiance"]
+        assert rad == L.expected_radiance_peer(ev, rad.get("models")), (
+            f"radiance peer is {rad}, want the evidence-derived sanctioned block — "
+            "cf-143 C04 pins the exact hop from the sibling evidence file"
+        )
 
 
 # --- custom-values extraction (r2-C03) -------------------------------------------

@@ -322,10 +322,20 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
         assert golden_peers is None, f"{cluster}: golden gained peers where the plan keeps the box peer-less"
         return
     assert peers is not None, "gpu-ai: config.peers missing — C03 wiring not landed"
-    # cf-105 C03 peer wave (additive on the cf-77/cf-86 strata-only pin):
-    # vllm is the second and final sanctioned peer; the re-captured golden
-    # must mirror the fresh block exactly (era pin).
-    assert set(peers) == {"strata", "vllm"}, f"peer entries: {sorted(peers)}"
+    # cf-143 C01+C04 wave law (test-session re-pin, DECISIONS D13 + Q3/Q5):
+    # the vllm era peer retired to commented-out (Q3 — disable, reversible),
+    # and the radiance peer joins ADDITIVE beside strata (Q5 — strata lives,
+    # not one byte moves). The sanctioned peer-key states are therefore
+    # {strata} (C01 landed, C04 pending) and {strata, radiance} (C04
+    # landed); {strata, vllm} is the retired era and anything else is drift.
+    # The cf-86 models_states machinery is the precedent for wave-tolerant
+    # pins: every intermediate state is EXACT, never a superset grab-bag.
+    wave = set(peers)
+    assert wave in ({"strata"}, {"strata", "radiance"}), (
+        f"peer entries {sorted(wave)} are not a sanctioned cf-143 wave "
+        "({strata} after C01's vllm comment-out; {strata, radiance} once C04's "
+        "radiance join lands) — a live vllm peer or a third phantom is drift"
+    )
     assert golden_peers == peers, (
         f"peers block {None if golden_peers is None else sorted(golden_peers)} "
         f"!= fresh {sorted(peers)} — the re-captured golden must mirror both peers"
@@ -348,14 +358,19 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
         f"{expected['models_states']} — cf-86 grows this list per chunk; "
         "wave changes route through the test session, never a dev edit"
     )
-    # cf-105 C03: the vllm hop, exactly the C03 task-spec block — keyless
-    # in-cluster proxy (no /v1), explicit models list, the deep-prefill
-    # timeout, the set-if-undefined priority floor 5 (the floor follows the
-    # default class — cf-105-vllm-followup C01 re-pin).
-    v = peers["vllm"]
-    assert v == L.PEER_VLLM, (
-        f"vllm peer is {v}, want {L.PEER_VLLM} — cf-105 C03 pins the exact hop"
-    )
+    # cf-143 C04: the radiance hop, exactly this file's sibling evidence
+    # block (test-session single source, same header law as strata's).
+    # Read live: dev conforms values to the evidence, never the reverse.
+    # The cf-105-era peers.vllm exactness leg retired with the Q3 disable
+    # (its absence is pinned by the wave set above + test_vllm_peer T1).
+    if "radiance" in wave:
+        ev = L.radiance_peers_evidence()
+        r = peers["radiance"]
+        assert r == L.expected_radiance_peer(ev, r.get("models")), (
+            f"radiance peer is {r} — must equal the evidence-derived sanctioned block "
+            "(proxy no-/v1, one-id models wave, timeouts 1800/30, priority? floor 5, "
+            "no apiKey: keyless D8)"
+        )
 
 
 # --- criterion 3: consumer-critical surface ----------------------------------

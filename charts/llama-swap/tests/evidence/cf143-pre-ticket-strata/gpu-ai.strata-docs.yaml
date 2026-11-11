@@ -1,0 +1,192 @@
+# cf-143 pre-TICKET strata render baseline (test-session capture, 2026-11-11).
+# The Q5 guarantee made executable: peers.strata and every strata render leg
+# (controller Deployment, Service, config/profile ConfigMaps) must stay
+# byte-identical through C01/C04/C05/C07 — the radiance waves are ADDITIVE.
+# Captured via strata_testlib.render_service_overlay('gpu-ai') — the real
+# appset release name (gpu-ai-llama-swap), the live llama-swap: subtree from
+# services/gpu-ai/prod/values.yaml, domain/clusterName as the appset injects —
+# at branch tip ee102d959 (clean tree, zero cf-143 code edits), helm v3.16.4 +
+# app-template 5.0.1; docs sorted by kind/name, keys sorted. test_coexistence_
+# wiring.py compares the same parsed docs against this file. Editing this
+# fixture outside a test session is fixture breakage — the red, not a fix.
+- apiVersion: v1
+  data:
+    config.yaml: "apiKeys: []\nglobalTTL: 0\nhealthCheckTimeout: 1800\nlogToStdout: both\nmatrix:\n  sets:\n    main: (p | s | o | q | n)\n  vars:\n    \"n\": ornith-1.5-122b-strata-q4\n    o: qwen3.8-flash-next-strata-orca\n    p: qwen3.8-flash-next-strata\n    q: qwen3.8-flash-next-strata-q4\n    s: qwen3.8-flash-next-strata-strix\nmodels:\n  ornith-1.5-122b-strata-q4:\n    checkEndpoint: /health\n    cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile\n      /profile/strata-ornith-q4.json --host 127.0.0.1 --port ${PORT}'\n    description: Strata engine on the public unsloth Ornith-1.5-122B UD-Q4_K_XL trio\n      through its Qwen3.6 (qwen35moe) engine path \u2014 GGUF-direct, no pack, no token,\n      the three shards joined by the loader itself. Runs on the vendored two-hunk\n      constants carry (containers/strata carry/ornith-q36.patch, upstream issue\n    env:\n    - STRATA_REQUEST_LINES=1\n    - MALLOC_MMAP_THRESHOLD_=1048576\n    - STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local\n    - STRATA_DENSE_MMQ=1\n    - ROCR_VISIBLE_DEVICES=0\n    name: Ornith-1.5-122B Unsloth UD-Q4_K_XL (R9700 arena, Strata q36 path)\n    ttl: 3600\n    unloadTimeout: 180\n  qwen3.8-flash-next-strata:\n    checkEndpoint: /health\n    cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile\n      /profile/strata-iq3_s.json --host 127.0.0.1 --port ${PORT}'\n    description: Strata engine, experts pinned in a page-locked RAM arena on the R9700,\n      capped at 110592 MiB engine-side inside the 110Gi pod cgroup with a 16 GiB conversation-cache\n      budget over 16 slots; first request pays the cold pin (minutes), then residency\n      is time-shared \u2014 the arena unloads after 1h idle so the llama.cpp trio gets\n      its RAM back (set ttl 0 to pin forever).\n    env:\n    - STRATA_REQUEST_LINES=1\n    - MALLOC_MMAP_THRESHOLD_=1048576\n    - STRATA_PF_FUSED=1\n    - STRATA_PF_GEMM=1\n    - STRATA_PA_FAST=1\n    - STRATA_HIP_WMMA=1\n    - STRATA_SELECT_WMMA=1\n    - STRATA_PREFILL_CPU_SHARE=auto\n    - STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local\n    - ROCR_VISIBLE_DEVICES=0\n    name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)\n    ttl: 3600\n    unloadTimeout: 180\n  qwen3.8-flash-next-strata-orca:\n    checkEndpoint: /health\n    cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile\n      /profile/strata-orca-iq4_xs.json --host 127.0.0.1 --port ${PORT}'\n    description: Strata engine on the gated orcarouter Uncensored pack at IQ4_XS via\n      the ORCA.md-shape manual pack \u2014 plain IQ4_XS experts are kernel-supported on\n      the q38 path (unsloth's UD-IQ4_XS is catalog-served on AMD since engine 0.1.31/0.1.32),\n      so the U9.2 ladder shift from IQ3_XXS changed rung, not flags; 57.7 GiB pinned-expert\n      arena inside the 90 GiB engine cap with the conversation-cache trimmed to 8\n      GiB; first request pays the cold pin (minutes), then residency is time-shared\n      \u2014 the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.\n    env:\n    - STRATA_REQUEST_LINES=1\n    - MALLOC_MMAP_THRESHOLD_=1048576\n    - STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local\n    - ROCR_VISIBLE_DEVICES=0\n    name: Qwen3.8-Flash-Next Uncensored IQ4_XS (R9700 arena)\n    ttl: 3600\n    unloadTimeout: 180\n  qwen3.8-flash-next-strata-q4:\n    checkEndpoint: /health\n    cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile\n      /profile/strata-q4.json --host 127.0.0.1 --port ${PORT}'\n    description: Strata engine on the public unsloth UD-Q4_K_XL pack \u2014 the wave's\n      quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%,\n      paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at\n      16 GiB \u2014 the U8 half-restore, the value the primary itself now runs at row-H\n      \u2014 since the HIP engine compiles the disk session files out and the full 32 GiB\n      restore would not fit the node; ~10-30% slower decode than IQ3_S on this card\n      class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked\n      RAM arena on the R9700 inside its own 103680 declaration under the pod's 110Gi\n      cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.\n    env:\n    - STRATA_REQUEST_LINES=1\n    - MALLOC_MMAP_THRESHOLD_=1048576\n    - STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local\n    - ROCR_VISIBLE_DEVICES=0\n    name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)\n    ttl: 3600\n    unloadTimeout: 180\n  qwen3.8-flash-next-strata-strix:\n    checkEndpoint: /health\n    cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile\n      /profile/strata-strix-iq3_s.json --host 127.0.0.1 --port ${PORT}'\n    description: Strata engine, gfx1151 build on the 8060S iGPU; arena lives in shared\n      LPDDR5X, manual/secondary use, unloads on idle (see the chart README, Strix-alone\n      fallback).\n    env:\n    - STRATA_REQUEST_LINES=1\n    - MALLOC_MMAP_THRESHOLD_=1048576\n    - STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local\n    - ROCR_VISIBLE_DEVICES=1\n    name: Qwen3.8-Flash-Next IQ3_S (Strix Halo 8060S fallback)\n    ttl: 1800\n    unloadTimeout: 180\nstartPort: 10001\n"
+  kind: ConfigMap
+  metadata:
+    name: strata-config
+    namespace: default
+- apiVersion: v1
+  data:
+    strata-iq3_s.json: "{\n  \"aliases\": [\n    \"qwen3.8-flash-next\"\n  ],\n  \"api_key\": \"none\",\n  \"args\": [\n    \"--pack /models/strata/Strata-data/packs/iq3_s\",\n    \"--native /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf\",\n    \"--ple-gguf /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf\",\n    \"--expert-profile /models/strata/Strata/data/expert-profile.bin\",\n    \"--expert-cache auto\",\n    \"--spec 4\",\n    \"--spec-min-p 0.5\",\n    \"--mtp /models/strata/Strata-data/mtp/rt\",\n    \"--max-context 262144\",\n    \"--kv int8\",\n    \"--kv-resident 32768\",\n    \"--prefill auto:32768\",\n    \"--memory-limit-mib 110592\",\n    \"--conversation-cache-mib 16384\",\n    \"--conversation-cache-slots 16\"\n  ],\n  \"backend\": \"hip\",\n  \"cwd\": \"/models/strata/Strata\",\n  \"drafting\": \"mtp\",\n  \"env\": {\n    \"STRATA_PLE_AUTO_RAM\": \"0\"\n  },\n  \"exe\": \"/models/strata/Strata/engine/strata\",\n  \"gpu\": [\n    0\n  ],\n  \"host\": \"127.0.0.1\",\n  \"lib_dirs\": [\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib\",\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib\"\n  ],\n  \"log\": \"/models/strata/Strata/strata-iq3_s.log\",\n  \"model_name\": \"qwen3.8-flash-next-iq3_s\",\n  \"parallel\": 8,\n  \"tokenizer\": \"/models/strata/Strata-data/packs/iq3_s/tokenizer\",\n  \"user_args\": []\n}\n"
+    strata-orca-iq4_xs.json: "{\n  \"aliases\": [\n    \"qwen3.8-flash-next-orca\"\n  ],\n  \"api_key\": \"none\",\n  \"args\": [\n    \"--pack /models/strata/Strata-data/packs/orca-iq4_xs\",\n    \"--native /models/strata/Strata-data/models/IQ4_XS-orca/Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf\",\n    \"--ple-gguf /models/strata/Strata-data/models/IQ4_XS-orca/Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf\",\n    \"--expert-profile /models/strata/Strata/data/expert-profile.bin\",\n    \"--expert-cache auto\",\n    \"--spec 4\",\n    \"--spec-min-p 0.5\",\n    \"--mtp /models/strata/Strata-data/mtp/rt\",\n    \"--max-context 262144\",\n    \"--kv int8\",\n    \"--kv-resident 32768\",\n    \"--prefill auto\",\n    \"--memory-limit-mib 92160\",\n    \"--conversation-cache-mib 8192\",\n    \"--conversation-cache-slots 16\"\n  ],\n  \"backend\": \"hip\",\n  \"cwd\": \"/models/strata/Strata\",\n  \"drafting\": \"mtp\",\n  \"env\": {},\n  \"exe\": \"/models/strata/Strata/engine/strata\",\n  \"gpu\": [\n    0\n  ],\n  \"host\": \"127.0.0.1\",\n  \"lib_dirs\": [\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib\",\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib\"\n  ],\n  \"log\": \"/models/strata/Strata/strata-orca-iq4_xs.log\",\n  \"model_name\": \"qwen3.8-flash-next-orca-iq4_xs\",\n  \"parallel\": 8,\n  \"tokenizer\": \"/models/strata/Strata-data/packs/orca-iq4_xs/tokenizer\",\n  \"user_args\": []\n}\n"
+    strata-ornith-q4.json: "{\n  \"aliases\": [\n    \"ornith-1.5-122b-strata\"\n  ],\n  \"api_key\": \"none\",\n  \"args\": [\n    \"--native /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf\",\n    \"--max-context 131072\",\n    \"--prefill auto\",\n    \"--mtp 2\"\n  ],\n  \"backend\": \"hip\",\n  \"cwd\": \"/models/strata/Strata\",\n  \"env\": {},\n  \"exe\": \"/models/strata/Strata/engine/strata\",\n  \"gpu\": [\n    0\n  ],\n  \"host\": \"127.0.0.1\",\n  \"lib_dirs\": [\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib\",\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib\"\n  ],\n  \"log\": \"/models/strata/Strata/strata-ornith-q4.log\",\n  \"model_name\": \"ornith-1.5-122b-unsloth-ud-q4_k_xl\",\n  \"parallel\": 1,\n  \"tokenizer\": \"/models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/tokenizer\",\n  \"user_args\": []\n}\n"
+    strata-q4.json: "{\n  \"aliases\": [\n    \"qwen3.8-flash-next-unsloth\"\n  ],\n  \"api_key\": \"none\",\n  \"args\": [\n    \"--pack /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl\",\n    \"--native /models/strata/Strata-data/models/unsloth-UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf\",\n    \"--expert-profile /models/strata/Strata/data/expert-profile.bin\",\n    \"--expert-cache auto\",\n    \"--spec 4\",\n    \"--spec-min-p 0.5\",\n    \"--mtp /models/strata/Strata-data/mtp/rt\",\n    \"--max-context 262144\",\n    \"--kv int8\",\n    \"--kv-resident 32768\",\n    \"--prefill auto\",\n    \"--memory-limit-mib 103680\",\n    \"--conversation-cache-mib 16384\",\n    \"--conversation-cache-slots 16\"\n  ],\n  \"backend\": \"hip\",\n  \"cwd\": \"/models/strata/Strata\",\n  \"drafting\": \"mtp\",\n  \"env\": {\n    \"STRATA_MMQ_KQ\": \"1\"\n  },\n  \"exe\": \"/models/strata/Strata/engine/strata\",\n  \"gpu\": [\n    0\n  ],\n  \"host\": \"127.0.0.1\",\n  \"lib_dirs\": [\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib\",\n    \"/models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib\"\n  ],\n  \"log\": \"/models/strata/Strata/strata-q4.log\",\n  \"model_name\": \"qwen3.8-flash-next-unsloth-ud-q4_k_xl\",\n  \"parallel\": 8,\n  \"tokenizer\": \"/models/strata/Strata-data/packs/unsloth-ud-q4_k_xl/tokenizer\",\n  \"user_args\": []\n}\n"
+    strata-strix-iq3_s.json: "{\n  \"aliases\": [\n    \"qwen3.8-flash-next\"\n  ],\n  \"api_key\": \"none\",\n  \"args\": [\n    \"--pack /models/strata/Strata-data/packs/iq3_s\",\n    \"--native /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf\",\n    \"--ple-gguf /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf\",\n    \"--expert-profile /models/strata/Strata/data/expert-profile.bin\",\n    \"--expert-cache 24576\",\n    \"--resident-budget-gib 55\",\n    \"--prefill 16384\",\n    \"--max-context 262144\",\n    \"--kv int8\",\n    \"--spec 4\",\n    \"--spec-min-p 0.5\",\n    \"--mtp-window 8192\",\n    \"--mtp /models/strata/Strata-data/mtp/rt\"\n  ],\n  \"backend\": \"hip\",\n  \"drafting\": \"mtp\",\n  \"env\": {\n    \"STRATA_HC_UPMIX\": \"1\",\n    \"STRATA_HIP_WMMA\": \"1\",\n    \"STRATA_PA_FAST\": \"1\",\n    \"STRATA_PF_FUSED\": \"1\",\n    \"STRATA_PF_GEMM\": \"1\",\n    \"STRATA_PF_SWITCH_MIN_T\": \"4096\",\n    \"STRATA_PREFILL_STREAM_MIN\": \"128\",\n    \"STRATA_SELECT_WMMA\": \"1\"\n  },\n  \"exe\": \"/opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo/strata\",\n  \"gpu\": [\n    0\n  ],\n  \"host\": \"127.0.0.1\",\n  \"lib_dirs\": [\n    \"/opt/strata/components/engine/0.1.59-linux-x86_64-hip-halo\"\n  ],\n  \"model_name\": \"qwen3.8-flash-next\",\n  \"parallel\": 8,\n  \"tokenizer\": \"/models/strata/Strata-data/packs/iq3_s/tokenizer\",\n  \"user_args\": []\n}\n"
+  kind: ConfigMap
+  metadata:
+    name: strata-profile
+    namespace: default
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      reloader.stakater.com/auto: 'true'
+    labels:
+      app.kubernetes.io/controller: strata
+      app.kubernetes.io/instance: gpu-ai-llama-swap
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: llama-swap
+      helm.sh/chart: app-template-5.0.1
+    name: gpu-ai-llama-swap-strata
+    namespace: default
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 3
+    selector:
+      matchLabels:
+        app.kubernetes.io/controller: strata
+        app.kubernetes.io/instance: gpu-ai-llama-swap
+        app.kubernetes.io/name: llama-swap
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/controller: strata
+          app.kubernetes.io/instance: gpu-ai-llama-swap
+          app.kubernetes.io/name: llama-swap
+      spec:
+        automountServiceAccountToken: false
+        containers:
+        - args:
+          - -config
+          - /app/config/config.yaml
+          image: ghcr.io/ownyourio/strata:main
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          name: strata
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          resources:
+            limits:
+              memory: 110Gi
+            requests:
+              cpu: 8
+              memory: 64Gi
+          securityContext:
+            privileged: true
+          startupProbe:
+            failureThreshold: 150
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 10
+          volumeMounts:
+          - mountPath: /models
+            name: models
+          - mountPath: /app/config
+            name: strata-config
+          - mountPath: /dev/dri
+            name: strata-dri
+          - mountPath: /dev/kfd
+            name: strata-kfd
+          - mountPath: /profile
+            name: strata-profile
+          - mountPath: /dev/shm
+            name: strata-shm
+        dnsPolicy: ClusterFirst
+        enableServiceLinks: false
+        hostIPC: false
+        hostNetwork: false
+        hostPID: false
+        initContainers:
+        - command:
+          - /opt/strata/bin/fetch_models.sh
+          env:
+          - name: HF_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: token
+                name: hf-token
+          - name: STRATA_MODEL_ORCA
+            value: orca/IQ4_XS
+          - name: STRATA_MODEL_ORN
+            value: orn/UD-Q4_K_XL
+          - name: STRATA_MODEL_Q4
+            value: unsloth/UD-Q4_K_XL
+          - name: STRATA_QUANTS
+            value: q3,orca,q4,orn
+          image: ghcr.io/ownyourio/strata:main
+          imagePullPolicy: Always
+          name: model-fetch
+          resources:
+            limits:
+              memory: 32Gi
+            requests:
+              cpu: 200m
+              memory: 2Gi
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /models
+            name: models
+          - mountPath: /dev/dri
+            name: strata-dri
+          - mountPath: /dev/kfd
+            name: strata-kfd
+        securityContext:
+          seccompProfile:
+            type: Unconfined
+          supplementalGroups: []
+        serviceAccountName: gpu-ai-llama-swap
+        terminationGracePeriodSeconds: 420
+        volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-swap
+        - configMap:
+            name: strata-config
+          name: strata-config
+        - hostPath:
+            path: /dev/dri
+            type: Directory
+          name: strata-dri
+        - hostPath:
+            path: /dev/kfd
+            type: CharDevice
+          name: strata-kfd
+        - configMap:
+            name: strata-profile
+          name: strata-profile
+        - emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+          name: strata-shm
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/instance: gpu-ai-llama-swap
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: llama-swap
+      app.kubernetes.io/service: gpu-ai-llama-swap-strata
+      helm.sh/chart: app-template-5.0.1
+    name: gpu-ai-llama-swap-strata
+    namespace: default
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/controller: strata
+      app.kubernetes.io/instance: gpu-ai-llama-swap
+      app.kubernetes.io/name: llama-swap
+    type: ClusterIP

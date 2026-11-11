@@ -119,13 +119,45 @@
 # eb8a963; the rejected alternative, a historical CF58_BASE default, would
 # hide a stale ref that passes only when the env is set by accident).
 #
+# cf-143 C01 re-pin (2026-11-11, the vllm lane disabled commented-out — owner
+# Q3): the vllm-side needles RETIRE and invert. M3: the three-qwen3.8-27b-
+# vllm-row HOLD loop becomes an ABSENCE-NEB needle (no live vllm row key may
+# parse out of the jsonc — the rows ride on as comments, one-edit-reversible;
+# charts/vllm is the magiccodingman/vllm-radiance FORK lane, never the cf-143
+# radiance engine — naming law). M4: the wire id leaves the serving-grep loop
+# (grep would false-green on the comment text — the live-shape absence is
+# pinned by charts/llama-swap/tests/test_vllm_disable_contract.py); M4 GAINS
+# the retirement negative needle (tests/notes/vllm-runbook.sh absent while
+# .agents/notes/vllm-on-target-acceptance.md lives with a cf-143 supersession
+# header). M7: the peers.vllm floor leg, the vllm-catalog.js cross-file leg
+# and the PM vllm class-table cells retire (C05 re-pins the class table for
+# radiance in the NEW M8 arm — NOT here: M7 must be green at C01's review,
+# C05 lands in wave 4). M1/M2/M5/M6: byte-untouched (nothing vllm-shaped;
+# the strata/q4 route legs are Q5-proTECTED — strata lives).
+# Red posture: M3's absence legs + M4's retirement needle are designed-RED
+# naming C01 until the comment-out + runbook retirement land; M1, M2, M5,
+# M6, M7 (minus the retired vllm legs) are HOLD-green and must stay green.
+#
 # Offline-deterministic: tree/parse checks only; JSONC is parsed with node
 # evaluating the file as an object literal (the plan's "JSONC-tolerant"
 # mandate — bare jq would choke on the comments).
 #
+# cf-143 C05 adds M8 (radiance catalog + class-table + priority-coherence
+# legs, DECISIONS Q2/Q4/Q8 + D17/D18): designed-RED until C05 (wave 4). M8 is
+# deliberately NOT in the default set — C01..C04 reviews run `bash
+# tests/pipeline-models/surface.sh` bare and must PASS (chunks/C01.md AC6
+# says so verbatim: "radiance legs don't exist yet — M-arm structure
+# intact"); C05 and the final review run the full set explicitly:
+# `bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 M7 M8`
+# (cf-105's M7-before-C04 posture, re-expressed with M8 excluded from the
+# default so the chunk-AC bare runs stay honest). M8's cross-file legs also
+# wait on C04 (peers.radiance) and C02 (the chart scalars/polarity comment)
+# — all predecessors of C05's wave, so C05's bar is a full green.
+#
 # Usage:
-#   bash tests/pipeline-models/surface.sh            # M1..M7
+#   bash tests/pipeline-models/surface.sh            # M1..M7 (cf-143 default)
 #   bash tests/pipeline-models/surface.sh M3 M4      # subset
+#   bash tests/pipeline-models/surface.sh M8         # cf-143 radiance legs (C05+)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -152,7 +184,7 @@ if [ "$#" -eq 0 ]; then
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^m[1-7]$ ]] || fail "unknown check id '$a' (expected M1..M7)"
+    [[ "$lc" =~ ^m[1-8]$ ]] || fail "unknown check id '$a' (expected M1..M8)"
     WANT["$lc"]=1
   done
 fi
@@ -427,36 +459,22 @@ for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flas
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context not 262144`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
 }
-// cf-105 C03 + cf-105-vllm-followup C01: the three vLLM class rows — D10
-// keeps the wire modelID (qwen3.8-27b-vllm) identical on all rows; only
-// body.priority differs (5 default / 1 urgent / 9 low). cf-131 C04: the
-// 262144 context pin below is the owner-ruled TRUE AXIS — catalog 262144
-// == engine --max-model-len 262144 (round-2 Q3 keep + round-3 Q11
-// engine-cap ruling, D31) — the assert stays byte-verbatim; the same loop
-// gains the capabilities marker (round-1 OQ9/R4 input/output + round-2 Q6
-// tools: true, the 0.30 stack's own 30/30 tool record with its TP2-only
-// and mtp-29/30 caveats — the runbook's on-target tool smoke closes it).
-// cf-131 D38 (the owner's R8-Q1 vision-drop ruling): the input leg goes
-// text-only — the shipped --language-model-only makes the engine refuse
-// image inputs, and the honest-grounding law forces the marker to what the
-// engine serves; tools: true STAYS (tool parsing/serving is text-side).
-const capEq = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
-for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
-  const e = cur[k];
-  if (!e) { errs.push(`${k}: catalog row missing (cf-105 C03 adds the default/urgent pair, cf-105-vllm-followup C01 adds the low row)`); continue; }
-  if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID is ${e.modelID}, want the shared wire value qwen3.8-27b-vllm`);
-  if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
-  if (!e.body || e.body.priority !== prio) errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
-  if (!e.name) errs.push(`${k}: no descriptive name`);
-  const caps = e.capabilities || {};
-  if (!capEq(caps.input, ['text'])) errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text"] (cf-131 D38 — the shipped --language-model-only makes the engine refuse image inputs at validation: the text-only marker per DECISIONS D38, the owner's R8-Q1 vision-drop ruling)`);
-  if (!capEq(caps.output, ['text'])) errs.push(`${k}: capabilities.output is ${JSON.stringify(caps.output)}, want ["text"] (cf-131 C04)`);
-  if (caps.tools !== true) errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true (cf-131 round-2 Q6 override — the tools marker on the shipped dflash lane)`);
+// cf-143 C01 (owner Q3 ruling, DECISIONS D6): the vllm lane is DISABLED
+// commented-out — charts/vllm is the magiccodingman/vllm-radiance FORK
+// engine (NOT the cf-143 radiance engine; naming law). The three-row HOLD
+// loop (cf-105 C03 + cf-105-vllm-followup C01 + cf-131 C04/D38 re-pins)
+// inverts to an ABSENCE needle: no live qwen3.8-27b-vllm* row key may parse
+// out of the gpu-ai provider map. The rows survive as JSONC comments for the
+// locate-and-uncomment re-enable (grep cf-143 finds each site — the marker
+// legs live pytest-side in charts/llama-swap/tests/test_vllm_disable_
+// contract.py, AC7); the loader parse itself is the same AC5 criterion.
+for (const k of ['qwen3.8-27b-vllm', 'qwen3.8-27b-vllm-urgent', 'qwen3.8-27b-vllm-low']) {
+  if (cur[k]) errs.push(`${k}: still a LIVE catalog row — cf-143 C01 comments the three vllm (vllm-radiance FORK) rows out (owner Q3: disable, keep one-edit-reversible)`);
 }
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/catalog.js" "$CAT" \
-    || fail "M3: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD rows never reshaped; the vllm class rows are cf-105 C03 / cf-105-vllm-followup C01's additive re-pin)"
+    || fail "M3: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD rows never reshaped; the vllm rows are cf-143 C01's ABSENCE re-pin — a live row there is the disable not landed)"
   # The peer hop only works while the wire name is not also a local model id
   # (llama-swap precedence: local IDs beat unqualified peer IDs, R3 Q5.2).
   python3 - <<'PY' \
@@ -476,7 +494,7 @@ ids = model_ids(chart.get("config") or {})
 ids |= model_ids((svc.get("llama-swap") or {}).get("config") or {})
 assert "qwen3.8-27b-vllm" not in ids, "qwen3.8-27b-vllm is a local model id in the chart or gpu-ai overlay config"
 PY
-  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, body.priority 5/1/9, the 262144 context on the TRUE axis (catalog == engine cap, cf-131 round-2 Q3 + round-3 Q11) and the capabilities marker (input [text] + output [text] + tools true — cf-131 C04, D38-amended: the owner's vision-drop ruling makes the text-only marker the honest one, the tools leg text-side and unchanged); the peer wire name is shadow-free (R3 Q5.2)"
+  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); NO live qwen3.8-27b-vllm* row key (cf-143 C01 absence re-pin — the fork-lane rows are commented-out, one-edit-reversible per owner Q3); the peer wire name is shadow-free (R3 Q5.2)"
 fi
 
 # --- M4: serving-fact cross-check (AC8) -------------------------------------------
@@ -485,19 +503,35 @@ if want m4; then
   # (27b+Local → q4, Flash+Local → strata-q4 per the owner ruling
   # 2026-11-09) plus q3 as the documented explicit-request alternate.
   # flash-next-q4 joins because the contract now names it as the default.
-  # cf-105 C04
-  # re-pins additively: the class table's wire id qwen3.8-27b-vllm joins —
-  # it is served from C03's peers.vllm.models list in the gpu-ai values, so
-  # this arm is designed-red until C03 lands (C03 review runs M1..M6 with
-  # C03 already landed → green).
-  for id in qwen3.8-27b-q4 qwen3.8-flash-next-strata-q4 qwen3.8-flash-next-q3 qwen3.8-27b-vllm; do
+  # cf-143 C01: the vllm wire id LEAVES this loop — grep -F would false-green
+  # on the commented-out rows' text (the disable keeps the comments for the
+  # one-edit re-enable); its live-shape absence is pinned by
+  # charts/llama-swap/tests/test_vllm_disable_contract.py (parse-level),
+  # never by a file-wide grep. C05 re-pins the serving cross-check with
+  # peers.radiance in M8 (the radiance wire id + the golden authority).
+  for id in qwen3.8-27b-q4 qwen3.8-flash-next-strata-q4 qwen3.8-flash-next-q3; do
     if grep -qF "$id" charts/llama-swap/values.yaml || grep -qF "$id" services/gpu-ai/prod/values.yaml; then
       :
     else
       fail "M4[AC8]: contract-named id '$id' is absent from both serving authorities (charts/llama-swap/values.yaml, services/gpu-ai/prod/values.yaml) — routing must never point at an unserved id"
     fi
   done
-  ok "M4[AC8]: every id the contract names (27b-q4 + flash-next-strata-q4 defaults, flash-next-q3 documented alternate, cf-105 vllm wire id — red until C03's peers.vllm block lands) appears in the serving authority"
+  # cf-143 C01 Tests bullet 4: the retirement negative needle — the vllm
+  # runbook CONTRACT SUITE goes away with the lane while the runbook DOC
+  # survives with a DORMANT supersession header (engine dormant, owner
+  # circles back — header only, body untouched).
+  if [ -e tests/notes/vllm-runbook.sh ]; then
+    fail "M4[cf-143 C01]: tests/notes/vllm-runbook.sh still exists — the vllm (vllm-radiance fork lane) contract suite retires with its catalog rows (owner Q3/D6); git rm it and note the retirement in charts/llama-swap/tests/TEST_SPEC.md"
+  fi
+  if [ ! -f .agents/notes/vllm-on-target-acceptance.md ]; then
+    fail "M4[cf-143 C01]: .agents/notes/vllm-on-target-acceptance.md must REMAIN (header-only supersession; the disable never deletes the runbook body — reversible-while-disabled)"
+  fi
+  head30=$(head -30 .agents/notes/vllm-on-target-acceptance.md)
+  printf '%s' "$head30" | grep -q "cf-143" \
+    || fail "M4[cf-143 C01]: the vllm runbook header carries no cf-143 supersession marker (engine dormant, owner circles back)"
+  printf '%s' "$head30" | grep -qiE 'superseded' \
+    || fail "M4[cf-143 C01]: the vllm runbook header lacks the word 'superseded' (the DORMANT framing of the fork lane)"
+  ok "M4[AC8 + cf-143 C01]: every contract-named id (27b-q4 + flash-next-strata-q4 defaults, flash-next-q3 documented alternate) appears in a serving authority; the vllm-runbook suite is retired while the runbook doc lives with its cf-143 superseded header (the wire id's live-shape absence is pinned by the pytest disable contract)"
 fi
 
 # --- M5: boards skill — Model(s) line re-pinned, routing clauses re-pinned (AC1, AC3) --
@@ -680,10 +714,16 @@ assert "slug" in low and "models" in low, "the two questions must be the slug an
   done
   for f in "$PM_SRC" "$PM_GEN"; do
     [ -f "$f" ] || fail "M7[AC4]: $f missing"
-    # The class table rows, verbatim cells (markdown table lines only).
+    # The class table's BACKGROUND row is NOT vllm-shaped (it routes
+    # gpu-ai/qwen3.8-27b-q4, llama.cpp — off any peer) and stands unchanged
+    # across cf-143, so it stays the live M7 table leg (10+ marker included).
+    # The urgent/default/low row cells, the polarity sentence and the three
+    # favorited vLLM rows retired with cf-143 C01's vllm disable (suite
+    # header); cf-143 C05 re-pins them for the radiance trio in M8 —
+    # deliberately NOT in M7, so every review from C01 to C04 passes bare.
     python3 -c '
 import re, sys
-# Cells are conventionally backtick-wrapped (the plan table writes `1`–`3`);
+# Cells are conventionally backtick-wrapped (the plan table writes `1`-`3`);
 # the contract is the cell TEXT, so match on backtick-stripped lines.
 lines = [ln.replace("`", "").lower()
          for ln in open(sys.argv[1]).read().splitlines()
@@ -694,79 +734,249 @@ def find(cells, rx=None, must_not=()):
            and (rx is None or re.search(rx, low)):
             return low
     return None
-# The 1-3 range is part of the row MATCHER, not a post-hoc assert: the
-# favorited -urgent row carries every other cell as a substring ("urgent"
-# and "3" both inside qwen3.8-27b-vllm-urgent) and would otherwise shadow
-# the table row when the favorited table precedes it in the file.
-r1 = find(["urgent", "qwen3.8-27b-vllm-urgent"], rx=r"1\s*[–\-—]\s*3")
-assert r1, "class table: no urgent row (1-3 / urgent / qwen3.8-27b-vllm-urgent / 1)"
-assert re.search(r"\|\s*1\s*\|", r1), f"class table: urgent row lacks the vLLM priority cell 1: {r1}"
-r2 = find(["default", "qwen3.8-27b-vllm", "5", "unset"], must_not=["-urgent"])
-assert r2, "class table: no default row (unset / default / qwen3.8-27b-vllm / 5)"
-assert re.search(r"\|\s*5\s*\|", r2), f"class table: default row lacks the vLLM priority cell 5: {r2}"
-r_low = find(["low", "qwen3.8-27b-vllm-low"], rx=r"8\s*[–\-—]\s*9")
-assert r_low, "class table: no low row (8-9 / low / qwen3.8-27b-vllm-low / 9)"
-assert re.search(r"\|\s*9\s*\|", r_low), f"class table: low row lacks the vLLM priority cell 9: {r_low}"
 r3 = find(["background", "qwen3.8-27b-q4", "n/a"]) or find(["background", "qwen3.8-27b-q4", "n-a"])
 assert r3, "class table: no background row (10+ / background / qwen3.8-27b-q4 / n-a)"
 assert re.search(r"\b10\s*\+", r3), f"class table: background row lacks the 10+ card-Priority marker: {r3}"
-# Polarity + snap-interval sentence: lower = more urgent (vLLM convention);
-# the discrete values ride the resolved body.priority 1:1.
-text = open(sys.argv[1]).read().lower()
-i = text.find("more urgent")
-assert i >= 0, "no polarity sentence (lower = more urgent)"
-window = text[max(0, i - 300):i + 300]
-assert "lower" in window and "1:1" in window, "the polarity sentence must state 1:1 passthrough with lower = more urgent"
-# The two favorited rows: exact model cells (the class table routes
-# gpu-ai/<id>, so exact-cell matching keeps the two apart).
+' "$f" || fail "M7[AC4]: $f lacks the class table's background row leg (the cf-143-invariant row of the single-authority table)"
+  done
+  # Cross-file (cf-143 C01 re-pin of the cf-105 peers.vllm floor leg): the
+  # vllm era is ABSENT at the live-parse level — peers.vllm gone and no live
+  # charts.vllm entry (grep would false-green on the surviving comments; the
+  # parsed shapes are the disable contract, chunks/C01.md AC1). The radiance
+  # floor 5 takes the priority-wiring role in M8 (C04+C05 authority).
+  python3 -c '
+import sys, yaml
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+peer = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers", {})
+assert "vllm" not in peer, "cf-143 C01: llama-swap.config.peers.vllm is still a LIVE key — the vllm (vllm-radiance fork lane) peer must be commented out (Q3)"
+assert "vllm" not in (svc.get("charts") or {}), "cf-143 C01: charts.vllm still live — the ApplicationSet entry must be commented out"
+' || fail "M7[cf-143 C01]: the vllm disable is not live-parsed-absent in services/gpu-ai/prod/values.yaml (the floor-5 wiring role moves to peers.radiance in M8)"
+  grep -qF 'qwen3.8-27b-q4' charts/llama-swap/values.yaml \
+    || grep -qF 'qwen3.8-27b-q4' services/gpu-ai/prod/values.yaml \
+    || fail "M7[AC5]: the background-leg rung qwen3.8-27b-q4 is absent from the serving authorities (chart catalog or gpu-ai overlay)"
+  ok "M7[cf-105 C04, re-pinned cf-105-vllm-followup C02, retired the vllm cells at cf-143 C01]: boards roster names both fields + the D12 carve-out with the retired semantics intact, the priority kickoff bullet and launch-prompt value are present, the kickoff slot is board-scoped with the two-question list intact, the class table's background leg lives in pipeline-models alone, the vllm era is parse-absent in the gpu-ai values, the background rung serves, and no 10+/background leg text leaks into boards/kickoff"
+fi
+
+# --- M8: cf-143 radiance catalog + priority-coherence legs (C05; designed-red ---
+# until C05 lands — wave 4. Run explicitly: `bash tests/pipeline-models/surface.sh
+# M8` alongside the bare M1..M7 set at C05 review and the final review; NOT in
+# the default set, so every earlier bare run stays honest (suite header, cf-143
+# posture). Contract: chunks/C05.md "## Tests" — M-leg radiance re-pins (rows
+# 9/5/1 higher-wins, ctx 200000 == the shipped maxModelLen, input [text,image]),
+# the strata-KEEP needles (Q5 made executable), the negative peer-id bar, the
+# four-surface priority coherence (catalog rows / peer floor 5 / class table +
+# per-engine polarity / chart polarity comment — AC4's "one needle set... as a
+# unit"), and the retirement-footnote shape of the vllm class rows in the
+# favorited table ("live-inventory convention; test needle decides exact shape":
+# vllm ids stay named in pipeline-models prose, never as live table rows).
+# Cross-file legs additionally wait on C02 (chart scalars/polarity comment) and
+# C04 (peers.radiance) — both predecessors of C05's wave, so C05's bar is full
+# green. The table legs run against SOURCE AND generated mirror (M6's pairsync
+# + generate --check is the mirror-integrity extension the chunk names: a
+# half-regenerate cannot pass M8 + M6 together).
+if want m8; then
+  [ -f "$CAT" ] || fail "M8: $CAT missing"
+  cat >"$TMP/rad-catalog.js" <<'JS'
+// M8-A: the radiance trio HOLD (D7 honest ids, Q2 higher-wins 9/5/1, Q8
+// [text,image], D17/Q10 ctx 200000 served truth — the 262,144-trained figure
+// stays OUT of the row, D38 honesty pattern). The wire modelID is SHARED on
+// all three rows (the vllm row pattern mirrored: only body.priority differs).
+const fs = require('fs');
+function load(p) { return eval('(' + fs.readFileSync(p, 'utf8') + ')'); }
+const o = load(process.argv[2]);
+const provs = o.providerMetas || o.providers || {};
+const models = (provs['gpu-ai'] || {}).models || {};
+const capEq = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
+const errs = [];
+for (const [k, prio] of [['qwen3.8-flash-next-radiance', 5],
+                         ['qwen3.8-flash-next-radiance-urgent', 9],
+                         ['qwen3.8-flash-next-radiance-low', 1]]) {
+  const e = models[k];
+  if (!e) { errs.push(`${k}: catalog row missing (C05 adds the trio)`); continue; }
+  if (e.modelID !== 'qwen3.8-flash-next-radiance')
+    errs.push(`${k}: modelID is ${e.modelID}, want the shared wire value qwen3.8-flash-next-radiance (D7)`);
+  if (!e.limit || e.limit.context !== 200000)
+    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 200000 (Q10 FULL profile served truth)`);
+  if (!e.body || e.body.priority !== prio)
+    errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio} (Q2 HIGHER-WINS: urgent 9 / default 5 / low 1 — a 1/5/9 port of the retired vLLM numbers is exactly the inversion bug RESEARCH RQ2 names)`);
+  if (!e.name) errs.push(`${k}: no descriptive name`);
+  const caps = e.capabilities || {};
+  if (!capEq(caps.input, ['text', 'image']))
+    errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text","image"] (Q8 — vision tower verified in-pack RQ0; the runbook image-smoke leg retires the claim on failure)`);
+  if (!capEq(caps.output, ['text']))
+    errs.push(`${k}: capabilities.output is ${JSON.stringify(caps.output)}, want ["text"]`);
+  if (caps.tools !== true)
+    errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true`);
+}
+// M8-A2 (chunks/C05.md Tests, "Catalog-shape test — live-row set =="):
+// the cf-143 DELTA contract against the test-wave frozen base (captured
+// 2026-11-11 from the parsed catalog). Exactly +3 radiance rows, exactly
+// -3 vllm rows, everything else byte-present ("strata rows five-ish as
+// today" rides this same equality; M3's HOLD legs keep their shape).
+const CF143_BASE_KEYS = ["home-3b-v3","home-3b-v3-gpu","local/qwen3.8-27b","ornith-1.5-122b-q3","ornith-1.5-122b-q4","ornith-1.5-122b-q5","ornith-1.5-122b-q6","ornith-1.5-122b-strata-q4","qwen3-vl-2b-bf16","qwen3-vl-2b-bf16:caption","qwen3-vl-2b-bf16:tags","qwen3-vl-2b-q4","qwen3-vl-2b-q4:caption","qwen3-vl-2b-q4:tags","qwen3-vl-2b-q8","qwen3-vl-2b-q8:caption","qwen3-vl-2b-q8:tags","qwen3-vl-30b-a3b","qwen3-vl-30b-a3b-bf16","qwen3-vl-30b-a3b-bf16:caption","qwen3-vl-30b-a3b-bf16:tags","qwen3-vl-30b-a3b-q4","qwen3-vl-30b-a3b-q4:caption","qwen3-vl-30b-a3b-q4:tags","qwen3-vl-30b-a3b-q8","qwen3-vl-30b-a3b-q8:caption","qwen3-vl-30b-a3b-q8:tags","qwen3-vl-30b-a3b-thinking-bf16","qwen3-vl-30b-a3b-thinking-q4","qwen3-vl-30b-a3b-thinking-q8","qwen3-vl-4b","qwen3-vl-4b-bf16","qwen3-vl-4b-bf16:caption","qwen3-vl-4b-bf16:tags","qwen3-vl-4b-q4","qwen3-vl-4b-q4:caption","qwen3-vl-4b-q4:tags","qwen3-vl-4b-q8","qwen3-vl-4b-q8:caption","qwen3-vl-4b-q8:tags","qwen3-vl-4b-thinking-bf16","qwen3-vl-4b-thinking-q4","qwen3-vl-4b-thinking-q8","qwen3-vl-8b","qwen3-vl-8b-bf16","qwen3-vl-8b-bf16:caption","qwen3-vl-8b-bf16:tags","qwen3-vl-8b-q4","qwen3-vl-8b-q4:caption","qwen3-vl-8b-q4:tags","qwen3-vl-8b-q8","qwen3-vl-8b-q8:caption","qwen3-vl-8b-q8:tags","qwen3.6-27b-q6","qwen3.6-27b-q8","qwen3.6-35b-a3b-1m","qwen3.6-35b-a3b-bf16","qwen3.6-35b-a3b-q6","qwen3.6-35b-a3b-q8","qwen3.6-35b-a3b-q8-visual","qwen3.8","qwen3.8-27b-bf16","qwen3.8-27b-q4","qwen3.8-27b-q6","qwen3.8-27b-q8","qwen3.8-27b-q8-1m","qwen3.8-27b-q8-visual","qwen3.8-27b-vllm","qwen3.8-27b-vllm-low","qwen3.8-27b-vllm-urgent","qwen3.8-flash-next-heretic-q4","qwen3.8-flash-next-orca-q6","qwen3.8-flash-next-q3","qwen3.8-flash-next-q4","qwen3.8-flash-next-strata","qwen3.8-flash-next-strata-orca","qwen3.8-flash-next-strata-q4","qwen36-heretic","qwen36-huihui","qwen38-ara","qwen38-heretic","qwen38-humanlike","qwen38-orca","qwen38-orca-f16","qwen38-rana","whisper-large-v3"];
+const liveKeys = Object.keys(models).sort();
+const added = liveKeys.filter(k => !CF143_BASE_KEYS.includes(k));
+const removed = CF143_BASE_KEYS.filter(k => !liveKeys.includes(k));
+const wantAdded = ['qwen3.8-flash-next-radiance', 'qwen3.8-flash-next-radiance-urgent', 'qwen3.8-flash-next-radiance-low'].sort();
+const wantRemoved = ['qwen3.8-27b-vllm', 'qwen3.8-27b-vllm-urgent', 'qwen3.8-27b-vllm-low'].sort();
+if (JSON.stringify(added) !== JSON.stringify(wantAdded))
+  errs.push(`live catalog rows added vs the cf-143 base are ${JSON.stringify(added)}, want exactly the radiance trio (C05 delta contract)`);
+if (JSON.stringify(removed) !== JSON.stringify(wantRemoved))
+  errs.push(`live catalog rows removed vs the cf-143 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable + C05 delta — every other row stays live, strata included)`);
+if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
+JS
+  node "$TMP/rad-catalog.js" "$CAT" \
+    || fail "M8: the radiance catalog contract is violated (trio HOLD: shared modelID, body.priority 9/5/1 higher-wins, ctx 200000, input [text,image], tools true; delta equality vs the frozen cf-143 base — chunks/C05.md Tests + M8 header)"
+  # M8-B: cross-chart context needle — the catalog's 200000 == the SHIPPED
+  # maxModelLen scalar (single-sources honesty law; reads charts/radiance/
+  # values.yaml, so it names C02 until the chart lands).
+  python3 - <<'PY' || fail "M8: the catalog context pin does not equal the shipped chart scalar (cross-chart honesty needle)"
+import re, sys, yaml
+try:
+    vals = yaml.safe_load(open("charts/radiance/values.yaml"))
+except FileNotFoundError:
+    sys.exit("charts/radiance/values.yaml missing — C02 not landed; the cross-chart ctx needle waits on it")
+mm = (vals.get("app-template") or {}).get("maxModelLen")
+assert mm == 200000, f"charts/radiance maxModelLen is {mm!r}, want 200000 (D17 FULL profile — the catalog rows must mirror the served truth)"
+PY
+  # M8-C: serving-fact cross-check (the cf-83 M4 role, radiance era): the wire
+  # id is SERVED via peers.radiance (golden authority), and the strata ids
+  # STILL appear in peers.strata.models (Q5 — the live default lane untouched).
+  python3 - <<'PY' || fail "M8: the radiance wire id is not in peers.radiance.models, or a strata id vanished from peers.strata.models (serving-fact law + Q5 KEEP needle)"
+import sys, yaml
+ev = yaml.safe_load(open("charts/llama-swap/tests/evidence/radiance-peers-expected.yaml"))["radiance"]
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+peers = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers") or {}
+rad = peers.get("radiance")
+assert rad is not None, "peers.radiance missing — C04 must land before C05's bar (wave 3 dep)"
+assert rad.get("models") == ev["models_allowed"], f"peers.radiance.models {rad.get('models')!r} != the evidence-ruled id list"
+floor = ((rad.get("filters") or {}).get("setParams") or {}).get("priority?")
+assert floor == 5, f"peers.radiance priority? floor is {floor!r}, want 5 (Q2 default class under higher-wins — the M8 coherence unit: catalog 9/5/1 + floor 5 + PM table + chart comment)"
+sev = yaml.safe_load(open("charts/llama-swap/tests/evidence/strata-peers-expected.yaml"))["strata"]
+strata_models = (peers.get("strata") or {}).get("models") or []
+assert strata_models in sev["models_states"], f"peers.strata.models {strata_models} left the sanctioned waves (Q5 violation)"
+PY
+  # M8-D: the negative needle (local-ids-shadow-peers law, R3 Q5.2 mirrored
+  # from M3): the radiance wire id must NOT be a local llama-swap model id.
+  python3 - <<'PY' || fail "M8: qwen3.8-flash-next-radiance is declared as a local llama-swap model id — it would shadow the unqualified radiance peer (the very precedence bug that kept the vllm id out of the local map)"
+import yaml
+def model_ids(cfg):
+    out = set((cfg or {}).get("models") or {})
+    for fam, spec in ((cfg or {}).get("families") or {}).items():
+        for quant, rung in ((spec or {}).get("quants") or {}).items():
+            out.add((rung or {}).get("id") or f"{fam}-{quant}")
+    return out
+chart = yaml.safe_load(open("charts/llama-swap/values.yaml"))
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+ids = model_ids(chart.get("config") or {}) | model_ids((svc.get("llama-swap") or {}).get("config") or {})
+assert "qwen3.8-flash-next-radiance" not in ids, "the radiance wire id is a local model id in the chart or gpu-ai overlay config"
+PY
+  for f in "$PM_SRC" "$PM_GEN"; do
+    [ -f "$f" ] || fail "M8[C05]: $f missing"
+    # M8-E: the re-pinned class table (engine-scoped value column, radiance
+    # cells, 9/5/1, intervals + the 10+ background leg unchanged), per-engine
+    # polarity with the RETIRED-vLLM-lane guard sentence (the chunk's verbatim
+    # marks), the re-pinned floor sentence, and the favorited table: radiance
+    # row joins, strata-q4 row STAYS, vllm ids survive only OUTSIDE table
+    # rows (retirement footnotes, live-inventory convention).
+    python3 - "$f" <<'PY' || fail "M8[C05]: $f diverges from the re-pinned radiance tables/polarity (diagnostics above)"
+import re, sys
+path = sys.argv[1]
+text = open(path).read()
+lines = [ln.replace("`", "").lower() for ln in text.splitlines() if ln.lstrip().startswith("|")]
+def find(cells, rx=None, must_not=()):
+    for low in lines:
+        if all(c.lower() in low for c in cells) and not any(b in low for b in must_not) \
+           and (rx is None or re.search(rx, low)):
+            return low
+    return None
+errs = []
+header = [ln for ln in lines if "class" in ln or "priority" in ln]
+if not any(("radiance" in ln and "body.priority" in ln) for ln in header):
+    errs.append("the class table value column is not renamed engine-scoped (Radiance body.priority)")
+r1 = find(["urgent", "qwen3.8-flash-next-radiance-urgent"], rx=r"1\s*[–\-—]\s*3")
+if not r1 or not re.search(r"\|\s*9\s*\|", r1):
+    errs.append("no urgent row (1-3 / urgent / qwen3.8-flash-next-radiance-urgent / 9)")
+r2 = find(["default", "qwen3.8-flash-next-radiance", "5", "unset"], must_not=["-urgent", "-low"])
+if not r2 or not re.search(r"\|\s*5\s*\|", r2):
+    errs.append("no default row (unset / default / qwen3.8-flash-next-radiance / 5)")
+rl = find(["low", "qwen3.8-flash-next-radiance-low"], rx=r"8\s*[–\-—]\s*9")
+if not rl or not re.search(r"\|\s*1\s*\|", rl):
+    errs.append("no low row (8-9 / low / qwen3.8-flash-next-radiance-low / 1)")
+r3 = find(["background", "qwen3.8-27b-q4"]) 
+if not r3 or not re.search(r"\b10\s*\+", r3):
+    errs.append("the background row (10+ / qwen3.8-27b-q4) changed — the chunk rules it UNCHANGED")
+low_t = text.lower()
+if not re.search(r"radiance[^\n]{0,200}higher[^\n]{0,40}wins|higher[^\n]{0,30}wins[^\n]{0,200}radiance", low_t):
+    errs.append("no per-engine polarity: radiance higher-wins since cf-143 is not stated")
+if not re.search(r"retired vllm lane[^\n]{0,120}lower-wins|lower-wins[^\n]{0,120}retired vllm lane", low_t):
+    errs.append("the vLLM-history sentence lacks the RETIRED-lane (lower-wins) mark")
+if "never port" not in low_t:
+    errs.append("'never port those numbers to radiance' is missing (Q2 verbatim guard)")
+if not re.search(r'peers\.radiance[^\n]{0,80}priority\?[^\n]{0,30}= ?5|priority\?[^\n]{0,40}=? ?5[^\n]{0,120}peers\.radiance', low_t):
+    errs.append('the floor sentence is not re-pinned to peers.radiance.filters.setParams "priority?" = 5')
 def favrow(cell):
     for ln in lines:
         cells = [c.strip().strip("`").strip() for c in ln.strip().strip("|").split("|")]
         if cell in cells and "gpu-ai" in cells:
             return ln
     return None
-assert favrow("qwen3.8-27b-vllm"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm"
-assert favrow("qwen3.8-27b-vllm-urgent"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm-urgent"
-assert favrow("qwen3.8-27b-vllm-low"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm-low"
-' "$f" || fail "M7[AC4/AC5]: $f lacks the single-authority four-class table (rows + polarity + the three favorited vLLM rows)"
+if not favrow("qwen3.8-flash-next-radiance"):
+    errs.append("favorited models: no gpu-ai row keyed qwen3.8-flash-next-radiance")
+if not favrow("qwen3.8-flash-next-strata-q4"):
+    errs.append("favorited models: the strata-q4 row vanished — Q5 says it STAYS (still the default)")
+vllm_rows = [ln for ln in lines if "qwen3.8-27b-vllm" in ln]
+if vllm_rows:
+    errs.append(f"the vllm rows are still live TABLE rows in pipeline-models ({len(vllm_rows)} lines) — retirement footnotes must sit outside the tables")
+if "qwen3.8-27b-vllm" not in low_t:
+    errs.append("the vllm ids vanished from pipeline-models prose entirely — the retirement footnote is required (dormant-by-owner-ruling, not deleted, echoes Q3/D6)")
+if errs:
+    print("; ".join(errs), file=sys.stderr); sys.exit(1)
+PY
+    # M8-F: the strata-KEEP route strings (C05 AC3): the default route SURVIVES
+    # everywhere C05 must not touch it — pipeline-models combination rule, the
+    # kickoff derivation, the boards routing paragraph, catalog side via M3
+    # HOLD. (A disappearance here IS the Q5 violation.)
+    python3 -c '
+import re, sys
+text = re.sub(r"\s+", " ", open(sys.argv[1]).read())
+assert "gpu-ai/qwen3.8-flash-next-strata-q4" in text, f"strata route string absent from {sys.argv[1]}"
+' "$f" || fail "M8[Q5]: $f lost the strata-q4 route string — the routing DEFAULT does not move this run (C05 notes-for-dev; reviewer rejects otherwise)"
   done
-  # Cross-file (M4 style): the class table's row IDs appear in a serving
-  # authority, and the floor 5 equals the peer filter value.
   python3 -c '
-import sys, yaml
-svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
-peer = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers", {}).get("vllm")
-assert peer is not None, "services/gpu-ai: no llama-swap.config.peers.vllm block (C03)"
-assert peer.get("models") == ["qwen3.8-27b-vllm"], f"peers.vllm.models must be exactly [qwen3.8-27b-vllm], got {peer.get('models')!r}"
-floor = ((peer.get("filters") or {}).get("setParams") or {}).get("priority?")
-assert floor == 5, f"the peer priority? floor must be 5 (the floor follows the default class — cf-105-vllm-followup D2), got {floor!r}"
-' || fail "M7[AC5]: the peers.vllm serving authority (models list + priority? floor 5) is absent or wrong in services/gpu-ai/prod/values.yaml"
-  cat >"$TMP/vllm-catalog.js" <<'JS'
-// cf-105 C04 cross-file leg (re-pinned cf-105-vllm-followup C02): the class
-// table's row IDs exist in the gpu-ai provider catalog with the shared wire
-// modelID, the HR3 context pin and the class body.priority values
-// (1 urgent / 5 default / 9 low).
-const fs = require('fs');
-function load(p) { return eval('(' + fs.readFileSync(p, 'utf8') + ')'); }
-const o = load(process.argv[2]);
-const provs = o.providerMetas || o.providers || {};
-const models = (provs['gpu-ai'] || {}).models || {};
-const errs = [];
-for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
-  const e = models[k];
-  if (!e) { errs.push(`${k}: row missing`); continue; }
-  if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID ${e.modelID}, want the wire value qwen3.8-27b-vllm`);
-  if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
-  if ((e.body || {}).priority !== prio) errs.push(`${k}: body.priority ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
-}
-if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
-JS
-  node "$TMP/vllm-catalog.js" "$CAT" \
-    || fail "M7[AC5]: the gpu-ai provider catalog rows do not match the class table (shared wire modelID, 262144 context, body.priority 5/1/9)"
-  grep -qF 'qwen3.8-27b-q4' charts/llama-swap/values.yaml \
-    || grep -qF 'qwen3.8-27b-q4' services/gpu-ai/prod/values.yaml \
-    || fail "M7[AC5]: the background-leg rung qwen3.8-27b-q4 is absent from the serving authorities (chart catalog or gpu-ai overlay)"
-  ok "M7[cf-105 C04, re-pinned cf-105-vllm-followup C02]: boards roster names both fields + the D12 carve-out with the retired semantics intact, the priority kickoff bullet and launch-prompt value are present, the kickoff slot is board-scoped with the two-question list intact, the four-class table + polarity + the three favorited vLLM rows live in pipeline-models alone, the serving authorities agree (floor 5, wire model, catalog body.priority 1/5/9, background rung), and no 10+/background leg text leaks into boards/kickoff"
+import re
+for f in (".rulesync/skills/pipeline-kickoff/SKILL.md", ".rulesync/skills/boards/SKILL.md"):
+    t = re.sub(r"\s+", " ", open(f).read())
+    assert "gpu-ai/qwen3.8-flash-next-strata-q4" in t, f"strata-q4 default route vanished from {f}"
+' || fail "M8[Q5]: the strata default route moved in pipeline-kickoff/boards — C05 edits ONLY pipeline-models (+ catalog + this suite)"
+  # M8-G: the chart polarity comment (AC4's fourth surface — one unit with the
+  # catalog rows, the floor and the class table).
+  python3 - <<'PY' || fail "M8[AC4]: the charts/radiance priority comment block does not complete the four-surface coherence unit"
+import re, sys
+try:
+    text = open("charts/radiance/values.yaml").read()
+except FileNotFoundError:
+    sys.exit("charts/radiance/values.yaml missing — C02 not landed (the polarity-comment surface)")
+low = text.lower()
+if not re.search(r"higher[^\n]{0,60}wins", low):
+    sys.exit("the chart priority block never states higher-wins (Q2)")
+if "opposite" not in low or "vllm" not in low:
+    sys.exit("the chart block never marks the OPPOSITE polarity of the retired vLLM table (Q2/C02 task)")
+for tok in ("429", "5000", "peers.radiance"):
+    if tok not in text:
+        sys.exit(f"the chart priority block lacks {tok!r} (preempt-wait-ms default / 429+Retry-After / the pointer at the C04 floor)")
+PY
+  # M8-H (review-time, env-gated like cf-143's other git legs): the Q5
+  # untouched-file diff inventory — the runner-literal surfaces were never in
+  # the edit set (C05 AC3: "asserted by diff, not by grep").
+  if [ -n "${CF143_BASE_SHA:-}" ]; then
+    touched=$(git diff --name-only "$CF143_BASE_SHA"...HEAD -- .rulesync/rules/overview.md .agents/loops/pipeline-worker.md)
+    [ -z "$touched" ] || fail "M8[Q5]: the deferred surfaces were touched: $touched — loops/AGENTS runner literals ride the cutover ruling, NOT this run (DECISIONS Deferred)"
+    ok "M8: radiance trio HOLD (9/5/1 higher-wins, shared modelID, ctx 200000 == shipped maxModelLen, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence, floor 5) + strata KEEP needles + negative peer-id bar + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the loops/overview diff inventory vs $CF143_BASE_SHA"
+  else
+    skip "M8: Q5 diff-inventory leg not run — review sets CF143_BASE_SHA=<merge-base> and re-runs M8 (git diff check, chunks/C05.md AC3)"
+    ok "M8: radiance trio HOLD (9/5/1 higher-wins, shared modelID, ctx 200000 == shipped maxModelLen, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence, floor 5) + strata KEEP needles + negative peer-id bar + re-pinned class/favorited tables on source AND mirror + chart polarity comment"
+  fi
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

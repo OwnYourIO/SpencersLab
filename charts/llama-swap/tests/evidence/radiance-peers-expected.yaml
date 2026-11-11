@@ -1,0 +1,46 @@
+# Pinned expectation for the cf-143 ADDITIVE radiance peer delta on the gpu-ai
+# outer llama-swap render (2026-11-cf-143-feat-radiance-replaces-strata, C04;
+# DECISIONS D13: the evidence law is PER-PEER-KEY — the strata file stays
+# valid and unedited, this sibling joins beside it). Authored in the cf-143
+# test session; dev must not edit this file.
+#
+# This file is the SINGLE source for the radiance peer shape; the C04 dev
+# edits services/gpu-ai/prod/values.yaml to MATCH it, never the reverse.
+# Consumers (test_radiance_peer, the parity wave-leg, the flashnext
+# blast-radius carve-out, the cf-143 naming/coexistence arms) read it live,
+# so a test-session re-author re-aligns them automatically — the
+# strata-peers-expected.yaml machinery, copied.
+#
+# models_states is APPEND-ONLY history; first state = the one-id list ruled
+# by the plan (peer models list exactly [qwen3.8-flash-next-radiance], the
+# served id from --served-model-name, DECISIONS D7 / chunks/C02.md). A peers
+# list matching no sanctioned state is a phantom or a lost entry.
+#
+# Shape provenance (RESEARCH.md authority, chunks/C04.md): peer entry =
+# required proxy+models (config-schema.v266.json); responseHeader 1800 =
+# the cold-start knob, restated for radiance's ~66 GiB-class first load
+# (strata O2 precedent); NO /v1 suffix — the request path appends verbatim;
+# no apiKey — the engine is keyless (DECISIONS D8: keyless + ungated packs,
+# no secret surface anywhere on this lane); filters.setParams "priority?" = 5
+# is the set-if-undefined floor of radiance's DEFAULT class — polarity is
+# higher-wins on radiance (owner Q2 ruling, RESEARCH RQ2: urgent 9 / default
+# 5 / low 1, the OPPOSITE of the retired vLLM lane's 1/5/9), so the floor
+# 5 must never be read as a vLLM-era number ported over (the per-engine
+# polarity note lives in .rulesync/skills/pipeline-models/SKILL.md, C05).
+radiance:
+  proxy: http://gpu-ai-radiance.default.svc.cluster.local:8000
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  filters:
+    setParams:
+      "priority?": 5
+  models_must_include:
+    - qwen3.8-flash-next-radiance
+  models_allowed:
+    - qwen3.8-flash-next-radiance
+  models_states:
+    # cf-143 C04 landed (the one-id first state; growth history starts clean —
+    # a second radiance arena (e.g. the -urgent wire never joins models: it is
+    # the SAME wire id, DECISIONS D7) would be the next appended state):
+    - [qwen3.8-flash-next-radiance]
