@@ -26,12 +26,12 @@
   },
   "chunks": {
     "C01": {
-      "status": "in-review",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": "dev DONE (t1 green 7/7)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review r1, zero required changes)",
       "dev_session": "ses_e37606cd3ffeo4e7zuRBEQd44n",
       "handoffs": [
         {
@@ -41,6 +41,12 @@
           "deviations": "Target file lives under .agents/plans/** where dev-family `edit` is denied by design — wrote via sanctioned shell channel (python anchor-asserted, fsync-verified), cf-77 precedent; 'already on fix branch' comment reworded to 'content is on main'.",
           "friction": "edit-deny on plans-root deliverable swept up by bookkeeping protection; fix proposal: narrow allow in 5 dev-family sources + rulesync generate (coord to rule: this branch vs follow-up card).",
           "open_questions": "Phase 4 'trim the mark list' sentence vs Phase 3 full-list posture — reviewer to reconcile; deny-narrowing routing."
+        },
+        {
+          "role": "review", "at": "2026-11-11T03:55:00+00:00", "verdict": "APPROVED", "chunk": "C01", "session": "ses_e374dbde5ffeALGmx5YGSsmdyy",
+          "commands_run": "surface.sh t1 re-run post-final-write PASS 7/7; bash -n 5/5; heredoc binding independently proved (old form fed tee, corrected feeds the command); git scope-clean",
+          "findings": "blocking none; trim-vs-full-list nit reconciled (idempotent marks + volume.list -readonly pre-check) cosmetic; informational: post-heal verdict form not restated (not an AC); header filer endpoint spelling pre-existing",
+          "next_suggested": "commit C01, open C02"
         }
       ]
     },
