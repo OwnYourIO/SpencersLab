@@ -77,6 +77,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - 2026-11-11 coord: C03 review minors 1–2 + nit + ResourceExhausted-row: all DEFERRED (next-touch fixes; row omission ruled correct-by-sources-discipline).
 
 ## Deferred
+- Final review (2026-11-11): runbook Phase 2 prose "`-collection=_default` (or `""`)" for fsck contradicts the matcher law (`""`=all; equivalence is ec.decode's exception) — fix at next runbook touch via C01 dev session; STATE `updated_at` staleness nit; C01 review notes now backfilled in chunks/C01.md.
 - C02 review minor (deferred by coord, verdict was APPROVED): `mcp-server-spec.md` §9 "verbatim" quote silently drops the "(such as a NetworkPolicy or service mesh)" parenthetical — restore on next touch of that file.
 - Re-enabling `services.infra.selfHeal` cluster annotation (owner decision; affects every infra
   charts-appset app, not just seaweedfs) — surfaced by R1 §R1.6, out of this plan's scope.

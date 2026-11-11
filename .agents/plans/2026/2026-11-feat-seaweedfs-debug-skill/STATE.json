@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-feat-seaweedfs-debug-skill",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e3a8cea67ffe891zJAR4d19Vyq",
   "test_session": "ses_e3775b4f4ffempWIiWhc4U7ZTS",
   "tests": {
@@ -9,7 +9,7 @@
     "verdict": "DONE"
   },
   "current_wave": 1,
-  "updated_at": "2026-11-11T03:05:00+00:00",
+  "updated_at": "2026-11-11T07:05:00+00:00",
   "kickoff": {
     "slug": "seaweedfs-debug-skill",
     "type": "feat",
@@ -110,13 +110,22 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C04"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review r1, zero findings; generator idempotence proven via sha256 re-run)",
+      "dev_session": "ses_e37029e5bffeEN27YM0d37PRDA",
+      "handoffs": [
+        { "role": "dev", "at": "2026-11-11T06:30:00+00:00", "status": "DONE", "chunk": "C05",
+          "files_changed": [".rulesync/rules/overview.md (1-line bullet append)", "AGENTS.md (generator-written mirror)"],
+          "commands_run": "rulesync generate => wrote AGENTS.md only; --check exit 0; idempotence second run no drift; surface.sh t1-t5 29/29; negatives empty",
+          "deviations": "brief said description-style bullet; actual sibling format is bare backticked names — implemented bare-name append per chunk+t5.4 allow-list (reviewer confirmed byte-consistent).", "friction": "none", "open_questions": "none" },
+        { "role": "review", "at": "2026-11-11T06:45:00+00:00", "verdict": "APPROVED", "chunk": "C05", "session": "ses_e36ffb4deffexJw5Hav72ani8j",
+          "commands_run": "full suite 29/29; generate --check 0; sha256 idempotence; scope + negatives; name==dir==bullet token",
+          "findings": "zero findings of any severity" }
+      ]
     },
     "C06": {
       "status": "declined",
