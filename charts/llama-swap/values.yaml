@@ -1293,9 +1293,13 @@ app-template:
             # from 2026-10-29 until that raise (see its profile note).
             # Declared caps are
             # PER-RUNG inside this one cgroup: 110592 primary, 103680 q4
-            # (71.7 pinned experts + 16 conv + ~13 KV ≈ 100.7, the owner-ruled
-            # half-restore), 92160 orca (U9.2 zero-growth law) — each leg stays
-            # ≥ its terms and ≤ this limit, which is the #1601 pairing.
+            # (the owner-ruled half-restore pair), 92160 orca (U9.2
+            # zero-growth law). The #1601 pairing reads each leg ≥ its terms
+            # and ≤ this limit: the primary keeps that law at the shipped
+            # 8-slot shape (row-H ≈ 99.0 ≤ 108 ≤ 110, runbook §6); q4 (≈ 123.9)
+            # and orca (≈ 101.9) ship ABOVE their own declarations on owner
+            # Q9's authorized-overshoot word — governed by the boot-read gates
+            # and the runbook §6 ladder, not claimed as fits.
             # Why 110Gi (owner ruling 2026-11-10, supersedes U14's 116Gi): the
             # container must die BEFORE the node. 110Gi + the measured node
             # floor ~7-8 GiB (all non-strata workloads ~7.3 GiB on the
@@ -1525,7 +1529,7 @@ strata:
     models:
       qwen3.8-flash-next-strata:
         name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)
-        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 110592 MiB engine-side inside the 110Gi pod cgroup with a 32 GiB conversation-cache budget over 16 slots; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
+        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 110592 MiB engine-side inside the 110Gi pod cgroup with a 16 GiB conversation-cache budget over 16 slots; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
         # serve takes only --profile/--host/--port (RESEARCH §2) — every
         # tuning knob lives in the run-config JSON below. `exec` hands the
         # process to llama-swap for stop/unload, and the ulimit wrapper is
@@ -1649,7 +1653,7 @@ strata:
 
       qwen3.8-flash-next-strata-q4:
         name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
-        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 110Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — the U8 half-restore, the value the primary itself now runs at row-H — since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 110Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
         # Same serve wrapper as the primary, byte-for-byte except the profile
         # file (the suite asserts exactly this equality — the ulimit wrapper is
         # load-bearing, and a per-rung wrapper drift is invisible until fd
@@ -1750,8 +1754,21 @@ strata:
       # serve's engine child inherits llama-swap's model env (the layer
       # above, single source of truth); a duplicate here would let serve
       # silently re-pin a value the chart gates (rocrVisibleDevices). C05's
-      # strix profile carries its own §5 eight-set instead.
-      env: {}
+      # strix profile carries its own §5 eight-set instead. The ONE entry
+      # below is not a model-env restatement: it is the row-H residency pin.
+      env:
+        # Row-H residency pin (owner Q10 2026-11-10): force the 26.8 GiB
+        # PLE table DIRECT at the 8-slot shape. The gfx12 auto-RAM policy
+        # WOULD admit the table here — 46.84 arena + 26.8 + 8 lands under
+        # the available memory — and the envelope would reach ~125.8 GiB,
+        # far past the 110592 declaration; row-H's fit verdict (99.0 ≤ 108
+        # ≤ 110, tuning runbook §6 row H) holds only with PLE-direct. The
+        # engine reads getenv("STRATA_PLE_AUTO_RAM")[0]=='0' [26] — the
+        # quoted string is load-bearing, an int form never fires the
+        # switch (§9.12 keys-vs-values class). An explicit --ple-io value
+        # stays forbidden (the 2026-10-29 OOM hazard law): env form only.
+        # Revert = delete this entry (back to env: {}).
+        STRATA_PLE_AUTO_RAM: "0"
       # setup's own choices, kept verbatim: engine-relative cwd and the
       # progress log on the claim (the --plan-gate and unload-timing
       # evidence trail).
@@ -1803,13 +1820,17 @@ strata:
         # available". 108 GiB (110592 MiB) declared inside the 110Gi cgroup.
         # Host-RAM KV law (int8): 13 KV-bearing layers (the 12 full-attention
         # QSA layers + the MTP draft) × 1,056 B = 13,728 B per context token
-        # per slot — 1.28 GiB per 100k tokens, 3.35 GiB a full 262k park,
-        # 13.4 GiB at the 4-slot worst case (4 × 262,144 × 13,728 B — the
-        # budget's counted "~13 GiB", now derived). --kv-resident below is NOT
+        # per slot — 1.28 GiB per 100k tokens, 3.35 GiB a full 262k park. The
+        # (N+1) pinning law (main + each slot, pinned for the whole context
+        # at engine start) puts this rung's shipped 8-slot worst case at
+        # 9 × 3.35 ≈ 30.15 GiB — the row-H KV term (tuning runbook §6); the
+        # ~13 GiB the budget once counted was the 4-slot-era reading U14
+        # sized against (4 × 262,144 × 13,728 B = 13.4 GiB, now derived).
+        # --kv-resident below is NOT
         # that budget: it keeps 32,768 KV cells per QSA layer in VRAM
         # (~0.4 GiB VRAM/slot), and the host-RAM cost is context × 13,728 B
-        # per slot regardless of it. The 32768 MiB conversation-cache budget
-        # below parks roughly 9-10 full-262k sessions — or dozens of typical
+        # per slot regardless of it. The 16384 MiB conversation-cache budget
+        # below parks roughly 4-5 full-262k sessions — or dozens of typical
         # 30-50k turns.
         - --kv-resident 32768
         # T3 (owner ruling 2026-11-01): bare `auto` on gfx12 Linux means
@@ -1825,7 +1846,16 @@ strata:
         # for this round — one variable at a time on the arena with headroom.
         - --prefill auto:32768
         - --memory-limit-mib 110592
-        - --conversation-cache-mib 32768
+        # Row-H (owner Q10 2026-11-10, shipped with the Q9 8-slot envelope):
+        # conv halves 32768 → 16384 because the 8-slot KV term needs the
+        # room — nine pinned 262k sessions are ~30.15 GiB, and conv 32 would
+        # declare ~115.0 against a 108 GiB declaration. Conv 16 lands the
+        # term sum at 46.84 + 30.15 + 16 + 6 ≈ 99.0 ≤ 108 ≤ 110: the only
+        # in-envelope 8×262K int8 shape at the pin (tuning runbook §6 row H,
+        # [E] on [M-node] terms). Slots stay 16 — the ruling halves the
+        # budget, not the slot count. Revert = restore 32768 with the rung's
+        # parallel scale-back (runbook §6 ladder).
+        - --conversation-cache-mib 16384
         - --conversation-cache-slots 16
         # Context-extension toggle (EXPERIMENTAL, off by policy): the
         # engine answers past the trained 262144 with llama.cpp-style rope
@@ -1837,7 +1867,7 @@ strata:
         # makes EVERY run a slightly different model (a 64-token greedy
         # prompt diverges ~19 tokens in — short-context quality is not
         # "native"); KV doubles per parked session (~6.5 GiB/park → half the
-        # park count on the 32 GiB budget) and the rope tables add ~0.26
+        # park count on the 16 GiB budget) and the rope tables add ~0.26
         # KiB/token; KV is allocated before expert-cache auto-sizing, so the
         # arena shrinks to make room (#765 budgeting order). One scaling
         # setting per process — never mix scaled and unscaled sessions on
@@ -1848,9 +1878,10 @@ strata:
         #   2026-11-01 — the --plan/bench evidence the override asked for
         #   arrived: PR #3636's ~2,519 tok/s ran this node class at 32,768).
         # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
-        #   the PR's parked budget — superseded by the owner's 32768×16
-        #   above; the real home of the guide's "24576" (RESEARCH §5
-        #   contradiction #3).
+        #   the PR's parked budget — superseded by the owner's conv budget
+        #   above (row-H's 16384×16, Q10, which itself halved the earlier
+        #   32768×16 uplift); the real home of the guide's "24576"
+        #   (RESEARCH §5 contradiction #3).
         # --ple-io ram: put the 28.8 GiB n-gram table back in RAM — only
         #   sane with the trio idle (the OOM post-mortem above); re-add
         #   after loading, never alongside residency.
@@ -1891,7 +1922,16 @@ strata:
       aliases:
         - qwen3.8-flash-next
       gpu: [0]
-      parallel: 4
+      # Owner Q9 ruling (2026-11-10/11, shipped at the pin per the Q17(a)
+      # plan approval): "8 slots everywhere. I know it won't fit, but I also
+      # know I won't be running 8 sessions at full context. I'd rather crash
+      # it and scale back from there." The primary is where the arithmetic
+      # genuinely fits at 8 — row-H's 99.0 ≤ 108 ≤ 110 (tuning runbook §6)
+      # — conditional on the conv 16384 and the PLE-direct pin above. The
+      # startup `INFO batch_slots` read on this arena is the boot-read gate
+      # (runbook §6 ladder); scale-back is a single-value `parallel: 4` on
+      # an explicit in-round owner word, never agent discretion.
+      parallel: 8
       # The cmd's --host flag binds loopback (the supervisor is the pod's
       # only in-pod listener); the PR ran 0.0.0.0 on a laptop.
       host: "127.0.0.1"
@@ -2002,9 +2042,17 @@ strata:
       # above, so [0] is the first (only) visible GPU — the chip for this
       # profile, whatever its pre-filter index was.
       gpu: [0]
-      # Mirrors the primary seed (same family recipe); the --plan gate
-      # reviews it for the chip too.
-      parallel: 4
+      # Owner Q9's 8-everywhere ruling (2026-11-10/11, shipped at the pin
+      # per Q17(a)): strix ships `parallel: 8` under its own owner word —
+      # not by mirroring the primary; the slot count left the byte-identical
+      # sibling set with that ruling (per-node keys stay mirrored). The
+      # 8060S is its own shared-UMA ruling class (no declared cap — the
+      # `--expert-cache 24576` / `--resident-budget-gib 55` hypothesis pair
+      # plus the pod cgroup bound it), so the verdict is the boot-read gate:
+      # the `INFO batch_slots` read when this arena loads (tuning runbook
+      # §6); a degraded read is recorded, not success. Scale-back is a
+      # single-value `parallel: 4` on an explicit in-round owner word.
+      parallel: 8
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
@@ -2014,12 +2062,18 @@ strata:
     # quant ladder — same frozen id, rung replace, no matrix growth). Shape:
     # data paths on the three IQ4_XS shards staged by model-fetch's gated
     # orca step, and the memory pair MOVED: the 57.7 GiB pinned-expert arena
-    # (97.47 GB x the 0.635 setup-calibrated expert share, RESEARCH R4) fits
+    # (97.47 GB x the 0.635 setup-calibrated expert share, RESEARCH R4) fit
     # this rung's 92160 declared cap ONLY with the conversation cache trimmed
     # to 8192 — 57.7 arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈
     # 84.7 GiB, while conv 32 would declare 108.7 — past this rung's own 90
     # GiB declaration (the pod cgroup is now 110Gi, but the cap is
     # what bounds an arena, and U9.2 pinned orca's envelope as zero-growth).
+    # That term-sum counted the 4-slot posture of its era; under the shipped
+    # 8-slot envelope (owner Q9, tuning runbook §6) the (N+1) KV term is nine
+    # pinned 262k sessions ≈ 30.15 GiB and the terms read ≈ 101.9 — over the
+    # declaration. The slot raise was ruled knowing this (Q17(a)
+    # crash-and-scale-back); the cap and conv stay exactly where U9.2 pinned
+    # them because no ruling re-opens them.
     # Slots stay 16 and the cap stays 92160 (the #1601 law is
     # declared ≤ cgroup, and the cgroup raises were the Q4 arm's lockstep);
     # the trim follows the sibling Q4 arm's U8 precedent and upstream's own
@@ -2046,7 +2100,10 @@ strata:
       # carries no secret reference of any kind.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/parallel/host to the primary and the Q4 rung.
+      # backend/gpu/host to the primary and the Q4 rung. `parallel` left
+      # that identity set by owner Q9 (2026-11-10/11): each rung's slot
+      # count is per-rung ruled data, so scaling ONE rung back cannot
+      # violate a cross-rung law.
       exe: /models/strata/Strata/engine/strata
       env: {}
       cwd: /models/strata/Strata
@@ -2082,21 +2139,29 @@ strata:
         # conversation-cache term below. The flag is a VRAM cell window —
         # 32,768 KV cells per QSA layer, ~0.4 GiB VRAM/slot — not a host-RAM
         # budget: host-RAM KV is context × 13,728 B per slot regardless (int8:
-        # 13 KV-bearing layers × 1,056 B), so the counted ~13 GiB worst-case
-        # 4-slot KV is 13.4 GiB derived.
+        # 13 KV-bearing layers × 1,056 B). Under the shipped 8-slot envelope
+        # the (N+1) law makes the worst case nine pinned sessions ≈ 30.15 GiB
+        # (tuning runbook §6); the ~13 GiB this comment once counted was the
+        # 4-slot-era reading of U9.2.
         - --kv-resident 32768
         - --prefill auto
         # THE DECLARED CAP stays 92160 for this rung (the #1601 law is
         # declared ≤ cgroup, not equal — the 100Gi cgroup raise was the Q4
-        # arm's pair). Fit math (RESEARCH R4): 57.7 GiB arena + 8 conv +
-        # ~13 worst-case KV + ~6 supervisor ≈ 84.7 GiB inside 92160.
+        # arm's pair). Fit math (RESEARCH R4) at its 4-slot era: 57.7 GiB
+        # arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈ 84.7 inside
+        # 92160. At the shipped 8-slot envelope the same terms read ≈ 101.9 —
+        # over this declaration and the zero-growth era behind it; that is
+        # Q9's authorized overshoot (tuning runbook §6), not a fit to
+        # re-derive.
         - --memory-limit-mib 92160
         # Conversation-cache trim 32→8 GiB (slots unchanged at 16) is the
         # arithmetic of the 57.7 GiB arena, not tuning: conv 32 declares
-        # 108.7 GiB, past its own 92160 declaration. Same trim the sibling Q4
-        # arm ships (U8 precedent) and upstream's own default ceiling
-        # ("40% of the RAM left above min-free, at most 8192 MiB",
-        # DETAILS.md@v0.2.8).
+        # 108.7 GiB on its 4-slot-era KV term, past its own 92160
+        # declaration; on the shipped 8-slot term no conv value makes this
+        # rung fit (≈ 101.9 even at 8 — runbook §6, Q9 authorized). Same
+        # trim the sibling Q4 arm ships (U8 precedent) and upstream's own
+        # default ceiling ("40% of the RAM left above min-free, at most
+        # 8192 MiB", DETAILS.md@v0.2.8).
         - --conversation-cache-mib 8192
         - --conversation-cache-slots 16
       # Person-wins layer (RESEARCH §2), same rule as the other profiles.
@@ -2114,7 +2179,14 @@ strata:
       aliases:
         - qwen3.8-flash-next-orca
       gpu: [0]
-      parallel: 4
+      # Owner Q9's 8-everywhere ruling (2026-11-10/11, shipped at the pin
+      # per Q17(a)): parallel 8 knowingly beyond this rung's arithmetic —
+      # ≈ 101.9 vs the 92160 declaration and the 110Gi cgroup with nine
+      # pinned 262k sessions (tuning runbook §6). Expected first symptom:
+      # conversation-park refusals; expected boot outcome: engine fit-down
+      # to fewer INFO batch_slots. Scale-back is a single-value
+      # `parallel: 4` on an explicit in-round owner word (runbook §6 ladder).
+      parallel: 8
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
@@ -2140,8 +2212,11 @@ strata:
       # arm.
       api_key: "none"
       # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
-      # backend/gpu/parallel/host to the primary and the orca rung (the
-      # suite asserts this equality; only data paths may differ).
+      # backend/gpu/host to the primary and the orca rung (the suite
+      # asserts this equality; only data paths may differ). `parallel` left
+      # that identity set by owner Q9 (2026-11-10/11) — each rung's slot
+      # count is per-rung ruled data, so a single-rung scale-back cannot
+      # violate a cross-rung law.
       exe: /models/strata/Strata/engine/strata
       # L2 arm (owner Q1 2026-11-10): K-quant prompt kernels — R9700
       # +10.3/14.3/16.8% prompts at 4K/8K/32K [36]; opt-in at 0.2.9 via
@@ -2191,8 +2266,10 @@ strata:
         # conversation-cache term. The flag is a VRAM cell window — 32,768 KV
         # cells per QSA layer, ~0.4 GiB VRAM/slot — not a host-RAM budget:
         # host-RAM KV is context × 13,728 B per slot regardless (int8: 13 KV-
-        # bearing layers × 1,056 B) — 3.35 GiB a full 262k park, 13.4 GiB at
-        # this rung's 4-slot worst case.
+        # bearing layers × 1,056 B) — 3.35 GiB a full 262k park; the (N+1)
+        # law puts this rung's shipped 8-slot worst case at nine pinned
+        # sessions ≈ 30.15 GiB (the ~13 GiB once counted was the 4-slot-era
+        # reading; see the Q9 ruling at parallel below and runbook §6).
         - --kv-resident 32768
         - --prefill auto
         # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory above, this cap
@@ -2202,7 +2279,10 @@ strata:
         # worst-case 4-slot KV ≈ 92.7) — the on-node HIP engine rejected
         # --slot-save-path at argv (a CUDA-side feature compiled out), so conv
         # is back to 16384 and the pair to 103680 inside the pod cgroup
-        # (71.7 + 16 + 13 ≈ 100.7). The pair value itself is PER-RUNG and does
+        # (71.7 + 16 + 13 ≈ 100.7 on that 4-slot-era KV term; on the shipped
+        # 8-slot nine-session term the same sum reads ≈ 123.9 — over the
+        # cgroup, Q9 authorized, see the ruling at parallel below). The pair
+        # value itself is PER-RUNG and does
         # NOT move when the cgroup does: U14 raised the container to 116Gi the
         # same day (for the flagship's term-sum, see its profile), and q4 keeps
         # 103680 — its envelope gains nothing from a ceiling it was never
@@ -2275,10 +2355,22 @@ strata:
       aliases:
         - qwen3.8-flash-next-unsloth
       gpu: [0]
-      # Owner ruling 2026-11-10 (reverts the envelope round's 4→2): q4 keeps parallel 4,
-      # NO concurrencyLimit; protections = 110Gi cgroup + MALLOC_MMAP_THRESHOLD_ (#5697)
-      # + the serialized-deep-prompts law — two concurrent deep prefills is accepted risk.
-      parallel: 4
+      # Owner Q9 (2026-11-10/11, plan-approved Q17(a)), verbatim: "8 slots
+      # everywhere. I know it won't fit, but I also know I won't be running
+      # 8 sessions at full context. I'd rather crash it and scale back from
+      # there." Q9 supersedes the a6e493b78 4-slot ruling; that 4-slot shape
+      # stands as the rung's scale-back target. Pin arithmetic says this
+      # ships OVER budget — 71.73 + 9 × 3.35 KV + 16 conv + ~6 ≈ 123.9 GiB >
+      # the 110Gi cgroup (tuning runbook §6 row A′): expected outcomes are
+      # engine fit-down (degraded `batch_slots`), park refusals, or a
+      # contained cgroup kill — the 110Gi containment, the
+      # MALLOC_MMAP_THRESHOLD_ (#5697) and the serialized-deep-prompts law
+      # are the accepted safety net, and the boot-read gate (startup
+      # `INFO batch_slots` on this arena) decides what actually serves.
+      # Scale-back = single-value `parallel: 4`, only on an explicit
+      # in-round owner word (runbook §6 ladder). No cap moves (the 103680
+      # pair stays).
+      parallel: 8
       host: "127.0.0.1"
 
     # -----------------------------------------------------------------------
@@ -2359,8 +2451,8 @@ strata:
         - ornith-1.5-122b-strata
       gpu: [0]
       # One request at a time until the on-target gate measures it: q36 keeps a
-      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 4 the
-      # flash-next q4 arena runs (int8 KV) would multiply a KV cost this path
+      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 8 the
+      # flash-next rungs ship (int8 KV) would multiply a KV cost this path
       # cannot pay yet.
       parallel: 1
       host: "127.0.0.1"
