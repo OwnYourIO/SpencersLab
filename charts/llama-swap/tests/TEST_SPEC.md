@@ -3238,3 +3238,70 @@ Map at authoring (no renders needed — this file is text-law only): containers
 29 passed / 1 failed — the single red names C05 with the guard-absence body;
 the C04-era 25 baseline legs unchanged and green. Chart suite untouched (no
 chart file moved; 466P/9S/0F stands from §9.31); aislop ci --changes clean.
+**CORRECTION — dated addendum to §9.32 (2026-11-11, C05 correction round).**
+The official-first `|| { sed → kernel.org && retry; }` shape this section
+contracted is WITHDRAWN and its three C05 legs re-pin: CI ran the landed
+guarded step (main build @ `f58334ffe`) and the fallback never fired —
+`apt-get update` exits 0 while every stanza host is unresolvable (failed
+fetches surface as `W: … ignored, or old ones used instead`), so the `||`
+branch is structurally dead against the failure it was written for and the
+step died later at the install's `E: Unable to locate package`. The
+dash-behavior proof stubbed the update as failing; real apt does not.
+Reinstated per the owner's verbatim directive (DECISIONS "Coord rulings
+(2026-11-11)"): the unconditional form — sed re-points BOTH deb822 stanza
+hosts at `http://mirrors.edge.kernel.org` FIRST, then the single
+`apt-get update`, then the same gated install. §9.32's arm-name ledger is
+superseded by §9.33; the §9.32 text stands as the record of what was
+authored before the CI evidence, per append-only doctrine.
+
+
+### 9.33 cf-141 C05 correction round — unconditional re-point reinstated, red-first (2026-11-11)
+
+The re-pin lands in `containers/strata/tests/test_dockerfile.py` (tests/**
+only; zero implementation edits; the guarded shape is what is landed and the
+new laws are red against it, per the immutable-contract rule):
+
+- `test_c05_apt_step_official_first_with_fallback` → **replaced by**
+  `test_c05_apt_step_unconditional_repoint_before_single_update`: ONE ubuntu
+  apt RUN; a sed re-pointing both stanza hosts to the kernel.org mirror in
+  the deb822 `ubuntu.sources` BEFORE the update; exactly ONE `apt-get
+  update` (a retry pair is the withdrawn corpse); no `||` text; install
+  flags/set (`DEBIAN_FRONTEND=noninteractive`, `--no-install-recommends
+  build-essential git ccache`) and lists-cleanup gated behind, unchanged.
+- `test_c05_no_unconditional_mirror_use` → **inverted** to
+  `test_c05_no_guard_structure_or_pre_sed_update`: the re-point being
+  unconditional is now the required posture (shape arm); forbidden are
+  `||` remnants, an update reachable before the sed, mirror text on any
+  non-apt step, and ubuntu-mirror/guard contamination of the alpine apk
+  step (out of scope, different mirror family).
+- `test_c05_run_step_count_and_order_preserved`: unchanged law;
+  `C05_BASELINE_STEPS` verified NOT to move (the sed joins the same RUN;
+  18 keywords hold for guarded interim AND target — proven green on the
+  landed tree and on the scratch target).
+- `test_c05_readme_toolchain_row_tracks_the_apt_step` → conditions follow
+  the new form, covering the doc pair as one law: the apt step's
+  why-comment block AND the README L26 toolchain row must name the
+  kernel.org mirror and the unconditional posture, keep the baked-at-build
+  tokens (`baked`, `apt`, `no pod-start apt`), and hold NONE of
+  `C05_WITHDRAWN_CLAIMS` (official-first / never the primary / self-retir /
+  only-on-failure family / fallback) — dead prose is as withdrawn as the
+  dead guard.
+- `test_c05_target_form_clears_every_law_and_guarded_mutants_redden`: the
+  §9.32 probes arm re-pointed — the landed GUARDED run reddens shape +
+  guard legs; hoisted update-before-sed reddens both; withdrawn comment and
+  old row redden the doc law; apk contamination and stray mirror text
+  redden the guard law; a step added reddens the count law; the synthetic
+  TARGET clears all of it.
+
+Red-first map at authoring: containers 27 passed / 3 failed — the three C05
+shape legs, bodies quoting the withdrawn-guard evidence and the landed
+README claims verbatim; 25 baseline/C04-preservation legs unchanged green.
+GREEN-on-scratch: the full patched container tree (target RUN + comment +
+README row, `sh -n`/`dash -n` clean on the logical script) clears every
+C05 leg; the single scratch failure is a `/tmp/opencode/charts` stale-copy
+artifact of `test_c07_engine_package_labels…`'s REPO_ROOT path (passes on
+the real tree — re-run proved it). Exact target texts validated here ship in
+the test RESULT for dev byte-compatibility; the README L26 row and the
+comment block move with the step in the same chunk (docs law). The C04
+ledger/era/carry laws and every chart-side arm are untouched — charts suite
+NOT re-run with reason: no chart file moved this round (466P/9S/0F stands).
