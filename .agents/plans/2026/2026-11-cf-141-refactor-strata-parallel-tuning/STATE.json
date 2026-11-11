@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
   "test_session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
-  "current_wave": 2,
+  "current_wave": 4,
   "updated_at": "2026-11-11T00:20:00+00:00",
   "test_wave": {
     "at": "2026-11-11T00:20:00+00:00",
@@ -178,14 +178,27 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "gate": "Q17 folded (plan written on best-guess a; b re-waves behind C04, c shrinks to primary-only)",
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh ses_e37749210ffejPowJWi4uxlVOC; m1/m2 test-wording minors folded into C04's landing round)",
+      "dev_session": "ses_e379fa475ffe2yuwntiStLD5cK",
+      "handoffs": [
+        {
+          "at": "2026-11-11 dev", "role": "agent-dev-local",
+          "result": "DONE — Q9+Q17(a) envelope: primary full row-H trio (parallel 8, conv 32768→16384, env STRATA_PLE_AUTO_RAM \"0\", honest 125.8≫108 admission math); strix/orca/q4 {parallel} 4→8 with per-rung ruling comments (q4's a6e493b78 comment replaced by the verbatim Q9 ruling + crash modes + single-value revert); ornith 1 untouched (one-word seam-comment fix to satisfy AC5 stale law); interlock comments moved. Render delta proven {args,env,parallel}+{parallel}×3 only. 448P/9S/19F; pending capture round + ac5 static-constant validation_at_fault routed."
+        },
+        {
+          "at": "2026-11-11 landing round", "role": "agent-test (ses_e383ce02fffeb7oMcZ5bUV1MR7 continued)",
+          "result": "DONE — four era captures (cf141-rowh/-strix8/-orca8/-q4parallel8) pre-verified deltas == step sets, double-capture, PROVENANCE; DOC_TOKENS 32→16; ac5 repair via era chain-tip resolver (law-preserving, mutation-probed); §9.29 records the missed-inventory class. Map 459P/9S/9F — all reds name C04."
+        },
+        {
+          "at": "2026-11-11 review r1", "role": "agent-review (fresh ses_e37749210ffejPowJWi4uxlVOC)",
+          "result": "APPROVED — zero blockers/majors. Reviewer-own capture verifier passed (stored bytes == fresh canonical render ×4; q4 two-step chain end-to-end; frozen primary quintuple; whole-render object diff = 4 profiles + 2 sanctioned description lines only); budget math vs RESEARCH R2 exact; ac5 resolver teeth mutated+proven; ornith seam-comment adjudicated lawful (AC5 stale-grep over prose-gag reading); Q17(a) conformance full (ladder = live envelope, four-rung table, zero agent commands). Minors m1 (PROVENANCE determinism wording over-claim) + m2 (config_schema pre-C03 message clause) + nit n1 (q4 'NO concurrencyLimit' line dropped) → fold with C04 landing round / next test touch. Open question on the single-commit envelope vs §9.28's four per-rung commits → coord WAIVER recorded (owner lands PR-1; per-rung revert lines preserve the drop-a-rung option; history not rewritten)."
+        }
+      ]
     },
     "C04": {
       "status": "pending",
