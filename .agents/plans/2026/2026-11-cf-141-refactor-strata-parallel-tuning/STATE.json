@@ -204,9 +204,9 @@
       "status": "pending",
       "wave": 4,
       "depends_on": ["C01", "C02", "C03"],
-      "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": "NEEDS_INFO r1 resolved by research R3 (verdict a) — test re-cut first, then C04 re-launch",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh ses_e370ff8daffe5N3PiGJ4CLUBmI; offline gate complete — on-target done rides PR-2 + P1/soak)",
       "gate": "Q13(a): lands after PR-1; same-day gate-1 re-fetch BEFORE declaring ready (r1 fetch 2026-11-11 ~01:45Z: cluster all-open, #5701 first maintainer touch = reproduction request, no deterioration ⇒ passed at r1; MUST re-fetch day-of-ready per the recorded row law)",
       "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
       "handoffs": [
@@ -217,6 +217,18 @@
         {
           "at": "2026-11-11 dev r1", "role": "agent-dev-local",
           "result": "NEEDS_INFO (chunk's own branch, tree clean, zero edits): Gate 1 PASS (table recorded — runbook gate-row text delivered; #5701 first maintainer reply is a repro request whose own 0.1.59 run did not fail; no fix named; no new gfx1201 class ⇒ no deterioration; cluster still 0.1.59-in-failing-set for #5559/#5635). Carry tripwire FIRED: hunk-1 preimage gone at v0.2.13 (kNativeHBytes now compile-time geometry expr), hunk 2 byte-clean; control clean at v0.2.9 ⇒ drift real. Held inventory §3 complete (FROM pair, clone tag, labels, markers, README ledger + Q14 folds, drafting×4 Q16 comments, strix 0.1.59 root); digest re-reads deferred to landing round (by-design). C03 carry m1/m2/n1 delivered verbatim for the landing round. Geometry-load question raised."
+        },
+        {
+          "at": "2026-11-11 dev r2", "role": "agent-dev-local (same session ses_e3763aa5fffeKHDFH2G97jmu3S)", "commit": "8b0d05bfc",
+          "result": "DONE — re-cut patch authored at d2f09647 (apply+reverse PASS both hunks, 2-hunk law kept, #3574 provenance) + full §3 held inventory landed-to-tree (FROM pair, clone tag, verify-layer re-anchored with retired single-line grep gone, README ledger pair with LIVE re-read digests + Q14 folds, markers, strix 0.1.59 root, drafting×4 Q16 comments, n1 fold reconstructed from a6e493b78, four-surface README, gate-1 day-of-ready re-fetch row PASS no deterioration + shipped-state row). Envelope frozen (render delta = 1 object, per-file step sets exact). Found + reported the hunk1 clause-pair unsatisfiability (validation_at_fault, repair text routed). Gates 460P/9S/6F + containers 25P/0F at its edge."
+        },
+        {
+          "at": "2026-11-11 landing round", "role": "agent-test (ses_e383ce02fffeb7oMcZ5bUV1MR7 continued)", "commit": "8b0d05bfc",
+          "result": "DONE — c09 hunk1 substance-count repaired mechanically (comment-payload exclusion; four-way mutant check: real GREEN, no-comment RED, two-substance RED, half-floor RED — intent both directions); cf141-bump capture written (delta {drafting}×3 + {drafting,exe,lib_dirs} strix, shas off stored bytes, PROVENANCE m1 wording, transient double-render raw-stdout difference recorded honestly); §9.31 appended. FULL GREEN: charts 466P/9S/0F, containers 25P/0F, aislop 0/0/0."
+        },
+        {
+          "at": "2026-11-11 review r1", "role": "agent-review (fresh ses_e370ff8daffe5N3PiGJ4CLUBmI)",
+          "result": "APPROVED — zero blockers/majors/minors. Reviewer-own re-derivations: pristine clones both tags (old patch fails at 0.2.13, applies at 0.2.9 — drift real, tripwire justified the NEEDS_INFO route), live digest re-reads byte-equal to README, config-blob label proof 0.1.59 pair, whole-render object diff 1e20b574c→8b0d05bfc = ONLY strata-profile CM, same-day gate-1 re-fetch matches the runbook row on every claim, 5 in-memory mutants of the hunk laws all RED by clause. Adjudications: hunk2 stamp re-anchor accepted, transient note accepted, 466-vs-465 = brief arithmetic (460+5+1), q4 MMQ posture sentences accepted. docker build => no-daemon CI-deferred (designed shape)."
         },
         {
           "at": "2026-11-11 research r3", "role": "agent-research (ses_e38980ee0ffe2MqslWY2c0Qtmi continued; RESEARCH.md Round 3)",
