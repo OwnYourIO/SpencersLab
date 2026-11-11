@@ -1,10 +1,17 @@
 {
   "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
-  "plan_status": "approved",
+  "plan_status": "complete",
+  "final_review": {
+    "at": "2026-11-11",
+    "session": "ses_e36ffc873ffeCe8qd0sz89Te1O (planning tier, openrouter/qwen/qwen3.8-27b per standing owner model directive)",
+    "verdict": "CHANGES_REQUESTED → CLOSED-APPROVED-ON-FOLD (finding 1 MAJOR doc-truth fixed prose-only at fcf2e73aa with suites re-verified 466P/9S/0F + 25P/0F; two MINOR bookkeeping closed by the records pass; zero other findings — all era deltas, owner-round records, live digests, gate-1 row independently re-derived)",
+    "record_in": "plan file ## Review record (final whole-plan) + chunks/C03.md transcription",
+    "posture_final": "charts 466P/9S/0F (9 skips = standing RUN_HF_CHECK/RUN_FLAG_AUDIT evidence gates), containers 25P/0F, helm+aislop clean, docker build no-daemon CI-deferred, 15 commits on branch, main untouched, nothing pushed"
+  },
   "coord_session": "ses_e38a2309affeRESASVSQ34VK0r",
   "test_session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
   "current_wave": 4,
-  "updated_at": "2026-11-11T00:20:00+00:00",
+  "updated_at": "2026-11-11T05:30:00+00:00",
   "test_wave": {
     "at": "2026-11-11T00:20:00+00:00",
     "session": "ses_e383ce02fffeb7oMcZ5bUV1MR7",
@@ -201,10 +208,10 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C01", "C02", "C03"],
-      "dev_rounds": 2,
+      "dev_rounds": 3,
       "review_rounds": 1,
       "last_verdict": "APPROVED (r1, fresh ses_e370ff8daffe5N3PiGJ4CLUBmI; offline gate complete — on-target done rides PR-2 + P1/soak)",
       "gate": "Q13(a): lands after PR-1; same-day gate-1 re-fetch BEFORE declaring ready (r1 fetch 2026-11-11 ~01:45Z: cluster all-open, #5701 first maintainer touch = reproduction request, no deterioration ⇒ passed at r1; MUST re-fetch day-of-ready per the recorded row law)",
