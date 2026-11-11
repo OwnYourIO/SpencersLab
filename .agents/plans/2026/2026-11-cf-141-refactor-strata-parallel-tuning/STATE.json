@@ -1,6 +1,7 @@
 {
   "feature": "2026/2026-11-cf-141-refactor-strata-parallel-tuning",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "plan_status_note": "reopened 2026-11-11 (was complete after the final-review fold): owner in-session directive — CI apt-mirror fallback for the strata build (Canonical mirrors unreachable at build time). Delta chunk C05 (cf-122 precedent); base landed — all 14 ticket commits verified on origin/main (rebase-merged), branch rebased clean. Ticket's card #141 stays in Review per owner's flow; lock re-claimed under AI (setId 7e3fc8dc).",
   "final_review": {
     "at": "2026-11-11",
     "session": "ses_e36ffc873ffeCe8qd0sz89Te1O (planning tier, openrouter/qwen/qwen3.8-27b per standing owner model directive)",
@@ -215,8 +216,7 @@
       "review_rounds": 1,
       "last_verdict": "APPROVED (r1, fresh ses_e370ff8daffe5N3PiGJ4CLUBmI; offline gate complete — on-target done rides PR-2 + P1/soak)",
       "gate": "Q13(a): lands after PR-1; same-day gate-1 re-fetch BEFORE declaring ready (r1 fetch 2026-11-11 ~01:45Z: cluster all-open, #5701 first maintainer touch = reproduction request, no deterioration ⇒ passed at r1; MUST re-fetch day-of-ready per the recorded row law)",
-      "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",
-      "handoffs": [
+      "dev_session": "ses_e3763aa5fffeKHDFH2G97jmu3S",      "handoffs": [
         {
           "at": "2026-11-11 test round", "role": "agent-test (ses_e383ce02fffeb7oMcZ5bUV1MR7 continued)", "commit": "1e20b574c",
           "result": "DONE — C04 contracts landed: c09 re-cut byte fixtures at d2f09647 (hunk1 one-line floor law 1024→2048, 2-hunk law kept, hunk2 proved byte-identical both tags), §9.28 by-name constant flips (0.2.13/0.1.59, STALE sets, four-surface labels, marker pair, CHECKOUT_MARKER/era), digest slots as live-re-read OBLIGATION arms (freshness shape, no remembered values), merged cf141-bump era per-file step sets + halo tether, C03 carry m1/m2 done + n1 line text delivered for the dev brief, TEST_SPEC §9.30. Designed-red map: charts 455P/9S/11F + containers 18P/7F, all naming un-landed C04 literals."
@@ -242,6 +242,16 @@
           "result": "VERDICT (a) — flash_next-compiled 0.2.13 loads+serves ornith Q4_K_XL WITH the floor re-cut: q36 family routed before all new geometry mechanisms (unreachable; same as 0.2.9; #3574 community report corroborates). Walls: W1 pool floor (re-cut = ternary 1024→2048, one line, 2-hunk law preserved; act side passes 3504≤4096) + W2 format list (hunk 2 unchanged, preimage byte-identical offset 853). P1 on-target confirmation probe = user leg post-branch-build (--families/--geometry + ornith load-smoke, two refusal strings); P2 soak-parity folded into bump re-bench. Re-pin inventory: patch 2 hunks re-anchored at v0.2.13, Dockerfile verify grep 2048, c09 byte arms, header provenance."
         }
       ]
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 5,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "delta chunk (owner directive 2026-11-11): strata Dockerfile apt official-first + kernel.org fallback; DECISIONS 'Owner directive — CI delta' is the authority; C01-C04 landings untouched",
+      "handoffs": []
     }
   },
   "blocked": [],

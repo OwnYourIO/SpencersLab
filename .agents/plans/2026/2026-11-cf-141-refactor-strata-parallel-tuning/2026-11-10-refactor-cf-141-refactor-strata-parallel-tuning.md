@@ -192,3 +192,26 @@ envelope-table/shipped-in legs re-pin with it) before any execution.
   load-smoke, both refusal strings checked) as user legs post-branch-build; U1-v2 capture +
   §3.4 `--plan` re-checks + post-merge soak watch (binding stop condition) + re-bench
   attribution sheet; row-G stays deferred (Q11 experiment-only, Q12 premise unmeasured).
+
+## Delta round — CI mirror fallback (C05, owner directive 2026-11-11)
+
+Authority: DECISIONS "Owner directive — CI delta (2026-11-11)" (owner's verbatim sed + the
+coord official-first/fallback-on-failure shape ruling). Ticket is otherwise landed and
+complete; C05 is the cf-122-precedent delta chunk — see `chunks/C05.md` for the contract.
+`plan_status` is the coordinator's record and stays as it is.
+
+Commands slice for the delta (supplements the plan's Commands above; chart surfaces are
+re-checked, not edited):
+
+```sh
+export PATH=$HOME/.local/bin:$PATH
+cd containers/strata && python3 -m pytest tests/ -q   # C05's gate surface; entering baseline 25P/0F + new test_c05_* arms
+cd charts/llama-swap && python3 -m pytest tests/ -q   # unchanged re-check: 466P/9S/0F (no chart file moves)
+# dev-round live probes (agent-capable HTTPS, outcomes recorded in the handoff):
+curl -sSI https://mirrors.edge.kernel.org/ubuntu/dists/noble/InRelease
+curl -sSI https://mirrors.edge.kernel.org/ubuntu/dists/noble-security/InRelease   # decides host-sed vs stanza-drop
+# base file-shape evidence: GHCR anonymous-token manifest HEAD + layer tar-listing proving
+# /etc/apt/sources.list.d/ubuntu.sources deb822 + the two hosts on 0.2.13-rocm-gfx120x
+npx aislop ci --changes                               # 0/0 on the touched files
+# docker build => no-daemon, CI-deferred; docker-build.yaml on the PR-3 branch is the authoritative build proof
+```

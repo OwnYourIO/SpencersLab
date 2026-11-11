@@ -249,6 +249,28 @@ alternatives rejected, why.
 - L1 / L3 / L5 / L6' follow-up arms; per-rung L2 extension; v3.1 routing; engram table;
   `--resident-experts`; replica mode — all as in round-2 Deferred, unchanged.
 
+## Owner directive — CI delta (2026-11-11)
+
+- 2026-11-11 human (in-session, after the post-merge CI `docker-build.yaml` strata build failed
+  in the runtime stage's `apt-get update` — `Could not resolve 'archive.ubuntu.com' /
+  'security.ubuntu.com'`; my earlier transient-runner-DNS reading SUPERSEDED: the domains
+  themselves are down at fetch time, confirmed by the owner): **"those domains are down right
+  now. Can you do something like the following to get around it? RUN sed -i
+  's|http://archive.ubuntu.com|http://mirrors.edge.kernel.org|;
+  s|http://security.ubuntu.com|http://mirrors.edge.kernel.org|'
+  /etc/apt/sources.list.d/ubuntu.sources && apt-get update ..."** — recorded verbatim.
+- 2026-11-11 coord shape ruling within the directive's "something like": implement as an
+  **official-first, mirror-on-failure fallback** (plain `apt-get update` tried first; on
+  non-zero exit the sed re-points both stanzas at kernel.org and retries), NOT an unconditional
+  re-pin — Canonical being briefly unreachable is an outage workaround, not a permanent trust
+  move; the fallback self-retires when the mirrors heal. Obligations the dev round must verify
+  live and record: `mirrors.edge.kernel.org` actually serves the `dists/noble/InRelease` AND
+  `dists/noble-security/InRelease` shapes the two stanzas produce (if security's suite is not
+  hosted there, adjust the fallback's security stanza — drop-with-why is the accepted
+  alternative for the throwaway toolchain layer only) and the file is the deb822
+  `ubuntu.sources` (noble) the sed assumes. Lands as delta chunk C05 on this ticket (cf-122
+  delta precedent); PR-3 rides the same branch, now rebased clean onto origin/main.
+
 ## Coord rulings (2026-11-11)
 
 - 2026-11-11 coord: **per-rung commit split WAIVED for C03** (review r1 open question): the
