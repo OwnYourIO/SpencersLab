@@ -558,6 +558,7 @@ def test_cf141_c02_values_primary_description_is_render_true():
     conv term — C03's row-H move re-tracks automatically, because the arm
     reads the render, not the prose."""
     conv, cap = _render_numbers()
+    # The model-id key contains dots; S.dig's shortest-match join resolves it.
     ok, desc = S.dig(S.chart_values_dict(), "strata.config.models.qwen3.8-flash-next-strata.description")
     assert ok, "the primary arena description vanished from values"
     problems = _description_violations(desc, conv, cap)
@@ -575,30 +576,6 @@ def _ram_law_violations(window: str) -> list[str]:
     if "3600" not in window:
         out.append("window does not name the shipped ttl: 3600")
     return out
-
-
-@helm
-def test_cf141_c02_values_primary_description_is_render_true():
-    """Correction 2 (chart values ~L1524): the arena description must drop
-    the "capped at 90 GiB engine-side" falsification and state the rendered
-    cap (110592) plus a conversation-cache GiB figure equal to the render's
-    conv term — C03's row-H move re-tracks automatically, because the arm
-    reads the render, not the prose."""
-    conv, cap = _render_numbers()
-    vals = S.chart_values_dict()
-    ok, desc = S.dig(vals, "strata.config.models.qwen3.8-flash-next-strata.description")
-    assert ok, "the primary arena description vanished from values"
-    assert "90 GiB" not in desc, (
-        f"the description still caps the primary at 90 GiB engine-side (shipped {cap}): {desc[:120]!r}"
-    )
-    assert str(cap) in desc or str(cap // 1024) == "108" and "108 GiB" in desc, (
-        f"the L1524 window must carry the rendered cap {cap} (C02 Tests verbatim)"
-    )
-    m = re.search(r"(\d+)\s*GiB conversation-cache", desc)
-    assert m and int(m.group(1)) * 1024 == conv, (
-        f"description states a {m.group(1) if m else 'no'} GiB conversation-cache budget; "
-        f"the render says {conv} MiB (={conv // 1024} GiB) — docs move with the numbers"
-    )
 
 
 @helm

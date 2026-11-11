@@ -241,7 +241,11 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
 ```
 
 Acceptance gate: within **~10%** of RESEARCH §5's **one-at-a-time** column
-(batch numbers are not the bar — that posture was rejected, Q2): decode ≈80
+(batch numbers are not the bar — that posture was rejected, Q2; what Q2
+rejected is the literal `--batch` argv element and that bench posture, not
+the engine path: the run-config key `parallel:` maps to `--batch` via
+`parallel_args` — the settled OQ-1 reading, tuning runbook §10 corrections
+ledger): decode ≈80
 tok/s @64K; short 570-token prompts 429–443 tok/s with the CPU share vs 224
 control; 64K/128K/200K prompt ≈2,519 tok/s. The primary's chunk cap now matches
 that posture (`--prefill auto:32768`, owner T3 ruling 2026-11-01; bare `auto`
@@ -255,8 +259,9 @@ applies to OUR reproduction of the same posture, and where the WeKan card's
 table differs from these cited figures the card is superseded.
 
 **5 — Conversation-cache reuse.** Send the same ~30K-token conversation
-twice; the second pass must land materially faster (the
-`--conversation-cache-mib 24576` × 16-slot budget working, RESEARCH §2/§5 —
+twice; the second pass must land materially faster (the primary's
+`--conversation-cache-mib 32768` × 16-slot budget and the q4 rung's
+`--conversation-cache-mib 16384` × 16 working, RESEARCH §2/§5 —
 not `--prompt-cache`, which is not shipped: #4206 makes it a no-op at the
 `--prefill 32768` edge).
 

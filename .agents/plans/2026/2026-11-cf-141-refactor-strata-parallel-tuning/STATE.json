@@ -25,7 +25,9 @@
       "containers/strata/tests/test_dockerfile.py"
     ],
     "test_deviations_accepted_by_coord": "1 (C01 absence as designed-red naming C01, not skip — strictly stronger), 2 (per-rung env law resolved through the era chain because the chunk's 'every other rung env=={}' wording is falsified by the live strix eight-set), 3 (one merged cf141-bump era with per-file step sets — an engine-only capture would need a render state that never exists), 4 (era-0 anchor capture dir added so C02 AC2's era delta is machine-verifiable), 5 (primary-conv literal → era-chain-tip read; DOC_TOKENS conv rows stay literal and move 32→16 at C03 per §9.28), 6 (pre-bump constants NOT flipped now; their flips are C04 landing-round by-name moves), 7 (q4/orca overshoot derivations corrected this pass to era-gated reds naming C03). All within the test session's authority; none weaken a baseline law.",
-    "open_questions": "none"
+    "open_questions": "none",
+    "commit": "68dd5fd3f",
+    "coord_note": "The test session's first hand-back truncated mid-sentence without a RESULT block; re-prompting the SAME session recovered the full ledger — both announced defect repairs had already landed and verified. No work lost; lesson: recover from the same sessionID before assuming loss."
   },
   "kickoff": {
     "slug": "cf-141-refactor-strata-parallel-tuning",

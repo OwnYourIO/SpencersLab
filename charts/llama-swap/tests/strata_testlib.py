@@ -824,12 +824,27 @@ def values_region(text: str, key: str) -> str:
 
 
 def dig(d, path: str):
-    """Walk a dotted key path through nested dicts; returns (found, value)."""
+    """Walk a dotted key path through nested dicts; returns (found, value).
+
+    Real YAML keys may themselves contain dots (arena ids like
+    `qwen3.8-flash-next-strata`), which a plain split-on-"." path can never
+    resolve — so when the bare segment misses, the walk extends the segment
+    with following parts until a key matches. Shortest match first keeps
+    every dot-free path resolving exactly as the naive split did."""
+    parts = path.split(".")
     cur = d
-    for part in path.split("."):
-        if not isinstance(cur, dict) or part not in cur:
+    i = 0
+    while i < len(parts):
+        if not isinstance(cur, dict):
             return False, None
-        cur = cur[part]
+        for j in range(i, len(parts)):
+            key = ".".join(parts[i:j + 1])
+            if key in cur:
+                cur = cur[key]
+                i = j + 1
+                break
+        else:
+            return False, None
     return True, cur
 
 

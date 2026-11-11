@@ -197,14 +197,18 @@ llama-swap:
         enabled: true
   # Workload DATA for that controller: deep-merged OVER the chart's strata:
   # container (pod shape, inner llama-swap config, run-config profiles,
-  # (p | s) matrix — see charts/llama-swap/values.yaml). Peer models route
-  # through config.peers below. Keyless by C-A: the run-config profiles ship
-  # api_key "none" and no secret chain exists to re-add.
+  # (p | s | o | q | n) matrix — see charts/llama-swap/values.yaml). Peer
+  # models route through config.peers below. Keyless by C-A: the run-config
+  # profiles ship api_key "none" and no secret chain exists to re-add.
   strata:
     # ROCr device index hiding the 8060S (PR #3636 ran 0); the on-target
     # rocminfo gate retargets this key, never the template (C04 runbook).
     rocrVisibleDevices: "0"
-    # RAM law (Q2): the inner posture is lazy + ttl 0 — the llama.cpp trio
+    # RAM law (Q2): the shipped posture is time-share — ttl: 3600 on the
+    # R9700 rungs, strix 1800 — and the inner matrix `(p | s | o | q | n)`
+    # makes the five arenas alternatives, never co-resident; the fleet
+    # obeys the serialized-deep-prompts traffic law (two concurrent ~99k
+    # prefills on q4 is the 2026-11-10 SystemOOM shape). The llama.cpp trio
     # coexists only until the first Strata request pins the ~47 GiB arena;
     # the escape is POST /api/models/unload on the inner instance, and final
     # arena sizing is fixed by the on-target --plan gate (C04 human step 3),

@@ -532,9 +532,14 @@ ladder's rung 6).
 
 ## 4. RAM law — one-at-a-time discipline (Q2)
 
-The engine posture is one at a time — the PR's one-at-a-time arm: no
-`--batch`, `STRATA_PREFILL_CPU_SHARE=auto` (the `--batch 4` stall incident
-after 85 min is why batch was rejected, DECISIONS Q2). The operational law
+Acceptance runs the PR's one-at-a-time arm, with
+`STRATA_PREFILL_CPU_SHARE=auto` (the `--batch 4` stall incident after
+85 min is why the literal `--batch` bench posture was rejected, DECISIONS
+Q2). The rejection did not close the engine path: the run-config key
+`parallel:` maps to `--batch` via `parallel_args` (settled OQ-1 reading,
+tuning runbook §10 corrections ledger), so every flash-next arena ships
+batch slots spelled config-side. What this section disciplines is traffic
+across the time-shared arenas, not argv. The operational law
 follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 ~47 GiB page-locked arena stays resident for up to an hour of idle
 (`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old

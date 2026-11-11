@@ -1206,10 +1206,13 @@ app-template:
         strata:
           image:
             repository: ghcr.io/ownyourio/strata
-            # PIN-ME: brand-new container, no :v<run> exists yet (repo
-            # new-container rule) — docker-build.yaml publishes :v<run_number>
-            # on the first merge; replace this rolling tag with the pin
-            # (+ the renovate habit) as soon as one exists.
+            # Deliberate rolling-tag posture, not a pending chore: :main +
+            # pullPolicy Always is law — the boot guard's self-heal window
+            # rests on the Always re-pull after CI's :main push.
+            # test_strata_thin_init.py's rolling-pair arm enforces the pair
+            # (init + main). :v<run> builds exist for this image; adopting
+            # one is a Renovate chores decision, never a hand-bump here
+            # (repo law).
             tag: main
             pullPolicy: Always
           # C01 interface freeze (containers/strata README): PID 1 is the
@@ -1286,8 +1289,9 @@ app-template:
             # absorb the big parks, and the HIP engine compiled that feature
             # out), and the SAME DAY's U14 ruling raised it again to 116Gi so
             # the flagship's own term-sum fits inside what it declares — the
-            # primary has been declaring 90 GiB against terms of ~91.8 GiB
-            # since 2026-10-29 (see its profile note). Declared caps are
+            # primary had been declaring 90 GiB against terms of ~91.8 GiB
+            # from 2026-10-29 until that raise (see its profile note).
+            # Declared caps are
             # PER-RUNG inside this one cgroup: 110592 primary, 103680 q4
             # (71.7 pinned experts + 16 conv + ~13 KV ≈ 100.7, the owner-ruled
             # half-restore), 92160 orca (U9.2 zero-growth law) — each leg stays
@@ -1521,7 +1525,7 @@ strata:
     models:
       qwen3.8-flash-next-strata:
         name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)
-        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 90 GiB engine-side with a 32 GiB conversation-cache budget; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
+        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 110592 MiB engine-side inside the 110Gi pod cgroup with a 32 GiB conversation-cache budget over 16 slots; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
         # serve takes only --profile/--host/--port (RESEARCH §2) — every
         # tuning knob lives in the run-config JSON below. `exec` hands the
         # process to llama-swap for stop/unload, and the ulimit wrapper is
@@ -2139,7 +2143,17 @@ strata:
       # backend/gpu/parallel/host to the primary and the orca rung (the
       # suite asserts this equality; only data paths may differ).
       exe: /models/strata/Strata/engine/strata
-      env: {}
+      # L2 arm (owner Q1 2026-11-10): K-quant prompt kernels — R9700
+      # +10.3/14.3/16.8% prompts at 4K/8K/32K [36]; opt-in at 0.2.9 via
+      # getenv("STRATA_MMQ_KQ")[0]=='1' [32], hence the quoted "1" — the
+      # int form never fires the switch. Chunk rounding flips near-tie
+      # answers: retain-vs-revert rides the tuning runbook's §7 L2 round on
+      # fleet-agent traffic. At 0.1.59 this is the engine's own Linux-gfx12
+      # default for UD-Q4-class packs [61][62] (user-set wins; the IQ3_S
+      # primary sits outside that flip) — kept present as an experimental
+      # pin per owner Q16, not settled intent. Revert = delete this entry.
+      env:
+        STRATA_MMQ_KQ: "1"
       cwd: /models/strata/Strata
       # Own progress log on the claim (the on-target --plan gate and the
       # session round-trip gate both read this file).
