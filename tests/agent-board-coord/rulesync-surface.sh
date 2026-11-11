@@ -76,7 +76,7 @@
 # coord-inwork i4 + gate t17 are the frontmatter contract now).
 #
 # Usage:
-#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c22
+#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c25
 #   bash tests/agent-board-coord/rulesync-surface.sh c1 c4 c10 # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -126,10 +126,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 24); do WANT["c$i"]=1; done
+  for i in $(seq 1 25); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-4])$ ]] || fail "unknown check id '$a' (expected c1..c24)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-5])$ ]] || fail "unknown check id '$a' (expected c1..c25)"
     WANT["$a"]=1
   done
 fi
@@ -672,13 +672,17 @@ fi
 # cf-58 C05: the third checklist is LIFECYCLE (checked-stages-only,
 # nothing-checked = the standard loop). cf-96 C07 RE-PIN: the intake eight-
 # stage set became ELEVEN items — the ten stages in card order plus Single
-# Session LAST (OQ6 ruling) — and the nothing-checked default is the seven-
-# stage list (Exploration first, Final Review last, Deployment + Single
-# Session opt-in). The window/HITL/default pins below ride the new list. C06: the Model(s) four-option
-# line stays UNCHANGED while the routing paragraph grows the two combination
-# clauses. The Model(s)/HITL pins hold exactly as before. cf-83 C01 RE-PIN:
-# the Flash+Local combination clause demands flash-next-strata — the route
-# moves, the option set and Q6 veto guards stay byte-identical.
+# Session LAST (OQ6 ruling). cf-124 C01 RE-PIN: the generation is now THIRTEEN
+# — `Session Rename` + `Worktree Creation` FIRST (genuine gates, D15) and
+# `Follow-up cards created` + `Human in the Loop` last — with a NINE-stage
+# nothing-checked default (Session Rename first, Final Review last, D16/OQ2;
+# Deployment + Single Session stay the two-member OPT-IN sentence), and
+# Services = derived folders ∪ a FIXED six (D22) with an exactness negative.
+# C06: the Model(s) four-option line stays UNCHANGED while the routing
+# paragraph grows the two combination clauses. The Model(s)/HITL pins hold
+# exactly as before. cf-83 C01 RE-PIN: the Flash+Local combination clause
+# demands flash-next-strata — the route moves, the option set and Q6 veto
+# guards stay byte-identical.
 if want c11; then
   python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
     || fail "c11[C05]: Services/Type/Model(s)/Lifecycle/Human in the Loop do not read as one checklist-definition passage (red before C05 — the Research checklist has not been replaced by Lifecycle)"
@@ -686,10 +690,62 @@ if want c11; then
     grep -qF "\`$d\`" "$SKILL_GEN" \
       || fail "c11: the Services checklist does not name the services/$d folder as a code span — drift detector (D9) failed"
   done
-  for extra in 'home-assistant' 'agent context'; do
+  for extra in 'home-assistant' 'agent context' 'HomeAssistant' 'Home-Assistant-Label-based-Features' \
+               'brother-ptouch-automation' 'CuratedForest.com'; do
     grep -qF "\`$extra\`" "$SKILL_GEN" \
-      || fail "c11: the Services checklist does not name the non-folder work target '$extra' as a code span"
+      || fail "c11[cf-124 C01]: the Services checklist does not name the fixed non-folder work target '$extra' as a code span — the extra set is the fixed six, folders ∪ six (red before C01 dev)"
   done
+  # cf-124 C01: exactness, not "contains something" — every target-shaped code
+  # span in the Services bullet must be a live folder or one of the fixed six,
+  # and a fabricated seventh target must be rejected by the same check.
+  python3 - "$SKILL_GEN" <<'PY' || fail "c11[cf-124 C01]: the Services bullet is not the exact folders ∪ fixed-six set (reason above)"
+import os
+import re
+import sys
+text = open(sys.argv[1]).read()
+m = re.search(r"(?ms)^\s*-\s+\*\*Services\*\*(.*?)(?=^\s*-\s+\*\*Type\*\*)", text)
+if not m:
+    print("no Services bullet between the Services and Type checklist titles"); sys.exit(1)
+bullet = m.group(1)
+folders = sorted(os.listdir("services"))
+allowed = set(folders) | {"home-assistant", "agent context", "HomeAssistant",
+                          "Home-Assistant-Label-based-Features", "brother-ptouch-automation",
+                          "CuratedForest.com"}
+spans = re.findall(r"`([^`\n]+)`", bullet)
+
+
+def unlisted(spans):
+    # target-shaped = one bare path component (a folder or repo name);
+    # descriptive spans (`services/`, `ls services/`, `Repo:`, `agent context`)
+    # carry slashes, spaces or colons and are never work targets.
+    return [s for s in spans
+            if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", s) and s not in allowed]
+
+
+def folders_listed(spans):
+    # count distinct bare names matching the folder set — proof a fabricated
+    # unlisted folder (which joins `allowed` live) would be caught by the
+    # fabricated control below, not waved through.
+    return sum(1 for s in spans
+               if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", s) and s in folders)
+
+
+bad = unlisted(spans)
+if bad:
+    print(f"unlisted target-shaped tokens in the Services bullet: {bad!r} — the set is exactly "
+          f"the services/ folders ∪ the fixed six, nothing else (red before C01 dev)"); sys.exit(1)
+# Exactness of the DERIVED half: the bullet must enumerate every live folder,
+# not merely mention some. The folder loop above checks each against a live
+# `ls services/`, so this leg proves a fabricated unlisted folder is caught.
+listed = folders_listed(spans)
+if listed < len(folders):
+    print(f"the Services bullet enumerates {listed} of {len(folders)} live folders — the exactness "
+          f"arm must bite on a non-enumerating bullet, or the fabricated-folder control is vacuous"); sys.exit(1)
+# Defect control: a fabricated unlisted target must be rejected by this check.
+if not unlisted(spans + ["totally-made-up-target"]):
+    print("the fabricated unlisted target PASSED the exactness check — the negative is inert"); sys.exit(1)
+print("ok")
+PY
   grep -qE 'feat.*bug.*debug.*dep.*refactor.*chore.*docs' "$SKILL_GEN" \
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
   grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_GEN" \
@@ -703,12 +759,14 @@ fi
    grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_SRC" \
      || fail "c11[cf-106 C02 AC1]: the boards SOURCE Model(s) line is not the four-label Dense set — the source and its generated mirror must carry the same vocabulary"
   grep -qE 'Qwen Large.*Flash Next' "$SKILL_GEN" && fail "c11[C06]: a single passage pairing 'Qwen Large' with 'Flash Next' — the Model(s) checklist gained a fifth option; Q6 vetoed it (combination of existing checks is the mechanism)"
-  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Exploration' 'Agent Decides Research' 'Pre Research' 'Planning' 'Post Research' 'Test Writing' 'Chunk Development' 'Chunk Review' 'Final Review' 'Deployment' 'Single Session' \
-    || fail "c11[C07]: the Lifecycle checklist does not carry its eleven items in one passage (cf-96 C07 redesign, card order, Single Session LAST; red before C07's text + this re-pin)"
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'default' 'nothing is checked' 'exploration' 'agent decides research' 'final review' \
-    || fail "c11[C07]: no nothing-checked default passage (the Stage map's Blank defaults section: the seven-stage standard default loop, Exploration first, Final Review last; the retired Plan+Test+Code+Review shape)"
-  grep -qE 'Human in the Loop.*`Exploration` \| `Agent Decides Research` \| `Pre Research` \| `Planning` \| `Post Research` \| `Test Writing` \| `Chunk Development` \| `Chunk Review` \| `Final Review` \| `Deployment` \| `Single Session`' "$SKILL_GEN" \
-    || fail "c11[C07]: the Human in the Loop checklist does not mirror the eleven Lifecycle names in one passage (the OQ6-derived exact mirror)"
+  python3 "$TMP/window.py" "$SKILL_GEN" 1150 'Session Rename' 'Worktree Creation' 'Exploration' 'Agent Decides Research' 'Planning' 'Test Writing' 'Chunk Development' 'Chunk Review' 'Final Review' 'Deployment' 'Single Session' 'Follow-up cards created' 'Human in the Loop' \
+    || fail "c11[cf-124 C01]: the Lifecycle checklist does not carry its thirteen items in one passage (cf-124 C01 list, card order, Session Rename FIRST, Human in the Loop LAST; red before C01's text + this re-pin)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 900 'default' 'nothing is checked' 'session rename' 'worktree creation' 'exploration' 'agent decides research' 'final review' \
+    || fail "c11[cf-124 C01]: no nothing-checked default passage naming the nine-stage blank default (Session Rename first, Final Review last — the cf-124 D16 default loop; red before C01's text + this re-pin)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 400 'opt-in' 'Deployment' 'Single Session' \
+    || fail "c11[cf-124 C01]: the two-member OPT-IN sentence (Deployment + Single Session, outside the default set) is missing or was rewritten"
+  grep -qE 'Human in the Loop.*`Session Rename` \| `Worktree Creation` \| `Exploration` \| `Agent Decides Research` \| `Planning` \| `Test Writing` \| `Chunk Development` \| `Chunk Review` \| `Final Review` \| `Deployment` \| `Single Session` \| `Follow-up cards created` \| `Human in the Loop`' "$SKILL_GEN" \
+    || fail "c11[cf-124 C01]: the Human in the Loop checklist does not mirror the thirteen Lifecycle names in one passage (the cf-124 13-name mirror, Session Rename first; red before C01 dev)"
   # cf-106 C02 AC2: the default selection is pinned on SOURCE and MIRROR alike —
   # the flip must be identical on both (a hand-edited or stale mirror fails here).
   for f in "$SKILL_SRC" "$SKILL_GEN"; do
@@ -725,7 +783,7 @@ fi
     || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle's eleven items (cf-96 C07) + nothing-checked seven-stage default; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the eleven + Final Review default; combination clauses present with the cf-83 strata re-pin"
+  ok "c11: five checklist titles with full item sets — Services = regenerated ls services/ folders ∪ the fixed six exactly (unlisted tokens rejected); Lifecycle's thirteen items (cf-124 C01) + nine-stage nothing-checked default + the untouched two-member OPT-IN sentence; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the thirteen + Final Review default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
@@ -835,9 +893,10 @@ if want c16; then
   ok "c16: agent body + command mirror the skill's pinned strings (pickup order, research-only exit, cf-slug/no-run-tag, checklist intake)"
 fi
 
-# --- c18: Lifecycle consumption contract (cf-58 C05; cf-96 C07 re-pin: 11 rows) --
+# --- c18: Lifecycle consumption contract (cf-58 C05; cf-96 C07 re-pin; cf-124
+#       C01 re-pin: 13 rows, the two gated leading stages) ----------------------
 # The agent-side consumption of the checklist restructure, on source AND
-# mirror: the Stage map section (11 rows naming each stage's pipeline agent
+# mirror: the Stage map section (13 rows naming each stage's pipeline agent
 # or action — the single table coords cite, never restate), the transition rule
 # for cards still carrying the legacy Research checklist, the human-owned
 # board-side cutover documentation, the reworded label-trigger sentence, the
@@ -845,9 +904,45 @@ fi
 # commands (with the old slash-enumeration gone from those files), and the
 # residual-semantics negative (old Research OPTION strings survive only
 # inside the transition rule's context).
+# cf-124 C01: the map gains `Session Rename` + `Worktree Creation` rows at the
+# TOP (each with a what-runs cite AND an unchecked-consequence clause) and the
+# `Follow-up cards created` + `Human in the Loop` rows at the end; Pre/Post
+# Research rows are gone with the vocabulary. The Worktree Creation row must
+# carry the D28 uncommitted-no-commits consequence and must NOT carry the
+# stop/NEEDS_INFO/branch-precondition phrasing the owner withdrew at approval.
 if want c18; then
+  # Control (c18 itself, before touching dev files): the Worktree Creation
+  # row check must ACCEPT D28-verbatim denial posture and REJECT the restored
+  # stop design. The extracted checker below is the one the dev-facing loop
+  # runs; a fabricated row pair proves it bites both ways.
+  python3 - <<'PY' || fail "c18 control: the withdrawn-wording scan failed its own fabricated pair (the negative arm is inert or reddens compliant denials — report, do not relax)"
+import re, sys
+
+DENIAL = re.compile(r"\b(?:no|not|never|without|nor|neither|nothing)\b[\s\S]{0,45}$", re.I)
+WITHDRAWN = [r"\bstops?\b", r"\bstopping\b", "NEEDS_INFO", r"\bpreconditions?\b",
+             r"\bdetached\b", r"non-`?main`?"]
+
+
+def asserted_withdrawn(row):
+    hits = []
+    for pat in WITHDRAWN:
+        for mm in re.finditer(pat, row, re.I):
+            if DENIAL.search(row[max(0, mm.start() - 60):mm.start()]):
+                continue
+            hits.append(mm.group(0))
+    return hits
+
+
+ok_row = "| `Worktree Creation` | the kickoff mint (`worktree_create` + the mint script) then warm and `session_move` (`pipeline-kickoff`, cited — never restated here). Unchecked: no mint, no warm, no `session_move` — the run works **uncommitted, in place**, in whatever checkout and branch it landed in, `main` included, with **no branch precondition, no stop and no `NEEDS_INFO` exit**, and the coordinator makes **no commits at all**. |"
+bad_row = "| `Worktree Creation` | the mint runs (`pipeline-kickoff`). Unchecked: the launch checkout must already sit on a non-`main`, non-detached branch; otherwise the run stops and returns RESULT `status: NEEDS_INFO` naming the rule. |"
+if asserted_withdrawn(ok_row):
+    print(f"D28-compliant denial row was rejected: {asserted_withdrawn(ok_row)}"); sys.exit(1)
+if not asserted_withdrawn(bad_row):
+    print("the restored stop design was ACCEPTED — the negative arm is inert"); sys.exit(1)
+print("ok")
+PY
   for f in "$SKILL_SRC" "$SKILL_GEN"; do
-    python3 - "$f" <<'PY' || fail "c18[C05]: $f fails the Stage map completeness check (red before C05 — eight rows, each naming its pipeline agent/action)"
+    python3 - "$f" <<'PY' || fail "c18[cf-124 C01]: $f fails the Stage map completeness check (13 rows, each naming its pipeline agent/action + consequence)"
 import re, sys
 path = sys.argv[1]
 text = open(path).read()
@@ -856,34 +951,64 @@ if not m:
     print(f"{path}: no 'Stage map' section (C05: single table, coords cite it)"); sys.exit(1)
 body = m.group(1)
 rows = [l for l in body.splitlines() if l.strip().startswith('|') and not re.match(r'^\|[\s:-]+\|', l.strip())]
-# Hoisted above stage_tokens (validation_at_fault round 4): the dict literal
-# below reads _DEV at build time, so assigning it after the dict raised a
-# NameError exactly when a VALID Stage map existed — the missing-section
-# early exit masked it before C05 landed.
+# Hoisted above the rows list (validation_at_fault round 4): the literal below
+# reads _DEV at build time; assigning after use raised a NameError exactly when
+# a VALID Stage map existed — the missing-section early exit masked it.
 _DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
-stage_tokens = {
-    'Exploration': ['agent-explore'],
-    'Agent Decides Research': ['pipeline-role-coord'],
-    'Pre Research': ['agent-research'],
-    'Planning': ['agent-plan'],
-    'Post Research': ['agent-research'],
-    'Test Writing': ['agent-test'],
-    'Chunk Development': [_DEV],  # the dev-variant slot; the review lives in the NEXT row
-    'Chunk Review': ['agent-review'],
-    'Final Review': ['agent-review'],
-    'Deployment': ['push', 'ready'],
-    'Single Session': [_DEV, 'review'],  # ONE dev-variant session, ONE final review
-}
+# (stage, needles-that-must-be-present, needles-that-must-BE-ABSENT)
+stage_rows = [
+    ('Session Rename', ['pipeline-kickoff', 'session_rename', 'session-rename-skipped'], []),
+    ('Worktree Creation', ['pipeline-kickoff', 'uncommitted', 'no commits'], None),
+    ('Exploration', ['agent-explore'], []),
+    ('Agent Decides Research', ['pipeline-role-coord'], []),
+    ('Planning', ['agent-plan'], []),
+    ('Test Writing', ['agent-test'], []),
+    ('Chunk Development', [_DEV], []),  # the dev-variant slot; the review lives in the NEXT row
+    ('Chunk Review', ['agent-review'], []),
+    ('Final Review', ['agent-review'], []),
+    ('Deployment', ['push', 'ready'], []),
+    ('Single Session', [_DEV, 'review'], []),  # ONE dev-variant session, ONE final review
+    ('Follow-up cards created', ['Inbox'], []),
+    ('Human in the Loop', ['question'], []),
+]
+# D28's withdrawn design (round-2's stop-with-NEEDS_INFO + branch precondition)
+# must not come back in the row's consequence text. Raw-token bans would also
+# redden the AMENDMENT's own denials ("no stop and no NEEDS_INFO exit" is
+# D28-verbatim posture wording), so an occurrence is asserted only when no
+# denial word precedes it inside its sentence-neighborhood — the house
+# negation-scan pattern (cf96 t5, agent-perms A15).
+DENIAL = re.compile(r"\b(?:no|not|never|without|nor|neither|nothing)\b[\s\S]{0,45}$", re.I)
+WITHDRAWN = [r"\bstops?\b", r"\bstopping\b", "NEEDS_INFO", r"\bpreconditions?\b",
+             r"\bdetached\b", r"non-`?main`?"]
+
+
+def asserted_withdrawn(row):
+    hits = []
+    for pat in WITHDRAWN:
+        for mm in re.finditer(pat, row, re.I):
+            if DENIAL.search(row[max(0, mm.start() - 60):mm.start()]):
+                continue
+            hits.append(f"...{row[max(0, mm.start() - 20):mm.end() + 20]}...")
+    return hits
+
+
 missing = []
-for stage, tokens in stage_tokens.items():
+for stage, tokens, banned in stage_rows:
     hit = [r for r in rows if r.strip().startswith('| `' + stage + '`')]
     if not hit:
         missing.append(f"row '{stage}'")
         continue
-    if not all(tok in hit[0] for tok in tokens):
+    row = hit[0]
+    if not all(tok in row for tok in tokens):
         missing.append(f"row '{stage}' lacks tokens {tokens}")
-if len(rows) < 12:  # 11 stage rows + at least the header row
-    missing.append(f"only {len(rows)} table rows, want 11 stage rows + header")
+    if banned is None:  # the Worktree Creation row carries the withdrawn-wording scan
+        bad = asserted_withdrawn(row)
+        if bad:
+            missing.append("row 'Worktree Creation' asserts withdrawn stop/NEEDS_INFO/"
+                           "branch-precondition wording (D28 — the owner withdrew the stop at "
+                           f"approval): {bad[:2]}")
+if len(rows) < 14:  # 13 stage rows + at least the header row
+    missing.append(f"only {len(rows)} table rows, want 13 stage rows + header")
 if missing:
     print(f"{path}: stage map incomplete: {'; '.join(missing)}"); sys.exit(1)
 PY
@@ -920,7 +1045,7 @@ PY
       fail "c18[C05]: $f still carries the old slash-enumeration Model(s)/Research/Human in the Loop — C05 replaced it (the Research LABEL mentions stay; the enumeration must not name a retired checklist)"
     fi
   done
-  ok "c18[C05]: Stage map (11 rows naming agents/actions — the cf-96 C07 redesign), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
+  ok "c18[cf-124 C01]: Stage map (13 rows naming agents/actions + unchecked consequences — the cf-124 generation), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
 fi
 
 # --- c17: pipeline-models / pipeline-gates byte-unchanged ----------------------
@@ -979,7 +1104,13 @@ if want c19; then
     wb="$TMP/wb-${f//\//_}.txt"
     awk '/^## Post-plan card write-back/{p=1; next} p && /^## /{exit} p' "$f" >"$wb"
     [ -s "$wb" ] || fail "c19: $f has no 'Post-plan card write-back' section — the section title moved (harness fault, report it)"
-    nw=$(grep -c 'set_card_custom_field' "$wb")
+    # cf-85's law is ONE write of the SLUG value; cf-124 C03/D20 legitimately
+    # adds a conditional second write for the Priority field to that section.
+    # Counting every `set_card_custom_field` would read C03's stamp leg as the
+    # two-write red state and move this arm's pre-existing red message off the
+    # roster one (the roster-family reds stay verbatim per D20) — so the count
+    # is scoped to slug-value writes: the cf-85 two-write form stays red.
+    nw=$(grep -E 'set_card_custom_field' "$wb" | grep -Eiv 'priority' | grep -c 'set_card_custom_field')
     [ "$nw" -eq 1 ] \
       || fail "c19[AC2]: $f's write-back names $nw set_card_custom_field calls — the contract is ONE upsert writing the combined value (the two-write form is the red state)"
     if grep -Eq '`session`[[:space:]]*=' "$wb"; then
@@ -1338,6 +1469,104 @@ PY
     fail "c23[cf-106 C09]: NEGATIVE CONTROL FAILED — a source-only rewrite of the Human-stops bullet did not read as source/mirror drift"
   fi
   ok "c23[cf-106 C09 AC1-AC5]: the Human-stops and Exit bullets carry the sanctioned one-question posture, the card-id takeover shape (pipelines:[<cardId>], asks-before-move out of Timeout, takeover comment, kickoff.claim) and the never-silent-resume/never-second-question boundary on source AND mirror, the takeover branch is named ahead of the blocked choice, and both controls respond (a compliant pair reads clean, a source-only edit reads as drift)"
+fi
+
+# --- c25: cf-124 C02 — the two new lock doctrines on the boards surface ------
+# C02 writes the owner's card-ask-E assumptions (OQ10/OQ11 → D23) into the
+# `boards` skill's pickup + Human-stops bullets: (1) a card's membership in
+# **Executing** ALONE means it is owned — no lock state is consulted for that
+# inference, and the walk still never visits Executing nor restarts a card
+# there; (2) the lock-lost doctrine says a later user **continuation prompt
+# ANSWERS** the single sanctioned question (a continuation that carries no
+# answer is silence → the abandoned exit) while NOTHING extends a lease — no
+# engine capability is added. Designed RED before C02 dev: today's walk text
+# qualifies ownership with "owned by the run holding its pipeline lock set"
+# and the Human-stops bullet never names a continuation prompt. c23 stays
+# untouched (every NEEDLE it pins survives C02's edit).
+if want c25; then
+  cat >"$TMP/c25_check.py" <<'PY'
+# Boards-side lock-doctrine checker: argv = files to check. The affirmative-
+# extension scan is denial-aware ("nothing extends a lock" is the doctrine;
+# "the prompt extends the lock" is the overstatement the engine cannot keep).
+import re, sys
+
+def section(text, heading):
+    m = re.search(r"(?ms)^#+[^\n]*" + re.escape(heading) + r"[^\n]*\n.*?(?=^#{1,2} |\Z)", text)
+    return m.group(0) if m else ""
+
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+
+def asserted_extension(body):
+    hits = []
+    for mm in re.finditer(r"\b(?:extends?|extending|renews?|renewing|refresh(?:es|ing)?)\b", body, re.I):
+        lo, hi = max(0, mm.start() - 80), min(len(body), mm.end() + 80)
+        if not re.search(r"\block\b|\blease\b", body[lo:hi], re.I):
+            continue
+        before = body[max(0, mm.start() - 60):mm.start()]
+        if re.search(r"\b(?:no|not|never|nothing|without|nor|neither)\b(?:[^.!?]|\n){0,50}$", before, re.I):
+            continue
+        hits.append(mm.group(0))
+    return hits
+
+errs = []
+for path in sys.argv[1:]:
+    text = open(path).read()
+    hay = section(text, "Card pickup") + "\n" + section(text, "Parallel pipeline loops")
+    if not re.search(r"Executing[^.\n]{0,80}membership[^.\n]{0,160}(alone|is the evidence|no lock state)"
+                     r"|membership[^.\n]{0,120}(alone|means[^.\n]{0,40}owned|is the evidence)", hay, re.I):
+        errs.append(f"{path}: the pickup walk does not state that Executing membership ALONE means the card is owned (C02 AC1, D23/OQ11)")
+    if re.search(r"under another run.s lock", hay):
+        errs.append(f"{path}: an Executing card is still qualified 'under another run's lock' — membership alone is now the stated evidence, and the qualifier re-derives what the authority already states (C02 AC1)")
+    if not re.search(r"(no|never|without)[^.\n]{0,60}lock (state|read)|[^.\n]{0,60}no lock state is consulted", hay, re.I):
+        errs.append(f"{path}: nothing says lock state is NOT consulted for the Executing inference (C02 AC1: documented inference, no lock read — and no worker reads .pipeline/**)")
+    hs = bullet(text, "Human stops")
+    if hs is None:
+        errs.append(f"{path}: no 'Human stops' bullet — c23 anchors it too; the anchor moved (harness fault)")
+    else:
+        if not re.search(r"continuation prompt[^.]{0,200}answers|answers[^.]{0,160}continuation prompt", hs, re.I):
+            errs.append(f"{path}/Human stops: never names the later user CONTINUATION PROMPT as the answer to the sanctioned question (C02 AC2, D23/OQ10)")
+        if not re.search(r"(carries no answer|without an answer)[^.]{0,140}silence|silence[^.]{0,140}(carries no answer|without an answer)", hs, re.I):
+            errs.append(f"{path}/Human stops: a continuation that carries no answer is not named silence (the blocked/abandoned exit)")
+        if not re.search(r"nothing extends|does not extend|never extends|no (lease|lock).extension", hs, re.I):
+            errs.append(f"{path}/Human stops: does not state that NOTHING extends a lock — the engine has no lease-extension verb (C02 must not overstate it)")
+        hits = asserted_extension(hs)
+        if hits:
+            errs.append(f"{path}/Human stops: asserts a lease extension/renewal/refresh ({hits}) — doctrine limit: the continuation prompt ANSWERS the question, it never keeps or restores the lock")
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+print("ok")
+PY
+  # Controls FIRST — they hold whatever dev lands and prove the checker is
+  # satisfiable, live, and denial-aware.
+  python3 - "$TMP/c25-compliant.md" "$TMP/c25-overstated.md" <<'PY'
+import sys
+COMPLIANT = """## Card pickup
+
+The walk never visits **Executing** — membership there ALONE means the card is owned by a run; that membership is the evidence, no lock state is consulted (workers never read `.pipeline/**`) — nor **Timeout**.
+
+## Parallel pipeline loops
+
+- **Pick per lock availability.** Never pick or restart a card in **Executing**.
+
+- **Human stops (D20/D21).** The ONE sanctioned question stays exactly one; a later user continuation prompt ANSWERS it — a continuation that carries no answer is silence, which is the blocked/abandoned exit. The resume is a fresh pipeline_claim under pipelines:[<cardId>]; nothing extends a lock — there is no lease-extension verb, and the after_reap tag is evidence, not permission.
+"""
+open(sys.argv[1], "w").write(COMPLIANT)
+open(sys.argv[2], "w").write(COMPLIANT + "\nA continuation prompt extends the lock and renews the lease anyway.\n")
+PY
+  python3 "$TMP/c25_check.py" "$TMP/c25-compliant.md" >/dev/null 2>&1 \
+    || { python3 "$TMP/c25_check.py" "$TMP/c25-compliant.md"; fail "c25 control: the fabricated COMPLIANT doctrine wording FAILED the checker — the dev-facing pins are unsatisfiable (harness fault, report rather than let dev chase it)"; }
+  if python3 "$TMP/c25_check.py" "$TMP/c25-overstated.md" >/dev/null 2>&1; then
+    fail "c25 control: a copy asserting 'the prompt extends the lock and renews the lease' still PASSED — the no-extension guard is inert (the engine has no such verb; C02 must not be allowed to promise it)"
+  fi
+  python3 "$TMP/c25_check.py" "$SKILL_SRC" "$SKILL_GEN" \
+    || fail "c25[cf-124 C02 AC1/AC2]: the boards lock doctrine is not the membership-alone + continuation-answers posture on source AND mirror (reason above; designed red until C02 dev)"
+  ok "c25[cf-124 C02 AC1/AC2]: Executing membership ALONE means owned with no lock state consulted (the 'under another run's lock' qualifier is gone), and the lock-lost doctrine names the continuation prompt as the answer while NOTHING extends a lease — source and mirror alike; controls: a compliant fabrication reads clean, an extends-the-lease overstatement is rejected"
 fi
 
 # --- c24: cf-106 C04 — the code-pr mirror and the two contract mirrors --------

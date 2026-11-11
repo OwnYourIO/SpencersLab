@@ -635,6 +635,13 @@ fi
 # The boards/kickoff halves' NEEDLES stay byte-untouched (D6: cite-only —
 # only the absence guard's marker moves, 4+ -> 10+); M3's C01 catalog
 # re-pin feeds the cross-file leg below.
+# cf-124 C03 RE-PIN (OQ7 → D20): the "input-only / NEVER written back" bar is
+# the ban's doctrine lock and the ban is REVOKED — the arm is re-cut, not
+# deleted: same bullet, same strictness, now pinning the permission (MAY write
+# — own claimed card + cards this run creates) and the boundary (bulk + every
+# other card still need explicit owner direction; owner-run backfill), with
+# the ban phrases as rejects. Every roster needle above stays unchanged; the
+# three roster-family reds elsewhere stay red with verbatim messages.
 if want m7; then
   for f in "$BD_SRC" "$BD_GEN"; do
     [ -f "$f" ] || fail "M7[AC3]: $f missing"
@@ -666,12 +673,18 @@ open(sys.argv[2], "w").write(m.group(0))
 ' "$f" "$TMP/kd.md" || fail "M7[AC3]: $f has no '## Card-driven kickoff' section"
     python3 "$TMP/win.py" "$TMP/kd.md" 400 'Priority' 'string→int' 'kickoff.priority' '{raw, class}' \
       || fail "M7[AC3]: $f's Card-driven kickoff section lacks the priority bullet (Priority + string→int + kickoff.priority + {raw, class} in one span)"
-    python3 -c '
-import re, sys
-text = re.sub(r"\s+", " ", open(sys.argv[1]).read()).lower()
-sys.exit(0 if "never written back" in text else 1)
-' "$f" \
-      || fail "M7[AC3]: $f's priority bullet lacks the 'NEVER written back' phrasing (the board field is input-only; post-plan write-back stays slug-only)"
+    # cf-124 C03 (OQ7 → D20): the input-only/never-written-back doctrine is
+    # REVOKED. M7 was that ban's lock, not a wording pin — re-cut at equal
+    # strictness rather than deleted: the bar now pins the NEW permission and
+    # its two boundaries, and the withdrawn ban phrases become the defect.
+    python3 "$TMP/win.py" --ci "$TMP/kd.md" 700 'priority' 'may' 'card this run claims' 'cards this run creates' \
+      || fail "M7[cf-124 C03 AC1/AC2]: $f's priority bullet does not state the new permission in one span (Priority MAY be written — on the card this run claims and on cards this run creates) (designed red until C03 lands the ban-lift)"
+    python3 "$TMP/win.py" --ci "$TMP/kd.md" 700 'bulk' 'explicit owner direction' \
+      || fail "M7[cf-124 C03 AC2]: $f's priority bullet lacks the boundary — every other card and ALL bulk board-data mutation still need explicit owner direction (the lift is a permission, not a mandate and not a sweep authorization; the ~90-card leg stays the owner-run backfill)"
+    phrased 'input-only' "$f" \
+      && fail "M7[cf-124 C03 AC1]: $f still calls the Priority field 'input-only' — the owner revoked that doctrine (D20); the phrase is the defect now"
+    phrased 'never written back' "$f" \
+      && fail "M7[cf-124 C03 AC1]: $f still bars agent writes with 'NEVER written back' — the ban sentence must be replaced by the bounded permission, in the same bullet. The roster's retired-`session` 'never read, never written' clause is a different sentence and must survive (C03 AC5)"
     # The launch-prompt block names the Priority value alongside the slug value.
     python3 -c '
 import re, sys

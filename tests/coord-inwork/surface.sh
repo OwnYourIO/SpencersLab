@@ -109,8 +109,11 @@
 # design; i1/i2/i3/i5 stay green HOLD.
 #
 # Usage:
-#   bash tests/coord-inwork/surface.sh           # i1..i7
+#   bash tests/coord-inwork/surface.sh           # i1..i9
 #   bash tests/coord-inwork/surface.sh i4 i7     # subset
+# cf-124 C05 adds i9 (captured-sessionID mark keying) — cf-124 chunk Commands
+# select i1 i2 i3 i5 i6 i7 i8 i9 (never whole, so i4's pre-existing red stays
+# outside every cf-124 bar and keeps its verbatim message).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -173,10 +176,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["i$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9; do WANT["i$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^i[1-8]$ ]] || fail "unknown check id '$a' (expected i1..i8)"
+    [[ "$a" =~ ^i[1-9]$ ]] || fail "unknown check id '$a' (expected i1..i9)"
     WANT["$a"]=1
   done
 fi
@@ -832,6 +835,41 @@ if want i8; then
       || fail "i8[C03 Tasks]: the hard-rule sentence was not widened — the scoped worktree_remove + session_move-home use must ride inside the never-any-other-opencode-tool containment, not beside it"
   done
   ok "i8[C03 AC2]: RC pair carries the work-complete cleanup step — content-based landed check (ancestry rejected), landed sequence, origin_dir destination, ask-once-default-keep not-landed path, deploy-surface split, and the widened opencode-tool containment"
+fi
+
+# --- i9: cf-124 C05 — the in-work mark is keyed on the CAPTURED sessionID ------
+# D15 gates `Session Rename`, so `pipeline-role-coord` step 0 must stop claiming
+# the mark is "unconditional in both coordinator variants" — it now runs on every
+# sessionID the run ACTUALLY captured (new run AND resume re-capture), and a run
+# that skipped the rename has no id and writes no mark. Asserts the captured-id
+# keying (coord_session + null + skipped) AND the removal of the unconditional
+# claim, so nobody re-ships it; source and mirror. Designed red before C05 dev.
+if want i9; then
+  # Satisfiability + non-vacuity FIRST: a fabricated re-cut that names the
+  # captured-id keying with the null/skip record shape must read clean; the
+  # bare 'unconditional' claim is what the arm rejects.
+  python3 - "$TMP/i9-compliant.md" "$TMP/i9-oldclaim.md" <<'PY'
+import sys
+open(sys.argv[1], "w").write(
+    "- **In-work mark** — runs on every sessionID this run actually captured (new run AND resume re-capture). "
+    "A run that skipped `Session Rename` has no id: `kickoff.coord_session: null` with reason "
+    "`session-rename-skipped`, and no mark is written.\n")
+open(sys.argv[2], "w").write(
+    "- **In-work mark** — perform the kickoff in-work mark (unconditional in both coordinator variants).\n")
+PY
+  python3 "$TMP/win.py" --ci "$TMP/i9-compliant.md" 800 'coord_session' 'null' 'skipped' >/dev/null 2>&1 \
+    || fail "i9 control: the fabricated COMPLIANT captured-id wording failed the window — the pin is unsatisfiable by the C05 re-cut (harness fault)"
+  if ! grep -qF 'unconditional in both coordinator variants' "$TMP/i9-oldclaim.md"; then
+    fail "i9 control: the fabricated old-claim copy lost the unconditional phrase — the negative control is inert (harness fault)"
+  fi
+  for f in "$RC_SRC" "$RC_GEN"; do
+    [ -f "$f" ] || fail "i9: $f missing (harness fault)"
+    grep -qF 'unconditional in both coordinator variants' "$f" \
+      && fail "i9[cf-124 C05 AC6]: $f still claims the in-work mark is 'unconditional in both coordinator variants' — with Session Rename gated, a rename-skipped run has no sessionID and writes no mark (C05 re-cuts step 0; the phrase is the defect)"
+    python3 "$TMP/win.py" --ci "$f" 800 'coord_session' 'null' 'skipped' \
+      || fail "i9[cf-124 C05 AC6]: $f does not key the in-work mark on the captured sessionID (coord_session + null + skipped in one span — a rename-skipped run records coord_session null and writes no mark; designed red before C05 dev)"
+  done
+  ok "i9[cf-124 C05 AC6]: the role-coord mark sentence is keyed on the captured sessionID (coord_session null + skipped) and the 'unconditional in both coordinator variants' claim is gone — source and mirror; a compliant re-cut reads clean and the bare unconditional claim is rejected"
 fi
 
 printf 'PASS: coord-inwork surface checks (%d ok)\n' "$checks"

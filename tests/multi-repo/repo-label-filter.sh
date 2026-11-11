@@ -120,16 +120,47 @@ if not near(r'no-claimable-cards', [r'Repo:|repo-mismatch|repo mismatch'], 400):
 if not near(r'Repo identity', [r'basename|canonical', r'NEEDS_INFO', r'never guess'], 1200):
     bad('missing the Repo identity subsection (basename + AGENTS.md cross-check, NEEDS_INFO on mismatch, never guess)')
 
-# 8) the four exact label spellings (OQ-B2), case-sensitive; the card's
-#    mis-cased historical spelling may only appear as a flagged note.
+# 8) the exact label spellings (OQ-B2 + cf-124 OQ9b — now FIVE worker repos),
+#    case-sensitive; the mis-cased/historical forms may only appear as flagged
+#    notes inside the history/nit sentences.
 for spelling in ('SpencersLab', 'HomeAssistant',
-                 'Home-Assistant-Label-based-Features', 'brother-ptouch-automation'):
+                 'Home-Assistant-Label-based-Features', 'brother-ptouch-automation',
+                 'CuratedForest.com'):
     if spelling not in text:
-        bad(f'label spelling {spelling!r} absent (spellings are exact dir names, case-sensitive, OQ-B2)')
+        bad(f'label spelling {spelling!r} absent (spellings are exact dir names, case-sensitive, OQ-B2/OQ9b)')
 for m in re.finditer(r'Home-Assistant-Label-Based', text):
     seg = text[max(0, m.start() - 300):m.end() + 300]
     if not re.search(r'mis-?cas|historical|renamed', seg, re.I):
         bad(f'capital-B "Label-Based" present without the mis-cased/historical flag at offset {m.start()}')
+# 8b) cf-124 C04: the ruled fifth spelling is the exact directory basename
+# `CuratedForest.com`; the owner card's own mis-forms — the missing-d
+# `CurateForest.com` (a live LIST title, not a label) and the undotted
+# `CuratedForest` — are defects anywhere except the flagged history/nit
+# sentences that name them wrong.
+for m in re.finditer(r'CurateForest|CuratedForest(?!\.com)', text):
+    seg = text[max(0, m.start() - 320):m.end() + 320]
+    if not re.search(r'mis-?cas|no dot|undotted|wrong form|not the label|not a label|list title|listed? as wrong|history|nit|"fix"|do not fix|recorded here', seg, re.I):
+        bad(f'mis-form {m.group(0)!r} present without the flagged-history/list-title context at offset {m.start()} — a wrong spelling silently makes its cards UNCLAIMABLE, so it may live only inside the sentence that names it wrong')
+# 8c) cf-124 C04 AC1: the table carries exactly the five rows (AC1 pins the
+# row SET and the single default picker, not an order) with exact spellings.
+table = re.search(r"(?ms)^\|[^|\n]*label spelling[^\n]*\n\|[-| ]+\n((?:\|[^|\n]+\|[^|\n]*\|[ \t]*\n)+)", text)
+if not table:
+    bad('no Repo: table found (header row + separator + rows) — C04 keeps the cf-93 column shape')
+else:
+    rows = set(re.findall(r"^\| `([^`]+)` \|", table.group(1), re.M))
+    want5 = {'SpencersLab', 'HomeAssistant', 'Home-Assistant-Label-based-Features',
+             'brother-ptouch-automation', 'CuratedForest.com'}
+    if rows != want5:
+        bad(f'Repo: table rows are {sorted(rows)}, want exactly the five {sorted(want5)}')
+    yes = [l for l in table.group(1).splitlines() if re.search(r'\|\s*yes', l, re.I)]
+    if len(yes) != 1:
+        bad(f'{len(yes)} rows marked default-picker yes, want exactly one (SpencersLab)')
+if re.search(r'[Ff]our worker repos', text):
+    bad('the section still counts FOUR worker repos — with the fifth row the counters become five (C04 AC2)')
+# 8d) cf-124 C04 AC2: the silent-unclaimable trap is stated bluntly next to
+# the basename law — a wrong spelling matches nothing and says nothing.
+if not near(r'basename', [r'unclaimable|never picked|no error|matches nothing'], 500):
+    bad('the exact-basename law is not paired with the silent-unclaimable trap (D22: a mismatched label makes its cards unclaimable with NO error) — designed red before C04 dev')
 
 # 9) filter POSITION in the walk: after the step-3 get_card confirm (pickup
 #    section) and before the lock-availability skip (Parallel section).

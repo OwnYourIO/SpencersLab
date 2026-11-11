@@ -999,9 +999,18 @@ if want s3; then
     [ -f "$f" ] || fail "s3: $f missing (harness fault)"
     for s in 'SESSION_URL_BASE' 'Session origin:' 'VSCODE_PROXY_URI' 'UNRESOLVED' \
              '$(SESSION_URL_BASE)/?session=<sessionID>' 'Never a raw session id (D13)' \
-             'slug' 'session' 'custom field' 'cf-<card' 'session_rename' '?session='; do
-      grep -qF "$s" "$f" || fail "s3: $f lost carry string '$s' (t19/c12/i3 sets re-pinned natively — C02 wording must not drop a sibling needle)"
+             'slug' 'session' 'custom field' 'cf-<card' 'session_rename' '?session=' \
+             'branch_source' 'worktree-creation-skipped' 'commits' 'session-rename-skipped'; do
+      grep -qF "$s" "$f" || fail "s3: $f lost carry string '$s' (t19/c12/i3 sets re-pinned natively — C02 wording must not drop a sibling needle; the last four are the cf-124 C05 D28/D15 gated-kickoff record shapes — designed red until C05 writes them into the Card-driven kickoff bullets)"
     done
+    # cf-124 C05: the record shapes must read as one passage, not four stray
+    # mentions — the gated run's STATE.json record is what resume and the
+    # fuser hand-off read, and D28 replaced D15's guard half with the
+    # worktree-null/commits-none shape while the rename leg keeps its own.
+    python3 "$TMP/win.py" --ci "$f" 900 'kickoff.worktree' 'null' 'branch_source' 'commits' \
+      || fail "s3[cf-124 C05]: $f does not state the mint-skip record shape (kickoff.worktree null + branch_source + commits) as one passage (D28; designed red before C05 dev)"
+    python3 "$TMP/win.py" --ci "$f" 500 'coord_session' 'null' 'skipped' \
+      || fail "s3[cf-124 C05]: $f does not state the rename-skip record shape (kickoff.coord_session null + reason) as one passage (D15; designed red before C05 dev)"
     python3 "$TMP/win.py" --ci "$f" 900 'UNRESOLVED' 'absent' 'shape' 'answered' \
       || fail "s3: $f no longer defines UNRESOLVED via the three expansion-time branches in ONE passage (t19 window — the leg-2 text must leave this passage intact, C02 2.2)"
     python3 "$TMP/win.py" --ci "$f" 400 'raw session id' 'proceed' \

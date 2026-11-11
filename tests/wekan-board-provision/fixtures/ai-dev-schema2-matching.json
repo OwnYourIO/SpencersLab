@@ -1,7 +1,7 @@
 {
   "schema": "wekan-board-snapshot/2",
   "collected_at": "2026-10-31",
-  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT) | cf-106 C02 agent-test re-pin: the Model(s) items and checked here read `Qwen Dense` (checked [Qwen Dense]) — the applied state AFTER the USER-owned live checklist rename; boards' transition alias covers the live `Qwen 27b` items until then, so zero actions holds only once the engine spec flips Dense too (designed red before C02 dev). The drift fixture deliberately keeps the retired vocabulary so the engine's drift list must name Model(s).",
+  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT) | cf-106 C02 agent-test re-pin: the Model(s) items and checked here read `Qwen Dense` (checked [Qwen Dense]) \u2014 the applied state AFTER the USER-owned live checklist rename; boards' transition alias covers the live `Qwen 27b` items until then, so zero actions holds only once the engine spec flips Dense too (designed red before C02 dev). The drift fixture deliberately keeps the retired vocabulary so the engine's drift list must name Model(s). | cf-124 C01 agent-test re-pin: checklist_extras move to the ruled generation \u2014 Services 19 (v1's 15 + the four fixed repo targets, D22), Lifecycle/HITL the 13 names (Session Rename first, Human in the Loop last). Zero actions against the new CHECKLIST_SPEC holds only once C01 dev lands the engine flip (designed red before C01 dev).",
   "board": {
     "id": "TNQJ2BrXenZovngTS",
     "title": "AI-Dev"
@@ -101,7 +101,7 @@
       }
     },
     {
-      "title": "Bucket: Context — createCard",
+      "title": "Bucket: Context \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Context",
@@ -112,7 +112,7 @@
       }
     },
     {
-      "title": "Bucket: Context — moveCard",
+      "title": "Bucket: Context \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Context",
@@ -123,7 +123,7 @@
       }
     },
     {
-      "title": "Bucket: Features — createCard",
+      "title": "Bucket: Features \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Features",
@@ -134,7 +134,7 @@
       }
     },
     {
-      "title": "Bucket: Features — moveCard",
+      "title": "Bucket: Features \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Features",
@@ -145,7 +145,7 @@
       }
     },
     {
-      "title": "Bucket: Research — createCard",
+      "title": "Bucket: Research \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Research",
@@ -156,7 +156,7 @@
       }
     },
     {
-      "title": "Bucket: Research — moveCard",
+      "title": "Bucket: Research \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Research",
@@ -167,7 +167,7 @@
       }
     },
     {
-      "title": "Bucket: Outside Process — createCard",
+      "title": "Bucket: Outside Process \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Outside Process",
@@ -178,7 +178,7 @@
       }
     },
     {
-      "title": "Bucket: Outside Process — moveCard",
+      "title": "Bucket: Outside Process \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Outside Process",
@@ -189,7 +189,7 @@
       }
     },
     {
-      "title": "Bucket: Dev Env — createCard",
+      "title": "Bucket: Dev Env \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Dev Env",
@@ -200,7 +200,7 @@
       }
     },
     {
-      "title": "Bucket: Dev Env — moveCard",
+      "title": "Bucket: Dev Env \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Dev Env",
@@ -211,7 +211,7 @@
       }
     },
     {
-      "title": "Bucket: Home Assistant — createCard",
+      "title": "Bucket: Home Assistant \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Home Assistant",
@@ -222,7 +222,7 @@
       }
     },
     {
-      "title": "Bucket: Home Assistant — moveCard",
+      "title": "Bucket: Home Assistant \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Home Assistant",
@@ -233,7 +233,7 @@
       }
     },
     {
-      "title": "Bucket: CICD — createCard",
+      "title": "Bucket: CICD \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "CICD",
@@ -244,7 +244,7 @@
       }
     },
     {
-      "title": "Bucket: CICD — moveCard",
+      "title": "Bucket: CICD \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "CICD",
@@ -255,7 +255,7 @@
       }
     },
     {
-      "title": "Bucket: Wekan — createCard",
+      "title": "Bucket: Wekan \u2014 createCard",
       "trigger": {
         "activityType": "createCard",
         "listName": "Wekan",
@@ -266,7 +266,7 @@
       }
     },
     {
-      "title": "Bucket: Wekan — moveCard",
+      "title": "Bucket: Wekan \u2014 moveCard",
       "trigger": {
         "activityType": "moveCard",
         "listName": "Wekan",
@@ -280,33 +280,37 @@
   "checklist_extras": {
     "Lifecycle": {
       "items": [
+        "Session Rename",
+        "Worktree Creation",
         "Exploration",
         "Agent Decides Research",
-        "Pre Research",
         "Planning",
-        "Post Research",
         "Test Writing",
         "Chunk Development",
         "Chunk Review",
         "Final Review",
         "Deployment",
-        "Single Session"
+        "Single Session",
+        "Follow-up cards created",
+        "Human in the Loop"
       ],
       "checked": []
     },
     "Human in the Loop": {
       "items": [
+        "Session Rename",
+        "Worktree Creation",
         "Exploration",
         "Agent Decides Research",
-        "Pre Research",
         "Planning",
-        "Post Research",
         "Test Writing",
         "Chunk Development",
         "Chunk Review",
         "Final Review",
         "Deployment",
-        "Single Session"
+        "Single Session",
+        "Follow-up cards created",
+        "Human in the Loop"
       ],
       "checked": []
     },
@@ -337,7 +341,11 @@
         "proxy-local",
         "proxy-remote",
         "home-assistant",
-        "agent context"
+        "agent context",
+        "HomeAssistant",
+        "Home-Assistant-Label-based-Features",
+        "brother-ptouch-automation",
+        "CuratedForest.com"
       ],
       "checked": []
     },

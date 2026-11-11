@@ -971,6 +971,7 @@ if want t14; then
       .agents/plans/2026/2026-11-bug-pipeline-locks-tick-pin/*|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
+      .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml|\
       .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
       charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\

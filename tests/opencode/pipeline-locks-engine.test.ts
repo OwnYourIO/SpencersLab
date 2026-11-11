@@ -986,4 +986,20 @@ describe("U3 the takeover signal on lock-lost (cf-106 C09 AC 1-2)", () => {
     const phraseSites = (PLUGIN_SRC.match(/PIPELINE LOCK LOST/g) ?? []).length;
     assert.equal(phraseSites, 1, `the phrase lives in exactly one literal (saw ${phraseSites}) — a second near-identical string forks the guard contract`);
   });
+
+  it("the stop string answers through a continuation prompt and a fresh card-id claim — never a lease extension (cf-124 C02 AC2, D23/OQ10)", () => {
+    const decl = PLUGIN_SRC.match(/(?:const|let)\s+LOCK_LOST_STOP\s*=\s*"((?:[^"\\]|\\.)*)"|(?:const|let)\s+LOCK_LOST_STOP\s*=\s*'((?:[^'\\]|\\.)*)'/);
+    assert.ok(decl, "LOCK_LOST_STOP stays a named constant (the partial-drift arm above reads the same literal)");
+    const text = (decl[1] ?? decl[2] ?? "").replace(/\\"/g, '"').replace(/\\'/g, "'");
+    // The doctrine the owner ruled: the ONE sanctioned question is answered by a
+    // LATER USER CONTINUATION PROMPT (an answer, not a workaround), and the
+    // resume is a FRESH claim under the card-id key. Designed red until C02
+    // rewrites the string; silence (an answer-free continuation) is the exit.
+    assert.match(text, /continuation prompt/i, "the string names the later user continuation prompt as how the sanctioned question gets answered (OQ10)");
+    assert.match(text, /fresh/i, "the resume is a FRESH card-id claim — a continuation that arrives after the reap restores nothing, so the string must not read as a restore instruction");
+    // The engine has no extend/renew verb (ground truth); a stop string that
+    // promises lease extension would overstate the plugin (C02 dev-note:
+    // "answers the question", never "extends"/"renews"/"refreshes").
+    assert.doesNotMatch(text, /\b(?:extends?|extending|renews?|renewing|refresh(?:es|ing)?)\b/i, "the string never mentions extending/renewing/refreshing a lease — refusal, no-self-reclaim and the 2 h window stay exactly as shipped");
+  });
 });

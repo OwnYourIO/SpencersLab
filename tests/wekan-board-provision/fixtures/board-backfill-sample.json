@@ -1,0 +1,287 @@
+{
+  "schema": "wekan-board-export/1",
+  "collected_at": "2026-11-11",
+  "provenance": "cf-124 C07 agent-test synthetic export (tests/wekan-board-provision/backfill.sh input) — a trimmed board exercising the backfill engine's whole scope matrix in ONE file: a legacy 14-item HITL + 11-item-Lifecycle + 15-item-Services card (every additive leg fires), a current-generation card (zero actions), a duplicated-checklist-set card and a missing-Lifecycle card (report-only anomalies — the #65/#66 and #57/#71 classes), a Cancelled-list card, an archived card and an In Process-swimlane card (all three excluded), a case/whitespace item-title variant (the no-op dedupe leg), and a card with an explicit Priority value (the --priority-default leg must skip it). The lab shape: cards carry inline checklists with items {title, isFinished, sort} and custom_fields entries {name, value} — the chunk's export contract, NOT a raw WeKan export; the engine reads this file offline and never the live board.",
+  "board": { "_id": "TNQJ2BrXenZovngTS", "title": "AI-Dev" },
+  "swimlanes": [
+    { "_id": "SL-backlog", "title": "Backlog" },
+    { "_id": "SL-planning", "title": "Planning" },
+    { "_id": "SL-inproc", "title": "In Process" }
+  ],
+  "lists": [
+    { "_id": "L-backlog", "swimlaneId": "SL-backlog", "title": "Not Started" },
+    { "_id": "L-cancelled", "swimlaneId": "SL-backlog", "title": "Cancelled" },
+    { "_id": "L-planning", "swimlaneId": "SL-planning", "title": "Not Started" },
+    { "_id": "L-executing", "swimlaneId": "SL-inproc", "title": "Executing" }
+  ],
+  "cards": [
+    {
+      "_id": "C-legacy", "num": 11, "title": "cf-11 legacy generation card",
+      "listId": "L-planning", "archived": false,
+      "custom_fields": [
+        { "name": "slug", "value": "[cf-11-legacy](https://example.invalid/?session=ses_legacy)" },
+        { "name": "Priority", "value": null }
+      ],
+      "checklists": [
+        { "_id": "CL-legacy-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Exploration", "isFinished": true, "sort": 1000 },
+          { "title": "Agent Decides Research", "isFinished": false, "sort": 2000 },
+          { "title": "Pre Research", "isFinished": false, "sort": 3000 },
+          { "title": "Planning", "isFinished": false, "sort": 4000 },
+          { "title": "Post Research", "isFinished": false, "sort": 5000 },
+          { "title": "Test Writing", "isFinished": false, "sort": 6000 },
+          { "title": "Chunk Development", "isFinished": false, "sort": 7000 },
+          { "title": "Chunk Review", "isFinished": false, "sort": 8000 },
+          { "title": "Final Review", "isFinished": false, "sort": 9000 },
+          { "title": "Deployment", "isFinished": false, "sort": 10000 },
+          { "title": "Single Session", "isFinished": false, "sort": 11000 }
+        ] },
+        { "_id": "CL-legacy-hitl", "title": "Human in the Loop", "items": [
+          { "title": "Plan", "isFinished": false, "sort": 1000 },
+          { "title": "Code", "isFinished": false, "sort": 2000 },
+          { "title": "Review", "isFinished": false, "sort": 3000 },
+          { "title": "Research", "isFinished": false, "sort": 4000 },
+          { "title": "Test Writting", "isFinished": false, "sort": 5000 },
+          { "title": "Deploy", "isFinished": false, "sort": 6000 },
+          { "title": "Final Review", "isFinished": true, "sort": 7000 },
+          { "title": "Post plan review", "isFinished": false, "sort": 8000 },
+          { "title": "Plan approval", "isFinished": false, "sort": 9000 },
+          { "title": "Merge approval", "isFinished": false, "sort": 10000 },
+          { "title": "Human checks work", "isFinished": false, "sort": 11000 },
+          { "title": "Human decides close", "isFinished": false, "sort": 12000 },
+          { "title": "Questions batched", "isFinished": false, "sort": 13000 },
+          { "title": "Final sign-off", "isFinished": false, "sort": 14000 }
+        ] },
+        { "_id": "CL-legacy-services", "title": "Services", "items": [
+          { "title": "backups", "isFinished": false, "sort": 1000 },
+          { "title": "dev", "isFinished": false, "sort": 2000 },
+          { "title": "gpu", "isFinished": false, "sort": 3000 },
+          { "title": "gpu-ai", "isFinished": false, "sort": 4000 },
+          { "title": "grow", "isFinished": false, "sort": 5000 },
+          { "title": "home", "isFinished": false, "sort": 6000 },
+          { "title": "infra", "isFinished": false, "sort": 7000 },
+          { "title": "media", "isFinished": false, "sort": 8000 },
+          { "title": "monitoring", "isFinished": false, "sort": 9000 },
+          { "title": "personal", "isFinished": false, "sort": 10000 },
+          { "title": "proxy-backup", "isFinished": false, "sort": 11000 },
+          { "title": "proxy-local", "isFinished": false, "sort": 12000 },
+          { "title": "proxy-remote", "isFinished": false, "sort": 13000 },
+          { "title": "home-assistant", "isFinished": false, "sort": 14000 },
+          { "title": "agent context", "isFinished": false, "sort": 15000 }
+        ] },
+        { "_id": "CL-legacy-type", "title": "Type", "items": [
+          { "title": "feat", "isFinished": true, "sort": 1000 },
+          { "title": "bug", "isFinished": false, "sort": 2000 },
+          { "title": "debug", "isFinished": false, "sort": 3000 },
+          { "title": "dep", "isFinished": false, "sort": 4000 },
+          { "title": "refactor", "isFinished": false, "sort": 5000 },
+          { "title": "chore", "isFinished": false, "sort": 6000 },
+          { "title": "docs", "isFinished": false, "sort": 7000 }
+        ] },
+        { "_id": "CL-legacy-models", "title": "Model(s)", "items": [
+          { "title": "Qwen Large", "isFinished": false, "sort": 1000 },
+          { "title": "Qwen Dense", "isFinished": true, "sort": 2000 },
+          { "title": "Qwen Flash", "isFinished": false, "sort": 3000 },
+          { "title": "Local (gpu-ai)", "isFinished": false, "sort": 4000 }
+        ] },
+        { "_id": "CL-legacy-research", "title": "Research", "items": [
+          { "title": "None", "isFinished": false, "sort": 1000 },
+          { "title": "Before Planning", "isFinished": false, "sort": 2000 },
+          { "title": "After Planning", "isFinished": false, "sort": 3000 },
+          { "title": "Agent Decides", "isFinished": true, "sort": 4000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-variant", "num": 12, "title": "cf-12 title-variant card",
+      "listId": "L-planning", "archived": false,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-variant-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "  session rename  ", "isFinished": false, "sort": 500 },
+          { "title": "WORKTREE CREATION", "isFinished": false, "sort": 600 },
+          { "title": "Exploration", "isFinished": false, "sort": 1000 },
+          { "title": "Agent Decides Research", "isFinished": false, "sort": 2000 },
+          { "title": "Planning", "isFinished": false, "sort": 3000 },
+          { "title": "Test Writing", "isFinished": false, "sort": 4000 },
+          { "title": "Chunk Development", "isFinished": false, "sort": 5000 },
+          { "title": "Chunk Review", "isFinished": false, "sort": 6000 },
+          { "title": "Final Review", "isFinished": false, "sort": 7000 },
+          { "title": "Deployment", "isFinished": false, "sort": 8000 },
+          { "title": "Single Session", "isFinished": false, "sort": 9000 },
+          { "title": "Follow-up cards created", "isFinished": false, "sort": 10000 },
+          { "title": "Human in the Loop", "isFinished": false, "sort": 11000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-current", "num": 13, "title": "cf-13 current-generation card",
+      "listId": "L-planning", "archived": false,
+      "custom_fields": [ { "name": "Priority", "value": null } ],
+      "checklists": [
+        { "_id": "CL-cur-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Session Rename", "isFinished": false, "sort": 1000 },
+          { "title": "Worktree Creation", "isFinished": false, "sort": 2000 },
+          { "title": "Exploration", "isFinished": false, "sort": 3000 },
+          { "title": "Agent Decides Research", "isFinished": false, "sort": 4000 },
+          { "title": "Planning", "isFinished": false, "sort": 5000 },
+          { "title": "Test Writing", "isFinished": false, "sort": 6000 },
+          { "title": "Chunk Development", "isFinished": false, "sort": 7000 },
+          { "title": "Chunk Review", "isFinished": false, "sort": 8000 },
+          { "title": "Final Review", "isFinished": false, "sort": 9000 },
+          { "title": "Deployment", "isFinished": false, "sort": 10000 },
+          { "title": "Single Session", "isFinished": false, "sort": 11000 },
+          { "title": "Follow-up cards created", "isFinished": false, "sort": 12000 },
+          { "title": "Human in the Loop", "isFinished": false, "sort": 13000 }
+        ] },
+        { "_id": "CL-cur-hitl", "title": "Human in the Loop", "items": [
+          { "title": "Session Rename", "isFinished": false, "sort": 1000 },
+          { "title": "Worktree Creation", "isFinished": false, "sort": 2000 },
+          { "title": "Exploration", "isFinished": false, "sort": 3000 },
+          { "title": "Agent Decides Research", "isFinished": false, "sort": 4000 },
+          { "title": "Planning", "isFinished": false, "sort": 5000 },
+          { "title": "Test Writing", "isFinished": false, "sort": 6000 },
+          { "title": "Chunk Development", "isFinished": false, "sort": 7000 },
+          { "title": "Chunk Review", "isFinished": false, "sort": 8000 },
+          { "title": "Final Review", "isFinished": false, "sort": 9000 },
+          { "title": "Deployment", "isFinished": false, "sort": 10000 },
+          { "title": "Single Session", "isFinished": false, "sort": 11000 },
+          { "title": "Follow-up cards created", "isFinished": false, "sort": 12000 },
+          { "title": "Human in the Loop", "isFinished": false, "sort": 13000 }
+        ] },
+        { "_id": "CL-cur-services", "title": "Services", "items": [
+          { "title": "backups", "isFinished": false, "sort": 1000 },
+          { "title": "dev", "isFinished": false, "sort": 2000 },
+          { "title": "gpu", "isFinished": false, "sort": 3000 },
+          { "title": "gpu-ai", "isFinished": false, "sort": 4000 },
+          { "title": "grow", "isFinished": false, "sort": 5000 },
+          { "title": "home", "isFinished": false, "sort": 6000 },
+          { "title": "infra", "isFinished": false, "sort": 7000 },
+          { "title": "media", "isFinished": false, "sort": 8000 },
+          { "title": "monitoring", "isFinished": false, "sort": 9000 },
+          { "title": "personal", "isFinished": false, "sort": 10000 },
+          { "title": "proxy-backup", "isFinished": false, "sort": 11000 },
+          { "title": "proxy-local", "isFinished": false, "sort": 12000 },
+          { "title": "proxy-remote", "isFinished": false, "sort": 13000 },
+          { "title": "home-assistant", "isFinished": false, "sort": 14000 },
+          { "title": "agent context", "isFinished": false, "sort": 15000 },
+          { "title": "HomeAssistant", "isFinished": false, "sort": 16000 },
+          { "title": "Home-Assistant-Label-based-Features", "isFinished": false, "sort": 17000 },
+          { "title": "brother-ptouch-automation", "isFinished": false, "sort": 18000 },
+          { "title": "CuratedForest.com", "isFinished": false, "sort": 19000 }
+        ] },
+        { "_id": "CL-cur-type", "title": "Type", "items": [
+          { "title": "feat", "isFinished": false, "sort": 1000 },
+          { "title": "bug", "isFinished": false, "sort": 2000 },
+          { "title": "debug", "isFinished": false, "sort": 3000 },
+          { "title": "dep", "isFinished": false, "sort": 4000 },
+          { "title": "refactor", "isFinished": false, "sort": 5000 },
+          { "title": "chore", "isFinished": false, "sort": 6000 },
+          { "title": "docs", "isFinished": false, "sort": 7000 }
+        ] },
+        { "_id": "CL-cur-models", "title": "Model(s)", "items": [
+          { "title": "Qwen Large", "isFinished": false, "sort": 1000 },
+          { "title": "Qwen Dense", "isFinished": false, "sort": 2000 },
+          { "title": "Qwen Flash", "isFinished": false, "sort": 3000 },
+          { "title": "Local (gpu-ai)", "isFinished": false, "sort": 4000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-dup", "num": 65, "title": "cf-65 duplicated-set card",
+      "listId": "L-backlog", "archived": false,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-dup-lifecycle-a", "title": "Lifecycle", "items": [
+          { "title": "Exploration", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-dup-lifecycle-b", "title": "lifecycle", "items": [
+          { "title": "Exploration", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-dup-hitl", "title": "Human in the Loop", "items": [
+          { "title": "Final Review", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-dup-services", "title": "Services", "items": [
+          { "title": "backups", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-dup-type", "title": "Type", "items": [
+          { "title": "feat", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-dup-models", "title": "Model(s)", "items": [
+          { "title": "Qwen Dense", "isFinished": false, "sort": 1000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-nolifecycle", "num": 57, "title": "cf-57 missing-Lifecycle card",
+      "listId": "L-backlog", "archived": false,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-nolc-services", "title": "Services", "items": [
+          { "title": "backups", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-nolc-type", "title": "Type", "items": [
+          { "title": "feat", "isFinished": false, "sort": 1000 }
+        ] },
+        { "_id": "CL-nolc-models", "title": "Model(s)", "items": [
+          { "title": "Qwen Dense", "isFinished": false, "sort": 1000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-cancelled", "num": 71, "title": "cf-71 cancelled shelved card",
+      "listId": "L-cancelled", "archived": false,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-can-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Exploration", "isFinished": false, "sort": 1000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-archived", "num": 72, "title": "cf-72 archived card",
+      "listId": "L-planning", "archived": true,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-arc-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Exploration", "isFinished": false, "sort": 1000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-inproc", "num": 124, "title": "cf-124 in-process card",
+      "listId": "L-executing", "archived": false,
+      "custom_fields": [],
+      "checklists": [
+        { "_id": "CL-inp-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Exploration", "isFinished": false, "sort": 1000 }
+        ] }
+      ]
+    },
+    {
+      "_id": "C-prio-set", "num": 123, "title": "cf-123 explicit-Priority card",
+      "listId": "L-planning", "archived": false,
+      "custom_fields": [
+        { "name": "Priority", "value": "9" },
+        { "name": "slug", "value": "[cf-123-x](https://example.invalid/?session=ses_123)" }
+      ],
+      "checklists": [
+        { "_id": "CL-prio-lifecycle", "title": "Lifecycle", "items": [
+          { "title": "Session Rename", "isFinished": false, "sort": 1000 },
+          { "title": "Worktree Creation", "isFinished": false, "sort": 2000 },
+          { "title": "Exploration", "isFinished": false, "sort": 3000 },
+          { "title": "Agent Decides Research", "isFinished": false, "sort": 4000 },
+          { "title": "Planning", "isFinished": false, "sort": 5000 },
+          { "title": "Test Writing", "isFinished": false, "sort": 6000 },
+          { "title": "Chunk Development", "isFinished": false, "sort": 7000 },
+          { "title": "Chunk Review", "isFinished": false, "sort": 8000 },
+          { "title": "Final Review", "isFinished": false, "sort": 9000 },
+          { "title": "Deployment", "isFinished": false, "sort": 10000 },
+          { "title": "Single Session", "isFinished": false, "sort": 11000 },
+          { "title": "Follow-up cards created", "isFinished": false, "sort": 12000 },
+          { "title": "Human in the Loop", "isFinished": false, "sort": 13000 }
+        ] }
+      ]
+    }
+  ]
+}

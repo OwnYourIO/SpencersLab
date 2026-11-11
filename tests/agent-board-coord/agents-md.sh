@@ -101,10 +101,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 11); do WANT["c$i"]=1; done
+  for i in $(seq 1 12); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c(1[0-1]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c11)"
+    [[ "$a" =~ ^c(1[0-2]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c12)"
     WANT["$a"]=1
   done
 fi
@@ -486,7 +486,19 @@ fi
 if want c9; then
   for f in AGENTS.md "$RULES_SRC"; do
     python3 "$TMP/negwin.py" --ci "$f" 400 'lifecycle' 'checked' \
-      || fail "c9[cf-58 C05]: $f lacks the Lifecycle wording (eight stages, checked-stages-only — the board-coord bullet rewrite; red before C05)"
+      || fail "c9[cf-58 C05]: $f lacks the Lifecycle wording (checked-stages-only — the board-coord bullet rewrite; red before C05)"
+    # cf-124 C01 re-pin: the paragraph now names the 13-item generation — the
+    # count, the nine-stage default, and the two gated leading stages. These
+    # move the pins where the contract moved; the old counts become rejects.
+    python3 "$TMP/negwin.py" --ci "$f" 700 'lifecycle' '13-item' \
+      || fail "c9[cf-124 C01]: $f's board-coord paragraph does not name the 13-item checklist (the cf-124 vocabulary generation; red until C01 moves overview.md and regenerates)"
+    python3 "$TMP/negwin.py" --ci "$f" 700 'default' 'nine stages' \
+      || fail "c9[cf-124 C01]: $f never pairs the default loop with the nine stages the Blank defaults section names (D16; red until C01 dev)"
+    python3 "$TMP/negwin.py" --ci "$f" 1200 'lifecycle' 'session rename' 'worktree creation' \
+      || fail "c9[cf-124 C01]: $f's stage sentence never names the two gated leading stages (Session Rename + Worktree Creation, D15) — the paragraph must show what the checklist now starts with (red until C01 dev)"
+    if grep -qE 'the 11-item checklist|seven stages' "$f"; then
+      fail "c9[cf-124 C01 negative]: $f still carries the pre-cf-124 counts (11-item checklist / seven stages) — this is a current-state summary surface; the generation move must rewrite it in the same commit"
+    fi
     if grep -qE 'Model\(s\)[[:space:]]*/[[:space:]]*Research([[:space:]]*/[[:space:]]*Human| checklists)' "$f"; then
       fail "c9[cf-58 C05]: $f still enumerates the retired Research CHECKLIST (Model(s)/Research/... or 'Research checklists') — the LABEL wording may stay, the checklist enumeration must become Lifecycle"
     fi
@@ -498,7 +510,7 @@ standalone = [l for l in hits if "agent-" not in l]
 sys.exit(0 if standalone else 1)
 PY
   done
-  ok "c9: AGENTS.md + rules carry the Lifecycle wording, the retired Research-checklist enumeration is gone, and the standalone dev family has its own entry"
+  ok "c9: AGENTS.md + rules carry the cf-124 Lifecycle wording (13-item checklist, nine-stage default, the two gated leading stages named, old counts rejected), the retired Research-checklist enumeration is gone, and the standalone dev family has its own entry"
 fi
 
 # --- c10: the worker alert sentence covers every stop path (cf-106 C03b AC6/AC7) -------
@@ -595,6 +607,55 @@ PY
     fail "c11 control: the deleted copy failed the arm without a missing-needle naming one of the three alternatives — the failure is not the arm's"
   fi
   ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, a fabricated pair sentence is rejected, and deleting the routing sentence reddens the routing arm"
+fi
+
+# --- c12: cf-124 C05 — the feature-branch hard rule gains the gated-mint clause --
+# C05 appends to the hard rule (overview.md:418 → AGENTS.md) that a board run
+# whose checked set omits `Worktree Creation` works UNCOMMITTED, IN PLACE, in
+# whatever checkout it lands in (main included) and its coordinator makes NO
+# COMMITS, so never-advance-`main` is honoured by the absence of commits.
+# Needles only (the law is the semantic pairing, never a prose copy); designed
+# red before C05 dev. The shipped feature-branch law must survive intact.
+if want c12; then
+  # Window-bite proof (self-contained, holds today and after C05): the SAME
+  # needles must read clean when co-located and must fail when the commit-rule
+  # spelling is moved >1200 chars away — proof c12 demands co-location, not
+  # file-wide scatter (the c10/c11 control discipline).
+  python3 - "$TMP/c12-co.md" "$TMP/c12-moved.md" <<'PY'
+import sys
+clause = "A board run whose checked set omits `Worktree Creation` works uncommitted, in place, in whatever branch it landed in, main included, and its coordinator makes no commits at all."
+pad = " ".join(f"filler {k}" for k in range(400))
+open(sys.argv[1], "w").write(clause + "\n")
+head, _, tailc = clause.partition("no commits")
+open(sys.argv[2], "w").write(head + pad + "no commits" + tailc + "\n")
+PY
+  python3 "$TMP/negwin.py" --ci "$TMP/c12-co.md" 900 'worktree creation' 'uncommitted' >/dev/null 2>&1 \
+    || fail "c12 control: the fabricated co-located clause failed its own window — the pin is unsatisfiable by the planned C05 sentence (harness fault)"
+  python3 "$TMP/negwin.py" --ci "$TMP/c12-co.md" 900 'uncommitted' 'no commits' >/dev/null 2>&1 \
+    || fail "c12 control: the compliant copy lost the zero-commit pairing — fabricate fault (harness)"
+  if python3 "$TMP/negwin.py" --ci "$TMP/c12-moved.md" 900 'worktree creation' 'no commits' >/dev/null 2>&1; then
+    fail "c12 control: the moved copy satisfied the 900-char window across 1200+ chars of filler — the co-location pin is inert"
+  fi
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c12[cf-124 C05]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'worktree creation' 'uncommitted' \
+      || fail "c12[cf-124 C05 AC1/AC2]: $f's feature-branch rule does not pair the unchecked Worktree Creation with the uncommitted-in-place posture (D28; red until C05 edits the rules source and regenerates)"
+    # Zero-commit rule, one honest spelling per window call (negwin needles are
+    # literal — the c11 routing-alternation discipline).
+    if ! { python3 "$TMP/negwin.py" --ci "$f" 900 'uncommitted' 'no commits' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'uncommitted' 'never commit' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'uncommitted' 'commits nothing' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'uncommitted' 'makes no commit'; } \
+        >"$TMP/c12-nocommit.out" 2>&1; then
+      cat "$TMP/c12-nocommit.out" >&2
+      fail "c12[cf-124 C05 AC1/AC2]: $f never pairs the uncommitted posture with the zero-commit rule (no commits / never commit / commits nothing / makes no commit) in one passage — D28's safety property is the ABSENCE of commits"
+    fi
+    python3 "$TMP/negwin.py" --ci "$f" 1200 'uncommitted' 'main' \
+      || fail "c12[cf-124 C05 AC2]: $f states the uncommitted posture without naming main in the same passage — the clause must make clear working on main is permitted while committing there is not"
+    grep -qF 'feature/fix branch' "$f" \
+      || fail "c12[cf-124 C05 negative]: $f lost the feature/fix-branch hard rule the D28 clause extends — the amendment rides beside the law, never replaces it"
+  done
+  ok "c12[cf-124 C05 AC1/AC2]: the feature-branch hard rule carries the gated-mint clause — unchecked Worktree Creation pairs with uncommitted-in-place work, a zero-commit spelling, and main named in the same breath, while the feature/fix-branch law survives (rules source + generated AGENTS.md; red until C05 edits and regenerates); the window control proves co-location is required"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

@@ -2,7 +2,7 @@
 # boards skill — pickup dependency gate, preload consumer, grouped siblings,
 # follow-up label/lineage updates (2026/2026-10-cf-96-feat-dep-tracking-card-pickup, C05).
 #
-# Pins chunks/C05.md "## Tests": windowed grep contracts over
+# Pins cf-96 C05 + cf-124 C06/C08 "## Tests": windowed grep contracts over
 # .rulesync/skills/boards/SKILL.md (SOURCE — the mirror must equal it after
 # regeneration) for AC1-AC4: the dependency gate inside Card pickup, the
 # claim-time preload consumer with its lean STATE.json stamp and degrade
@@ -20,25 +20,29 @@
 # tools) — the wekan-mcp skill's failure-mode playbook's exact drift failure
 # this chunk warns about.
 #
-# AC trace: t1[C05 AC1 — gate shape: blocking types, Test/Finished by TITLE
-# at runtime, _id keying, both edge directions, archived exemption, audit
-# reporting; negatives: no hardcoded list ids in the file, no card_number
-# keying] t2[AC2 — consumer: claim-time call site named, NOT the hook; lean
-# stamp keys; per-card get_card kept for the claimed card; degrade to
-# today's reads + gate-skip] t3[AC3 — grouped flow: Executing-at-start /
-# Review-at-end, coord-owned, ride-the-claim, plan-enumerated degrade;
-# trigger names blocking edges ONLY (no parentId/kind-1, OQ1 negative)]
-# t4[AC4 — Follow-up cards: set_card_labels with tools/list-gated degrade,
-# parent_id passed on creation] t5[source↔mirror — the regenerated mirror
-# carries every pinned passage; rulesync output never hand-edited]
+# AC trace: t1[cf-124 C06 AC1-AC3 — gate shape INVERTED: related-to sole gating
+# type, source-is-dependent direction, blocks/is-blocked-by/fixes/duplicates
+# enumerated non-gating with a negative bar, satisfaction set/_id keying/reporting
+# unchanged, pickup-only scope, mutual/cycle never-gates-and-reports; negatives:
+# no hardcoded list ids, no blocks-gates sentence] t2[AC2 — consumer: claim-time
+# call site named, NOT the hook; lean stamp keys; per-card get_card kept for the
+# claimed card; degrade to today's reads + gate-skip] t3[cf-124 C06 AC4 — grouped
+# flow: Executing-at-start / Review-at-end, coord-owned, ride-the-claim,
+# plan-enumerated degrade; trigger = INBOUND related-to, outbound never a trigger,
+# fixes + parent_id never grouping (negative), settled rule cites membership
+# authority] t4[cf-124 C08 AC1/AC2 — follow-up lineage = parent_id AND a
+# child→parent fixes edge, non-effects + UPSERT re-run, parentId-ONLY supersession
+# bar; set_card_labels degrade] t5[source↔mirror — the regenerated mirror carries
+# every pinned passage; rulesync output never hand-edited]
 # t6[C11 OQ-P2 — degrade law gains the present-but-FAILED branch: a failed
 #     call degrades exactly like absence, at most ONE retry (the read is
 #     idempotent), never a stall. Needle groups tools/list|fails|retry|
 #     idempotent, min-span 261 (plan-sim 238) of 2400, ORIG infeasible on
 #     'fails'.]
 # t7[C11 OQ-P3 — unresolvable edge end never gates: non-gating|REPORT|
-#     deleted/moved away, min-span 117 (plan-sim 105) of 2600, ORIG
-#     infeasible on 'non-gating'.]
+#     deleted/moved away, min-span 117 (plan-sim 105) of 2600 — type-agnostic,
+#     survives the C06 rewrite UNCHANGED (a red here means the rewrite leaked
+#     into the unresolvable-endpoint rule).]
 # t8[C11 OQ-P3 — title-map fallback: block|map|swimlane in one Card-pickup
 #     window (the block's map carries only the named swimlane's lists),
 #     min-span 38, ORIG infeasible on 'swimlane' in this section. Chosen
@@ -46,11 +50,12 @@
 #     read green at ORIG (24) — the red/green discipline of this suite
 #     demands the swimlane-scope group.]
 #
-# Red posture: DESIGNED RED until C05 dev lands (verified at authoring
-# 2026-11-01: no dependency-gate / preload / grouped-sibling / set_card_labels
-# text in the boards skill). The file-wide negatives (no hardcoded ids) are
-# GREEN at base and HOLD. cf90-ledger's re-pin duty for the old follow-up
-# wording belongs to C05's own commit.
+# Red posture (cf-124): t1/t3/t4 DESIGNED RED until C06 (wave 2) and C08 (wave 3)
+# land their rewrites — t4 stays red through C06's window because the single
+# test session (D21) lands the whole ticket's re-pins in one pass, superseding
+# C06's note that t4 stays green "as shipped". t2/t5/t6/t7/t8 are UNCHANGED
+# shipped law and stay green. The file-wide negatives (no hardcoded ids) are
+# GREEN at base and HOLD.
 #
 # Usage:
 #   bash tests/boards-deps/surface.sh            # t1..t8
@@ -154,33 +159,73 @@ PY
   done
 }
 
-# --- t1: the pickup dependency gate (C05 T1 / AC1) ----------------------------------
+# --- t1: the pickup dependency gate — related-to sole type, source=dependent (C06) --
+# cf-96 C05 shipped "blocking edge set is EXACTLY blocks/is-blocked-by". OQ12/
+# OQ12b → D24 supersedes it: `related-to` is the ONLY gating type, the stored
+# source is the dependent (`A →related-to→ B` ⇒ A waits for B), `blocks`/
+# `is-blocked-by` become display-only, mutual/ambiguous pairs never gate and are
+# reported, and the gate decides only whether a card may START (a run already
+# holding its card reaches Review). Satisfaction set + skip/release/reporting
+# + _id keying + no-hardcoded-ids negatives are UNCHANGED shipped law.
 if want t1; then
-  check_pair "t1[C05 AC1]" "Card pickup" 2600 \
-    'dependen' 'is-blocked-by' 'blocks' \
-    || fail "t1[C05 AC1]: the Card-pickup dependency gate does not name the blocking edge types"
-  check_pair "t1[C05 AC1]" "Card pickup" 2600 \
-    'Test' 'Finished' 'skip' 'title' \
-    || fail "t1[C05 AC1]: the gate text lacks the target-list condition (a dependency satisfied = its card in Test OR Finished; list ids resolved by TITLE at runtime, never hardcoded)"
-  check_pair "t1[C05 AC1]" "Card pickup" 2600 \
+  check_pair "t1[C06 AC1/AC2]" "Card pickup" 2600 \
+    'dependen' 'related-to' 'waits for' \
+    || fail "t1[C06 AC1]: the gate does not state the direction law (A →related-to→ B means the SOURCE A is the dependent and WAITS FOR B) in one passage (C06 rewrite; related-to sole type, source-is-dependent — designed red before C06 dev)"
+  check_pair "t1[C06 AC2]" "Card pickup" 2600 \
+    'Test' 'Finished' 'archived' 'skip' 'title' \
+    || fail "t1[C06 AC2]: the satisfaction set changed — a prerequisite satisfies when archived OR in a list titled Test or Finished, resolved by TITLE at runtime (Review does NOT satisfy). This is unchanged shipped law; a red here means C06 moved it (it must not)"
+  check_pair "t1[C06 AC2]" "Card pickup" 2600 \
     '_id' 'card_number|cardNumber' \
-    || fail "t1[C05 AC1]: the gate must key on card _id and name card_number as display-only identity (RESEARCH C2 — numbers re-counter on cross-board moves)"
-  check_pair "t1[C05 AC1]" "Card pickup" 2600 \
-    'inverse' 'archived' \
-    || fail "t1[C05 AC1]: the gate text must honor BOTH edge directions (blocks stored on the dependency side via WeKan's inverse map) and exempt archived dependency targets"
-  check_pair "t1[C05 AC1]" "Card pickup" 2600 \
-    'RESULT' 'blocking' \
-    || fail "t1[C05 AC1]: skipped candidates must be reported (card id + blocking card id + its list) in the RESULT/claim comment so the walk is auditable"
-  python3 - "$SRC" <<'PY' || fail "t1[C05 AC1]: the gate does not pin that ONLY blocks/is-blocked-by edges gate pickup (related-to/fixes/duplicates never do — plan OQ2 ruling)"
+    || fail "t1[C06]: the gate must key on card _id and name card_number as display-only identity (unchanged — RESEARCH C2, numbers re-counter on cross-board moves)"
+  check_pair "t1[C06]" "Card pickup" 2600 \
+    'inverse|stored only|drawing card' 'archived' \
+    || fail "t1[C06 AC1]: the gate does not state that only the DRAWING card stores the edge (no server-side inverse twin) and archived prerequisites are exempt — the both-directions consumer rule collapses to this single-type law (designed red before C06 dev)"
+  check_pair "t1[C06 AC3]" "Card pickup" 2600 \
+    'start' 'Review' 'already|complete|holding' \
+    || fail "t1[C06 AC3]: the gate's SCOPE is missing — it decides only whether a card may START; a run already holding its card completes and hands it to Review, which stays the release point (OQ12b pickup-only; designed red before C06 dev)"
+  check_pair "t1[C06 AC2]" "Card pickup" 2600 \
+    'mutual|cycle' 'never gate|does not gate|neither gate' 'report' \
+    || fail "t1[C06 AC2 mutual-pair]: mutual / cycle pairs must NEVER gate and be REPORTED (the #126↔#140 deadlock preventer — the law, not an edge case). Proven by a separate negative below. Designed red before C06 dev"
+  check_pair "t1[C06]" "Card pickup" 2600 \
+    'RESULT' 'skip|prerequisit|block' \
+    || fail "t1[C06]: skipped candidates must still be REPORTED (candidate _id + far-end _id + its list) in the RESULT/claim comment so the walk is auditable (unchanged reporting duty)"
+  # INVERTED sole-type enumeration (was: ONLY blocks/is-blocked-by gate): the
+  # section must name related-to as the sole gating type AND enumerate
+  # blocks/is-blocked-by as display-only AND fixes/duplicates as never gating.
+  python3 - "$SRC" "$GEN" <<'PY' || fail "t1[C06 AC1]: the sole-gating-type + non-gating enumeration is not stated (reason above; designed red before C06 dev)"
 import re, sys
-sec = re.search(r"(?ms)^## Card pickup.*?(?=^## |\Z)", open(sys.argv[1]).read()).group(0)
-if not re.search(r"related-to|fixes|duplicates", sec):
-    sys.exit(1)
+for path in sys.argv[1:]:
+    sec = re.search(r"(?ms)^#{2,4}[^\n]*Card pickup.*?(?=^#{1,2} |\Z)", open(path).read())
+    if not sec:
+        print(f"{path}: no Card pickup section"); sys.exit(1)
+    s = sec.group(0)
+    if not re.search(r"related-to[^.]{0,200}\b(only|sole)\b[^.]{0,60}gat", s, re.I):
+        print(f"{path}: related-to is not stated as the ONLY/sole gating type (C06 AC1)"); sys.exit(1)
+    for t, rx in (("blocks", r"\bblocks?\b[^.]{0,120}display[- ]only|display[- ]only[^.]{0,120}\bblocks?\b|\bblocks?\b[^.]{0,80}never gat"),
+                  ("is-blocked-by", r"is-blocked-by[^.]{0,120}display[- ]only|display[- ]only[^.]{0,120}is-blocked-by|is-blocked-by[^.]{0,80}never gat"),
+                  ("fixes", r"fixes[^.]{0,80}never gat|never gat[^.]{0,80}fixes"),
+                  ("duplicates", r"duplicates[^.]{0,80}never gat|never gat[^.]{0,80}duplicates")):
+        if not re.search(rx, s, re.I):
+            print(f"{path}: {t} is not enumerated as non-gating/display-only (C06 AC1 — the plan requires the enumeration, not a 'contains related-to' relaxation)"); sys.exit(1)
+print("ok")
+PY
+  # NEGATIVE bar: reject any sentence that lets `blocks` GATE pickup (the
+  # superseded cf-96 OQ2 law). blocks may appear only as display-only here.
+  python3 - "$SRC" "$GEN" <<'PY' >/dev/null || fail "t1[C06 AC1 negative]: a sentence still lets \`blocks\`/\`is-blocked-by\` gate pickup — the display-only supersession is incomplete (the old EXACTLY-blocks law survives)"
+import re, sys
+for path in sys.argv[1:]:
+    sec = re.search(r"(?ms)^#{2,4}[^\n]*Card pickup.*?(?=^#{1,2} |\Z)", open(path).read())
+    if not sec:
+        sys.exit(1)
+    for sent in re.split(r"(?<=[.!?])\s+", sec.group(0)):
+        if re.search(r"\b(blocks?|is-blocked-by)\b", sent, re.I) and re.search(r"\b(gate|gates|gating|skip|skips|skipped)\b", sent, re.I) \
+           and not re.search(r"display[- ]only|never gat|not gat|non-gating|only.{0,40}related-to|sole|supersed|histor|retired|no longer|formerly|was the|old law", sent, re.I):
+            sys.exit(1)
 print("ok")
 PY
   grep -qF 'jNYNdCPPkX8Bs95s4' "$SRC" && fail "t1[C05 AC1 negative]: the boards SOURCE hardcodes the live Test list id — ids resolve from the board-context block/preload map BY TITLE; plan-time ids ride STATE.json kickoff.board_context for traceability" || true
   grep -qF 'DHw56fMKy3qyfudz4' "$SRC" && fail "t1[C05 AC1 negative]: the boards SOURCE hardcodes the live Finished list id — same rule" || true
-  ok "t1[C05 AC1]: dependency-gate contracts pinned in Card pickup (both files); no hardcoded ids file-wide"
+  ok "t1[C06 AC1-AC3]: gate inverted at equal strictness — related-to sole gating type (direction stated as a lab convention), blocks/is-blocked-by/fixes/duplicates enumerated non-gating with a negative bar against a blocks-gates sentence, satisfaction set + _id keying + reporting unchanged, pickup-only scope, and mutual/cycle pairs never-gate-and-report; no hardcoded ids file-wide"
 fi
 
 # --- t2: the preload consumer at claim (C05 T2 / AC2) --------------------------------
@@ -230,7 +275,7 @@ PY
   ok "t2[C05 AC2 + cf-106 C06 AC5]: preload consumer pinned — claim-time call site, hook exclusion, lean stamp, degrade law, and the new-field + claimed-card carve-out wording"
 fi
 
-# --- t3: the grouped-sibling flow section (C05 T3 / AC3) ------------------------------
+# --- t3: the grouped-sibling flow section (C06 T2 / AC4; was C05 T3 / AC3) -------
 if want t3; then
   [ -n "$(python3 - "$TMP/sec.py" "$SRC" "sibling" <<'PY'
 import sys
@@ -242,40 +287,87 @@ PY
   )" ] || fail "t3[C05 AC3]: $SRC has no grouped-sibling section (a heading naming 'sibling'/'siblings') — C05 T3 adds it as its own section so later tickets can cite it (designed red before C05 dev)"
   check_pair "t3[C05 AC3]" "sibling" 2400 \
     'Executing' 'Review' 'summary comment' \
-    || fail "t3[C05 AC3]: the grouped flow must pin siblings-to-Executing-at-start / siblings-to-Review-at-end with one summary comment each (coord-owned moves)"
+    || fail "t3[C05 AC3]: the grouped flow must pin siblings-to-Executing-at-start / siblings-to-Review-at-end with one summary comment each (coord-owned moves) — unchanged"
   check_pair "t3[C05 AC3]" "sibling" 2400 \
     'claim' 'never' \
-    || fail "t3[C05 AC3]: the ride-the-claim rule is missing — siblings run under the run's OWN claim, never claimed separately (one session, one card; the walk skips Executing so no double-pick)"
-  check_pair "t3[C05 AC3]" "sibling" 2400 \
-    'is-blocked-by' 'blocks' \
-    || fail "t3[C05 AC3]: the grouping trigger must name the blocking Red Strings edge types (kinds 2+3)"
+    || fail "t3[C05 AC3]: the ride-the-claim rule is missing — siblings run under the run's OWN claim, never claimed separately (one session, one card; the walk skips Executing so no double-pick) — unchanged"
+  check_pair "t3[cf-124 C06 AC4]" "sibling" 2400 \
+    'inbound' 'related-to' \
+    || fail "t3[cf-124 C06 AC4]: the grouping trigger is not the claimed card's INBOUND related-to edges — D24: cards whose prerequisite is the card this run holds ride the claim; the shipped blocks/is-blocked-by trigger is superseded (designed red before C06 dev)"
+  check_pair "t3[cf-124 C06 AC4]" "sibling" 2400 \
+    'outbound' 'never' \
+    || fail "t3[cf-124 C06 AC4]: the section does not say the OUTBOUND edges are prerequisites and NEVER a grouping trigger (reading the trigger from both ends would pull a card's own prerequisites into its run — the direction flipped with D24; designed red before C06 dev)"
+  check_pair "t3[cf-124 C06 AC4]" "sibling" 2400 \
+    'fixes' 'never' 'group|trigger' \
+    || fail "t3[cf-124 C06 AC4]: fixes/is-fixed-by are not named as never-grouping here — C06 must write it so C08's follow-up edge cannot be read as a trigger (designed red before C06 dev)"
+  check_pair "t3[cf-124 C06 AC4]" "sibling" 2400 \
+    'settled' 'Test' 'Finished' 'Executing' \
+    || fail "t3[cf-124 C06 AC4]: the 'never disturb the settled' rule lost its Test/Finished + Executing exclusions — they survive the rewrite, with the Executing leg citing the membership authority C02 landed instead of re-deriving a lock read"
   check_pair "t3[C05 AC3]" "sibling" 2400 \
     'plan-enumerated' 'degrade' \
     || fail "t3[C05 AC3]: the degrade path is missing — until edges exist, a run may operate from a plan-enumerated id list (this ticket's first instance does exactly that)"
-  python3 - "$SRC" <<'PY' || fail "t3[C05 AC3/OQ1 negative]: the sibling section lets parentId/kind-1 lineage read as a grouping trigger (the batched ruling makes follow-up lineage parentId-ONLY — it never groups)"
+  python3 - "$SRC" <<'PY' || fail "t3[cf-124 C06 AC4 negative]: the sibling section lets parent/fixes lineage read as a grouping trigger (neither ever groups — C06/C08)"
 import re, sys
 sec = re.search(r"(?ms)^#{2,3}[^\n]*sibling[^\n]*\n(.*?)(?=^#{1,4} |\Z)", open(sys.argv[1]).read(), re.I).group(0)
 for line in sec.splitlines():
-    if re.search(r"parent", line, re.I) and re.search(r"trigger|group", line, re.I) \
+    if re.search(r"parent|fixes", line, re.I) and re.search(r"trigger|group", line, re.I) \
        and not re.search(r"never|not|no\b|exclude|only", line, re.I):
-        print(f"affirmative parent-as-trigger line: {line.strip()[:100]}"); sys.exit(1)
+        print(f"affirmative parent/fixes-as-trigger line: {line.strip()[:100]}"); sys.exit(1)
 print("ok")
 PY
-  ok "t3[C05 AC3]: grouped-sibling flow pinned — moves, ride-the-claim, degrade path, blocking-edge-only trigger"
+  ok "t3[cf-124 C06 AC4]: grouped-sibling flow pinned — moves, ride-the-claim, degrade path (all unchanged), INBOUND related-to trigger with outbound never a trigger, fixes + parent_id non-trigger (line negative extended), settled rule keeps Test/Finished + Executing exclusions"
 fi
 
-# --- t4: follow-up cards — set_card_labels + parent_id (C05 T4 / AC4) -----------------
+# --- t4: follow-up cards — lineage is the ruled PAIR (C08; was C05 T4 / AC4) -----
+# Shipped arm (cf-96's OQ1 ruling): parent_id was the ONLY follow-up lineage
+# representation. D25 (OQ13) supersedes it WHERE THE SENTENCE LIVES — the pair
+# below is the new law, the ONLY-phrase becomes a reject, and the two
+# non-effects (fixes never gates, never groups) plus the UPSERT re-run are
+# pinned. The set_card_labels/tool-probe and labels-degrade legs are shipped
+# law this chunk must not disturb.
 if want t4; then
   check_pair "t4[C05 AC4]" "Follow-?up cards" 1500 \
     'set_card_labels' 'tools/list' \
-    || fail "t4[C05 AC4]: the Follow-up cards section must use set_card_labels for parent-label inheritance, gated on the tools/list probe with the comment line as the until-deployed degrade (AD-74 retirement)"
-  check_pair "t4[C05 AC4]" "Follow-?up cards" 1500 \
-    'parent_id' 'create_card' \
-    || fail "t4[C05 AC4]: follow-up creation must pass parent_id to create_card — the OQ1 ruling: parentId is the ONLY follow-up representation (no dependency edge drawn, none expected back)"
+    || fail "t4[C05 AC4]: the Follow-up cards section must use set_card_labels for parent-label inheritance, gated on the tools/list probe with the comment line as the until-deployed degrade (AD-74 retirement) — unchanged"
+  check_pair "t4[cf-124 C08 AC1]" "Follow-?up cards" 1500 \
+    'parent_id' 'create_card' 'add_card_dependency' 'fixes' 'child' \
+    || fail "t4[cf-124 C08 AC1]: the follow-up Mechanics does not carry BOTH lineage representations in one span — parent_id on create_card AND a `fixes` edge drawn at creation via add_card_dependency called ON THE CHILD (the stored source is the follow-up card, D25/C06 direction; designed red before C08 dev)"
+  check_pair "t4[cf-124 C08 AC2]" "Follow-?up cards" 1200 \
+    'not|never' 'gating' 'grouping' \
+    || fail "t4[cf-124 C08 AC2]: the non-effects are missing — fixes gates nothing (the gate reads related-to alone) and groups nothing, stated once in the bullet so nobody 'discovers' a new gate (designed red before C08 dev)"
+  check_pair "t4[cf-124 C08 AC2]" "Follow-?up cards" 1200 \
+    'upsert' 'refresh|re-run|duplicat' \
+    || fail "t4[cf-124 C08 AC2]: the UPSERT/re-run sentence is missing — add_card_dependency updates the edge, so re-running the protocol refreshes instead of duplicating (designed red before C08 dev)"
+  # Supersession bar: the plan's own needle — an ONLY-representation lineage
+  # assertion is the withdrawn ruling; a compliant bullet may mention the
+  # supersession without that phrase.
+  cat >"$TMP/only-lineage.py" <<'PY'
+import re, sys
+sys.exit(1 if re.search(r"(only|sole)[^.\n]{0,40}follow[- ]up lineage|follow[- ]up lineage[^.\n]{0,40}(only|sole)",
+                         open(sys.argv[1]).read(), re.I) else 0)
+PY
+  python3 - "$SRC" "$TMP/t4-single.md" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+sec = re.search(r"(?ms)^#{2,3}[^\n]*Follow[- ]?up cards.*?(?=^#{1,2} |\Z)", text).group(0)
+open(sys.argv[2], "w").write(sec + "\n`parent_id` is the ONLY follow-up lineage representation (the batched-round ruling — no dependency edge is drawn).\n")
+PY
+  python3 "$TMP/only-lineage.py" "$TMP/t4-single.md" >/dev/null 2>&1 \
+    && fail "t4 control: the fabricated parentId-ONLY copy PASSED the supersession bar — the negative arm is inert"
+  python3 - "$TMP/t4-pair.md" <<'PY'
+import sys
+open(sys.argv[1], "w").write("lineage is `parent_id` + a `fixes` edge from the child to the parent, drawn at creation — an explicit supersession of the batched-round single-representation ruling (owner OQ13, 2026-11-11)\n")
+PY
+  python3 "$TMP/only-lineage.py" "$TMP/t4-pair.md" >/dev/null 2>&1 \
+    || fail "t4 control: the fabricated two-representation copy was rejected — the bar is overscoped (it names the ONLY-lineage assertion, not the word only)"
+  for f in "$SRC" "$GEN"; do
+    python3 "$TMP/only-lineage.py" "$f" \
+      || fail "t4[cf-124 C08 AC1 negative]: $f still asserts parentId-only lineage (the superseded cf-96 OQ1 ruling) — D25 replaced it where the sentence lived (red until C08)"
+  done
   check_pair "t4[C05 AC4]" "Follow-?up cards" 1500 \
     'labels to apply' \
     || fail "t4[C05 AC4]: the comment-line degrade must STAY documented (it is the pre-deploy path) — retiring the WORDING while set_card_labels is still undeployed would leave no degrade"
-  ok "t4[C05 AC4]: follow-up protocol carries set_card_labels-with-degrade + parent_id lineage (AD-74 cite intact)"
+  ok "t4[cf-124 C08 AC1/AC2]: follow-up lineage pinned as the PAIR (parent_id + create_card AND add_card_dependency + fixes + child in one span), the fixes non-gating/non-grouping non-effects and the UPSERT re-run sentence, and the parentId-ONLY supersession bar — with a fabricated single-representation copy rejected and the ruled pair accepted; set_card_labels + labels-degrade legs unchanged"
 fi
 
 # --- t5: source↔mirror regeneration parity (C05 AC5) ---------------------------------

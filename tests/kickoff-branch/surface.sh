@@ -40,6 +40,10 @@
 #       sources (generate --check; a hand-edit or unregenerated source still
 #       fails this arm — no blind path whitelist), fail-closed when the
 #       generator is unresolvable (the freeze it replaced was unconditional)
+#   m7  cf-124 C05 — the gated mint leg: the unchecked `Worktree Creation`
+#       span is the D28 uncommitted-in-place, zero-commit posture (controls
+#       prove the arm satisfiable AND the withdrawn-wording negative live);
+#       designed red before C05 dev
 #
 # Red posture (post-landing, 2026-10-26/27): m1–m4 are GREEN — C01's script
 # landed at 5a335aff2, C02's text + third grant landed at c6689202c, and m4
@@ -157,10 +161,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 6); do WANT["m$i"]=1; done
+  for i in $(seq 1 7); do WANT["m$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^m[1-6]$ ]] || fail "unknown check id '$a' (expected m1..m6)"
+    [[ "$a" =~ ^m[1-7]$ ]] || fail "unknown check id '$a' (expected m1..m7)"
     WANT["$a"]=1
   done
 fi
@@ -1091,6 +1095,100 @@ if want m6; then
   timeout 180 $RS6 generate --check >"$TMP/m6-check.log" 2>&1 \
     || { tail -n 15 "$TMP/m6-check.log" >&2; fail "m6: the AGENTS.md/.rulesync/rules delta is NOT regeneration-explained — generate --check is not clean (hand-edit of a generated surface, or a rules edit with no mirror — cf-76 D7 carve)"; }
   ok "m6[hold]: commands dirs, the gate script and the pipeline-models/gates pairs byte-unchanged vs $notb (merge-window reference when MERGE_HEAD is live); AGENTS.md + .rulesync/rules carry the cf-76 regeneration carve and generate --check proves every delta is the current sources' output (via $RS6)"
+fi
+
+# --- m7: cf-124 C05 — the gated mint leg carries the D28 posture, not the
+#     owner-withdrawn stop design (AC1/AC2/AC3). Designed RED before C05 dev:
+#     today's mint bullet has no unchecked leg at all. The negative half is
+#     denial-aware — "no stop and no NEEDS_INFO exit" IS the amendment's own
+#     posture wording (C05 AC2), while an ASSERTED stop/precondition restores
+#     the withdrawn design (round-2 text, owner-corrected at approval).
+if want m7; then
+  cat >"$TMP/m7_check.py" <<'PY'
+# Mint-bullet posture + withdrawn-wording checker. argv: <file> <mode> where
+# mode = posture (unchecked leg states the D28 shape) | withdrawn (no asserted
+# stop/NEEDS_INFO/branch-precondition inside the unchecked leg).
+import re, sys
+
+path, mode = sys.argv[1], sys.argv[2]
+text = open(path).read()
+m = re.search(r"(?ms)^[ \t]*[-*][ \t]+\*\*Worktree \+ branch\*\*(.*?)(?=\n[ \t]*[-*][ \t]+\*\*|\n#|\Z)", text)
+if not m:
+    print(f"{path}: no 'Worktree + branch' bullet — the mint leg's home moved (harness fault if today, C05 must keep the bullet if it rewrote it)")
+    sys.exit(1)
+bullet = m.group(0)
+um = re.search(r"\bunchecked\b", bullet, re.I)
+if mode == "posture":
+    if not um:
+        print(f"{path}: the mint bullet has no unchecked leg — `Worktree Creation` is not yet gated in text (C05 AC1; designed red before C05 dev)")
+        sys.exit(1)
+    for rx, why in ((r"worktree creation", "names the gated stage"),
+                    (r"uncommitted", "states the uncommitted-in-place posture (D28)"),
+                    (r"no commits", "states the coordinator's zero-commit rule for such a run (D28)"),
+                    (r"never[- ]advance[- ]`?main", "keeps the never-advance-main limit in the same breath as the permission (D28's non-relaxation)")):
+        if not re.search(rx, bullet, re.I):
+            print(f"{path}: the mint bullet lacks /{rx}/ — {why} (C05 AC2)")
+            sys.exit(1)
+    if not (re.search(r"\bin place\b", bullet, re.I) or re.search(r"\blanding\b", bullet, re.I)):
+        print(f"{path}: the mint bullet never says WHERE the work happens ('in place' / 'landing' checkout) (C05 AC2)")
+        sys.exit(1)
+    print("ok")
+    sys.exit(0)
+# mode == withdrawn
+DENIAL = re.compile(r"\b(?:no|not|never|nothing|without|nor|neither)\b(?:[^.!?\n]|\n){0,50}$", re.I)
+WITHDRAWN = [r"\bstops?\b", r"\bstopping\b", r"\bhalt\b", "NEEDS_INFO",
+             r"\bpreconditions?\b", r"\bdetached\b", r"non-`?main`?", r"must already sit"]
+if not um:
+    # No mint-skip span exists yet, so there is nothing for the negative to
+    # bite on — the posture arm above is the designed red. Scanning the whole
+    # bullet here would fire on the CHECKED leg's shipped mechanics text
+    # (`worktree_create` arrives on detached HEAD), which is not withdrawn
+    # wording; the guard scopes to the unchecked leg exactly like the doctrine.
+    print("ok (no unchecked leg yet — vacuous green, the posture arm carries the red)")
+    sys.exit(0)
+leg = bullet[um.start():]
+hits = []
+for pat in WITHDRAWN:
+    for mm2 in re.finditer(pat, leg, re.I):
+        if DENIAL.search(leg[max(0, mm2.start() - 60):mm2.start()]):
+            continue  # a denial of the withdrawn design ("no stop") is the amendment's own wording
+        hits.append(mm2.group(0))
+if hits:
+    print(f"{path}: the mint-skip span ASSERTS withdrawn stop/NEEDS_INFO/branch-precondition wording {hits[:4]} (D28 — the owner withdrew it at approval; C05 AC3)")
+    sys.exit(1)
+print("ok")
+PY
+  # Controls first: the planned compliant leg must PASS both modes; a copy
+  # restored to the round-2 stop design must redden the withdrawn scan.
+  python3 - "$TMP/m7-compliant.md" "$TMP/m7-withdrawn.md" <<'PY'
+import sys
+HEAD = "- **Worktree + branch**: the leg runs when the card's checked `Lifecycle` includes `Worktree Creation` (the blank default checks it, so the ordinary path is unchanged). "
+TAIL = "A **resumed** run (worktree + branch present) is unaffected; the checked leg's mechanics above are unchanged. "
+COMPLIANT = HEAD + ("When it is **unchecked**: no `worktree_create`, no mint script, no warm, no `session_move`; "
+                   "the run works **in place**, in the checkout and branch it landed in — `main` included, with "
+                   "**no branch precondition, no stop and no `NEEDS_INFO` exit** — and **makes no commits**: the "
+                   "coordinator (the pipeline's sole committer) commits nothing, so the work accumulates as an "
+                   "uncommitted working tree handed back with its changed-file list; reviews read the working diff. "
+                   "Keep the limit loud: the never-advance-`main` law binds the same way, a commit onto `main` is a "
+                   "violation, and the uncommitted handback is the designed outcome, never a failure to report. ") + TAIL
+WITHDRAWN = HEAD + ("When it is **unchecked**: the run may work in the launch checkout only if that checkout already "
+                    "sits on a non-`main`, non-detached branch; otherwise it stops and returns RESULT `status: NEEDS_INFO`. ") + TAIL
+open(sys.argv[1], "w").write("# k\n\n" + COMPLIANT + "\n- **Session**: x\n")
+open(sys.argv[2], "w").write("# k\n\n" + WITHDRAWN + "\n- **Session**: x\n")
+PY
+  python3 "$TMP/m7_check.py" "$TMP/m7-compliant.md" posture >/dev/null 2>&1 \
+    || { python3 "$TMP/m7_check.py" "$TMP/m7-compliant.md" posture; fail "m7 control: the fabricated COMPLIANT D28 leg failed the posture pins — the dev-facing arm is unsatisfiable (harness fault)"; }
+  python3 "$TMP/m7_check.py" "$TMP/m7-compliant.md" withdrawn >/dev/null 2>&1 \
+    || { python3 "$TMP/m7_check.py" "$TMP/m7-compliant.md" withdrawn; fail "m7 control: the COMPLIANT leg reddened the withdrawn-wording scan — the denial-awareness is broken and would false-red dev (report, never relax the posture pins)"; }
+  python3 "$TMP/m7_check.py" "$TMP/m7-withdrawn.md" withdrawn >/dev/null 2>&1 \
+    && fail "m7 control: a copy restored to the owner-withdrawn stop design PASSED the negative arm — the guard is inert (D28 wording must never survive a re-wrap)"
+  for f in "$KICK_SRC" "$KICK_GEN"; do
+    python3 "$TMP/m7_check.py" "$f" posture \
+      || fail "m7[cf-124 C05 AC1/AC2]: $f does not gate the mint leg and state the D28 posture (uncommitted, in place, no commits, landing branch-agnostic, never-advance-main kept) in one span (designed red before C05 dev)"
+    python3 "$TMP/m7_check.py" "$f" withdrawn \
+      || fail "m7[cf-124 C05 AC3]: $f restores a stop / NEEDS_INFO / branch-precondition for the mint-skip case (the owner withdrew it at approval — D28)"
+  done
+  ok "m7[cf-124 C05 AC1-AC3]: the kickoff mint bullet is gated on `Worktree Creation` and its unchecked leg is ONE uncommitted-in-place, zero-commit posture with the never-advance-`main` limit kept — on source AND mirror; the denial-aware negative rejects any restored stop/NEEDS_INFO/non-main/detached precondition, proven live by a compliant fabrication (passes both arms) and a withdrawn-design fabrication (reddens)"
 fi
 
 printf 'PASS: kickoff-mints contract checks (%d ok)\n' "$checks"
