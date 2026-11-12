@@ -3419,19 +3419,21 @@ needed no re-pin (it carries no peers-map-equality leg — audited).
 **Red ledger at handoff (this session's additions; all name their chunk).**
 C01 LANDED (dev round + the 12.1 test repair round, 2026-11-12): its row is
 the history of what was greened; every surviving red names C02/C03/C04/C05/
-C06/C07 — at the current tree `charts/llama-swap/tests` = 8 failed (3× C07
-naming-flip, 5× C04 wiring/golden) / 485 passed / 9 skipped (standing
+C06/C07 — at the tree after the C07 landing round (12.2) `charts/llama-swap/tests`
+= 5 failed (all C04 wiring/golden-era arms; the 3× C07 naming-flip reds went
+green, off-parity re-baseline dissolved) / 488 passed / 9 skipped (standing
 evidence gates), `charts/vllm/tests` = 36 passed (incl. the 12.1 era
-re-pins), surface.sh bare = PASS, M8 + the C02/C03/C06/C07 suites red per
-the table:
+re-pins), `charts/amd-gpu/tests` 15/15 + `amd-gpu-naming.sh` PASS,
+`radiance-tp2.sh` PASS (C03 landed), surface.sh bare = PASS, M8 + the
+C02/C06 suites red per the table:
 
 | red arms | chunk that greens them |
 |---|---|
 | ~~test_vllm_peer T1+T4; test_vllm_disable_contract 8 of 9 legs; parity gpu-ai era leg; blast-radius carve refusal leg; strata_wiring peers-map leg; surface.sh M3/M4/M7~~ — **GREEN since the C01 landing round (see 12.1)** | **C01 (landed)** |
 | charts/radiance/tests: 37 arms | **C02** (the two cross-chart identity legs ALSO need C07's ledger; 2 arms skip LOUDLY naming C04) |
-| charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty | **C07** |
+| ~~charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty~~ — **GREEN since the C07 landing round (see 12.2; the re-baseline dissolved under B1)** | **C07 (landed)** |
 | test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green | **C04** |
-| surface.sh M8 + tests/notes/radiance-tp2.sh T1-T3 | **C05 / C03** |
+| ~~tests/notes/radiance-tp2.sh T1-T3~~ — **GREEN (C03 landed, suite PASS)** / surface.sh M8 | ~~**C03 (landed)**~~ / **C05** |
 | tests/notes/radiance-runbook.sh T1-T5 | **C06** |
 
 HOLD-green (must stay green across every wave): the coexistence baseline +
@@ -3553,3 +3555,46 @@ by the dev landing) · `surface.sh M8` designed-red naming C05 ·
 37F/2P/2S + `charts/amd-gpu` 15F + the notes suites red naming their chunks
 (unchanged posture). Review's C01 bar: the 13 flipped arms + bare surface —
 green.
+
+### 12.2 C07 landing round — the off-parity re-baseline DISSOLVES (B1 shield), naming-flip and n2/n3 re-scoped to per-cluster truth (test session, 2026-11-12)
+
+**The §12/§12.1 scheduled re-baseline — one entry:** the C07 landing round
+planned a re-capture of `evidence/off-parity/render-default.yaml` (round-1's
+tree-global flip would have moved exactly the main-container claim line — the
+§9.8-era cadence assigned it to this session in C07's landing round). Owner
+B1 (DECISIONS D21) moved the flip to the gpu-ai SERVICE OVERLAY, so the
+default render NEVER moves: the fixture is byte-equal on the landing tree
+(`test_c01_off_render_byte_identical_to_baseline` PASS, `git status` shows the
+fixture untouched), the structural arm likewise untouched, and NO sanctioned-
+growth allowance was engaged anywhere. The re-baseline collapses to this note
+— the zero-move is the shield's positive evidence, not an omission.
+
+Re-scoped arms (all four per chunks/C07.md "Pending test-round scope"):
+`test_cf143_naming_flip.py` is now res=-level per-cluster truth — gpu-ai
+overlay-merged render: limits EXACTLY {amd.com/gpu-8060s: 1} (null retired
+the bare key), explicit requests mirror present; gpu-cluster render: bare
+{amd.com/gpu: 1} INTACT, APU name absent (the shield proof); values-level:
+the chart's tree-global bare claim + its WHY comment pinned, APU-name live
+lines confined to the gpu-ai overlay file, R9700 nowhere (charts/radiance
+pre-allowed for C02) — realized-prose + tools-sidecar legs carried
+unchanged. `amd-gpu-naming.sh` n2 = overlay flip + null + chart claim-line
+untouched (env-gated same-wave guard extended: before/after `git show`
+proves the claim line's ZERO-DIFF at landing; verified biting on the
+uncommitted tree and rejecting a bad sha; runs green without the env with a
+loud skip); n3 = AC4 per-cluster sweep (bare ONLY the chart default, APU
+ONLY the gpu-ai overlay, R9700 nothing, services/gpu claim-free — comments/
+fixtures exempt as before); `test_provenance.py`'s renovate-window join
+flattened (mechanical, the round-1 form TypeErrors into str.join; the dev
+proved the flattened replay passes all three assertions on the shipped file
+— same bug fixed pre-emptively in charts/radiance/tests/test_renovate_
+ledger.py, same form, no bar moved; the same round gave radiance_testlib a
+C02-named chart_values_text() reader so missing-chart legs assert instead of
+tracing FileNotFoundError — message-quality only, no semantics).
+
+Posture after this round: `charts/amd-gpu/tests` 15/15 PASS · naming-flip
+6/6 PASS · `amd-gpu-naming.sh` PASS (n1-n5, guard env-gated) · off-parity
+3/3 PASS · `charts/llama-swap/tests` residuals 5 = test_radiance_peer T1/T3
++ test_coexistence_wiring ×3, ALL naming C04-era absences (peers.radiance /
+charts.radiance / radiance service block / radiance skip-comment) — none
+touches the C07 overlay, no further re-pin due; the §12 table's C07 row is
+GREEN from here.

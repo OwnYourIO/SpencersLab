@@ -12,6 +12,11 @@
 #
 # Red state at handoff (designed): every leg red until C07 lands (missing
 # files). Pure file reads — no helm, no skip.
+#
+# cf-143 C07 landing-round re-pin (dev-routed, chunks/C07.md "Pending test-
+# round scope" item 1): the renovate-window join flattens its per-tag line
+# windows before joining (the round-1 form nested lists into str.join and
+# TypeErrors); same facts, same window, no bar moved.
 
 from __future__ import annotations
 
@@ -110,7 +115,7 @@ def test_image_tag_renovate_pin_parses():
         f"C07: values.yaml carries no dp.image.tag: 1.31.0.12 line — the pin the naming "
         "strategy ships on (§R6-Q2: the tag IS values-reachable, the flag is not)"
     )
-    window = " ".join(lines[max(0, i - 6):i + 1] for i in tag_idx)
+    window = " ".join(ln for i in tag_idx for ln in lines[max(0, i - 6):i + 1])
     assert re.search(
         r"#\s*renovate:\s*datasource=docker\s+depName=docker\.io/rocm/k8s-device-plugin", window
     ), (

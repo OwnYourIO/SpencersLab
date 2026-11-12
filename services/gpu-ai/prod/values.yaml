@@ -42,11 +42,25 @@ charts:
   #   namespace: default
   #   ServerSideApply: "false"
 
-  # External charts (with version and repository)
+  # cf-143 C07 (DECISIONS D18/D19): the device-plugin chart is now the
+  # VENDORED internal charts/amd-gpu (upstream 0.22.0 + the args hook no
+  # released upstream chart carries), running the plugin at
+  # -resource_naming_strategy=product: the gpu-ai node advertises per-device
+  # pools amd.com/gpu-ai-pro-r9700 + amd.com/gpu-8060s and bare amd.com/gpu
+  # disappears THERE (per-cluster shield, D21: llama-swap's gpu-8060s flip is
+  # the overlay below in this same file, same commit — the gpu cluster keeps
+  # the external single-naming entry and the chart default's bare claim).
+  # Versionless entry => the base appset renders a git-path source; the
+  # Application keeps deriving gpu-ai-amd-gpu and the vendored templates keep
+  # the upstream object names, so the repo->git-path source flip swaps in
+  # place with no orphan prune (charts/base/templates/appset-charts.yaml).
   amd-gpu:
-    version: 0.22.0
-    repository: https://rocm.github.io/k8s-device-plugin/
     namespace: default
+    # The image pin moved with the vendor: the renovate tracking comment now
+    # lives in charts/amd-gpu/values.yaml as a docker datasource (the helm
+    # repository pin this entry carried is retired — D19). ServerSideApply
+    # "true" is KEPT: it eases the one-time args field-ownership watch on the
+    # source flip (plan Rollout notes).
     ServerSideApply: "true"
 
 ingress:
@@ -117,6 +131,25 @@ llama-swap:
                   secretKeyRef:
                     name: hf-token
                     key: token
+            # cf-143 C07 per-cluster flip (DECISIONS D21, owner B1 shield):
+            # product naming ships gpu-ai-only, so the APU claim flips HERE,
+            # not on the chart's tree-global default line — that must stay
+            # the bare amd.com/gpu the gpu cluster's single-naming 1.31.0.9
+            # plugin can actually advertise (live gpu-llama-swap 1/1 proof).
+            # Merge law (cf-97's per-app valuesObject fact, proven live):
+            # overlays deep-merge maps — keys ADD, they never remove — so
+            # the null on the inherited bare key is load-bearing: it is what
+            # RETIRES amd.com/gpu in this render, leaving exactly one GPU
+            # claim. The requests mirror is explicit for self-documentation;
+            # the scheduler auto-mirrors extended resources from limits
+            # anyway, and requests never inherited the bare key, so nothing
+            # needs nulling there.
+            resources:
+              limits:
+                amd.com/gpu: null
+                amd.com/gpu-8060s: 1
+              requests:
+                amd.com/gpu-8060s: 1
           # Operator provisioning sidecar (LoRA conversion, artifact staging).
           # Scripts at /app/tools (llama-swap-tools ConfigMap); work happens
           # under /models/.tools; see charts/llama-swap/scripts/llama_tools.py.

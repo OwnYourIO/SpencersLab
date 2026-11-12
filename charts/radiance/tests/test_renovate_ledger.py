@@ -10,6 +10,10 @@
 #
 # Red state at handoff (designed): every leg red until C02 lands. Pure file
 # reads — no helm, no skip.
+#
+# Window-join flattening carried from the cf-143 C07 landing round (same
+# str.join-of-lists bug class as charts/amd-gpu/tests/test_provenance.py,
+# fixed pre-emptively on the sibling form; no bar moved).
 
 from __future__ import annotations
 
@@ -18,6 +22,10 @@ import re
 import yaml
 
 import radiance_testlib as R
+
+
+def _values_text() -> str:
+    return R.chart_values_text()
 
 
 def _image_block_values() -> dict:
@@ -44,11 +52,11 @@ def test_renovate_pin_comment_parses():
     """The regex the repo's docker-pin idiom demands: '# renovate:
     datasource=docker depName=docker.io/stilldeadcode/radiance' directly
     above the tag line (the llama-swap precedent shape)."""
-    lines = R.CHART_DIR.joinpath("values.yaml").read_text().splitlines()
+    lines = _values_text().splitlines()
     tag_idx = [i for i, ln in enumerate(lines)
                if re.match(r"^\s*tag:\s*[\"']?1\.17\.0[\"']?\s*(#.*)?$", ln)]
     assert tag_idx, "C02 AC5: no image tag line `tag: 1.17.0` in charts/radiance/values.yaml"
-    window = " ".join(lines[max(0, i - 6):i + 1] for i in tag_idx)
+    window = " ".join(ln for i in tag_idx for ln in lines[max(0, i - 6):i + 1])
     assert re.search(
         r"#\s*renovate:\s*datasource=docker\s+depName=docker\.io/stilldeadcode/radiance", window
     ), (
@@ -75,7 +83,7 @@ def test_both_digests_ledgered_and_labeled():
     """AC5: BOTH radiance digests present, each labeled with WHICH identity
     it is (amd64 image-manifest vs index) — the RQ0 pin-shape nuance; an
     unlabeled digest pair is the ambiguity the guide's own pin hides."""
-    text = R.CHART_DIR.joinpath("values.yaml").read_text()
+    text = _values_text()
     digests = set(re.findall(r"sha256:[0-9a-f]{64}", text))
     assert R.AMD64_IMAGE_MANIFEST in digests, (
         "C02 AC5: the amd64 image-manifest digest sha256:6fb0e99b… is not ledgered in full "
@@ -99,7 +107,7 @@ def test_pack_ledger_comment():
     """The model-path comment carries the pack ledger (C02 task): HF repo,
     exact bytes, lfs sha, ungated — RESEARCH RQ0's pack table, the staging
     init's verification authority."""
-    text = R.CHART_DIR.joinpath("values.yaml").read_text()
+    text = _values_text()
     flat = " ".join(text.split())
     assert R.PACK_REPO in text, f"C02: the pack ledger omits the HF repo {R.PACK_REPO}"
     assert re.search(r"121[,_]?969[,_]?901[,_]?568", flat), (

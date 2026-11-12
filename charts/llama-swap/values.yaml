@@ -1042,6 +1042,16 @@ app-template:
               cpu: 1000m
               memory: 4Gi
             limits:
+              # THE CLAIM IS TREE-GLOBAL AND MUST STAY THE BARE NAME: this
+              # chart renders in TWO clusters and the gpu cluster's plugin is
+              # the external single-naming 1.31.0.9 (its amd-gpu entry in
+              # services/gpu/prod/values.yaml), which can only ever
+              # advertise amd.com/gpu — naming this line per-product would
+              # strand the live gpu-llama-swap. gpu-ai runs the vendored
+              # product-naming plugin and RETIRES this key in its render
+              # through the service overlay's null (cf-143 C07/D21
+              # per-cluster shield; there the APU is claimed by name,
+              # amd.com/gpu-8060s).
               amd.com/gpu: 1
           securityContext:
             allowPrivilegeEscalation: false
@@ -1325,14 +1335,24 @@ app-template:
               memory: 110Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
-            # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
-            # the plugin advertises by count and cannot name gfx1201 vs the
-            # 8060S on this mixed APU+dGPU node; chip hiding happens inside
-            # via rocrVisibleDevices. Accepted deviation from the repo
-            # drop-ALL standard, confined to this pod (the llama.cpp pod
-            # keeps its unprivileged shape untouched). Documented-not-built
-            # fallback once a naming-capable plugin exists: amd.com/gpu +
-            # IPC_LOCK/SYS_RESOURCE + non-privileged.
+            # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin;
+            # chip hiding happens inside via rocrVisibleDevices. Accepted
+            # deviation from the repo drop-ALL standard, confined to this pod
+            # (the llama.cpp pod keeps its unprivileged shape untouched).
+            # The naming capability this pod's ruling once waited on is
+            # REALIZED — but PER-CLUSTER (cf-143 C07, DECISIONS D18/D21): the
+            # vendored amd-gpu chart runs the plugin at
+            # -resource_naming_strategy=product on gpu-ai ONLY, where the
+            # node advertises per-device pools (amd.com/gpu-ai-pro-r9700 for
+            # radiance, C02; amd.com/gpu-8060s claimed by the gpu-ai service
+            # overlay's null-flip on llama-swap, retiring the nodeId-order
+            # APU accident as a named guarantee). The gpu cluster keeps the
+            # external single-naming plugin, so the chart default claim stays
+            # the bare name it can advertise. Strata keeps this privileged
+            # hostPath shape either way: per-name pools settle cross-card
+            # choice, never VRAM arbitration (Q5 coexistence, Q11 observe),
+            # and hostPath sits outside plugin accounting entirely
+            # (RESEARCH §R6-Q4-3).
             privileged: true
 
   service:

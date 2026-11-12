@@ -1,0 +1,96 @@
+# Vendored fork of upstream chart 0.22.0 - provenance, delta inventory and
+# refresh policy: Chart.yaml header; ruling: DECISIONS.md D18/D19 (cf-143).
+#
+# Product-naming ledger (-resource_naming_strategy=product on plugin
+# 1.31.0.12). RESEARCH §R6-Q1 ported naming.go/products.go against the
+# amdgpu.ids table baked into that image; computed per-device pools for the
+# ai-gpu node (one device each):
+#   7551, C0 -> gpu-ai-pro-r9700  (AMD Radeon AI PRO R9700, 32 GB dGPU)
+#   1586, C1|C3|C6|D1 -> gpu-8060s  (AMD Radeon 8060S Graphics, Strix APU)
+# The node advertises amd.com/gpu-ai-pro-r9700 + amd.com/gpu-8060s and bare
+# amd.com/gpu disappears - a stray bare claim schedules Pending by design
+# (loud). Claimants: radiance the R9700 pool (C02), llama-swap the APU pool
+# (C07 same-wave flip). Fallback trap: an unknown sysfs (device,revision)
+# pair lands its card under bare amd.com/gpu; the on-target receipts and the
+# remedy decision tree live in the cf-143 C06 runbook step-0 gates.
+
+nfd:
+  # Kept false as shipped: the live node has zero amd.com/* labels; waking
+  # the labeller/NFD classes is outside the cf-143 C07 flip wave.
+  enabled: false
+
+labeller:
+  enabled: false
+
+dp:
+  image:
+    repository: docker.io/rocm/k8s-device-plugin
+    # Overrides the image tag whose default is the chart appVersion.
+    # The .12 pin the product naming strategy ships on (first release with
+    # PR #246); the datasource=helm pin that lived on the gpu-ai service
+    # entry migrated here when the chart was vendored (D19).
+    # renovate: datasource=docker depName=docker.io/rocm/k8s-device-plugin
+    tag: "1.31.0.12"
+    # amd64 image-manifest digest of the 1.31.0.12 tag above
+    # (sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117)
+    # - ledger comment per D2 posture: tag + digest recorded, no digest field.
+  resources: {}
+  # Extra plugin args spliced after the restated image CMD (fork delta,
+  # templates/deviceplugin-daemonset.yaml). Product naming is the vendored
+  # chart's whole point; the list stays values-level so a per-cluster
+  # override can swap or drop the strategy without a template edit.
+  extraArgs:
+    - -resource_naming_strategy=product
+  # Set daemonsets updateStrategy for device plugin
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+
+lbl:
+  image:
+    repository: docker.io/rocm/k8s-device-plugin
+    tag: "labeller-1.31.0.9"
+  serviceAccount:
+    annotations: {}
+  securityContext:
+    # The labeller reads GPU properties from /sys and opens the DRM device nodes
+    # (/dev/kfd, /dev/dri) via libdrm. Those device nodes are mounted read-only by
+    # the DaemonSet, which is sufficient - no privilege or capabilities are needed.
+    privileged: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: false # true if -logtostderr flag set in labeller
+  # If you do want to specify resources, uncomment the following lines, 
+  # adjust them as necessary, and remove the curly braces after 'resources:'.
+  resources: {}
+    # limits:
+    #   memory: 20Mi
+    #   cpu: 100m
+    # requests:
+    #   memory: 30Mi
+    #   cpu: 150m
+  # Set daemonsets updateStrategy for labeller
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+
+imagePullSecrets: []
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists
+
+node_selector_enabled: false
+node_selector:
+  feature.node.kubernetes.io/pci-0300_1002.present: "true"
+  kubernetes.io/arch: amd64

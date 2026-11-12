@@ -123,15 +123,17 @@ def helm_ready() -> tuple[bool, str]:
     return True, ""
 
 
-def chart_exists() -> bool:
-    return (CHART_DIR / "values.yaml").is_file()
-
-
 def chart_values() -> dict:
-    assert chart_exists(), (
-        "C02: charts/radiance/values.yaml missing — the radiance engine chart is not implemented yet"
+    return yaml.safe_load(chart_values_text())
+
+
+def chart_values_text() -> str:
+    path = CHART_DIR / "values.yaml"
+    assert path.is_file(), (
+        "C02: charts/radiance/values.yaml missing — the radiance engine chart is not "
+        "implemented yet (missing chart reads as a named red, never a bare trace)"
     )
-    return yaml.safe_load((CHART_DIR / "values.yaml").read_text())
+    return path.read_text()
 
 
 def service_block() -> dict | None:

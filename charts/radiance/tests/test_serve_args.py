@@ -144,7 +144,7 @@ def test_scalars_commented_with_the_arithmetic():
     names the Q10 ruling class; the coexistence Pending handshake is on the
     record (64+64+4 > 125.08 — Pending beside a live strata is the designed
     handshake, not a bug)."""
-    text = R.CHART_DIR.joinpath("values.yaml").read_text()
+    text = R.chart_values_text()
     flat = " ".join(text.split())
     assert "60Gi-class" in flat, "C02: the guaranteedMemoryGi comment never names the owner's '60Gi-class' ruling (Q10)"
     assert "125.08" in flat and "Pending" in flat, (

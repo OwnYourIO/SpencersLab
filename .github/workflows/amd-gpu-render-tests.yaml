@@ -1,0 +1,49 @@
+# Render-contract tests for the VENDORED amd-gpu chart (cf-143 C07,
+# DECISIONS D18/D19): the args hook must keep rendering the restated image CMD
+# plus the product-naming flag under the upstream-pinned object names, and the
+# gpu-ai Application entry must keep its internal git-path shape — both
+# trigger this ladder. No `helm dependency update` step: the vendored chart
+# declares no dependencies (D19), so the fresh-clone render needs no registry.
+name: amd-gpu render tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/amd-gpu/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/amd-gpu-render-tests.yaml'
+  pull_request:
+    paths:
+      - 'charts/amd-gpu/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/amd-gpu-render-tests.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+
+      - name: Install Python dependencies
+        run: pip install pytest pyyaml
+
+      - name: Run test suite
+        run: pytest charts/amd-gpu/tests -v
+
+      - name: helm lint (chart)
+        run: helm lint charts/amd-gpu
+
+      - name: helm template (chart defaults)
+        run: helm template amd-gpu charts/amd-gpu --set domain=spencerslab.com --set clusterName=gpu-ai
