@@ -44,8 +44,8 @@ app-template:
   # COEXISTENCE ARITHMETIC: 64 (this) + 64 (strata's request) + 4 (llama-swap
   # outer) > 125.08 GiB node allocatable, so a radiance pod sits Pending with
   # "Insufficient memory" beside a live strata pod — LOUD, SAFE, the designed
-  # handshake of the owner's manual scale-down protocol (runbook step 9 owns
-  # down + restore-back). This is not a bug to "fix" by shrinking.
+  # handshake of the owner's manual scale-down protocol (runbook steps 3
+  # and 10 own down + restore-back). This is not a bug to "fix" by shrinking.
   guaranteedMemoryGi: 64
   hostPoolMib: 43000
   maxModelLen: 200000
@@ -80,7 +80,7 @@ app-template:
   # nodeId-ascending APU-first accident that crash-looped charts/vllm
   # 2026-11-07; the round-2 mis-allocation runtime-retry gate is SUPERSEDED
   # by that determinism — the startup-report PCI/gfx1201 assert survives only
-  # as belt-and-braces in the C06 runbook gate (e)). amd.com/gpu DISAPPEARS
+  # as belt-and-braces in the C06 step-7 receipt e). amd.com/gpu DISAPPEARS
   # from the GPU-AI NODE: a stray bare claim there schedules Pending-forever,
   # loud by design. Scope: that is per-cluster — the gpu cluster's plugin
   # stays single-naming 1.31.0.9 and its renders keep the bare name BY DESIGN
@@ -94,7 +94,7 @@ app-template:
   # and is MOOT here: each pool holds one device, so within-bucket choice
   # cannot exist. The fallback trap (a card whose sysfs (device,revision)
   # pair is unknown to the baked amdgpu.ids reverts to the bare amd.com/gpu
-  # name) is closed by the C06 step-0 receipts (a)-(c) BEFORE first boot, not
+  # name) is closed by the C06 step-0 gate (a) BEFORE first boot, not
   # by runtime logic. STRATA LAW (Q11): strata's privileged hostPath pod sits
   # PHYSICALLY on the same card this pool names — naming settles cross-card
   # choice, never VRAM arbitration; the radiance-vs-strata contention stays

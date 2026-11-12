@@ -249,7 +249,7 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": [
         "C01",
@@ -277,17 +277,33 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": [
         "C02",
         "C04",
         "C07"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; whole-plan ticket-wide bar green — nothing designed-red remains; sweep folded M1/M2-chart/N1)",
+      "dev_session": "ses_e31033972ffejwyyPYwvRTbY72",
+      "review_session": "ses_e30c107caffeLMPkas4t0yvJBR",
+      "commit": "a6dec689e (+ records sweep pending commit: runbook M1/N1 + chart M2 comments)",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T08:10:00+00:00", "session": "ses_e31033972ffejwyyPYwvRTbY72",
+          "result": "DONE — .agents/notes/radiance-on-target-acceptance.md (611 lines, step groups 0-11: posture/OWNER-EXECUTED law, D21/B1 belt, step-0 five gates (a)-(e) + sysfs receipts + fallback-trap tree + Pending-by-design handshake + GID-486 + memlock/nofile posture + classic host checklist; triple-digest ledger 1:1; Q10 scale-down protocol w/ selfHeal-suspend nuance; EXACTLY-ONE fenced args block extracted from the chart (no retyping); startup watch; 8-session gate + full up/down ladder; STARTUP REPORT receipts; higher-wins 9/5/1 live smoke w/ unflipped-detector; IMAGE smoke leg + retire-on-failure clause (closes C05 N2); Q11 coexistence observe-only; restore-back re-verifies the strata route; three rollback classes + lockstep-revert law). T1/T4/T5 green; VALIDATION_AT_FAULT T2/T3: mid-pattern (?m under python 3.14 PatternError (latent authoring bug, masked by T1 short-circuit) — routed; deviations: [2 30-min envelope = chart startupProbe 180x10s equality law (launch brief's 40-min was vllm lineage); 3 gate-letter vs receipt-letter reconciliation prose; 4 misc ~1.5 GiB = chunk-internal quote]."
+        },
+        {
+          "role": "test-round", "at": "2026-11-12T08:30:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE — two re.search flag repairs exactly per the dev's replay-proven proposal (inner (?m dropped, flags=re.S|re.M, zero semantics drift, two never-ran arms now actually run); runbook 5 ok; COMBINED §12.3 final check ALL GREEN (495/9S/0F, 41P, 15P, 36P, surface 9 ok + M1..M8 10 ok, naming 5, tp2 3); TEST_SPEC §12.5 flip record + flag-position class law (run env-overridable suites against conforming fixtures at authoring) + deviations 2-4 adjudicated CLOSED (30-min chart-equality; letters accepted; misc quote chunk-internal, not a T5 marker)."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T09:00:00+00:00", "session": "ses_e30c107caffeLMPkas4t0yvJBR",
+          "result": "APPROVED — full ticket-wide bar fresh (runbook 5 ok; 495/9S/0F after re-running clean-solo — first pass 3F was the reviewer's OWN backgrounding PATH-flake, disclosed; radiance 41P; amd-gpu 15P; vllm 36P; surface incl M8 10 ok; naming 5; tp2 3; dashboards 5; rulesync + aislop clean). Flag-repair integrity: byte-matches proposal, strictly MORE executable, no softening. Fact-check: digests/pool/9-5-1/64Gi/Q10 verbatim/strata-route restore-back/lockstep all verified vs RESEARCH+charts; startup envelope 1800s pinned in test; IMAGE smoke + retire-on-failure VERIFIED (C05 N2 hook discharged). Findings non-gating: M1 EXPLORE §7 mis-cite, M2 stale 'step 9'/'gate (e)' pointers chart+plan, N1 '~10-minute' unsourced — ALL folded same-day by the coord-routed records sweep (chart 3 spots + runbook 2, runbook suite re-green 5 ok)."
+        }
+      ]
     },
     "C07": {
       "status": "done",
@@ -326,7 +342,8 @@
     "N1 (C04 review r1): services/gpu-ai/prod/values.yaml:744 'ONLY this subtree' wording vs the appset generator's shared-storage merge — one-line wording at the file's next touch",
     "TEST_SPEC §12.4 capture-provenance note for the C04 golden round — landed in the C05 test round 86ed1e7bf (close this line)",
     "N1 (C05 review r1): .opencode/opencode.jsonc floor-sentence wording precision — next touch of the catalog block",
-    "N2 (C05 review r1, FORWARD HOOK): C06 review must verify the runbook's image-request smoke leg exists — both C05 surfaces stake the [text,image] claim on it"
+    "N2 (C05 review r1, FORWARD HOOK) CLOSED by C06 review r1: runbook image smoke leg VERIFIED present with the three-line retire-on-failure clause",
+    "plan-file pointer fold: line 49's Q10 bullet tail 'runbook step 9' → 'steps 3 and 10' (stale after C06 landed; plan-agent surface) — ride the next agent-plan touch; sweep deviation recorded in STATE C06 notes"
   ],
   "handoffs": [
     {

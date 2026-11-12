@@ -30,10 +30,10 @@ manifests directly with kubectl (the repo's first hard rule). Host-side
 commands run on the `ai-gpu` node (Tumbleweed + k3s); every kubectl line
 here is READ-ONLY (`get`, `describe`, `logs`, `top`); pod-internal checks
 run through the operator's own pod access — no agent tier grants pod exec
-(EXPLORE §7). The two cluster mutations in the protocol — the strata
-scale-down (step 3) and restore (step 10) — are OWNER-EXECUTED out-of-band
-commands marked as such; the sync itself is ArgoCD's own reconciliation,
-never a runbook instruction line.
+(RESEARCH RQ3; AGENTS MCP law). The two cluster mutations in the protocol
+— the strata scale-down (step 3) and restore (step 10) — are OWNER-EXECUTED
+out-of-band commands marked as such; the sync itself is ArgoCD's own
+reconciliation, never a runbook instruction line.
 
 **Scope belt (D21/B1).** Every gate here is gpu-ai-scoped. The gpu cluster's
 plugin posture — the EXTERNAL amd-gpu chart 0.22.0 at 1.31.0.9, single
@@ -290,8 +290,8 @@ ls -ln "$(ls -d /var/lib/rancher/k3s/storage/*llama-swap* | head -1)/radiance/"
 
 Expect the "radiance staging: complete" (or marker-skip) line and a listing
 where the `.rad` and its marker are owner/group `65532:65532`. A re-check of
-the 113.6 GiB file with `sha256sum` is a ~10-minute full read — run it only
-if the marker is doubted (the init already gate-verified it).
+the 113.6 GiB file with `sha256sum` is a minutes-class full read — run it
+only if the marker is doubted (the init already gate-verified it).
 
 Non-privileged-class FIRST TRAP — loud by design, not silent: the file must
 be readable by the dedicated UID/gid through the fsGroup (`OnRootMismatch`,
