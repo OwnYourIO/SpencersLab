@@ -3416,11 +3416,18 @@ by this wave (its per-key scope keeps governing strata + the cf-77 additive
 delta); the radiance sibling is its first per-key extension. `test_strata_untouched.py`
 needed no re-pin (it carries no peers-map-equality leg — audited).
 
-**Red ledger at handoff (this session's additions; all name their chunk):**
+**Red ledger at handoff (this session's additions; all name their chunk).**
+C01 LANDED (dev round + the 12.1 test repair round, 2026-11-12): its row is
+the history of what was greened; every surviving red names C02/C03/C04/C05/
+C06/C07 — at the current tree `charts/llama-swap/tests` = 8 failed (3× C07
+naming-flip, 5× C04 wiring/golden) / 485 passed / 9 skipped (standing
+evidence gates), `charts/vllm/tests` = 36 passed (incl. the 12.1 era
+re-pins), surface.sh bare = PASS, M8 + the C02/C03/C06/C07 suites red per
+the table:
 
 | red arms | chunk that greens them |
 |---|---|
-| test_vllm_peer T1+T4; test_vllm_disable_contract 8 of 9 legs (the scoped sentinel arm is the planned HOLD-green); parity gpu-ai era leg; blast-radius carve refusal leg; strata_wiring peers-map leg; surface.sh M3/M4/M7 | **C01** |
+| ~~test_vllm_peer T1+T4; test_vllm_disable_contract 8 of 9 legs; parity gpu-ai era leg; blast-radius carve refusal leg; strata_wiring peers-map leg; surface.sh M3/M4/M7~~ — **GREEN since the C01 landing round (see 12.1)** | **C01 (landed)** |
 | charts/radiance/tests: 37 arms | **C02** (the two cross-chart identity legs ALSO need C07's ledger; 2 arms skip LOUDLY naming C04) |
 | charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty | **C07** |
 | test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green | **C04** |
@@ -3463,3 +3470,86 @@ vllm-dashboards.sh (owner's follow-up, untouched).
    AGENTS MCP law), `argocd app sync` barred outright (vllm T2 law carried).
 8. docker build legs: N/A this ticket (no containers/ change) — recorded
    honestly per the repo's CI-deferred posture.
+
+### 12.1 C01 landing round — the disable lands, the golden re-captures, the runbook retires, 4 charts/vllm arms era-flip (dev + test repair, 2026-11-12)
+
+Coordinated round on the uncommitted C01 dev tree (branch tip `6400c3331` +
+dev edits). Dev landed: the services `charts.vllm` entry + `peers.vllm`
+commented with the cf-143 marker, the top-level `vllm:` key kept as an
+EXPLICIT EMPTY FLOW MAP in split-line form (`vllm:` / marker comments / `{}`
+— parses to exactly `{}`, my AC1 leg + the trio leg both read it), the two
+overrides preserved commented underneath; the workflow extraction hardened to
+`d.get('vllm') or {}`; the three jsonc vllm rows commented (strict JSON
+parses, 83 live rows, zero live vllm keys); the runbook doc DORMANT header
+(cf-143 + superseded, body untouched); `tests/notes/vllm-runbook.sh`
+DELETED. The chart implementation `charts/vllm/{Chart.yaml,Chart.lock,
+values.yaml,templates/**}` is byte-untouched — AC3's reversible-while-
+disabled witness.
+
+**Golden re-capture provenance (dev obligation, §1 pattern; this wave's
+TEST_SPEC note is mine per §12):** `golden/gpu-ai.config.yaml` re-captured at
+39158 → 38944 B (handoff byte counts; the file's only data change is EXACTLY
+the 10-line `peers.vllm` block deletion, verified pre-capture by the dev's
+render diff — llama-swap full render pre/post differs by the same 10 lines).
+The §9.26 column-0 preload-ruling annotations are preserved verbatim at their
+anchor (T4's exempted layer); the gpu-cluster golden untouched. The
+re-pinned `test_vllm_peer.py` T4 + the parity era legs went green at once
+with the capture — no residual drift reds.
+
+**vllm-runbook.sh retirement record (the §12 "retirement note" owed here):**
+`tests/notes/vllm-runbook.sh` (the cf-105 C06 / cf-131 C05 contract suite for
+`.agents/notes/vllm-on-target-acceptance.md`) is retired WITH C01 — the vllm
+(vllm-radiance FORK lane) catalog rows it cross-checked are disabled, so the
+suite retires with its lane (owner Q3, DECISIONS D6: "the vllm-runbook suite
+retires when its catalog rows sleep"). Its memory lives in TWO places by
+design: the negative needle in surface.sh M4 (suite ABSENT + the doc's
+cf-143/superseded header check — M4 goes red if anyone resurrects the script
+or the doc loses its header) and `test_vllm_disable_contract.py::test_runbook_doc_kept_superseded_and_script_retired`.
+The runbook DOC itself STAYS (header-only edit) — engine dormant, owner
+circles back; deleting the body would have broken the reversible-while-
+disabled law.
+
+**4-arm era inversion (validation-at-fault, coord-routed to the test session
+per pipeline-gates; referee = chunks/C01.md AC1 + AC3).** The C01 dev hit 4
+charts/vllm/tests arms pinning ENABLE-era service shapes — a collision the
+plan foresaw (EXPLORE test-breakage inventory) but the wave's HOLD list did
+not cover, because charts/vllm/tests was expected byte-untouched while its
+ARMS couple to the service block. Mechanically re-pinned, semantics kept:
+
+1. `test_trio::test_trio_charts_vllm_entry_is_exact` — enable-era exact-entry
+   equality → the AC1 DISABLED shape: no live `vllm` key under charts, the
+   exact `{namespace, ServerSideApply: "false"}` trio preserved commented
+   (the re-enable recipe, gotcha-6 pin included), cf-143 marker within the
+   900 chars above the commented block (AC7).
+2. `test_trio::test_trio_vllm_block_carries_the_two_overrides` — enable-era
+   exactly-two-overrides equality → top-level `vllm` parses to EXACTLY `{}`
+   (the gotcha-14 workflow survivor, null rejected) with both overrides
+   (`modelPath`, `rocrVisibleDevices: "0"`) present commented underneath the
+   key + the cf-143 marker in that region.
+3. `test_render::test_ac2_serve_args_are_the_contract_recipe_verbatim` and
+4. `test_render::test_ac2_container_env_is_exactly_the_contract_set` — SPLICE
+   SOURCE re-point only: both still render at SERVICE level (the {}-overlay
+   must stay INERT — the dev's cmp proof: service-level render byte-identical
+   to the chart-default render), and read the model/rocr splice values from
+   the CHART's own `app-template:` values keys (gotcha 7 already made the
+   chart the true splice source; the enable-era service mirror retired with
+   Q3). The full contract bars are unchanged: recipe verbatim + args[0]
+   model-path law + no-double-verb + the 21-var exact env set + the named
+   drops + the hard-read idiom (no default that could hollow the assert).
+   Each arm gained the `block == {}` era guard, so a re-enable that
+   reintroduces service-side overrides goes RED here and forces a test-
+   session re-pin — the same era-inversion shape `test_vllm_peer.py` applies
+   from the peer side. No other arm in either file moved; the
+   skip-comment/no-subdomain/sibling-surface HOLDs and AC1's dual-render
+   sentinel bar are byte-untouched and green.
+
+**Bar after this round** (all PATH-exported, deps fetched): `charts/vllm/tests`
+36 passed / 0 failed · `charts/llama-swap/tests` 8 failed / 485 passed /
+9 skipped (residuals name ONLY C04 ×5 — radiance peer + wiring legs — and
+C07 ×3 — the flip needles) · `bash tests/pipeline-models/surface.sh` bare
+PASS (9 ok, M1–M7 — M3 absence/M4 retirement/M7 parse-absent flipped green
+by the dev landing) · `surface.sh M8` designed-red naming C05 ·
+`tests/services/vllm-dashboards.sh` PASS (untouched) · `charts/radiance`
+37F/2P/2S + `charts/amd-gpu` 15F + the notes suites red naming their chunks
+(unchanged posture). Review's C01 bar: the 13 flipped arms + bare surface —
+green.

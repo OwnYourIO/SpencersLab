@@ -540,6 +540,16 @@ fi
 # containers/wekan-mcp/*, skills/wekan-mcp/*, .agents/loops/* and .rulesync/*
 # + .opencode/{commands,skills}/*. Harness state, not repo drift (plan
 # DECISIONS baseline note).
+# cf-143 (2026-11-12, agent-test round, chunks/C01..C07 files-in-scope): the
+# radiance serving ticket — own plan folder on the D9 rule plus its declared
+# serving surfaces, exact style per the cf-86 precedent: the two new chart
+# trees (charts/radiance/*, charts/amd-gpu/*), the vllm ERAS TEST TREE only
+# (charts/vllm/tests/* — C01's era re-pins; charts/vllm/** stays out, the
+# byte-untouched-disabled guarantee keeps teeth), the three render-test
+# workflow files, the three exact notes docs. The rest rides existing admits
+# (.rulesync/skills/* covers pipeline-models, .opencode/opencode.jsonc, the
+# llama-swap values/tests pair, the gpu-ai overlay, tests/*). Same-line
+# widening on replan (cf-106 rule).
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -585,6 +595,12 @@ if want c8; then
       skills/wekan-board-provision/*|\
       .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
+      charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\
+      .github/workflows/vllm-render-tests.yaml|.github/workflows/radiance-render-tests.yaml|\
+      .github/workflows/amd-gpu-render-tests.yaml|\
+      .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
+      .agents/notes/radiance-second-gpu-tp2.md|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*) return 0 ;;
       *) return 1 ;;
     esac
@@ -617,12 +633,13 @@ if want c8; then
            containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
            charts/llama-swap/templates/deployment.yaml \
            charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
-           .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md; do
+           .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md \
+           charts/vllm/values.yaml services/gpu/prod/values.yaml; do
     if c8_admits "$p"; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair) and the cf-106/cf-123 own-folder admits; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits and the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs — charts/vllm/values.yaml and services/gpu stay probed OUT); undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

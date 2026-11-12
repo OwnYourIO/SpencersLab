@@ -362,6 +362,16 @@ fi
 # .rulesync/*, .opencode/{agents,commands,skills}/*, AGENTS.md, tests/*,
 # scripts/*, containers/wekan-mcp/*, skills/*, .opencode/plugin/* and
 # .agents/loops/* admits. A replan-added file joins THIS line.
+# cf-143 widening (2026-11-12, agent-test round, chunks/C01..C07): the
+# radiance serving ticket — own plan folder (D9 rule) + its declared serving
+# surfaces exact-style (cf-86 precedent): charts/radiance/* and
+# charts/amd-gpu/* (the two new chart trees), charts/vllm/tests/* (the C01
+# era re-pins ONLY — charts/vllm/** itself stays out, byte-untouched-
+# disabled), the three render-test workflow files and the three notes docs.
+# Its skills/catalog/llama-swap/gpu-ai/tests edits ride the
+# .rulesync/skills/*, .opencode/skills/*, .opencode/opencode.jsonc,
+# charts/llama-swap/{values.yaml,tests/*}, services/gpu-ai/prod/values.yaml
+# and tests/* admits already in this set. A replan-added file joins THIS line.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -410,11 +420,17 @@ if want c7; then
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
+      charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\
+      .github/workflows/vllm-render-tests.yaml|.github/workflows/radiance-render-tests.yaml|\
+      .github/workflows/amd-gpu-render-tests.yaml|\
+      .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
+      .agents/notes/radiance-second-gpu-tp2.md|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
-      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
+      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-143 radiance admits in the union)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

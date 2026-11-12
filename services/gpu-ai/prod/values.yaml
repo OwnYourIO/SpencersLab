@@ -32,9 +32,15 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-  vllm:
-    namespace: default
-    ServerSideApply: "false"
+  # cf-143 C01 (owner Q3 ruling, DECISIONS D6): the vllm lane — charts/vllm,
+  # the magiccodingman/vllm-radiance FORK engine, NOT the cf-143 radiance
+  # engine — is disabled here, commented out rather than deleted so the
+  # re-enable stays a locate-and-uncomment. gpu-ai-vllm already sits at
+  # replicas 0 out-of-band; commenting the entry is what makes that disable
+  # declarative (an ArgoCD selfHeal sync could otherwise resurrect it).
+  # vllm:
+  #   namespace: default
+  #   ServerSideApply: "false"
 
   # External charts (with version and repository)
   amd-gpu:
@@ -46,10 +52,14 @@ charts:
 ingress:
   subdomains:
     # cf-105 (D7/Q4 ruling): deliberately NO vllm host — the trio rule's
-    # proxy leg is skipped, cluster-internal only: the engine is reached
-    # only through the llama-swap peers.vllm hop (C03) on the existing
-    # llama host below. A host of its own would publish the surface the
-    # peers hop exists to keep private.
+    # proxy leg is skipped, cluster-internal only: while the lane served, the
+    # engine was reached only through the llama-swap peers.vllm hop (C03) on
+    # the existing llama host below. A host of its own would publish the
+    # surface the peers hop exists to keep private.
+    # cf-143 C01 (owner Q3): the lane is dormant-commented now (charts.vllm
+    # and peers.vllm are comments), so this skip has no client at all — but it
+    # is not a disable artifact: a re-enable uncomments the hop and still adds
+    # no host, same D7/Q4 ruling.
     # cf-77: deliberately NO strata host — the trio rule's proxy leg is
     # skipped by the operator's Q4 ruling (DECISIONS 2026-10-27): the engine
     # pod is cluster-internal, reached only through the llama-swap peers
@@ -531,6 +541,11 @@ llama-swap:
         timeouts:
           responseHeader: 1800
           connect: 30
+      # cf-143 C01 (owner Q3 ruling, DECISIONS D6): the peers.vllm hop is
+      # disabled commented-out beside its charts.vllm entry — this is the
+      # vllm-radiance FORK lane (charts/vllm), not the cf-143 radiance engine.
+      # A re-enable uncomments this block together with the charts.vllm entry
+      # and the three qwen3.8-27b-vllm rows in .opencode/opencode.jsonc.
       # cf-105 C03: the vLLM engine (charts/vllm, C02) is reached
       # through this surface only (D7 — no ingress of its own, HR4).
       # proxy carries NO /v1 suffix: the request path is appended
@@ -548,16 +563,16 @@ llama-swap:
       # the strata C-A ruling). The peer model stays OUT of the
       # matrix below: invisible to the solver, so R9700 coexistence
       # with Strata remains operator discipline (D5, HR6).
-      vllm:
-        proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
-        models:
-          - qwen3.8-27b-vllm
-        timeouts:
-          responseHeader: 1800
-          connect: 30
-        filters:
-          setParams:
-            "priority?": 5
+      # vllm:
+      #   proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
+      #   models:
+      #     - qwen3.8-27b-vllm
+      #   timeouts:
+      #     responseHeader: 1800
+      #     connect: 30
+      #   filters:
+      #     setParams:
+      #       "priority?": 5
     matrix:
       # vars moved chart-side with the catalog (CA2): one var per catalog
       # rung, names kept identical so the set expressions below resolve
@@ -602,18 +617,29 @@ llama-swap:
 # R9700. Cluster-internal by the Q4 ruling — no host of its own (see the
 # subdomains skip note above); C03 wires the llama-swap peers.vllm hop on
 # the llama host as the sole client route.
+# cf-143 C01 (owner Q3 ruling, DECISIONS D6): the vllm lane — charts/vllm, the
+# magiccodingman/vllm-radiance FORK engine, NOT the cf-143 radiance engine — is
+# disabled: this block's two overrides are commented out below and the
+# ApplicationSet entry + peers.vllm hop above go with them.
 vllm:
-  app-template:
-    # The RAW RELEASE dir of the served Quark MXFP4 checkpoint — identical
-    # to the chart's modelPath (the round-2 Q8 ruling drops the rewrite
-    # tree; the chart's modelPath comment carries the full record, and the
-    # source pin 93245f7c00f1a8964b66a97c6e02e2fd09080be4 lives in the C03
-    # staging marker + the chart comment + the runbook, NOT in the path). A
-    # retarget is the dual edit of the chart's modelPath/serveArgs with this
-    # re-pin kept in sync — the chart's anchored serveArgs splices the
-    # CHART-level modelPath (anchors resolve per-document), so this key
-    # alone does not change the rendered args; the suite's
-    # args[0] == service modelPath assert guards the divergence.
-    modelPath: /models/Qwen3.8-27B-Quark-AWQ-MXFP4
-    # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
-    rocrVisibleDevices: "0"
+  # cf-143 disable shape: the KEY stays live as an explicit empty flow map,
+  # never deleted — .github/workflows/vllm-render-tests.yaml extracts this
+  # subtree for its service-level `helm template -f` leg, and a missing key
+  # there is EXPLORE gotcha 14 (the job raises). Re-enable = uncomment the
+  # block below and flip the charts.vllm + peers.vllm comment-outs back; the
+  # chart is byte-untouched, so its defaults render while the lane sleeps.
+  {}
+  # app-template:
+  #   # The RAW RELEASE dir of the served Quark MXFP4 checkpoint — identical
+  #   # to the chart's modelPath (the round-2 Q8 ruling drops the rewrite
+  #   # tree; the chart's modelPath comment carries the full record, and the
+  #   # source pin 93245f7c00f1a8964b66a97c6e02e2fd09080be4 lives in the C03
+  #   # staging marker + the chart comment + the runbook, NOT in the path). A
+  #   # retarget is the dual edit of the chart's modelPath/serveArgs with this
+  #   # re-pin kept in sync — the chart's anchored serveArgs splices the
+  #   # CHART-level modelPath (anchors resolve per-document), so this key
+  #   # alone does not change the rendered args; the suite's
+  #   # args[0] == service modelPath assert guards the divergence.
+  #   modelPath: /models/Qwen3.8-27B-Quark-AWQ-MXFP4
+  #   # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
+  #   rocrVisibleDevices: "0"

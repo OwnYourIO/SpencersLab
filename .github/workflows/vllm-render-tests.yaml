@@ -53,7 +53,12 @@ jobs:
       - name: helm template (chart defaults)
         run: helm template vllm charts/vllm --set domain=spencerslab.com --set clusterName=gpu-ai
 
+      # cf-143 C01: the vllm service block (charts/vllm — the magiccodingman/
+      # vllm-radiance FORK lane, not the cf-143 radiance engine) is disabled
+      # commented-out in the service values, so the extraction must survive an
+      # empty AND a removed `vllm:` key (EXPLORE gotcha 14): `d['vllm']` raises
+      # the day the owner deletes the key and cleans up the comment-outs.
       - name: helm template (service-level values)
         run: |
-          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d['vllm'], open('/tmp/vllm-vals.yaml','w'))"
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('vllm') or {}, open('/tmp/vllm-vals.yaml','w'))"
           helm template vllm charts/vllm -f /tmp/vllm-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai

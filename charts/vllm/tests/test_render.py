@@ -11,7 +11,12 @@
 # branching is explained in vllm_testlib; the deliberately-unchanged legs
 # (security/devices/resources/annotations/Service/hand-written PVC) are every
 # chunk's stability witness — if one ever needs a hand edit to stay green,
-# that is scope creep, not test maintenance.
+# that is scope creep, not test maintenance. cf-143 C01 re-pin (validation-
+# at-fault, coord-routed): the AC2 serve-args + env arms' SERVICE-block splice
+# sources flipped to the chart's own values (the service vllm: block is the
+# disabled {} since Q3; the renders stay service-level to pin the overlay's
+# inertness — the only moved legs; AC1's dual-render sentinel bar and every
+# other arm byte-untouched).
 
 from __future__ import annotations
 
@@ -49,25 +54,41 @@ def test_ac2_serve_args_are_the_contract_recipe_verbatim():
     as args[0] — the 0.30 entrypoint does `exec vllm serve "$@"`, so a
     vllm/serve token or a --model flag would double the verb the image
     already supplies (R3 L1.3).
-    No silent mutation (add, drop, reorder, re-value) survives this bar."""
+    No silent mutation (add, drop, reorder, re-value) survives this bar.
+
+    cf-143 C01 era inversion of the SPLICE SOURCE only (validation-at-fault
+    repair, routed by coord from the C01 dev round): the service `vllm:` block
+    is now the disabled empty flow map (owner Q3), so the enable-era
+    "service modelPath" splice source is gone. The arm keeps rendering at
+    SERVICE level — the {} overlay must stay INERT (the dev's cmp proof: the
+    service-level render is byte-identical to the chart-default render) — and
+    reads the splice from the CHART's own values, which always carried the
+    same anchor (gotcha 7: the anchored serveArgs splices the CHART-level
+    modelPath; the service re-pin only had to mirror it). A re-enable that
+    reintroduces a service-side override turns the block=={} guard red and
+    forces this era-pin to be re-pinned by a test session — never silently."""
     docs, _ = _service_render()
     container = V.main_container(V.deployment(docs))
     block = V.service_vllm_block()
-    sub = block.get("app-template")
-    assert isinstance(sub, dict) and "modelPath" in sub, (
-        "C07 AC2: the service vllm: block must carry modelPath under its app-template: subtree "
-        "(the repo app-template idiom — the model splice source)"
+    assert block == {}, (
+        "cf-143 C01 AC1: the service vllm: block must be the explicit empty flow map {} "
+        f"(got {block!r}) — this arm renders its inertness; re-enable re-pins the era test-side"
+    )
+    sub = (V.chart_values().get("app-template") or {})
+    assert "modelPath" in sub, (
+        "C02 AC2: charts/vllm values lost the modelPath anchor — the splice source this arm "
+        "now reads directly (the enable-era service mirror is retired, cf-143 C01)"
     )
     model_path = sub["modelPath"]
-    V.assert_model_path_shape(model_path, "service values")
+    V.assert_model_path_shape(model_path, "chart values")
     args = container.get("args", [])
     if V.cf131_plane():
-        # The dual edit, render-side: chart anchor, service override and the
-        # leading arg are the same exact raw-release dir (AC3).
-        chart_model = (V.chart_values().get("app-template") or {}).get("modelPath")
-        assert chart_model == model_path == V.MODEL_DIR, (
-            f"C02 (cf-131) AC3: the dual edit diverged — chart modelPath {chart_model!r}, "
-            f"service modelPath {model_path!r}, want both {V.MODEL_DIR}"
+        # The former dual-edit equality collapses to the chart anchor being
+        # the ruled raw-release dir (the service side is inert by the {}-guard
+        # above); the args[0] law and the no-double-verb bar are unchanged.
+        assert model_path == V.MODEL_DIR, (
+            f"C02 (cf-131) AC3: chart modelPath {model_path!r}, want {V.MODEL_DIR} — the "
+            "raw-release dir (the enable-era service-side mirror of this pin retired with Q3)"
         )
         assert args and args[0] == model_path, (
             f"C02 (cf-131) AC2: args[0] is {args[:1]} — the pod args must START with the "
@@ -99,19 +120,26 @@ def test_ac2_container_env_is_exactly_the_contract_set():
     and sleep-mode stories). FLASH_ATTENTION_TRITON_AMD_ENABLE stays a
     REQUIRED member, not a drop: the D33-era four-name bar inverted with the
     owner's install ruling, and the exit-64 exact-set law keeps the var even
-    though D38's text-only serving never runs the ViT path it selects."""
+    though D38's text-only serving never runs the ViT path it selects.
+
+    cf-143 C01 era inversion of the SPLICE SOURCE, same law as the serve-args
+    arm: the render stays at service level (the {} overlay is inert, cmp-
+    proven), the rocrVisibleDevices splice source is the CHART's own key —
+    the hard-read idiom carries over unchanged (a default that happened to
+    equal the rendered value would hollow the assert; the chart's values key
+    must EXIST and be read)."""
     docs, _ = _service_render()
     env = V.env_map(V.main_container(V.deployment(docs)))
     block = V.service_vllm_block()
-    sub = block.get("app-template")
-    # Hard read (no .get default): the C02 top-level key is dead on the C07
-    # block shape, and a fallback to a default that happens to equal the
-    # rendered value would make the want-set a test-internal constant — the
-    # service-coupling of the assert (rendered env follows the operator
-    # re-pin surface) is what this arm pins.
-    assert isinstance(sub, dict) and "rocrVisibleDevices" in sub, (
-        "C07 AC2: the service vllm: block must carry rocrVisibleDevices under its app-template: "
-        "subtree (the chip-targeting values key, D2)"
+    assert block == {}, (
+        "cf-143 C01 AC1: the service vllm: block must be the explicit empty flow map {} "
+        f"(got {block!r}) — the env arm renders its inertness"
+    )
+    sub = (V.chart_values().get("app-template") or {})
+    assert "rocrVisibleDevices" in sub, (
+        "C07 AC2: charts/vllm values lost the rocrVisibleDevices key under app-template: — "
+        "the chip-targeting values source this arm hard-reads (D2; the enable-era service "
+        "mirror retired with cf-143 C01's Q3 disable)"
     )
     if V.cf131_plane():
         want = V.env_want_cf131(str(sub["rocrVisibleDevices"]))

@@ -137,13 +137,36 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e330eb74dffeU053gSeKcq3B2Q",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-11T23:30:00+00:00",
+          "session": "ses_e330eb74dffeU053gSeKcq3B2Q",
+          "result": "RESULT status: DONE chunk: C01 files_changed: [services/gpu-ai/prod/values.yaml (charts.vllm entry + peers.vllm commented cf-143-marked; vllm: kept explicit empty flow map split-line; skip-note tense-fix), .github/workflows/vllm-render-tests.yaml (extraction d.get('vllm') or {} + why), .opencode/opencode.jsonc (three vllm rows commented, comma inside comment — strict JSON parses, 83 rows 0 live vllm), charts/llama-swap/tests/golden/gpu-ai.config.yaml (re-capture 39158→38944B = exactly the 10-line peers.vllm delta, §9.26 annotations preserved), .agents/notes/vllm-on-target-acceptance.md (DORMANT header +11 only), tests/notes/vllm-runbook.sh (DELETED — retirement)] commands_run: [charts/llama-swap 21F→8F/485P/9S — 13 C01 arms flipped green, residuals name only C04(×5)/C07(×3), 9 skips standing evidence gates no helm-skips; charts/vllm 4/36 FAIL = validation_at_fault (deviation 5); surface.sh bare PASS 9 ok M1-M7; M8 designed-red names C05; dashboards PASS 5; containers vllm witness PASS 9; workflow extraction legs run (rc0, {} , template 4 docs, service-level cmp BYTE-IDENTICAL); llama-swap render pre/post diff = exactly peers.vllm 10 lines; golden diff same 10 lines; jsonc strict+node loads; AC1/AC7 regex greps true; helm lint vllm+llama-swap pass; aislop 100/0/0] deviations: [1 golden by sanctioned shell capture route (TEST_SPEC §12 dev obligation); 2 runbook rm plain deletion needs git add at commit; 3 surface/TEST_SPEC untouched (test-session property); 4 skip-note tense-fixed-keeps-vllm-naming for charts/vllm test_trio; 5 VALIDATION_AT_FAULT 4 arms charts/vllm/tests (trio×2 + render service-block legs ×2): pin enable-era shapes C01+owner Q3+this wave's own test_vllm_disable_contract remove — mechanically re-pinnable (invert trio legs to commented/empty + cf-143 marker; re-point render splice at chart values, cmp-proven byte-identical) ROUTED to test session; 6 custom-values zero vllm slots verified; 7 stash push/pop pathspec-scoped proof, tree restored] friction: [AC1-vs-AC3 collision through charts/vllm service coupling — EXPLORE foresaw, wave §12 HOLD list did not; vllm=={} + ^vllm: region anchor force split-line shape; agent-board-coord scope gates (agents-md c7/gate t14/rulesync c8) red on cf-143 paths incl test-wave dirs — stale allow-lists not C01 fallout → route with test round; pre-existing branch reds confirmed at clean tree: agent-perms A15, dev-mcp-fleet t7 playwright drift] open_questions: [route: 4-arm charts/vllm re-pin + TEST_SPEC §12 C01 capture/retirement notes + agent-board-coord allow-list admits → test session; A15 + dev-mcp-fleet t7 NOT ours; deferred: later full vllm retirement would drop charts/vllm whole] next_suggested: review C01 at 13-flipped-arms + bare-surface bar after the test round lands; commit with runbook deletion staged"
+        },
+        {
+          "role": "test-repair",
+          "round": 1,
+          "at": "2026-11-12T00:05:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE (C01-validation-repair + §12 ledger + cf-143 scope admits) — charts/vllm/tests/{test_trio.py,test_render.py}: 4 arms era-flipped mechanically (trio legs pin the DISABLED shape + commented re-enable recipe + cf-143 marker window; render legs keep the service-level render so the {}-overlay inertness is executable, + block=={} era guards; all contract bars byte-unchanged; charts/vllm implementation byte-intact). TEST_SPEC §12.1: golden provenance 39158→38944 exact 10-line peers.vllm delta, vllm-runbook.sh retirement record (M4 needle carries memory, DOC stays DORMANT), era-inversion rationale; posture now 8F=C04×5+C07×3. tests/agent-board-coord/{gate.sh t14, rulesync-surface c8 +2 anti-catch-all probes, agents-md c7}: cf-143 admits (5th-ritual), PASS on the dirty tree; residuals t17/c19/c11/i4/A15/dev-mcp-fleet-t7 proven PRE-EXISTING with HEAD script copies. Bars: charts/vllm 36/36 green; llama-swap 8F/485P/9S; surface bare 9 ok; aislop 100/0. C01 review-ready."
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-12T00:35:00+00:00",
+          "session": "ses_e32af7324ffe2FBR6K435Osvsb",
+          "result": "APPROVED — all bars re-run fresh (llama-swap 8F/485P/9S zero-C01-named; targeted era arms 70P; charts/vllm 36P; five /tmp teeth probes on the era inversion all bite exactly; surface bare 9 ok / M8 designed-red names C05; runbook-resurrection probe reddens M4 (retirement needle has teeth); golden re-derivation byte-equal + diff = exactly the 10-line peers.vllm removal, §9.26 annotations intact; workflow extraction both ways + service-vs-chart cmp BYTE-IDENTICAL; jsonc 83 live rows + uncomment round-trip 86 byte-equal trio; markers 8/2/2/2; custom-values zero-vllm; helm lint 0 failed; aislop 0/0 both forms @0.20.0; rulesync --check clean). Deviations none; one cosmetic test-message nit routed to test session's next touch; commit must stage the runbook deletion (done). Full notes in chunks/C01.md Review notes round 1."
+        }
+      ]
     },
     "C02": {
       "status": "pending",

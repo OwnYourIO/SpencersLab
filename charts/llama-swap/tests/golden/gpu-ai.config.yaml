@@ -1368,16 +1368,6 @@ peers:
     timeouts:
       connect: 30
       responseHeader: 1800
-  vllm:
-    filters:
-      setParams:
-        priority?: 5
-    models:
-    - qwen3.8-27b-vllm
-    proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
-    timeouts:
-      connect: 30
-      responseHeader: 1800
 performance:
   enable: true
   every: 5s

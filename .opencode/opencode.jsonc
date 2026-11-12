@@ -791,28 +791,34 @@
         "whisper-large-v3": {
           "modelID": "whisper-large-v3",
           "name": "Whisper Large v3"
-        },
-        "qwen3.8-27b-vllm": {
-          "modelID": "qwen3.8-27b-vllm",
-          "name": "Qwen3.8 27B (vLLM, R9700) - default priority",
-          "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
-          "limit": { "context": 262144 },
-          "body": { "priority": 5 }
-        },
-        "qwen3.8-27b-vllm-urgent": {
-          "modelID": "qwen3.8-27b-vllm",
-          "name": "Qwen3.8 27B (vLLM, R9700) - urgent",
-          "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
-          "limit": { "context": 262144 },
-          "body": { "priority": 1 }
-        },
-        "qwen3.8-27b-vllm-low": {
-          "modelID": "qwen3.8-27b-vllm",
-          "name": "Qwen3.8 27B (vLLM, R9700) - low priority",
-          "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
-          "limit": { "context": 262144 },
-          "body": { "priority": 9 }
         }
+        // cf-143 C01 (owner Q3 ruling, DECISIONS D6): the three vllm rows are
+        // disabled commented-out — vllm here is charts/vllm, the
+        // magiccodingman/vllm-radiance FORK lane, NOT the cf-143 radiance
+        // engine. Strict JSON forbids the dangling comma after
+        // whisper-large-v3, so the row separator lives inside the comment
+        // below: re-enable is a pure uncomment (no other edit).
+        // ,"qwen3.8-27b-vllm": {
+        //   "modelID": "qwen3.8-27b-vllm",
+        //   "name": "Qwen3.8 27B (vLLM, R9700) - default priority",
+        //   "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
+        //   "limit": { "context": 262144 },
+        //   "body": { "priority": 5 }
+        // },
+        // "qwen3.8-27b-vllm-urgent": {
+        //   "modelID": "qwen3.8-27b-vllm",
+        //   "name": "Qwen3.8 27B (vLLM, R9700) - urgent",
+        //   "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
+        //   "limit": { "context": 262144 },
+        //   "body": { "priority": 1 }
+        // },
+        // "qwen3.8-27b-vllm-low": {
+        //   "modelID": "qwen3.8-27b-vllm",
+        //   "name": "Qwen3.8 27B (vLLM, R9700) - low priority",
+        //   "capabilities": { "input": ["text"], "output": ["text"], "tools": true },
+        //   "limit": { "context": 262144 },
+        //   "body": { "priority": 9 }
+        // }
       }
     }
   },

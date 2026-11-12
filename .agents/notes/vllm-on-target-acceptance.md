@@ -1,5 +1,16 @@
 # vLLM on target — acceptance runbook (operator-owned)
 
+> **DORMANT — superseded by cf-143 (2026-11-12).** The lane this runbook
+> walks — `charts/vllm`, the magiccodingman/vllm-radiance FORK engine (not the
+> cf-143 `StillDeadcode/radiance` engine, unrelated to Strata) — is disabled
+> commented-out per the owner's Q3 ruling: the `gpu-ai` ApplicationSet entry,
+> the `llama-swap` `peers.vllm` hop and the three `qwen3.8-27b-vllm` catalog
+> rows are comments in GitOps, so there is nothing on-target to accept until a
+> re-enable uncomments them (owner circles back). The body below stays
+> byte-untouched as the re-enable procedure — every constant in it still
+> matches the untouched chart. Its contract suite
+> (`tests/notes/vllm-runbook.sh`) retired with the lane.
+
 **Provenance.** WeKan card #131 (`cf-131-feat-vllm-fp8-official`), the
 cf-105 successor (`R4EjaHtDeHMjAkDpf`), whose shape this file documented
 until the owner's re-scope ruling ("you need to include the MXFP4 fork in
