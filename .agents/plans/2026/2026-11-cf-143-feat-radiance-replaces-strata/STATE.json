@@ -4,7 +4,7 @@
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
   "current_wave": 0,
-  "updated_at": "2026-11-11T22:05:00+00:00",
+  "updated_at": "2026-11-12T02:40:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -189,15 +189,24 @@
       "dev_session": "ses_e32a433c0ffevkKraPTCf00bIY",
       "handoffs": [
         {
-          "role": "dev", "round": 1, "at": "2026-11-12T00:55:00+00:00", "session": "ses_e32a433c0ffevkKraPTCf00bIY",
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-12T00:55:00+00:00",
+          "session": "ses_e32a433c0ffevkKraPTCf00bIY",
           "result": "DONE — .agents/notes/radiance-second-gpu-tp2.md (new, 350L, 14 sections, provenance header + exact follow-up-card title). radiance-tp2.sh 3 ok GREEN (T1 structure/provenance, T2 citation resolver, T3 needles+absences); llama-swap 8F/485P/9S unchanged; surface 9 ok; aislop 100/0. deviations none. friction: T2 resolver cannot span newlines → line-suffix citation form R6-Q4-<n> never resolves — heading-only form used; C06 dev must do the same (heads-up carried). open_questions none."
         },
         {
-          "role": "review", "round": 1, "at": "2026-11-12T01:15:00+00:00", "session": "ses_e329403a0ffeB5f2OBB0jz2sCw",
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-12T01:15:00+00:00",
+          "session": "ses_e329403a0ffeB5f2OBB0jz2sCw",
           "result": "APPROVED — all bars fresh green; AC1-AC3 met; every number/name/flag cross-checked vs RESEARCH clean (stale-flag single explicit-mention, UNVERIFIABLE GB/s figures direction-only, pack/envelope/pooling all resolve); enumeration table verified vs values.yaml:1477/1491/:55; SKETCH honest; scope = single new file. Minors: M1 62-88% MTP attributed to 'the fn card' (source is the swift1.5 card), M2 '§12 disambiguation law' should be §13, M3 present-tense shipped-world (optional hedge). Notes appended to chunks/C03.md."
         },
         {
-          "role": "dev", "round": 2, "at": "2026-11-12T01:35:00+00:00", "session": "ses_e32a433c0ffevkKraPTCf00bIY",
+          "role": "dev",
+          "round": 2,
+          "at": "2026-11-12T01:35:00+00:00",
+          "session": "ses_e32a433c0ffevkKraPTCf00bIY",
           "result": "DONE (fold round) — M1 swift1.5-card attribution (§9), M2 §12→§13 cross-ref (§2), M3 tense hedges (header + §1, needle-safe, applied); radiance-tp2.sh 3 ok green post-fold; aislop 100/0; doc 351 lines; no other surfaces touched."
         }
       ]
@@ -301,6 +310,19 @@
       "at": "2026-11-11T22:40:00+00:00",
       "session": "ses_e3341864effeGtB69Py9rDwbH5",
       "result": "RESULT status: DONE chunk: tests (all chunks C01-C07; one Test Writing wave) files_changed: [21 files: charts/llama-swap/tests/{evidence/radiance-peers-expected.yaml, evidence/cf143-pre-ticket-strata/gpu-ai.strata-docs.yaml, test_vllm_peer.py, test_vllm_disable_contract.py, test_radiance_peer.py, test_coexistence_wiring.py, test_cf143_naming_flip.py, llama_swap_testlib.py, test_config_parity.py, test_flashnext_blast_radius.py, test_strata_wiring.py, TEST_SPEC.md} + charts/radiance/tests/ (testlib + 6 suites) + charts/amd-gpu/tests/ (testlib + 2 suites) + tests/services/amd-gpu-naming.sh + tests/notes/{radiance-runbook.sh, radiance-tp2.sh} + tests/pipeline-models/surface.sh (M8 arm, opt-in)] baseline_pre_write: [charts/llama-swap 466P/9S/0F; charts/vllm 36P; surface M1-M7 green; vllm-runbook PASS; dashboards PASS — fresh-worktree dep-missing shape recorded in TEST_SPEC §12] after_state: [llama-swap 21 designed-reds naming C01/C04/C07 + 472P/9S; radiance 37F/2HOLD-P/2 loud skips naming C04; amd-gpu 15F; bash suites red naming their chunks; vllm 36P untouched witness; aislop 100/0] deviations: [1 sentinel-parity line-scoped (gotcha 5); 2 M8 opt-in so C01's bare-PASS AC holds; 3 vllm:{} pinned empty-flow-map; 4 C05 live-row-set = DELTA contract vs frozen 86-key base; 5 M6-mirror extension folded into M8 legs; 6 runbook shipped-args equality = exactly one fenced block; 7 OWNER-EXECUTED marker token law, kubectl exec + argocd sync barred; 8 citation resolver vs R6-Q4 table; 9 n3 sweep excludes charts/*/tests fixtures; 10 no-daemon N/A recorded] friction: [fresh worktree lacks vendored tgz — helm dependency update before baselining (known trap, TEST_SPEC §12)] open_questions: [routing note (a): C07 landing round owes off-parity render-default.yaml re-baseline (test-session action per §9.8 cadence) — coord to schedule it with C07's landing; (b) radiance's 2 c04-gated legs SKIP by generation-witness idiom — accepted as-is] next_suggested: coord commits test wave, then chunk loop wave 1 id order: C01, C03, C07"
+    },
+    {
+      "stage": "Owner ruling — C07 open question 1 (gpu-cluster cross-wave leak)",
+      "at": "2026-11-12T02:10:00+00:00",
+      "session": null,
+      "result": "OWNER chose B1 (shield — per-cluster flip): charts/llama-swap/values.yaml default REVERTS to amd.com/gpu: 1 (the gpu cluster's plugin stays single-naming 1.31.0.9 — that name is all it can advertise; gpu-llama-swap live 1/1 stays schedulable); services/gpu-ai/prod/values.yaml llama-swap: block carries the amd.com/gpu-8060s resources override (gpu-ai-only flip); the n3/AC4 bare-claim sweep + test_cf143_naming_flip arms + off-parity baseline re-scoped to per-cluster truth by the test round. No live workload endangered on merge; no gpu-cluster sysfs research needed; services/gpu external amd-gpu entry unchanged. C07 dev round 2 reworks the flip placement; chunks/C07.md ACs amended by coord to match the ruling."
+    },
+    {
+      "stage": "Plan amendment (C07 owner-B1 fold-in)",
+      "at": "2026-11-12T02:40:00+00:00",
+      "session": null,
+      "note": "owner B1 shield folded: flip carrier = gpu-ai service overlay (D21); test-round re-pin scope made explicit in chunks/C07.md; session id filled by coord",
+      "result": "RESULT status: DONE chunk: plan (amendment fold-in, C07 OQ1 owner-B1 shield) files_changed: [chunks/C07.md (AMENDED header line + flip MOVED: charts/llama-swap/values.yaml reverts to bare amd.com/gpu: 1 tree-global with comment WHY (claim tree-global; gpu cluster single-naming 1.31.0.9 per services/gpu/prod/values.yaml:135-139; naming ships gpu-ai-only); services/gpu-ai/prod/values.yaml llama-swap: overlay gains app-template.controllers.llama-swap.containers.main.resources limits {amd.com/gpu: null, amd.com/gpu-8060s: 1} + requests mirror (maps deep-merge ADD-only -> null retires inherited bare key — cf-97 valuesObject fact cited); AC3 now zero-claim-line chart diff (comment only) + per-cluster render proofs; AC4/n3 sweep re-scoped to per-cluster truth + stray-APU-name guard (gpu-ai overlay + amd-gpu ledger only); Pending-test-round-scope section: test_provenance window-join->flattened replay, test_cf143_naming_flip resources-level->res= level (gpu-ai render APU+bare-absent; gpu-cluster/chart bare-default assertion), off-parity render-default fixture moves ZERO lines (B1 shield; scheduled re-baseline collapses to TEST_SPEC 9.8 era note), amd-gpu-naming.sh n3/AC4 re-scope), DECISIONS.md (owner B1 verbatim + D21 append-only: supersedes D18 flip-location + C07 round-1 AC3 shape — strategy/same-wave/lockstep survive; leak mechanism grounded 135-139 + gpu-llama-swap 1/1; governance: services/gpu external entry BY DESIGN; per-cluster posture note rides follow-up CARD #1 authoring), chunks/C06.md (step-0 gates gpu-ai-scope belt note: gpu-cluster posture intentional per D21, no new gates/no sysfs research; T3 name-needle scoped), chunks/C04.md (charts/llama-swap note: NO chart claim flip exists under B1 — overlay only; AC1 diff inventory names the overlay flip leg), chunks/C02.md (GPU-AI-node scoping of the disappears-there claim + cross-chart identity test reads the MERGED render for the APU leg — pending chunk, steers dev round 1 right), chunks/C03.md untouched (DONE chunk — card-posture note lives in plan Run-end action #1 instead), plan file (goal/key-facts/C07-row/Rollout/Risks/Open-questions amended for B1), STATE.json (this handoff; chunks byte-equal, waves/deps kept, plan_status approved)] highlights: [shield holds: no live workload endangered on merge — gpu-llama-swap keeps its advertisable name, gpu-ai overlay+entry-swap+product-naming land as ONE commit (same-wave window closed by construction: flip and producer share a file/commit); lockstep-revert law preserved (revert = one C07 commit range); the null-on-bare-key merge mechanic is the load-bearing subtlety, rendered-assertion-proven not prose-assumed; off-parity baseline zero-move becomes positive evidence of the shield] deviations: C03 done-chunk not edited (approved artifact) — D21 posture note folded into the coordinator's card-#1 authoring action; two one-word scopes added to pending C02 to keep its dev round correct friction: none open_questions: none new — Q12/Q13 unchanged (non-blocking); no gpu-cluster sysfs research owed (ruling: shielded)] next_suggested: test round re-pins the four named mechanical arms (test-session property, coord to schedule with C07 dev round 2 landing), then C07 dev round 2 (revert chart line + overlay block), chunk loop continues wave order toward C02 -> C04 -> C05/C06, Final Review the next owner touchpoint"
     }
   ]
 }

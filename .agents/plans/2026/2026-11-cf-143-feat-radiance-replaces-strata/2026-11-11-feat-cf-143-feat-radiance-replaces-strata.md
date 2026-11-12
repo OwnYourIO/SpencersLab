@@ -8,7 +8,9 @@ Land a new `charts/radiance` (engine: `stilldeadcode/radiance` v1.17.0 — the C
 NOT the vllm-radiance fork behind `charts/vllm`, unrelated to Strata) as a non-privileged,
 Guaranteed-QoS peer Deployment that claims the R9700 **by name** (`amd.com/gpu-ai-pro-r9700`,
 made possible by a vendored `charts/amd-gpu` fork enabling the plugin's `product` naming
-strategy — the llama-swap APU claim flips to `amd.com/gpu-8060s` in the same wave), serving
+strategy — the llama-swap APU claim flips to `amd.com/gpu-8060s` in the same wave VIA the
+gpu-ai service overlay, per-cluster shielded so the gpu cluster keeps its bare-claim chart
+default (B1/D21)), serving
 the FULL Flash-Next 8-session profile, joined ADDITIVELY to llama-swap via `peers.radiance`
 while Strata stays fully live (Q5) — the owner scales strata down manually when testing
 radiance (Q10). The vLLM chart+peer+catalog lane is disabled commented-out; the agent-context
@@ -50,15 +52,21 @@ catches the fallback trap). No structural forks remain in any chunk.
   hostPath kfd/dri; seccomp Unconfined; drop ALL + IPC_LOCK; supplementalGroups [486]
   (kfd; render/video runbook-gated); Recreate; grace 180; dedicated UID + fsGroup (init
   ALSO requests==limits — pod-class law, D15); no ROCR/HIP env; no nodeSelector.
-- GPU naming (Q9): vendored `charts/amd-gpu` (upstream 0.22.0 copy + ~10-line args hook,
-  CMD restated incl `-v=5`; `dp.extraArgs: ["-resource_naming_strategy=product"]`;
-  `dp.image.tag: 1.31.0.12` + renovate docker comment + amd64 digest `sha256:6437c74f…`
-  ledger); `gpu-ai-amd-gpu` Application switches repo→git-path with identical object
-  names; node then advertises `amd.com/gpu-ai-pro-r9700: 1` + `amd.com/gpu-8060s: 1`,
-  `amd.com/gpu` GONE — any stray bare claim becomes Pending-forever (loud by design).
-  Fallback trap: unknown (device,revision) pair → bare `amd.com/gpu` — five C06 step-0
-  receipts gate it (sysfs pair, plugin log, node-status assert, llama-swap post-rollout,
-  radiance PCI belt-and-braces).
+- GPU naming (Q9 + B1/D21 amendment): vendored `charts/amd-gpu` (upstream 0.22.0 copy +
+  ~10-line args hook, CMD restated incl `-v=5`; `dp.extraArgs:
+  ["-resource_naming_strategy=product"]`; `dp.image.tag: 1.31.0.12` + renovate docker
+  comment + amd64 digest `sha256:6437c74f…` ledger); `gpu-ai-amd-gpu` Application switches
+  repo→git-path with identical object names; the GPU-AI node then advertises
+  `amd.com/gpu-ai-pro-r9700: 1` + `amd.com/gpu-8060s: 1`, `amd.com/gpu` GONE THERE —
+  the flip is PER-CLUSTER (B1 shield): llama-swap's `gpu-8060s` claim arrives via the
+  gpu-ai service OVERLAY (deep-merge + `null` removing the inherited bare key), the chart
+  default stays `amd.com/gpu: 1` because the same chart serves the gpu cluster, whose
+  plugin stays external single-naming 1.31.0.9 (live gpu-llama-swap stays schedulable —
+  D21). Any stray APU-name claim outside gpu-ai + the amd-gpu ledger is a bug (guard
+  needle); stray bare claims on gpu-ai become Pending-forever (loud by design there).
+  Fallback trap (unknown revision → bare `amd.com/gpu`) is gpu-ai-scope, gated by five
+  C06 step-0 receipts (a–e): sysfs pair, plugin log, node-status assert, llama-swap
+  post-rollout, radiance PCI belt-and-braces.
 - Priority (Q2): higher-wins flip — rows 9/5/1, peer floor `priority?: 5`, per-engine
   polarity note in pipeline-models.
 - Catalog (Q4+Q8+Q10): `qwen3.8-flash-next-radiance` (+ `-urgent`/`-low` sharing the
@@ -71,11 +79,13 @@ catches the fallback trap). No structural forks remain in any chunk.
 Every agent: `export PATH=$HOME/.local/bin:$PATH` first (helm-guarded pytest mass-skips without it).
 - charts: `helm dependency update charts/{radiance,amd-gpu} && helm lint … && helm template …` (both new charts)
 - chart suites (per-directory): `python3 -m pytest charts/radiance/tests -v`; `python3 -m pytest charts/amd-gpu/tests -v`;
-  `python3 -m pytest charts/llama-swap/tests -v` (strata suites green untouched — Q5; resources needle re-pinned to `gpu-8060s` — C07);
+  `python3 -m pytest charts/llama-swap/tests -v` (strata suites green untouched — Q5; the naming-flip arms re-pinned to per-cluster render level — C07/D21);
   `python3 -m pytest charts/vllm/tests -v` (green — chart intact)
-- naming wave (C07): `helm template charts/amd-gpu` shows args incl `-resource_naming_strategy=product` + full restated CMD;
-  `grep -rn "amd.com/gpu:" charts/ services/` finds ZERO live bare claims post-flip (comments excluded — the suite's own pattern);
-  `grep -n "amd.com/gpu-8060s" charts/llama-swap/values.yaml` + `grep -n "amd.com/gpu-ai-pro-r9700" charts/radiance/values.yaml`;
+- naming wave (C07, per-cluster truth): `helm template charts/amd-gpu` shows args incl `-resource_naming_strategy=product` + full restated CMD;
+  `charts/llama-swap/values.yaml` shows `amd.com/gpu: 1` UNCHANGED (comment-only diff — the B1 shield);
+  gpu-AI render (chart + service merged) carries `amd.com/gpu-8060s: 1` and NO bare claim (overlay null-out);
+  stray-name guards: `amd.com/gpu-8060s` appears live ONLY in `services/gpu-ai/prod/values.yaml` + the amd-gpu ledger comment;
+  `grep -n "amd.com/gpu-ai-pro-r9700" charts/radiance/values.yaml` (C02 next wave);
   cross-chart name-identity test (radiance claim string == the pool the vendored plugin produces for 7551/C0 per its pinned ledger)
 - service values: parses; `charts.radiance` + `charts.amd-gpu` (internal shape, SSA "true" kept) entries; `peers.radiance` AND
   `peers.strata` both present (strata block byte-unchanged); `vllm: {}` empty-key shape; no radiance ingress key + skip comment;
@@ -94,7 +104,7 @@ Every agent: `export PATH=$HOME/.local/bin:$PATH` first (helm-guarded pytest mas
 |-----|-------|------|------|------------|--------------------|
 | C01 | Disable vllm (commented-out) + retire its tails | L | 1 | [] | independent vllm surface |
 | C03 | Second-GPU (TP2) expansion doc → follow-up card #1 body | S | 1 | [] | research synthesis, independent |
-| C07 | Vendored `charts/amd-gpu` product-naming + llama-swap same-wave flip | M | 1 | [] | defines the cluster's resource-name interface; carries the flip in its own commit (same-wave law) |
+| C07 | Vendored `charts/amd-gpu` product naming + llama-swap gpu-ai-OVERLAY flip (B1/D21) | M | 1 | [] | defines the cluster's resource-name interface; carries entry-swap + overlay flip in its own commit (same-wave law) |
 | C02 | New `charts/radiance` — non-priv Guaranteed chart, FULL fn profile | L | 2 | [C07] | interface: radiance claims `amd.com/gpu-ai-pro-r9700` — the name only exists once the vendored plugin chart lands; cross-chart name-identity test requires C07 in tree |
 | C04 | Service wiring: `peers.radiance` ADDITIVE + radiance appset entry + evidence/golden | M | 3 | [C02] | served-id + scalars from the chart; evidence/golden pair with the values edit |
 | C05 | Agent-context catalog: ADD radiance rows (9/5/1, text+image, 200000); strata KEEP | M | 4 | [C01, C04] | M4 reads peers.radiance (C04); same-file M-legs ordered after C01 |
@@ -107,22 +117,28 @@ appends C07 rather than renumbering pending chunks)
 3. C04
 4. C05, C06 (independent of each other; run in id order)
 
-## Rollout notes (merge-time reality — one PR, Argo syncs all; per R6-Q4-4)
-- All flips land together on merge: vendored amd-gpu (new DS source, same object names,
-  plugin pod restart only — running GPU pods keep their allocations; seconds-long
-  deregistration window, single idle node ⇒ no scheduling storm) + llama-swap `gpu-8060s`
-  flip (its NEXT restart needs the new name; the running pod survives) + radiance chart
-  (Pending until strata is manually scaled down — owner's Q10 protocol).
-- Rollback = ONE `git revert` of the flip wave (plugin revert restores `amd.com/gpu: 2`;
-  the llama-swap flip MUST revert in lockstep — same values history). Rollback of the
-  radiance/peer legs alone = C01-style comment flips; never split the plugin+llama-swap pair.
+## Rollout notes (merge-time reality — one PR, Argo syncs all; per R6-Q4-4 + B1/D21)
+- The flip wave is C07's own commit, gpu-ai-SCOPED: vendored amd-gpu entry (same object
+  names, plugin pod restart only — running GPU pods keep allocations; seconds-long
+  deregistration window on an idle single node ⇒ no scheduling storm) + the gpu-ai
+  overlay flip (llama-swap's NEXT restart on gpu-ai gets `gpu-8060s`; the running pod
+  survives; the CHART default stays bare so the gpu cluster is untouched by the entire
+  wave — D21 shield) + radiance chart (C02, Pending until strata is manually scaled down
+  — owner's Q10 protocol).
+- Rollback = ONE `git revert` of C07's commit (plugin entry revert restores gpu-ai's
+  `amd.com/gpu: 2`; the overlay flip reverts in lockstep in the same range — never split
+  the pair). Radiance/peer legs rollback = C01-style comment flips alone.
 - Watch-once: `ignoreDifferences`/SSA field ownership on the DaemonSet `args` field when
   the Application source flips repo→path (ServerSideApply "true" helps).
 - C06 step-0 enumerates the five naming receipts (a–e) + host-prep gates BEFORE first boot.
 
 ## Run-end actions (coordinator)
-1. TWO Inbox follow-up cards (Q6): (1) TP2 expansion — body = C03's doc; (2) Grafana
-   dashboard re-import. Strata-deletion + IQR-V4 ride the owner's metrics decision, not cards.
+1. TWO Inbox follow-up cards (Q6): (1) TP2 expansion — body = C03's doc, APPEND a short
+   per-cluster-posture paragraph at authoring time (D21/B1: product naming is gpu-ai-only;
+   the gpu cluster stays on the external single-naming amd-gpu entry BY DESIGN — extending
+   naming there is future work with its own vendored-entry decision + sysfs receipts);
+   (2) Grafana dashboard re-import. Strata-deletion + IQR-V4 ride the owner's metrics
+   decision, not cards.
 2. "Fold and run on": after this fold-in, Test Writing + the whole chunk loop proceed with
    NO further owner pause until Final Review. Residual gaps below ship on best guesses.
 3. Card write-back per the boards flow stays coord's.
@@ -132,7 +148,9 @@ RULED: Q1=A · Q2=flip 9/5/1 + floor 5 + per-engine note · Q3=commented disable
 `vllm: {}` kept, extraction hardened, no replicas:0, absence-asserting suites · Q4=honest
 new id · Q5=STRATA LIVES (additive radiance) · Q6=two cards · Q7=non-priv NOW + mandatory
 pre-deploy host gates · Q8=`in: [text,image]` + retire-on-failure smoke · Q9(20:40)=
-research round → R6 → **(final ruling): Option 1 vendored product-naming, same-wave flip** ·
+research round → R6 → **(final ruling): Option 1 vendored product-naming, same-wave flip**
+→ C07-OQ1 (2026-11-12): **B1 shield — per-cluster flip**: chart default stays bare
+(tree-global, gpu-cluster-safe), the flip rides the gpu-ai service overlay (D21) ·
 Q10="I will manually scale down strata when testing and using radiance" → FULL profile,
 60Gi-class, scale-down/restore in runbook · Q11=observe, no auto-mitigate · APPROVED
 (plan_status approved; fold-and-run-on).
@@ -150,10 +168,12 @@ Residual (best guesses shipped, NON-BLOCKING per "fold and run on"):
   fix the flip list) — owner's on-target call, no repo speculation.
 
 ## Risks / assumptions
-- The flip wave is the ticket's only cluster-wide behavioral change beyond adding radiance:
-  `amd.com/gpu` disappearing strays ANY future bare claim to Pending-forever (loud by
-  design, R6-Q4-3); a llama-swap pod rescheduled between plugin-flip and its own flip lands
-  Pending — same-wave law + single-PR merge is the mitigation, runbook (d) verifies after.
+- The flip wave is gpu-ai-scoped (D21/B1): on that node `amd.com/gpu` disappears ⇒ future
+  stray bare claims there become Pending-forever (loud by design, R6-Q4-3); the overlay
+  flip and the entry swap live in C07's ONE commit/file, so the round-2 "between plugin
+  flip and its own flip" window is closed by construction; the gpu cluster is untouched —
+  its live gpu-llama-swap keeps the chart-default bare claim (the shield's whole point,
+  asserted by the per-cluster render tests, C07 AC3).
 - Strata stays privileged hostPath on the R9700's *physical* card inside the named pool
   (naming ≠ VRAM arbitration — Q11's law stands; manual scale-down protocol governs).
 - kv-resident 8×200K start remains an on-target unknown (RESEARCH OQ3 — the refusal

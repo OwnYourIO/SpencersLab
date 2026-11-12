@@ -199,6 +199,42 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   "ids-in-wave-order" convention once, deliberately, recorded here. ArgoCD merge-time
   sync coherence + the lockstep-revert law are the plan's Rollout notes, the on-target
   receipts are C06's gates — chunk waves are BRANCH order only, not sync order.
+- 2026-11-11 human (C07 OQ1 ruling — verbatim, STATE top handoffs
+  "Owner ruling — C07 open question 1 (gpu-cluster cross-wave leak)"): OWNER chose **B1
+  (shield — per-cluster flip)**: "charts/llama-swap/values.yaml default REVERTS to
+  amd.com/gpu: 1 (the gpu cluster's plugin stays single-naming 1.31.0.9 — that name is all
+  it can advertise; gpu-llama-swap live 1/1 stays schedulable); services/gpu-ai/prod/values.yaml
+  llama-swap: block carries the amd.com/gpu-8060s resources override (gpu-ai-only flip);
+  the n3/AC4 bare-claim sweep + test_cf143_naming_flip arms + off-parity baseline re-scoped
+  to per-cluster truth by the test round. No live workload endangered on merge; no
+  gpu-cluster sysfs research needed; services/gpu external amd-gpu entry unchanged. C07
+  dev round 2 reworks the flip placement."
+- 2026-11-12 plan D21 (folds B1; supersedes D18's FLIP-LOCATION assumption and C07's
+  round-1 AC3 shape — D18's strategy stands: same-wave law, per-name pools, lockstep
+  revert, strata/vllm non-interaction all survive): the leak the C07 dev found is real and
+  repo-grounded — `services/gpu/prod/values.yaml:135-139` keeps the gpu cluster on the
+  EXTERNAL amd-gpu chart 0.22.0 (appVersion 1.31.0.9, single naming), which can only ever
+  advertise bare `amd.com/gpu`; a tree-global chart flip to `amd.com/gpu-8060s` would
+  strand the live gpu-llama-swap (1/1) on its next reschedule. MECHANISM: chart default
+  stays `amd.com/gpu: 1` (gpu-cluster-safe tree-global claim — the llama-swap chart renders
+  in both clusters) with the comment rewritten to say exactly why; the gpu-ai service
+  overlay flips it — `app-template.controllers.llama-swap.containers.main.resources:
+  limits {amd.com/gpu: null, amd.com/gpu-8060s: 1} + requests {amd.com/gpu-8060s: 1}` —
+  maps deep-merge so keys ADD and never remove: the `null` on the inherited bare key is
+  load-bearing (cf-97's proven per-app valuesObject subtree-merge fact; requests-mirror
+  explicit for self-documentation, scheduler auto-mirrors extended resources anyway).
+  Test consequences (round-1 dev-routed re-pins, test-session property): n3/AC4 sweep →
+  per-cluster truth (bare allowed ONLY as the chart default; stray-guard: the APU name
+  appears nowhere but the gpu-ai overlay + the amd-gpu expected-names ledger; radiance's
+  R9700 name only in charts/radiance + that ledger); test_cf143_naming_flip tree-line grep
+  → rendered `res=`-level legs (gpu-ai render APU+no-bare; default/gpu-cluster render
+  bare); test_provenance window-join → flattened replay; off-parity render-default
+  fixture moves ZERO lines (the shield's proof) — its scheduled re-baseline collapses to
+  a TEST_SPEC §9.8 era note. GOVERNANCE: services/gpu stays on the external chart entry —
+  documented per-cluster posture, NOT drift; extending product naming to the gpu cluster
+  (would need its own vendored-entry decision + sysfs receipts) rides the TP2 follow-up
+  CARD #1 as a one-line posture note in the C03 doc (placement call: card #1 is the GPU
+  scheduling home; the dashboard card stays dashboard-only).
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
