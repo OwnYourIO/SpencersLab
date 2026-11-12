@@ -40,14 +40,14 @@ The kickoff's model question is one multi-select over `Qwen Large` / `Qwen Dense
 
 The single authority for the board `Priority` → serving-class mapping; `boards` and `pipeline-kickoff` cite this table, never duplicate it (the same cite-don't-restate pattern as the size order above).
 
-| Card `Priority` | Class | Model row (this lab) | vLLM `body.priority` |
+| Card `Priority` | Class | Model row (this lab) | Radiance `body.priority` |
 |---|---|---|---|
-| `1`–`3` | urgent | `gpu-ai/qwen3.8-27b-vllm-urgent` | 1 |
-| unset / `null`, `4`–`7` | default | `gpu-ai/qwen3.8-27b-vllm` | 5 |
-| `8`–`9` | low | `gpu-ai/qwen3.8-27b-vllm-low` | 9 |
+| `1`–`3` | urgent | `gpu-ai/qwen3.8-flash-next-radiance-urgent` | 9 |
+| unset / `null`, `4`–`7` | default | `gpu-ai/qwen3.8-flash-next-radiance` | 5 |
+| `8`–`9` | low | `gpu-ai/qwen3.8-flash-next-radiance-low` | 1 |
 | `10`+ | background | `gpu-ai/qwen3.8-27b-q4` (llama.cpp — off vLLM, keeps KV headroom) | n/a |
 
-Polarity is lower = more urgent (vLLM's own convention); the discrete values 1/5/9 ride the resolved row's `body.priority` 1:1. The board field is a free NUMBER, so intermediate values snap to the class interval (midpoint boundaries: 1–3→1, 4–7→5, 8–9→9, 10+→10). The peer filter floor (`peers.vllm.filters.setParams "priority?" = 5`) is set-if-undefined: non-priority clients land in the default class, never outrank it, and a client-sent `priority` still wins.
+Polarity is per-engine, and the value column belongs to the engine it names: radiance is higher-wins since cf-143, so the resolved row's `body.priority` rides 9/5/1 for urgent/default/low, 1:1. The 1/5/9 numbers are the polarity of the RETIRED vLLM lane (lower-wins) — never port those numbers to radiance: urgent would sit near-idle and low would take the preemption-proof top lane. The board field is a free NUMBER, so intermediate values snap to the class interval (midpoint boundaries: 1–3→9, 4–7→5, 8–9→1, 10+→10). The peer filter floor (`peers.radiance.filters.setParams "priority?" = 5`) is set-if-undefined: non-priority clients land in the default class, never outrank it, and a client-sent `priority` still wins.
 
 ## Favorited models in this lab
 
@@ -57,10 +57,8 @@ Local first: the self-hosted `gpu-ai`/`gpu-moe` rows are the default provider's 
 |---|---|---|
 | `gpu-ai` | `qwen3.8-2.4t-a95b-q6` | local planning (kickoff `Local` option; q6 assumed, not catalog-verified — pre-existing) |
 | `gpu-ai` | `qwen3.8-flash-next-strata-q4` | local fast for the Flash+Local combo — 180B-class MoE served by the dedicated Strata pod through the outer llama-swap `peers` seam (UD-Q4_K_XL arena on the R9700; the first request pays a minutes-long arena pin, so cold start is expected; the `-strix` sibling is a manual/secondary fallback only, never an agent route) |
+| `gpu-ai` | `qwen3.8-flash-next-radiance` | local fast-adjacent quality lane — 180B-class MoE served by the dedicated radiance pod through the outer llama-swap `peers.radiance` seam (first request may pay a minutes-class load, ~66 GiB; 200K ctx / 8 sessions on the named R9700 pool) — opt-in for now, the Strata row above being the Flash+Local default; its `-urgent`/`-low` catalog siblings are the same served model at another priority class, not further models |
 | `gpu-ai` | `qwen3.8-27b-q4` | local code default (UD-Q4_K_XL + MTP; verified served in the chart catalog and the provider catalog) — also the Priority class table's background leg |
-| `gpu-ai` | `qwen3.8-27b-vllm` | local vLLM 27B default class (board `Priority` unset/`null`/`4`–`7`; `body.priority` 5, served through the llama-swap `peers.vllm` hop) |
-| `gpu-ai` | `qwen3.8-27b-vllm-urgent` | local vLLM 27B urgent class (board `Priority` 1–3; `body.priority` 1) |
-| `gpu-ai` | `qwen3.8-27b-vllm-low` | local vLLM 27B low class (board `Priority` 8–9; `body.priority` 9) |
 | `gpu-ai` | `qwen3.8-27b-q6` | local verified alternate quant (UD-Q6_K_XL + MTP — only on explicit request) |
 | `gpu-ai` | `qwen3.8-27b-q8` | local code fallback (self-hosted, 262k ctx) |
 | `gpu-ai` | `qwen3.8-27b-q8-1m` | local code fallback, long context (1M ctx) |
@@ -73,3 +71,5 @@ Local first: the self-hosted `gpu-ai`/`gpu-moe` rows are the default provider's 
 | `openrouter` | `qwen/qwen3.6-35b-a3b` | general MoE |
 | `openrouter` | `qwen/qwen3.8-flash` | cheap/fast triage |
 | `openrouter` | `deepseek/deepseek-v4.1-flash-1017` | cheap/fast triage |
+
+Retired lanes stay named, never re-listed: the three `qwen3.8-27b-vllm` rows left both tables above with the cf-143 C01 disable of that lane (`charts/vllm` — the magiccodingman vllm-radiance FORK, a different engine from cf-143's radiance). The lane is dormant by the owner's Q3 ruling and its provider rows are commented, one edit from a re-enable, so they return to the tables only when the owner re-enables it.

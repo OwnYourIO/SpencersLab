@@ -699,6 +699,40 @@
             "context": 262144
           }
         },
+        // cf-143 radiance class rows (owner Q4/D7 + Q2 + Q8): one wire model in
+        // three priority classes — modelID is shared and only body.priority
+        // differs, the shape the commented vllm trio at the foot of this map
+        // left behind. That lane is charts/vllm, the magiccodingman
+        // vllm-radiance FORK, a different engine. Radiance ranks HIGHER-WINS
+        // (RESEARCH RQ2): urgent 9 / default 5 / low 1, the OPPOSITE of its
+        // 1/5/9, so those numbers must never be ported here. The default-class
+        // floor is server-side in peers.radiance's filters.setParams
+        // "priority?" (services/gpu-ai/prod/values.yaml), never repeated on a
+        // row. Context 200000 is what the pod serves (--max-model-len in
+        // charts/radiance/values.yaml), not the 262,144 trained ceiling. Image
+        // input is the Q8 ruling: the vision tower ships in the pack (RQ0), and
+        // the runbook's image-smoke leg retires the claim if it fails on target.
+        "qwen3.8-flash-next-radiance": {
+          "modelID": "qwen3.8-flash-next-radiance",
+          "name": "Qwen 3.8 Flash Next (Radiance, R9700) - default priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 5 }
+        },
+        "qwen3.8-flash-next-radiance-urgent": {
+          "modelID": "qwen3.8-flash-next-radiance",
+          "name": "Qwen 3.8 Flash Next (Radiance, R9700) - urgent",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 9 }
+        },
+        "qwen3.8-flash-next-radiance-low": {
+          "modelID": "qwen3.8-flash-next-radiance",
+          "name": "Qwen 3.8 Flash Next (Radiance, R9700) - low priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 1 }
+        },
         "ornith-1.5-122b-strata-q4": {
           "modelID": "ornith-1.5-122b-strata-q4",
           "name": "Ornith 1.5 122B (Strata q36 UD-Q4_K_XL arena, R9700)",

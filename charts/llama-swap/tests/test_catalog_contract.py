@@ -7,11 +7,16 @@
 #               pre-C05: the new ids and the ornith hygiene ladder are not in
 #               the catalog yet.
 #   NO-PHANTOM — every catalog key must be routable: a gpu-ai render model, a
-#               render alias, or one of the three explicit allow-list families
+#               render alias, or one of the four explicit allow-list families
 #               (workload `:tags`/`:caption` aliases; peers-routed Strata
 #               arenas, whose serving authority is the peers evidence file;
 #               vllm-peer-routed ids and their class aliases, whose serving
-#               authority is the rendered peers.vllm models list — cf-105 C03).
+#               authority is the rendered peers.vllm models list — cf-105 C03
+#               (self-emptying since cf-143 C01 disabled the peer: the wire
+#               set reads empty, the commented rows are out of the map);
+#               radiance-peer-routed ids + their -urgent/-low class aliases
+#               read from the rendered peers.radiance models list — cf-143
+#               C05, same wire-carrier pattern, cf-143 §12.4).
 #               RED pre-C05 because the 13 ruled-out REMOVED_IDS are still
 #               registered; stays RED if C05 pre-registers something that does
 #               not serve.
@@ -188,9 +193,19 @@ def test_c05_no_phantom_catalog_entries(catalog):
     vllm_wire = set(((L.rendered_config("gpu-ai").get("peers") or {}).get("vllm") or {}).get("models") or [])
     vllm_routed = {k for k, e in catalog.items()
                    if k in vllm_wire or (e or {}).get("modelID") in vllm_wire}
+    # cf-143 C05: peers.radiance is the third serving authority, the same
+    # leg read from the RENDER: its models list names the served wire id
+    # qwen3.8-flash-next-radiance, and the trio rows ride it as key or
+    # modelID carrier (the D7 class-alias pattern mirrors cf-105's D6/D10 —
+    # the wire id serves once, -urgent/-low are body.priority variants of
+    # the same model). Empties with the peer the same way; rows that
+    # outlive a removed peer fall back to phantom-red.
+    rad_wire = set(((L.rendered_config("gpu-ai").get("peers") or {}).get("radiance") or {}).get("models") or [])
+    rad_routed = {k for k, e in catalog.items()
+                  if k in rad_wire or (e or {}).get("modelID") in rad_wire}
     phantoms = []
     for key in sorted(catalog):
-        if key in served or key in aliases or key in peers_routed or key in vllm_routed:
+        if key in served or key in aliases or key in peers_routed or key in vllm_routed or key in rad_routed:
             continue
         if key.endswith(WORKLOAD_ALIAS_SUFFIXES):
             continue

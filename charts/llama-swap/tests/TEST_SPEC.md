@@ -3424,16 +3424,17 @@ C06/C07 — at the tree after the C07 landing round (12.2) `charts/llama-swap/te
 green, off-parity re-baseline dissolved) / 488 passed / 9 skipped (standing
 evidence gates), `charts/vllm/tests` = 36 passed (incl. the 12.1 era
 re-pins), `charts/amd-gpu/tests` 15/15 + `amd-gpu-naming.sh` PASS,
-`radiance-tp2.sh` PASS (C03 landed), surface.sh bare = PASS, M8 + the
-C02/C06 suites red per the table:
+`radiance-tp2.sh` PASS (C03 landed), surface.sh bare = PASS; M8 and the
+radiance suite went green with the C02/C05 rounds (12.3/12.4) — the only
+designed-red left is `tests/notes/radiance-runbook.sh` naming C06:
 
 | red arms | chunk that greens them |
 |---|---|
 | ~~test_vllm_peer T1+T4; test_vllm_disable_contract 8 of 9 legs; parity gpu-ai era leg; blast-radius carve refusal leg; strata_wiring peers-map leg; surface.sh M3/M4/M7~~ — **GREEN since the C01 landing round (see 12.1)** | **C01 (landed)** |
-| charts/radiance/tests: 37 arms | **C02** (the two cross-chart identity legs ALSO need C07's ledger; 2 arms skip LOUDLY naming C04) |
+| ~~charts/radiance/tests: 37 arms~~ — **GREEN since the C02 landing round (12.3) — suite 41P/0S/0F after the cross-chart era re-pin; the two c04_wiring skips bound when C04 landed (12.4)** | **C02 (landed)** |
 | ~~charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty~~ — **GREEN since the C07 landing round (see 12.2; the re-baseline dissolved under B1)** | **C07 (landed)** |
-| test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green | **C04** |
-| ~~tests/notes/radiance-tp2.sh T1-T3~~ — **GREEN (C03 landed, suite PASS)** / surface.sh M8 | ~~**C03 (landed)**~~ / **C05** |
+| ~~test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green~~ — **GREEN since C04 landed (capture provenance in 12.4)** | **C04 (landed)** |
+| ~~tests/notes/radiance-tp2.sh T1-T3~~ — **GREEN (C03 landed, suite PASS)** / ~~surface.sh M8~~ — **GREEN since the C05 landing round (12.4)** | ~~**C03 (landed)**~~ / ~~**C05**~~ (landed) |
 | tests/notes/radiance-runbook.sh T1-T5 | **C06** |
 
 HOLD-green (must stay green across every wave): the coexistence baseline +
@@ -3635,3 +3636,53 @@ round. C04/C05/C06 landing rounds: run
 `pytest charts/llama-swap/tests charts/radiance/tests charts/amd-gpu/tests`
 + `bash tests/services/amd-gpu-naming.sh` + bare surface.sh as ONE bar,
 whatever the routed item list says.
+
+### 12.4 C04 capture provenance + C05 landing round — the radiance era binds the last routed legs (test session, 2026-11-12)
+
+**C04 golden re-capture (the note the C04 landing round deferred here, §12.1
+pattern; capture itself was the dev's paired obligation, §1/§11 route):**
+`golden/gpu-ai.config.yaml` 38944 → 39177 B at commit 1cada6d63 — the diff
+vs the C01 capture is EXACTLY +10/−0 lines, the `peers.radiance` block
+(proxy / one-id models / timeouts 30+1800 / filters.setParams priority? 5),
+verified by `git diff --numstat` at this round. The §9.26 column-0
+preload-ruling annotations are preserved at their hooks anchor: 8 lines
+before, 8 lines after (T4's exempted layer). Fidelity: the peers subtree now
+mirrors the two-peer render (strata byte-stable + radiance, equal to the
+sibling evidence by test_radiance_peer T3); the gpu golden untouched.
+`test_vllm_peer` T4 + the parity era legs stayed green across the capture —
+the wave-law intermediate {strata} was sanctioned precisely so each capture
+lands one clean step.
+
+**C05 landing round (coord-routed):** one arm re-pinned —
+`test_catalog_contract::test_c05_no_phantom_catalog_entries` gains the
+radiance allow-list family, mirroring the cf-105 vllm_routed leg EXACTLY:
+served wire ids read from the RENDERED peers.radiance.models (never from the
+catalog), catalog rows admitted by key-equality or modelID-carrier (the D7
+-urgent/-low class aliases of the same wire model), self-emptying if the
+peer ever leaves the render. The vllm leg itself stays as written — since
+C01 it reads the empty wire set (peers.vllm is gone from the render) and the
+commented rows are out of the parsed map, the documented dormant behavior,
+not drift. Bar: 495 passed / 9 skipped / 0 failed — the pre-C05 posture,
+restored with the trio live.
+
+**Skipped-then-bound (folded honestly):** radiance's two c04_wiring legs
+(the service-subtree sentinel render + the dual-edit guard) flipped
+skip→bound-run when C04 landed, and the suite now runs 41 passed / 0 skipped
+/ 0 failed; C05's cross-file legs (M8) bind C02's scalars + C04's peer
+evidence and passed green at this round without edits. §12's red table:
+C05's row is GREEN from here (radiance trio + class/favorited tables + M8
+including the CF143_BASE_SHA=0d9b41785 diff-inventory leg, spot-checked
+green — loops/overview untouched, the once-per-ticket admits of §12 hold);
+what remains designed-red is `tests/notes/radiance-runbook.sh` (T1 names
+C06 — the acceptance doc is the last artifact of the plan).
+
+**Deviation adjudication (C05 dev round, its deviation 2 — vllm favorited
+rows as prose footnotes):** CONFIRMED against the suite's wording-agnostic
+bar, no re-pin. M8-E asserts the retirement shape both ways: zero live
+TABLE rows containing qwen3.8-27b-vllm (verified: 0 pipe-lines name the id)
+AND the ids still named in pipeline-models prose (SKILL.md "Retired lanes
+stay named, never re-listed" line satisfies it — also carrying the naming-
+landmine disambiguation the wave's law wants). The needle was authored
+placement-agnostic on purpose ("test needle decides exact shape" — here it
+decides table-absence + prose-presence, which is exactly the chunk's
+live-inventory convention); the dev's text is inside the bar, not around it.
