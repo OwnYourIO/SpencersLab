@@ -169,13 +169,29 @@
     },
     "C02": {
       "title": "Lock doctrine: continuation prompt answers the lock-lost question; Executing membership alone means locked (boards bullets + LOCK_LOST_STOP string)",
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e33d30cccffeU15QJcvaBuJ50R",
+      "review_session": "ses_e333d192bffew4M6LAhGxq6Gea",
+      "last_verdict": "CHANGES_REQUESTED (round 1) — resolved by the coordinator: the sole blocker B-1 was MY orphaned STATE.json lines 190-194 (a residual of my own aborted edit, not the dev's three files), deleted exactly as the reviewer proved; the implementation itself passed every AC and every re-run validation with zero blockers/majors, so no second dev round is owed and the chunk is done on the dev's green bars + this resolved review round",
+      "dev_note": "Two turns ended mid-flight with the session waiting on its own background baseline sweep; the third, directed to work synchronously, completed the edits and the bars. Durable lesson applied: subagent launches in this run now say explicitly not to gate work on background jobs.",
+      "handoffs": [
+        {
+          "at": "2026-11-11T21:1xZ",
+          "role": "dev",
+          "session": "ses_e33d30cccffeU15QJcvaBuJ50R",
+          "result": "status: DONE | files: .rulesync/skills/boards/SKILL.md (four edits: the pickup bullet, the one-rule sentence, the Human-stops lock-lost bullet, the Exits takeover clause) + its generated mirror, .opencode/plugin/pipeline-locks/index.ts (ONE hunk at L171-182: the LOCK_LOST_STOP comment block 7→9 lines + the constant, 10+/8−; the phrase PIPELINE LOCK LOST still occurs exactly once file-wide) | bars: rulesync-surface c25 GREEN (c1..c24 minus c19 green, c19 red byte-identical), all four pipeline-locks node suites green (engine 42/42 including the new continuation arm, the one-constant partial-drift arm and the negative control; core 38 / reap 32 / tick 15), boards-deps t2/t5/t6/t7/t8/t9 green with t1/t3/t4 red identical, agent-perms 18 ok with A15 red identical, gate 22 ok with t17 red identical, agents-md c9/c10 green (c11/c12 red identical), kickoff-branch script 8 ok + m1-m3/m5/m6 green (m4/m7 identical), session-origin script 7 ok + s1/s2/s5-s7 green (s3/s4 identical), coord-inwork 7 ok (i4/i9 identical), provider-loops t1 identical, pipeline-models M1-M6 green (M7 identical), slug-stack S1-S4 green (S5 identical), repo-label-filter t1 identical, backfill b1-b8 identical, board-context identical (its t6 is the A15 chain), validation-fix t4 verbatim, checklist-cutover 11 ok + cf96-lifecycle 7 ok (C01 arms hold), rulesync generate x2 no-op + --check clean with the plugin untouched by generate, aislop ci --changes score 100 / 0 errors / 1 pre-existing file-too-large warning on the 2535-line hand-managed plugin (+2 net from this diff), helm N/A, docker not-applicable; a 108-log full sweep after the edits is byte-identical to the baseline except the ONE designed flip (the engine continuation arm red→green) | control: the reviewer-grade negative check re-run externally — an 'extends the lease / renews the lock' append is rejected by the arm's own ban regex, the shipped string is not | deviations: (1) the coordinator's brief mis-cited the rulings as D24/D25 where DECISIONS has them in D23 — followed DECISIONS, and the shipped test arms cite D23 too; (2) engine arm E6 bans the substrings 'question'/'permission' on non-comment plugin lines, which killed the pre-briefed candidate tail — shipped as 'the owner's answer' / 'evidence only' with every needle intact (recorded in FRICTION as a machinery fact absent from C02.md); (3) the chunk's 'agent-perms t8/t9' ids do not exist (suite is A1..A19) — ran the green set + A15 per arm; (4) plugin comments follow the file's actual `//` convention (977 lines, zero `#`) rather than the chunk's `#` wording; (5) the Exits takeover clause sits slightly beyond the task's 'pickup + Human-stops' phrasing, kept for doctrine consistency and verified outside c25's section scan; (6) its own background sweep finished mid-run and gated nothing — all gating was a synchronous base-vs-worktree compare against a detached worktree at 1d48c9d98 | friction: E6's invisible substring ban; a TWELFTH pre-existing red outside the documented eleven (services/dev-mcp-fleet.sh t7 pins playwright v0.0.78 against main's v0.0.83 bump in e9a5d7005) reported untouched; validation-fix t7 is unsatisfiable while A15 stands | open_questions: none | next_suggested: review C02, then C03/C04"
+        },
+        {
+          "at": "2026-11-12T00:0xZ",
+          "role": "review",
+          "session": "ses_e333d192bffew4M6LAhGxq6Gea",
+          "result": "status: CHANGES_REQUESTED (verdict on the ROUND; the implementation itself passed) | validations re-run from scratch with a 2×227-block sweep across detached worktrees at 1d48c9d98 AND main a6e493b78: the ONLY rc flips are the engine continuation arm and rulesync-surface c25 — C02's two designed reds — red→green, every other message byte-identical modulo tmp paths/timings; engine 42/42 with both negative controls run in the reviewer's own fabrications (a lease-extension tail rejected by the arm's ban, the base string rejected by the /continuation prompt/i needle), core 38 / reap 32 / tick 15, c1..c25 with only c19 red, boards-deps t2/t5-t9 green and t1/t3/t4 red-by-design, agents-md c9 green, gate minus t17 green, C01's arms all still green, tests/ diff empty, rulesync generate twice both no-op + --check with the plugin untouched, aislop 100 / 0 errors / 1 pre-existing size warning, helm N/A | the eleven documented pre-existing reds reproduced byte-verbatim in a detached worktree (not accepted on claim), plus THREE further pre-existing reds the sweep exposed: provider-loops **t3** (runner-model family, hidden behind t1's fail-fast — twelfth red), validation-fix **t7** (agent-perms A15 chain, fails at both refs), dev-mcp-fleet **t7** (playwright v0.0.78 pin vs main's v0.0.83 bump in e9a5d7005, fails at both refs) — all reproduced at main too, all left byte-untouched, now recorded in `red_ledger`; two state-dependent reds noted as outside this ticket's test surface (media-slskd-conflict t3 wants a vanished stash; hivetools-docs d4 reddens on any branch touching agent surfaces) | findings: B-1 blocker = COORDINATOR-OWNED invalid STATE.json lines 190-194 (my own orphaned skeleton; json.load 'Extra data: line 266', base parses clean; the deletion the reviewer verified in-memory is what I applied) — NOT a dev or test defect, so no second dev round; the dev's four edits pass every AC: doctrine fidelity to D23 (the continuation prompt ANSWERS the one question, no lease extension promised, silence still the abandoned exit, never-a-second-question intact), engine invariance (one 10+/8− hunk, the phrase exactly once, five untouched call sites, no new export, foreign-holder refusal / no-self-reclaim / 2 h window / max(heartbeatAt,mtime) / holder-granular reap / takeover tag all still the pinned paths), the Executing-membership law WITH its anti-adopt clause intact (no double-run hazard opened), source↔mirror lock-step, comment discipline | nits on the dev's record, not its code: deviation 4's '977 lines' plugin miscount (2536; its load-bearing zero-`#`/all-`//` claim verified true), deviation 5's 'outside c25's section scan' imprecise (the Exit bullet IS inside the scanned section and passes because nothing asserts it) | INFO carried to C06's launch: the grouped-sibling 'under another run's lock' qualifier at ~L385 was deliberately left byte-identical for C06's re-cut | friction (reviewer's own): the write tool denies /tmp/opencode for new files there (heredoc authoring), and bare fail-fast suite runs hide later reds (hence the full per-arm sweep in both trees) | open_questions: none | next_suggested: coord deletes the STATE orphan lines, records the verdict, commits C02, adds the red_ledger footnote, carries L385 + Ride-the-claim into C06, launches C03"
+        }
+      ]
     },
     "C03": {
       "title": "Priority doctrine: write ban lifted with its owner-direction boundary, the post-plan write-back stamp leg, class-table truth kept",
@@ -281,6 +297,30 @@
     "green_confirmed": "everything else in every touched suite, with messages unchanged: agents-md c2–c8/c10, rulesync c1–c10/c12–c17/c20–c24, gate ids-minus-t17, pipeline-locks core/engine/reap/tick (minus the new arm), the four node sibling suites (board-context 49, question-notify 65, card-details 32, aislop-pin-parity 5), pipeline-models M1–M6, kickoff-branch script+m1/m2/m3/m5/m6, session-origin script+s1/s2/s5/s6/s7, coord-inwork i1–i3/i5–i8, boards-deps t2/t5/t6/t7/t8/t9, wekan-board-provision surface 8 + checklist-cutover t1/t4/t9/t10, multi-repo hourly-board-check + three port-*.sh, the wekan-mcp family, cf96-coord/siblings/tz, noop-marker, cf106-noop, cf90-ledger, agent-explore, board-preload-probe, standalone-agents, dev-wiring; bash -n on every touched file; aislop ci --changes 0/0 over 91 files; rulesync not invoked (no .rulesync edit); helm N/A; docker build => no-daemon, CI-deferred",
     "coord_rulings_from_its_questions": "all three answered in DECISIONS D30–D33: the two extra pre-existing reds are documented, not chased (D30); C01's 'Type = 3' is a typo and the generation is the shipped seven, suite-enforced (D31); C05's 'unnamed token already in boards' premise is false and the marker rides the bullets C05 owns (D32); the three pre-emptive re-pin readings — c19 slug-write scoping, gate t14 plan-folder admit, boards-deps t4 moving to C08 — are the amended chunk bars, so C06's bar is t1/t3 and repo-label-filter t1 is C04's (D33)",
     "commit": "landed as the pre-C01 test-wave commit (this wave + the D30–D33 records + STATE) so dev re-runs land on green-by-construction pins"
+  },
+  "red_ledger": {
+    "note": "THE AUTHORITATIVE PRE-EXISTING RED LIST for this ticket, amended by the C02 review's two-tree sweep at 1d48c9d98 AND main a6e493b78. Every chunk's bar is arm-level: its own arms green + NO new red + these still red with byte-identical messages. Never 'fix' one as a drive-by; none is this ticket's surface.",
+    "documented_fourteen": [
+      "tests/agent-board-coord/gate.sh t17 (warm-location family)",
+      "tests/coord-inwork/surface.sh i4 (warm-location family)",
+      "tests/kickoff-branch/surface.sh m4 (warm-location family)",
+      "tests/session-origin/surface.sh s4 (warm-location family)",
+      "tests/agent-board-coord/agents-md.sh c11 (runner-model literal vs the 2026-11-09 owner ruling)",
+      "tests/provider-loops/surface.sh t1 (same runner-model family)",
+      "tests/provider-loops/surface.sh t3 (SAME family, hidden behind t1's fail-fast — found by the C02 review)",
+      "tests/agent-board-coord/rulesync-surface.sh c19 (custom-field roster family)",
+      "tests/wekan-mcp/slug-stack.sh S5 (roster family)",
+      "tests/wekan-mcp/board-context.sh t6 (roster family, via its nested agent-perms child)",
+      "tests/agent-perms/surface.sh A15 (roster family's fourth arm — cf-106's still-open posture, D30)",
+      "tests/pipeline-gates/validation-fix.sh t4 (role-coord step 10's unenumerated 'ask the user ONCE' line, D30)",
+      "tests/pipeline-gates/validation-fix.sh t7 (unsatisfiable while A15 stands — its battery sweep requires agent-perms green, D30)",
+      "tests/services/dev-mcp-fleet.sh t7 (pins mcr.microsoft.com/playwright/mcp:v0.0.78; main's e9a5d7005 renovate bump moved it to v0.0.83 — found by the C02 dev, reproduced by its review at both refs)"
+    ],
+    "state_dependent_not_bars": [
+      "tests/services/media-slskd-conflict.sh t3 — asserts a stash that no longer exists; red on any clean tree, unrelated to this ticket",
+      "tests/services/hivetools-kubernetes-mcp-docs.sh d4 — reddens on any branch that touches agent surfaces (scope-pin shape, cf-52 lineage); the C01 review's per-chunk framing already handles it"
+    ],
+    "designed_reds_by_owner": "C03: pipeline-models M7 · C04: multi-repo/repo-label-filter t1 · C05: agents-md c12, kickoff-branch m7, session-origin s3, coord-inwork i9 · C06: boards-deps t1/t3 · C07: wekan-board-provision/backfill.sh b1–b8 · C08: boards-deps t4 · (C01's cf96 t1/t2/t3/t6 + rulesync c11/c18 + agents-md c9 + checklist-cutover and C02's rulesync c25 + pipeline-locks-engine arm are now GREEN)"
   },
   "blocked": [],
   "card_write_back": {

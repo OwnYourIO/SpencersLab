@@ -168,14 +168,16 @@ const BEAT_AUDIT_EVERY = 10;
 // restart the session graph rebuilds through the setup-time scan.
 const CHILD_KEY_PREFIX = "child/";
 
-// The D16/D28 stop signal, now carrying C09's sanctioned resume: the plugin
-// has no question channel, so the strict execute.before throw, the tool
-// responses and the session pin all carry this ONE text — stop the step, ask
-// the user once, and on yes re-claim under the card-id key instead of the
-// reaped pipeline label. The phrase and the do-not-commit / do-not-move
-// prohibition stay verbatim (the suites pin the literal, engine U3); only
-// the guidance sentence around them may drift.
-const LOCK_LOST_STOP = "PIPELINE LOCK LOST — do not commit or move the card; stop the step, ask the user once whether to continue anyway, and on yes re-claim with pipelines:[<cardId>] instead of the reaped pipeline label — on no or silence, take the blocked/abandoned exit";
+// The D16/D28 stop signal carrying C09's sanctioned resume: the plugin has no
+// question channel, so the strict execute.before throw, the tool responses and
+// the session pin all carry this ONE text. A later user continuation prompt is
+// how that one sanctioned question receives its answer; liveness is
+// heartbeat-only, so the answer keeps nothing alive — the resume is the
+// session's own fresh claim under the card-id key, never a revived set. The
+// phrase and the do-not-commit / do-not-move prohibition stay verbatim (the
+// suites pin the literal, engine U3); only the guidance sentence around them
+// may drift.
+const LOCK_LOST_STOP = "PIPELINE LOCK LOST — do not commit or move the card; stop the step, ask the user once whether to continue anyway — a later user continuation prompt is the owner's answer, and a continuation carrying no answer is silence; on yes, the resume is a fresh claim under the card-id key with pipelines:[<cardId>] instead of the reaped pipeline label, tagged after_reap when a reap record backs it — evidence only; nothing revives a reaped set or keeps a lease alive, so that fresh claim is the only door; on no or silence, take the blocked/abandoned exit";
 
 // C09: the tag the sanctioned post-reap resume earns — evidence in the lock
 // record and the claim audit, never a permission: a card-id claim without a
