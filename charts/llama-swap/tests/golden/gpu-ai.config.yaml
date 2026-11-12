@@ -1357,6 +1357,16 @@ models:
     proxy: http://localhost:${PORT}
     ttl: 0
 peers:
+  radiance:
+    filters:
+      setParams:
+        priority?: 5
+    models:
+    - qwen3.8-flash-next-radiance
+    proxy: http://gpu-ai-radiance.default.svc.cluster.local:8000
+    timeouts:
+      connect: 30
+      responseHeader: 1800
   strata:
     models:
     - qwen3.8-flash-next-strata

@@ -63,6 +63,20 @@ charts:
     # source flip (plan Rollout notes).
     ServerSideApply: "true"
 
+  # cf-143 C04 (DECISIONS D1, owner Q1=A): the radiance ENGINE chart (C02's
+  # charts/radiance — the stilldeadcode one, not the vllm-radiance FORK
+  # parked in comments above) joins the roster ADDITIVE beside strata; Q5
+  # leaves every strata byte as-is. Internal shape (no version/repository):
+  # the base appset renders a git-path source and derives the Application
+  # name serviceName+appName = gpu-ai-radiance — the host of the peers.radiance
+  # hop below; a release name drifting from it silently breaks that route.
+  # ServerSideApply "false": the llama-swap-family shape (gotcha 6, like
+  # the llama-swap entry). Keyless chart (D8): no bitwardenIds here, no
+  # custom-values leg — the trio law's documented skip.
+  radiance:
+    namespace: default
+    ServerSideApply: "false"
+
 ingress:
   subdomains:
     # cf-105 (D7/Q4 ruling): deliberately NO vllm host — the trio rule's
@@ -80,6 +94,13 @@ ingress:
     # route below (the existing llama/ai-llama-swap hosts already carry the
     # chain). A host of its own would publish the surface the peers hop
     # exists to keep private.
+    # cf-143 C04: deliberately NO radiance host either — the same D7/Q4
+    # internal-only ruling skips this trio leg (DECISIONS; charts/radiance is
+    # the stilldeadcode ENGINE, not the vllm-radiance fork): the engine pod is
+    # reached only through the llama-swap peers.radiance route below — the
+    # existing llama/ai-llama-swap hosts already carry the chain, and a host
+    # of its own would publish the surface the peers hop exists to keep
+    # private.
     ai-llama-swap:
       service: gpu-ai-llama-swap
       port: 8080
@@ -574,6 +595,44 @@ llama-swap:
         timeouts:
           responseHeader: 1800
           connect: 30
+      # cf-143 C04 — the radiance ENGINE (charts/radiance, C02; NOT the
+      # vllm-radiance FORK commented below — naming law in DECISIONS) joins
+      # ADDITIVE beside strata; Q5 keeps every strata byte as-is. Single
+      # source: charts/llama-swap/tests/evidence/radiance-peers-expected.yaml
+      # (D13: the per-peer-key evidence law, this file's sibling — dev
+      # conforms values to it, never the reverse).
+      # proxy = the charts.radiance release's cluster DNS (gpu-ai-radiance,
+      # name derived by the appset entry above), NO /v1 suffix — the request
+      # path is appended verbatim, a suffix would double-prefix every route
+      # (strata's own law above). models lists served ids explicitly (peers
+      # is not a blanket URL proxy): the one engine --served-model-name id
+      # (D7), and it stays OUT of the outer matrix/models below — peers are
+      # invisible to the solver, so coexistence stays operator discipline,
+      # not a matrix arena. No apiKey: keyless engine + ungated packs (D8).
+      # responseHeader 1800 restates the cold-start knob (strata O2
+      # precedent) for radiance's ~66 GiB-class first load — the chart's
+      # sizing arithmetic (host pool + resident-KV copy + checkpoint slots).
+      # setParams "priority?" = the set-if-undefined floor 5: a client-sent
+      # priority wins. 5 is radiance's DEFAULT class under its higher-wins
+      # polarity (urgent 9 / default 5 / low 1 — RESEARCH RQ2, owner Q2), the
+      # OPPOSITE of the retired vLLM lane's 1/5/9, so never read it as a
+      # ported vLLM number; the per-engine polarity note lives in
+      # pipeline-models (C05).
+      # CUT-OVER HAZARD this join deliberately creates (Q10/Q11): radiance
+      # boots resident while strata's arenas stay live on one node —
+      # VRAM/RAM contention is the owner's observe-only metrics window;
+      # nothing here mitigates it in GitOps (the runbook's
+      # coexistence-envelope section owns the on-target posture).
+      radiance:
+        proxy: http://gpu-ai-radiance.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-flash-next-radiance
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 5
       # cf-143 C01 (owner Q3 ruling, DECISIONS D6): the peers.vllm hop is
       # disabled commented-out beside its charts.vllm entry — this is the
       # vllm-radiance FORK lane (charts/vllm), not the cf-143 radiance engine.
@@ -676,3 +735,31 @@ vllm:
   #   modelPath: /models/Qwen3.8-27B-Quark-AWQ-MXFP4
   #   # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
   #   rocrVisibleDevices: "0"
+
+# cf-143 C04: the charts/radiance service overlay (C02's engine chart;
+# DECISIONS D17 full profile). SCALARS ONLY, never lists — Helm deep-merge
+# REPLACES lists wholesale, so a list here would silently truncate the
+# chart's seed (the same law the llama-swap block states above; a
+# models/args override belongs chart-side). The appset generator hands the
+# release ONLY this subtree (charts/base/templates/appset-charts.yaml
+# `index $.Values $appName`), which is why the CI leg extracts exactly
+# d.get('radiance') or {} — this shape is the live deploy path, not a test
+# fixture.
+radiance:
+  app-template:
+    # DUAL-EDIT law (the commented vllm override above is the precedent):
+    # the chart's anchored serveArgs splices the CHART-level modelPath —
+    # anchors resolve per document (gotcha 7), so this re-pin alone does NOT
+    # move the rendered --model. A pack retarget moves charts/radiance/
+    # values.yaml AND this line together; charts/radiance/tests/
+    # test_serve_args.py's dual-edit leg reds a half-move.
+    modelPath: /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+    # Sizing scalars (guaranteedMemoryGi/hostPoolMib/maxModelLen/maxNumSeqs/
+    # cpuCores) deliberately NOT re-pinned: the chart defaults them to the
+    # FULL serving profile (Q10 ruling), so the owner's on-target receipt
+    # ladder stays ONE chart-value edit; re-pin one here only on a per-
+    # environment divergence the C06 runbook receipts name (the pair the
+    # chart's scalar comments record). NO rocrVisibleDevices re-pin either —
+    # the named-pool path sets no ROCr/HIP env (C02 absence law: the plugin's
+    # Allocate() injects the card; the vllm lane needed the key only for its
+    # hostPath in-pod enumeration).
