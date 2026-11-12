@@ -235,6 +235,61 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   (would need its own vendored-entry decision + sysfs receipts) rides the TP2 follow-up
   CARD #1 as a one-line posture note in the C03 doc (placement call: card #1 is the GPU
   scheduling home; the dashboard card stays dashboard-only).
+- 2026-11-12 human (owner PR review, six items — verbatim-intent ledger: DECISIONS
+  "Owner PR review — 2026-11-12" §items 1-6) via 2026-11-12 plan D22 (DISPOSITIONS,
+  §R7-resolved where factual): (1) `guaranteedMemoryGi: 64` "seems wrong. 64 too low or
+  too high?" → ANSWERED IN PLACE, value kept (C08 T-D: the comment now carries the D17
+  derivation + ladder + the 64+64+4>125.08 designed-Pending handshake — 64 is
+  class-median, too-high-for-coexistence is the feature, too-low is receipt-moved UP to
+  ~96 only while strata is manually down). (2) serveArgs same-line pairs → C08 T-C
+  flow-style-per-pair reformat, token multiset preserved EXACTLY; `--flag=value` merge
+  REJECTED (engine acceptance unverified — no gambling); equality arms parse-compare.
+  (3) rename `amd.com/gpu-ai-pro-r9700` → `amd.com/r9700-1` → §R7 VERDICT: NO MECHANISM —
+  .12/master have 2 flags, no override/env/config; `amd.com/` namespace AND `gpu-` prefix
+  are code constants; the unsupported amdgpu.ids-mount hack tops out at `amd.com/gpu-r9700-1`
+  and breaks the ledger provenance; the exact-string lanes are rejected-by-ruling lane
+  SWITCHES (DRA extendedResourceName reopens D18; squat reopens the determinism rejection)
+  — kept name + T-B evidence comment at the claim; upstream feature ask RECOMMENDED, no
+  duplicate exists (§R7-S9) — coord's run-end option, presented at hand-back with the
+  lane table. (4) `lbl:` key "not understandable" → DIES with the vendored values file
+  in T-A (no rename needed). (5) app-template conversion → YES per §R7-Q5, C08 T-A
+  executes (D23). (6) "fair number of other comments" → the recorded nits sweep:
+  test_trio.py:66 truncated message + naming.sh:205 stale phrase (TESTS/** → test
+  session, dev hands off), values:744 subtree wording + jsonc floor sentence + radiance
+  NOTES colon (dev-side one-liners in C08 T-E), M1 header fold mooted by T-A (arm
+  re-pin if it reads the header). "Other comments" beyond the six: if the owner holds
+  more they surface at the round-2 hand-back — plan assumption stated, not stalled on.
+- 2026-11-12 plan D23 (C08 shape; SUPERSEDES D19 — append-only: the vendored-fork
+  governance line, the ~10-line args-delta story, the refresh policy ("on upstream ≥0.23
+  re-copy+re-apply"), the `name: amd-gpu` byte-pin rationale (templates hardcoding
+  .Chart.Name) and the `lbl:`/`dp.extraArgs`/`updateStrategy` vendored-values keys ALL
+  DIE with the conversion to a FIRST-PARTY app-template 5.0.1 chart (owner item 5;
+  §R7-Q5 verdict "converts cleanly"; refresh debt ends — app-template dep bumps via
+  renovate are already repo norm, PR #122 staleness becomes irrelevant). SHIP FACTS the
+  conversion carries from the live/vendored bytes: four plain args (CMD trio restated —
+  `-v=5` law survives as comment — + strategy arg direct, no plumbing key), image
+  1.31.0.12 + docker renovate pin + 6437c74f digest ledger MOVED, THREE hostPaths
+  (device-plugins dir, /sys, /var/lib/amd-metrics-exporter DirectoryOrCreate) — §R7
+  CORRECTS the owner item-5 phrasing: the plugin mounts NO /dev/kfd//dev/dri (socket-
+  handshake registration; Allocate hands devices to kubelet at container creation),
+  /sys REQUIRED for naming; priorityClassName system-node-critical; tolerations
+  CriticalAddonsOnly; nodeSelector/imagePullSecrets/resources OFF as today (parity, not
+  improvement); RBAC/SA render NOTHING today (labeller-gated) → zero shipped,
+  app-template serviceAccount/rbac documented as the future-labeller route; templates/
+  emptied (owner: no _helpers.tpl, no NOTES.txt — radiance NOTES is a DIFFERENT chart
+  and STAYS). TWO ACCEPTED STRAINS shipped as decisions: (1) DaemonSet `updateStrategy`
+  NOT RENDERED by common 5.0.1 — today's RollingUpdate/maxUnavailable:1 EQUALS the k8s
+  API default ⇒ zero behavior delta; future OnDelete needs rawResources/upstream.
+  (2) NAME BYTE-IDENTITY (D19's pin) INTENTIONALLY LOST: global.nameOverride: amd-gpu +
+  identifier target live names where CHEAP; where it strains, one Argo-sync DS
+  prune+create swap inside the same wave (seconds gap; running GPU pods unaffected
+  §R6-Q4-4; gpu cluster OUTSIDE the wave — external entry + D21 shield untouched),
+  tests re-pinned to app-template-derived names where suite law demands identity,
+  rename set enumerated in the commit + review notes. Pool NAMES unchanged (D22 item 3
+  verdict NO) — the §R7-Q4 rename-inventory table becomes the zero-delta list.
+  Chart.yaml: version stays 1.0.0 (existing chart, no hand-bump), appVersion carries the
+  image pairing; .helmignore joins repo standard; expected-names ledger block SURVIVES
+  the values rewrite in n4-readable form.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
@@ -249,8 +304,13 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   0.22.0 + args hook + plugin 1.31.0.12; names `amd.com/gpu-ai-pro-r9700` /
   `amd.com/gpu-8060s`; the earlier bullet's name form `Radeon-AI-PRO-R9700` was
   CORRECTED by R6 — the sanitizer lowercases, drops "Radeon", prefixes `gpu-`).
-- Upstream amd-gpu chart refresh (≥0.23 or PR #122 merge): re-copy + re-apply the args
-  delta per the D19 refresh policy; watch, don't wait.
+- Upstream amd-gpu chart refresh (≥0.23 or PR #122 merge) — MOOTED by D23: charts/amd-gpu
+  becomes first-party app-template (C08); the vendored-fork refresh policy dies with the
+  fork. D19 kept on the ledger for provenance.
+- Upstream feature ask on ROCm/k8s-device-plugin for a configurable resource name/
+  prefix/domain or an override side-map (the shape §R7-Q3(b) argues for; no duplicate
+  exists — §R7-S9 verified full open list 2026-11-12): RECOMMENDED yes, owner's call at
+  the round-2 hand-back (coord's run-end option), independent of keeping the name.
 - Plugin occupancy PRs #243/#247 (opt-in KFD occupancy): upstream concedes the
   no-occupancy class; a future bump could make within-bucket choice occupancy-aware —
   watch (moot while each bucket holds one device).
@@ -268,3 +328,49 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   neither `AMD_GPU_DEVICE_COUNT` nor `CONFIG_FILE_PATH` (docs lead code; a count cap
   could never choose a card anyway); the t1m.me kernel-7.1.3 story stays dropped unless
   the owner produces the citation.
+
+## Owner PR review — 2026-11-12 (rework round, same run + same claim, cf-141 pattern)
+
+The owner line-reviewed the branch vs main and left six items (verbatim intent; the
+"fair number of other comments" tail is read as: also fold the recorded non-gating nits
+in Deferred/STATE.deferred — if the owner has comments beyond the six, they will surface
+them at hand-back):
+
+1. charts/radiance/values.yaml:49 `guaranteedMemoryGi: 64` — "seems wrong. 64 too low or
+   too high?" → D17 already holds the derivation (60Gi-class author recipe 49 GiB pinned;
+   +4 GiB pool delta; ladder up→96 while strata is down, down via pool/ctx steps).
+   Rework: sharpen the comment to answer the question AT the scalar (derivation + ladder +
+   the 64+64+4>125.08 designed-Pending handshake), keep 64 unless the sweep finds a better
+   receipt-anchored start.
+2. charts/radiance/values.yaml serveArgs list — "put the args on the same lines as the
+   flags" → reformat the YAML list so each flag+value share a line; TOKENS unchanged
+   (app-template schema rejects nested arrays; `--flag=value` merge unverified for this
+   engine — flow-style-per-pair is the token-preserving shape). Test/runbook equality arms
+   parse tokens, so contract stays green; verify.
+3. Resource name `amd.com/gpu-ai-pro-r9700` → "call this amd.com/r9700-1" — the product
+   names come from the plugin BINARY's sanitizer over the baked amdgpu.ids table (§R6-Q1),
+   not from chart values. Rework gate: a source-verified capability check (name override
+   flag/env/config at v1.31.0.12) — RESEARCH §R7 commissions it. If customizable → rename
+   EVERYWHERE (radiance claim, ledger, tests' constants, runbook/TP2 docs, catalog-free
+   names unchanged) with tests re-pinned to the new strings; if NOT → keep
+   `gpu-ai-pro-r9700` + answer the owner with evidence (and the naming shape rides an
+   upstream ask).
+4. charts/amd-gpu/values.yaml:50 `lbl:` — "not understandable, use a better name" →
+   superseded by item 5's conversion when it lands (the vendored values file goes away);
+   if 5 concludes non-convertible, rename with a D19-governance delta note.
+5. charts/amd-gpu/templates/deviceplugin-daemonset.yaml "Can this be handled by the
+   app-template?" + "I don't use _helpers.tpl, so remove that and NOTES.txt" → owner
+   direction: rewrite charts/amd-gpu as a repo-standard app-template 5.0.1 chart
+   (DaemonSet controller type, SA+RBAC via app-template controller fields, hostPath
+   volumes for /dev/kfd + /dev/dri, tolerations, nodeSelector as today, args incl.
+   -resource_naming_strategy=product + -v=5), DELETE _helpers.tpl + NOTES.txt + the six
+   vendored templates. Governance effect: D19's vendored-fork story ends — charts/amd-gpu
+   becomes a first-party chart (better: no upstream-refresh debt); the labeller/nfd
+   subcharts stay out (they rendered nothing). D19 append-only superseded-by-D-note owed.
+6. "a fair number of other comments for you to clean up" → fold the still-open recorded
+   nits: charts/vllm/tests/test_trio.py:66 dropped-message phrase (test session),
+   charts/radiance NOTES.txt colon (mooted by its own file? no — radiance NOTES stays;
+   fix), tests/services/amd-gpu-naming.sh:205 stale success phrase (test session),
+   services/gpu-ai/prod/values.yaml:744 'ONLY this subtree' wording, .opencode/opencode
+   .jsonc floor-sentence precision, chart M1 header fold if chart survives conversion
+   (mooted by item 5 otherwise).

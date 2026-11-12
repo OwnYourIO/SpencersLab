@@ -256,3 +256,43 @@ acceptable — a plan-agent-surface one-liner, out of this review's edit grant,
 rides the next agent-plan touch; fold is otherwise verified landed (runbook
 :33 RESEARCH RQ3 cite, chart values :47/:83 steps 3/10 + receipt e,
 :293 minutes-class).
+
+---
+
+## Rework delta — owner PR review (C08) — 2026-11-12, appended per owner direction
+Six owner review items (DECISIONS "Owner PR review — 2026-11-12"; dispositions D22;
+conversion shape D23 superseding D19; factual gates resolved by RESEARCH §R7). All seven
+prior chunks stay DONE under the same claim; this is a delivery delta, not a re-plan.
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C08 | Owner-review rework: amd-gpu → first-party app-template + items T-A..T-E | L | 5 | [C07] | converts C07's shipped artifact; §R7 name-verdict keeps all name strings, so only the chart shape moves |
+
+Wave 5: C08 (alone). Test Writing recurs for C08's arms (red-first re-author:
+charts/amd-gpu render+provenance suites, n1–n5 re-scope, parse-compare confirmations,
+the two routed test-message fixes) before dev.
+
+Delta summary (full contract = chunks/C08.md): **T-A** charts/amd-gpu becomes a
+first-party app-template 5.0.1 chart — templates/ emptied per owner ("remove _helpers.tpl
+and NOTES.txt"), values.yaml declares the DS (type daemonset, args 4-list with `-v=5` law
+as comment, image 1.31.0.12 + docker pin + 6437c74f ledger, THREE hostPaths — §R7
+correction: NO /dev/kfd//dev/dri mounts, priorityClassName, tolerations, drop-ALL, parity
+over improvement, zero RBAC/Service today), .helmignore joins; accepted strains shipped as
+decisions: updateStrategy NOT rendered (= k8s default, zero delta) + D19 name byte-pin
+intentionally lost → nameOverride-target live names where cheap, else ONE Argo-sync DS
+prune+create swap in-wave with tests re-pinned (gpu cluster untouched — D21 shield).
+**T-B** names STAY (`amd.com/r9700-1` unreachable — sanitizer + code constants, §R7;
+exact-string lanes are rejected lane-switches, presented at hand-back; upstream ask =
+coord run-end option; radiance claim gains the evidence comment). **T-C** serveArgs
+flow-style pair-per-line reformat, token multiset EXACT, no `--flag=value` gamble.
+**T-D** guaranteedMemoryGi:64 comment answers too-low/too-high IN PLACE (derivation +
+ladder + designed-Pending handshake), value kept. **T-E** nits: dev-side values:744 +
+jsonc floor sentence + radiance NOTES colon; test-side test_trio.py:66 + naming.sh:205
+routed to the test session; M1 fold mooted by T-A.
+
+Commands additions (beyond the standing battery): `helm dependency update charts/amd-gpu`
+before renders (gitignored-tgz law); `helm template charts/amd-gpu` vs today's DS parity
+diff (names per strain doc, everything else equal); gpu-umbrella + **services/gpu render
+BYTE-PARITY check** (shield witness); serveArgs pre/post token-multiset equality; golden +
+off-parity fixtures move ZERO lines; combined ticket-wide bar re-run (C08 AC7).
+plan_status remains **approved** (owner-directed rework on an approved plan).
