@@ -180,13 +180,27 @@
       "handoffs": []
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; M1/M2/M3 folded in dev round 2, contract green)",
+      "dev_session": "ses_e32a433c0ffevkKraPTCf00bIY",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T00:55:00+00:00", "session": "ses_e32a433c0ffevkKraPTCf00bIY",
+          "result": "DONE — .agents/notes/radiance-second-gpu-tp2.md (new, 350L, 14 sections, provenance header + exact follow-up-card title). radiance-tp2.sh 3 ok GREEN (T1 structure/provenance, T2 citation resolver, T3 needles+absences); llama-swap 8F/485P/9S unchanged; surface 9 ok; aislop 100/0. deviations none. friction: T2 resolver cannot span newlines → line-suffix citation form R6-Q4-<n> never resolves — heading-only form used; C06 dev must do the same (heads-up carried). open_questions none."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T01:15:00+00:00", "session": "ses_e329403a0ffeB5f2OBB0jz2sCw",
+          "result": "APPROVED — all bars fresh green; AC1-AC3 met; every number/name/flag cross-checked vs RESEARCH clean (stale-flag single explicit-mention, UNVERIFIABLE GB/s figures direction-only, pack/envelope/pooling all resolve); enumeration table verified vs values.yaml:1477/1491/:55; SKETCH honest; scope = single new file. Minors: M1 62-88% MTP attributed to 'the fn card' (source is the swift1.5 card), M2 '§12 disambiguation law' should be §13, M3 present-tense shipped-world (optional hedge). Notes appended to chunks/C03.md."
+        },
+        {
+          "role": "dev", "round": 2, "at": "2026-11-12T01:35:00+00:00", "session": "ses_e32a433c0ffevkKraPTCf00bIY",
+          "result": "DONE (fold round) — M1 swift1.5-card attribution (§9), M2 §12→§13 cross-ref (§2), M3 tense hedges (header + §1, needle-safe, applied); radiance-tp2.sh 3 ok green post-fold; aislop 100/0; doc 351 lines; no other surfaces touched."
+        }
+      ]
     },
     "C04": {
       "status": "pending",
