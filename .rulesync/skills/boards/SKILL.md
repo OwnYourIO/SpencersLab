@@ -84,9 +84,9 @@ Displayed stamps follow the workspace `$TZ` with its explicit UTC offset — the
 
 ## Repo identity
 
-The run's repo name decides which `Repo:` labels this worker picks up. It is the BASENAME of the session's canonical project root — resolved through the sanctioned channel, the PARENT of `git rev-parse --path-format=absolute --git-common-dir` (a main checkout's common dir is its own `<root>/.git`, so the same derivation holds there), never the worktree's own basename — the same `project.canonical` the lock engine anchors on, so every worktree of one repo resolves to the root's name — cross-checked against the repo's own generated `AGENTS.md`, which carries a `Repo identity:` line supplied by that repo's rules source (`.rulesync/rules/overview.md`). Both must agree: no `Repo identity:` line, or a line that does not match the basename → STOP the board-read side and return RESULT `status: NEEDS_INFO` naming the mismatch — never guess a repo name or host (OQ-A2, DECISIONS 2026-10-31). The table keeps all four worker repos in every copy; the default picker is named exactly once, in its row — a ported worker repo copies this body verbatim and flips only the `Repo identity:` line in its own rules source.
+The run's repo name decides which `Repo:` labels this worker picks up. It is the BASENAME of the session's canonical project root — resolved through the sanctioned channel, the PARENT of `git rev-parse --path-format=absolute --git-common-dir` (a main checkout's common dir is its own `<root>/.git`, so the same derivation holds there), never the worktree's own basename — the same `project.canonical` the lock engine anchors on, so every worktree of one repo resolves to the root's name — cross-checked against the repo's own generated `AGENTS.md`, which carries a `Repo identity:` line supplied by that repo's rules source (`.rulesync/rules/overview.md`). Both must agree: no `Repo identity:` line, or a line that does not match the basename → STOP the board-read side and return RESULT `status: NEEDS_INFO` naming the mismatch — never guess a repo name or host (OQ-A2, DECISIONS 2026-10-31). The table keeps all five worker repos in every copy; the default picker is named exactly once, in its row — a ported worker repo copies this body verbatim and flips only the `Repo identity:` line in its own rules source.
 
-`Repo:` label spellings are exact, case-sensitive project directory names (OQ-B2). The owner creates the labels in the WeKan UI — human-owned like `Pipeline:`. The four worker repos:
+`Repo:` label spellings are exact, case-sensitive project directory names (OQ-B2). The owner creates the labels in the WeKan UI — human-owned like `Pipeline:`. The five worker repos:
 
 | `Repo:` label spelling (exact dir name) | Default picker |
 |---|---|
@@ -94,8 +94,11 @@ The run's repo name decides which `Repo:` labels this worker picks up. It is the
 | `HomeAssistant` | no |
 | `Home-Assistant-Label-based-Features` | no |
 | `brother-ptouch-automation` | no |
+| `CuratedForest.com` | no |
 
-Spelling history: card #93's text writes `Home-Assistant-Label-Based-Features` — that capital-B is a mis-cased historical spelling of the LBF directory; the label spelling is the exact lowercase-b dir name in the table above.
+Spelling history: card #93's text writes `Home-Assistant-Label-Based-Features` — that capital-B is a mis-cased historical spelling of the LBF directory; the label spelling is the exact lowercase-b dir name in the table above. Card #124's text writes `CuratedForest` with no dot — the same mis-case class: the ruled label spelling is the exact directory basename `CuratedForest.com`, the canonical string shared with the Services fixed extra set (the Services bullet under Board facts is that list's authority — one canonical spelling per repo across both lists, D22).
+
+The spelling law is exact-equality and silent: a `Repo:` label that is not the directory basename matches nothing, its cards are never picked, and no error is reported — the cards are silently unclaimable (D22). The live Planning list titled `CurateForest.com` (missing the `d`) is a list title, not a label: it neither satisfies nor conflicts with a `Repo:` label, and it is recorded here so the next reader does not "fix" the table to match the list — renaming that list is the owner's call.
 
 ## Card pickup
 
