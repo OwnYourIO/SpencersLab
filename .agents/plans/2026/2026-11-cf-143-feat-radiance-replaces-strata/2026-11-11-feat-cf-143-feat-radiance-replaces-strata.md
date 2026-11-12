@@ -294,5 +294,27 @@ Commands additions (beyond the standing battery): `helm dependency update charts
 before renders (gitignored-tgz law); `helm template charts/amd-gpu` vs today's DS parity
 diff (names per strain doc, everything else equal); gpu-umbrella + **services/gpu render
 BYTE-PARITY check** (shield witness); serveArgs pre/post token-multiset equality; golden +
-off-parity fixtures move ZERO lines; combined ticket-wide bar re-run (C08 AC7).
+off-parity fixtures move ZERO lines; combined ticket-wide bar re-run (C08 AC8).
 plan_status remains **approved** (owner-directed rework on an approved plan).
+
+### Lane ruling (amendment 2026-11-12, batched owner round — recorded in DECISIONS D24)
+Owner chose **"Table-mount → amd.com/gpu-r9700-1 (Recommended)"** for item 3 and confirmed
+scope **"Six items + recorded nits"**. C08.md amended in place (dated markers): T-B becomes
+the RENAME contract — minimal patched `amdgpu.ids` shipped as a ConfigMap over the const
+IDsPath via subPath (renamed 7551/C0 row → product string exactly `r9700-1` → sanitizer
+yields `gpu-r9700-1`; EVERY 1586 row carried verbatim from the fetched v1.31.0.12 baked
+table — dropping one silently strands the APU name the live B1 overlay consumes: the grave
+case, test-enforced parity vs the evidence fixture); ledger, radiance claim+comments+NOTES,
+runbook expected-names gates (incl gate (b) row-count = the minimal table) and TP2 doc §6/§11
+all move to `gpu-r9700-1`; `gpu-8060s` + the overlay + catalog/peers FROZEN (unchanged).
+Minimality law: a (device,revision) absent from the table hits the shipped fallback-trap
+tree — TP2 cards REQUIRE table re-verification first (rides the TP2 doc). WATCH: an image
+moving its IDs path un-applies the mount silently → baked `gpu-ai-pro-r9700` returns →
+claim Pending; step-0 receipts catch it. Plus T-B's COMMENT-ONLY carve sites
+(charts/llama-swap flip-comment block + services/gpu-ai amd-gpu-entry comments) follow the
+string; renders/golden/off-parity byte-laws unchanged there. Upstream naming feature ask:
+RECOMMENDED, filing = optional owner call (Deferred; D24). Zero-stale-name AC (C08 AC4):
+after C08 the old string survives only in historical records. The in-flight test round is
+pointed at the amended C08.md verbatim. **Coord run-end consequences: (1) RE-PUBLISH follow-up card #1's
+body — it is a doc snapshot and the TP2 doc's name strings + re-verification law changed;
+(2) STATE.deferred carries both open owner-lane items (upstream ask; card refresh).**

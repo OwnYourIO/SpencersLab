@@ -290,6 +290,42 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   Chart.yaml: version stays 1.0.0 (existing chart, no hand-bump), appVersion carries the
   image pairing; .helmignore joins repo standard; expected-names ledger block SURVIVES
   the values rewrite in n4-readable form.
+- 2026-11-12 human (lane ruling, batched round — verbatim: owner chose **"Table-mount →
+  amd.com/gpu-r9700-1 (Recommended)"** for the item-3 rename-lane question and confirmed
+  the rework scope is **"Six items + recorded nits"** — no further comments) via
+  2026-11-12 plan D24 (APPEND-ONLY SUPERSEDES D23's names-stay framing and D22-item-3's
+  keep-name disposition; the ledger/gate/test name strings all move per the C08.md
+  amendment of the same date): MECHANISM ON THE RECORD — the exact `amd.com/r9700-1`
+  REMAINS UNREACHABLE (§R7: namespace `amd.com` and prefix `gpu-` are code constants;
+  the table-mount's ceiling is `gpu-r9700-1`, §R7-Q2 sanitizer trace verified: marketing
+  string exactly `r9700-1` → valid chars, no filler token, unique in the 752-row table →
+  `gpu-r9700-1`). The owner ACCEPTED the closest name via the §R7-Q2 unsupported-in-docs /
+  works-in-practice mount (plain os.Open of the const IDsPath, mount-over-able) rather
+  than the exact-string lane-switches: chosen over DRA `extendedResourceName` (reopens
+  D18 Option-1, second GPU subsystem, reboot-CDI bug ledger) and over squat (D18's
+  determinism rejection) precisely because it is INJECTION-PRESERVING (same plugin, same
+  strategy, same per-name pools, same B1 shield) and adds NO new subsystem. SHAPE:
+  charts/amd-gpu (first-party per D23) ships a MINIMAL PATCHED amdgpu.ids as a ConfigMap
+  mounted over the baked IDsPath via subPath; ONLY the 7551/C0 row(s) renamed + EVERY
+  1586 row copied VERBATIM from the fetched v1.31.0.12 baked table (rows keyed
+  per-(device,revision): renaming the R9700 cannot touch the APU — but DROPPING any 1586
+  row silently strands `gpu-8060s` → bare-fallback → breaks the LIVE B1 overlay consumer:
+  THE APU-ROWS-MUST-CARRY LAW, enforced by the test parity leg vs the stored evidence
+  fixture, not prose). MINIMALITY LAW: the shipped table is NOT the full 752 rows — any
+  absent (device,revision) hits the already-shipped fallback-trap decision tree; bounded
+  to this node's two cards TODAY; TP2 CARDS REQUIRE TABLE RE-VERIFICATION BEFORE
+  SCHEDULING TRUST (rides the TP2 doc §6/§11; follow-up card #1 body RE-PUBLISHED by
+  coord after C08 — run-end action). WATCH LAW: if the image ever moves its IDs lookup
+  path (the Dockerfile COPY constant), the mount un-applies SILENTLY and the baked
+  `gpu-ai-pro-r9700` returns → radiance claim Pending-forever; step-0 receipts (a–c)
+  catch it — comment at the mount + runbook prose. RENAMED SURFACES: amd-gpu ledger,
+  radiance claim pair/comments/NOTES, runbook gate names + gate (b) Loaded-N row-count
+  (now = the minimal table), TP2 doc pool strings, testlib GPU_CLAIM constant.
+  FROZEN: `gpu-8060s` everywhere, the overlay, peers/catalog (engine ids were never
+  GPU-resource names), the gpu cluster (external chart never sees the ConfigMap).
+  UPSTREAM FEATURE ASK (§R7-Q3(b)/OQ3): RECOMMENDED, filing = OPTIONAL owner call —
+  recorded Deferred either way, zero code implication. Scope confirmed closed: the six
+  items + recorded nits are the whole rework.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
@@ -309,8 +345,12 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   fork. D19 kept on the ledger for provenance.
 - Upstream feature ask on ROCm/k8s-device-plugin for a configurable resource name/
   prefix/domain or an override side-map (the shape §R7-Q3(b) argues for; no duplicate
-  exists — §R7-S9 verified full open list 2026-11-12): RECOMMENDED yes, owner's call at
-  the round-2 hand-back (coord's run-end option), independent of keeping the name.
+  exists — §R7-S9 verified full open list 2026-11-12): RECOMMENDED, filing is an OPTIONAL
+  OWNER CALL post-lane-ruling (D24: table-mount ships gpu-r9700-1 regardless — the ask
+  would make the name natively configurable later); record the choice either way.
+- C08 lands WITH the rename (D24): after its dev round, COORD RE-PUBLISHES follow-up
+  card #1's body (the TP2 doc's name strings + the table re-verification law changed;
+  the card is a doc snapshot) — run-end action, tracked in the plan's delta section.
 - Plugin occupancy PRs #243/#247 (opt-in KFD occupancy): upstream concedes the
   no-occupancy class; a future bump could make within-bucket choice occupancy-aware —
   watch (moot while each bucket holds one device).
