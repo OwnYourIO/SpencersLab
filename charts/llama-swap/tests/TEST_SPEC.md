@@ -3426,7 +3426,8 @@ evidence gates), `charts/vllm/tests` = 36 passed (incl. the 12.1 era
 re-pins), `charts/amd-gpu/tests` 15/15 + `amd-gpu-naming.sh` PASS,
 `radiance-tp2.sh` PASS (C03 landed), surface.sh bare = PASS; M8 and the
 radiance suite went green with the C02/C05 rounds (12.3/12.4) — the only
-designed-red left is `tests/notes/radiance-runbook.sh` naming C06:
+designed-red left is `tests/notes/radiance-runbook.sh` naming C06
+*(and it flipped with 12.5 — every row below is history by this line)*:
 
 | red arms | chunk that greens them |
 |---|---|
@@ -3435,7 +3436,7 @@ designed-red left is `tests/notes/radiance-runbook.sh` naming C06:
 | ~~charts/llama-swap/tests/test_cf143_naming_flip 3 arms + charts/amd-gpu/tests 15 arms + amd-gpu-naming n1-n5 + off-parity re-baseline duty~~ — **GREEN since the C07 landing round (see 12.2; the re-baseline dissolved under B1)** | **C07 (landed)** |
 | ~~test_radiance_peer 2 arms, test_coexistence_wiring 3 arms (entry/scalars/skip-comment) + the 5 HOLD/green legs that must STAY green~~ — **GREEN since C04 landed (capture provenance in 12.4)** | **C04 (landed)** |
 | ~~tests/notes/radiance-tp2.sh T1-T3~~ — **GREEN (C03 landed, suite PASS)** / ~~surface.sh M8~~ — **GREEN since the C05 landing round (12.4)** | ~~**C03 (landed)**~~ / ~~**C05**~~ (landed) |
-| tests/notes/radiance-runbook.sh T1-T5 | **C06** |
+| ~~tests/notes/radiance-runbook.sh T1-T5~~ — **GREEN since the C06 landing round (12.5) — 5 ok/PASS on the shipped doc, two latent flag-position sites repaired** | **C06 (landed)** |
 
 HOLD-green (must stay green across every wave): the coexistence baseline +
 enable-set + appset-name + custom-values + matrix legs, gpu/gpu.config golden
@@ -3686,3 +3687,70 @@ landmine disambiguation the wave's law wants). The needle was authored
 placement-agnostic on purpose ("test needle decides exact shape" — here it
 decides table-absence + prose-presence, which is exactly the chunk's
 live-inventory convention); the dev's text is inside the bar, not around it.
+
+### 12.5 C06 landing round — the last designed-red flips; the flag-position class; deviations adjudicated (test session, 2026-11-12)
+
+**The flip record:** `.agents/notes/radiance-on-target-acceptance.md`
+(611 lines) landed and `tests/notes/radiance-runbook.sh` went **5 ok / PASS**
+unchanged in its assertions — T1 twelve step-groups 0-11 + AC3 posture +
+OWNER-EXECUTED command law; T2 the single shipped-args DRY_RUN block ==
+chart serveArgs (43000/200000/8/64 both sides) + gate order; T3 names
+block, triple-digest pairing, 9/5/1 higher-wins in runbook AND catalog,
+(a)-(e) gates with sysfs receipts + fallback decision tree + request-sum
+Pending gate + gfx1201 belt; T4 citations incl. §R6 rows; T5 the full
+marker set. With it the ticket's designed-red ledger closes: every suite
+this wave wrote is now green on the landed tree (combined §12.3 bar,
+§12.5 bottom).
+
+**The flag-position class (routed mechanical repair, two sites):** T2's
+step-3 and T3's step-0 section splitters embedded a second `(?m)` inside a
+lookahead of a pattern already carrying the global `(?m)` prefix — Python
+3.14 rejects inline global flags anywhere but the pattern start
+(PatternError at position 47). The arms therefore NEVER RAN during the
+designed-red phase: T1's missing-file short-circuit exited the suite before
+the heredocs executed, so the crash class stayed latent until the doc
+existed. Repair exactly as the dev's replay-proven proposal: drop the
+inner `(?m`, pass `flags=re.S | re.M` on those two `re.search` calls; same
+section boundaries, same assertions, zero leg semantics moved. CLASS LAW:
+an inline group-local flag form belongs mid-pattern; a global inline flag
+does not — and any suite whose first legs short-circuit on a missing
+artifact must have its heredoc bodies compiled (`python3 -m compileall`
+over the PY-heredoc extraction, done at wave-1 write time here but the
+regexes only *execute* at green time — so ALSO run the suite once against
+a conforming fixture set via the documented env overrides before calling
+the contract authored). No other cf-143 suite carries the pattern class
+(grepped).
+
+**C06 dev deviations adjudicated (brief items 2-4; closed on record, zero
+suite-side, zero doc-side words owed):**
+- *deviation 2, 30-minute probe envelope*: chart-equality law holds — T2's
+  equality bar is the ARGS block only (flags/values), the probe budget is
+  pinned where it lives: charts/radiance/tests
+  `test_ac2_probes_are_plain_health_on_8000` (>=1800 s startup envelope,
+  /health-only) and runbook T5's `/health startup` + `/v1/models`-probe bar.
+  The doc's line-357 sentence documents the render, it is not a second
+  source. CLOSED.
+- *deviation 3, gate-letter reconciliation*: the doc names step-0's (a)-(e)
+  per C06's own list and explicitly cross-references the R6-Q4-5 receipts
+  ("Receipt c of the same [numbering]", line 229) — prose marking is the
+  doc's idiom; the suite is placement-agnostic inside step-0 (letters +
+  sysfs/fallback/decision-tree/request-sum keywords) and asserts the
+  belt-and-braces gfx1201 assert separately (T3), exactly as §12 deviation
+  5-7 read the two numberings. T3 PASS = reconciliation lands. CLOSED.
+  Side note for the dev's next doc touch (not a bar): line 229 cites
+  "Receipt c" where line 436's step-7 belt cites "step 0(a)" — the two
+  cross-references use different letter spaces of the same reconciliation
+  the doc itself explains; a future docs round may align them, the suite
+  stays silent either way.
+- *deviation 4, the 1.5 GiB misc line*: the chunk's step-6 pinning text
+  (pool 42.0 + copy ≈19.3 + slots ≈8.9 + misc ≈1.5 = 60-70 GiB-class) —
+  quoted by the doc verbatim (line 378) and nowhere a T5 marker (the
+  chunk's marker list names the ladder/66/450-600/120.6 set only). A
+  chunk-internal citation, not a suite fact. CLOSED.
+
+**Combined §12.3 final bar (this round, ONE check):** charts/llama-swap
+495P/9S/0F · charts/radiance 41P/0S/0F · charts/amd-gpu 15P · charts/vllm
+36P · surface bare 9 ok + M1..M8 with CF143_BASE_SHA=0d9b41785 10 ok ·
+amd-gpu-naming 5 ok · radiance-tp2 3 ok · radiance-runbook 5 ok — all
+green, aislop 100/0/0, bash -n + compileall clean. The whole-plan test
+contract is fully bound; only chunk Review/final-review actions remain.

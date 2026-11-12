@@ -208,7 +208,7 @@ m0 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?0(?=[.: \t—–-]|$)", rb)
 first_boot = re.search(r"(?i)\b(port-forward|application startup|first boot|engine boots)\b", rb)
 if m0 and first_boot and first_boot.start() < m0.end():
     errs.append("boot text appears BEFORE the step-0 gates header (gate-order law)")
-m3 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?3(?=[.: \t—–-]|$).*?(?=(?m)^#{1,6}\s*(Step\s+)?4(?=[.: \t—–-]|$))", rb, re.S)
+m3 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?3(?=[.: \t—–-]|$).*?(?=^#{1,6}\s*(Step\s+)?4(?=[.: \t—–-]|$))", rb, re.S | re.M)
 if not m3:
     errs.append("no step-3 section found for the scale-down-before-start ordering")
 else:
@@ -289,7 +289,7 @@ for row, prio in (("qwen3.8-flash-next-radiance-urgent", 9), ("qwen3.8-flash-nex
 
 # The five step-0 gates (a)-(e) present BY NAME + the sysfs receipts + the
 # fallback-trap tree (R6-Q4-5 a; the decision tree records both remedies).
-m0 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?0(?=[.: \t—–-]|$).*?(?=(?m)^#{1,6}\s*(Step\s+)?1(?=[.: \t—–-]|$))", rb, re.S)
+m0 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?0(?=[.: \t—–-]|$).*?(?=^#{1,6}\s*(Step\s+)?1(?=[.: \t—–-]|$))", rb, re.S | re.M)
 if not m0:
     errs.append("no step-0 section to search for the (a)-(e) gates")
 else:
