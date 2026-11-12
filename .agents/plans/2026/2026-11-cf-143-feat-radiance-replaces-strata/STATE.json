@@ -169,14 +169,14 @@
       ]
     },
     "C02": {
-      "status": "review-pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C07"
       ],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; 2 non-gating nits → Deferred; dev 3 + test-round 3 deviations all adjudicated ACCEPTED)",
       "dev_session": "ses_e31ee6fb9ffe36Ly30BmY3B5Jy",
       "handoffs": [
         {
@@ -186,6 +186,10 @@
         {
           "role": "test-round", "at": "2026-11-12T05:10:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE — routed arm re-pinned to res= level (gpu-AI overlay-MERGED render APU limits exact + ledger 1586≠7551 kept; gpu render bare intact = shield at suite level; cross-chart via sys.path resolve of llama-swap/tests, documented); radiance suite now 39P/2S/0F (operative 0F; 2S = standing C04 witnesses); llama-swap 5F/490P/9S UNCHANGED (5 C04-era; naming_flip 6/6 green vs new charts/radiance presence — R9700 pre-allow guard checked-not-assumed); naming 5 ok with C02 claim site live; TEST_SPEC §12.3 class fold (placement-move class law: enumerate ALL suites reading the moved surface — grep audit run, 4 surviving bare reads all B1-legit)."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T05:40:00+00:00", "session": "ses_e31a95edaffeWdZ2S5Z4ifvdkR",
+          "result": "APPROVED — combined §12.3 bar fresh: radiance 39P/2S/0F (skips name C04 verbatim), llama-swap 5F/490P/9S all-C04-era zero-C02-named, amd-gpu 15P, vllm 36P, naming 5 ok, surface 9 ok, helm floors, rulesync --check clean at pinned 37.0.0, aislop 0/0 both forms; own workflow-leg renders (service-vs-defaults diff = release-name lines only); LIVE registry re-verification byte-exact (index c2acbaa3/amd64 6fb0e99b/1.17.0 still newest; curl 8.23.0 current; HF gated-False/121,969,901,568 B/lfs 0af5e962 exact); 7-mutation teeth battery all bite (args half-move, init-pair removal, bare-claim flip, mount polarity, privileged, digest-flip, served-id retarget) then restored; schema probe verified dev's int-args claim live. All six routed deviations ACCEPTED with reasons (string-carrier mechanism = library-forced; sys.path resolve = sanctioned single-authority). Nits N1 NOTES colon + N2 stale 'nowhere yet' message phrase → Deferred; Q12 verified no owner-gate missed."
         }
       ]
     },
