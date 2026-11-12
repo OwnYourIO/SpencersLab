@@ -119,7 +119,7 @@ def test_ac2_container_capabilities_and_escalation():
 @helm_skip
 def test_ac2_guaranteed_pair_with_named_pool():
     """requests == limits EXACTLY on the serve container, extended resource
-    included: {cpu 8, memory 64Gi, amd.com/gpu-ai-pro-r9700: 1} — extended
+    included: {cpu 8, memory 64Gi, GPU_CLAIM: 1} — extended
     resources require equal integer pairs and Guaranteed is the ruling's pod
     class (Q7 + D15 + Q9 named pool)."""
     docs, _ = R.render(service=False)
@@ -134,7 +134,7 @@ def test_ac2_guaranteed_pair_with_named_pool():
     assert res.get("limits") == want, f"C02 AC2: serve limits {res.get('limits')} != {want}"
     assert R.GPU_CLAIM_BARE not in (res.get("requests") or {}) and R.GPU_CLAIM_BARE not in (res.get("limits") or {}), (
         "C02 AC2: a bare amd.com/gpu claim — after C07's flip the name does not exist on the "
-        "node; the claim is amd.com/gpu-ai-pro-r9700, the product pool (Q9/§R6-Q1)"
+        f"node; the claim is {R.GPU_CLAIM}, the product pool (Q9 naming, D24-renamed)"
     )
 
 

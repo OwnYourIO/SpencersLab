@@ -1,0 +1,75 @@
+# C08 T-A parity oracle — the CURRENT (vendored-chart) amd-gpu render captured
+# by the C08 test round at HEAD eef04f9c3, BEFORE the first-party conversion
+# deletes the templates (git-added test-session property; dev never edits
+# this). The conversion's law is PARITY, NOT IMPROVEMENT (chunks/C08.md): the
+# app-template 5.0.1 render must reproduce every meaningful field below —
+# image + the 4-arg list (the -v=5 law), priorityClassName, tolerations, the
+# three hostPath volumes + byte-exact mountPaths (health WITH trailing slash,
+# DirectoryOrCreate on health only), container securityContext, resources
+# nothing, RBAC/SA/Service NOTHING (today's kinds: DaemonSet only, §R7-Q5) —
+# modulo the documented name strain (D23: byte-identical names OR the rename
+# set enumerated in the values ledger; updateStrategy absent = the ACCEPTED
+# k8s-default-equivalence gap). The gpu cluster is not in scope (external
+# entry, D21 shield).
+# Captured: helm template amd-gpu charts/amd-gpu --set domain=spencerslab.com
+#   --set clusterName=gpu-ai  (helm v3.16.4, chart = C07 vendored 0.22.0 +
+#   args hook), full DaemonSet document verbatim:
+observed_kinds:
+- DaemonSet/amd-gpu-device-plugin-daemonset
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: amd-gpu-device-plugin-daemonset
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      name: amd-gpu-dp-ds
+  template:
+    metadata:
+      labels:
+        name: amd-gpu-dp-ds
+    spec:
+      containers:
+      - args:
+        - -logtostderr=true
+        - -stderrthreshold=INFO
+        - -v=5
+        - -resource_naming_strategy=product
+        image: docker.io/rocm/k8s-device-plugin:1.31.0.12
+        name: amd-gpu-dp-cntr
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /var/lib/kubelet/device-plugins
+          name: dp
+        - mountPath: /sys
+          name: sys
+        - mountPath: /var/lib/amd-metrics-exporter/
+          name: health
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /var/lib/kubelet/device-plugins
+        name: dp
+      - hostPath:
+          path: /sys
+        name: sys
+      - hostPath:
+          path: /var/lib/amd-metrics-exporter/
+          type: DirectoryOrCreate
+        name: health
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+

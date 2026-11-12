@@ -3754,3 +3754,106 @@ suite-side, zero doc-side words owed):**
 amd-gpu-naming 5 ok · radiance-tp2 3 ok · radiance-runbook 5 ok — all
 green, aislop 100/0/0, bash -n + compileall clean. The whole-plan test
 contract is fully bound; only chunk Review/final-review actions remain.
+
+### 12.6 C08 test round — first-party conversion + the MID-ROUND LANE RULING (test session, 2026-11-12; ruling landed 2026-11-12 ~while this round ran)
+
+**Ruling timing, honestly:** this round opened against the ORIGINAL C08
+(names-stay, §R7 verdict) and was re-pointed mid-flight at the owner's lane
+answer — table-mount rename `amd.com/gpu-r9700-1` (amended chunks/C08.md,
+DECISIONS D24 supersedes D23 names-stay). Legs authored pre-ruling against
+the old string were adjusted in place (this section is the dated note). The
+APU name `gpu-8060s` is FROZEN by the ruling scope — every APU leg kept its
+substance; naming_flip's res=-level legs are byte-untouched in meaning.
+
+**ONE-EDIT-SITE name constants (amended D24 design):** the canonical block
+lives in `charts/amd-gpu/tests/amd_gpu_testlib.py` (marked); the bash twins
+at the tops of `tests/services/amd-gpu-naming.sh`, `tests/notes/radiance-runbook.sh`
+(constants injected into the T3 heredoc via env) and `tests/notes/radiance-tp2.sh`
+carry the mirror. `charts/radiance/tests/radiance_testlib.py` and
+`charts/llama-swap/tests/test_cf143_naming_flip.py` RESOLVE the python block
+(sys.path join — the sanctioned cross-chart read from §12.4), so zero forked
+literals exist in tests/** (audited; the pre-C08 pool name survives nowhere
+in my files — the sanitizer's historical derivation is described via the
+HISTORICAL constant, and the unreachable owner-literal appears nowhere in
+the scanned scopes — §R7-Q1 code-constants law).
+
+**Evidence fixtures (both test-session captures, git-add with the landing):**
+- `charts/amd-gpu/tests/evidence/pre-c08-deviceplugin-ds.yaml` — the vendored
+  render (oracle for T-A parity: args 4-list, image, priorityClassName,
+  tolerations, secctx, the THREE hostPaths + byte mountPaths incl the health
+  trailing slash, kinds DaemonSet-only = §R7-Q5 zero-RBAC fact).
+- `charts/amd-gpu/tests/evidence/pre-c08-amdgpu-ids-rows.txt` — the fetched
+  baked-table authority: header+version+EVERY 7551 and 1586 row, byte-verbatim
+  from raw.githubusercontent …/v1.31.0.12/cmd/k8s-node-labeller/amdgpu.ids
+  (full file sha256 382ef0d5…78 lines… recorded in the fixture header; fetched
+  once via curl, never hand-retyped — §R7-Q5 fetch-honesty law). The grave-case
+  leg (AC7/T-B(ii)) diffs the shipped 1586 set against THIS; the sanitizer port
+  in the testlib reproduces both the pre-C08 derivation (from the baked
+  marketing row) and the D24 one (from the exactly-`r9700-1` string) — the
+  rename is asserted as a DERIVATION, not a string swap.
+
+**Red ledger at this handoff (designed; each names its C08 task):**
+
+| reds | count | greens when dev C08 lands |
+|---|---|---|
+| charts/amd-gpu/tests — values-shape-first-party, updateStrategy-absent, ConfigMap+kinds, table-mount subPath leg (T-B i), table content vs authority (T-B ii), minimality+impossible-literal, ledger names/WATCH, Chart floors+lock+tgz+.helmignore, first-party header, vendored-text-absent, strategy-plain/plumbing-dead, zero-stale/placement | 14F/11P | T-A/T-B/D24 (the 11P are the parity witnesses — they must STAY green: conversion moves files, not facts) |
+| charts/radiance/tests — claim-equality×2, T-B evidence-comment+NOTES, T-D comment needles | 4F/38P | T-B/T-C/T-D (serveArgs arms are parse-based: T-C reformat cannot break them — audited, zero raw-line readers found beyond the already-ported chart_values_text reads) |
+| naming.sh n4 (ledger names) | 1F/4ok | T-B ledger move; n2 env-guard re-proven biting (garbage sha rejected; HEAD rejected) |
+| runbook T3 (doc names + patched-table provenance + WATCH) | 1F (T1/T2/T4/T5 green) | T-E docs sweep; T4 resolver extended for R7-Q forms (regression-run clean) |
+| tp2 T3 (renamed pool + TP2 RE-VERIFICATION LAW) | 1F (T1/T2 green) | T-E docs sweep (§6/§11 bullet: absent-from-the-minimal-table ⇒ verify-or-ADD before trusting); T2 resolver extended for §R7 |
+| green witnesses unchanged | vllm 36P, llama-swap 495P/9S, dashboards 5ok, surface bare 9ok + M8 (incl CF143_BASE_SHA diff-inventory) 10ok | — |
+
+Also adjudicated here: T-E's "M1 re-pin IF it reads the governance header" —
+`tests/pipeline-models/surface.sh` M1 does NOT read charts/amd-gpu (grepped:
+zero amd-gpu/governance needles) — MOOTED, no arm moved. The two routed
+test-file fixes landed: test_trio.py's truncated message restored ("900
+chars above it"), n3's :205 phrase rewritten to the D24-present truth.
+C04's deferred capture note is §12.4; the pending-name-ruling markers this
+round opened with are resolved — the constants blocks stay marked as the
+ONE edit site for any future lane move.
+
+### 12.7 C08 dev-round test repairs — the name-strain adjudication + a latent resolver defect the fixture probe caught (test session, 2026-11-12)
+
+Coord-routed trio, mechanical (dev's implementation tree NOT touched):
+
+1. `test_live_names_coherent_or_rename_set_enumerated` re-pinned per the
+   dev's library evidence: app-template classes/_daemonset.tpl HARDCODES
+   spec.selector.matchLabels to the app.kubernetes.io triple (the live
+   `name: amd-gpu-dp-ds` is unreachable by ANY values shape) and names the
+   container after the controller identifier — so the all-or-nothing triple
+   rule could fit NEITHER strain and its rename branch TypeErrored reading
+   the absent `name:` selector. Now: per-object coherence (each of DS name /
+   container name = byte-live OR enumerated in the values rename-set — the
+   dev's mixed shape, `gpu-ai-amd-gpu-device-plugin-daemonset`-style under
+   the prod release + `deviceplugin`, is legitimate and enumerated), the
+   selector's invariant asserted as SELF-coherence (matchLabels ⊆ pod
+   labels), TypeError-free on every shape. LIVE_SELECTOR_VALUE survives in
+   the testlib as marked historical documentation.
+2. `test_zero_stale_name_and_new_name_placement`: the scan's allow-set gained
+   `charts/llama-swap/tests/` — its own §12.x TEST-SPEC RECORDS name the
+   ruling pool as their subject (root `tests/` was already admitted; the
+   cross-chart suite dirs are the same record class). The scan factored into
+   `name_scope_violations(root)` and a NEW probe leg (`…_teeth_on_synthetic_
+   tree`) proves on a /tmp tree the allow-list is still a placement RULE:
+   exactly the non-admitted stray reds, an admitted home passes. Old-name
+   half confirmed clean on the dev's swept tree (zero hits; the seven-file
+   red list this round's §12.6 predicted).
+3. The §R7 resolver arms were LATENT-DEAD as the route said (heading is
+   `## §R7 —`, regex asked `^## R7`) — one-token `^## §?R7` in both notes
+   suites, and the runbook gained the §R7 bare-form arm for tp2 symmetry.
+   ADJUDICATION of the dev's citation-shape call (docs used bare `§R7` to
+   stay green): fix the resolvers and KEEP the docs' bare form — both bare
+   §R7 and row-form R7-Q<n> cites now resolve; docs stay prose-natural and
+   dev-side untouched (they are not tests/**). Running both suites against a
+   CONFORMING fixture per the §12.5 class law then caught a SECOND latent
+   defect of the same family: `r6q_rows()` searched its section with `.*?`
+   but NO re.S, so the R6-Q<n>-<row> arm had never actually checked a row
+   (the real docs never cite the row form — the green was an accident).
+   Fixed with re.S in both resolvers; fixture probes now prove all three
+   states: conforming cites (§R7/R7-Q2/R6-Q4-5/RQ4/OQ3) PASS, stale R7-Q9
+   REDS by name, real docs stay green. Law restated: the §12.5 fixture-run
+   rule exists precisely because green-against-today's-docs ≠ arm-alive.
+
+Bar after: charts/amd-gpu/tests 26 passed / 0 failed (dev-observed 23 +
+coherence + placement re-pins + the new teeth probe). The other counts in
+the combined §12.6 bar hold unchanged.

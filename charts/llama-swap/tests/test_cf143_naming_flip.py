@@ -24,11 +24,18 @@
 # tree (overlay + reverted chart line); the realized-prose and tools-sidecar
 # legs are the same bars round-1 wrote and stay byte-kept where true.
 #
+# C08 T-B re-point (mid-round amendment): the R9700 pool name resolved to
+# the PATCHED-TABLE rename (D24) — this suite's legs read the CANONICAL
+# constants block in charts/amd-gpu/tests/amd_gpu_testlib.py (the marked one-
+# edit site; the APU claim it asserts is frozen by the ruling). No literal
+# names live in this file.
+#
 # Run with the suite (per-directory): python3 -m pytest charts/llama-swap/tests -v
 
 from __future__ import annotations
 
 import re
+import sys
 
 import pytest
 import yaml
@@ -38,9 +45,18 @@ import llama_swap_testlib as L
 _ok, _reason = L.helm_ready()
 pytestmark = pytest.mark.skipif(not _ok, reason=_reason)
 
-APU_CLAIM = "amd.com/gpu-8060s"
-R9700_CLAIM = "amd.com/gpu-ai-pro-r9700"
-BARE_CLAIM = "amd.com/gpu"
+_amd_tests = L.REPO_ROOT / "charts" / "amd-gpu" / "tests"
+assert _amd_tests.is_dir(), (
+    "cf-143 naming suite: the GPU-name constants home (charts/amd-gpu/tests) is missing — "
+    "names resolve from the one marked block, never from forked literals"
+)
+if str(_amd_tests) not in sys.path:
+    sys.path.insert(0, str(_amd_tests))
+import amd_gpu_testlib as AMDNAMES  # noqa: E402
+
+APU_CLAIM = AMDNAMES.APU_CLAIM
+R9700_CLAIM = AMDNAMES.R9700_CLAIM
+BARE_CLAIM = AMDNAMES.BARE_GPU_CLAIM
 VALUES = L.CHART_DIR / "values.yaml"
 GPU_AI_SERVICE = L.REPO_ROOT / "services" / "gpu-ai" / "prod" / "values.yaml"
 

@@ -113,33 +113,43 @@ is already met by the naming wave (§R6-Q4 row 2).
 
 ## 6. Scheduling the second card in the shipped product-naming world (post-C07)
 
-Under the vendored `charts/amd-gpu` with `-resource_naming_strategy=product`
-(§R6-Q1), resources are bucketed per **sanitized marketing name** from the
-table baked in the plugin image, and the plugin runs one kubelet pool per
+Under the first-party `charts/amd-gpu` with `-resource_naming_strategy=product`
+(§R6-Q1) and the D24 patched table, resources are bucketed per **sanitized
+marketing name** from the `amdgpu.ids` ConfigMap the chart mounts over the
+image's baked file, and the plugin runs one kubelet pool per
 name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
 
 - A second card with the **same (device, revision) pair** — `7551/C0`, an
   R9700 (not an R9700S) — resolves to the same product name and **joins the
-  same pool**: the node advertises `amd.com/gpu-ai-pro-r9700: 2`. Extended
+  same pool**: the node advertises `amd.com/gpu-r9700-1: 2`. Extended
   resources are integer counts with no overcommit, so one TP2 radiance pod
-  simply raises its claim to `amd.com/gpu-ai-pro-r9700: 2` and the scheduler
+  simply raises its claim to `amd.com/gpu-r9700-1: 2` and the scheduler
   hands it both R9700s — same-name pooling is the product of the strategy;
   the per-name pools keep the llama-swap APU assignment untouched.
-- A **different revision** lands under another name — e.g. the R9700S row
-  yields `amd.com/gpu-ai-pro-r9700s` — or, if the (device, revision) pair
-  misses the vendored `amdgpu.ids` table, the card falls back to bare
-  `amd.com/gpu` (the trap §R6-Q4 row 5 gates repo-side). Either way it would NOT
-  count toward the `gpu-ai-pro-r9700` pool the TP2 claim needs.
+- A **different revision is out of the shipped table by construction**: the
+  patched `amdgpu.ids` is MINIMAL (this node's ten rows only — the 7551/C0
+  renamed row plus the nine carried 1586 rows), so an R9700S (`7551/C1`) or
+  any other (device, revision) pair is absent and the card falls back to
+  bare `amd.com/gpu` (the trap §R6-Q4 row 5 gates repo-side) — it would NOT
+  count toward the `gpu-r9700-1` pool the TP2 claim needs.
+- **THE TP2 RE-VERIFICATION LAW (D24 era):** before trusting TP2
+  scheduling with a second/third card, VERIFY its (device, revision) pair
+  carries in the chart's patched `amdgpu.ids` — and if it does not, ADD
+  the row (its product string is what the sanitizer turns into the pool
+  name, §R6-Q1) BEFORE the flip wave lands; the bare-fallback is silent.
+  The concrete first shape: the same 7551/C0 pair simply joins the pool
+  (row already carries); any other pair is an explicit table edit + the
+  runbook step-0 receipts re-run at the new row count.
 - Therefore **the runbook's sysfs revision receipt carries to the new card
   before trusting TP2 scheduling**: read `device`+`revision` per BDF under
-  `/sys/module/amdgpu/drivers/pci:amdgpu/` and match the vendored-table
+  `/sys/module/amdgpu/drivers/pci:amdgpu/` and match the patched-table
   rows (`7551 C0` expected), exactly C06 step-0 gate (a) — the same receipt
   that gates the naming wave (R6 OQ1). Then assert node status:
-  `amd.com/gpu-ai-pro-r9700: 2`, `amd.com/gpu-8060s: 1`, and `amd.com/gpu`
+  `amd.com/gpu-r9700-1: 2`, `amd.com/gpu-8060s: 1`, and `amd.com/gpu`
   still ABSENT (present = a fallback fired — the gate-(a) decision tree,
   not improvisation).
 - Strata needs no naming change: its privileged hostPath pod never held a
-  plugin claim (`amd.com/gpu`, `amd.com/gpu-8060s` or `gpu-ai-pro-r9700`) —
+  plugin claim (`amd.com/gpu`, `amd.com/gpu-8060s` or `gpu-r9700-1`) —
   R6-Q4 row 3. It keeps hitting cards by host enumeration, which is §4's
   checklist, not §6's pool arithmetic.
 - **Alternative lane, recorded not planned:** R6 ranked the ROCm DRA driver
@@ -222,7 +232,7 @@ because fn TP1 alone consumes ~28–30 GiB of the ~31.86 GiB usable card and
 **two peer pods on one GPU is NOT feasible for fn+q27** — capacity-ruled,
 "do not plan it" (RQ5, Structural options D). That single-card ruling lifts
 with a second card: two peer pods, one card each, each claiming 1 from the
-same `gpu-ai-pro-r9700` pool. The concrete unlock: the retired vLLM 27B lane
+same `gpu-r9700-1` pool. The concrete unlock: the retired vLLM 27B lane
 (C01's commented disable) can return as **radiance q27** on the second
 card — pack `qwen3.8-27b-mxfp4.rad`, 18.05 GiB (19,377,119,232 B), lfs
 `a4908940…`, ungated, with the z-lab DFlash2 drafter merged in-pack (no
@@ -271,14 +281,17 @@ values change that reaches the cluster through ArgoCD alone:
 3. **Enumeration sweep**: apply §4's checklist from a fresh `rocminfo`;
    values re-pins go through each engine's documented key, never a template.
 4. **Revision receipts + pool assert**: §6's gate — sysfs pair per BDF
-   against the vendored table, then node status shows
-   `amd.com/gpu-ai-pro-r9700: 2`; a mismatch is the fallback-trap decision
+   against the patched table (the TP2 RE-VERIFICATION LAW: the new card's
+   (device,revision) pair must carry in `charts/amd-gpu`'s minimal
+   `amdgpu.ids` ConfigMap or be ADDED before trusting TP2 scheduling), then
+   node status shows
+   `amd.com/gpu-r9700-1: 2`; a mismatch is the fallback-trap decision
    tree, not improvisation.
 5. **Chart change, same chart — two shapes:**
    - *fn goes TP2 (one pod, two cards):* move the C02 single-source scalars
      — tp 1→2, `hostPoolMib` 43000→12288 (per rank), `--kv-resident` out /
      `--prefix-cache-mib 4096` in, chunk 4096→2048 — and the claim count
-     `amd.com/gpu-ai-pro-r9700` 1→2 (request==limit pair kept, Guaranteed
+     `amd.com/gpu-r9700-1` 1→2 (request==limit pair kept, Guaranteed
      law). Guaranteed memory recomputes at the TP2 pin set (~24 GiB pool +
      tier + slots + tables) — receipt-gated, same ladder discipline as C06
      step-6, never a pre-emptive softening.
@@ -312,7 +325,7 @@ values change that reaches the cluster through ArgoCD alone:
 
 During coexistence the shipped world has radiance and strata sharing ONE
 physical R9700: strata's privileged hostPath arenas sit inside the same
-card the `gpu-ai-pro-r9700` pool books exclusively for the radiance pod
+card the `gpu-r9700-1` pool books exclusively for the radiance pod
 (naming is scheduler bookkeeping, not VRAM arbitration — the plan's Q11
 one-engine-per-card contention, ruled "observe, no auto-mitigate", plus the
 owner's Q10 manual scale-down handshake). A second R9700 lets radiance hold
@@ -340,7 +353,8 @@ P2P fallback is the measured mailbox path of §2, not a crash.
   rows), main-list `OQ1`–`OQ7` and `R6 OQ1`–`OQ4`, plus `[S#]` source ids —
   all resolve in `.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-
   strata/RESEARCH.md` (Sources + §R6-S tables); plan law from the folder's
-  plan file, DECISIONS D17/D18/D19 (naming wave) and the Q5/Q6/Q10/Q11
+  plan file, DECISIONS D17/D18/D21 (naming wave) plus D23/D24 (the C08
+  first-party conversion + the patched-table rename) and the Q5/Q6/Q10/Q11
   rulings; contract: `tests/notes/radiance-tp2.sh` (T1 structure/provenance,
   T2 this doc's citation resolver, T3 the needle set).
 - Status of every number: community-recipe class (RQ1/RQ4 attributions are

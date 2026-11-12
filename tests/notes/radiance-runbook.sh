@@ -47,6 +47,15 @@ RAD_CHART="${RAD_CHART_VALUES:-charts/radiance/values.yaml}"
 AMD_CHART="${RAD_AMD_CHART_VALUES:-charts/amd-gpu/values.yaml}"
 CATALOG=".opencode/opencode.jsonc"
 
+# ---------------------------------------------------------------------------
+# GPU RESOURCE-NAME CONSTANTS — C08 D24 lane ruling landed (marked single edit
+# site, bash twin of charts/amd-gpu/tests/amd_gpu_testlib.py's block; any
+# future lane move edits here + that block, never needle archaeology). T3's
+# name needles read these; the patched-table/watch sentences are pinned there
+# too (T-E docs sweep).
+R9700_CLAIM="amd.com/gpu-r9700-1"
+APU_CLAIM="amd.com/gpu-8060s"
+
 checks=0
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -235,9 +244,12 @@ if want t3; then
     [ -f "$f" ] || fail "T3: $f missing — the cross-reference needs the C02/C05/C07 artifacts (this suite's bar is the final chunk)"
   done
   rc=0
+  RAD_R9700="$R9700_CLAIM" RAD_APU="$APU_CLAIM" \
   python3 - "$RUNBOOK" "$RAD_CHART" "$AMD_CHART" "$CATALOG" <<'PY' || rc=$?
-import re, sys
+import os, re, sys
 runbook, rad_chart, amd_chart, catalog = sys.argv[1:5]
+r9700_claim = os.environ["RAD_R9700"]   # constants-injected (C08 D24): no forked literals
+apu_claim = os.environ["RAD_APU"]
 rb = open(runbook).read()
 rc_text = open(rad_chart).read()
 ac_text = open(amd_chart).read()
@@ -248,8 +260,8 @@ errs = []
 for needle, what in (
     ("qwen3.8-flash-next-radiance", "the served id"),
     ("gpu-ai-radiance.default.svc.cluster.local:8000", "the peer URL (no /v1)"),
-    ("amd.com/gpu-ai-pro-r9700", "the R9700 pool name"),
-    ("amd.com/gpu-8060s", "the APU pool name"),
+    (r9700_claim, "the R9700 pool name (D24 renamed)"),
+    (apu_claim, "the APU pool name"),
 ):
     if needle not in rb:
         errs.append(f"the names block never names {what}: {needle!r}")
@@ -306,6 +318,14 @@ else:
 # Belt-and-braces PCI assert survives (D18 — gate (e) in the R6-Q4-5 numbering):
 if not re.search(r"(?i)belt.and.braces", rb) or "gfx1201" not in rb:
     errs.append("the belt-and-braces PCI/gfx1201 startup assert (R6-Q4-5 e) is not recorded")
+# C08 T-B/T-E (amendment): the names' PROVENANCE moved to the patched table —
+# the doc must say so (receipts + the mount-stops-applying watch).
+if not re.search(r"(?i)patched[- \t]table|amdgpu\.ids", rb):
+    errs.append("the runbook never names the patched-table/amdgpu.ids provenance (D24: the gate-(a) "
+                "receipts now derive gpu-r9700-1 THROUGH the ConfigMap'd table)")
+if not re.search(r"(?i)watch[\n]{0,160}(ids|mount|lookup|baked)|ids[\n]{0,80}(path|lookup)[\n]{0,120}(watch|baked|falls? back|stops? applying)", rb):
+    errs.append("the mount-stops-applying WATCH sentence (image IDs-path move => baked name returns "
+                "=> claim Pending; receipts catch it) is missing (C08 T-E)")
 
 if errs:
     print("; ".join(errs), file=sys.stderr); sys.exit(1)
@@ -329,6 +349,10 @@ rq = {int(m.group(1)) for m in re.finditer(r"(?m)^## RQ([0-5]) —", research)}
 m_r6 = re.search(r"(?m)^## R6 —", research)
 r6_part = research[m_r6.start():] if m_r6 else ""
 r6q = {int(m.group(1)) for m in re.finditer(r"(?m)^### R6-Q([1-5]) —", r6_part)}
+# C08 (§R7): the R7 part runs from its heading to EOF (it is the tail round).
+m_r7 = re.search(r"(?m)^## §?R7", research)  # heading carries the § literally (## §R7 —)
+r7_part = research[m_r7.start():] if m_r7 else ""
+r7q = {int(m.group(1)) for m in re.finditer(r"(?m)^### R7-Q([0-9]+) —", r7_part)}
 
 def numbered_items(t):
     return len(re.findall(r"(?m)^\d+\.\s", t))
@@ -348,7 +372,7 @@ if m_r6oq:
     r6_oq = numbered_items(rest[: stop.start() if stop else len(rest)])
 
 def r6q_rows(q):
-    m = re.search(r"(?m)^### R6-Q%s —.*?(?=^### |\Z)" % q, r6_part)
+    m = re.search(r"(?m)^### R6-Q%s —.*?(?=^### |\Z)" % q, r6_part, re.S)
     if not m:
         return set()
     return {int(mm.group(1)) for mm in re.finditer(r"(?m)^\|\s*(\d+)\s*\|", m.group(0))}
@@ -358,6 +382,10 @@ for m in re.finditer(r"(?<![A-Za-z0-9])RQ\s*([0-5])", doc):
     cites.append(("RQ", int(m.group(1)), None))
 for m in re.finditer(r"(?<![A-Za-z0-9])R6\s*[-–]\s*Q\s*([1-5])(?:\s*[-–]\s*(\d+))?", doc):
     cites.append(("R6Q", int(m.group(1)), int(m.group(2)) if m.group(2) else None))
+for m in re.finditer(r"(?<![A-Za-z0-9])R7\s*[-–]\s*Q\s*([0-9]+)(?:\s*[-–]\s*(\d+|[A-Za-z]+))?", doc):
+    cites.append(("R7Q", int(m.group(1)), None))
+for m in re.finditer(r"§\s*R7(?![\w-])", doc):
+    cites.append(("S7", None, None))
 for m in re.finditer(r"§\s*R6(?![\w-])", doc):
     cites.append(("S6", None, None))
 for m in re.finditer(r"(?<![A-Za-z0-9])R6\s+OQ\s*(\d+)", doc, re.I):
@@ -380,6 +408,12 @@ for kind, n, extra in sorted(set(cites), key=lambda c: (c[0], c[1] or 0, c[2] or
             errs.append(f"R6-Q{n}: no '### R6-Q{n} —' heading in the §R6 block")
         elif extra is not None and extra not in r6q_rows(n):
             errs.append(f"R6-Q{n}-{extra}: no table row {extra} inside '### R6-Q{n}'")
+    elif kind == "R7Q":
+        if n not in r7q:
+            errs.append(f"R7-Q{n}: no '### R7-Q{n}' heading in the §R7 block")
+    elif kind == "S7":
+        if not m_r7:
+            errs.append("§R7: RESEARCH.md has no R7 section")
     elif kind == "S6":
         if not m_r6:
             errs.append("§R6: RESEARCH.md has no R6 section")

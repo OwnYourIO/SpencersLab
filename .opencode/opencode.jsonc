@@ -707,8 +707,9 @@
         // (RESEARCH RQ2): urgent 9 / default 5 / low 1, the OPPOSITE of its
         // 1/5/9, so those numbers must never be ported here. The default-class
         // floor is server-side in peers.radiance's filters.setParams
-        // "priority?" (services/gpu-ai/prod/values.yaml), never repeated on a
-        // row. Context 200000 is what the pod serves (--max-model-len in
+        // "priority?" (services/gpu-ai/prod/values.yaml); rows carry their
+        // class value unconditionally — the set-if-undefined floor operator
+        // never rides a row. Context 200000 is what the pod serves (--max-model-len in
         // charts/radiance/values.yaml), not the 262,144 trained ceiling. Image
         // input is the Q8 ruling: the vision tower ships in the pack (RQ0), and
         // the runbook's image-smoke leg retires the claim if it fails on target.

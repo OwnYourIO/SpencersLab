@@ -1,0 +1,33 @@
+# C08 T-B AUTHORITATIVE TABLE EXTRACT — the ONLY equivalence authority for the
+# patched amdgpu.ids ConfigMap (the grave-case fixture; test-session fetch,
+# dev never edits). Source: raw.githubusercontent.com/ROCm/k8s-device-plugin/
+# v1.31.0.12/cmd/k8s-node-labeller/amdgpu.ids — the file the plugin image bakes at
+# /usr/share/libdrm/amdgpu.ids via the Dockerfile COPY law (§R6-Q5/§R7-Q2);
+# full fetched file sha256:382ef0d5282fd8f5c17872c9f3641518d08a93e8c8e12b190e37005d48f3b1fa
+# (758 lines) fetched 2026-11-12 by the C08 test round via curl, NEVER hand-retyped.
+# Contents: the format header lines + the version line + EVERY 7551 row + EVERY 1586
+# row of the baked table, byte-verbatim (tabs/spaces included). The shipped patched
+# table must equal: header + version + every 1586 row byte-equal + exactly the
+# 7551,C0 row with its product string replaced by 'r9700-1' — and nothing more
+# (minimality; AC7). The 1586 parity is the APU-rows-must-carry grave case: a
+# dropped row falls that SKU to bare amd.com/gpu and strands the live gpu-ai
+# overlay consumer (D21/B1).
+# List of AMDGPU IDs
+#
+# Syntax:
+# device_id,	revision_id,	product_name        <-- single tab after comma
+
+1.0.0
+1586,	C1,	AMD Radeon 8060S Graphics
+1586,	C2,	AMD Radeon 8050S Graphics
+1586,	C3,	AMD Radeon 8060S Graphics
+1586,	C4,	AMD Radeon 8050S Graphics
+1586,	C6,	AMD Radeon 8060S Graphics
+1586,	D1,	AMD Radeon 8060S Graphics
+1586,	D2,	AMD Radeon 8050S Graphics
+1586,	D4,	AMD Radeon 8050S Graphics
+1586,	D5,	AMD Radeon 8040S Graphics
+7551,	C0,	AMD Radeon AI PRO R9700
+7551,	C8,	AMD Radeon AI PRO R9600D
+7551,   C1,	AMD Radeon AI PRO R9700S
+7551,   C8,	AMD Radeon AI PRO R9600D

@@ -1341,10 +1341,11 @@ app-template:
             # (the llama.cpp pod keeps its unprivileged shape untouched).
             # The naming capability this pod's ruling once waited on is
             # REALIZED — but PER-CLUSTER (cf-143 C07, DECISIONS D18/D21): the
-            # vendored amd-gpu chart runs the plugin at
+            # amd-gpu chart runs the plugin at
             # -resource_naming_strategy=product on gpu-ai ONLY, where the
-            # node advertises per-device pools (amd.com/gpu-ai-pro-r9700 for
-            # radiance, C02; amd.com/gpu-8060s claimed by the gpu-ai service
+            # node advertises per-device pools (amd.com/gpu-r9700-1 for
+            # radiance, C02/D24's patched-table name; amd.com/gpu-8060s
+            # claimed by the gpu-ai service
             # overlay's null-flip on llama-swap, retiring the nodeId-order
             # APU accident as a named guarantee). The gpu cluster keeps the
             # external single-naming plugin, so the chart default claim stays

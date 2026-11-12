@@ -14,10 +14,12 @@ after the ticket branch merges and ArgoCD applies it.
 **Provenance.** WeKan card #143 (`cf-143-feat-radiance-replaces-strata`);
 feature folder `.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/`
 — plan of record `2026-11-11-feat-cf-143-feat-radiance-replaces-strata.md`,
-`DECISIONS.md` (D15–D21 + the owner Q7/Q9/Q10/Q11/Q12 rulings), `RESEARCH.md`
-(cited below as `RQ<n>`, `§R6`, `R6-Q<n>`, `OQ<n>`, `R6 OQ<n>` — every
-reference resolves to a heading of that file), `EXPLORE.md`, `chunks/C06.md`.
-This file is C06; the shipped values (`charts/radiance/values.yaml`,
+`DECISIONS.md` (D15–D24 + the owner Q7/Q9/Q10/Q11/Q12 rulings), `RESEARCH.md`
+(cited below as `RQ<n>`, `§R6`, `R6-Q<n>`, `§R7`, `OQ<n>`,
+`R6 OQ<n>` — every
+reference resolves to a heading of that file), `EXPLORE.md`, `chunks/C06.md`,
+`chunks/C08.md`. This file is C06 (its name/gate prose re-pointed by the C08
+T-E docs sweep); the shipped values (`charts/radiance/values.yaml`,
 `services/gpu-ai/prod/values.yaml`, `charts/amd-gpu/values.yaml`,
 `.opencode/opencode.jsonc`) are the other numeric authority. Nothing is
 quoted from the card's deployment guide — the guide's stale items are
@@ -48,9 +50,12 @@ Nothing boots before these pass. Record every receipt in place (fill the
 acceptance evidence trail, and several decide whether shipped values stay
 correct or move by the ONE-scalar edits of step 6.
 
-**(a) — NAMING receipt (sysfs device+revision, both cards).** The vendored
-plugin's product naming maps each card to a resource name from the baked
-`amdgpu.ids` table by its PCI (device, revision) pair — the pair the plugin
+**(a) — NAMING receipt (sysfs device+revision, both cards).** The amd-gpu
+plugin's product naming maps each card to a resource name from the MINIMAL
+PATCHED `amdgpu.ids` table — the ConfigMap `charts/amd-gpu` ships and mounts
+over the image's baked file (the D24 lane ruling; derivation and mechanism
+verified in the §R7 round, sanitizer §R6-Q1) — keyed by the PCI (device,
+revision) pair the plugin
 itself reads (§R6-Q1; RESEARCH RQ3 documents the enumeration). Prove the
 pair from sysfs first:
 
@@ -61,12 +66,12 @@ for d in /sys/module/amdgpu/drivers/pci:amdgpu/0000:c4:00.0 \
 done
 ```
 
-Expected-name derivation — match the reads against the vendored table rows
+Expected-name derivation — match the reads against the PATCHED table rows
 (the ledger at `charts/amd-gpu/values.yaml`):
 
 | read `device` | read `revision` | card | materialized pool name |
 |---|---|---|---|
-| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-ai-pro-r9700` |
+| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700-1` |
 | `0x1586` | one of `0xc1`/`0xc3`/`0xc6`/`0xd1` | Radeon 8060S (Strix APU) | `amd.com/gpu-8060s` |
 
 Derive the names from the device reads, not from BDF position: the plugin's
@@ -75,8 +80,9 @@ KFD topology map enumerated `c4:00.0` as nodeId 0 / card1 / renderD128
 is why c4 is expected to read `0x1586`, but the pair is the authority. The
 revision expectation itself is the §R6 residual this gate closes (R6 OQ1).
 
-**Fallback trap + decision tree.** An unknown (device, revision) pair — a
-revision the baked table does not carry — lands THAT card under the bare
+**Fallback trap + decision tree.** A (device, revision) pair the MINIMAL
+patched table does not carry — by construction that is every pair beyond
+this node's two cards' ten rows — lands THAT card under the bare
 `amd.com/gpu` name (§R6-Q4's gate list, item a; RESEARCH RQ3 names the
 reserved fallback). The pair is silently downgraded, the pod claiming the
 named pool then never schedules. If a card reads a name you did not expect,
@@ -87,11 +93,12 @@ sanctioned remedies:
   lines to the names the node ACTUALLY advertises (radiance's `requests`/
   `limits` in `charts/radiance/values.yaml`, llama-swap's gpu-ai overlay in
   `services/gpu-ai/prod/values.yaml`) — the flip list stays as-is.
-- **Fix the flip list**: change what produces the names — a plugin image
-  whose `amdgpu.ids` row table carries the actual revision (a vendored-chart
-  image bump, D19 refresh policy governs). A bare-claiming node makes every
-  named claim Pending, so this remedy must land before step 2 is called a
-  pass.
+- **Fix the table**: change what produces the names — add the actual
+  (device, revision) row to the patched `amdgpu.ids` ConfigMap in
+  `charts/amd-gpu/values.yaml` (git edit, then the receipts re-run; the
+  rows' product string is what the sanitizer turns into the pool name,
+  §R6-Q1). A bare-claiming node makes every named claim Pending, so this
+  remedy must land before step 2 is called a pass.
 
 Do NOT improvise a third path (hostPath env tricks would re-privileged the
 pod against the Q7 ruling). Record the reads either way.
@@ -178,45 +185,62 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Served id (single authority, D7) | `qwen3.8-flash-next-radiance` — plus the wire-siblings `-urgent` / `-low` sharing the modelID (catalog rows, C05) |
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
-| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-ai-pro-r9700`; llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` is GONE there (stray bare claims on gpu-ai schedule Pending-forever — loud by design) |
+| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` is GONE there (stray bare claims on gpu-ai schedule Pending-forever — loud by design) |
 | Shipped sizing scalars | `guaranteedMemoryGi: 64` / `hostPoolMib: 43000` / `maxModelLen: 200000` / `maxNumSeqs: 8` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
-| Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; D19 fork of chart 0.22.0) |
+| Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
+| Patched table | the `amdgpu-ids` ConfigMap in `charts/amd-gpu/values.yaml` — 10 data rows (1 renamed 7551/C0 `r9700-1` row + 9 carried 1586 rows), rows spliced from the fetched v1.31.0.12 baked file (authority `sha256:382ef0d5282fd8f5c17872c9f3641518d08a93e8c8e12b190e37005d48f3b1fa`, recorded in the test fixture header) |
 | Pack | `/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad` — 113.60 GiB (121,969,901,568 B), lfs `sha256:0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20`, ungated (RESEARCH RQ0); staged on the shared `llama-swap` 500Gi claim |
 | Peer route constants | `timeouts.responseHeader: 1800` (absorbs the cold-load class), `connect: 30`, set-if-undefined floor `"priority?": 5` (`services/gpu-ai/prod/values.yaml` peers.radiance, C04 evidence file) |
 | Strata (stays live, Q5) | Deployment `gpu-ai-llama-swap-strata` — request 64Gi/8 cpu, limit 110Gi; runner route `gpu-ai/qwen3.8-flash-next-strata-q4` |
 
 Digest pairing law: each ledger digest above appears 1:1 in its chart
 (`charts/radiance/values.yaml`, `charts/amd-gpu/values.yaml`) beside the
-`# renovate: datasource=docker` pin comment — runbook, chart ledger and
+`# renovate: datasource=docker` pin comment, or — for the patched-table
+authority — in its test-evidence fixture header; runbook, chart ledger and
 renovate pin pair the same way at every retarget; a digest retarget is a
 DECISIONS line, not a drive-by (D2 posture; tag-rebuild caution on record).
 
 ## Step 2 — Flip-wave watch (post-merge, the naming receipts b–d)
 
-The merge makes ArgoCD apply C07's one commit: the vendored plugin (source
-repo→git-path, identical object names) and the llama-swap overlay flip
-together. Expect, in order:
+The merge makes ArgoCD apply the flip wave: C07's naming commit plus C08's
+first-party conversion land on main together, so one sync (1) retires the
+old plugin DaemonSet and creates the renamed object (D23's documented
+one-sync prune+create — the rename-set is enumerated in
+`charts/amd-gpu/values.yaml`), (2) applies the patched `amdgpu.ids`
+ConfigMap for the first time, and (3) flips llama-swap's overlay in the
+same wave. Expect, in order:
 
-1. The plugin DaemonSet rollout restarts ONLY the plugin pod — running GPU
+1. The plugin pod rolls under the NEW object names — running GPU
    pods keep their allocations (container-creation-time; the plugin's own
    19-restart history proves no pod churn, RESEARCH RQ3). A seconds-long
-   deregistration window on a single idle node is acceptable (lockstep law,
-   §R6-Q4's row 4).
+   deregistration window between the old DaemonSet's prune and the new
+   pod's registration is acceptable — it is the D23 strain, not an
+   incident (lockstep law, §R6-Q4's row 4).
 
    ```bash
-   kubectl -n default get pods -l name=amd-gpu-dp-ds -w
+   kubectl -n default get pods \
+     -l app.kubernetes.io/name=amd-gpu,app.kubernetes.io/instance=gpu-ai-amd-gpu -w
    ```
 
-2. Plugin log receipt — `-v=5` is what makes it runbook-log-bearing (D19):
+2. Plugin log receipt — `-v=5` is what makes it runbook-log-bearing (the
+   law lives in `charts/amd-gpu/values.yaml` now):
 
    ```bash
-   kubectl -n default logs daemonset/amd-gpu-device-plugin-daemonset --tail=200 \
+   kubectl -n default logs daemonset/gpu-ai-amd-gpu-device-plugin-daemonset --tail=200 \
      | grep -E "amdgpu.ids|Reporting .*devices as amd"
    ```
 
-   Expect the "Loaded N GPU products" line + "Reporting 1 devices as
-   amd.com/gpu-…" per pool (§R6-Q4's fifth-receipt list, receipt b).
+   Expect `Loaded 10 GPU products from /usr/share/libdrm/amdgpu.ids` —
+   TEN, the MINIMAL patched table's data-row count (1 renamed 7551/C0 row
+   + the 9 carried 1586 rows; source of the override: the rendered
+   ConfigMap `gpu-ai-amd-gpu-amdgpu-ids`, data sha256
+   `864da8694ab58ed8096e31dd49983736a130309b0ce058dfdf8bbe4fd843c6f5`
+   (455 bytes as rendered — recompute from `helm template charts/amd-gpu`
+   on any table edit) — plus "Reporting 1 devices as amd.com/gpu-…" per pool
+   (§R6-Q4's fifth-receipt list, receipt b). Any other count means the
+   overlay did not apply (or the table moved): the stock file is a
+   different number — re-run the step-0 tree, do not proceed.
 
 3. Node-status assert:
 
@@ -224,9 +248,10 @@ together. Expect, in order:
    kubectl describe node ai-gpu | grep -E "amd\.com"
    ```
 
-   Expect `amd.com/gpu-ai-pro-r9700: 1` AND `amd.com/gpu-8060s: 1` AND bare
-   `amd.com/gpu` ABSENT (absent = both cards matched the table; present = a
-   gate-(a) fallback fired → decision tree, step 0). Receipt c of the same
+   Expect `amd.com/gpu-r9700-1: 1` AND `amd.com/gpu-8060s: 1` AND bare
+   `amd.com/gpu` ABSENT (absent = both cards matched the patched table;
+   present = a gate-(a) fallback fired → decision tree, step 0). Receipt
+   c of the same
    five-receipt list.
 
 4. llama-swap post-rollout check: its Deployment template changed in the
@@ -244,6 +269,18 @@ Receipt e of that list — the radiance PCI/gfx1201 assert — is the step-7
 belt-and-braces. If any of these watches fails, stop: this is still the
 pre-deploy world (strata serves, radiance is Pending or absent), and the
 rollback class for a failed naming wave is step 11(ii).
+
+The overlay applies because the plugin plain-`os.Open`s the const
+IDsPath
+baked into the image by the Dockerfile COPY — the mechanism the §R7 round
+verified. If a
+future plugin image ever moves that file's location, the ConfigMap silently
+stops applying and the baked-table name returns; radiance's claim then sits
+Pending-forever. The receipts above are the catch: gate (a) expects the
+patched pool names and receipt (b) counts the patched rows. A table edit
+propagates with the DaemonSet rollout anyway — kubelet `subPath` never
+live-updates and `LoadProductIndex` reads the file once at startup (the
+chart values carry the same watch law, D24).
 
 ## Step 3 — Owner protocol: strata scale-down (Q10 verbatim)
 
@@ -576,17 +613,22 @@ untouched), so rolling the engine back is exactly two comment flips in
 the `gpu-ai-radiance` Application on its own; llama-swap simply loses the
 peer route (its own pods never depended on it). No naming-wave bytes move.
 
-**(ii) NAMING WAVE — the lockstep-revert law.** One `git revert` of C07's
-commit reverts the WHOLE wave — that is why the wave shipped as a single
-commit (D20: flip + vendored chart + entry swap in one). NEVER SPLIT THE
-PAIR: reverting the plugin entry alone restores `amd.com/gpu: 2` on gpu-ai
+**(ii) NAMING WAVE — the lockstep-revert law.** One `git revert` RANGE over
+the wave reverts the WHOLE of it — the flip shipped as a single commit
+(D20: flip + chart + entry swap in one) and C08's first-party conversion is
+the wave's second naming-bearing commit, so the range covers BOTH. NEVER
+SPLIT THE PAIR: reverting the plugin entry alone restores `amd.com/gpu: 2`
+on gpu-ai
 but the gpu-ai OVERLAY flip leg (the `gpu-8060s` resources block, D21/B1)
 must revert IN LOCKSTEP in the same range — a node advertising the named
 pools beside a llama-swap already flipped to the APU name is fine, but a
 reverted plugin beside an UN-reverted overlay flip strands the next
 llama-swap restart on a name the node no longer offers (§R6-Q4's row 4 is
-the migration/rollback authority). Check-out discipline: `git revert <sha>`
-of C07's commit, one commit, one sync cycle.
+the migration/rollback authority). The C08 half reverts the same way on its
+own when only the conversion must roll back: the DaemonSet swap is
+name-mirror-image (the prune+create lands back on the old object names in
+one sync). Check-out discipline: `git revert` of the wave's commits, one
+range, one sync cycle.
 
 **(iii) vllm re-enable (unrelated lane, for completeness).** The C01 disable
 is fully reversible by uncomment: `charts.vllm` + `peers.vllm` in the

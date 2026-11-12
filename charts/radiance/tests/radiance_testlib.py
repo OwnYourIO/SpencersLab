@@ -92,9 +92,26 @@ ABSENT_FLAGS = (
 ABSENT_ENV = ("ROCR_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES")
 
 # --- pod shape (Q7 verbatim + Q9 named pools; AC2) --------------------------------
-GPU_CLAIM = "amd.com/gpu-ai-pro-r9700"      # the R9700 product pool C07's plugin advertises
-GPU_CLAIM_BARE = "amd.com/gpu"              # GONE from the node post-flip — a stray claim is Pending-forever
-APU_CLAIM = "amd.com/gpu-8060s"             # llama-swap's flipped pool (must NOT be radiance's)
+# The GPU resource-name constants resolve from the CANONICAL block in
+# charts/amd-gpu/tests/amd_gpu_testlib.py (the D24 lane ruling — the R9700
+# pool was renamed via the patched-table mount; a future lane change edits
+# that ONE block, never needles here). The sys.path join is the §12.4/12.5
+# sanctioned cross-chart read: this suite's cross-chart identity leg IS the
+# join point, so the names must not be forked.
+import sys as _sys
+
+_amd_tests = REPO_ROOT / "charts" / "amd-gpu" / "tests"
+assert _amd_tests.is_dir(), (
+    "radiance suite: charts/amd-gpu/tests (the GPU-name canonical block home) missing — "
+    "the constants have no other source by design (one edit site per the C08 ruling)"
+)
+if str(_amd_tests) not in _sys.path:
+    _sys.path.insert(0, str(_amd_tests))
+import amd_gpu_testlib as AMDNAMES  # noqa: E402
+
+GPU_CLAIM = AMDNAMES.R9700_CLAIM                  # pending-lane resolved by D24: the renamed pool
+GPU_CLAIM_BARE = AMDNAMES.BARE_GPU_CLAIM         # GONE from the gpu-ai node post-flip — stray = Pending-forever
+APU_CLAIM = AMDNAMES.APU_CLAIM                  # llama-swap's pool (must NOT be radiance's)
 SUPPLEMENTAL_GROUPS = [486]                 # kfd, live-verified (RESEARCH RQ3); render/video join per C06 receipt
 GRACE_SECONDS = 180                         # engine drains ~60-120 s on SIGTERM — NOT strata's 420 child-choreography number
 INIT_NAME = "radiance-fetch"
@@ -263,7 +280,7 @@ def amd_gpu_ledger_names() -> dict:
     comment line that names the PCI device id (7551/1586) must also name the
     pool (`gpu-...` token, with or without the amd.com/ prefix) on the same
     line — so the cross-chart identity leg reads ONE authority, no second
-    copy. Returns {"7551": "gpu-ai-pro-r9700", "1586": "gpu-8060s"} for the
+    copy. Returns {"7551": <pool-name-without-prefix>, "1586": ...} for the
     ledger rows found (the R9700 row additionally expected to name C0)."""
     assert AMD_GPU_VALUES.is_file(), (
         "C02 AC4: charts/amd-gpu/values.yaml missing — the vendored plugin chart (C07) must "

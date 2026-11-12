@@ -42,21 +42,23 @@ charts:
   #   namespace: default
   #   ServerSideApply: "false"
 
-  # cf-143 C07 (DECISIONS D18/D19): the device-plugin chart is now the
-  # VENDORED internal charts/amd-gpu (upstream 0.22.0 + the args hook no
-  # released upstream chart carries), running the plugin at
-  # -resource_naming_strategy=product: the gpu-ai node advertises per-device
-  # pools amd.com/gpu-ai-pro-r9700 + amd.com/gpu-8060s and bare amd.com/gpu
+  # cf-143 C07 (DECISIONS D18/D21), first-party since C08 (D23): the
+  # device-plugin chart is the internal charts/amd-gpu — a repo-owned
+  # app-template 5.0.1 chart running the plugin at
+  # -resource_naming_strategy=product and shipping the patched
+  # amdgpu.ids ConfigMap (D24): the gpu-ai node advertises per-device
+  # pools amd.com/gpu-r9700-1 + amd.com/gpu-8060s and bare amd.com/gpu
   # disappears THERE (per-cluster shield, D21: llama-swap's gpu-8060s flip is
   # the overlay below in this same file, same commit — the gpu cluster keeps
   # the external single-naming entry and the chart default's bare claim).
   # Versionless entry => the base appset renders a git-path source; the
-  # Application keeps deriving gpu-ai-amd-gpu and the vendored templates keep
-  # the upstream object names, so the repo->git-path source flip swaps in
-  # place with no orphan prune (charts/base/templates/appset-charts.yaml).
+  # Application keeps deriving gpu-ai-amd-gpu. C08's conversion renames the
+  # plugin objects (charts/amd-gpu/values.yaml enumerates the set): the
+  # DaemonSet lands under a new name, so the next sync is the documented
+  # ONE prune+create swap — running GPU pods keep their allocations.
   amd-gpu:
     namespace: default
-    # The image pin moved with the vendor: the renovate tracking comment now
+    # The image pin moved with the chart: the renovate tracking comment now
     # lives in charts/amd-gpu/values.yaml as a docker datasource (the helm
     # repository pin this entry carried is retired — D19). ServerSideApply
     # "true" is KEPT: it eases the one-time args field-ownership watch on the
@@ -741,7 +743,8 @@ vllm:
 # REPLACES lists wholesale, so a list here would silently truncate the
 # chart's seed (the same law the llama-swap block states above; a
 # models/args override belongs chart-side). The appset generator hands the
-# release ONLY this subtree (charts/base/templates/appset-charts.yaml
+# release this subtree PLUS the service-wide shared-storage/subDomain keys
+# (charts/base/templates/appset-charts.yaml merges those in around
 # `index $.Values $appName`), which is why the CI leg extracts exactly
 # d.get('radiance') or {} — this shape is the live deploy path, not a test
 # fixture.

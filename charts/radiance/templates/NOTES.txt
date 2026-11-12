@@ -7,7 +7,7 @@ public host (the internal-only ruling; the strata Q4 / vllm D7 precedent).
 The one client route is the llama-swap peers.radiance hop on the existing
 llama host, whose proxy target is this release's Service. The peer URL
 carries no "/v1" suffix (request paths append verbatim) and is the exact
-string the C04 peers entry consumes
+string the C04 peers entry consumes:
 
   http://{{ $svc }}.default.svc.cluster.local:8000
 
@@ -17,13 +17,14 @@ the StillDeadcode/radiance ENGINE; charts/vllm's vllm-radiance image is the
 magiccodingman vLLM FORK; Strata (Niko1221) is an unrelated engine and
 stays live beside this pod (owner Q5 coexistence ruling).
 
-Debug access from outside the cluster (kubectl only — not a client path)
+Debug access from outside the cluster (kubectl only — not a client path):
 
   kubectl -n default port-forward svc/{{ $svc }} 8000:8000
   curl -s http://127.0.0.1:8000/health
 
-GPU: the pod claims the R9700's named product pool, amd.com/gpu-ai-pro-r9700
-(C07's vendored plugin makes the name exist) — the scheduler can land it on
+GPU: the pod claims the R9700's named product pool, amd.com/gpu-r9700-1
+(the amd-gpu chart's patched amdgpu.ids ConfigMap + product naming make
+the name exist — D24/§R7-Q2) — the scheduler can land it on
 exactly one device. If the pod sits Pending with "Insufficient memory",
 that is the designed coexistence handshake, not a bug: strata's 64Gi request
 plus this Guaranteed 64Gi exceed the node's 125.08 GiB, and the owner's

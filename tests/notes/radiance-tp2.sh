@@ -27,6 +27,13 @@ DOC="${RAD_TP2_DOC:-.agents/notes/radiance-second-gpu-tp2.md}"
 RESEARCH="${RAD_TP2_RESEARCH:-.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md}"
 CARD_TITLE="Radiance second-GPU (TP2) expansion"
 
+# ---------------------------------------------------------------------------
+# GPU RESOURCE-NAME CONSTANTS — C08 D24 lane ruling landed (marked bash twin
+# of charts/amd-gpu/tests/amd_gpu_testlib.py; future lane moves edit both).
+R9700_CLAIM="amd.com/gpu-r9700-1"
+APU_CLAIM="amd.com/gpu-8060s"
+R9700_POOL="${R9700_CLAIM#amd.com/}"
+
 checks=0
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -70,7 +77,7 @@ if want t2; then
   [ -f "$DOC" ] || fail "T2: $DOC missing (see T1)"
   [ -f "$RESEARCH" ] || fail "T2: $RESEARCH missing (this folder's research record)"
   if ! python3 - "$DOC" "$RESEARCH" <<'PY'
-import re, sys
+import os, re, sys
 doc = open(sys.argv[1]).read()
 research = open(sys.argv[2]).read()
 
@@ -78,6 +85,9 @@ rq = {int(m.group(1)) for m in re.finditer(r"(?m)^## RQ([0-5]) —", research)}
 m_r6 = re.search(r"(?m)^## R6 —", research)
 r6_part = research[m_r6.start():] if m_r6 else ""
 r6q = {int(m.group(1)) for m in re.finditer(r"(?m)^### R6-Q([1-5]) —", r6_part)}
+m_r7 = re.search(r"(?m)^## §?R7", research)  # heading carries the § literally (## §R7 —)
+r7_part = research[m_r7.start():] if m_r7 else ""
+r7q = {int(m.group(1)) for m in re.finditer(r"(?m)^### R7-Q([0-9]+) —", r7_part)}
 
 def numbered_items(section_text):
     return len(re.findall(r"(?m)^\d+\.\s", section_text))
@@ -97,7 +107,7 @@ if m_r6oq:
     r6_oq = numbered_items(rest[: stop.start() if stop else len(rest)])
 
 def r6q_rows(q):
-    m = re.search(r"(?m)^### R6-Q%s —.*?(?=^### |\Z)" % q, r6_part)
+    m = re.search(r"(?m)^### R6-Q%s —.*?(?=^### |\Z)" % q, r6_part, re.S)
     if not m:
         return set()
     return {int(mm.group(1)) for mm in re.finditer(r"(?m)^\|\s*(\d+)\s*\|", m.group(0))}
@@ -109,6 +119,10 @@ for m in re.finditer(r"(?<![A-Za-z0-9])R6\s*[-–]\s*Q\s*([1-5])(?:\s*[-–]\s*(
     cites.append(("R6Q", int(m.group(1)), int(m.group(2)) if m.group(2) else None))
 for m in re.finditer(r"§\s*R6(?![\w-])", doc):
     cites.append(("S6", None, None))
+for m in re.finditer(r"(?<![A-Za-z0-9])R7\s*[-–]\s*Q\s*([0-9]+)", doc):
+    cites.append(("R7Q", int(m.group(1)), None))
+for m in re.finditer(r"§\s*R7(?![\w-])", doc):
+    cites.append(("S7", None, None))
 for m in re.finditer(r"(?<![A-Za-z0-9])R6\s+OQ\s*(\d+)", doc, re.I):
     cites.append(("R6OQ", None, int(m.group(1))))
 for m in re.finditer(r"(?<![A-Za-z0-9-])OQ\s*(\d+)", doc, re.I):
@@ -132,6 +146,12 @@ for kind, n, extra in sorted(set(cites), key=lambda c: (c[0], c[1] or 0, c[2] or
     elif kind == "S6":
         if not m_r6:
             errs.append("§R6: RESEARCH.md has no R6 section")
+    elif kind == "R7Q":
+        if n not in r7q:
+            errs.append(f"R7-Q{n}: no '### R7-Q{n}' heading in the §R7 block")
+    elif kind == "S7":
+        if not m_r7:
+            errs.append("§R7: RESEARCH.md has no R7 section")
     elif kind == "R6OQ":
         if extra > r6_oq:
             errs.append(f"R6 OQ{extra}: the R6 open-questions list has only {r6_oq} numbered items")
@@ -154,8 +174,8 @@ fi
 if want t3; then
   [ -f "$DOC" ] || fail "T3: $DOC missing (see T1)"
   rc=0
-  python3 - "$DOC" <<'PY' || rc=$?
-import re, sys
+  RAD_R9700="$R9700_POOL" python3 - "$DOC" <<'PY' || rc=$?
+import os, re, sys
 doc = open(sys.argv[1]).read()
 flat = " ".join(doc.split())
 low = doc.lower()
@@ -204,7 +224,12 @@ if re.search(r"radiance\s+serve\b", doc, re.I):
 
 # Product-naming world (post-C07 reading of TP2): the pool-count-2 mechanic +
 # the revision receipt carrying to the new card + the DRA alternative lane.
-need(r"(?i)gpu-ai-pro-r9700", "the shipped pool name (same-revision second card joins the same pool, count 2)")
+need(re.escape(os.environ["RAD_R9700"]), "the D24-renamed pool name (same-revision second card joins the same pool, count 2 — the pool-count mechanics are name-agnostic, the STRING is the ruling)")
+# C08 T-E (amendment): the TP2 RE-VERIFICATION LAW — a second/third card is absent from the
+# MINIMAL patched table by construction; its (device,revision) row must carry or be ADDED
+# before TP2 scheduling is trusted (bare-fallback trap).
+need(r"(?i)(re-?verif|carries?\b|added?\b)[^.\n]{0,160}(before|beforehand|first)[^.\n]{0,80}(tp2|schedul|trusting)|(tp2|second|third)[^.\n]{0,120}(re-?verif|verify|before trusting)", "the TP2 re-verification law (§6 bullet, minimal-table era)")
+need(r"(?i)minimal|patched[ -]table|amdgpu\.ids", "the minimal patched-table provenance (the law\u2019s mechanism)")
 need(r"(?i)dra|resourceclaim", "the R6 ranked-2 DRA alternative lane (recorded as the alternative, not the plan)")
 
 if errs:

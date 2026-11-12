@@ -64,7 +64,7 @@ def test_trio_charts_vllm_entry_is_exact():
     region = text[max(0, m.start() - 900): m.start()]
     assert "cf-143" in region, (
         "cf-143 C01 AC7: the commented charts.vllm entry carries no cf-143 marker within the "
-        "(the disable site must be grep-findable for the re-enable)"
+        "900 chars above it (the disable site must be grep-findable for the re-enable)"
     )
 
 

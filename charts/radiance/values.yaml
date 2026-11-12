@@ -34,18 +34,22 @@ app-template:
   # renders the args AND resources and reds any half-move of one side — the
   # equality against these scalars is what makes the carriers one source.
   #
-  # guaranteedMemoryGi = 64: the owner's "60Gi-class" ruling (Q10) honored as
-  # one scalar. Boot arithmetic (RESEARCH Serving envelope, receipt-gated
-  # — the Q12 best guess): pool 43000 MiB (~42 GiB) + the --kv-resident 8x200K
-  # host copy (~19.3 GiB) + checkpoint slots (~8.9 GiB) + misc lands the pins
-  # at 60-70 GiB class; the engine's rule is >=4 GiB free under the cgroup,
-  # so the startup receipt moves this scalar UP (68/72, schedulable to ~96
-  # while strata is scaled down — Q10's protocol) or DOWN (pool -> ctx step).
-  # COEXISTENCE ARITHMETIC: 64 (this) + 64 (strata's request) + 4 (llama-swap
-  # outer) > 125.08 GiB node allocatable, so a radiance pod sits Pending with
-  # "Insufficient memory" beside a live strata pod — LOUD, SAFE, the designed
-  # handshake of the owner's manual scale-down protocol (runbook steps 3
-  # and 10 own down + restore-back). This is not a bug to "fix" by shrinking.
+  # guaranteedMemoryGi = 64 answers "is 64 too low or too high?" AT this
+  # scalar. TOO HIGH BESIDE LIVE STRATA IS THE FEATURE: 64 (this) + 64
+  # (strata's request) + 4 (llama-swap outer) > 125.08 GiB node
+  # allocatable, so a radiance pod sits Pending with "Insufficient memory"
+  # next to a live strata pod — LOUD, SAFE, the designed handshake of the
+  # owner's manual scale-down protocol (runbook steps 3/10 own down +
+  # restore-back); not a bug to "fix" by shrinking. TOO LOW is a receipt
+  # question, not a guess: the D17 derivation lands the boot pins at the
+  # 60-70 GiB class (pool 43000 MiB ~42 GiB + the --kv-resident 8x200K
+  # host copy ~19.3 GiB + checkpoint slots ~8.9 GiB + misc) and the engine
+  # needs >= 4 GiB free under the cgroup, so the on-target startup receipt
+  # moves this scalar UP (68/72, schedulable to ~96 only while strata is
+  # down — Q10's protocol). The ladder DOWN runs through hostPoolMib/ctx
+  # steps, never this scalar below the class floor. 64 is the
+  # class-median start of that band (Q10 "60Gi-class" ruling,
+  # receipt-gated — the Q12 on-target ladder confirms).
   guaranteedMemoryGi: 64
   hostPoolMib: 43000
   maxModelLen: 200000
@@ -70,13 +74,18 @@ app-template:
   # filters.setParams "priority?": 5 in C04 (radiance's DEFAULT class — never
   # read it as a vLLM-era number).
   #
-  # --- plugin facts (Q9 Option-1 as SHIPPED by C07; RESEARCH §R6-Q1/Q4): the
-  # vendored charts/amd-gpu runs the device plugin at
-  # -resource_naming_strategy=product, which buckets devices per sanitized
-  # marketing name into per-NAME kubelet pools: this node advertises exactly
-  # amd.com/gpu-ai-pro-r9700 (the R9700, PCI 7551 revision C0) and
-  # amd.com/gpu-8060s (the Strix APU, 1586) — a pod requesting the R9700 pool
-  # can ONLY ever receive the R9700 (scheduler determinism replaces the
+  # --- plugin facts (Q9 Option-1 as SHIPPED by C07, renamed per the D24
+  # lane ruling; RESEARCH §R6-Q1/§R7-Q2): first-party charts/amd-gpu runs
+  # the device plugin at -resource_naming_strategy=product, which buckets
+  # devices per SANITIZED MARKETING NAME, and since D24 the names come from
+  # the PATCHED amdgpu.ids ConfigMap that chart mounts over the image's
+  # baked table — the sanitizer maps the 7551/C0 row's "r9700-1" product
+  # string to gpu-r9700-1 (the amd.com namespace and the gpu- prefix are
+  # plugin CODE constants, §R7-Q1/Q2). This node advertises exactly
+  # amd.com/gpu-r9700-1 (the R9700, PCI 7551 revision C0) and
+  # amd.com/gpu-8060s (the Strix APU, 1586, carried rows — unchanged) — a
+  # pod requesting the R9700 pool can ONLY ever receive the R9700
+  # (scheduler determinism replaces the
   # nodeId-ascending APU-first accident that crash-looped charts/vllm
   # 2026-11-07; the round-2 mis-allocation runtime-retry gate is SUPERSEDED
   # by that determinism — the startup-report PCI/gfx1201 assert survives only
@@ -93,7 +102,7 @@ app-template:
   # Allocate()" stays TRUE upstream (open PRs #243/#247 — watch, don't wait)
   # and is MOOT here: each pool holds one device, so within-bucket choice
   # cannot exist. The fallback trap (a card whose sysfs (device,revision)
-  # pair is unknown to the baked amdgpu.ids reverts to the bare amd.com/gpu
+  # pair is absent from the patched table reverts to the bare amd.com/gpu
   # name) is closed by the C06 step-0 gate (a) BEFORE first boot, not
   # by runtime logic. STRATA LAW (Q11): strata's privileged hostPath pod sits
   # PHYSICALLY on the same card this pool names — naming settles cross-card
@@ -114,38 +123,22 @@ app-template:
   # Flash-Next slot, RESEARCH RQ1); --num-speculative-tokens 3 is the pack's
   # native MTP depth (RESEARCH RQ0: the fn pack carries an MTP-3 drafter).
   serveArgs: &serveArgs
-    - "--model"
-    - *modelPath
-    - "--port"
-    - "8000"
-    - "--host"
-    - "::"
-    - "--tp"
-    - "1"
-    - "--max-model-len"
-    - "200000"
-    - "--max-num-seqs"
-    - "8"
-    - "--placement"
-    - "expert_tiered"
-    - "--host-pool-mib"
-    - "43000"
-    - "--gpu-headroom-mib"
-    - "96"
-    - "--kv-cache-dtype"
-    - "fp8"
-    - "--kv-resident"
-    - "32768"
-    - "--num-speculative-tokens"
-    - "3"
-    - "--max-num-batched-tokens"
-    - "4096"
-    - "--checkpoint-interval"
-    - "4096"
-    - "--ngram-placement"
-    - "disk"
-    - "--served-model-name"
-    - "qwen3.8-flash-next-radiance"
+    ["--model", *modelPath,
+     "--port", "8000",
+     "--host", "::",
+     "--tp", "1",
+     "--max-model-len", "200000",
+     "--max-num-seqs", "8",
+     "--placement", "expert_tiered",
+     "--host-pool-mib", "43000",
+     "--gpu-headroom-mib", "96",
+     "--kv-cache-dtype", "fp8",
+     "--kv-resident", "32768",
+     "--num-speculative-tokens", "3",
+     "--max-num-batched-tokens", "4096",
+     "--checkpoint-interval", "4096",
+     "--ngram-placement", "disk",
+     "--served-model-name", "qwen3.8-flash-next-radiance"]
 
   global:
     nameOverride: &chartName radiance
@@ -269,20 +262,28 @@ app-template:
             # GUARANTEED QoS (Q7 + D15): requests == limits, extended
             # resource included (extended resources REQUIRE an equal
             # integer pair — the kubelet rejects requests != limits for
-            # them). cpu/memory here are the k8s-string forms of the
-            # cpuCores/guaranteedMemoryGi scalars above (see the single
-            # scalars note); the GPU name is the R9700 product pool (the
-            # plugin-facts block above — NOT the bare amd.com/gpu, which
-            # does not exist on this node post-C07 and would schedule
-            # Pending-forever).
+            # them). cpu/memory are the k8s-string forms of the
+            # cpuCores/guaranteedMemoryGi scalars above (single-source
+            # note). The GPU name is the R9700 pool, PATCHED-TABLE
+            # provenance (D24/§R7-Q2): charts/amd-gpu ships an
+            # amdgpu.ids ConfigMap whose 7551/C0 product string
+            # "r9700-1" the plugin's sanitizer maps to gpu-r9700-1
+            # (the amd.com/ namespace and gpu- prefix are code
+            # constants — the sanitizer decides the shape); the pool
+            # holds exactly one device, so the "-1" carries no
+            # scheduling meaning; a further rename needs the upstream
+            # feature ask (recommended, filing optional per D24).
+            # The patched amdgpu.ids table is this name's only source:
+            # NOT the bare amd.com/gpu — absent from this node
+            # post-C07, a stray bare claim sits Pending-forever.
             requests:
               cpu: "8"
               memory: "64Gi"
-              amd.com/gpu-ai-pro-r9700: "1"
+              amd.com/gpu-r9700-1: "1"
             limits:
               cpu: "8"
               memory: "64Gi"
-              amd.com/gpu-ai-pro-r9700: "1"
+              amd.com/gpu-r9700-1: "1"
           securityContext:
             # The repo drop-ALL standard plus the engine's one carry:
             # IPC_LOCK for locked-buffer / io_uring registration (Q7).

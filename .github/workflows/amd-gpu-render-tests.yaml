@@ -1,9 +1,11 @@
-# Render-contract tests for the VENDORED amd-gpu chart (cf-143 C07,
-# DECISIONS D18/D19): the args hook must keep rendering the restated image CMD
-# plus the product-naming flag under the upstream-pinned object names, and the
+# Render-contract tests for the FIRST-PARTY amd-gpu chart (cf-143 C08,
+# DECISIONS D23 superseding D19): the app-template values subtree must keep
+# rendering the restated image CMD plus the product-naming flag, the patched
+# amdgpu.ids ConfigMap must mount over the plugin's const IDsPath, and the
 # gpu-ai Application entry must keep its internal git-path shape — both
-# trigger this ladder. No `helm dependency update` step: the vendored chart
-# declares no dependencies (D19), so the fresh-clone render needs no registry.
+# trigger this ladder. `helm dependency update` runs first because C08's
+# chart declares the app-template dep and the vendored tgz is gitignored
+# (the fresh-tree render law, same step as radiance-render-tests.yaml).
 name: amd-gpu render tests
 
 on:
@@ -38,6 +40,9 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install pytest pyyaml
+
+      - name: Fetch chart dependencies
+        run: helm dependency update charts/amd-gpu
 
       - name: Run test suite
         run: pytest charts/amd-gpu/tests -v

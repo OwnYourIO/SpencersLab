@@ -41,12 +41,23 @@ cd "$(git rev-parse --show-toplevel)"
 
 VALS="${AMD_GPU_VALS:-services/gpu-ai/prod/values.yaml}"
 SWAP_VALUES="${AMD_GPU_SWAP_VALUES:-charts/llama-swap/values.yaml}"
-VENDORED="${AMD_GPU_VENDORED_VALUES:-charts/amd-gpu/values.yaml}"
+AMD_GPU_VALUES="${AMD_GPU_VENDORED_VALUES:-charts/amd-gpu/values.yaml}"
+VENDORED="$AMD_GPU_VALUES"   # legacy alias: the file's path is stable across the C08 rewrite
 APPSET="${AMD_GPU_APPSET:-charts/base/templates/appset-charts.yaml}"
 WORKFLOW=".github/workflows/amd-gpu-render-tests.yaml"
 
-APU_CLAIM="amd.com/gpu-8060s"
-R9700_CLAIM="amd.com/gpu-ai-pro-r9700"
+# ---------------------------------------------------------------------------
+# GPU RESOURCE-NAME CONSTANTS — the C08 lane RULING LANDED mid-round (D24:
+# table-mount rename; the string the owner first asked is unreachable by any
+# mechanism — §R7-Q1's code-constant prefix/domain law — so the pool carries
+# the sanitizer's closest output below). THE ONLY bash-side name needles
+# ticket-wide: any future lane move edits HERE and the marked block in
+# charts/amd-gpu/tests/amd_gpu_testlib.py (the python canonical home), never
+# needle archaeology. Conversion legs (C08 n2) are name-agnostic.
+BARE_CLAIM="amd.com/gpu"                       # gpu-cluster tree-global; never renames (D21)
+APU_CLAIM="amd.com/gpu-8060s"                  # frozen by the D24 ruling scope
+R9700_CLAIM="amd.com/gpu-r9700-1"              # D24: patched-table sanitizer output
+# ---------------------------------------------------------------------------
 
 checks=0
 
@@ -145,9 +156,9 @@ if want n2; then
     # commit (comment-only diff, AC3).
     stat=$(git show --stat --format= "$AMD_GPU_FLIP_COMMIT" 2>/dev/null || true)
     [ -n "$stat" ] || fail "n2: AMD_GPU_FLIP_COMMIT=$AMD_GPU_FLIP_COMMIT is not a commit"
-    for path in charts/amd-gpu/ "$VALS"; do
+    for path in charts/amd-gpu/ charts/radiance/ "$VALS"; do
       printf '%s\n' "$stat" | grep -q "$path" \
-        || fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT does not touch $path (vendored chart, entry swap and the overlay flip — one commit; git show --stat is the evidence)"
+        || fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT does not touch $path (C08 conversion wave: vendored->first-party chart + the radiance T-B/C/D values legs + the gpu-ai service file land as ONE commit; git show --stat is the evidence)"
     done
     bare_now=$(git show "$AMD_GPU_FLIP_COMMIT:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
     bare_before=$(git show "$AMD_GPU_FLIP_COMMIT^:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
@@ -173,9 +184,9 @@ if want n3; then
   #   amd.com/gpu-8060s    -> ONLY services/gpu-ai/prod/values.yaml (overlay
   #                           flip) — ledger/name mentions are comments,
   #                           exempt by pattern;
-  #   amd.com/gpu-ai-pro-r9700 -> nowhere until C02, then charts/radiance
-  #                           only (allow-list prefix pre-declared so the
-  #                           guard stays honest when the chart lands).
+  #   renamed pool ($R9700_CLAIM) -> ONLY charts/radiance live claims (D24 sweep);
+  #                           no other file carries it claim-shaped; comment/
+  #                           ledger/doc placement is AC4's python-leg scope.
   claim_grep() {  # $1=resource name -> "file:line: text" hits, non-comment, yaml-ish
     grep -rn --include='*.yaml' --include='*.yml' --include='*.tpl' \
       -E "^[[:space:]]*$(printf '%s' "$1" | sed 's/\./\\./g'):[[:space:]]*[0-9]+[[:space:]]*$" \
@@ -183,7 +194,7 @@ if want n3; then
       | grep -vE ':[0-9]+:[[:space:]]*#' \
       | grep -vE '^charts/[^/]+/tests/|^services/[^/]+/tests/' || true
   }
-  bad=$(claim_grep "amd.com/gpu" | grep -vE '^charts/llama-swap/values\.yaml:' || true)
+  bad=$(claim_grep "$BARE_CLAIM" | grep -vE '^charts/llama-swap/values\.yaml:' || true)
   if [ -n "$bad" ]; then
     fail "n3 (AC4 per-cluster): bare amd.com/gpu claims OUTSIDE the charts/llama-swap tree-global default — every other renderer has no such pool post-gpu-ai-flip (stray claims are Pending-forever, R6-Q4-3):
 $bad"
@@ -193,31 +204,31 @@ $bad"
     fail "n3 (AC4 stray-guard): live APU-name claims outside the gpu-ai overlay — the gpu cluster's 1.31.0.9 plugin cannot advertise it (B1):
 $bad"
   fi
-  bad=$(claim_grep "amd.com/gpu-ai-pro-r9700" | grep -vE '^charts/radiance/' || true)
+  bad=$(claim_grep "$R9700_CLAIM" | grep -vE '^charts/radiance/' || true)
   if [ -n "$bad" ]; then
-    fail "n3 (AC4): live R9700-pool claims outside charts/radiance (where C02 will claim it) and the amd-gpu ledger comments:
+    fail "n3 (AC4): live claims of the renamed pool outside charts/radiance (the D24 claim site) —
 $bad"
   fi
   if grep -E "^[[:space:]]*amd\.com/gpu(-[a-z0-9-]+)?:[[:space:]]*[0-9]+" services/gpu/prod/values.yaml \
      | grep -vE '^[[:space:]]*#' | grep -q .; then
     fail "n3: services/gpu/prod/values.yaml carries a GPU claim line — the gpu cluster is shielded, its overlay stays claim-free (D21 untouched witness)"
   fi
-  ok "n3: per-cluster sweep clean — bare claims ONLY the llama-swap tree-global default, the APU name ONLY in the gpu-ai overlay, the R9700 name nowhere yet (charts/radiance pre-allowed for C02), services/gpu claim-free (comments/fixtures exempt per the pattern)"
+  ok "n3: per-cluster sweep clean — bare claims ONLY the llama-swap tree-global default, the APU name ONLY in the gpu-ai overlay, the renamed R9700 pool ONLY in charts/radiance (D24 sweep), services/gpu claim-free (comments/fixtures exempt per the pattern)"
 fi
 
 # --- n4: the vendored chart's expected-names ledger (the C02 authority) ---------
 if want n4; then
-  [ -f "$VENDORED" ] || fail "n4: $VENDORED missing — the vendored chart (C07) is the producer of the pool names; the ledger comment lives here"
-  grep -qF "$R9700_CLAIM" "$VENDORED" || fail "n4: $VENDORED never names ${R9700_CLAIM} (the 7551/C0 product pool C02 claims)"
+  [ -f "$VENDORED" ] || fail "n4: $VENDORED missing — the amd-gpu chart (first-party since C08/D23) is the producer of the pool names; the ledger comment lives here"
+  grep -qF "$R9700_CLAIM" "$VENDORED" || fail "n4: $VENDORED never names ${R9700_CLAIM} (the 7551/C0 pool the D24 patched table derives; C02 claims it)"
   grep -qF "$APU_CLAIM" "$VENDORED" || fail "n4: $VENDORED never names ${APU_CLAIM} (the 1586 product pool llama-swap flips to)"
-  grep -E "^[[:space:]]*#" "$VENDORED" | grep "7551" | grep -q "gpu-ai-pro-r9700" \
-    || fail "n4: no ledger COMMENT row mapping 7551 (R9700) to gpu-ai-pro-r9700 — §R6-Q1's computed names must sit where the test reads them (same-line row form)"
+  grep -E "^[[:space:]]*#" "$VENDORED" | grep "7551" | grep -qF "${R9700_CLAIM#amd.com/}" \
+    || fail "n4: no ledger COMMENT row mapping 7551 (R9700) to ${R9700_CLAIM#amd.com/} — the patched-table name (D24) must sit where the test reads it (same-line row form)"
   grep -E "^[[:space:]]*#" "$VENDORED" | grep "1586" | grep -q "gpu-8060s" \
     || fail "n4: no ledger COMMENT row mapping 1586 (APU) to gpu-8060s"
   # The fallback trap named (its decision tree stays in the runbook, C06):
   grep -qi "fallback" "$VENDORED" \
     || fail "n4: the unknown-(device,revision) -> bare amd.com/gpu fallback trap is not named beside the ledger"
-  ok "n4: the vendored chart's values ledger records 7551/C0->gpu-ai-pro-r9700, 1586->gpu-8060s and the fallback trap (the cross-chart name-identity join lives in charts/radiance/tests/test_resource_name_identity.py, deferred per the chunk)"
+  ok "n4: the chart's values ledger records 7551/C0->${R9700_CLAIM#amd.com/} (patched table), 1586->${APU_CLAIM#amd.com/} (carried rows) and the fallback trap + WATCH (cross-chart join: charts/radiance/tests/test_resource_name_identity.py)"
 fi
 
 # --- n5: the render-CI deliverable (file scope: .github/workflows/...) -----------

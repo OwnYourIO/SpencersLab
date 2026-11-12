@@ -1,96 +1,208 @@
-# Vendored fork of upstream chart 0.22.0 - provenance, delta inventory and
-# refresh policy: Chart.yaml header; ruling: DECISIONS.md D18/D19 (cf-143).
+# charts/amd-gpu — FIRST-PARTY app-template 5.0.1 chart (cf-143 C08; owner
+# item 5; DECISIONS D23 superseding D19; RESEARCH §R7-Q5 key-by-key). The pod
+# renders PARITY, NOT IMPROVEMENT against the flip-wave shape: the conversion
+# moves files, not facts (the parity oracle lives under tests/evidence/).
+# Provenance + the line-for-line fact migration: Chart.yaml header.
 #
-# Product-naming ledger (-resource_naming_strategy=product on plugin
-# 1.31.0.12). RESEARCH §R6-Q1 ported naming.go/products.go against the
-# amdgpu.ids table baked into that image; computed per-device pools for the
-# ai-gpu node (one device each):
-#   7551, C0 -> gpu-ai-pro-r9700  (AMD Radeon AI PRO R9700, 32 GB dGPU)
-#   1586, C1|C3|C6|D1 -> gpu-8060s  (AMD Radeon 8060S Graphics, Strix APU)
-# The node advertises amd.com/gpu-ai-pro-r9700 + amd.com/gpu-8060s and bare
+# Accepted gaps (D23 strains, recorded where the values live):
+#   - updateStrategy: app-template 5.0.1 renders NO DaemonSet updateStrategy
+#     (§R7-Q5 gap row). The flip-wave value RollingUpdate/maxUnavailable 1
+#     EQUALS the kubernetes API default, so the omission is a zero-behavior
+#     delta; a future OnDelete or maxUnavailable != 1 needs rawResources or
+#     a library ask. Do not fight the library.
+#
+# Name strain (D23 strain 1) — the rename-set, enumerated. Object names now
+# derive from release + identifier (global.nameOverride keeps the stable
+# prefix), so on the gpu-ai cluster the SAME Application's next sync prunes
+# the old DaemonSet and creates the renamed one (seconds-long gap; running
+# GPU pods keep their allocations — §R6-Q4's allocation law; the gpu cluster
+# is outside this wave entirely, external chart + D21 shield untouched):
+#   DaemonSet  amd-gpu-device-plugin-daemonset -> gpu-ai-amd-gpu-device-plugin-daemonset
+#   selector   name=amd-gpu-dp-ds -> app.kubernetes.io/name|instance|controller labels
+#   container  amd-gpu-dp-cntr -> deviceplugin
+#   volume     names keep the flip-wave identifiers (dp/sys/health); NEW:
+#              ids-table + ConfigMap gpu-ai-amd-gpu-amdgpu-ids (patched table)
+#
+# Product naming ledger (-resource_naming_strategy=product on plugin
+# 1.31.0.12; RESEARCH §R6-Q1/§R7-Q2; DECISIONS D24). Names derive from the
+# MINIMAL PATCHED amdgpu.ids this chart ships as a ConfigMap (mounted over
+# the plugin's const IDsPath below — the D24 lane ruling), per sanitized
+# marketing name, one kubelet pool per name (one device each on the ai-gpu
+# node):
+#   7551, C0 -> gpu-r9700-1  (Radeon AI PRO R9700, 32 GB dGPU — patched-table row)
+#   1586, C1|C3|C6|D1 -> gpu-8060s  (Radeon 8060S Graphics, Strix APU — carried rows)
+# The node advertises amd.com/gpu-r9700-1 + amd.com/gpu-8060s and bare
 # amd.com/gpu disappears - a stray bare claim schedules Pending by design
 # (loud). Claimants: radiance the R9700 pool (C02), llama-swap the APU pool
-# (C07 same-wave flip). Fallback trap: an unknown sysfs (device,revision)
+# (C07 same-wave flip). The 7551/C0 baked-table marketing row is
+# SUPERSEDED-BY-MOUNT (D24): the stock-table string for this pair lives only
+# in DECISIONS history, never on a live surface; name provenance now = the
+# ConfigMap rows below. Fallback trap: an unknown sysfs (device,revision)
 # pair lands its card under bare amd.com/gpu; the on-target receipts and the
 # remedy decision tree live in the cf-143 C06 runbook step-0 gates.
+# WATCH: if a future plugin image ever moves its IDs lookup path (the
+# Dockerfile COPY law that makes this mount apply), the mount silently stops
+# applying and the node falls back to advertising the BAKED-table name ->
+# radiance's claim goes Pending-forever; the runbook step-0 receipts (a)-(c)
+# catch it (the expected name in that gate prose is gpu-r9700-1 post-C08).
 
-nfd:
-  # Kept false as shipped: the live node has zero amd.com/* labels; waking
-  # the labeller/NFD classes is outside the cf-143 C07 flip wave.
-  enabled: false
+app-template:
+  global:
+    # Stable "amd-gpu" prefix for every derived name, release-independent
+    # (the flip-wave object-name baseline this chart replaces); the
+    # identifier is always appended so single-item resources keep the
+    # suffix in EVERY release (test render amd-gpu-... vs live cluster
+    # gpu-ai-amd-gpu-...) — see the rename-set above.
+    nameOverride: amd-gpu
+    alwaysAppendIdentifierToResourceName: true
+    # Zero RBAC ships (§R7-Q5): the flip-wave render carried no
+    # ServiceAccount and none is needed (the plugin talks to kubelet over
+    # the device-plugins socket, not the API). The library default would
+    # CREATE one, so it is explicitly off — not an improvement, the parity
+    # expression of "renders NOTHING today".
+    createDefaultServiceAccount: false
 
-labeller:
-  enabled: false
+  controllers:
+    device-plugin-daemonset:
+      # Explicit daemonset type: app-template defaults controllers to
+      # deployment and a device plugin must run on every GPU node
+      # (§R7-Q5 caveat; the generic-device-plugin precedent leaves the
+      # default on single-node clusters — not an option here).
+      type: daemonset
+      pod:
+        # system-node-critical: the flip-wave template hardcode expressed
+        # as values (§R7-Q5 priorityClassName row).
+        priorityClassName: system-node-critical
+        tolerations:
+          - key: CriticalAddonsOnly
+            operator: Exists
+        # The library writes pod-level fields the old template left unset
+        # (serviceAccountName: default, automountServiceAccountToken: false,
+        # enableServiceLinks: false, dnsPolicy ClusterFirst). They are the
+        # D23 conversion's shape, not improvements: the plugin registers
+        # through the kubelet device-plugins socket and needs no API token
+        # (§R7-Q5's zero-RBAC fact; parity legs assert the carried fields).
+        # nodeSelector stays OFF exactly as today (the flip-wave gate was
+        # false); would-be pair recorded, not shipped:
+        #   feature.node.kubernetes.io/pci-0300_1002.present: "true"
+        #   kubernetes.io/arch: amd64
+        # imagePullSecrets: absent as today ([]). No resources block: the
+        # flip-wave dp.resources {} rendered NOTHING — parity, not
+        # improvement; do not invent requests/limits here.
+      containers:
+        deviceplugin:
+          image:
+            repository: docker.io/rocm/k8s-device-plugin
+            # Renovate docker pin (migrated with C07's vendoring, FINALIZED
+            # here): the .12 release is the first carrying the product
+            # naming strategy (PR #246).
+            # renovate: datasource=docker depName=docker.io/rocm/k8s-device-plugin
+            tag: "1.31.0.12"
+            # amd64 IMAGE-MANIFEST digest of the tag above:
+            # sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117
+            # D2 posture: tag pin + digest ledger comment, no digest field
+            # (moves VERBATIM through the conversion).
+          # Declaring args REPLACES the image CMD, so the Dockerfile CMD
+          # trio is restated in full. Omitting -v=5 is not cosmetic: it
+          # drops the product enumeration logs the cf-143 C06 runbook
+          # receipt (b) greps — the -v=5 law (Chart.yaml migration line 1).
+          # The strategy arg is now PLAIN (the old splice key died; a
+          # per-cluster strategy change rides the service-block override).
+          args:
+            - -logtostderr=true
+            - -stderrthreshold=INFO
+            - -v=5
+            - -resource_naming_strategy=product
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          # NO /dev/kfd, NO /dev/dri mounts — §R7 fact (correcting the
+          # owner item-5 phrasing): the plugin pod never mounts device
+          # nodes; registration is the unix-socket handshake in the
+          # device-plugins dir and Allocate() hands /dev/kfd + render nodes
+          # to kubelet at container creation.
 
-dp:
-  image:
-    repository: docker.io/rocm/k8s-device-plugin
-    # Overrides the image tag whose default is the chart appVersion.
-    # The .12 pin the product naming strategy ships on (first release with
-    # PR #246); the datasource=helm pin that lived on the gpu-ai service
-    # entry migrated here when the chart was vendored (D19).
-    # renovate: datasource=docker depName=docker.io/rocm/k8s-device-plugin
-    tag: "1.31.0.12"
-    # amd64 image-manifest digest of the 1.31.0.12 tag above
-    # (sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117)
-    # - ledger comment per D2 posture: tag + digest recorded, no digest field.
-  resources: {}
-  # Extra plugin args spliced after the restated image CMD (fork delta,
-  # templates/deviceplugin-daemonset.yaml). Product naming is the vendored
-  # chart's whole point; the list stays values-level so a per-cluster
-  # override can swap or drop the strategy without a template edit.
-  extraArgs:
-    - -resource_naming_strategy=product
-  # Set daemonsets updateStrategy for device plugin
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
+  persistence:
+    # Volume identifiers + mountPath strings are byte-equal to the flip-wave
+    # render (the health dir keeps its trailing slash — parity law).
+    # /sys is REQUIRED, not decoration: the product naming reads sysfs
+    # (PR #246 design note; the C06 step-0 gate (a) receipts depend on it).
+    dp:
+      type: hostPath
+      hostPath: /var/lib/kubelet/device-plugins
+      globalMounts:
+        - path: /var/lib/kubelet/device-plugins
+    sys:
+      type: hostPath
+      hostPath: /sys
+      globalMounts:
+        - path: /sys
+    health:
+      type: hostPath
+      hostPath: /var/lib/amd-metrics-exporter/
+      hostPathType: DirectoryOrCreate
+      globalMounts:
+        - path: /var/lib/amd-metrics-exporter/
+    # FOURTH volume (amendment 2026-11-12, D24 lane): the patched table
+    # over the plugin's const IDsPath. subPath single-file mount, readOnly —
+    # the values-route expression (configMap persistence + globalMounts
+    # subPath/readOnly are schema-presented; the generic-device-plugin
+    # configMap-volume precedent). No template exception needed.
+    ids-table:
+      type: configMap
+      identifier: amdgpu-ids
+      globalMounts:
+        - path: /usr/share/libdrm/amdgpu.ids
+          subPath: amdgpu.ids
+          readOnly: true
 
-lbl:
-  image:
-    repository: docker.io/rocm/k8s-device-plugin
-    tag: "labeller-1.31.0.9"
-  serviceAccount:
-    annotations: {}
-  securityContext:
-    # The labeller reads GPU properties from /sys and opens the DRM device nodes
-    # (/dev/kfd, /dev/dri) via libdrm. Those device nodes are mounted read-only by
-    # the DaemonSet, which is sufficient - no privilege or capabilities are needed.
-    privileged: false
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - ALL
-    readOnlyRootFilesystem: false # true if -logtostderr flag set in labeller
-  # If you do want to specify resources, uncomment the following lines, 
-  # adjust them as necessary, and remove the curly braces after 'resources:'.
-  resources: {}
-    # limits:
-    #   memory: 20Mi
-    #   cpu: 100m
-    # requests:
-    #   memory: 30Mi
-    #   cpu: 150m
-  # Set daemonsets updateStrategy for labeller
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
+  configMaps:
+    amdgpu-ids:
+      # MINIMAL PATCHED TABLE (§R7-Q2; the grave-case law is test-enforced
+      # against the fetched authority, not prose): content = the format
+      # header + version line + EVERY 1586 row BYTE-VERBATIM from the
+      # v1.31.0.12 baked table (dropping any 1586 row would silently fall
+      # the APU to bare amd.com/gpu and strand the LIVE gpu-ai overlay
+      # consumer, D21/B1 — the APU-rows-must-carry law) + the single
+      # 7551/C0 row with its product string set EXACTLY "r9700-1": the
+      # sanitizer keeps that token (lowercase, [a-z0-9.-] only, not a
+      # filler word), so the node advertises gpu- + r9700-1 =
+      # amd.com/gpu-r9700-1; the amd.com namespace and the gpu- prefix are
+      # code constants, so no table content can produce the owner's first
+      # literal — that rejected string is impossible by construction
+      # (§R7-Q1) and appears nowhere claim-shaped anywhere.
+      # MINIMALITY LAW: this is NOT the full 752-row baked table — any
+      # (device,revision) pair ABSENT from it falls back to bare
+      # amd.com/gpu (the C06 step-0 gate-(a) fallback-trap decision tree).
+      # This node is bounded by the two cards TODAY; a TP2 card of any new
+      # pair REQUIRES table re-verification (carry or ADD the row) BEFORE
+      # trusting scheduling — the TP2 doc §6 law.
+      # Table provenance: rows spliced from the fetched v1.31.0.12 file
+      # (authority + full-file sha256 in tests/evidence/
+      # pre-c08-amdgpu-ids-rows.txt header); the D24 rename edits ONLY the
+      # 7551/C0 product field.
+      # Hot-reload law: kubelet subPath NEVER live-updates — INTENTIONAL
+      # here: the plugin reads the table once at startup (LoadProductIndex);
+      # a table edit propagates as the DaemonSet rollout (the library's
+      # configMap checksum annotation does that roll), not an in-place
+      # reload. Do NOT widen to directory-mount reload idioms.
+      data:
+        amdgpu.ids: |
+          # List of AMDGPU IDs
+          #
+          # Syntax:
+          # device_id,	revision_id,	product_name        <-- single tab after comma
 
-imagePullSecrets: []
-
-securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-
-tolerations:
-  - key: CriticalAddonsOnly
-    operator: Exists
-
-node_selector_enabled: false
-node_selector:
-  feature.node.kubernetes.io/pci-0300_1002.present: "true"
-  kubernetes.io/arch: amd64
+          1.0.0
+          1586,	C1,	AMD Radeon 8060S Graphics
+          1586,	C2,	AMD Radeon 8050S Graphics
+          1586,	C3,	AMD Radeon 8060S Graphics
+          1586,	C4,	AMD Radeon 8050S Graphics
+          1586,	C6,	AMD Radeon 8060S Graphics
+          1586,	D1,	AMD Radeon 8060S Graphics
+          1586,	D2,	AMD Radeon 8050S Graphics
+          1586,	D4,	AMD Radeon 8050S Graphics
+          1586,	D5,	AMD Radeon 8040S Graphics
+          7551,	C0,	r9700-1

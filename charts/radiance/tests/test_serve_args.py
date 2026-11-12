@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import collections
+import re
 
 import pytest
 
@@ -138,16 +139,30 @@ def test_dual_edit_guard_model_path_matches_service_repin():
 
 
 def test_scalars_commented_with_the_arithmetic():
-    """The scalars ship with their why (plan: 'commented with the full
-    arithmetic'): the guaranteedMemoryGi comment carries the owner's
-    '60Gi-class' phrase + the receipt-gate note; the hostPoolMib comment
-    names the Q10 ruling class; the coexistence Pending handshake is on the
-    record (64+64+4 > 125.08 — Pending beside a live strata is the designed
-    handshake, not a bug)."""
+    """AC6 (C08 T-D re-pin of the needles): the guaranteedMemoryGi comment
+    ANSWERS '64 too low or too high?' IN PLACE — the amendment mandates four
+    token families, all read from the comment: the D17 derivation (pool ~42 +
+    copy ~19.3 + slots ~8.9), the ladder-UP bounds with the strata-DOWN
+    precondition (…→96 while strata is down), the ≥4-GiB-free-under-cgroup
+    rule, and the 64+64+4 > 125.08 designed-Pending handshake; 64 is marked
+    the class-median start. (Pre-amendment this arm pinned '60Gi-class' +
+    '125.08' + 'Pending' — the sharpening keeps the last two and adds the
+    rest; the value itself stays pinned by the scalar-splice leg, so a
+    comment rewrite that drops a mandated fact reddens HERE, not silently.)"""
     text = R.chart_values_text()
     flat = " ".join(text.split())
-    assert "60Gi-class" in flat, "C02: the guaranteedMemoryGi comment never names the owner's '60Gi-class' ruling (Q10)"
+    for tok in ("19.3", "8.9"):
+        assert tok in flat, f"C08 T-D: the derivation term {tok} is missing from the comment (D17 chain)"
+    assert "96" in flat and re.search(r"(?i)strata[^\n]{0,120}down|down[^\n]{0,80}strata", flat), (
+        "C08 T-D: the ladder-UP bound (…96) with the strata-DOWN precondition is not stated"
+    )
+    assert re.search(r"(?i)(≥ ?4|>= ?4|4 GiB)", flat), (
+        "C08 T-D: the ≥4-GiB-free-under-cgroup rule is missing"
+    )
     assert "125.08" in flat and "Pending" in flat, (
-        "C02: the coexistence arithmetic (64+64+4 > 125.08 allocatable => Pending beside live "
-        "strata, the designed scale-down handshake) is not on the record"
+        "C08 T-D: the coexistence arithmetic (64+64+4 > 125.08 ⇒ designed Pending handshake) "
+        "left the comment — it is the 'too high is the FEATURE' answer"
+    )
+    assert re.search(r"(?i)median", flat), (
+        "C08 T-D: 64 is not marked the class-median start (the answer's landing point)"
     )

@@ -1,20 +1,27 @@
 # cf-143 C02 — the cross-chart GPU name identity (chunks/C02.md Tests bullet
-# 5; AC4). The owner Q9 ruling in two needles: radiance claims
-# amd.com/gpu-ai-pro-r9700 and llama-swap claims amd.com/gpu-8060s — the two
-# pools are DISJOINT and each name equals what C07's vendored plugin ledger
-# advertises for its device (7551/C0 -> gpu-ai-pro-r9700; 1586 -> gpu-8060s,
-# RESEARCH §R6-Q1, computed against the plugin's baked amdgpu.ids). The
-# ledger in charts/amd-gpu/values.yaml is the single authority BOTH charts'
-# suites read — no second copy of the names.
+# 5; AC4; re-pointed by the C08 T-B amendment to the D24 renamed pool). The
+# ruling in two needles: radiance claims the R9700 pool — since D24 the
+# PATCHED-TABLE name in the canonical constants block — and llama-swap's
+# gpu-ai render claims the APU pool; the two pools are DISJOINT and each
+# name equals what the amd-gpu ledger advertises for its device (7551/C0 ->
+# the renamed pool via the patched amdgpu.ids ConfigMap; 1586 -> the
+# unchanged APU name, §R6-Q1/§R7-Q2). The ledger in
+# charts/amd-gpu/values.yaml is the single authority BOTH charts' suites
+# read — no second copy of the names; every string resolves through the
+# marked constants block (the one C08 edit site).
 #
-# Red state at handoff (designed): red until C07 (the ledger + the flip) and
-# C02 (the claim) land; C02's wave-2 dependency on C07 is exactly this
-# needle's meaning (chunks/C02.md: "the dependency's sole executable
+# Red posture (red-first for dev C08): the claim-equality legs go RED again
+# on the renamed-string flip until the T-B sweep lands them (today's
+# charts/radiance values still claim the pre-C08 pool name); the disjointness
+# and ledger-pairing legs track the constants and stay green.
+#
 # meaning").
 #
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
 from __future__ import annotations
+
+import re
 
 import pytest
 
@@ -66,7 +73,7 @@ def test_pools_are_disjoint_and_llama_swap_owns_the_apu_name():
     assert "1586" in ledger, "C02 AC4: ledger has no 1586 (APU) row (see C07 n4)"
     assert ledger.get("1586") != ledger.get("7551"), (
         "C02/Q9: the two devices share a pool name — per-device NAMING is the ruling "
-        "(amd.com/gpu-ai-pro-r9700 vs amd.com/gpu-8060s)"
+        f"({R.GPU_CLAIM} vs {R.APU_CLAIM})"
     )
     apu_name = f"amd.com/{ledger['1586']}"
     assert apu_name != R.GPU_CLAIM and apu_name == R.APU_CLAIM, (
@@ -132,4 +139,44 @@ def test_bare_claim_absent_from_everything_this_chart_ships():
     )
     assert raw.count(R.GPU_CLAIM_BARE + ":") == 0, (
         "C02: rendered manifests carry a bare amd.com/gpu:"
+    )
+
+
+@helm_skip
+def test_claim_line_carries_the_name_and_the_sanitizer_evidence_comment():
+    """C08 T-B (amendment): the radiance claim pair must carry the CONSTANT
+    name and sit under the comment the owner's '-1' intent needs — the name
+    is the PATCHED amdgpu.ids table's sanitizer output for (7551, C0)
+    (§R7-Q2's traced derivation + the code-constant prefix/domain), the pool
+    holds exactly ONE device so the '-1' carries no scheduling meaning, and
+    a further rename needs an upstream feature ask. NOTES.txt (the rendered
+    surface) carries the same name string."""
+    import yaml
+
+    text = R.chart_values_text()
+    lines = text.splitlines()
+    claim_lines = [i for i, ln in enumerate(lines)
+                   if not ln.lstrip().startswith("#") and f"{R.GPU_CLAIM}:" in ln]
+    assert len(claim_lines) >= 2, (
+        f"C08 T-B: radiance values claims the pool constant at {len(claim_lines)} live line(s), "
+        "want the requests+limits pair (Guaranteed extended pair, equal)"
+    )
+    for i in claim_lines:
+        window = " ".join(ln.strip().lstrip("#").strip()
+                          for ln in lines[max(0, i - 14):i])
+        assert ("amdgpu.ids" in window or "table" in window.lower()) and \
+            re.search(r"(?i)sanitiz|patched", window) and \
+            re.search(r"(?i)one device|exactly one|-1[^\n]{0,60}(no scheduling|carries no)", window), (
+            f"C08 T-B: the claim at line {i+1} lacks the evidence comment (patched-table sanitizer "
+            "provenance + the one-device '-1' explanation) the owner ruling requires in place"
+        )
+    assert re.search(r"(?i)upstream", text) and re.search(r"(?i)feature ask", text), (
+        "C08 T-B: the 'renaming requires an upstream feature ask' sentence is absent from the "
+        "radiance values (D24 records the recommended-optional filing; the comment stays true either way)"
+    )
+    notes = (R.CHART_DIR / "templates" / "NOTES.txt")
+    assert notes.is_file(), "C02 scaffold: charts/radiance/templates/NOTES.txt missing"
+    assert R.GPU_CLAIM in notes.read_text(), (
+        f"C08 T-B: NOTES.txt (a rendered surface) still lacks the pool name constant — the T-B "
+        "string move carries it (the T-E colon fix rides the same paragraph)"
     )
