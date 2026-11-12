@@ -318,3 +318,166 @@ after C08 the old string survives only in historical records. The in-flight test
 pointed at the amended C08.md verbatim. **Coord run-end consequences: (1) RE-PUBLISH follow-up card #1's
 body — it is a doc snapshot and the TP2 doc's name strings + re-verification law changed;
 (2) STATE.deferred carries both open owner-lane items (upstream ask; card refresh).**
+
+---
+
+## FINAL whole-plan review round 2 (2026-11-12, fresh planning-tier session, HEAD a81989b47 + coord's
+uncommitted C08 bookkeeping fold in the worktree; base main 0d9b41785)
+
+**Verdict: APPROVED.** Zero blockers, zero majors. The C08 delta re-verified bar-for-bar and the
+ticket-wide coherence re-derived independently against `main@0d9b41785` — nothing trusted from the
+chunk records.
+
+**Bars (all run fresh, sequential, PATH-exported):** llama-swap 495P/9S/0F (9 skips = standing
+RUN_FLAG_AUDIT/RUN_HF_CHECK gates) · radiance 42P/0F · amd-gpu 26P/0F · vllm 36P · runbook 5 ok ·
+tp2 3 ok (15 citation forms) · naming 5 ok bare AND full green with AMD_GPU_FLIP_COMMIT=a81989b47…
+(conversion-wave same-wave guard + claim-line zero-diff verified against the real commit) ·
+dashboards 5 ok · surface 9 ok bare AND M1..M8 10 ok with CF143_BASE_SHA=0d9b41785 · helm lint
+charts/{amd-gpu,radiance,llama-swap,vllm} 0 failed · rulesync @repo-pin `generate --check` clean ·
+aislop @0.20.0 `ci --changes` 0/0/0 over 106 files AND the bare local 0.20.1 form 0/0 AND the
+`--base main` form via npx @0.20.0 completed (135 ms, rc0 — the FRICTION hang class did NOT recur,
+second consecutive round). Tree clean after all runs (only coord's pre-existing STATE/C08 fold +
+this record).
+
+**Rename-coherence sweep (independent):** `gpu-ai-pro-r9700` whole-literal hits ZERO in
+charts/ services/ tests/ .agents/notes/ .github/ custom-values/ containers/ .opencode/ .rulesync/
+— survives only in pipeline records + plan history (the sanctioned AC4 set). `gpu-r9700-1` sits
+EXACTLY at the AC4 placement set: charts/amd-gpu (values+2 test files), charts/radiance
+(values+NOTES), the two T-B comment carve sites (charts/llama-swap/values.yaml,
+services/gpu-ai/prod/values.yaml), the two notes docs, tests/ constants, TEST_SPEC + pipeline
+records. The rejected literal `amd.com/r9700-1` appears only in pipeline records plus its ABSENCE
+guard (`test_provenance.py:320` assembled form — never claim-shaped). **Table content re-derived
+against MY OWN live fetch** of the v1.31.0.12 authority (raw.githubusercontent …/cmd/k8s-node-
+labeller/amdgpu.ids): sha256 382ef0d5…f3b1fa, 758 lines — equals the fixture header's claim; the
+fixture's 7551 rows == authority rows byte-equal; the shipped 1586 rows == authority rows
+byte-equal (9); exactly ONE 7551 row `7551,\tC0,\tr9700-1` (only the product field edited vs the
+baked `AMD Radeon AI PRO R9700` row; C1/C8 siblings deliberately absent — minimality); header +
+`1.0.0` per format; rendered table = 455 bytes / 10 data rows / sha256 864da869…c6f5 — the
+runbook's gate-(b) pin AND the `Loaded 10` expectation match. **Fallback story** identical at all
+three homes: ledger (unknown (device,revision) → bare `amd.com/gpu` + WATCH line), runbook
+(step-0 (a) decision tree with the fix-the-table/pin-the-name remedies + step-2 node assert),
+TP2 §6/§11 (minimal ten-row table by construction → RE-VERIFICATION LAW: verify-or-ADD the pair
+before trusting TP2 scheduling).
+
+**C08 delta audits:** (a) converted DS vs the committed oracle — args 4-list / image 1.31.0.12 /
+priorityClassName / tolerations / container secctx byte-equal / THREE hostPaths byte-equal (health
+trailing slash + DirectoryOrCreate-only) / resources `{}` vs omitted field (semantic parity, D23
+documented) / updateStrategy absent (accepted k8s-default strain) / zero SA-RBAC-Service-Ingress /
+kinds exactly {ConfigMap, DaemonSet} / ids-table subPath+readOnly mount / selector SELF-coherent /
+rename-set enumeration COMPLETE in the values ledger (DS, selector, container, ConfigMap, volume —
+every moved object listed). (b) umbrella planes: gpu-ai AND gpu renders HEAD~(b74aaba85)↔HEAD
+**BYTE-EQUAL whole** (C08 r1's N3 witness re-confirmed: the change lives entirely in the child
+plane). (c) shield witnesses at render: gpu-ai merged llama-swap = limits EXACTLY
+{amd.com/gpu-8060s:1} (bare null-retired) + requests mirror; gpu-cluster default render = bare
+`amd.com/gpu: 1` INTACT; rendered llama-swap config carries peers {strata, radiance}, vllm ABSENT.
+(d) radiance render: claim pair `amd.com/gpu-r9700-1: "1"` at requests AND limits (Guaranteed,
+init pair carried), no privileged/hostPaths, drop-ALL+IPC_LOCK, supplementalGroups [486]. (e)
+serveArgs: pair-per-line flow-style, parsed-token compare (the suite's + dev's 32-token equality).
+(f) T-D: all four fact-families at the scalar, value 64 kept.
+
+**Teeth probes (synthesized violations on a /tmp copy of the tree; the two routed re-pin arms):**
+stray `gpu-r9700-1` in a non-admitted path (charts/vllm) → placement guard **RED**; stray OLD
+literal in services/gpu → zero-stale guard **RED**; controller-identifier tamper →
+per-object-coherence guard **RED** (+ the RBAC-absence leg); every tamper restored, suite re-green
+26P, copy verified byte-clean vs repo. Line-by-line diff of the two re-pinned arms: the old
+`test_object_names_are_pinned_to_the_pre_ticket_ds` triple-pin DIES by owner ruling (D23 strain 1,
+library-unreachable selector per the §12.7 dev evidence) and is REPLACED by strictly-more-real
+properties (per-object live-or-enumerated + selector self-coherence + TypeError-free); the
+placement arm is net-new enforcement; naming_flip's re-pin is a literals→canonical-constants swap
+(equal semantics, one-edit-site design); test_trio.py:66 is the routed message completion.
+**No weakening anywhere.**
+
+**Carries from the C08-era reviews — dispositioned:**
+- N1 (radiance/amd-gpu testlib historical-constant mention): **ACCEPTED** —
+  `HISTORICAL_R9700_POOL_NAME = "gpu-ai-pro-" + "r9700"` is the sanctioned assembled-literal
+  idiom (vllm_testlib LEGACY_REF precedent, TEST_SPEC §12.6 documents it), the AC4 grep law is
+  satisfied mechanically (the whole literal exists in NO live file), and the sanitizer port NEEDS
+  the historical input (the fixture-trust leg asserts the pre-C08 derivation). No action.
+- N2 (llama-swap overlay comment naming the renamed pool): **ACCEPTED TRUTHFUL** — verified
+  line-by-line against the D21/D24 chain: `gpu-r9700-1` + patched-table provenance + per-cluster
+  scope + null-flip mechanics + `gpu-8060s` frozen + strata hostPath law all match the shipped
+  render. NEW related nit FR-2 below ("vendored" phrasing survived the first-party conversion in
+  one older comment block).
+- N3 (§12.5 aislop `--base` hang class): **CARRIED** — FRICTION line 20 holds the class, the
+  local-pin workaround and the 0.20.1-vs-CI-0.20.0 drift note; not TEST_SPEC-only. This round
+  neither form hung (second clean run) — the workaround law stands regardless. The drift note
+  rides the next records touch (coord).
+- N4 (pre-c08 evidence fixture path pins): **VERIFIED** — both fixtures committed at a81989b47
+  (`git ls-files` clean), the loud-assert pins resolve (`table_authority()` + ORACLE legs green,
+  incl. inside my /tmp copy — path resolution is self-contained).
+- N5 (STATE C08 rows): **VERIFIED** — STATE.json parses; chunks.C08 coherent (status done, wave 5,
+  depends [C07], dev_rounds 1, review_rounds 1, last_verdict APPROVED, commit a81989b47, four
+  handoffs tests-r1/dev-r1/tests-r2/review-r1, amendment note present). All eight chunk rows
+  status-consistent with their verdicts. Residual for the coord's bookkeeping commit: the
+  deferred array still carries five rows C08 discharged — the C07-M1/N1 header rows (MOOTED by the
+  first-party rewrite), C01 test_trio.py:66 nit, C02 NOTES-colon + naming.sh:205 rows, C05-N1
+  jsonc-floor row (all landed, re-status to closed); and C01–C03 rows carry no `commit` field
+  (provenance rides their handoffs — historical shape, optional backfill).
+- FRICTION open plan-pointer line (plan :49 "runbook step 9"): **DISPOSITIONED ACCEPTABLE**, same
+  as round 1 — pre-doc shorthand in the plan's own frozen body (which also still carries the
+  superseded pool name at :9/:50/:60 per the plan-as-record carve); the true pointers (steps 3/10)
+  live in the live surfaces (T-D comment, runbook headings); fold is routed (STATE.deferred
+  :419 + FRICTION :23) and owed at the next agent-plan touch — the plan-file permission boundary
+  makes it structurally NOT this branch's lane (FRICTION :22/:23). DECISIONS carries no "step 9"
+  sweep — correct, DECISIONS is the decision ledger, the pointer history lives in chunks/C06.md M2.
+- Two routed test arms' re-pins: see Teeth probes — per-object coherence + placement admit both
+  verified with real teeth.
+
+**Findings (none gating):**
+- FR-1 (minor, records hygiene): FRICTION lines 22/23 are near-duplicate entries of the same
+  permission-boundary event (line 23 the precise restatement) — re-status line 22 rather than
+  append a third.
+- FR-2 (nit, wording class): the "vendored" qualifier survives in three current-wording homes
+  post-D23 — `charts/llama-swap/values.yaml:1054` ("the vendored product-naming plugin"),
+  `charts/radiance/tests/test_resource_name_identity.py:36` docstring ("the vendored plugin"),
+  and `tests/services/amd-gpu-naming.sh` n1's "vendored internal shape" message (+ the marked
+  `VENDORED=` alias, which is documented as a legacy path alias — fine). One-word folds at each
+  file's next touch; renders and needles are name-agnostic so nothing breaks.
+- FR-3 (nit, guard depth): the coherence arm's enumeration check reads `value in
+  chart_values_text()` (whole file), and a container name always appears in values as its own
+  container key — so the CONTAINER side cannot redden from a ledger omission (the DS side and the
+  selector self-coherence DO bite — probe-verified). Consider narrowing the check to the
+  rename-set/ledger lines at the next lane move (the same one-edit-site home as C08-r1's N4
+  allow-set note).
+
+**Cross-chunk final coherence (all re-derived, nothing fell between chunks):** C01 disable-state
+still true post-C08 (peers.vllm absent from the render, zero live vllm catalog rows — 86 live rows
+= C01's 83 + C05's radiance trio; C08 touched the jsonc comment-only). C02+D24 combined: full Q10
+profile, claim renamed, Guaranteed pairs incl. init, keyless. C04: peers.radiance join byte-from-
+evidence, two-peer golden green in the 495P run. C05: catalog trio 9/5/1 higher-wins (priority 5/9/1
+per-class verified in the strict parse), strata rows KEEP, per-engine polarity note, M1..M8 needles
+green — no C08 collision (C08 froze the engine-facing ids correctly: no catalog/peers name legs).
+C06: runbook complete with renamed gates a–e + Loaded-10/sha pins + WATCH + fix-the-table remedy +
+reworded lockstep-revert for the two-commit wave. C07: shield intact — gpu-cluster bare claim
+byte-equal at render AND zero-diff on the claim line at the commit; llama-swap chart comments
+truthful (FR-2 aside). The in-wave DS prune+create is OWNER-acceptance and documented at FOUR
+homes: the values rename-set header, the services/gpu-ai entry comment, runbook step-2 gate 1
+("acceptable — it is the D23 strain, not an incident"), and the plan's Rework-delta. Goal-vs-card
+re-derived: engine radiance (not the fork, not Strata), TP2 doc card-ready post-rename (§6/§11
+laws, tp2 suite green), priority/preemption handled (9/5/1 + floor 5 + runbook step-8 live proof +
+image-smoke retire clause), vllm disabled commented with circle-back markers, strata lives per Q5,
+both follow-up cards exist — card #1 body verified PRE-RENAME on the board (stale; the re-publish
+is the coord's run-end action per D24, NOT a branch finding).
+
+**Git/scope:** per-commit audit of everything after round 1: 1a030a87e (plan-folder record),
+eef04f9c3 (C08 contract + §R7 + D22/D23 — records only), b74aaba85 (D24 lane ruling — records
+only), a81989b47 (33 files, exactly the C08 Files-in-scope + the adjudicated workflow dep-update
+step + the two notes docs — zero plan-folder files, zero gpu-cluster files, `services/gpu` and
+`charts/llama-swap/**` outside the carve comment-only or untouched). Bookkeeping fold rides the
+worktree uncommitted (STATE + chunks/C08 review notes + this record) as designed — commit-only
+lane, reviewer writes only under .agents/plans/. Branch LOCAL-ONLY (no upstream, no
+origin/cf-143… ref); main == origin/main == 0d9b41785, untouched; nothing pushed anywhere.
+
+**Owner must know at hand-back:** (1) the merge→sync effect — the gpu-ai plugin DaemonSet is
+pruned and recreated under new names in ONE Argo sync (seconds-long window, running GPU pods
+unaffected, gpu cluster outside the wave); acceptance is the owner's at sync time, receipts are
+runbook step-2. (2) The `amd.com/gpu-r9700-1` name rides the unsupported-but-ruled
+patched-`amdgpu.ids` ConfigMap injection (D24) — the WATCH (image moving its IDs path un-applies
+the mount silently) is test-pinned + runbook-gated. (3) The upstream naming-feature ask is
+RECOMMENDED, filing an OPTIONAL owner call (D24/Deferred) — record the choice. (4) Follow-up card
+#1's body is stale (pre-rename) — the coord re-publishes it as a run-end action before the Review
+hand-off. (5) On-target lanes stay owner-run: PR merge, runbook step-0 gates first, Q12 receipt
+ladder may move the 64 scalar UP (one edit).
+
+— final reviewer round 2, 2026-11-12 (fresh session; no implementation or validation file edited;
+teeth probes and dep-update-free renders only in /tmp copies; repo tree verified clean post-runs).

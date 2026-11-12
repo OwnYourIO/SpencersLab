@@ -376,32 +376,54 @@
       ]
     },
     "C08": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": [
         "C07"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; six owner items + AC4/AC7 met; deviations 1-7 ACCEPTED evidence-backed; two routed test arms verified stricter-or-equal)",
+      "dev_session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+      "review_session": "ses_e2eabd90affe012u3s4P2gPBzR",
+      "commit": "a81989b47 (33 files: amd-gpu first-party conversion + rename sweep + serveArgs pairs + 64Gi comment + nit folds + test re-pins + 2 evidence fixtures)",
+      "handoffs": [
+        {
+          "role": "tests", "round": 1, "at": "2026-11-12T19:15:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE (red-first C08 contracts, adjusted mid-round to the lane ruling) — amd-gpu suite re-authored for first-party+table (14F/11P red ledger §12.6; parity oracle captured pre-deletion; amdgpu.ids authority fetched once, sha 382ef0d5 cited, byte-verbatim 1586+7551 rows; sanitizer port asserted BOTH directions; grave-case row-parity leg; zero-stale+placement scan with self-exempt assembled literals; name-strain leg), naming.sh constants + n2 conversion-wave guard (teeth both ways) + n3/n4 re-scope, shared constants via sanctioned sys.path join (no forks), radiance arms confirmed parse-based + T-B/T-D legs, routed T-E test-file fixes landed. Witnesses green (llama-swap 0F etc.)."
+        },
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T20:10:00+00:00", "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "result": "DONE — T-A conversion (6 templates deleted incl _helpers+NOTES per owner verbatim; values first-party app-template shape; Chart.lock 0ea7893a; render parity vs oracle machine-judged; DS sole consumer; resources:{}-omitted noted; pod-delta posture recorded), T-B rename via ConfigMap minimal table (7551/C0 'r9700-1' + 9x1586 byte-verbatim splice, zero retypes, sha 864da869 pinned; ledger + WATCH; sanitizer-evidence comment; carve sites name-followed), T-C pair-per-line flow reformat (32-token parsed list byte-equal pre/post), T-D four-fact-family comment value-kept-64, T-E all dev-side nits + runbook/TP2 sweeps. Bars: radiance 42P/0S, llama-swap 495P/9S, umbrellas byte-equal witnesses, naming/runbook/tp2/surface/M1..M8 green, aislop 0/0, rulesync clean. Two validation_at_fault routed (name-strain selector-label arm: app-template hardcodes matchLabels to app.kubernetes.io triple — live 'name: amd-gpu-dp-ds' values-unreachable + TypeError on None; placement scan false-flags TEST_SPEC's own §12.6 record-class line); dev-adjacent workflow dep-update step touched (CI-structural). Strain taken: nameOverride + identifier + appendIdentifier, forceRename rejected (selector immutability), rename-set COMPLETE enumeration shipped in values ledger."
+        },
+        {
+          "role": "tests", "round": 2, "at": "2026-11-12T20:40:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE (C08 dev-round repairs) — coherence leg re-pinned per library truth (per-object name/coherence + selector SELF-coherence, TypeError-free, mixed-strain legal); placement leg admits charts/llama-swap/tests + synthetic-tree teeth probe; latent resolver headers repaired (both suites ^## §?R7 — dev's §R7-bare-form call adjudicated, both forms resolve, conforming-fixture run caught+fixed a SECOND same-family defect: r6q_rows missing re.S (never checked a row — accidental green)); §12.7 record. amd-gpu 26P/0F; all bars HOLD."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T21:10:00+00:00", "session": "ses_e2eabd90affe012u3s4P2gPBzR",
+          "result": "APPROVED — all bars fresh (incl AMD_GPU_FLIP_COMMIT=a81989b47 same-wave guard green); table byte-chain re-derived against reviewer's OWN live fetch of the v1.31.0.12 authority; rename-set COMPLETE vs ledger; umbrellas byte-equal; zero-stale sweeps clean; six owner items AC-by-AC incl T-D arithmetic re-checked; deviations 1-7 ACCEPTED (workflow step radiance-idiom; routed arms stricter-or-equal verified from tgz source; nameOverride rationale sound; pod-deltas behavior-neutral per zero kube-API client in the plugin; resolver re.S made AC7 REAL — stale cites probe red by name). N5 (STATE rows — folded here) + N1-N4 non-gating carries to final review; notes in chunks/C08.md."
+        }
+      ],
       "note": "amended 2026-11-12 per owner lane ruling (D24): T-B became the RENAME contract — amd.com/gpu-r9700-1 via minimal patched amdgpu.ids ConfigMap over the const IDsPath (subPath); 7551/C0 renamed + EVERY 1586 row carried verbatim (APU-rows law, test-enforced parity vs evidence fixture); gpu-8060s/overlay/catalog FROZEN; zero-stale-name AC added; in-flight test round pointed at the amended file"
     }
   },
   "blocked": [],
   "deferred": [
-    "M1/N1 (C07 review r1): vendored-chart governance header delta-inventory one-line fold + D19 prose 'helm comment leaves'→version+repository-pair phrasing — ride the next touch of charts/amd-gpu or a records round",
-    "D21 governance: extending product naming to the gpu cluster (services/gpu plugin vendored swap + its per-device name receipts) rides run-end follow-up CARD #1 (TP2 doc) authoring",
-    "N1 (C04 review r1): services/gpu-ai/prod/values.yaml:744 'ONLY this subtree' wording vs the appset generator's shared-storage merge — one-line wording at the file's next touch",
+    "M1/N1 (C07 review r1): vendored-chart governance header delta-inventory + D19 prose — MOOTED by the C08 first-party rewrite (a81989b47); CLOSED",
+    "D21 governance: extending product naming to the gpu cluster (services/gpu plugin swap + its per-device sysfs receipts) rides run-end follow-up CARD #1 (TP2 doc) authoring — still FORWARD (card body re-publish in flight)",
+    "N1 (C04 review r1): services/gpu-ai/prod/values.yaml:744 'ONLY this subtree' wording — LANDED in a81989b47 (T-E); CLOSED",
     "TEST_SPEC §12.4 — LANDED in 86ed1e7bf (CLOSED by final review; row retained for history)",
-    "N1 (C05 review r1): .opencode/opencode.jsonc floor-sentence wording precision (:709 confirmed present) — next touch of the catalog block",
+    "N1 (C05 review r1): .opencode/opencode.jsonc floor-sentence wording precision — LANDED in a81989b47 (T-E); CLOSED",
     "N2 (C05 review r1, FORWARD HOOK) CLOSED by C06 review r1: runbook image smoke leg VERIFIED present with the three-line retire-on-failure clause",
-    "plan-file pointer fold: line 49's Q10 bullet tail 'runbook step 9' — final review DISPOSITIONED ACCEPTABLE as a decision-record shorthand; rides the next agent-plan touch",
-    "C01 review-round nit: charts/vllm/tests/test_trio.py:66 failure-message dropped the '900 chars above the block' phrase — test session at its next touch",
-    "C02 review nits still open: charts/radiance/templates/NOTES.txt ~11-12 missing colon before the URL block (radiance dev lane at next touch); tests/services/amd-gpu-naming.sh:205 stale 'nowhere yet' n3 success message (test session at next touch)",
-    "Q12 exact Guaranteed memory byte (shipped 64Gi '60Gi-class') + Q13 no amd-gpu: service block — both forward to the C06 on-target receipt ladder (runbook step-6 up/down), no owner gate missed",
-    "Upstream naming feature ask (ROCm/k8s-device-plugin): recommended, filing OPTIONAL owner call (D24) — record choice at/near hand-back.",
-    "C08 lands with the rename (gpu-r9700-1); coord re-publishes follow-up card #1's body after C08's dev round (TP2 doc strings + re-verification law changed)."
+    "plan-file pointer fold: line 49's Q10 bullet tail 'runbook step 9' — final review r1 DISPOSITIONED ACCEPTABLE (decision-record shorthand); CLOSED as dispositioned, no future edit owed unless the plan file next opens for substance",
+    "C01 review-round nit: charts/vllm/tests/test_trio.py:66 message phrase — LANDED in a81989b47 (test round restored the phrase); CLOSED",
+    "C02 review nits: charts/radiance/templates/NOTES.txt colon + tests/services/amd-gpu-naming.sh:205 stale phrase — LANDED in a81989b47 (both); CLOSED",
+    "Q12 exact Guaranteed memory byte (shipped 64Gi, answer-in-place comment) + Q13 no amd-gpu: service block — both forward to the C06 on-target receipt ladder (runbook step-6 up/down), no owner gate missed — still FORWARD (on-target, owner-run)",
+    "Upstream naming feature ask (ROCm/k8s-device-plugin): recommended, filing OPTIONAL owner call (D24) — decision presented at hand-back",
+    "C08 lands with the rename (gpu-r9700-1); coord re-publishes follow-up card #1's body after C08's dev round (TP2 doc strings + re-verification law changed) — IN FLIGHT (this round's run-end action)",
+    "FR-2 (final r2): three remaining 'vendored' wordings (charts/llama-swap/values.yaml:1054 comment, charts/radiance/tests/test_resource_name_identity.py docstring, tests/services/amd-gpu-naming.sh n1 ok-message) — one-word folds at each file's next touch",
+    "FR-3 (final r2): coherence arm's container-check depth (value-in-blob could narrow to the rename-set lines) — next lane move of the amd-gpu suite"
   ],
   "handoffs": [
     {
