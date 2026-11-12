@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 2,
-  "updated_at": "2026-11-12T04:25:00+00:00",
+  "current_wave": 4,
+  "updated_at": "2026-11-12T06:45:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -226,15 +226,27 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; nit N1 → Deferred; 495P/0F + 41P/0F combined bar)",
+      "dev_session": "ses_e31956aa1ffeuWLnry4SAhPeMn",
+      "review_session": "ses_e317a6c2bffehAIVOREx8wTIJz",
+      "commit": "1cada6d63 (pure insertions 97: charts.radiance entry, scalars-only radiance block, additive peers.radiance, two skip-comments, two-peer golden)",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T06:10:00+00:00", "session": "ses_e31956aa1ffeuWLnry4SAhPeMn",
+          "result": "DONE — 4 pure-insert hunks (charts.radiance internal entry, radiance: scalars-only block w/ modelPath dual-edit re-pin + sizing-scalar law + appset mechanism note, peers.radiance join byte-taken from radiance-peers-expected.yaml (no /v1, 1800/30, priority? 5, no apiKey, cold-load/polarity/out-of-matrix/cut-over-hazard comments), two subdomains skip-comments) + golden re-capture (+10 = exactly peers.radiance, §9.26 annotations preserved, shell route §11 precedent); combined bar flipped: llama-swap 495P/9S/0F (5 C04 arms green), radiance 41P/0S/0F (2 generation skips bound green), amd-gpu 15P, vllm 36P, naming 5 ok, surface 9 ok, M8 designed-red names C05 (not chased); render witnesses per ACs (strata byte-identical both directions, appset apps set, triple modelPath equality, 0 sentinels); deviations none (one comment-wording self-fix pre-handback, render-inert)."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T06:35:00+00:00", "session": "ses_e317a6c2bffehAIVOREx8wTIJz",
+          "result": "APPROVED — all 7 ACs, everything re-run fresh incl own render→evidence deep-equal + evidence-mutation teeth (4 expected reds), golden byte-equal + +10/−0 proof, strata byte-law RE-DERIVED at chunk AND ticket scale (every services-values deletion classifies to a named C01/C07 site; zero strata-named deletions), appset derivation + modelPath triple equality, M8 designed-red C05-ONLY verified, rulesync + aislop clean. Zero blockers/majors; nit N1 (values:744 'ONLY this subtree' vs generator shared-storage merge — wording at next touch) → Deferred. Coord bookkeeping owed: this row (done now) + TEST_SPEC §12.4 capture-provenance note → routed to the test session's C05 landing round."
+        }
+      ]
     },
     "C05": {
       "status": "pending",
@@ -294,7 +306,9 @@
   "blocked": [],
   "deferred": [
     "M1/N1 (C07 review r1): vendored-chart governance header delta-inventory one-line fold + D19 prose 'helm comment leaves'→version+repository-pair phrasing — ride the next touch of charts/amd-gpu or a records round",
-    "D21 governance: extending product naming to the gpu cluster (services/gpu plugin vendored swap + its per-device name receipts) rides run-end follow-up CARD #1 (TP2 doc) authoring"
+    "D21 governance: extending product naming to the gpu cluster (services/gpu plugin vendored swap + its per-device name receipts) rides run-end follow-up CARD #1 (TP2 doc) authoring",
+    "N1 (C04 review r1): services/gpu-ai/prod/values.yaml:744 'ONLY this subtree' wording vs the appset generator's shared-storage merge — one-line wording at the file's next touch",
+    "TEST_SPEC §12.4 capture-provenance note for the C04 golden round — routed to the test session's C05 landing round (§12.1 pattern)"
   ],
   "handoffs": [
     {
