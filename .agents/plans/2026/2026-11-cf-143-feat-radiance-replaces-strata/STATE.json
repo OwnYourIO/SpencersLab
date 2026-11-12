@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 0,
-  "updated_at": "2026-11-12T02:40:00+00:00",
+  "current_wave": 2,
+  "updated_at": "2026-11-12T04:25:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -248,17 +248,40 @@
       "handoffs": []
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; owner B1 rework landed; M1/N1 non-gating records nits → Deferred)",
+      "dev_session": "ses_e3284e5d7ffeZrfTjAKoTTH7Xy",
+      "review_session": "ses_e3206f395ffe4XZqemsW7AVfuT",
+      "commit": "546f03e01 (single same-wave commit: vendored charts/amd-gpu + entry swap + per-cluster overlay flip + naming suites; n2 guard verified against this sha)",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T02:40:00+00:00", "session": "ses_e3284e5d7ffeZrfTjAKoTTH7Xy",
+          "result": "DONE — vendored charts/amd-gpu (5 byte-verbatim templates + args-delta, name-pinned Chart.yaml, image 1.31.0.12 + digest + renovate pin, D19 governance header), gpu-ai entry repo→internal, llama-swap tree-global flip + render CI; bars 14P/1F (renovate-pin arm = author fault) + naming 5ok + flip-arms 2 green; ROUTED OQ1 GPU-CLUSTER CROSS-WAVE LEAK (tree-global claim + gpu cluster plugin single-naming → live gpu-llama-swap 1/1 would strand) — owner chose B1 per-cluster shield."
+        },
+        {
+          "role": "dev", "round": 2, "at": "2026-11-12T03:20:00+00:00", "session": "ses_e3284e5d7ffeZrfTjAKoTTH7Xy",
+          "result": "DONE (B1 rework) — chart claim REVERTED to bare amd.com/gpu: 1 (comment-ONLY diff vs HEAD; per-cluster WHY prose in two blocks); gpu-ai llama-swap: overlay resources limits {amd.com/gpu: null, amd.com/gpu-8060s: 1} + requests mirror (merge-law comment, null load-bearing); witnesses: gpu-ai merged render exact APU maps bare-absent, gpu render bare intact, off-parity ZERO-line move (re-baseline duty dissolved), golden untouched; 4 re-pins routed to test round."
+        },
+        {
+          "role": "test-round", "at": "2026-11-12T03:50:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE — 4 pending-scope items landed: test_provenance window-join flattened (15P) + radiance twin pre-empt; naming_flip per-cluster re-pin at res= level + requests-mirror expectation + NEW gpu-shield leg + values-level law (6/6); off-parity green on UNTOUCHED fixture (§12.2 zero-move era note); amd-gpu-naming.sh n2 overlay-truth + widened same-wave guard (claim-line zero-diff via git show, teeth bite), n3 per-cluster law — 5 ok. llama-swap 5F/490P/9S, all 5 naming C04-era."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-12T04:15:00+00:00", "session": "ses_e3206f395ffe4XZqemsW7AVfuT",
+          "result": "APPROVED — fresh bars: amd-gpu 15P; naming 5 ok + landing-sha guard zero-skip + 4 synthetic teeth bites; llama-swap 5F/490P/9S zero-C07-named; own renders confirm both cluster truths; upstream blob-identity 5/6 + 3 deltas == recorded; digest matches Docker Hub live; services/gpu 0-line; aislop 0/0; rulesync clean at repo-pinned 37.0.0. Minor M1 (header delta omits README/.helmignore non-vendoring — fold at next touch) + nit N1 (D19 prose phrasing) → Deferred. Notes in chunks/C07.md."
+        }
+      ]
     }
   },
   "blocked": [],
-  "deferred": [],
+  "deferred": [
+    "M1/N1 (C07 review r1): vendored-chart governance header delta-inventory one-line fold + D19 prose 'helm comment leaves'→version+repository-pair phrasing — ride the next touch of charts/amd-gpu or a records round",
+    "D21 governance: extending product naming to the gpu cluster (services/gpu plugin vendored swap + its per-device name receipts) rides run-end follow-up CARD #1 (TP2 doc) authoring"
+  ],
   "handoffs": [
     {
       "stage": "Exploration",
