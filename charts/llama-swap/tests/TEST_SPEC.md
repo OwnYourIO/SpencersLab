@@ -3598,3 +3598,40 @@ Posture after this round: `charts/amd-gpu/tests` 15/15 PASS · naming-flip
 charts.radiance / radiance service block / radiance skip-comment) — none
 touches the C07 overlay, no further re-pin due; the §12 table's C07 row is
 GREEN from here.
+
+### 12.3 C02 landing round — the missed cross-suite grep, and the class law (test session, 2026-11-12)
+
+Second C07-era miss, same root cause, recorded so a third cannot hide: the
+C07 landing round re-pinned THREE of the four files touching the flipped
+names (test_provenance window form, test_cf143_naming_flip, amd-gpu-naming.sh)
+but missed `charts/radiance/tests/test_resource_name_identity.py::
+test_pools_are_disjoint_and_llama_swap_owns_the_apu_name`, whose round-1 grep
+read charts/llama-swap/values.yaml for a LIVE `amd.com/gpu-8060s: 1` line — a
+shape owner B1/D21 forbids and which stood mutually exclusive against this
+suite's own naming_flip chart-stays-bare bar (passing one re-reddened the
+other; the C02 dev proved it deterministically and coord routed it).
+
+Re-pin (the only arm that moved): owner-ask verification now reads the
+gpu-AI overlay-MERGED llama-swap render at res= level (limits EXACTLY
+{amd.com/gpu-8060s: 1}, the ledger's 1586 pool joined to the constant by the
+same assert) and the gpu-cluster render's intact bare {amd.com/gpu: 1} — the
+per-cluster shield asserted at the ONE level both suites can share; the
+ledger 1586!=7551 disjointness legs carry unchanged. A sanctioned
+cross-surface sys.path read of charts/llama-swap/tests makes the join (the
+testlib resolves its own renders; no logic copied). `LLAMA_SWAP_VALUES` left
+the testlib with its last consumer. Bar after: charts/radiance/tests
+39 passed / 2 skipped (the standing C04-witness skips) / 0 failed — total
+collected 41, the round's "+1 routed leg" arithmetic in the hand-off counts
+assertions, not files.
+
+CLASS LAW for every later landing round on this ticket (and the honest
+generalization of §9.8's re-baseline cadence): after ANY surface-placement
+move (chart<->overlay, file<->file, name<->name), enumerate and run ALL
+suites whose arms READ the moved surface — grep the suites for the moved
+literals (`amd.com/gpu`, pool names, ids) — not just the files the routed
+list names. Here that set was {test_cf143_naming_flip, amd-gpu-naming.sh,
+test_provenance, TEST-wide grep}: the grep step was skipped and it cost a
+round. C04/C05/C06 landing rounds: run
+`pytest charts/llama-swap/tests charts/radiance/tests charts/amd-gpu/tests`
++ `bash tests/services/amd-gpu-naming.sh` + bare surface.sh as ONE bar,
+whatever the routed item list says.

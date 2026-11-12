@@ -36,7 +36,6 @@ REPO_ROOT = CHART_DIR.parent.parent
 SERVICE_VALUES = REPO_ROOT / "services" / "gpu-ai" / "prod" / "values.yaml"
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "radiance-render-tests.yaml"
 AMD_GPU_VALUES = REPO_ROOT / "charts" / "amd-gpu" / "values.yaml"
-LLAMA_SWAP_VALUES = REPO_ROOT / "charts" / "llama-swap" / "values.yaml"
 RAD_PEERS_EVIDENCE = REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-peers-expected.yaml"
 
 # --- the served id (C02 single authority; C04/C05 consume it) -------------------

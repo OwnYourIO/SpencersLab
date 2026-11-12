@@ -48,23 +48,65 @@ def test_radiance_claim_equals_the_ledger_r9700_pool():
 
 @helm_skip
 def test_pools_are_disjoint_and_llama_swap_owns_the_apu_name():
-    """The owner ask verified repo-side: the APU pool name != radiance's —
-    and llama-swap's flipped claim is exactly the ledger's 1586 pool."""
+    """The owner ask verified repo-side, per-cluster under B1/D21: the APU
+    pool name != radiance's (ledger disjointness), and the gpu-AI
+    overlay-MERGED llama-swap render's main container claims EXACTLY the
+    ledger's 1586 pool — while the gpu-cluster render keeps the bare
+    tree-global default (that cluster's plugin can advertise nothing else).
+
+    C02 landing-round re-pin (the arm the C07 landing round missed): the
+    round-1 form grepped charts/llama-swap/values.yaml for a live
+    `amd.com/gpu-8060s: 1` line — a shape owner B1 explicitly forbids
+    (the flip is overlay-only, D21) and which stood MUTUALLY exclusive
+    against the C07 naming-flip suite's chart-stays-bare bar; passing this
+    arm would have re-reddened those two. Re-read at the res= level through
+    the llama-swap testlib's own render (same pattern as the C07 rewrite),
+    so both suites now assert the SAME per-cluster truth."""
     ledger = R.amd_gpu_ledger_names()
     assert "1586" in ledger, "C02 AC4: ledger has no 1586 (APU) row (see C07 n4)"
     assert ledger.get("1586") != ledger.get("7551"), (
         "C02/Q9: the two devices share a pool name — per-device NAMING is the ruling "
         "(amd.com/gpu-ai-pro-r9700 vs amd.com/gpu-8060s)"
     )
-    swap_text = R.LLAMA_SWAP_VALUES.read_text()
-    live = [ln.strip() for ln in swap_text.splitlines()
-            if not ln.lstrip().startswith("#") and "amd.com/gpu" in ln and ": 1" in ln]
-    assert live and all(ln.startswith(R.APU_CLAIM) for ln in live), (
-        f"C07: llama-swap's live GPU claim lines are {live} — must be exactly the flipped "
-        f"{R.APU_CLAIM}: 1 (same-wave law; a bare amd.com/gpu claim is Pending-forever post-flip)"
+    apu_name = f"amd.com/{ledger['1586']}"
+    assert apu_name != R.GPU_CLAIM and apu_name == R.APU_CLAIM, (
+        f"C02 AC4: the ledger's 1586 pool {apu_name!r} must equal this suite's APU constant "
+        f"{R.APU_CLAIM!r} and differ from radiance's {R.GPU_CLAIM!r} (disjoint pools, one string each)"
     )
-    assert f"amd.com/{ledger['1586']}: 1" in swap_text, (
-        "C02 AC4: llama-swap does not claim the ledger's 1586 pool by name"
+    # Render-level cross-chart read: the llama-swap testlib resolves its own
+    # per-directory imports only when its dir is on sys.path (suites run
+    # per-directory — the repo layout law; this arm is the sanctioned
+    # cross-surface exception: the C02 cross-chart identity test is the
+    # single needle joining the two charts' claims).
+    import sys
+
+    swap_tests = R.REPO_ROOT / "charts" / "llama-swap" / "tests"
+    assert swap_tests.is_dir(), "C02 AC4: charts/llama-swap/tests missing — nothing to render against"
+    if str(swap_tests) not in sys.path:
+        sys.path.insert(0, str(swap_tests))
+    import llama_swap_testlib as LS
+
+    ls_ok, ls_reason = LS.helm_ready()
+    if not ls_ok:
+        pytest.skip(f"llama-swap render leg needs helm: {ls_reason}")
+
+    def _main_limits(cluster: str) -> dict:
+        docs = LS.render_docs(cluster)
+        dep = next(d for d in docs
+                   if d.get("kind") == "Deployment" and d.get("metadata", {}).get("name") == "llama-swap")
+        main = next(c for c in dep["spec"]["template"]["spec"]["containers"] if c.get("name") == "main")
+        return (main.get("resources") or {}).get("limits") or {}
+
+    ai_limits = _main_limits("gpu-ai")
+    assert ai_limits == {apu_name: 1}, (
+        f"C02 AC4/D21: gpu-ai overlay-merged llama-swap limits are {ai_limits}, want exactly "
+        f"{{{apu_name!r}: 1}} — the named-APU guarantee lives in the overlay, not the chart line"
+    )
+    gpu_limits = _main_limits("gpu")
+    assert gpu_limits == {R.GPU_CLAIM_BARE: 1}, (
+        f"C02/D21 shield: gpu-cluster llama-swap limits are {gpu_limits}, want exactly "
+        f"{{{R.GPU_CLAIM_BARE!r}: 1}} — its external single-naming plugin can advertise only "
+        "the bare name; a flip here is the B1 leak"
     )
 
 

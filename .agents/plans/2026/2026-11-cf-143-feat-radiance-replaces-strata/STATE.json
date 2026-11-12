@@ -169,15 +169,25 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "review-pending",
       "wave": 2,
       "depends_on": [
         "C07"
       ],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e31ee6fb9ffe36Ly30BmY3B5Jy",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-12T04:50:00+00:00", "session": "ses_e31ee6fb9ffe36Ly30BmY3B5Jy",
+          "result": "DONE — charts/radiance/** (Chart.yaml 1.0.0/appVersion 1.17.0, FULL Q10 profile pool-43000/200K/8/4096/kv-resident-32768/ngram-disk, claim amd.com/gpu-ai-pro-r9700 gpu-ai-only, non-priv Q7 shape + Guaranteed both-containers D15 pair, keyless, radiance-fetch staging init curl 8.23.0 + lfs-sha marker, NOTES, .helmignore, render CI) + workflow; bars radiance 38P/2S/1F (validation_at_fault: test_resource_name_identity disjointness leg still pre-B1 — routed) + llama-swap 5F/490P/9S byte-identical baseline (5=C04-era) + amd-gpu 15P + vllm 36P + naming 5 ok + surface 9 ok; live-registry digests re-verified verbatim vs Docker Hub (1.17.0 newest, index c2acbaa3/amd64 6fb0e99b). deviations: [1 routed validation_at_fault; 2 string-carrier args mechanism (app-template schema rejects non-string args — verified live; int scalars + set-equality guard keep single-source law; commented); 3 scope = chunk files only]. friction: global-renovate dry_run unspawnable in sandbox (recorded honestly, live API verification substituted), aislop ci ignores untracked (per-file scan clean, definitive gate at review). open_questions: none (Q12 stays with C06 ladder)."
+        },
+        {
+          "role": "test-round", "at": "2026-11-12T05:10:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE — routed arm re-pinned to res= level (gpu-AI overlay-MERGED render APU limits exact + ledger 1586≠7551 kept; gpu render bare intact = shield at suite level; cross-chart via sys.path resolve of llama-swap/tests, documented); radiance suite now 39P/2S/0F (operative 0F; 2S = standing C04 witnesses); llama-swap 5F/490P/9S UNCHANGED (5 C04-era; naming_flip 6/6 green vs new charts/radiance presence — R9700 pre-allow guard checked-not-assumed); naming 5 ok with C02 claim site live; TEST_SPEC §12.3 class fold (placement-move class law: enumerate ALL suites reading the moved surface — grep audit run, 4 surviving bare reads all B1-legit)."
+        }
+      ]
     },
     "C03": {
       "status": "done",
