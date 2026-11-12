@@ -195,13 +195,35 @@
     },
     "C03": {
       "title": "Priority doctrine: write ban lifted with its owner-direction boundary, the post-plan write-back stamp leg, class-table truth kept",
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e32d645dcffe6LEj81x9GD0ak4",
+      "review_session": "ses_e32612e0dffeU91nm4asBhg38u",
+      "validation_repair": "test_session ses_e3460ff68ffeI0Myd52xyyRW6y — routed m6 carve (cf-124's mandated pipeline-models delta admitted CONDITIONALLY, section-scoped, fail-closed), +51/-3 in tests/kickoff-branch/surface.sh, five teeth probes",
+      "last_verdict": "APPROVED (round 1, fresh session; M7 flipped red→green at equal strictness with four teeth probes re-run by the reviewer, the m6 carve's five controls re-proved independently, all fourteen ledger reds + every other chunk's designed reds reproduced byte-verbatim in two trees, C01/C02 arms still green, STATE confirmed to parse, aislop 0/0)",
+      "handoffs": [
+        {
+          "at": "2026-11-12T01:4xZ",
+          "role": "dev",
+          "session": "ses_e32d645dcffe6LEj81x9GD0ak4",
+          "result": "status DONE — four files (boards source+mirror, pipeline-models source+mirror): the kickoff priority bullet's 'never written back / input-only' sentence replaced by the PERMISSION (agents may set Priority on the card this run claims and cards it creates; numeric, idempotent, never overwriting an explicit value) with its boundary in the same breath (permission-not-mandate; every other card and all bulk mutation need explicit owner direction; the ~90-card leg stays the owner-run backfill); the write-back gains step 3 (unset → may stamp 5 as int, recorded {raw:5,class:default}), the trim renumbered to 4, the byte-frozen slug block untouched; pipeline-models gains one clause with the class table byte-identical; tasks 4-5 verified no-ops (overview/AGENTS never asserted the ban; the wekan-mcp skill only describes tool shape) — bars: M1-M7 all green, c19/S5/t6/A15 etc verbatim, 239-arm two-tree sweep vs 70b8f7e43 with only M7 (designed) and m6 (reported below) moving — deviation: VALIDATION_AT_FAULT, not an edit: kickoff-branch m6's NOTOUCH freeze flags the pipeline-models pair C03 is mandated to edit; greens at base, reddens only in-window, self-clears at commit (proved in a throwaway clone); routed to test_session per D21"
+        },
+        {
+          "at": "2026-11-12T02:3xZ",
+          "role": "test-repair",
+          "session": "ses_e3460ff68ffeI0Myd52xyyRW6y",
+          "result": "status DONE, chunk C03-validation — tests/kickoff-branch/surface.sh only (+51/-3): a conditional, section-scoped carve in m6's existing cf-76 regeneration-carve shape, gated by a fail-closed helper asserting everything OUTSIDE the Priority class-table section stays byte-equal on both files and the heading survives; header red-posture note updated; five teeth probes (out-of-section edit red, heading deletion fails CLOSED, sanctioned delta green, another frozen member red, one-sided edit red via generate --check); m6 green in-window, m4/m7 red verbatim, M1-M7 green, c19/c11/c12/S5/t6 ledger-verbatim, aislop 0/0; deviation: the briefed plan-folder admit is unnecessary (m6's walk is pathspec-limited to NOTOUCH, so plan folders never enter it); residual documented in-comment: an unsanctioned edit INSIDE the class-table section passes m6 — that region's law is M7, exactly the scoped-equivalence trade cf-76 made"
+        },
+        {
+          "at": "2026-11-12T03:0xZ",
+          "role": "review",
+          "session": "ses_e32612e0dffeU91nm4asBhg38u",
+          "result": "VERDICT APPROVED, no second dev round, no validation_at_fault (the carve passed the reviewer's own five re-runs) — six adjudications PASS: the revocation is written once with an inseparable boundary and no reading that licenses a sweep; the write-back step sits in the right order, is conditional/numeric/idempotent and never touches an unclaimed card or the byte-frozen block; the class table is byte-identical with M7 RE-CUT NOT RELAXED (four fabrications bite: both ban phrases, boundary deletion, table corruption; the test-wave diff shows only the ban bar removed); the roster family untouched and tasks 4-5 confirmed no-ops by grep; sources↔mirrors in lock-step with no stale input-only residue and the S4 line-pairing hazard respected; zero encroachment on C04/C05/C06/C08 sentences — findings: F1 (coordinator-owned) the STATE C03 handoff records I was briefed to read did not exist yet, which is this review confirming my own pending bookkeeping; **F2: two more undisclosed pre-existing reds — dev-mcp-fleet t13/t14 (stale agent-dev.md pins retired at cf-58's 7e9d6d0a3), hidden behind t7's fail-fast, byte-identical at both refs → ledger grows to SIXTEEN**; F3/N2 minor wording notes for the planner/next touch; STATE.json parses OK (verified with python3, which the coordinator lacks)"
+        }
+      ]
     },
     "C04": {
       "title": "Repo worker-repo table: fifth row CuratedForest.com, exact-spelling law, silent-unclaimable trap, provision spelling capture",
@@ -299,8 +321,8 @@
     "commit": "landed as the pre-C01 test-wave commit (this wave + the D30–D33 records + STATE) so dev re-runs land on green-by-construction pins"
   },
   "red_ledger": {
-    "note": "THE AUTHORITATIVE PRE-EXISTING RED LIST for this ticket, amended by the C02 review's two-tree sweep at 1d48c9d98 AND main a6e493b78. Every chunk's bar is arm-level: its own arms green + NO new red + these still red with byte-identical messages. Never 'fix' one as a drive-by; none is this ticket's surface.",
-    "documented_fourteen": [
+    "note": "THE AUTHORITATIVE PRE-EXISTING RED LIST for this ticket, amended by the C02 review's two-tree sweep at 1d48c9d98 AND main a6e493b78, and by the C03 review (dev-mcp-fleet t13/t14) at 70b8f7e43 AND main — SIXTEEN arms. Every chunk's bar is arm-level: its own arms green + NO new red + these still red with byte-identical messages. Never 'fix' one as a drive-by; none is this ticket's surface.",
+    "documented_sixteen": [
       "tests/agent-board-coord/gate.sh t17 (warm-location family)",
       "tests/coord-inwork/surface.sh i4 (warm-location family)",
       "tests/kickoff-branch/surface.sh m4 (warm-location family)",
@@ -314,7 +336,9 @@
       "tests/agent-perms/surface.sh A15 (roster family's fourth arm — cf-106's still-open posture, D30)",
       "tests/pipeline-gates/validation-fix.sh t4 (role-coord step 10's unenumerated 'ask the user ONCE' line, D30)",
       "tests/pipeline-gates/validation-fix.sh t7 (unsatisfiable while A15 stands — its battery sweep requires agent-perms green, D30)",
-      "tests/services/dev-mcp-fleet.sh t7 (pins mcr.microsoft.com/playwright/mcp:v0.0.78; main's e9a5d7005 renovate bump moved it to v0.0.83 — found by the C02 dev, reproduced by its review at both refs)"
+      "tests/services/dev-mcp-fleet.sh t7 (pins mcr.microsoft.com/playwright/mcp:v0.0.78; main's e9a5d7005 renovate bump moved it to v0.0.83 — found by the C02 dev, reproduced by its review at both refs)",
+      "tests/services/dev-mcp-fleet.sh t13 (stale `agent-dev.md` pins — that agent file was retired at cf-58's 7e9d6d0a3; hidden behind t7's fail-fast, found by the C03 review, byte-identical at base and main)",
+      "tests/services/dev-mcp-fleet.sh t14 (same family as t13, same finding)"
     ],
     "state_dependent_not_bars": [
       "tests/services/media-slskd-conflict.sh t3 — asserts a stash that no longer exists; red on any clean tree, unrelated to this ticket",

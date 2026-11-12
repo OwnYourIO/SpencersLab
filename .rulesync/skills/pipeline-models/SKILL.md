@@ -49,6 +49,8 @@ The single authority for the board `Priority` → serving-class mapping; `boards
 
 Polarity is per-engine, and the value column belongs to the engine it names: radiance is higher-wins since cf-143, so the resolved row's `body.priority` rides 9/5/1 for urgent/default/low, 1:1. The 1/5/9 numbers are the polarity of the RETIRED vLLM lane (lower-wins) — never port those numbers to radiance: urgent would sit near-idle and low would take the preemption-proof top lane. The board field is a free NUMBER, so intermediate values snap to the class interval (midpoint boundaries: 1–3→9, 4–7→5, 8–9→1, 10+→10). The peer filter floor (`peers.radiance.filters.setParams "priority?" = 5`) is set-if-undefined: non-priority clients land in the default class, never outrank it, and a client-sent `priority` still wins.
 
+The field is agent-WRITABLE within the boundary the `boards` priority bullet carries (D20): an agent may set `Priority` on the card its run claims and on cards its run creates, never as a bulk sweep — bulk values come from the owner-run `--apply` backfill (D19). Provenance never moves the mapping: this table decides the CLASS whatever wrote the value, and a stamp of the default `5` on an unset card selects the row unset already selected — a no-op for routing.
+
 ## Favorited models in this lab
 
 Local first: the self-hosted `gpu-ai`/`gpu-moe` rows are the default provider's serving inventory; the `openrouter` rows are the explicit-choice models and the fallback when the local route is unavailable:

@@ -270,9 +270,19 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
    answers; the resolved CLASS is recorded in STATE.json
    `kickoff.priority {raw, class}` and in the claim comment alongside
    `kickoff.models` — the class table's single authority is
-   `pipeline-models`, referenced, never duplicated. The board field
-   itself is NEVER written back by agents: it is input-only, and the
-   post-plan write-back stays slug-only.
+   `pipeline-models`, referenced, never duplicated. The field is
+   agent-WRITABLE (owner ruling OQ7 → D20): agents MAY set `Priority`
+   on the card this run claims and on cards this run creates (Follow-up
+   and friction Inbox cards), as a numeric write — idempotent, and a
+   card already carrying an explicit value is never overwritten. The
+   lift is a permission, not a mandate and not a sweep authorization:
+   every other card and all bulk board-data mutation still need
+   explicit owner direction, and the ~90-card value leg comes from the
+   owner-run `--apply` backfill (D19) by the owner's separate ruling;
+   the human-owned posture for checklists, rule extras, labels and
+   lists is unchanged. Unset is already the default class, so a stamped
+   `5` is visibility, not an urgency change; the conditional stamp of
+   that default is Post-plan card write-back's.
 - **human-in-the-loop** — the checked Human in the Loop items are THIS
   run's stop stages: each checked item stops the run AFTER that step
   completes (even if a later stage is skipped) and waits for human input
@@ -389,7 +399,8 @@ A card sometimes stands for a group of small companion asks its owner wants run 
 
 Right after plan approval (research-only cards do the same immediately before their Ready-for-Review move, D19):
 
-1. `list_custom_fields` on the AI-Dev board → the id of the `slug` field.
+1. `list_custom_fields` on the AI-Dev board → the ids of the `slug` and
+   the `Priority` fields, each resolved by name (the roster law).
 2. `set_card_custom_field` (upsert): the server stores the value VERBATIM —
    no server-side append exists — so the stack growth is this skill's
    read-modify-write. Read the field's current value (the `get_card` this
@@ -413,7 +424,18 @@ Right after plan approval (research-only cards do the same immediately before th
    values are frozen history — tolerated on read, never rewritten; the
    retired `session` field stays never read, never written. This first
    write-back performs the Config constants consistency check.
-3. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
+3. Priority stamp — conditional and single-card (D20): when the claimed
+   card's `Priority` reads unset/`null` (the value read at claim), the
+   run MAY stamp `Priority` with `set_card_custom_field` — the NUMBER
+   takes the int `5`, never the string form — and records it in
+   STATE.json `kickoff.priority` as `{raw: 5, class: "default"}` with
+   the stamping recorded. A card already carrying an explicit value is
+   left alone: unset is already the default class (the
+   `pipeline-models` table), so a stamp of the default is visibility,
+   not an urgency change. This run never stamps a card it did not claim
+   and never loops over a board or a list — bulk values come from the
+   owner-run `--apply` backfill (D19), by the owner's separate ruling.
+4. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
    Model(s) / Lifecycle / Human in the Loop checklists (checklist ids from
    `list_checklists`, item ids from `get_checklist`). The surviving checked
    items are the on-card decision record — the checked Model(s) options ARE

@@ -56,7 +56,10 @@
 # red on a hand-edit or a stale mirror via the regeneration-equivalence check. Both arms (BASE=HEAD and
 # CHUNK_BASE=081b57889) keep passing until session-origin C02 lands, after
 # which both arms (HEAD and the new landed posture) must go fully green again
-# on one commit.
+# on one commit. The pipeline-models pair carries a conditional carve for the
+# cf-124 C03 class-table clause (see below): the sanctioned delta must not
+# redden m6 in-window; an unsanctioned edit — to those files or any other
+# frozen member — still reddens it.
 #
 # cf-58 merge re-pin (2026-10-27): the standalone-agent merge lands the
 # sanctioned git block + the agent-dev → agent-dev-local roster rename on the
@@ -1065,6 +1068,31 @@ fi
 # rulesync cannot be resolved: a carve that silently degrades to
 # anything-goes would be weaker than the freeze it replaces.
 if want m6; then
+  # Section-scope gate for the pipeline-models carve (written here, run below):
+  # outside the `## Priority class table (board runs)` section the file must
+  # equal $notb byte-for-byte, and the section must still exist in both trees
+  # (fail-closed — a deleted heading could otherwise smuggle a vacuous carve).
+  cat >"$TMP/m6-pm-carve.py" <<'PY'
+import re, subprocess, sys
+notb, rels = sys.argv[1], sys.argv[2:]
+PAT = re.compile(r"^## Priority class table \(board runs\)[ \t]*\n(?:.|\n)*?(?=^## |\Z)", re.M)
+bad = 0
+for rel in rels:
+    try:
+        base = subprocess.run(["git", "show", f"{notb}:{rel}"], capture_output=True, text=True)
+        if base.returncode != 0:
+            print(f"{rel}: no such file at {notb} — deletion is not the sanctioned delta"); bad += 1; continue
+        base = base.stdout
+    except OSError as e:
+        print(f"{rel}: git show failed ({e}) — failing closed"); bad += 1; continue
+    cur = open(rel).read()
+    bs, cs = PAT.search(base), PAT.search(cur)
+    if not bs or not cs:
+        print(f"{rel}: the 'Priority class table' section heading is missing ({'base' if not bs else 'current'} tree) — the carve cannot be verified, failing closed"); bad += 1; continue
+    if base[:bs.start()] + base[bs.end():] != cur[:cs.start()] + cur[cs.end():]:
+        print(f"{rel}: changed content OUTSIDE the sanctioned 'Priority class table' section (kickoff picker mapping, favorited models, or any other part moved)"); bad += 1
+sys.exit(1 if bad else 0)
+PY
   NOTOUCH=(.rulesync/commands .opencode/commands
            scripts/agent-board-coord-gate.sh
            .rulesync/skills/pipeline-models .opencode/skills/pipeline-models
@@ -1083,7 +1111,27 @@ if want m6; then
            | grep -v -E -e '^\.rulesync/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
                        -e '^\.opencode/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
            || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $notb — commands dirs/the gate script/pipeline-models/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency). The admitted command trio is cf-90-sanctioned: pipeline.md/pipeline-pr.md (C02 run-tag retirement sentence) + the new wekan-board-provision.md (C01)."; }
+  # cf-124 C03 (owner-approved plan, DECISIONS D20) MANDATES the field.ownership
+  # boundary clause in pipeline-models' `## Priority class table` section — on
+  # source and generated mirror together — so a compliant in-window edit must
+  # not redden this freeze. The carve is SECTION-SCOPED, the same shape as the
+  # cf-76 D7 regeneration carve below: everything OUTSIDE that section, and
+  # every other frozen member, must still equal $notb byte-for-byte; the
+  # section itself keeps M7's content pins in tests/pipeline-models/surface.sh
+  # as its law. Parity needs no twin here: the generate --check below fails on
+  # a one-sided source/mirror edit, so the pair moves together or m6 reddens.
+  if [ -n "$moved" ]; then
+    pm_outside=$(printf '%s\n' "$moved" | grep -vE -e '^\.rulesync/skills/pipeline-models/SKILL\.md$' -e '^\.opencode/skills/pipeline-models/SKILL\.md$' || true)
+    if [ -z "$pm_outside" ] && python3 "$TMP/m6-pm-carve.py" "$notb" \
+         .rulesync/skills/pipeline-models/SKILL.md .opencode/skills/pipeline-models/SKILL.md \
+         >"$TMP/m6-pm-carve.out" 2>&1; then
+      moved=""
+    elif [ -z "$pm_outside" ]; then
+      tail -n 8 "$TMP/m6-pm-carve.out" >&2
+      fail "m6: the pipeline-models delta sits OUTSIDE the sanctioned cf-124 C03/D20 section carve — only the 'Priority class table' section may move, on source AND mirror; revert the rest or route any other wording through the test-owner channel (D21)"
+    fi
+  fi
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $notb — commands dirs/the gate script/pipeline-models (outside its D20 section carve)/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency). The admitted command trio is cf-90-sanctioned: pipeline.md/pipeline-pr.md (C02 run-tag retirement sentence) + the new wekan-board-provision.md (C01)."; }
   RS6=""
   if command -v rulesync >/dev/null 2>&1; then
     RS6="rulesync"
@@ -1094,7 +1142,7 @@ if want m6; then
     || fail "m6: AGENTS.md/.rulesync/rules may only change as a rulesync regeneration, but rulesync is not resolvable here (PATH or npx cache) — the carve cannot be verified, and the arm stays fail-closed (unlike m5's warning-skip, which guards a different duty)"
   timeout 180 $RS6 generate --check >"$TMP/m6-check.log" 2>&1 \
     || { tail -n 15 "$TMP/m6-check.log" >&2; fail "m6: the AGENTS.md/.rulesync/rules delta is NOT regeneration-explained — generate --check is not clean (hand-edit of a generated surface, or a rules edit with no mirror — cf-76 D7 carve)"; }
-  ok "m6[hold]: commands dirs, the gate script and the pipeline-models/gates pairs byte-unchanged vs $notb (merge-window reference when MERGE_HEAD is live); AGENTS.md + .rulesync/rules carry the cf-76 regeneration carve and generate --check proves every delta is the current sources' output (via $RS6)"
+  ok "m6[hold]: commands dirs, the gate script and the pipeline-models/gates pairs byte-unchanged vs $notb (merge-window reference when MERGE_HEAD is live), pipeline-models' SKILL.md pair admitted only inside its cf-124 D20 'Priority class table' section carve (everything else equal to $notb, section kept, mirror parity proven by the generate --check); AGENTS.md + .rulesync/rules carry the cf-76 regeneration carve and generate --check proves every delta is the current sources' output (via $RS6)"
 fi
 
 # --- m7: cf-124 C05 — the gated mint leg carries the D28 posture, not the
