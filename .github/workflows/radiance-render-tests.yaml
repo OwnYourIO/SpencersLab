@@ -1,0 +1,64 @@
+# Render-contract tests for the radiance engine chart plus lint/template for
+# the chart (chart defaults and the gpu-ai service values):
+#   - pytest suite in charts/radiance/tests (the FULL serving profile set
+#     equality, the non-privileged Q7 pod shape, the Guaranteed pairs on both
+#     containers, the cross-chart GPU name identity, the image/pack digests
+#     ledgers, NOTES/Chart floors)
+#   - helm lint + helm template for charts/radiance
+# Clone of vllm-render-tests.yaml minus the containers/ leg (radiance ships
+# the upstream image directly — DECISIONS D2).
+name: radiance render tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/radiance/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/radiance-render-tests.yaml'
+  pull_request:
+    paths:
+      - 'charts/radiance/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/radiance-render-tests.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+
+      - name: Install Python dependencies
+        run: pip install pytest pyyaml
+
+      - name: Fetch chart dependencies
+        run: helm dependency update charts/radiance
+
+      - name: Run test suite
+        run: pytest charts/radiance/tests -v
+
+      - name: helm lint (chart)
+        run: helm lint charts/radiance
+
+      - name: helm template (chart defaults)
+        run: helm template radiance charts/radiance --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      # cf-143 C02 (AC6, the C01 lesson): the `radiance:` service block lands
+      # with C04 — the extraction must yield {} before it and the subtree
+      # after (EXPLORE gotcha 14), so this leg never needs a hand edit
+      # between chunk waves.
+      - name: helm template (service-level values)
+        run: |
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance') or {}, open('/tmp/radiance-vals.yaml','w'))"
+          helm template gpu-ai-radiance charts/radiance -f /tmp/radiance-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai

@@ -1,0 +1,413 @@
+# Radiance (cf-143 C02): the Flash-Next engine pod on the gpu-ai R9700.
+# "Radiance" here is the StillDeadcode ENGINE (docker.io/stilldeadcode/radiance
+# — the C++/HIP one, RESEARCH RQ0). Two name-collisions must not be read into
+# this chart: charts/vllm's image vllm-radiance-mxfp4 is the magiccodingman
+# vLLM FORK (a different artifact and a different API surface), and Strata
+# (Niko1221/Strata) is an unrelated engine. Naming law: DECISIONS Conventions.
+#
+# Cluster-internal (Q1=A, structure ruled): the sole client route is the
+# llama-swap peers.radiance hop (C04 wires it) — no ingress, no public host,
+# no secret surface (D8: keyless engine + ungated packs => no bitwardenIds,
+# no ExternalSecret leg, no custom-values entry: the trio law's documented
+# skip). domain/clusterName references are absent on purpose.
+
+app-template:
+  # The served model FILE, spliced as the --model value: the flash-next pack
+  # on the shared 500Gi llama-swap claim. PACK LEDGER (RESEARCH RQ0, the
+  # staging init's + C06's verification authority): HF
+  # StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe, file
+  # qwen3.8-next-flash-fp8-iq4r-moe.rad, 121,969,901,568 bytes (113.60 GiB),
+  # lfs sha256
+  # 0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20, ungated
+  # (gated:False verified against the HF API). Anchors resolve per-document,
+  # so the C04 service block's modelPath re-pin does NOT reach this render:
+  # a retarget is the dual edit the suite's modelPath-equality leg guards
+  # (the vllm values anchor-trap law).
+  modelPath: &modelPath /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+
+  # --- the sizing scalars (D15/D17): the arithmetic + ladder home the C06
+  # runbook moves (pool -> ctx -> last-resort prefix-tier swap with owner
+  # sign-off). app-template's values schema pins args entries to STRINGS and
+  # YAML offers no anchor mechanism turning int 64 into "64Gi" or a schema-
+  # valid string, so the args/resources carriers below hold the string FORM
+  # of each number and these ints are the ledger: test_ac3_scalar_splice
+  # renders the args AND resources and reds any half-move of one side — the
+  # equality against these scalars is what makes the carriers one source.
+  #
+  # guaranteedMemoryGi = 64: the owner's "60Gi-class" ruling (Q10) honored as
+  # one scalar. Boot arithmetic (RESEARCH Serving envelope, receipt-gated
+  # — the Q12 best guess): pool 43000 MiB (~42 GiB) + the --kv-resident 8x200K
+  # host copy (~19.3 GiB) + checkpoint slots (~8.9 GiB) + misc lands the pins
+  # at 60-70 GiB class; the engine's rule is >=4 GiB free under the cgroup,
+  # so the startup receipt moves this scalar UP (68/72, schedulable to ~96
+  # while strata is scaled down — Q10's protocol) or DOWN (pool -> ctx step).
+  # COEXISTENCE ARITHMETIC: 64 (this) + 64 (strata's request) + 4 (llama-swap
+  # outer) > 125.08 GiB node allocatable, so a radiance pod sits Pending with
+  # "Insufficient memory" beside a live strata pod — LOUD, SAFE, the designed
+  # handshake of the owner's manual scale-down protocol (runbook step 9 owns
+  # down + restore-back). This is not a bug to "fix" by shrinking.
+  guaranteedMemoryGi: 64
+  hostPoolMib: 43000
+  maxModelLen: 200000
+  maxNumSeqs: 8
+  # The KV-to-RAM lever the owner's 8-session goal runs on: 32768 tokens
+  # resident off-card (args-carried — no separate scalar: it is a
+  # recipe-constant, not a ladder rung). It is MUTUALLY EXCLUSIVE with
+  # --prefix-cache-mib (the prefix tier forces off — an idle session then
+  # re-prefills against the Gen4-x4 link wall, ~450-600 tok/s @55k measured
+  # class, the honest envelope). v1.17.0 recipe pool 43000 is the same
+  # envelope's pool number.
+  cpuCores: 8
+
+  # --- priority / preemption (Q2 ruling, RESEARCH RQ2): radiance honors the
+  # OpenAI body `priority` field with HIGHER-WINS ranking (urgent 9 / default
+  # 5 / low 1) and preempts by recompute — the OPPOSITE polarity of the
+  # retired vLLM lane's 1/5/9 table, so porting the old numbers would run the
+  # board backwards. Engine defaults NOT shipped as flags (the profile pins
+  # only what deviates): --preempt-wait-ms 5000, and --max-queued-requests
+  # overflow answers 429 + Retry-After (peers surface it verbatim). The 9/5/1
+  # catalog rows land in C05 and the llama-swap peer floor
+  # filters.setParams "priority?": 5 in C04 (radiance's DEFAULT class — never
+  # read it as a vLLM-era number).
+  #
+  # --- plugin facts (Q9 Option-1 as SHIPPED by C07; RESEARCH §R6-Q1/Q4): the
+  # vendored charts/amd-gpu runs the device plugin at
+  # -resource_naming_strategy=product, which buckets devices per sanitized
+  # marketing name into per-NAME kubelet pools: this node advertises exactly
+  # amd.com/gpu-ai-pro-r9700 (the R9700, PCI 7551 revision C0) and
+  # amd.com/gpu-8060s (the Strix APU, 1586) — a pod requesting the R9700 pool
+  # can ONLY ever receive the R9700 (scheduler determinism replaces the
+  # nodeId-ascending APU-first accident that crash-looped charts/vllm
+  # 2026-11-07; the round-2 mis-allocation runtime-retry gate is SUPERSEDED
+  # by that determinism — the startup-report PCI/gfx1201 assert survives only
+  # as belt-and-braces in the C06 runbook gate (e)). amd.com/gpu DISAPPEARS
+  # from the GPU-AI NODE: a stray bare claim there schedules Pending-forever,
+  # loud by design. Scope: that is per-cluster — the gpu cluster's plugin
+  # stays single-naming 1.31.0.9 and its renders keep the bare name BY DESIGN
+  # (the owner's B1 shield, DECISIONS D21; this chart serves gpu-ai only, so
+  # it claims the named pool). The plugin Allocate() injects /dev/kfd + the
+  # allocated card/render nodes into the container and sets NO environment:
+  # host enumeration is irrelevant inside the pod, so this chart ships NO
+  # ROCR/HIP env (the charts/vllm 307/310 idiom is obsolete here — that lane
+  # uses hostPath devices, which Q7 rules out below). "No occupancy check in
+  # Allocate()" stays TRUE upstream (open PRs #243/#247 — watch, don't wait)
+  # and is MOOT here: each pool holds one device, so within-bucket choice
+  # cannot exist. The fallback trap (a card whose sysfs (device,revision)
+  # pair is unknown to the baked amdgpu.ids reverts to the bare amd.com/gpu
+  # name) is closed by the C06 step-0 receipts (a)-(c) BEFORE first boot, not
+  # by runtime logic. STRATA LAW (Q11): strata's privileged hostPath pod sits
+  # PHYSICALLY on the same card this pool names — naming settles cross-card
+  # choice, never VRAM arbitration; the radiance-vs-strata contention stays
+  # the owner's observe-only ruling, the manual scale-down protocol governs.
+
+  # The shipped serve recipe — the FULL RESEARCH serving envelope per the
+  # Q10 ruling (the round-2 shadow profile is VOID). Order-insensitive
+  # contract (set equality; test_serve_args pins it). ABSENCE LAW, each a
+  # boot-refusal or a different-memory story avoided (RESEARCH Guide
+  # corrections): NO `serve` verb (the engine takes args directly — the
+  # guide's `radiance serve` double-verbs it, the Strata/vLLM idiom leaking);
+  # no --expert-vs-cache-ratio (stale guide flag); no --prefix-cache-mib
+  # (mutually exclusive with --kv-resident — the 8-session lever IS
+  # kv-resident); no --api-key (keyless D8); --checkpoint-interval 4096 is
+  # the v1.17.0 recipe's session-checkpoint cadence (checkpoints ride the
+  # ~8.9 GiB checkpoint-slot line of the sizing arithmetic — ~113.5 MiB per
+  # Flash-Next slot, RESEARCH RQ1); --num-speculative-tokens 3 is the pack's
+  # native MTP depth (RESEARCH RQ0: the fn pack carries an MTP-3 drafter).
+  serveArgs: &serveArgs
+    - "--model"
+    - *modelPath
+    - "--port"
+    - "8000"
+    - "--host"
+    - "::"
+    - "--tp"
+    - "1"
+    - "--max-model-len"
+    - "200000"
+    - "--max-num-seqs"
+    - "8"
+    - "--placement"
+    - "expert_tiered"
+    - "--host-pool-mib"
+    - "43000"
+    - "--gpu-headroom-mib"
+    - "96"
+    - "--kv-cache-dtype"
+    - "fp8"
+    - "--kv-resident"
+    - "32768"
+    - "--num-speculative-tokens"
+    - "3"
+    - "--max-num-batched-tokens"
+    - "4096"
+    - "--checkpoint-interval"
+    - "4096"
+    - "--ngram-placement"
+    - "disk"
+    - "--served-model-name"
+    - "qwen3.8-flash-next-radiance"
+
+  global:
+    nameOverride: &chartName radiance
+    # The engine pod never calls the K8S API, so no ServiceAccount object is
+    # created (the vllm/home-assistant tokenless precedent).
+    createDefaultServiceAccount: false
+
+  defaultPodOptions:
+    terminationGracePeriodSeconds: 180
+    # The engine drains in-flight work ~60-120 s on SIGTERM (1.17.0 compose
+    # stop_grace_period 60 s + teardown margin). NOT strata's 420 — that
+    # number is the child-choreography invariant of the llama-swap-child
+    # shape, not a radiance law.
+    securityContext:
+      # DEDICATED UID: io_uring rings count against RLIMIT_MEMLOCK (the k3s
+      # default 8 MiB) PER UID — a fresh, dedicated uid gets its own budget
+      # and needs no host drop-in (llmkube's exact posture, RESEARCH RQ3;
+      # the lab's strata pod pinning ~100+ GiB on the same default proves
+      # the card-path itself is not ulimit-charged). 65532 = the distroless
+      # nonroot convention, non-colliding: no consumer of the shared claim
+      # runs it (llama-swap/vllm/strata are root), and host human uids sit
+      # in the 1000-range. Same uid/gid/fsGroup everywhere on this pod: the
+      # fetch-init's staged tree reads group- AND owner-consistent in the
+      # serve container (Q7 verbatim, non-privileged from day one — the
+      # host-prep receipts gate first boot in the C06 runbook).
+      runAsUser: 65532
+      runAsGroup: 65532
+      fsGroup: 65532
+      # The 500Gi claim carries other tenants' root-owned trees; a recursive
+      # group rewrite of 500Gi on every mount would stall boot and churn
+      # foreign ownership. OnRootMismatch applies once (root dir group
+      # mismatch) and skips after; the claim's dir itself is provisioned
+      # world-writable (local-path default), and same-uid reads never needed
+      # the rewrite anyway — fsGroup exists for the staged .rad's GROUP
+      # readability (Q7).
+      fsGroupChangePolicy: OnRootMismatch
+      # kfd device access, non-privileged: this node's /dev/kfd and
+      # /dev/dri/renderD* are group 486 mode 660 (the charts/vllm GID-486
+      # comment is the precedent source; RESEARCH RQ3 live-verified). The
+      # named-pool plugin injects the device nodes; 486 is what lets a
+      # non-root process OPEN them (render/video join: the C06 host receipt,
+      # one-edit service-block override if the render nodes need more than
+      # 486 here).
+      supplementalGroups: [486]
+      # io_uring + NUMA (mbind/set_mempolicy) need Unconfined: the RuntimeDefault
+      # profile blocks io_uring outright, which kills the ngram DISK tier and
+      # the ROCm NUMA path (upstream's own seccomp note, RESEARCH RQ3) —
+      # the profile ships Unconfined, or the engine refuses to boot.
+      seccompProfile:
+        type: Unconfined
+
+  controllers:
+    radiance:
+      # A ~60 GiB-class pinned host pool must never ride a RollingUpdate
+      # overlap — a second pod would double-pin the node (the strata #2257
+      # class the repo lived). Same-node single-tenant.
+      strategy: Recreate
+      # No reloader.stakater.com/auto annotation ON PURPOSE: the repo
+      # standard exists to restart pods when mounted ConfigMaps/Secrets
+      # change — this pod mounts neither (keyless D8, no config surface),
+      # so the annotation would be inert drift.
+      containers:
+        radiance:
+          image:
+            repository: docker.io/stilldeadcode/radiance
+            # renovate: datasource=docker depName=docker.io/stilldeadcode/radiance
+            tag: "1.17.0"
+            pullPolicy: IfNotPresent
+            # DIGEST LEDGER (D2 — tag pin + digests-in-comment, NO digest
+            # field: the repo has no image.digest precedent). Which is which
+            # (RESEARCH RQ0/S4, verified against the Docker Hub API
+            # 2026-11-12):
+            #   amd64 IMAGE MANIFEST:
+            #     sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330
+            #   tag INDEX (manifest-list wrapper — what `radiance:1.17.0`
+            #   itself resolves to; llmkube pins the manifest digest as
+            #   1.17.0@sha256:6fb0e99b...):
+            #     sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100
+            # Tag-rebuild caution (the unified-vulkan-262 precedent: a tag
+            # CAN be rebuilt in place upstream, silently changing bytes under
+            # a held pin) — this ledger is the forensic anchor for exactly
+            # that case; a digest retarget is a DECISIONS line, not a drive-by.
+          args: *serveArgs
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          probes:
+            # Probe law: /health only — key-exempt and the load-aware surface
+            # (upstream's own healthcheck puts a ~15-min start period on it,
+            # RESEARCH RQ3). Never probe a model endpoint: that would run
+            # real inference on every kubelet tick, and needs a key this
+            # lane does not have.
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8000
+                # 180x10s = 30-min ceiling: the cold-load class is minutes
+                # (113.6 GiB read + graph build), the llmkube probe law; a
+                # mis-sized boot fails LOUD at startup rather than thrashing.
+                periodSeconds: 10
+                failureThreshold: 180
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8000
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8000
+          resources:
+            # GUARANTEED QoS (Q7 + D15): requests == limits, extended
+            # resource included (extended resources REQUIRE an equal
+            # integer pair — the kubelet rejects requests != limits for
+            # them). cpu/memory here are the k8s-string forms of the
+            # cpuCores/guaranteedMemoryGi scalars above (see the single
+            # scalars note); the GPU name is the R9700 product pool (the
+            # plugin-facts block above — NOT the bare amd.com/gpu, which
+            # does not exist on this node post-C07 and would schedule
+            # Pending-forever).
+            requests:
+              cpu: "8"
+              memory: "64Gi"
+              amd.com/gpu-ai-pro-r9700: "1"
+            limits:
+              cpu: "8"
+              memory: "64Gi"
+              amd.com/gpu-ai-pro-r9700: "1"
+          securityContext:
+            # The repo drop-ALL standard plus the engine's one carry:
+            # IPC_LOCK for locked-buffer / io_uring registration (Q7).
+            # allowPrivilegeEscalation false and NO privileged — the
+            # charts/vllm privileged+hostPath block must not be copied, the
+            # named pool's Allocate() injects the device nodes instead.
+            # readOnlyRootFilesystem stays unset: the engine writes scratch +
+            # the disk ngram tier, and this chunk ships no PVC to point it
+            # at — the root FS is its scratch.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - IPC_LOCK
+      initContainers:
+        radiance-fetch:
+          # D10 staging: pull the ungated pack ONCE onto the shared claim by
+          # curl-resume, marker-gated on the lfs sha. Image choice between the
+          # chunk's two sanctioned shapes (curl image / engine image):
+          # staging is pure network+disk IO needing only curl + coreutils,
+          # so the minimal pinned curl image carries it without dragging the
+          # engine's ~GiB runtime onto a pod step that touches no GPU. The
+          # resume flag (-C -) is the mechanism that survives an interrupted
+          # 113.6 GiB fetch — a full re-download per boot glitch is the
+          # failure mode this shape exists to avoid.
+          image:
+            repository: docker.io/curlimages/curl
+            # renovate: datasource=docker depName=docker.io/curlimages/curl
+            tag: "8.23.0"
+            pullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |-
+              set -e
+              LFS_SHA=0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20
+              PACK=/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+              MARKER=/models/radiance/.staged-$LFS_SHA
+              URL=https://huggingface.co/StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe/resolve/main/qwen3.8-next-flash-fp8-iq4r-moe.rad
+              mkdir -p /models/radiance
+              if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
+                echo "radiance staging: marker + pack present — skipping"
+                exit 0
+              fi
+              echo "radiance staging: fetch $PACK (curl-resume, 113.6 GiB class)"
+              # rc 33 = "the file is already completely retrieved" under
+              # --continue-at - : a pack that finished without ever having
+              # written its marker (kill between bytes and touch) is DONE,
+              # not a failure — set -e would otherwise boot-loop on it.
+              rc=0
+              curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
+              if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
+                echo "radiance staging: curl failed rc=$rc"
+                exit "$rc"
+              fi
+              # The marker is only written after the sha256 PASSES — the
+              # marker IS the landed-file provenance (C06 step-4 receipts
+              # sha256sum against this same ledgered value).
+              echo "$LFS_SHA  $PACK" | sha256sum --check
+              touch "$MARKER"
+              echo "radiance staging: complete"
+          resources:
+            # THE POD-CLASS LAW, commented where it renders (D15): Guaranteed
+            # is a POD property — ANY container without an equal
+            # requests==limits pair silently downgrades the WHOLE pod to
+            # Burstable. The init's pair is 200m/2Gi (IO-bound budget:
+            # curl's buffers, not the tree size).
+            requests:
+              cpu: 200m
+              memory: 2Gi
+            limits:
+              cpu: 200m
+              memory: 2Gi
+          securityContext:
+            # Non-privileged like the serve container (Q7) — and the same
+            # pod-level runAsUser writes the staged tree, so the serve
+            # container reads it owner-consistently.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    radiance:
+      controller: *chartName
+      ports:
+        http:
+          port: 8000
+      # NO ingress anywhere on this lane, deliberately: the trio rule's
+      # proxy leg is skipped by the internal-only ruling — the engine stays
+      # reachable only through the llama-swap peers hop (a host here would
+      # publish it). The skip-comment home is the services file's
+      # ingress.subdomains section, where C04 mirrors the vllm/strata
+      # precedent text with the radiance entry.
+
+  persistence:
+    # Weights: the EXISTING 500Gi llama-swap claim, mounted per ACTOR
+    # (advancedMounts keyed <controller>.<container>): the serve container
+    # reads /models read-only, the radiance-fetch init writes it. What the
+    # claim carries: /models/radiance/*.rad + .staged-* markers (this
+    # chart), the GGUF trees the llama.cpp rungs serve, the vllm-era
+    # Qwen3.8-27B trees — DO NOT DELETE anything under /models you did not
+    # stage (the class-10 GGUF ground; the vllm 542-552 warning mirrors
+    # here). RWO same-node multi-attach is the lab's single-node pattern
+    # (vllm/strata/llama-swap all already ride this claim).
+    models:
+      existingClaim: llama-swap
+      advancedMounts:
+        radiance:
+          radiance:
+            - path: /models
+              readOnly: true
+          radiance-fetch:
+            - path: /models
+    # Engine shared memory (HIP/IPC surfaces): emptyDir medium Memory,
+    # capped 2Gi (the single-GPU-TP1 worker's working set; the node's tmpfs
+    # accounting keeps the cap honest).
+    shm:
+      type: emptyDir
+      medium: Memory
+      sizeLimit: 2Gi
+      globalMounts:
+        - path: /dev/shm
+    # NO kfd/dri hostPath entries (Q7): the named-pool plugin's Allocate()
+    # injects /dev/kfd + the R9700 render node into the container — the
+    # strata/vllm hostPath class is exactly what this chart replaces (and
+    # the absence is test-pinned, load-bearing, not stylistic).

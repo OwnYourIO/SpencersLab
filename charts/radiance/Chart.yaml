@@ -1,0 +1,16 @@
+# Radiance (cf-143): the StillDeadcode/radiance ENGINE chart on gpu-ai —
+# NOT the magiccodingman vllm-radiance fork (that is charts/vllm) and NOT
+# Strata. DECISIONS D1/D2/D3/D17/D18; the pod contract (Q7/Q9/Q10) lives in
+# values.yaml comments. Cluster-internal peer engine: no ingress, no secrets.
+apiVersion: v2
+name: radiance
+version: 1.0.0
+appVersion: "1.17.0"
+dependencies:
+# The repo app-template idiom: the single dep bundles the common chart
+# internally (which generates no k8s objects of its own), so the workload
+# renders from this chart's app-template: values with no parent-side
+# loader and no second dep (charts/vllm Chart.yaml comment, verbatim law).
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

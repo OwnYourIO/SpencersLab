@@ -1,0 +1,7 @@
+# The pytest suite runs from the source checkout (and CI), not from an
+# installed chart — keep it and its caches out of the package artifact
+# (the charts/llama-swap .helmignore rationale).
+tests/
+__pycache__/
+.pytest_cache/
+*.pyc
