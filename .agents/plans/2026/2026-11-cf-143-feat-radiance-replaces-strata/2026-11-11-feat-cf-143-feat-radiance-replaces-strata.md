@@ -183,3 +183,76 @@ Residual (best guesses shipped, NON-BLOCKING per "fold and run on"):
   wall (~450–600 tok/s @55k) — honest-envelope note in runbook + TP2 doc.
 - amdgpu.ids revision assumption (R9700 C0 → `gpu-ai-pro-r9700`; 8060S C1/C3/C6/D1 →
   `gpu-8060s`) is computed, not yet receipted on-target — the five step-0 gates close it.
+
+## FINAL whole-plan review (2026-11-12, fresh planning-tier session, HEAD 72770056e)
+
+**Verdict: APPROVED.** Zero blockers, zero majors. Every ticket-wide bar re-run
+clean and sequential at HEAD, every whole-plan seam re-derived by this reviewer
+against `main@0d9b41785` — not trusting chunk records.
+
+Bars (all exact): llama-swap 495P/9S/0F (9 skips = standing RUN_HF_CHECK/
+RUN_FLAG_AUDIT gates, enumerated) · radiance 41P/0S/0F · amd-gpu 15P · vllm 36P ·
+runbook 5 ok · tp2 3 ok · amd-gpu-naming 5 ok bare AND zero-skip with
+AMD_GPU_FLIP_COMMIT=546f03e01 · dashboards 5 ok · surface 9 ok bare AND M1..M8
+10 ok with CF143_BASE_SHA=0d9b41785 · helm lint charts/{radiance,amd-gpu,
+llama-swap,vllm} + services/gpu-ai/prod = 0 failed · rulesync @ repo-pinned
+37.0.0: --check clean + generate no-op (tree empty after) · aislop ci --changes
+0/0/0 over 106 files (bare via @0.20.0 AND --base main via the local 0.20.1
+binary — identical result; the npx --yes --base route hung on registry network,
+environmental, worked via --no-install).
+
+Seams re-derived independently: (1) STRATA BYTE LAW — peers.strata / strata
+subtree / matrix / hooks / models parse-equal vs main; charts/llama-swap/values
+.yaml parsed-values EQUAL (diff comment-only both directions); golden strata
+block all-context in the golden diff (my slice-compare false-red was my own
+regex, the diff proves it); jsonc strata lines string-equal; strata evidence,
+flashnext baseline, gpu.config golden NOT in the 71-file diff; kickoff/boards/
+overview/loops/AGENTS all EMPTY diff; test_strata_wiring re-pin STRENGTHENS the
+law (live vllm key or missing strata = red). (2) PRIORITY COHERENCE across all
+five surfaces — class table 9/5/1 engine-scoped + per-engine polarity para +
+snap re-key (1-3→9, 4-7→5, 8-9→1) + catalog trio body.priority 5/9/1 shared
+modelID ctx 200000 [text,image] + floor "priority?": 5 = default class + chart
+comment HIGHER-WINS/never-port + runbook step 8 with the unflipped-port
+detector — leak sweep found zero lower-wins port. (3) ARGS: runbook's exactly
+one fenced block == chart serveArgs token-for-token (23 tokens) == the tested
+contract. (4) DIGESTS three-way (chart == runbook == ledger/renovate comments)
+AND live by this reviewer: radiance 1.17.0 index c2acbaa3… + amd64 6fb0e99b…
+byte-exact and still newest; plugin 1.31.0.12 6437c74f… byte-exact; pack gated:
+False, 121,969,901,568 B, lfs 0af5e962…4d20 byte-exact. (5) modelPath TRIPLE
+equality: chart anchor == service re-pin == appset values leg. (6) VLLM FULL
+CIRCLE: zero 'vllm' strings in the rendered gpu-ai llama-swap config (peers/
+models/matrix), 0 live catalog rows, no vllm app in the apps set, vllm:{}
+render byte-identical to chart defaults (extraction `d.get('vllm') or {}`
+=> {}), circle-back/re-enable markers at all four disable sites + the 11-line
+header on the retired doc. (7) SHIELD LIVE: gpu-umbrella + gpu-cluster render
+carry the bare amd.com/gpu: 1 while the gpu-ai merged render carries ONLY
+amd.com/gpu-8060s (null-retire proven at render); live cluster untouched —
+plugin DS still 1.31.0.9 args:null, node still amd.com/gpu: 2, strata pod
+alive, readonly MCP only. (8) RUNNER ROUTE: gpu-ai/qwen3.8-flash-next-strata-
+q4 intact in loops line 5 + live catalog row + favorited row + NOTES — the
+hourly loop keeps working (Q4/D21 outcome).
+
+Rulings ledger honored: Q1=A chart+peer · Q2 flip shipped · Q3 commented with
+circle-back · Q4 honest new id · Q5 strata lives everywhere, byte-untouched ·
+Q6 two follow-up cards textually supported (TP2 doc self-contained + exact
+title "Radiance second-GPU (TP2) expansion"; runbook :522 names card #2) ·
+Q7 non-priv shipped (no privileged/hostPath in any render; Guaranteed pair on
+BOTH containers incl. init) · Q8 [text,image] + retire-on-failure smoke leg ·
+Q9 Option-1 named pools · Q10 full profile (16-flag envelope verbatim) +
+OWNER-EXECUTED scale-down/restore steps 3/10 · Q11 observe-only (:526) ·
+Q13 no amd-gpu service block · B1 per-cluster shield everywhere · "fold and
+run on" respected — the only owner pause was the C07 OQ1 leak escalation
+(legitimate). Hygiene: 18 commits, per-commit scope clean (implementation
+carriers vs records carriers), generated surfaces rulesync-only, no UUID/
+secret literals in impl, radiance 1.0.0 brand-new law, amd-gpu 1.0.0 + D19
+name-pin rationale, llama-swap/vllm charts untouched, branch local-only (no
+upstream), main == origin/main == base — nothing pushed, nothing landed.
+
+Findings (all non-gating; route per RESULT): m1/m2 coord-records (deferred
+array misses C01/C02's three riding nits; two landed rows to close); n1
+aislop 0.20.1-vs-0.20.0 note; n2 friction line for the npx hang class. The
+single `open` FRICTION item (plan-file :49 "step 9" pointer) is DISPOSITIONED
+acceptable — a plan-agent-surface one-liner, out of this review's edit grant,
+rides the next agent-plan touch; fold is otherwise verified landed (runbook
+:33 RESEARCH RQ3 cite, chart values :47/:83 steps 3/10 + receipt e,
+:293 minutes-class).
