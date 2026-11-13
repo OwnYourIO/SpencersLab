@@ -279,15 +279,30 @@
     },
     "C06": {
       "title": "Dependency gate on related-to: source-is-dependent, sole gating type, mutual-pair tie-break, pickup-only scope, grouping by inbound edges",
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e2ab904daffeMoYcc9DQo6PAb5",
+      "review_session": "ses_e2ac9b0dcffefBCT8mGZjT0t9K",
+      "last_verdict": "APPROVED (round 1) — gate re-cut to related-to with stored source = dependent, sole gating type, blocks/is-blocked-by display-only, satisfaction set untouched, mutual pairs reported not gated, pickup-only scope, grouping from inbound edges; boards-deps t1/t3 flipped green and t4 left red for C08; 222-arm two-tree sweep vs b86c62398 shows EXACTLY those two flips, zero new reds; regen no-op + --check, aislop 100/0/0, STATE parses",
+      "handoffs": [
+        {
+          "at": "2026-11-13T16:4xZ",
+          "role": "dev",
+          "session": "ses_e2ab904daffeMoYcc9DQo6PAb5",
+          "result": "status DONE | files: boards SKILL.md source + mirror only | five deviations all reasoned: (1) the gate's cross-reference recut to 'the consumer rule lives in the Board context section' because the literal word 'block' beside a skip verb trips t1's own negative bar — cite preserved, t8's needles untouched; (2) the grouped-sibling intro DROPS the cf-96 'parent_id alone — no follow-up edge is drawn' claim because D25 supersedes it and C08 must not inherit a contradiction, writing the fixes/is-fixed-by + parent_id-never-grouping sentence instead while leaving C08's Follow-up-cards Mechanics bullet byte-untouched; (3) board-facts 'counts a blocker here as satisfied' kept verbatim (Task 4 optional); (4) rules source verified no-op so no AGENTS.md delta; (5) the settled-bullet Executing leg now cites C02's membership authority rather than 'under another run's lock', consistent with the flow's own start-moves | bar: per-arm two-tree sweep incl. every C01–C05 arm, red set = sixteen ledger + backfill b1–b8 + boards-deps t4, zero new | friction: t1's negative bar matches the ordinary English noun 'block' in that section — later prose there must pre-screen it (informs C08)"
+        },
+        {
+          "at": "2026-11-13T17:2xZ",
+          "role": "review",
+          "session": "ses_e2ac9b0dcffefBCT8mGZjT0t9K",
+          "result": "VERDICT APPROVED, no blockers/majors, no validation_at_fault | ran the bar twice (before and after its own live-gate re-pin observation), the ONLY red flip outside dev's two is gate.sh t14, which self-clears in the COMMITTED state because gate.sh reads the committed rule shape and main now carries cf-124's own 'related-to' vocabulary — proven by reproducing the widened gate in a detached worktree (t14+t17 green) | independently verified: the lead/skips/precedence sentences match the ruling word-for-word; the inverse twin is consumer-side and blocks/is-blocked-by are display-only; Test/Finished/archived semantics preserved with Review NOT satisfying; grouping from inbound edges with outbound as the gate and neither kind-1 parent_id nor fixes/is-fixed-by grouping, while C08's mechanics lines stay pending; C01–C05 vocabulary and C02's lock sentences zero-delta; plugin/scripts/overview/AGENTS untouched; regen no-op, --check clean, aislop 0/0, STATE parses | its two nits taken by the coordinator: a dangling '(the grouped-sibling flow below)' forward-reference now resolves at :376, and the new '(the two spellings are one relation read from either end)' clause duplicates the both-spelling law at :167 — deferred to the planner's consolidated touch with D34/D32/C05/cf-124 pointers | reviewer's own friction: bare rc equality hid three live-window reds (gate t14, board-context t6 via the same t14, agents-md c12 pre-commit) — per-arm both-tree + committed-state checks are the only trustworthy proof"
+        }
+      ]
     },
     "C07": {
       "title": "Backfill engine + runbook: scripts/board-checklist-backfill.py (additive, in-place sorted inserts, dry-run default, owner-run --apply)",
