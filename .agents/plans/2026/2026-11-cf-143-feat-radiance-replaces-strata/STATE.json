@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-143-feat-radiance-replaces-strata",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 7,
-  "updated_at": "2026-11-13T08:05:00+00:00",
+  "current_wave": 8,
+  "updated_at": "2026-11-13T13:40:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -467,31 +467,52 @@
       "last_verdict": "APPROVED (r2 on the AMENDED landing sha 56142d511; r1 was CHANGES_REQUESTED — MAJOR-1 the owner-facing diagnostic was unrunnable, closed with a test-pinned command shape)",
       "handoffs": [
         {
-          "role": "tests", "round": 1, "at": "2026-11-13T04:35:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 1,
+          "at": "2026-11-13T04:35:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (red-first C10, TEST_SPEC §12.9) — one-SITE valuesObject PROJECTION helper in llama_swap_testlib.py (umbrella render → per-app values → documented mergo-nil-skip → helm, cited to the §D2 live pair) makes the router-down shape reproducible OFFLINE (its red diagnostic prints the exact live-broken pair {amd.com/gpu:1, amd.com/gpu-8060s:1}); leg A (gpu-ai projection claims only the APU) + leg C (no retirement instructions survive) + the flipped chart-default arm (claim-less + WHY needles; THE CLAIM IS TREE-GLOBAL must die) RED today naming C10; gpu-shield legs GREEN BOTH directions (gpu projected limits exactly {amd.com/gpu:1}, requests {cpu,memory} = the D26 limits-only byte-law); naming.sh n2 WAVE-C matcher (chart + BOTH overlays + runbook in ONE commit) + the TRANSFER check (chart bare 1→0 AND services/gpu 0→+ in the same commit — a split carrier fails, the zero-schedulable-claims window made unlandable), n3 bare-site now services/gpu only; runbook T5 +5 needles; §12.3 grep-audit re-run VERIFIED at the three named sites. Baseline llama-swap 3F/495P/9S; witnesses hold (radiance 43P, amd-gpu 29P, vllm 36P, tp2 3, dashboards 5, surface 9 + M1..M8 10)."
         },
         {
-          "role": "dev", "round": 1, "at": "2026-11-13T05:05:00+00:00", "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-13T05:05:00+00:00",
+          "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
           "result": "DONE — AC2 carrier move: charts/llama-swap/values.yaml bare tree-global limits block DELETED (chart claim-less; cpu/memory requests byte-kept; WHY rewritten: per-cluster ADD carriers, fresh-cluster-gets-GPU-less-pod trade-off, valuesObject null-death with the live pair, positive-integers/never-null-nor-0 law); services/gpu/prod/values.yaml ADDs amd.com/gpu:1 limits-only (transferred line's shape; chain-survival + 1.31.0.9 single-naming WHY; external amd-gpu entry untouched); services/gpu-ai/prod/values.yaml inert null DELETED, 8060s add + mirror kept, comment re-worded to the valuesObject truth; runbook AC5 sweep (count-0 pool row, step-2.3 COUNT-0 assert, third-class section with the valuesObject-vs-service-file diagnostic, step-3 §D2 numbers + the OUTAGE TRUTH line). /tmp-gated renders: gpu-ai {gpu-8060s} only at BOTH layers, gpu {amd.com/gpu} only, radiance r9700-1 1==1; SHIELDS: gpu + gpu-ai umbrellas = exactly ONE embedded values line each (zero workload-object diff), gpu-llama-swap Deployment byte-IDENTICAL old-chart+overlay vs new, radiance + amd-gpu renders diff-EMPTY. Three reds routed (validation_at_fault): naming_flip :264 ADD needle carried a literal 0x08 byte (unmatchable); off-parity legs ×2 owed the §9.8 landing-round re-baseline (AC2.1 legitimately moves the default render by exactly the transferred 2 lines). Commit 698af3b78 (12 files)."
         },
         {
-          "role": "tests", "round": 2, "at": "2026-11-13T05:25:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 2,
+          "at": "2026-11-13T05:25:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (routed repairs) — :264 repaired to r\"(?i)\\badd(ed)?\\b\" + whole-file 0x08 audit clean (class law: patched regexes get a BYTE audit, not only a compile) + the WHY-needle group made wrap-safe (dev's correct wrapped prose defeated a brittle needle; no needle loosened); OFF-PARITY re-baseline under §9.8 with the delta PROVEN before re-capture = EXACTLY 2 lines (1758a1759,1760 — limits: + amd.com/gpu: 1; fixture 1794→1792; cpu/memory requests byte-identical), PROVENANCE era entry, both arms green with teeth (synthesized third un-sanctioned change → BOTH arms RED); §12.9 amendment + n3 success message rewritten to carrier truth. llama-swap 498P/9S/0F, naming 5 ok bare."
         },
         {
-          "role": "review", "round": 1, "at": "2026-11-13T05:50:00+00:00", "session": "ses_e2d071761ffeJ7W6X4XdSIOseF",
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-13T05:50:00+00:00",
+          "session": "ses_e2d071761ffeJ7W6X4XdSIOseF",
           "result": "CHANGES_REQUESTED — MAJOR-1: the runbook's new owner-facing diagnostic was UNRUNNABLE (`-n argocd` — ai-gpu has no argocd namespace; `sources[0]` — that is the ref:services git source with no helm key; the valuesObject lives at sources[1], appset-charts.yaml:53-71 + live read) and T5 grepped only `valuesObject` so the suite could not see the break (the one-layer-below-production class, now on the owner-facing side). MINOR: naming.sh n2/n3 headers still described the dead null-retire/tree-global law; the frozen strata prose (~1348-1354) ages with no dated pointer. Nits: whole-file prose needle looseness; step-2.3 phrasing. Everything else clean and independently re-derived: AC1 truth set LIVE (enumeration closes at gpu+gpu-ai; custom-values carry zero amd.com/resources keys; no consumer stranded), byte-shield line-deltas, off-parity re-baseline authentic + teeth by synthesis, 0x08 clean, limits-only behavior-identical LIVE-proven (owner-decision note, not a fault), full bar green + naming @698af3b78 WAVE-C/transfer green."
         },
         {
-          "role": "dev", "round": 2, "at": "2026-11-13T06:10:00+00:00", "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "role": "dev",
+          "round": 2,
+          "at": "2026-11-13T06:10:00+00:00",
+          "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
           "result": "DONE (fix round) — MAJOR-1 corrected to `kubectl -n default get application gpu-ai-llama-swap -o jsonpath='{.spec.sources[1].helm.valuesObject}'` + a plain-shape sentence (ns default; source [0] = ref:services no helm key; source [1] = the chart's helm source whose valuesObject ArgoCD renders; adapt-by-helm-block if the order ever changes), LIVE-verified READ-ONLY first: namespaces have no argocd; sources[0].hasHelm FALSE / sources[1].helm.valuesObject = the APU-only pair, bare key ABSENT, zero nulls in the 6600-byte map. Also folded C09's owed M-1: the step-2.1 describe lens `grep -E` → `grep -A4 -E` so Command/Args VALUES print (dev adjudicated -A4 over the carry's -A1: describe emits four Args lines and the next sentence expects them). MINOR-2 strata region NOT touched (C04/AC4 byte law). One ungrounded claim self-dropped mid-round. Bars: runbook 5 ok through both edits, llama-swap 498P/9S/0F, radiance 43P, amd-gpu 29P, vllm 36P, naming 5 ok, tp2 3, dashboards 5, surface 9 + M1..M8 10, aislop 0/0; docs-only proof via git status."
         },
         {
-          "role": "tests", "round": 3, "at": "2026-11-13T06:30:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 3,
+          "at": "2026-11-13T06:30:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (review-r1 test lane) — naming.sh headers ×4 rewritten to the C10 carrier truth (assertions byte-untouched); MAJOR-1 made TEST VISIBLE: T5 pins the RUNNABLE SHAPE (`-n default get application` + `sources[1].helm.valuesObject` required; kubectl-LINE commands with `-n argocd` or `sources[0].helm` RED) while prose WARNINGS about the wrong forms stay admissible (line-scoped deliberately so the doc can keep teaching the trap) — teeth proven on /tmp (restored command → RED naming the ns pin; prose-only → GREEN); docs-dir audit: `-n argocd` = 1 prose warning line, `sources[0].helm` = 0 hits; NIT-1 TIGHTENED (prose needles read only the comment run at the resources key, both directions, wrap-joining kept — the values.yaml:3 backfill case proved whole-file matching real; absence-pins stay whole-file by nature); §12.9 fix-round rows + the law line (an owner-facing runbook command is RUNNABLE SHAPE, not vocabulary — third sighting of the one-layer-below-production class: a doc command is production for the human at 3am). Live WAVE-C re-proof @698af3b78 green (the matcher keys on paths → survives the amend)."
         },
         {
-          "role": "review", "round": 2, "at": "2026-11-13T06:55:00+00:00", "session": "ses_e2cead074ffeDcZUoaP8XR57rp",
+          "role": "review",
+          "round": 2,
+          "at": "2026-11-13T06:55:00+00:00",
+          "session": "ses_e2cead074ffeDcZUoaP8XR57rp",
           "result": "APPROVED — every r1 finding re-proven CLOSED on the AMENDED sha 56142d511 (amend lawful: the branch was never pushed; 698af3b78 is not an ancestor; a81989b47/b1def8d1f intact): MAJOR-1 live receipt re-taken (no argocd ns; sources[0] hasHelm=false; valuesObject = APU-only pair, no bare key, zero nulls); the T5 shape-pin's teeth proven in BOTH directions (restored command → RED; prose warning → GREEN; prose+literal-token → RED, documented); -A4 ACCEPTED (describe emits four Args lines; Command value still shown); naming.sh diff comment-only verified; NIT-1 syntheses (header-only tokens → RED, no block → RED, real WHY → GREEN); full bar fresh (498P/9S/0F, 43/29/36, naming 5 ok + AMD_GPU_FLIP_COMMIT=56142d511 WAVE-C + transfer 1→0/+1 — r1 carry #1 CLOSED, bogus sha + plans commit RED); lints/renders/rulesync/aislop clean; amend scope = 13 files (C10 wave + chunk record). LIVE pair still broken at review (router Deployment gen 49 unavailable 1, template still the bare pair) — AC7 closure is the owner's merge+sync."
         }
       ],
@@ -499,6 +520,18 @@
       "dev_session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
       "review_session": "ses_e2cead074ffeDcZUoaP8XR57rp",
       "commit": "56142d51152087132ec11a4379e4d48f3e05dd30 (amended from 698af3b78: the MAJOR-1 docs fix + the r1 test lane fold into ONE WAVE-C-shaped commit — a runbook-only follow-up commit would match no accepted shape)"
+    },
+    "C11": {
+      "status": "pending",
+      "wave": 8,
+      "depends_on": [
+        "C10"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "LIVE-DEFECT ORIGIN (3rd round): owner-reported CrashLoopBackOff on radiance-fetch — values.yaml:346 sha256sum --check is GNU grammar in the Alpine/BusyBox curlimages init image (short-only scwbt, exit 1 at option parse; set -e skips the marker; pack COMPLETE per resume offset==ledger size, never hash-verified). Fix = §D3b.4 portable equality gate, one site + runbook :383 carrier (chunks/C06.md:267 corrected by plan this fold); red-first grammar legs gated on busybox-family image identity; n2 gains NON-FLIP class (no WAVE-E); names/claims frozen; live closure owner-run post-merge (AC6). Authority EXPLORE §D3/§D3b; ledger D27."
     }
   },
   "blocked": [],
@@ -674,6 +707,19 @@
       "at": "2026-11-13T08:00:00+00:00",
       "session": "ses_e2e9c1b8affeai0xOY23xsUdst",
       "result": "APPROVED — zero blockers, zero majors on the reopened plan; record appended to the plan file (round-3 section + the §D2.8/D26-card addendum). Ticket-wide bar fresh: llama-swap 498P/9S/0F, radiance 43P, amd-gpu 29P, vllm 36P, naming 5 ok bare + AMD_GPU_FLIP_COMMIT=56142d511 full green (WAVE-C + transfer 1→0/+1) with both teeth biting, runbook 5 ok, tp2 3 ok, dashboards 5 ok, surface 9 ok + explicit M1..M8 @CF143_BASE_SHA=0d9b41785 10 ok, helm lints 0 failed + both umbrella renders rc0, rulesync clean at the repo pin, aislop ci --changes 0/0 AND the --base main form answering promptly this time (the earlier drift did not recur; the FRICTION flake-class note stands). The reviewer re-read the cluster with its own eyes and CONFIRMED §D2.8 rather than trusting it: main still lacks C10, router gen 49 unavailable 1 with the broken pair, node bare 0 + both pools 1, Application valuesObject APU-only zero nulls, gpu-ai-amd-gpu valuesObject = {} (the killer datum), gpu-cluster router 1/1 Available limits-only bare = the D26 byte-witness; its independent projection re-derivation reproduced both production shapes and proved the gpu pod byte-unchanged by the carrier move (the shield holds carrier-independently). Carry list dispositioned: -A4 describe lens ACCEPTED; the Chart.yaml governance-header fold stays Deferred; MINOR-2 frozen strata prose = pointer-only (it re-writes itself at the cutover); NIT-2/NIT-3 no action; the null-retirement ban verified un-reintroducible (repo-wide ': null' scan 0 live hits under services/, the lone supabase hit is a JSON-string body); the falsified-cause hunt CLEAN (no record asserts helm-ignores-null or staleness); off-parity fixture delta = exactly the 2 sanctioned lines; no test weakening across C09+C10; the amend lawful (no cf-143 ref on origin, main==origin/main==ec18281fb). Run-end actions DONE: plan_status → complete (step 9); D26 follow-up card CREATED in Inbox/Backlog — Eev5WkDieH6TH2pEW 'ApplicationSet→Application hand-off strips null values (deletion instructions never reach Helm)' with the §D2.8.5(iii) adjudicated body, default-checked Services infra / Type bug / Model(s) Qwen Flash (zero missing/failed), labels Provider: API + Pipeline: AI applied (closing the reviewer's r3 deviation in the same round), parent lineage in body text (post-create parent_id writes 405 on this build), nothing moved out of Inbox and nothing claimed — triage is the owner's alone; M8 explicit-check-id law dispositioned NOT owed a FRICTION line (surface.sh's Usage header + TEST_SPEC §12 are its durable homes). OPEN FOR THE OWNER in order: (1) merge+sync 56142d511 (+records) — the router's ONLY cure, verifiably absent from main; (2) AC7 receipts: router Running on gpu-8060s → pools gpu-r9700-1:1 + gpu-8060s:1 with bare count 0 → radiance schedules ONLY after step 3 (suspend selfHeal, scale strata to 0; free 59.92→123.92) → the 8-session gate → the 64→96 receipt ladder; (3) decisions: the D26 limits-only word (the live gpu pod proves it byte-exact; overrule = one line + leg-B re-pin), the optional upstream naming ask (D24), this card's triage, and AD-143 Executing→Review→Finished (the merge and Finished stay the owner's)."
+    },
+    {
+      "stage": "Exploration (scout round 5 — §D3/§D3b: timeout premise REFUTED, BusyBox checksum grammar root-caused)",
+      "at": "2026-11-13T13:20:00+00:00",
+      "session": "ses_e2b06477fffeuymXBh71NbPe3w",
+      "note": "launch premise 'timing out too soon' = owner hypothesis, refuted by evidence (redirect-interstitial + \\r-meter viewer artifact + completed stream); a FIRST scout launch of this round was cancelled by the user before this re-run; §D3 stands for the download, §D3b supersedes-at-completion for the gate",
+      "result": "RESULT status: DONE chunk: exploration files_changed: [EXPLORE.md (sections §D3 and §D3b appended)] HONEST PREMISE RECORDING (required): the coordinator's launch premise for this round — that the fetch was 'timing out too soon' / stalled at ~1126 bytes — was THE OWNER'S HYPOTHESIS, and the scout's evidence REFUTED IT (§D3: the 1126 B is the HF 302 redirect interstitial; the stream ran ~95 MB/s and COMPLETED at 12:52:40Z exactly per §D3.6's ETA; 'nothing stopped' — initContainer was Running restartCount 0 at that probe; the ProgressDeadlineExceeded condition (600 s default) is theater, not a killer; the newline-rendered log viewer froze on curl's \\r meter). A FIRST SCOUT LAUNCH OF THIS ROUND WAS CANCELLED BY THE USER; the re-run completed — recorded per instruction. §D3b (the same round, minutes later, probes 13:02-13:03Z) then found the REAL defect at the completion gate: BusyBox sha256sum has no --check (source-grounded getopt32 scwbt, live banner v1.37.0, exit 1, set -e -> marker never written -> CrashLoopBackOff restartCount 6, one-second no-op resume iterations, serve container never started imageID \"\"); download COMPLETE (resume offset 121,969,901,568 == ledger), bytes NOT yet hash-verified. Fix shape + rejects + blast radius (one site + two prose carriers; repo-wide busybox/GNU audit clean) in D3b.4/.7; cost + owner-only host-side loop-breaker alternative in D3b.6; test-site map D3b.5. deviations: none — read-only cluster probes; single sanctioned EXPLORE.md append; the §D3 'no defect' verdict stands FOR THE DOWNLOAD it watched, superseded-at-completion by §D3b for the gate (duplicate heading launch-verbatim, D3b.* disambiguates) friction: busybox gitweb/1.37.0 raw 404s (bracketed via 1_36_1 vs master byte-identical check-loop + live banner); Alpine-base claim rests on the live image's own banner (runtime authority anyway) open_questions: [plan-side (now resolved by D27): equality-vs-c-stdin choice (equality chosen — only shape naming both digests); n2 WAVE-E vs NON-FLIP (NON-FLIP chosen); owner-facing word: merge C11 (recommended) vs host-side hash+marker-touch (human-only, same verification, not a substitute)] next_suggested: agent-plan writes the C11 contract from D3b.4/D3b.5 straight through"
+    },
+    {
+      "stage": "Plan amendment (live defect C11 — BusyBox checksum grammar)",
+      "at": "2026-11-13T13:40:00+00:00",
+      "note": "§D3b authority; plan reopened complete->approved for the delta; exact red-first file set named for the test round; session id filled by coord",
+      "result": "RESULT status: DONE chunk: plan (live-defect fold-in) files_changed: [chunks/C11.md (NEW — S, wave 8, dep [C10]: AC1 one-site fix values.yaml:346 -> §D3b.4 equality gate verbatim (actual=$(sha256sum|cut -d' ' -f1), MISMATCH echo names expected AND actual, exit 1, touch marker after the guard; curl line/rc-33/set -e/constants byte-kept; NOT a timeout stated plainly; rejects recorded: -c -s source-refuted via busybox FIXME 'GNU has no -s', -c - acceptable-coarser-not-chosen, --check/--status/bare -c dead, [ -s ] guard UNNECESSARY with the empty-actual argument), AC2 WHY-comment (Alpine/BusyBox applet contract, two-space compute form portable both families, cites §D3b), AC3 prose carriers (runbook :383 dev-same-commit keeping the sha256sum literal for T5 need_lit; chunks/C06.md:267 DATED CORRECTION ALREADY FOLDED BY PLAN THIS ROUND; TP2 doc grep-adjudicated OUT; names/claims frozen), AC4 red-first test ledger (grammar leg gated on busybox-family IMAGE-IDENTITY set {curlimages/curl,docker.io/curlimages/curl,alpine variants,busybox} + no---long-option ban on hash-applet lines + positive equality/MISMATCH/marker-order arms + digest-ledger pin beside the init image (3fb7e13e seed) + render-shape-not-runtime honesty (no docker daemon) + n2 NON-FLIP classifier DECIDED (no WAVE-E; census keeps teeth) + TEST_SPEC next §12.x class law), AC5 combined bar (radiance 43P+legs, witnesses 498P/9S + 29P + 36P unmoved, naming 5ok + AMD_GPU_FLIP_COMMIT=<C11 sha> NON-FLIP, runbook 5/tp2 3/dashboards 5/surface 9 + explicit M1..M8 10, render-diff proof ONLY the init command string moved, aislop/rulesync, zero-stale re-run), AC6 owner-run live closure (NO re-download — pack complete size-proven; ONE minutes-class sha256 pass = FIRST hash verification ever; mismatch-still-loud = gate working; serve pulls + boots; every later restart <1s marker-skip; the ONLY no-fix path = host-side GNU-compute hash + marker touch + chown 65532:65532, human-owned loop-breaker NOT a substitute — merge C11 recommended; never touch the pack itself)), DECISIONS.md (D27 append-only: owner live report, BusyBox short-only parse root cause with source+banner cites, download-complete + size!=hash caveat, fix + all rejects with reasons, NOT-A-TIMEOUT non-cause + cancelled-first-launch recording, class law applet-family-is-a-contract / vocabulary-never-proves-grammar, blast radius one site + two carriers, n2 NON-FLIP decision, authored-at-C02-survived-four-rounds honesty (designed-red catches shapes, live catches truths — 4th confirmation), reopen recorded), plan file (APPENDED '## Rework delta 4 — live defect C11' — chunk row, wave 8, Commands additions; earlier sections frozen), chunks/C06.md (:267 dated correction marker for the presence-not-grammar witness), STATE.json (plan_status complete->APPROVED reopened with reason; chunks.C11 pending/wave8/[C10]/live-defect note; scout round-5 handoff WITH the premise-refutation + cancelled-launch honesty; fold-in handoff; all keys intact)] highlights: [exact file set named for the red-first round — TEST SESSION TODAY: charts/radiance/tests/{test_render.py,radiance_testlib.py}, tests/services/amd-gpu-naming.sh, charts/llama-swap/tests/TEST_SPEC.md (+ radiance-runbook.sh re-pin if the :383 wording moves a needle — expected none); DEV: charts/radiance/values.yaml (346 + comment) + .agents/notes/radiance-on-target-acceptance.md (:383); the legs MUST be red against today's tree (command fires the --check ban) and the equality/MISMATCH/marker-order positive arms define green; names/claims/services frozen — C11 is the smallest live delta yet] deviations: none — fix shape taken from §D3b.4's recommended block verbatim; the two §D3b open plan-items closed in-contract (equality-over-c-minus; NON-FLIP-over-WAVE-E) with rationale in D27 friction: none open_questions: [none new — the owner's live-merge sequencing (C11 rides the same branch; live crashloop clears only at the owner's merge+sync, backoff-capped at 5 min, nothing degrading meanwhile) is a hand-back word, not a plan gate] next_suggested: test session red-first on the named file set (grammar leg + image-identity/digest pin + NON-FLIP matcher + §12.x record) -> dev C11 (one line -> one block + runbook wording, same commit) -> review -> final-review round 4 (narrow: C11 delta + full bar) -> owner hand-back (merge + AC6 receipt walk; host-side loop-breaker offered as the human-only alternative)"
     }
   ]
 }

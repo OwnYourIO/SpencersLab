@@ -836,3 +836,32 @@ Tree clean apart from the records files.
 — final reviewer round 3 ADDENDUM, 2026-11-13 (same reviewer session line: fresh bars re-run;
 §D2.8 + D26-amendment audited as records; D26 card verified against the live datum; no
 implementation or validation file edited; /tmp-only dep updates; readonly-tier cluster reads).
+
+---
+
+## Rework delta 4 — live defect C11 (BusyBox checksum grammar) — 2026-11-13, appended per owner report
+Third live-defect round (C09 §D1, C10 §D2, C11 §D3/§D3b). The fetch-init's completion gate is
+GNU grammar (`sha256sum --check`) inside an Alpine/BusyBox image — long-option parse dies at
+exit 1, `set -e` skips the marker, pod CrashLoops on 1-second no-op iterations while the
+113.6 GiB pack is COMPLETE (size-proven, never yet hash-proven). The "timeout/stall" premise
+was refuted by the same scout round (§D3; first scout launch cancelled by the user, re-run
+produced §D3b — both recorded honestly). Authority: EXPLORE §D3b; ledger D27. plan_status
+reopened complete→approved for this delta.
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C11 | fetch-init checksum gate → portable shell-EQUALITY form (+WHY comment, grammar-leg suite law, runbook carrier) | S | 8 | [C10] | repairs C02's authored line as shipped through C08-C10's world; live closure chains after C10's router recovery + step 3 |
+
+Wave 8: C11 (alone). One-site fix `charts/radiance/values.yaml:346` per §D3b.4's verbatim
+replacement block; rejected shapes recorded with source reasons (`-c -s` GNU-has-no-`-s`;
+`-c -` coarser-not-chosen; extra `[ -s ]` guard unnecessary — empty-actual covers the
+missing-file case). Commands additions (beyond the standing battery): the render-diff proof
+that ONLY the init command string moved (claim pair, curl line, D15 QoS byte-kept);
+`AMD_GPU_FLIP_COMMIT=<C11 sha>` => **NON-FLIP** acceptance (new n2 class — census of claim
+lines unchanged, carrier files untouched; WAVE-E deliberately NOT minted); the red-first
+grammar legs (`--`-ban on hash-applet lines gated on busybox-family IMAGE IDENTITY +
+digest-ledger pin + positive equality/MISMATCH/marker-order arms) go green only with the
+fix; radiance suite 43P+legs/0F, witnesses 498P-9S/29P/36P unmoved; zero-stale sweep
+re-run (names frozen). Live closure owner-run (AC6): one minutes-class sha256 pass,
+marker lands, serve container pulls + boots; the host-side hash+marker-touch stays the
+human-only same-verification loop-breaker, never a substitute for the chart fix.

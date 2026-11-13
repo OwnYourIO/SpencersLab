@@ -437,6 +437,74 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    ProgressDeadlineExceeded 02:37:47Z) because main is at `ec18281fb` = C09 — C10 (56142d511)
    is NOT yet merged — and step 3 has not been run (strata 64Gi resident, free 59.92 Gi). The
    healthy router on the gpu cluster is a DIFFERENT cluster and is not recovery evidence here.
+- 2026-11-13 human+plan D27 (LIVE DEFECT C11 — owner-reported third round: after the C10
+  sync the radiance pod streams the pack to completion, then the `radiance-fetch` init
+  CRASHLOOPS — live restartCount 6, back-off 5m0s, 1-second iterations, serve container
+  never started (`imageID: ""`, PodInitializing); verbatim intent in STATE handoffs;
+  authority EXPLORE §D3/§D3b, scout round 5 ses_e2b06477fffeuymXBh71NbPe3w): ROOT CAUSE —
+  `charts/radiance/values.yaml:346` runs `echo "$LFS_SHA  $PACK" | sha256sum --check` in
+  `sh` inside `docker.io/curlimages/curl:8.23.0` (live imageID `sha256:3fb7e13e…`; the
+  container's own banner `BusyBox v1.37.0` is the authority) — BusyBox hash applets declare
+  SHORT options only (`md5_sha1_sum.c` `getopt32(argv, "^" "scwbt"…)`, byte-identical
+  1_36_1↔master bracketing 1.37.0): any GNU long option dies at option parse with
+  `unrecognized option: check` + **exit 1** (live lastState.terminated), `set -e` aborts
+  before `touch "$MARKER"` → the marker can never be written → every restart re-enters, the
+  curl resume is a <2 s no-op, CrashLoop. DOWNLOAD-COMPLETE FINDING: resume offset printed
+  `121,969,901,568` == the exact RQ0/values-ledger size — the 113.6 GiB pack is COMPLETE
+  (triple-match §D3.4: `x-linked-etag` + HF tree `lfs.oid` + ledger); honest caveat
+  recorded: size-complete ≠ hash-complete — the bytes have NEVER passed the gate, which is
+  why the fix REPAIRS the gate (first real verification happens post-fix, ~1-6 min, one
+  time, zero re-download) and nobody "skips to the marker" without running the hash.
+  FIX CHOSEN (C11 AC1 = §D3b.4): portable SHELL EQUALITY —
+  `actual=$(sha256sum "$PACK" | cut -d' ' -f1)` + `[ "$actual" != "$LFS_SHA" ]` →
+  MISMATCH echo naming BOTH expected and actual → `exit 1`; `touch "$MARKER"` stays the
+  sole success artifact after the guard; the two-space compute form prints identically on
+  both applet families (`printf("%s  %s\n")`); curl line, rc-0/33 tolerance, marker-skip,
+  set -e, all script constants BYTE-KEPT. REJECTIONS with source reasons (recorded so
+  nobody re-attempts): `-c -s`/`-cs` — BusyBox-only, GNU has NO `-s` (busybox's OWN FIXME
+  names GNU's long-only --quiet/--status) → breaks an image swap; `sha256sum -c -`
+  (stdin) — equally portable, minimal diff, keeps `: OK` receipt, but on failure names the
+  FILE never the digests → adjudicated ACCEPTABLE-COARSER, NOT chosen (equality is the
+  only shape satisfying the digests-on-one-line failure-log requirement, §D3b.4 open item
+  closed by plan); `--check`/`--status`/bare `-c` — die or half-die per family; extra
+  `[ -s "$PACK" ]` guard — UNNECESSARY and omitted: missing file → `can't open`/`cannot
+  open` stderr + empty stdout through `cut` → `actual=""` can never equal the 64-hex sha →
+  same loud MISMATCH; partial file hashes differently → same path. NON-CAUSE ADJUDICATED:
+  **NOT a timeout, NOT a stall** — §D3 (same scout round) refuted the launch's/owner's
+  "timing out too soon" premise with live+offline evidence (the 1126 B line is the HF 302
+  redirect interstitial; the stream ran ~95 MB/s; `progressDeadlineSeconds: 600` is the
+  Deployment-condition theater that sold "the pod stopped"; no `--max-time`/`--speed-*`
+  exists on the line; no `activeDeadlineSeconds` on the pod); a first scout launch was
+  CANCELLED BY THE USER and re-run — recorded honestly in the STATE scout handoff;
+  progress-output cosmetics (§D3 open items: progressDeadline prose/override, `-#`/`--silent`
+  style) stay NON-defect options, not in C11's scope. CLASS LAW (the third
+  "one-layer-below-the-surface" sighting with §12.8/§12.9): **a container image's applet
+  family is a CONTRACT — GNU-only long options require a GNU-family image; vocabulary
+  assertions never prove grammar** — the suite now gates on IMAGE IDENTITY (busybox-family
+  set membership + digest-ledger pin beside the init image) and OPTION GRAMMAR (no `--`
+  long options on hash-applet lines; red-first legs §D3b.5, which MUST be red against
+  today's tree and are the legs whose absence let this ship). BLAST RADIUS: exactly ONE
+  defective call site + TWO prose carriers — runbook :383 (dev re-words in C11's commit,
+  `sha256sum` literal survives T5's need_lit, no needle quoted `--check`) and
+  chunks/C06.md:267 (plan-round dated correction folded at this amendment — the C06
+  operator-proof checked the string's PRESENCE, not the grammar); TP2 doc
+  grep-adjudicated OUT (zero sha256sum sites); repo-wide audit §D3b.7: every other
+  busybox/alpine-family init is POSIX-applet-safe, all `curl --long-flags` are the real
+  curl binary, git/rulesync/aislop long options are GNU-userland tools — the class cannot
+  currently return elsewhere; the new grammar legs guard radiance itself. n2 same-wave
+  matcher: C11 gets NO WAVE-E shape — a NON-FLIP class (touches no carrier file +
+  claim-line census unchanged → guard vacuous-with-message; any claim-moving non-wave
+  commit still REDs) — a fifth shape would classify a grammar fix as a claim wave and rot
+  per doc-fix (adjudicated; D27). AUTHORY HONESTY (no blame, the law is the product): the
+  defect was written at C02 (init contract per D10/D15), survived C04's review, the test
+  wave, C09's adjacent fix and final reviews r2/r3 because every leg read the script's
+  staging VOCABULARY (marker/sha/URL/curl present) — 43P through a broken gate; the
+  green-suite witness at final-r3 predates the first cold-staging attempt: designed-red
+  catches shapes, LIVE catches truths — fourth confirmation of the ticket's
+  live-verification law (all three prior live defects likewise invisible to a green bar).
+  Scope confirmation from the same owner round: rework scope remains the six items +
+  recorded nits + these live deltas; plan_status reopened complete→approved for the C11
+  round (D26/D25 pattern).
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
