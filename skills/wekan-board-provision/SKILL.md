@@ -56,6 +56,12 @@ the apply steps below, gated by a human-confirmed plan.
   what the spec accepts.
   Against a schema-1 snapshot the spec is UNVERIFIABLE and the engine
   prints only a runbook note on stderr — a note is not an action.
+- **Existing cards**: a separate offline engine,
+  `scripts/board-checklist-backfill.py`, plans the additive,
+  dry-run-by-default expansion of live cards' Lifecycle / Human in the
+  Loop / Services checklists onto this spec; its apply leg is owner-run
+  per `references/checklist-backfill-runbook.md` (board backup, then
+  `--apply --yes --backup-confirmed`), never a provisioning step.
 
 ## Procedure
 

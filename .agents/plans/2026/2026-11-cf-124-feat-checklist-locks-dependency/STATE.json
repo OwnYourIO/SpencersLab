@@ -306,16 +306,43 @@
     },
     "C07": {
       "title": "Backfill engine + runbook: scripts/board-checklist-backfill.py (additive, in-place sorted inserts, dry-run default, owner-run --apply)",
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01",
         "C03"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "dev_session": "ses_e2a9780b2ffeUd3m25znfe0mwW",
+      "review_session": "ses_e2a7b2a51ffeeN1GxGEMbV95YS (r1 CHANGES_REQUESTED) / ses_e2a6a249fffepBwciMuNEn5ais (r2 APPROVED)",
+      "last_verdict": "APPROVED (round 2) — engine + runbook land with zero new reds, backfill b1–b8 flipped green, dry-run proven network-free two ways, no DELETE anywhere, and round 1's MAJOR (the Priority apply leg using a route unregistered at v12.77, which would abort the owner's whole apply) fixed to mirror the deployed MCP with the reviewer's OWN stub-transport proof of both branches",
+      "handoffs": [
+        {
+          "at": "2026-11-13T18:2xZ",
+          "role": "dev",
+          "session": "ses_e2a9780b2ffeUd3m25znfe0mwW",
+          "result": "status DONE | files: new scripts/board-checklist-backfill.py (stdlib, 440 ln) + new skills/wekan-board-provision/references/checklist-backfill-runbook.md + one pointer bullet in that skill + one sentence in the boards cutover section (+mirror via regen) | dry-run deterministic (two runs cmp-identical, 88 actions) and ZERO-network proven by a socket-poisoned run; --apply refuses without --yes + the backup assertion; reads only an exported board file; archived/In-Process/anomaly cards reported not repaired; vocabulary COPIED from the landed engine constants (b4 probe) | deviations: report to stderr + --report because the suite reserves stdout for the plan array; the boards sentence had to become its own paragraph (S4 pairs Session Rename × backfill on one line); every insert carries a strictly-negative sort so trailing names render AHEAD of the stored set — no reorder API exists, so the runbook documents the owner's one-time order pass"
+        },
+        {
+          "at": "2026-11-13T19:0xZ",
+          "role": "review",
+          "session": "ses_e2a7b2a51ffeeN1GxGEMbV95YS",
+          "result": "round 1 CHANGES_REQUESTED — validations green and safety/determinism/coupling/prose all pass, but **MAJOR M-1**: `scripts/board-checklist-backfill.py:327` POSTs a board-scoped `/customFields/:f` shape UNREGISTERED at v12.77 (the real route is list-scoped, cards.js L2388, exactly what the deployed MCP uses at server.py:1000), so an armed apply aborts the whole run — a defect only a route-aware review can see, since the offline suite never touches transport; siblings named: the camel-vs-kebab fallback GET and the already-attached-only no-op. No validation_at_fault: a concrete fix, not a test fault"
+        },
+        {
+          "at": "2026-11-13T19:4xZ",
+          "role": "dev-round-2",
+          "session": "ses_e2a9780b2ffeUd3m25znfe0mwW",
+          "result": "M-1 rewritten to mirror the MCP: pre-read GET /api/cards/:c → attached: list-scoped POST …/lists/:l/cards/:c/customFields/:f {value:int}; unattached: whole-array PUT …/lists/:l/cards/:c with the entry appended; fallback GET corrected to kebab; request_json gained PUT; runbook nits landed (streams named, the PUT leg's read-modify-write concurrency warning). Proven on a /tmp stub transport: attached POST, unattached PUT preserving pre-existing entries, zero board-scoped camel paths, armed apply rc=0 with no abort; 185-arm sweep unchanged; file-too-large aislop warning cleared"
+        },
+        {
+          "at": "2026-11-13T20:2xZ",
+          "role": "review",
+          "session": "ses_e2a6a249fffepBwciMuNEn5ais",
+          "result": "round 2 APPROVED, zero findings at any severity — every route verified against BOTH authorities line-by-line (script:313/320-329/288 ↔ server.py:992-1007 / overview:414), zero camel board-scoped paths and zero DELETEs remaining; the live-pre-read-attaches deviation ruled CORRECT (export entries carry no field _id, so attach is undecidable offline by construction; the extra GET is apply-only and dry-run stays socket-free, independently proved); the reviewer built its OWN stub harness (95 recorded calls, attached POST int 5, two unattached PUTs preserving entries, kebab fallback used, pre-reads ordered before writes, off-shape route raises) rather than trusting the dev's; runbook stream naming matches the code exactly and the concurrency sentence is precisely the PUT leg's read-modify-write law; informational: skills/wekan-api/references/rest-api-overview.md:312 still documents the stale board-scoped camel POST (a doc/version-lag nit for the planner, no action owed here)"
+        }
+      ]
     },
     "C08": {
       "title": "Follow-up-card lineage: parent_id AND child-to-parent fixes edge, superseding the parentId-only ruling",
