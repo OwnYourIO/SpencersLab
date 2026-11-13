@@ -1,7 +1,18 @@
 {
   "feature": "2026/2026-11-cf-124-feat-checklist-locks-dependency",
   "plan": "2026-11-11-feat-cf-124-feat-checklist-locks-dependency.md",
-  "plan_status": "approved",
+  "plan_status": "complete",
+  "final_review": {
+    "at": "2026-11-13T22:4xZ",
+    "session": "ses_e2a4fc73fffeMng0HummwabB6",
+    "verdict": "APPROVED (whole-plan, whole-branch; planning-tier fresh session)",
+    "battery": "the reviewer's OWN 219-run sweep (179 per-arm + 29 bare + 11 node): every suite green except the ledger; boards-deps t1–t9 fully green; backfill b1–b8 green; rulesync generate ×2 no-op + --check; aislop ci --changes 100/0/0 and --base main 0 errors with only the pre-existing plugin-size warning; py_compile both scripts; the two provision dry-runs in their designed shapes; artifact AST ≡ engine (5 checklists, 19/7/4/13/13 name+order, exactly one checkItem, no custom-field action); STATE parses",
+    "red_set_assertion": "EXACTLY the sixteen pre-existing ledger arms, ZERO designed reds, ZERO new — the last designed red (boards-deps t4) flipped green with C08",
+    "coverage": "all five card asks landed UNDER the owner's overrides — Deployment NOT in the blank default (D17/OQ3), `Type` = the shipped seven (D31), five checklists only (D34), `CuratedForest.com` exact (D22/D23), D28's uncommitted-in-place zero-commit posture with no stop-guard anywhere, the Priority write permitted with its bulk boundary, `related-to` the sole gate with the child→parent `fixes` edge non-gating and non-grouping; live-board text stays v12.77-truthful (dormant rule extras, vocabulary-only artifact); owner-owned surfaces untouched; USER steps 3–7/9 accurate",
+    "findings": "no blockers, no majors. MINOR-1 was the coordinator's own STATE (C04 left pending, stale current_wave, a duplicate plan_handoffs key whose later copy shadowed mine) — all three fixed at this write. MINOR-2 the boards Follow-up-cards opener still lacks the back-cite of the gated `Follow-up cards created` row (Stage map remains the working authority) — planner fold. MINOR-3 `skills/wekan-mcp/SKILL.md:64` + `references/call-shapes.md:54` still say kind-1 follow-ups are parentId-only — flow half withdrawn by D25, tool half true; deliberately outside C08's file list, so it is a planner/owner one-phrase reword. NITs: a pre-D27 renumber pointer in the runbook; role-coord step 8's 'full diff' wording for a no-mint run; boards:14 'blocker' vs prerequisite. INFO: backfill.sh:179 failure text repeats the backwards 'append after' clause; rest-api-overview.md:312 lists the stale camel route; overview.md:274 undotted parenthetical; the roster-family reds stay red by design",
+    "hygiene": "diff ⊆ the chunks' declared files + this ticket's folder; zero charts/services/custom-values/containers paths; nothing pushed; main never advanced",
+    "plan_file_edits_by_reviewer": "final review section appended; the stale 'draft' header and the nine-red Commands bullets corrected to approved / sixteen-arm ledger (its own write-back, sanctioned for the final round)"
+  },
   "approval": {
     "at": "2026-11-11T14:29Z (owner message timestamp; workspace clock at record: 2026-11-11T15:05Z)",
     "by": "owner, in-session",
@@ -10,8 +21,8 @@
   },
   "coord_session": "ses_e3898c639ffek4WKeesBx5rhoe",
   "test_session": "ses_e3460ff68ffeI0Myd52xyyRW6y",
-  "current_wave": 1,
-  "updated_at": "2026-11-11T15:05:00Z",
+  "current_wave": 3,
+  "updated_at": "2026-11-13T22:5xZ (final review recorded; all eight chunks done)",
   "plan_rounds": [
     {
       "round": 1,
@@ -227,7 +238,7 @@
     },
     "C04": {
       "title": "Repo worker-repo table: fifth row CuratedForest.com, exact-spelling law, silent-unclaimable trap, provision spelling capture",
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
@@ -372,7 +383,7 @@
       ]
     }
   },
-  "plan_handoffs": [
+  "plan_handoffs_planner_rounds": [
     {
       "round": "plan-1 (draft)",
       "session": "ses_e37e26e23ffepyqIF2e20YpvNR",
