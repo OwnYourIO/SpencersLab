@@ -418,6 +418,25 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   model the layer production consumes — for GPU-claim law that is the Application-side
   valuesObject, not the chart-only helm merge; a deletion instruction in service values is
   now a banned pattern (null-absence guard).
+   AMENDMENT 2026-11-13 (scout round 4, §D2.8 — boundary closure, the FACT UNCHANGED): the
+   death site is now narrowed BETWEEN two exonerated layers — the ApplicationSet CR provably
+   STORES both nulls (claim + `shared-storage`), and every live Application is null-free
+   doc-wide (the killer datum: `gpu-ai-amd-gpu`'s valuesObject is literally `{}` because its
+   only generator content was such a null), while helm v3.16.4 provably DELETES a key given a
+   null (`pkg/chartutil/coalesce.go` + the docs' "Deleting a default key" + offline render A on
+   the pre-C10 blobs retires the bare). So the strip is whole-tree and happens in the
+   appset-controller hand-off only (sprig/mergo nil-skip vs struct round-trip still
+   indistinguishable from outside the binary, and irrelevant to the law); C10's carrier move is
+   the right fix under EVERY candidate cause, and the C10 commit message stands verbatim,
+   upgraded from one evidence pair to a fleet-wide class law. Against over-reading: nothing
+   ever "retired" the bare claim normatively, and the wedge was NOT propagation staleness —
+   `Application.status.history` ids 123-132 show the APU ADD present in every snapshot from
+   01:52:08Z on and the null absent from all of them, across 4 syncs and 2 ReplicaSets, so the
+   valuesObject never once held a schedulable shape. LIVE STATUS at this writing: router
+   `gpu-ai-llama-swap` STILL `Available=False` since 01:52:09Z (gen 49, template the bare pair,
+   ProgressDeadlineExceeded 02:37:47Z) because main is at `ec18281fb` = C09 — C10 (56142d511)
+   is NOT yet merged — and step 3 has not been run (strata 64Gi resident, free 59.92 Gi). The
+   healthy router on the gpu cluster is a DIFFERENT cluster and is not recovery evidence here.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future

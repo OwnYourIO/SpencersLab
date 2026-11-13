@@ -543,3 +543,296 @@ prose (AC7): post-sync router pod Running on `gpu-8060s` (node allocation names 
 radiance still Pending until the owner's step 3; the `charts/base` appset-charts passthrough
 root-fix is OUT OF SCOPE (repo-wide blast radius) → coord files the follow-up card (body line in
 chunks/C10.md AC5 / DECISIONS D26).
+
+---
+
+## FINAL whole-plan review round 3 (live-defect deltas C09+C10) — 2026-11-13, fresh
+planning-tier session, HEAD 4652671fd (C09 = b1def8d1f, C10 = 56142d511 amended + records)
+
+**Verdict: APPROVED.** Zero blockers, zero majors. Both live-defect rounds re-verified against
+the LIVE cluster truth (readonly MCP only) and re-derived bar-for-bar with no trust in prior
+verdicts; the eight earlier chunks' guarantees re-checked post-C09/C10. NOTE on the landing
+state: the owner already rebase-landed the branch through C09 onto main (`main == origin/main
+== ec18281fb` carries the re-hashed C09 wave — that is why C09 is LIVE-GOOD and the router is
+still broken); the remaining merge delta `main..HEAD` is exactly 19 files — 56142d511 (C10) +
+1b89da994 (its plan round) + 4652671fd (records). **56142d511 is the router's cure.**
+
+**Bars (all run fresh, sequential, PATH-exported, dep-update only in /tmp copies):**
+charts/llama-swap **498P/9S/0F** (9 skips enumerated = standing RUN_FLAG_AUDIT/RUN_HF_CHECK
+network evidence gates, zero helm-skips) · charts/radiance **43P/0F** · charts/amd-gpu
+**29P/0F** · charts/vllm **36P/0F** · amd-gpu-naming **5 ok bare AND** full green with
+`AMD_GPU_FLIP_COMMIT=56142d5115…` (WAVE-C same-wave guard + carrier transfer verified: chart
+bare 1→0 AND services/gpu +1, one commit) **with teeth re-proven by this review** (bogus sha →
+RED "is not a commit"; plans commit 1b89da994 → RED "matches NO accepted shape") · runbook
+**5 ok** · tp2 **3 ok** · dashboards **5 ok** · surface **9 ok bare** AND
+`CF143_BASE_SHA=0d9b41785 … M1..M8` **10 ok** (M8 needs explicit check-ids — env-var-only is
+9 ok BY DESIGN) · helm lint charts/{amd-gpu,radiance,llama-swap,vllm} + both service umbrellas
+**0 failed**, renders exit 0 · rulesync @repo-pin `generate --check` clean · aislop: local-pin
+`ci --changes` 0/0/0 (106 files) AND the `--base main` form answered promptly 0/0/0/106 at the
+final tree — the C09-r1 drift reading (35/78E on out-of-branch files) did NOT reproduce here;
+the CI-authoritative form (`@0.20.0 ci --changes --base origin/main`) passed at C09 r1 and the
+workflow header's full-repo-debt note stays accurate. Tree clean after every run.
+
+**FOCUS 1 — C09+C10 as a pair, vs the live truth:**
+(a) `charts/amd-gpu` renders `command: ['/root/k8s-device-plugin']` + the EXACT 4-item args +
+the ids-table subPath mount over `/usr/share/libdrm/amdgpu.ids` (readOnly), kinds
+{ConfigMap, DaemonSet}, zero RBAC ✓. The image-config evidence json is the COMMAND authority
+(Entrypoint ABSENT, Cmd four items `./k8s-device-plugin`-first, WorkingDir `/root/`, manifest
+digest byte-equal the 6437c74f values ledger) and the testlib RE-DERIVES PLUGIN_COMMAND from
+it (cmd[:1] pinned before the WorkingDir join — constants cannot drift silently). The oracle
+carries its KNOWN-DEFECT header (one authorized comment) with the parsed body **byte-equal to
+the a81989b47 capture** — re-verified here, not trusted. The radiance asymmetry is DOCUMENTED
+and frozen: `test_main_container_stays_command_absent_entrypoint_witnessed` states the image
+HAS Entrypoint [radiance] (registry receipt at 5b4c1470/6fb0e99b, §D1.5), args-only is the
+ruled shape, a consistency-copy would RED, and the leg names its own removal law.
+(b) `charts/llama-swap` ships **NO GPU claim** (requests cpu/memory only; the WHY block carries
+the per-cluster-ADD law + both dead ends named — null AND 0). `services/gpu/prod` ADDs bare
+`amd.com/gpu: 1` **limits-only** — my adjudication, once more, against the LIVE witness: the
+running gpu-llama-swap template is exactly `limits {amd.com/gpu:1}` + `requests {cpu:1,
+memory:4Gi}` (kubelet mirrors extended resources), so limits-only is the byte-exact transfer;
+a requests mirror would MOVE the shielded render and is NOT owed (owner overrule = one line +
+leg-B re-pin, presented below). `services/gpu-ai` keeps the gpu-8060s add + mirror; the inert
+null and its false prose are gone; a repo-wide scan finds NO live `: null` retirement anywhere
+under `services/` (the supabase `'{"data": null}'` hit is a JSON-string body, not YAML null).
+(c) PROJECTION re-derived by this reviewer independently (umbrella render → generator values →
+recursive nil-drop → helm → Deployment): **gpu-ai** = limits EXACTLY {gpu-8060s:1}, requests
+{gpu-8060s:1, cpu, mem}, generator subtree null-free; **gpu** = limits EXACTLY {amd.com/gpu:1},
+requests {cpu, mem} — byte-equal to the pre-C10 chart-default render (the C07/C10 live-witness
+included): the shield's REAL meaning — the rendered gpu pod unchanged — holds
+carrier-independently. LIVE reads (readonly tier): Application `gpu-ai-llama-swap@default`
+valuesObject = APU-only pair, ZERO null keys, sources[0].helm absent (MAJOR-1's shape lives);
+plugin DS 1/1 ready with command+4-args (C09 live-good); node `ai-gpu` capacity `amd.com/gpu:
+"0"` + both pools 1 (the count-0 reading the C10 docs sweep teaches IS the live truth); memory
+allocatable 125.08Gi. The router Deployment remains the BROKEN pair (gen 49, unavailable 1,
+Recreate, limits {amd.com/gpu, gpu-8060s}) — **owner-side pending sync, not a branch fault →
+AC7 hand-back item, first in the receipts order below.**
+(d) Silent-failure guard: leg C walks the PRE-projection generator values of BOTH umbrellas
+(null ⇒ RED — verified non-vacuous: the walk reads the raw map, the projection is a separate
+step) and text-scans EVERY `services/*/*/values.yaml` for live `amd.com/…: null` lines —
+so re-introducing the GPU-claim null-retirement ANYWHERE under services/ is impossible.
+Honest coverage note: the GENERALIZED class (a null retiring a NON-amd.com key on some other
+app) is enforced only for the two watched llama-swap subtrees + prose; its repo-wide form
+naturally belongs to the D26 passthrough card (its companion would be a repo-wide
+null-scan arm) — recorded, not a gap of this ticket.
+(e) Zero-stale sweep re-run: `gpu-ai-pro-r9700` 0 hits across charts/ services/ tests/
+.agents/notes/ .github/ custom-values/ containers/ .opencode/ .rulesync/ (records-only);
+`amd.com/r9700-1` 0 live hits (rejected literal stays record-side + assembled absence-checks);
+`gpu-r9700-1` exactly at the AC4 placement set. ids-table: rendered sha 864da869…c6f5 == the
+runbook pin, 455 bytes, 10 data rows; the fixture files were untouched since C08 (C09 added
+only the image-config json + oracle header) — the APU-rows/7551-row byte-parity legs re-ran
+green inside the 29P.
+
+**FOCUS 2 — goal-vs-card after two live rounds:** every prior chunk's guarantee holds at the
+post-C09/C10 tree: C01 vllm disable intact (golden 0 'vllm' hits, 0 live catalog rows — the
+jsonc is 86 live rows = C01-era 83 + C05's radiance trio, the trio commented with markers);
+C02 full profile + Guaranteed pairs + the 64Gi answer-in-place — and the owner is LIVING the
+arithmetic: 64+64+4 = 132 > 125.08 shipped, live-grounded 65.158 + 64 = 129.16 (§D2.4; the
+shipped 132's undercount is documented as MORE-over-budget direction, never less), radiance
+Pending-by-design to the byte; the runbook's THIRD-CLASS section does NOT contradict step 3 —
+it scopes it (step 3 schedules RADIANCE; the OUTAGE TRUTH line says plainly the router returns
+only with the C10 merge+sync); C04 peers.radiance live in the golden + projection render; C05
+trio 9/5/1 higher-wins + polarity + [text,image] (M8 green); C06 runbook complete at 717 lines
+incl. the C09 exec receipt (-A4 describe lens) and the C10 diagnostic (pinned RUNNABLE shape:
+`-n default get application`, `sources[1].helm.valuesObject`); C07 shield proven at the
+projection layer; C08 first-party chart + rename unmoved. Strata LIVES (Q5) — its pod Running
+33h on its pre-swap allocation; TP2 doc + card #1 (re-published POST-rename — live-checked:
+carries gpu-r9700-1 + the RE-VERIFICATION law) + card #2 + the pending D26 card close the
+card's documented-instructions ask.
+
+**Carry-list dispositions:** M-1 grep fold — CLOSED, `-A4` ACCEPTED over the carry-literal
+`-A1` (describe emits four Args lines; -A4 ⊇ -A1; doc :237 names four; T5 holds green).
+Chart.yaml governance-header one-line fold — ACCEPTED AS DEFERRED, row stays open (Chart.yaml
+is outside every wave's sanctioned set since; the authoritative corrected story is
+test-pinned in values.yaml; behavior-irrelevant). MINOR-2 frozen strata prose ~1348-1354 —
+POINTER ADEQUATE: three dated homes (STATE.deferred names the exact range + FORWARD, TEST_SPEC
+§12.9 ledger, DECISIONS cutover line); the region is byte-frozen by C04/AC4 and dies at the
+cutover anyway — no edit owed. NIT-2 "without a single-naming history" (:278) — ACCEPTED as
+dev-lane optional wording (the count-0 conjunct independently catches every real fallback).
+NIT-3 PROVENANCE delta-header direction — cosmetic, closed-by-parenthetical, concurred. M8
+explicit-check-id law — documented in TEST_SPEC §12's run-posture section + the script, but it
+has now tripped a second reader: recommend ONE FRICTION line (coord's write). D26 follow-up
+card — body line recorded at chunks/C10.md AC5/DECISIONS D26 is ADEQUATE for the root fix
+(fact + both sanctioned fix shapes + evidence-pair citation + blast radius + latent-not-active
+status); recommend the created card also cite TEST_SPEC §12.9's class law (and consider the
+repo-wide null-scan companion there); board check this round: NOT yet in Inbox → coord
+run-end action, still owed. Class laws L1 (command/entrypoint parity + image-config receipt),
+L2 (valuesObject projection), L3 (owner-facing commands are RUNNABLE SHAPE) are each STATED
+where agents read them (FRICTION 2026-11-13 lines + DECISIONS D25/D26 + TEST_SPEC §12.8/§12.9)
+AND test-armed on their ticket planes; L4 (patched-regex byte audit) is a process law —
+prose-only by nature, FRICTION + §12.9 AMENDMENT are its homes, flagged honestly.
+
+**FOCUS 4 — git/scope:** per-commit audit of all five post-5d2afd129 commits: e086638b4 and
+1b89da994 are plan-folder-only records (6 files each); b1def8d1f = exactly C09's 11-file set
+(2 dev + 8 test-wave + 1 evidence json, zero services/gpu-cluster files); 56142d511 = the 13
+WAVE-C-shaped files (four dev values/docs + eight test files incl. the amended chunks/C10.md
+record); 4652671fd = three plan-folder files. The AMEND was lawful: branch never pushed
+(no upstream, `origin` carries no cf-143 ref), 698af3b78 unreferenced and NOT an ancestor,
+a81989b47/b1def8d1f intact, main == origin/main == ec18281fb untouched by any agent write.
+Test-integrity: every removed assertion line across C09+C10 classified — each is either a
+D26-ruled carrier flip (its inverse guard shipped strictly stronger: legs A/B/C + WAVE-C
+transfer + null-absence repo scan) or a re-embedded prior shape; the off-parity fixture moved
+by EXACTLY the sanctioned 2 transferred lines with a PROVENANCE era entry and teeth (synthesized
+third change reddens both arms per §12.9); NO weakening. Tree clean after all runs.
+
+**Owner hand-back, in order:** (1) MERGE + SYNC 56142d511 (with its records) — the router cure;
+then the AC7 receipts IN SEQUENCE: (i) router pod Running on `amd.com/gpu-8060s` (Recreate
+replacement — llama.spencerslab.com back); (ii) node pools `amd.com/gpu-r9700-1: 1` +
+`amd.com/gpu-8060s: 1`, bare `amd.com/gpu` at COUNT 0 — already true live (C09 receipts
+re-confirmed this round); (iii) radiance schedules ONLY after step 3 — SUSPEND auto-sync of
+gpu-ai-llama-swap first, then the owner's `kubectl scale deploy/gpu-ai-llama-swap-strata
+--replicas=0` (free 59.92 → 123.92 ≥ 64; do NOT touch guaranteedMemoryGi to clear it);
+(iv) the 8-session gate at full sizing (step 6); (v) then the receipt-gated ladder 64→68/72
+(→~96 while strata is down). (2) DECISIONS owed: the limits-only word (live witness says the
+transfer is exact; overrule = one line + leg-B re-pin); the D26 passthrough card — file it
+(adequate body ready, see above) and triage it as its own ticket; the upstream naming-feature
+ask (D24) remains an optional filing. (3) Card #1/#2 sit in Inbox awaiting the owner's pickup;
+AD-143 moving Executing→Review→Finished stays the owner's alone.
+
+— final reviewer round 3, 2026-11-13 (fresh session; no implementation or validation file
+edited; renders/dep-updates confined to /tmp copies; cluster reads readonly-tier only; repo
+tree verified clean post-runs).
+
+### Round 3 ADDENDUM — §D2.8 adjudication, the D26 card, and the full fresh re-run (2026-11-13, later the same day)
+
+The record above was written before scout round 4 (§D2.8, EXPLORE) and the DECISIONS D26
+AMENDMENT landed in the worktree, and before the D26 follow-up card was filed. This addendum
+closes those and re-runs the ENTIRE bar fresh at the current tree (HEAD 4652671fd + the
+uncommitted §D2.8/D26 records fold — zero implementation files moved since 56142d511, verified
+by `git status`). **Verdict unchanged: APPROVED. Zero blockers, zero majors — and §D2.8
+introduces no record defect: the falsified-cause hunt is CLEAN (below).**
+
+**(1) THE MECHANISM ADJUDICATION (FOCUS 1(e) — a surviving falsified claim would be a MAJOR).**
+§D2.8 falsifies CAUSE-A ("helm ignores nulls" — helm v3.16.4 `coalesce.go` deletes nil keys,
+docs 'Deleting a default key', offline render A on the pre-C10 blobs RETIRES the bare) and
+CAUSE-B ("propagation staleness / transient wedge" — `Application.status.history` ids 123–132
+show the APU ADD present in every snapshot from 01:52:08Z, the null absent from ALL of them,
+across 4 syncs and 2 ReplicaSets; no schedulable shape ever existed, and no APU-only template
+has EVER been live). The surviving story is §D2.6's, hardened: the null dies whole-tree inside
+the ApplicationSet-controller hand-off; my OWN live re-read this round confirms the killer
+datum — `gpu-ai-amd-gpu`'s valuesObject is literally `{}` (its only generator content was the
+inert `shared-storage: null`), and every Application read is null-free doc-wide. **Record grep
+hunts (DECISIONS/STATE/FRICTION/plan/chunks/EXPLORE + shipped docs): the retired-NORMATIVE
+framing = 0 hits; 'stale/transient' near valuesObject/hand-off/wedge = only §D2.8's own
+falsification paragraphs and the D26 AMENDMENT (correct usage); helm-ignores-null claims = 0.**
+Per §D2.8.5(ii): the C10 commit message stands VERBATIM, D26 stands with the appended
+boundary clause (present in the worktree diff), FRICTION line 26 stands (names the hand-off,
+not helm). No falsified cause survives → no MAJOR. One honest self-note: nothing in my record
+above asserted either falsified theory; its "the chain drops nulls before helm" wording is
+exactly the surviving adjudicated truth.
+
+**(2) LIVE TRUTH RE-VERIFIED (FOCUS 1(c)).** origin/main is STILL `ec18281fb` (C09) — C10 is
+NOT merged and the gpu-ai router is STILL DOWN (Deployment gen 49, available 0, unavailable 1,
+template the broken pair `{amd.com/gpu, gpu-8060s}`; Pending pod 3eac8cad…). The §D2.8.1
+correction is load-bearing for the hand-back: the "04:01 recovery" premise matches NOTHING on
+this cluster (likely the GPU-cluster router — live-healthy, gen 22, Available=True since
+17:50:43Z — or the ticket-side r2 approval). Node: bare `amd.com/gpu` at CAPACITY 0, pools 1/1
+both UNALLOCATED, radiance still Pending (step 3 NOT yet run: strata 64Gi resident, free
+59.92 < 64). My projection re-derivation on a fresh /tmp archive reproduces both production
+shapes EXACTLY: gpu-ai → limits {gpu-8060s:1} + requests {gpu-8060s:1,cpu,memory}, generator
+nulls NONE; gpu → limits {amd.com/gpu:1} requests {cpu,memory} — byte-matching the live
+gpu-llama-swap template (the D26 limits-only witness), so **the rendered gpu pod is unchanged
+by the carrier move — the shield's real meaning, proven carrier-independent, and the router's
+cure is confirmed as the chart-side deletion + sync, nothing else.**
+
+**(3) THE D26 FOLLOW-UP CARD — created and verified.** `Eev5WkDieH6TH2pEW` ("ApplicationSet→
+Application hand-off strips null values (deletion instructions never reach Helm)"), Inbox per
+the protocol. Body = the §D2.8.5(iii) corrected text (supersedes the chunks/C10.md:204
+placeholder framing) — factually checked line-by-line against §D2.8 and re-verified against
+my own live reads: the `{}` datum TRUE (read it myself), "every live Application null-free"
+TRUE (3 apps censused), "helm honors nulls (coalesce.go/docs/offline render)" TRUE per
+§D2.8.3, the title's "never reach Helm" is the surviving hand-off framing (NOT the falsified
+helm-ignores reading). "Blast radius today: ZERO / every other consumer ADD-only" — consistent
+with §D2.8 + my own repo scan (no live `amd.com/…: null` anywhere under services/ post-C10;
+the two surviving generator nulls are exactly as the card says). No overstatement found.
+Default-checked legs verified live: Services `infra`, Type `bug`, Model(s) `Qwen Flash`.
+**ONE deviation to fix at run end: the card carries NO labels** (`label_ids` empty; parent
+AD-143 carries `Provider: API` + `Pipeline: AI`) — the boards follow-up protocol says
+parent-minus-`Research`. Unlabeled it derives the `default` pipeline (not `AI`) and its future
+pickup owes a Provider kickoff question. Defensible as a separate hardening track, but if the
+owner wants it on the AI lane, `set_card_labels` is the one-call patch.
+
+**(4) FULL FRESH BAR (this addendum's runs, sequential, PATH-exported, dep-update /tmp-only):**
+charts/llama-swap **498P/9S/0F** · charts/radiance **43P/0F** · charts/amd-gpu **29P/0F** ·
+charts/vllm **36P/0F** · naming **5 ok bare** AND `AMD_GPU_FLIP_COMMIT=56142d5115…` **full
+green** (WAVE-C + transfer: chart bare 1→0, gpu overlay +1) AND both teeth RED (bogus sha →
+"is not a commit"; plans 1b89da994 → "matches NO accepted shape") · runbook **5 ok** · tp2
+**3 ok** · dashboards **5 ok** · surface **9 ok bare** + explicit `M1 M2 M3 M4 M5 M6 M7 M8`
+with `CF143_BASE_SHA=0d9b41785` → **10 ok** · helm lint ×4 (fresh /tmp archive) + both umbrella
+renders rc0 · rulesync `generate --check` clean · aislop local-pin `ci --changes` 0/0/0/106 AND
+`--base main` answered promptly rc0 (drift class did NOT recur; CI `@0.20.0 --changes --base
+origin/main` form authoritative and passing per C09 r1).
+
+**(5) GUARD-SCOPE ADJUDICATION (FOCUS 1(d)):** the null-retirement pattern is un-reintroducible
+IN ITS CHANNEL — the render-side walk keeps BOTH clusters' llama-swap generator values null-free
+(pre-projection — non-vacuous, verified), and the text-side scan catches any live
+`amd.com/…: null` line in EVERY `services/*/*/values.yaml` (all categories, repo-wide within
+services/). The scope is ADEQUATE because per-cluster deletion intent can ONLY be expressed in
+service overlays — charts/ nulls are local helm semantics (honored at coalesce, proven by
+§D2.8.3), not hand-off claims; a non-GPU key's null-retirement in some OTHER category's
+overlay is the residual prose-only sliver, and its natural repo-wide home is the D26 card's
+task (3) ("deletion-inherited-by-null banned pattern repo-wide") — recorded honestly, no gap
+against this ticket's acceptance.
+
+**(6) CARRY-LIST FINAL DISPOSITIONS (incl. the C09 r1 open questions answered):**
+- M8 explicit-check-id law — **documented where it must be read: the surface.sh header itself
+  (Usage block: bare = M1..M7; full set spelled verbatim; C01 AC6 rationale paragraph) + TEST_SPEC
+  §12 run-posture.** The C09-r1 question "whether a FRICTION line is still owed": **NOT owed** —
+  the header is the durable home, the second reader was cured by reading it, and this launch's
+  own bar text now invokes the form correctly. (FRICTION keeps its four 2026-11-13 class-law
+  lines + the re-statused aislop line; FRICTION line 26 confirmed standing per §D2.8.5(ii).)
+- C09 Chart.yaml governance-header one-line fold — **ACCEPTED as Deferred** (row stays; the
+  file has not been touched since; the authoritative corrected story is test-pinned values-side;
+  no behavioral risk). Not demanded for merge.
+- MINOR-2 strata :1348-1354 — **pointer adequate** (STATE.deferred names the exact range +
+  TEST_SPEC §12.9 ledger + DECISIONS cutover line; region byte-frozen by C04/AC4, dies at the
+  cutover anyway).
+- NIT-2 (:278 "without a single-naming history") — accepted, dev-lane optional wording; the
+  count-0 conjunct independently catches every real fallback (and §D2.2/§D2.8.1 live prove the
+  0-retention story).
+- NIT-3 PROVENANCE header direction — cosmetic, closed-by-parenthetical, concurred.
+- D26 card — CREATED + body adequate; labels deviation above.
+- Class laws: command/entrypoint-parity = TESTED (amd-gpu command/joint legs + radiance
+  Entrypoint-witness with removal law); valuesObject-projection = TESTED (legs A/B/C + the
+  transfer check + pre-projection null walk); owner-facing-commands-runnable-shape = TESTED
+  (T5 shape pins, teeth both directions proven r2); patched-regex-byte-audit = PROSE-ONLY
+  (FRICTION + §12.9 AMENDMENT item 1) — honestly flagged as the one law without an arm; it is
+  a repair-recipe, not a checkable property; no CI arm is practical, no action owed.
+- FR-2 "vendored" wordings — residual pair STILL live (radiance `test_resource_name_identity.py:36`
+  docstring; naming.sh era-comment lines) — the C10 MINOR-1 fold correctly scoped itself to the
+  null-retire law; one-word next-touch folds per STATE row.
+
+**(7) GIT/SCOPE FINAL (unchanged conclusions, re-verified this pass):** per-commit audit of
+e086638b4 (plans-only), b1def8d1f (exactly C09's 11-file set), 1b89da994 (plans-only),
+56142d511 (13-file WAVE-C), 4652671fd (records-only) — all scope-coherent; the uncommitted
+delta now is three records files (EXPLORE §D2.8, DECISIONS D26-amendment, my two plan records)
+— records-only by class. Amend lawful: `origin` has no cf-143 ref, 698af3b78 unreferenced and
+NOT an ancestor, `main == origin/main == ec18281fb` untouched by any agent write. Removed-
+assertion sweep (C09+C10 test files): every deletion classified — ruled carrier flips with
+stronger inverse guards (legs A/B/C + WAVE-C transfer + repo-wide amd.com null scan), re-embedded
+prior shapes (zero-diff for WAVE-A/B), comment/message rewords; the off-parity re-baseline stays
+EXACTLY the 2 sanctioned transferred lines with its PROVENANCE era entry; no weakening anywhere.
+Tree clean apart from the records files.
+
+**(8) OWNER HAND-BACK — ORDER (supersedes nothing above, completes it):**
+1. **MERGE + SYNC 56142d511 (+ 1b89da994/4652671fd records) — this is the router's ONLY cure.**
+   main lacks it (verified live: origin/main still ec18281fb = C09). Nothing else — not a retry,
+   not a sync refresh, not step 3 — moves a capacity-0 pool (§D2.8.2).
+2. **AC7 receipt sequence, in order:** (i) router pod Running on `amd.com/gpu-8060s`
+   (Recreate replacement; llama.spencerslab.com back — expect within ~seconds of sync + a cold-
+   load watch per the runbook); (ii) node check: `gpu-r9700-1: 1` + `gpu-8060s: 1`, bare
+   `amd.com/gpu` at COUNT 0 — already true live, re-confirm post-sync it stays; (iii) radiance
+   schedules ONLY after step 3: suspend auto-sync for gpu-ai-llama-swap in the ArgoCD UI first,
+   then OWNER `kubectl -n default scale deploy/gpu-ai-llama-swap-strata --replicas=0` (free
+   59.92 → 123.92 ≥ 64; do NOT touch guaranteedMemoryGi to clear this Pending); (iv) the
+   8-session gate at full sizing (runbook step 6, STARTUP REPORT receipts); (v) the receipt-
+   gated 64 → 68/72 (→ ~96 max, strata-down only) ladder — one-scalar edits.
+3. **Owner decisions outstanding:** the limits-only word (live gpu pod proves the transfer
+   byte-exact; overrule = one line + leg-B re-pin); the upstream naming-feature ask filing
+   (D24, optional); D26 card `Eev5WkDieH6TH2pEW` triage (its Inbox landing is per protocol;
+   decide the labels: AI lane needs the parent-minus-Research label patch); moving AD-143
+   Executing→Review→**Finished** stays the owner's alone — the branch's work is complete at
+   chunk and final-review level, all ten chunks APPROVED, the ticket-wide bar green.
+
+— final reviewer round 3 ADDENDUM, 2026-11-13 (same reviewer session line: fresh bars re-run;
+§D2.8 + D26-amendment audited as records; D26 card verified against the live datum; no
+implementation or validation file edited; /tmp-only dep updates; readonly-tier cluster reads).
