@@ -42,7 +42,14 @@ x4 link at 0000:00:03.1 (capable of 512.00 Gb/s-class 504.112 Gb/s with
 Width vs speed, precisely: the **x4 width is PHYSICAL** here — the root
 port's own LnkCap is 16 GT/s **x4** (OCuLink/SFF-8611 carries 4 lanes; the
 "capable x16" class refers to the card silicon, unreachable through an x4
-port); the switch internals (`c3:00.0`/`c4:00.0`, 32 GT/s x16) prove the
+port) — and the bridges behind it are **the card's own silicon**: every
+Navi part presents an integrated switch pair (`1002:1478` upstream /
+`1002:1479` downstream), so `c2:00.0`/`c3:00.0` belong to the R9700, not
+the dock — §D6.6's "(switch upstream)" label is RETIRED by §R9/D33. The
+DEG1 is Minisforum's PASSIVE Gen4 x4 OCuLink dock (no switch, no retimer),
+so exactly ONE physical link negotiates: root port `00:00:03.1` ↔ card,
+across the cable and the passive dock PCB. Inside the card the endpoint
+side trains `c3:00.0`/`c4:00.0` at 32 GT/s x16, which proves the
 downstream is not the limiter. The only defect candidate is the SPEED:
 Gen3 where the port caps Gen4. 3.94 GB/s raw ≈ HALF the RQ1-planned
 7.0–7.2 GB/s class for this path (RESEARCH RQ1/RQ4 envelope) — which
@@ -53,13 +60,20 @@ Check (read-only): `sudo lspci -vvv -s 00:00:03.1 | grep -E 'LnkCap:|LnkSta:|Lnk
 — same for `0000:c2:00.0` — plus
 `cat /sys/bus/pci/devices/0000:c2:00.0/current_speed /sys/bus/pci/devices/0000:c2:00.0/current_width`
 and `sudo dmesg | grep -iE 'GT/s|link training|downgraded'`. The
-discriminator is `LnkCtl2` **TargetSpeed**: TargetSpeed=8.0 ⇒ BIOS slot PIN
-(fix: set the slot to Gen4/Auto in BIOS); TargetSpeed=16 while LnkSta reads
-8.0 ⇒ Gen4 training failed on the electrical path — reseat/inspect the
-Gen4-rated OCuLink cable or the retimer (fix: reseat/swap the cable,
-owner lane). The reboot did NOT clear the state, which pushes toward
+discriminator is `LnkCtl2` **TargetSpeed**: TargetSpeed=8.0 ⇒ host-BIOS
+per-slot speed PIN (fix: set the slot to Gen4/Auto in BIOS); TargetSpeed=16
+while LnkSta reads 8.0 ⇒ ELECTRICAL — and the electrical branch has NO
+active silicon to configure (the DEG1 is passive — no retimer, no switch,
+§R9/D33 — and not hot-plug-capable): it is the dock's documented power
+sequence (dock and host powered in order, cold boot — those ARE its
+"settings") plus cable/seat quality. Reseat/inspect the
+Gen4-rated OCuLink cable and re-check the power order (fix: reseat/swap the
+cable, owner lane). The reboot did NOT clear the state, which pushes toward
 BIOS-pin-or-cable over transient-stick. A forced retrain (setpci LnkCtl
-bit, or remove/rescan) is a WRITE — owner lane only. After any change: re-read the
+bit, or remove/rescan) is a WRITE — owner lane only. (D33: the engine doc's
+"a link stuck one level down clears on reboot" advice is WITNESSED-FALSE on
+this node — it must not be presented as a fix.)
+After any change: re-read the
 startup report AND capture `GET /diagnostics` under a long prefill — the
 link widths under load are the receipt.
 
