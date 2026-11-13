@@ -37,7 +37,7 @@ ARG GO_SHA256=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
 # Deploy CLI. Requires Node >=22.13.0; the pinned base resolves to 22.23.4,
 # so the engine floor holds while the 22.x line stays at/above 22.13.
 # renovate: datasource=npm depName=netlify-cli
-ARG NETLIFY_CLI_VERSION=27.16.2
+ARG NETLIFY_CLI_VERSION=27.19.0
 
 # Job-surface toolchain. dumb-init reaps zombies the same way the donor
 # image's entrypoint does; git and git-lfs land in one layer so the
