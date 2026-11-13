@@ -656,3 +656,182 @@ deviations: none — stayed read-only; wrote only EXPLORE.md in the ticket folde
 friction: readonly-ai-gpu-kubernetes resources_list returns flattened summary objects (Name/Images/… keys), not raw manifests; use pods_get/resources_get for spec detail. Application list carries no health fields through that MCP. The vllm-render workflow's inline python depends on the top-level vllm: key — noted as gotcha 14 rather than friction.
 open_questions: [Needs research: yes — verify stilldeadcode/radiance 1.17.0 guide claims + its identity vs Niko1221/Strata and vs magiccodingman/vllm-radiance (namespace collision). Coord/owner: why is gpu-ai-vllm scaled to 0 today and should the disabled shape carry replicas:0?; should the new radiance chart be a llama-swap second controller (strata-consolidation shape) or its own ApplicationSet entry (card's "NEW chart")?; is the strata route string in AGENTS.md/loops/pipeline-models tables in scope this run?]
 next_suggested: agent-research on the card guide + radiance identity, then agent-plan; plan should read §Gotchas 12-15 and the open structural question before chunking.
+
+## §D1 — C08 conversion: container command dropped (live RunContainerError) (2026-11-13, scout round 2, HEAD 5d2afd129)
+
+The owner's live error is real, on-target, and root-caused: `exec: "-logtostderr=true":
+executable file not found in $PATH` on the converted `gpu-ai-amd-gpu-device-plugin-daemonset`
+pod (container `deviceplugin`, Waiting/RunContainerError, exit 128 StartError). The plugin
+image has **no ENTRYPOINT — the binary ships in CMD only**, so declaring `args` without
+`command` makes args[0] the exec path. The C07 args-hook, the parity oracle, and the C08
+conversion ALL carry the same broken shape: the oracle could never witness the defect
+because the oracle *is* the defect.
+
+### D1.1 LIVE GROUNDING (readonly-ai-gpu-kubernetes, ns default, 2026-11-13)
+
+- DaemonSet `gpu-ai-amd-gpu-device-plugin-daemonset`: age ~5 min, Desired 1, Ready 0;
+  labels carry `helm.sh/chart=app-template-5.0.1`, container `deviceplugin`, image
+  `docker.io/rocm/k8s-device-plugin:1.31.0.12`. The OLD `amd-gpu-device-plugin-daemonset`
+  (1.31.0.9) is GONE — the D23 one-sync prune+create swap completed (the swap law worked;
+  the payload is what fails).
+- Pod `gpu-ai-amd-gpu-device-plugin-daemonset-kfvnr` (node ai-gpu), CrashLoopBackOff, 5
+  restarts: `spec.containers[0].command` = **absent (null)**, `args` = exactly
+  `[-logtostderr=true, -stderrthreshold=INFO, -v=5, -resource_naming_strategy=product]`;
+  `containerStatuses[0].state.waiting`: reason `RunContainerError`, message
+  `…error during container init: exec: "-logtostderr=true": executable file not found in $PATH`;
+  lastState.terminated reason `StartError`, exitCode 128. The live spec matches the local
+  render (D1.3) field-for-field.
+- DOWNSTREAM STALL (ticket-wide blast radius, cite in the fix card): pods
+  `gpu-ai-radiance-59c96d5bcd-dsscv` and `gpu-ai-llama-swap-779b58445d-mmwrj` are **Pending**
+  (no node advertises `amd.com/gpu-r9700-1` / `amd.com/gpu-8060s` while the plugin is down —
+  the D24 product pools exist only once this container starts). `gpu-ai-llama-swap-strata-…`
+  keeps Running (32h) on its pre-swap allocation — §R6-Q4 allocation law holding.
+
+### D1.2 THE PARITY ORACLE — it has NO command (the oracle is broken, not the conversion)
+
+- `charts/amd-gpu/tests/evidence/pre-c08-deviceplugin-ds.yaml`: container block lines 35–43:
+  `args:` (36–40, the four items), `image: docker.io/rocm/k8s-device-plugin:1.31.0.12` (41),
+  `name: amd-gpu-dp-cntr` (42) — **no `command:` key anywhere in the file** (the vendored
+  render it captured simply omitted it).
+- The template that produced it — `git show a81989b47^:charts/amd-gpu/templates/deviceplugin-daemonset.yaml`
+  (the C07 vendored 0.22.0+args-hook): container starts line 35, `image:` line 36, `args:`
+  line 40 — the ~10-line args hook emitted `args` ONLY; grep confirms zero `command` lines
+  in that template. It did NOT set a binary path. The bug was BORN here (C07) and was never
+  live-tested: gpu-ai kept running the EXTERNAL 0.22.0 chart (no args surface, image default
+  CMD) until the C08 swap landed this shape on the cluster for the first time.
+- `git show 0d9b41785:…` → path does not exist at that commit (charts/amd-gpu was vendored
+  later in the run) — the launch's first citation is void, the a81989b47^ one is the real
+  pre-conversion template.
+
+### D1.3 THE SHIPPED CONVERSION — render reproduces the oracle exactly (faithful port of a broken shape)
+
+- `cp -r charts/amd-gpu /tmp/cf143-amd-gpu-explore && helm dependency update .` (app-template
+  5.0.1 tgz fetched from bjw-s-labs) → `helm template gpu-ai-amd-gpu .` (helm v3.16.4):
+  the DaemonSet's container (`deviceplugin`) renders `args:` with `-logtostderr=true` FIRST
+  and the four items, `image: docker.io/rocm/k8s-device-plugin:1.31.0.12`, NO `command:` —
+  identical to the live pod (D1.1). Values source: `charts/amd-gpu/values.yaml` — container
+  keys are exactly `image` (94), `args` (111–115), `securityContext` (116+); no command key.
+- So C08's conversion is NOT where the field was dropped — `command` was absent upstream of
+  it. The "PARITY, NOT IMPROVEMENT" law executed perfectly against an oracle that itself
+  predates any successful live run of that shape.
+
+### D1.4 APP-TEMPLATE 5.0.1 SURFACE (vendored tgz, extracted /tmp/at501)
+
+- Values key (schema): `controllers.<name>.containers.<container>.command` —
+  `app-template/values.schema.json` → `$.properties.controllers.additionalProperties
+  .properties.containers.additionalProperties.properties.command`: `oneOf [array-of-strings,
+  string]`, description "Command for the container entrypoint." (`defaultContainerOptions
+  .command` also exists). `args` is the sibling key.
+- Render: `charts/common/templates/lib/container/_spec.tpl` lines 15–17:
+  `{{- with (include "…field.command" …) }} command: …` — command renders ONLY when the values
+  key is set; `fields/_command.tpl` lines 4–23: string → wrapped into a one-element list
+  (14–15), list → verbatim toYaml (17), unset → empty → skipped. **There is NO entrypoint-
+  providing default: with only `args` set the library emits `args` and never `command`**
+  (same symmetric logic in `fields/_args.tpl`). The library cannot know the image lacks an
+  ENTRYPOINT — the values must carry `command`.
+- Repo precedent (app-template charts): `command:` + `args:` pairs in values are an established
+  idiom — `charts/betanin/values.yaml:25` (`command: ["/bin/sh", "-c"]` + args),
+  `charts/archon/values.yaml:21-27` (command list), `charts/erp-next/values.yaml:140,173`
+  (`command: ["bash","-c"]` + args), and INSIDE this ticket's own chart:
+  `charts/radiance/values.yaml:318` (curl init container `command: [sh, -c, …]`).
+  `charts/amd-gpu` is the first app-template workload that needed the binary itself and didn't
+  declare it.
+
+### D1.5 THE IMAGE AUTHORITY — no ENTRYPOINT, binary lives in CMD (registry + Dockerfile, both at the exact pin)
+
+- Registry (docker.io API, anonymous pull; tag manifest `docker-content-digest` =
+  `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` — EXACTLY the
+  amd64 ledger digest in `charts/amd-gpu/values.yaml:104-106`, so this config IS the pinned
+  bytes; config blob `sha256:740b1675d6a980236a2f5138a04738c5806a7dc1484ff562ab8d68ed0eae6d79`):
+  `image.config` = **no `Entrypoint`**, `Cmd: ["./k8s-device-plugin", "-logtostderr=true",
+  "-stderrthreshold=INFO", "-v=5"]`, `WorkingDir: "/root/"`, `User: root`.
+  → K8s semantics: `command` overrides ENTRYPOINT (empty here), `args` overrides CMD —
+  declaring args alone leaves process = args, and runc execs `-logtostderr=true`. The exit-128
+  message is the exact predicted shape. Note the CMD is FOUR items: binary + trio — the
+  "CMD trio restated in full" comment law (`values.yaml:108-110`, testlib
+  `CMD_RESTATED` line 72) restated only the FLAGS half and silently dropped the binary half.
+- Dockerfile (raw GitHub, tag `v1.31.0.12` exists — `ROCm/k8s-device-plugin/Dockerfile`):
+  final stage `WORKDIR /root/` + `COPY --from=0 /go/bin/k8s-device-plugin .` → the binary is
+  **`/root/k8s-device-plugin`**; `CMD ["./k8s-device-plugin", "-logtostderr=true",
+  "-stderrthreshold=INFO", "-v=5"]`; NO ENTRYPOINT line. Same fetch CONFIRMS the D24 mount
+  law holds at this tag: `COPY … /usr/share/libdrm/amdgpu.ids` (the IDS_PATH const).
+- Upstream HELM chart 0.22.0 (`amd-gpu-helm-0.22.0` tag, `helm/amd-gpu/templates/
+  deviceplugin-daemonset.yaml`): container block = name/image/securityContext/volumeMounts/
+  resources ONLY — no `command:`/`args:` lines at all (validates the vendored Chart.yaml
+  header claim "it has no args/command surface at all"). With no args declared the runtime
+  uses the image CMD wholesale, binary included — which is why the 5-week-old external-chart
+  pod ran fine at 1.31.0.9.
+
+### D1.6 THE TEST GAP — zero `command` legs in the whole amd-gpu suite
+
+- `grep -rn command charts/amd-gpu/tests/ tests/services/amd-gpu-naming.sh` → **no match**.
+  The parity-leg inventory (`test_render.py`): args == ARGS_CONTRACT (61), -v=5 alone (74),
+  image==oracle (84), pod facts priority/tolerations/secctx/nodeSelector-absent/
+  imagePullSecrets-absent/resources-empty (99), hostPath trio + mounts byte-parity incl the
+  extra-mount whitelist ids-table (130), updateStrategy-absent (170), kinds⊆{DS,CM} zero-RBAC
+  (185), table subPath mount (215), name coherence (256), values-shape first-party (304).
+  `test_provenance.py`: provenance/ledger/text legs (header floors, tgz+lock, renovate pin,
+  digest ledger, strategy-plain 158, gaps documented, ledger names, table rows vs authority,
+  minimality, zero-stale, placement guard). `tests/services/amd-gpu-naming.sh`: services-entry
+  shape only (its line 105 checks the gpu-ai entry's namespace/SSA). NOTHING reads the
+  container `command`, and the oracle equality legs would GREEN a command-less render forever
+  — the oracle cannot be the authority for a field the oracle lacks.
+- MISSING LEG (for agent-test, red-first): a `command`-parity leg beside
+  `test_args_are_the_four_plain_items` in `charts/amd-gpu/tests/test_render.py` — e.g.
+  `test_container_command_carries_the_plugin_binary` asserting
+  `A.dp_container(docs)["command"] == A.PLUGIN_COMMAND` (new testlib constants, e.g.
+  `PLUGIN_BINARY = "/root/k8s-device-plugin"`; `PLUGIN_COMMAND = [PLUGIN_BINARY]`), anchored
+  on NEW evidence (capture the registry image-config Cmd/Entrypoint — D1.5 digests — into
+  `tests/evidence/`, e.g. `image-config-1.31.0.12.json`, since the DS oracle cannot supply
+  it); plus a command+args JOINT invariant (args alone legal only if Entrypoint evidence
+  exists). Precedent shapes for asserting `.command` in render tests:
+  `charts/llama-swap/tests/test_render.py:167`, `charts/llama-swap/tests/test_strata_thin_init.py:56,73`,
+  `charts/radiance/tests/test_render.py:276`. Also mechanical: the oracle's header comment
+  should gain a line recording that its command-absence is the CAPTURED DEFECT (test-session
+  property — coord routes, not review).
+- Leg naming caution for the test/dev rounds: "args are the four plain items" stays GREEN
+  after the fix (the four items remain as args; the binary rides `command`), so the fix is
+  additive to the suite, not a re-pin of ARGS_CONTRACT.
+
+### D1.7 SIDE EFFECTS
+
+- ids-table ConfigMap mount: UNAFFECTED by the exec defect and its fix — the binary reads the
+  const IDS_PATH `/usr/share/libdrm/amdgpu.ids` (Dockerfile COPY line at v1.31.0.12 re-
+  confirmed in D1.5); with `command` set, the subPath mount still overlays it.
+- Flag reachability after the fix: `command: [/root/k8s-device-plugin]` + the existing 4-item
+  `args` → argv = binary + all four flags; `-v=5` and `-resource_naming_strategy=product`
+  reach the binary exactly as ARGS_CONTRACT promises (runbook receipt (b) law holds).
+- OTHER args-without-command surfaces vs their images' ENTRYPOINT:
+  - `charts/radiance` main container: `args: *serveArgs` (values.yaml:224), no command —
+    SAFE, verified via registry: `stilldeadcode/radiance:1.17.0` amd64 (manifest
+    `sha256:6fb0e99b…` = the values ledger D1.170 pin) image config
+    (`sha256:5b4c1470…`) HAS `Entrypoint: ["radiance"]` (PATH includes /opt/radiance/bin) —
+    args append to it; that pod's Pending (D1.1) is the device-pool starvation, not this bug.
+  - `charts/generic-device-plugin/values.yaml:11` args-only: pre-existing surface, NOT a
+    C08-converted chart; squat/generic-device-plugin ships its binary via ENTRYPOINT
+    (upstream image idiom) and it has run live for months — not ticket-scoped, no action.
+  - The gpu cluster entry (`services/gpu/prod/values.yaml:135` amd-gpu version 0.22.0 from
+    rocm.github.io): external chart, no args/command — untouched by C08 (D21 shield), unaffected.
+- VERDICT / fix shape (values-only, library-supported, no template exception):
+  add to `charts/amd-gpu/values.yaml` under
+  `app-template.controllers.device-plugin-daemonset.containers.deviceplugin`:
+
+      command: ["/root/k8s-device-plugin"]
+
+  (list form per repo precedent; the absolute path removes the image-WORKDIR dependency that
+  the relative `./k8s-device-plugin` form would keep; DO NOT move the flags into command —
+  args stays as the 4-item ARGS_CONTRACT). Validated by render on the /tmp copy:
+  `helm template … -f overlay(command)` emits `command:\n- /root/k8s-device-plugin` beside
+  the untouched args (exit 0). After the values edit the test suite needs the D1.6 leg
+  red-first, then the bar re-run; landing stays owner-owned (PR — the branch's commits are
+  local per pipeline law).
+
+RESULT
+status: DONE
+chunk: exploration
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/EXPLORE.md]
+commands_run: [repo reads/greps + git show a81989b47^ template + ls-tree 0d9b41785 => pass; cp chart to /tmp + helm dependency update + helm template gpu-ai-amd-gpu (with and without command-overlay) => pass; docker.io registry API image-config fetches (rocm/k8s-device-plugin:1.31.0.12, stilldeadcode/radiance:1.17.0) => pass; raw GitHub Dockerfile@v1.31.0.12 + upstream template@amd-gpu-helm-0.22.0 => pass; readonly-ai-gpu-kubernetes: DaemonSet list, Pod list, pods_get failing pod => pass]
+deviations: none — read-only on the repo (only EXPLORE.md written); all renders/copies in /tmp.
+friction: the launch's first git citation (0d9b41785:…template) is void — the file did not exist there (recorded in D1.2); resources_list MCP needs kind+apiVersion and returns flattened rows (round-1 friction, unchanged); Code Mode has no filesystem/globalThis.crypto, schema digs went through shell python.
+open_questions: none research-grade — the fix shape is fully grounded in-repo + registry; owner/coord choice reduced to list-vs-string form and whether the C08 rework round also re-words the "CMD trio restated in full" comments (they encode the binary-dropping misreading, D1.5).
+next_suggested: agent-test adds the D1.6 command leg red-first (new image-config evidence + PLUGIN_COMMAND constant), then agent-dev adds the one `command:` key to values.yaml; after the sync lands, the Pending radiance/llama-swap pods are the on-target receipt.

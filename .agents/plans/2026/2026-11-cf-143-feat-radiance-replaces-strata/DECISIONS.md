@@ -326,6 +326,50 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   UPSTREAM FEATURE ASK (§R7-Q3(b)/OQ3): RECOMMENDED, filing = OPTIONAL owner call —
   recorded Deferred either way, zero code implication. Scope confirmed closed: the six
   items + recorded nits are the whole rework.
+- 2026-11-13 human+plan D25 (LIVE DEFECT C09 — owner-reported after sync: the converted
+  plugin container crashloops `RunContainerError: exec: "-logtostderr=true": executable
+  file not found` → pools un-advertised → radiance + gpu-ai llama-swap Pending; verbatim
+  report in STATE handoffs, full grounding EXPLORE §D1 scout round 2): ROOT CAUSE — the
+  pinned image (digest 6437c74f = the values ledger; config blob 740b1675) ships NO
+  ENTRYPOINT; the binary is CMD's first element `./k8s-device-plugin` at WORKDIR /root/
+  (Dockerfile@v1.31.0.12 — also re-confirms the D24 COPY law for the IDS path); declaring
+  args without command makes args[0] the exec path (runc/exit-128 semantics — the live
+  pod spec matches the local render field-for-field). HONESTY ON THE LINE: the defect is
+  INHERITED FROM C07 — the vendored template at a81989b47^ emitted args-only, the parity
+  oracle pre-c08-deviceplugin-ds.yaml captured that same broken shape (no command key
+  anywhere), so THE ORACLE COULD NOT WITNESS IT — "the oracle is the defect"; it survived
+  because gpu-ai ran the EXTERNAL 0.22.0 chart (no args/command surface at all → image
+  CMD wholesale, binary included) until C08's swap landed the broken shape live for the
+  first time; C08's "parity, not improvement" executed perfectly against a never-live-
+  proven source, and the values 105-110 comment ("CMD trio restated in full") encoded the
+  same misreading — CMD is binary + trio; the binary half was dropped silently. THE FIX
+  (C09, values-only, library-expressed — _command.tpl 4-23/_spec.tpl 15-17, no
+  entrypoint default exists): `command: ["/root/k8s-device-plugin"]` on
+  app-template.controllers.device-plugin-daemonset.containers.deviceplugin (absolute path
+  drops the WORKDIR dependency; LIST form per repo precedent charts/betanin:25,
+  charts/archon:21-27, charts/radiance:318 — schema oneOf also accepts a bare string,
+  recorded alternative NOT taken for needle/grep symmetry); args stays the EXACT 4-item
+  ARGS_CONTRACT (fix is additive; the four flags reach the binary via args, §D1.7 — the
+  -v=5 runbook-log law finally executable); comment block rewritten to carry the WHY
+  (registry + Dockerfile cites) and the never-live-provenance sentence; charts/radiance
+  main container is NOT touched — its image HAS Entrypoint ["radiance"] (registry-
+  verified §D1.5), args-only is SAFE there (a future "consistency" command-add would be
+  a regression); generic-device-plugin pre-existing + ENTRYPOINT image, out of scope.
+  EVIDENCE-AUTHORITY SWITCH: command-parity authority is a NEW image-config capture
+  (tests/evidence/image-config-1.31.0.12.json — test-session re-fetch, digest-cross-
+  checked, never hand-retyped) — NOT the DS oracle, which keeps all its existing
+  comparison legs with command listed as a KNOWN PRE-C08 DEFECT (one header line,
+  test-session property). C08 AC AMENDMENT (append-only, no rewrite of chunks/C08.md's
+  landed record): its "parity vs oracle" legs are valid EXCEPT they cannot and must not
+  be read as commanding command-absence. CLASS LAW for every future conversion/parity
+  work: (1) parity-vs-oracle MUST enumerate command/entrypoint explicitly — a field the
+  oracle lacks is not "equal", it is UN-witnessed; (2) any chart conversion whose parity
+  source was never run live REQUIRES an image-config receipt before landing exec-shape
+  fields; (3) suites must carry a both-or-neither joint invariant (command+args together,
+  args-alone only with Entrypoint evidence) — the red-first command legs that would have
+  caught this are C09 AC5. Names/ledger/strategy FROZEN (gpu-r9700-1 / gpu-8060s
+  unchanged); live verification stays owner-run read-only prose (AC7); plan_status
+  reopened complete→approved for this delta round (owner live report is the gate).
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future

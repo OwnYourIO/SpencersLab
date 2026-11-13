@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-143-feat-radiance-replaces-strata",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 5,
-  "updated_at": "2026-11-12T21:50:00+00:00",
+  "current_wave": 6,
+  "updated_at": "2026-11-13T03:10:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -389,23 +389,47 @@
       "commit": "a81989b47 (33 files: amd-gpu first-party conversion + rename sweep + serveArgs pairs + 64Gi comment + nit folds + test re-pins + 2 evidence fixtures)",
       "handoffs": [
         {
-          "role": "tests", "round": 1, "at": "2026-11-12T19:15:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 1,
+          "at": "2026-11-12T19:15:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (red-first C08 contracts, adjusted mid-round to the lane ruling) — amd-gpu suite re-authored for first-party+table (14F/11P red ledger §12.6; parity oracle captured pre-deletion; amdgpu.ids authority fetched once, sha 382ef0d5 cited, byte-verbatim 1586+7551 rows; sanitizer port asserted BOTH directions; grave-case row-parity leg; zero-stale+placement scan with self-exempt assembled literals; name-strain leg), naming.sh constants + n2 conversion-wave guard (teeth both ways) + n3/n4 re-scope, shared constants via sanctioned sys.path join (no forks), radiance arms confirmed parse-based + T-B/T-D legs, routed T-E test-file fixes landed. Witnesses green (llama-swap 0F etc.)."
         },
         {
-          "role": "dev", "round": 1, "at": "2026-11-12T20:10:00+00:00", "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-12T20:10:00+00:00",
+          "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
           "result": "DONE — T-A conversion (6 templates deleted incl _helpers+NOTES per owner verbatim; values first-party app-template shape; Chart.lock 0ea7893a; render parity vs oracle machine-judged; DS sole consumer; resources:{}-omitted noted; pod-delta posture recorded), T-B rename via ConfigMap minimal table (7551/C0 'r9700-1' + 9x1586 byte-verbatim splice, zero retypes, sha 864da869 pinned; ledger + WATCH; sanitizer-evidence comment; carve sites name-followed), T-C pair-per-line flow reformat (32-token parsed list byte-equal pre/post), T-D four-fact-family comment value-kept-64, T-E all dev-side nits + runbook/TP2 sweeps. Bars: radiance 42P/0S, llama-swap 495P/9S, umbrellas byte-equal witnesses, naming/runbook/tp2/surface/M1..M8 green, aislop 0/0, rulesync clean. Two validation_at_fault routed (name-strain selector-label arm: app-template hardcodes matchLabels to app.kubernetes.io triple — live 'name: amd-gpu-dp-ds' values-unreachable + TypeError on None; placement scan false-flags TEST_SPEC's own §12.6 record-class line); dev-adjacent workflow dep-update step touched (CI-structural). Strain taken: nameOverride + identifier + appendIdentifier, forceRename rejected (selector immutability), rename-set COMPLETE enumeration shipped in values ledger."
         },
         {
-          "role": "tests", "round": 2, "at": "2026-11-12T20:40:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 2,
+          "at": "2026-11-12T20:40:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (C08 dev-round repairs) — coherence leg re-pinned per library truth (per-object name/coherence + selector SELF-coherence, TypeError-free, mixed-strain legal); placement leg admits charts/llama-swap/tests + synthetic-tree teeth probe; latent resolver headers repaired (both suites ^## §?R7 — dev's §R7-bare-form call adjudicated, both forms resolve, conforming-fixture run caught+fixed a SECOND same-family defect: r6q_rows missing re.S (never checked a row — accidental green)); §12.7 record. amd-gpu 26P/0F; all bars HOLD."
         },
         {
-          "role": "review", "round": 1, "at": "2026-11-12T21:10:00+00:00", "session": "ses_e2eabd90affe012u3s4P2gPBzR",
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-12T21:10:00+00:00",
+          "session": "ses_e2eabd90affe012u3s4P2gPBzR",
           "result": "APPROVED — all bars fresh (incl AMD_GPU_FLIP_COMMIT=a81989b47 same-wave guard green); table byte-chain re-derived against reviewer's OWN live fetch of the v1.31.0.12 authority; rename-set COMPLETE vs ledger; umbrellas byte-equal; zero-stale sweeps clean; six owner items AC-by-AC incl T-D arithmetic re-checked; deviations 1-7 ACCEPTED (workflow step radiance-idiom; routed arms stricter-or-equal verified from tgz source; nameOverride rationale sound; pod-deltas behavior-neutral per zero kube-API client in the plugin; resolver re.S made AC7 REAL — stale cites probe red by name). N5 (STATE rows — folded here) + N1-N4 non-gating carries to final review; notes in chunks/C08.md."
         }
       ],
       "note": "amended 2026-11-12 per owner lane ruling (D24): T-B became the RENAME contract — amd.com/gpu-r9700-1 via minimal patched amdgpu.ids ConfigMap over the const IDsPath (subPath); 7551/C0 renamed + EVERY 1586 row carried verbatim (APU-rows law, test-enforced parity vs evidence fixture); gpu-8060s/overlay/catalog FROZEN; zero-stale-name AC added; in-flight test round pointed at the amended file"
+    },
+    "C09": {
+      "status": "pending",
+      "wave": 6,
+      "depends_on": [
+        "C08"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "LIVE-DEFECT ORIGIN: owner-reported RunContainerError after C08 sync — deviceplugin container declares args WITHOUT command against an image with NO ENTRYPOINT (EXPLORE §D1 authority; defect inherited from C07's vendored args-only template; the parity oracle shares the defect — oracle-could-not-witness-it). Fix: one values key command=[\"/root/k8s-device-plugin\"] + WHY-comment + image-config evidence authority + runbook receipts; names/ledger/args frozen; red-first command legs (must be RED today: command absent); live verification owner-run read-only after owner's merge/sync. Ledger: D25."
     }
   },
   "blocked": [],
@@ -531,6 +555,12 @@
       "at": "2026-11-12T21:45:00+00:00",
       "session": "ses_e2e9c1b8affeai0xOY23xsUdst",
       "result": "C08 landed (a81989b47: amd-gpu first-party app-template conversion + patched amdgpu.ids table-mount rename to amd.com/gpu-r9700-1 + serveArgs pair-lines + 64Gi answer-in-place + nit folds), review r1 APPROVED (ses_e2eabd90affe012u3s4P2gPBzR, five non-gating findings N1-N5 — N1/N2 adjudicated moot/true, N3 re-statused in FRICTION, N4 fixture committed+pin resolves, N5 folded by coord this round), then FINAL whole-plan review ROUND 2 APPROVED — zero blockers/majors, ticket-wide bar green (llama-swap 495P/9S/0F, radiance 42P, amd-gpu 26P, vllm 36P, naming 5 ok + flip-commit form, runbook 5 ok, tp2 3 ok, dashboards 5 ok, surface 9 ok + M1..M8 10 ok, lints/renders incl gpu-cluster + services/gpu BYTE-EQUAL shield witnesses, zero-stale sweep clean, table sha 864da869 re-derived, rulesync clean, aislop 0/0). Run-end actions DONE: STATE C08 rows + deferred folds (five CLOSED; FR-2/FR-3 carried), follow-up CARD #1 body RE-PUBLISHED post-rename (Cnf563PDBmBoDLSaS, update_card updated:true — the same-artifact law with .agents/notes/radiance-second-gpu-tp2.md restored), FRICTION second-flap line added. Open at hand-back: owner's PR-review word; optional upstream naming-ask filing (D24 owner call); branch local-only (0d9b41785..f0099260a) — no push, card still Executing under claim AI. Post-report: plan_status → complete (step 9, final r2 APPROVED); the second PIPELINE LOCK LOST flap verified via pipeline_status + pipeline_heartbeat before any write and re-statused in FRICTION (no open item left); session done-mark and card→Review await the owner's explicit word."
+    },
+    {
+      "stage": "Plan amendment (live defect C09 — command dropped)",
+      "at": "2026-11-13T03:10:00+00:00",
+      "note": "owner-reported RunContainerError; EXPLORE §D1 authority; plan reopened complete->approved for the delta; session id filled by coord",
+      "result": "RESULT status: DONE chunk: plan (live-defect fold-in) files_changed: [chunks/C09.md (NEW — S, wave 6, dep C08: AC1 the fix (exact shipped path verified from charts/amd-gpu/values.yaml — controllers.device-plugin-daemonset.containers.deviceplugin; command list-form [/root/k8s-device-plugin] per repo precedent betanin/archon/radiance, string alternative recorded-not-taken, absolute path kills the WORKDIR dependency, args byte-unchanged; /tmp render proof-leg), AC2 WHY-comment rewrite of the 105-110 misreading block with registry+Dockerfile@v1.31.0.12 cites and the never-live-provenance sentence closing the oracle-is-the-defect story, AC3 evidence-authority switch (new tests/evidence/image-config-1.31.0.12.json, test-session re-fetch digest-cross-checked; oracle keeps its legs with command listed as KNOWN PRE-C08 DEFECT + header line), AC4 runbook step-2 receipt + consequence lines (NO name changes — gpu-r9700-1/gpu-8060s frozen; TP2 doc grep-verified out of scope; radiance args-only SAFE via Entrypoint witness — do-not-touch), AC5 test legs RED-FIRST routed (i command==PLUGIN_COMMAND anchored on AC3 evidence beside test_args_are_the_four_plain_items, testlib one-edit-site constants + CMD_RESTATED historical marking, (ii) args-unchanged additive-leg, (iii) both-or-neither joint invariant, (iv) n2 AMD_GPU_FLIP_COMMIT file-set extended + radiance guard optional), AC6 combined bar (§12.7 counts 26+legs/42/495P9S/36 + bash suites + umbrella + services/gpu BYTE-PARITY shield + aislop/rulesync + zero-stale re-run), AC7 owner-run read-only live verification prose), DECISIONS.md (D25 append-only: owner live report + root cause with §D1 citations + inherited-from-C07/oracle-is-the-defect honesty + fix shape + evidence-authority switch + C08-ACs-amended note + class laws for future conversions: enumerate command/entrypoint in parity; image-config receipt when the parity source was never live-proven; both-or-neither joint invariant; plan reopen recorded), plan file (APPENDED '## Rework delta 2 — live defect C09' — chunk row, wave 6, Commands additions; earlier sections frozen), chunks/C08.md (append-only Delta-to-C09 pointer), STATE.json (plan_status complete->APPROVED reopened for the delta round with reason; chunks.C09 pending/wave6/[C08]/live-defect note; current_wave 6; handoff; all keys intact)] highlights: [the scout's live+registry+git-show grounding made the contract one-key-deep with no guessing: absolute-path binary, list form decided-with-recorded-alternative, args untouched so the whole ARGS_CONTRACT suite stays green; the honesty load-bearing in D25: C07 BORN the defect, C08 faithfully ported it, the oracle could not witness it, the tests had ZERO command legs — three class laws written so parity work enumerates command/entrypoint and never-live oracles require image-config receipts; crashloop persists until owner merge+sync — agents own no cluster step] deviations: none — fix shape taken verbatim from §D1.7's grounded verdict (scout naming double-checked against the shipped values file: identifier device-plugin-daemonset, container deviceplugin — matched) friction: none open_questions: [none new — the scout's two residual owner/coord choices are resolved IN-CONTRACT (list-vs-string: list, recorded; comment re-word: yes, AC2)] next_suggested: test session — AC5 legs red-first against today's tree (they MUST fail: command absent; evidence capture first, oracle header line, testlib constants, n2 file-set) -> dev C09 (one values key + comment + runbook lines) -> chunk review -> final-review round 3 (NARROW: the C09 delta + re-run of the full bar) -> owner hand-back (+ PR-merge sequencing note: the live crashloop clears only at the owner's sync; card #1 re-publish still pending in the run-end set)"
     }
   ]
 }

@@ -481,3 +481,25 @@ ladder may move the 64 scalar UP (one edit).
 
 — final reviewer round 2, 2026-11-12 (fresh session; no implementation or validation file edited;
 teeth probes and dep-update-free renders only in /tmp copies; repo tree verified clean post-runs).
+
+---
+
+## Rework delta 2 — live defect C09 (container command) — 2026-11-13, appended per owner report
+Owner-reported LIVE RunContainerError after the C08 sync (pools un-advertised → radiance +
+gpu-ai llama-swap Pending). Authority: EXPLORE.md §D1 (scout round 2 — registry image-config
++ Dockerfile@v1.31.0.12 + live-pod renders, every fact grounded). Root cause INHERITED FROM
+C07 (args-only against a no-ENTRYPOINT image; the parity oracle shares the defect — "the
+oracle is the defect", never live-proven because gpu-ai ran the external chart until C08).
+plan_status reopened complete→approved for this delta (D25).
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C09 | deviceplugin container gains `command: ["/root/k8s-device-plugin"]` (+ WHY-comment, evidence authority, runbook receipts) | S | 6 | [C08] | fixes C08's shipped file; the defect predates C08 but only C08 made it live |
+
+Wave 6: C09 (alone). Commands additions (beyond the standing battery): the /tmp-copy
+render asserting `command == ["/root/k8s-device-plugin"]` beside the UNCHANGED 4-item args;
+`bash tests/services/amd-gpu-naming.sh n2` with `AMD_GPU_FLIP_COMMIT=<C09 sha>`; services/gpu
+render BYTE-PARITY (shield witness — the fix is gpu-ai-chart-only); zero-stale + placement
+scans re-run; combined bar per chunks/C09.md AC6 (§12.7 counts + the three new red-first
+legs). Live verification stays OWNER-RUN read-only prose (AC7) — the crashloop clears only
+when the owner merges and syncs; agents touch no cluster.
