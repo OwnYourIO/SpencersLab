@@ -731,7 +731,7 @@ paperless:
         tika:
           image:
             repository: apache/tika
-            tag: 2.9.2.1-full@sha256:ae0b86d3c4d06d8997407fcb08f31a7259fff91c43e0c1d7fffdad1e9ade3fe8
+            tag: 3.3.3.0-full@sha256:6ef30abd65df4b6c478907904099d0245bdb0e0686f94fb9bc7493558442bb74
           resources:
             limits:
               memory: 700Mi
