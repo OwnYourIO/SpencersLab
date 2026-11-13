@@ -561,8 +561,16 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   refuses boot otherwise), ECC-off (31.86 GiB), ReBAR. CUSTOM-PARAM CONTRADICTION
   adjudicated honestly: the owner's "ASSUME NOTHING CUSTOM" stands as METHOD (quote
   /proc/cmdline into every receipt; treat no param as stock OR intentional) even
-  though `ttm.page_pool_size=29360128 ttm.pages_limit=293610128
+  though `ttm.page_pool_size=29360128 ttm.pages_limit=29360128
   amdgpu.lockup_timeout=30000` + `amd_iommu=off` are visibly custom-set in the paste —
+   [C14-r1 TRANSCRIPTION CORRECTION, this round: the paste above originally read
+   `ttm.pages_limit=293610128` — a 9-digit mis-type of the owner's own line, which repeats
+   `29360128` twice per the §D8/§D10 boot-parameter prints. 29360128 × 4 KiB = 112.00 GiB
+   EXACTLY, the figure the pin-cap law below rests on, where the mis-type computes 1,120.03
+   GiB. Corrected in place: a "verbatim paste" that isn't verbatim is the exact class this
+   ticket keeps getting burned by. The same typo survived in three sites of the tuning note
+   (folded at C14 r1) and in chunks/C12.md:177's `-class` quote — that one is a chunk record,
+   left as the historical quote with this note as its correction pointer.]
   the PRINTED budget wins anyway: pin-cap authority = the engine's 112.00 GiB line,
   not the stock ~120.6 formula. DECODE 5.1 t/s suspect order: LINK → POWER-CLOCKS
   (300 W cap ≠ the TP2 §3 120 W class — board not capping today; sclk 500–2350, check

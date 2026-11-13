@@ -22,11 +22,12 @@ printed output, not the stock formula: quote `cat /proc/cmdline` into every
 receipt, and take the engine's printed caps as the authority (the boot
 pinned to a **112.00 GiB** TTM envelope — the printed `ttm.page_pool_size`
 29360128 is exactly 29,360,128 pages × 4 KiB = 112.00 GiB; the
-`ttm.pages_limit` 293610128 completes the pasted pair). That number, not
+`ttm.pages_limit` 29360128 completes the pasted pair — the same number,
+twice). That number, not
 the stock RAM-minus-formula, is the envelope this note
 measures against. This box runs a custom boot-parameter set —
 the exact paste strings, verbatim: `amd_iommu=off amdgpu.lockup_timeout=30000
-ttm.page_pool_size=29360128 ttm.pages_limit=293610128`. Re-read them on
+ttm.page_pool_size=29360128 ttm.pages_limit=29360128`. Re-read them on
 every receipt; do not assume any of it survived a kernel update by accident.
 
 ## 1. LINK — the PCIe speed defect, PROVEN downgraded (first suspect)
@@ -82,8 +83,9 @@ order (§D10.8, R10-Q5):
   4d6202d9-14f2-4e7d-b107-1edec278a73d` at 21:34:43Z, old pod SIGTERM
   21:31:24Z, ≈3 m 19 s off-window — REPRINTED the chain still degraded:
   `link 00:03.1 8.0 GT/s x4 (max 16.0 GT/s x4) -> c2:00.0 8.0 GT/s x4 (max
-  32.0 GT/s x16) -> c3:00.0 32.0 GT/s x16 -> c4:00.0 32.0 GT/s x16 [read at
-  48% busy]` plus the same WARN (§D10.2). The rate did not move BECAUSE THE
+  32.0 GT/s x16) -> c3:00.0 32.0 GT/s x16 (max 32.0 GT/s x16) -> c4:00.0
+  32.0 GT/s x16 (max 32.0 GT/s x16) [read at 48% busy]` plus the same WARN
+  (§D10.2). The rate did not move BECAUSE THE
   LINK DID NOT MOVE (D35); D33 re-witnessed — the engine doc's "a link stuck
   one level down clears on reboot" advice is WITNESSED-FALSE here. Spend the
   next power cycles on rungs 1–3, not on a cheap re-run.
@@ -282,7 +284,7 @@ down to 112. What to watch: while the engine pins ~71 GiB for minutes at
 first staging (tens-of-minutes class — §D4), large-order allocations lean
 on compaction; a stall during that window is host memory work, not GPU.
 This is also the family where the boot paste lives (HUGEPAGES-TTM line:
-`ttm.page_pool_size=29360128` / `ttm.pages_limit=293610128` — the printed
+`ttm.page_pool_size=29360128` / `ttm.pages_limit=29360128` — the printed
 112.00 GiB pin cap, the authority per the method section; kernel THP sysfs
 `/sys/kernel/mm/transparent_hugepage/enabled` is a READ here — any WRITE
 into it is owner-executed host lane). Do not "tune" THP speculatively:
@@ -389,14 +391,17 @@ question for the owner, never a sysfs chase.
 The family's founding reading — `0 dispatches`, resident-per-layer `max 154`,
 mover idle, "every expert already fits resident" — is REVISED by the drained
 pod's recovered EXIT BANNER (§D10.5, pod `5f7d6b95d7-4fccz`, graceful drain
-at the 21:31:24Z SIGTERM): the ticket's first COMPLETE mover receipt, quoted
-here COMPLETELY — a truncated banner re-opens the mis-read class it closed:
+at the 21:31:24Z SIGTERM): the ticket's first COMPLETE mover receipt — the
+armed counters quoted complete below, tail included (the full multi-line
+banner with its per-layer tables is EXPLORE §D10.5) — a truncated quote
+re-opens the mis-read class the banner closed:
 
 `heat engine: 20678 dispatches, 12129 swaps proposed, 13736 promotions, 11960
 demotions; 9993 distinct promoted, 4971 readmits (36% of promotions were of
 something already demoted); resident units a layer: min 0 max 300 mean 67.2 sd
 94.5; mover: 71.40 GiB h2d, 19.08 GiB d2h; prefetch: 46.2% of copies looked
-back on routed; 49 layer-sweeps found nothing new`
+back on routed; 49 layer-sweeps found nothing new; 328 dispatches declined on
+hysteresis; 265 starved of a slab slot, 3721 of a pool slot`
 
 - **READ ARTIFACT:** boot B's literal `0 dispatches` was not a state — the
   mover demonstrably ran on this profile, and the live `expert prefetch
