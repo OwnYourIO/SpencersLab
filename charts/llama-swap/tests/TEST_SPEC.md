@@ -4343,3 +4343,55 @@ by loosening the arm.** And the fiction class itself stays upstream of every
 arm: a token-presence test can never catch advising a component that does not
 exist (bf950d22a's FRICTION law) — this arm bounds the advice SHAPE, humans
 bound the facts. No behavior of any existing arm changed; nothing loosened.
+
+### 12.14 C14 test round — VERIFY-FIRST arm check for the docs-only rewrite (test session, 2026-11-14; wave 11, §D10/§R10/D34/D35/D36)
+
+The round exists to make a docs rewrite unable to silently disarm the suite: the
+arms were walked against AC1–AC3's INSTRUCTED prose BEFORE dev's round (the C13
+lesson inverted — there dev's line-shape misses fired T3/T4 mid-authoring; here
+the arm moves deliberately, up front, and the suite must be green BOTH before
+(the current, pre-rewrite note) and after (the truthful fixture). Law recorded:
+**a docs rewrite must be arm-checked BEFORE the dev round, not repaired after it.**
+
+**Arm-survival table (at-risk → decision):**
+
+| planned prose (C14 AC) | arm that reads it | decision → what dev MUST land |
+|---|---|---|
+| §1 ladder rewrite (rungs 0–4, witness law, census 49→50→48) | T2 LINK: `TargetSpeed` presence; `REPRINTED\|proven downgraded` presence; open-clause guard on retrain-vs-luck | UNMOVED — AC1 instructs the tokens (D34's `LnkCtl2 Target Link Speed: 16GT/s` row lands TargetSpeed; rung-0's re-printed-chain row lands REPRINTED; every rung says CLOSED/falsified) |
+| dock-bypass / active-dock hardware language | T2 fiction-ban (trigger: `retimer\|re-?driver` + dock-qualified `switch`; DENY list: no/not/none/passive/retired/moot/without/integrated/1002:147x/navi/does-not-exist/no-longer — LINE-scoped) | UNMOVED, satisfiability PROVEN on the exact instructed sentences ("no retimer, no switch", "the purchase of hardware the DEG1 is NOT, for it has neither"); re-advertisement synthesis REDS |
+| NOT-fixes rows (`pcie_aspm=off`, `setpci` overrides) | NEW (this round): per-line NOT-FIX denial guard — every `pcie_aspm` line must carry `NOT-FIX\|no change to PCIe link speed\|stabilit…`, every `setpci` line `OWNER\|NOT-FIX\|nothing to write\|zero\|stop\|retrain` | ADDABLE discipline, silent on today's note (no tokens yet) — dev's rows carry both quotes verbatim ("no change to PCIe link speed" R10-S9; "nothing to write" D34) |
+| `d3cold_allowed=0` + `amdgpu.runpm=0` STABILITY sub-block | NEW: section-WINDOW re-brand guard — a param↔speed pairing within 90 chars (WRAP-ALLOWING `[\s\S]`) must have a deny word in ±220; stability label (stabilit/hygiene/`device lost from bus`/BOCO) must exist in the section when d3cold/runpm appear | ADDABLE — first draft was line-scoped and MISSED the wrapped synthesis re-brand ("…runpm=0 boot param — pin these two and the link retrains⏎Gen4…"); fixed at authoring, synthesis now REDS. §R10-Q4 is the encoded law: anything that does not land LnkSta first is not a fix |
+| udev-rule + setpci write mechanics | T3 HOST_WRITE (echo/tee→/etc, setpci, …) + OWNER marker | MOVED: **test-side defect fixed pre-dev** — the OWNER regex `owner[- ]executed\|owner lane` did NOT match the instructed "OWNER-lane" (hyphen) — widened to `owner[- ](?:executed\|lane)`. The adjacency law is NOT loosened: the marker must stay same-or-previous LINE (my own first fixture draft wrapped it away and T3 correctly reddened — repair prose, never the arm: FRICTION's C13 r1 law, re-witnessed) |
+| §14 exit-banner rewrite | audited: NO current arm pinned "0 dispatches" or the 154 figure (only the family HEADING token) — **verified-nil**; and the new truth cannot be armed unconditionally without REDDING the PRE-rewrite tree (green-both-ways law) | ONE-WAY arm ADDED: if `20678` appears, the banner must be quoted COMPLETELY (13736/71.40/36%/300/67.2) AND carry the adjudication word (`read artifact\|supersed`). Truncation synthesis REDS ×2. The idle-claim regression surface ("the mover is IDLE" re-advertised without the banner) stays HUMAN-armed territory until dev lands — record honestly; a post-landing touch can pin the §D10.5 story fully |
+| new cites §R10 / R10-Qn / R10-Sn / R9-Sn / §D10 / D33–D36 | T1 resolver | EXTENDED (never deleted): `§R<n>`→`^## §?R`, `R<n>-Q<m>`→`^### R-Q` heading, `R<n>-S<m>`→`^\| R-S \|` source row (verified both §R9 and §R10 number sources that way, incl. R9-S17); fixture-probe cites the whole new set conforming (GREEN) and the fake set (§R11, R10-Q99, R10-S99) REDS; a real-doc synthesis with fake cites REDS T1 |
+| frozen set (AC4) | headings×15 order, envelope pair halves, sums 110/71.04/118.72/115.28/9.80/38.96, T4 coherence, runbook untouched | UNTOUCHED — verified: truthful fixture runs 4 ok INCLUDING T4, current note 4 ok |
+
+**Green-both-ways proofs:** CURRENT note 4 ok · TRUTHFUL fixture (the full AC1/
+AC2/AC3 rewrite, written as dev's checklist demo) 4 ok · fiction→T2 RED ·
+wrapped-re-brand→T2 RED · aspm+setpci cures→T2 RED (and the setpci line T3 too)
+· stale cites→T1 RED · banner-truncation→T2 RED · mover-idle regression→GREEN
+(the named gap above). Two self-defects caught by the synthesis set BEFORE
+handoff: the line-scoped re-brand window (miss direction) and the escaped-dot
+substring tokens (`"71\.40"` as a LITERAL — a false-red waiting to blame dev's
+correct prose); the third find was the genuine test-side exemption gap
+("OWNER-lane"). Authoring lesson extension: conditional arms must be
+synthesized in BOTH directions — an arm that cannot red the lie AND green the
+truth is half a tripwire.
+
+**LAW (§12.x list):** *verify-first for docs rounds — when the deliverable is a
+prose rewrite, the test session walks every instructed sentence through every
+armed shape BEFORE the wave: satisfiability is proven on the exact prose the
+plan tells dev to write, discipline arms are added in the same wave, and the
+suite is green on the old note and the new fixture both. A rewrite discovered
+to disarm arms in the dev round is the §12.10 class re-timed: the arms were
+vocabulary about the OLD document.*
+
+**Footnote (aislop local-pin, this round):** aislop@0.21.0 reached the registry
+during the C14 window and `npx --no-install aislop` (the repo's standing
+command, latest-matches-cache since C12) began refusing outright — npx resolves
+the DIST-TAG before consulting the _npx cache. Workaround used and available
+to review: invoke the cached binary directly
+(`node ~/.npm/_npx/<hash>/node_modules/aislop/dist/cli.js ci --changes`, 0.20.1)
+— same engine, same verdict (100/0/0). Coord may want a repo-visible pin
+(package.json devDependency or a documented hash path) so the gate command
+stops floating; recorded here because every agent session runs this bar.

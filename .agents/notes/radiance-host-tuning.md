@@ -56,26 +56,97 @@ Gen3 where the port caps Gen4. 3.94 GB/s raw ≈ HALF the RQ1-planned
 predicts the ~142 t/s prefill signature, and why LINK is the FIRST suspect:
 worth 2–4× prefill, vs the n-gram tier's 3–10% decode band.
 
-Check (read-only): `sudo lspci -vvv -s 00:00:03.1 | grep -E 'LnkCap:|LnkSta:|LnkCtl2|TargetSpeed'`
-— same for `0000:c2:00.0` — plus
-`cat /sys/bus/pci/devices/0000:c2:00.0/current_speed /sys/bus/pci/devices/0000:c2:00.0/current_width`
-and `sudo dmesg | grep -iE 'GT/s|link training|downgraded'`. The
-discriminator is `LnkCtl2` **TargetSpeed**: TargetSpeed=8.0 ⇒ host-BIOS
-per-slot speed PIN (fix: set the slot to Gen4/Auto in BIOS); TargetSpeed=16
-while LnkSta reads 8.0 ⇒ ELECTRICAL — and the electrical branch has NO
-active silicon to configure (the DEG1 is passive — no retimer, no switch,
-§R9/D33 — and not hot-plug-capable): it is the dock's documented power
-sequence (dock and host powered in order, cold boot — those ARE its
-"settings") plus cable/seat quality. Reseat/inspect the
-Gen4-rated OCuLink cable and re-check the power order (fix: reseat/swap the
-cable, owner lane). The reboot did NOT clear the state, which pushes toward
-BIOS-pin-or-cable over transient-stick. A forced retrain (setpci LnkCtl
-bit, or remove/rescan) is a WRITE — owner lane only. (D33: the engine doc's
-"a link stuck one level down clears on reboot" advice is WITNESSED-FALSE on
-this node — it must not be presented as a fix.)
-After any change: re-read the
-startup report AND capture `GET /diagnostics` under a long prefill — the
-link widths under load are the receipt.
+Read toolkit — every rung is witnessed the SAME way, all read-only: the
+engine's HARDWARE `link 00:03.1 …` line (startup report) AND `journalctl -k -b
+| grep 'available PCIe bandwidth'` as the kernel's second witness — BOTH
+**read under load**: idle parks the link at 2.5 GT/s, the trap that fooled
+early reads. The honest busy census across the three witness boots is
+**49% → 50% → 48%** (§D6.6/§D8/§D10); a "61%" reading NEVER EXISTED in the
+ticket's records (D36's self-correction, against our own records first).
+Support reads: `sudo lspci -vvv -s 00:00:03.1 | grep -E
+'LnkCap:|LnkSta:|LnkCtl2|TargetSpeed'`,
+`cat /sys/bus/pci/devices/0000:c2:00.0/current_speed …/current_width`, and
+`sudo dmesg | grep -iE 'GT/s|link training|downgraded'`.
+
+Discriminator status: `LnkCtl2` **TargetSpeed** CLOSED the host-BIOS pin
+branch by the owner's own read — lspci prints `Target Link Speed: 16GT/s`
+while `LnkSta` reads `8GT/s x4` (D34). The root port is INSTRUCTED to train
+Gen4 and FALLS BACK: the defect is electrical/equalization — seat, cable,
+passive path — not configuration. One variable per cold boot, ladder in
+order (§D10.8, R10-Q5):
+
+- **Rung 0 — power-sequencing ritual: FALSIFIED, not owed a repeat.** The
+  owner ran the dock-first full-cold sequence verbatim (everything off, dock
+  on, 10 s, host on — the dock is not hot-plug-capable, R10-S4) and a
+  GENUINELY NEW boot — Node event `Rebooted … boot id
+  4d6202d9-14f2-4e7d-b107-1edec278a73d` at 21:34:43Z, old pod SIGTERM
+  21:31:24Z, ≈3 m 19 s off-window — REPRINTED the chain still degraded:
+  `link 00:03.1 8.0 GT/s x4 (max 16.0 GT/s x4) -> c2:00.0 8.0 GT/s x4 (max
+  32.0 GT/s x16) -> c3:00.0 32.0 GT/s x16 -> c4:00.0 32.0 GT/s x16 [read at
+  48% busy]` plus the same WARN (§D10.2). The rate did not move BECAUSE THE
+  LINK DID NOT MOVE (D35); D33 re-witnessed — the engine doc's "a link stuck
+  one level down clears on reboot" advice is WITNESSED-FALSE here. Spend the
+  next power cycles on rungs 1–3, not on a cheap re-run.
+- **Rung 1 — RESEAT, cost ~0, do it first:** the SFF-8611 cable at BOTH ends
+  until the latch clicks, plus full 24-pin/AC seating (a shallow 24-pin is a
+  documented malfunction class, R10-S7). With cause (a) dead above, seat/
+  channel integrity (cause (d), R10-Q2) is the surviving STRONG candidate —
+  a fresh cold training that fails Gen4 EQ and falls back to Gen3 is exactly
+  cause (c)-via-channel.
+- **Rung 2 — CABLE SWAP, cost ~0:** a known Gen4-rated SHORT SFF-8611 cable
+  (the owner's own framing); same witness, same cold-boot law.
+- **Rung 3 — DOCK BYPASS, the DECISIVE separator (R10-Q3 verbatim logic):**
+  card + the SAME cable straight onto the board's own OCuLink port (open
+  frame), or the dock + card on a second Gen4 host. Gen4 while bypassed ⇒
+  the dock's PCB/power path owns the defect; still Gen3 while bypassed ⇒ the
+  host-port ↔ cable ↔ card triple owns it. The dock trains Gen4 in other
+  hands (chimolog's 7.07 GB/s 3DMark witness, R10-S8) and the card's class
+  is ruled out — other hosts report this card at Gen4 x4 (R10-Q2 (f), §R9).
+- **Rung 4 — BIOS slot menu, LAST and trust-flagged:** the speed PIN is
+  already ruled out (TargetSpeed reads 16GT/s, D34); what survives is a
+  platform EQ/DTLSM tuning difference or an explicit per-slot "Gen4, not
+  Auto" menu — and ONLY if such a menu exists on this board. The EVO-X3-class
+  lead (R9-S17) is an SEO page; no primary GMKtec/AMD BIOS document exists —
+  the menu's existence here is UNVERIFIED; do not promise it.
+- **Terminal fork (only if rungs 1–4 ALL still print `LnkSta 8GT/s x4` under
+  load):** the passive path cannot hold Gen4 in this chassis (§R10-Q5). Then
+  the choice is an active dock (redriver/PEX-switch) the DEG1 is NOT — it
+  has neither, and buying one rides TP2 §2's hardware lane, an owner
+  decision and never a repo step — or accepting the 3.94 GB/s ceiling and
+  pursuing the profile levers / TP2 instead.
+
+NOT-fixes — recorded so this checklist never re-lists a dead end as a cure.
+§R10-Q4's law verbatim: "Anything that doesn't land LnkSta first is not a
+fix, it's hygiene."
+
+- **`pcie_aspm=off` — NOT-FIX for speed.** Field evidence: it produced
+  "no change to PCIe link speed" (R10-S9). ASPM L0s/L1 bits showing in
+  `LnkCap` are NORMAL — the knob belongs to the stability channel only.
+- **`setpci` TargetSpeed / retrain overrides — NOT-FIX here (OWNER-lane
+  mechanics at most).** The value already reads 16GT/s (D34) — nothing to write —
+  and with the config theory dead the override class collapses to
+  link-down/unbootable risk for zero speed upside; the runtime retrain
+  itself showed "no effect" in the field case (R10-S9). Recorded to STOP
+  attempts.
+- **STABILITY — due regardless, explicitly NOT a throughput fix.** The
+  report STILL prints `runtime pm active (control auto)` after the cold
+  cycle (§D10.3) and the root port ships `d3cold_allowed=1` by default:
+  the chain is armed, un-pinned, for the D3cold/BOCO "device lost from bus"
+  class. The hygiene: a udev rule pinning `d3cold_allowed=0` across the
+  chain including `00:00:03.1`, plus the `amdgpu.runpm=0` boot param — the
+  ArcheoCodix precedent (R10-S6: GPD Win 4 + the SAME DEG1 + RX 9070 XT,
+  same `00:03.1` root port, same 1002:1478/1479 card bridges) landed
+  exactly this against bus-loss. On this churn-heavy lane (see HEAT-ENGINE)
+  a mid-session power-state drop costs MORE, which is why the row is due
+  even while Gen3 persists. Mechanics stay OWNER-EXECUTED — udev file +
+  kernel param, then one cold boot and the receipts above; stability, not
+  speed.
+
+Any rung's receipt: re-read the engine startup report AND capture
+`GET /diagnostics` under a long prefill — the link widths under load are
+the receipt; a rung scores ONLY when the engine line and `journalctl -k -b`
+both show 16.0 GT/s. The payoff model is unchanged: Gen4 x4 buys prefill
+249→~450–500 t/s and warm decode toward the ~35 t/s compute floor (§D8).
 
 ## 2. MEMLOCK — 8 MiB in the container; the node-lane-only truth
 
@@ -168,7 +239,10 @@ per-CPU changes, and the engine side alone cannot separate the two (no
 repo record of the write time exists). A runtime
 `cpupower frequency-set` is in either case NOT the fix — that OWNER-EXECUTED
 write reverts on the next reboot (there is no repo record of when the owner
-set performance; their paste is the only evidence of the write).
+set performance; their paste is the only evidence of the write). SECOND
+WITNESS (§D10.3): the 21:34:43Z full power cycle — the dock-first ritual boot
+(D35) — re-printed `powersave` too; the non-persistence reading survived a
+second cold boot, and the persistence routes below stand unchanged.
 
 Re-check (read-only): `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | sort | uniq -c`
 and the same for `energy_performance_preference`, THEN the final authority:
@@ -310,23 +384,49 @@ an interval that explodes while sessions are flat is the pool-vs-mirror
 arithmetic (§14 and the C12 scalar comment) talking — that is a profile
 question for the owner, never a sysfs chase.
 
-## 14. HEAT-ENGINE — residency tiers never promoted: idle expert heat
+## 14. HEAT-ENGINE — the mover IS engaged and CHURNING: the exit banner settles it
 
-Report tokens: expert-heat lines all zero — `0 dispatches`, `0 promotions`,
-`0 demotions`, resident-per-layer `min 0 / max 154 / mean 54.4 / sd 73.3`,
-layers L48+ resident 0 — plus the fresh boot's line quoted here
-deliberately at this family: `expert prefetch resting: the steps used 29%
-of its last 3528 copies, under the 30% that pays for them`. Reading: the
-heat engine is IDLE because every expert already fits resident at 8×200K
-under the 43 GiB pool — promotions/demotions only exist to move what
-doesn't. The prefetch sitting below its pay-for threshold is the same
-story in the other direction. Checks: re-read the report + `/diagnostics`
-under a LONGER decode (≥2000 tokens, fixed probe) and after the session
-count rises; target: zero stays correct while the pool holds — first
-promotions appearing is HEALTH (pressure working), not a defect. If
-demotion BURSTS coincide with RAM spikes, the pinned-burst class (RESEARCH
-RQ1's Wilde note) is the thing to watch — it rides the same arithmetic
-discussed at §3, not a host knob.
+The family's founding reading — `0 dispatches`, resident-per-layer `max 154`,
+mover idle, "every expert already fits resident" — is REVISED by the drained
+pod's recovered EXIT BANNER (§D10.5, pod `5f7d6b95d7-4fccz`, graceful drain
+at the 21:31:24Z SIGTERM): the ticket's first COMPLETE mover receipt, quoted
+here COMPLETELY — a truncated banner re-opens the mis-read class it closed:
+
+`heat engine: 20678 dispatches, 12129 swaps proposed, 13736 promotions, 11960
+demotions; 9993 distinct promoted, 4971 readmits (36% of promotions were of
+something already demoted); resident units a layer: min 0 max 300 mean 67.2 sd
+94.5; mover: 71.40 GiB h2d, 19.08 GiB d2h; prefetch: 46.2% of copies looked
+back on routed; 49 layer-sweeps found nothing new`
+
+- **READ ARTIFACT:** boot B's literal `0 dispatches` was not a state — the
+  mover demonstrably ran on this profile, and the live `expert prefetch
+  resting … under the 30% that pays` line (29%/22%/26% across the three
+  boots) is the same idle-PREFETCH signature, not engine idleness. §D8's
+  "unsettled mover" question is CLOSED.
+- **SUPERSEDED:** §D8.2(b)'s inference that `max 154` was the per-layer
+  capacity — residency reaches 300 with the documented KV/arena loans (520
+  KV-cache slots + 1416 activation-arena slots lendable to the mover;
+  ≈37% of the 25078 units resident is the WORKING state), the `L48+ zero`
+  rows are the non-MoE layer plane, and D36 records the self-correction.
+- **THE CHURN RIDES THE SAME 3.94 GB/s LINK:** re-placement traffic on the
+  order of ~90–100 MiB per served token sits ON TOP of the ~200 MiB/token
+  miss stream, during exactly the early requests that look worst — which is
+  why short generations look catastrophic and long ones recover as the
+  miss-fraction converges (m 0.29 → 0.20 → ~0.17 on §D8's 3.8× warm-up
+  curve; the banner's settled state is `49 layer-sweeps found nothing new`).
+  The post-ritual prints — `11.0 tok/s` at gen 1047, `16.4` at gen 1707 —
+  are the SAME, MID-RAMP, NOT a regression: "same or worse" adjudicates to
+  "same" (D36). Link-first SURVIVES STRENGTHENED: one Gen4 fix halves the
+  misses AND the churn AND the wasted prefetch together.
+- **Fair measurement, both still owed:** no settled number exists — the
+  fixed ≥2000-token probe at request-position ≥4 (§D8.3) has NEVER been run
+  and the runbook's step-6 8-session gate is still unrun (owner-lane, each
+  read-only). Standing law: **the receipt decides, never the rate** (§R8).
+  Recorded, NO advice shipped: 36% readmits + 46.2% no-lookback prefetch MAY
+  say the heat.h guards are off-optimum on this profile — UNVERIFIED (D36).
+- Unchanged watch item: if demotion BURSTS coincide with RAM spikes, the
+  pinned-burst class (RESEARCH RQ1's Wilde note) is the thing to watch — it
+  rides the same arithmetic discussed at §3, not a host knob.
 
 ## 15. PROTOCOL — how to run the loop without lying to yourself
 

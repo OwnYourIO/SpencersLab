@@ -98,6 +98,15 @@ def resolve(doc_text):
     the real doc can be latently dead — §12.5)."""
     rq = {int(m.group(1)) for m in re.finditer(r"(?m)^## RQ([0-9]) —", research)}
     sd = {int(m.group(1)) for m in re.finditer(r"(?m)^## §?D([0-9]+)", explore)}
+    # C14 AC4 extension (same wave as the note's new cites — ACCEPT by extending,
+    # never dodge by dropping citations): §R<n> block headings, R<n>-Q<m>
+    # sub-question headings, and R<n>-S<m> source rows (both §R9 and §R10 number
+    # their source tables as "| R<n>-S<m> |", verified this round).
+    sr = {int(m.group(1)) for m in re.finditer(r"(?m)^## §?R([0-9]+)", research)}
+    rq_q = {(int(m.group(1)), int(m.group(2)))
+            for m in re.finditer(r"(?m)^### R([0-9]+)-Q([0-9]+)", research)}
+    rq_s = {(int(m.group(1)), int(m.group(2)))
+            for m in re.finditer(r"(?m)^\| R([0-9]+)-S([0-9]+) ", research)}
     dn = set()
     for m in re.finditer(r"(?m)^[ \t]*(?:[-*] )?\d{4}-\d{2}-\d{2}[^\n]*?\bD(\d+)\b", decisions):
         dn.add(int(m.group(1)))
@@ -108,6 +117,12 @@ def resolve(doc_text):
     sd_spans = [m.span() for m in re.finditer(r"§\s*D([0-9]+)(?:[.\s]\d+)?", doc_text)]
     for m in re.finditer(r"§\s*D([0-9]+)", doc_text):
         cites.append(("S", int(m.group(1))))
+    for m in re.finditer(r"(?<![A-Za-z0-9])R([0-9]+)\s*[-–]\s*Q\s*([0-9]+)", doc_text):
+        cites.append(("RQq", (int(m.group(1)), int(m.group(2)))))
+    for m in re.finditer(r"(?<![A-Za-z0-9])R([0-9]+)\s*[-–]\s*S\s*([0-9]+)", doc_text):
+        cites.append(("RQs", (int(m.group(1)), int(m.group(2)))))
+    for m in re.finditer(r"§\s*R([0-9]+)(?![\w-])", doc_text):
+        cites.append(("SR", int(m.group(1))))
     # Bare D-notes: skip spans already claimed by a §D citation (the §D<m>
     # form resolves through EXPLORE, not the decision ledger).
     for m in re.finditer(r"(?<![0-9A-Za-z.\-§])D(\d+)\b", doc_text):
@@ -116,23 +131,29 @@ def resolve(doc_text):
         if re.search(r"§\s*$", doc_text[max(0, m.start() - 2):m.start()]):
             continue
         cites.append(("D", int(m.group(1))))
-    for kind, n in sorted(set(cites)):
+    for kind, n in sorted(set(cites), key=lambda c: (c[0], str(c[1]))):
         if kind == "RQ" and n not in rq:
             errs.append(f"RQ{n}: no '## RQ{n} —' heading in RESEARCH.md (stale pointer)")
         if kind == "S" and n not in sd:
             errs.append(f"§D{n}: no '## §D{n}' heading in EXPLORE.md (stale pointer)")
         if kind == "D" and n not in dn:
             errs.append(f"D{n}: no D{n} entry in DECISIONS.md (stale pointer)")
+        if kind == "SR" and n not in sr:
+            errs.append(f"§R{n}: no '## §R{n}' heading in RESEARCH.md (stale pointer)")
+        if kind == "RQq" and n not in rq_q:
+            errs.append(f"R{n[0]}-Q{n[1]}: no '### R{n[0]}-Q{n[1]}' sub-question heading in RESEARCH.md (stale pointer)")
+        if kind == "RQs" and n not in rq_s:
+            errs.append(f"R{n[0]}-S{n[1]}: no '| R{n[0]}-S{n[1]} |' source row in RESEARCH.md (stale pointer)")
     return cites, errs
 
 
 # --- fixture-probe (three states): conforming cite GREENS, stale cite REDS ---
-good_cites, good_errs = resolve("Grounded per RESEARCH RQ1 and §D4 (scout round 6), decisions D17, D27 and D28; §D4.4 details.")
+good_cites, good_errs = resolve("Grounded per RESEARCH RQ1 and §D4 (scout round 6), decisions D17, D27 and D28; §D4.4 details. §R10 + §D10 (scout round 10) ladder, per R10-Q3 with the R10-S6 precedent; §D8.2(b) superseded, §R9 lead R9-S17 trust-flagged.")
 if good_errs:
     sys.exit(f"resolver machinery broken: the CONFORMING fixture cite failed to resolve: {good_errs}")
-if {("RQ", 1), ("S", 4), ("D", 17), ("D", 27), ("D", 28)} - set(good_cites):
+if {("RQ", 1), ("S", 4), ("D", 17), ("D", 27), ("D", 28), ("SR", 10), ("RQq", (10, 3)), ("RQs", (10, 6)), ("S", 10)} - set(good_cites):
     sys.exit(f"resolver machinery broken: the conforming fixture cites were not even harvested: {sorted(set(good_cites))}")
-_stale_cites, stale_errs = resolve("Per RESEARCH RQ9 and §D42 and D222, the envelope holds.")
+_stale_cites, stale_errs = resolve("Per RESEARCH RQ9 and §D42 and D222, the §R11 verdict in R10-Q9 (source R10-S99) holds.")
 if not stale_errs:
     sys.exit("resolver machinery broken: the STALE fixture cite resolved (teeth dead — a vacuous resolver would green any doc)")
 
@@ -296,6 +317,41 @@ for m in re.finditer(r"(?i)ngram-placement ram|ram=DIR", dio):
     w = dio[max(0, m.start() - 160): m.end() + 160]
     if not re.search(r"(?i)dead|118\.72|>|cannot|forfeit|moot", w):
         errs.append(f"the RAM-tier option is presented without its DEAD arithmetic context: {m.group(0)[:60]!r}")
+# C14 AC2 STABILITY-vs-SPEED discipline: a future edit may not silently re-brand
+# the d3cold/runpm hygiene or the ASPM/setpci dead-ends as throughput cures.
+# Conditional arms (verify-first law — green now, green after dev's rewrite):
+# * if the LINK section carries the d3cold/runpm STABILITY row, the stability
+#   label must live in the same section, and no line may pair these params with
+#   speed language (Gen4 / GT/s / throughput / prefill / tok) without a deny.
+# * pcie_aspm (if present) must keep the "no change to PCIe link speed" / NOT-FIX
+#   wording; every setpci mention must be OWNER-marked, NOT-FIX/stop-framed, or
+#   plain retrain-hygiene prose — never a speed promise.
+if re.search(r"d3cold|runpm", link):
+    if not re.search(r"(?i)stabilit|hygiene|device lost from bus|BOCO", link):
+        errs.append("LINK names d3cold/runpm without the STABILITY label — AC2: they are hygiene due regardless, explicitly NOT a throughput fix (ArcheoCodix R10-S6 precedent, the D3cold/BOCO 'device lost from bus' class)")
+    # Section-window scan, NOT line-scan: a re-brand reads "…runpm=0 boot
+    # param — pin these two and the link retrains\n Gen4…" — the cure claim
+    # wraps OFF the param token, and a line-scoped guard misses it (caught by
+    # synthesis at C14 authoring — the same wrap-safety law §12.9 records).
+    for m in re.finditer(r"(?i)(d3cold_allowed|runpm)[\s\S]{0,90}(?:\bgen4\b|gt/s|throughput|prefill|tok/s|link speed)|(?:\bgen4\b|throughput|speed)[\s\S]{0,70}(?:via|by|with|pinning|and)[\s\S]{0,40}(?:d3cold|runpm)", link):
+        w = link[max(0, m.start() - 220): m.end() + 220]
+        if not re.search(r"(?i)not|never|no change|zero|only|stabilit|hygiene|moot|due regardless", w):
+            errs.append(f"LINK re-brands a STABILITY param as a speed cure (window near {m.group(0)[:50]!r}) — §R10-Q4: anything that does not land LnkSta first is not a fix, it is hygiene")
+for _i, _ln in enumerate(link.splitlines()):
+    if "pcie_aspm" in _ln and not re.search(r"(?i)not-?fix|not a fix|no change to pcie link speed|never fixed|stabilit", _ln):
+        errs.append(f"pcie_aspm presented without its NOT-FIX-for-speed denial — field evidence (R10-S9): 'no change to PCIe link speed'; ASPM is a stability channel only (line {_i+1}): {_ln.strip()[:90]!r}")
+    if "setpci" in _ln and not re.search(r"(?i)owner|not-?fix|nothing to write|zero|stop|no effect|retrain", _ln):
+        errs.append(f"setpci mention is neither OWNER-marked prose nor a NOT-FIX row — AC2: TargetSpeed ALREADY reads 16GT/s (D34), a retrain override is risk for zero speed upside; every setpci line must stay in one of those two frames (line {_i+1}): {_ln.strip()[:90]!r}")
+
+heat = section("HEAT-ENGINE")
+if "20678" in heat:
+    for tok, what in (("13736", "promotions"), ("71.40", "GiB h2d"), ("36%", "readmits"),
+                      ("300", "max resident units"), ("67.2", "mean resident units")):
+        if tok not in heat:
+            errs.append(f"HEAT-ENGINE quotes the §D10.5 exit banner but loses {what} ({tok}) — quote the receipt COMPLETELY or not at all (a truncated banner re-opens the mis-read class the banner CLOSED)")
+    if not re.search(r"(?i)read artifact|supersed", heat):
+        errs.append("HEAT-ENGINE carries the exit banner without the §D10.5 adjudication (boot-B '0 dispatches' = READ ARTIFACT; §D8.2(b)'s 154-capacity inference SUPERSEDED) — the numbers without the self-correction are half a receipt")
+
 iom = section("IOMMU")
 if not re.search(r"(?i)wrong", iom):
     errs.append("IOMMU does not name the gate WRONG (AC2-v: the C06 iommu=pt expectation was the defect, not the host — §D6 confirmed)")
@@ -333,7 +389,7 @@ if want t3; then
 import re, sys
 
 lines = open(sys.argv[1]).read().splitlines()
-OWNER = re.compile(r"(?i)owner[- ]executed|owner lane|human[- ]owned")
+OWNER = re.compile(r"(?i)owner[- ](?:executed|lane)|human[- ]owned")
 CLUSTER_MUT = re.compile(r"kubectl[ \t]+(apply|create|delete|scale|edit|patch|label|annotate|cordon|drain|taint|run|rollout)|helm[ \t]+(install|upgrade|uninstall|rollback)|argocd[ \t]+(app[ \t]+)?(sync|delete)")
 EXEC = re.compile(r"kubectl[ \t]+exec")
 HOST_WRITE = re.compile(r"systemctl[ \t]+(edit|restart|start|stop|enable|disable|daemon-reload|set-property)|cpupower[ \t]+(set|frequency-set)|echo[^\n>] *> *>? */(sys|proc|etc)/|tee[^\n]*/(sys|proc)/|sysctl[ \t]+-w|swapoff[ \t]+-a|modprobe[ \t]|grubby|(?:reboot|shutdown)(?: now|[ \t]+-|[ \t]*$)|setpci|pp_dpm_sclk[^\n]*echo")
