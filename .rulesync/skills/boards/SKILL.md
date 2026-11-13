@@ -300,7 +300,14 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   restate). Nothing checked = the standard default loop (the Stage map's
   Blank defaults section). A card still carrying the legacy Research
   checklist follows the transition rule instead — its items time research
-  only, they never gate stages.
+  only, they never gate stages. The two leading stages gate like every
+  other name on the checklist: a curated set that omits `Worktree Creation`
+  opts the run into the Stage map row's consequence — uncommitted-in-place
+  work with zero commits (D28), no mint and no branch requirement, the leg
+  mechanics being `pipeline-kickoff`'s — and a set that omits `Session
+  Rename` opts into that row's null-session record (D15). The blank default
+  checks both names, so the ordinary run mints and renames exactly as the
+  legs describe.
 - **slug** — the `slug` custom field if already set (parsed per Resume vs
   new run: the bracketed text of the stack's last non-empty line);
   otherwise derive
@@ -313,16 +320,30 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   `2026-10-<cf-slug>`, worktree `<cf-slug>`, branch `<cf-slug>`, and
   `session_rename` to `<cf-slug>`. The branch named there is minted by
   kickoff's `kickoff-mint-branch.sh` step — citation only; the mechanics
-  live in `pipeline-kickoff`, never here.
+  live in `pipeline-kickoff`, never here. A rename-skipped run writes its
+  stack line as the bare slug — the Resume rule above already parses a
+  bare value, so resume keeps working with no sessionID captured.
 - **In-work mark** — after the `session_rename` returns the sessionID, mark
   the session in-work per `pipeline-kickoff` (citation only — the contract,
-  its values and its commands live there, never here).
+  its values and its commands live there, never here). The mark is keyed on
+  the captured id: a rename-skipped run has no sessionID, writes no mark,
+  and records `kickoff.coord_session: null` + reason
+  `session-rename-skipped`.
 - **No run tag** — run tags are retired for every flavor (cf-90): the
   card-driven and the live-kickoff families mint the run's surfaces from the
   bare slug alike, and the mint mechanics live in `pipeline-kickoff` —
   citation only, never restated here. STATE.json `kickoff` carries `card`
   (the id) + `slug` + `session_origin` (the claim-once slot record — Config
   constants) + (board runs) `priority: {raw, class}` (the `Priority` value and its resolved class — the Card-driven kickoff priority bullet) and omits/nulls `run_tag`.
+  A gated run records its skipped legs as facts, not plausible lies:
+  `kickoff.worktree: null` + reason `worktree-creation-skipped`,
+  `kickoff.branch` = the observed landing branch (a fact, never a
+  requirement), `kickoff.branch_source`, `kickoff.commits: "none"`, and
+  `kickoff.coord_session: null` + reason `session-rename-skipped` when the
+  rename leg was skipped; such a run's claim comment carries the `unnamed`
+  token in its session slot in place of the session link, and its own
+  `slug`-stack line is the bare slug (the rules above parse both shapes on
+  read — records, never rewrites of stored values).
 
 ## Board context block (consumer side)
 

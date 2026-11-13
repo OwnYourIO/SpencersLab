@@ -439,7 +439,11 @@ fi
 # board-tick-cleanup C02 widens the allowed set with "Pipeline worker
 # iterations" — the OQ10 docs-only truth task + silence rule edit exactly that
 # section's worker sentence (chunks/C02.md Tasks; AGENTS.md regenerates from
-# the sanctioned .rulesync/rules/overview.md delta).
+# the sanctioned .rulesync/rules/overview.md delta). cf-124 C05 (AC7, D28)
+# widens it further with "Hard rules" — the gated-mint clause is an approved
+# amendment to the feature-branch hard rule, mandated in overview.md and
+# regenerated into AGENTS.md by exactly that section (its content is pinned by
+# c12, the same division of duty as every other widened section).
 if want c8; then
   if git diff --quiet "$BASE" -- AGENTS.md 2>/dev/null; then
     ok "c8: AGENTS.md shows no delta vs $BASE (committed) — content checks c2-c6 carry the gate"
@@ -459,7 +463,7 @@ def sections(path):
     return out
 old, new = sections(sys.argv[1]), sections(sys.argv[2])
 allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo",
-           "Pipeline worker iterations"}
+           "Pipeline worker iterations", "Hard rules"}
 changed = [n for n in old if old.get(n) != new.get(n)]
 extra = [n for n in new if n not in old]
 if extra:

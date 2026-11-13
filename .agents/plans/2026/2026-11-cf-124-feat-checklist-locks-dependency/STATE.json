@@ -244,15 +244,38 @@
     },
     "C05": {
       "title": "Gated-kickoff run-shape: conditional rename/mint legs, the uncommitted-in-place zero-commit posture (D28), the degrade records, the step-10 no-surfaces clause",
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e2ada65c5ffewSldu2nBHKr27G",
+      "review_session": "ses_e2ac59ae0ffeFuDSXgTNyGbhht",
+      "validation_repair": "test_session ses_e3460ff68ffeI0Myd52xyyRW6y — agents-md c8 section allow-set extended by one entry (`Hard rules`) in the arm's own board-tick-cleanup precedent idiom (+6/−2), with the division of duty stated (c8 = section scope, c12 = content law)",
+      "launch_history": "three launches failed before this one: two on the local gpu-ai route (connection refused to 10.43.210.50:8080 — D29's serving saga), one aborted mid-run by a server restart that nevertheless LEFT its full edit set in the tree, and one whose hand-back answered 'Tool result missing' having written nothing (proven by mtimes stopping at 13:31:55 before it started). The audit round changed NOTHING and confirmed the inherited implementation contract-complete, so this chunk cost one audit rather than a re-author",
+      "last_verdict": "APPROVED (round 1) — checked paths byte-unchanged, the unchecked legs state D28 exactly with the withdrawn stop-guard present only as denial wording, all four of C05's arms (agents-md c12, kickoff-branch m7, session-origin s3, coord-inwork i9) flipped red→green, sixteen ledger reds + other chunks' designed reds byte-verbatim vs a detached 5c1c2deaa worktree, ZERO new reds, regen no-op + --check clean, aislop 100/0/0, STATE verified to parse by the reviewer's python3",
+      "handoffs": [
+        {
+          "at": "2026-11-13T14:5xZ",
+          "role": "dev",
+          "session": "ses_e2ada65c5ffewSldu2nBHKr27G",
+          "result": "status DONE (audit round, zero edits owed) | audit_verdict: the dead launch's implementation was contract-complete — checked paths verbatim create→mint→warm→move with the gate appended after them; unchecked `Worktree Creation` states D28 in full (no mint/warm/move, uncommitted in place including main, coordinator zero commits, working-diff reviews, step-10 no-surfaces, records worktree:null+reason / branch as observed fact / branch_source / commits:\"none\", no live stop/NEEDS_INFO/precondition — only the amendment's own denial wording that m7's denial-aware checker exists to permit); unchecked `Session Rename` names all four D15 consumers and introduces `unnamed` as C05's own record (D32 satisfied) with the bare-slug resume cite verified pre-existing at boards:136; sole-committer window intact with the zero-commit clause inside it; citations-only (boards hunks confined to 303–346; Stage map / Repo table / lock sections / plugin surfaces zero-delta) | bar: 130 arms both-green, 27 red arms red-in-both with byte-identical normalized messages, 4 designed flips, 0 unexpected, all against a detached 5c1c2deaa worktree | reports VALIDATION_AT_FAULT: agents-md c8's hard-coded six-entry allowed-SECTION set omits `Hard rules` while AC7 + c12 mandate exactly that AGENTS.md delta, so no source shape satisfies c8+c12+AC7 together (c8 greens at base only through its no-delta branch) — the arm's own docstring records the precedent widening, the test wave owed C05 the same one-word extension and missed it; tests untouched per D21, routed to test_session"
+        },
+        {
+          "at": "2026-11-13T15:2xZ",
+          "role": "test-repair",
+          "session": "ses_e3460ff68ffeI0Myd52xyyRW6y",
+          "result": "status DONE, chunk C05-validation — reproduced the deadlock first-hand at both trees, then applied the arm's precedent idiom: `\"Hard rules\"` added to c8's allowed set with a WHY comment naming cf-124 C05 AC7/D28 and the c8-section-scope / c12-content-law division; changed/extra/rename machinery untouched; teeth P1 fabricated `## Nonsense section` → reddens, P2 edit in a still-unlisted section → reddens, P3 renamed `## MCP servers` → reddens, sanctioned real delta → green; agents-md c1–c10+c12 green with c11 red verbatim, kickoff/session-origin/coord-inwork bars confirmed, rulesync-surface c19 only, aislop 0/0; honest self-report: a mis-cwd `git checkout --` silently reverted its own two edits mid-sweep, caught by its own per-arm table, re-applied and the whole sweep re-run; P4 recorded as inherent to a name allow-set and unchanged (c12's content grep + c1's regeneration no-op are the mesh)"
+        },
+        {
+          "at": "2026-11-13T15:5xZ",
+          "role": "review",
+          "session": "ses_e2ac59ae0ffeFuDSXgTNyGbhht",
+          "result": "VERDICT APPROVED, zero blockers/majors, no validation_at_fault | per-arm two-tree bar: agents-md c1–c12 pass (c8/c9/c12 green, c11 verbatim, c12 red→green the only flip), kickoff m7 green + m4 verbatim, session-origin s3 green + s4 verbatim, coord-inwork i9 green + i4 verbatim, rulesync-surface only c19 red (c7/c17/c18/c24-with-hollow-control/c25 green), slug-stack only S5, agent-perms only A15, validation-fix t4+t7, boards-deps t1/t3 (C06) + t4 (C08) as designed with the rest green, repo-label-filter/pipeline-models(M7)/cf96-coord/cf96-lifecycle/agent-explore/noop-marker/cf106-noop/checklist-cutover/provision-surface all green, backfill b1–b8 red-as-designed, four node pipeline-locks suites green (C02's engine arm incl. E6 still green), gate t17 + provider-loops t1/t3 + board-context t6 verbatim, regen ×2 no-op + --check, aislop 100/0/0, STATE PARSES, its own c8 fabrications (nonsense section reddens, real delta greens, an unrelated in-section sentence greens c8 but reddens c12) | NEW REDS: none; implementation deviations none — it independently confirmed the checked paths byte-unchanged, the withdrawn vocabulary present only in denial wordings whose control bites, `unnamed` introduced (not claimed pre-existing) with the bare-slug cite predating, and `.opencode/plugin/**` zero-diff; attributed the c8 widening to the test session via permission geometry + arm idiom (the dev's tests/** deny is firewall-backed) | friction: my brief again cited STATE handoff records I had not yet written (same class as C03's F1) | notes for coord: write the C05 handoffs before wave close; nit that step-8's final-review launch wording still says 'full diff' where a no-mint run has none — planner's next-touch call"
+        }
+      ]
     },
     "C06": {
       "title": "Dependency gate on related-to: source-is-dependent, sole gating type, mutual-pair tie-break, pickup-only scope, grouping by inbound edges",
