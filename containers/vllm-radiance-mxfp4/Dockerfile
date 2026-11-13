@@ -32,7 +32,7 @@
 #         label; engine vLLM 0.30.0 @ ced6857afa0ea7b2e3f0846a62e1394e90f15607
 #         = the v0.30.0 tag commit; stack record torch 2.12.0 / triton 3.7.1 /
 #         AITER 0.1.20 / libr4d 0.5.0 @ e8de4bc1 / ROCm 7.14)
-FROM docker.io/magiccodingman/vllm-radiance:1.0.397@sha256:b73bf3e41bc0a1cf7aaa5935bebe31123f549639e69b61a3ffa81acd5f7313e0
+FROM docker.io/magiccodingman/vllm-radiance:1.0.425@sha256:00d36f307d1fc7b1508ca2710ad3777043dab7d70b8f253a38fe6cce0552fa18
 
 # flash-attn for the ViT FLASH_ATTN path (owner ruling 2026-11-09, D35 — the
 # install-source switch on the D34 layer; the install itself and the D33
