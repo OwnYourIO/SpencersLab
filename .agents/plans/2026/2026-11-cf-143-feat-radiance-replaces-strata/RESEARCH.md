@@ -2398,3 +2398,229 @@ deviations: none beyond scope — read-only, only RESEARCH.md written. Two launc
 friction: reddit's 120W thread unreachable via sanctioned tools (wiki carries its gist + URL — cited via the wiki, marked accordingly); tldevtech EVO-X3 menu claim has no primary corroboration (GMKtec publishes no EVO-X3 BIOS guide, R9-S8) — used as a lead with an explicit trust flag; superuser fetch bot-blocked (403) — replaced by the forencich original, which is the better source anyway; codeberg raw path form took one retry (api/v1 path).
 open_questions: [does a loaded 8060S measurably cost radiance decode on this box (the action-list item-5 A/B settles it; structural bound says single-digit % — UNVERIFIED magnitude)? does the EVO-X3 BIOS actually expose a per-slot Gen4 pin (the item-1 LnkCtl2 TargetSpeed read discriminates whether a pin or the electrical path is our cause)? is the Strix-Halo power-tie board/firmware-specific (our 300 W print escapes the community's ~120 W norm — re-read after any BIOS update)? idle-APU DRAM tax — no source exists either way; treated as zero, honestly labeled UNVERIFIED]
 next_suggested: coord hand the owner the R9 action list 1→2/3→5 (the link read first — one minute, decides BIOS-vs-cable; the APU A/B second — answers their community question with our own numbers), fold the supersede lines (§D8.5 wording, §D6.6 c2 identity + reboot-clears retirement, R9-S18 slot-pin as the rig-doc's own next candidate) into the next DECISIONS round, and record that NO chart change and NO knob from A4 ships — the evidence says the fix is host-side and the measurement is workload-side.
+
+---
+
+## §R10 — the DEG1's power-sequence requirement, and the settings that make an OCuLink eGPU train Gen3 instead of Gen4
+
+Owner round 2026-11-14, post-D34. Authorities re-read first: §R9 (DEG1 = passive
+Gen4-x4 dock; c2/c3 = the card's own `1002:1478/1479` Navi switch pair; the ONE
+negotiating link is `00:03.1 ↔ c2:00.0`), §D8 (link-bound rate model), **D34 (the
+owner's fresh `LnkCtl2: Target Link Speed: 16GT/s` read CLOSED the BIOS-pin arm —
+config-instructed-Gen4, falling-back-to-Gen3 ⇒ signal-integrity/LTSSM territory;
+suspects ordered power-sequence → cable → host-port EQ)**. This round tests that
+ordering against the external record and prices the fix ladder. New citations
+R10-S#; access dates 2026-11-14.
+
+### R10 VERDICT (first)
+
+**Highest-probability single action: the dock-first FULL-COLD-BOOT sequence —
+DEG1 power button on, card fully powered, ~5 s, THEN host power — executed as a
+0 %-to-break one-variable-per-cold-boot ladder with the cable reseat/swap, because
+every documented DEG1-owning source says the dock's link enumeration is
+gated on that exact ordering (chimolog: "make sure you power on the external GPU
+first… wait about 5 seconds" — and the first-time-only recognition "ritual"; STH:
+plugging while the host runs "was unsuccessful"; Newegg manual row: "does not
+support hot plugging, and the machine needs to be turned off"), and because the
+same dock + same GPU family on the same GPP-port number has a documented,
+power-state-driven failure mode on Linux** [R10-S2,S3,S4,S6]. **The
+ASPM-off/`runpm=0` class is DEMOTED as a speed fix by direct evidence** (a
+live bug report shows `pcie_aspm=off` "no change to PCIe link speed" and a
+runtime `setpci` retrain "no effect" when a link has EQ-failed and parked low
+[R10-S5]) — but `amdgpu.runpm=0` + no-D3cold on the chain is UPGRADED to a
+necessary *stability* lane for this exact rig class: the GPD+DEG1+RX 9070 XT
+investigation proved root-port D3cold cuts the whole OCuLink chain ("device lost
+from bus") on the SAME `00:03.1 (GPP9)` port number, fixed locally by a udev
+`d3cold_allowed=0` rule [R10-S6]. If power-sequence + cable + bypass all fail to
+produce Gen4, the honest read is a channel-quality failure on the passive path —
+cable-brand swap, redriver-class dock (AG02/OcuP4V2 tier), or the TP2 §2
+PEX-switch plan are the remaining roads; nothing chart- or kernel-side changes
+that (Q5).
+
+### R10-Q1 — The DEG1's own power requirements (vendor + hands-on record)
+
+- **Power architecture:** ATX/SFX PSU IN the dock (24-pin to the board; the PSU also
+  feeds the GPU's 8-pin(s)) — "Support ATX/SFX Standard Power Supplies" [R10-S3:
+  newegg.com/p/1DN-0432-00001 DEG1 listing, accessed 2026-11-14; store.minisforum.com
+  product page R9-S12]; STH: the bottom "PCB that handles the Oculink to PCIe slot as
+  well as the power functions", "24-pin ATX power input", GPU retention bracket bolts
+  to the PSU, "850W… 500W is likely more than enough" for the big cards [R10-S4:
+  servethehome.com/minisforum-deg1-oculink-egpu-dock-quick-look-amd-nvidia/,
+  2024-08-23, accessed 2026-11-14]. **No DC barrel, no host sideband power**: the OCuLink
+  4i cable carries signal + PRSNT sideband only; per the egpu.io hub, the *only* known
+  risers that power the eGPU from the host's extra pins are OneDock/OSU designs
+  ("the only currently known riser… that has extra pins to allow the laptop to power on
+  the eGPU or off" — and that family has a physical SWITCH, not the DEG1) [R10-S2:
+  egpu.io/forums/custom-egpu-chassis/oculink-what-it-is-why-you-need-it-and-where-to-get-it/
+  (slothman sticky, updated through 2026), accessed 2026-11-14]. **A 300 W R9700 is a
+  non-issue for the dock itself** — any sane ATX/SFX covers card+slot; the slot's own
+  75 W budget rides the dock PCB. The exact SFF-8611 pin-level perst/signal-power map
+  = **UNVERIFIED** (VITA spec paywalled).
+- **Physical switch:** YES — a side-mounted FORCE-power button with LED [R10-S3],
+  the one the reviews call the dock's "power button" [R10-S4]. No jumpers/DIPs or
+  firmware are documented anywhere fetched (manual PDFs are gated;
+  manuals.plus/asin/B0DCZLPWXK 403'd this round — the retail manual's verbatim
+  wording is therefore represented by the Newegg transcription row [R10-S3] + the
+  STH/chimolog procedures below; a vendor PDF quote stays **UNVERIFIED**).
+- **The documented boot sequence, three independent sources, in agreement:**
+  - STH (R9-S14 = same article): "1. Turn the Oculink-capable PC off 2. Ensure power
+    to the power supply and the power supply is on 3. Power on the DEG1 via the
+    button 4. Wait a few seconds 5. Connect the DEG1 and Oculink capable PC using
+    the Oculink cable… 6. Turn the Oculink-capable PC on. **Plugging in the Oculink
+    cable was unsuccessful when the mini PC was already running**" [R10-S4].
+  - chimolog (JP DEG1 review, 2025-04-21): "The power-on order is a little tricky…
+    **always power on the external GPU first** — wait a few seconds and then power
+    on the mini PC… A 'ritual' required only on the FIRST boot — once the GPU is
+    recognized it follows reboots and power-offs" — plus the install warning "if the
+    [ATX 24-pin] insertion is shallow it easily causes malfunction" [R10-S5-note →
+    R10-S7 below for id; verbatim JP at chimolog.co/minisforum-deg1/].
+  - Retail manual transcription: "Note1: OCulink interface **does not support hot
+    plugging, and the machine needs to be turned off**" [R10-S3].
+- **Cold-boot vs reboot asymmetry (owner-relevant):** the "first-boot ritual" +
+  no-hotplug + the STH failure say the SAFE experiment is a **full cold boot**
+  (dock button + PSU flip, host off, sequence per above), not a warm reboot — our
+  three "reboot did not fix it" boots were warm rolls/restarts and the 15:01
+  REBOOT ran with whatever dock power state preceded it (§D4/§D6.6/§D8.1). Whether a
+  degraded training **latches across warm reboots** is not documented —
+  **UNVERIFIED** (plausible mechanism: PERST#/refclk presence at the moment the
+  root port runs its LTSSM; no source to claim either way beyond the ritual
+  wording).
+- **Does the DEG1 measure up?** chimolog's 3DMark PCIe Feature test on a
+  GPD-class host: "average 7.07 GB/s (theoretical: 8.0 GB/s)" — an independent,
+  hands-on confirmation that the DEG1 trains Gen4 x4 and delivers ~88% of line rate
+  when the path cooperates [R10-S8: chimolog.co/minisforum-deg1/ PCIe-bandwidth
+  section, accessed 2026-11-14]. **The dock is not spec'd or empirically Gen3 —
+  our Gen3 is a path failure, not the product's ceiling.**
+
+### R10-Q2 — Why an OCuLink link settles at Gen3 while asking Gen4: causes, ranked against OUR data (TargetSpeed=16GT/s, -6dB default preset, Phase1-only EQ bits, reboot-surviving, under-load reads)
+
+| rank | cause | external evidence | fits OUR rig? |
+|---|---|---|---|
+| 1 | **(a) power-state/ordering latch** — link trained while dock/card not fully powered or before the chain settled ⇒ degraded training persists | the vendor/press boot-ritual trio (Q1); the GPD/DEG1 case where the SAME `00:03.1` GPP9 root port's D3cold cut the chain and lost the device until pinned off [R10-S6] | **STRONGEST** — our setup has never demonstrably executed the ritual cold-boot (owner's memory "setting I was supposed to enable" plausibly = exactly this; no cold-boot-with-dock-first witnessed in the ticket's boot history) |
+| 2 | **(d) cable/connector integrity** — seating, latch not clicked, kinked/marginal SFF-8611; the tier differences are real (redriver vs plain) | egpu.io hub: "stick to the sf-8611 cable… make sure it's PCIe 4.0 compatible"; "cable length doesn't matter much for degradation **until 1.5m**"; the 2-lane-vs-4-lane SKU-lottery report (GREEN vs RED LED variants) [R10-S2]; STH's "Words of Caution" + the DEG1-enumeration-failure case on another host [R10-S4/R9-S16]; chimolog's shallow-24-pin warning [R10-S7] | **STRONG** — passive path (R9-B1) has zero silicon to compensate loss; one reseat + one known-Good-cable swap is minutes |
+| 3 | **(c) Gen4 equalization fails on a marginal channel and the link parks at Gen3** — the *mechanism* behind (a)/(d): 16 GT/s EQ phases incomplete ⇒ stay at last-good speed | the live analogue, NVIDIA's RTX-5070-Gen1 case, states the failure grammar verbatim: "the driver writes 32GT/s to LnkCtl2, **Gen 5 equalization fails (`Phy32Sta: EquComplete-`), and the link falls back** to Gen 1 instead of Gen 4" [R10-S9: discourse.ubuntu.com RTX 5070 thread, accessed 2026-11-14; plus the LTSSM Recovery.Equlization phase-bit sequence in R10-S10: blog.csdn.net LTSSM article (zh), accessed 2026-11-14] | **TRUE as mechanism** — our `-6dB de-emphasis / 0dB preshoot` is the compliance DEFAULT preset, not a channel-trained one; but a standalone "host EQ bug" is only distinguishable from (a)/(d) AFTER they're cleared (that's what the ladder in Q5 is for) |
+| 4 | **(e) host port/firmware** — per-slot speed pin, platform EQ settings, BIOS rev regressions | **Half-closed by the owner's own read**: `Target Link Speed: 16GT/s` ⇒ no Gen3 pin (D34); the surviving sub-cause = platform EQ presets/DTLSM tuning (the rig docs' "stops the slots training at a lower generation" pin exists *because* boards train low [R9-S18]); EVO-X3-class per-slot "Gen4 not Auto" claim is the SEO-flagged lead [R9-S17] | **WEAK-but-alive** — an explicit Gen4 (not Auto) slot setting, if the menu exists, still changes platform-side behavior worth one cold boot; the *pin* itself is ruled out |
+| 5 | **(b) ASPM L1/L1.2 + runtime PM on a passive long channel** — L1 exit retrains; a marginal channel can re-fail Gen4 EQ and settle low | mechanism plausible but the evidence says ASPM does NOT fix or cause *trained* speed in the parked cases: "pcie_aspm=off kernel parameter — in place, **no change to PCIe link speed**" [R10-S9]; ASPM L0s/L1 idle states are power, not width/speed, per the amdgpu/L1 substate semantics; our LnkCap advertises "ASPM L0s L1" (normal) and the runtime state prints "(control auto)" | **NOT a cause of our Gen3 settle — BUT a real degradation/instability channel on this exact rig class** ([R10-S6]'s D3cold/BOCO/BACO chain is the same family, and it's why Q3 reads `d3cold_allowed`) |
+| 6 | **(f) the card** — R9700/RDNA4 refusing Gen4 on OCuLink | counter-evidence is concrete: RX 9070 XT + DEG1 runs Gen4 x4 on a GPD host (its bugs are power-state crashes, no speed complaint) [R10-S6]; R9700 over OCuLink at Gen4 x4 on the working MS-S1 Max, same `00:03.1` root port [R9-S10]; same R9700 + DEG2 + RIITOP adapter at 4.0 x4 on an Intel Z890 [R9-S10]; RX 9070 works direct M.2→OCuLink [R10-S11: makeuseof.com/i-tested-my-egpu-with-oculink-and-thunderbolt-and-it-wasnt-close/, accessed 2026-11-14]. The engine's `pcie 0: 2.5GT/s x4 250Mhz | 1: 16.0GT/s x4 …` lines are the card's **DPM table entries** (supported states incl. 16GT), not a lane claim — and `mclk/sclk` reads are memory/graphics clocks, per the brief's don't-conflate rule: agreed, they stay out of the link argument (§D8.1) | **RULED OUT absent evidence** — no report of this card class training Gen3 on OCuLink was found anywhere this round |
+
+Also from [R10-S6]'s cause-B writeup, a caution that APPLIES to our stability, not
+our speed: on this firmware family the root port's own PM (`d3cold_allowed=1`
+default, no `_PR3` resource, `SltCap: HotPlug- Surprise-`) can drop the whole chain —
+"OCuLink does not support Surprise Removal… If bus loss happens during an active
+session… recovery fails" — so any *experiment* here must avoid letting idle PM churn
+mid-measurement (Q3/Q4 handle it).
+
+### R10-Q3 — The read-only discriminator table (exact commands → meaning)
+
+Owner-lane, all reads (the two writes are flagged). Rule from the record: **read
+under load** — "An idle link reads 2.5 GT/s in lspci, and that is normal"
+[R9-S18]; "power savings mode shifting the link speed… in-game environments push
+for more throughput" [R9-S16]; the NVIDIA case proves idle-vs-load confusion is the
+#1 false-negative here [R10-S9]. Have the fixed probe (§D8.3) or `stress`-class
+inference running; radiance down for the writes.
+
+| command (read) | decode |
+|---|---|
+| `sudo lspci -vvv -s 00:00:03.1 \| sed -n '/LnkCap:/,/LnkSta2:/p'` | `LnkSta: Speed 8GT/s (downgraded)` = the defect; `LnkCtl2: Target Link Speed: 16GT/s` (already read, D34) ⇒ **config arm CLOSED**; `ASPM L0s L1` in LnkSta means the idle-state machinery is live (stability lane, not speed); `Transmit Margin/Compliance preset -6dB/0dB` = default preset, NOT a channel-trained one ⇒ no evidence the host ever finished 16 GT/s EQ |
+| `sudo lspci -vvv -s 00:00:03.1 \| grep -A1 'LnkSta2'` + `sudo lspci -vvv -s 0000:c2:00.0 \| sed -n '/LnkCap:/,/SltCtl:/p'` | bridge-side view of the SAME link (`(downgraded)` expected twice); `SltCap: HotPlug- Surprise-` ⇒ no latch/hotplug semantics on the port (also means power-cycle discipline is ALL there is); per-lspci LnkSta2/EQ bit spellings vary by version — capture verbatim, don't paraphrase (exact bit-name → phase mapping left **UNVERIFIED** on this toolchain) |
+| `cat /sys/bus/pci/devices/0000:00:03.1/current_link_speed /sys/bus/pci/devices/0000:00:03.1/d3cold_allowed /sys/bus/pci/devices/0000:00:03.1/power/control` (+ same trio on `0000:c2:00.0`, `c3:00.0`, `c4:00.0`) | `current_link_speed` = kernel's own read (cross-check lspci); `d3cold_allowed 1` + `power/control auto` on the ROOT PORT = the [R10-S6] bus-loss precondition is armed on our box too ⇒ pinning those is Q4's *stability* row even if it changes no speed |
+| `cat /sys/module/pcie_aspm/parameters/policy` | `[default] powersupersave/performance` — documents the policy state; per [R10-S9] do NOT expect a speed change from toggling it |
+| `sudo dmesg \| grep -iE 'pcieport 0000:00:03.1|link (training|downgraded|retrain)|LTSSM|Gen[0-9]|equaliz'` | the kernel logs `link training` events + `PCI: Bridge: to [bus …]` re-enumerations on the port at boot; repeated retrain/fallback lines around boot = LTSSM struggling (absence = silent first-attempt Gen3) |
+| `sudo journalctl -k -b \| grep -i 'available PCIe bandwidth'` | the boot line D34 records (`31.504 Gb/s … limited by 8.0 GT/s x4 … capable of 504 Gb/s`) — one per boot, timestamps WHICH boots were degraded (count vs "three boots" — did ANY boot run dock-first-cold?) |
+| engine's own `link` line + `GET /diagnostics` under load (§D8.5-1) | the load-state witness we already trust: `8.0 GT/s x4 [read at 50% busy]` |
+| **dynamic debug**: `echo 'file drivers/pci/* +p' > /sys/kernel/debug/dynamic_debug/control` | **that is a WRITE to kernel state** (changes dmesg verbosity; harmless-ish, non-persistent) — owner-decided only if the dmesg grep above is mute; not a repo proposal |
+| **THE physical discriminator (Q5 step 4): bypass the dock** — card+cable into the host's own OCuLink port with NO dock (open-frame), or DEG1+card into a second Gen4 host (the Z890-control move [R9-S10]) | Gen4 there with the SAME cable ⇒ the dock's PCB/power path is the defect; Gen3 still ⇒ the host port ↔ cable ↔ card triple owns it, and the cable swap (Q5 step 3) is what separates the last two |
+
+### R10-Q4 — Candidate fixes, cheap → expensive, risk, verification print
+
+Verification print for ALL rows (unchanged from §D8.2/R9-B5): boot-time `journalctl`
+bandwidth line + `LnkSta` under load + the engine's `link … [read at NN% busy]`
+hard-asserts `16.0 GT/s x4`; rates must then move prefill 249→~450–500 tok/s and warm
+decode toward the ~35 t/s compute floor. Anything that doesn't land `LnkSta` first is
+not a fix, it's hygiene.
+
+| $ | change | precision note | risk | rollback |
+|---|---|---|---|---|
+| 0 | **Cold-boot ritual ×2-3** (PSU flip, dock button, ≥5 s, host on; never the cable while hot) | the vendor/press-documented enumeration gate (Q1); zero hardware change; the one-variable law D28(5) applies | ~0 | undo = boot normally |
+| 0 | **Reseat** OCuLink both ends "until the latch clicks"; full 24-pin; fresh AC cord seating [R10-S7 warns shallow = malfunction] | same family as ritual | ~0 | — |
+| 1 | **Cable swap** to a different known-Gen4 SFF-8611 cable (short; the hub says quality>length until ~1.5 m) [R10-S2] | cheap, decisive vs cause (d) | ~0 | swap back |
+| 1 | **BIOS: per-slot explicit Gen4 (not Auto)** + re-check Above-4G/ReBAR unchanged; ONLY if the menu exists on this board (EVO-X3-class: [R9-S17] trust-flagged; no GMKtec BIOS guide published [R9-S8]) | TargetSpeed=16 says no *pin*, but a platform EQ path can still differ per BIOS rev — plausible, low-confidence | one wrong slot setting; screenshot before/after | undo setting + cold boot |
+| 2 | **Stability hygiene (NOT a speed fix):** udev `d3cold_allowed=0` on the 5-chain devices incl. root port + `amdgpu.runpm=0` (the [R10-S6] workaround verbatim; runpm semantics: [R9-S4]) | prevents mid-session link-off events on this rig class; ASPM-off explicitly does NOT move a parked speed [R10-S9] — keep `policy` default; `runpm=0` costs the card's idle power draw only | kargs/udev, reboot | remove rule/param |
+| 2 | **Forced retrain** `setpci … CAP_EXP+10.L=20:20` (Retrain bit; forencich shape [R9-S19]) | diagnostic-only: a healthy LTSSM re-attempts 16 EQ ⇒ if the channel is marginal the retrain either lands (then a cold boot should too — proves latch) or no-ops exactly like [R10-S9]'s field case | link blip mid-I/O = driver errors ⇒ radiance scaled to 0 | already re-executed at next boot; no persistence |
+| 3 | **TargetSpeed re-write + retrain** (`setpci CAP_EXP+30.L` per [R9-S19]) | our value ALREADY reads 16GT/s ⇒ this row collapses into the forced-retrain above unless a BIOS rev or the NVIDIA-style "driver writes a WRONG target (32)" case applies — no wrong target here | same as row 2 + "link-down/unbootable" lore [D34] | owner power-cycle |
+| 4 | **Bypass/replace the dock** (open-frame direct, or redriver-tier AG02/OcuP4V2 [R9-S15], or the DEG1-in-another-host control) | the definitive separator (Q3) | labor; open frame = physical care | — |
+| 5 | **PEX Gen4 switch** (the TP2 §2 family — ASM2824/PEX88048-class as the ticket's RQ4 already contemplates) between host and dock | re-establishes equalization authority & shortens each passive segment; this is ALSO the TP2 second-card lane, so it's spend the plan already contemplates — but buy only if rows 0-4 prove "passive path cannot hold Gen4 here" | capital; switch adds latency (~1-2 µs class — **UNVERIFIED** magnitude) | keep for TP2 regardless |
+| — | **NOT fixes** (recorded so they don't get retried): `pcie_aspm=off` for speed [R10-S9]; `setpci` retrain as a *cure* [R10-S9]; HSA/amdgpu knobs (R9-A4); software touching the card's own `mclk/sclk` or the ngram tier — none is the link | | | |
+
+### R10-Q5 — Verdict + ordered ladder (one variable per cold boot)
+
+**Ladder:** (1) ritual cold boot ×2-3 exactly per Q1 → read `LnkSta`; (2) reseat
+cable both ends + 24-pin → read; (3) swap cable → read; (4) **bypass the dock**
+(card on the host's OCuLink port open-frame, or the DEG1+card on a second Gen4
+host) → read; (5) BIOS slot-pin IF the menu exists → read; (6) whatever the winner
+was, make it permanent, then add the row-2 hygiene (`d3cold_allowed=0` chain rule —
+stability, not speed); (7) only if steps 1-5 all print 8GT/s: the passive channel
+cannot hold Gen4 in this chassis — the switch/redriver-dock purchase decision
+(TP2 §2's lane) is next, and until then **the ceiling stays 3.94 GB/s and the only
+rate levers are the §D8 profile ones** (pool/ctx/seqs negotiation or TP2-class
+hardware — nothing else is honest).
+**Probability read (stated as judgment, labeled):** highest single-action
+probability is step 1-3 collectively (ordering/latch + cable, causes (a)/(d)) —
+the vendor record makes the dock's enumeration order-gated, our boot history never
+witnessed the ritual, and the chimolog 7.07 GB/s witness says the dock itself
+trains Gen4 when respected [R10-S8]. Step 4 is the *definitive* one. Step 6 is
+near-certain no-op for speed by direct evidence [R10-S9].
+**Prove-it-worked:** `LnkSta: Speed 16GT/s x4 (no downgraded)` under load + boot
+line `…limited by 16.0 GT/s PCIe x4` gone + engine HARDWARE `link 00:03.1 16.0
+GT/s x4` + fixed-probe prefill ≈450–500 / warm decode climbing 19.3 → 30-40 band,
+landing near ~35 (compute floor, §D8.2). If prefill lands ~500 but decode doesn't
+move, re-read the m-value before celebrating (the §D8 model separates the legs).
+
+### R10 — Conflicts / SUPERSEDES / UNVERIFIED
+
+- **Supersedes §R9-B2's ordering emphasis on the BIOS-pin arm:** D34 (owner read) +
+  this round confirm: the `Target Link Speed` is already 16 — the pin candidate is
+  CLOSED except as an EQ-path BIOS-rev quirk; §R9's action-list item 2 ("if
+  TargetSpeed reads 8") is now moot-but-unharmful; the surviving discriminator is
+  the dock-bypass (Q5-4), not the `LnkCtl2` read.
+- **Supersedes any ASPM-hope reading of §R9's item list** (it wasn't there — recorded
+  so it doesn't enter the tuning note's next fold): ASPM-off is NOT a
+  link-speed fix [R10-S9]; it (and runpm pinning) belong in the tuning note as
+  **stability** items for exactly this dock+RDNA4+GPP-port chain [R10-S6].
+- **§D8/§R9 numbers untouched**: passivity of the DEG1, the c2/c3 card-bridge
+  identity, and the payoff model all re-confirmed by independent witnesses
+  ([R10-S6] names the same `1002:1478/1479` chain; [R10-S8] the Gen4 ceiling).
+- **UNVERIFIED (explicit):** DEG1 official PDF manual text (fetch 403; retail row +
+  two reviews carry the same content); SFF-8611 per-pin perst/signal-power map;
+  whether a degraded training latches across warm reboots on this chipset (the
+  ritual wording implies first-contact matters; no spec citation); lspci LnkSta2
+  bit-name↔phase mapping on this toolchain; EVO-X3/our-board BIOS menu existence;
+  switch-latency magnitude for a PEX Gen4; the -6dB preset's host/card-side
+  attribution (which end owns the un-trained preset — spec-adjacent, not sourced).
+  Chimolog's host is a different mini-PC (EVO-X1/HX370) — transferable as dock
+  evidence only, board claims are its own.
+
+### R10 — Sources (accessed 2026-11-14)
+
+| # | URL | What it is |
+|---|---|---|
+| R10-S2 | egpu.io/forums/custom-egpu-chassis/oculink-what-it-is-why-you-need-it-and-where-to-get-it/ (slothman sticky + updates) | OCuLink doctrine: SFF-8611 cable guidance ("stick to that cable… PCIe 4.0 compatible"), length→1.5 m, SKU lottery (2-lane GREEN vs 4-lane RED variants; cuda-z/aida64 proof rule), extra-pin power-on risers exist ONLY on OneDock/OSU (not DEG1), GPD-G1 80/100/120 W BIOS-flash power caps (APU-side TDP tying an external AMD card — the class of coupling our 300 W print escapes) |
+| R10-S3 | newegg.com/p/1DN-0432-00001 | DEG1 retail spec row: ATX/SFX, "Up link: Oculink 4i (PCIE4.0x4) Down Link: PCIEx16(PCIE4.0x4)", "does not support hot plugging, and the machine needs to be turned off", power-button description |
+| R10-S4 | servethehome.com/minisforum-deg1-oculink-egpu-dock-quick-look-amd-nvidia/ (2024-08-23) | Passive PCB ("handles the Oculink to PCIe slot as well as the power functions"), 24-pin input, PSU sizing, the 6-step cold-boot procedure, "unsuccessful when the mini PC was already running", HBA-doesn't-work caveat |
+| R10-S7 | chimolog.co/minisforum-deg1/ (2025-04-21, JP) | DEG1 assembly + the power ORDER verbatim ("外付けグラボから電源を入れて…5秒くらい待って…ミニPCの電源" — dock first, ~5 s, then host; first-boot "ritual" then it follows reboots; shallow-24-pin malfunction warning) |
+| R10-S8 | same page, PCIe link-speed section | 3DMark PCIe Feature Test on DEG1: avg **7.07 GB/s** (theoretical 8.0) — third-party proof the dock trains Gen4 x4 |
+| R10-S9 | discourse.ubuntu.com/t/rtx-5070-pcie-link-speed-stuck-at-gen-1…/77366 | Live "asks Gen5, EQ fails (`Phy32Sta: EquComplete-`), falls back below target" bug grammar; `pcie_aspm=off` = no speed change; runtime `setpci` retrain = no effect; BIOS speed-lock overridden by driver; upstream NVIDIA issue 1010 |
+| R10-S10 | blog.csdn.net/weixin_45176819/article/details/134032000 (zh) | LTSSM Recovery.Equlization phase-bit register walk (16.0 GT/s Phase1/2/3 + Complete bits) — secondary, used only for the phase-sequence grammar |
+| R10-S6 | github.com/ArcheoCodix/egpu-oculink-fix (README + docs/topo.md + issues/B-d3cold-bus-loss/) | **GPD Win 4 + DEG1 + RX 9070 XT (Navi 48) on Linux**: same GPP `00:03.1` root port + same `1002:1478/1479` card-side switch chain; root-port D3cold ⇒ "device lost from bus" ⇒ udev `d3cold_allowed=0` resolved; Mario's B3/B2 patches partial (BACO path still drops); `SltCap HotPlug- Surprise-`; ATPX/`_PR3` absence; DS_GFXCLK wake + MES fw causes (stability family, not speed) |
+| R10-S11 | makeuseof.com/i-tested-my-egpu-with-oculink-and-thunderbolt-and-it-wasnt-close/ | RX 9070 on direct M.2→OCuLink vs TB3 — card-class works on the path (no Gen3 complaint) |
+| (inherited) | R9-S4 kernel amdgpu module-parameters; R9-S10 daimonionnn MS-S1/Z890 witnesses; R9-S15/S16 egpu.io thread (redriver tier, idle-LnkSta lesson, DEG1-enumeration-failure report); R9-S17 EVO-X3 BIOS lead (trust-flagged); R9-S18 radiance PREPARING_YOUR_RIG §1/§5 (slot-speed pin row; idle-link normality; reboot-clears, ours falsified); R9-S19 forencich setpci shapes; R6-S14 | carried per §R9; nothing re-fetched contradicted them |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R10 appended)]
+commands_run: [repo reads: DECISIONS D30-D34 block verbatim (D34's LnkCtl2 ruling + isolation ladder = the premise), §R9/§D8/§D6.6 re-read => pass; global-searxng web_search x6 (DEG1 manual, GMKtec Gen3 reports, RX9070/R9700 Gen3 reports, cold-boot lore, EQ fallback, loss budget) => pass; web_url_read: egpu.io OCuLink hub x2 pages, chimolog DEG1 x2 (procedure + 3DMark bw), Ubuntu RTX-5070 discourse thread, STH DEG1, Newegg row, MUO RX9070 OCuLink, makeuseof; raw fetch ArcheoCodix/egpu-oculink-fix README+docs/topo.md+issues/B README => pass; dead ends recorded honestly: manuals.plus 403 (official manual PDF ungetatble), kernel-parameters page window miss for pcie_aspm (replaced by the R10-S9 behavior evidence), loss-budget search ERR (marked UNVERIFIED), codeberg PREPARING_YOUR_RIG carried from §R9 => pass]
+deviations: none beyond scope — read-only; only RESEARCH.md touched. One deliberate ordering change vs the launch's cause list: it ranked ASPM/L1 (b) ahead of cable (d); the direct behavior evidence [R10-S9] (aspm-off no-change, retrain no-op) forces (b) DOWN to a stability lane and (a)/(d) UP — flagged as evidence, not preference.
+friction: the DEG1 official manual is unreachable (manuals.plus bot-block; Minisforum's product-info SPA has no fetchable PDF) — the requirement is carried by the Newegg manual transcription + STH + chimolog, three-way consistent, recorded as such; lspci LnkSta2 bit-name semantics vary by version so the read instruction says "capture verbatim, don't paraphrase" rather than decoding from memory.
+open_questions: [which of Q5 steps 1-4 turns the read (ladder is owner-executed; step-4 bypass is the definitive one); whether the board's BIOS exposes a per-slot speed menu at all (R9-S17 trust-flag unresolved, GMKtec publishes no EVO-X3 guide); whether a degraded Gen3 training latches across warm reboots on this chipset (mechanism plausible, no source — the ritual is the test); official DEG1 manual PDF wording]
+next_suggested: coord fold R10 into the tuning note's LINK section at its next touch (D34 named it the fold target): replace the now-moot "BIOS-pin" discriminator with the Q5 ladder (ritual→reseat→cable→BYPASS→BIOS), add the `d3cold_allowed=0` + `amdgpu.runpm=0` STABILITY row (with the [R10-S6] same-port precedent), and record the NOT-fixes (aspm-off/retrain-as-cure) so the record stops re-listing them; owner runs steps 1-3 tonight (zero risk) and the bypass (step 4) decides whether the DEG1 itself is the suspect — if it is, the AG02/redriver-tier swap or the TP2 §2 PEX lane become purchases, and until `LnkSta` says 16GT/s the §D8 rate model stands unchanged.

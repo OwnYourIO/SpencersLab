@@ -779,6 +779,57 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   XFS/ext4 card already deferred (verify). C13's bar: three notes suites at the new figure,
   radiance 46P with an EMPTY render-diff (comment-only values edits — asserted), naming
   NON-FLIP at C13's sha, witnesses unmoved.
+- 2026-11-14 human+plan D36 (C14 DOCS-ONLY ROUND — §D10 authority; plan_status reopened
+  complete(=FINAL r5 APPROVED after C13 landed + its r1 fold incl the fiction-ban arm)
+  →approved, wave 11, reason: the tuning note's LINK section still advertised candidates
+  §D10 falsified — an owner-facing checklist pointing at dead ends is this ticket's own
+  defect class; it gets a real contract→red-first→dev→review round, not a silent edit.
+  Numbering note: D35's ledger named the round "C15" before chunk reassignment; frozen-ids
+  convention landed it as C14 with D35's content applying unchanged):
+  (1) FALSIFICATION ON THE RECORD: the owner executed §R10's rung-1 ritual verbatim ("I
+  turned everything off, turned the card dock on, waited 10 s, turned on the desktop, but
+  performance is the same or worse") and a GENUINELY NEW cold boot — Node event
+  `Rebooted … boot id 4d6202d9-14f2-4e7d-b107-1edec278a73d` @21:34:43Z, old pod SIGTERMed
+  21:31:24Z (≈3 m 19 s off-window, consistent with the dock-first order, accepted on the
+  owner's word — dock-button itself unobservable from k8s) — reprinted
+  `link 00:03.1 8.0 GT/s x4 (max 16.0 GT/s x4) -> c2:00.0 8.0 GT/s x4 … [read at 48%
+  busy]` + the WARN. The rate did not move BECAUSE THE LINK DID NOT MOVE: §R10's
+  #1-ranked power-ordering latch is FALSIFIED by its own prescribed experiment; no repeat
+  owed (spend power cycles on rungs 2-4). Hardware-state-did-not-move ≠ hardware-moved-
+  but-rate-did-not — the first is the recorded fact.
+  (2) MOVER PROVEN: the drained pod's recovered exit banner is the ticket's first COMPLETE
+  heat-engine receipt — 20678 dispatches / 13736 promotions / 11960 demotions, max 300
+  resident units/layer, 71.40 GiB h2d + 19.08 GiB d2h, 4971 readmits (36%), 46.2% prefetch
+  no-lookback. Boot-B's `0 dispatches` = READ ARTIFACT (§D8 open question CLOSED); the
+  churn adds ~90–100 MiB/token of re-placement traffic ON TOP of the ~200 MiB/token miss
+  stream, during exactly the early requests — refines-and-strengthens link-first (one fix
+  halves all three terms); rates 11.0/16.4 post-ritual = SAME, MID-RAMP on the m-curve —
+  "same or worse" adjudicates to "same"; the fair number still needs the fixed ≥2000-token
+  probe at request ≥4 (§D8.3, never run) + step-6 8-session gate (never run) — §R8's
+  receipt-decides law stands.
+  (3) SELF-CORRECTIONS, ours first: (a) §D8.2(b)'s inference that `max 154` was per-layer
+  capacity is SUPERSEDED — residency reaches 300/layer with the documented KV/arena loans;
+  (b) the "read at 61% busy" citation — mine, quoted into this round's launch framing —
+  NEVER EXISTED anywhere in the ticket (grep nil); the honest census is **49% (§D6.6) →
+  50% (§D8) → 48% (§D10)** across the three witness boots, rock-stable under-load reads;
+  corrected against our own records, not just the note's.
+  (4) LAW (fifth live-round confirmation, made mechanical): **a checklist row whose
+  top-ranked cause has been falsified must be RE-POINTED IN THE SAME TICKET, not left for
+  the next reader** — dead cures on an owner-console document are outages-at-3am. C14 AC1
+  restates the ladder (reseat → Gen4-rated cable → DOCK BYPASS decisive → last,
+  trust-flagged, BIOS-EQ/explicit-Gen4-menu only if it exists — R9-S17 UNVERIFIED), AC2
+  labels the NOT-fixes (`pcie_aspm=off` no speed change R10-S9; setpci TargetSpeed/
+  retrain pointless at TargetSpeed=16 already + link-down risk) and adds the row due
+  REGARDLESS — `d3cold_allowed=0` udev + `amdgpu.runpm=0` STABILITY hygiene per the
+  ArcheoCodix GPD-Win-4 + SAME DEG1 + RX-9070-XT precedent (same 00:03.1 root port, same
+  1002:1478/1479 bridges), explicitly NOT a throughput fix; AC4 freezes the tokens that
+  must survive (110/71.04/118.72/5.8–13.6/30–70 + the fiction-ban/marker arms); AC6 routes
+  the final hardware-purchase rung (active redriver/PEX dock = TP2 §2 lane, or accept
+  3.94 GB/s and chase profile levers/TP2) and the UNVERIFIED guards-optimality observation
+  to the owner (record only, no advice shipped). GOVERNOR non-persistence re-confirmed a
+  SECOND reboot (powersave reprint after the power cycle); pinned 71.04 fourth identical
+  print. plan_status approved at wave 11 for this delta; the §D10 GPU-cluster control held
+  (same gpu-llama-swap pod alive across the ritual — invariant re-witnessed).
 
   - 2026-11-13 research+coord D33 (§R9 — the owner's two pushbacks, both about PERF, and three of
     MY OWN claims retired on evidence): (A) **APU**: my "not costing you anything measurable
@@ -817,6 +868,80 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
     and `00:03.1` (AMD publishes no IOD block diagram; bounded by the live asymmetric link reads),
     whether a mid-session dock power-state change can latch a degraded negotiation across reboots.
     Authority: RESEARCH.md §R9 (lines 1907–2400).
+
+ - 2026-11-13 human D34 (THE OWNER'S `LnkCtl2` READ CLOSES MY PRIMARY HYPOTHESIS — recorded
+   immediately because it inverts the tuning note's discriminator and the next run must not
+   re-litigate it): `lspci -vvv -s 00:00:03.1` ⇒ `LnkCtl2: Target Link Speed: 16GT/s,
+   EnterCompliance- SpeedDis-`, `Transmit Margin: Normal Operating Range`,
+   `Compliance Preset/De-emphasis: -6dB de-emphasis, 0dB preshoot`, while `LnkSta` reads
+   `8GT/s x4`. So the root port is NOT BIOS-pinned to Gen3 — it is INSTRUCTED to train Gen4 and
+   FALLS BACK, which moves the diagnosis from configuration to **signal integrity / LTSSM
+   equalization**, and (because §R9 proved the DEG1 is a passive board with no retimer, and
+   c2/c3 are the card's own Navi bridges) narrows the suspects in this order: **dock power
+   sequence** (the DEG1 is explicitly NOT hot-plug capable and has documented power-on ordering —
+   the strongest candidate for the owner's "a setting I was supposed to enable"), then
+   **cable/connector integrity** (SFF-8611 seating both ends, kink/damage, a genuinely Gen4-rated
+   cable), then **host-port equalization** (`-6dB` de-emphasis / 0dB preshoot are the compliance
+   defaults; per-platform EQ is exactly what Gen4 training renegotiates and gives up on). The
+   `EqualizationComplete+ EqualizationPhase1+` seen in earlier reads is Phase-1-only evidence at
+   the trained (Gen3) speed, not proof Gen4 EQ ever succeeded — do not read it as such.
+   ISOLATION LADDER (one variable per cold boot, verify with `LnkSta` after each; the definitive
+   discriminator is step 4): (1) power order — dock PSU on and stable, card power LED lit, THEN
+   host power-on; full cold boot (not reboot), per the dock's documented sequence; (2) reseat the
+   OCuLink cable at BOTH ends until the latch clicks; inspect for strain/kink; (3) swap to a
+   different known Gen4-rated OCuLink cable; (4) **bypass the dock** — card straight into the
+   board's OCuLink port (or a different slot): Gen4 there with the same cable ⇒ the dock's power
+   or PCB; still Gen3 ⇒ host port/cable/card-side EQ, and the card itself becomes the suspect
+   (its own upstream port reports `32GT/s x16` capability, so a card-side fallback would need
+   its own evidence); (5) only after 1–4, consider the OS-side write
+   (`setpci … CAP_EXP+0x30.W` TargetSpeed overrides / forced retrain via `LnkCtl: Retrain
+   Link`) — this is an OWNER-LANE WRITE with a documented unbootable/link-down risk and is NOT a
+   repo proposal; the read-only receipts stay `LnkSta`, `dmesg | grep -iE 'link (training|downgraded|retrain)'`,
+   and the engine's own `link` line + `GET /diagnostics` under load.
+   WHAT THIS DOES NOT CHANGE: the payoff model stands (Gen4 x4 ≈ 7.88 vs 3.94 GB/s — the §D8
+   miss-fraction model predicts prefill 249→~450–500 tok/s and warm decode toward the ~35 t/s
+   compute floor), the APU answer stands as §R9 narrowed it (D33: no idle-enumeration cost,
+   loaded-router DRAM contention is the open question, the Strix power-tie falsified by our own
+   300 W print), and **nothing here is a repo change** — this is host hardware, owner-executed.
+   Authority: the owner's paste (18:58Z) + RESEARCH §R9/§D8; the tuning note's LINK section is
+   the fold target at its next touch (its "BIOS-pin vs cable" discriminator is now half-answered:
+   BIOS-pin CLOSED, electrical OPEN) — recorded here so the record is not left holding the
+   superseded half.
+
+ - 2026-11-13 human D35 (THE POWER-SEQUENCE RITUAL IS FALSIFIED BY THE OWNER'S OWN COLD BOOT,
+   and a lock incident to record against myself): the owner executed §R10's step 1 exactly as
+   written — "turned everything off, turned the card dock on, waited 10 s, turned the desktop
+   on" — and reports **"performance is the same or worse"**. So the strongest-ranked cause in
+   §R10 (power-ordering latch) is **ruled out on this rig by direct experiment**, and the
+   remaining ladder is: **(2) reseat the OCuLink cable at both ends until the latch clicks,
+   (3) swap to a different known Gen4-rated cable, (4) the DEFINITIVE discriminator — bypass the
+   dock** (card straight onto the board's OCuLink port with the same cable, or the dock on a
+   second Gen4 host): Gen4 while bypassed ⇒ the dock's PCB/power path is the suspect (a
+   redriver/PEX-switch purchase, TP2 §2's lane); still 8 GT/s while bypassed ⇒ host port /
+   equalization, and the honest ceiling stays 3.94 GB/s with only the profile levers
+   (residency, prefix-vs-kv-resident) and TP2 left. Reads `LnkSta` **under load** at each step
+   (idle parks at 2.5 GT/s — that is the trap that fooled earlier reads) plus the engine's own
+   `link` line, so a step is never scored on a warm reboot. Also noted: the same read settles
+   whether "worse" is real regression or the miss-fraction ramp (§D8's warm-up shape), so the
+   next probe must be the fixed ≥2000-token pair, not a short request.
+   LOCK INCIDENT, self-reported: the 2 h reaper pruned this session's claim at
+   16:09:03Z (`lastReap.reaped=["AI"]`) after the earlier server restart cost the in-memory
+   registration (heartbeat answering `no_claim` while `pipeline_status` still showed the set
+   held solely by me — the fourth variant of that engine bug). **Three records commits
+   (f13200cdc, bf950d22a, 2c5151179) were made AFTER the prune and before the owner's word** —
+   branch-local, no card move, no push, but outside the C09 rule that a lost lock stops
+   commits. On the owner's "Do take your lock back for this" the claim was **re-acquired under a
+   NEW setId `4cc5d898-f180-4eee-9d22-345c1ea7603a`** (the old `b60c418b…` is gone, not
+   inherited) and the takeover is recorded here per the C09 law. Standing correction of
+   practice: once a heartbeat returns `no_claim`, treat the lease as LOST — stop commits
+   immediately and ask, rather than finishing "harmless" records work.
+   FOLDED-BY-THIS-ROUND: the tuning note's LINK discriminator is now only half-live (its
+   "BIOS-pin" arm was closed by D34's `TargetSpeed=16GT/s` read, and the power-sequence arm by
+   D35), which is why C15 replaces that arm with the §R10 ladder + the NOT-fixes row
+   (`pcie_aspm=off` no-ops the speed per [R10-S9]; `setpci` TargetSpeed/retrain overrides are a
+   link-down risk with the config theory already dead) and the **`d3cold_allowed=0` +
+   `amdgpu.runpm=0` STABILITY row** with the ArcheoCodix precedent — explicitly labelled
+   stability, never a speed fix.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future

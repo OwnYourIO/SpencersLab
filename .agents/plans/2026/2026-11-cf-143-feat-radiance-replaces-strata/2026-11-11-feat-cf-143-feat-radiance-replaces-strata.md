@@ -1311,3 +1311,29 @@ Wave 10: C13 (alone). Commands: three notes suites at the new figure
 — asserted in commit), naming 5 ok + `AMD_GPU_FLIP_COMMIT=<C13 sha>` ⇒ NON-FLIP, witnesses
 498P/9S + 29P + 36P + surface 9/M1..M8 10, aislop/rulesync repo-pins, zero-stale re-run.
 Run-end: card #1 re-publish AGAIN + NEW fleet selfHeal-prose card (D32(4) body line).
+
+## Rework delta 7 — C14 (LINK ladder refresh + mover facts) — 2026-11-14, docs-only
+§D10 (scout round 10) falsified the tuning note's top LINK candidate on the record: the
+owner ran §R10's dock-first cold-boot ritual verbatim; the genuinely NEW boot
+(`4d6202d9…` @21:34:43Z) reprinted the chain degraded — **the rate didn't move because the
+LINK didn't move**; power-ordering latch CLOSED by its own experiment; BIOS-pin already
+closed by D34's TargetSpeed=16 read. The drained pod's exit banner proved the MOVER
+ENGAGED AND CHURNING (20678 dispatches; boot-B's 0-dispatches was a read artifact; §D8's
+154-capacity inference corrected — layers reach 300; churn = ~90–100 MiB/token of extra
+link traffic → link-first STRENGTHENED; post-ritual 11.0/16.4 tok/s = same, mid-ramp —
+"same or worse" adjudicated; fair number still gated on the never-run fixed probe + step 6).
+D36 carries the two self-corrections (154-capacity; the "61% busy" citation that NEVER
+existed — honest census 49/50/48) and the law: falsified checklist rows get re-pointed in
+the SAME ticket. plan_status reopened complete(FINAL r5)→approved, reason recorded.
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C14 | LINK ladder refresh (falsified rung + reseat→cable→DOCK-BYPASS→last-resort BIOS-EQ) + NOT-fixes & d3cold/runpm STABILITY row + HEAT-ENGINE mover facts | S | 11 | [C13] | edits C13's freshly-landed note; the fiction-ban/marker/coherence arms C13 added are the rewrite's rails |
+
+Wave 11: C14 (alone; docs-only). Commands: the two notes suites' LINK arms (TargetSpeed /
+REPRINTED-at-49% / fiction-ban) must SURVIVE the rewrite unchanged; `tests/notes/radiance-
+host-tuning.sh` 4 ok + runbook 5 ok + tp2 3 ok; envelope/sums tokens frozen (30–70 /
+5.8–13.6 / 110 / 71.04 / 118.72); witnesses 46P/498P-9S/29P/36P unmoved; naming NON-FLIP
+at C14's sha; **render-diff MUST BE EMPTY (zero charts/services files)**. Run-end: active-
+dock-vs-3.94-GB/s purchase decision + guards-optimality observation recorded for the owner
+(AC6), card-#1 re-publish ledger unchanged.
