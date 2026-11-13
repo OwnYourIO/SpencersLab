@@ -865,3 +865,222 @@ fix; radiance suite 43P+legs/0F, witnesses 498P-9S/29P/36P unmoved; zero-stale s
 re-run (names frozen). Live closure owner-run (AC6): one minutes-class sha256 pass,
 marker lands, serve container pulls + boots; the host-side hash+marker-touch stays the
 human-only same-verification loop-breaker, never a substitute for the chart fix.
+
+---
+
+## FINAL whole-plan review round 4 (C11 + landed-state verification) — 2026-11-13, fresh
+planning-tier session, HEAD `cf037ef07`; **main == origin/main == `de02e1884`** (the owner
+has already cherry-picked + pushed C10-rehash and the C11 landing).
+
+**Verdict: APPROVED.** Zero blockers, zero majors. C11 re-verified bar-for-bar AND against
+the LANDED truth on the live cluster (readonly tier only); the C09/C10/C11 live-defect
+CLASS adjudicated as a pair; all four r1 carries dispositioned below.
+
+**Bars (all run fresh, sequential, PATH-exported, dep-update /tmp-clone-only):**
+charts/llama-swap **498P/9S/0F** (9 skips enumerated by name = 8× RUN_HF_CHECK +
+1× RUN_FLAG_AUDIT network-evidence gates, zero helm-skips) · charts/radiance **46P/0F**
+(`-k staging` = 4 legs RUN-and-pass, not skipped) · charts/amd-gpu **29P/0F** · charts/vllm
+**36P/0F** · naming **5 ok bare** AND `AMD_GPU_FLIP_COMMIT=b71c8dfac…` **full green with n2
+NON-FLIP** (class message printed verbatim: "no carrier file touched; amd.com/gpu* claim
+census unchanged across the commit's files — C11 grammar fix, D27") · historical
+re-proofs: a81989b47→**WAVE-A**, b1def8d1f→**WAVE-B**, 698af3b78→**WAVE-C** all ok ·
+bogus sha → **FAIL "is not a commit"** rc1 · **teeth re-synthesized in the /tmp clone**:
+claim-dropping commit touching NO carrier → **"matches NO accepted shape" REJECT**;
+comment-only CARRIER-touch without a wave → same REJECT (NON-FLIP correctly unavailable);
+clone restored byte-clean · runbook **5 ok** · tp2 **3 ok** · dashboards **5 ok** · surface
+**9 ok bare** + `CF143_BASE_SHA=0d9b41785 … M1..M8` **10 ok** · `helm lint` ×4 charts
+0 failed · both umbrella renders rc0 · rulesync `generate --check` clean @**37.0.0** ·
+aislop `ci --changes` **0 errors/0 warnings/0 fixable over 106 files** @**0.20.1**. Tree
+clean after every run (`git status --porcelain` = 0).
+
+**FOCUS A — C11 as a PAIR with C09/C10 (the "contract lives one layer below where the tests
+read" class; third confirmation):**
+(a) *Grammar first-hand*: rendered `command[2]` read line-by-line AND scanned — exactly ONE
+hash-applet invocation on an executable line (`actual=$(sha256sum "$PACK" | cut -d' ' -f1)`,
+zero options); NO GNU long option and none of the D27-rejected forms (`--check/--status/-cs/
+-c -s/lone -s/-w/operand-less -c`) on ANY executable line. Long-option occurrences
+classified: line 16 curl's REAL flags (full curl binary, not the coreutils-applet family —
+legit, byte-kept); `--check` at the WHY-comment and `--continue-at` in the rc-33 comment —
+`#`-lines, inert to `sh`. The equality form EMPIRICALLY proven in a /tmp harness with
+both-family stubs (BB stub rejects long opts exit-1 + two-space compute print + `can't
+open` on missing; GNU shim honours `--check` stdin): correct digest ⇒ `complete` + rc0 +
+marker; TRUNCATED pack ⇒ MISMATCH naming expected= AND actual=, rc1, NO marker; MISSING pack
+⇒ stderr + `actual=` EMPTY ⇒ MISMATCH rc1 NO marker — `set -e` does NOT abort at the
+assignment (pipeline rc = `cut`'s 0) — exactly D27's adjudication; GNU family + same script
+⇒ passes (portability both ways). The OLD gate under the BB stub reproduces the live defect
+verbatim (`unrecognized option: check`, rc1, no marker) and under the GNU stub would have
+PASSED — the proof that the family premise, not the script text, carries the contract.
+(b) *Digest pin verified LIVE and INDEPENDENTLY*: new pod `gpu-ai-radiance-7b4b757fff-dnfbf`
+initContainerStatuses imageID = `sha256:3fb7e13e5d17…` — full-64-hex EXACT match to the
+values ledger pin; registry re-read by this reviewer: Docker Hub `8.23.0`
+`Docker-Content-Digest` = the same value with content-type
+`manifest.list.v2+json` (⇒ NIT-1's descriptor point proven — see carries); amd64 platform
+manifest = `3b8fde20…` (NOT what is pinned, and correctly so — imageID is the index digest).
+VACUITY test re-run on the /tmp clone: repository → `docker.io/library/ubuntu` ⇒ BOTH
+`…image_identity_pinned_and_digest_ledged` AND `…grammar_matches_the_init_image_applets`
+RED — the ban refuses to pass vacuously on an unruled family ✓.
+(c) *Class coverage beyond radiance (own grep, classified)*: executable hash-applet call
+sites repo-side = radiance:357 (portable form) + `containers/coder-workspace/Dockerfile` +
+`containers/forgejo-host-runner/Dockerfile` — all `sha256sum -c -`/`-c file` (SHORT option +
+explicit operand = portable BOTH families, and build-time GNU anyway — doubly legit); busybox/
+alpine-family `repository:` sites = playsms (busybox:stable, 0 long opts), prowlarr
+(alpine, 0 long opts), privatebin (app image, no shell init), radiance (fixed).
+`--checkpoint-interval` (engine arg), `git apply --check` (GNU git at build), rulesync/aislop
+(dev CI) stay classified non-class per §D3b.7. Verdict: no second live site of the class.
+(d) *Curl line*: `git show <rev>:charts/radiance/values.yaml | grep 'curl --fail'` at
+72770056e (C02-era), 56142d511, b71c8dfac, de02e1884 and the LIVE pod spec = ONE unique
+byte-identical line; no `--max-time`/speed/timeout flags crept anywhere — the NOT-A-TIMEOUT
+adjudication is honored in bytes, and the live log proves the resume no-op (~2 s) as
+designed.
+
+**FOCUS B — LANDED-STATE TRUTH (all reads readonly; zero mutations by this session):**
+(1) **C09 live-good**: DS `gpu-ai-amd-gpu-device-plugin-daemonset` 1/1 ready, container
+`command: ["/root/k8s-device-plugin"]` + the EXACT 4-item args, image 1.31.0.12.
+(2) **ROUTER RECOVERED — AC7's first receipt**: sync id **137** (initiatedBy `tms@…`)
+deployed revision `dc3570741` (carries C10 `dc69d64ec`) at 13:32:08Z → new pod
+`…6796d989db-l5b74` created 13:32:11Z, Deployment **Available=True at 13:32:43Z** (the
+outage began 01:52:09Z — recovered after 11h40m34s, exactly on C10's landing sync). Live
+pod limits **EXACTLY {amd.com/gpu-8060s: 1}**, requests mirror {gpu-8060s:1, cpu:1,
+memory:4Gi}, ZERO bare claim; Application `gpu-ai-llama-swap` valuesObject = APU-only pair,
+null-free. The app now reports **OutOfSync with Health=Healthy** — the witness is the
+STRATA Deployment's live `replicas: 0` vs the git-rendered 1: that is the owner's
+runbook-step-3 manual scale-down (see (3)), i.e. the DESIGNED posture, not a sync gap —
+syncs are manual here (ids 137/138 both `tms`).
+(3) **RADIANCE — step 3 ALREADY RUN, init in its first-ever hash pass**: the owner scaled
+`gpu-ai-llama-swap-strata` to **0** (live receipted). New pod `…7b4b757fff-dnfbf` (the
+C11-fixed template) hit `FailedScheduling Insufficient memory` at 13:38:18+13:38:28 (the
+old crashlooping pod still held the 64Gi reservation under Recreate), **Scheduled 13:38:47Z**
+once the replacement rolled, `radiance-fetch` RUNNING since 13:38:48Z — **restartCount 0,
+no MISMATCH line, no crashloop signature** (vs the 1-second-exit iterations of §D3b.2): the
+`sha256sum --check` wedge is empirically GONE and the one minutes-class full-pack hash pass
+(~15 min at read time 13:53:45Z, disk-bound single-thread reading the 113.6 GiB — slower
+than the 1–6 min envelope, still in-envelope) is the FIRST hash-verification these bytes
+ever receive, with zero re-download (log shows the resume-from-121,969,901,568 no-op
+exactly as designed). Serve container `PodInitializing`, `imageID: ""` — the engine pull
+awaits init completion, per contract. Application `gpu-ai-radiance` **Synced @de02e1884**;
+Argo health currently `Degraded` = the §D3-adjudicated `progressDeadlineSeconds: 600`
+condition theater while a legitimately-long init runs — NOT the crashloop signature;
+the AC6 closure receipts (marker `.staged-0af5e962…` + "radiance staging: complete" +
+exit 0 + serve pull/boot under the 180×10 s startupProbe) land within minutes of the pass
+finishing and are the owner's next-window read (or the next coord tick's), per the
+owner-run closure law. fsGroup warning (`AlreadyMountedVolume`, GID 0 vs 65532
+"may not be shareable") observed — kubelet informational; the pack+marker writes belong to
+the same init that already wrote 113.6 GiB successfully — watch item, not a finding.
+(4) **Node pools**: `amd.com/gpu-r9700-1: 1` + `amd.com/gpu-8060s: 1`, bare `amd.com/gpu`
+at **capacity 0** (the count-0 reading the C10 docs teach), allocatable 125.08Gi — all as
+ruled. (5) **gpu cluster untouched**: `gpu-llama-swap` 1/1 Available at gen **22** (the
+pre-C10 gen), rendered template EXACTLY limits `{amd.com/gpu: 1}` + requests `{cpu, memory}`
+(live pod additionally shows the API-server-defaulted `amd.com/gpu` requests entry —
+extended-resource defaulting at pod admission, the template is unchanged — this refines,
+without contradicting, round 3's template-side witness); `gpu-amd-gpu` external entry
+Synced/Healthy. The `gpu` umbrella app shows OutOfSync (child apps already carry the
+C10-era content; umbrella re-sync is the owner's manual lane) — receipt nuance, not a
+branch fault.
+
+**FOCUS C — goal-vs-card re-derivation after three live rounds (board reads):** radiance
+LIVES BESIDE strata per Q5 (peer block live in valuesObject, models list intact; strata's
+0-replica is the owner's Q10 scale-down, restore-back is step 9/10 theirs) · vllm
+disabled-commented (M3/M4 green) · 9/5/1 higher-wins trio + floor `priority?: 5` (M8 green)
+· FULL 8×200K profile shipped and now being exercised (64Gi + full serveArgs + Q12 ladder
+rulers live) · TP2 doc + **card #1 AD-144 "Radiance second-GPU (TP2) expansion"** — Inbox,
+`Provider: API`+`Pipeline: AI`, body RE-PUBLISHED POST-RENAME: 10× `gpu-r9700-1`, ZERO
+`gpu-ai-pro-r9700`, no null-mechanism prose ✓ · **card #2 AD-145 "Radiance Grafana
+dashboard + metrics scrape wiring"** — Inbox, labels ✓ · **D26 card AD-146
+`Eev5WkDieH6TH2pEW`** — Inbox, **labels now APPLIED** (closes round 3's one-label
+deviation; `set_card_labels` was run), body = the §D2.8.5(iii) corrected framing: it names
+the HAND-OFF strip, HELM-EXONERATED, "never retired normatively / NOT staleness" — NO card
+describes null-retirement as the mechanism ✓; only stale pointer found (cosmetic): its
+reference-implementation cites `56142d511` (branch sha) while main carries the re-hash
+`dc69d64ec` — both reachable, same content. AD-143 sits in **Executing** with the slug
+custom-field naming this session ✓; its body is the original intake sketch (predates the
+rename/conversion rulings) — per the boards law the card body is human intake, the plan
+folder is the record — no write-back owed beyond the Review move below.
+
+**FOCUS D — git/scope:** per-commit audit: a533048fd = plan-folder-only 6 files · b71c8dfac
+= exactly the 6 contracted files (2 dev + 4 test-wave) · cf037ef07 = 3 records files ·
+owner's landings `cf14837ed`/`de02e1884` are cherry-picks with **patch-ids IDENTICAL** to
+their branch twins (verified by hash) and **main == HEAD implementation-content: 0 lines
+of diff** across charts/ services/ tests/ containers/ .agents/notes/ .github/ custom-values/
+.opencode/ .rulesync/ — the residual `main..HEAD` delta is **EXACTLY cf037ef07's records**
+(STATE +30, FRICTION +2, chunks/C11.md +48 — the C11 fold the coord owes main) **plus this
+round's record below**. main advanced only by owner commits (committer `Spencer` on every
+landing) — no agent merge/push: `origin` carries no cf-143 ref, branch never pushed; the
+earlier amend (698af3b78→56142d511) stays lawful (unpushed, unreferenced). Test-integrity:
+every removed line across the three landed fix-commits re-enumerated by this reviewer —
+C11: **4 deletions, ZERO in test files** (old gate line + 2 comment tails + 1 runbook
+sentence); C09 test deletions = comment/docstring rewords + the n2 message reword (inverse
+guards shipped); C10 test deletions = the D26-ruled carrier flip (legs A/B/C + WAVE-C
+transfer + null-absence scan shipped STRICTLY stronger) + re-embedded prior shapes; the
+off-parity fixture moved **EXACTLY the 2 sanctioned transferred lines, 0 added**, with its
+cf-143 era-chain PROVENANCE entry present on main. **No weakening anywhere.** Clone/tree
+verified byte-clean after every probe.
+
+**Carry dispositions (C11 r1 → FINAL):**
+- **NIT-2 (grammar-ban line-scoping): ACCEPTED AS A RECORDED FORWARD ITEM — hardening NOT
+  demanded now.** My synthesis proves the hole exactly as described (smuggled
+  `sha256sum \` + next-line `--check` passes all legs) — and proves the legs are
+  CONTRACT-CONFORMANT (§D3b.5 defines the ban per-line; demanding continuation-join now
+  would be a test-lane SCOPE EXPANSION mid-FINAL, minor/nit never gates per the role law,
+  and the positive equality leg still pins the shipped gate — a smuggled SECOND gate cannot
+  delete the first). Forward item for the next test wave touching this chart: join
+  `\`-continuations before scanning OR assert exactly-one hash-applet invocation on
+  executable lines. Coord: add as a STATE.deferred row.
+- **NIT-1 (values.yaml:318 "amd64 IMAGE-MANIFEST digest"): DEFERRED one-word fold —
+  confirmed and independentized** (my own registry read: the pinned 3fb7e13e… is the tag's
+  MANIFEST-LIST/index digest == what containerd records as imageID; the amd64 platform
+  manifest is 3b8fde20…). Value, pin role and premise-leg all verified correct; the
+  descriptor rides any future values.yaml touch (owner may also fold it into the PR
+  narrative). Not blocking: a fold NOW = history churn on a just-pushed main.
+- **MINOR-1 (commit-message payload): record-do-not-amend CONFIRMED — and now doubly:**
+  `de02e1884` is on origin/main; amending would mean rewriting pushed main, the repo's
+  single most forbidden act. The owner-facing PR/merge narrative paragraph (source:
+  chunks/C11.md notes + D27/§D3b) — to append to the AD-143 merge text: *"The fetch-init's
+  completion gate was `sha256sum --check` — GNU long-option grammar inside
+  curlimages/curl:8.23.0, whose coreutils are BusyBox v1.37.0 (the container's own banner;
+  hash applets declare short `scwbt` only, `md5_sha1_sum.c`), so the gate died at option
+  parse (exit 1), `set -e` skipped `touch "$MARKER"`, and the pod crashlooped while the
+  113.6 GiB pack was COMPLETE (resume offset == ledger size 121,969,901,568; triple-matched
+  x-linked-etag/HF-tree/ledger) yet NEVER hash-verified. Fix: the portable compute+compare
+  equality gate — `actual=$(sha256sum "$PACK" | cut -d' ' -f1)` + MISMATCH echo naming
+  BOTH digests + `exit 1` strictly before the marker-touch — the only shape both applet
+  families pass loudly. Rejected with source reasons: `-c -s`/`-cs` (BusyBox-only, GNU has
+  no short `-s` — breaks an image swap), `-c -` (portable but names only the file on
+  failure — coarser, not chosen), an extra `[ -s ]` guard (a missing pack yields an empty
+  actual — the equality already catches it). NOT a timeout — the curl line is byte-unchanged,
+  no timeout flags added. Cost from today: zero re-download + one minutes-class sha256
+  pass (the bytes' first-ever verification); every later restart marker-skips <1 s. Also
+  pins the init-image family's digest (sha256:3fb7e13e… = the tag manifest-list digest =
+  the live imageID) as the grammar's PREMISE — a family swap now reddens the premise leg
+  instead of passing the ban vacuously. Honesty: authored at C02, survived four green
+  reviews because every leg checked the script's VOCABULARY, never its GRAMMAR against the
+  pinned image's applet family (class law: TEST_SPEC §12.10 / D27 / FRICTION)."*
+- **Records-fold status: ADEQUATE, with two coord residuals.** STATE's C11 rows match
+  chunks/C11.md r1 notes line-for-line (verdict, per-bar counts — every number reproduced
+  identically by this fresh run; dev/tests handoffs carry real session ids read from tool
+  results; review row `session: null` + `session_note` + `review_session_note` name exactly
+  what is evidenced (disk notes) and what is unknown — the correct shape per the same
+  honesty law; NOT treated as an unrun review). FRICTION class law is where future agents
+  read it: the C11 line + the coord second-sighting line are on main? NO — they live in
+  `cf037ef07` (branch-side records fold, still residual; the FRICTION/STATE/C11-notes delta
+  is precisely the main-vs-branch gap). TEST_SPEC §12.10 + DECISIONS D27 ARE on main (they
+  rode the fix/plan commits). Coord residuals to fold next: (i) STATE.deferred rows for
+  NIT-1/NIT-2/MINOR-1 dispositions; (ii) the D26 deferred row still reads "IN FLIGHT this
+  round" — CLOSE it (card AD-146 created + labels applied, receipted by this round).
+
+**Residual delta main-vs-branch (stated precisely):** `cf037ef07` (C11 records fold: 3 plan-
+folder files) + this round's record = the whole of `main..HEAD`; implementation content
+0-diff. Landing them is the owner's cherry-pick/merge lane, same as every prior round.
+
+**Owner decision list (unchanged heads, updated states):** (1) the limits-only word —
+gpu-cluster witness REFINED this round (template limits-only + pod-admission defaulting —
+the byte-neutral transfer holds); (2) D24 upstream naming ask — still an optional filing;
+(3) D26/AD-146 card triage — now label-clean in Inbox, decide AI-lane pickup; (4) NIT-1
+one-word fold + NIT-2 test-lane hardening — record-and-ride (this round's dispositions) or
+demand a follow-up; (5) **AD-143 Executing→Review — yours**; Finished stays yours; the
+restore-back of strata after radiance testing (runbook step 9/10) and the Q12 ladder are
+likewise your live lanes. Watch-items: the first hash pass' terminal receipt (marker +
+complete + serve boot) and the fsGroup warning at init completion.
+
+— final reviewer round 4, 2026-11-13 (fresh session; no implementation or validation file
+edited; /tmp-only renders, stubs, clone and dep-copies; readonly-tier cluster reads only;
+repo tree verified clean post-runs).
