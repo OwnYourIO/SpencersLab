@@ -51,7 +51,7 @@ app-template:
           image:
             repository: ghcr.io/home-operations/prowlarr
             # Verified 2026-09-20 via ghcr tags API — re-verify before pinning.
-            tag: 2.7.0.5723@sha256:fcf7498692f97698ea8b8f7078a0f81120a16e7354e4c232b5e3810e3e783dff
+            tag: 3.0.1.5752@sha256:83cc967a3b7b754634e31773d4d58ea606714490b7e8592d41b608f7c249afe6
           env:
             TZ: America/Denver
             PROWLARR__SERVER__PORT: "9696"
