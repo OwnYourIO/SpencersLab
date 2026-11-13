@@ -42,5 +42,5 @@ dependencies:
 # law). type: daemonset is set explicitly — app-template defaults controllers
 # to deployment and a device plugin must not run as one (§R7-Q5 caveat).
 - name: app-template
-  version: 5.0.1
+  version: 5.3.0
   repository: https://bjw-s-labs.github.io/helm-charts/

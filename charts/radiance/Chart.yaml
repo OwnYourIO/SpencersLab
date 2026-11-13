@@ -12,5 +12,5 @@ dependencies:
 # renders from this chart's app-template: values with no parent-side
 # loader and no second dep (charts/vllm Chart.yaml comment, verbatim law).
 - name: app-template
-  version: 5.0.1
+  version: 5.3.0
   repository: https://bjw-s-labs.github.io/helm-charts/
