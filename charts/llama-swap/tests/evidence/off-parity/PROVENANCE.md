@@ -48,3 +48,27 @@ Ownership: test-session property (single test-asset authority, run-2 DECISIONS
 Conventions). Dev NEVER regenerates this file; a re-baseline (e.g. a deliberate
 post-consolidation default-render change) is routed through the test session
 and re-provenanced here in the same commit.
+
+## Era chain — cf-143 C10 re-baseline (test session, 2026-11-13)
+
+Deliberate default-render change, routed per the ownership law above: AC2.1
+(D26) moves the GPU-claim CARRIER — `charts/llama-swap/values.yaml` goes
+claim-LESS, so the default-OFF render legitimately loses exactly the
+transferred bare claim. Delta proven by diff before re-capture (fixture
+1794 -> 1792 lines):
+
+```
+1758a1759,1760   (lines present ONLY in the OLD fixture)
+>             limits:
+>               amd.com/gpu: 1
+```
+
+Two lines, both inside the llama-swap Deployment main-container resources
+block; `requests: cpu 1000m / memory 4Gi` byte-identical; zero other lines
+moved. Sanctioned-set law UNCHANGED: the structural arm still permits only
+id-prefixed fail-fast echo growth in models; any further default-render move
+(especially anything re-introducing a tree-global claim) reds the byte arm —
+re-capture is NOT the fix for it. The per-cluster carriers now live in the
+service overlays (services/gpu bare ADD; services/gpu-ai gpu-8060s ADD) —
+OUTSIDE this chart-default render by construction, so this fixture returns to
+full immobility for the rest of the ticket.

@@ -1038,21 +1038,27 @@ app-template:
                   path: /health
                   port: 8080
           resources:
+            # cf-143 C10 (DECISIONS D21 intent, D26 carrier): this chart
+            # ships deliberately NO GPU claim — each cluster ADDs its own in
+            # its service overlay. services/gpu adds the bare amd.com/gpu
+            # (its plugin is the external single-naming 1.31.0.9,
+            # services/gpu/prod/values.yaml — that name is all it can
+            # advertise); services/gpu-ai adds the named APU pool
+            # amd.com/gpu-8060s (first-party product naming, D24). A fresh
+            # cluster without its own ADD renders a GPU-less llama-swap pod —
+            # the accepted standalone-usable trade-off, and the only shape
+            # that cannot strand a cluster: a claim carried tree-globally
+            # CANNOT be retired per cluster downstream. Overlay `null`
+            # deletions die in the ApplicationSet→Application valuesObject
+            # chain before helm ever sees them (cf-143 §D2 live pair: the
+            # null is present in the ApplicationSet generator, absent from
+            # the live Application), and extended resources take positive
+            # integers only — so neither null NOR 0 is a legal retirement
+            # shape; the per-cluster positive ADD is the only carrier that
+            # survives this chain.
             requests:
               cpu: 1000m
               memory: 4Gi
-            limits:
-              # THE CLAIM IS TREE-GLOBAL AND MUST STAY THE BARE NAME: this
-              # chart renders in TWO clusters and the gpu cluster's plugin is
-              # the external single-naming 1.31.0.9 (its amd-gpu entry in
-              # services/gpu/prod/values.yaml), which can only ever
-              # advertise amd.com/gpu — naming this line per-product would
-              # strand the live gpu-llama-swap. gpu-ai runs the vendored
-              # product-naming plugin and RETIRES this key in its render
-              # through the service overlay's null (cf-143 C07/D21
-              # per-cluster shield; there the APU is claimed by name,
-              # amd.com/gpu-8060s).
-              amd.com/gpu: 1
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -7,18 +7,24 @@
 # (upstream 0.22.0 + the ~10-line args hook) runs the plugin at 1.31.0.12
 # with -resource_naming_strategy=product; the gpu-ai-amd-gpu Application
 # switches source repo->git-path with IDENTICAL object names; llama-swap's
-# gpu-ai render flips to amd.com/gpu-8060s VIA THE SERVICE OVERLAY (null
-# retire of the inherited bare key) in the same commit, while the chart's
-# tree-global claim stays bare amd.com/gpu: 1 for the gpu cluster's single-
-# naming plugin (D21: a tree-global flip would strand live gpu-llama-swap).
+# gpu-ai render claims amd.com/gpu-8060s VIA ITS SERVICE-OVERLAY ADD and the
+# gpu cluster claims the bare amd.com/gpu VIA ITS OWN OVERLAY ADD — the CHART
+# default ships NO GPU claim (C10/D26: a tree-global claim cannot be retired
+# per cluster — overlay nulls die in the ApplicationSet->Application
+# valuesObject chain, §D2 live pair; extended resources take positive
+# integers only, so 0 is no escape either; positive per-cluster ADDs are the
+# carrier that survives. D21's INTENT stands verbatim: gpu bare, gpu-ai the
+# named APU, a tree-global flip would strand live gpu-llama-swap).
 #
-# Landing-round re-scope (this file's C07 test round): n2 pins the per-cluster
-# flip (overlay APU pair + null + chart claim-line untouched) and the env-
-# gated same-wave guard now also PROVES the claim-line zero-diff via
-# git show before/after; n3 became the AC4 per-cluster sweep (bare claims
-# ONLY the chart default, APU name ONLY the gpu-ai overlay, R9700 nowhere
-# until C02 — then charts/radiance only; comments/fixtures exempt, the
-# off-parity fixture moved ZERO lines under B1, TEST_SPEC §12.2).
+# Re-scopes: C07 landing round made n2 the per-cluster flip needle and n3 the
+# AC4 placement sweep; C10/D26 moved the CARRIER (chart claim-less, both
+# claims live as per-cluster overlay ADDs — the null-retirement mechanism and
+# the tree-global bare default are DEAD LAW, the same false-prose honesty
+# pass that cleared values.yaml); the env-gated guard now accepts WAVE-A/B
+# (zero-diff check) and WAVE-C (transfer check: chart bare 1->0 AND services/
+# gpu 0->+ in ONE commit). Comments/fixtures exempt by pattern; the
+# off-parity fixture moved by EXACTLY the transferred 2 lines at C10's
+# re-baseline (PROVENANCE era entry — the "zero lines" B1 claim is history).
 #
 # Designed-RED at test-write: every leg names the missing artifact (entry,
 # flip, vendored chart, ledger). The n2 same-wave COMMIT leg runs only when
@@ -54,7 +60,12 @@ WORKFLOW=".github/workflows/amd-gpu-render-tests.yaml"
 # ticket-wide: any future lane move edits HERE and the marked block in
 # charts/amd-gpu/tests/amd_gpu_testlib.py (the python canonical home), never
 # needle archaeology. Conversion legs (C08 n2) are name-agnostic.
-BARE_CLAIM="amd.com/gpu"                       # gpu-cluster tree-global; never renames (D21)
+BARE_CLAIM="amd.com/gpu"                       # gpu-cluster claim; C10: the CARRIER moved to
+#                                                the gpu overlay (chart default is claim-less —
+#                                                D26: nulls die in the appset→valuesObject
+#                                                chain; positive per-cluster ADDs are the only
+#                                                carrier). The NAME never renames.
+GPU_VALS="services/gpu/prod/values.yaml"
 APU_CLAIM="amd.com/gpu-8060s"                  # frozen by the D24 ruling scope
 R9700_CLAIM="amd.com/gpu-r9700-1"              # D24: patched-table sanitizer output
 # ---------------------------------------------------------------------------
@@ -123,27 +134,34 @@ PY
   ok "n1: charts.amd-gpu renders internal (no version/repository, SSA \"true\", namespace default), the helm-pin comment left services/ with the datasource-move recorded, and the base-appset name/path derivation is intact (C07 AC1/AC2)"
 fi
 
-# --- n2: the per-cluster flip needle (overlay null) + same-wave guard -----------
-# C07 landing-round re-scope (owner B1 / DECISIONS D21): the APU flip lives
-# in the gpu-ai SERVICE OVERLAY (null-retire of the inherited bare key), the
-# chart's tree-global claim line STAYS bare amd.com/gpu: 1 by design (gpu-
-# cluster shield). The same-wave lockstep law is closed by construction (the
-# entry swap and the flip share this one file; the vendored chart joins the
-# same commit), and the review-time git-show guard re-pins it.
+# --- n2: the per-cluster carrier needles (ADDs; no nulls) + same-wave guard -----
+# C10/D26 law: the gpu-ai overlay ADDS amd.com/gpu-8060s (requests mirror
+# included), the gpu overlay ADDS the bare amd.com/gpu, the chart ships NO
+# GPU claim; the old overlay-null retirement is DEAD (nulls are dropped by
+# the ApplicationSet->valuesObject chain before helm sees them — §D2 live
+# pair — and positive integers only, so the ADD is the carrier). The
+# same-wave lockstep law is closed by construction (entry swap + flip share
+# this file; the chart conversion rides its commit); the env-gated git-show
+# guard re-pins each landing wave's file set + claim-line/transfer checks.
 if want n2; then
   [ -f "$SWAP_VALUES" ] || fail "n2: $SWAP_VALUES missing"
   [ -f "$VALS" ] || fail "n2: $VALS missing"
-  # (a) the overlay flip: APU limits pair + the load-bearing null on the
-  #     inherited bare key + the explicit requests mirror (D21 shape)
+  # (a) the gpu-ai overlay ADD: APU limits pair + the explicit requests
+  #     mirror (positive per-cluster ADDs only, D26 shape)
   grep -qE "^[[:space:]]*${APU_CLAIM}: 1" "$VALS" \
     || fail "n2: $VALS carries no live '${APU_CLAIM}: 1' overlay line — the per-cluster flip did not land (llama-swap keeps the APU BY NAME on gpu-ai, owner Q9/B1)"
-  grep -qE "^[[:space:]]*amd\.com/gpu:[[:space:]]*null[[:space:]]*$" "$VALS" \
-    || fail "n2: no 'amd.com/gpu: null' retirement line in the overlay — maps deep-merge ADD-only; without the null the gpu-ai render keeps the bare claim beside the APU name (double slot)"
-  # (b) the chart's claim line UNTOUCHED: bare lives, APU name absent live
-  grep -qE "^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$" "$SWAP_VALUES" \
-    || fail "n2: charts/llama-swap/values.yaml lost the tree-global bare amd.com/gpu: 1 claim — the gpu cluster's single-naming plugin can advertise NOTHING ELSE (B1 shield; a flip here strands live gpu-llama-swap)"
-  if grep -E "^[[:space:]]*${APU_CLAIM}:" "$SWAP_VALUES" | grep -vqE '^[[:space:]]*#'; then
-    fail "n2: a LIVE ${APU_CLAIM} claim line in the CHART values — the flip is overlay-only (the tree-global shape is the B1 leak this shield retires)"
+  # C10/D26 flip: the null retirement is INERT through the appset→valuesObject
+  # chain (live pair §D2) — it must be GONE (chart claim-less makes it moot)
+  # and the gpu cluster's claim must exist as a positive ADD in services/gpu.
+  if grep -qE "^[[:space:]]*amd\.com/gpu:[[:space:]]*null[[:space:]]*$" "$VALS"; then
+    fail "n2 (C10): the inert 'amd.com/gpu: null' retirement line is still in the gpu-ai overlay — nulls never reach helm through the chain (§D2/D26); the carrier is the per-cluster ADD, delete the null"
+  fi
+  grep -qE "^[[:space:]]*amd\.com/gpu:[[:space:]]*1[[:space:]]*$" "$GPU_VALS" \
+    || fail "n2 (C10): services/gpu/prod/values.yaml carries no bare 'amd.com/gpu: 1' ADD — the gpu cluster would get a GPU-LESS llama-swap pod once the chart default goes claim-less (the carrier moved, not the posture, D21 intent)"
+  # (b) C10: the chart default is CLAIM-LESS (both pools named only per-cluster);
+  # no claim of ANY name lives in the chart anymore.
+  if grep -E "^[[:space:]]*amd\.com/gpu(-[a-z0-9-]+)?:[[:space:]]*[0-9]+[[:space:]]*$" "$SWAP_VALUES" | grep -vqE '^[[:space:]]*#'; then
+    fail "n2 (C10): a LIVE GPU-claim line remains in charts/llama-swap/values.yaml — the carrier moved per-cluster (D26); a tree-global claim is exactly what cannot be retired through the chain"
   fi
   # the fallback comment retired as realized prose (needle mirror of the pytest leg)
   if grep -qi "fallback once a naming-capable plugin exists" "$SWAP_VALUES"; then
@@ -172,25 +190,45 @@ if want n2; then
         printf '%s\n' "$stat" | grep -q "$path" || return 1
       done
     }
-    if wave_a; then
+    wave_c() {
+      for path in charts/llama-swap/values.yaml "$GPU_VALS" "$VALS" .agents/notes/radiance-on-target-acceptance.md; do
+        printf '%s\n' "$stat" | grep -q "$path" || return 1
+      done
+    }
+    if wave_c; then
+      shape="WAVE-C (C10 carrier wave: chart + BOTH overlays + runbook in ONE commit)"
+    elif wave_a; then
       shape="WAVE-A (conversion wave)"
     elif wave_b; then
       shape="WAVE-B (C09 defect-fix wave: values + runbook)"
     else
-      fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NEITHER accepted shape (WAVE-A: charts/amd-gpu + charts/radiance + $VALS as one commit; WAVE-B: charts/amd-gpu + the runbook doc) — git show --stat is the evidence"
+      fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NO accepted shape (WAVE-C: charts/llama-swap + services/gpu + services/gpu-ai + the runbook as one commit; WAVE-A: charts/amd-gpu + charts/radiance + $VALS; WAVE-B: charts/amd-gpu + runbook) — a SPLIT carrier leaves a cluster with zero schedulable claims between syncs"
     fi
     claim_note=" (llama-swap chart untouched by this commit)"
     if printf '%s\n' "$stat" | grep -q "charts/llama-swap/values.yaml"; then
       bare_now=$(git show "$AMD_GPU_FLIP_COMMIT:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
       bare_before=$(git show "$AMD_GPU_FLIP_COMMIT^:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
-      [ "$bare_now" = "$bare_before" ] \
-        || fail "n2: the $shape commit MOVED the chart's tree-global bare claim line ($bare_before -> $bare_now) — B1: claim-line diff must be zero, comments only"
-      claim_note=" + chart claim-line zero-diff"
+      gpu_now=$(git show "$AMD_GPU_FLIP_COMMIT:$GPU_VALS" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
+      gpu_before=$(git show "$AMD_GPU_FLIP_COMMIT^:$GPU_VALS" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
+      if [ "$shape" != "${shape#WAVE-C}" ]; then
+        # TRANSFER check: the bare claim MOVED chart→gpu-overlay in THIS commit —
+        # exactly one live site before (the chart), exactly one after (services/gpu).
+        [ "$bare_before" -ge 1 ] || fail "n2 transfer check: WAVE-C parent had no chart bare claim to transfer"
+        [ "$bare_now" = "0" ] || fail "n2 transfer check (C10): the WAVE-C commit left $bare_now chart default bare claim(s) — the carrier move must zero it"
+        [ "$gpu_now" -gt "$gpu_before" ] || fail "n2 transfer check (C10): services/gpu bare ADD did not grow (gpu_before=$gpu_before gpu_now=$gpu_now) — the claim must be ADDED there in the SAME commit (split = one cluster unschedulable between syncs)"
+        claim_note=" + carrier transfer verified (chart bare $bare_before->0, gpu overlay +$((gpu_now-gpu_before)))"
+      else
+        [ "$bare_now" = "$bare_before" ] \
+          || fail "n2: the $shape commit MOVED the chart's bare claim line ($bare_before -> $bare_now) — only WAVE-C may do that (carrier move)"
+        [ "$gpu_now" = "$gpu_before" ] \
+          || fail "n2: the $shape commit moved the gpu-overlay bare claims ($gpu_before -> $gpu_now) — only WAVE-C may do that"
+        claim_note=" + chart/gpu claim-line zero-diff"
+      fi
     fi
     ok "n2: per-cluster flip needles green AND the $shape same-wave guard verified$claim_note against $AMD_GPU_FLIP_COMMIT"
   else
     skip "n2: same-wave COMMIT guard not run — review sets AMD_GPU_FLIP_COMMIT=<sha> and re-runs n2 (git-show check incl. the claim-line zero-diff leg, C07 Tests bullet 3)"
-    ok "n2: per-cluster truth holds — gpu-ai overlay carries the APU flip with the bare-null retire, the chart keeps its tree-global bare claim untouched (APU-name-free), fallback comment retired (same-wave commit guard deferred to review)"
+    ok "n2: carrier law holds — gpu-ai overlay ADDs gpu-8060s with NO inert null line, services/gpu ADDs the bare claim, the chart ships NO GPU claim at all (claim-less default, D26), fallback comment retired (same-wave commit guard deferred to review)"
   fi
 fi
 
@@ -198,12 +236,13 @@ fi
 if want n3; then
   # Live requests/limits claim lines across charts/ services/, comments and
   # test fixtures excluded (the fixtures are RENDERS guarded by the
-  # off-parity byte cadence — under B1 the default fixture moved ZERO lines,
-  # TEST_SPEC §12.2). Per-cluster law:
-  #   bare amd.com/gpu     -> ONLY charts/llama-swap/values.yaml (tree-global
-  #                           default; the gpu cluster renders it against the
-  #                           external single-naming plugin — services/gpu's
-  #                           own values carry no claim line at all);
+  # off-parity byte cadence — re-baselined at C10 by exactly the transferred
+  # 2 lines, PROVENANCE era entry). Per-cluster law (C10/D26 carrier):
+  #   bare amd.com/gpu     -> ONLY services/gpu/prod/values.yaml (the gpu
+  #                           cluster's overlay ADD — its plugin is the
+  #                           external single-naming 1.31.0.9; the CHART
+  #                           default is now claim-less and must carry ZERO
+  #                           live claim lines of any name);
   #   amd.com/gpu-8060s    -> ONLY services/gpu-ai/prod/values.yaml (overlay
   #                           flip) — ledger/name mentions are comments,
   #                           exempt by pattern;
@@ -217,11 +256,16 @@ if want n3; then
       | grep -vE ':[0-9]+:[[:space:]]*#' \
       | grep -vE '^charts/[^/]+/tests/|^services/[^/]+/tests/' || true
   }
-  bad=$(claim_grep "$BARE_CLAIM" | grep -vE '^charts/llama-swap/values\.yaml:' || true)
+  # C10/D26: the bare CLAIM now lives ONLY in the gpu overlay (the chart default
+  # is claim-less; gpu-ai's node has the name at capacity 0 — a stray there is
+  # the live Pending-forever defect).
+  bad=$(claim_grep "$BARE_CLAIM" | grep -vE "^$GPU_VALS:" || true)
   if [ -n "$bad" ]; then
-    fail "n3 (AC4 per-cluster): bare amd.com/gpu claims OUTSIDE the charts/llama-swap tree-global default — every other renderer has no such pool post-gpu-ai-flip (stray claims are Pending-forever, R6-Q4-3):
+    fail "n3 (C10 AC4 per-cluster): bare amd.com/gpu live claims OUTSIDE services/gpu/prod/values.yaml (the gpu cluster's ADD carrier) —
 $bad"
   fi
+  claim_grep "$BARE_CLAIM" | grep -q "^$GPU_VALS:" \
+    || fail "n3 (C10): the gpu overlay carries no bare claim line — after the chart went claim-less, gpu-llama-swap would lose its scheduling claim (posture unchanged, carrier moved, D21 intent)"
   bad=$(claim_grep "amd.com/gpu-8060s" | grep -vE '^services/gpu-ai/prod/values\.yaml:' || true)
   if [ -n "$bad" ]; then
     fail "n3 (AC4 stray-guard): live APU-name claims outside the gpu-ai overlay — the gpu cluster's 1.31.0.9 plugin cannot advertise it (B1):
@@ -232,11 +276,13 @@ $bad"
     fail "n3 (AC4): live claims of the renamed pool outside charts/radiance (the D24 claim site) —
 $bad"
   fi
-  if grep -E "^[[:space:]]*amd\.com/gpu(-[a-z0-9-]+)?:[[:space:]]*[0-9]+" services/gpu/prod/values.yaml \
-     | grep -vE '^[[:space:]]*#' | grep -q .; then
-    fail "n3: services/gpu/prod/values.yaml carries a GPU claim line — the gpu cluster is shielded, its overlay stays claim-free (D21 untouched witness)"
+  extra_gpu=$(claim_grep "$BARE_CLAIM" | grep -c "^$GPU_VALS:" || true)
+  [ "$extra_gpu" = "1" ] || [ "$extra_gpu" = "0" ] \
+    || fail "n3 (C10): services/gpu carries $extra_gpu bare-claim lines — exactly one is the carrier (double claims would demand capacity 2 the node lacks)"
+  if claim_grep "$APU_CLAIM" | grep -q "^$GPU_VALS:"; then
+    fail "n3: the gpu overlay claims ${APU_CLAIM} — that name exists only on the gpu-ai node (single-naming 1.31.0.9 plugin, D21 intent)"
   fi
-  ok "n3: per-cluster sweep clean — bare claims ONLY the llama-swap tree-global default, the APU name ONLY in the gpu-ai overlay, the renamed R9700 pool ONLY in charts/radiance (D24 sweep), services/gpu claim-free (comments/fixtures exempt per the pattern)"
+  ok "n3: carrier-law sweep clean — bare claims ONLY in services/gpu/prod/values.yaml (the gpu overlay ADD — the chart default is claim-less since C10/D26), the APU name ONLY in the gpu-ai overlay, the renamed R9700 pool ONLY in charts/radiance (D24 sweep), the chart claim-free — exactly one live site per claim name (comments/fixtures exempt per the pattern)"
 fi
 
 # --- n4: the vendored chart's expected-names ledger (the C02 authority) ---------

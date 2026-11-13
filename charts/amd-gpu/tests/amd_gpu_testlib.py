@@ -45,7 +45,11 @@ import yaml
 GPU_RESOURCE_PREFIX = "amd.com/"                       # code constant (§R7-Q1)
 R9700_POOL_NAME = "gpu-r9700-1"                       # THE ruling (D24); patched-table row
 APU_POOL_NAME = "gpu-8060s"                           # frozen by the ruling scope
-BARE_GPU_CLAIM = "amd.com/gpu"                        # gpu-cluster tree-global; never renames
+BARE_GPU_CLAIM = "amd.com/gpu"                        # gpu-cluster claim; C10/D26: carried by the
+#                                                        gpu OVERLAY ADD (the chart default
+#                                                        is claim-less — a tree-global claim
+#                                                        cannot be retired through the appset
+#                                                        chain); the NAME never renames
 R9700_CLAIM = GPU_RESOURCE_PREFIX + R9700_POOL_NAME
 APU_CLAIM = GPU_RESOURCE_PREFIX + APU_POOL_NAME
 # Pre-C08 pool name, assembled so no AC4-swept file ever carries it whole:

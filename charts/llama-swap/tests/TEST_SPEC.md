@@ -3931,3 +3931,140 @@ Red ledger this round (all name C09, zero crashes): charts/amd-gpu 3F/26P
 everything else HOLD-green (radiance 43P, llama-swap 495P/9S, vllm 36P,
 naming 5ok, tp2 3ok, dashboards 5ok, surface 9ok bare + 10ok M1..M8 w/
 CF143_BASE_SHA).
+
+### 12.9 C10 test round — the carrier moves to per-cluster ADDs; the valuesObject layer becomes a test subject (test session, 2026-11-13; LIVE OUTAGE: llama.spencerslab.com down since 01:52:09Z)
+
+**Why this round exists:** D21's B1 carrier (tree-global chart claim + overlay
+`null`) is dead — §D2's live evidence pair: the null is PRESENT in the
+ApplicationSet generator values and ABSENT from the generated Application's
+`spec.sources[].helm.valuesObject` (death in the controller's merge chain,
+appset-charts.yaml:120-122 candidates); helm ALONE honors it (§D2.6.2-4) — so
+every prior proof of "the bare is retired" was made one layer below
+production. Consequence live: the chart bare survives on gpu-ai, the node's
+bare pool sits at capacity 0 (kubelet retention, §D2.2), and the Recreate
+pod is Pending-forever — the router outage. D26 keeps D21's INTENT verbatim
+and moves the CARRIER: chart ships claim-less; gpu adds bare (limits-only,
+byte-law), gpu-ai keeps the 8060s ADD (mirror stays), the null dies with its
+false prose.
+
+**The projection helper (ONE site):** `llama_swap_testlib.project_valuesobject`
++ `render_via_projection`/`projection_main_container` — umbrella render →
+per-app values → recursive nil-drop (the documented mergo model of the
+chain) → helm. Cited to §D2/D26 with the evidence pair right in the block
+header. This is the suite's first leg-layer that models the CONTROLLER side
+of the GitOps chain; claim-shape law is asserted here or not at all.
+
+**Red ledger (designed; each names the dev's C10 edit that greens it):**
+
+| leg | state | greens when |
+|---|---|---|
+| `test_cf143_naming_flip::test_gpu_ai_valuesobject_projection_claims_only_apu` (AC3 leg A) | RED — projection shows the exact live broken pair `{amd.com/gpu: 1, amd.com/gpu-8060s: 1}` | chart claim-less (AC2.1) |
+| `test_cf143_naming_flip::test_no_retirement_instructions_survive_the_chain` (AC3 leg C, render+text) | RED — the `: null` line + its generator-value footprint | null deleted (AC2.3) |
+| `test_cf143_naming_flip::test_chart_default_is_claim_less_with_carrier_why` (AC2.1 arm FLIPPED from 'stays bare') | RED — `values.yaml:1055` still live | chart claim-less + WHY rewrite (per-cluster/gpu-8060s/single-naming/ADD/positive-integer needles; THE CLAIM IS TREE-GLOBAL must DIE) |
+| naming.sh n2 (null-absent + gpu-ADD + claim-less chart needles) | RED naming the inert null | AC2.1-.3 |
+| naming.sh n3 (bare site = ONLY services/gpu; chart claim-free) | RED naming `charts/llama-swap/values.yaml:1055` | AC2.1+.2 |
+| radiance-runbook T5 ×5 needles (count-0, Insufficient amd.com/gpu, valuesObject diff, step-3-≠-router, 65.158/59.92) | RED | AC5 doc sweep |
+
+**Green both directions (shield witnesses — NOT red bait):** gpu helm-render +
+`test_gpu_cluster_valuesobject_projection_keeps_bare_only` (leg B: limits
+`{amd.com/gpu: 1}`, requests cpu/memory only — byte-identical across the
+transfer; if either reddens, a cluster lost its only claim), the
+helm-merge-level gpu-ai arm (documents what the old proof showed and why the
+layer lied), realized-prose/tools-sidecar/strata byte-laws, golden
+byte-stable (pod resources are not in the ConfigMap — untouched by design).
+
+**n2 matcher:** three accepted shapes — WAVE-C (C10 carrier: chart + BOTH
+overlays + runbook, one commit; a split ships a zero-schedulable-claims
+window), WAVE-A (C07/C08), WAVE-B (C09); matcher routing verified against the
+REAL commits (a81989b47→A, b1def8d1f→B, plans-HEAD→NONE; bogus→reject).
+WAVE-C carries the TRANSFER check (chart bare N→0 AND services/gpu 0→M>0 in
+the same commit); WAVE-A/B keep the zero-diff check — only WAVE-C may move
+claims. `AMD_GPU_FLIP_COMMIT=<C10 sha>` at review proves it once the tree
+needles clear.
+
+**AMENDMENT — C10 dev-round repairs (test session, 2026-11-13, same round
+continuation).** The three red ledger rows above cleared against the dev's
+landed carrier move; the clear also repaired three TEST-SIDE defects the
+red-first phase had masked:
+1. The ADD needle in the WHY group carried a literal 0x08 (backspace) byte
+   instead of `\b` — corruption MY patch layer introduced (python-in-bash
+   double-quoting ate the escape); no text could ever match it. Repaired to
+   `(?i)\badd(ed)?\b`; byte-audited (`cat -v`/0x08-count = 0) across the
+   file. Class lesson: a patch that rewrites regexes gets a byte-level audit,
+   not only a compile.
+2. The remaining WHY needles got wrap-safe comment-prose normalization
+   (the dev's block legitimately wraps "positive / # integers"; needles now
+   join comment lines before matching). Dev text was never wrong; the needle
+   was brittle — recorded so nobody 'fixes' the comment.
+3. **Off-parity re-baseline happened** — superseding §12.2's "dissolved"
+   state for C10: AC2.1's claim-less chart default moves the default render
+   by EXACTLY the transferred 2 lines (`            limits:` +
+   `              amd.com/gpu: 1`, fixture 1794→1792), proven by raw diff
+   BEFORE re-capture and enumerated in `evidence/off-parity/PROVENANCE.md`
+   (era chain). requests cpu/memory byte-identical; zero other lines moved.
+   The byte arm + the sanctioned-growth structural arm both re-ran GREEN
+   against the new baseline with the same-set law intact; the §12.9
+   shields-line above stays true for the GOLDEN ConfigMap (pod resources are
+   not in it) — the claim-less era note lives here and in the testlib
+   BARE_GPU_CLAIM comment (amd-gpu testlib :48 synced).
+Absorbed-leg rows made explicit: pre-C10 `test_main_container_claims_named_
+apu_pool` (null-retire rationale) folded INTO
+`test_gpu_ai_helm_merge_shape_keeps_apu_only` (assertions preserved, the
+false reasoning replaced by the "this layer lies" note);
+`test_chart_default_claim_stays_bare_with_why` BECAME
+`test_chart_default_is_claim_less_with_carrier_why` (D26 carrier flip — the
+inverse law, same file). n3's success message stale-since-C10 wording
+("ONLY the llama-swap tree-global default") fixed to the services/gpu
+carrier — the :205 nit's class. Bar post-repair: llama-swap 498P/9S/0F
+(the three table reds cleared, +4 new arms vs the pre-C10 baseline),
+naming 5 ok bare, runbook 5 ok (dev's doc landed all T5 needles), rest per
+§12.9 — combined below.
+
+**FIX ROUND (review r1, test lane — 2026-11-13, HEAD 698af3b78 + uncommitted
+docs fix).** Dispositions: MAJOR-1 closed doc-side by dev (ns default +
+sources[1]) and PINNED test-side — T5 gained the owner-facing COMMAND-SHAPE
+leg: `-n default get application` must exist, `sources[1].helm.valuesObject`
+(jsonpath form) must exist, any kubectl line commanding `-n argocd` REDS, any
+`sources[0].helm` token REDS; prose WARNING about the wrong forms stays
+allowed (the doc must keep explaining the trap). Teeth proven on a /tmp copy
+with the exact pre-fix command restored — RED naming the namespace pin, tree
+doc GREEN. MINOR-1: naming.sh headers (file-wide carrier paragraph, n2
+header + (a)-bullet, n3 law list) rewritten to the C10 carrier truth — the
+DEAD null-retirement/tree-global-bare law no longer appears as current in any
+comment; assertions byte-untouched, 5 ok bare before and after; the stale
+"off-parity moved ZERO lines" phrase in n3's header corrected to the C10
+2-line re-baseline (supersedes §12.2's dissolved-state claim for C10 — the
+cadence RAN this time). NIT-1: WHY needles SCOPE-TIGHTENED — the per-cluster/
+gpu-8060s/single-naming/ADD/positive-integer pass now reads only the comment
+run at the resources key (above or immediately inside the block; the dev's
+C10 WHY sits under the key), so :3's unrelated "per-cluster" cannot
+backfill the law; absence-pins (TREE-GLOBAL dead sentence, zero live claim
+lines) stay whole-file by nature. NIT-2 (dev-lane wording, doc uncommitted
+here) no test action; NIT-3 cosmetic, corrected-by-parenthetical stands.
+MINOR-2 (strata :1348-1354 aged prose): frozen region by C04/AC4 byte law —
+correctly NOT edited by dev; pointer lives in this ledger + rides the
+cutover deletion scan (coord Deferred-line, review concurs).
+
+LAW LINE (owner-facing commands, §12.x list): *a runbook command is RUNNABLE
+SHAPE, not vocabulary — pin namespace + resource + index (`-n default get
+application X` / `sources[1].helm.valuesObject`) and RED the known-wrong
+forms; a needle that greps only the word valuesObject watched a dead command
+ship.* The §12.8/§12.9 "one layer below production" class now has its third
+sighting: a doc command is production for the human at 3am.
+
+**CLASS LAW (§12.x list, the C09 §12.8 law generalized):** *a per-cluster
+values override that RETIRES an inherited key must be proven through the
+ApplicationSet→Application valuesObject layer — a helm-only proof is not
+proof.* Parity/render legs asserting a deletion must run through
+`render_via_projection`; any future overlay `null` (or `0` for an extended
+resource) is a silent no-op the projection legs catch at authoring time.
+Corollary for oracles: capture or model at the layer PRODUCTION renders at
+(§12.8's "the oracle is the defect" — one class, two sightings: command-less
+oracle C09, null-honoring helm layer C10).
+
+**Bar (this round, pre-dev):** charts/llama-swap 492P/9S/3F (the table's
+naming_flip reds only) · radiance 43P/0F · amd-gpu 29P/0F (C09 legs green
+since b1def8d1f) · vllm 36P · surface bare 9 ok + M8 (CF143_BASE_SHA) 10 ok ·
+tp2 3 ok · dashboards 5 ok · naming n1/n4/n5 green, n2/n3 red (table),
+bare run exit≠0 BY DESIGN · runbook T1–T4 ok / T5 red (table). Post-dev the
+combined §12.6-style bar returns fully green with WAVE-C proven.

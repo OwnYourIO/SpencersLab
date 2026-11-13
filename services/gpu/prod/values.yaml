@@ -434,6 +434,23 @@ llama-swap:
         # mmproj busts the ~7.4 GiB usable).
         disabled: "disabled on the 8GiB gpu box: BF16 non-expert weights + 256k q8_0 KV + mmproj exceed the card (66.2 GiB total; same qwen35moe class as the disabled qwen3.6-35b-a3b-bf16). Use ornith-1.5-35b-a3b-q8 (tuned) or gpu-ai."
         description: "DISABLED on 8GiB gpu (cannot fit) — use the tuned q8/q6 entries or gpu-ai"
+  # cf-143 C10 carrier (DECISIONS D21 intent, D26): the chart default ships
+  # NO GPU claim, so this cluster ADDs its own — the bare amd.com/gpu its
+  # external single-naming 1.31.0.9 plugin advertises (the amd-gpu entry
+  # above; that name is all that plugin can offer). Limits-only, mirroring
+  # the transferred chart line byte-for-byte: kubelet mirrors extended
+  # resources into requests itself (the live gpu-llama-swap pod shows that
+  # shape), and a positive ADD is the only claim carrier that crosses the
+  # ApplicationSet→Application valuesObject chain — null retirements die
+  # there (cf-143 §D2), so the claim never goes back to the chart default.
+  app-template:
+    controllers:
+      llama-swap:
+        containers:
+          main:
+            resources:
+              limits:
+                amd.com/gpu: 1
 
 open-webui:
   annotations:

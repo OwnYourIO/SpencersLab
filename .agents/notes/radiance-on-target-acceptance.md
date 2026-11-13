@@ -185,7 +185,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Served id (single authority, D7) | `qwen3.8-flash-next-radiance` — plus the wire-siblings `-urgent` / `-low` sharing the modelID (catalog rows, C05) |
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
-| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` is GONE there (stray bare claims on gpu-ai schedule Pending-forever — loud by design) |
+| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
 | Shipped sizing scalars | `guaranteedMemoryGi: 64` / `hostPoolMib: 43000` / `maxModelLen: 200000` / `maxNumSeqs: 8` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
@@ -231,7 +231,7 @@ same wave. Expect, in order:
 
    ```bash
    kubectl -n default describe pod -l app.kubernetes.io/controller=device-plugin-daemonset \
-     | grep -E "Command:|Args:|State:|Reason:|Restart Count"
+     | grep -A4 -E "Command:|Args:|State:|Reason:|Restart Count"
    ```
 
    — expect `Command: /root/k8s-device-plugin`, the four `Args:` (the -v=5
@@ -240,7 +240,9 @@ same wave. Expect, in order:
    `amd.com/gpu-8060s`, and the radiance + gpu-ai llama-swap pods sit
    Pending on pool starvation (§D1.1) — after this fix, Pending there
    means the plugin is NOT Running, not a name defect (the pool names are
-   the patched-table pair, D24; the step-0(a) receipts stand).
+   the patched-table pair, D24; the step-0(a) receipts stand). D26
+   supersedes the converse reading: a healthy plugin does NOT end the
+   Pending story — item 4's third class exists.
 
 2. Plugin log receipt — `-v=5` is what makes it runbook-log-bearing (the
    law lives in `charts/amd-gpu/values.yaml` now):
@@ -267,11 +269,14 @@ same wave. Expect, in order:
    kubectl describe node ai-gpu | grep -E "amd\.com"
    ```
 
-   Expect `amd.com/gpu-r9700-1: 1` AND `amd.com/gpu-8060s: 1` AND bare
-   `amd.com/gpu` ABSENT (absent = both cards matched the patched table;
-   present = a gate-(a) fallback fired → decision tree, step 0). Receipt
-   c of the same
-   five-receipt list.
+   Expect `amd.com/gpu-r9700-1: 1` AND `amd.com/gpu-8060s: 1`, and the bare
+   `amd.com/gpu` at COUNT 0 — the key is PRESENT at zero, not literally
+   absent (§D2.2: kubelet retention of the pruned single-naming 1.31.0.9
+   advertisement; "ABSENT" was the pre-C10 wording's wrong expectation).
+   Read it as: a zero bare residue with both named pools at 1 = both cards
+   matched the patched table; a NONZERO bare capacity without a
+   single-naming history = a gate-(a) fallback fired → decision tree, step
+   0. Receipt c of the same five-receipt list.
 
 4. llama-swap post-rollout check: its Deployment template changed in the
    same wave, so the running pod serves until the replacement with
@@ -283,6 +288,33 @@ same wave. Expect, in order:
    kubectl -n default get deploy gpu-ai-llama-swap -o jsonpath='{.spec.template.spec.containers[0].resources}'
    kubectl -n default logs deploy/gpu-ai-llama-swap --tail=100 | grep -i vulkan
    ```
+
+THE THIRD PENDING CLASS (C10/§D2.6.7 — supersedes the reading that a
+healthy plugin ends the Pending story): plugin Running + both pools
+advertised is NOT sufficient — `gpu-ai-llama-swap` can still sit Pending on
+`Insufficient amd.com/gpu`, the CARRIER class. A bare claim inherited from
+the chart's old tree-global default survived onto gpu-ai even where the
+overlay "null"ed it, because deletion instructions are dropped in the
+ApplicationSet→Application valuesObject chain before helm runs (D26), and
+demanding a pool the node holds at capacity 0 is Pending-forever. Under
+C10's claim-less chart + per-cluster positive ADDs the class is
+structurally closed; if a claim-Pending ever recurs with healthy pools the
+needle diagnostic is a valuesObject-vs-service-file diff — a `null` in a
+service overlay does NOT retire an inherited claim, so check through the
+live Application, never through a local `helm template`:
+
+```bash
+kubectl -n default get application gpu-ai-llama-swap \
+  -o jsonpath='{.spec.sources[1].helm.valuesObject}'
+```
+
+The Applications live in namespace `default` — ai-gpu has no `argocd`
+namespace, so a `-n argocd` read errors out. The shared appset
+template gives every Application two sources in this order: source [0]
+is the `ref: services` git source (values repo, no helm key), source [1]
+is the chart's helm source whose `helm.valuesObject` ArgoCD renders
+(`charts/base/templates/appset-charts.yaml:53-71`). If that order ever
+changes, pick the source carrying the helm block.
 
 Receipt e of that list — the radiance PCI/gfx1201 assert — is the step-7
 belt-and-braces. If any of these watches fails, stop: this is still the
@@ -331,6 +363,19 @@ flips green the moment strata's 64Gi request leaves the node. Bring it up by
 the normal route: ArgoCD's own reconciliation (or a UI-led sync of
 `gpu-ai-radiance`) — the sync is the controller's job, never a runbook
 command line here.
+
+Live-grounded numbers (§D2.4, read 2026-11-13): Σ running effective requests
+sit at 65.158 Gi against 125.08 Gi allocatable → free 59.92 Gi, ~4.08 Gi
+short of radiance's 64Gi — the designed step-0(b) Pending to the byte
+(`Insufficient memory`; MemoryPressure=False, pure arithmetic). This
+scale-down lifts free to 123.92 Gi and radiance schedules on its own.
+
+OUTAGE TRUTH (D26): step 3 does not restore the router — with the pre-C10
+carrier the outer llama-swap simply sits Pending on the third class (item
+4; §D2.6.7 records the router down from 2026-11-13T01:52:09Z on exactly
+this shape), and no scale-down moves a capacity-0 pool. The router returns
+only with the C10 merge+sync: the Recreate replacement then claims
+`amd.com/gpu-8060s`, which the node advertises at 1.
 
 ## Step 4 — Staging receipts (fetch-init + pack provenance)
 

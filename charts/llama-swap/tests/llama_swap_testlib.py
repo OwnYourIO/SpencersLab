@@ -1049,3 +1049,117 @@ def cmd_effective_tag(cmd: str) -> str | None:
     if ref and ":" in ref:
         return ref.split(":", 1)[1]
     return None
+
+
+# ---------------------------------------------------------------------------
+# C10 — the APPSET→valuesObject PROJECTION layer (§D2; DECISIONS D26). ONE
+# documented model site (like the constants blocks of §12.6): the §D2 LIVE
+# EVIDENCE PAIR (readonly, 2026-11-13) — the gpu-ai ApplicationSet generator's
+# element `values` CARRIES "amd.com/gpu": null while the generated
+# Application's spec.sources[].helm.valuesObject does NOT; helm alone honors
+# the null (§D2.6 points 2-4, reproduced locally) — so the retirement dies
+# INSIDE the ApplicationSet controller's merge chain (candidates:
+# charts/base/templates/appset-charts.yaml:120-122 valuesObject merge). The
+# production model therefore is: recursively DROP null-valued keys from the
+# per-app values BEFORE helm renders. ADDs demonstrably survive the chain
+# (the gpu-8060s lines arrived); nulls do not; extended resources take
+# POSITIVE integers only, so 0 is no alternative either — a per-cluster
+# positive ADD is the only carrier across this chain (D26). Legs asserting the
+# GPU-CLAIM shape go through THIS layer; helm-only assertions would test a
+# shape the cluster never renders (the §12.8 "oracle N layers below
+# production" class, closed for the carrier).
+# ---------------------------------------------------------------------------
+
+SERVICE_DIR = {"gpu": REPO_ROOT / "services" / "gpu" / "prod",
+               "gpu-ai": REPO_ROOT / "services" / "gpu-ai" / "prod"}
+
+
+def project_valuesobject(node):
+    """mergo-nil-skip model: recursively strip keys whose value is null —
+    what the ApplicationSet controller's chain does to the valuesObject
+    before helm ever sees it (§D2.6)."""
+    if isinstance(node, dict):
+        return {k: project_valuesobject(v) for k, v in node.items() if v is not None}
+    if isinstance(node, list):
+        return [project_valuesobject(v) for v in node]
+    return node
+
+
+def _umbrella_values(cluster: str) -> dict:
+    """The service ApplicationSet's rendered element values (the map the base
+    chart later splits per-app from; `shared-storage` merge omitted — it
+    carries no resources keys, noted in §12.9)."""
+    import json
+
+    out = subprocess.run(["helm", "template", f"{cluster}-umbrella", str(SERVICE_DIR[cluster]),
+                          "--set", "domain=spencerslab.com", "--set", f"clusterName={cluster}"],
+                         capture_output=True, text=True, timeout=300)
+    assert out.returncode == 0, f"C10: umbrella render of services/{cluster}/prod failed:\n{out.stderr}"
+    el = None
+    for doc in yaml.safe_load_all(out.stdout):
+        if not doc or doc.get("kind") != "ApplicationSet":
+            continue
+        def find(node):
+            if isinstance(node, dict):
+                if node.get("serviceName") == cluster and isinstance(node.get("values"), (str, dict)):
+                    return node
+                for v in node.values():
+                    r = find(v)
+                    if r:
+                        return r
+            elif isinstance(node, list):
+                for v in node:
+                    r = find(v)
+                    if r:
+                        return r
+            return None
+        el = find(doc.get("spec", {}).get("generators", []))
+        if el:
+            break
+    assert el, f"C10: no serviceName={cluster} generator element with embedded values found in the umbrella render"
+    v = el["values"]
+    return json.loads(v) if isinstance(v, str) else _jsonize(v)
+
+
+def _jsonize(node):
+    """yaml-parsed flow mappings keep tuple-safe plain types; json.loads-style
+    str keys guaranteed — normalize dicts/lists for the walk (helm YAML never
+    yields non-str keys here, but the projection must not care)."""
+    if isinstance(node, dict):
+        return {str(k): _jsonize(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_jsonize(v) for v in node]
+    return node
+
+
+@functools.lru_cache(maxsize=None)
+def _projection_render(cluster: str) -> tuple:
+    raw_values = _umbrella_values(cluster)
+    llama = (raw_values.get("llama-swap") or {})
+    assert llama, f"C10: the {cluster} umbrella values carry no llama-swap: block"
+    projected = project_valuesobject(llama)
+    import json as _json
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="cf143-proj-") as tmp:
+        vals = Path(tmp) / "vo.yaml"
+        vals.write_text(yaml.safe_dump(projected, sort_keys=True))
+        cmd = ["helm", "template", f"{cluster}-llama-swap", str(CHART_DIR),
+               "-f", str(vals), "--set", "domain=spencerslab.com", "--set", f"clusterName={cluster}"]
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        assert out.returncode == 0, f"C10: projection-level render failed for {cluster}:\n{out.stderr}"
+        docs = tuple(_thaw(d) for d in yaml.safe_load_all(out.stdout) if d)
+        return docs, out.stdout, _json.dumps(raw_values, sort_keys=True)
+
+
+def render_via_projection(cluster: str):
+    """(docs, raw, raw_values_json) at the production valuesObject shape:
+    umbrella → per-app values → nil-skip projection → helm."""
+    return _projection_render(cluster)
+
+
+def projection_main_container(cluster: str) -> dict:
+    docs, _raw, _rv = render_via_projection(cluster)
+    dep = next((d for d in docs if d.get("kind") == "Deployment"
+                and d.get("metadata", {}).get("name") == f"{cluster}-llama-swap"), None)
+    assert dep, f"C10: no {cluster}-llama-swap Deployment in the projection render"
+    return next(c for c in dep["spec"]["template"]["spec"]["containers"] if c.get("name") == "main")

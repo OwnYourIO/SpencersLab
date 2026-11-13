@@ -522,6 +522,34 @@ need(r"(?i)describe[ \t][^\n]{0,120}device-plugin", "the kubectl describe receip
 need(r"(?i)(crashloop|crash-loop|crashlooping)[^.]{0,300}(advertise|advertised|pending)|(no node advertises|pools un-advertised)[^.\n]{0,300}",
      "the consequence line: while the plugin crashloops NO node advertises the pools and radiance + the gpu-ai llama-swap pod sit Pending (§D1.1)")
 need(r"(?i)not a name defect", "the Pending-disambiguation clause (Pending after the fix = plugin not Running, not the name)")
+# C10 AC5 (red-first until the doc sweep lands): the outage's three truths —
+# the bare-pool assert is COUNT 0 (kubelet retention keeps the key at zero,
+# §D2.2), a THIRD Pending class exists (plugin healthy, pools up, carrier
+# defect — check valuesObject vs service file, §D2.6.7), and step 3's memory
+# handshake does NOT restore the router (that needs the C10 merge+sync;
+# §D2.4 numbers ride the line).
+need(r"(?i)(capacity|count) 0|carries[^.\n]{0,80}zero", "the count-0 reading of the bare amd.com/gpu residue (§D2.2 retention — 'absent' was the wrong word, capacity-0 is the live truth)")
+need(r"(?i)insufficient[ \t]*amd\.com/gpu", "the third-class Pending symptom line (bare claim at a capacity-0 pool)")
+need(r"(?i)valuesobject", "the third-class diagnostic: diff the live Application's valuesObject against the service file")
+need(r"(?i)step 3[^.\n]{0,120}(does not|won't)[^.\n]{0,120}router|(does not|won't)[^.\n]{0,60}restore[^.\n]{0,60}router", "the outage truth: step 3 (strata scale-down) does NOT restore the router before the C10 sync")
+need(r"65\.158|59\.92", "the §D2.4 memory numbers behind the designed-Pending (65.158 used / 59.92 free vs the 64Gi pair)")
+# C10 review-r1 MAJOR-1: owner-facing commands in docs ARE test surface — pin
+# the RUNNABLE SHAPE of the third-class Application read, not the word. Live-
+# proven wrong axes were (ns) argocd — no such namespace on ai-gpu, the
+# Applications live in default — and sources[0], which is the ref:services
+# git source with no helm key (appset-charts.yaml:53-71); the valuesObject is
+# on source [1]. Pins: the command exists with the right ns + index, and no
+# command anywhere in the doc keeps the broken shapes (prose WARNING about
+# them is explicitly allowed — the doc explains the wrong form it replaced).
+need(r"kubectl[^\n]*-n[ \t]+default[ \n]*[^\.]{0,80}get[ \t]+application",
+     "the third-class read COMMAND must target namespace default")
+need(r"sources\[1\]\.helm\.valuesObject",
+     "the chart source is sources[1] — the read must carry that index (jsonpath form)")
+bad_ns = [ln for ln in rb.splitlines() if re.search(r"kubectl[^\n]*-n[ \t]+argocd", ln)]
+if bad_ns:
+    errs.append("a kubectl line commands -n argocd (no such namespace on ai-gpu — the read errors): " + bad_ns[0][:100])
+if re.search(r"sources\[0\]\.helm", rb):
+    errs.append("sources[0].helm appears anywhere: source [0] is the ref:services git source, NO helm key — the jsonpath would print empty")
 
 if errs:
     print("; ".join(errs), file=sys.stderr)

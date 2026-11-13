@@ -154,22 +154,23 @@ llama-swap:
                   secretKeyRef:
                     name: hf-token
                     key: token
-            # cf-143 C07 per-cluster flip (DECISIONS D21, owner B1 shield):
-            # product naming ships gpu-ai-only, so the APU claim flips HERE,
-            # not on the chart's tree-global default line — that must stay
-            # the bare amd.com/gpu the gpu cluster's single-naming 1.31.0.9
-            # plugin can actually advertise (live gpu-llama-swap 1/1 proof).
-            # Merge law (cf-97's per-app valuesObject fact, proven live):
-            # overlays deep-merge maps — keys ADD, they never remove — so
-            # the null on the inherited bare key is load-bearing: it is what
-            # RETIRES amd.com/gpu in this render, leaving exactly one GPU
-            # claim. The requests mirror is explicit for self-documentation;
-            # the scheduler auto-mirrors extended resources from limits
-            # anyway, and requests never inherited the bare key, so nothing
-            # needs nulling there.
+            # cf-143 C07 flip + C10 carrier law (DECISIONS D21 intent, D26):
+            # product naming ships gpu-ai-only, so this cluster's APU claim
+            # is an ADD here: limits amd.com/gpu-8060s plus an explicit
+            # requests mirror (self-documentation — the scheduler mirrors
+            # extended resources from limits anyway). The old shape — this
+            # overlay carrying `amd.com/gpu: null` to retire the chart's
+            # tree-global bare claim — is dead: the null NEVER reached helm.
+            # The ApplicationSet→Application valuesObject chain drops
+            # null-valued keys before helm sees them (live pair §D2.6: the
+            # null is present in the ApplicationSet generator, absent from
+            # the live Application's valuesObject; a helm-only reproduction
+            # honors it — locally true, not production proof). The chart
+            # default is claim-less now (C10), so nothing here needs
+            # retiring; and extended resources take positive integers only —
+            # never re-attempt `null` or `0` as a retirement on a claim.
             resources:
               limits:
-                amd.com/gpu: null
                 amd.com/gpu-8060s: 1
               requests:
                 amd.com/gpu-8060s: 1
