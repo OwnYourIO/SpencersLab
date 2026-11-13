@@ -503,3 +503,43 @@ render BYTE-PARITY (shield witness — the fix is gpu-ai-chart-only); zero-stale
 scans re-run; combined bar per chunks/C09.md AC6 (§12.7 counts + the three new red-first
 legs). Live verification stays OWNER-RUN read-only prose (AC7) — the crashloop clears only
 when the owner merges and syncs; agents touch no cluster.
+
+## Rework delta 3 — live defect C10 (claim carrier + appset null-drop) — 2026-11-13, appended per §D2
+Second LIVE defect from the same on-target round (EXPLORE.md §D2, scout round 3 — AUTHORITATIVE,
+plan-session readonly re-verified ~03:4xZ): the B1 overlay's `amd.com/gpu: null` retirement is
+DROPPED in the ApplicationSet→Application valuesObject chain (null present in the live
+ApplicationSet generator, absent from the live Application's `spec.sources[].helm.valuesObject`;
+helm alone honors it — locally reproduced). The chart's tree-global bare claim therefore survives
+live on gpu-ai against a capacity-0 bare pool → the outer llama-swap pod is Pending-forever under
+`strategy: Recreate`: **llama.spencerslab.com router DOWN since 01:52:09Z; runbook step 3 will NOT
+restore it** (radiance's Pending IS the designed handshake). Fix: the CARRIER moves — deletion is
+inert through this chain, positive ADDs survive. D26 supersedes D21's MECHANISM only; the owner's
+B1 intent (gpu keeps the bare claim, gpu-ai the named APU pool, no workload strands) stands
+verbatim. plan_status stays reopened-approved (wave 6 → 7).
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C10 | llama-swap GPU-claim carrier move: chart default ships NO claim; `services/gpu` ADDs bare `amd.com/gpu: 1` (limits-only, byte-neutral); `services/gpu-ai` keeps the 8060s add, drops the inert null + false prose; naming-flip oracle re-pinned to the valuesObject layer; runbook live-closure truths | S | 7 | [C09] | same file set as C09's landed wave (n2 WAVE-C matcher extends the accepted shapes); the claim surface C07/D21 placed tree-global+null is what §D2 proves dead in production |
+
+Wave 7: C10 (alone). Commands additions (beyond the standing battery): the AC1 consumer
+enumeration table is the truth set (per-cluster claim law verified LIVE, both directions — no
+consumer loses its only schedulable claim); gpu-merge render `limits == {amd.com/gpu: 1}` EXACTLY +
+**gpu-cluster rendered resources block BYTE-equal to its pre-C10 render** (the net-neutral transfer
+proof); gpu-ai render + the new valuesObject-PROJECTION legs (appset render → documented
+mergo-nil-skip projection → chart overlay → exact claim sets) and the null-absence guard
+("the pattern that cannot fail silently") — red-first today; charts/llama-swap bar 495P/9S +
+re-pinned/renamed flip legs, 0F; radiance 43P, amd-gpu 29P, vllm 36P;
+`bash tests/services/amd-gpu-naming.sh` bare + `AMD_GPU_FLIP_COMMIT=<C10 sha>` (WAVE-C = chart
+values + BOTH service overlays + the runbook doc, ONE commit — split carrier = a
+zero-schedulable-claims window; transfer check: chart 1→0 AND services/gpu 0→1 same commit);
+runbook 5 ok (count-0 reading of the bare-ABSENT gate lines, the third failure class, the
+step-3-does-not-restore-the-router truth, §D2 numbers 65.158/125.08/59.92), tp2 3 ok (grep-verified
+out of scope — it quotes no claim-carrier shape), dashboards 5 ok, surface bare 9 ok +
+`CF143_BASE_SHA=0d9b41785` M1..M8 10 ok (explicit check-ids law), helm lint x4 +
+`services/{gpu,gpu-ai}` umbrella renders, zero-stale sweep unchanged, placement scans re-scoped
+(n3 bare site: ONLY `services/gpu/prod/values.yaml`; chart carries ZERO live claims), rulesync
+--check @37.0.0, `npx --no-install aislop ci --changes` 0/0. LIVE closure stays OWNER-RUN read-only
+prose (AC7): post-sync router pod Running on `gpu-8060s` (node allocation names llama-swap),
+radiance still Pending until the owner's step 3; the `charts/base` appset-charts passthrough
+root-fix is OUT OF SCOPE (repo-wide blast radius) → coord files the follow-up card (body line in
+chunks/C10.md AC5 / DECISIONS D26).

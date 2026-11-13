@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 6,
-  "updated_at": "2026-11-13T03:10:00+00:00",
+  "current_wave": 7,
+  "updated_at": "2026-11-13T03:01:23+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -420,16 +420,53 @@
       "note": "amended 2026-11-12 per owner lane ruling (D24): T-B became the RENAME contract — amd.com/gpu-r9700-1 via minimal patched amdgpu.ids ConfigMap over the const IDsPath (subPath); 7551/C0 renamed + EVERY 1586 row carried verbatim (APU-rows law, test-enforced parity vs evidence fixture); gpu-8060s/overlay/catalog FROZEN; zero-stale-name AC added; in-flight test round pointed at the amended file"
     },
     "C09": {
-      "status": "pending",
+      "status": "done",
       "wave": 6,
       "depends_on": [
         "C08"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; zero blockers, zero majors; minor M-1 runbook describe-lens grep -A1 receipt fix routed to next docs touch; Chart.yaml header fold accepted as DEFERRED; aislop --base main local drift adjudicated ENVIRONMENTAL (CI --changes form clean); red-first re-proven mechanically 3F/26P; D21 shield witnesses diff-EMPTY)",
+      "handoffs": [
+        {
+          "role": "tests",
+          "round": 1,
+          "at": "2026-11-13T03:25:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "result": "DONE (red-first C09 contracts, TEST_SPEC §12.8) — command legs RED today naming C09: charts/amd-gpu 3F/26P (test_container_command_carries_the_plugin_binary, joint invariant, why-comment); NEW authority charts/amd-gpu/tests/evidence/image-config-1.31.0.12.json (live re-fetch, manifest 6437c74f byte-equal the values ledger, config blob 740b1675, Entrypoint ABSENT, Cmd 4 items, WorkingDir /root/; never hand-retyped); testlib PLUGIN_BINARY/PLUGIN_COMMAND one-edit-site constants + CMD_RESTATED marked the historical misreading (ARGS_CONTRACT stays); oracle pre-c08-deviceplugin-ds.yaml gained the ONE header KNOWN-DEFECT declaration (parsed body byte-invariant, re-verified); radiance Entrypoint-witness leg landed (suite 43P green-forever); n2 WAVE-B matcher added with the claim-line zero-diff self-skip; runbook T5 C09 needles. Witness bars HOLD (llama-swap 495P/9S etc.)."
+        },
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-13T03:45:00+00:00",
+          "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "result": "DONE — charts/amd-gpu/values.yaml: command: [\"/root/k8s-device-plugin\"] (list form, absolute path per D25 — kills the WORKDIR dependency) beside the UNCHANGED 4-item ARGS_CONTRACT; 105-block WHY-comment rewrite (no-ENTRYPOINT fact, binary-in-CMD correction, registry + Dockerfile@v1.31.0.12 cites, never-live-provenance sentence; -v=5 law + strategy-plain sentences verbatim); runbook step-2 receipt + consequence lines. Commit b1def8d1fe3f3c2b5432d6208990b3067102eaf1 (11 files = exactly the chunk set: 2 dev + 8 test-wave + 1 evidence json). Bars: amd-gpu 29P/0F (26 + 3 legs), radiance 43P/0S, llama-swap 495P/9S/0F, vllm 36P, naming 5 ok bare + AMD_GPU_FLIP_COMMIT form (WAVE-B), runbook 5 ok, tp2 3, dashboards 5, surface 9 ok + M1..M8 10 ok @CF143_BASE_SHA=0d9b41785, helm lints, rulesync clean @37.0.0, aislop --changes 0/0. deviations: comment rewrap token-stable; Chart.yaml header line NOT edited (file outside C09's sanctioned set) -> Deferred fold."
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-13T04:00:00+00:00",
+          "session": "ses_e2d484ae7ffep8rTq6KhYLuU4p",
+          "result": "APPROVED — zero blockers, zero majors. All bars re-run fresh at b1def8d1f; RED-FIRST re-proven mechanically (tests+evidence over HEAD~ values = exactly 3F/26P, §12.8 ledger byte-matched); whole-render delta HEAD~<->HEAD = command key ONLY (perfectly additive); D21 shield witnesses re-derived (services/gpu, gpu-ai umbrella, charts/radiance renders diff-EMPTY); oracle parsed body byte-equal vs a81989b47^; evidence json proven genuine by re-fetch (image_config deep-equal to the live registry config blob); PLUGIN_COMMAND re-derivation pinned (cmd[:1], WorkingDir join); n2 teeth re-verified (bogus sha RED, plans commit RED, WAVE-A re-proven @a81989b47). Findings: minor M-1 (step-2 describe-lens grep cannot show Command/Args values — grep -A1 at next docs touch), two recorded nits; Chart.yaml header fold ACCEPTED as Deferred one-liner; aislop --base main 35/78E drift reproduces at r2-certified 5d2afd129 on files entirely outside the branch = ENVIRONMENTAL, CI --changes form clean both ways. STATE write-back owed (status/verdict/handoffs/deferred fold) — folded in the C10 plan round same day. Full notes in chunks/C09.md Review notes round 1."
+        }
+      ],
+      "note": "LIVE-DEFECT ORIGIN: owner-reported RunContainerError after C08 sync — deviceplugin container declares args WITHOUT command against an image with NO ENTRYPOINT (EXPLORE §D1 authority; defect inherited from C07's vendored args-only template; the parity oracle shares the defect — oracle-could-not-witness-it). Fix: one values key command=[\"/root/k8s-device-plugin\"] + WHY-comment + image-config evidence authority + runbook receipts; names/ledger/args frozen; red-first command legs (must be RED today: command absent); live verification owner-run read-only after owner's merge/sync. Ledger: D25.",
+      "dev_session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+      "review_session": "ses_e2d484ae7ffep8rTq6KhYLuU4p",
+      "commit": "b1def8d1fe3f3c2b5432d6208990b3067102eaf1"
+    },
+    "C10": {
+      "status": "pending",
+      "wave": 7,
+      "depends_on": [
+        "C09"
       ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "LIVE-DEFECT ORIGIN: owner-reported RunContainerError after C08 sync — deviceplugin container declares args WITHOUT command against an image with NO ENTRYPOINT (EXPLORE §D1 authority; defect inherited from C07's vendored args-only template; the parity oracle shares the defect — oracle-could-not-witness-it). Fix: one values key command=[\"/root/k8s-device-plugin\"] + WHY-comment + image-config evidence authority + runbook receipts; names/ledger/args frozen; red-first command legs (must be RED today: command absent); live verification owner-run read-only after owner's merge/sync. Ledger: D25."
+      "note": "LIVE-DEFECT ORIGIN (URGENT): EXPLORE §D2 (scout round 3; plan-session readonly re-verification) — the B1 overlay's amd.com/gpu:null retirement is DROPPED in the ApplicationSet->Application valuesObject chain (null PRESENT in the live ApplicationSet generator, ABSENT from the live Application spec.sources[].helm.valuesObject; helm alone honors it — locally reproduced, §D2.6). The chart's tree-global bare claim survives live on gpu-ai against the capacity-0 bare pool (node carries amd.com/gpu:\"0\", kubelet retention, §D2.2) -> outer llama-swap Pending-forever under strategy:Recreate -> llama.spencerslab.com ROUTER DOWN SINCE 01:52:09Z; runbook step 3 will NOT restore it (radiance's Pending IS the designed handshake — §D2.4 numbers 65.158/125.08/59.92). FIX: carrier moves — chart ships NO GPU claim; services/gpu ADDs bare amd.com/gpu:1 (limits-only, gpu render byte-neutral); services/gpu-ai keeps the 8060s add, drops the inert null + false prose; naming-flip oracle re-pinned to the valuesObject layer (projection legs RED today + null-absence guard). D26 supersedes D21's MECHANISM only — intent verbatim (gpu bare claim, gpu-ai named APU pool, no workload strands). ONE commit (WAVE-C). Base appset-charts:117-123 passthrough root-fix OUT OF SCOPE -> coord follow-up card (body line in chunks/C10.md AC5). Live closure owner-run (AC7): recovery receipt = router pod Running on gpu-8060s."
     }
   },
   "blocked": [],
@@ -447,7 +484,8 @@
     "Upstream naming feature ask (ROCm/k8s-device-plugin): recommended, filing OPTIONAL owner call (D24) — decision presented at hand-back",
     "C08 lands with the rename (gpu-r9700-1); coord re-publishes follow-up card #1's body after C08's dev round (TP2 doc strings + re-verification law changed) — DONE 2026-11-12: card Cnf563PDBmBoDLSaS description re-written with the post-C08 .agents/notes/radiance-second-gpu-tp2.md verbatim (update_card returned updated:true; the earlier 'PROBE' write was overwritten by the full body in the same round)",
     "FR-2 (final r2): three remaining 'vendored' wordings (charts/llama-swap/values.yaml:1054 comment, charts/radiance/tests/test_resource_name_identity.py docstring, tests/services/amd-gpu-naming.sh n1 ok-message) — one-word folds at each file's next touch",
-    "FR-3 (final r2): coherence arm's container-check depth (value-in-blob could narrow to the rename-set lines) — next lane move of the amd-gpu suite"
+    "FR-3 (final r2): coherence arm's container-check depth (value-in-blob could narrow to the rename-set lines) — next lane move of the amd-gpu suite",
+    "C09 review r1 Deferred: charts/amd-gpu/Chart.yaml governance-header one-line fold (\"the Dockerfile CMD (binary + flag trio) is restated in full in values.yaml — binary via command, trio via args (C09/D25)\") — sanctioned fold at that file's next touch; C10 does NOT touch charts/amd-gpu, row stays open to FINAL review round 3"
   ],
   "handoffs": [
     {
@@ -561,6 +599,19 @@
       "at": "2026-11-13T03:10:00+00:00",
       "note": "owner-reported RunContainerError; EXPLORE §D1 authority; plan reopened complete->approved for the delta; session id filled by coord",
       "result": "RESULT status: DONE chunk: plan (live-defect fold-in) files_changed: [chunks/C09.md (NEW — S, wave 6, dep C08: AC1 the fix (exact shipped path verified from charts/amd-gpu/values.yaml — controllers.device-plugin-daemonset.containers.deviceplugin; command list-form [/root/k8s-device-plugin] per repo precedent betanin/archon/radiance, string alternative recorded-not-taken, absolute path kills the WORKDIR dependency, args byte-unchanged; /tmp render proof-leg), AC2 WHY-comment rewrite of the 105-110 misreading block with registry+Dockerfile@v1.31.0.12 cites and the never-live-provenance sentence closing the oracle-is-the-defect story, AC3 evidence-authority switch (new tests/evidence/image-config-1.31.0.12.json, test-session re-fetch digest-cross-checked; oracle keeps its legs with command listed as KNOWN PRE-C08 DEFECT + header line), AC4 runbook step-2 receipt + consequence lines (NO name changes — gpu-r9700-1/gpu-8060s frozen; TP2 doc grep-verified out of scope; radiance args-only SAFE via Entrypoint witness — do-not-touch), AC5 test legs RED-FIRST routed (i command==PLUGIN_COMMAND anchored on AC3 evidence beside test_args_are_the_four_plain_items, testlib one-edit-site constants + CMD_RESTATED historical marking, (ii) args-unchanged additive-leg, (iii) both-or-neither joint invariant, (iv) n2 AMD_GPU_FLIP_COMMIT file-set extended + radiance guard optional), AC6 combined bar (§12.7 counts 26+legs/42/495P9S/36 + bash suites + umbrella + services/gpu BYTE-PARITY shield + aislop/rulesync + zero-stale re-run), AC7 owner-run read-only live verification prose), DECISIONS.md (D25 append-only: owner live report + root cause with §D1 citations + inherited-from-C07/oracle-is-the-defect honesty + fix shape + evidence-authority switch + C08-ACs-amended note + class laws for future conversions: enumerate command/entrypoint in parity; image-config receipt when the parity source was never live-proven; both-or-neither joint invariant; plan reopen recorded), plan file (APPENDED '## Rework delta 2 — live defect C09' — chunk row, wave 6, Commands additions; earlier sections frozen), chunks/C08.md (append-only Delta-to-C09 pointer), STATE.json (plan_status complete->APPROVED reopened for the delta round with reason; chunks.C09 pending/wave6/[C08]/live-defect note; current_wave 6; handoff; all keys intact)] highlights: [the scout's live+registry+git-show grounding made the contract one-key-deep with no guessing: absolute-path binary, list form decided-with-recorded-alternative, args untouched so the whole ARGS_CONTRACT suite stays green; the honesty load-bearing in D25: C07 BORN the defect, C08 faithfully ported it, the oracle could not witness it, the tests had ZERO command legs — three class laws written so parity work enumerates command/entrypoint and never-live oracles require image-config receipts; crashloop persists until owner merge+sync — agents own no cluster step] deviations: none — fix shape taken verbatim from §D1.7's grounded verdict (scout naming double-checked against the shipped values file: identifier device-plugin-daemonset, container deviceplugin — matched) friction: none open_questions: [none new — the scout's two residual owner/coord choices are resolved IN-CONTRACT (list-vs-string: list, recorded; comment re-word: yes, AC2)] next_suggested: test session — AC5 legs red-first against today's tree (they MUST fail: command absent; evidence capture first, oracle header line, testlib constants, n2 file-set) -> dev C09 (one values key + comment + runbook lines) -> chunk review -> final-review round 3 (NARROW: the C09 delta + re-run of the full bar) -> owner hand-back (+ PR-merge sequencing note: the live crashloop clears only at the owner's sync; card #1 re-publish still pending in the run-end set)"
+    },
+    {
+      "stage": "Exploration (scout round 3 — live post-C09 state + router outage)",
+      "at": "2026-11-13T02:46:00+00:00",
+      "session": "ses_e2d425dcaffeZTjPdFiSiJHLEt",
+      "result": "RESULT status: DONE chunk: exploration files_changed: [EXPLORE.md §D2 (readonly tier only, ~02:27-02:30Z)]. findings: [C09 LIVE-GOOD (DS 1/1 gen 2, command+4 args exactly D1.7, pod Running 0 restarts, node advertises gpu-r9700-1:1 + gpu-8060s:1, 'Loaded 10 GPU products', per-pool Registration lines — runbook step-2 receipts reached); the owner's 'Insufficient memory' message is the RADIANCE pod and the DESIGNED step-3 handshake to the byte (Sum running requests 65.158 Gi vs allocatable 125.08 -> free 59.92 < 64; step 3 lifts to 123.92; guaranteedMemoryGi 64 is NOT the knob); NEW DEFECT §D2.6: overlay amd.com/gpu:null never reaches helm — dropped appset->application valuesObject (live pair read; helm-alone reproduction honors it = oracle class §D1.2) -> outer llama-swap Pending-forever on Insufficient amd.com/gpu (bare pool capacity 0, kubelet-retained 'amd.com/gpu:0' — runbook 'ABSENT' asserts read as count 0) -> llama.spencerslab.com router DOWN since 01:52:09Z under Recreate — step 3 alone does NOT restore it; fix-shape recommendation (chart drop + per-cluster ADD + oracle re-pin modeling the valuesObject layer) + base appset-charts passthrough root-fix flagged follow-up-card-grade (repo-wide, latent). open_questions: [coord decision owed: adopt add-per-cluster shape (recommended) + file the passthrough card]. next_suggested: mark C09 live-good + radiance step-3-gated; open the D2.6 defect round (red-first valuesObject legs)."
+    },
+    {
+      "stage": "Plan amendment (live defect C10 — claim carrier + appset null-drop)",
+      "at": "2026-11-13T03:01:23+00:00",
+      "session": null,
+      "note": "owner live report + EXPLORE §D2 authority; D26 supersedes D21's MECHANISM only (intent verbatim); session id filled by coord at handoff write",
+      "result": "RESULT status: DONE chunk: plan (live-defect fold-in, C10) files_changed: [chunks/C10.md (NEW wave 7 dep C09: AC1 consumer truth set enumerated REPO+LIVE this round (services/gpu + services/gpu-ai are the ONLY llama-swap consumers — charts entries, top-level blocks, base charts: list negative, proxy/media/custom-values greps negative; live re-reads: ApplicationSet null PRESENT / Application valuesObject null ABSENT / gpu-ai Deployment unavailable 1 (router still down) / gpu Application valuesObject carries NO resources key / gpu DS 1/1 image 1.31.0.9, node gpu cap+alloc amd.com/gpu:1, gpu-llama-swap template limits {amd.com/gpu:'1'} 1/1 Available / ai-gpu bare 'amd.com/gpu':'0' + both pools 1; per-cluster required claims + no-consumer-loses proof), AC2 carrier edits (chart claim-less + rejected alternatives + needle symmetry; gpu ADD limits-only adjudication for the byte-law; gpu-ai keeps add+mirror, drops null+false prose; positive-integer law vs 0), AC3 render proofs incl. valuesObject-PROJECTION legs + null-absence guard (RED today), AC4 shield + gpu resources-block byte-equality (diff confined to the ApplicationSet generator values line, zero workload-plane diff), AC5 runbook live-closure truths (count-0 gate lines, third failure class, step-3-does-not-restore-router, §D2 numbers; TP2 grep-verified OUT — quotes no claim-carrier shape), AC6 combined bar (495P/9S + flip legs 0F, radiance 43P, amd-gpu 29P, vllm 36P, naming bare + WAVE-C AMD_GPU_FLIP_COMMIT transfer check, runbook 5/tp2 3/dashboards 5/surface 9 + M1..M8 10 @0d9b41785, lints x4 + both umbrella renders, n3 placement flip, zero-stale unchanged, rulesync + aislop 0/0), AC7 owner-run live-closure prose (router Running on gpu-8060s receipt, node allocation, radiance still step-3-gated, gpu Deployment unchanged)), DECISIONS.md D26 appended (null-drop fact + live evidence pair, carrier decision + rejected alternatives, D21 MECHANISM-only supersession with intent verbatim, base-passthrough OUT-OF-SCOPE follow-up-card body line, valuesObject-layer oracle class law), plan file '## Rework delta 3 — live defect C10 (claim carrier + appset null-drop)' APPENDED (chunk row, wave 7, Commands additions; earlier sections frozen), STATE.json (current_wave 7; chunks.C10 pending; C09 reviewer-owed write-back FOLDED: done/rounds/verdict/commit b1def8d1fe… + tests/dev/review handoff rows + §D2 exploration row + this row; Deferred +C09 Chart.yaml fold row)], deviations: [1 gpu-cluster overlay ADD adjudicated LIMITS-ONLY against the launch brief's 'requests+limits' phrasing — the transferred chart line was limits-only and AC4's byte-equality binds (kubelet auto-mirrors extended resources; the live gpu pod proves it — template requests cpu/memory only) — recorded in AC2/D26 for owner word at hand-back; 2 C09 round rows appended per-chunk (chunks.C09.handoffs, C01/C04/C08 pattern), stage rows to top-level], friction: none new (readonly cluster re-reads answered; flattened list shape known; unicode-heavy DECISIONS region spliced by anchored python per the standing FRICTION recipe), open_questions: none for the human — coord owes: follow-up card creation (appset passthrough, body line chunks/C10.md AC5 / D26), owner merge+sync urgency carried through (router down since 01:52:09Z), final-review round-3 carry-list stays (full bar re-run, Chart.yaml Deferred fold, M8 explicit-check-id law). next_suggested: Test Writing for C10 (red-first ledger in chunks/C10.md 'Tests': valuesObject projection legs + null-absence guard + chart-default flip + n2 WAVE-C matcher/transfer check + n3 bare-site flip + T5 needles), then dev C10 ONE WAVE-C commit, then review r1, then FINAL review round 3."
     }
   ]
 }

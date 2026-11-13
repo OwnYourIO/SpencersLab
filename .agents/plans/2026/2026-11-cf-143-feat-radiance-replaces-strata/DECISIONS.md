@@ -371,6 +371,54 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   unchanged); live verification stays owner-run read-only prose (AC7); plan_status
   reopened complete→approved for this delta round (owner live report is the gate).
 
+- 2026-11-13 human+plan D26 (LIVE DEFECT C10 — §D2 scout round 3, plan-session readonly
+  re-verification ~03:4xZ; operational headline: **the llama.spencerslab.com router has been
+  DOWN since 01:52:09Z** under `strategy: Recreate` and runbook step 3 will NOT restore it):
+  THE FACT — the B1 overlay's `amd.com/gpu: null` retirement **never reaches Helm**: the
+  ApplicationSet→Application valuesObject chain drops null-valued keys before helm ever sees
+  them. Live evidence pair (§D2.6, re-read this round): live ApplicationSet
+  `gpu-ai-charts-appset` generator `values` carries `"amd.com/gpu":null` AND live Application
+  `gpu-ai-llama-swap` `spec.sources[].helm.valuesObject` = `{limits:{amd.com/gpu-8060s:1},
+  requests:{amd.com/gpu-8060s:1}}` — the ADDs arrived, the null is GONE; helm ALONE honors the
+  null (locally reproduced per §D2.6.2 — true ONE LAYER BELOW production, the same
+  "oracle-is-the-defect" class as §D1.2/C09). The two death-site candidates (mergo-nil-skip in
+  the templatePatch merge at `charts/base/templates/appset-charts.yaml:120`, or the YAML->struct
+  round-trip) are indistinguishable read-only; the FACT stands either way: **deletion
+  instructions cannot cross this chain; positive ADDs demonstrably do**. Consequence chain:
+  chart tree-global bare claim survives live on gpu-ai, the node's bare pool is capacity 0
+  (kubelet-retained `amd.com/gpu: "0"` from the pruned 1.31.0.9 advertisement, §D2.2), the
+  outer llama-swap pod is Pending-forever on `Insufficient amd.com/gpu` — a THIRD failure
+  class the runbook did not know (plugin Running, pools advertised, pod still Pending).
+  THE CARRIER DECISION (C10): `charts/llama-swap/values.yaml` ships NO GPU claim (the
+  tree-global `limits:"amd.com/gpu": 1` line DIES; a fresh cluster renders a GPU-less pod
+  until it adds one explicitly — said plainly in the comment); `services/gpu/prod/values.yaml`
+  ADDs bare `amd.com/gpu: 1` **limits-only** (adjudication: the rendered gpu-cluster Deployment
+  stays byte-identical to pre-C10 — the transferred chart line was limits-only and kubelet
+  auto-mirrors extended resources into requests, exactly what the live gpu pod shows);
+  `services/gpu-ai/prod/values.yaml` keeps the 8060s add+mirror and DROPS the inert null and
+  its false prose. WHY not the alternatives (rejected): keep-null-per-cluster (empirically
+  dead by this fact), chart-side cluster-discriminating template (clusters' choices live in
+  service overlays by repo law), custom-values channel (Bitwarden UUIDs only). Extended
+  resources require POSITIVE INTEGERS — `0` is not a legal retirement either; the comment
+  names both dead shapes so nobody re-attempts them.
+  D21 SUPERSESSION — MECHANISM ONLY, intent verbatim-unchanged: the gpu cluster keeps the
+  bare claim (its external single-naming 1.31.0.9 plugin can advertise nothing else; live
+  gpu-llama-swap 1/1 stays schedulable), gpu-ai uses the named APU pool, no workload strands;
+  the same-wave commit and lockstep-revert laws survive; only the CARRIER flips from
+  tree-global-default + overlay-null to per-cluster positive ADDs. C07's AC3/AC4 per-cluster
+  RENDER truths are unchanged; the "chart claim-line zero-diff" shape of proof is superseded
+  by the transfer check (chart 1->0 AND services/gpu 0->1 in ONE commit — WAVE-C).
+  ROOT-CAUSE HOME OUT OF SCOPE: the passthrough at
+  `charts/base/templates/appset-charts.yaml:117-123` (fix = pass `$baseValues` through
+  untouched when both custom dicts are empty, or document the add-only chain law) has
+  repo-wide blast radius — every Application rendered by the shared template; latent, not
+  active, for every other consumer today (all consumers ADD-only; cf-143 becomes so with
+  C10) -> **follow-up card** (coord creates in Inbox/Backlog; planned body line in
+  chunks/C10.md AC5, the D26 bullet). Class law for the ticket (TEST_SPEC §12.9 property): oracle arms MUST
+  model the layer production consumes — for GPU-claim law that is the Application-side
+  valuesObject, not the chart-only helm merge; a deletion instruction in service values is
+  now a banned pattern (null-absence guard).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
