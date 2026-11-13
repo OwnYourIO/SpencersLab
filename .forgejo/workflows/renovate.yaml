@@ -41,7 +41,7 @@ on:
 jobs:
   renovate:
     if: vars.ROLE == 'dev'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # No timeout-minutes: the lab runner's own 30m job ceiling bounds the
     # pass, and a restated value would drift from the runner config.
     container:
