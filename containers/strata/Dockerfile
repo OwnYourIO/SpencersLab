@@ -35,7 +35,7 @@ FROM ghcr.io/niko1221/strata:0.2.13-rocm-gfx1151 AS engine-strix
 # digest re-verified 2026-10-28 via GHCR manifest HEAD:
 # sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045
 # (RESEARCH §3). Only the single binary is harvested, see below.
-FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-266 AS supervisor
+FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-272 AS supervisor
 
 # Source-checkout stage: headless weight provisioning IS a source-checkout
 # operation — upstream's llama-swap integration doc ("needs a source
