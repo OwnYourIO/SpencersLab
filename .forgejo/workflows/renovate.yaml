@@ -45,7 +45,7 @@ jobs:
     # No timeout-minutes: the lab runner's own 30m job ceiling bounds the
     # pass, and a restated value would drift from the runner config.
     container:
-      image: ghcr.io/renovatebot/renovate:44.181.5
+      image: ghcr.io/renovatebot/renovate:44.239.1
       # Image-index digest of the tag, read anonymously at implementation
       # time: sha256:611eac05a6ee11c06d23157ae2ca11364f5b4a096c12d7f82a65aec2b6ec8a48
     env:
