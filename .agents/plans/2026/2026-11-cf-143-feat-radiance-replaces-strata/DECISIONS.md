@@ -704,6 +704,81 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
  - 2026-11-13 coord note: D30's §R8 authority is RESEARCH.md §R8; the review's MINOR-2/MINOR-3
    and NIT-1 route to a single same-wave micro-round (plan ledger line → test re-pin → dev doc
    fold), NOT to silent prose edits, because the wrong figure is pinned by a test arm.
+ - 2026-11-13 research+coord D31 (§D7 scout round 8 — CLOSING A COORDINATOR-SIDE CONTRADICTION,
+   where one side was a REVIEW round's "verified" claim): C12 review r2's MINOR-R2-1 asserted
+   `gpu-ai-radiance` auto-syncs with selfHeal ("verified appset-charts.yaml:132-138") and asked
+   step 10's scale-down to carry step 3's suspend guard. §D7's LIVE READ says otherwise and §D4
+   (scout round 6) was RIGHT: Application `gpu-ai-radiance` (gen 342) `spec.syncPolicy` =
+   syncOptions ONLY (CreateNamespace=true, ServerSideApply=false, RespectIgnoreDifferences=true),
+   **no `automated`**; last operation 16:29:51Z Succeeded **initiatedBy tms@spencerslab.com —
+   MANUAL**; 0 of 7 sampled children and the parent `gpu-ai` app carry `automated`, and the
+   template's default-true branch is skipped for every child because the NON-REPO
+   cluster-registration knob (`services.gpu-ai.selfHeal` in the argocd secret, RBAC-closed to
+   scouts) is not "true". So MINOR-R2-1 is SUPERSEDED-BY-OBJECTS — its GUARD INTENT survives,
+   re-worded. Two owner-facing laws: (1) **there is no selfHeal to suspend** — runbook step 3's
+   "suspend selfHeal" instruction is MOOT AND WRONG-AS-WRITTEN; the real hazard is a SYNC, manual
+   included, because (2) **any sync re-applies git over hand-edits**: that 16:29:51Z click already
+   replaced the owner's limit-only 94 Burstable edit with the 110/110 **Guaranteed** pair
+   (Deployment gen 4 ⇒ D29's QoS repair is LIVE now, not pending), while strata's `replicas: 0`
+   survives ONLY because `gpu-ai-llama-swap` has not been synced (git renders `replicas: 1` by
+   app-template default, no ignoreDifferences on /spec/replicas) ⇒ **syncing that app is the
+   resurrection trigger**, i.e. it IS step 10's restore moment, not a routine operation. C13's
+   prose consequences: replace step 3's suspend-selfHeal shape with the don't-sync guard
+   (OutOfSync through the window is EXPECTED, say so), delete step 10's "resume auto-sync" clause
+   and state that a hand scale-down sticks until that app's next manual sync, ground the truth in
+   live §D7 rather than the repo template, and re-look at the same false belief in
+   `charts/radiance/values.yaml:40-41` (dev lane) and the 2026-10 gpu-cluster notes (follow-up
+   card, fleet-wide prose). CLASS LAW FOR REVIEWS: **"verified" against a TEMPLATE is not
+   verified against the CLUSTER** — sync-policy/annotation claims need a live object read, because
+   this repo's base template emits defaults the cluster-registration knobs then override.
+   Lineage note: main==origin/main==eaaba4197 now carries rebased twins of the C12 wave
+   (ec92229ce ≡ 29d2cb5a4); branch records are NOT re-pinned (D30(7) stands — content-equivalence
+   is the merge law, and content-diff main↔branch is 0 lines).
+- 2026-11-13 plan D32 (C13 DOC MICRO-ROUND — wave 10, the routed C12-review items + §D7
+  owner-facing safety folds; plan_status: STATE had stayed "approved" from the C12 re-opens
+  — the wave-10 reason is recorded here rather than as a flip):
+  (1) FIGURE: the 1000m cold-hash envelope "8–23 min" (runbook :415, tuning :331,
+  values:385, testlib:175) is §D4's UN-throttled counterfactual re-used as a cap-bound
+  figure — the bound is **~5.8–13.6 min** (30–70 @200m ÷ 5; single-threaded busybox, one
+  core = whole gain; D30(6)); because the figure is T4/T5-PINNED the fix MUST be a
+  same-wave doc+needle change (C13 AC1) — the §12.10 vocabulary-vs-grammar lesson applied
+  to our own NUMBERS; arms get the stale-figure RED re-proof.
+  (2) TIER HONESTY: tuning DIO list re-worded to a HIERARCHY — ram tier DEAD
+  (71.04+47.68=118.72>110), stay-on-disk-4KiB the live posture (3.42<5 recorded; band
+  3–10%), XFS/ext4 the owner's storage-lane option; and the "=" budget-sum sites take
+  D30(2)'s BOUNDED-not-decomposed wording (parts 77.88 vs whole 71.04) + D30(3)'s
+  O_DIRECT/page-cache refutation.
+  (3) §D7 SYNC GUARD (the substantive fold, live-object law): runbook step 3's
+  "suspend selfHeal / resume auto-sync" machinery is MOOT-AND-WRONG — 0/7 gpu-ai apps
+  carry `automated`; the real hazard is witnessed: **any SYNC re-applies git over
+  hand-edits** (16:29:51Z wiped the 94; strata's replicas:0 survives ONLY while
+  gpu-ai-llama-swap stays unsynced — git renders 1) ⇒ replace with the lab's procedural
+  DON'T-SYNC idiom (no sync of that app through the strata-down window; OutOfSync through
+  the window is EXPECTED — it IS the parked scale-down; step 10 ordered restore:
+  radiance's request off node → sync/restore strata in agreement → verify runner route).
+  Review MINOR-R2-1 is **SUPERSEDED-BY-OBJECTS** (its suspend-clause must not ship; guard
+  intent preserved re-worded per D7.4(2)) — CLASS LAW: **"verified" against a TEMPLATE is
+  not verified against the CLUSTER**: any sync-policy/annotation claim needs a LIVE
+  Application read, because base templates emit defaults the out-of-git cluster-
+  registration knobs override (the knob itself is RBAC-closed; §D7.1's elimination
+  inference is the proof shape).
+  (4) values.yaml:40-41 VERIFIED-NIL for the false belief (D29 comment there; no sync
+  prose) — the actual carrier is services/gpu-ai/prod/values.yaml:40-41 (cf-77 era), which
+  §D7.4(4) routes to the FLEET prose card (C13 AC8.2 body line), NOT this ticket — recorded
+  so the routing is visible, not silent.
+  (5) STEP-6 CAPTURE KEYS (§R8-Q4/D30(4)) folded into the runbook as the 8-session gate's
+  receipt list (memory.peak ≤100, memory.events max/oom_kill=0, file≈0 O_DIRECT falsifier,
+  MemAvailable ≥8, buddyinfo/compact deltas, pinned 71–78 window) — receipt-decides law
+  stays explicit; TP2 §12 gains D30(5)'s forward-look pointer (host answer ~30–35 at TP2,
+  110 is the re-pin-DOWN superset, co-existence may arithmetically RE-OPEN ≈104.3 ≤
+  125.08 — the cutover ticket's decision) + the r2-cosmetics bundle (NIT-R2-1 heading
+  aligned to the body's "most probable" strength — SUITE IS STRENGTH-BLIND, proven both
+  directions, NO arm invented; NIT-R2-2/3 one-word grammar folds, synth-proved needle-free;
+  naming.sh :228 NON-FLIP label genericized per the coord note).
+  Run-end: card #1 re-publish owed AGAIN (TP2 body moved); new fleet card per (4);
+  XFS/ext4 card already deferred (verify). C13's bar: three notes suites at the new figure,
+  radiance 46P with an EMPTY render-diff (comment-only values edits — asserted), naming
+  NON-FLIP at C13's sha, witnesses unmoved.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future

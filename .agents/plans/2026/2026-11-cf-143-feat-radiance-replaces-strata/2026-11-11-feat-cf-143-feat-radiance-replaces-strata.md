@@ -1130,3 +1130,31 @@ Guaranteed in the same roll (AC6). The uncommitted 96-pinned test round re-point
 per C12 AC4's exact list. Lock anomaly: "Yes, continue anyway" (D29.2); gpu-box spec:
 owner "upgraded/different box" without a number → live 28.60 GiB governs, docs follow-up
 card owed (D29.3).
+
+## Rework delta 6 — C13 doc micro-round (figures + the §D7 sync guard) — 2026-11-13
+Routed items from C12's review rounds + the §D7 live-object finding (D32). plan_status
+stands approved (STATE never re-closed after the C12 re-opens; wave 10 reason recorded in
+D32's head). Six folds: 8–23→~5.8–13.6 min @1000m (doc AND its pinning arms, same wave —
+D30(6)); tier-hierarchy + BOUNDED-residual wording (D30(2)/(3)); the runbook's step-3/step-10
+selfHeal machinery REPLACED by the procedural DON'T-SYNC guard (§D7: no automated on any
+gpu-ai app; sync — not selfHeal — re-applies git over hand-edits; OutOfSync through the
+strata-down window is EXPECTED; ordered restore sequence; review-r2's MINOR-R2-1
+superseded-by-objects, guard preserved; CLASS LAW: template-verification ≠
+cluster-verification for sync-policy claims); step-6 gains §R8-Q4's capture-key receipt
+list; TP2 §12 gains D30(5)'s forward-look pointer (~30–35 host class at TP2, co-existence
+may re-open ≈104.3 — cutover's decision); the r2-cosmetics bundle (governor heading to
+body strength — suite is strength-blind, no arm invented; two grammar words; naming.sh
+NON-FLIP label). `charts/radiance/values.yaml:40-41` verified-NIL for the false belief; its
+actual carrier (services/gpu-ai values comment) routes to the NEW fleet prose card (AC8),
+not this ticket.
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C13 | Doc micro-round: figure fix (doc+needle same-wave), tier honesty, §D7 don't-sync guard, step-6 capture keys, TP2 pointer, r2-cosmetics | S | 10 | [C12] | everything folds lands on C12's freshly-landed doc/comment surface; the envelope figure is pinned by C12's own suite arms |
+
+Wave 10: C13 (alone). Commands: three notes suites at the new figure
+(`radiance-runbook.sh` 5 ok, `radiance-host-tuning.sh` 4 ok incl stale-figure RED re-proof,
+`radiance-tp2.sh` 3 ok), radiance **46P with render-diff EMPTY** (values edits comment-only
+— asserted in commit), naming 5 ok + `AMD_GPU_FLIP_COMMIT=<C13 sha>` ⇒ NON-FLIP, witnesses
+498P/9S + 29P + 36P + surface 9/M1..M8 10, aislop/rulesync repo-pins, zero-stale re-run.
+Run-end: card #1 re-publish AGAIN + NEW fleet selfHeal-prose card (D32(4) body line).
