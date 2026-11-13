@@ -34,7 +34,9 @@ here is READ-ONLY (`get`, `describe`, `logs`, `top`); pod-internal checks
 run through the operator's own pod access — no agent tier grants pod exec
 (RESEARCH RQ3; AGENTS MCP law). The two cluster mutations in the protocol
 — the strata scale-down (step 3) and restore (step 10) — are OWNER-EXECUTED
-out-of-band commands marked as such; the sync itself is ArgoCD's own
+out-of-band commands marked as such; at the shipped 110 (D29) they are not a
+reversible sequence — restore-back is the either/or step 10 states (radiance's
+request must leave the node first); the sync itself is ArgoCD's own
 reconciliation, never a runbook instruction line.
 
 **Scope belt (D21/B1).** Every gate here is gpu-ai-scoped. The gpu cluster's
@@ -664,10 +666,21 @@ ONLY if the step-6 last-resort prefix-tier shape was adopted — it is MOOT
 on the shipped `--kv-resident` profile. No GitOps mitigation exists for
 any of it and none may be improvised.
 
-## Step 10 — Restore-back (Q10's other half)
+## Step 10 — Restore-back (Q10's other half — an either/or at 110)
 
-After testing, the owner reverses the protocol — same lane, same markers
-(the scale command recorded for convenience, OWNER-EXECUTED out-of-band):
+At the shipped `guaranteedMemoryGi: 110` (D29), restore-back is NOT "finish
+testing, scale strata back up": a scheduled radiance holds 110 GiB of
+request and strata's 64 GiB beside it sums 110 + 64 + 6.3 = 180.3 > 125.08
+— the two can never co-reside (the same arithmetic step-0(b) and step 3
+restate; the handshake inverts for whoever starts second). The protocol
+reverses only in that order: radiance's request must first leave the node —
+the owner scales radiance down in this same human-owned lane, or the engine
+rolls back via step 11(i) — and only then does strata's restore land. The
+cutover decision (D26-era, Deferred row) is now a real either/or; while
+radiance stays scheduled, strata remains at 0 and this step waits.
+
+The restore itself, taken AFTER radiance's request is off the node (the
+scale command recorded for convenience; OWNER-EXECUTED out-of-band):
 
 ```bash
 # OWNER-EXECUTED — operator runs this, the repo never scripts it (Q10):
@@ -685,9 +698,14 @@ curl -sS https://llama.spencerslab.com/v1/chat/completions -H 'Content-Type: app
   -d '{"model":"qwen3.8-flash-next-strata-q4","max_tokens":8,"messages":[{"role":"user","content":"ack"}]}'
 ```
 
-A 200 completion means the hourly loop's runner literal survived the whole
+In that radiance-down order, a 200 completion means the hourly loop's runner
+literal survived the whole
 ticket (Q5 kept strata live; Q4 kept radiance a NEW honest id — nobody
-quietly moved the fleet's model). Record the workingSet/RSS split after
+quietly moved the fleet's model). If the strata pod instead sits Pending
+here, radiance's 110 request never left the node — that is the designed
+arithmetic, not a defect to chase (the old unconditional "restore
+afterwards" shape predates 110 and no longer describes this node).
+Record the workingSet/RSS split after
 restore against step 3's baseline — that pair of deltas is the acceptance
 file's tail: the owner's "good metrics from Radiance" set is complete only
 with the before/after both sides.

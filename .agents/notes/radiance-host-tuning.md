@@ -31,7 +31,7 @@ every receipt; do not assume any of it survived a kernel update by accident.
 
 ## 1. LINK — the PCIe speed defect, PROVEN downgraded (first suspect)
 
-Report token (both boots): `link-below-max: … runs 8.0 GT/s x4 of its
+Report token (two of the three boots): `link-below-max: … runs 8.0 GT/s x4 of its
 16.0 GT/s x4 while the card is 49% busy` — the WARN REPRINTED on the fresh
 15:01Z boot, which is what PROVES the downgrade (§D6.6: report-2's silence
 was luck/state; the retrain-vs-luck clause is CLOSED). Kernel boot line
@@ -130,16 +130,20 @@ the band earns a device move AFTER the link fix. Checks (read-only):
 `findmnt -T <pack-path>`, `sudo filefrag -v <pack> | head -20`, the dd
 above.
 
-## 4. GOVERNOR — the writes DID NOT PERSIST; persistence routes only
+## 4. GOVERNOR — the writes DID NOT PERSIST across the reboot (the probable reading); persistence routes only
 
 Host reads, today: all 32 CPUs `performance`/EPP `performance`, policy
 2.00–5.19 GHz (owner's paste §3). Yet the FRESH 15:01Z boot's startup
 report printed `note cpu-governor: the CPU governor is powersave with
 energy preference balance_performance`. The engine's HARDWARE block is a
-boot-time snapshot (RESEARCH RQ3) — and the reboot events mean the fresh
-snapshot IS the current truth: the writes did not persist across the
-reboot (non-persistence, not mere staleness). A runtime
-`cpupower frequency-set` alone is therefore NOT the fix — that OWNER-EXECUTED
+boot-time snapshot (RESEARCH RQ3). The reboot events date the fresh
+snapshot, so the MOST PROBABLE reading is that the writes did not persist
+across the reboot (non-persistence, not mere staleness) — §D6.4's own
+adjudication keeps the alternative alive: if the owner wrote
+performance AFTER that boot, the report line is simply stale for later
+per-CPU changes, and the engine side alone cannot separate the two (no
+repo record of the write time exists). A runtime
+`cpupower frequency-set` is in either case NOT the fix — that OWNER-EXECUTED
 write reverts on the next reboot (there is no repo record of when the owner
 set performance; their paste is the only evidence of the write).
 

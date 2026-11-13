@@ -324,8 +324,10 @@ values change that reaches the cluster through ArgoCD alone:
    the P2P/wire lines under load, and its priority live check per pod.
 8. **Owner posture note**: with radiance on its own card(s), §12's
    coexistence relief applies — the Q10 strata scale-down dance may stop
-   being required; that stays the owner's call, observed not auto-mitigated
-   (Q11 law).
+   being required for the CONTENTION; it does not end the restore-back
+   arithmetic (§12's either/or caveat: host RAM, not VRAM, is what a
+   110-scheduled radiance holds); that stays the owner's call, observed
+   not auto-mitigated (Q11 law).
 
 ## 12. Coexistence relief — the Q11 contention dissolves
 
@@ -338,9 +340,14 @@ owner's Q10 manual scale-down handshake). A second R9700 lets radiance hold
 one card while strata keeps the other — the contention **dissolves without
 touching the naming scheme**: strata still holds no plugin claim (§6),
 llama-swap still schedules from the named APU pool, and the
-Pending-handshake arithmetic on host memory just gets a second card of
-breathing room on the engine side. Record for the card: TP2 is also the
-cleanest exit from the scale-down dance.
+Pending-handshake arithmetic on host memory gets a second card of
+breathing room ONLY on the engine side: at the shipped 110 (D29) the
+RESTORE-BACK can never co-reside strata beside a scheduled radiance —
+110 + 64 + 6.3 = 180.3 > 125.08, and a second card adds VRAM, not host
+RAM. Record for the card: TP2 is the cleanest RELIEF of the card-side
+contention, not an exit from the scale-down dance — exiting the dance is
+the cutover decision itself (the runbook's step 10 either/or, restated
+by C12).
 
 ## 13. Three-way naming law — what this doc's engine is
 
