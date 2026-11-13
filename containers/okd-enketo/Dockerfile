@@ -3,7 +3,7 @@
 # getodk/central's enketo.dockerfile at the pinned Central commit. Consumed by
 # charts/okd. When bumping CENTRAL_VERSION, also check that commit's
 # enketo.dockerfile FROM line and bump the base image below if it changed.
-FROM ghcr.io/enketo/enketo:7.6.4
+FROM ghcr.io/enketo/enketo:7.6.5
 
 # Pinned to the immutable commit SHA of getodk/central v2026.3.0 (mutable
 # tags could be re-pointed; raw.githubusercontent accepts SHAs).
