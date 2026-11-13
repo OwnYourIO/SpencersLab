@@ -4313,3 +4313,33 @@ their drafted remedies were being disproven on-node (§D6).*
 - *Verified against a template is not verified against the cluster* (D31/D32, §D7): review r2 "verified" selfHeal from appset-charts.yaml and shipped a suspend-button guard for a policy that does not exist — 0/7 live Applications carry `automated`; the base template emits DEFAULTS the cluster-registration knob (out-of-git, RBAC-closed) overrides. Any sync-policy/annotation claim needs a live object read; and because ANY sync (manual included) re-applies git over hand-edits, the runbook's owner-facing machinery is now the procedural DON'T-SYNC guard — with the doc prose and the T5 arms pinned together, per the law above.
 
 **Bar at this handoff (red-first, per-leg):** runbook tree T1–T4 ok + T5 RED (the table's doc-text arms); tuning tree T1–T3 ok + T4 RED (corrected-half arms); radiance **46P/0F** (testlib comment-only, assertions untouched — AC7's render-unchanged law holds: zero values lines touched by the test session); llama-swap 498P/9S/0F; amd-gpu 29P; vllm 36P; naming 5 ok bare + the six wave/NON-FLIP witnesses; tp2 3 ok (untouched); dashboards 5 ok; surface 9 ok bare + M1..M8 10 ok. Dev's wave flips: runbook T5 (AC1 fold + AC4 folds + AC5 step-6), tuning T4 (both docs' figure), nothing else — and `AMD_GPU_FLIP_COMMIT=<C13 sha>` must land the **NON-FLIP** row (docs + at most comment-only values lines).
+
+**AMENDMENT — C13 final-r5 items 3+4 (test session, 2026-11-13, post-landing):**
+(1) NEW LINK-family arm in the host-tuning suite, the §R9/D33 FICTION BAN:
+a line in the LINK section naming a retimer/re-driver/dock-switch with no
+same-line DENY word REDS, naming the §R9 facts in the message (the DEG1 is a
+PASSIVE Gen4-x4 dock — no switch, no retimer, not hot-plug-capable — and
+c2:00.0/c3:00.0 are the R9700's OWN integrated Navi bridges 1002:1478/1479,
+so exactly ONE link negotiates root-port→card); corrective sentences that
+name the components only to DENY them stay GREEN via the exemption — the same
+instruction-vs-explanation line §12.9 drew for the selfHeal and `--check`
+bars. Teeth: the REAL main-merged pre-fold copy (`git show
+f1769df4a:.agents/notes/radiance-host-tuning.md` → RAD_TUNING) REDS naming
+line 28 with the shipped `…cable or the retimer…` sentence, and a synthetic
+"Set the retimer EQ… or try the dock's switch" REDS; the branch doc (folded
+by bf950d22a) runs 4 ok. (2) The sensitivity law this §12.13 owes verbatim:
+**the guard arms are LINE-SCOPED and therefore SENSITIVITY-BOUNDED — an
+instruction that shares its line with a correction word can PASS (r1's
+rb-sneak2 probe: GREEN), and a correction that wraps to the next line can
+FALSE-FIRE (r1's rb-explanatory probe: RED) — they are tripwires, not proofs,
+and both failure directions are accepted by design rather than patched with
+multi-line windows that would widen the sneak surface; authors keep the
+correction token ON the instruction line (r1's rb-explanatory2: GREEN). The
+same line-adjacency law governs the OWNER-EXECUTED marker (FRICTION,
+2026-11-13 C13 r1-fold): a mid-paragraph clause insert re-wrapped the setpci
+command away from its marker and T3 reddened semantically-fine prose —
+repair by PROSE RE-ARRANGEMENT (move the marker with its command line), NEVER
+by loosening the arm.** And the fiction class itself stays upstream of every
+arm: a token-presence test can never catch advising a component that does not
+exist (bf950d22a's FRICTION law) — this arm bounds the advice SHAPE, humans
+bound the facts. No behavior of any existing arm changed; nothing loosened.

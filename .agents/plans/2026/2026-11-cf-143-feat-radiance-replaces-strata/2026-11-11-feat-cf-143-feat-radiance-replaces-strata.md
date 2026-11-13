@@ -837,6 +837,159 @@ Tree clean apart from the records files.
 §D2.8 + D26-amendment audited as records; D26 card verified against the live datum; no
 implementation or validation file edited; /tmp-only dep updates; readonly-tier cluster reads).
 
+## FINAL whole-plan review round 5 (C12+C13 live deltas + landed-state verification) —
+2026-11-14, fresh planning-tier session, HEAD bf950d22a, main == origin/main == da46cee2e
+
+**Verdict: APPROVED.** Zero blockers, zero majors. Rounds 1–4 stand; C09–C13 — the four LIVE
+re-opens — re-verified against the cluster as it runs NOW (readonly tier only), every bar fresh
+and sequential, every arithmetic line re-derived by this reviewer, and the removed-assertion
+sweep across the whole live-round window came back CLEAN.
+
+**TICKET-WIDE BAR (all exact):** charts/llama-swap **498P/9S/0F** (9 skips = standing
+RUN_HF_CHECK/RUN_FLAG_AUDIT gates) · charts/radiance **46P/0F** (43 + C11's three grammar legs)
+· charts/amd-gpu **29P/0F** · charts/vllm **36P/0F** · amd-gpu-naming **5 ok bare**;
+`AMD_GPU_FLIP_COMMIT=384e3135e` → **NON-FLIP green** (census-unchanged wording); historical
+re-proofs at the REAL commits — a81989b47→WAVE-A, b1def8d1f→WAVE-B, 56142d511→WAVE-C; bogus sha
+**RED**; claim-drop synthetic (services/gpu bare ADD deleted in a /tmp clone) **RED naming the
+carrier law** · runbook **5 ok** (805 lines) · host-tuning **4 ok** (new C12 suite) · tp2 **3 ok**
+· dashboards **5 ok** · surface **9 ok bare** + explicit `M1..M8` @`CF143_BASE_SHA=0d9b41785`
+**10 ok** (the M8 explicit-check-id law now documented in the script's own Usage header + TEST_SPEC
+§12 posture — re-confirmed, no FRICTION line owed) · helm lint ×4 + both umbrella renders (fresh
+/tmp archive + dep-updates /tmp-only) 0 failed · rulesync `--check` clean · aislop local-pin
+`ci --changes` 0/0/0/106. Repo tree clean after every run.
+
+**FOCUS 1 — THE LANDED, LIVE TRUTH (readonly MCP, this session).** Device-plugin DS 1/1
+Ready with `command [/root/k8s-device-plugin]` + the exact 4 args (C09). Node `ai-gpu`:
+`amd.com/gpu-r9700-1: 1` + `amd.com/gpu-8060s: 1`, bare `amd.com/gpu` capacity **"0"** — the
+count-0 state the C13-corrected runbook teaches. **Router `gpu-ai-llama-swap` AVAILABLE (1),
+template APU-pair only** — the C10 cure landed (recovered 13:32:43Z, round-4 record; my own
+live read agrees), and its Application sits **OutOfSync with NO automated policy** (syncPolicy
+= syncOptions only, last op manual Succeeded) — that OutOfSync IS the DESIGNED parked scale-down
+(strata `replicas: 0` survives only while unsynced; the 16:29:51Z click precedent proved any
+sync re-applies git). Radiance pod `gpu-ai-radiance-5f7d6b95d7-4fccz`: **Running 17:20:05Z,
+QoS Guaranteed, 0 restarts, 110Gi requests==limits BOTH maps + gpu-r9700-1 1==1, init pair
+1000m/2Gi, radiance-fetch terminated (marker-skip path, hash passed)**. Its startup report
+reprints exactly the §R8/§R9 record: `ttm.pages_limit 112.00 GiB | pinned by this process
+71.04 GiB`, `kv cache 4.49 GiB a card: 1600000 tokens, 8.0 sessions at 200000`, FINDINGS =
+1 warning + 4 notes (experts-from-host 41.52 GiB, link-capped, memlock 8.00 MiB, governor
+powersave) — and the warning STILL reads `link-below-max: 8.0 GT/s x4 of its 16.0 GT/s x4`:
+**the crashloop AND OOM classes are dead; the rate is STILL the owner's open complaint**
+(freshest receipt `req … done … gen=884 ttft=13.42s 12.4 tok/s`), and per §R9/D33 its fix is
+the owner-lane link item (BIOS per-slot speed pin / cable / dock power sequence), not the repo.
+NOT yet closed by evidence, honestly listed: runbook **step 6's 8-session gate + §R8 capture
+keys** (the one known open AC), the Q11 co-existence metrics window (owner observation), and
+the cutover decision below.
+
+**FOCUS 2 — C12+C13 AS RECORDS:** (a) render diff `56142d511..384e3135e` = exactly the init-gate
+rewrite, `cpu 200m→1000m`, `memory 64Gi→110Gi ×2` — claims/marker-skip/`--continue-at` intact;
+C13's own values edit is **comment-only (0-line render diff re-derived)**; my arithmetic
+independently reproduces every sum: 110+4.125+1.158=**115.283 ≤ 125.08, free 9.80**;
+110+64+6.3=**180.3 > 125.08** (the inverted either/or — restore-back needs radiance off first);
+110−71.04=**38.96 ≥ 4**; 71.04+47.68=**118.72 > 110** (RAM tier dead); 71.04+21+4=**96.04 ≤ 110**
+(§R8); and the figure from first principles: 121,969,901,568 B ÷ 150–350 MB/s = **5.8–13.6 min**
+(≡ §D4's ÷5) ✓. (b) step-3/step-10 prose verified live-true AS WRITTEN; my two re-syntheses
+went RED with exact names: the old "suspend auto-sync" instruction → "INSTRUCTS a suspend/resume";
+a reversed restore (strata-back sentence before radiance-off) → "reaches the strata/sync step
+BEFORE radiance's 110 request leaves the node" — and the base doc stays 5 ok; the :486
+residual-clause ban + capture-key arms (memory.peak/oom_kill/file≈0 present ×2) pin the rest.
+(c) NO stale 8–23 satisfaction token survives anywhere: the five repo-wide hits are all
+correction-annotations (values:392 historical note + the two suites' split-arm comments); docs
+carry 5.8–13.6 in all three carriers (T4/T5 two-half pins green). (d) §R9 fiction fold in the
+branch doc is complete — "no switch, no retimer" asserted, c2/c3 attributed to the card's OWN
+integrated Navi pair, the engine's "clears on reboot" advice marked WITNESSED-FALSE (:42–:74);
+the existence law lives in FRICTION with resolution. **BUT: main's copy of the tuning note still
+says "reseat/inspect … cable or the retimer" (:59) — the fold is branch-side ONLY, and NOTHING
+in CI pressures it (no arm forbids the token; the doc isn't a rendered surface): see the
+residual-delta section — this is now the single most urgent branch→main landing.** (e) The five
+tuning arms state only receipt-supported truth: 3.42<5 recorded (not met), 118.72 kill-sum,
+sandbox-vs-container memlock read (16787369984 = PAUSE-SANDBOX limit; crictl route),
+O_DIRECT-never-page-cache (D30(3)), `amd_iommu=off` supersession + the amdxdna/NPU side effect,
+governor persistence-not-proven with "MOST PROBABLY" body-strength (suite proven strength-blind,
+NO arm invented) — each cross-checked against §D6/§R8/§R9; T4's two-doc coherence arm keeps them
+locked.
+
+**FOCUS 3 — GOAL-VS-CARD, five live rounds on:** card intent delivered and LANDED: radiance
+deployed beside strata (Q5 — strata kept, parked; cutover still the owner's metrics call), vllm
+disabled commented (0 live rows, golden 0 hits byte-equal main↔HEAD, 83-row era + C05 trio = 86
+live, circle-back markers untouched), TP2 documented (card #1 body verified post-rename but
+STALE AGAIN — no 110/5.8 tokens; third re-publish owed, same-artifact law), Grafana deferred
+(card #2 in Inbox), priority handled (9/5/1 + floor 5 + M8). C01–C08 guarantees hold post-
+C09–C13: suites green = the whole prior contract re-proven (vllm disable, full 8×200K profile +
+Guaranteed, peers.radiance, catalog trio, runbook completeness, shield — the gpu cluster's bare
+claim now arrives via its OVERLAY ADD, and the RENDERED gpu pod is unchanged, which is what the
+D21 intent actually requires; naming n2/n3 + the 498P carry it), first-party amd-gpu + patched
+table re-verified (rendered sha **864da8694ab5**/455B == runbook :273 pin; fixtures untouched
+since C08/C09 additions), zero-stale sweep clean (old literal records-only; impossible literal
+nowhere claim-shaped).
+
+**FOCUS 4 — RECORDS + GIT:** STATE parses; 13 rows; plan_status approved (pending this
+verdict); 16 honest null-session rows; per-commit audit of the window CLEAN — e086638b4/a533048fd/
+1aceb102f/9248151c9/446fc73e2/627a2fdd0/94b143ee8/b09764ab0/cf037ef07 records-only; b71c8dfac =
+C11's 6-file set; 027d3b4ee 11; ec92229ce 4 (fix-round scope); 384e3135e 9 (C13 wave);
+bf950d22a 4 (fiction fold + records). The amend/landing history is lawful: no cf-143 ref on
+origin, branch has no upstream, main moved ONLY via the owner's own cherry-picks/rebases (twins
+verified content-equivalent by the C12 r2 review + my own byte-comparisons), zero agent pushes.
+Removed-lines sweep `4652671fd..HEAD`: every deletion is a 64-era budget/gate line replaced by
+its 110-based equal-or-stronger successor, or C10's already-adjudicated re-pin (off-parity/
+evidence fixtures moved ZERO lines this window — C12 touched no llama-swap render surface);
+C11's grammar suite + C13's split-arm needles are net-new enforcement. **No weakening; the only
+fixture move in the whole live-round window remains the sanctioned C10 off-parity re-baseline.**
+Records folds for coord (non-gating): (1) C13 row `in_review` → done + C12/C13 `commit` fields
+(027d3b4ee+ec92229ce / 384e3135e+bf950d22a); (2) RESEARCH:777 SUPERSEDED annotation on the
+12.5 MB/token line (D30(2)/§D8's ~16–18 KiB/token) still OWED; (3) C13 r1 minor-1's §12.13
+wrap/exemption-sensitivity sentence → test lane at the notes-suite's next touch; (4) the
+STATE.deferred Q12 row's "shipped 64Gi" phrase is era-stale (history line, harmless).
+Prose-only-laws audit (the class we keep hitting): FOUR of the new laws are arm-backed —
+image-grammar (radiance suite: family set + digest seed + long-option bans + exit<touch order),
+budget-sum (T2 scalars both-sides + T4 coherence + suite SCALARS), probe-falsification
+(the corrected claims themselves are pinned), sync-guard-shape (AC4's (a)/(b)/(c)/(e) arms +
+figure split-arms); THREE remain prose BY NATURE or by ruling — the existence law (a
+token-presence test structurally cannot catch naming a nonexistent device: honestly un-armable,
+though a cheap NEGATIVE needle — ban "the retimer" as advice — is now justified precisely because
+main still carries the fiction; recommend it with the doc landing), the marker line-adjacency
+class (a repair recipe, not a property), and the governor strength-blinding (deliberate: r2
+proved the suite blind BOTH directions and NO arm was invented — right call).
+
+**RESIDUAL BRANCH-vs-MAIN DELTA (what to merge):** implementation + runbook + TP2 + tuning
+PRE-fictive-copy + every suite are ALREADY IN MAIN (content hashes byte-equal — golden, values,
+runbook, naming, radiance suites). What main lacks: (1) the **fiction-fold tuning doc**
+(bf95022a — the retimer/Navi/witnessed-false corrections; owner-facing doc hazard live on main
+until landed), (2) the branch's own **cf-143 records delta** (plan deltas 4–6 + FINAL r3–r5
+records, STATE/DECISIONS/D26-amendment/EXPLORE §D3–§D8/RESEARCH §R8–§R9 + the C13 chunk records)
+— records ride the same landing PR; and main additionally carries cf-135 files the branch lacks
+(the D30(7) no-rebase ruling stands: zero intersection, branch records keep their SHAs).
+
+**COMPLETE-EXCEPT:** the ticket is COMPLETE except (a) the owner's runbook **step 6** 8-session
+gate + capture keys (the ticket's last open AC), and (b) the **run-end card actions**: card #1
+re-publish (third TP2 move), XFS/ext4 storage-lane card, fleet selfHeal-prose card (D32(4) body
+line), the D26 card ALREADY filed+labelled (verified live, labels now present), plus the fiction-
+fold landing. Nothing else in the ten-round review history remains open.
+
+**OWNER HAND-BACK:** merge the branch remainder (tuning-doc fold + records; docs-only, zero
+sync impact beyond nothing — no rendered surface moves; the landing is safe any time, DON'T
+sync anything else meanwhile). Receipt sequence for normal operation, in order: (1) router stays
+Running on gpu-8060s ✓ live — do NOT sync gpu-ai-llama-swap while strata is parked (the
+OutOfSync you see is the parked scale-down, by design); (2) node pools ✓ bare-0 live;
+(3) for radiance use: step 3 (scale strata 0 — already parked; 115.28 fits with 9.80 free) ✓
+live; (4) **step 6: run the 8-session gate** with §R8 capture keys (memory.peak ≤100,
+oom_kill=0, file≈0, MemAvailable ≥8, pinned 71–78 window — receipts close D30(4)); the ladder
+UP stays capped by D29's envelope (~96 was the documented ceiling before the 110 ruling — the
+110 already contains it; a step-down only via pool/ctx, never the scalar below 71.04+4);
+(5) restore is the ORDERED, either/or law: radiance's 110 off the node FIRST, then sync +
+strata back (180.3 > 125.08). OPEN DECISIONS (owner's alone): the limits-only word (D26 shape —
+live gpu pod still proves it byte-exact; overrule = one line + leg-B re-pin); the D24 upstream
+naming-ask filing (still optional, still open); the cutover — at 110 the strata co-residency is
+arithmetically dead (D29's "real either/or" + §R8-Q5: TP2's ~30–35 re-pin may RE-OPEN
+co-existence ≈104.3 — the cutover ticket's call); AD-146 (D26 card) triage + the two new cards'
+prioritization; gpu-box spec-drift card (28.60 GiB truth vs the 64-era notes); the owner-lane
+link fix (BIOS per-slot Gen4 pin / cable / power sequence — the ONLY thing that moves the
+12.4 tok/s today; 110 provably cannot — pinned 71.04 at both caps, §D8); and AD-143's move to
+Finished stays theirs.
+
+— final reviewer round 5, 2026-11-14 (fresh session; no implementation or validation file
+edited; sole write = this record; dep-updates/renders/synthetics in /tmp; cluster reads
+readonly-tier only; repo tree verified clean post-runs).
+
 ---
 
 ## Rework delta 4 — live defect C11 (BusyBox checksum grammar) — 2026-11-13, appended per owner report

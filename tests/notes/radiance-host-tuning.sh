@@ -240,6 +240,27 @@ for m in re.finditer(r"(?i)indistinguishable|retrain[^.\n]{0,30}luck", link):
     w = link[max(0, m.start() - 160): m.end() + 160]
     if not re.search(r"(?i)closed|resolved|no longer|was luck|state —", w):
         errs.append(f"LINK re-states retrain-vs-luck as OPEN (§D6 closed it): {m.group(0)[:60]!r}")
+# §R9/D33 FICTION BAN (C13 final-r5 item 4): the DEG1 is Minisforum's
+# PASSIVE Gen4-x4 OCuLink dock — no switch, no retimer, not hot-plug-capable —
+# and c2:00.0/c3:00.0 are the R9700's OWN integrated Navi bridges
+# (1002:1478/1479), so exactly ONE link negotiates (root port -> card).
+# No sentence in the LINK family may present a retimer/re-driver/dock-switch
+# as hardware the owner can configure or inspect: the main-merged note told
+# them to "reseat... or the retimer" — advice pointing at silicon that does
+# not exist in their path. Line-scoped like every advisory bar (§12.9
+# MAJOR-1 mechanism): a component token with NO same-line DENY word REDS;
+# corrective sentences that name the components precisely to DENY them
+# ("no retimer", "passive — no switch", "§D6.6's label RETIRED", the card's
+# own "integrated switch pair") stay GREEN. This is a tripwire, not a proof
+# (same-line deny words can be ridden, §12.13's sensitivity note); the real
+# law is upstream of any suite: SOURCE A COMPONENT'S EXISTENCE BEFORE NAMING
+# IT A SUSPECT (bf950d22a FRICTION).
+COMP_TRIG = re.compile(r"(?i)retimers?|re-?drivers?|(?:dock|enclosure|adapter|hub)[^.\n]{0,24}(?:switch|retimer)s?")
+COMP_DENY = re.compile(r"(?i)\bno\b|\bnot\b|\bnone\b|passive|retired|moot|without|integrated|1002:147[89]|navi|does not exist|no longer")
+for _i, _ln in enumerate(link.splitlines()):
+    if COMP_TRIG.search(_ln) and not COMP_DENY.search(_ln):
+        errs.append(f"LINK line {_i+1} presents a retimer/re-driver/dock-switch as REAL configurable hardware — §R9/D33 proves the DEG1 is a PASSIVE Gen4-x4 dock (no switch, no retimer) and c2/c3 are the R9700's own integrated Navi pair (1002:1478/1479), so exactly ONE link negotiates root-port->card; name the component only to DENY it: {_ln.strip()[:100]!r}")
+
 gov = section("GOVERNOR")
 if not re.search(r"(?i)cpupower\.service|systemctl enable|tmpfiles|udev|tuned|tlp|kernel param", gov):
     errs.append("GOVERNOR lacks a PERSISTENCE route — §D6 proved the runtime writes DID NOT PERSIST (fresh 15:01Z boot re-printed powersave); a bare runtime set is not the fix")
