@@ -116,6 +116,35 @@ SUPPLEMENTAL_GROUPS = [486]                 # kfd, live-verified (RESEARCH RQ3);
 GRACE_SECONDS = 180                         # engine drains ~60-120 s on SIGTERM — NOT strata's 420 child-choreography number
 INIT_NAME = "radiance-fetch"
 SERVE_NAME = "radiance"
+# --- C11 applet-grammar law constants (ONE site; DECISIONS D27, EXPLORE §D3b) ----
+# A container image's coreutils-applet FAMILY is part of the image contract:
+# BusyBox hash applets (md5_sha1_sum.c getopt32 "^" "scwbt" — short options only,
+# byte-identical 1_36_1<->master so v1.37.0 is bracketed) reject GNU LONG
+# options at parse (exit 1, "unrecognized option"), while GNU coreutils has no
+# BusyBox `-s` (quiet) — the portable shape is neither flag, it is shell
+# EQUALITY on the two-space compute output. The live authority for the init
+# image's family is the container's own banner ("BusyBox v1.37.0", §D3b) —
+# vocabulary legs (tokens present) NEVER proved grammar; these constants let
+# the suite gate on IMAGE IDENTITY + OPTION GRAMMAR (the §12.10 class law).
+BUSYBOX_FAMILY_REPOS = (
+    "docker.io/curlimages/curl",  # the pinned init image (values 313-317); live
+    #                                imageID seed sha256:3fb7e13e… (§D3b.1) — digest
+    #                                ledgered in values by AC4.3's upgrade
+    "curlimages/curl", "docker.io/alpine", "alpine", "busybox",
+)
+INIT_IMAGE_ID_SEED = "sha256:3fb7e13e"           # live forensic anchor (§D3b.1/AC4.3)
+import re as _c11_re
+HASH_APPLET_RE = _c11_re.compile(r"\b(?:md5|sha1|sha224|sha256|sha384|sha512)sum\b")
+# AC1's portable gate — TOKEN needles anchored on the §D3b.4 block dev lands
+# verbatim (plain substrings survive every quoting layer; a shape change must
+# touch this ONE site, never scattered regexes). The two-space compute form +
+# cut is what BOTH applet families print, so equality is portable grammar.
+EQ_GATE_TOKENS = ("actual=$(sha256sum", "$PACK", "| cut", "-f1)")
+NEQ_TEST_TOKENS = (f'$actual" != "$LFS_SHA',)  # inside [ ... ]
+MISMATCH_ECHO_TOKENS = ("MISMATCH", "expected=", "actual=")
+# D27's rejected shapes — each dies on one family or the other (or both):
+REJECTED_GATE_FORMS = ("--check", "--status", "-cs", "-c -s")
+
 # D15: Guaranteed is a POD-class property — the init must carry the equal pair
 # too or the pod silently downgrades to Burstable.
 INIT_PAIR = {"cpu": "200m", "memory": "2Gi"}

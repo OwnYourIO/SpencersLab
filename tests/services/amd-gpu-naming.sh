@@ -195,12 +195,37 @@ if want n2; then
         printf '%s\n' "$stat" | grep -q "$path" || return 1
       done
     }
+    touches_carrier() {
+      for path in charts/llama-swap/values.yaml "$GPU_VALS" "$VALS" charts/amd-gpu/; do
+        printf '%s\n' "$stat" | grep -q "$path" && return 0
+      done
+      return 1
+    }
+    # C11 AC4.4 NON-FLIP class (D27: a grammar fix is NOT a claim wave; a
+    # WAVE-E entry would rot per doc-fix commit — the census keeps the teeth):
+    # NO carrier file touched AND the claim-line census (resource key:
+    # positive-int lines under amd.com/gpu*) UNCHANGED across every file the
+    # commit touches. C11's radiance diff moves zero claim lines — accepted
+    # as NON-FLIP; any claim-moving commit still needs a real wave shape.
+    non_flip() {
+      touches_carrier && return 1
+      local f b a
+      while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        b=$(git show "$AMD_GPU_FLIP_COMMIT^:$f" 2>/dev/null | grep -cE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' || true)
+        a=$(git show "$AMD_GPU_FLIP_COMMIT:$f" 2>/dev/null | grep -cE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' || true)
+        [ "$b" = "$a" ] || return 1
+      done < <(git show --name-only --format= "$AMD_GPU_FLIP_COMMIT" | sed '/^$/d')
+      return 0
+    }
     if wave_c; then
       shape="WAVE-C (C10 carrier wave: chart + BOTH overlays + runbook in ONE commit)"
     elif wave_a; then
       shape="WAVE-A (conversion wave)"
     elif wave_b; then
       shape="WAVE-B (C09 defect-fix wave: values + runbook)"
+    elif non_flip; then
+      shape="NON-FLIP (no carrier file touched; amd.com/gpu* claim census unchanged across the commit's files — C11 grammar fix, D27)"
     else
       fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NO accepted shape (WAVE-C: charts/llama-swap + services/gpu + services/gpu-ai + the runbook as one commit; WAVE-A: charts/amd-gpu + charts/radiance + $VALS; WAVE-B: charts/amd-gpu + runbook) — a SPLIT carrier leaves a cluster with zero schedulable claims between syncs"
     fi

@@ -315,6 +315,12 @@ app-template:
             # renovate: datasource=docker depName=docker.io/curlimages/curl
             tag: "8.23.0"
             pullPolicy: IfNotPresent
+            # amd64 IMAGE-MANIFEST digest of the tag above (the live imageID, §D3b.1): sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93
+            # — this is the APPLET PREMISE PIN (D2 posture, C11/AC4.3): the
+            # image's coreutils ARE BusyBox v1.37.0 (the container's own
+            # banner), which is what the checksum-grammar law in the script
+            # below guards. Swapping the image family means re-ruling that
+            # premise — the identity leg refuses to pass vacuously.
           command:
             - sh
             - -c
@@ -342,8 +348,17 @@ app-template:
               fi
               # The marker is only written after the sha256 PASSES — the
               # marker IS the landed-file provenance (C06 step-4 receipts
-              # sha256sum against this same ledgered value).
-              echo "$LFS_SHA  $PACK" | sha256sum --check
+              # sha256sum against this same ledgered value). BusyBox grammar only:
+              # the curl image is Alpine — sha256sum there implements short -c[sw]
+              # and NO GNU long options; GNU in turn has no short -s. Equality on
+              # the two-space compute form (printf("%s  %s") upstream) is the only
+              # shape both applet families pass, loudly, with the digests on one
+              # line (§D3b, D27 — the --check here crashlooped the pod).
+              actual=$(sha256sum "$PACK" | cut -d' ' -f1)
+              if [ "$actual" != "$LFS_SHA" ]; then
+                echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
+                exit 1
+              fi
               touch "$MARKER"
               echo "radiance staging: complete"
           resources:

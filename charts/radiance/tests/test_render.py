@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+import re
+
 import subprocess
 
 import pytest
@@ -307,6 +309,152 @@ def test_ac2_staging_init_shape():
         assert "renovate: datasource=docker depName=" in values_text, (
             "C02: the curl staging image is pinned without its renovate docker comment"
         )
+
+
+# --- C11: applet-family + checksum-GRAMMAR legs (D27; §D3b) ---------------------
+
+
+def _staging_script():
+    docs, _ = R.render(service=False)
+    init = R.fetch_init(R.deployment(docs))
+    command = init.get("command") or []
+    assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
+        "C11: the fetch-init is no longer [sh -c <script>] — the grammar legs' parse anchor "
+        "moved; re-read §D3b and re-pin (not silently vacuous)"
+    )
+    return init, command[2]
+
+
+@helm_skip
+def test_ac2_staging_image_identity_pinned_and_digest_ledged():
+    """C11 AC4.1/AC4.3 image-identity gate: the grammar law's premise is the
+    init image's applet FAMILY. The repo must stay inside the BusyBox-family
+    set AND the family must be PINNED, not inferred from a floating tag — a
+    64-hex digest-ledger comment beside the init image block (repo D2
+    posture; seed = the live imageID 3fb7e13e…, §D3b.1). If someone swaps to
+    a GNU-family image, THIS leg reddens and forces the re-ruling of the
+    grammar ban (AC1's equality survives both families — the swap is then
+    allowed only with the premise pinned anew; the ban leg refuses to
+    silently pass on a swapped family).
+
+    Honest split: the family half is GREEN today (curlimages/curl is in the
+    set); the digest-ledger half is DESIGNED-RED until dev adds the one
+    comment line (AC4.3)."""
+    init, _script = _staging_script()
+    image = str(init.get("image", ""))
+    repo = image.rsplit(":", 1)[0]
+    assert repo in R.BUSYBOX_FAMILY_REPOS, (
+        f"C11 premise-pin: init image repo {repo!r} left the BusyBox-family set {R.BUSYBOX_FAMILY_REPOS} "
+        "— the option-grammar law below must be re-ruled against the new family, not pass vacuously"
+    )
+    lines = R.chart_values_text().splitlines()
+    idx = [i for i, ln in enumerate(lines) if R.BUSYBOX_FAMILY_REPOS[0] in ln and "repository" in ln]
+    assert idx, "C11 AC4.3: the curl staging image block vanished from values.yaml"
+    # flattened window join (the str.join-of-lists class, 12.6 law applies to itself)
+    window = " ".join(ln for i in idx for ln in lines[max(0, i - 6):i + 14])
+    assert re.search(re.escape(R.INIT_IMAGE_ID_SEED) + r"[0-9a-f]{48}", window), (
+        f"C11 AC4.3 (DESIGNED-RED): no 64-hex digest ledger comment seeded {R.INIT_IMAGE_ID_SEED} "
+        "beside the init image — the applet set the grammar law guards must be PINNED (repo D2 "
+        "tag+digest-in-comment posture); dev adds the ledger line naming the live imageID"
+    )
+
+
+@helm_skip
+def test_ac2_staging_grammar_matches_the_init_image_applets():
+    """C11 AC4.1 grammar ban — THE red leg today (`--check` at values 346):
+    inside a BusyBox-family image, GNU LONG options die at option parse
+    (getopt32 "^" "scwbt" short-only, md5_sha1_sum.c; live banner v1.37.0
+    bracketed by 1_36_1<->master byte-identity) → exit 1 → set -e → marker
+    unreachable → CrashLoop (§D3b/D27). Therefore: NO `--…` long option on
+    any hash-applet line; NO lone -s/-w (BusyBox-only quiet/warn — GNU has
+    no short -s, its own FIXME says so); NO -c without an explicit operand
+    (GNU stdin-implicit asymmetry half-dies). D27's rejected forms
+    (--check/--status/-cs/-c -s) are asserted absent outright: nobody may
+    'fix' the gate into either family's exclusive shape.
+
+    Parse-based (rendered script lines), never a whole-file grep — vocabulary
+    legs are exactly what failed to catch this defect for four review rounds.
+    Runtime end-to-end proof belongs to CI/on-target (AC6 receipt walk) — this
+    repo has no docker daemon in agent sessions; what CAN be proven offline —
+    image family + option grammar — is proven here."""
+    import re as _re
+
+    init, script = _staging_script()
+    repo = str(init.get("image", "")).rsplit(":", 1)[0]
+    if repo not in R.BUSYBOX_FAMILY_REPOS:
+        pytest.fail(
+            f"C11: init repo {repo!r} is off the family set — the identity gate leg owns that "
+            "swap; the grammar ban refuses to pass vacuously on an unruled premise"
+        )
+    problems = []
+    for ln in script.splitlines():
+        if not R.HASH_APPLET_RE.search(ln):
+            continue
+        stripped = ln.strip()
+        if _re.search(r"--[A-Za-z-]+", stripped):
+            problems.append(("GNU long option dies in BusyBox (exit 1 → no marker)", stripped))
+        if _re.search(r"(?<!\S)-[sw](?![a-zA-Z])", stripped) and "-c" not in stripped:
+            problems.append(("BusyBox-only short -s/-w without -c (GNU has no short -s)", stripped))
+        for bad_form in R.REJECTED_GATE_FORMS:
+            if bad_form in stripped:
+                problems.append((f"rejected D27 shape {bad_form!r}", stripped))
+        if _re.search(r"(?<!\S)-c(?=\s|$)", stripped) and not _re.search(r"-c[ \t]+[^ \t-]", stripped):
+            problems.append(("-c without an explicit operand (GNU implicit-stdin asymmetry)", stripped))
+    assert not problems, (
+        "C11 AC1/§D3b/D27: checksum-gate grammar vs the pinned BusyBox image family —\n  "
+        + "\n  ".join(f"{why}: {line}" for why, line in problems[:6])
+        + "\nPortable AC1 shape: compute + shell equality, touch marker AFTER the guard."
+    )
+
+
+@helm_skip
+def test_ac2_staging_checksum_gate_is_the_portable_equality():
+    """C11 AC4.1 positive arms — the ONE replacement shape (green only when
+    dev lands AC1 verbatim, red today): the equality gate computes via
+    `sha256sum "$PACK" | cut -d' ' -f1` (the two-space output form both
+    families print), tests [ "$actual" != "$LFS_SHA" ], echoes MISMATCH
+    naming BOTH expected= and actual=, exits non-zero, and `touch "$MARKER"`
+    sits AFTER the guard — marker-unreachable-on-failure asserted as
+    RENDER-SHAPE ordering. Missing/partial file needs no extra guard: the
+    applet's error goes to stderr, the pipeline's stdout is empty, and an
+    empty actual can never equal the 64-hex ledger value (loud MISMATCH) —
+    the D27 adjudication. Loud-failure EXECUTION is CI/on-target territory
+    (no docker daemon here — stated honestly, not faked); the render-order
+    assertions below are the offline share of it."""
+    _init, script = _staging_script()
+    lines = script.splitlines()
+    def _has_all(tokens, line):
+        return all(tok in line for tok in tokens)
+
+    eq_line = next((ln for ln in lines if _has_all(R.EQ_GATE_TOKENS, ln)), None)
+    assert eq_line is not None, (
+        f"C11 AC1: no compute line {' '.join(R.EQ_GATE_TOKENS)!r} in the staging script — "
+        "the equality gate is absent (this is the live CrashLoop shape)"
+    )
+    neq_line = next((ln for ln in lines if _has_all(R.NEQ_TEST_TOKENS, ln) and ln.strip().startswith("if")), None)
+    assert neq_line is not None, (
+        'C11 AC1: no [ "$actual" != "$LFS_SHA" ] test — the gate cannot fail loudly without it'
+    )
+    echo_line = next((ln for ln in lines if _has_all(R.MISMATCH_ECHO_TOKENS, ln)), None)
+    assert echo_line is not None, (
+        "C11 AC1: the MISMATCH echo must name BOTH expected= and actual= on ONE line — the "
+        "owner-facing digests-on-one-line requirement (D27; -c - rejected for exactly this)"
+    )
+    idx = {ln: i for i, ln in enumerate(lines)}
+    touch_i = next((i for i, ln in enumerate(lines) if 'touch "$MARKER"' in ln), None)
+    assert touch_i is not None, "C02/C11: touch $MARKER vanished (success artifact must survive)"
+    exit_i = next((i for i, ln in enumerate(lines) if "exit 1" in ln and i > idx[neq_line]), None)
+    assert exit_i is not None, "C11 AC1: no `exit 1` after the mismatch test — set -e alone is not the guard"
+    assert exit_i < touch_i, (
+        "C11 AC1 loud-failure shape: exit-1 must PRECEDE touch — on mismatch the marker stays "
+        "unreachable (the CrashLoop-without-marker class returns otherwise)"
+    )
+    curl_line = next((ln for ln in lines if ln.strip().startswith("curl ")), None)
+    assert curl_line is not None and "--continue-at -" in curl_line and \
+        '-output "$PACK"' in curl_line, (
+        "C11 AC1 invariants: the curl download part is BYTE-UNCHANGED — resume no-op is proven, "
+        "flag churn is out of contract (§D3.6: the failure was never a timeout)"
+    )
 
 
 # --- AC6: sentinel-free renders ----------------------------------------------------

@@ -380,8 +380,10 @@ only with the C10 merge+sync: the Recreate replacement then claims
 ## Step 4 — Staging receipts (fetch-init + pack provenance)
 
 The `radiance-fetch` init container stages the pack curl-resume style and
-writes the `.staged-<lfs-sha>` marker ONLY after `sha256sum --check` passes
-against `0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20`
+writes the `.staged-<lfs-sha>` marker ONLY after the portable `sha256sum`
+equality gate passes (compute + shell compare, BusyBox-safe — the init
+image's applets know no GNU long options, §D3b/D27) against
+`0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20`
 (the chart's own script, the ledger above). Receipts:
 
 ```bash

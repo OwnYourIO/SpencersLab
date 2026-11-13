@@ -4068,3 +4068,68 @@ since b1def8d1f) · vllm 36P · surface bare 9 ok + M8 (CF143_BASE_SHA) 10 ok ·
 tp2 3 ok · dashboards 5 ok · naming n1/n4/n5 green, n2/n3 red (table),
 bare run exit≠0 BY DESIGN · runbook T1–T4 ok / T5 red (table). Post-dev the
 combined §12.6-style bar returns fully green with WAVE-C proven.
+
+### 12.10 C11 test round — applet-GRAMMAR vs image family; the NON-FLIP class (test session, 2026-11-13; LIVE defect round 3: radiance fetch-init CrashLoop)
+
+**Defect summary (D27/§D3b):** `sha256sum --check` at charts/radiance/values.yaml:346
+is GNU grammar inside a BusyBox image (curlimages/curl:8.23.0, live banner
+BusyBox v1.37.0; hash applets short-options-only, getopt32 "scwbt") -> exit 1
+-> set -e -> touch-marker unreachable -> CrashLoop (restartCount 6). Download
+COMPLETE (resume offset == ledger size); bytes never hashed. Authored at C02;
+vocabulary legs (tokens present) never checked grammar against the image's
+applet family — survived four review rounds. Class law at the bottom.
+
+**Constants (ONE site, radiance_testlib.py, cited §D3b/D27):**
+BUSYBOX_FAMILY_REPOS (curlimages×2, alpine×2, busybox), INIT_IMAGE_ID_SEED
+(sha256:3fb7e13e… live imageID forensic anchor), HASH_APPLET_RE
+(md5|sha1|sha224|sha256|sha384|sha512)sum, token needles for AC1's portable
+equality (EQ_GATE_TOKENS / NEQ_TEST_TOKENS / MISMATCH_ECHO_TOKENS —
+plain-substring, quoting-layer-proof after two str.join/escaping bites this
+round), REJECTED_GATE_FORMS (--check/--status/-cs/-c -s — D27 rejections stay
+rejected).
+
+**New legs (charts/radiance/tests/test_render.py, red-first):**
+| leg | today | greens when |
+|---|---|---|
+| `test_ac2_staging_image_identity_pinned_and_digest_ledged` | HALF-GREEN/HALF-RED — family pin passes (curlimages ∈ set); the 64-hex digest-ledger comment beside the init image block is ABSENT (AC4.3) | dev adds the ledger comment (seed 3fb7e13e…) — the applet premise becomes PINNED, not tag-inferred; a swap OFF the family set reddens the premise assert on purpose (forces re-ruling, the ban never passes vacuously) |
+| `test_ac2_staging_grammar_matches_the_init_image_applets` | **RED** — `--check` on a hash-applet line (long-option ban + rejected-form census fire on exactly the live line) | AC1's equality (no flags at all on the compute line) |
+| `test_ac2_staging_checksum_gate_is_the_portable_equality` | **RED** — no compute line | AC1 shape: `actual=$(sha256sum "$PACK" | cut -d' ' -f1)` + `[ "$actual" != "$LFS_SHA" ]` + MISMATCH echo naming expected=/actual= + `exit 1` strictly BEFORE `touch "$MARKER"` (loud-failure as RENDER-SHAPE ordering; missing-file needs no guard — empty stdout ≠ 64-hex, the D27 adjudication). Runtime EXECUTION proof belongs to CI/on-target AC6 — no docker daemon in agent sessions; stated, not faked. |
+
+**n2 NON-FLIP class (AC4.4, WAVE-C chain extended):** a commit touching NO
+carrier file (charts/llama-swap/values.yaml, services/gpu/ai overlays,
+charts/amd-gpu/) AND leaving the claim-line census
+(`amd.com/gpu*:<positive-int>` lines, per touched file, before vs after)
+UNCHANGED is accepted as NON-FLIP — C11's radiance edit moves zero claim
+lines. Teeth synthesized three ways: C11-shape commit → NON-FLIP accepted;
+same-file commit that drops a claim line → census DIFF → REJECTED; carrier-
+touching commit → NON-FLIP unavailable, wave shapes still mandatory (A/B/C
+re-proven on the real shas this round: a81989b47→A, b1def8d1f→B, 698af3b78→C
+— all PASS; review runs `AMD_GPU_FLIP_COMMIT=<C11 landing sha>` expecting
+`ok: n2 … NON-FLIP …`). No WAVE-E by design (D27: rot-per-doc-fix rejected).
+
+**Runbook/TP2 verification (AC3/AC4.6):** runbook-suite needle audit —
+`sha256sum` appears only as bare literals (T5 @514 / marker-set), ZERO
+needles quote `--check`, so the :383 portable-gate re-word is **VERIFIED-NIL
+for the suite** (dev keeps the literal `sha256sum` in the sentence — AC3);
+tp2 has zero sha256sum/claim sites (plan grep + this round's re-check) — out
+of scope, no edit, class law re-recorded there by C10 already.
+
+**CLASS LAW (§12.x list, third sibling of §12.8/§12.9 — and the one D27
+names the product):** *a container image's coreutils-applet FAMILY is part of
+the CONTRACT: long options require a GNU-family image; vocabulary legs
+("the token is present") never prove grammar ("the option parses"). Suites
+guarding shell embedded in values must gate on IMAGE IDENTITY (family set +
+digest-ledger pin) and OPTION GRAMMAR (parse the rendered script line-by-
+line), and must refuse to pass vacuously when the image premise changes.*
+The defect's own lineage proves the cost: authored at C02, four review
+rounds green, because every leg checked what the script MENTIONS, never how
+the pinned image PARSES it. Corollary (NON-FLIP): the same-wave guard
+classifies by CLAIM CENSUS, not by file list alone — grammar/doc waves must
+be provably claim-neutral to be accepted, and any claim move still needs a
+real wave shape.
+
+Bar at this handoff (red-first, per-leg): radiance 43P/3F (the table),
+llama-swap 498P/9S/0F, amd-gpu 29P, vllm 36P, naming 5 ok bare + A/B/C live
+re-proofs + synthetic NON-FLIP teeth, runbook 5 ok, tp2 3 ok, dashboards
+5 ok, surface 9 ok bare / 10 ok explicit M1..M8 — all witnesses HOLD; dev's
+AC1 edit + AC4.3 ledger line flip the three radiance reds together.
