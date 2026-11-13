@@ -346,15 +346,30 @@
     },
     "C08": {
       "title": "Follow-up-card lineage: parent_id AND child-to-parent fixes edge, superseding the parentId-only ruling",
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C06"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e2a645629ffeI7u9upIOZQ3UR0",
+      "review_session": "ses_e2a591d50ffeMfh9eW87EhHJ2u",
+      "last_verdict": "APPROVED (round 1) — AC1–AC6 met; pair law stated once with the dated owner-attributed supersession where the old sentence lived; zero residual parent_id-alone/no-edge claims in either tree; direction matches the route contract; three hunks only, zero touched C01–C06 sections; boards-deps t4 flipped red→green and THE RED SET IS NOW EXACTLY THE SIXTEEN PRE-EXISTING LEDGER ARMS WITH ZERO DESIGNED REDS LEFT; node 341/341, regen no-op + --check, aislop 0/0, STATE parses",
+      "handoffs": [
+        {
+          "at": "2026-11-13T21:1xZ",
+          "role": "dev",
+          "session": "ses_e2a645629ffeI7u9upIOZQ3UR0",
+          "result": "status DONE | files: boards SKILL.md frontmatter follow-up clause + the Mechanics bullet (pair law; add_card_dependency called on the child so the stored source is the child→parent fixes edge; fixes never gating, never grouping, related-to named as the sole gating type; UPSERT makes a re-run idempotent; per-leg probe/degrade so a build without the tool still creates the card, carries the `depends: <parent _id> fixes` body line and notes it in RESULT) + the friction-Inbox sentence (edge only when a parent _id is named; a parentless card carries neither) + regenerated mirror | designed reds after this chunk: NONE | raised: skills/wekan-mcp/SKILL.md:64 and references/call-shapes.md:54 still read 'kind-1 follow-ups are parentId-only' (tool half true, flow half withdrawn by D25) and C08's file list bars touching it; plus C07's stale-route doc at rest-api-overview.md:312"
+        },
+        {
+          "at": "2026-11-13T21:5xZ",
+          "role": "review",
+          "session": "ses_e2a591d50ffeMfh9eW87EhHJ2u",
+          "result": "VERDICT APPROVED, no blockers/majors | greps both trees for the retired wording (ONLY follow-up lineage / parent_id alone / no dependency edge / none is expected back) → zero hits; gate/grouping/friction seams cite-only; direction checked against the route contract; supersession dated, owner-attributed, placed where the old rule lived, not narrated elsewhere; diff = 3 hunks, none in C01–C06-owned sections | red-set assertion proven per-arm in a detached base worktree incl the fail-fast-hidden provider-loops t3 / validation-fix t7 / dev-mcp-fleet t13/t14: EXACTLY sixteen, zero designed reds (t4 was the last); node --test 341/341; aislop 0/0; regen no-op + --check; STATE parses | MINOR not on this chunk: the wekan-mcp 'parentId-only' flow parenthetical is withdrawn by D25 though its tool half stays true — left for the planner/owner micro-edit per C08 task 4; NIT: a runbook '(the C08 provision-engine label ensure)' pointer predates the D27 renumber"
+        }
+      ]
     }
   },
   "plan_handoffs": [
