@@ -513,6 +513,15 @@ need(r"(?i)(rss|working.?set)[^\n]{0,120}(before|after|delta|record)", "the RSS/
 # first-trap of the non-privileged class:
 need_lit("sha256sum", "the landed-pack verification (step 4)")
 need(r"(?i)0af5e962", "the pack lfs sha the receipt compares against")
+# C09 AC4 (red-first until the docs sweep lands): the step-2 flip-wave watch
+# gains the COMMAND receipt line and the crashloop consequence — the live
+# defect class the runbook must disambiguate (Pending AFTER this fix means
+# the plugin is not Running, NOT a name defect).
+need_lit("Command: /root/k8s-device-plugin", "the step-2 describe-pod receipt (the C09 command rides the watch)")
+need(r"(?i)describe[ \t][^\n]{0,120}device-plugin", "the kubectl describe receipt target")
+need(r"(?i)(crashloop|crash-loop|crashlooping)[^.]{0,300}(advertise|advertised|pending)|(no node advertises|pools un-advertised)[^.\n]{0,300}",
+     "the consequence line: while the plugin crashloops NO node advertises the pools and radiance + the gpu-ai llama-swap pod sit Pending (§D1.1)")
+need(r"(?i)not a name defect", "the Pending-disambiguation clause (Pending after the fix = plugin not Running, not the name)")
 
 if errs:
     print("; ".join(errs), file=sys.stderr)

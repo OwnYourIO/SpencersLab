@@ -3857,3 +3857,77 @@ Coord-routed trio, mechanical (dev's implementation tree NOT touched):
 Bar after: charts/amd-gpu/tests 26 passed / 0 failed (dev-observed 23 +
 coherence + placement re-pins + the new teeth probe). The other counts in
 the combined §12.6 bar hold unchanged.
+
+### 12.8 C09 test round — the oracle-is-the-defect adjudication, the command-parity authority, and the class law (test session, 2026-11-13)
+
+**The live defect's test-side truth:** C08's "parity, not improvement" executed
+PERFECTLY against an oracle that could not witness the bug — the pre-c08
+vendored render had no `command:` because the shape was BORN broken at C07
+(args-hook emitted args only; the image has NO ENTRYPOINT so args[0] became
+the exec path — §D1, D25). Every new leg therefore anchors on a NEW
+authority, not the oracle.
+
+**Evidence (AC3, fetched this round, never hand-retyped):**
+`charts/amd-gpu/tests/evidence/image-config-1.31.0.12.json` — docker.io
+registry API (anonymous pull): tag manifest `docker-content-digest` =
+`sha256:6437c74f…` byte-equal the values ledger (config IS the pinned bytes),
+config blob `sha256:740b1675…`: `Entrypoint` ABSENT, `Cmd` = FOUR items
+(./k8s-device-plugin + the trio), `WorkingDir` `/root/`; plus the
+Dockerfile@v1.31.0.12 WORKDIR/COPY/CMD lines (absolute binary
+`/root/k8s-device-plugin`; re-confirms the D24 IDS-path COPY law). The testlib
+`image_config_authority()` self-checks the fixture and RE-DERIVES
+`PLUGIN_BINARY` from WorkingDir+Cmd[0] — the constants and the authority
+cannot drift silently.
+
+**Oracle-exception adjudication:** `pre-c08-deviceplugin-ds.yaml` gained ONE
+header comment line (the KNOWN DEFECT declaration the chunk authorizes). The
+fixture's own §12 law binds DEV and other sessions ("edit outside a test
+session is fixture breakage"); this IS the test session and the edit is
+header-comment-only — the parsed YAML body is byte-invariant (all oracle-
+comparing legs re-verified green the same round). No body change, no
+re-capture; the oracle keeps full parity authority for EVERY field except
+command/entrypoint semantics, where it is the defect exhibit.
+
+**New legs (all in charts/amd-gpu/tests + notes suite; AC5):**
+- `test_container_command_carries_the_plugin_binary` — RED today: command
+  absent; green on dev's ONE values key (`command: [/root/k8s-device-plugin]`,
+  list form per D25).
+- `test_command_and_args_joint_invariant` — RED today (same fix); the §D1.6
+  law made executable: BOTH fields, never args-only, command=binary+args=
+  4-list split exactly.
+- `test_args_are_the_four_plain_items` — the AC5(ii) UNCHANGED-proof anchor:
+  green today, must STAY green post-fix (additive change; flags may not
+  migrate into command).
+- `test_c09_why_comment_rewrites_the_misreading` — RED today: the AC2 token
+  set (no-ENTRYPOINT fact, binary-in-CMD correction, absolute path, registry
+  + Dockerfile cites, never-live-provenance sentence, the 'trio restated in
+  full' misreading GONE, -v=5 + strategy lines survive verbatim).
+- runbook T5 additions — RED today naming C09 docs: `Command: /root/k8s-
+  device-plugin` receipt, the describe-pod target, the crashloop→pools-un-
+  advertised→Pending consequence window, the `not a name defect` clause.
+- OPTIONAL witness landed: radiance `test_main_container_stays_command_absent_
+  entrypoint_witnessed` — GREEN today and forever (its image HAS Entrypoint
+  [radiance], §D1.5; the C09 fix is container-specific; the leg exists to
+  catch a consistency-copy regression). Suite now 43P/0S/0F.
+
+**n2 dual-wave shape:** accepted file-set matcher now knows WAVE-A (C07/C08:
+chart+radiance+services as one commit) and WAVE-B (C09: chart values + the
+runbook doc). WAVE-A re-proven against the REAL C08 commit a81989b47 (incl.
+the llama-swap claim-line zero-diff sub-check); WAVE-B exercises the same
+matcher code and is proven at review with `AMD_GPU_FLIP_COMMIT=<C09 sha>`;
+teeth re-verified (non-matching plans commit REDS, garbage sha REDS).
+
+**CLASS LAW for every future conversion/parity capture:** a parity-vs-oracle
+leg MUST ENUMERATE `command` (and Entrypoint semantics) explicitly — silence
+in an oracle is evidence of NOTHING; before trusting any args-only rendered
+shape, demand image-config ENTRYPOINT evidence (the §D1.6 pair: command
+absent ⇔ Entrypoint present). Parity against a source that has never run
+live is faith, not testing — "the oracle is the defect" is now a named
+failure mode, and the live-verification step (AC7, owner-run) is part of
+every conversion's definition of done, not an afterthought.
+
+Red ledger this round (all name C09, zero crashes): charts/amd-gpu 3F/26P
+(command, joint, why-comment) · radiance-runbook T5 RED (doc tokens) ·
+everything else HOLD-green (radiance 43P, llama-swap 495P/9S, vllm 36P,
+naming 5ok, tp2 3ok, dashboards 5ok, surface 9ok bare + 10ok M1..M8 w/
+CF143_BASE_SHA).

@@ -66,12 +66,59 @@ PLUGIN_REPO = "docker.io/rocm/k8s-device-plugin"
 PLUGIN_AMD64_DIGEST_PREFIX = "sha256:6437c74f"        # §R6-Q5/§R6-S13 (amd64 manifest)
 
 # The four plain args (§R7-Q5 ship facts): restated image CMD trio + the
-# strategy arg. Declaring args DROPS the image CMD, so the trio must be
-# restated verbatim; -v=5 is runbook-log-bearing (receipt (b) greps the
-# enumeration logs — the D19 law survives as a values comment, C08 T-A).
+# strategy arg. C09/D25 correction: the image CMD is FOUR items — BINARY +
+# the flag trio — and the image has NO ENTRYPOINT (§D1.5, evidence
+# image-config-1.31.0.12.json); declaring args without command made args[0]
+# the exec path (the live crashloop). CMD_RESTATED's name is the historical
+# misreading it encodes — it is the FLAG TRIO half of the image CMD; the
+# binary half rides PLUGIN_COMMAND below. ARGS_CONTRACT itself stays the
+# exact render-side list (the C09 fix is ADDITIVE — args do not move).
 CMD_RESTATED = ["-logtostderr=true", "-stderrthreshold=INFO", "-v=5"]
 STRATEGY_FLAG = "-resource_naming_strategy=product"
 ARGS_CONTRACT = CMD_RESTATED + [STRATEGY_FLAG]
+# C09 AC5 one-edit-site command constants, DERIVED from the AC3 evidence (the
+# leg re-derives them from the file — these constants carry the citation):
+# registry WorkingDir "/root/" + Dockerfile@v1.31.0.12 WORKDIR/COPY → the
+# absolute binary; the relative "./k8s-device-plugin" CMD form kept the
+# WORKDIR dependency, the absolute path drops it (D25 form decision).
+PLUGIN_BINARY = "/root/k8s-device-plugin"
+PLUGIN_COMMAND = [PLUGIN_BINARY]
+IMAGE_CONFIG_EVIDENCE = Path(__file__).resolve().parent / "evidence" / "image-config-1.31.0.12.json"
+
+
+def image_config_authority() -> dict:
+    """The C09 command-parity authority (test-session registry fetch, never
+    hand-retyped): asserts its own shape so a fixture edit cannot silently
+    bless a wrong command — Entrypoint ABSENT, Cmd = binary + the trio (the
+    binary-first fact the args-only render turned into the crashloop),
+    WorkingDir /root/, and the manifest digest EQUAL to the values ledger
+    (the config IS the pinned bytes)."""
+    assert IMAGE_CONFIG_EVIDENCE.is_file(), (
+        f"C09: command-parity authority {IMAGE_CONFIG_EVIDENCE.name} missing — fixture "
+        "breakage, not a code red (test-session capture, AC3)"
+    )
+    import json as _json
+
+    doc = _json.loads(IMAGE_CONFIG_EVIDENCE.read_text())
+    cfg = (doc.get("image_config") or {}).get("config") or {}
+    assert "Entrypoint" not in cfg or not cfg.get("Entrypoint"), (
+        "C09: the evidence's Entrypoint-absence fact changed — re-fetch the registry config; "
+        "the command leg's derivation authority is broken"
+    )
+    cmd = cfg.get("Cmd") or []
+    assert cmd[:1] == ["./k8s-device-plugin"], f"C09: evidence Cmd lost its binary-first shape: {cmd}"
+    assert cmd[1:] == CMD_RESTATED, f"C09: evidence Cmd flag trio diverges from ARGS_CONTRACT's trio: {cmd[1:]}"
+    assert cfg.get("WorkingDir") == "/root/", f"C09: evidence WorkingDir {cfg.get('WorkingDir')!r}"
+    assert "/root/" + cmd[0].lstrip("./") == PLUGIN_BINARY, (
+        "C09: PLUGIN_BINARY no longer matches the evidence derivation (WorkingDir + CMD[0]) — "
+        "the constants block and the AC3 authority moved apart"
+    )
+    cap = doc.get("_capture") or {}
+    assert cap.get("manifest_digest", "").startswith(PLUGIN_AMD64_DIGEST_PREFIX), (
+        "C09: the evidence manifest digest is not the values-ledger 6437c74f… — the config "
+        "captured is not the pinned bytes (AC3 cross-check broken)"
+    )
+    return doc
 
 # Name-targeting (D23 strain 1): either the live names are reproduced byte-
 # identical (nameOverride + identifier where cheap), or the rename-set is

@@ -59,14 +59,63 @@ def test_renders_exactly_one_daemonset():
 
 @helm_skip
 def test_args_are_the_four_plain_items():
-    """The restated CMD trio + the strategy arg as one plain 4-list (§R7-Q5;
-    the dp.extraArgs plumbing DIES with the vendored values — the strategy is
-    now a literal arg, per-cluster override = the service-block law)."""
+    """The restated CMD FLAG TRIO + the strategy arg as one plain 4-list
+    (§R7-Q5; the dp.extraArgs plumbing DIES with the vendored values — the
+    strategy is now a literal arg, per-cluster override = the service-block
+    law).
+
+    C09 AC5(ii) anchor: the command fix is ADDITIVE, so this exact equality
+    is the proof the four flags did NOT migrate into `command`. GREEN today,
+    and it must STAY green when dev lands the key — a red here after the fix
+    means the flags moved, which is out of contract."""
     docs, _ = A.render()
     args = A.dp_container(docs).get("args")
     assert args == A.ARGS_CONTRACT, (
         f"C08 AC1: args are {args}, want exactly {A.ARGS_CONTRACT} "
         "(CMD trio restated — declaring args drops the CMD — + strategy arg literal)"
+    )
+
+
+@helm_skip
+def test_container_command_carries_the_plugin_binary():
+    """C09 AC5(i) — THE FIX's witness, DESIGNED-RED until dev adds the one
+    values key. The pinned image ships NO ENTRYPOINT and its CMD's first
+    element is the relative binary; the AC3 authority
+    (evidence/image-config-1.31.0.12.json, registry-fetched) is what makes
+    `/root/k8s-device-plugin` a DERIVATION (WorkingDir + Cmd[0]) rather than
+    a floating string — so the leg validates that fixture first. Declaring
+    args without command makes args[0] the exec path: the live
+    RunContainerError crashloop (§D1.1) that left both product pools
+    un-advertised and radiance + the gpu-ai overlay pod Pending."""
+    A.image_config_authority()
+    docs, _ = A.render()
+    command = A.dp_container(docs).get("command")
+    assert command == A.PLUGIN_COMMAND, (
+        f"C09 AC5(i)/D25: container command is {command!r}, want exactly {A.PLUGIN_COMMAND!r} — "
+        "without it the args-only shape execs '-logtostderr=true' (exit 128). The fix is the "
+        "ONE values key app-template.controllers.device-plugin-daemonset.containers.deviceplugin.command "
+        "(list form per charts/betanin/archon/radiance precedent; §D1.4 library surface)"
+    )
+
+
+@helm_skip
+def test_command_and_args_joint_invariant():
+    """C09 AC5(iii) — the class law made executable for THIS container: command
+    and args must BOTH be present. Args-only is legal only where the image
+    carries an Entrypoint (the radiance main container is that case, §D1.5);
+    the plugin image has none (§D1.6/AC3 evidence), so args-only is the
+    shipped defect. Command-only would drop the naming strategy and the -v=5
+    log law. Red with the same fix; green together or not at all."""
+    docs, _ = A.render()
+    ctr = A.dp_container(docs)
+    command, args = ctr.get("command"), ctr.get("args")
+    assert command and args, (
+        f"C09 AC5(iii): command={command!r} args={args!r} — the device-plugin container needs "
+        "BOTH (binary via command, the four flags via args); args-only is the live defect"
+    )
+    assert command == A.PLUGIN_COMMAND and args == A.ARGS_CONTRACT, (
+        "C09 AC5(iii): the both-fields shape drifted from the ruled split "
+        f"(command={A.PLUGIN_COMMAND}, args={A.ARGS_CONTRACT})"
     )
 
 

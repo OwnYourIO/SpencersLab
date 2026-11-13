@@ -223,6 +223,25 @@ same wave. Expect, in order:
      -l app.kubernetes.io/name=amd-gpu,app.kubernetes.io/instance=gpu-ai-amd-gpu -w
    ```
 
+   THE C09 EXEC RECEIPT (D25 — the live crashloop class the fix closes):
+   the pinned image ships no ENTRYPOINT, so without the chart's `command`
+   key the args-only container execs its first flag and dies
+   RunContainerError exit 128; the log and pool receipts below only fire
+   once the binary actually starts. After the sync —
+
+   ```bash
+   kubectl -n default describe pod -l app.kubernetes.io/controller=device-plugin-daemonset \
+     | grep -E "Command:|Args:|State:|Reason:|Restart Count"
+   ```
+
+   — expect `Command: /root/k8s-device-plugin`, the four `Args:` (the -v=5
+   trio + the strategy flag), State: Running. Consequence while the plugin
+   crashloops: NO node advertises `amd.com/gpu-r9700-1` or
+   `amd.com/gpu-8060s`, and the radiance + gpu-ai llama-swap pods sit
+   Pending on pool starvation (§D1.1) — after this fix, Pending there
+   means the plugin is NOT Running, not a name defect (the pool names are
+   the patched-table pair, D24; the step-0(a) receipts stand).
+
 2. Plugin log receipt — `-v=5` is what makes it runbook-log-bearing (the
    law lives in `charts/amd-gpu/values.yaml` now):
 

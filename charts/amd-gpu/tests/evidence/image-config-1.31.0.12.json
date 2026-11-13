@@ -1,0 +1,129 @@
+{
+ "_capture": {
+  "purpose": "C09 AC3 COMMAND-PARITY AUTHORITY \u2014 the image-config receipt that replaces the pre-c08 oracle as the source of truth for command/args semantics (the oracle's command-absence is the CAPTURED DEFECT \u2014 D25; 'the oracle is the defect').",
+  "fetched_utc": "2026-11-13T02:07:55Z",
+  "fetched_by": "cf-143 C09 test round (test session), live docker.io registry API, anonymous pull token \u2014 never hand-retyped (fetch-honesty law, \u00a712.6/AC3)",
+  "repo": "docker.io/rocm/k8s-device-plugin",
+  "tag": "1.31.0.12",
+  "manifest_url": "https://registry-1.docker.io/v2/rocm/k8s-device-plugin/manifests/1.31.0.12",
+  "manifest_media_type": "application/vnd.docker.distribution.manifest.v2+json",
+  "manifest_digest": "sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117",
+  "manifest_digest_note": "docker-content-digest header for tag 1.31.0.12 \u2014 byte-EQUAL to the amd64 ledger digest in charts/amd-gpu/values.yaml (the D2 posture ledger), so this config IS the pinned bytes (EXPLORE \u00a7D1.5 cross-check).",
+  "config_blob_digest": "sha256:740b1675d6a980236a2f5138a04738c5806a7dc1484ff562ab8d68ed0eae6d79",
+  "dockerfile_ref": "https://raw.githubusercontent.com/ROCm/k8s-device-plugin/v1.31.0.12/Dockerfile",
+  "dockerfile_relevant_lines": [
+   "40: WORKDIR /root/",
+   "41: COPY --from=0 /go/bin/k8s-device-plugin .",
+   "43: COPY --from=0 /go/src/github.com/ROCm/k8s-device-plugin/cmd/k8s-node-labeller/amdgpu.ids /usr/share/libdrm/amdgpu.ids",
+   "50: CMD [\"./k8s-device-plugin\", \"-logtostderr=true\", \"-stderrthreshold=INFO\", \"-v=5\"]"
+  ],
+  "dockerfile_note": "final stage: WORKDIR /root/ + COPY of the built binary \u2192 absolute path /root/k8s-device-plugin; CMD is FOUR items (binary + flag trio); NO ENTRYPOINT line; the amdgpu.ids COPY also re-confirms the D24 IDS_PATH mount law at this exact tag."
+ },
+ "conclusions": {
+  "entrypoint_absent": true,
+  "cmd_first_element_relative_binary": "./k8s-device-plugin",
+  "working_dir": "/root/",
+  "absolute_binary_path": "/root/k8s-device-plugin",
+  "k8s_semantics": "args replaces CMD; declaring args without command makes args[0] the exec path \u2192 RunContainerError exit 128 (the live C08 defect, \u00a7D1.1). This container therefore MUST carry command."
+ },
+ "image_config": {
+  "architecture": "amd64",
+  "config": {
+   "User": "root",
+   "Env": [
+    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+   ],
+   "Cmd": [
+    "./k8s-device-plugin",
+    "-logtostderr=true",
+    "-stderrthreshold=INFO",
+    "-v=5"
+   ],
+   "WorkingDir": "/root/",
+   "Labels": {
+    "org.opencontainers.image.authors": "Kenny Ho <Kenny.Ho@amd.com>",
+    "org.opencontainers.image.licenses": "Apache-2.0",
+    "org.opencontainers.image.source": "https://github.com/ROCm/k8s-device-plugin",
+    "org.opencontainers.image.vendor": "Advanced Micro Devices, Inc."
+   },
+   "ArgsEscaped": true,
+   "OnBuild": null
+  },
+  "created": "2026-11-06T18:00:19.362934207Z",
+  "history": [
+   {
+    "created": "2026-06-22T19:20:09.106506185Z",
+    "created_by": "ADD alpine-minirootfs-3.23.5-x86_64.tar.gz / # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-06-22T19:20:09.106506185Z",
+    "created_by": "CMD [\"/bin/sh\"]",
+    "comment": "buildkit.dockerfile.v0",
+    "empty_layer": true
+   },
+   {
+    "created": "2026-09-14T20:36:03.312619892Z",
+    "created_by": "LABEL org.opencontainers.image.source=https://github.com/ROCm/k8s-device-plugin org.opencontainers.image.authors=Kenny Ho <Kenny.Ho@amd.com> org.opencontainers.image.vendor=Advanced Micro Devices, Inc. org.opencontainers.image.licenses=Apache-2.0",
+    "comment": "buildkit.dockerfile.v0",
+    "empty_layer": true
+   },
+   {
+    "created": "2026-09-14T20:36:03.312619892Z",
+    "created_by": "RUN /bin/sh -c apk --no-cache upgrade # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-09-14T20:36:06.488763471Z",
+    "created_by": "RUN /bin/sh -c apk --no-cache add ca-certificates libdrm # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-09-14T20:36:09.843116131Z",
+    "created_by": "RUN /bin/sh -c apk --no-cache add hwloc --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-09-14T20:36:09.954573959Z",
+    "created_by": "WORKDIR /root/",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-11-06T18:00:19.310045825Z",
+    "created_by": "COPY /go/bin/k8s-device-plugin . # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-11-06T18:00:19.362934207Z",
+    "created_by": "COPY /go/src/github.com/ROCm/k8s-device-plugin/cmd/k8s-node-labeller/amdgpu.ids /usr/share/libdrm/amdgpu.ids # buildkit",
+    "comment": "buildkit.dockerfile.v0"
+   },
+   {
+    "created": "2026-11-06T18:00:19.362934207Z",
+    "created_by": "USER root",
+    "comment": "buildkit.dockerfile.v0",
+    "empty_layer": true
+   },
+   {
+    "created": "2026-11-06T18:00:19.362934207Z",
+    "created_by": "CMD [\"./k8s-device-plugin\" \"-logtostderr=true\" \"-stderrthreshold=INFO\" \"-v=5\"]",
+    "comment": "buildkit.dockerfile.v0",
+    "empty_layer": true
+   }
+  ],
+  "moby.buildkit.cache.v0": "W3siZGlnZXN0Ijoic2hhMjU2OjAzNDA3MzUwYmEzNDE1YmFmYzI3ZjZiYTQ1YjhiMmViODVkZWJlZTNkMjMwZWI2MDRiZTUxNWVkYTJmOTYwZTEifSx7ImRpZ2VzdCI6InNoYTI1NjowNDk0OWRjMjNiMWRjYTJiZjQ2M2MxMzA3MGNmZmJmNjAxN2Y0MTE3NGQ2MTg3YWZlY2E5MTEyZTExNTM2NjAzIn0seyJkaWdlc3QiOiJzaGEyNTY6MTQ1MjgxODdiMTExNWI4MzE4ZDFkYzBlNzg2Y2RlNTI0NzZiOGUzZThmYmFkNzJlYWVkODE0OGNhY2NkMGNmMSIsImlucHV0cyI6W1t7ImxpbmsiOjZ9XV19LHsiZGlnZXN0Ijoic2hhMjU2OjE2M2RjYTU4OTBiODViMjRmMDk1MWUwZjQ4NmQyN2FkMGUzN2JiM2YyNDA5MzIyNjE4ZWVlZjdiMGNiMTU4NTIifSx7ImxheWVycyI6W3sibGF5ZXIiOjIsImNyZWF0ZWRBdCI6IjIwMjYtMDktMTRUMjA6MzY6MDYuNDk2Njg4NjIyWiJ9XSwiZGlnZXN0Ijoic2hhMjU2OjJhNzgwNjdjMmM1ZTE5MzNiZjEzZDA5ZWY4MGI5NTI0MWY5YmZmYjRjMTgxZmRmOWYwNGM0OTNiNjE1YWE3NGUiLCJpbnB1dHMiOltbeyJsaW5rIjo1fV1dfSx7ImxheWVycyI6W3sibGF5ZXIiOjEsImNyZWF0ZWRBdCI6IjIwMjYtMDktMTRUMjA6MzY6MDMuMzI0Mzc1MzQ0WiJ9XSwiZGlnZXN0Ijoic2hhMjU2OjJjNDk0NzA3ODkxMDMyZWIxMjg2NDNkZTVmYWFhYjJkOTQ5YjA1NzZkYzc5MWY2ZDU5YjBiMThiYWM1YmMxNzciLCJpbnB1dHMiOltbeyJsaW5rIjozfSx7ImxpbmsiOjE2fV1dfSx7ImRpZ2VzdCI6InNoYTI1NjozZTg4ZDYwYzMzZWU2ZjFiNWMyN2IwNGNmNmJmODdiNmJiNzYwNDZjNTRjYjJiNjIyZWMwMzBmNDVhNTExYTg5IiwiaW5wdXRzIjpbW3sibGluayI6MTB9XV19LHsiZGlnZXN0Ijoic2hhMjU2OjNmNjg0OGE1MmMyMWFkNWM1NDU5OTZmY2ZiNWJhYmY0NTFjYWI2MWViZTg3ZjkzYzMzNjI4NzkwOWQ0YjI2NmQifSx7ImxheWVycyI6W3sibGF5ZXIiOjYsImNyZWF0ZWRBdCI6IjIwMjYtMTEtMDZUMTg6MDA6MTkuMzY2NDQ2OTIyWiJ9XSwiZGlnZXN0Ijoic2hhMjU2OjRiZTdjZmY3MDI0YzJmNTA1M2RiNjEzMWQwYTk5Y2ZjMDNkM2FjN2MzY2E3Y2NlNzllMmM3ZWE1ZDkyOTNiNGEiLCJpbnB1dHMiOltbeyJsaW5rIjoxN31dLFt7ImxpbmsiOjB9LHsic2VsZWN0b3IiOiJzaGEyNTY6ZmRkYzU0NzMwYWY5M2FhYTA4NTZlMDZhZDBkZjdhYzFmNGE3M2VkY2E4ODI2ZTI0NzgxNGY1MGJmOGQyMmJjYyIsImxpbmsiOjJ9XV19LHsibGF5ZXJzIjpbeyJsYXllciI6MywiY3JlYXRlZEF0IjoiMjAyNi0wOS0xNFQyMDozNjowOS44NTE4NTE0NzRaIn1dLCJkaWdlc3QiOiJzaGEyNTY6OGU1MmNjYmFmNGYwYjVmZDc5N2FmMDc2OTZhMGI5NWQ4YjAwMTFlODJiODIzMWM4OTVjZmE4YzhiNjY0ZjZjNiIsImlucHV0cyI6W1t7ImxpbmsiOjR9XV19LHsiZGlnZXN0Ijoic2hhMjU2Ojk5MTM1ZGZiMDk1M2M2MDQ3YTk5YTkwY2U2Mzk5NjVlMzI1MGRjZWJjMmM1MDkzMmUyZWUyMTE3M2JlZDU3YzUiLCJpbnB1dHMiOltbeyJsaW5rIjoxNX1dLFt7ImxpbmsiOjE4fV1dfSx7ImxheWVycyI6W3sibGF5ZXIiOjQsImNyZWF0ZWRBdCI6IjIwMjYtMDktMTRUMjA6MzY6MDkuOTYzODA2NTkzWiJ9XSwiZGlnZXN0Ijoic2hhMjU2OjlhYWY0MWMzNjY0YWQzZDRmZjUxODUzZTFkNDhmNjlhZDQ1NDgxYjYxODkzOTI2NTcwNDc5NjE1MWE0NGZiMzAiLCJpbnB1dHMiOltbeyJsaW5rIjo5fV1dfSx7ImRpZ2VzdCI6InNoYTI1NjphNzYzZDBiZjA5NjZiYzdkODIxOGM4YjRlMTQyZWM4NmQ5ZGE3OTM2ZWE2Mzg4MGIyOTZiZDE1ODVmMDJjMTllIiwiaW5wdXRzIjpbW3sibGluayI6MTN9XV19LHsiZGlnZXN0Ijoic2hhMjU2OmM0OGViMGY3ODA5ODkyMTJkZGEwYzk0N2EwNGNlOWI1MTgzYmEzYTQ2NWEyZjlmMTVmYTI5YzRmOGUzZDlkY2UiLCJpbnB1dHMiOltbeyJsaW5rIjo3fSx7ImxpbmsiOjE0fV1dfSx7ImRpZ2VzdCI6InNoYTI1NjpjODM3YzUwYzk5NDg1MjUyZmEwMDQ3ZWU4YmIyYTc2ZTkyNmZlYjRkMmUxM2JlMmVjNmRjMzlhODMxM2QxZmEzIn0seyJkaWdlc3QiOiJzaGEyNTY6Y2JkZmI1OGZjYTZjODY3ZmU1MDI4ODIwZGIwMjViZDQwNWEyMGRjYzgwMzgxNDAxNjY5YmY5NzIyMGFjZmZiYSIsImlucHV0cyI6W1t7ImxpbmsiOjEyfV1dfSx7ImRpZ2VzdCI6InNoYTI1NjpkZThiZDQ2Y2VhZTBiNDg2ZTJjNTdkNmRhMzRiYTZiOTlkZWU3YWY1MzQzZmUyM2FjYzc0OTI2YWVkMmNkMTUwIn0seyJsYXllcnMiOlt7ImxheWVyIjo1LCJjcmVhdGVkQXQiOiIyMDI2LTExLTA2VDE4OjAwOjE5LjMxNTI5OTUyMloifV0sImRpZ2VzdCI6InNoYTI1NjplNGUyMTI3NDVhY2VhNDY5MWJkMGFjY2UyY2U4ZmIwMjY3MjJkZGM2MmYyOTlmMWI1MjFmNWFkMTMxMTc0MTUzIiwiaW5wdXRzIjpbW3sibGluayI6MTF9XSxbeyJsaW5rIjoxfSx7InNlbGVjdG9yIjoic2hhMjU2OmUwMTZkMGVkNDE4OGU2YjVlMTI2YTZiMmE4ZmQ5YjAwYzQ0Mzc1MmI2ZjQ3ZTE3OTNlZWUyNWNiMDljZWZiZGMiLCJsaW5rIjoyfV1dfSx7ImRpZ2VzdCI6InNoYTI1NjpmMjljZjdkZGZkYzk0ZjQ4OThhMWMyN2M4ZTkyYzdmM2RlZDVkMWNkNmExYWEzOGJmOTkxMmQyZTU4MmMyOTE3In1d",
+  "os": "linux",
+  "rootfs": {
+   "type": "layers",
+   "diff_ids": [
+    "sha256:31ad4a471c6852bfec14d757cc75a566c82a9769f12c3918cf6bf52cc0eeb3d0",
+    "sha256:806a71738190e25ee46da714ef093a4f5cfbd4cd534bf108677de152be993efa",
+    "sha256:b9135e569984081def1a95e08a046e9a216c55e635e0f16701a743d60f0c89a8",
+    "sha256:6d2504d9af93f901e9a171ce740b899338787808d522d6e19fe9a44c9fe73972",
+    "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+    "sha256:1fa495fe83a7992c89a529a142f4e54ca879ecbefaf704e7087ddba68779197c",
+    "sha256:0d1ac8a6dd40fa7f1b248b61457877d9107e0a3c5de5edc837a02cedf7af7016"
+   ]
+  }
+ }
+}

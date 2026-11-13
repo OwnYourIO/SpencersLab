@@ -102,12 +102,29 @@ app-template:
             # sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117
             # D2 posture: tag pin + digest ledger comment, no digest field
             # (moves VERBATIM through the conversion).
-          # Declaring args REPLACES the image CMD, so the Dockerfile CMD
-          # trio is restated in full. Omitting -v=5 is not cosmetic: it
+          # The plugin image ships NO ENTRYPOINT: its CMD = BINARY plus the
+          # flag trio. The registry image-config receipt (docker.io at the
+          # pinned tag, captured to tests/evidence/image-config-1.31.0.12.json
+          # — manifest digest 6437c74f… = the image-manifest ledger above, so
+          # the config IS the pinned bytes) and the Dockerfile@v1.31.0.12
+          # (WORKDIR /root/ + COPY) are the command-parity authority — NOT
+          # the pre-c08 oracle: the C07 vendored template carried the same
+          # args-only gap and was never live-tested (gpu-ai ran the external
+          # chart until the C08 swap landed the shape live; D25, EXPLORE
+          # §D1 — the oracle captured the defect, it could not witness it).
+          # Declaring args REPLACES the image CMD, so args alone would exec
+          # args[0] — a flag string — and the container dies
+          # RunContainerError exit 128. command therefore carries the binary
+          # at its absolute /root/k8s-device-plugin (the WORKDIR + COPY
+          # pair's result; the absolute form drops the WORKDIR dependency the
+          # CMD's relative ./k8s-device-plugin kept), args carry the four
+          # flags.
+          # Omitting -v=5 is not cosmetic: it
           # drops the product enumeration logs the cf-143 C06 runbook
           # receipt (b) greps — the -v=5 law (Chart.yaml migration line 1).
           # The strategy arg is now PLAIN (the old splice key died; a
           # per-cluster strategy change rides the service-block override).
+          command: ["/root/k8s-device-plugin"]
           args:
             - -logtostderr=true
             - -stderrthreshold=INFO

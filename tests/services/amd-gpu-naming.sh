@@ -150,21 +150,44 @@ if want n2; then
     fail "n2: the 'fallback once a naming-capable plugin exists' comment survived — it rewrites to per-cluster REALIZED prose (C07 task, D21 wording)"
   fi
   if [ -n "${AMD_GPU_FLIP_COMMIT:-}" ]; then
-    # Same-wave guard (review-time): the vendored chart + the entry swap +
-    # the overlay flip ride ONE commit (R6-Q4-2 window-closed-by-
-    # construction); the chart's claim line must be provably UNMOVED in that
-    # commit (comment-only diff, AC3).
+    # Same-wave guard (review-time), TWO accepted wave shapes (C09 extension
+    # of the C08 file-set):
+    #   WAVE-A (C07/C08 landings): the chart conversion + the radiance values
+    #     legs + the gpu-ai service file — one commit, window closed by
+    #     construction (R6-Q4-2);
+    #   WAVE-B (C09 live-defect fix): the values key + the runbook doc — the
+    #     receipt/consequence lines RIDE the fix (a stale runbook next to a
+    #     crashloop fix is its own defect class).
+    # The chart claim-line zero-diff sub-check runs only when the commit
+    # touches charts/llama-swap/values.yaml (WAVE-A territory; B1 shield).
     stat=$(git show --stat --format= "$AMD_GPU_FLIP_COMMIT" 2>/dev/null || true)
     [ -n "$stat" ] || fail "n2: AMD_GPU_FLIP_COMMIT=$AMD_GPU_FLIP_COMMIT is not a commit"
-    for path in charts/amd-gpu/ charts/radiance/ "$VALS"; do
-      printf '%s\n' "$stat" | grep -q "$path" \
-        || fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT does not touch $path (C08 conversion wave: vendored->first-party chart + the radiance T-B/C/D values legs + the gpu-ai service file land as ONE commit; git show --stat is the evidence)"
-    done
-    bare_now=$(git show "$AMD_GPU_FLIP_COMMIT:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
-    bare_before=$(git show "$AMD_GPU_FLIP_COMMIT^:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
-    [ "$bare_now" = "$bare_before" ] \
-      || fail "n2: the flip commit MOVED the chart's tree-global bare claim line ($bare_before -> $bare_now) — B1: claim-line diff must be zero, comments only"
-    ok "n2: per-cluster flip needles green AND the same-wave commit guard + chart claim-line-zero-diff verified against $AMD_GPU_FLIP_COMMIT"
+    wave_a() {
+      for path in charts/amd-gpu/ charts/radiance/ "$VALS"; do
+        printf '%s\n' "$stat" | grep -q "$path" || return 1
+      done
+    }
+    wave_b() {
+      for path in charts/amd-gpu/ .agents/notes/radiance-on-target-acceptance.md; do
+        printf '%s\n' "$stat" | grep -q "$path" || return 1
+      done
+    }
+    if wave_a; then
+      shape="WAVE-A (conversion wave)"
+    elif wave_b; then
+      shape="WAVE-B (C09 defect-fix wave: values + runbook)"
+    else
+      fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NEITHER accepted shape (WAVE-A: charts/amd-gpu + charts/radiance + $VALS as one commit; WAVE-B: charts/amd-gpu + the runbook doc) — git show --stat is the evidence"
+    fi
+    claim_note=" (llama-swap chart untouched by this commit)"
+    if printf '%s\n' "$stat" | grep -q "charts/llama-swap/values.yaml"; then
+      bare_now=$(git show "$AMD_GPU_FLIP_COMMIT:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
+      bare_before=$(git show "$AMD_GPU_FLIP_COMMIT^:charts/llama-swap/values.yaml" 2>/dev/null | grep -cE '^[[:space:]]*amd\.com/gpu: 1[[:space:]]*$' || true)
+      [ "$bare_now" = "$bare_before" ] \
+        || fail "n2: the $shape commit MOVED the chart's tree-global bare claim line ($bare_before -> $bare_now) — B1: claim-line diff must be zero, comments only"
+      claim_note=" + chart claim-line zero-diff"
+    fi
+    ok "n2: per-cluster flip needles green AND the $shape same-wave guard verified$claim_note against $AMD_GPU_FLIP_COMMIT"
   else
     skip "n2: same-wave COMMIT guard not run — review sets AMD_GPU_FLIP_COMMIT=<sha> and re-runs n2 (git-show check incl. the claim-line zero-diff leg, C07 Tests bullet 3)"
     ok "n2: per-cluster truth holds — gpu-ai overlay carries the APU flip with the bare-null retire, the chart keeps its tree-global bare claim untouched (APU-name-free), fallback comment retired (same-wave commit guard deferred to review)"

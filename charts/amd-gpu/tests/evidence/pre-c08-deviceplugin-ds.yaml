@@ -14,6 +14,14 @@
 # Captured: helm template amd-gpu charts/amd-gpu --set domain=spencerslab.com
 #   --set clusterName=gpu-ai  (helm v3.16.4, chart = C07 vendored 0.22.0 +
 #   args hook), full DaemonSet document verbatim:
+# KNOWN DEFECT (C09/D25, test-session authorized header line, body bytes
+#   unchanged): this render has NO command: key and the image carries no
+#   ENTRYPOINT (§D1.5) — the oracle captured the C07-born args-only bug, so
+#   for COMMAND/ENTRYPOINT semantics it is the DEFECT EVIDENCE, not the
+#   parity authority: the command-parity authority is
+#   evidence/image-config-1.31.0.12.json. Every other field the oracle
+#   carries remains the parity truth (parity-vs-oracle legs must always
+#   enumerate command — class law, TEST_SPEC §12.8).
 observed_kinds:
 - DaemonSet/amd-gpu-device-plugin-daemonset
 

@@ -340,3 +340,23 @@ def test_reloader_annotation_absent():
     docs, _ = R.render(service=False)
     ann = (R.deployment(docs)["spec"]["template"].get("metadata") or {}).get("annotations") or {}
     assert not [k for k in ann if "reloader.stakater.com" in k], f"C02: reloader annotations present: {ann}"
+
+
+@helm_skip
+def test_main_container_stays_command_absent_entrypoint_witnessed():
+    """C09 AC5 optional hardening (test-session discretion): the C09 command
+    requirement is CONTAINER-SPECIFIC, and the radiance main container is the
+    opposite half of the §D1.6 law — its image DOES carry
+    Entrypoint ["radiance"] (EXPLORE §D1.5, registry-verified at the pinned
+    digest 6fb0e99b…), so the args-only shape is SAFE and CORRECT here.
+    Copying the command key across "for consistency" would be a regression
+    (command replaces the ENTRYPOINT, and the image's own exec resolution is
+    what makes the current form work). Green today; it exists to catch a
+    future copy-paste of the fix."""
+    docs, _ = R.render(service=False)
+    ctr = R.serve_container(R.deployment(docs))
+    assert "command" not in ctr, (
+        "C09 §D1.6: the radiance serve container gained a command key — its image HAS an "
+        "ENTRYPOINT ([radiance], §D1.5 registry receipt), args-only is the ruled shape; "
+        "removing this leg requires new Entrypoint-absence evidence of its own"
+    )

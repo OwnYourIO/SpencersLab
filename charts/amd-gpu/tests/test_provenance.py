@@ -169,6 +169,44 @@ def test_strategy_arg_is_plain_and_plumbing_dead():
     )
 
 
+def test_c09_why_comment_rewrites_the_misreading():
+    """AC2 (C09): the 105-block comment must tell the TRUE command story at
+    the values key — the image ships NO ENTRYPOINT; its CMD = binary + the
+    flag trio (so the old 'CMD trio restated in full' sentence encoded a
+    misreading — its binary half was silently dropped); declaring args alone
+    REPLACES CMD, hence the explicit command. Citations (registry + the tag
+    Dockerfile), the never-live-provenance sentence (the bug born in the C07
+    vendored args hook; gpu-ai ran the EXTERNAL chart until C08 landed the
+    shape), and the surviving verbatim lines (-v=5 law, strategy-plain).
+    Designed-RED until dev rewrites the block."""
+    text = A.chart_values_text()
+    flat = " ".join(text.split())
+    low = flat.lower()
+    assert re.search(r"(?i)no[ \t]+entrypoint|without[ \t]+an?[ \t]+entrypoint|entrypoint[ \t]*[:=]?[ \t]*(absent|none)", flat), (
+        "C09 AC2: the values comment never states the ENTRYPOINT-absence fact — the reader "
+        "must learn why command is mandatory HERE"
+    )
+    assert "/root/k8s-device-plugin" in text, "C09 AC2: the absolute binary path is not named at the key"
+    assert re.search(r"(?i)cmd[^.\n]{0,120}binary|binary[^.\n]{0,120}cmd", flat), (
+        "C09 AC2: the CMD-carries-the-binary correction (CMD = binary + trio) is missing"
+    )
+    for cite in ("Dockerfile", "v1.31.0.12"):
+        assert cite in flat, f"C09 AC2: the {cite} citation the fix derives from is absent"
+    assert re.search(r"(?i)(registry|image-config|image config)", flat), (
+        "C09 AC2: no pointer to the registry image-config authority (tests/evidence/"
+        "image-config-1.31.0.12.json — the command-parity authority, NOT the pre-c08 oracle)"
+    )
+    assert re.search(r"(?i)never (been )?(live|test)|never live-tested|not live-tested|external chart[^.\n]{0,160}", flat), (
+        "C09 AC2: the never-live-provenance sentence (how the defect survived parity) is missing"
+    )
+    assert "trio restated in full" not in low, (
+        "C09 AC2: the historical MISREADING sentence ('CMD trio restated in full') survived — "
+        "the block must be rewritten, not appended to"
+    )
+    for survive in ("-v=5", "-resource_naming_strategy=product"):
+        assert survive in text, f"C09 AC2: the verbatim-survival line for {survive!r} was lost"
+
+
 def test_accepted_gaps_and_off_pairs_documented():
     """The conversion's documented concessions, each a comment where the
     values live: the updateStrategy gap (k8s default == today), the would-be
