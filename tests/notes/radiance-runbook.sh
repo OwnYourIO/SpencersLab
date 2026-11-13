@@ -26,7 +26,11 @@
 # fenced args block containing `--served-model-name qwen3.8-flash-next-
 # radiance` — EXACTLY ONE such block; its flag/value multiset must equal the
 # chart's serveArgs (read live from charts/radiance/values.yaml, C02), the
-# four scalars needle-pinned on BOTH sides (43000 / 200000 / 8 / 64).
+# four scalars needle-pinned on BOTH sides (43000 / 200000 / 8 / 110 — C12
+# AC1 amendment moved guaranteedMemoryGi 64→110: the printed 71.04-GiB
+# receipt + the owner ruling "110 GiB (your figure)" (D29), which also makes
+# the naive "110Gi" needle COLLIDE with strata's own limit line — the T2
+# regex is scope-aware (guaranteedMemoryGi context) for exactly that.
 #
 # T4 citation resolver: the vllm T4 regex shape extended to THIS folder's
 # RESEARCH.md incl. the §R6 block (forms: RQ<n>, R6-Q<n>, R6-Q4-<row>,
@@ -201,7 +205,7 @@ else:
         only_chart = {k: chart_flags[k] for k in chart_flags if k not in rb_flags}
         errs.append(f"runbook args block != chart serveArgs: runbook-side diff {only_rb}, chart-only {only_chart}")
 
-# Scalars BOTH sides (chunk T2: 43000 / 200000 / 8 / 64).
+# Scalars BOTH sides (chunk T2 + C12 AC1 amendment re-pin: 43000 / 200000 / 8 / 110).
 for num in ("43000", "200000"):
     if num not in rb:
         errs.append(f"the runbook never names {num} (shipped scalar)")
@@ -209,8 +213,17 @@ for num in ("43000", "200000"):
         errs.append(f"the chart values never name {num} (single-source scalar)")
 if not re.search(r"max-num-seqs[ \t\"':=-]*8\b|8[ \t-]*sessions|8 concurrent", rb):
     errs.append("the runbook never states the 8-session scalar")
-if not re.search(r"64 ?Gi|guaranteedMemoryGi[^\n]{0,20}\b64\b", rb):
-    errs.append("the runbook never states the 64 (Gi-class guaranteedMemoryGi) scalar")
+# C12 AC4 (amendment) re-pin: the shipped scalar needle moves 64→110 (the
+# 64-era reading died at the live OOM: the engine printed 71.04 GiB pinned
+# against a 64.00 cgroup; the owner then ruled 110 over D28's 96, D29).
+# SCOPE-AWARE by necessity: unlike 96, "110Gi" ALONE is ambiguous — strata's
+# OWN limit reads "110Gi" (doc :117/:195 and charts/llama-swap/values.yaml:
+# 1319-1325) — so the needle requires the guaranteedMemoryGi context, line-
+# local. A bare mention of 110 anywhere cannot satisfy it; a rewrite that
+# states the scalar as "Guaranteed pair 110" inside the scalars line does.
+if not re.search(r"guaranteedMemoryGi[^\n]{0,20}\b110\b", rb):
+    errs.append("the runbook never states the 110 guaranteedMemoryGi scalar (guaranteedMemoryGi-context "
+                "needle — '110Gi' alone would collide with strata's limit line, C12 AC1 amendment)")
 
 # Gate order: step-0 gates precede any boot text; scale-down precedes start.
 m0 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?0(?=[.: \t—–-]|$)", rb)
@@ -235,7 +248,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T2: shipped-flag equality / scalar pins / gate order violated (C06 T2 — diagnostics above)"
   fi
-  ok "T2: the runbook's shipped-args block equals the chart serveArgs flag set (single DRY_RUN block), the 43000/200000/8/64 scalars are pinned BOTH sides, and the gate order holds (step-0 before boot text; scale-down before radiance start)"
+  ok "T2: the runbook's shipped-args block equals the chart serveArgs flag set (single DRY_RUN block), the 43000/200000/8/110 scalars are pinned BOTH sides (scope-aware), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
 fi
 
 # --- T3: names block + triple-digest ledger + polarity + gates a-e ---------------
@@ -314,7 +327,15 @@ else:
     if not re.search(r"(?i)fallback", sec) or not re.search(r"(?i)decision tree", sec):
         errs.append("the fallback trap + decision tree are not in step-0 (unknown revision -> bare amd.com/gpu; remedies: pin the claim by the materialized name / fix the flip list)")
     if not re.search(r"(?i)request.?sum|allocatable", sec):
-        errs.append("gate (b) lacks the request-sum arithmetic (64+64+4 > 125.08 — the Pending-by-design gate)")
+        errs.append("gate (b) lacks the request-sum arithmetic (the Pending-by-design gate)")
+    # C12 AC4 (amendment): the step-0(b) sum moves with the scalar — the
+    # 64+64+4=132 era and the 96-draft pair are BOTH dead arithmetic; the
+    # §D6.2 terms are UP 110+64+6.3 = 180.3 > 125.08 (designed Pending) and
+    # DOWN 110+4.125+1.158 = 115.28 <= 125.08 (9.80 GiB free).
+    if not re.search(r"110\s*\+\s*64\s*\+\s*6\.3|180\.3[^.\n]{0,40}125\.08", sec):
+        errs.append("gate (b) still lacks the C12-amendment strata-UP sum (110+64+6.3 = 180.3 > 125.08 — the designed Pending restated at 110)")
+    if not re.search(r"115\.28|110\s*\+\s*4\.125", sec):
+        errs.append("gate (b) lacks the C12-amendment strata-DOWN schedulability (110+4.125+1.158 = 115.28 <= 125.08 — §D6.2's exact live terms)")
 # Belt-and-braces PCI assert survives (D18 — gate (e) in the R6-Q4-5 numbering):
 if not re.search(r"(?i)belt.and.braces", rb) or "gfx1201" not in rb:
     errs.append("the belt-and-braces PCI/gfx1201 startup assert (R6-Q4-5 e) is not recorded")
@@ -532,7 +553,17 @@ need(r"(?i)(capacity|count) 0|carries[^.\n]{0,80}zero", "the count-0 reading of 
 need(r"(?i)insufficient[ \t]*amd\.com/gpu", "the third-class Pending symptom line (bare claim at a capacity-0 pool)")
 need(r"(?i)valuesobject", "the third-class diagnostic: diff the live Application's valuesObject against the service file")
 need(r"(?i)step 3[^.\n]{0,120}(does not|won't)[^.\n]{0,120}router|(does not|won't)[^.\n]{0,60}restore[^.\n]{0,60}router", "the outage truth: step 3 (strata scale-down) does NOT restore the router before the C10 sync")
-need(r"65\.158|59\.92", "the §D2.4 memory numbers behind the designed-Pending (65.158 used / 59.92 free vs the 64Gi pair)")
+# C12 AC4 (amendment) re-pin: the 65.158/59.92/4.08 trio priced the 64Gi
+# PAIR, the 96-draft pair died with the owner ruling — the suite demands the
+# §D6.2 sums (red today: 180.3/115.28/9.80 all absent from the shipped doc).
+need(r"(?i)110\s*\+\s*64\s*\+\s*6\.3|180\.3[^.\n]{0,40}125\.08",
+     "the C12-amendment designed-Pending arithmetic while strata is UP (110+64+6.3 = 180.3 > 125.08)")
+need(r"(?i)110\s*\+\s*4\.125\s*\+\s*1\.158|115\.28|9\.80 ?GiB free|9\.80 GiB",
+     "the C12-amendment schedulability while strata is DOWN (115.28 <= 125.08, 9.80 GiB free — 22.8 was the dead 96-draft figure)")
+# The §D4 hash envelope folds the "minutes-class full read" (:396) —
+# CPU-quota-bound: 30–70 min at 200m, 8–23 min at the C12 1000m cap.
+need(r"(?i)tens[- ]of[- ]minutes|30\s*[–—-]\s*70 ?(min|minutes)|8\s*[–—-]\s*23 ?(min|minutes)",
+     "the §D4/C12 tens-of-minutes hash envelope (30–70 @200m / 8–23 @1000m — replaces 'minutes-class')")
 # C10 review-r1 MAJOR-1: owner-facing commands in docs ARE test surface — pin
 # the RUNNABLE SHAPE of the third-class Application read, not the word. Live-
 # proven wrong axes were (ns) argocd — no such namespace on ai-gpu, the
@@ -558,7 +589,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the step content is incomplete (C06 T5 marker set — diagnostics above)"
   fi
-  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the up/down ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
+  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the C12 110-based sums (180.3/115.28/9.80) + tens-of-minutes envelope, the ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
 fi
 
 printf 'PASS: radiance runbook contract checks (%d ok)\n' "$checks"

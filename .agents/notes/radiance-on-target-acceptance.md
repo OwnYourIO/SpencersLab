@@ -48,7 +48,13 @@ runbook.
 Nothing boots before these pass. Record every receipt in place (fill the
 `[VERIFY:]` cells the way `strata-host-prep-gpu-ai.md` does); they are the
 acceptance evidence trail, and several decide whether shipped values stay
-correct or move by the ONE-scalar edits of step 6.
+correct or move by the ONE-scalar edits of step 6. The post-boot HOST-TUNING
+loop — the fifteen owner-executed families (link, memlock, governor, n-gram
+DIO, swap/zram, huge-pages/TTM, runtime-PM, iommu, clocks/power, …) with the
+PROVEN-DONE list — lives in `.agents/notes/radiance-host-tuning.md` (C12):
+the gates below stay the pre-deploy bar; the tuning note is the one-variable-
+at-a-time loop AFTER the boot receipts, and the iommu/ReBAR/CWSR/ECC/zram
+reads it shares with this file carry the SAME corrected posture in both.
 
 **(a) — NAMING receipt (sysfs device+revision, both cards).** The amd-gpu
 plugin's product naming maps each card to a resource name from the MINIMAL
@@ -113,12 +119,18 @@ kubectl -n default get deploy gpu-ai-llama-swap-strata \
   -o jsonpath='{.spec.replicas} {range .spec.template.spec.containers[*]}{.name}={.resources.requests.memory} {end}'
 ```
 
-The shipped arithmetic (`charts/radiance/values.yaml` comment): radiance
-Guaranteed 64Gi + strata's 64Gi REQUEST (its limits are 110Gi — requests
-are what schedule) + the outer llama-swap 4Gi = 132 > 125.08, so a radiance
-pod beside a LIVE strata sits Pending with "Insufficient memory" — that is
-the DESIGNED handshake of the owner's manual scale-down protocol, loud and
-safe, never a bug to fix by shrinking the chart (D17). Radiance scheduling
+The shipped arithmetic (`charts/radiance/values.yaml` comment, restated at
+the C12 value: `guaranteedMemoryGi: 110` — the owner ruling "110 GiB (your
+figure)", D29): strata UP — radiance Guaranteed 110 + strata's 64Gi REQUEST
+(its limits are 110Gi — requests are what schedule) + router and system
+≈ 6.3 → 110 + 64 + 6.3 = 180.3 > 125.08, so a radiance pod beside a LIVE
+strata sits Pending with "Insufficient memory" — that is the DESIGNED
+handshake of the owner's manual scale-down protocol, loud and safe, never a
+bug to fix by shrinking the chart (the 64-era 64+64+4=132 pair died with the
+scalar; the handshake now INVERTS — at a scheduled 110, strata's
+restore-back can never co-reside). Strata DOWN: 110 + router 4.125 + system
+floor 1.158 = 115.28 ≤ 125.08 → it fits, 9.80 GiB free (§D6.2's exact live
+terms; engine rule 110 − 71.04 printed = 38.96 ≥ 4). Radiance scheduling
 REQUIRES step 3. Record the actual allocatable figure in place.
 
 **(c) — GID resolution.** `/dev/kfd` and the render nodes decide the
@@ -167,9 +179,9 @@ first:
 | ReBAR / BAR0 | `lspci -vv -d 1002:7551 \| grep -E "Region 0"` | expect the 32G-size BAR window (Above-4G + ReBAR on, RESEARCH Guide-corrections; the rig doc's own check) — `[VERIFY: printed Region 0 size]` |
 | CWSR | `cat /sys/module/amdgpu/parameters/cwsr_enable` | must read `1` — the engine REFUSES startup otherwise (RESEARCH RQ3) |
 | ECC off | `cat /sys/module/amdgpu/parameters/ras_enable; cat /sys/class/drm/card*/device/mem_info_vram_total` | expect `0` and `34208743424` bytes = 32,624 MiB (~31.86 GiB usable — the ECC-off recovery, RESEARCH RQ3) |
-| iommu | `cat /proc/cmdline` | the rig doc wants `iommu=pt`; THIS node carries the cf-77 strata trio incl. `amd_iommu=off` (strata-host-prep-gpu-ai.md §1.2 — proven for the same card path, a stronger setting than passthrough). Record which is in effect |
+| iommu | `cat /proc/cmdline` | CORRECTED GATE (C12/§D6.6 — the old C06 line expected `iommu=pt`; the gate was WRONG, not the host): `amd_iommu=off` is the proven working posture for this engine's host-staging path (`dma copy lists` ACTIVE on DMA engine 0; no RCCL in radiance; the strata trio carrier strata-host-prep-gpu-ai.md §1.2) — record which is in effect; re-verify `rocm-bandwidth-test` + `HSA_AMD_P2P`/`PCI_P2PDMA` before any TP2/P2P experiment. Side effect: off also bars the NPU driver (`amdxdna … Running without IOMMU not supported`) — the owner's fact, their call, no radiance action |
 | zram | `cat /proc/cmdline; zramctl` | `systemd.zram=0` is the real lever — masking the generator units RE-ENABLES zram (RESEARCH Guide-corrections); expect no active zram devices |
-| swap | `swapon --show` | expect empty — swap-off/zram-off is the pinned-RAM discipline; the pod's containment is its cgroup ALONE (the 64Gi pair; strata's own cgroup-is-the-only-containment law). The engine's shared-memory tier ships capped at 2Gi emptyDir (chart `shm` block) — no host action |
+| swap | `swapon --show` | expect empty — swap-off/zram-off is the pinned-RAM discipline; the pod's containment is its cgroup ALONE (the 110Gi pair, C12/D29; strata's own cgroup-is-the-only-containment law). The engine's shared-memory tier ships capped at 2Gi emptyDir (chart `shm` block) — no host action |
 | O_DIRECT (ngram disk tier) | `dd if=/dev/zero of="$(ls -d /var/lib/rancher/k3s/storage/*llama-swap* \| head -1)/.odirect-probe" bs=1M count=8192 oflag=direct && rm -f "$(ls -d /var/lib/rancher/k3s/storage/*llama-swap*)/.odirect-probe"` | the disk ngram tier REQUIRES an O_DIRECT-capable fs and the rig checklist wants ≥5 GB/s class (RESEARCH RQ1/RQ3) — record the MB/s; `[VERIFY: dd result]` |
 | claim free space | `df -h "$(ls -d /var/lib/rancher/k3s/storage/*llama-swap* \| head -1)"` | ≥120 GiB free on the 500Gi claim before the 113.60 GiB pack stages (plan arithmetic; RESEARCH RQ0 pack bytes) |
 | kernel pin | `uname -r` | lab sits at 7.3.0-1-default; the 7.3.3 `mem_info_vram_vis_total` regression is a CAUTION — re-check this gate before adopting any 7.3.3+ snapshot (RESEARCH Guide-corrections) |
@@ -186,7 +198,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
 | GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
-| Shipped sizing scalars | `guaranteedMemoryGi: 64` / `hostPoolMib: 43000` / `maxModelLen: 200000` / `maxNumSeqs: 8` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
+| Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup) / `hostPoolMib: 43000` / `maxModelLen: 200000` / `maxNumSeqs: 8` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
 | Patched table | the `amdgpu-ids` ConfigMap in `charts/amd-gpu/values.yaml` — 10 data rows (1 renamed 7551/C0 `r9700-1` row + 9 carried 1586 rows), rows spliced from the fetched v1.31.0.12 baked file (authority `sha256:382ef0d5282fd8f5c17872c9f3641518d08a93e8c8e12b190e37005d48f3b1fa`, recorded in the test fixture header) |
@@ -364,11 +376,14 @@ the normal route: ArgoCD's own reconciliation (or a UI-led sync of
 `gpu-ai-radiance`) — the sync is the controller's job, never a runbook
 command line here.
 
-Live-grounded numbers (§D2.4, read 2026-11-13): Σ running effective requests
-sit at 65.158 Gi against 125.08 Gi allocatable → free 59.92 Gi, ~4.08 Gi
-short of radiance's 64Gi — the designed step-0(b) Pending to the byte
-(`Insufficient memory`; MemoryPressure=False, pure arithmetic). This
-scale-down lifts free to 123.92 Gi and radiance schedules on its own.
+Live-grounded numbers (§D2.4 history — priced the 64-era pair: Σ running
+effective requests 65.158 Gi against 125.08 Gi allocatable → free 59.92 Gi,
+~4.08 Gi short of the then-shipped 64Gi, the designed `Insufficient memory`
+to the byte with MemoryPressure=False). Restated at the C12 value: the
+scale-down frees strata's 64Gi REQUEST → 110 + router 4.125 + system floor
+1.158 = 115.28 ≤ 125.08 with 9.80 GiB free (§D6.2) and radiance schedules
+on its own; the reverse never co-resides (110 + 64 + 6.3 = 180.3 > 125.08 —
+the handshake inverts at 110, the cutover is a real either/or, D29).
 
 OUTAGE TRUTH (D26): step 3 does not restore the router — with the pre-C10
 carrier the outer llama-swap simply sits Pending on the third class (item
@@ -393,7 +408,10 @@ ls -ln "$(ls -d /var/lib/rancher/k3s/storage/*llama-swap* | head -1)/radiance/"
 
 Expect the "radiance staging: complete" (or marker-skip) line and a listing
 where the `.rad` and its marker are owner/group `65532:65532`. A re-check of
-the 113.6 GiB file with `sha256sum` is a minutes-class full read — run it
+the 113.6 GiB file with `sha256sum` is a tens-of-minutes full read under a
+throttled init (§D4: the busybox applet is single-threaded, no SHA-NI path,
+CPU-quota-bound — 30–70 min at the 200m cap C11 ran under, 8–23 min at the
+1000m cap C12 ships; not disk-bound at either) — run it
 only if the marker is doubted (the init already gate-verified it).
 
 Non-privileged-class FIRST TRAP — loud by design, not silent: the file must
@@ -468,19 +486,24 @@ then follow the engine log. Expect, in this order:
 - the cgroup-limit WARNING line class (llmkube's observed "at 44Gi Radiance
   warned cgroup-limit" shape, RESEARCH RQ1): the engine refuses to start
   unless ≥4 GiB stays free under the memory cgroup after its reservations —
-  if THIS warning fires, the shipped `guaranteedMemoryGi: 64` is the scalar
-  that moves (Q12, step below), and it is a receipt, not a crash loop to
-  ignore.
+  at the shipped `guaranteedMemoryGi: 110` (D29) the printed 71.04 budget
+  leaves 38.96 GiB of slack, so if THIS warning fires the PROFILE moved:
+  read the printed tiers, sum them, compare to the limit (the budget-line
+  class law, D28) before any scalar edit — a limit below the printed budget
+  is a defect, never a ladder shortcut.
 
 **The gate (RESEARCH OQ3 closes here):** the profile must START and then
 HOLD 8 CONCURRENT 200K-class sessions on THIS host. The published refusal
 ("2×262k host copy does not fit beside the weights") was the reference rig,
 a smaller host (RESEARCH RQ1) — the 124 GiB box is the ruling's bet; this
-run is the datum. Pin the expectation for the receipt: pool ≈42.0 GiB
-(43000 MiB) + kv-resident host copy ≈19.3 GiB (8×200K at the ~12 KiB/token
-class) + checkpoint slots ≈8.9 GiB + misc ≈1.5 GiB → 60–70 GiB-class pins;
-the owner's ruling words are "60Gi-class" and the shipped 64Gi scalar
-honestly brackets it.
+run is the datum. Pin the expectation for the receipt: the engine's own
+printed budget is the authority — report 2 read `pinned by this process
+71.04 GiB` (pool 42.70 + the kv-resident host mirror ~32 + arena 2.00 +
+placement 1.18 + staging). The D17-era per-token arithmetic (mirror ≈19.3
+at the ~12 KiB/token class → "60–70 GiB-class pins", the owner's
+"60Gi-class" words) UNDER-RESERVED the mirror shipped 1.17.0 books
+(~20 KiB/token at 8×200K) — D28 records the slip; the shipped scalar is
+110 on the printed receipt (D29), never a per-token figure.
 
 Eight-session fill skeleton (through the peer hop, long-context bodies,
 step 9's chain): drive 8 concurrent sessions to the 200K-class depth while
@@ -498,10 +521,13 @@ shipped value; every rung is a ONE-scalar edit of the `charts/radiance/values.ya
 scalars above, landed as a git change human-run and picked up by ArgoCD's
 own reconciliation; re-run the gate after each):
 
-- ladder UP (the ≥4-GiB-free rule or pin arithmetic bites): `guaranteedMemoryGi`
-  64 → 72 → 80 → 96 — all schedulable WHILE STRATA IS DOWN (step 0(b)
-  arithmetic with strata's 64Gi gone: 96+4 < 125.08 leaves OS headroom; the
-  chart comment's 68/72 rungs and the ≤~96 ceiling, plan Q12). One scalar.
+- ladder UP (the ≥4-GiB-free rule or pin arithmetic bites): the C08-era plan
+  `64 → 72 → 80 → 96` is CLOSED at the top — C12 landed the ceiling-plus
+  outright (`guaranteedMemoryGi: 110`, the owner ruling D29: 110 + 4.125 +
+  1.158 = 115.28 ≤ 125.08 strata-down, slack 110 − 71.04 printed = 38.96 ≥
+  4). If a PROFILE change bites the rule again, re-walk the printed sums
+  before choosing any new rung (budget-line law, not the old rungs). One
+  scalar.
 - ladder DOWN by pool first: `hostPoolMib` 43000 → 40000 → 36000. One
   scalar; experts spill back onto the card, KV room shrinks — measure the
   receipt line change.

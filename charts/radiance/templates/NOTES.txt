@@ -26,10 +26,11 @@ GPU: the pod claims the R9700's named product pool, amd.com/gpu-r9700-1
 (the amd-gpu chart's patched amdgpu.ids ConfigMap + product naming make
 the name exist — D24/§R7-Q2) — the scheduler can land it on
 exactly one device. If the pod sits Pending with "Insufficient memory",
-that is the designed coexistence handshake, not a bug: strata's 64Gi request
-plus this Guaranteed 64Gi exceed the node's 125.08 GiB, and the owner's
-manual strata scale-down is the protocol (the runbook owns down/restore-back
-— do not "fix" it by shrinking the chart's scalars).
+that is the designed coexistence handshake, not a bug: radiance's
+Guaranteed 110 pair plus strata's 64Gi request (with the router + system
+floor) sums to 110 + 64 + 6.3 = 180.3 > the node's 125.08 GiB, and the
+owner's manual strata scale-down is the protocol (the runbook owns
+down/restore-back — do not "fix" it by shrinking the chart's scalars).
 
 Next step — the on-target acceptance + host-prep runbook
 (.agents/notes/radiance-on-target-acceptance.md, cf-143 C06): the naming

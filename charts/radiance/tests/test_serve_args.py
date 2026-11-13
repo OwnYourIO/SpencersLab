@@ -139,30 +139,46 @@ def test_dual_edit_guard_model_path_matches_service_repin():
 
 
 def test_scalars_commented_with_the_arithmetic():
-    """AC6 (C08 T-D re-pin of the needles): the guaranteedMemoryGi comment
-    ANSWERS '64 too low or too high?' IN PLACE — the amendment mandates four
-    token families, all read from the comment: the D17 derivation (pool ~42 +
-    copy ~19.3 + slots ~8.9), the ladder-UP bounds with the strata-DOWN
-    precondition (…→96 while strata is down), the ≥4-GiB-free-under-cgroup
-    rule, and the 64+64+4 > 125.08 designed-Pending handshake; 64 is marked
-    the class-median start. (Pre-amendment this arm pinned '60Gi-class' +
-    '125.08' + 'Pending' — the sharpening keeps the last two and adds the
-    rest; the value itself stays pinned by the scalar-splice leg, so a
-    comment rewrite that drops a mandated fact reddens HERE, not silently.)"""
+    """AC6, era-pinned twice: C08 T-D demanded the D17 per-token derivation
+    (19.3/8.9) and a class-median marking; C12 AC4 (ORIGINAL) replaced that
+    basis with the printed-receipt arithmetic at the plan's 96; the C12
+    AMENDMENT (owner batched answer "110 GiB (your figure)", D29) re-points
+    the value AND the sums — the comment must now answer 'where did 110 come
+    from': the 71.04-GiB printed budget (report 2), the owner ruling over
+    D28's 96 ceiling, §D6.2's exact terms (UP 110+64+6.3 = 180.3 > 125.08 —
+    the designed Pending survives; DOWN 110 + router 4.125 + system 1.158 =
+    115.28 <= 125.08, 9.80 GiB free), the engine-rule walk 110 - 71.04 =
+    38.96 >= 4, and the prints-its-own-budget law line. RED today (C12): the
+    shipped comment still carries the 64-era derivation; the value itself
+    stays pinned by the scalar-splice leg, so a comment rewrite that drops a
+    mandated fact reddens HERE, not silently."""
     text = R.chart_values_text()
     flat = " ".join(text.split())
-    for tok in ("19.3", "8.9"):
-        assert tok in flat, f"C08 T-D: the derivation term {tok} is missing from the comment (D17 chain)"
-    assert "96" in flat and re.search(r"(?i)strata[^\n]{0,120}down|down[^\n]{0,80}strata", flat), (
-        "C08 T-D: the ladder-UP bound (…96) with the strata-DOWN precondition is not stated"
+    assert "71.04" in flat, (
+        "C12 AC1: the receipt anchor 71.04 (the engine's printed 'pinned by this process "
+        "71.04 GiB', report 2) is absent — the scalar must be receipt-anchored (D28 class law)"
     )
-    assert re.search(r"(?i)(≥ ?4|>= ?4|4 GiB)", flat), (
-        "C08 T-D: the ≥4-GiB-free-under-cgroup rule is missing"
+    assert re.search(r"(?i)owner ruling|your figure|D29", flat), (
+        "C12 AC1 amendment: the comment does not mark the 110 as the OWNER'S RULING "
+        "('110 GiB (your figure)', D29 over D28's 96) — provenance of a ruling differs from a "
+        "plan figure; §D6.1 says 110 is nowhere a radiance plan number (it is strata's limit "
+        "envelope), so the comment must say who chose it and why it is legal"
     )
-    assert "125.08" in flat and "Pending" in flat, (
-        "C08 T-D: the coexistence arithmetic (64+64+4 > 125.08 ⇒ designed Pending handshake) "
-        "left the comment — it is the 'too high is the FEATURE' answer"
+    assert re.search(r"110\s*\+\s*64\s*\+\s*6\.3|180\.3[^.]{0,30}125\.08", flat) and "Pending" in flat, (
+        "C12 AC1 amendment: the strata-UP arithmetic (110+64+6.3 = 180.3 > 125.08 ⇒ designed "
+        "Pending, step-3 handshake restated at 110) is not in the comment"
     )
-    assert re.search(r"(?i)median", flat), (
-        "C08 T-D: 64 is not marked the class-median start (the answer's landing point)"
+    assert re.search(r"115\.28|110\s*\+\s*4\.125", flat) and "9.80" in flat, (
+        "C12 AC1 amendment: the strata-DOWN schedulability (110+4.125+1.158 = 115.28 <= 125.08, "
+        "9.80 GiB free — §D6.2's exact live terms) is not stated — the old 96-pair (102.3/22.8) "
+        "dies with the ruling"
+    )
+    assert "38.96" in flat and re.search(r"(?i)(≥ ?4|>= ?4)", flat), (
+        "C12 AC1: the engine-rule walk (110 - 71.04 = 38.96 >= 4 free-under-cgroup) is missing — "
+        "the >=4 rule stated WITHOUT its computed slack at the shipped value is the vocabulary-"
+        "not-arithmetic class §12.11 names"
+    )
+    assert re.search(r"(?i)prints? (its|the) own budget", flat), (
+        "C12 AC1/D28: the budget-line law line ('the engine prints its own budget — read it') "
+        "is missing — the sentence that makes the NEXT profile change walk the receipt"
     )

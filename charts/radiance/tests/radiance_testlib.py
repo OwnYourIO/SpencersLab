@@ -48,7 +48,28 @@ PACK_REPO = "StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe"
 PACK_BYTES = 121_969_901_568
 PACK_LFS_SHA = "0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20"
 SCALARS = {
-    "guaranteedMemoryGi": 64,     # owner's "60Gi-class" ruling verbatim, Q12 ladder up to ~96
+    # C12 AC1 (amendment 2026-11-13, D29) — SHIPPED VALUE 110, OWNER RULING.
+    # The 64 shipped at C02/D17 was a PLANNING miss: the live boot printed its
+    # own budget — pool 42.70 + kv-resident host mirror ~32 + arena 2.00 +
+    # placement 1.18 + staging = "pinned by this process 71.04 GiB" (report 2)
+    # vs a 64.00 cgroup => OOM. D28 planned the ladder ceiling 96; asked "which
+    # value should charts/radiance ship for gpu-ai?", the owner answered
+    # verbatim "110 GiB (your figure)" — D29 records the ruling (D28's reasoning
+    # stands as history, append-only). 110 is NOT a radiance plan figure in the
+    # repo (§D6.1): it is STRATA's own limit on this node (charts/llama-swap/
+    # values.yaml:1319-1325, the owner's proven "container dies BEFORE the node"
+    # envelope) — the ruling EXTENDS that node law to radiance. Slack: 110 -
+    # 71.04 = 38.96 >= 4 with margin (vs 96's 24.96); the RAM-ngram tier is
+    # DEAD at BOTH (71.04+47.68 = 118.72 > 110, §D6/AC2-iv) — 110 is slack,
+    # not a tier enabler. Schedulability (§D6.2 exact terms): strata DOWN
+    # 110 + router 4.125 + system floor 1.158 = 115.28 <= 125.08, 9.80 GiB
+    # free; strata UP 110 + 64 + 6.3 = 180.3 > 125.08 => designed Pending
+    # (step-3 handshake unchanged, inverted restore-back at 110). The live 94
+    # is a LIMIT-ONLY hand-edit (req 64) => the pod is Burstable RIGHT NOW;
+    # the 110 PAIR restores Guaranteed at sync (AC6) — repo is the source of
+    # truth, 94 exists nowhere in git. Class law: sum the tiers the engine
+    # PRINTS before shipping a memory scalar.
+    "guaranteedMemoryGi": 110,
     "hostPoolMib": 43000,
     "maxModelLen": 200000,
     "maxNumSeqs": 8,
@@ -147,7 +168,17 @@ REJECTED_GATE_FORMS = ("--check", "--status", "-cs", "-c -s")
 
 # D15: Guaranteed is a POD-class property — the init must carry the equal pair
 # too or the pod silently downgrades to Burstable.
-INIT_PAIR = {"cpu": "200m", "memory": "2Gi"}
+# C12 AC1 raises the cpu knob 200m -> 1000m on §D4's measured law: the
+# first-ever hash is CPU-QUOTA-bound, not disk-bound (busybox sha256sum is
+# single-threaded, no SHA-NI path; live 0.2000 core exactly + io PSI 0).
+# Wall = 121,969,901,568 B / (cores x 150-350 MB/s): 200m => 30-70 min,
+# 1000m => 8-23 min; MORE THAN 1 CORE IS POINTLESS (single-threaded applet).
+# Every pod loss before completion throws the whole elapsed away (the hash
+# restarts at byte 0; only the download resumes). SEPARABLE KNOB: reverting
+# this pair is a one-line no-op to the memory fix (owner's call if the
+# 30-70 min status quo is preferred). Memory stays 2Gi/2Gi (measured
+# workingSet 4.1 MB — generous by design; do not shrink).
+INIT_PAIR = {"cpu": "1000m", "memory": "2Gi"}
 
 # --- image ledger (D2: tag + digest-in-comment, NO digest field) ------------------
 IMAGE_REPO = "docker.io/stilldeadcode/radiance"

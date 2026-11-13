@@ -121,7 +121,9 @@ def test_ac2_container_capabilities_and_escalation():
 @helm_skip
 def test_ac2_guaranteed_pair_with_named_pool():
     """requests == limits EXACTLY on the serve container, extended resource
-    included: {cpu 8, memory 64Gi, GPU_CLAIM: 1} — extended
+    included: {cpu 8, memory 110Gi (C12 AC1 amendment: the 64 era died at the
+    live OOM — the engine printed a 71.04 GiB budget — and the owner ruled 110
+    "your figure", D29), GPU_CLAIM: 1} — extended
     resources require equal integer pairs and Guaranteed is the ruling's pod
     class (Q7 + D15 + Q9 named pool)."""
     docs, _ = R.render(service=False)
@@ -144,7 +146,9 @@ def test_ac2_guaranteed_pair_with_named_pool():
 def test_ac2_init_container_is_guaranteed_too():
     """D15: Guaranteed is a POD-class property — ANY container without equal
     pairs silently downgrades the pod to Burstable. The radiance-fetch init
-    carries the equal pair (200m/2Gi) and the matching UID posture."""
+    carries the equal pair (1000m/2Gi — C12 raises the cpu knob on §D4's
+    CPU-quota-bound hash law; separable revert is one line) and the matching
+    UID posture."""
     docs, _ = R.render(service=False)
     init = R.fetch_init(R.deployment(docs))
     res = R.resources(init)

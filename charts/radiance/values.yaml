@@ -28,29 +28,42 @@ app-template:
   # --- the sizing scalars (D15/D17): the arithmetic + ladder home the C06
   # runbook moves (pool -> ctx -> last-resort prefix-tier swap with owner
   # sign-off). app-template's values schema pins args entries to STRINGS and
-  # YAML offers no anchor mechanism turning int 64 into "64Gi" or a schema-
+  # YAML offers no anchor mechanism turning int 110 into "110Gi" or a schema-
   # valid string, so the args/resources carriers below hold the string FORM
   # of each number and these ints are the ledger: test_ac3_scalar_splice
   # renders the args AND resources and reds any half-move of one side — the
   # equality against these scalars is what makes the carriers one source.
   #
-  # guaranteedMemoryGi = 64 answers "is 64 too low or too high?" AT this
-  # scalar. TOO HIGH BESIDE LIVE STRATA IS THE FEATURE: 64 (this) + 64
-  # (strata's request) + 4 (llama-swap outer) > 125.08 GiB node
-  # allocatable, so a radiance pod sits Pending with "Insufficient memory"
-  # next to a live strata pod — LOUD, SAFE, the designed handshake of the
-  # owner's manual scale-down protocol (runbook steps 3/10 own down +
-  # restore-back); not a bug to "fix" by shrinking. TOO LOW is a receipt
-  # question, not a guess: the D17 derivation lands the boot pins at the
-  # 60-70 GiB class (pool 43000 MiB ~42 GiB + the --kv-resident 8x200K
-  # host copy ~19.3 GiB + checkpoint slots ~8.9 GiB + misc) and the engine
-  # needs >= 4 GiB free under the cgroup, so the on-target startup receipt
-  # moves this scalar UP (68/72, schedulable to ~96 only while strata is
-  # down — Q10's protocol). The ladder DOWN runs through hostPoolMib/ctx
-  # steps, never this scalar below the class floor. 64 is the
-  # class-median start of that band (Q10 "60Gi-class" ruling,
-  # receipt-gated — the Q12 on-target ladder confirms).
-  guaranteedMemoryGi: 64
+  # guaranteedMemoryGi = 110 — the OWNER RULING (D29; batched answer verbatim
+  # "110 GiB (your figure)" to "which value should charts/radiance ship for
+  # gpu-ai?"), superseding D28's documented 96 ceiling as THE VALUE ONLY.
+  # Why no plan figure survived: the engine prints its own budget — report 2:
+  # pool 42.70 + the --kv-resident host mirror ~32 + activation/arena 2.00 +
+  # placement-flag 1.18 + staging = `pinned by this process 71.04 GiB`
+  # against the old 64.00 cgroup → live OOM at the first boot that ever
+  # hashed. D17's per-token derivation reserved the mirror at ~19.3 GiB
+  # (RQ1's ~12 KiB/token rate) while shipped 1.17.0 books ~20 KiB/token
+  # (~32 GiB at 8×200K) — the class law (D28): READ the printed tiers, SUM
+  # them, compare to the limit; a limit below the printed budget is a defect,
+  # not a ladder step. 110 is honestly sourced (§D6.1): it is NOT a radiance
+  # plan figure anywhere — it is STRATA's own proven envelope on this node
+  # (the owner's "container must die BEFORE the node" ruling,
+  # charts/llama-swap/values.yaml:1319-1325); the ruling extends that node
+  # law to radiance. Sums at 110 (allocatable 125.08, §D6.2): strata DOWN
+  # 110 + router 4.125 + system floor 1.158 = 115.28 ≤ 125.08 → fits with
+  # 9.80 GiB free; strata UP 110 + 64 + 6.3 = 180.3 > 125.08 → radiance
+  # sits Pending with "Insufficient memory" — the DESIGNED handshake of the
+  # owner's scale-down protocol restated at 110 (runbook steps 3/10; the
+  # handshake INVERTS: at 110 strata's restore-back can never co-reside a
+  # scheduled radiance — the cutover is now a real either/or). Engine rule:
+  # 110 − 71.04 = 38.96 ≥ 4 ✓ with margin — the ladder-UP plan (64→…→96) is
+  # CLOSED by this value; the ladder DOWN still runs through hostPoolMib/ctx
+  # steps, never this scalar below printed-budget + 4. The RAM-ngram tier is
+  # DEAD at 110 too (71.04 + 47.68 = 118.72 > 110): 110 buys prefill-burst
+  # slack, not a tier. The live hand-bump (limit 94 over request 64 →
+  # Burstable) exists nowhere in git — this PAIR lands on the next sync and
+  # restores Guaranteed.
+  guaranteedMemoryGi: 110
   hostPoolMib: 43000
   maxModelLen: 200000
   maxNumSeqs: 8
@@ -278,11 +291,11 @@ app-template:
             # post-C07, a stray bare claim sits Pending-forever.
             requests:
               cpu: "8"
-              memory: "64Gi"
+              memory: "110Gi"
               amd.com/gpu-r9700-1: "1"
             limits:
               cpu: "8"
-              memory: "64Gi"
+              memory: "110Gi"
               amd.com/gpu-r9700-1: "1"
           securityContext:
             # The repo drop-ALL standard plus the engine's one carry:
@@ -365,13 +378,20 @@ app-template:
             # THE POD-CLASS LAW, commented where it renders (D15): Guaranteed
             # is a POD property — ANY container without an equal
             # requests==limits pair silently downgrades the WHOLE pod to
-            # Burstable. The init's pair is 200m/2Gi (IO-bound budget:
-            # curl's buffers, not the tree size).
+            # Burstable. C12/§D4 raises the CPU half 200m -> 1000m: the
+            # first-ever pack hash is CPU-quota-bound, NOT disk-bound — the
+            # busybox sha256sum applet is single-threaded with no SHA-NI
+            # path (§D4 measured exactly 0.2000 core with io PSI 0) — so one
+            # core is the whole gain (30-70 min -> 8-23 min; more than one
+            # core is pointless) and every pod loss before completion
+            # restarts the hash at byte 0. SEPARABLE: reverting this knob
+            # is one line, leaving the memory fix intact. Memory stays
+            # 2Gi/2Gi (measured workingSet 4.1 MB — generous by design).
             requests:
-              cpu: 200m
+              cpu: 1000m
               memory: 2Gi
             limits:
-              cpu: 200m
+              cpu: 1000m
               memory: 2Gi
           securityContext:
             # Non-privileged like the serve container (Q7) — and the same

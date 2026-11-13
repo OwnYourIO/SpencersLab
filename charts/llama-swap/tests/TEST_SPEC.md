@@ -4133,3 +4133,162 @@ llama-swap 498P/9S/0F, amd-gpu 29P, vllm 36P, naming 5 ok bare + A/B/C live
 re-proofs + synthetic NON-FLIP teeth, runbook 5 ok, tp2 3 ok, dashboards
 5 ok, surface 9 ok bare / 10 ok explicit M1..M8 — all witnesses HOLD; dev's
 AC1 edit + AC4.3 ledger line flip the three radiance reds together.
+
+### 12.11 C12 test round — the budget-line class; 64→96 re-pins + the host-tuning note suite (test session, 2026-11-13; LIVE defects round 4: OOM-at-64 + 5.1-tok/s decode; D28)
+
+**Receipt provenance (why 96, not a vibe):** the shipped `guaranteedMemoryGi: 64`
+could NEVER hold the profile — the engine PRINTS its own budget and report 2
+states it: pool 42.70 + `--kv-resident` host mirror ≈32 + arena 2.00 +
+placement 1.18 + staging = `pinned by this process 71.04 GiB` against a 64.00
+cgroup → `startup stopped: out of memory`. The owner's out-of-band 94 boots and
+SERVES but is drift — 94∉git, and the next sync re-applying 94 is the failure
+mode AC6 closes. 96 = D17's OWN documented ladder ceiling, receipt-anchored
+(71.04 + ≥4-GiB-free rule + ~21 GiB burst headroom). The init-CPU raise
+200m→1000m rides §D4's measured law (busybox sha256sum single-threaded, no
+SHA-NI, live 0.2000 core + io PSI 0 ⇒ CPU-quota-bound: 200m = 30–70 min,
+1000m = 8–23 min, >1 core pointless); separable one-line revert, ship the raise.
+
+**Honesty ledger (sibling of §12.10's):** the defect was AUTHORED at C02/D17
+and survived every review round because the suite (and the plan) checked the
+comment's VOCABULARY (derivation present, ladder present, handshake present) —
+never the ARITHMETIC against the engine's printed tiers. D28 names the deeper
+slip: RQ1's VERDICT said verbatim "don't plan off any per-token figure; the
+receipt prints it" — and D17 planned off per-token figures anyway.
+
+**Red ledger at this handoff (all name C12; the C11 trio is GREEN since its
+landing — radiance baseline was 46P/0F):**
+
+| leg | today | greens when |
+|---|---|---|
+| `test_render::test_ac2_guaranteed_pair_with_named_pool` | RED — want memory 96Gi vs rendered 64Gi (constants-driven) | AC1 scalar edit in values.yaml |
+| `test_render::test_ac2_init_container_is_guaranteed_too` | RED — want cpu 1000m vs rendered 200m | AC1 init-CPU knob (SEPARABLE — if the owner holds 200m, this leg reverts with the knob, one site) |
+| `test_serve_args::test_ac3_scalar_splice_is_single_source` | RED — `app-template.guaranteedMemoryGi` 64 ≠ SCALARS 96 | same scalar edit |
+| `test_serve_args::test_scalars_commented_with_the_arithmetic` | RED — no `71.04`, no `6.3`, no "prints … own budget", no ceiling/receipt mark | dev's WHY rewrite (C08's 19.3/8.9 + class-median basis REPLACED per AC4 — recorded supersession, not a weakening: the new arms are arithmetic the live boot proved) |
+| runbook **T2** | RED — "never states the 96 (receipt-anchored guaranteedMemoryGi) scalar" | doc fold at :189-class sites (teeth: conforming fixture GREEN, tree RED; `96 ?Gi` cannot match strata's 64Gi lines) |
+| runbook **T3** | RED — gate (b) lacks the `6.3` term | step-0(b) rewrite `96+64+6.3 > 125.08` |
+| runbook **T5** | RED ×3 — UP-pair, DOWN-pair/22.8, tens-of-minutes envelope | :362-369 + :394-395 + :471 folds (the old 65.158/59.92/4.08 pins were SUPERSEDED by AC1's new sums, not deleted silently — the docs may keep them as §D2.4 history; the suite no longer prices the dead pair) |
+| **NEW** `tests/notes/radiance-host-tuning.sh` T1–T4 | RED ×4 — file absent (the designed shape) | dev lands `.agents/notes/radiance-host-tuning.md` per AC2 |
+
+**Host-tuning suite (T1–T4, notes-suite idiom):** T1 posture/provenance + the
+citation resolver over THREE sources (RQ→RESEARCH `^## RQn —`, §D→EXPLORE
+`^## §?Dn`, D-note→DECISIONS ledger), shipped with its own three-state
+fixture-probe INSIDE the leg (conforming cite green, stale cite red, then the
+real doc through the proven-live path — §12.5/§12.7 applied from authoring;
+the probe caught a real SyntaxError in the T4 POSTURE pattern during this
+round — proof the harness earns its keep). T2 fifteen AC4 tokens in
+heading/numbered-item form (lookbehind bars `LimitMEMLOCK`-style prose
+matches), AC2 order enforced, + boot-param paste strings (`amd_iommu=off`,
+`amdgpu.lockup_timeout=30000`, `ttm.page*`) + printed-112.00-as-authority +
+§PROTOCOL's budget-line arm (`pinned …` vs `limit ≥ pinned + 4`). T3 the
+owner-executed marker law extended to HOST writes (systemctl mutations,
+cpufreq, echo/tee→/sys|/proc|/etc, swapoff -a, modprobe, grubby) — marker on
+same/previous line, kubectl-exec barred outright; marker/hash-bypass mentions
+must be owner/human/prohibition-framed. T4 two-doc coherence: note × runbook
+must BOTH carry the corrected iommu posture, the tens-of-minutes envelope and
+the 71.04/96 arithmetic, and NEITHER may re-state `iommu=pt` as the live
+requirement without a correction word — the exact class that bit (runbook
+gate pt vs live host off; off is the SUPPORTED posture for the host-staging
+path, gate wrong). Teeth: all four legs proven red-on-stale-fixture and
+green-on-conforming (/tmp harness, RAD_TUNING/RAD_RUNBOOK overrides).
+
+**naming.sh (deliverable 6): NO re-pin — CONFIRMED.** C12 touches zero carrier
+files and moves zero claim lines (`amd.com/gpu*:<pos-int>` census unchanged by
+the memory/cpu fold), so `AMD_GPU_FLIP_COMMIT=<C12 sha>` takes the NON-FLIP
+path. Witnesses this round: LIVE on plans commit 9248151c9 → `ok: n2 … NON-FLIP
+…`; synthetic C12-shape commit (radiance values comment + doc, no claim move) →
+NON-FLIP accepted; the C11 census-reject and carrier-reject teeth untouched.
+
+**AC3/TP2 verified-nil:** `tests/notes/radiance-tp2.sh` carries ZERO
+iommu/zram/O_DIRECT needles (grep this round) — AC3's :254 + §3 pointer lines
+ride no re-pin; re-check tp2 3 ok after dev lands (expected).
+
+**CLASS LAW (§12.x list — D28's law as a test rule):** *before shipping a
+memory scalar, SUM the tiers the engine prints and compare to the pod limit —
+a limit below the printed pinned budget is a DEFECT, not a ladder step.* The
+budget line is a LEG, not a vibe: §PROTOCOL's `limit ≥ pinned + 4` check is
+suite-pinnable (T2), and the two-doc coherence arm (T4) exists because a
+gate stated in two docs that disagree is worse than either doc alone —
+vocabulary-not-arithmetic is §12.10's class seen from the sizing side: legs
+that check which NUMBERS APPEAR cannot catch numbers that are WRONG.
+
+Bar at this handoff (red-first): radiance **42P/4F** (the table; the C11 trio
+landed green), llama-swap 498P/9S/0F, amd-gpu 29P, vllm 36P, naming 5 ok bare
++ NON-FLIP witnesses, runbook **T1/T4 ok + T2/T3/T5 red-naming-C12**,
+host-tuning 4 red (absence) — tp2 3 ok, dashboards 5 ok, surface 9/10 ok
+(combined below); dev's AC1 values edit + the three doc folds flip the named
+legs together.
+
+### 12.12 C12 amendment re-point — the 110 owner ruling + the five §D6 truth corrections (test session, 2026-11-13, mid-round; dated-marker law, C08 precedent)
+
+The owner's batched answer landed while §12.11's round was in flight: shipped
+value **110 GiB, "110 GiB (your figure)"** (D29 — supersedes D28's 96 ceiling
+AS THE VALUE ONLY; §12.11's 96-era rows stand as history, append-only). Also
+§D6 (scout round 7) FALSIFIED five of the drafted AC2 checklist truths. This
+section records the re-point; the amendment block of chunks/C12.md governs.
+
+**Moved (96→110 + §D6.2 sums, one site each):** testlib SCALARS comment/value
+(the 110 provenance paragraph: owner ruling over the plan's 96; 110 =
+STRATA's own limit envelope §D6.1; slack 110−71.04=38.96; UP 110+64+6.3 =
+180.3 > 125.08; DOWN 110+4.125+1.158 = 115.28, 9.80 free; the live 94 is
+LIMIT-ONLY req-64 ⇒ pod is BURSTABLE right now — the 110 PAIR restores
+Guaranteed at sync, AC6); the arithmetic leg's needles (`71.04`, owner-ruling
+mark, up-pair incl. Pending, down-pair, `38.96`+`≥4` computed-slack pairing,
+prints-its-own-budget kept); runbook T2 scalar needle — **now scope-aware by
+necessity**: unlike 96, bare `110Gi` ALREADY exists as STRATA's limit
+(doc :117/:195, llama-swap values:1319-1325) — the needle requires the
+`guaranteedMemoryGi` context line-local (teeth: a bare-110 injection stays
+RED; reverting BOTH 110 statements redds T2); runbook T3 step-0(b) now
+demands BOTH sums in the gate section (UP strict/180.3 alt, DOWN
+115.28|110+4.125); runbook T5 UP/DOWN pairs + `9.80` (22.8 was the dead
+96-draft figure). The four radiance pytest legs unchanged in SHAPE (all
+constants-driven): they now red at 110/180.3/115.28/38.96 — same dev edits
+flip them. naming: C12 STILL touches zero claim surfaces — NON-FLIP path
+LIVE witness this round: the amendment plans commit
+1aceb102f classifies as NON-FLIP (no carrier file, census unchanged).
+
+**The five §D6 truth-correction arms (folded into host-tuning T2 — "a suite
+that blesses a falsified remedy is §12.10's class from the other side"):**
+LINK must carry the `TargetSpeed` discriminator + the REPRINTED/proven-
+downgrade fact, and re-stating retrain-vs-luck as OPEN (without a correction
+word) REDS; GOVERNOR must carry a PERSISTENCE ROUTE (cpupower.service/
+systemctl enable/tmpfiles/udev/tuned/tlp/kernel param) + the did-not-persist
+truth, and any `frequency-set` without the reverts-on-reboot disavowal REDS
+(the runtime-write remedy was live-falsified: host reads performance NOW yet
+the fresh-boot report printed powersave); MEMLOCK must carry the corrected
+probe (`crictl ps → inspect .info.pid → /proc/<pid>/limits`), the PAUSE-
+SANDBOX attribution of the ×8 figure, the container truth `8.00 MiB`, and
+the node-lane-only adjudication (no PodSpec rlimit/no containerd
+default_ulimits; precedent strata-host-prep-gpu-ai.md:115-118) — attributing
+16787369984 outside sandbox-context REDS; DIO-NGRAM must carry the kill-sum
+`118.72` + the dead-verdict + the real options (stay-4KiB-spans vs XFS/ext4
+move — storage lane, not a chart value) + the measured `3.42` GB/s (< the
+runbook's own ≥5 gate), and selling `--ngram-placement ram` without dead-
+context REDS; IOMMU must name the GATE WRONG + carry the `amdxdna`/NPU side
+effect. §PROTOCOL's budget line gained the 110-era terms (71.04/110/38.96).
+Teeth (all RED naming the family): openlink, runtimegov, ramtier, sandbox,
+nosidefx; conforming note GREEN T1–T4 (fixture rewritten to the corrected
+truths first — dev writes THESE, not the draft).
+
+**Suite self-defects caught by the fixture-probe THIS round (§12.5 earning
+rent, twice):** (a) the HOST_WRITE arm's `(reboot|shutdown)[ \t]` matched
+PROSE ("across the reboot (", "reboot at 49% busy") — tightened to the
+command shape `reboot|shutdown( now| -flag|EOL)`: a mutation-detection arm
+that fires on narrative makes dev mark PROSE and de-values the marker law;
+(b) the resolver's DECISIONS-ledger regex required a bullet — D29 was folded
+as a wrapped entry whose date line starts indented without `- ` →
+bullet-optional now. Both classes: an arm's own vocabulary-vs-shape problem
+— the conforming fixture is what surfaces them before dev round.
+
+**Ledger updates to §12.11's table:** its "96-based" rows are the superseded
+draft state (value ruling + sums moved here); the red-first SHAPE is
+unchanged — 4 pytest legs, runbook T2/T3/T5, tuning T1–T4 absent-file;
+witnesses unchanged (498P/9S, 29P, 36P, naming bare + NON-FLIP, tp2 3 ok,
+dashboards 5 ok, surface 9/10 ok). `AMD_GPU_FLIP_COMMIT=<C12 landing sha>`
+expectation unchanged: NON-FLIP (110 changes memory, not claims).
+
+**LAW LINE (§12.x list):** *when a live probe falsifies a checklist truth,
+the suite that pins the family must move with it — pin the CORRECTED claim
+(the discriminator, the persistence route, the probe method, the kill-sum),
+not merely the family NAME. Vocabulary legs survive falsification of the
+thing they name: T2 checked LINK/GOVERNOR/MEMLOCK EXISTED while five of
+their drafted remedies were being disproven on-node (§D6).*

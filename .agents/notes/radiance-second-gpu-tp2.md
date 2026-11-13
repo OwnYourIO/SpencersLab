@@ -72,7 +72,12 @@ of decode" measurement applies to **slot-mounted** cards [S16], not this
 path. Whether the lab's board actually caps is a decode-relevant unknown
 until measured on-target (expectation, not claim: decode falls with the
 power ceiling; prefill mostly not). Mark it OPEN — measure in the TP2
-acceptance run.
+acceptance run. The live single-card re-read of this caveat belongs to the
+C12 host-tuning note's POWER-CLOCKS family
+(`.agents/notes/radiance-host-tuning.md`): the radiance boot's 300 W
+`power_cap` is NOT the ~120 W OCuLink cap class of this section — read
+sclk ramp + `power_cap_usd` under load there before assuming this box caps
+the card.
 
 ## 4. Re-enumeration checklist — the rocrVisibleDevices index law
 
@@ -251,8 +256,9 @@ and the ngram table is per-process unless `ram=DIR` sharing (§10) [RQ1].
 ## 10. Host-prep deltas vs the single-card list
 
 The single-card host gates (C06 step-0(e): ReBAR, CWSR=1, ECC-off,
-`iommu=pt`, zram-off, O_DIRECT ≥5 GB/s for the disk ngram tier, kernel
-caution) stay; TP2 adds or sharpens:
+`amd_iommu=off` (posture corrected by C12/§D6.6 — the old gate's
+`iommu=pt` expectation was the wrong one), zram-off, O_DIRECT ≥5
+GB/s for the disk ngram tier, kernel caution) stay; TP2 adds or sharpens:
 
 1. **ReBAR `size=32G` on BOTH cards** — TP2-critical: P2P needs the large
    BAR (at TP1 the no-ReBAR tax is only 0.4–1.8% decode; it is "critical
