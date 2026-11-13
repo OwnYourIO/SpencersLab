@@ -780,6 +780,44 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   radiance 46P with an EMPTY render-diff (comment-only values edits — asserted), naming
   NON-FLIP at C13's sha, witnesses unmoved.
 
+  - 2026-11-13 research+coord D33 (§R9 — the owner's two pushbacks, both about PERF, and three of
+    MY OWN claims retired on evidence): (A) **APU**: my "not costing you anything measurable
+    today" was RIGHT-BUT-OVERSTATED and is NARROWED, not repeated. The community's "yes it costs"
+    resolves into exactly two documented couplings — (1) the **Strix-Halo firmware power-limit tie**
+    (the external-GPU power limit is *tied to the APU's BIOS power limit* — strixhalo.wiki, echoed
+    by the r/GMKtec 120 W and Framework threads), which our own receipt FALSIFIES TODAY (the engine
+    prints `power cap 300 W (default 300 W, max 300 W)` — we are not in the capped class), and
+    (2) **shared-LPDDR5X contention while the iGPU actually COMPUTES** (Framework's "256 GB/s would
+    be a bottleneck" is about the APU *serving*, not idling) — real, and UNMEASURED for our
+    co-serving case, which is why it is now an ACTION (a loaded-router A/B) rather than a verdict.
+    No attested cost for idle enumeration (ROCr/HSA knobs all target APU-users; radiance prints
+    `1 device(s) [0:gfx1201]`). NO chart knob ships from this round: every route that would
+    "recover" an APU cost (BIOS iGPU disable, vfio bind, `ip_block_mask`) either kills the
+    `gpu-8060s` router claim (D21/B1 — the router would unschedule, cf-143's own C10 outage class)
+    or is module-global poison. (B) **DEG1**: it is Minisforum's **passive** OCuLink Gen4 x4 dock
+    (vendor "PCIE4.0*4 (up to 64GT/s)"; STH: "a PCB that handles the Oculink to PCIe slot as well
+    as the power functions") — **no switch, no retimer, not hot-plug-capable, with a strict power
+    sequence** (THOSE are its "settings"), and `c2:00.0`/`c3:00.0` are **the R9700's own integrated
+    Navi switch pair** (`1002:1478/1479`, daimonionnn: "a plain direct attachment, not a tunnel or a
+    dock switch"). So EXACTLY ONE physical link negotiates (root port `00:03.1` ↔ card, across cable
+    + passive dock), its x4 width is by design, and its 8-vs-16 GT/s speed — third boot, reboot-
+    surviving, under load — is the single defect. Best fit for the owner's forgotten setting is a
+    **host-BIOS per-slot speed pin** (radiance's own `PREPARING_YOUR_RIG.md`: setting slot link speed
+    wrong "stops the slots training at a lower generation"; tldevtech EVO-X3: explicit **Gen4, not
+    Auto** — SEO-sourced, trust-flagged, no primary AMD/GMKtec BIOS doc exists), with the dock's
+    power sequence + cold-boot discipline as the electrical branch; `LnkCtl2 TargetSpeed` under load
+    is the one-minute discriminator (8.0 ⇒ BIOS pin; 16.0 ⇒ cable/dock/power-sequence). RETIRED:
+    §D6.6's "(switch upstream)" label (the bridges are the CARD's), and the engine doc's own advice
+    that **"a link stuck one level down has been cleared by a reboot"** is WITNESSED-FALSE on this
+    node (we rebooted; the 17:20:25Z boot re-warned) — it must not be presented as a fix.
+    Payoff stated honestly: Gen4 x4 ⇒ prefill 249→~450–500 tok/s, warm decode 19.3→~35 t/s (the
+    compute floor caps it), TTFT halves — it does NOT buy the x4 width wall, the 41.52 GiB
+    experts-from-host fact, or the 140–160 class (that road is TP2). UNVERIFIED, kept labelled:
+    any idle-APU DRAM tax (no source either way), Strix-Halo fabric lane-sharing between `00:08.1`
+    and `00:03.1` (AMD publishes no IOD block diagram; bounded by the live asymmetric link reads),
+    whether a mid-session dock power-state change can latch a degraded negotiation across reboots.
+    Authority: RESEARCH.md §R9 (lines 1907–2400).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

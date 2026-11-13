@@ -1901,3 +1901,500 @@ deviations: none — answered the five questions in order, read-only; no file wr
 friction: the boot-B decomposition does not close exactly (parts sum 77.88 vs printed whole 71.04) — some terms double-count in the prose; resolved by bounding the residual instead of trusting the sum, flagged in the uncertainty list. nodes/cluster not re-probed this round — §D6.2's same-day reads cited as the live corroboration rather than re-reading (launch supplied the receipts and the round is read-only-by-evidence).
 open_questions: [true 8-session peak remains class-(c) until runbook step 6 runs (this section's capture plan is the closing instrument); engine's `pinned by this process` scope taken at label value — unevictable/memory.current cross-check in the gate will confirm; whether arena/placement double-count inside pool 42.70 (affects only the split of the residual, not the verdict); `file` in memory.stat assumed ~0 under O_DIRECT — falsifier included]
 next_suggested: coord folds the verdict line into the plan (D29 stands — 110 reviewed and confirmed against the receipts, no scalar change, no ladder pre-emption), adopts §R8-Q4's capture list into the runbook step-6 prose in the next doc round, and leaves the gate + ladder to the owner per the D17 receipt law.
+
+---
+
+## §R9 — (A) does the 8060S APU cost the R9700 real throughput, and (B) is the DEG1 enclosure's un-enabled setting our Gen3 link?
+
+Owner round 2026-11-13/14. (A) adjudicates §D8.5's claim — "**the visible APU costs
+nothing today**" — against every distinct APU→dGPU cost mechanism the community reports
+for Strix Halo (AI Max+ 395) machines. (B) adjudicates the owner's "I know there was a
+setting on that [DEG1] I was supposed to enable and have not" against the enclosure's
+identity and our twice-reboot-surviving `8.0 GT/s x4 of 16.0` link (§D6.6/§D8.1).
+Read-only; external sources fetched 2026-11-13/14 under R9-S# keys; ticket records cited
+by their own keys (RQ*, §D*, [S#]). Where a mechanism is real but our rig has no
+measurement, it is marked **UNVERIFIED** — this round adds none by analogy.
+
+### R9 TL;DR (verdict-first, two lines)
+
+**A — the claim stands as written for TODAY (zero measurable cost, three live lines
+confirm it), but it is RIGHT-BUT-OVERSTATED as a general statement:** the community's
+repeated "the APU costs the dGPU" is mostly about TWO specific couplings — (1) the
+Strix-Halo firmware **power-limit tie** (external AMD GPU capped by the APU's BIOS
+power limit) and (2) **shared-LPDDR5X bandwidth contention while the iGPU is actually
+computing** — and while (1) is falsified ON OUR RIG by the engine's own print
+(`power cap 300 W (default 300 W, max 300 W)`, §D8.1), (2) is a real, workload-time
+channel we have never measured with a loaded router (§D8.5 falsified it only because
+the router reports every model `unloaded`) — magnitude UNKNOWN for our profile,
+bounded structurally at the few-percent class and to be settled by the one cheap
+loaded-APU A/B in the action list; **enumeration itself costs nothing attestable**.
+**B — YES, plausible and well-fitted:** the DEG1 is Minisforum's **passive** Gen4-x4
+OCuLink dock (no switch, no documented retimer, **not hot-plug-capable, dock+PSU must
+be powered before the host boots** — those ARE its "settings", STH + Newegg-manual
+clauses quoted below), and every source that documents this symptom class on this port
+class points at a **host-side link-speed decision** (EVO-X3 fix-guide: set the OCuLink
+port to explicit **PCIe Gen4, not Auto**; radiance's own rig doc: a firmware slot-speed
+pin "stops the slots training at a lower generation"; egpu.io: idle LnkSta readings
+lie, load-state readings don't — ours was taken at 50% busy and survived reboots, so
+it is real). Our failing hop is exactly ONE physical link — root port `00:03.1` (Gen4-x4
+cap) ↔ the **card's own** integrated Navi switch upstream port `c2:00.0` — because
+`c2/c3` are `1002:1478/1479`, the R9700's internal switch pair, NOT dock silicon
+(daimonionnn capture, verbatim below): the DEG1 contains no switch to fix. Expected
+payoff at Gen4 x4 from §D8.2(a)'s own model: prefill 249→~450–500 tok/s, warm decode
+19.3→~35–40 t/s (compute floor caps it near 35), TTFT roughly halves; what the fix
+does NOT buy is stated at B5.
+
+### R9-A1 — Does an idle/near-idle iGPU consume measurable LPDDR5X bandwidth?
+
+- **What is documented about the memory model (no idle tax claimed):** ROCm's official
+  Strix-Halo optimization page: "On Strix Halo GPUs (gfx1151) memory access is handled
+  through GPU Virtual Memory (GPUVM), which provides per-process GPU virtual address
+  spaces (VMIDs) rather than a separate, discrete VRAM pool… **GTT allocations are
+  dynamic and are not permanently reserved, allowing the operating system to reclaim
+  memory when it is not actively used**" [R9-S1: rocm.docs.amd.com/en/docs-7.2.0/how-to/system-optimization/strixhalo.html, Memory settings, accessed 2026-11-14]. I.e. the
+  APU's mapped window into the same LPDDR5X is demand-driven: idle ⇒ nothing mapped,
+  nothing streaming.
+- **Community measurements: none found for "idle iGPU steals bandwidth from a dGPU."**
+  Searches this round (Phoronix Strix Halo platform profiles, r/LocalLLaMA, strixhalo.wiki,
+  daimonionnn's two-rig notebook) surface contention numbers only where the iGPU is an
+  ACTIVE compute device: jasl123 in the Framework dGPU thread: "AI Max is slower than
+  M4Max… because **256 GB/s memory bandwidth would be a bottleneck**" [R9-S2:
+  community.frame.work/t/request-verify-dgpu-support/69392, post #5/#6, accessed
+  2026-11-14] — a statement about the iGPU doing the serving, not about its idle cost.
+  daimonionnn's whole `halo-win` dataset measures the same from the other side (iGPU
+  actively serving split MoE layers) [R9-S3: raw.githubusercontent.com/daimonionnn/multi-gpu-llm-toolkit/refs/heads/main/doc/benchmarks.md, accessed 2026-11-14].
+  **Idle-APU bandwidth tax: UNVERIFIED — and crucially, no report claiming it exists
+  was found either.** The honest statement is: no published measurement, our own
+  receipt sees zero APU compute (router `/v1/models` all-`unloaded`, §D8.5-iii).
+- **The display engine headless question:** no source found quantifying a headless
+  RDNA3.5 display block's DRAM traffic on Strix Halo — **UNVERIFIED**. What IS on
+  record: the engine prints the APU's power state honestly: `power cap unknown …
+  runtime pm active (control on)` for c5:00.0 (§D8.1), and the kernel module-parameter
+  docs note runtime PM is a **dGPU** mechanism ("Override for runtime power management
+  control for **dGPUs**… default is -1 (auto enable)" — `runpm`, [R9-S4:
+  kernel.org/doc/html/latest/gpu/amdgpu/module-parameters.html, accessed 2026-11-14]),
+  so the APU does not sleep the way a parked dGPU does; but its clocks idle via DPM
+  and with no queue work there is nothing to stream. No contradiction found.
+- **Applies to us?** Conditionally-zero: our APU is idle whenever the router holds no
+  model; the §D8 probe state was exactly that.
+
+### R9-A2 — Does KFD/HIP enumeration of the APU cost anything?
+
+- ROCr's env surface documents what enumeration-side knobs exist — `HSA_ENABLE_SDMA`
+  ("enable or disable the use of DMA engines in all copy directions… when using the
+  following APIs: hsa_memory_copy, hsa_amd_memory_fill, hsa_amd_memory_async_copy…"
+  [R9-S5: rocm.docs.amd.com/projects/ROCR-Runtime/en/docs-6.1.1/environment_variables.html, accessed 2026-11-14]) — and GPUOpen shows it used for peer-copy tuning on
+  multi-GPU boxes ("SDMA engines are used by default in ROCM 5.4 and below [for peer
+  copies]", [R9-S6: gpuopen.com/learn/amd-lab-notes/amd-lab-notes-gpu-aware-mpi-readme/, accessed 2026-11-14]). These are **users-of-the-APU** knobs: they change how an
+  app copies, and none of them taxes a dGPU when the APU is unused.
+- **Memory-type wrong-pick risk (the engine reading the wrong bank):** the documented
+  APU-side bugs on this class are all "app uses the APU" failures — daimonionnn's
+  rocm-bugs.md matrix: "isLargeBar cap — ROCm hardcodes it off for APUs; KV cache
+  spill — WDDM + starved GART at 96 GB UMA; hipMallocManaged broken — gfx1151-specific"
+  — with the explicit applicability line "On `dual-linux` (discrete R9700, Linux) none
+  of them should reproduce, because the preconditions do not exist: no integrated GPU,
+  no BIOS UMA split…" [R9-S7: …/doc/rocm-bugs.md, accessed 2026-11-14]. Radiance pins
+  `1 device(s) [0:gfx1201]` (§D8.5-ii) and allocates device-local + its own pinned host
+  pool; the APU is enumerated by /sys walks but never targeted. **No cost attested.**
+- **The one genuine APU+dGPU interaction bug found:** "Splitting across two AMD GPUs
+  **corrupts output unless peer copies are disabled**" (halo-win, llama.cpp ROCm
+  tensor-split, 8060S + R9700) [R9-S3: benchmarks.md ToC, accessed 2026-11-14]. Applies
+  only to engines that split one model across both AMD devices — radiance and the
+  router's Vulkan-on-APU lanes are disjoint; recorded as a DO-NOT-sPLIT marker for
+  future engine choices, not a cost today.
+- Interrupts: the amdgpu `msi` parameter ("To disable Message Signaled Interrupts…
+  default -1 auto, enabled" [R9-S4]) shows both devices use MSI, not a shared legacy
+  line; no report of shared-IRQ cost found — **UNVERIFIED-by-absence**, claimed zero.
+
+### R9-A3 — PCIe/fabric topology: do the APU's x16 and the OCuLink x4 share a cap?
+
+- **Live receipt (ours, engine HARDWARE prints §D8.1):** the APU chain is
+  `00:08.1 16.0 GT/s x16 (max 16.0 GT/s x16) -> c5:00.0` at FULL rate while the dGPU
+  chain `00:03.1` sits at `8.0 GT/s x4` — two root ports negotiating independently and
+  asymmetrically, so there is no shared speed cap tying them (if there were, the APU's
+  Gen4 x16 could not coexist with the dGPU's Gen3 state — and equally, the dGPU's
+  failure did not drag the APU's width). Also: our dGPU's traffic never traverses the
+  APU's link, and vice-versa (both are root-port-attached).
+- **Lane budget, as far as the public record goes:** the EVO-X3 teardown-blog
+  (closest machine-study found for this board family): "AMD lists **16 usable PCIe 4.0
+  lanes** for the processor, while this machine exposes two ×4 M.2 connections and a
+  ×4 OCuLink port. **The firmware and board topology decide how those endpoints are
+  rooted and whether anything is shared.** Linux proves the populated path; settling
+  the aggregate question will require a second drive" [R9-S8: soothill.io/blog/2026/08/03/gmktec-evo-x3-hardware-bios-nvme-baseline/, accessed 2026-11-14] — i.e.
+  the 16-lane CPU-PCIe budget covers NVMe+OCuLink; the iGPU is NOT among them (it is
+  the on-die 256-bit graphics fabric surfaced at `00:08.1`); aggregate sharing among
+  the x4 endpoints is explicitly unresolved even for the vendor class. **Strix-Halo
+  IOD block diagrams are not public: whether `00:03.1` and `00:08.1` share an
+  NBIO/upstream fabric is UNVERIFIED.** What the evidence supports: even if they share
+  a fabric, our observed state (x16 Gen4 idle vs x4 Gen3 under load) shows the fabric
+  is not what forces the dGPU down; the forcing candidates live in the single link
+  between root port and card (B2/B4).
+- **Does disabling the APU change link negotiation?** No source found either way —
+  **UNVERIFIED**; but this class of machine DOES have firmware that treats AMD-dGPU
+  presence specially (`AMD_PBS_SETUP` knobs, next bullet), so "APU off ⇒ different
+  topology behavior" is not safely assumable — another reason the action list tests A
+  by LOAD, not by BIOS surgery.
+- PBS topology knobs that exist on the class (daimonionnn's map of Strix Halo
+  firmware): `Primary Video Adaptor` — official ASRock manual wording: "Allows you to
+  select Internal/External Graphics. Default setting is [Int Graphics (IGD)].
+  Configuration options: [Int Graphics (IGD)] [Ext Graphics (PEG)]" [R9-S9:
+  manualowl.com ASRock B650E-PG Riptide manual p.67 (AMD PBS section), accessed
+  2026-11-14; the same option byte at `AMD_PBS_SETUP+0x05` in daimonionnn's Strix
+  Halo extraction R9-S10]. This is the documented firmware surface where APU/dGPU
+  roles are decided on AMD client reference firmware — not a bandwidth control.
+
+### R9-A4 — Knobs that could recover an APU-side cost WITHOUT killing the router — and their blast radii
+
+B1/D21 law first (repo): the router's pod schedules **by the pool name**
+`amd.com/gpu-8060s` (services/gpu-ai overlay, §R6-Q2/D21) and the pool name exists only
+while the APU is amdgpu-bound and product-nameable in the patched table ("THE
+APU-ROWS-MUST-CARRY LAW", D24). **Any route that removes the APU from amdgpu/KFD kills
+the router's APU leg** — the catalog's `-strix` unified-vulkan fallback goes with it
+(RQ4:508-510). Each knob against that:
+
+| knob | what it actually does (cite) | router blast radius | verdict |
+|---|---|---|---|
+| `amdgpu.runpm=0` | dGPU runtime-pm override; 0 disables idle power-down [R9-S4] | none to the APU (per-kernel it is a dGPU mechanism) — but it would PIN THE R9700 awake; nothing about APU cost | not the lever |
+| BIOS iGPU disable / vfio bind `1002:1586` | strips APU from host amdgpu (ticket S17 mechanism; guide's headless recommendation) | **KILLS the router's `gpu-8060s` claim (Pending-forever) + D24 ledger row + the catalog fallback** | forbidden as a measurement; owner's temporary-BIOS-window only if ever truly needed — and there is no evidence-backed need (A1/A2 found no idle/enumeration tax) |
+| `amdgpu.ip_block_mask` | "Override what IP blocks are enabled on the GPU (gfx, display, video, etc.)" [R9-S4] | **module-global** — it would hit the R9700 too (its display blocks idle anyway, but gfx masking on the serving card is fatal); a per-device variant is not documented on that page | too blunt; not ship-eligible |
+| `amdgpu.dc=0` (display engine off) | not listed on the fetched module-parameters page — **UNVERIFIED at this kernel/doc**; owner read `modinfo amdgpu -a` settles presence | would break the APU's display path — our router's compute lane (Vulkan on the 8060S) does not need displays… but this is an amdgpu-global behavior question, unresolved in sources | park; measure first |
+| BIOS "UMA framebuffer"/Variable Graphics Memory | ROCm docs: "AMD recommends keeping the dedicated VRAM reservation in BIOS **small (for example 0.5 GB)** and increasing the shared (TTM/GTT) limit instead" [R9-S1]; ours matches: APU prints `512.00 MiB VRAM` (§D8.1) and the cmdline already carries `ttm.pages_limit=29360128` = 112 GiB (the amd-ttm page's `pages_limit` knob in PAGES, expressed identically, [R9-S1]) | zero — already at AMD's recommended shape | nothing to recover |
+| `HSA_ENABLE_SDMA=0` | switches ROCr copy paths between SDMA and kernels [R9-S5,S6] | only affects ROCr-API apps (the router's ROCm-backend lanes, if any; radiance is not ROCr-copy-based — engine uses its own "dma copy lists on DMA engine 0", §D8.1) | irrelevant to A; TP2-era interest only |
+| governor/clocks (APU-side) | the APU shares the SoC's amd-pstate; host-governor persistence is already on the C12 checklist (§D6.4) | none | the free swing, already scheduled |
+
+**Rollback-safety of everything in the action list: the APU measurement is
+read-only-plus-workload (no knob at all).** That is deliberate: the one knob class
+that could "recover" an APU cost (disabling it) is exactly the one the router law
+forbids, and no source justifies trading the router for an unmeasured idle tax.
+
+### R9-A5 — Verdict on "the APU is not costing you anything measurable today"
+
+**RIGHT-BUT-OVERSTATED.** Precisely:
+- TRUE for today's witnessed state, with receipts (all four channels read zero): own
+  root port at full Gen4 x16 while the dGPU link fails independently (A3); engine
+  enumerates only gfx1201 (`1 device(s) [0:gfx1201]`, §D8.5); router `/v1/models`
+  every model `unloaded` (§D8.5); UMA carve at AMD's recommended minimum (A4 row).
+- The community's "yes it costs" reports resolve, on reading, into (1) the
+  **power-limit tie** — "external GPU power limit… is being tied to the APU's power
+  limit… limited to the APU limit you set in the BIOS" [R9-S11: strixhalo.wiki
+  External_GPU guide (raw GitHub, deseven/strixhalo-homelab), AMD GPUs section,
+  accessed 2026-11-14, which links the r/GMKtec EVO-X2 "120W power limit" thread and
+  the Framework thread] — **falsified on OUR rig today by the engine's own print
+  `power cap 300 W (default 300 W, max 300 W)`** (§D8.1; the wiki's norm for "most
+  current Strix Halo boards" is ~120 W on OCuLink/M.2 AMD cards, daimonionnn's
+  paraphrase [R9-S10: doc/oculink-amd-dgpu.md, accessed 2026-11-14]: "the external
+  card's power limit gets tied to the APU's… capped at ~120 W regardless of the
+  card") — our card is NOT capped, so whatever the class-wide bug is, this
+  board+bios+DEG1 combination escapes it today; re-check the print after any BIOS
+  firmware update. and (2) **DRAM-bandwidth contention while the iGPU computes**
+  (jasl123's 256 GB/s framing, R9-S2) — a real shared-fabric fact, applicable to us
+  only when the router actually serves on the APU.
+- **Magnitude for our profile if the loaded-router case ever co-occurs:** bound it
+  honestly: radiance's host-memory demand is link-bound (≤3.94 GB/s PCIe fill today,
+  ≤7.88 after B's fix) plus io_uring spans; the APU serving GGUF on the 8060S is the
+  workload that would compete at the LPDDR5X controller. A concurrent APU inference
+  burst can at worst claim the model's share of ~230–256 GB/s [R9-S2/S3]; our PCIe
+  stream is ≤3% of that even if the memory controller fully divided against us —
+  but "fully divided" is not how the scheduler behaves and NO published measurement
+  of radiance-vs-APU co-serving was found. **Estimate: single-digit-percent decode
+  impact at router-peak, UNVERIFIED magnitude; zero at router-idle (today).**
+- **The one cheapest isolating experiment (minutes, rollback-safe, read-only-first):**
+  keep radiance at rest-state receipts (D8.3 fixed probe, ≥2000-token prompt, greedy,
+  n=1, run twice, quote the second — §D8.3), note decode t/s; then from the router
+  load ONE GGUF that fills the 8060S comfortably and stream 2–4 concurrent requests
+  against it, and re-run the SAME fixed probe WHILE that traffic runs. Compare. The
+  delta IS the APU's active cost for our profile, zero config touched, and rollback
+  is "stop the router load". Pair it with the read-only `gpu_busy_percent` lines for
+  both cards (host sysfs, §D8.4-7 style: `cat /sys/class/drm/card*/device/gpu_busy_percent`)
+  before/during/after. NO BIOS iGPU-disable is justified by anything found this round.
+
+### R9-B1 — What the DEG1 actually is
+
+- **Identity:** MINISFORUM DEG1 eGPU dock — "Oculink Graphics Docking Station |
+  PCIE4.0*4 (up to 64GT/s) | Compatible with ATX/SFX | Supports up to NVIDIA RTX 4090
+  & AMD RX 7900 XTX" [R9-S12: store.minisforum.com/products/minisforum-deg1-egpu-dock,
+  accessed 2026-11-14]. Newegg's spec row for the line: "Up link: Oculink 4i
+  (PCIE4.0x4) Down Link: PCIEx16 (PCIE4.0x4) … Note1: OCulink interface does not
+  support hot plugging, and the machine needs to be turned off" [R9-S13:
+  newegg.com/p/1DN-0432-00001 product page text, accessed 2026-11-14].
+- **Internal silicon:** STH's teardown-level look: "On the bottom, we have a PCB that
+  handles the Oculink to PCIe slot as well as the power functions" — no bridge, retimer
+  or switch mentioned anywhere in the article [R9-S14: servethehome.com/minisforum-deg1-oculink-egpu-dock-quick-look-amd-nvidia/, 2024-08-23, accessed 2026-11-14].
+  So: **passive OCuLink→slot PCB + PSU wiring** is what is documented; a
+  retimer/redriver presence is **UNVERIFIED** (nothing in vendor materials claims one;
+  contrast morgwai's adapter-world statement that among M.2→OCuLink adapters "OCuP4V2
+  is at least one category higher than F9G as it has a redriver, while F9G does not"
+  [R9-S15: egpu.io thread p.3 reply, January 21 2026, accessed 2026-11-14] — redriver
+  presence is a genuine tier differentiator in this connector class, and a passive path
+  is more cable/length/EMI-sensitive at Gen4 rates — which matters for B4).
+- **Connector generation:** OCuLink = SFF-8611-class, 4 lanes; vendor rating Gen4 x4
+  (64 GT/s aggregate marketing figure, R9-S12). Gen5 is out of the dock's spec — our
+  card's Gen5 capabilities (c2–c4 prints) are forward-compatible noise, not headroom.
+- **Power/hotplug requirements (these ARE the dock's "settings"):** STH's operational
+  sequence verbatim: "1. Turn the Oculink-capable PC off 2. Ensure power to the power
+  supply and the power supply is on 3. Power on the DEG1 via the button 4. Wait a few
+  seconds 5. Connect the DEG1 and Oculink capable PC using the Oculink cable… 6. Turn
+  the Oculink-capable PC on. **Plugging in the Oculink cable was unsuccessful when the
+  mini PC was already running**" [R9-S14].
+
+### R9-B2 — The setting(s) a user must enable, and which fits our symptom
+
+1. **Dock-side (DEG1 itself): power sequencing + no-hotplug** (R9-S14/S13 above). A
+   dock powered on mid-session (or a host booted before the dock) risks enumeration at
+   degraded or absent state. Rollback = obey the procedure. Fits partially: it would
+   more plausibly cause absence (DEG1 "would not enumerate on PCIe bus" on a GMKTec M7,
+   egpu.io R9-S16) than a clean Gen3 train.
+2. **Host BIOS per-slot PCIe speed**: the EVO-X3 fix-page (the closest host):
+   "Navigate to **Advanced → PCI Subsystem Settings** and ensure the OCuLink port is set
+   to Enabled with **PCIe Gen4 selected as the link speed (not Auto, which can fall back
+   to Gen1 on some docks)**" [R9-S17: tldevtech.com/fix/gmktec-evo-x3/oculink-egpu-not-detected,
+   accessed 2026-11-14 — TRUST FLAG: SEO-style fix-aggregator; treat as lead, not
+   authority; the AMI "PCI Subsystem Settings" page it names is stock AMI aptio, and
+   GMKtec publishes no BIOS guide for the EVO-X3 ("does not yet publish an EVO-X3 BIOS
+  guide", R9-S8) so no primary menu screenshot was located — the corroborating authority
+   for this class is (3)]. Independently, the ENGINE's OWN rig doc puts a slot-speed pin
+   on the firmware checklist for exactly the half-rate symptom: "PCIe link speed of both
+   slots | **Gen5** | **stops the slots training at a lower generation**" [R9-S18:
+   codeberg.org/StillDeadcode/radiance docs/PREPARING_YOUR_RIG.md §1 @v1.17.0, accessed
+   2026-11-14]. **This is the best candidate for "a setting on that I was supposed to
+   enable and have not" — with the correction that it lives in the HOST BIOS (the
+   OCuLink port's slot speed), not on the DEG1.**
+3. **Host BIOS ReBAR chain: "Above 4G Decoding | enabled | needed for Resizable BAR;
+   Re-Size BAR Support | enabled; CSM disabled"** [R9-S18] — our card already runs at
+   full 32 GiB BAR (engine `claimable 29.30 GiB`, §D8.1) ⇒ already enabled, not our gap.
+4. **AMD PBS `Primary Video Adaptor` (IGD/PEG) and `Non-Eval Discrete GPU Support`**:
+   Strix-Halo firmware DOES contain AMD-dGPU-specific paths (daimonionnn's byte map:
+   `AMD_PBS_SETUP` offset `0x05` = Primary Video Adaptor, offset `0x35` = "Enable to
+   support Non-Eval Discrete GPU that doesn't have specific EVAL_PWRGD(B30),
+   EVAL_PRESENT#(A5)" [R9-S10: doc/oculink-amd-dgpu.md, accessed 2026-11-14]) — their
+   investigation CLOSED the explanation (a working same-BIOS MS-S1 Max reads the same
+   bytes with the R9700 running at **Gen4 x4 on root port `00:03.1`**) but proved the
+   machinery exists and is how this firmware class treats AMD cards. We enumerate and
+   serve ⇒ we are past that gate; not our setting.
+5. **Cable/seat (not a setting but the sibling fix)**: the engine's own doc "An idle
+   link reads 2.5 GT/s in lspci, and that is normal. If one card measures half the
+   other's rate **under load**, the PCIe power state of its root port is stuck one level
+   down, and **a reboot clears it**" [R9-S18 §5]. Our case: under-load read
+   (`[read at 50% busy]`, §D8.1), three boots, one explicit reboot — did NOT clear.
+   Per that doc's own decision tree, "stuck, reboot-clears" is falsified for us ⇒ the
+   remaining candidates are the speed PIN (R9-S18 §1 table / R9-S17) or the electrical
+   path (cable/seat/dock — the passive-path point of B1). The discriminator is the
+   TargetSpeed read (B4).
+- **Reported-symptom harvest (same family, other rigs):** the egpu.io January 2026
+  thread — owner stuck "getting anything above 2.5GT/s with OCuLink dock" across
+  Minisforum DEG1 (never enumerated) + ADT-F9G-BK7 + OcuP4V2 — resolved to full
+  bandwidth, with the community's caution that **idle LnkSta readings show
+  powersave speeds and only load reads are meaningful** ("the power savings mode
+  shifting the link speed… in-game environments will push for more throughput", and the
+  withdrawn dual-GPU comparison in R9-S3 was withdrawn precisely because an enclosure
+  "was not negotiating USB4 v2 at all — it trained **Gen2 x4, 1.41 GiB/s measured**")
+  [R9-S16: egpu.io/forums/thunderbolt-linux-setup/need-help-troubleshooting-poor-gt-s-with-oculink-dock/, accessed 2026-11-14; R9-S3]. **That is the shape of our
+  situation witnessed elsewhere on this dock line: a Genx-forced-down link that only
+  load-state reads reveal, and cable/dock/host triple as the variable set.**
+
+### R9-B3 — Manual speed-override path (documented, measurable, NOT to apply blindly)
+
+- The canonical script shape (used in AMD/TI bring-up contexts): Alex Forencich's
+  `pcie_set_speed.sh` — reads `CAP_EXP+0c.L` (LnkCap), walks UP to the bridge/port if
+  the target device is an endpoint (`pt` in {RCiEP/…} rule), masks in the new speed at
+  `CAP_EXP+30.L` (LnkCtl2 bits [3:0] TargetSpeed), then `setpci -s $dev CAP_EXP+10.L=20:20`
+  — "Triggering link retraining…" — with the stated purpose "uses setpci to change a
+  device's target link speed… useful… for testing a device at a lower bandwidth"
+  [R9-S19: github.com/alexforencich/verilog-pcie scripts/pcie_set_speed.sh +
+  alexforencich.com/wiki/en/pcie/set-speed, accessed 2026-11-14]. A TI E2E field report
+  shows the same script actually flipping link rate on live hardware ("able to change
+  the PCIe link rate from 5GT/s (Gen2) to 2.5GT/s (Gen1) by using the PCIe Set Speed
+  script") [R9-S20: e2e.ti.com AM6548 thread, accessed 2026-11-14].
+- Risks, stated from the mechanism not folklore: the retrain bit acts on a LIVE link —
+  if the GPU is mid-allocation the retrain window can error the device (the whole point
+  of doing it only with radiance scaled to 0 and the router idle); a failed Gen4
+  retrain falls back to the last good rate (harmless); writing TargetSpeed ABOVE both
+  partners' LnkCap max is clamped by the script itself (`if speed > max_speed`). It is
+  a WRITE: owner-lane, and **only diagnostic value** — if forcing TargetSpeed=4 +
+  retrain lands at 16 GT/s under load, the electrical path is fine and the state was a
+  firmware default; if it re-falls to 8, it is electrical (cable/dock/seat). A BIOS
+  change (if the menu exists on this board) is the persistent equivalent; the kernel
+  has no supported per-slot speed pin (nothing in-device-tree) — **UNVERIFIED**: no
+  distro/kernel doc found claiming one.
+
+### R9-B4 — THE TOPOLOGY READ (where negotiation fails, in which silicon)
+
+Chain as printed: `00:03.1 8.0GT/s x4 (max 16.0GT/s x4) → c2:00.0 8.0GT/s x4 (max
+32.0GT/s x16) → c3:00.0 32.0GT/s x16 → c4:00.0 32.0GT/s x16` (§D8.1). Reading:
+- **c2:00.0/c3:00.0 are the CARD's own silicon, not the dock's**: "every Navi part
+  presents an integrated switch pair, `1002:1478` upstream and `1002:1479` downstream,
+  so `00.0-[c2]----00.0-[c3]--+-00.0 Navi 48` is a plain direct attachment, not a
+  tunnel or a dock switch. A working MS-S1 Max reports the same `1002:1478` in front
+  of its R9700" [R9-S10: doc/oculink-amd-dgpu.md, withdrawn-caveats section, accessed
+  2026-11-14]. **Consequence for the plan: the DEG1 contributes no negotiation brain —
+  exactly ONE link trains in our path (root port ↔ c2 upstream port), across the
+  OCuLink cable and the passive dock PCB. c2's "max 32.0GT/s x16" is the bridge's
+  advertised ceiling (the card is Gen5/x16-capable), and its `x4` width is the
+  connector's physical lane count — the OCuLink x4, per the dock's own spec "Up link:
+  Oculink 4i (PCIE4.0x4)" [R9-S13]. Width is by-design, exactly §D6.6's ruling;
+  SPEED is the single defect.**
+- **Where it fails:** one link ⇒ the candidate set is (root-port firmware speed pin —
+  host BIOS; root-port equalization failure at Gen4 — electrical: cable quality/seat/
+  dock PCB — recall B1's passivity point; or the endpoint side refusing Gen4 — ruled
+  out by the same card+bridge pair training Gen5 x16 internally at c3/c4 and by other
+  hosts reporting it at Gen4 x4: the MS-S1 witness's "R9700 over OCuLink at Gen4 x4"
+  [R9-S10] and the Z890 control "the same PCIe 4.0 x4, out of the box" [R9-S10]).
+- **§D6.6's discriminator survives, sharpened:** `LnkCtl2: TargetSpeed` on `00:03.1` —
+  if it reads 8.0 GT/s (Gen3) ⇒ firmware PIN (fix in BIOS; tldevtech's menu, if the
+  EVO-X3 has it, is the lever) — if it reads 16.0 with LnkSta at 8.0 ⇒ **electrical**:
+  reseat/swap the OCuLink cable first (Gen4-rated; the community's cable-tier point
+  R9-S16), then suspect the dock's passive path (try the other host port class or a
+  redriver-equipped adapter — the ADT/OcuP4V2 tier — before declaring the DEG1 itself
+  at fault). Owner commands (all read-only, extend §D6.6's block):
+  `sudo lspci -vvv -s 00:00:03.1 | sed -n '/LnkCap:/,/LnkSta2:/p'` — LnkCtl2 TargetSpeed
+  AND `LnkCtl:` ASPM/L1 state, `LnkSta2` equalization bits (the LTSSM Gen4-equalization
+  completion flags live here when reported) — `sudo lspci -vvv -s 0000:c2:00.0 | sed -n
+  '/LnkSta:/,/SlotSta:/p'` — the bridge side's view of the SAME link plus
+  `SlotCaps/SlotSta` (hot-plug presence/attention bits if the board wires them;
+  OCuLink consumer ports commonly do NOT — R9-S13/S14); `cat
+  /sys/bus/pci/devices/0000:c2:00.0/current_speed current_width` for the kernel's own
+  read; `sudo dmesg | grep -iE 'pcie.*(training|retrain|downgraded|equalization)'`;
+  and `lspci -nn -s 0000:c2:00.0` to print the bridge VID:DID (expected `1002:1478` —
+  if a DIFFERENT vendor's ID appears, a dock silicon premise changes and this section's
+  reading must be redone — cheap falsifier).
+- **What the width/speed split says about TP2 expectations (superseding note):**
+  RQ4's "~13.4 GB/s symmetric through the PEX switch fabric" story presumes an
+  external PEX88048/88096 for the SECOND card; the CURRENT dock has no switch at all
+  (B1) and the in-card switch pair is a point-to-point lane-bundler, not a fan-out —
+  two R9700s cannot share this DEG1's single x4 uplink; the TP2 lane plan (M.2→OCuLink
+  adapters or a second dock) stands, and the switch-fabric caveat stays where it was:
+  direction-corroborated, figures UNVERIFIED [RQ4:464-467].
+
+### R9-B5 — The payoff model, from §D8's own arithmetic
+
+Inputs (all from §D8.2(a), which is the ticket's printed-receipt model):
+`all-miss decode token = 48 × 10 × 2.42 MiB = 1,162 MiB`; Gen3 x4 = 3,755 MiB/s;
+Gen4 x4 = 7,510 MiB/s; observed warm miss fraction m ≈ 0.17 (at 19.3 t/s) and prefill
+15.1 MiB/token (the 249 t/s receipt ⇒ the docs' 15 MB/token model class).
+
+| quantity | now (Gen3 x4) | after fix (Gen4 x4) | basis |
+|---|---|---|---|
+| all-miss decode ceiling | 3.2 t/s | 6.5 t/s | 3755 or 7510 ÷ 1162 |
+| warm single-stream decode (m=0.17 ⇒ 197.5 MiB/token) | 3755/197.5 ≈ 19–20 t/s — "we are there" | 7510/197.5 ≈ 38 t/s, **but the x16-class compute floor lands it ≈ 30–35 t/s** (§D8.1/docs 29.0/28.0 ms ≈ 35) | §D8.2(a) line 2 |
+| prefill | 3755/15.1 ≈ 249 t/s ✓ matches receipt | ≈ 500 t/s ceiling; **the docs' measured Gen4-x4 class is 454 @55k** ([S7]/§D8.2(a) "prefill 249→~450–500") | §D8.2(a) |
+| TTFT at ~2K–55K prompts | ~12 s @ 1.8–2.3K; minutes-class @55k | roughly halves again | same model |
+| an independent witness of the shape | — | daimonionnn TB5-vs-OCuLink at equal lanes: "TB5 costs **what you send across it**… activations only: **2.7–3.3%**; expert weights every micro-batch: **7.9–12.8%**" [R9-S3] — a same-width link-quality delta measured on a Strix Halo; our Gen3-vs-Gen4 is a 2× CAPACITY delta, same direction | R9-S3 |
+
+**What Gen4 does NOT fix, stated plainly:** (1) the x4 WIDTH wall — "Four lanes against
+sixteen is the constraint, and no cabling change addresses it" [R9-S3: benchmarks.md,
+same section]; (2) the `experts-from-host 41.52 GiB` fact itself (tiering negotiation,
+profile or TP2 — §D8.5-5); (3) the single-stream compute floor ≈35 t/s (docs'
+29.0/28.0 ms x16 receipts — past the link we hit THIS, not 160); (4) the ngram 4 KiB
+spans / btrfs no-dioalign facts (§D6.5); (5) the governor persistence (§D6.4); (6) the
+road to 140–160 t/s stays TP2-class hardware [RQ4/TP2 doc §8].
+
+### R9 — Conflicts and UNVERIFIED (explicit list, incl. claims of MINE this round moves)
+
+1. **My §D8.5 claim "the visible APU costs nothing today"** — SURVIVES for the witnessed
+   state (its three live lines all re-verified) but is **narrowed**: it is a statement
+   about an idle APU on a rig whose power-tie is provably disengaged (300 W print), not
+   a general "APUs never cost dGPUs anything." The loaded-APU bandwidth channel stays
+   unmeasured for our profile (UNVERIFIED magnitude; structural bound single-digit %).
+   Recommended wording going forward: "**zero measurable cost at today's router-idle
+   state; the only live channel is shared-DRAM contention while the router serves, and
+   the action-list A/B measures it before any knob is touched.**"
+2. **My §D6.6 discriminator framing ("BIOS-pin vs cable/seat")** — SURVIVES, but this
+   round RETIRES the sibling advice the engine's own fix line gave ("a reboot clears
+   it"): witnessed false here (three boots including a full reboot re-print the Gen3
+   state at 50% busy, §D6.6 + §D8.1); the doc's own tree routes to slot-pin-or-electrical
+   [R9-S18]. Also ADD a third arm the community proves: a **passive dock + marginal
+   Gen4 electrical path** falls back to Gen3 cleanly (B1's redriver-tier point) — cable
+   swap is a first-class candidate, not a last one.
+3. **Community "APU costs YES" reports vs their own scope**: the wiki's power-tie claim
+   says "most current Strix Halo boards… ~120 W" [R9-S10/S11] — our rig prints 300 W;
+   the claim and our receipt CONFLICT, our receipt wins for our rig; board/BIOS
+   variance (or the tie applying only under certain firmware) is unresolved — flagged,
+   re-check the print after firmware updates. jasl123's 256 GB/s bottleneck framing is
+   about the iGPU SERVEING, not about a dGPU next to it — a misread would inflate the
+   fear; this round says so explicitly.
+4. **UNVERIFIED inventory:** EVO-X3 BIOS menu names/screenshots (no GMKtec guide
+   exists [R9-S8]; R9-S17 is SEO-adjacent — corroborated only by the generic rig-doc
+   slot-pin pattern [R9-S18]); whether `00:03.1` and `00:08.1` share NBIO fabric
+   (AMD IOD docs not public); idle-APU DRAM tax (no report exists either way);
+   `amdgpu.dc=0` semantics at kernel 7.3 (not on the fetched module-parameters page —
+   `modinfo` read settles); DEG1 retimer presence (absent from all vendor/press
+   descriptions; treated as passive); whether hot-plug-style mid-session power states
+   can LATCH a degraded negotiation across reboots (plausible via dock power state —
+   NO source found; mark as folk-physics and test by the B2 procedure, not by belief).
+5. **Supersedes (for coord):** (a) the engine doc's "reboot clears it" applied to OUR
+   node — now falsified with receipts (§D8.1); (b) §D6.6's "(the switch upstream)"
+   label on c2:00.0 — CORRECTED: it is the CARD's own `1002:1478` integrated-switch
+   upstream port [R9-S10], the DEG1 has no switch (R9-B4 re-read; §D6.6's
+   conclusion — width-by-design, speed-defect — is UNCHANGED); (c) RQ4's
+   switch-fabric expectations for TP2 remain direction-only UNVERIFIED and are NOT
+   re-opened by this round (the DEG1's passivity removes no TP2 option because TP2
+   never rode the DEG1); (d) D8.5's APU verdict wording — per #1 above.
+
+### R9 — Ranked ACTION list (cheapest/highest-yield first; each = read / change / rollback / verification print)
+
+1. **B2 read-only localization (minutes, zero risk, settles the fix family):** owner
+   runs the B4 command block (`LnkCtl2: TargetSpeed` on `00:03.1` + `lspci -nn -s
+   0000:c2:00.0` + dmesg training greps + sysfs current_speed) while radiance is mid-load
+   (fixed probe running — idle reads lie, R9-S16). VERIFY against: engine next boot
+   HARDWARE line still prints `8.0 GT/s x4`; the lspci TargetSpeed value is the branch
+   selector (8.0 ⇒ item 2; 16.0 ⇒ item 3).
+2. **BIOS slot-speed pin (if item 1 read TargetSpeed 8):** BIOS → locate the OCuLink
+   port/slot speed (tldevtech's AMI path: Advanced → PCI Subsystem Settings; trust
+   flag noted) → explicit **Gen4** (or Auto→Gen4), Above-4G/ReBAR left as-is (already
+   working). Rollback = undo the one setting. VERIFY: next boot prints
+   `00:03.1 16.0 GT/s x4`, WARN `link-below-max` GONE, prefill 249→~450–500 class and
+   warm decode ≥30 on the fixed probe.
+3. **Electrical path (if TargetSpeed was already 16, or item 2 didn't land):** power
+   FULL DOWN (host + PSU + dock, per B2 sequence), reseat cable both ends, swap to a
+   different Gen4-rated OCuLink cable if available; if still Gen3: borrow/try a
+   redriver-equipped adapter tier (OcuP4V2-class, R9-S15) or the DEG1 in another rig.
+   Rollback = restore original cable/seat. VERIFY same prints as item 2.
+4. **Last-resort diagnostic setpci (write; radiance scaled to 0 + router idle):**
+   forencich-script shape — write TargetSpeed=4 on `0000:00:03.1` and retrigger
+   `CAP_EXP+10.L=20:20` [R9-S19]. Value is purely diagnostic (pin-vs-electrical in one
+   minute); it resets at boot anyway. Rollback = reboot. VERIFY: mid-session
+   `GET /diagnostics` hardware read (§D8.5-1) + next boot's HARDWARE line.
+5. **A-load measurement (settles the owner's community question, zero config):** the
+   A5 A/B — fixed probe decode/prefill idle-router vs router-serving-a-GGUF-concurrently;
+   reads: `gpu_busy_percent` both cards before/during/after. Rollback = stop the router
+   load. VERIFY: the DELTA; single-digit % ⇒ "APU costs ~nothing even loaded" upgrades
+   from witnessed-idle to measured-live; >10 % ⇒ a real co-tenancy finding that feeds
+   the strata-cutover scheduling conversation (Q11 lane), not a knob to flip today.
+6. **NOT-do list (recorded):** no BIOS iGPU disable / vfio bind (kills the
+   `gpu-8060s` router claim, D21/B1 + D24 law); no `ip_block_mask` (module-global);
+   no HSA_ENABLE_SDMA / memlock drop-in chasing anything in this round's scope
+   (radiance uses neither the ROCr copy path nor the RAM tier — §D8.4-4 unchanged); no
+   reseat-blind BIOS surgery while the item-1 read takes one minute to do first.
+
+### R9 — Sources (accessed 2026-11-13/14)
+
+| # | URL | What it is |
+|---|---|---|
+| R9-S1 | rocm.docs.amd.com/en/docs-7.2.0/how-to/system-optimization/strixhalo.html | Official Strix Halo optimization page: GPUVM/no-discrete-VRAM-pool, GART vs GTT ("GTT… dynamic… not permanently reserved", default ~50% RAM), `ttm/pages_limit` knob + `amd-ttm`, BIOS carve guidance ("keep… 0.5 GB"), kernel-6.18.4 KFD requirement |
+| R9-S2 | community.frame.work/t/request-verify-dgpu-support/69392 | Framework Desktop dGPU thread: jasl123's "256 GB/s memory bandwidth would be a bottleneck" (iGPU-serving framing), all-AMD platform context, cited by the wiki |
+| R9-S3 | raw.githubusercontent.com/daimonionnn/multi-gpu-llm-toolkit/refs/heads/main/doc/benchmarks.md + /doc/rocm-bugs.md | Same-SoC APU+dGPU rig notebook: TB5-vs-OCuLink measured pairs (3% activations / 13% weights; withdrawn Gen2-x4-latch case), "the link decides everything — width, not tunnel", dual-AMD-GPU split corruption, ROCm APU/UMA bug applicability matrix |
+| R9-S4 | kernel.org/doc/html/latest/gpu/amdgpu/module-parameters.html | Authoritative param semantics: `runpm` (dGPUs only), `aspm`, `ip_block_mask` ("Each GPU is a collection of IP blocks…"), `gartsize`/`gttsize` (deprecated/test), `dpm`, `bapm`, `msi` |
+| R9-S5 | rocm.docs.amd.com/projects/ROCR-Runtime/en/docs-6.1.1/environment_variables.html | `HSA_ENABLE_SDMA` documented scope (ROCr copy APIs) |
+| R9-S6 | gpuopen.com/learn/amd-lab-notes/amd-lab-notes-gpu-aware-mpi-readme/ | SDMA-vs-kernel copy practice for peer copies |
+| R9-S8 | soothill.io/blog/2026/08/03/gmktec-evo-x3-hardware-bios-nvme-baseline/ | EVO-X3 (the lab's machine class) Linux-visible facts: "rear OCuLink, PCIe 4.0 ×4; **not hot-pluggable**", "AMD lists 16 usable PCIe 4.0 lanes… two ×4 M.2 and a ×4 OCuLink… whether anything is shared" unresolved, "GMKtec… does not yet publish an EVO-X3 BIOS guide", 1 GiB visible VRAM vs 120 GiB GTT aperture |
+| R9-S9 | manualowl.com/m/ASRock/B650E-PG-Riptide-WiFi (AMD PBS p.67) + dev.solid-run.com PBS path | Official wording for `Primary Video Adaptor` IGD/PEG default + menu location |
+| R9-S10 | raw.githubusercontent.com/daimonionnn/multi-gpu-llm-toolkit/refs/heads/main/doc/oculink-amd-dgpu.md | The R9700-over-OCuLink-on-Strix-Halo firmware investigation: root port `00:03.1` Gen4 x4 WORKING witness, PBS byte map (`0x05`, `0x35` + EVAL-pin help string), **Navi integrated switch pair `1002:1478/1479` = "a plain direct attachment, not a tunnel or a dock switch"**, ~120 W cap norm, Z890 control ("the same PCIe 4.0 x4, out of the box"), Framework Desktop R9700 BAR capture, DEG1-working-but-host-unstated report |
+| R9-S11 | strixhalo.wiki/Guides/External_GPU (raw: github deseven/strixhalo-homelab) | Community wiki: "external GPU power limit… tied to the APU's power limit… limited to the APU limit you set in the BIOS" + the two linked report threads; "No problems were reported with NVIDIA GPUs" |
+| R9-S12 | store.minisforum.com/products/minisforum-deg1-egpu-dock | DEG1 vendor identity/spec: "PCIE4.0*4 (up to 64GT/s)", ATX/SFX, RTX4090/RX7900XTX class |
+| R9-S13 | newegg.com/p/1DN-0432-00001 | DEG-line spec row: "Up link: Oculink 4i (PCIE4.0x4) Down Link: PCIEx16(PCIE4.0x4)… does not support hot plugging, machine needs to be turned off" |
+| R9-S14 | servethehome.com/minisforum-deg1-oculink-egpu-dock-quick-look-amd-nvidia/ (2024-08-23) | STH physical inspection: "native PCIe Gen4", "a PCB that handles the Oculink to PCIe slot as well as the power functions" (no switch/retimer), the 6-step power procedure, "Plugging in… unsuccessful when the mini PC was already running", HBA-doesn't-work caveat |
+| R9-S15/R9-S16 | egpu.io/forums/thunderbolt-linux-setup/need-help-troubleshooting-poor-gt-s-with-oculink-dock/ (Jan 2026) | The same-symptom Linux thread: DEG1 "would not enumerate on PCIe bus" on GMKTec M7; idle vs load LnkSta lesson ("power savings mode shifting the link speed… in-game… push for more throughput"); redriver-vs-passive tier statement (OcuP4V2 vs F9G) |
+| R9-S17 | tldevtech.com/fix/gmktec-evo-x3/oculink-egpu-not-detected | EVO-X3 claim: "Advanced → PCI Subsystem Settings… OCuLink port… **PCIe Gen4 selected as the link speed (not Auto, which can fall back to Gen1)**" — TRUST-FLAGGED (SEO page; no primary menu corroboration, R9-S8 gap) |
+| R9-S18 | codeberg.org/StillDeadcode/radiance PREPARING_YOUR_RIG.md @v1.17.0 (fetched this round; = ticket [S3]) | The engine's own rig doc firmware table ("PCIe link speed of both slots \| Gen5 \| **stops the slots training at a lower generation**"; Above-4G/ReBAR/CSM rows), §5 idle-link normality + reboot-clears clause (ours: falsified), §6 power/undervolt context |
+| R9-S19 | alexforencich.com/wiki/en/pcie/set-speed + github.com/alexforencich/verilog-pcie/blob/master/scripts/pcie_set_speed.sh | Exact setpci command shape: `CAP_EXP+30.L` TargetSpeed write + `CAP_EXP+10.L=20:20` retrain trigger + endpoint→port walk logic + stated purpose |
+| R9-S20 | e2e.ti.com AM6548 "How to change the PCIe link rate" thread | Field demonstration of pcie_set_speed.sh flipping live link rate |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R9 appended)]
+commands_run: [repo reads (RESEARCH RQ1/RQ3/RQ4/RQ5/Serving-envelope/§R6/§R7/§R8 + TLDR/Sources; EXPLORE §D2.8-pointer, §D6, §D8 full; DECISIONS D21/D24 blocks; runbook/TP2 greps for DEG1/board identity — none present, recorded) => pass; searxng searches ×13 (DEG1 identity/spec/settings, Gen3-downgrade threads, Strix Halo iGPU/dGPU contention, PBS, setpci, runpm, HSA_ENABLE_SDMA, EVO-X3 BIOS) => pass; web_url_read: egpu.io thread ×3 pages, strixhalo.wiki raw md, daimonionnn oculink-amd-dgpu/benchmarks/rocm-bugs/systems raws, rocm.docs strixhalo + ROCR env-vars, kernel.org module-parameters, servethehome DEG1, minisforum store, soothill EVO-X3, forencich script raw, Framework thread; webfetch of the proxy-cached copies failed twice (403) — switched to the sanctioned mcp fetch => pass; codeberg raw PREPARING_YOUR_RIG.md @v1.17.0 => pass; arithmetic re-runs of the §D8.2(a) model (Gen3/Gen4 ceilings, m-fits, prefill) => pass; reddit thread fetch NOT attempted (wiki carries the citation; noted) => consistent with plan]
+deviations: none beyond scope — read-only, only RESEARCH.md written. Two launch framings answered beyond their letter because the evidence moved: (1) the brief's guess that c2:00.0 might be the DEG1's silicon is resolved the other way — daimonionnn's verbatim capture proves c2/c3 are the R9700's own integrated switch pair, so the DEG1 is passive and exactly one link negotiates; (2) the brief's "port9 vs port2" style A3 question (fabric sharing) is left UNVERIFIED by design — AMD IOD docs are not public, and the live asymmetric link states bound what such a cap could do.
+friction: reddit's 120W thread unreachable via sanctioned tools (wiki carries its gist + URL — cited via the wiki, marked accordingly); tldevtech EVO-X3 menu claim has no primary corroboration (GMKtec publishes no EVO-X3 BIOS guide, R9-S8) — used as a lead with an explicit trust flag; superuser fetch bot-blocked (403) — replaced by the forencich original, which is the better source anyway; codeberg raw path form took one retry (api/v1 path).
+open_questions: [does a loaded 8060S measurably cost radiance decode on this box (the action-list item-5 A/B settles it; structural bound says single-digit % — UNVERIFIED magnitude)? does the EVO-X3 BIOS actually expose a per-slot Gen4 pin (the item-1 LnkCtl2 TargetSpeed read discriminates whether a pin or the electrical path is our cause)? is the Strix-Halo power-tie board/firmware-specific (our 300 W print escapes the community's ~120 W norm — re-read after any BIOS update)? idle-APU DRAM tax — no source exists either way; treated as zero, honestly labeled UNVERIFIED]
+next_suggested: coord hand the owner the R9 action list 1→2/3→5 (the link read first — one minute, decides BIOS-vs-cable; the APU A/B second — answers their community question with our own numbers), fold the supersede lines (§D8.5 wording, §D6.6 c2 identity + reboot-clears retirement, R9-S18 slot-pin as the rig-doc's own next candidate) into the next DECISIONS round, and record that NO chart change and NO knob from A4 ships — the evidence says the fix is host-side and the measurement is workload-side.
