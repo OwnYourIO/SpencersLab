@@ -114,23 +114,32 @@ STATX_DIOALIGN regular-file fields are implemented by ext4, f2fs and xfs
 ONLY — btrfs, under CoW, legitimately reports nothing; the engine's 4 KiB
 span fallback is conservative policy against an absent hint.
 
-KILL-LIST first: the RAM tier — `--ngram-placement ram` / a `ram=DIR`
-shared table — pins the 47.68 GiB table on top of the 71.04 GiB already
-printed: 71.04 + 47.68 = **118.72 > 110** (and > 96): ARITHMETICALLY DEAD
-at both candidate limits, so unlocking MEMLOCK (§2) BUYS NOTHING HERE —
-moot by the sum, not by opinion. Dropping `--kv-resident` to fund it
-forfeits the 8-session lever — that is a profile negotiation with an owner
-sign-off, never a scalar. The real options are: (c) STAY on disk in 4 KiB
-spans (today's posture; published cost band 3–10% decode ≈ 0.3–1.2 tok/s
-at the current 11.2 — second-order to LINK), or (a) move /models to
-XFS/ext4 so statx reports alignment — a host STORAGE-LANE decision on the
-SHARED 500Gi claim (it carries llama.cpp/strata/vllm data too; a chart
-value cannot express it). Recommendation: stay (c); measure (a) only if
-the band earns a device move AFTER the link fix. Checks (read-only):
+The options are a HIERARCHY, not a menu of equals:
+**1 — DEAD at this profile: the RAM tier — `--ngram-placement ram` / a
+`ram=DIR` shared table pins 47.68 GiB on top of the 71.04 GiB already
+printed: 71.04 + 47.68 = 118.72 > 110 (and > 96) — unlocking MEMLOCK (§2)
+BUYS NOTHING HERE, moot by the sum; dropping `--kv-resident` to fund it
+forfeits the 8-session lever — a profile negotiation with an owner
+sign-off, never a scalar.**
+**2 — THE LIVE POSTURE: stay on disk in 4 KiB spans** — today's shape; the
+published cost is the ram-vs-disk band 3–10% decode ≈ 0.3–1.2 tok/s at the
+fresh 11.2 — second-order against the LINK defect.
+**3 — THE OWNER'S STORAGE LANE: move /models to XFS/ext4** so statx reports
+alignment and the engine leaves its 4 KiB-span fallback — a host
+STORAGE-LANE decision on the SHARED 500Gi claim (it carries
+llama.cpp/strata/vllm data too; a chart value cannot express it),
+fleet/deferred-card territory. Two arithmetic notes beside the hierarchy:
+the tier WORDS overlap — pool 42.70 + mirror ~32 + arena 2.00 + placement
+1.18 + staging sums to 77.88 against the printed whole 71.04; price the
+BOUNDED 71.04, never a re-added decomposition (D30(2)); and this disk tier
+is O_DIRECT — the table never enters page cache (host footprint ~85 MiB
+io_uring row cache), so "raise the cgroup limit starves the cache" is
+REFUTED (D30(3)). Recommendation: stay on (2); measure (3) only if the
+band earns a device move AFTER the link fix. Checks (read-only):
 `findmnt -T <pack-path>`, `sudo filefrag -v <pack> | head -20`, the dd
 above.
 
-## 4. GOVERNOR — the writes DID NOT PERSIST across the reboot (the probable reading); persistence routes only
+## 4. GOVERNOR — the writes MOST PROBABLY DID NOT PERSIST across the reboot; persistence routes only
 
 Host reads, today: all 32 CPUs `performance`/EPP `performance`, policy
 2.00–5.19 GHz (owner's paste §3). Yet the FRESH 15:01Z boot's startup
@@ -328,7 +337,10 @@ discussed at §3, not a host knob.
   that regresses the gate is reverted, not argued.
 - Cold-staging cost honesty (§D4): the first-ever pack hash ran tens-of-
   minutes class — 30–70 min at the 200m init cap C11 shipped under; the
-  C12 1000m cap prices 8–23 min; the hash restarts at byte 0 on any pod
+  C12 1000m cap is ÷5 of that ⇒ ~5.8–13.6 min (one core is the whole gain,
+  D30(6); the drafted 8–23 was §D4.4's un-quoted full-feed-disk
+  counterfactual, not a cap-bound figure); the hash restarts at byte 0 on
+  any pod
   loss, so never touch a pod mid-hash. The marker now exists: every
   restart is the <1 s skip. The host-side hash-and-touch loop-breaker
   (§D3b.6 era) remains human-owned, host lane, and is NOT a substitute for

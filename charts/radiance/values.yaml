@@ -37,11 +37,17 @@ app-template:
   # guaranteedMemoryGi = 110 — the OWNER RULING (D29; batched answer verbatim
   # "110 GiB (your figure)" to "which value should charts/radiance ship for
   # gpu-ai?"), superseding D28's documented 96 ceiling as THE VALUE ONLY.
-  # Why no plan figure survived: the engine prints its own budget — report 2:
-  # pool 42.70 + the --kv-resident host mirror ~32 + activation/arena 2.00 +
-  # placement-flag 1.18 + staging = `pinned by this process 71.04 GiB`
-  # against the old 64.00 cgroup → live OOM at the first boot that ever
-  # hashed. D17's per-token derivation reserved the mirror at ~19.3 GiB
+  # Why no plan figure survived: the engine prints its own budget — report 2
+  # printed `pinned by this process 71.04 GiB` against a 64.00 cgroup → live
+  # OOM at the first boot that ever hashed. The tier words (pool 42.70, the
+  # --kv-resident host mirror ~32, activation/arena 2.00, placement-flag
+  # 1.18, staging) OVERLAP: the printed parts sum to 77.88 against the
+  # printed whole 71.04 — 71.04 is the figure to price against, a BOUNDED
+  # residual, never a decomposition to re-add (D30(2)); and the disk n-gram
+  # tier is O_DIRECT — its table never enters page cache (host footprint is
+  # the ~85 MiB io_uring row cache), so "raise the limit starves the cache"
+  # stands REFUTED (D30(3)). D17's per-token derivation reserved the mirror
+  # at ~19.3 GiB
   # (RQ1's ~12 KiB/token rate) while shipped 1.17.0 books ~20 KiB/token
   # (~32 GiB at 8×200K) — the class law (D28): READ the printed tiers, SUM
   # them, compare to the limit; a limit below the printed budget is a defect,
@@ -382,7 +388,10 @@ app-template:
             # first-ever pack hash is CPU-quota-bound, NOT disk-bound — the
             # busybox sha256sum applet is single-threaded with no SHA-NI
             # path (§D4 measured exactly 0.2000 core with io PSI 0) — so one
-            # core is the whole gain (30-70 min -> 8-23 min; more than one
+            # core is the whole gain (30-70 min @200m ÷ 5 ⇒ ~5.8-13.6 min
+            # @1000m, D30(6); the drafted 8-23 was §D4.4's un-quoted
+            # full-feed-disk counterfactual, ~1.5x wrong as a cap-bound
+            # figure); more than one
             # core is pointless) and every pod loss before completion
             # restarts the hash at byte 0. SEPARABLE: reverting this knob
             # is one line, leaving the memory fix intact. Memory stays

@@ -225,7 +225,7 @@ if want n2; then
     elif wave_b; then
       shape="WAVE-B (C09 defect-fix wave: values + runbook)"
     elif non_flip; then
-      shape="NON-FLIP (no carrier file touched; amd.com/gpu* claim census unchanged across the commit's files — C11 grammar fix, D27)"
+      shape="NON-FLIP (no carrier file touched; amd.com/gpu* claim census unchanged across the commit's files — the generic claim-neutral class: grammar, figures and doc waves alike, D27 census law)"
     else
       fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NO accepted shape (WAVE-C: charts/llama-swap + services/gpu + services/gpu-ai + the runbook as one commit; WAVE-A: charts/amd-gpu + charts/radiance + $VALS; WAVE-B: charts/amd-gpu + runbook) — a SPLIT carrier leaves a cluster with zero schedulable claims between syncs"
     fi

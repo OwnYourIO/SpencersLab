@@ -35,9 +35,9 @@ run through the operator's own pod access — no agent tier grants pod exec
 (RESEARCH RQ3; AGENTS MCP law). The two cluster mutations in the protocol
 — the strata scale-down (step 3) and restore (step 10) — are OWNER-EXECUTED
 out-of-band commands marked as such; at the shipped 110 (D29) they are not a
-reversible sequence — restore-back is the either/or step 10 states (radiance's
-request must leave the node first); the sync itself is ArgoCD's own
-reconciliation, never a runbook instruction line.
+freely reversible sequence — restore-back is the either/or step 10 states
+(radiance's request must leave the node first); the sync itself is ArgoCD's
+own reconciliation, never a runbook instruction line.
 
 **Scope belt (D21/B1).** Every gate here is gpu-ai-scoped. The gpu cluster's
 plugin posture — the EXTERNAL amd-gpu chart 0.22.0 at 1.31.0.9, single
@@ -356,12 +356,21 @@ repo artifact (Q5 letter). Record the RSS/workingSet baseline first —
 the before/after delta IS the owner's "good metrics from Radiance" window
 (step 10 records the other half).
 
-SelfHeal note (ground truth, `charts/base/templates/appset-charts.yaml`):
-the Applications sync automated with `selfHeal: true`, so an un-guarded
-manual scale reverts at the next sync. Before scaling, SUSPEND auto-sync for
-`gpu-ai-llama-swap` in the ArgoCD UI — OWNER-EXECUTED, UI-only, not a repo
-change (the appset's `services.<scope>.selfHeal` annotation knobs are a git
-edit; do not flip them for this protocol).
+Sync-posture note (ground truth: the LIVE Application reads, §D7 — repo
+templates emit DEFAULTS that the cluster-registration knob then overrides,
+and that knob is out-of-band): NO gpu-ai Application carries an `automated`
+sync policy (live-verified twice, 0 of 7), so nothing auto-syncs and a hand
+scale-down STICKS across reconciliations. The real hazard is a human click:
+ANY sync re-applies git over hand-edits — the 16:29:51Z sync of
+`gpu-ai-radiance` proved the law by replacing the 94 GiB hand-limit with
+git's 110/110 pair. Git renders strata at `replicas: 1` (no `replicas:` key
+exists in the chart, the service values or custom-values — the app-template
+default), so do NOT click Sync on `gpu-ai-llama-swap` while strata must stay
+down — a sync re-resurrects it, and beside radiance at 110 the newcomer
+would sit Pending with preemption pressure landing on strata (priority,
+D17's class).
+The app reading OutOfSync all through the window is EXPECTED — that red-ish
+marker IS the parked scale-down, not a defect to "fix" with a Sync click.
 
 The scale-down itself (the exact command recorded for convenience; OWNER-EXECUTED on the owner's own kubeconfig):
 
@@ -412,8 +421,10 @@ Expect the "radiance staging: complete" (or marker-skip) line and a listing
 where the `.rad` and its marker are owner/group `65532:65532`. A re-check of
 the 113.6 GiB file with `sha256sum` is a tens-of-minutes full read under a
 throttled init (§D4: the busybox applet is single-threaded, no SHA-NI path,
-CPU-quota-bound — 30–70 min at the 200m cap C11 ran under, 8–23 min at the
-1000m cap C12 ships; not disk-bound at either) — run it
+CPU-quota-bound — 30–70 min at the 200m cap C11 ran under; the C12 1000m
+cap is ÷5 of that ⇒ ~5.8–13.6 min — one core is the whole gain, D30(6),
+the drafted 8–23 was §D4.4's un-quoted full-feed-disk counterfactual; not
+disk-bound at either) — run it
 only if the marker is doubted (the init already gate-verified it).
 
 Non-privileged-class FIRST TRAP — loud by design, not silent: the file must
@@ -483,7 +494,8 @@ then follow the engine log. Expect, in this order:
   same class on the first request;
 - a pod stuck Pending at this point is step-0(b)'s arithmetic still in
   effect — strata's request has not actually left the node (re-check step
-  3, selfHeal included); that is the Pending-by-design handshake state, not
+  3 — and whether anyone Synced `gpu-ai-llama-swap`); that is the
+  Pending-by-design handshake state, not
   an engine failure;
 - the cgroup-limit WARNING line class (llmkube's observed "at 44Gi Radiance
   warned cgroup-limit" shape, RESEARCH RQ1): the engine refuses to start
@@ -500,12 +512,28 @@ HOLD 8 CONCURRENT 200K-class sessions on THIS host. The published refusal
 a smaller host (RESEARCH RQ1) — the 124 GiB box is the ruling's bet; this
 run is the datum. Pin the expectation for the receipt: the engine's own
 printed budget is the authority — report 2 read `pinned by this process
-71.04 GiB` (pool 42.70 + the kv-resident host mirror ~32 + arena 2.00 +
-placement 1.18 + staging). The D17-era per-token arithmetic (mirror ≈19.3
+71.04 GiB`. The named tier words (pool 42.70, kv-resident host mirror ~32,
+arena 2.00, placement-flag 1.18, staging) OVERLAP — they sum to 77.88
+against the printed whole 71.04; price the bounded 71.04, never a
+re-added decomposition (D30(2)), and note the disk n-gram tier is O_DIRECT:
+its table never enters page cache (host footprint ~85 MiB io_uring row
+cache), so "raise the limit starves the cache" is REFUTED (D30(3)). The
+D17-era per-token arithmetic (mirror ≈19.3
 at the ~12 KiB/token class → "60–70 GiB-class pins", the owner's
 "60Gi-class" words) UNDER-RESERVED the mirror shipped 1.17.0 books
 (~20 KiB/token at 8×200K) — D28 records the slip; the shipped scalar is
 110 on the printed receipt (D29), never a per-token figure.
+
+**The 8-session gate's receipt list (§R8, D30(4) — owner-run, all
+read-only during the fill):** cgroup `memory.peak` ≤ 100 (the cap the ramp
+must not touch); `memory.events` — `oom_kill = 0` (the no-kill proof;
+`max` hits count how close the limit bit); cgroup `file` ≈ 0 — the O_DIRECT
+falsifier (D30(3): the n-gram table never enters page cache, so a big
+`file` would falsify the disk-tier claim); node `MemAvailable` ≥ 8 GiB at
+peak; `/proc/buddyinfo` plus `compact_stall`/`compact_fail` deltas across
+the ramp; and the engine's own `pinned by this process …` inside the
+71–78 GiB window. The standing law rides the list: **the receipt decides,
+never the rate** (D17/D28/D30(2) — don't plan off any per-token figure).
 
 Eight-session fill skeleton (through the peer hop, long-context bodies,
 step 9's chain): drive 8 concurrent sessions to the 200K-class depth while
@@ -671,11 +699,18 @@ any of it and none may be improvised.
 At the shipped `guaranteedMemoryGi: 110` (D29), restore-back is NOT "finish
 testing, scale strata back up": a scheduled radiance holds 110 GiB of
 request and strata's 64 GiB beside it sums 110 + 64 + 6.3 = 180.3 > 125.08
-— the two can never co-reside (the same arithmetic step-0(b) and step 3
-restate; the handshake inverts for whoever starts second). The protocol
-reverses only in that order: radiance's request must first leave the node —
-the owner scales radiance down in this same human-owned lane, or the engine
-rolls back via step 11(i) — and only then does strata's restore land. The
+— strata can never co-reside beside a radiance at 110 (the same
+arithmetic step-0(b) and step 3 restate; the handshake inverts for whoever
+starts second). The protocol reverses only in that order: radiance's
+request must first leave the node — the owner scales it down in this same
+human-owned lane, or the engine rolls back via step 11(i) — and only then
+does strata's restore land. Durability law for that scale-down leg (§D7,
+corrected guard): nothing auto-syncs on gpu-ai, so radiance at 0 sticks
+across reconciliations — but only until `gpu-ai-radiance` is next synced;
+sync nothing radiance-owned while it must stay at 0, because a later sync
+resurrects it at 110/110 Guaranteed (Recreate) — the 16:29:51Z sync
+already demonstrated sync-overwrites-hand-edits on the 94 GiB hand-limit;
+the durable route remains step 11(i), a git change. The
 cutover decision (D26-era, Deferred row) is now a real either/or; while
 radiance stays scheduled, strata remains at 0 and this step waits.
 
@@ -687,8 +722,15 @@ scale command recorded for convenience; OWNER-EXECUTED out-of-band):
 kubectl -n default scale deploy/gpu-ai-llama-swap-strata --replicas=1
 ```
 
-Then resume auto-sync for `gpu-ai-llama-swap` in the ArgoCD UI (the
-step-3 suspend's counterpart). Strata's arenas re-pin ON DEMAND — the first
+The ordering law (§D7.4(4)): a hand scale-down of EITHER app sticks only
+until that app's NEXT manual sync — so (1) radiance's 110 request off the
+node first, as above, (2) THEN bring strata back and/or sync
+`gpu-ai-llama-swap` — the sync IS the restore moment: git and live must
+agree on `replicas: 1` before the click (scale first, then sync, and the
+standing OutOfSync clears honestly), (3) verify the runner route below.
+There is nothing to resume in the UI (0 of 7 apps carry `automated`, §D7)
+— the old suspend counterpart clause was part of that dead machinery.
+Strata's arenas re-pin ON DEMAND — the first
 requests after restore pay the cold-pin minutes class (the ttl:3600
 time-share law in strata-host-prep-gpu-ai.md), so verify the runner route
 serves again through the chain:

@@ -560,10 +560,77 @@ need(r"(?i)110\s*\+\s*64\s*\+\s*6\.3|180\.3[^.\n]{0,40}125\.08",
      "the C12-amendment designed-Pending arithmetic while strata is UP (110+64+6.3 = 180.3 > 125.08)")
 need(r"(?i)110\s*\+\s*4\.125\s*\+\s*1\.158|115\.28|9\.80 ?GiB free|9\.80 GiB",
      "the C12-amendment schedulability while strata is DOWN (115.28 <= 125.08, 9.80 GiB free — 22.8 was the dead 96-draft figure)")
-# The §D4 hash envelope folds the "minutes-class full read" (:396) —
-# CPU-quota-bound: 30–70 min at 200m, 8–23 min at the C12 1000m cap.
-need(r"(?i)tens[- ]of[- ]minutes|30\s*[–—-]\s*70 ?(min|minutes)|8\s*[–—-]\s*23 ?(min|minutes)",
-     "the §D4/C12 tens-of-minutes hash envelope (30–70 @200m / 8–23 @1000m — replaces 'minutes-class')")
+# C13 AC1 — SAME-WAVE FIGURE (the §12.10 vocabulary-vs-grammar lesson applied
+# to our OWN numbers): the 200m half stays exactly as §D4 measured it; the
+# 1000m half is CORRECTED to §D4's own bound 30–70 ÷ 5 ⇒ ~5.8–13.6 min
+# (single-threaded busybox, one core is the whole gain, D30(6)) — the drafted
+# "8–23" was §D4.4's UN-QUOTED counterfactual (an unthrottled core on a
+# FULL-FEED disk) re-used as if cap-bound, ~1.5× wrong. Deliberately TWO
+# separate arms (not one alternation): a doc that restored "8–23" alongside
+# tens-of-minutes/30–70 would satisfy any single-armed form — the stale figure
+# must have NO satisfaction token left. The prose and these arms move in ONE
+# wave (C13); the arms REDD the stale shape (teeth re-proven, §12.13).
+need(r"(?i)30\s*[–—-]\s*70 ?(min|minutes)",
+     "the §D4 MEASURED 200m envelope half (30–70 min — stays as-is per AC1)")
+need(r"(?i)5\.8\s*[–—-]\s*13\.6 ?(min|minutes)?",
+     "the C13-corrected 1000m envelope half (~5.8–13.6 min = 30–70 ÷ 5, D30(6) — '8–23' was the un-quoted counterfactual, not a cap-bound figure)")
+
+# C13 AC4 (§D7/D31, live-object law): step 3's "suspend selfHeal / resume
+# auto-sync" machinery is MOOT-AND-WRONG — 0/7 gpu-ai Applications carry
+# `automated` (LIVE Application reads, NOT the template: D31's class law) and
+# the real hazard is that ANY sync, manual included, re-applies git over
+# hand-edits (the 16:29:51Z click wiped the 94 hand-edit; strata's replicas:0
+# survives only while gpu-ai-llama-swap stays UNSYNCED). Arms in the MAJOR-1
+# mechanism (§12.9): instructions are test surface; prose EXPLAINING the dead
+# machinery stays admissible via the correction-word exemption.
+m3s = re.search(r"(?m)^#{1,6}\s*(?:Step\s+)?3(?=[.: \t—–-]|$).*?(?=^#{1,6}\s*(?:Step\s+)?4(?=[.: \t—–-]|$))", rb, re.S)
+m6s = re.search(r"(?m)^#{1,6}\s*(?:Step\s+)?6(?=[.: \t—–-]|$).*?(?=^#{1,6}\s*(?:Step\s+)?7(?=[.: \t—–-]|$))", rb, re.S)
+m10s = re.search(r"(?m)^#{1,6}\s*(?:Step\s+)?10(?=[.: \t—–-]|$).*?(?=^#{1,6}\s*(?:Step\s+)?11(?=[.: \t—–-]|$))", rb, re.S)
+# (a) the dead suspend/resume machinery may never return AS AN INSTRUCTION:
+for _i, _ln in enumerate(rb.splitlines()):
+    if re.search(r"(?i)(suspend|resume)[^\n]{0,80}(auto-?sync|self-?heal)", _ln) and \
+       not re.search(r"(?i)wrong|moot|no longer|never existed|no auto|not a defect|refut|supersed|removed|stale|misleading|did not exist|nothing to", _ln):
+        errs.append(f"line {_i+1} INSTRUCTS a suspend/resume of auto-sync or selfHeal — §D7 proved 0/7 gpu-ai apps carry `automated` (live reads); nothing exists to suspend or resume — the line must go, or carry the correction word (AC4/D31): {_ln.strip()[:90]!r}")
+# (b) the step-3 replacement guard (§D7.4(1)):
+if not (m3s and re.search(r"(?i)(do ?NOT|never|avoid)[^.]{0,120}sync[^.]{0,90}gpu-ai-llama-swap|sync(ing)?( of)?[^.]{0,90}gpu-ai-llama-swap[^.]{0,90}(while|resurrect|re-appl|restore)", m3s.group(0))):
+    errs.append("step 3 lacks the don't-sync guard: syncing gpu-ai-llama-swap mid-window re-renders strata at replicas:1 and re-creates the outage (any sync re-applies git over hand-edits — §D7.4(1), AC4)")
+# WRAP-SAFE gaps ([^.] not [^.\n]) — markdown prose wraps; the C10 MAJOR-1
+# lesson applied to the arms THIS round authors.
+if not (m3s and re.search(r"(?i)OutOfSync[^.]{0,160}(expected|is the parked|parked|by design)", m3s.group(0))):
+    errs.append("step 3 does not state OutOfSync-through-the-window is EXPECTED — the red-ish marker IS the parked scale-down, not a defect to 'fix' with a Sync click (AC4)")
+# (c) step-10 restore ordering (§D7.4(4)(b)):
+if m10s:
+    s10 = m10s.group(0)
+    if not re.search(r"(?i)sync[^.]{0,80}restore moment|restore moment[^.]{0,80}sync", s10):
+        errs.append("step 10 does not state the sync of gpu-ai-llama-swap IS the restore moment ('resume auto-sync' deleted — there is nothing to resume; AC4)")
+    # radiance-LEAVES-NODE phrases specifically (a bare "110 ... scale" in the
+    # either/or intro is not the ordering statement — tightened at authoring
+    # when the intro's "110 ... strata back up" prose matched the loose form).
+    off = re.search(r"(?i)radiance[^.]{0,60}(off the node|request off|leaves the node|scaled? down|scale-down)", s10)
+    syn = re.search(r"(?i)sync[^.]{0,60}gpu-ai-llama-swap|bring(ing)? strata back", s10)
+    if off and syn and off.start() > syn.start():
+        errs.append("step 10 reaches the strata/sync step BEFORE radiance's 110 request leaves the node — the sequence is (1) radiance off, (2) THEN strata back and/or the sync (AC4's restore law)")
+else:
+    errs.append("no step-10 section found for the restore-ordering guard (AC4)")
+# (e) the :486 residual-clause fold (AC4 names it with its replacement):
+if re.search(r"(?i)selfHeal included", rb):
+    errs.append("'(re-check step 3, selfHeal included)' survives — there is no selfHeal in the step to re-check; the clause must read '...and whether anyone Synced gpu-ai-llama-swap' (C13 AC4 :486)")
+# (d) AC5 step-6 capture keys — the §R8-Q4 receipt list as the 8-session gate's
+# proof-of-presence (three tokens AC5 NAMES; memory.events/MemAvailable/
+# buddyinfo-compact/71–78 window deliberately NOT pinned — the AC's needle
+# sentence enumerates exactly these three, and §12.13 records the no-sprawl
+# decision).
+if m6s:
+    s6 = m6s.group(0)
+    for pat, tok in (
+        (r"memory\.peak", "memory.peak (the ≤100 cap receipt)"),
+        (r"oom_kill", "oom_kill = 0 (the no-kill proof)"),
+        (r"(?i)file[^.]{0,26}(≈|~|<=|<)\s*0|file[^.]{0,40}falsif", "cgroup file ≈ 0 — the O_DIRECT falsifier (D30(3))"),
+    ):
+        if not re.search(pat, s6):
+            errs.append(f"step 6's 8-session gate lacks the §R8 capture key {tok} (AC5 receipt list)")
+else:
+    errs.append("no step-6 section found for the §R8 capture-key receipt list (AC5)")
 # C10 review-r1 MAJOR-1: owner-facing commands in docs ARE test surface — pin
 # the RUNNABLE SHAPE of the third-class Application read, not the word. Live-
 # proven wrong axes were (ns) argocd — no such namespace on ai-gpu, the
@@ -589,7 +656,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the step content is incomplete (C06 T5 marker set — diagnostics above)"
   fi
-  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the C12 110-based sums (180.3/115.28/9.80) + tens-of-minutes envelope, the ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
+  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the C12 110-based sums (180.3/115.28/9.80) + the C13 two-half envelope (30–70 / 5.8–13.6) + the §D7 don't-sync guard (suspend machinery barred, OutOfSync-expected, restore ordering) + the AC5 step-6 capture keys, the ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
 fi
 
 printf 'PASS: radiance runbook contract checks (%d ok)\n' "$checks"

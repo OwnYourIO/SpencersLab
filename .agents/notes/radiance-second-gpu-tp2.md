@@ -341,13 +341,21 @@ one card while strata keeps the other — the contention **dissolves without
 touching the naming scheme**: strata still holds no plugin claim (§6),
 llama-swap still schedules from the named APU pool, and the
 Pending-handshake arithmetic on host memory gets a second card of
-breathing room ONLY on the engine side: at the shipped 110 (D29) the
-RESTORE-BACK can never co-reside strata beside a scheduled radiance —
+breathing room ONLY on the engine side: at the shipped 110 (D29) strata
+can never co-reside beside a scheduled 110-radiance —
 110 + 64 + 6.3 = 180.3 > 125.08, and a second card adds VRAM, not host
 RAM. Record for the card: TP2 is the cleanest RELIEF of the card-side
 contention, not an exit from the scale-down dance — exiting the dance is
 the cutover decision itself (the runbook's step 10 either/or, restated
-by C12).
+by C12). Forward look (D30(5), §R8): TP2 SHRINKS the host answer ~3× —
+per-rank `--host-pool-mib 12288` × 2 ≈ 24 GiB, the `--kv-resident` mirror
+gone, the prefix tier affordable ⇒ ~30–35 GiB class (witness: llmkube runs
+262144 ctx at req 40 / lim 48). So the shipped 110 is the SINGLE-CARD
+SUPERSET that TP2 re-pins DOWN — and at that smaller number strata
+co-existence may arithmetically RE-OPEN (~35 + 64 + 4.1 + 1.2 ≈ 104 ≤
+125.08): a decision that rides the CUTOVER ticket, recorded here so nobody
+rediscovers it. Pointer and sums only — TP2's recipe re-derivation is that
+ticket's job (cite D29/D30(5)).
 
 ## 13. Three-way naming law — what this doc's engine is
 

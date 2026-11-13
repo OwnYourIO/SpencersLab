@@ -34,8 +34,10 @@
 #     contradict on the three shared gates AC2/AC3 fold together — the CORRECTED
 #     IOMMU posture (amd_iommu=off is a working supported state; the C06
 #     iommu=pt expectation was the wrong gate — the class that bit: runbook
-#     expected pt while the live host ran off), the tens-of-minutes hash
-#     envelope (§D4: 30–70 @200m / 8–23 @1000m — "minutes-class" is dead), and
+#     expected pt while the live host ran off), the hash envelope in BOTH
+#     halves — 30–70 @200m (§D4 measured, stays) + the C13-corrected
+#     ~5.8–13.6 @1000m (30–70 ÷ 5, D30(6); the drafted 8–23 was §D4's
+#     un-quoted counterfactual — prose and arm move SAME-WAVE, AC1), and
 #     the 110-era budget arithmetic (the 71.04-GiB
 #     printed receipt + the owner-ruling 110 scalar, D29). Arms compare
 #     token-for-token across the two docs.
@@ -367,7 +369,13 @@ POSTURE = re.compile(r"(?i)amd_iommu=off|(off[^.\n]{0,140}(acceptable|supported|
 # (a stale gate line = the contradiction class this arm exists to catch).
 STALE_GATE = re.compile(r"(?i)(expect[a-z]*|required|require[sd]?|must (be|have|set)|gate wants)[^.\n]{0,60}iommu=pt|iommu=pt[^.\n]{0,40}(is required|expected)")
 CORRECTION = re.compile(r"(?i)wrong|superseded|no longer|was the|old gate|instead|not the (host|gate)|re-verify|before any|correction|vs\b")
-ENVELOPE = re.compile(r"(?i)tens[- ]of[- ]minutes|30\s*[–—-]\s*70 ?(min|minutes)|8\s*[–—-]\s*23 ?(min|minutes)")
+# C13 AC1: TWO half-arms, no single-armed alternation (a stale "8–23" doc
+# also mentioning tens-of-minutes would satisfy any one-armed form). The 200m
+# half is §D4's live measurement (stays as-is); the 1000m half is ÷5 of it
+# (D30(6) — one core, single-threaded busybox; 8–23 was the un-quoted
+# FULL-FEED-DISK counterfactual, ~1.5× wrong as a cap-bound figure).
+ENVELOPE_200 = re.compile(r"(?i)30\s*[–—-]\s*70 ?(min|minutes)")
+ENVELOPE_1000 = re.compile(r"(?i)5\.8\s*[–—-]\s*13\.6 ?(min|minutes)?")
 RECEIPT = re.compile(r"71\.04")
 # (amendment) the 110 era — SCOPE-AWARE like the runbook T2 needle: strata's
 # OWN limit line ("its limits are 110Gi") may not satisfy it; require the
@@ -380,8 +388,10 @@ for name, text in docs.items():
     for ln in text.splitlines():
         if "iommu=pt" in ln and STALE_GATE.search(ln) and not CORRECTION.search(ln):
             errs.append(f"{name}: a line RE-STATES iommu=pt as the live requirement without a correction word — two docs, two answers: {ln.strip()[:90]!r}")
-    if not ENVELOPE.search(text):
-        errs.append(f"{name}: no tens-of-minutes hash envelope (§D4: 30–70 min @200m / 8–23 min @1000m — the 'minutes-class' fold must reach BOTH docs)")
+    if not ENVELOPE_200.search(text):
+        errs.append(f"{name}: the §D4-measured 200m envelope half (30–70 min) is missing — that half stays as-is (C13 AC1); the fold must reach BOTH docs")
+    if not ENVELOPE_1000.search(text):
+        errs.append(f"{name}: the C13-corrected 1000m half (~5.8–13.6 min = 30–70 ÷ 5, D30(6)) is missing — '8–23' was §D4's un-quoted counterfactual; prose and arm move same-wave")
     if not RECEIPT.search(text):
         errs.append(f"{name}: the 71.04-GiB printed-budget receipt is absent — the budget-line class law (D28) anchors the 110 in BOTH docs")
     if not SHIPPED_110.search(text):
@@ -394,7 +404,7 @@ PY
   then
     fail "T4: the two docs CONTRADICT (or fail to carry) the shared gates — iommu posture / hash envelope / 110 arithmetic (C12 AC4/T4 — diagnostics above)"
   fi
-  ok "T4: note and runbook carry the SAME corrected gates token-for-token — amd_iommu=off posture with no uncorrected iommu=pt re-statement, the tens-of-minutes §D4 envelope, and the 71.04-receipt-anchored 110 arithmetic (owner ruling)"
+  ok "T4: note and runbook carry the SAME corrected gates token-for-token — amd_iommu=off posture with no uncorrected iommu=pt re-statement, the two-half §D4/C13 envelope (30–70 / 5.8–13.6), and the 71.04-receipt-anchored 110 arithmetic (owner ruling)"
 fi
 
 printf 'PASS: radiance host-tuning contract checks (%d ok)\n' "$checks"

@@ -50,9 +50,13 @@ PACK_LFS_SHA = "0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20
 SCALARS = {
     # C12 AC1 (amendment 2026-11-13, D29) — SHIPPED VALUE 110, OWNER RULING.
     # The 64 shipped at C02/D17 was a PLANNING miss: the live boot printed its
-    # own budget — pool 42.70 + kv-resident host mirror ~32 + arena 2.00 +
-    # placement 1.18 + staging = "pinned by this process 71.04 GiB" (report 2)
-    # vs a 64.00 cgroup => OOM. D28 planned the ladder ceiling 96; asked "which
+    # own budget — "pinned by this process 71.04 GiB" (report 2) against a 64.00
+    # cgroup => OOM. The tier words (pool 42.70, kv-resident host mirror ~32,
+    # arena 2.00, placement 1.18, staging) OVERLAP: the printed parts sum to
+    # 77.88 against the printed whole 71.04 — 71.04 is a BOUNDED residual, the
+    # figure to price against, never a decomposition to re-add (D30(2)); the
+    # disk n-gram tier is O_DIRECT — its table never enters page cache, so the
+    # "raise the limit starves the cache" reading stands REFUTED (D30(3)). D28 planned the ladder ceiling 96; asked "which
     # value should charts/radiance ship for gpu-ai?", the owner answered
     # verbatim "110 GiB (your figure)" — D29 records the ruling (D28's reasoning
     # stands as history, append-only). 110 is NOT a radiance plan figure in the
@@ -172,7 +176,10 @@ REJECTED_GATE_FORMS = ("--check", "--status", "-cs", "-c -s")
 # first-ever hash is CPU-QUOTA-bound, not disk-bound (busybox sha256sum is
 # single-threaded, no SHA-NI path; live 0.2000 core exactly + io PSI 0).
 # Wall = 121,969,901,568 B / (cores x 150-350 MB/s): 200m => 30-70 min,
-# 1000m => 8-23 min; MORE THAN 1 CORE IS POINTLESS (single-threaded applet).
+# 1000m => ~5.8-13.6 min (30-70 ÷ 5, D30(6): the drafted 8-23 was §D4.4's
+# UN-QUOTED counterfactual — an unthrottled core on a FULL-FEED disk — re-used
+# as if cap-bound, ~1.5x wrong; C13 AC1 same-wave correction). MORE THAN 1
+# CORE IS POINTLESS (single-threaded applet).
 # Every pod loss before completion throws the whole elapsed away (the hash
 # restarts at byte 0; only the download resumes). SEPARABLE KNOB: reverting
 # this pair is a one-line no-op to the memory fix (owner's call if the
