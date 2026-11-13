@@ -1577,3 +1577,327 @@ PR #122 staleness becomes irrelevant).
 | R7-S12 | raw.githubusercontent.com/kubernetes/kubernetes/release-1.36/staging/src/k8s.io/api/resource/v1/types.go | DeviceClassSpec: Selectors (class-side CEL/label, "each selector must be satisfied by a device claimed via this class"), ExtendedResourceName *string (format k8s-extended-resource-name, unique per cluster, +featureGate=DRAExtendedResource, "This is a beta field") |
 | R7-S13 | raw.githubusercontent.com/squat/generic-device-plugin/main/README.md | `--domain` flag (default devic.es) + arbitrary device names → literal `amd.com/r9700-1` expressible |
 | R7-S14 | repo reads (branch cf-143-feat-radiance-replaces-strata): charts/radiance/charts/app-template-5.0.1.tgz (unpacked: values.schema.json lines 918/939/966/975/1238/1750/1886/2760/2781/2808/2817/3080/3247/12518-12522; charts/common/templates/classes/_daemonset.tpl 47 lines, no updateStrategy; lib/pod/_spec.tpl:10-31,74-75), charts/amd-gpu/{Chart.yaml,values.yaml,templates/{deviceplugin-daemonset,rbac,serviceaccount}.yaml}, charts/generic-device-plugin/{Chart.yaml,values.yaml}, tests grep of the two pool names | conversion key inventory + blast-radius list; DECISIONS.md D18/D19/D21 + owner-review items 3-5 lines 161-173/174-189/202-237/272-316 |
+
+---
+
+## §R8 — does 110 GiB cover fn at 8×200K? (owner capacity question)
+
+Owner ask 2026-11-13 (verbatim): "I would also like you to check whether the 110Gi is
+enough for the 200K context for the model I'm running." Object: shipped
+`guaranteedMemoryGi: 110` (D29) + the serve recipe (pool 43000 / kv-resident 32768 /
+8×200000 / spec 3 / chunk 4096 / ngram disk / headroom 96, values.yaml:138-154).
+Authorities read this round: RQ1, RQ4/RQ5, Serving envelope, §R6/§R7, EXPLORE §D4/§D6,
+DECISIONS D28/D29, runbook step 6, TP2 doc §7-§9/§11, the two boot receipts quoted in
+the launch (owner captures 2026-11-13). Repo lines [repo read]; kernel semantics
+[R8-S1][R8-S2]; earlier external evidence keeps its [S#] keys.
+
+### R8 VERDICT (one sentence, then the arithmetic)
+
+**YES — 110 GiB covers the fn-TP1 8×200K case: the 200K×8 cost is NOT what the host is
+paying for (it is funded ON-CARD at 4.49–4.51 GiB per the engine's own "worst case"
+line, and the host-side mirror for it is an EAGER boot-time reservation already inside
+the printed `pinned by this process 71.04 GiB`), leaving 38.96 GiB under the 110 cap
+against the documented growth allowance of ~21 GiB (D28's own basis for the 96 rung) —
+steady-state PROVEN, peak-sufficient vs every known term with ~14 GiB margin over the
+receipt-anchored 96, and the ONLY open term is what the never-yet-run 8-session gate
+(runbook step 6) can surprise, which is exactly what the number now buys slack for.**
+The counter-intuitive worry — "a bigger cgroup starves the page cache the n-gram disk
+reads want" — is REFUTED on mechanism: the disk tier is O_DIRECT [S2 §4.3; boot B's own
+line "a direct read of one returned the file's bytes"], so the 47.68 GiB table never
+enters page cache at all; the raise is **orthogonal to the disk path, helps boot
+(refuses), and costs only node slack** (9.80 GiB scheduler-free strata-down; strata
+restore co-residency dead at 110 by design — D29's either/or).
+
+### R8-Q1 — Where 200K actually costs memory (the two homes, separated)
+
+**(i) ON-CARD — the 200K worst case is funded there, not in RAM.** Boot B printed
+`kv cache 4.49 GiB a card: 1600000 tokens, 8.0 sessions at 200000` (= 8×200,000 exactly)
+with "1.72 GiB of it per-sequence state; up to 1.23 GiB lent to the experts while no
+request holds it", and the VRAM budget line `kv 4.51 = 19% … "backs 8 sequences all at
+200000 tokens at once, which is the worst case"` inside elastic 23.89 of claimable 29.30
+on the 31.86 usable card (launch receipt; static 5.40, experts 17.76 = 74%, prefill
+staging 1.63). Implied on-card rate = 4.49 GiB ÷ 1.6M tokens = **2.94 KiB/token**
+(paged part (4.49−1.72) → 1.81 KiB/token + 0.215 GiB/sequence of delta-net state). This
+is the receipt the RQ1 "pin to the receipt, not to a per-token figure" verdict demanded
+[RQ1 Serving envelope] — and it also sits well BELOW the doc's 7.32 KiB/token worked
+example and the field's 30–60 KiB band [S2 §4.3][S8][S16]: the fp8 paged groups on this
+build cost ~3 KiB/token on-card. **Conclusion: "200K context" does not add host RAM;
+`--kv-resident` moved the SPARSE QSA group to RAM, and that host copy is the host cost.**
+
+**(ii) HOST-SIDE — the reservation arithmetic.** RQ1's law: the kv-resident "host copy
+reserved max-num-seqs × max-model-len however short the requests" [S2 §4.4.1] — eager,
+at boot. Boot B's printed sum decomposes at the receipt's own terms:
+
+```
+pinned (printed, boot B, cgroup 94.00, SERVED)   71.04 GiB
+  host pool 42.70 (weights: expert_tiered pins experts there;
+  "experts-from-host 41.52 GiB … cross PCIe" per the same report)
+  + placement-flag items 1.18 (token embedding, encoder towers, drafter experts)
+  + activation/arena 2.00 (D28 term)
+  + step staging (D28: folded in the observed sum)
+  + --kv-resident host mirror … THE RESIDUAL
+residual  = 71.04 − 42.70 − 1.18 − 2.00          = 25.16 GiB  → 16.1 KiB/token
+upper bound (if arena/placement are inside pool) = 71.04 − 42.70 = 28.34   → 18.1 KiB/token
+```
+
+Reconciling the three booked rates at 8×200K = 1.6M tokens:
+
+| rate | source | 1.6M-token mirror | fits boot B? |
+|---|---|---|---|
+| ~12 KiB/token | RQ1's doc-derived figure (two 262k convs at 3.22 GiB/card → 12.9) [S2 §4.4.1] | 19.3 GiB | **NO** — pool+placement+arena+19.3 = 65.2 ≠ 71.04; leaves 5.9 GiB UNBOOKED against the print; and 65.2 > 64.00 ⇒ boot A still dies, so boot A does NOT discriminate — boot B falsifies the 12 rate as an envelope (D28 records exactly this slip) |
+| ~16–18 KiB/token | **boot B receipt (derived above)** | 25.2–28.3 GiB | YES — by construction (it is the residual) |
+| ~20 KiB/token | D28's booked envelope ("shipped 1.17.0 books ≈20 KiB/token (~32 GiB at 8×200K)") | 30.5–32 GiB | YES as CONSERVATIVE cover — over-books the residual by 2–5 GiB; D29's ladder arithmetic (110 − 71.04 = 38.96) rides the printed sum, so the over-book is margin, not a defect |
+
+**Which the live receipt supports: the truth is ~16–18 KiB/token (boot B); the 12
+RQ1-carried figure UNDER-reserves (~6 GiB short of the print) and the D28 ~20
+over-reserves by a safe 2–5 GiB. Plan must keep using printed sums, not rates (RQ1's
+verdict line stands: "don't plan off any per-token figure; the receipt prints it").**
+Boot A (64.00 cgroup) is the EAGERNESS proof: `pinned 43.18` at the pre-streaming
+print [D28(1)] = pool + fraction, then OOM during the mirror reservation — the host
+copy was being reserved at startup, with zero sessions arrived. So the 8×200K host cost
+is present from t=0, not at peak: steady state and "all sessions short" cost the SAME.
+
+### R8-Q2 — Verdict on 110, term-by-term (a)/(b)/(c) growth enumeration
+
+Boot-state (already inside the printed 71.04, class (a)): expert pool 42.70; **kv-resident
+mirror for the FULL 8×200K worst case** (reserved max-num-seqs × max-model-len
+however short — boot A/B prove eager); placement 1.18; activation/arena 2.00; step
+staging as printed. Add these OUTSIDE the print (class (b), with estimates):
+
+| term | estimate | basis | inside 110 − 71.04 = 38.96? |
+|---|---|---|---|
+| full-8-session prefill staging + slot fill growth as contexts actually reach 200K | **≈21 GiB** — this is D28's OWN allowance (96 = 71.04 + 4 + ≈21 "for full-8-session prefill staging") | [D28(3); runbook step 6] | YES (+ ~14 spare beyond the 96-rung budget) |
+| checkpoint-slot tier (linear-state snapshots ride HOST PINNED memory; ~113.5 MiB/slot; RQ1 read ≈8.87 GiB at 8 seqs; auto-cap 1/8 host RAM ≈ 15.6 GiB) | ≤8.9–15.6 GiB, likely INSIDE the 21 GiB allowance already (D28's 96 arithmetic had to cover the same arrivals) | [S2 §4.8; RQ1] | YES (contained in prior row or its surplus) |
+| io_uring disk-row cache | ~0.085 GiB (the table's only resident host footprint on disk placement) | [S2 §4.3] | trivial |
+| kv-streaming miss bursts (resolves/lookups/misses) | ring is ON-CARD (32,768-token ring/group; boot B ring 16416 blocks; miss class 6,357/1,357,869 ≈ 0.4% per request end) — misses cost PCIe TIME, not host bytes | launch receipt [R8-S7] | no growth term |
+| speculative-decode buffers (MTP-3) | on-card, inside printed kv/elastic ("1.72 GiB per-sequence state" incl.); host-side drafter experts already in placement 1.18 | boot B budget lines | (a) |
+| demotion-burst class (Wilde: idle sessions demote PINNED in a 9.4 GiB/2 s burst) | **structurally OFF on this profile** — the burst is the PREFIX-CACHE TIER's demotion mechanism, and the tier is force-off while a group streams [S2 §4.4.1; RQ1]; it RE-ENTERS only if the last-resort ladder swap ships | [S9][S2] | N/A today (re-check on swap) |
+| HIP/driver drift, tokenizer, misc anon | unquantified; boot B implies ~8–9 GiB node-wide non-pod + pod anon already outside pinned | boot B RAM 125.08/45.57 | fits; bounded small |
+| **TRUE PEAK: 8 simultaneous 200K-filled sessions decoding at once** | **UNKNOWN (class (c))** — no receipt exists; boot B served with single-request traffic (cache 0 on every request; 5.1/12.4/19.3 tok/s at gen 123/896/717); the runbook step-6 gate is the datum | [runbook step 6] | this is what step 6 decides |
+
+**Verdict: SUFFICIENT at steady state (margin 38.96 GiB vs the engine's own ≥4 GiB-free
+rule — D29 quote "110 − 71.04 = 38.96 ≥ 4 ✓ with margin"; values.yaml:52-59);
+SUFFICIENT at every KNOWN peak (71.04 + 21 allowance + 4 rule = 96.04 ≤ 110, 14 GiB of
+documented-rung surplus beyond C12's 96); TIGHT only against (c)-class surprises beyond
+~39 GiB of simultaneous growth — implausible given the allowance D28 priced for exactly
+the arrivals (21 GiB) but unproven until step 6 runs. The evidence-backed "comfortable"
+number: 110 already IS the comfortable number (96 was "sufficient", 110 = 96 + burst
+slack, per D29 "+14 GiB prefill-burst headroom"). What was NOT ever sufficient: 64
+(boot-A defect class — below printed budget, D28 class law: "a limit below the printed
+budget is a defect, not a ladder step"); 94 (boot B) served but sat BELOW the 96
+arithmetic, i.e. inside the allowance it had ~0 of the priced burst cover.**
+
+### R8-Q3 — The node-level tension, checked not assumed: VERDICT = orthogonal-to-hurtless for the disk path, helpful for boot, paid in node slack
+
+The worry's shape: pod 110 of a 125.08 GiB node ⇒ less host page cache ⇒ the 4 KiB-span
+n-gram reads slow. Each link, with the deciding facts:
+
+1. **The n-gram disk tier does not USE page cache.** `--ngram-placement disk` =
+   "streamed from the .rad via a host io_uring row cache (~85 MiB, **O_DIRECT**, ~half
+   first-seen rows)" [S2 §4.3]. O_DIRECT bypasses the page cache into user buffers; boot
+   B's own line says the direct read "returned the file's bytes" (and the owner's dd
+   measured 3.42 GB/s `iflag=direct` on the very btrfs PV [D6.5]). The btrfs alignment
+   story (statx STATX_DIOALIGN unreported → engine reads in 4096-byte spans [D6.5;
+   man-pages 6.19 statx]) is about SPAN GRANULARITY, not about losing directness. So the
+   47.68 GiB table resident anywhere on the node ≈ 85 MiB + in-flight spans.
+   **Proof-from-receipt (arithmetic, not doctrine):** boot B printed node-wide
+   `RAM 125.08/45.57 available` — 125.08 − 45.57 = 79.51 GiB total used, vs 71.04 pod
+   pinned ⇒ only ~8.5 GiB of everything-else, INCLUDING any cache. If the table were
+   page-cached, `available` would read near zero. The 47.68 GiB "mapped" is
+   address-space mapping (weights-by-tier line), NOT residency. The "110 squeezes the
+   cache the table reads need" premise is therefore falsified at the first link.
+2. **cgroup accounting anyway:** memcg charges page cache + anon to the cgroup that
+   instantiates the pages, and mlocked anon lands unevictable — the pod's own disk-path
+   footprint (~85 MiB ring + touched buffers) is charged INSIDE the 110 cap, where it
+   fits trivially [R8-S1 "Memory Ownership" + tracked-usages list]. Raising the cap does
+   not re-route any charge.
+3. **memory.high / memory.max / memory.reclaim pressure:** Kubernetes maps the container
+   LIMIT to the cgroup v2 HARD limit `memory.max` (OOM-kill-at-breach semantics
+   [R8-S1: "If a cgroup's memory usage reaches this limit and can't be reduced, the OOM
+   killer is invoked in the cgroup"]); `memory.high` is the THROTTLE knob and is left at
+   "max" (= disabled) by kubelet (owner one-liner to confirm in R8-Q4's capture:
+   `cat …/memory.high` expecting `max`); `memory.reclaim` is manual, unused. A cgroup's
+   usage near its own max triggers reclaim INSIDE that cgroup — the pod has ~no
+   reclaimable memory inside (pool+mirror+mlock ⇒ unevictable [R8-S2: mlock "preventing
+   that memory from being paged to the swap area"; resident "guaranteed to stay in RAM";
+   same physics the engine README quotes: "that nothing else can use and the kernel
+   cannot swap out" [S1]) — so a bigger max neither evicts host cache nor gets evicted;
+   it just defers the OOM boundary. Global host page cache shrinks only under GLOBAL
+   pressure — and this pod's actual usage is profile-driven (~75–92 class), NOT
+   cap-driven: the same 71.04 pinned at cgroup 94, and the mirror reserved to the same
+   size at 110 (boot A/B evidence). **The cap number does not change what the engine
+   allocates.**
+4. **The real node cost of 110 is scheduler arithmetic, already ruled:** 110 + 4.125
+   router + 1.158 floor = 115.28 ≤ 125.08, 9.80 GiB free strata-DOWN; strata restore-back
+   (64 request) can never co-reside (180.3) — D29's stated inversion: the cutover is a
+   real either/or at 110 (it already was at 96's 166.3). Node MemAvailable at boot B was
+   45.57 with pod-used ~75; at 110 nothing is consumed differently — the cap itself
+   commits nothing beyond the scheduler reservation (Guaranteed reserves REQUEST = limit
+   for scheduling; physical pages appear only as the profile pins them).
+5. **Swap:** 425 MiB already in use (boot B) of the node's 2.15 GiB swap [node object,
+   D6.2-era] cannot BE the pinned tier (mlock forbids swap [R8-S2]) — it is the
+   non-pinned anon (misc host daemons, the pod's small swappable anon). With zram
+   masked [S9 law, host-prep] and the engine's own `note swap` class line printed, the
+   honest read: swap is a symptom to watch (memory.swap.current), not a 200K/8-session
+   risk driver — the whole profile is deliberately unswappable by construction.
+6. **Compaction/failure counters:** compact_stall 117,859 / compact_fail 47,681 /
+   allocstall_movable 116,143, THP always/madvise, HugePages_Total 0, buddyinfo Normal
+   order-6 = 112 blocks (~28 MiB) [launch receipt / owner capture]. The pinned ~71 GiB is
+   a long-lived movable-zone population — exactly the class that ages into order-N
+   starvation, and the counters show the node already struggles for contiguous blocks
+   (attribution radiance-vs-router-vs-strata-lifetime is UNVERIFIABLE from one snapshot —
+   flagged honest). Decisive for the cap question: **the pinning footprint and order
+   behaviour are IDENTICAL at 94 and 110** (same profile pins the same bytes) — raising
+   the cap neither causes nor cures fragmentation; what mitigates the class is booting
+   radiance FIRST after a reboot (fresh memory; boot B's success pattern) and treating
+   restart-after-long-uptime as the risk moment (step-6 capture includes the
+   buddyinfo/compact deltas). A THP/madvise host policy or pool-rewrite lane is TP2-era /
+   host-prep territory, not a C12 scalar.
+
+**Q3 verdict: raising 94→110 HELPS (the boot-refusal margin; the (b)-allowance cover),
+HURTS ONLY node slack (strata co-residency — already the ruled either/or), and is
+ORTHOGONAL to the n-gram disk path (O_DIRECT never touches the cache it was going to
+squeeze) — the launch's counter-intuitive tension does not exist on this profile.**
+
+### R8-Q4 — What to measure next (8-session gate, runbook step 6, NOT yet run)
+
+All reads below are owner-executed-host / log-capture prose (no exec from here).
+Boot-time engine startup report on the 110/110 Guaranteed roll (the roll also restores
+QoS from today's Burstable 64/94 hand-edit — D29(4)):
+- `pinned by this process X GiB` → **PASS 71 ≤ X ≤ 78** (drift allowance ~10% over boot
+  B); **X > 106 ⇒ STOP**: re-sum the printed tiers before ANY scalar edit (budget-line
+  class law D28(6) — the limit below the printed sum is a defect).
+- `weights by tier … host pool` → expect 42.70 class; `the host pool holds the 1.18 GiB
+  … placement` → expect ≈1.18; `kv cache X GiB a card: 1600000 tokens, 8.0 sessions at
+  200000` → expect ≥4.49 and "backs 8 … at once" (the on-card 200K-worst funded);
+  `RAM 125.08/Y available` → expect Y ≥ 30 at boot; the context lines (memlock 8 MiB
+  note, link WARN class, governor) ride as host state, not pass/fail here.
+Gate (8 concurrent sessions driven to 200K-class depth THROUGH the peer hop, per runbook
+step 6's skeleton; PASS = "eight admitted without refusal-class errors and decode
+steady" verbatim), capturing DURING and at peak:
+- host, pod cgroup (path via `crictl inspect` of the serve container): `memory.current`
+  **PASS ≤ 100 GiB at peak**; `memory.peak` after the gate **≤ 100** (reset-by-write is
+  available [R8-S1]); `memory.events(.local)`: `max=0`, `oom=0`, `oom_kill=0` ANY non-zero
+  = the cap bit ⇒ record and ladder; `memory.stat` keys — `anon` (≈ pinned class),
+  **`file` should stay SMALL (≤ ~1 GiB; a growing `file` would mean something IS
+  buffering the pack — falsifier for the O_DIRECT assumption above, investigate before
+  believing any cache-squeeze story)**, `unevictable` ≈ the pinned sum (cross-check of
+  mlock accounting), `workingset_refault_file` near 0; `memory.swap.current` ≤ ~1 GiB;
+  `memory.high` = `max` (kubelet-mapping confirmation one-liner).
+- host: `/proc/meminfo` — `MemAvailable` **≥ 8 GiB at gate peak** (floor class),
+  `AnonHugePages`, `Committed_AS` (≤ ~135 GiB sanity), `SwapCached`;
+  `/proc/buddyinfo` + compact_stall/compact_fail/allocstall_movable DELTAS around the
+  boot and around the gate.
+- engine: `/stats` running/waiting during fill; per-request-end kv-streaming counters
+  (today class: 797 resolves / 1,357,869 lookups / 6,357 misses ≈ 0.4% [receipt]) —
+  miss% exploding under 8×200K = ring pressure → record for the ladder; decode tok/s per
+  stream vs today's single-stream band (5.1/12.4/19.3 at gen 123/896/717) — acceptance is
+  steady, not a rate; note the half-width Gen3 link defect (~142 class prefill) is a
+  SEPARATE open lane (§D6.6) and will mask gate speeds — do not ladder the profile for a
+  link defect.
+Ladder, ONLY if the gate refuses (D17 "never preemptively soften — the receipt decides";
+runbook step 6's own order, ONE scalar per rung, `guaranteedMemoryGi` never below
+printed-sum + 4):
+1. `hostPoolMib` 43000 → 40000 → 36000 — frees host pins 1:1 (42.70 class ↓); cost:
+   experts spill back onto the card, kv elastic room shrinks — read the `kv cache` and
+   `experts-from-host` receipt lines after the change [runbook ladder-DOWN "pool first"].
+2. `maxModelLen` 200000 → 131072 → 65536 (8 seqs) — mirror ↓ proportionally (−~8.5
+   GiB/−17 GiB at the receipt rate); cost: forfeits the 200K promise; catalog
+   `limit.context` rows MUST re-pin in the same change (true-axis law).
+3. `maxNumSeqs` 8 → 4 — halves the reserved mirror (RQ1 reservation semantics); cost:
+   CONCEDES the 8-session target — a redefinition = owner call recorded.
+4. LAST resort, explicit owner sign-off: the mutually-exclusive swap — drop
+   `--kv-resident 32768`, add `--prefix-cache-mib 4096` (the v1.17.0 4-seq published
+   recipe, pool backs ~301K ≈ 1.5×200K [S3][RQ1]) — host ↓ ~25 GiB, cost: the 8-live
+   shape is gone AND Wilde's pinned-demotion-burst class RE-ENTERS (tier demotions land
+   pinned, 9.4 GiB/2 s precedent [S9]) — with `--prefix-cache-mib 0` as the escape hatch.
+(Recorded separately, NOT a memory rung: the init CPU 200m→1000m knob (D28(4)) — staged
+hash wall-clock only.)
+
+### R8-Q5 — Cross-check vs the TP2 follow-up (doc §7/§9/§11; RQ4/RQ5)
+
+The TP2 fn recipe [TP2 §7, verbatim flags]: `--tp 2 --tp-wire wht6 --max-num-seqs 8
+--max-model-len 200000 --placement expert_tiered --host-pool-mib 12288 --gpu-headroom-mib
+96 --kv-cache-dtype fp8 --prefix-cache-mib 4096 --num-speculative-tokens 3
+--max-num-batched-tokens 2048`.
+- **Does 8×200K at TP2 change the host answer? YES — it shrinks it ~3×**: pool is
+  per-rank (2 × 12288 MiB ≈ 24 GiB [TP2 §7]), `--kv-resident` OUT ⇒ the ~25–30 GiB
+  mirror disappears, prefix tier 4 GiB back in (exclusivity: one lever or the other,
+  never both [RQ1; TP2 §7]), placement/arena ≈3 ⇒ host-pinned class **≈ 30–35 GiB** vs
+  today's 71.04 + 21. Production witness: llmkube runs TP2 at full 262144 with pool 8192
+  on a 62 GiB host at **request 40 / limit 48 GiB** [S11] — i.e. the TP2 pod-class is
+  ~half of today's 96-rung arithmetic.
+- The CARD question stays a receipt question at TP2 too: Wilde's Gen4-class TP2 backed
+  "~15.7 GiB pool ≈ one 262k whale or ~4×64k" [S8] — 8×200K live at TP2 is not claimed
+  by any witness; TP2 §8 pre-registers exactly that as an open receipt item ("pin to the
+  startup receipt, not to any per-token constant" — same law).
+- **Is the 110 single-card decision consistent with the TP2 path, or does it strand
+  anything? Consistent, nothing stranded**: 110 is the SUPERSET envelope until TP2's own
+  receipts re-pin the scalar (TP2 §11's adoption step rewrites `hostPoolMib` and the
+  serveArgs anyway; the class law then re-reads the printed sum before the new scalar
+  ships — D28(6)). The one asymmetry to record for the cutover ticket (Deferred,
+  owner's): strata restore-back is dead at 110 (180.3 > 125.08), but a TP2-era radiance
+  at the llmkube 40–48 class would make 48 + 64 + 6.3 ≈ 118.3 ≤ 125.08 again
+  *arithmetically possible* — TP2 relieves RAM pins (not the pin-cap formula, whose
+  120.6-class cap both cards' pools still respect [S1; TP2 §9 "TP2 relieves VRAM
+  contention, not the RAM pin ceiling" is about per-process sums, and two ranks still
+  pin against the same cap]). Flag: co-residency re-opening is a cutover-ticket
+  consequence of TP2, not a reason to hold today's number down.
+- TP2 does NOT rescue the RAM-ngram tier either way (71.04 + 47.68 = 118.72 > 110 is a
+  single-card profile statement; TP2's mirror-free shape would make the tier arithmetic
+  `24 + 47.68 + ≈3 = 75` — interesting but out of scope; rides TP2 §10's host-prep list).
+
+### R8 — Honest uncertainty list
+
+1. **Class-(c) peak** — no receipt of 8 simultaneous 200K-filled sessions exists ANYWHERE
+   in the corpus (RQ1's contradiction section: "nobody in the fetched corpus serves
+   fn-TP1×8-long-sessions on one R9700"); 110's sufficiency at true peak is inference
+   from the eager-reservation shape + D28's priced allowance, decided by step 6.
+2. The residual method behind 16–18 KiB/token attributes the 71.04 minus known terms to
+   the mirror; if `activation/arena`/`staging` interleave differently (terms overlap in
+   the print — the parts sum to 77.88 vs the whole 71.04, so some terms double-count),
+   the mirror could be as low as ~25 GiB — the (b)-term estimates would then shrink and
+   the verdict stays sufficient (the cap margin only grows).
+3. `file` growth inside the pod cgroup was predicted ~zero from O_DIRECT semantics; the
+   gate capture is the falsifier (cheap, one key).
+4. Compaction counters are host-wide and unattributable to radiance from one snapshot.
+5. Boot A/B are DIFFERENT cgroups (64 vs 94) but the same profile — the 71.04 figure is
+   valid at 110 only because the reservation is profile-driven (boot A/B comparison is
+   the evidence, and it is ONE pair of boots on ONE build).
+6. The engine's `pinned by this process` scope (VmLck-equivalent? includes arena?) is
+   taken at face value from the print label; the cross-check is
+   `unevictable`/`memory.current` vs the line (in Q4's plan).
+
+### R8 — Implications for the plan (fold)
+
+- D29's shipped 110 **survives the capacity review** — no change; the ladder does not
+  re-open pre-gate ("the receipt decides", D17 law).
+- Runbook step 6 is now the SINGLE load-bearing open gate for the memory question; its
+  capture list should adopt Q4's keys (cgroup memory.peak/events/stat, /proc/meminfo,
+  buddyinfo deltas) — a doc-round line, not a scalar.
+- The per-token law restated with live numbers: plan off receipts (71.04), not rates
+  (12/20) — already D28's class law; §R8 adds the on-card side: the 200K×8 KV worst case
+  lives in VRAM (4.49 GiB), the host pays the EAGER mirror, so "more context" at this
+  profile is nearly FREE in RAM terms beyond the reservation already made.
+- TP2 doc §11's adoption step and the cutover Deferred row inherit this round's TP2
+  numbers unchanged.
+
+### R8 — Sources (accessed 2026-11-14)
+
+| # | URL / path | What it is |
+|---|---|---|
+| R8-S1 | raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/cgroup-v2.rst (fetched full) | memory controller: tracked usages (page cache + anon + kmem + tcp), memory.max HARD-OOM semantics, memory.high THROTTLE (not OOM), memory.peak semantics (+reset-by-write), memory.events low/high/max/oom/oom_kill definitions, memory.stat keys (anon/file/unevictable/workingset_refault_*/swapcached), Memory Ownership = charged-to-instantiating-cgroup |
+| R8-S2 | man7.org/linux/man-pages/man2/mlock.2.html (man-pages 6.19, 2026-02-11, fetched) | mlock: locked pages "preventing that memory from being paged to the swap area", guaranteed-resident-and-stay-in-RAM; RLIMIT_MEMLOCK/CAP_IPC_LOCK semantics (grounds D28's memlock-scope line) |
+| R8-S3 | repo reads: .agents/notes/radiance-on-target-acceptance.md step 6 (lines 469-555: gate law, 110 arithmetic verbatim, ladder order) · radiance-second-gpu-tp2.md §7 (lines 169-211 recipe + per-rank math) §8 (213-231 envelope) §9 (233-256 second-lane) §11 (298-300 adoption scalars) · charts/radiance/values.yaml:30-66 (D29 block, 71.04 decomposition) :70-76 (lever/exclusivity) :90-123 (plugin facts post-D24) :131-154 (serveArgs) :279-299 (claim pair gpu-r9700-1) · DECISIONS.md D28 (lines 508-579) / D29 (587-663) · EXPLORE.md §D6.1-§D6.7 | ticket authorities read per the launch; shipped-state inventory |
+| R8-S4 | boot A/boot B startup-report receipts + host capture quoted in the launch brief (owner, 2026-11-13; corroborated live-class by §D6.2's node figures 125.08 / pools gpu-r9700-1 + gpu-8060s + bare 0, Burstable 64/94 state, first-request 11.2 tok/s) | the primary evidence this round computed against |
+| (inherited) | [S1][S2 §4.3/§4.4.1/§4.8][S3][S5][S8][S9][S11][S12][S14][S16][S19] per RESEARCH Sources table | engine docs (O_DIRECT disk tier, kv-resident exclusivity + reservation semantics, prefix tier + checkpoint slots, pin cap), shipped recipes, Wilde/bigcherry/llmkube field receipts, live node reads |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R8 appended)]
+commands_run: [repo reads (RESEARCH RQ1/RQ4/RQ5/envelope, §R6/§R7 re-read; EXPLORE §D4+§D6 full; DECISIONS D28/D29 + D23/D24 rename block; charts/radiance values scalars/args/claims; runbook step 6; TP2 doc §1-§14 map + §7/§8/§9/§11 text; STATE.json chunk statuses C05-C12) => pass; webfetch kernel cgroup-v2.rst (master) => pass; webfetch man7 mlock(2) 6.19 => pass; arithmetic recomputations (on-card 2.94 KiB/token, mirror residual 16.1-18.1 KiB/token, 12/20-rate refit, 110 sums 115.28/38.96/96.04, TP2 ~30-35 class, 48+64+6.3=118.3) => pass; first mlock(2) proxy fetch failed (403) — re-fetched via man7.org => pass]
+deviations: none — answered the five questions in order, read-only; no file written but RESEARCH.md (appended §R8). Where the launch invited a verdict beyond its framing, said so: the "20 KiB vs 12 KiB" reconciliation resolved to a THIRD figure (~16-18 KiB/token, the receipt-derived residual) with both booked rates kept as the safe-envelope and falsified-derivation respectively.
+friction: the boot-B decomposition does not close exactly (parts sum 77.88 vs printed whole 71.04) — some terms double-count in the prose; resolved by bounding the residual instead of trusting the sum, flagged in the uncertainty list. nodes/cluster not re-probed this round — §D6.2's same-day reads cited as the live corroboration rather than re-reading (launch supplied the receipts and the round is read-only-by-evidence).
+open_questions: [true 8-session peak remains class-(c) until runbook step 6 runs (this section's capture plan is the closing instrument); engine's `pinned by this process` scope taken at label value — unevictable/memory.current cross-check in the gate will confirm; whether arena/placement double-count inside pool 42.70 (affects only the split of the residual, not the verdict); `file` in memory.stat assumed ~0 under O_DIRECT — falsifier included]
+next_suggested: coord folds the verdict line into the plan (D29 stands — 110 reviewed and confirmed against the receipts, no scalar change, no ladder pre-emption), adopts §R8-Q4's capture list into the runbook step-6 prose in the next doc round, and leaves the gate + ladder to the owner per the D17 receipt law.

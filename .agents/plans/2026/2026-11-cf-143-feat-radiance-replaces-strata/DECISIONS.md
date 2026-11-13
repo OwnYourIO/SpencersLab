@@ -649,6 +649,62 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   plan_status remains approved (wave 9 unchanged); reopen→re-amend pattern per C08's
   lane-ruling precedent.
 
+ - 2026-11-13 human+research D30 (OWNER CAPACITY QUESTION answered by RESEARCH §R8, lines
+   1583–1903 — "check whether the 110Gi is enough for the 200K context for the model I'm
+   running"): **VERDICT YES; D29's 110 STANDS; no scalar change, no pre-emptive ladder.**
+   (1) THE PREMISE WAS INVERTED TWICE, both times in our favour: 200K is funded **ON-CARD**
+   (`kv cache 4.49 GiB a card: 1600000 tokens, 8.0 sessions at 200000` ≈ 2.94 KiB/token fp8,
+   the engine's own "the worst case"), and the HOST term is the eager `--kv-resident` mirror —
+   PROVEN eager because boot A died at 64.00 GiB **with zero sessions arrived**. Margin at
+   110: steady 110−71.04 = **38.96**; known-peak 71.04 + D28's own 21 GiB arrivals allowance +
+   4 = **96.04 ≤ 110**, i.e. 110 is literally "96 plus 14 GiB of documented burst slack". 64
+   was a defect, 94 was tight, 110 is the number the evidence supports.
+   (2) RATES RECONCILED (the class law reaffirmed rather than newly earned): RQ1's ~12
+   KiB/token UNDER-books the print by ~6 GiB (predicts 65.2 vs printed 71.04) and D28's ~20
+   KiB/token OVER-books the residual by 2–5; the receipt-derived truth is **~16–18
+   KiB/token** (residual 25.16–28.34 over 1.6M tokens). Both booked figures BRACKET it — which
+   is why the plan prices off the PRINT, never off the rate. Honest uncertainty kept: boot B's
+   printed PARTS sum to 77.88 against the printed WHOLE 71.04 (terms overlap somewhere), so
+   the residual is BOUNDED, not decomposed.
+   (3) MY OWN HYPOTHESIS REFUTED, recorded as a defect of my reasoning rather than of the
+   host: I claimed a 110-of-125.08 pod would STARVE the host page cache the `mapped 47.68 GiB`
+   disk-tier n-gram reads depend on. FALSE at the first link — that tier is **O_DIRECT**
+   (engine docs + the boot's own "a direct read of one returned the file's bytes"), so the
+   table never enters page cache (its host footprint is the ~85 MiB io_uring row cache; boot B's
+   45.57 GiB available arithmetically excludes ~47.68 GiB of residency); k8s maps limits to
+   `memory.max` with `memory.high` DISABLED, so a bigger max neither evicts cache nor is
+   evicted by it (kernel cgroup-v2 doc); pinned pages are mlock-unswappable (mlock(2)) so the
+   425 MiB of swap is unrelated anon; and the compaction counters are IDENTICAL at 94 vs 110
+   because the footprint is the same — a boot-order risk, not a cap risk. Net: **raising the
+   limit helps boot, is orthogonal to the disk path, and costs only scheduler slack — i.e.
+   strata co-residency, which is D29's ruled either/or.**
+   (4) OPEN, OWNER'S GATE (not a repo gap): the TRUE 8-session peak is undecided until runbook
+   **step 6** runs; §R8-Q4's capture keys are the closing instrument — `memory.peak ≤ 100`,
+   `memory.events` max/oom_kill = 0, `file ≈ 0` as the O_DIRECT falsifier, MemAvailable ≥ 8 at
+   peak, buddyinfo/compact deltas, pinned in the 71–78 window. Fold into step 6's prose at the
+   next doc round (STATE.deferred row).
+   (5) TP2 FORWARD LOOK (§R8-Q5): at fn-TP2 the host answer SHRINKS ~3× (per-rank 12288 MiB ×2
+   ≈ 24, the mirror gone, the prefix tier affordable → ~30–35 class; llmkube's witness runs
+   262K at req 40/lim 48), so **110 strands nothing** — it is the single-card superset TP2's own
+   receipts will re-pin DOWN; and at that smaller number strata co-existence may arithmetically
+   RE-OPEN (~35 + 64 + 4.1 + 1.2 ≈ 104 ≤ 125.08), which is the CUTOVER ticket's decision,
+   recorded so nobody has to rediscover it.
+   (6) CORRECTION OWED TO THE OWNER IN-CHAT: I quoted "cold hash ≈ 8–23 min at 1000m" from the
+   plan; §D4's own bound is **~5.8–13.6 min** (30–70 at the 200m cap ÷ 5, single-threaded
+   busybox). The note carries the wrong string and it is T4-PINNED in the suite, so the fix is
+   a SAME-WAVE doc+needle change (C12 review MINOR-2, with MINOR-3's tier-list framing and
+   NIT-1's message wording) — stated plainly rather than quietly amended.
+   (7) NO-REBASE ADJUDICATION: main advanced to `4cac77725` via cf-135 (Renovate-on-Forgejo);
+   its changed files (renovate.json, .forgejo/workflows/renovate.yaml, tests/renovate/*,
+   tests/services/forgejo-renovate.sh, cf-135's plan folder) DO NOT INTERSECT anything this
+   branch touches, so NO rebase: rebasing would rewrite the landing SHAs that the wave guard
+   and every record cite, for zero content gain; the merge delta stays content-based (step-10
+   law). Re-verify the intersection before any future landing.
+   plan_status stays approved (wave 9); C12 in_review pending round 2 on the fold ec92229ce.
+ - 2026-11-13 coord note: D30's §R8 authority is RESEARCH.md §R8; the review's MINOR-2/MINOR-3
+   and NIT-1 route to a single same-wave micro-round (plan ledger line → test re-pin → dev doc
+   fold), NOT to silent prose edits, because the wrong figure is pinned by a test arm.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
