@@ -1115,3 +1115,18 @@ the_arithmetic + testlib SCALARS 64→96) + runbook.sh scalar/minutes/arithmetic
 radiance 46P+arms, witnesses 498P-9S/29P/36P unmoved. Live closure owner-run: repo
 lands 96 OVER the hand-edit 94 (desired end state), budget-line check on every future
 profile change (D28), tuning loop one-variable-at-a-time with the 8-session bar.
+
+**Dated supersession (2026-11-13, owner batched round — D29; the 96 text above stays as
+written history):** the shipped `guaranteedMemoryGi` is **110**, per the owner's verbatim
+"110 GiB (your figure)" extending their own 2026-11-10 strata node-envelope law
+(110+~7.3 floor ≤ 125.08) to radiance — arithmetically legal at §D6.2's sums
+(115.28 ≤ 125.08 strata-down, free 9.80; 110−71.04 = 38.96 ≥ 4; strata-up 180.3 > 125.08
+keeps the designed handshake AND inverts it — at 110-radiance strata's restore-back can
+never co-reside). C12.md amended in place (dated markers) incl. five §D6 probe corrections
+(LINK proven-downgraded, GOVERNOR non-persistent, MEMLOCK sandbox-vs-container probe fix,
+RAM-tier arithmetically DEAD at 118.72 > 110 > 96, IOMMU confirmation + NPU side effect);
+the live 94 was a LIMIT-ONLY hand-edit (pod is Burstable NOW) — the 110-pair sync restores
+Guaranteed in the same roll (AC6). The uncommitted 96-pinned test round re-points to 110
+per C12 AC4's exact list. Lock anomaly: "Yes, continue anyway" (D29.2); gpu-box spec:
+owner "upgraded/different box" without a number → live 28.60 GiB governs, docs follow-up
+card owed (D29.3).

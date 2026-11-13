@@ -583,6 +583,71 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   designed-red catches shapes, LIVE catches truths (and the §D4 touch-quiet law holds:
   no radiance sync/delete while a cold hash runs). plan_status reopened complete→
   approved for this delta (wave 8→9; C09/C10/C11 pattern).
+- 2026-11-13 human (batched-round answers, C12 value question + lock + spec) via
+  2026-11-13 plan D29 (APPEND-ONLY; supersedes D28's 96 AS THE SHIPPED VALUE ONLY — D28's
+  ladder reasoning, the 71.04 receipt basis and the class law STAND as history):
+  (1) VALUE RULING — asked "Which value should charts/radiance ship for gpu-ai?", the
+  owner answered verbatim **"110 GiB (your figure)"**, choosing their remembered number
+  over C12's documented-96 recommendation ⇒ `guaranteedMemoryGi: 110` ships. §D6's
+  archaeology is recorded honestly in both directions: 110 is NOT a radiance figure in
+  any repo plan surface (zero literal on radiance surfaces; it is STRATA's gpu-ai LIMIT,
+  owner ruling 2026-11-10 with the node-envelope law "110 + ~7-8 GiB floor ≤ 125.1",
+  `charts/llama-swap/values.yaml:1319-1325`); the ruling EXTENDS the owner's own proven
+  envelope class to the new engine — repo-wise new, arithmetically LEGAL at §D6.2's
+  sums: **110 + router 4.125 + system 1.158 = 115.28 ≤ 125.08 (free 9.80 GiB) while
+  strata is DOWN; 110 − 71.04 printed = 38.96 ≥ 4 engine rule ✓; strata UP
+  110+64+6.3 = 180.3 > 125.08 → designed Pending — the step-3 handshake restated at
+  110, protocol unchanged; the handshake INVERTS: at 110-radiance, strata restore-back
+  can never co-reside — the cutover is now a real either/or (Deferred row gains the
+  weight)**. Headroom story: +14 GiB burst slack over 96 at −14 GiB node-free — and the
+  RAM-ngram tier is DEAD at BOTH (71.04 + 47.68 = 118.72 > 110) so 110 is slack, not a
+  tier enabler; "110 buys nothing the engine rule needed" is ALSO said: 96 passed the
+  rule — the ruling is headroom preference, not a fix correction. The in-flight C12 test
+  round (uncommitted, §12.11, pinned at 96) re-points to 110 per C12 AC4's exact list
+  (testlib SCALARS one site + the pair/splice/arithmetic legs + runbook.sh T2/T3/T5 +
+  tuning-suite fixtures + T4's 71.04/110 coherence token).
+  (2) LOCK ANOMALY — "Yes, continue anyway": during this round the pipeline lock showed
+  PIPELINE LOCK LOST; pipeline_status then held setId `b60c418b` (AI set, card
+  Na5LxMaY3ptABWhAy) SOLELY by THIS session but state `failed`, heartbeat answering
+  `no_claim` after the server restart cost the in-memory registration, and a re-claim
+  refused `reason: occupied` NAMING MY OWN session (§D6-era facts). Standing decisions
+  recorded: continue per the owner's word; the 2 h reaper may yet prune the stale row —
+  if it does, the CARD MOVE hands to the OWNER rather than any force (claim nothing
+  beyond what the file-backed state re-grants); the lock flap itself is the third
+  state-flap sighting of its class (cf-131/C09 precedent) with one new fact: failed-
+  state-but-held is the server-restart signature.
+  (3) GPU-BOX SPEC DRIFT — asked for the gpu cluster's real RAM, the owner answered
+  "I upgraded it / it's a different box" WITHOUT the number; §D6.2's live read is
+  AUTHORITATIVE for sizing until they supply the spec: node `gpu` capacity==allocatable
+  **28.60 GiB** (29,994,244Ki; capacity==allocatable pattern = the node IS that size,
+  same signature as ai-gpu's 125.08), while four 2026-10 carriers + a live
+  `services/gpu/prod/values.yaml:363-371` comment say **64 GiB RAM** — "64 for gpu" was
+  never a radiance pod plan (radiance serves gpu-ai ONLY; zero radiance surfaces on gpu).
+  Consequences: the 2026-10 fit-notes + that comment are STALE (the "~32 GiB experts
+  resident" line cannot fit a 28.6 GiB box) → **docs follow-up card owed at run end,
+  NOT a C12 code change**; if the box really moved, gpu-cluster cache-ram sizing prose
+  deserves a re-look (follow-up card territory).
+  (4) §D6's PROBE CORRECTIONS fold into C12 AC2's checklist as the five amended-truth
+  families (LINK PROVEN-DOWNGRADED (WARN reprints post-reboot at 49% busy; width is
+  physical, SPEED is the defect; LnkCtl2 TargetSpeed is the next discriminator;
+  retrain-vs-luck CLOSED); GOVERNOR NON-PERSISTENT (host reads performance NOW while
+  the fresh 15:01 boot printed powersave — persistence route, never a runtime-set
+  dressed as a fix); MEMLOCK PROBE (sandbox 16787369984 = MemTotal/8-computed vs the
+  engine's own 8 MiB container truth; crictl ps→inspect→/proc/pid/limits is the read;
+  k8s/CRI have NO per-pod rlimit — the node route is the only one and the repo's OWN
+  strata-prep LimitMEMLOCK=infinity drop-in (:115-118) is the precedent; CAP_IPC_LOCK
+  nuance mooted by... (5)); RAM-TIER DEAD arithmetic 118.72 > 110 > 96 (unlock-memlock
+  does NOT buy it; options = stay-on-disk 4KiB-spans (3–10% band) vs the owner's XFS/ext4
+  storage-layout follow-up — the runbook's ≥5 GB/s O_DIRECT gate is unmet at 3.42 GB/s,
+  and statx STATX_DIOALIGN regular-file support is ext4/f2fs/xfs ONLY (man-pages 6.19),
+  btrfs legitimately reports nothing; alignment-unreported ≠ direct-IO-broken); IOMMU
+  correction CONFIRMED (off works, dma copy lists active) + the recorded side-effect:
+  `amd_iommu=off` ALSO kills the NPU driver (`amdxdna … Running without IOMMU not
+  supported`) — owner's fact, no radiance action. Also honest §D6.2 finding folded into
+  AC6: the live 94 was LIMIT-ONLY (req stayed 64) ⇒ the pod is Burstable NOW; the 110
+  PAIR sync restores Guaranteed in the same roll — desired end state, said plainly.
+  plan_status remains approved (wave 9 unchanged); reopen→re-amend pattern per C08's
+  lane-ruling precedent.
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
