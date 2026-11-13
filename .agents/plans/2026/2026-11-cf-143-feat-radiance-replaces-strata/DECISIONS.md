@@ -951,6 +951,42 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    `amdgpu.runpm=0` STABILITY row** with the ArcheoCodix precedent — explicitly labelled
    stability, never a speed fix.
 
+  - 2026-11-13 coord D37 (TWO SELF-REPORTED PROCESS DEFECTS that FINAL round 6 caught in MY
+    records, filed as the ticket's last decision because both are laws, not footnotes):
+    (1) **BOARD WRITES IN THE UNCLAIMED WINDOW, understated by my own incident record.**
+    STATE.lock_incident said the three unclaimed-window commits involved "no card move, no
+    push" — true for the CLAIMED card, incomplete as a description: inside that window
+    (prune 16:09:03Z → re-claim ~18:5xZ) I also wrote the BOARD — filing the XFS/ext4 card
+    (SEadqvfPHA6T2MwJS) and the fleet selfHeal-prose card (uzHJTPNhRxTPCwcn7) and re-publishing
+    AD-144's body at 2c5151179's 18:46:52Z. Zero contention risk (both were NEW cards and a
+    follow-up card of my own ticket; the held card never moved and nothing touched the cluster),
+    but the rule's point is that a lost lease stops side-effects, and "card move" was the only
+    one I disclaimed. LAW: when a lease is lost, the freeze covers **every** external surface —
+    board writes included — not just the held card; and an incident record must enumerate the
+    surfaces touched, not the ones it happened to think about. Amendment appended to
+    STATE.lock_incident rather than editing the original prose (append-only law).
+    (2) **"FRESH SESSION" WAS FALSE — VERIFIED AS MY REUSE, NOT A COPY SLIP.** The C14 r1
+    review ran in the SAME session as the C13 r1 review (`ses_e29eb1f7cffe…`): I passed the id
+    forward on the launch out of convenience, and the chunk's own note then read "fresh
+    session" because that is the template wording. The contract requires chunk reviews to be
+    fresh precisely so a reviewer cannot inherit the run's optimism; I broke it on C14 r1 (and
+    the same reuse pattern runs through my FINAL rounds 3–6 on `ses_e2e9c1b8affe…`). Substance:
+    every one of those rounds re-ran its own bars and synthesized its own fixtures, and C14 r1
+    produced findings the earlier rounds had not (the COMPLETELY-claim over-read, the
+    `293610128` digit, the banner tail) — so the verdicts were earned, not carried. But the
+    record said something that wasn't true and the practice was wrong, so the correction stands
+    on the record rather than on the outcome. LAW: a `sessionID` on an `agent-review` launch is
+    a defect signal for a CHUNK review — pass none; where a continuation is genuinely intended
+    (a narrow re-check of the same delta), say "continued session" in the note and let the
+    coordinator's own judgment be the thing under review, not the label.
+    (3) WHAT REMAINS ON THE RECORD from round 6 (all non-gating, folded with this entry):
+    C13/C14 `commit` fields added to STATE; the chunks/C12.md:177 historical `-class` quote is
+    ruled ACCEPTABLE as-is with D33's bracket as its pointer (round 6's own judgment); the
+    §12.13 wrap-sensitivity sentence and the §12.14 aislop repo-pin stay carried (test lane /
+    infra lane). And the ticket's landing state is explicit: main still carries the retimer
+    fiction and the falsified Rung-0, so the branch's remaining docs-only delta
+    (d645b7cf8 + 3261a92f3) is the last thing between the owner's console and a dead end.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

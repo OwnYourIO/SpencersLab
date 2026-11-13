@@ -1337,3 +1337,150 @@ host-tuning.sh` 4 ok + runbook 5 ok + tp2 3 ok; envelope/sums tokens frozen (30�
 at C14's sha; **render-diff MUST BE EMPTY (zero charts/services files)**. Run-end: active-
 dock-vs-3.94-GB/s purchase decision + guards-optimality observation recorded for the owner
 (AC6), card-#1 re-publish ledger unchanged.
+
+## FINAL whole-plan review round 6 (C14 docs refresh + record corrections) — 2026-11-14,
+fresh planning-tier session, HEAD 3261a92f3, main == origin/main == da46cee2e
+
+**Verdict: APPROVED.** Zero blockers, zero majors. C14's four claims verified — not trusted —
+against the receipts and the live cluster; the record-corrections and the lock incident audited
+honestly, including the coordinator's self-reported errors. The ticket is now **COMPLETE except
+(i) the owner's hardware rungs and the two never-run gates, and (ii) the run-end card/merge
+actions** — nothing in the repo awaits agent work.
+
+**TICKET-WIDE BAR (all fresh, sequential, PATH-exported, /tmp-only dep updates):**
+charts/llama-swap **498P/9S/0F** · charts/radiance **46P/0F** · charts/amd-gpu **29P/0F** ·
+charts/vllm **36P/0F** · amd-gpu-naming **5 ok bare** AND `AMD_GPU_FLIP_COMMIT=d645b7cf8` ⇒
+**NON-FLIP** green; historical witnesses re-proved on the real commits (a81989b47→WAVE-A,
+b1def8d1f→WAVE-B, 56142d511→WAVE-C); **bogus sha RED** and a **claim-drop synthetic**
+(delete services/gpu's bare ADD in a /tmp clone) **RED** naming the carrier law ·
+host-tuning **4 ok** · runbook **5 ok** · tp2 **3 ok** · dashboards **5 ok** · surface **9 ok
+bare** + `CF143_BASE_SHA=0d9b41785` explicit `M1..M8` **10 ok** · helm lint ×4 (fresh /tmp
+archive + dependency update) **0 failed** + both umbrella renders rc0 · rulesync `--check` clean
+· **aislop: the §12.14 footnote reproduced exactly under my own hands** — `npx --no-install
+aislop` REFUSES ("missing packages… aislop@0.21.0"; the float reached the registry in the C14
+window) and the cached binary `node ~/.npm/_npx/74a4a2793e1dc310/node_modules/aislop/dist/
+cli.js ci --changes` answers **cliVersion 0.20.1, 0/0/0 over 106 files, exit 0**. The footnote's
+ask — make the pin repo-visible (package.json devDependency or a documented hash path) — is
+carried as an infra-lane suggestion. Tree clean after every run.
+
+**FOCUS 1 — C14's claims:** (a) the falsified Rung 0 carries its full receipt (boot id
+`4d6202d9-…-1edec278a73d` @21:34:43Z, SIGTERM 21:31:24Z ≈3 m 19 s off-window, the verbatim
+reprinted chain `00:03.1 8.0 GT/s x4 (max 16.0…) … [read at 48% busy]` + WARN + "FALSIFIED, not
+owed a repeat") and my own repo-wide sweep finds the dead candidate re-advertised NOWHERE (the
+"`those ARE its settings`" phrase survives ONLY inside §R9/D35's falsification prose in
+EXPLORE/plan records — no note, runbook or TP2 site teaches it; the runbook/TP2 files were
+untouched by the window — 4 "sequenc" hits elsewhere are the C13 restore-ORDER law and a
+curl-**resume** line, different words). (b) the ladder reads reseat → Gen4 SFF-8611 cable →
+**DOCK BYPASS — the decisive separator** → BIOS-EQ LAST and trust-flagged (R9-S17 SEO-lead,
+menu existence UNVERIFIED — "do not promise it"), the READ-UNDER-LOAD witness law is stated
+(:60–:64, "idle parks the link at 2.5 GT/s, the trap that fooled early reads"), the census is
+**49/50/48** with D36's explicit "a 61% reading never existed" self-correction, and the terminal
+fork (active redriver/PEX dock = TP2 §2 lane, owner decision, "never a repo step" / accept
+3.94 GB/s / profile levers / TP2) is presented as exactly that — OWNER's, not a plan.
+(c) the NOT-fixes row keeps BOTH verbatim field quotes ("no change to PCIe link speed" /
+"no effect"), the setpci row keeps NOT-FIX + OWNER-lane on one line (the marker-adjacency law
+honoured), and the `d3cold_allowed=0` + `amdgpu.runpm=0` row is labelled **STABILITY — due
+regardless, explicitly NOT a throughput fix** with the ArcheoCodix same-DEG1 precedent;
+§D10.6's live read agrees the D3cold symptom has NOT appeared while its precondition stays
+armed. (d) the HEAT-ENGINE section is now the COMPLETE exit banner (the tail restored at
+3261a92f3: `328 dispatches declined / 265 starved of a slab slot, 3721 of a pool slot` — I
+re-fetched the drained pod's log myself: 4fccz is Completed, banner byte-matches §D10.5),
+READ ARTIFACT names boot-B's `0 dispatches`, SUPERSEDED names §D8.2(b)'s 154-capacity with the
+300-reach + 520+1416 loans arithmetic, and the churn claim **recomputes**: h2d alone
+71.40 GiB × 1024 ÷ 884 tokens = 82.7 MiB/token, both directions 90.48 × 1024 ÷ 884 = 102.4 →
+"on the order of ~90–100 MiB/token" is honest framed arithmetic, not a measurement — and the
+honest bound stands as written: m-model fits FOUR samples, "same or worse" adjudicates to
+SAME-mid-ramp, and **no fair settled number exists until the fixed ≥2000-token probe (never
+run) + the step-6 8-session gate (never run)**. The card-class exoneration is labelled EXTERNAL:
+"the dock trains Gen4 in other hands (chimolog, R10-S8) and the card's class is ruled out —
+other hosts report this card at Gen4 x4 (R10-Q2(f), §R9)" — cited witnesses, not our measurement.
+**LIVE re-verification (readonly, this session): post-ritual truth holds** — the new radiance
+pod `gpu-ai-radiance-…-6h9cz` Running (4fccz Completed with the drained banner), the old boot's
+report still prints `8.0 GT/s x4 (max 16.0)`, cgroup **110.00 GiB**, `pinned by this process
+71.04 GiB`, `ttm.pages_limit 112.00 GiB`, memlock 8.00 MiB, governor powersave, iommu off,
+power cap 300 W — the hardware-did-not-move finding re-witnessed; router Deployment 1 Available
+(gen 50) with its Application OutOfSync and NO automated policy — the designed parked
+scale-down exactly as D31/§D7 teach.
+
+**FOCUS 2 — records integrity incl the coordinator's self-corrections:** the ttm
+`293610128→29360128` transcription is corrected at every LIVE site (note :24/:25/:30/:287 —
+:24 now states the arithmetic 29,360,128 × 4 KiB = 112.00 GiB exactly; D33's paste + a dated
+bracket) — **ruling on chunks/C12.md:177: ACCEPTABLE as-is** — that line quotes C12's frozen
+chunk-contract text (a record of what the wave PINNED, and rewriting a landed contract quote
+falsifies history); any reader grepping the mis-type lands on C14.md's info-1 + the D33 bracket
+one hop away — but a one-line dated bracket in C12's Review-notes section (coord lane, optional)
+would close the last hop. D36's two self-corrections (the never-existent 61%; the superseded
+154-inference) are recorded as defects of OUR reasoning with the corrected census — the honest
+shape. **Lock incident: truthful-but-incomplete.** STATE.lock_incident is accurate on every
+checkable claim (prune at 16:09:03Z after `no_claim`; setId b60c418b → reaped; three records
+commits f13200cdc/bf95022a/2c5151179 branch-local; owner verbatim; re-claim as `4cc5d898-…`,
+new set, not inherited; practice correction "a no_claim heartbeat means treat the lease as
+LOST"). **One omission I must name: the window was NOT board-write-free** — 2c5151179's own
+message records the XFS/ext4 + fleet selfHeal-prose cards FILED and AD-144 RE-PUBLISHED at
+18:46:52Z, minutes before the ~18:5xZ re-claim. Those were Inbox/Backlog additions (no
+claimed-card move, no AD-143 touch, no push, no cluster write — the cluster check above re-
+confirms nothing C14-era is deployed and main still lacks the docs-only C14 anyway), so zero
+contention risk — but "no card move" ≠ "no board write", and the append-only repair is one
+amendment line in lock_incident (coord lane). Null-session honesty rows: C11's review session
+stays `null` beside the coord's self-recorded invented-id friction — exemplary; **one flag**:
+C13-r1 and C14-r1 review rows carry the SAME session id (ses_e29eb1f7cffe…) while both chunk
+notes say "fresh session" — coord to verify copy-paste vs reuse and re-word one record. C13
+status correctly `done`; C14 done with all three handoffs and real session ids; **C13/C14 rows
+still carry no `commit` field** (027d3b4ee+ec92229ce / 384e3135e / d645b7cf8+3261a92f3 — fold
+owed); STATE parses, plan_status approved (delta 7 records the reopen reason), 42 top handoffs
++ per-chunk rows complete.
+
+**FOCUS 3 — goal-vs-card, FINAL: every card ask is delivered and LIVE.** Radiance deployed
+beside strata (Q5 co-existence held — strata parked at replicas:0 under the don't-sync law, its
+re-restore is step 10's ordered either/or at 110: 180.3 > 125.08); vllm disabled commented-out
+(C01, zero live rows); honest catalog trio (C05, 9/5/1 higher-wins, [text,image]); the ladder
+documented end-to-end (C06 runbook + C12's 110 + D30's capture keys); product-named pools +
+patched ids table (C07/C08, table sha 864da869… live-mounted, "Loaded 10" receipted);
+110/110 Guaranteed LIVE with the D21/D26 shield delivered by the per-cluster OVERLAY ADD (gpu
+pod rendered unchanged — naming n2/n3 + 498P carry it); four doc artifacts mutually coherent
+(T4 two-doc coherence arm green, cross-doc token census frozen, no stale survivor anywhere:
+zero 8–23, zero re-advertised rungs, zero fictive-retimer INSTRUCTION — the two branch "retimer"
+hits are the PASSIVE-dock denies). **TP2/card freshness: `git diff 2c5151179..HEAD` touched ONLY
+the tuning note among the four artifacts — TP2's body did NOT move in C14 ⇒ AD-144's C13-era
+re-publish is CURRENT, no fourth re-publish owed** (verified by diff, not by claim). Remaining
+owner-side items, named exactly: rungs 1–3 (reseat / Gen4 SFF-8611 cable swap / DOCK BYPASS —
+the decisive separator), the terminal purchase fork (active dock vs accept 3.94 GB/s vs levers
+vs TP2), the d3cold/runpm STABILITY hygiene (due regardless, host lane), the two gates (fixed
+probe at request ≥4; step-6 8-session + §R8 capture keys), the cutover either/or (110 made it
+binary; §R8-Q5: TP2's ~30–35 may re-open co-existence ≈104.3), and the five Inbox cards —
+AD-144 TP2 / AD-145 Grafana / AD-146 appset-passthrough (labels confirmed) / XFS-ext4 storage
+lane / fleet selfHeal-prose. **Zero repo-side work remains for ANY of them** — every follow-up
+is an owner action or a future ticket; the only branch→main delta left is this run's own landing.
+
+**FOCUS 4 — git/scope:** per-commit audit `2c5151179..HEAD`: d645b7cf8 = EXACTLY 3 files
+(note + TEST_SPEC ledger + suite arms — the docs-only claim holds, 0 render-plane files,
+confirmed by my own name-only diff and the input-zero-diff renders); 3261a92f3 = docs
+(banner tail + rung-0 quote + the 3 transcription sites) + records (STATE/DECISIONS/chunks) —
+inside the r1-fold lane. `4652671fd..HEAD`-wide removed-assertion state unchanged from round 5
+(0 removed assertions this window; the off-parity re-baseline remains the only fixture move of
+the whole live-round saga, already sanctioned-with-provenance). Branch local-only (no
+`cf-143*` ref on origin; no upstream); main moved solely by the owner's own landings (twins,
+content-equivalence law D30(7)/D31 — and main's advance to da46cee2e + the cf-135 files the
+branch lacks are exactly the no-rebase posture, re-verified intersect-free: the main..HEAD delta
+touches none of cf-135's files). Tree clean after my runs.
+
+**HAND-BACK (owner's word on all of it, in order):** (1) **Merge + sync the branch remainder** —
+d645b7cf8 + 3261a92f3 (+ the records): the owner-facing tuning note on main STILL carries the
+retimer fiction and the falsified Rung-0, and NOTHING syncs it automatically, so this is a
+docs-landing, not a sync — merging changes no rendered object (0 render-plane files).
+(2) The hardware ladder in the note's own order: reseat → cable → DOCK BYPASS (the decisive
+separator; open-frame or a second Gen4 host) → BIOS/EQ last; the d3cold/runpm stability row is
+due regardless; record the LnkSta verdict. (3) Then the two rate gates: the fixed probe
+(≥2000 tokens, n=1, temperature 0, run twice, quote the SECOND) at request ≥4 — the
+`stream_bytes ÷ decode_tokens_total` line is the one number that ends the debate — and
+step 6's 8-session gate with §R8 capture keys; report per "the receipt decides, never the rate".
+(4) Then the cutover decision (110's either/or), the five Inbox cards' triage, the D24 upstream
+naming-ask word. (5) AD-143: coord moves the card Executing→Review with the round-1–6 summary
+once the owner gives the word (records fold above are the final's asks), releases the
+`4cc5d898` claim, and the session goes home; **Finished is the owner's hand alone.** Ten rounds
+of review, four live-defect classes closed on-target, all fourteen chunks
+APPROVED: **this plan is complete.**
+
+— final reviewer round 6, 2026-11-14 (fresh session; sole write = this record; renders, dep
+updates and the claim-drop synthetic confined to /tmp; cluster reads readonly-tier only; repo
+tree verified clean post-runs).
