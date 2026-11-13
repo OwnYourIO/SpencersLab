@@ -1084,3 +1084,34 @@ complete + serve boot) and the fsGroup warning at init completion.
 — final reviewer round 4, 2026-11-13 (fresh session; no implementation or validation file
 edited; /tmp-only renders, stubs, clone and dep-copies; readonly-tier cluster reads only;
 repo tree verified clean post-runs).
+
+---
+
+## Rework delta 5 — live defects C12 (pod memory scalar + host tuning checklist) — 2026-11-13, appended per owner reports
+Fourth live-delta family (C09 §D1 command, C10 §D2 carrier, C11 §D3b grammar, C12 §D4 +
+two owner reports). Report 1: the repaired C11 gate completed the first-ever hash
+(CPU-quota-bound, ~30–70 min — §D4) and the SERVE container then printed its budget and
+OOMed — cgroup 64.00 GiB vs **71.04 GiB observed pinned** (pool 42.70 + kv-resident
+mirror ≈32 + arena 2.00 + placement 1.18 + staging): the shipped `guaranteedMemoryGi: 64`
+could never hold the profile. Report 2: the owner's MANUAL 94 GiB bump proves the shape —
+engine loads, SERVES — at `5.1 tok/s decode` / ~142 t/s prefill vs the RQ1 envelope
+(142–160 / ~450–600-class): a host-tuning story (LINK half-width, memlock, DIO,
+governor, swap, runtime-pm, clocks, heat-engine idleness). D28 class law: read the
+printed budget BEFORE shipping the scalar. plan_status reopened complete→approved.
+
+| id | title | size | wave | depends_on | why the dependency |
+|----|-------|------|------|------------|--------------------|
+| C12 | Two-part: memory scalar 64→96 (receipt-anchored) + init-CPU knob · host-tuning checklist note + gate corrections | M | 9 | [C11] | repairs C11's completed gate's next step (the boot); AC2/AC3 fold the gate prose C09–C11 proved on-target; two halves separable for the owner |
+
+Wave 9: C12 (alone). Commands additions: the render-diff proof (ONLY the memory pair
+64→96 both maps + init cpu pair change; claim pair/equality gate/serveArgs byte-kept);
+`AMD_GPU_FLIP_COMMIT=<C12 sha>` => NON-FLIP path (zero claim surfaces — re-proves the
+C11 class); NEW `bash tests/notes/radiance-host-tuning.sh` (T1 citation-resolver w/
+fixture-probe leg per §12.7 law, T2 fifteen stable family tokens, T3 read-only/owner-
+executed law, T4 two-doc gate coherence incl the iommu correction); radiance suite
+red-first legs (test_ac2_guaranteed_pair_with_named_pool, test_ac2_init_container_is_
+guaranteed_too, test_ac3_scalar_splice_is_single_source, test_scalars_commented_with_
+the_arithmetic + testlib SCALARS 64→96) + runbook.sh scalar/minutes/arithmetic needles;
+radiance 46P+arms, witnesses 498P-9S/29P/36P unmoved. Live closure owner-run: repo
+lands 96 OVER the hand-edit 94 (desired end state), budget-line check on every future
+profile change (D28), tuning loop one-variable-at-a-time with the 8-session bar.

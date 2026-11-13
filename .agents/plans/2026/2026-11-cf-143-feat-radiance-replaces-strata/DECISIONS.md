@@ -495,7 +495,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   matcher: C11 gets NO WAVE-E shape — a NON-FLIP class (touches no carrier file +
   claim-line census unchanged → guard vacuous-with-message; any claim-moving non-wave
   commit still REDs) — a fifth shape would classify a grammar fix as a claim wave and rot
-  per doc-fix (adjudicated; D27). AUTHORY HONESTY (no blame, the law is the product): the
+  per doc-fix (adjudicated; D27). AUTHORSHIP HONESTY (no blame, the law is the product): the
   defect was written at C02 (init contract per D10/D15), survived C04's review, the test
   wave, C09's adjacent fix and final reviews r2/r3 because every leg read the script's
   staging VOCABULARY (marker/sha/URL/curl present) — 43P through a broken gate; the
@@ -505,6 +505,84 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   Scope confirmation from the same owner round: rework scope remains the six items +
   recorded nits + these live deltas; plan_status reopened complete→approved for the C11
   round (D26/D25 pattern).
+- 2026-11-13 human+plan D28 (LIVE DEFECTS C12 — two owner reports 2026-11-13 afternoon;
+  NEW live deltas, not "other comments" beyond the closed six-item scope; authority: the
+  reports' startup-report receipts + EXPLORE §D4 scout round 6 — which live-falsified
+  §D3b.6's "1–6 min" hash model: busybox sha256sum is single-threaded with NO SHA-NI
+  path, cpu measured EXACTLY 0.2000 core while io PSI = 0 ⇒ the pass is CPU-QUOTA-bound
+  at 30–70 min (hard floor ≈20.3 min at any disk), and every pod loss restarts the HASH
+  at byte 0 (only the download resumes)):
+  (1) OOM-AT-64 RECEIPT: C11's repaired gate completed (first-ever hash, tens-of-minutes
+  exactly as §D4 predicts, zero re-download) — then the SERVE container printed its own
+  budget and died `radiance E startup stopped: out of memory`: cgroup 64.00 GiB vs the
+  printed host-side wants pool 42.70 + `--kv-resident` mirror ≈32 + activation/arena
+  2.00 + placement-flag items 1.18 + step staging = **71.04 GiB observed pinned**
+  (report 2; report 1 caught the pre-streaming 43.18). The shipped `guaranteedMemoryGi:
+  64` could NEVER hold the profile — a PLANNING miss at the shipped scalar, not a
+  runtime regression.
+  (2) D17 ADJUDICATION (no blame; the record is the product): the derivation neither
+  double-counted nor omitted the mirror — it RESERVED the mirror at RESEARCH RQ1's
+  ~12 KiB/token QSA-group rate (≈19.3 GiB) while shipped 1.17.0 books ≈20 KiB/token
+  (≈32 GiB at 8×200K), consistent with RQ1's own reservation semantics ("host copy
+  reserved max-num-seqs × max-model-len however short the requests"); the root slip is
+  that RQ1's VERDICT line says verbatim "don't plan off any per-token figure; the
+  receipt prints it" — and the plan (and C08 T-D's sharpened comment) planned off
+  per-token figures anyway. 64 sat BELOW the printed sum; D17's documented ladder-up
+  clause existed for exactly this and simply had to be walked.
+  (3) SHIPPED VALUE = **96 GiB** (D17's own ladder ceiling; receipt basis: 71.04 +
+  ≥4 GiB-free-under-cgroup rule + ≈21 GiB headroom for full-8-session prefill staging).
+  The owner's MANUAL 94 GiB out-of-band bump is drift the repo must absorb: landing 96
+  means the next Application sync APPLIES OVER the hand-edit and the Recreate roll makes
+  it effective — the DESIRED end state (94 exists nowhere in git and would silently
+  re-strike on any resync). Schedulability restated at 96: 96 + router 5.125 + system
+  1.158 ≈ 102.3 ≤ 125.08 while strata is scaled down (free ≈22.8 GiB); +strata's 64Gi
+  request > 125.08 → Pending — D17's designed handshake at the new number; every
+  64+64+4>125.08 arithmetic needle dies with this fold (C12 AC1/AC4).
+  (4) INIT CPU — §D4's law lands on the pair: DECIDED raise 200m→1000m (busybox
+  single-thread ⇒ one core is the whole gain, >1 pointless — math written at the knob;
+  cold-staging hash ≈ 8–23 min vs 30–70; memory stays 2Gi/2Gi, measured workingSet
+  4.1 MB); documented SEPARABLE knob (revert = one line, ship the raise); D15 pod-class
+  law keeps requests==limits on both containers. Runbook :394-395 "minutes-class"
+  folds to §D4.6's corrected tens-of-minutes/8–23-min wording.
+  (5) HOST-GATE CORRECTIONS (checklist = C12 AC2's 15 families in
+  .agents/notes/radiance-host-tuning.md; gate prose folded into the runbook): IOMMU —
+  step-0(e) expected `iommu=pt`, live truth `amd_iommu=off` + engine WORKS (report 2:
+  `dma copy lists` IN USE on DMA engine 0; no RCCL in radiance; p2pdma-permissive on
+  AMD RCs, RESEARCH S9) ⇒ THE GATE WAS WRONG, NOT THE HOST — corrected law: state
+  known+recorded, off acceptable for the host-staging path, re-verify before any
+  TP2/P2P experiment. MEMLOCK 8 MiB gates the RAM-ngram tier + io_uring rings ONLY
+  (card-path pins are driver-locked, NOT ulimit-charged — the 71 GiB pool never needed
+  it; do not oversell the drop-in). DIO — local-path backing "reports no direct-I/O
+  alignment… 4096-byte spans" (device class NOT-determinable-read-only, §D4.3): tier
+  choice documented (disk-stay vs memlock-unlock→ram, with the 71.04+47.7 > 96
+  arithmetic shown, vs ram=DIR tmpfs). LINK — 8.0 vs 16.0 GT/s x4 WARN: did NOT repeat
+  in report 2 — retrained-vs-luck is INDISTINGUISHABLE from logs; only LnkSta +
+  /diagnostics under a long prefill decides. PROVEN-DONE (do-not-redo): cwsr=1 (engine
+  refuses boot otherwise), ECC-off (31.86 GiB), ReBAR. CUSTOM-PARAM CONTRADICTION
+  adjudicated honestly: the owner's "ASSUME NOTHING CUSTOM" stands as METHOD (quote
+  /proc/cmdline into every receipt; treat no param as stock OR intentional) even
+  though `ttm.page_pool_size=29360128 ttm.pages_limit=293610128
+  amdgpu.lockup_timeout=30000` + `amd_iommu=off` are visibly custom-set in the paste —
+  the PRINTED budget wins anyway: pin-cap authority = the engine's 112.00 GiB line,
+  not the stock ~120.6 formula. DECODE 5.1 t/s suspect order: LINK → POWER-CLOCKS
+  (300 W cap ≠ the TP2 §3 120 W class — board not capping today; sclk 500–2350, check
+  ramp under load) → RUNTIME-PM (control auto) → HEAT-ENGINE idleness (0 dispatches/
+  promotions/demotions; resident-per-layer min 0 max 154 mean 54.4 sd 73.3, L48+ zero
+  — re-read under sustained multi-session load before touching `--placement`; the
+  all-miss story = cold expert set + half-width link); the ~142 t/s prefill vs the
+  ~450–600 x4-class is the half-width link's signature. 8-session fill = the STANDING
+  acceptance bar; PROTOCOL one-variable-at-a-time with receipts (startup report +
+  /diagnostics + fixed probe) after each.
+  (6) CLASS LAW (fifth live-round confirmation; becomes doc-test rule): **a startup
+  report that prints its own budget must be READ BEFORE the sizing scalar ships** —
+  we shipped 64 against a profile the engine now states needs ~71.04 pinned, and NO
+  arm across five chunk reviews + four final reviews ever compared the pod limit to
+  THE SUM OF THE PRINTED HOST-SIDE TIERS. Product: the tuning note's §PROTOCOL carries
+  the budget-line check (`pinned … GiB` + 4 ≤ limit) as a re-capture step, the runbook
+  step-7 gate gains the arithmetic, and the TEST_SPEC §12.x round pins it as a leg —
+  designed-red catches shapes, LIVE catches truths (and the §D4 touch-quiet law holds:
+  no radiance sync/delete while a cold hash runs). plan_status reopened complete→
+  approved for this delta (wave 8→9; C09/C10/C11 pattern).
 
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
