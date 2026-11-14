@@ -29,7 +29,7 @@ ARG HUGO_SHA256=f2fe3b4ef90bf053d93c713eca1d4d5a467d8d2d5da858a448d55eb71ad44ddf
 # toolchain ships pinned from the official tarball; the URL expands from
 # this ARG, so a version-only bump fails the digest check below loudly.
 # renovate: datasource=golang-version depName=golang
-ARG GO_VERSION=1.27.3
+ARG GO_VERSION=1.27.4
 # manual-pin: sha256 of go${GO_VERSION}.linux-amd64.tar.gz (official
 # dl.google.com .sha256); bump with GO_VERSION — a stale digest must fail
 # the build, not get auto-trusted.
