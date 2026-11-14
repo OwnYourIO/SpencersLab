@@ -47,7 +47,13 @@ hardware because a stale row says otherwise. Post-swap topology
 `00:02.5-[c1-c3]`, NVMe under `00:03.1-[c4]` — the devices TRADED root
 ports, which also REFUTES §D11's shared-upstream worry by read, not by
 reassurance; the bus letters inside the older receipts below belong to the
-PRE-swap enumeration.
+PRE-swap enumeration. **CLOSED BY INSTRUMENT (D51):** the live `/diagnostics`
+chain now reads `00:00:02.5 16.0 GT/s x4 (max 16.0 GT/s x4)` → card bridges
+at 32 GT/s x16, and the `link-below-max` WARN is GONE from findings — only
+`experts-from-host`, `link-capped`, `memlock-limited` remain. The fix
+survived both the D49 crash and D50's real reboot. Two single-rank no-ops,
+recorded so nobody tunes them: `--tp-wire exact` is the default and `--p2p
+n/a` — "one rank: no collective crosses a card" (D51, R16-S1).
 
 The Gen3-era evidence, kept as history (every CLOSED rung cites one of these):
 Report token (two of the three boots): `link-below-max: … runs 8.0 GT/s x4 of its
@@ -396,7 +402,9 @@ POST-FIX EPILOGUE — the measurement state, evidence-bounded (§R14, D44):
   docs put the TP1 decode step at 28–29 ms at one sequence (R14-S2), i.e.
   ≈35 t/s at tok/step 1: the single-card number is CLOSE TO PUBLISHED
   REALITY, not a broken host; §D8's prediction landed. (Whether those ms
-  figures already include MTP is UNVERIFIED — §R14.)
+  figures already include MTP stayed UNVERIFIED — §R14; and the number
+  moved UP since: that ~35 was the pre-EPP read, and D47's fair probe on
+  the EPP-fixed box printed 41.1/41.3 — see the governor bullet below.)
 - The 70+ figures in the wild are systematically TP2 or dense: fn at
   2×R9700 TP2 = 137 t/s single-stream sustained (R14-S1); the docs' own
   TP2 rows 62.3–64.8 with MTP at 62K context and 50.56 at 249,939
@@ -424,16 +432,24 @@ POST-FIX EPILOGUE — the measurement state, evidence-bounded (§R14, D44):
   buys ZERO decode speed and would SHRINK the expert slab — it is what
   funds the 8×200K envelope. Any "drop the mirror for speed" idea is
   dead by receipt.
-- The rank-1 FREE action (§R14-Q4 row 1, §R14-Q5 action 1) is the CPU
-  governor: it has printed `powersave` at EVERY boot this ticket has ever
-  observed — including the Gen4 ones — so the fixed link has NEVER once
-  been measured on a performance governor. §4's persistence routes are
-  the lane; then `/diagnostics` under a long prefill to close link
-  stability (Gen4 x4 has been load-stable only since 15:38Z, D44); then
-  runbook step 6's 8-session gate, still never run. The law is
-  unchanged: **the receipt decides, never the rate** (§R8).
+- The rank-1 FREE action §R14 queued — governor persistence — WAS run and
+  ANSWERED: EPP is `performance` and STUCK (D46; `epp-performance.service`
+  survived D50's real reboot, 32/32 cores), and the fair probe on that box
+  printed **41.1 and 41.3 tok/s on two consecutive 2000-token runs (D47)** —
+  24.3 ms/token, INSIDE the docs' own 28–29 ms `--tp 1` reference, with the
+  KV stream reading **0.0 MiB/token**: the wire theory of this box retires
+  by measurement (D47), as does §D8's miss-fraction story as an explanation
+  of any remaining gap. ~41 t/s is THE pinned single-card claim — quote
+  D47's pair, not a new number — and 70+ is now dead by measurement (it
+  needs ~14 ms/token total). The remaining queue: `/diagnostics` — DONE by
+  the D51 dump — then runbook step 6's 8-session gate, still never run; the
+  only live experiment left on this box is §R16-Q1's `--expert-stats`
+  precursor (§14). The law is unchanged: **the receipt decides, never the
+  rate** (§R8).
 The payoff model is unchanged: Gen4 x4 buys prefill
-249→~450–500 t/s and warm decode toward the ~35 t/s compute floor (§D8).
+249→~450–500 t/s and warm decode toward the ~35 t/s compute floor (§D8) —
+and the receipts agree: D47 measured prefill ~551 tok/s on the cache-miss
+path (~411 cache-hit) and the ~41 t/s decode pair quoted in the epilogue.
 
 ## 2. MEMLOCK — 8 MiB in the container; the node-lane-only truth
 
@@ -512,6 +528,28 @@ band earns a device move AFTER the link fix. Checks (read-only):
 `findmnt -T <pack-path>`, `sudo filefrag -v <pack> | head -20`, the dd
 above.
 
+**THE `--spec-ngram` CORRECTION (D51, §R16) — drafter ≠ table.** My earlier
+drafting conflated two different n-grams and the note corrects it in its
+own text: `--spec-ngram 0` is the PROMPT-LOOKUP DRAFTER switch (a
+per-sequence recurrence index, ~8 bytes per token per pattern length —
+R16-S1), NOT the container's 47.7 GiB PLE/n-gram table. "The drafter is off,
+therefore nobody reads the table" was a conflation (my error). The MODEL
+itself keeps reading the table "a few rows a token", and the docs still say
+disk placement means **"steps wait on the drive"** (about half a step's
+rows first-seen). Consequences, kept honest: the disk wait remains the
+LARGEST UNINSTRUMENTED host term of the ~24 ms step — D47's 0.0 MiB/token
+wire read does NOT cover it (storage-side host work, not link bytes) — and
+the fix (the ram tier) remains cgroup-gate-dead at TP1:
+`71.04 + 47.68 + 4 = 122.72 > 110` refuses the start, the gate is FREE RAM
+not memlock (D45), and the only way to make room — dropping `--kv-resident`
+— moves ~9.3 GiB of QSA KV onto the card and SHRINKS the expert slab: the
+two knobs lock each other out. AD-145 (the XFS/ext4 move) stays third-order
+by receipt — span policy is the ENGINE'S CHOICE (the 4096-byte spans remain
+4096-byte spans; reads stay direct), so the expected win is small. At TP2
+host arithmetic (~24 pool + 4 headroom + ~1.2 + 47.68 + 4 ≈ 81 ≤ 110) the
+ram tier FINALLY fits — "a step has no host work" stops being unreachable —
+but that is §R16-Q5's TP2 upgrade, not this box's lever.
+
 ## 4. GOVERNOR — the writes MOST PROBABLY DID NOT PERSIST across the reboot; persistence routes only
 
 Host reads, today: all 32 CPUs `performance`/EPP `performance`, policy
@@ -545,6 +583,23 @@ and the sampler run on core 0; powersave EPP balance_performance parks
 frequencies between bursts and the 49%-busy WARN window above is exactly
 where it would show — record governor state beside every prefill receipt.
 
+RESOLVED — the chapter closed on mechanism, not luck (D45 kernel-docs
+reading, D46 fix, D50 reboot-witness, D51 instrument). The lever was never
+the governor NAME: under `amd-pstate-epp`, `powersave` is the INTENDED name
+and **EPP is the control**; `dynamic` mode lets a desktop daemon re-assert
+the preference, which is why bare writes kept dying between boots (D45).
+The dump prints `cpu_governor powersave` + `cpu_epp performance` — the
+engine's `cpu-governor` finding is GONE (D51) — and `epp-performance.service`
+survived D50's real reboot at 32/32 cores. The history above stays exactly
+as written: it is WHY the service exists, and the non-persistence verdict
+for raw writes stands. Consequence measured: D47's 41.1/41.3 tok/s fair
+probe ran on THIS box — the ~24 ms non-wire step is what the EPP fix
+targeted, and the single-card question closed there. If a future boot ever
+prints EPP off `performance`, check the unit ordering (D46: the service is
+`After=cpupower.service` because the enabled cpupower unit can write EPP
+first — OWNER-EXECUTED service lanes only); the persistence routes above
+are now the fallback book, not an open to-do.
+
 ## 5. SWAP-ZRAM — expect empty; 425 MiB says otherwise
 
 Check (read-only): `swapon --show`, `zramctl`. Target: NO active swap and
@@ -575,6 +630,19 @@ This is also the family where the boot paste lives (HUGEPAGES-TTM line:
 `/sys/kernel/mm/transparent_hugepage/enabled` is a READ here — any WRITE
 into it is owner-executed host lane). Do not "tune" THP speculatively:
 change one variable, re-read the report, keep the numbers.
+
+THREE PIN NUMBERS, THREE SCOPES (D51/§R16-Q4 — flagged, NOT reconciled):
+the startup report's `pinned by this process 71.04 GiB`, the cgroup's
+`memory.peak 72.4 GiB`, and the runtime `/stats`-plane
+`pinned_bytes 76.28 GB` are not three measurements of one thing — an
+mlock-set, a cgroup high-water and a per-counter plane are different
+instruments, and the 76.28 > 72.4 ordering says at least one counts what
+the others do not (driver-locked pages? double-counted shared mappings?
+UNVERIFIED). Do NOT pick a winner and do not "correct" the 71.04 budget
+line with either other number: the settling read is one quiet owner moment
+— `VmLck` from `/proc/<pid>/status` (READ) plus `memory.peak` sampled at
+the SAME instant, recorded as a pair — and until they pair, each number
+stays quoted with its scope named.
 
 ## 7. RUNTIME-PM — card power-state latency at first token
 
@@ -673,6 +741,20 @@ an interval that explodes while sessions are flat is the pool-vs-mirror
 arithmetic (§14 and the C12 scalar comment) talking — that is a profile
 question for the owner, never a sysfs chase.
 
+THE `cache 12288` QUESTION, CLOSED (D47 flagged it as a live contradiction;
+D51/§R16-Q3 settled it against the docs): chat requests now log
+`cache 12288` with TTFT collapsing 25.44 → 6.27 s — and 12288 is NOT a block
+size (KV blocks are 4 tokens on this family): it is **3 ×
+`--checkpoint-interval 4096`**, because `--prefix-resume exact` may resume
+only at chunk/checkpoint boundaries, so hit depths quantize to 4096 and a
+3-chunk resume is the docs' DESIGNED behavior. The companion blanket
+reading — "streaming force-disables the prefix tier wholesale" — is
+NARROWED to the docs' wording: streaming suppresses the prefix cache's
+HOST TIER only; **prefix hits still work from VRAM** (R16-S1 §4.4.1). The
+dump's `prefix caching on` + `tier 0` lines are therefore consistent, and
+the pre-fix era of `cache 0` receipts and today's `cache 12288` hits
+bracket the WORKLOAD, not a config change.
+
 ## 14. HEAT-ENGINE — the mover IS engaged and CHURNING: the exit banner settles it
 
 The family's founding reading — `0 dispatches`, resident-per-layer `max 154`,
@@ -714,18 +796,43 @@ hysteresis; 265 starved of a slab slot, 3721 of a pool slot`
   cumulative mover bytes over an unsourced ~884-token denominator, VOID as
   a bound, hypothesis at best until the Δ`kv_stream_bytes_total` ÷ Δ-tokens
   pair-snapshot (§1 epilogue) replaces it.
-- **Fair measurement, both still owed:** no settled number exists — the
-  fixed ≥2000-token probe at request-position ≥4 (§D8.3) has NEVER been run
-  and the runbook's step-6 8-session gate is still unrun (owner-lane, each
-  read-only). Standing law: **the receipt decides, never the rate** (§R8).
+- **Fair measurement — one number ARRIVED, one gate still owed:** D47 ran
+  the fixed-probe shape (two consecutive 2000-token runs, second quoted:
+  41.1 / 41.3 t/s, wall 49.04/48.92 s) on the EPP-fixed box and the
+  Δ-stream_bytes read came back 0.0 MiB/token — the single-card question is
+  CLOSED with receipts (§D8.3's probe finally executed in this form; the
+  warm-up confound D47 flagged is noted there, not hidden). The runbook's
+  step-6 8-session gate is STILL unrun (owner-lane, read-only). Standing
+  law: **the receipt decides, never the rate** (§R8).
   RETRACTED per §R14 (superseding the D36 "recorded, no advice shipped"
   note): 46.2% look-back is the docs' OWN `--tp 1` norm ("about half the
   copies are used", R14-S2) and 36% readmits are design — demotion is
   cheap, re-promotion is the engine working — so there is NO guard problem
   to report upstream and no shipped knob to tune (D8.2(b) law). §R14
-  re-ranked the queue ahead of both gates: governor persistence (§4 — the
-  only untested zero-cost lever at Gen4), then the Δ-stream_bytes
-  pair-snapshot, then `/diagnostics`, then step 6.
+  re-ranked the queue ahead of both gates — and that queue was THEN RUN:
+  EPP-performance fixed and reboot-stuck (D46/D50), the fair probe measured
+  41.1/41.3 t/s with the wire at 0.0 MiB/token (D47), `/diagnostics` closed
+  the link and governor chapters (D51, §1). What remains unrun is runbook
+  step 6; what remains as the ONLY live experiment on this box is the pin
+  question below.
+- THE PIN QUESTION (D51, §R16-Q1): `--expert-pin-top` is **UNDOCUMENTED at
+  v1.17.0** — exact+loose triple-searches across GUIDE/TOOLS/spec return
+  zero hits (same for `--expert-profile` and `--draft-expert-placement`),
+  so NO value ships on anyone's say-so: the flag's per-layer-vs-global
+  semantics and its interaction with the engine-derived lending split are
+  UNVERIFIED, and the docs' own law ("the engine derives the split… no
+  flag states either pool") forbids guessing into it. What the docs DO
+  bound is the slack a pin could spend: roughly **300–500 units (≤12% of
+  the 7,520-unit slab)** before the one-sequence KV guarantee or the
+  kernel-launch headroom is threatened — and with the wire at ≤15% of step
+  (D45/D47), even a PERFECT pin caps near **+3–5%**. The FREE precursor is
+  `--expert-stats`: counted host-side off routing histograms the core
+  already copies back — "adds no device work and no synchronisation"
+  (R16-S3) — capture ≥30 s of decode visits, and pilot a pin ONLY if the
+  stats show a coverable hot set inside that slack, A/B'd with the §D8.3
+  fixed probe ×2 + the D47 counters, kept only at ≥+3% sustained with
+  `pinned` not rising past the 71.04-class ceiling. That is the recommended
+  next experiment; 70+ stays TP2's either way (§R14 census, §R16-Q5).
 - Unchanged watch item: if demotion BURSTS coincide with RAM spikes, the
   pinned-burst class (RESEARCH RQ1's Wilde note) is the thing to watch — it
   rides the same arithmetic discussed at §3, not a host knob.
@@ -746,11 +853,40 @@ hysteresis; 265 starved of a slab slot, 3721 of a pool slot`
   below the printed budget is a DEFECT, never a ladder step — that is how
   the 64-era OOM happened.
 - Suspect order (owner-impact-first, re-pointed post-D44): LINK is CLOSED
-  at Gen4 x4 — history and reading rules only, do not re-chase it. The free
-  checks now run in §R14's order: governor PERSISTENCE (§4) → the
-  Δ`kv_stream_bytes_total` pair-snapshot (§1 epilogue) → CLOCKS/POWER →
-  RUNTIME-PM → memlock/DIO (both parked: §2/§3 — memlock only
-  ever buys the dead RAM tier).
+  at Gen4 x4 — history and reading rules only, do not re-chase it. §R14's
+  free-check queue is now RUN: governor/EPP fixed and reboot-stuck (D46/
+  D50), the fair probe + Δ-stream_bytes settled wire-vs-host (D47 — zero
+  wire), `/diagnostics` closed the chapters (D51). What is LEFT, in order:
+  runbook step 6 (still never run) → the FREE `--expert-stats` capture
+  (§14) → only-if-informed pin pilot at ≤+3–5% (§14) → or nothing else on
+  this box: every remaining dump knob sits at its documented optimum (Q4
+  list below). memlock/DIO stay parked (§2/§3 — memlock only ever buys the
+  dead RAM tier).
+- LEAVE IT ALONE — the profile is otherwise AT the engine's documented
+  optimum (D51, §R16-Q4; recorded so the note stops being a to-do list).
+  The dump's `source:"auto"` / `"from the container"` entries are
+  DELIBERATE resolutions: kernel selection (libr4d 3107 bands / libavx
+  2980 host), embedding/vision placement (`ram`/`vram` — auto prints what
+  each table resolved to and why), sampling temp 1 / top-k 20 / top-p 0.95
+  from the CONTAINER (the pack's own guidance — the runbook's Q8/smoke
+  chain), `--max-n 8`, `--max-queued-requests 64`, `--http-threads 32`
+  ("one a hardware thread"), the checkpoint trio (host pinned memory — no
+  slab gain is available from touching it). And `--max-num-batched-tokens
+  4096` MUST NOT be raised: the docs quantify the cost ("the arena took
+  another 239 resident experts (9219 to 8980)") — raising breaks residency
+  twice. The rejected rows, ONCE, so they stop being revisited: ctx/seqs
+  cuts (spend the owner's 8×200K envelope for ≈−1% — noise class, D45);
+  `--attn-prefill-fp8` and `--state-cache-dtype f16` (fn's geometry is not
+  among the named kernels — startup-stops / refused-by-absence class);
+  `--weights-disk-tier on` (a RELIEF valve for budgets that do not fit,
+  not a gain); `--deterministic` (freezes the heat engine — "under
+  deterministic step() proposes nothing for the whole run"); APU hiding
+  (§R18/D49 — OFF THE TABLE by any method: `c5` is the whole SoC slot and
+  its sibling FUNCTIONS include your USB bus and the PSP/CCP — the unbind
+  I dictated crashed the box; if the lane is ever retired the mechanism is
+  a BIOS iGPU disable, researched then, not a Linux bind trick); and
+  ngram-ram at TP1 (the `122.72 > 110` gate, §3). A CLOSED or LEAVE-IT-
+  ALONE family generates no work: that is the point of this list.
 - The acceptance bar is unchanged: the runbook's 8-session gate
   (`.agents/notes/radiance-on-target-acceptance.md`, step-6 gate). Tuning
   that regresses the gate is reverted, not argued.

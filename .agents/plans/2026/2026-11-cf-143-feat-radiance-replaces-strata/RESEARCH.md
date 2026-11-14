@@ -4057,3 +4057,237 @@ deviations: none — read-only; RESEARCH.md only. The doc's headline evidence (P
 friction: the owner's document file itself was not in-repo (searched notes+plan folders) — fact-checked claim-by-claim from the launch's verbatim quotes and labeled as such; the VAP reference page resisted the reader (nav-only) — mechanism cited, version claim left UNVERIFIED; no source exists for "audio function left bound while display stubbed" on this SoC — flagged rather than extrapolated from desktop-GPU practice.
 open_questions: [whether the strata cutover (Q5 lane) retires the APU serving class at all — that, not mis-scheduling fear, is the only future trigger for hiding; any Framework Desktop BIOS menu documentation for the UMA carve (would upgrade the "already at minimum" from our engine print to doc-confirmed); audio-function co-binding behavior on stub (no report found)]
 next_suggested: coord reply to the owner's doc with the table: keep it as the cutover-day runbook (its §5 mechanics are fine, its §1 premises are pre-C07), record R18 in the next DECISIONS fold as "hiding: no — goal closed by shipped naming, sole cost = router starvation (C10 class), revisit only inside the strata-cutover APU-lane retirement (procedure §R18: code first, pci-stub per-function, rollback = rebind+revert)", and spend nothing: the measured ~41 t/s on a confirmed Gen4/wire-zero box is where the compute floor is; the 70+ class is TP2's documented lane (62–65 docs-measured, 137 L1T), already carded as AD-144.
+
+---
+
+## §R16 — the knobs the live /diagnostics dump exposed: `--expert-pin-top`, prefill fp8, the n-gram drafters, and what each costs
+
+Owner round 2026-11-15. Ticket state carried WITHOUT re-argument: one R9700, 110/110
+Guaranteed, Gen4 x4 stable (D44/D50), **wire 0.0 MiB/token sustained decode** (D47),
+~41 t/s sustained (D47's 41.1/41.3), 8×200K envelope is the owner's binding constraint
+(Q10/D17 — knobs that spend sessions/context are not free), §R15's census (no published
+single-card iq4r >~40; TP2 is the 70+ lane), §R18/D49 (no APU hiding). Doc citations
+R16-S1/S2/S3 = GUIDE.md / spec.md / TOOLS.md **@v1.17.0**, codeberg api raw, fetched
+2026-11-15. The /diagnostics dump quoted in the launch is this section's configuration
+of record.
+
+### R16 VERDICT (first)
+
+**The flagship knob is undocumented: `--expert-pin-top`, `--expert-profile` and
+`--draft-expert-placement` appear in the live dump but in NO v1.17.0 doc we could
+search — exact strings `expert-pin-top`/`pin-top`/`expert-profile`/`draft-expert`
+return nothing in GUIDE.md, TOOLS.md or spec.md [R16-S1/S2/S3].** (The only "pin" hits
+are vision-tower pinning and a quantiser bias note; spec.md §5.3's documented
+mechanism is the container's **imatrix popularity profile** + heat re-rank: "The
+container's expert-popularity profile, derived from the imatrix's activation counts,
+ranks which experts begin resident. It is only a starting point… the heat engine
+re-ranks within a few steps" [R16-S2].) So the dump's `--expert-pin-top 0` is a
+**code-leads-docs** situation (§R6's mirror image): the flag's semantics, its
+interaction with the lending-cache split (`experts 17.76 / kv 4.51 / staging 1.63`)
+and any affordable value at 8×200K are **UNVERIFIED — we will not propose a number we
+cannot source**. What the docs DO support, and it is not nothing: the `--expert-stats`
+**measurement** ("count the routed experts every layer selects, apart for prefill,
+decode, mixed steps and draft-head passes… Counted on the host from the routing
+histograms the core already copies back for the heat engine, so it adds no device
+work and no synchronisation" [R16-S3]) — the free way to learn our hot-set shape
+before touching any pin. Beyond that: **every documented, envelope-preserving knob in
+the dump is already at its docs-recommended value (Q4), the n-gram-disk theory was
+WRONG ABOUT THE MECHANISM but is still ALIVE** (the table is read per-token by the
+model's PLE lookup, not by the drafter — `--spec-ngram 0` doesn't silence it), the
+12288 question RESOLVES in favor of checkpoint/chunk-granularity (D47's hypothesis
+confirmed with docs, §R15's "no hits at all while streaming" reading corrected), and
+**nothing on one card credibly reaches 70: the honest budget stays AD-144/TP2**
+(62.3–64.8 docs / 137 L1T), with the pin-top experiment as a zero-envelope-cost
+maybe-if-undocumented pilot at single-digit expected gain.
+
+### R16-Q1 — `--expert-pin-top` (+ `--expert-stats` / `--expert-profile`)
+
+- **Doc status: UNDOCUMENTED at the pinned release** — searched exact + loose tokens in
+  all three docs; zero hits [R16-S1/S2/S3]. The dump prints the flag with `source`
+  default ⇒ the 1.17.0 binary accepts it; no formula, no per-layer-vs-global
+  semantics, no "hot" definition, no stats/profile dependency, no magnitude guidance
+  is stated anywhere we can cite. **Say so plainly: any pin value we'd pick is
+  guesswork, and the docs themselves forbid guessing this one's interaction — the
+  lending-cache law is engine-derived: "the engine derives the split… no flag states
+  either pool" [R16-S1 §4.3], and pinning is a placement override into exactly that
+  derived split.**
+- What the docs DO establish about the residency substrate a pin would spend:
+  elastic 23.89 GiB = experts 17.76 + KV 4.51 + staging 1.63 + slack (~2.4 incl.
+  `unclaimed 94.83 MiB` + the "1.23 GiB lent … while no request holds it" KV-side);
+  slab = 7,520 units @ 2.42 MiB [§D8.2]; "The cache never gets less than one
+  `--max-model-len` sequence" [R16-S1] — at 8×200K the cache-addressable is already at
+  its `max-seqs×max-model-len` bound and holds it (boot claim "backs 8 sequences all at
+  200000" [§D8.1]) ⇒ **any pinned VRAM must come out of the 1.23 GiB loaned slack plus
+  staging headroom — arithmetic ≈ ≤300–500 units (≤12% slab) before the KV guarantee
+  or the 96 MiB kernel-launch headroom is threatened.** If pin-top spends per-LAYER
+  units, max-300 resident rows mean it may be partly redundant with heat (which
+  already holds the hot set); if it spends a GLOBAL set, it can beat heat's hysteresis
+  — **which of these it is = UNVERIFIED, decide only after `--expert-stats` data.**
+- **Does the stream shrink if pinning works?** The doc's own law: "decode touches a
+  few experts per layer per token and residency decides its speed" (spec §5.3
+  [R16-S2]) — so yes directionally; magnitude bounded by the ≤15% wire share (D47):
+  even a perfect pin cuts only the ~4.2 ms/token mover upper-bound term ⇒
+  **best-case single-digit-percent decode at ~41 t/s. Not the 70 answer. No capability
+  spend if affordable — that's the one honest upside.**
+- **Measurement plan instead of a formula** (all free, envelope-intact):
+  1. enable `--expert-stats <path>` IF accepted as a server flag (the TOOLS.md entry is
+     inside a tool's flag table — attribution to the server binary itself is
+     UNVERIFIED; the /diagnostics dump's own `--expert-stats off` line proves the
+     server knows the name); collect ≥30 s JSON (writes "every 30 s and at shutdown",
+     per-tool doc line [R16-S3]);
+  2. compute the decode-time hot set: for each candidate pin size, share of DECODE
+     visits covered; if top-N (N ≈ 300–500 units globally) covers <80%, do not pin;
+  3. trial the flag at the affordable N, A/B with the §D8.3 fixed probe ×2 + the D47
+     counters (Δ`pinned`/`memory.peak` under the cgroup reads, request-`done` t/s,
+     `/diagnostics` `expert prefetch` + mover lines); keep only if ≥+3% sustained with
+     `pinned` NOT rising past the 71.04-class ceiling;
+  4. read `16 GT/s` link line + `oom_kill 0` each arm (regression tripwires).
+
+### R16-Q2 — Residency-adjacent knobs: what's actually free
+
+| knob (dump value) | doc meaning | decode effect / cost |
+|---|---|---|
+| `--weights-disk-tier off` | "experts that fit neither VRAM nor pool stream from the container via 4×32 MiB pinned windows… meant for running a checkpoint as shipped, to calibrate or compare" + "Without the flag, a budget that does not fit is refused at startup" [R16-S1 §4.3] | off is right: on = file-IO in the stream path; a RELIEF VALVE not a speed knob |
+| `--host-headroom-mib 4096` | the placement-spare the ram tiers keep out [R16-S1] | lowering to 2048 does NOT unlock ngram-ram: 110 − 71.04 = 38.96 < 47.68 + 2 anyway; don't bother |
+| `--checkpoint-interval 4096` / `--checkpoint-slots 72` / `geometric-backoff` | checkpoint = linear-state snapshots "always live in host pinned memory" [RQ1/S2 §4.8] + dump's own slot arithmetic ("9 a sequence… one more for a running turn") | **host RAM, not VRAM** — no expert-slab gain available from touching them; slots × ~113.5 MiB ≈ 8.2 GiB of the 45 GiB free — leave |
+| `--weight-prefetch on` | the next-layer DMA prefetch; §8 only says turn it `off` for a SECOND co-resident engine [R16-S1] | on is the single-engine optimum |
+| `--control-vector` disabled | optional per-request steering gguf; absent file ⇒ inert [R16-S1 §4.x: "Without it nothing is read… /admin/control-vector answers 404"] | neutral; leave |
+| `--draft-expert-placement auto` | **undocumented at 1.17.0** (zero hits [R16-S1/S2/S3]) | semantics UNVERIFIED; leave `auto` |
+| elastic loan | docs: cache "lends every block no live request holds back to the expert slab in place" [R16-S1] | already automatic — heat+loans ARE the pin mechanism the docs endorse; our 46.2% prefetch-usage is the documented TP1 norm (§R15-Q2) |
+
+### R16-Q3 — Prefill/TTFT knobs
+
+- **`--attn-prefill-fp8 off`**: docs give the gate exactly — "libr4d has the kernels
+  for **Qwen3.8-27B's** attention (head_dim 256, gqa 6, 16-token pages); anywhere no
+  kernel takes the flag (another geometry, a `bf16` cache, the host backend) **startup
+  stops, naming it**" [R16-S1]. Flash-Next's geometry is NOT among the named kernels
+  ⇒ for our model expect a startup refusal; UNVERIFIED only in the pedantic sense.
+  Not a lever here.
+- **`--state-cache-dtype f32`**: "The `qwen35` plugins… declare the recurrent state
+  cache f32. With `--state-cache-dtype f16` they declare it f16… a plugin that does not
+  serve it is refused at startup by name. It is lossy" [R16-S1] — qwen4exp not listed
+  ⇒ refused-or-untested for fn; and the halved-state gain "grows with the number of
+  decoding sequences" targets multi-seq state traffic, not our case. Leave.
+- **Chunk geometry — DO NOT RAISE `--max-num-batched-tokens` past 4096** and the docs
+  quantify why: "The checkpoint interval caps the chunk… asking for 4096 runs
+  2048-token chunks with an activation arena sized for 4096, and **the expert plane
+  loses residency for a chunk it never gets**"; "Raising both (4096/4096)… 2610 tok/s
+  against 2748, **because the arena took another 239 resident experts (9219 to
+  8980)**" [R16-S1 §4.5]. Our 4096/4096 is the creator-profile choice (flashnext-tp1
+  yaml, §R15-S2) — the docs' own table shows 2048 slightly BEATS 4096 for prompts
+  alone (2706 vs 2620) but 4096 wins the 185K-prompt wall class and the amortization
+  argument in the compose header. **Leave at 4096; raising breaks residency twice.**
+- **`--busy-prefill-chunk auto` + `--prefill-interleave off`**: auto's full paragraph
+  (share-per-row, "a long prompt (a minute or more at 256K) does not starve decode rows
+  or admission", floor at the stager's overlap minimum) [R16-S1] — auto is the docs'
+  designed state; `--prefill-interleave` trades TTFT FOR cadence ("the prompt's time to
+  first token grows by those steps" — wrong direction for our TTFT pain). Leave both.
+- **The prefix-cache "contradiction" RECONCILED, and D47's 12288 RESOLVED**:
+  `--prefix-cache-mib 0` = the **host tier** size; `--no-prefix-cache` (not given) =
+  on-card prefix retention ON ("prefix hits still work from VRAM" while streaming
+  [R16-S1 §4.4.1]; the dashboard's "dim segment is prefix cache, finished turns kept
+  for reuse, which gives way the moment a live request needs it" [R14-S1 §6.1]). So
+  the dump's `prefix caching on` + `tier 0` is consistent — and **§R15's claim that
+  streaming force-disables prefix reuse wholesale is CORRECTED: it suppresses the host
+  tier only** (D47(2b) predicted exactly this; docs side with it).
+  **`cache 12288` is not a KV block size** (blocks are 4-token, "4 tokens on this
+  family" [R16-S1]): `--prefix-resume exact` hits "resume only where an idle server's
+  cold prefill… starts a chunk: every `--max-num-batched-tokens` tokens (rounded down
+  to the chunk quantum), or every `--checkpoint-interval` when that is smaller"
+  [R16-S1] ⇒ hit depths quantize to 4096-boundaries — **12288 = 3×4096 exactly**. The
+  TTFT collapse 25.44→6.27 s at prompt≈14.2k with 12288 cached is the docs' designed
+  behavior of a 3-chunk resume.
+- **Docs-recommended TTFT cut without touching 8×200K:** the chunk/checkpoint pair we
+  already set (4096/4096 IS the 2× speed-vs-residency sweet spot the §4.5 table
+  computes), plus prefix resumes happening on their own (agent turns re-prefill only
+  "the cold run's last chunk + what the turn added"). No further flag buys TTFT for
+  cold prompts on this geometry; 4096-chunked prefill at ~551 tok/s (D47) is inside
+  the doc's link-amortization story.
+
+### R16-Q4 — What is already optimal (do not fight the `auto`/`from the container` rows)
+
+Leave alone, each because the docs chose it as a resolution: `--tp-wire exact` +
+`--tp-wire-min-kb 128` + `--p2p n/a` (single rank: "one rank: no collective crosses a
+card"), `--weight-prefetch on`, `--busy-prefill-chunk auto`, `--prefill-interleave
+off`, `--preempt-wait-ms 5000`, `--prefix-resume exact`, checkpoint trio (Q2),
+`--embedding-placement ram` and `--vision-tower-placement vram` (the auto block:
+"startup prints what each table resolved to and why" — these ARE the resolved-best
+placements for our caps [R16-S1 §4.3]), kernel selection (`libr4d 3107 bands / libavx
+2980 host`), sampling `temp 1 / top-k 20 / top-p 0.95` **from the container** (the
+pack's own guidance — the runbook's Q8/smoke chain), `--draft-model` head-not-in-pack
+(the pack carries MTP — RQ0), `--http-threads 32` ("one a hardware thread"),
+`--max-n 8 / --max-queued-requests 64`, `--deterministic off` (would freeze the heat
+engine — the one flag that WOULD hurt: "under deterministic step() proposes nothing for
+the whole run" [§D8.2b carry]), and `--spec-ngram`'s default off being the
+**drafter** switch, not the table. The `unclaimed 94.83 MiB` + `card settled at
+220.80 MiB free` lines say the VRAM plan is tight-and-correct; the only live anomaly
+to watch is bookkeeping, not placement: **runtime `pinned_bytes 76.28 GiB` vs startup
+`71.04` vs cgroup `memory.peak 72.4`** — three instruments, three scopes (mlock-set vs
+cgroup RSS vs per-counter) and the ordering (76.28 > 72.4) says at least one counts
+something the others don't (driver-locked pages? shared mappings double-counted?) —
+**UNVERIFIED; one owner read (`cat /proc/<pid>/status | grep VmLck` +
+`memory.current`) next time radiance idles settles it. Flagged, not guessed.**
+
+### R16-Q5 — The 70+ question, ranked, with the envelope kept or spent per row
+
+| rank | action | expected decode Δ | envelope cost | externally backed? | A/B print |
+|---|---|---|---|---|---|
+| 1 | `--expert-stats` data-capture pass, then **only-if**-informed `--expert-pin-top` pilot | 0 to +3–5% (wire share ≤15% caps the prize) | **none** (if affordable in the ~300–500-unit slack) | HALF: substrate documented (spec §5.3–5.4), the pin flag NOT (UNVERIFIED) | fixed probe ×2 + Δprefetch/mover lines + `pinned`/VmLck not rising |
+| 2 | Nothing else on this box — every other dump knob is at its documented optimum (Q4) | — | — | — | — |
+| 3 | **AD-144 TP2** (second R9700): pool 2×12288, prefix tier back (creator's flashnext.yaml shape), ngram **ram tier finally fits** (~24+4+1.2+47.68+4 ≈ 81 GiB ≤ 110 → "a step has no host work"), wire halves per rank | **the docs' own measured band: 62.3–64.8 with MTP @62K** [R14-S2]; L1T sustained **137** [R14-S1]; Strata's hidden-APU row (71–74) is the same physical story | costs a card, not the envelope (host math fits: §R8-Q5; D29's strata inversion stands) | YES (three independent receipts) | same fixed probe + 140–160-class prefill row check |
+| 4 | (rejected rows, named so we stop revisiting) ctx↓ / seqs↓ (envelope-spending, Q10/D17), attn-prefill-fp8 & state f16 (fn geometry: startup-stops or refused-by-absence [R16-S1]), batched>4096 (loses residency twice [R16-S1 §4.5]), weights-disk-tier on (relief valve), APU hiding (§R18/D49), ngram-ram at TP1 (gate: 38.96 < 51.68 [§R15]) | — | — | — | — |
+
+**Plain verdict: nothing on one card credibly reaches 70 — the ceiling is ~41 with at
+most single-digit percent of documented-headroom left, so every row above except TP2 is
+hygiene.** AD-144 is the 70+ purchase with three doc-adjacent receipts; row 1 is the
+free lottery ticket worth exactly one stats-capture afternoon.
+
+### R16 — Conflicts / corrections / UNVERIFIED
+
+- **Corrects §R15's own text (loud):** "`--kv-resident` force-disables the prefix
+  tier" ⇒ precise version: force-disables the **host** tier; on-card prefix hits live
+  (they're where `cache 12288` came from). §R15's cliff-quote stays valid; its blanket
+  does not. (D47 flagged it; docs confirm.)
+- **Resolves the coordinator's n-gram theory both ways:** `--spec-ngram` = prompt-lookup
+  DRAFTER switch (per-sequence index, "8 bytes a token per pattern length, 16 MiB at
+  400k tokens" [R16-S1]) — NOT the container's 47.7 GiB PLE/n-gram table, which "is read
+  a few rows a token" with "about half of a step's rows first-seen, so steps wait on the
+  drive" under `disk` [R16-S1 §4.3]. So `spec-ngram 0` does NOT silence the table; the
+  disk-wait suspect **stays alive** — but D47's 0.0 MiB/token KV-stream counter and the
+  mover upper bound do not cover it (it's storage-side host work, not link bytes), and
+  it remains the largest uninstrumented term of the ~24 ms. AD-145 (XFS move) would
+  only normalize the ENGINE'S CHOSEN 4096-byte span policy (span = fs block size,
+  reads still direct) — **expected small, unchanged priority (third-order, §R15-Q4
+  rank 3; the ram tier, which kills the waits outright, remains TP1-locked)**. spec.md's
+  mover note ("every slot and sub-region is a multiple of the logical block size
+  O_DIRECT requires") describes the WEIGHTS file tier — not evidence the ngram row-cache
+  spans change on ext4: marked UNVERIFIED.
+- **UNVERIFIED list:** `--expert-pin-top`/`--expert-profile`/`--draft-expert-placement`
+  semantics entirely (undocumented at 1.17.0; binary accepts the names); whether
+  `--expert-stats` is server- or tool-scoped (TOOLS.md table attribution); the
+  pinned-bytes discrepancy (VmLck read pending); flash-next acceptance of
+  attn-prefill-fp8/state-f16 (docs name only other plugins' kernels — "startup stops,
+  naming it" is the stated failure mode, not tested here); 2048-vs-4096 at OUR agent
+  workload mix (docs' table is 27B/TP2); the top-N-coverage shape of decode routing
+  until the stats file exists.
+- **Carried, unmoved:** §R15 census/ceiling, D47 wire-zero, D44/D49/D50 link+hide
+  rulings, §R8 capacity law, Q10/D17 envelope.
+
+### R16 — Sources (accessed 2026-11-15)
+
+| # | URL | What it is |
+|---|---|---|
+| R16-S1 | codeberg.org/api/v1/repos/StillDeadcode/radiance/raw/docs/GUIDE.md?ref=v1.17.0 (fetched, 14 targeted windows) | Authoritative flag semantics: §4.3 split/lending/headroom/lookup-tables (ngram "read a few rows a token", disk wait, ram gate, ram=DIR) + weights-disk-tier + expert-prefetch-usage; §4.4.1 streaming cost model + host-tier-off-while-streaming + "hits still work from VRAM"; §4.5 chunk table (1750/2200/2706/2620; 91 s at 2048; checkpoint-caps-chunk + "arena took another 239 resident experts"; interleave/prefill-span/busy-prefill-chunk full text; prefix-resume exact boundaries); §4.6 spec-ngram prompt-lookup (per-seq index bytes; verify-row economics; draft-window); state-f16 + attn-prefill-fp8 kernel-gate texts; control-vector block; §6.1 dashboard segments |
+| R16-S2 | codeberg.org/.../raw/spec.md?ref=v1.17.0 (fetched, windows) | §5.3/§5.4 planner laws: "decode touches a few experts per layer per token and residency decides its speed"; warm start from container imatrix profile; mover/heat file-tier O_DIRECT design; placement-miss classes |
+| R16-S3 | codeberg.org/.../raw/docs/TOOLS.md?ref=v1.17.0 (fetched) | `--expert-stats FILE` semantics ("apart for prefill, decode, mixed steps and draft-head passes… adds no device work and no synchronisation") in its tool's flag table (server-vs-tool attribution flagged); confirms NO pin-top/profile/draft-expert entries in tool docs either |
+| (internal) | live /diagnostics dump (launch, 2026-11-15), §R14-S1/S2, §R15-S1/S2, D44–D50 | configuration of record + prior findings corrected where stated |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R16 appended)]
+commands_run: [codeberg api-v1 raw fetches: GUIDE.md @v1.17.0 (×3 calls, ~14 keyword windows — pin/profile/draft-expert NEGATIVE results verified across exact+loose tokens; ngram/prefix-resume/checkpoint-caps/state-f16/attn-fp8/busy-prefill texts captured), spec.md (planner laws, warm-start, mover file-tier), TOOLS.md (expert-stats entry + tool-table attribution check) => pass; repo state reads (§R15 verdict, D44–D50 summaries per launch, dump-vs-startup figures cross-checked: 76.28/72.4/71.04 discrepancy flagged not resolved) => pass; arithmetic: 4096-boundary 12288 fit; ram-gate 38.96<51.68 recheck; affordable-slack ~300–500 units; wire-share ceiling 0.15×41→≤+3–5%; TP2 host fit ~81≤110 => pass; web searches this round: none needed beyond doc raws (the round's claims were all engine-doc-internal)]
+deviations: none — read-only; only RESEARCH.md written. The round's instruction "if the docs don't say, SAY SO" was exercised at full length: pin-top/profile/draft-expert declared undocumented with the negative-search method stated, and NO value was invented. Two internal corrections issued rather than smoothed: §R15's blanket prefix claim (host-tier only) and the coordinator's spec-ngram conflation (drafter ≠ PLE table — the disk-wait suspect survives, at documented 3–10% priority).
+friction: the GUIDE's flag table's exact-string search for --expert-pin-top returning nothing required a triple re-check (pin-top/--expert-pin/'pin ' + spec.md + TOOLS.md) before declaring undocumented — cheap insurance against a false negative; the 76.28-vs-72.4 pinned/peak ordering is a genuine instrumentation contradiction whose resolution needs one VmLck read we are not permitted to take — logged as the round's flagged-UNVERIFIED rather than reconciled by assumption.
+open_questions: [the stats-capture pass' hot-set shape (decides whether a pin pilot is worth running at all), expert-pin-top's per-layer-vs-global semantics (undocumented — decide empirically or ask upstream on Codeberg), VmLck/memory.current live reconciliation, whether 2048-vs-4096 flips at the owner's actual agent mix (docs' table isn't ours)]
+next_suggested: coord: (1) offer the owner exactly two actions — a free `--expert-stats` capture afternoon + optional informed pin pilot (row 1, zero envelope cost, ≤+3–5% honest cap), and AD-144/TP2 as the only 70+ road with receipts; (2) fold the two corrections (§R15 blanket → host-tier-only; drafter ≠ PLE table) into the next DECISIONS round and the D47(2b) open item, which this round closes with docs; (3) put the VmLck/peak reconciliation on the runbook's next-touch list; (4) record that nothing else in the dump should be edited — the `auto`/`from the container` block is the engine's own optimum and the docs say why (Q4).

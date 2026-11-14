@@ -1546,6 +1546,51 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    scale radiance down and let strata serve. It is also the moment the Deferred cutover row was
    written for. Authority: the owner's paste, 2026-11-14.
 
+ - 2026-11-14 research+coord D51 (THE LIVE `/diagnostics` DUMP CLOSES THE LINK AND GOVERNOR CHAPTERS,
+   FREEZES MOST OF THE PROFILE, AND KILLS A MECHANISM I WAS STILL USING): the owner's dump is the
+   cleanest instrument this ticket has pointed at the box, and it settles four things.
+   (1) **Link chapter, closed for good**: the chain is now `00:00:02.5 16.0 GT/s x4 (max 16.0 GT/s
+   x4)` → card bridges at 32 GT/s x16, and the **`link-below-max` WARN is GONE from findings** (only
+   `experts-from-host`, `link-capped`, `memlock-limited` remain). D44's fix survived D49's crash and
+   D50's reboot. `--tp-wire` reports `exact`/default and `--p2p n/a` ("one rank: no collective
+   crosses a card") — the single-rank no-ops the earlier drafts worried about are documented no-ops.
+   (2) **Governor chapter, closed**: `cpu_governor powersave` + **`cpu_epp performance`** under
+   `amd-pstate-epp`, and the **`cpu-governor` note is also gone** — D45/D46's reading was right, the
+   lever was EPP not the governor name, and `epp-performance.service` survived a real reboot (32/32).
+   (3) **A mechanism of mine was wrong and my suspect survives anyway.** `--spec-ngram 0 (off)` is
+   the **prompt-lookup drafter** switch (per-sequence recurrence index, 8 bytes/token/pattern-length),
+   NOT the container's 47.7 GiB PLE/n-gram table — so "the drafter is off therefore nobody reads the
+   table" was a conflation (my error, corrected in §R16). The table is still read "a few rows a
+   token" by the model itself, and the docs still say disk placement means **"steps wait on the
+   drive"** (about half a step's rows first-seen). So the n-gram disk wait remains the largest
+   UNINSTRUMENTED term of the ~24 ms, and the fix remains the ram tier — which is still
+   cgroup-gate-dead at TP1. AD-145/XFS stays third-order: the span policy is the engine's choice.
+   (4) **D47's `cache 12288` is RESOLVED, and §R15 was over-corrected**: 12288 is **not** a block
+   size (blocks are 4 tokens) — it is `3 × --checkpoint-interval 4096`, because
+   `--prefix-resume exact` resumes only at chunk/checkpoint boundaries. And §R15's blanket "the
+   prefix tier is force-disabled" is narrowed by the docs: streaming suppresses the prefix cache's
+   **host tier only** — "prefix hits still work from VRAM", which is exactly D47's predicted second
+   option. D47(2b) is hereby CLOSED with the doc line attached.
+   WHAT THE ROUND ALSO ESTABLISHES: **the profile is otherwise at the engine's optimum and should be
+   frozen** — `source:"auto"`/`"from the container"` entries (kernel selection, embedding/vision
+   placement, temp/top-k/top-p, `max-n`, `max-queued-requests`, `http-threads 32`) are deliberate,
+   and `--max-num-batched-tokens 4096` must NOT be raised because the docs quantify the cost ("the
+   arena took another 239 resident experts (9219 to 8980)"). The one genuinely interesting knob,
+   **`--expert-pin-top`, is undocumented at v1.17.0** — zero hits across GUIDE/TOOLS/spec after
+   exact+loose triple-searching — so §R16 invented no value; the docs' own slab arithmetic bounds the
+   affordable pin at ~300–500 units (≤12%), and with the wire at ≤15% of step a **perfect** pin caps
+   near **+3–5%**. The free precursor is `--expert-stats`, which the docs say "adds no device work
+   and no synchronisation". **70+ therefore stays TP2's**, and §R16 found the kicker: at TP2's ~81 GiB
+   host the n-gram **ram** tier finally fits — "a step has no host work" stops being unreachable —
+   alongside the prefix tier's return and the 62–65/137 receipts.
+   ONE ANOMALY FLAGGED, NOT RECONCILED: runtime `pinned_bytes 76,281,212,908` (76.28 GB) > cgroup
+   `memory.peak 72.4 GiB` > startup `pinned 71.04 GiB` — three different scopes, and the honest read
+   is `/proc/<pid>/status` `VmLck` plus `memory.peak` at the same instant, not a story about which
+   number is "the" pin. Rejected rows recorded so they stop being revisited: ctx/seqs cuts (spend
+   the envelope), `attn-prefill-fp8`/`state-cache f16` (startup-refusal class), `weights-disk-tier
+   on` (a relief valve, not a gain), `--deterministic`, APU hiding (§R18/D49), ngram-ram at TP1.
+   Authority: the owner's dump + RESEARCH §R16 (lines 4063–4293).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
