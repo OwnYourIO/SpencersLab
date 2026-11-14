@@ -14,7 +14,7 @@
 # renovate: datasource=docker depName=forgejo/runner registryUrl=https://data.forgejo.org
 FROM data.forgejo.org/forgejo/runner:13.2.1 AS runner-src
 
-FROM docker.io/library/node:22-bookworm-slim
+FROM docker.io/library/node:26-bookworm-slim
 
 # hugo EXTENDED at the site's exact netlify.toml pin: the runner build must
 # reproduce Netlify's output, and SCSS/.Resize only exist in the extended
