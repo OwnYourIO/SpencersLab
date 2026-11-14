@@ -30,8 +30,26 @@ the exact paste strings, verbatim: `amd_iommu=off amdgpu.lockup_timeout=30000
 ttm.page_pool_size=29360128 ttm.pages_limit=29360128`. Re-read them on
 every receipt; do not assume any of it survived a kernel update by accident.
 
-## 1. LINK — the PCIe speed defect, PROVEN downgraded (first suspect)
+## 1. LINK — RESOLVED at Gen4 x4 (D44): the M.2 socket was the fault; history + reading rules
 
+**RESOLVED — read this first, then the history.** The fault was the M.2
+SOCKET / root-port path: moving the M.2→OCuLink adapter to the board's other
+socket took the host↔card link to `LnkSta: Speed 16GT/s, Width x4` with
+`Phy16Sta: EquComplete+ EquPhase1+ EquPhase2+ EquPhase3+ LinkEquRequest-`
+(D44, the owner's own read — the ladder's whole payoff, bought with a
+screwdriver). Everything else this chapter chased — the cable, the dock PCB,
+firmware/BIOS, the redriver question (RETIRED: already owned), the power
+ritual, the OWNER-EXECUTED setpci retrain attempts, ASPM — was aimed at a
+NON-CULPRIT. The CLOSED/FALSIFIED rungs stay visible below by law and by
+kindness: an owner at 3am must see what was tested, and nobody must re-buy
+hardware because a stale row says otherwise. Post-swap topology
+(`lspci -tvv`, `readlink -f /sys/class/nvme/nvme0/device`, D44): GPU under
+`00:02.5-[c1-c3]`, NVMe under `00:03.1-[c4]` — the devices TRADED root
+ports, which also REFUTES §D11's shared-upstream worry by read, not by
+reassurance; the bus letters inside the older receipts below belong to the
+PRE-swap enumeration.
+
+The Gen3-era evidence, kept as history (every CLOSED rung cites one of these):
 Report token (two of the three boots): `link-below-max: … runs 8.0 GT/s x4 of its
 16.0 GT/s x4 while the card is 49% busy` — the WARN REPRINTED on the fresh
 15:01Z boot, which is what PROVES the downgrade (§D6.6: report-2's silence
@@ -52,10 +70,12 @@ so exactly ONE physical link negotiates: root port `00:00:03.1` ↔ card,
 across the cable and the passive dock PCB. Inside the card the endpoint
 side trains `c3:00.0`/`c4:00.0` at 32 GT/s x16, which proves the
 downstream is not the limiter. The only defect candidate is the SPEED:
-Gen3 where the port caps Gen4. 3.94 GB/s raw ≈ HALF the RQ1-planned
+Gen3 where the port caps Gen4 (candidate VINDICATED — the fault was a speed
+path, in the socket, D44). 3.94 GB/s raw ≈ HALF the RQ1-planned
 7.0–7.2 GB/s class for this path (RESEARCH RQ1/RQ4 envelope) — which
-predicts the ~142 t/s prefill signature, and why LINK is the FIRST suspect:
-worth 2–4× prefill, vs the n-gram tier's 3–10% decode band.
+predicts the ~142 t/s prefill signature, and why LINK was the FIRST suspect:
+worth 2–4× prefill, vs the n-gram tier's 3–10% decode band (D44 rates the
+landed fix at ~2× — the chapter's payoff, collected at the socket).
 
 The registers, re-read (D38(1)): the old `EqualizationComplete+/Phase1-3+` paste is
 the **legacy 8.0 GT/s** EQ status in the base capability's `LnkSta2` — Gen4 owns a
@@ -72,9 +92,11 @@ fastest rate it can stably support". `LnkSta 8GT/s` beside a completed Gen4 EQ i
 therefore SPEC-NORMAL margin behavior, not a mis-configuration: trained-then-parked
 (D39). What it kills: "never attempted Gen4" (the card disproves it; there is
 no re-driver to blame for that), and D40's host read then retired the last
-"host may not have agreed" hedge — BOTH ends completed. What is left is
+"host may not have agreed" hedge — BOTH ends completed. What was left was
 exactly two things: margin in traffic, or a boot sequence that never ran
-the speed change (D40) — Rung 1 tells them apart.
+the speed change (D40) — Rung 1 told them apart (D43: the clamp branch died
+on a genuine fresh negotiation), and D44 then ended the chapter: the socket
+path was the fault.
 
 Read toolkit — every rung is witnessed the SAME way, all read-only: the
 engine's HARDWARE `link 00:03.1 …` line (startup report) AND `journalctl -k -b
@@ -95,12 +117,18 @@ Gen4 and FALLS BACK — so the question was never a BIOS speed PIN. §R13 left
 one open branch — did the HOST end actually agree? — and D40 ANSWERED it by
 read: it did (EquComplete+ at the port too), so BOTH ends completed Gen4 EQ
 and the link STILL parked at Gen3. The live branch pair is a post-EQ
-margin-ABORT in traffic vs a boot-sequence CLAMP that never ran the change,
-and the ladder below is re-pointed to the D40 order — one variable per cold
-boot, each rung witnessed with the engine `link` line, `LnkSta` AND
-`Phy16Sta`, under load, after a cold boot.
+margin-ABORT in traffic vs a boot-sequence CLAMP that never ran the change.
+That order RAN to completion and is now the chapter's record: D41/D42 — the
+raw config write was REFUSED by kernel lockdown (not SELinux); D43 — the
+kernel's own reset path DID retrain, a fresh negotiation re-landed Gen3, the
+clamp branch died; D44 — the socket swap reached `16GT/s x4`. The ladder
+below is kept rung-for-rung with each OUTCOME, so the reasoning trail (and
+the witness discipline: one variable per cold boot, the engine `link` line,
+`LnkSta` AND `Phy16Sta`, under load) survives for the next owner question.
 
-CLOSED rungs — receipts kept, so an owner at 3am can see what was TESTED:
+CLOSED rungs — receipts kept, so an owner at 3am can see what was TESTED.
+After D44 none of these is live; they stay struck precisely so nothing gets
+re-tried or re-bought:
 
 - **FALSIFIED — dock-first power ritual (D35, §D10.2).** The owner ran the full
   cold sequence verbatim (everything off, dock on, 10 s, host on) and the
@@ -127,6 +155,10 @@ CLOSED rungs — receipts kept, so an owner at 3am can see what was TESTED:
   one narrow "look and report" question, and only if Rung 1's retrain lands
   16 GT/s: whether this BIOS exposes an AMD-CBS-style per-slot speed
   override anyway — the menu is documented sparse (D40), so never assume.
+  D43/D44 settled PAST that question: the fresh negotiation re-landed Gen3
+  (clamp dead) and the socket swap reached Gen4 — no firmware hunt ever
+  ran, none is owed, and the AMD-CBS lead stays a look-and-report footnote
+  for the second-card day only.
 - **RETIRED — the redriver-purchase rung (§R13-Q5, D39).** Not a purchase
   any more: the bay part is an M2-1955-OCU, vendor-described "Built-in PCIe
   ReDriver to extend PCIe Gen4, 16GT/s…" (R13-S4) — not a rung to run: it
@@ -183,42 +215,54 @@ is the test):
   are the per-lane `LnkErrSta` inside the PCIe capability and the bridge
   `SecSta` (all read-only): `sudo lspci -vvv -s 00:00:03.1 | grep -A6
   'LnkErrSta'`, the same on `c2:00.0`, plus `sudo lspci -vvv -s 00:00:03.1 |
-  grep -E 'SecSta|DevSta'`.
+  grep -E 'SecSta|DevSta'`. **(d)** the run that followed this receipt
+  finished it: those substitute reads printed NOTHING — `LnkErrSta` is not
+  implemented on these ports and `DevSta` never populates under the withheld
+  AER, so THIS PLATFORM HAS NO READABLE PCIe ERROR COUNTERS; margin
+  questions are experiment-only (D41(3)) — see the standing rules below. And
+  D41's caution on this very print: the phase bits are per-attempt state —
+  on `c2:00.0` all three CLEARED between two reads (all '+' then all '-') —
+  a single `EquComplete+` proves far less than it looks like (standing rule,
+  and the reason D40's "both ends agreed" framing needed the D43 experiment
+  to mean anything).
 - **Rung 1 — FORCED RETRAIN / RELEARN (promoted by D40; a WRITE —
-  OWNER-EXECUTED; it BLINKS the link).** The only test left that separates
-  a boot-sequence clamp from a channel-margin abort, and the reads above
-  left no cheaper separator. Prep: scale radiance DOWN first (the runbook's
-  owner-executed scale lane — step 3's shape for strata, step 10's for
-  radiance), carrying the §D7 law: a hand scale-down survives only until
-  that app's NEXT manual sync, so restoring radiance is a DELIBERATE step,
-  not a side effect. Then, owner lane:
-  `sudo setpci -s 00:00:03.1 CAP_EXP+0x10.w=20:20` (LnkCtl bit 5 = Retrain
-  Link, value:mask form — a RE-RUN of training, not a speed override: the
-  target already reads 16GT/s, nothing to write) → `sleep 3` → re-read
-  `LnkSta` on `00:00:03.1` AND `c2:00.0`, and `Phy16Sta` on both. The
-  heavier re-enumeration route lets the port driver narrate the attempt in
-  its own words — watch `dmesg -w` while it runs, OWNER-EXECUTED:
-  `echo 1 > /sys/bus/pci/devices/0000:00:03.1/remove` then
-  `echo 1 > /sys/bus/pci/rescan` (canonical: remove the bridge subtree,
-  rescan after). Verdict rule, written as law (D40): **lands 16 GT/s after
-  the retrain ⇒ the negotiation is CAPABLE and simply never ran at boot** —
-  the question becomes PERSISTENCE: the socket swap (Rung 2), and an
-  AMD-CBS-style per-slot PCIe speed option ONLY if this BIOS exposes one —
-  the Framework menu is documented sparse, so that is "look and report",
-  never "assume"; **still 8 GT/s ⇒ the channel cannot hold Gen4** — and
-  the remaining honest answers are the short/known-Good cable (Rung 3),
-  the dock bypass (Rung 4), or spending on TP2 — not another BIOS hunt.
-- **Rung 2 — M.2 SOCKET SWAP, demoted by D40 (cost ~0, still worth doing).**
-  The two M.2 sockets ride DIFFERENT root ports — `00:02.5` hosts the NVMe,
-  `00:03.1` the dock chain (§D11.3, D38(4)) — so moving the bay card is a
-  free per-port behavior probe (per-port training differences are the
-  inference here, not an externally witnessed effect — D38(5) honesty).
-  Its ORIGINAL justification (Rung 0's
-  host-asymmetry branch) is CLOSED by read, so it rides behind Rung 1 now:
-  run it when the retrain lands 16 and persistence is the live question,
-  or as a zero-cost side-check. Score `LnkSta` + `Phy16Sta` after a cold
-  boot; respect the dock's power order every time — safety only, the
-  ritual itself is FALSIFIED as a fix (above).
+  OWNER-EXECUTED; it BLINKS the link). RAN; ANSWERED; DO NOT REPEAT.**
+  The planned `setpci` retrain write was REFUSED (`sysfs_write: write
+  failed: Operation not permitted`) — kernel lockdown `[integrity]` under
+  Secure Boot, NOT SELinux (Enforcing, but zero AVC denials; D42 corrected
+  D41's prime suspect): config writes are closed on this box, and a durable
+  route that needs one is a security-posture decision the owner makes, never
+  a tuning knob. The kernel's own path works anyway, OWNER-EXECUTED:
+  `echo 1 | sudo tee /sys/bus/pci/devices/0000:c2:00.0/reset` — and the
+  `tee: Inappropriate ioctl for device` print there is NOISE; verify against
+  `dmesg`, which showed `pcieport 0000:c2:00.0: resetting` / `reset done`
+  and a full amdgpu resume (D43). The outcome follows D40's verdict rule: a
+  genuine fresh negotiation (re-init from Detect, TargetSpeed=16 in force)
+  came back at `8GT/s` with `EquComplete+` ⇒ **the boot-clamp branch is
+  DEAD; the physical chain owns the problem** — and no further retrain
+  attempts are worth anything; the register already said what it says (D43).
+  The heavier `remove`+`rescan` form was likewise
+  unnecessary — recorded for accuracy (OWNER-EXECUTED writes: `echo 1 > /sys/bus/pci/devices/0000:00:03.1/remove`
+  then `echo 1 > /sys/bus/pci/rescan`) — same verdict, more disturbance.
+  Method kept honest: the reset hit a LIVE GPU — clean resume, one dead
+  in-flight request, ~1 s marker-skip restart — but radiance SHOULD have
+  been scaled down first, per this rung's own prep (the runbook's
+  owner-executed scale lane; §D7 law: a hand scale-down survives only until
+  that app's NEXT manual sync, so bringing it back is a DELIBERATE step).
+  Outcome unaffected; method was not (D43(4)).
+- **Rung 2 — M.2 SOCKET SWAP: THE FIX (D44). DONE — link at Gen4 x4.**
+  The owner moved the adapter to the board's OTHER M.2 socket and the
+  host↔card link reads `LnkSta: Speed 16GT/s, Width x4`, `Phy16Sta:
+  EquComplete+ EquPhase1+ EquPhase2+ EquPhase3+ LinkEquRequest-` (D44). The
+  two sockets ride DIFFERENT root ports — pre-swap: `00:02.5` hosted the
+  NVMe, `00:03.1` the dock chain (§D11.3, D38(4)) — and what D38(5) called
+  an unbacked INFERENCE is now WITNESSED: the per-port behavior difference
+  was the whole story; the culprit was the socket/root-port path, not the
+  cable, not the dock PCB, not firmware, not a redriver. Note for the
+  ordering history: D40 had demoted this rung behind the retrain — D43's
+  clamp-death re-ranked it first among the physical rungs, and the swap
+  resolved on that re-rank. Score any future link change the same way:
+  engine `link` line + `journalctl -k -b` + `LnkSta`/`Phy16Sta` under load.
 - **Rung 3 — RESEAT + SHORT known-Good cable (D40 ordering; merged rung):**
   SFF-8611 at BOTH ends until the latch clicks; full 24-pin/AC seating
   (shallow 24-pin is a documented malfunction class, R10-S7); then a short
@@ -226,7 +270,9 @@ is the test):
   cable — the platform's own counsel is "keep that cable" and the DEG1 is
   "picky about generic cables" (R11-S2); every added mating interface degrades
   signal integrity (LiKenun, R13-S6). With the signature now read as
-  trained-then-parked, this is the margin-shrink move, not a lottery ticket.
+  trained-then-parked, this was the margin-shrink move, not a lottery
+  ticket. **OUTCOME: never needed — D44 resolved one rung earlier at the
+  socket. The cable was NOT the fault; do not buy one.**
 - **Rung 4 — DOCK BYPASS, the DECISIVE separator (R10-Q3 verbatim logic):**
   card + the SAME cable straight onto the board's own OCuLink port (open
   frame), or the dock + card on a second Gen4 host. Gen4 while bypassed ⇒
@@ -234,12 +280,18 @@ is the test):
   host-port ↔ cable ↔ card triple owns it. The dock trains Gen4 in other
   hands (chimolog's 7.07 GB/s 3DMark witness, R10-S8) and the card's class
   is ruled out — other hosts report this card at Gen4 x4 (R10-Q2 (f), §R9).
+  **OUTCOME: never run, never owed (D44). The dock was NOT the fault —
+  nothing inside the passive dock ever was; do not buy a replacement,
+  and do not open the chassis for this again.**
 - **PARKED — Lane Margining, a detour not a rung (§R13-Q1 tool branch).** The
   capability prints (`[450 v1] Lane Margining at the Receiver`) but nobody has
   armed it: `PortCap: Uses Driver-`, `PortSta: MargReady-/MargSoftReady-` —
   arming means device-config WRITES with link-disturb potential, and no
   mainstream Linux tool is evidenced (UNVERIFIED, R13-S1). The free reads +
-  relearn answer the question first; do not spend an evening here.
+  relearn answer the question first; do not spend an evening here. The
+  chapter closed at D44 without ever needing this detour — it stays parked,
+  and it is now moot for the link (re-open only for a future margin
+  question on other hardware).
 - **The platform census, plainly (§R13-Q3, D38(3), D39).** A Framework Desktop
   has no native OCuLink — the community method is literally "take up one of
   the nvme slots to an oculink adapter" (R13-S6), which is exactly this rig —
@@ -248,22 +300,24 @@ is the test):
   build — Frix_Rioux's llama-bench run on this very model at pp 324.8 / tg
   21.1 (R12-S2) — sits inside OUR band. "Others have done this build
   successfully" therefore most likely means "done at Gen3". Our reads can be
-  the first published receipt set for this platform — post them either way.
-  And if the chain simply cannot hold 16 GT/s, the bandwidth road is the
-  second card (TP2) or a switch-dock purchase — not another cable.
-- **Terminal fork (only if rungs 1–4 all keep printing `LnkSta 8GT/s x4`
-  under load — and D40 puts it plainly: if a retrain cannot hold 16 GT/s,
-  the chassis path is Gen3 and the bandwidth money belongs to TP2, not
-  another cable):** the chain cannot hold the 16 GT/s eye in traffic — trained
-  ≠ stable; TI's "the fastest rate it can stably support" is the epitaph
-  (R13-S2). The honest spend then: the SECOND card (TP2 — halves the per-rank
-  crossing; §R11-Q5 prices a narrow link at ~54% of prefill lost for
-  weights-crossing regimes like ours), or a switch-dock lane (§R11's hardware
-  lane; the DEG1 itself is passive with no switch and no retimer, §R9/D33 —
-  a purchase is the owner's call, never a repo step) — or accept 3.94 GB/s
-  and run the §D8 profile levers at zero cost. The 3.94→7.88 GB/s dream is
-  formally dead on this chassis if this branch lands; link-first was still
-  the right ordering, and the link's floor is here (R13-Q5).
+  the first published receipt set for this platform — and after D44 ours IS
+  a receipt set worth posting (owner-lane; nothing has been published by
+  the repo on anyone's behalf). The census's "if" resolved: the chain CAN
+  hold 16 GT/s — it needed the other socket. The switch-dock / second-card
+  economics stand for TP2 only, not for fixing this link again.
+- **Terminal fork — NEVER CAME TO PASS (D44 resolved at Rung 2). Kept as
+  the economics ledger for the second-card day, not as live advice.** The
+  rule as written: if every rung still printed `LnkSta 8GT/s x4`, the chain
+  could not hold the 16 GT/s eye in traffic — trained ≠ stable; TI's "the
+  fastest rate it can stably support" is the epitaph (R13-S2) — and the
+  honest spend was TP2 or a switch-dock (§R11's hardware lane; the DEG1
+  itself is passive with no switch and no retimer, §R9/D33), never another
+  cable. What actually happened: the fork's premise died at the socket —
+  the 3.94→7.88 GB/s uplift DID land (~2×, D44 "worth ~2×"), so the
+  "dream formally dead" clause is RETIRED. The §R11-Q5 ~54%-lost-to-narrow-
+  link pricing and the §D8 profile levers stay true for whatever the
+  35→? question (§R14 epilogue, below) turns out to need — that remainder
+  is NOT wire-side on this rig any more.
 
 NOT-fixes — recorded so this checklist never re-lists a dead end as a cure.
 §R10-Q4's law verbatim: "Anything that doesn't land LnkSta first is not a
@@ -299,7 +353,85 @@ Any rung's receipt: re-read the engine startup report AND capture
 the receipt; a rung scores ONLY when `LnkSta` reads 16.0 GT/s x4 and the
 engine line + `journalctl -k -b` agree — `Phy16Sta: EquComplete+` alone is
 NOT the win (BOTH ends print it while the link parks at 8 — D40 is exactly
-that receipt).
+that receipt; post-D44 the link reads 16 — the discipline survives any
+future park).
+
+STANDING reading rules — each cost a round; they outlive this chapter:
+
+- The `(downgraded)` ADJECTIVE is permanent and harmless on `c1:00.0` (the
+  card's upstream bridge post-swap): its own `LnkCap` advertises 32GT/s x16
+  — the CARD's ceiling — so any platform link under it prints
+  "downgraded" even while healthy at Gen4 x4. The signal is the SPEED
+  VALUE, never the flag (D43(2), D44).
+- The `32GT/s x16` hops are CARD-INTERNAL (under the Navi pair); they are
+  not platform links and prove nothing about them (D43; Rung 0's c1
+  correction).
+- Unoccupied root ports print `2.5GT/s x16 (overdriven)` and mean NOTHING —
+  not faults, not suspects (D44); a REAL link idle also parks at 2.5 GT/s,
+  which is why every score in this chapter was read under load (the
+  census above).
+- There are NO READABLE PCIe error counters on this platform: `LnkErrSta`
+  is not implemented on these ports and `DevSta` never populates because
+  `_OSC` withheld AER (D40 c2 + D41(3)) — margin questions are
+  EXPERIMENT-only: run the reset, read the outcome, never hunt a counter
+  that does not exist.
+- `Phy16Sta` phase bits are PER-ATTEMPT state: D41 watched them CLEAR
+  between two reads of the same port (`c2:00.0`, all '+' then all '-') — a
+  single `EquComplete+` proves far less than it looks; it can describe the
+  most recent retrain, not the boot negotiation. Read twice, beside an
+  experiment, before believing a phase story (D41, D42).
+- The kernel's own sysfs path works where the owner-lane raw write does
+  not: lockdown (`[integrity]`, Secure Boot on) refuses USERSPACE config
+  writes with EPERM (OWNER-EXECUTED routes included) — the D41 `setpci`
+  retrain refusal was that, not SELinux (zero AVC denials, D42) — but the
+  kernel's own `/sys/.../reset` executes, and the
+  `tee: Inappropriate ioctl for device` print is NOISE: verify against
+  `dmesg` (`resetting` / `reset done`) before believing any
+  refused-looking failure (D43). A reset BLINKS the link: scale the tenant
+  down first — the method note in Rung 1, earned on a live GPU.
+
+POST-FIX EPILOGUE — the measurement state, evidence-bounded (§R14, D44):
+
+- The rig landed ~35 t/s warm at Gen4 x4 — and the engine's OWN v1.17.0
+  docs put the TP1 decode step at 28–29 ms at one sequence (R14-S2), i.e.
+  ≈35 t/s at tok/step 1: the single-card number is CLOSE TO PUBLISHED
+  REALITY, not a broken host; §D8's prediction landed. (Whether those ms
+  figures already include MTP is UNVERIFIED — §R14.)
+- The 70+ figures in the wild are systematically TP2 or dense: fn at
+  2×R9700 TP2 = 137 t/s single-stream sustained (R14-S1); the docs' own
+  TP2 rows 62.3–64.8 with MTP at 62K context and 50.56 at 249,939
+  (R14-S2); the §R14-Q1 census says it flatly — every sourced >70 fn row
+  involves ≥2 cards, every sourced single-card row is q27-dense or ≤40
+  (llama.cpp 29.8 at one card, R14-S4), and the only literal "up from
+  about 70" found is a FOUR-card STRATA config (R14-S4). A single-card fn
+  expectation of 70+ has NO receipt in the corpus — send one and §R14
+  will audit the flags.
+- D44's retraction, recorded here so it travels with the receipts: the
+  old "~83–100 MiB/token churn" figure was a CUMULATIVE mover counter
+  (it includes the cold-load promotion) divided by an unsourced
+  884-token denominator — VOID as a bound, kept as a hypothesis only.
+  The one number that replaces all speculation is **Δ`kv_stream_bytes_total`
+  ÷ Δ tokens** in steady state — pair-snapshot `/metrics` ≥10 min apart
+  while serving (doc-defined counters, R14-S2): wire-vs-host, decided by
+  receipt, pricing everything downstream of it.
+- `46.2% of copies looked back on routed` is DOCUMENTED-NORMAL at
+  `--tp 1` — the docs' own sentence: "about half the copies are used"
+  (R14-S2) — so any waste framing of it is RETRACTED (see §14); the 36%
+  readmits are the heat engine re-promoting demoted units, by design,
+  with no shipped knob (D8.2(b) law).
+- `--kv-resident` is DECODE-NEUTRAL by the docs ("Decode is unchanged,
+  with and without": 39.89 off / 39.78 on, R14-S2): dropping the mirror
+  buys ZERO decode speed and would SHRINK the expert slab — it is what
+  funds the 8×200K envelope. Any "drop the mirror for speed" idea is
+  dead by receipt.
+- The rank-1 FREE action (§R14-Q4 row 1, §R14-Q5 action 1) is the CPU
+  governor: it has printed `powersave` at EVERY boot this ticket has ever
+  observed — including the Gen4 ones — so the fixed link has NEVER once
+  been measured on a performance governor. §4's persistence routes are
+  the lane; then `/diagnostics` under a long prefill to close link
+  stability (Gen4 x4 has been load-stable only since 15:38Z, D44); then
+  runbook step 6's 8-session gate, still never run. The law is
+  unchanged: **the receipt decides, never the rate** (§R8).
 The payoff model is unchanged: Gen4 x4 buys prefill
 249→~450–500 t/s and warm decode toward the ~35 t/s compute floor (§D8).
 
@@ -363,7 +495,8 @@ forfeits the 8-session lever — a profile negotiation with an owner
 sign-off, never a scalar.**
 **2 — THE LIVE POSTURE: stay on disk in 4 KiB spans** — today's shape; the
 published cost is the ram-vs-disk band 3–10% decode ≈ 0.3–1.2 tok/s at the
-fresh 11.2 — second-order against the LINK defect.
+fresh 11.2 — second-order against the LINK chapter (RESOLVED at Gen4 x4,
+D44; §R14's epilogue owns the remaining 35→? question).
 **3 — THE OWNER'S STORAGE LANE: move /models to XFS/ext4** so statx reports
 alignment and the engine leaves its 4 KiB-span fallback — a host
 STORAGE-LANE decision on the SHARED 500Gi claim (it carries
@@ -500,7 +633,8 @@ prefill, not at rest. Distinguish honestly: the 300 W `power_cap` is the
 slot's own ceiling and is NOT the ~120 W OCuLink cap class the TP2 doc §3
 leaves open for a second card (that caveat belongs to `current_position`;
 this card reads its full envelope). Low clock at 49% busy would be a
-decode-side suspect after LINK; the report's 5.1→11.2 tok/s swing between
+decode-side suspect after LINK (chapter CLOSED at Gen4 x4, D44 — §R14 ranks
+governor PERSISTENCE ahead of it now); the report's 5.1→11.2 tok/s swing between
 boots is exactly why clocks get their own re-read per receipt.
 
 ## 11. NUMA — there is no NUMA here
@@ -566,22 +700,32 @@ hysteresis; 265 starved of a slab slot, 3721 of a pool slot`
   KV-cache slots + 1416 activation-arena slots lendable to the mover;
   ≈37% of the 25078 units resident is the WORKING state), the `L48+ zero`
   rows are the non-MoE layer plane, and D36 records the self-correction.
-- **THE CHURN RIDES THE SAME 3.94 GB/s LINK:** re-placement traffic on the
-  order of ~90–100 MiB per served token sits ON TOP of the ~200 MiB/token
-  miss stream, during exactly the early requests that look worst — which is
-  why short generations look catastrophic and long ones recover as the
-  miss-fraction converges (m 0.29 → 0.20 → ~0.17 on §D8's 3.8× warm-up
-  curve; the banner's settled state is `49 layer-sweeps found nothing new`).
-  The post-ritual prints — `11.0 tok/s` at gen 1047, `16.4` at gen 1707 —
-  are the SAME, MID-RAMP, NOT a regression: "same or worse" adjudicates to
-  "same" (D36). Link-first SURVIVES STRENGTHENED: one Gen4 fix halves the
-  misses AND the churn AND the wasted prefetch together.
+- **THE CHURN RODE THE SAME LINK (Gen4 x4 since D44):** re-placement
+  traffic rode ON TOP of the miss stream during exactly the early requests
+  that look worst — which is why short generations looked catastrophic and
+  long ones recover as the miss-fraction converges (m 0.29 → 0.20 → ~0.17
+  on §D8's 3.8× warm-up curve; the banner's settled state is `49
+  layer-sweeps found nothing new`). The post-ritual prints — `11.0 tok/s`
+  at gen 1047, `16.4` at gen 1707 — are the SAME, MID-RAMP, NOT a
+  regression: "same or worse" adjudicates to "same" (D36). Link-first PAID
+  OFF: the Gen4 fix landed at the M.2 socket (D44) — misses, churn and
+  prefetch look-back all ride less wire now. RETRACTION on the record
+  (D44): this bullet once quoted "~90–100 MiB per served token" — that was
+  cumulative mover bytes over an unsourced ~884-token denominator, VOID as
+  a bound, hypothesis at best until the Δ`kv_stream_bytes_total` ÷ Δ-tokens
+  pair-snapshot (§1 epilogue) replaces it.
 - **Fair measurement, both still owed:** no settled number exists — the
   fixed ≥2000-token probe at request-position ≥4 (§D8.3) has NEVER been run
   and the runbook's step-6 8-session gate is still unrun (owner-lane, each
   read-only). Standing law: **the receipt decides, never the rate** (§R8).
-  Recorded, NO advice shipped: 36% readmits + 46.2% no-lookback prefetch MAY
-  say the heat.h guards are off-optimum on this profile — UNVERIFIED (D36).
+  RETRACTED per §R14 (superseding the D36 "recorded, no advice shipped"
+  note): 46.2% look-back is the docs' OWN `--tp 1` norm ("about half the
+  copies are used", R14-S2) and 36% readmits are design — demotion is
+  cheap, re-promotion is the engine working — so there is NO guard problem
+  to report upstream and no shipped knob to tune (D8.2(b) law). §R14
+  re-ranked the queue ahead of both gates: governor persistence (§4 — the
+  only untested zero-cost lever at Gen4), then the Δ-stream_bytes
+  pair-snapshot, then `/diagnostics`, then step 6.
 - Unchanged watch item: if demotion BURSTS coincide with RAM spikes, the
   pinned-burst class (RESEARCH RQ1's Wilde note) is the thing to watch — it
   rides the same arithmetic discussed at §3, not a host knob.
@@ -601,8 +745,11 @@ hysteresis; 265 starved of a slab slot, 3721 of a pool slot`
   the shipped guaranteedMemoryGi 110 pair → slack 38.96 ≥ 4 ✓. A limit
   below the printed budget is a DEFECT, never a ladder step — that is how
   the 64-era OOM happened.
-- Suspect order (owner-impact-first): LINK → CLOCKS/POWER → RUNTIME-PM →
-  governor PERSISTENCE → memlock/DIO (both parked: §2/§3 — memlock only
+- Suspect order (owner-impact-first, re-pointed post-D44): LINK is CLOSED
+  at Gen4 x4 — history and reading rules only, do not re-chase it. The free
+  checks now run in §R14's order: governor PERSISTENCE (§4) → the
+  Δ`kv_stream_bytes_total` pair-snapshot (§1 epilogue) → CLOCKS/POWER →
+  RUNTIME-PM → memlock/DIO (both parked: §2/§3 — memlock only
   ever buys the dead RAM tier).
 - The acceptance bar is unchanged: the runbook's 8-session gate
   (`.agents/notes/radiance-on-target-acceptance.md`, step-6 gate). Tuning
