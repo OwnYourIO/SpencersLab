@@ -3142,3 +3142,297 @@ deviations: none — read-only, RESEARCH.md only. The launch framed the signatur
 friction: searxng aborted one query batch and one query returned junk (Samsung/XDA noise) — recovered via the native websearch and by re-querying; pciutils path guessing cost one 404 (file lives at repo root, not lib/) — resolved via the trees API; lspci's Phy16Sta print exists in master but the introducing version is unrecorded → the ladder ships the setpci-equivalent read so the rung never depends on distro-lspci age.
 open_questions: [Phy16Sta on 00:03.1/c2:00.0 — the single read that selects the branch (EquComplete- channel problem vs trained-then-parked error problem); our bay adapter's identity and any physical switches (R29Q anecdote); Frix_Rioux's actual link speed (follow-up ask if the owner ever pings the thread); whether the 16GT parity-mismatch/DPM registers move during a Gen4 attempt]
 next_suggested: coord hand the owner Q2's read-#1 (one command pair, copy-pasteable) BEFORE any hardware spend — if it prints EquComplete- the case closes as channel quality and ladder rungs 1–3 (adapter ID → short cable → EOP4A-class redriver card) execute in that order against the working-build precedent; fold the supersede lines (LnkSta2 bit-attribution; §R11 firmware rung CLOSED at 03.06-latest; NVMe-contender confounder closed) into DECISIONS + the tuning note's §1 at next touch per the D36 re-pointing law, and restate the terminal fork verbatim: if still 8GT/s after all that, publish the first documented Framework-Desktop Gen3-latch and move the money to TP2 or the §D8 profile levers — the rate model and every prior capacity verdict stand.
+
+---
+
+## §R13 — Gen4 equalization COMPLETED at the card, link parked at Gen3: what that signature means on a Framework Desktop + ASM1955 ReDriver + DEG1 chain
+
+Owner round 2026-11-14. Authorities re-read (D33–D38, §D8/§D10/§D11, §R9–§R12).
+SETTLED and carried without re-argument: one negotiating link (root `00:03.1` ↔ card,
+past the passive DEG1 — c2/c3 are the card's own `1002:1478/1479`); TargetSpeed=16
+(D34); ritual falsified (D35); aspm-off/setpci-speed denied (R10-S9); BIOS latest 03.06
+with zero per-slot PCIe content (D38(2)); platform = Framework Desktop, eGPU path
+electrically x4 (D38(4)); NVMe on its own root port; base-cap `LnkSta2` EQ bits are the
+Gen3 procedure's (D38(1)). NEW data treated as premise: card-side
+`Phy16Sta: EquComplete+ EquPhase1+ EquPhase2+ EquPhase3+ LinkEquRequest-` at cap
+`[410 v1] Physical Layer 16.0 GT/s`; `Lane Margining at the Receiver` present but
+`PortCap: Uses Driver- / PortSta: MargReady- MargSoftReady-`; our adapter is an
+**M2-1955-OCU "ReDriver"** card (ASM1955-class — the §R12 rung-3 purchase is
+redundant, retired below); `journalctl` `_OSC: platform does not support
+[SHPCHotplug AER]` (firmware-withheld AER); and the owner's own correction that the
+host-side Phy16 grep pattern was void, not evidence. Citations R13-S#, accessed
+2026-11-14; UNVERIFIED items labeled.
+
+### R13 VERDICT (first)
+
+**Trained-then-parked is now REAL (card side) and, on THIS chain, it means: the
+16 GT/s equalization procedure negotiated to completion — the phases only pass with the
+target-rate exchange done, TI: "After completing Phase 3 … the PCIe link should have BER
+less than 10⁻¹²" — and the link nevertheless settled at 8 GT/s, which TI names exactly:
+the link runs "at **the fastest rate it can stably support**" [R13-S2].** Two branches
+remain open and the FIRST is one free read away: (A) **post-EQ L0 instability** — the
+channel held 16 GT/s through training but missed the BER target in traffic (the
+redriver's presence makes "couldn't train" less likely, "marginal-at-16" more so), with
+the per-16GT **Data-Parity-Mismatch** registers (cap+0x10/0x14/0x18) and `DevSta:
+CorrErr+` as the evidence that does NOT need AER; or (B) **host-side non-participation**
+— the root port's own 16 GT/s status (still unread — the owner's `16GT` grep could not
+match lspci's `Physical Layer 16.0 GT/s` string; the void read is re-issued fixed).
+**Cheapest discriminating action: the fixed host-port read block (Q4-a), then the
+`remove`→`rescan` re-learn (owner-lane write) which forces a fresh full training you can
+watch in `dmesg` for the 16 GT/s attempt + abort live.** And plainly: our own bay card
+turns out to carry the very "ReDriver" fix §R12 recommended buying — **that rung is
+retired in writing here; the recommendation was hardware they already own, said so
+loudly.** What the signature does NOT support anymore: "Gen4 was never attempted" (§R12
+Q5's hoped-for branch, now contradicted at the card end), and "buy a redriver" (owned).
+
+### R13-Q1 — The spec-grounded ways a far port shows EquComplete+ Ph1/2/3 while the link runs 8 GT/s
+
+- **(a) Speed-change/EQ machinery, per TI (SNLA415, fetched full):** equalization is
+  per-generation cascade — "if all PCIe devices are Gen 5, there will be three link
+  equalization processes: first to Gen 3, from Gen 3 to Gen 4, and from Gen 4 to Gen 5";
+  the phases are preset-negotiation until "BER of less than 10⁻⁴" gates Phase 2 and
+  Phase 3 completion targets "BER less than 10⁻¹²"; **"In some motherboard designs,
+  particularly those with long channel links, this level of signal quality is not
+  possible. Additional signal conditioning may be required. In this case, repeaters like
+  redrivers and retimers are used"** [R13-S2]. A link that completes 16GT phases then
+  parks at 8 is the spec-normal outcome when post-EQ 16 GT/s traffic cannot hold the BER
+  — the LTSSM re-enters Recovery and re-establishes L0 at the last good rate ("send or
+  receive data at the fastest rate it can stably support" [R13-S2]); autonomous
+  re-attempts are not guaranteed, and the spec gives software two re-triggers:
+  `LnkCtl3 Perform Equalization` (lspci prints the bit — `LnkCtl3: LnkEquIntrruptEn%c
+  PerformEqu%c`, pciutils `PCI_SEC_LNKCTL3_PERFORM_LINK_EQU` [R12-S1/R13-S1]) and any
+  hot-reset/relearn that re-runs the full sequence. The **Data Parity Mismatch** regs at
+  the 16GT cap's +0x10/+0x14/+0x18 (Local / 1st / 2nd Retimer [R12-S1]) are the
+  purpose-built, AER-free evidence that 16 GT/s was *lived and lost* vs *never lived*.
+- **(b) Can the card's `Phy16Sta` complete while the link never ran 16 GT/s?** Only via
+  **link subdivision**: a genuine retimer splits training — "the link can be split in
+  two parts due to the PCIe retimer: root complex to the retimer and retimer to the
+  endpoint… **The link on both sides of the retimer undergo link initialization
+  separately**" [R13-S2; Intel's spec-supplement lists the concept as "Link
+  Subdivision" §1.4.1 [R13-S3]]. Then the card's phases describe its own segment and the
+  root port may never have finished 16GT EQ — the end-to-end speed still falls back.
+  **But a present, participating retimer is DETECTED on the link and our root-port read
+  says `Retimer- 2Retimers-`** (the pciutils LnkSta2 defines `RETIMER 0x0040 /
+  2RETIMERS 0x0080` are exactly those detection flags [R12-S1]) ⇒ on the evidence, our
+  link is NOT subdivided: the "ReDriver" behaves as an analog redriver (invisible to the
+  LTSSM by design — ASMedia itself lists "Redriver" parts like ASM1468 "linear redriver …
+  for PCB trace extension" in a family separate from its retimers [R13-S5]).
+  Consequently the card-side completion **does** describe an end-to-end Gen4
+  negotiation, and the host-side "never asked" theory is disfavored — pending read Q4-a
+  to confirm the host end also completed (if it shows `EquComplete-` while the card
+  shows `+`, that ASYMMETRY is itself the finding: preset-mismatch between the ends, not
+  a dead channel). And for the sub-question "root port with LnkCap 16GT/s but NO cap
+  0x26": that would be an incomplete Gen4 implementation (the per-speed ext caps carry
+  the EQ controls a 16GT-capable DS port needs to run phases at all); lspci will simply
+  not list the block — the enumeration in Q4-a settles whether it exists at all.
+- **(c) Firmware/ACPI per-slot speed caps:** nothing in the spec places a *rate limit*
+  in `_PLD/_UPC/_DSM` (those carry presence/power/consumer info — marked UNVERIFIED as
+  a cap mechanism, no citation found this round); AMD's platform speed strap exists in
+  PBS/PI but D34's `TargetSpeed: 16GT/s` read already shows the instruction is Gen4, and
+  no Framework report of a silent speed-cap was found (search negative this round). The
+  `_OSC: platform does not support [SHPCHotplug AER]` line (owner paste; kernel's own
+  _OSC negotiation print) proves this firmware withholds AER control — it is an
+  error-REPORTING withholding, not a speed cap; nothing links it to 8GT/s except by our
+  own reading. **Rank: low, but non-zero only via AMD PI preset defaults — and PI 1.0.0.2c
+  is current-latest with no per-slot surface (D38(2)).**
+- **(d) ReDriver unpowered/disabled:** an analog redriver that LOSES power opens the
+  path — the link would not train at Gen3 either (TI's conditioning is in-path for the
+  high rates the platform needs it for; with a dead redriver expect degraded or dead at
+  ALL rates, not a clean Gen3 with completed Gen4 phases at the far end). M.2 sockets
+  supply 3.3V aux and the card is mid-chain of a LIVE link — so power-off is DISFAVORED
+  by our own evidence; whether the ASM1955-class part has a mode strap/jumper: NO page
+  fetched for this SKU mentions any (specs: "Built-in PCIe ReDriver to extend PCIe Gen4,
+  16GT/s differential pair signals" / "PN # M2-1955-OCU" [R13-S4] — chip datasheet
+  absent from public web: **ASM1955's exact function-class is UNVERIFIED**; the SKU name
+  + `Retimer-` bit make analog-redriver the working read). A protocol-level retimer
+  present-but-1x/bypassed would still normally set the detection bits; it doesn't here.
+- **(e) Marginal passive channel at 16 GT/s:** the standing physical story (R10-S2
+  "picky about generic cables", LiKenun [R13-S6]: "**been burnt by shoddy signal
+  integrity for PCIe 4.0 with OCuLink cables on many occasions. Every mating interface
+  you add to the chain further degrades the signal integrity**"), now RE-READ with the
+  new signature: the channel trains (phases complete through the redriver) but may not
+  HOLD 16GT/s in traffic — margin, not magic. Fix candidates remain per-section: reseat
+  (contact impedance), shorter/better cable, socket move (different preset/pu-training
+  defaults per port), open-frame bypass (shortest chain). What it is NOT anymore:
+  "no redriver in path" (owned) or "never attempted" (card says otherwise).
+- **Lane Margining (the tool branch):** our read shows the capability EXISTS (`[450 v1]
+  Lane Margining at the Receiver`) but `PortCap: Uses Driver-` and
+  `PortSta: MargReady-/MargSoftReady-` — i.e., nobody (driver or firmware) has armed
+  margining software-readiness; the spec requires SW enablement to run margin steps
+  (exact bit semantics UNVERIFIED this round — spec paywalled; pciutils print quoted in
+  §R12-S1 shows only the presence/ready flags). **Verdict: not a dead end, but a detour:
+  no mainstream Linux CLI is evidenced; the free host-read + relearn experiment answer
+  90% of the question first.**
+
+### R13-Q2 — The part itself (M2-1955-OCU / ASM1955)
+
+- **What the SKU claims:** "M.2 M-Key PCIe Gen4 with **ReDriver** to OCulink 4i
+  (SFF-8612) Adapter … Built-in **PCIe ReDriver to extend PCIe Gen4, 16GT/s**
+  differential pair signals … pin-out defined by SFF-9402 Rev1.1 … Micro SATA Cables
+  PN # **M2-1955-OCU**" — vendor pages (eproductsolutions render; microsatacables.com)
+  [R13-S4]; connector naming SFF-8612/4i is the SlimSAS-family spelling of OCuLink 4i
+  (the industry mixes 8611/8612 labels — cosmetic). **Rated: Gen4 x4, signal-conditioning
+  by design; no jumper/aux-power note exists on the page ⇒ M.2-slot-powered, no user
+  settings — "a setting on the card" is effectively ruled out for THIS part** (vs the
+  K993G-R29Q anecdote in §R12 which reportedly has switches — different part).
+- **ASM1955 as silicon:** ASMedia's public catalog separates **"Redriver"** (e.g.,
+  ASM1468: "dual lanes/4 differential channels **linear redriver** … for PCI Express
+  PCB trace extension") from retimer products [R13-S5]; no public ASM1955 datasheet page
+  was reachable this round ⇒ **chip identity UNVERIFIED**; the SKU's own word is
+  ReDriver and our `Retimer-` bit agrees — working read: analog signal conditioner,
+  LTSSM-transparent.
+- **Visibility:** a redriver adds NO config-space device (it is not a bridge); its
+  absence from `lspci -t` (our recorded chain `00:03.1-[c2-c3-c4]`, c2/c3 = the card's
+  own `1002:1478/1479`) is EXPECTED and is NOT evidence of inactivity — settling the
+  §R12-Q2 "is it visible at all" question: **not visible by design; the only visible
+  trace is LnkSta2's Retimer bits (which a redriver does not set and ours does not
+  show) or measurement (link quality).** If it were a protocol retimer, presence would
+  have set `Retimer+`. **A `1b21:` device therefore SHOULD NOT be searched for.**
+
+### R13-Q3 — Framework Desktop M.2 reality + the speed-receipt census
+
+- **Slots:** community block diagram (carried §R11-S7): "4 PCIe slots: 2x M.2, 1x WiFi
+  slot, 1x PCIex4"; third-party reviews carry "2x M.2 2280 NVMe PCIe Gen 4x4"
+  (bikmantech [§R11 search-render], mjh "the baffling PCIe x4 slot" [R12-S8];
+  official frame.work copy on the card slot [R12-S6]); Framework's own help/spec pages
+  did not render this round (408s — slot-gen-per-socket table UNVERIFIED officially,
+  community-consistent). Our OWN lspci -t proves the operative fact: **the two M.2
+  sockets ride DIFFERENT GPP root ports (`00:02.5` storage, `00:03.1` dock-path) — so
+  "move the adapter to the other socket" is a real, free A/B of host-side silicon
+  behavior (per-port presets/EQ state), and it does not disturb the disk tier's own
+  port story** (NVMe just swaps places — boot-disk caveat: the adapter move requires
+  the NVMe re-seat too; a one-time owner operation, rollback trivial).
+- **How the community adds OCuLink to a Desktop (the thread the owner's build follows):**
+  "Oculink Port - How to add it?" [R13-S6: community.frame.work/t/71782, accessed
+  2026-11-14]: options are "a pci-e card that has the port internally" or "**Take up
+  one of the nvme slots to an oculink adapter**" — i.e., EXACTLY our architecture (a
+  ReDriver M.2 card in an nvme socket, or a bracket card in the x4 slot); no
+  Framework-official OCuLink accessory exists for the Desktop (the blessed accessories
+  are its expansion cards; an x8 OCuLink bay module exists for the LAPTOP 16 — R11-S3/
+  R12-S7 — do not conflate). A photo build confirms the DIY pattern in the field:
+  "Pcie 4 Oculink adaptor for framework desktop … Installed card no bracket … It's a
+  bit loose on inside but hasn't failed me yet" [R13-S7: thread search-render, 2025-12-30,
+  accessed 2026-11-14 — speed never stated].
+- **The census, stated plainly:** of every Framework Desktop eGPU report found (§R11 +
+  this round: Frix_Rioux 9070XT+DEG1 BIOS 3.02 pp324.8/tg21.1 [R12-S2]; Martin_Roth
+  2×R9700 Fedora [R12-S2]; NappDev EOP4A+DEG1 [R12-S2]; Samuel_Sylvester 3090
+  [R12-S2]; the photo builds [R13-S7]) — **not one publishes a negotiated link speed;
+  ZERO Framework Desktop owners have documented 16 GT/s x4.** Frix's throughput
+  (pp 324.8 ≈ our ~250–286 band, tg 21.1) is consistent with Gen3-class crossing
+  without proving it; D38(3)'s reading hardens: **"others have done this build"
+  verifiably means "done it, plausibly AT Gen3" — the claim as stated does not
+  establish 16 GT/s was ever achieved on this platform by anyone.**
+
+### R13-Q4 — Read-only command set (no AER needed), corrected + version-tolerant
+
+Every block is read-only; the two writes are flagged and owner-lane. (Offsets from the
+fetched decoder sources [R12-S1]: 16GT ext cap = ID **0x26**, status at cap+0x0C bits
+`0x1 EquComplete 0x2 Ph1 0x4 Ph2 0x8 Ph3 0x10 LinkEquRequest16`, DPM at +0x10/0x14/0x18;
+base-cap `LnkSta2` at `CAP_EXP+0x32.w`, `LnkCtl2 +0x30.w`, DevCtl/DevSta inside the
+base PCIe cap.)
+
+| read | command | what it proves |
+|---|---|---|
+| (a) host ext caps + Phy16Sta | `sudo lspci -vvv -s 00:00:03.1 \| sed -n '/Capabilities/,/^$/p' \| grep -E 'Capa\|Physical Layer'` then `sudo lspci -vvv -s 00:00:03.1 \| grep -iA1 'Physical Layer 16'` — if the grep prints nothing on old lspci: `lspci -vvv -s 00:00:03.1 \| grep Capabilities` to find the 16GT block's hex offset `N`, then `sudo setpci -s 00:00:03.1 $((N+0xC)).l` (numeric fallback; ECAP symbolic names in setpci exist on recent tools — use whichever resolves; both READS only) | root-port side of the Gen4 negotiation: EquComplete? phase bits? `LinkEquRequest16`? If the port has NO cap 0x26 while LnkCap says 16GT/s ⇒ incomplete Gen4 implementation exposed — that finding alone would explain parked-at-8 and redirect to FW/AMD PI |
+| (a2) host DPM parity | `setpci -s 00:00:03.1 $((N+0x10)).l` (and +0x14/+0x18) | non-zero Local/Retimer Data Parity Mismatch = 16GT/s ordered sets were RECEIVED IN TRAFFIC and mismatched — the "lived-and-lost" marker; all zero + EquComplete+ = clean-EQ-then-polite-fallback (timeout/abort class) |
+| (b) card ends | same trio on `0000:c3:00.0` and `0000:c4:00.0` | whether both pseudo-internal hops + the EP agree; the c2 read we HAVE already shows the endpoint side completed and holds no pending request |
+| (c) negotiation state | `sudo lspci -vvv -s 00:00:03.1 \| grep -E 'LnkCap:.\|LnkCap2:.\|LnkCtl:.\|LnkCtl2:.\|LnkSta:.\|LnkSta2:.\|DevSta:.\|LnkCtl3:'` (same on c2) | LnkCap2 Supported Speeds Vector (16GT present?), `LnkCtl: … HWAutoWidth-/HWAutoSpeed?` + ASPM fields, `LnkCtl2: Target 16GT/s` re-check, `DevSta: CorrErr+` (Device Status is base-PCIe-cap — **works without AER**; a creeping CorrErr count on c2/c4 = 16GT traffic really errored), `LnkCtl3: PerformEqu-` current state |
+| (d) error views without AER | `dmesg \| grep -iE 'pcieport 0000:00:03.1\|link is down\|speed changed\|retrain'`; `journalctl -k -b --grep='pci\|pcie' --no-pager \| head -80` | the port bus driver prints `Link Training` / `Link Down` / slot events without AER; repeated `speed changed to 8.0 GT/s`-class lines around boot = the LTSSM's own autobiography (message texts vary — grep is forgiving on purpose) |
+| (e) margining | already read: `PortCap: Uses Driver- / MargReady-` | SW-enabled margining is NOT armed; arming it = device config WRITES with link-disturb potential and no mainstream Linux tool evidenced (**UNVERIFIED tooling**) — park; the free answers are (a)/(f) |
+| (f) relearn experiment — **WRITE, owner-lane** | with radiance scaled to 0: `echo 1 \| sudo tee /sys/bus/pci/devices/0000:00:03.1/remove && sleep 2 && echo 1 \| sudo tee /sys/bus/pci/devices/0000:c4:00.0/../..>/sys/bus/pci/rescan` (canonical form: remove the bridge subtree, then `echo 1 > /sys/bus/pci/rescan`) — or the gentler `setpci` LnkCtl Retrain bit (retrain bit, per §R10 forencich shape; still a write) | forces a FRESH full training; watch `dmesg -w` for the Gen4 attempt + any "Equalization … failed / speed downgraded" trace in the port's own words + the post-rescan LnkSta. If a re-learn re-runs EQ and lands Gen3 again with DPM/CorrErr moving ⇒ confirmed marginal-channel; if it lands **16GT/s** once (rare) ⇒ latch/staleness class, and the PerformEqu+retrain becomes the repeatable lever (documented owner ritual until reboot) |
+
+**Cheapest discriminating ACTION, named:** run (a)+(a2)+(c) on `00:03.1` (three
+read-only commands, one minute) — the host-side `Phy16Sta` + DPM pair splits the world
+into: host-EQ-failed (⇒ host-port/socket side, ladder rung "socket move" leads) vs
+host-EQ-complete-but-demoted-on-errors (⇒ channel/cable side, ladder "cable then socket"
+leads) vs no-cap-0x26-on-the-port (⇒ FW/PI surface — the only branch where any
+firmware hunt re-opens).
+
+### R13-Q5 — Revised ladder + RETIREMENTS
+
+**RETIREMENTS, in writing (per the launch's instruction):**
+1. **Redriver/ReDriver purchase rung — RETIRED. Our adapter IS one** ("M2-1955-OCU …
+   Built-in PCIe ReDriver to extend PCIe Gen4, 16GT/s" [R13-S4]); §R12-Q5 rung 3 and the
+   §R11 "EOP4A-class insert" recommendation recommended hardware the owner already owns —
+   error acknowledged. (The R29Q's switches anecdote dies too: different part, and the
+   BCC question was about THAT card.)
+2. BIOS/firmware rungs — stay CLOSED (03.06 = latest, zero per-slot PCIe content, D38(2)).
+3. Dock-first power ritual — stays FALSIFIED (D35).
+4. `pcie_aspm=off` / setpci TargetSpeed overrides — stay DENIED as speed fixes (R10-S9);
+   note the distinction this round draws: **`LnkCtl3 PerformEqu` + a link relearn is the
+   spec-adjacent EQ RE-RUN knob** (retry the training), not a speed override (pretend
+   faster) — different thing, still owner-lane.
+5. "Adapter-card identity unknown" — RESOLVED (M2-1955-OCU); its invisibility in
+   `lspci -t` is expected-redriver behavior, not evidence of absence (Q2).
+
+**LADDER, probability×cost (survivors):**
+0. **(a)/(a2)/(c) host-side reads — free, minutes** — splits the diagnosis (Q4);
+   backs: every bit quoted from decoder sources [R12-S1][R13-S2].
+1. **Socket swap** (adapter↔NVMe, one-time, trivial rollback): a different GPP root
+   port with independent per-port training state; a Gen4 landing on `00:02.5` localizes
+   the defect to `00:03.1`'s port/PI side; nothing to buy. (Externally unbacked —
+   inference — but it is THE experiment for Q1(b)'s asymmetry branch.)
+2. **Reseat + SHORT known-Good cable** (the 30 cm class Martin_Roth's working build used
+   [R12-S2]; "Keep that cable"/"picky about generic cables" [R11-S2]; LiKenun's every-
+   interface-adds-loss warning [R13-S6]) — channel branch.
+3. **Dock bypass / open frame** (decisive separator, unchanged logic from §R10/§R12;
+   the DEG1 itself measured fine at 7.07 GB/s on other hosts [R10-S8]).
+4. **Relearn with dmesg-watching (f)** — owner-lane write, after radiance down; converts
+   hypothesis into the port driver's own words.
+5. **Hygiene rows unchanged and orthogonal:** d3cold/runpm stability pair stays on the
+   book as STABILITY ONLY (D36/C14).
+6. **Terminal fork (both honest):** if no sequence lands 16GT/s — the chassis+socket+
+   cable+DEG1 chain cannot hold the 16 GT/s eye in traffic (trained ≠ stable; TI's
+   "fastest rate it can stably support" [R13-S2] is the epitaph) ⇒ **publish ours as the
+   first Framework-Desktop Gen3-latch receipt-set** and spend on the TP2 second card
+   (halves per-rank crossing; §R11-Q5: weights-crossing regimes lose ~54% of pp to a
+   narrow link; x4-vs-x16 wall persists per daimonionnn "Four lanes against sixteen is
+   the constraint") or the §D8 profile levers (pool/ctx/seqs) at zero cost. The 3.94 →
+   7.88 GB/s dream is then formally dead on this chassis and the tuning conclusion
+   (link-first was right; the link's floor is here) stands corrected-but-verified.
+
+### R13 — Conflicts / SUPERSEDES / UNVERIFIED
+
+- **Supersedes §R12-Q2's hoped-for branch:** "most likely `Phy16Sta: EquComplete-`" is
+  CONTRADICTED at the card end (it is `EquComplete+` all phases) — the trained-then-parked
+  (fallback-on-margin) story is now the leading one, host-side read pending; §R12's
+  ladder rung 3 (buy redriver) and its adapter-identity uncertainty are both CLOSED by
+  the SKU read; §R11's redriver recommendation — retired above.
+- **Corrects this round's own launch framing (accepted):** the host-port "no Phy16
+  block" non-result was a grep-pattern artifact — VOID, re-issued fixed (Q4-a).
+- **Preserved, untouched:** D34/D35/D36/D38's rulings, §D8's m-model and payoff
+  arithmetic (only the PROBABILITY of reaching its Gen4 branch moved down and the
+  diagnosis branch tree moved), §R8 capacity law, §R9 APU narrowing, the C14 note ladder
+  EXCEPT the two retired lines (C14 re-touch owed: swap rung-3's "buy redriver" for
+  "socket-swap + short cable", delete the EOP4A insert).
+- **UNVERIFIED:** ASM1955's silicon class (no public datasheet found — vendor "ReDriver"
+  + `Retimer-` bit carry the working read); whether cap 0x26 EXISTS on 00:03.1 (the
+  fixed read answers it); `_PLD/_UPC/_DSM` as any speed-cap mechanism (none found;
+  asserted absent is weak-evidence); LMR spec bit semantics (paywalled) and Linux tooling
+  existence; Framework official per-M.2-slot lane/gen table (help pages unfetchable,
+  community-consistent); Frix_Rioux's actual negotiated speed (never posted); whether a
+  relearn ever lands 16GT/s once and what reverts it (the (f) experiment will tell);
+  AMD PI per-port preset defaults (no public Strix-Halo knob table).
+
+### R13 — Sources (accessed 2026-11-14)
+
+| # | URL | What it is |
+|---|---|---|
+| R13-S1 | (inherited §R12-S1) raw.githubusercontent.com/pciutils/pciutils ls-ecaps.c + lib/header.h | Bit/reg authority reused throughout: LnkSta2 RETIMER 0x0040/2RETIMERS 0x0080; 16GT cap 0x26 status @+0x0C fields, DPM regs +0x10/0x14/0x18; LnkCtl3 `LnkEquIntrruptEn/PerformEqu` print; DevSta CorrErr decode; Phy16Sta print form |
+| R13-S2 | www.ti.com/lit/pdf/snla415 "PCIe Link Training Overview" (SNLA415, Aug 2022; fetched, 3 windows) | The mechanism doc: per-generation EQ cascade ("first to Gen 3, from Gen 3 to Gen 4…"); phases (BER 10⁻⁴ gate to Phase 2; Phase-3-done ⇒ "BER less than 10⁻¹²"); **long-channel boards cannot hold that ⇒ "repeaters like redrivers and retimers are used"**; **retimer = split links, "The link on both sides of the retimer undergo link initialization separately"**; final: link "send[s] or receive[s] data at the fastest rate it can stably support" |
+| R13-S3 | intel.com "PCIe 4.0 Retimer Supplemental Features and Standard BGA Footprint" (June 2018 PDF; TOC fetched) | Retimer-as-spec-participant authority: §1.4.1 "Link Subdivision", §1.4 "Retimer Supplemental Features Beyond PCIe 4.0 Specification" — retimers are detected protocol devices (contrast redrivers); body sections beyond TOC not extracted → content claims limited to the TOC + TI's body text |
+| R13-S4 | microsatacables.com product page (search-rendered) + eproductsolutions.com (search-rendered; direct 404) | The SKU itself: "M.2 M-Key PCIe Gen4 with **ReDriver** to OCulink 4i … Built-in PCIe ReDriver to extend PCIe Gen4, 16GT/s differential pair signals … PN # M2-1955-OCU"; no power/jumper requirement stated |
+| R13-S5 | asmedia.com.tw product renders (ASM1468 "8Gbps PCIe Redriver … linear redriver … PCB trace extension"; retimer categories separate) | ASMedia's own redriver-vs-retimer product taxonomy grounding the "ReDriver = analog, invisible" read; ASM1955 datasheet NOT found (UNVERIFIED) |
+| R13-S6 | community.frame.work/t/oculink-port-how-to-add-it/71782 (fetched) | How the platform's owners actually do it: "Take up one of the nvme slots to an oculink adapter" / bracket card in the x4 slot; LiKenun: "been burnt by shoddy signal integrity for PCIe 4.0 with OCuLink cables on many occasions. Every mating interface you add to the chain further degrades the signal integrity"; recommends Micro SATA/Serial Cables parts |
+| R13-S7 | community.frame.work "Pcie 4 Oculink adaptor for framework desktop" (search render, 2025-12-30) | In-the-field photo build of exactly this architecture ("Installed card no bracket … hasn't failed me yet") — no speed stated anywhere, consistent with the zero-speed-receipt census |
+| (inherited) | R12-S1..S8 (Frix/Martin/BIOS-audit/x4-slot), R11-S1..S7, R10-S2/S6/S8/S9, §D8/§D10/§D11, D33–D38 | carried; the only reversals are the ones declared above |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R13 appended)]
+commands_run: [repo reads (D33–D38 incl. D36 ladder verbatim, §D8/§D10/§D11, §R9–§R12) => pass; web_url_read: TI SNLA415 PDF (3 windows — retimer split-link, phase/BER texts, "fastest rate stably support"), community 71782 thread, Intel retimer-supplemental PDF (2 windows, TOC incl. "Link Subdivision"), microsata/eproducts SKU pages (one 404 → search-render fallback), asmedia product renders => pass; searxng ×5 (two batches partially aborted — recovered by serializing; one query returned noise-only and was dropped) + websearch ×1 (ASM1955 sweep — no datasheet, product-taxonomy finds retained) + frame.work spec page 408 (logged) => pass; §R12 decoder citations reused from fetched headers (no memory-bits used) => pass]
+deviations: none — read-only, RESEARCH.md only. Where the evidence contradicted §R12, said so loudly per instruction: its "most likely EquComplete-" branch IS contradicted at the card end, its redriver-purchase rung and adapter-identity doubt ARE retired by the SKU read, and its grep void-result IS corrected. The ASM1955 chip-class stayed UNVERIFIED despite two search lanes — stated rather than guessed, and the redriver read rests on two positive sources (vendor wording + the spec-defined `Retimer-` bit) rather than on absence.
+friction: ASMedia's site exposes product pages via JS-lists the reader can't walk — ASM1955's own page was not reachable at all (search found only category siblings); the Intel PDF yielded TOC not body for the subdivision section (TI carries the needed sentence); one eproductsolutions URL 404'd while the identical SKU text survived in search renders — quoted as such and labeled.
+open_questions: [host-port `Phy16Sta` + DPM + DevSta reads — the branch-splitter (Q4-a/a2/c, three minutes); whether 00:03.1 even implements cap 0x26; socket-swap outcome (00:02.5 vs 00:03.1 per-port behavior); what a relearn (f) prints in dmesg during its Gen4 attempt; ASM1955's true silicon class; any Framework Desktop owner who will ever post a LnkSta]
+next_suggested: coord hand the owner the Q4-a/a2/c command block (free, splits the diagnosis) and the socket-swap as rung 1 — then re-touch C14's note ladder to DELETE the retired redriver-purchase line (per D36's own re-pointing law, a falsified row must be re-pointed in the same ticket) substituting "socket swap → short known-Good cable → open-frame bypass → relearn experiment", keeping the terminal fork's economics (TP2/profile) verbatim; if the host end shows EquComplete- while the card shows +, that asymmetry is the finding of the two-day investigation and belongs in DECISIONS at the next fold.

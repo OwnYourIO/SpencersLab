@@ -1043,6 +1043,49 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    Authority: RESEARCH §R12 (lines 2879–3144); supersedes §R11's firmware candidate and my D37-
    adjacent register reading; nothing in §D8/§R8/§R9's capacity math moves.
 
+ - 2026-11-14 research+coord D39 (§R13 — the two-day link hunt gets its mechanism, and three of
+   MY recommendations are formally retired): the owner's correctly-read `Phy16Sta: EquComplete+
+   EquPhase1+ EquPhase2+ EquPhase3+ LinkEquRequest-` on `c2:00.0` means **16 GT/s was genuinely
+   trained and the link then demoted** — TI's link-training doc (SNLA415) is the authority for the
+   grammar: EQ is a per-generation cascade ("from Gen 3 to Gen 4"), Phase 2 is gated on
+   "BER of less than 10⁻⁴" and completion on "BER less than 10⁻¹²", and on long channels
+   "this level of signal quality is not possible… repeaters like redrivers and retimers are
+   used", with the link settling at "the fastest rate it can stably support". So `LnkSta 8GT/s`
+   beside a completed Gen4 EQ is spec-normal margin behavior, not a config we forgot.
+   RETIRED IN WRITING, each for a stated reason: (1) **the redriver-purchase rung** — the owner
+   already owns an **M2-1955-OCU**, vendor-described "Built-in PCIe ReDriver to extend PCIe Gen4,
+   16GT/s…"; my §R12 recommendation was simply wrong and §R11's "buy a redriver card" advice is
+   already spent; (2) **the adapter-identity rung** — closed as a redriver, and redrivers are
+   **analog and invisible to `lspci -t` by design** (TI: a *retimer* makes each side initialize the
+   link separately — "Link subdivision" — whereas our root port reads `Retimer- 2Retimers-`, i.e.
+   no detected retimer), so the card's absence from the topology is expected, not evidence of an
+   inert part; (3) **the BIOS/firmware, ritual, aspm and setpci rungs** stay closed from
+   §R12/D35/R10-S9. ASM1955's exact silicon class remains **UNVERIFIED** (no public datasheet
+   surfaced; ASMedia's own taxonomy separates redrivers like ASM1468 from its retimer lines).
+   THE REMAINING AMBIGUITY IS THE HOST END, and three free reads settle it without AER (which
+   `_OSC` withholds): root-port `Phy16Sta`, its Data-Parity-Mismatch registers at cap+0x10/0x14/0x18,
+   and `DevSta: CorrErr+` from the PCIe capability. Host `EquComplete-` against the card's `+` ⇒ the
+   negotiation never got the host's agreement (→ the **socket** leads); host `EquComplete+` with
+   parity/correctable errors ⇒ it lived Gen4 and lost margin in traffic (→ the **cable/chain**
+   leads); no cap 0x26 on the root port at all ⇒ the only branch that re-opens firmware.
+   NEW FREE A/B, and it is now ladder rung 1: our two M.2 sockets sit on **different root ports**
+   (`00:02.5` = the NVMe, `00:03.1` = the dock), so **moving the adapter to the other M.2 slot** is
+   a zero-cost per-port behavior test the previous ladders never had. Also added as owner-lane
+   reads: `echo 1 > …/remove` + rescan so the port driver narrates the Gen4 attempt in `dmesg`
+   (radiance must be down for that), and the Lane-Margining detour is PARKED, not pursued
+   (`Uses Driver-`/`MargReady-`, no Linux tool evidenced).
+   CENSUS HARDENED, said plainly for the owner: Framework Desktop has **no native OCuLink** — the
+   community method is literally "take up one of the nvme slots to an oculink adapter" (our exact
+   architecture) — and **no Framework Desktop owner has ever published a negotiated link speed**,
+   while the closest same-model build (Frix_Rioux, llama-bench pp 324.8 / tg 21.1) sits inside our
+   own band. "Others have done this build successfully" is therefore true but most likely means
+   "done at Gen3"; our case can be the first published receipt set, and if the reads say the chain
+   cannot hold 16 GT/s, the bandwidth road is TP2/§R11's switch-dock lane, not another cable.
+   RECORD ACTION: C14's ladder is re-pointed by a docs-only r1-fold per D36's law (retired rungs
+   deleted, socket-swap promoted to rung 1, host-end reads added as rung 0) — the note must not
+   keep advertising a redriver purchase or an adapter-identity mystery to an owner who answered
+   both in one sentence. Authority: RESEARCH §R13 (lines 3148–3440).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

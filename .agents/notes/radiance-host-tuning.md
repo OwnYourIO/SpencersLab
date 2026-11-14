@@ -57,6 +57,23 @@ Gen3 where the port caps Gen4. 3.94 GB/s raw ≈ HALF the RQ1-planned
 predicts the ~142 t/s prefill signature, and why LINK is the FIRST suspect:
 worth 2–4× prefill, vs the n-gram tier's 3–10% decode band.
 
+The registers, re-read (D38(1)): the old `EqualizationComplete+/Phase1-3+` paste is
+the **legacy 8.0 GT/s** EQ status in the base capability's `LnkSta2` — Gen4 owns a
+separate extended cap (ID `0x26`, printed as `Phy16Sta`). The card's own read then
+settled the premise (§R13): `c2:00.0` prints `Phy16Sta: EquComplete+ EquPhase1+
+EquPhase2+ EquPhase3+ LinkEquRequest-` at `[410 v1] Physical Layer 16.0 GT/s` —
+Gen4 was TRAINED end-to-end (no re-timer detected ⇒ no link subdivision, §R13-Q1)
+and then PARKED at 8. TI's link-training doc (SNLA415, R13-S2) is the mechanism:
+EQ is a per-generation cascade and the phases gate on bit-error-rate — Phase 2 at
+BER under 10⁻⁴, completion under 10⁻¹² — while on long channels "this level of
+signal quality is not possible… repeaters like redrivers and retimers are used"
+(generic TI wording, not an inventory of this path); the link settles at "the
+fastest rate it can stably support". `LnkSta 8GT/s` beside a completed Gen4 EQ is
+therefore SPEC-NORMAL margin behavior, not a mis-configuration: trained-then-parked
+(D39). What it kills: "never attempted Gen4" (the card disproves it; there is
+no re-driver to blame for that) and "settings we forgot" — the question is
+now channel QUALITY, not configuration.
+
 Read toolkit — every rung is witnessed the SAME way, all read-only: the
 engine's HARDWARE `link 00:03.1 …` line (startup report) AND `journalctl -k -b
 | grep 'available PCIe bandwidth'` as the kernel's second witness — BOTH
@@ -73,30 +90,91 @@ Discriminator status: `LnkCtl2` **TargetSpeed** CLOSED the host-BIOS pin
 branch by the owner's own read — lspci prints `Target Link Speed: 16GT/s`
 while `LnkSta` reads `8GT/s x4` (D34). The root port is INSTRUCTED to train
 Gen4 and FALLS BACK: the defect is electrical/equalization — seat, cable,
-passive path — not configuration. One variable per cold boot, ladder in
-order (§D10.8, R10-Q5):
+passive path — not configuration. The remaining ambiguity is the HOST end
+(§R13 VERDICT, D39): the ladder below is re-pointed to §R13-Q5 — one variable
+per cold boot, each rung witnessed with the engine `link` line, `LnkSta` AND
+`Phy16Sta`, under load, after a cold boot.
 
-- **Rung 0 — power-sequencing ritual: FALSIFIED, not owed a repeat.** The
-  owner ran the dock-first full-cold sequence verbatim (everything off, dock
-  on, 10 s, host on — the dock is not hot-plug-capable, R10-S4) and a
+CLOSED rungs — receipts kept, so an owner at 3am can see what was TESTED:
+
+- **FALSIFIED — dock-first power ritual (D35, §D10.2).** The owner ran the full
+  cold sequence verbatim (everything off, dock on, 10 s, host on) and the
   GENUINELY NEW boot — Node event `Rebooted … boot id
   4d6202d9-14f2-4e7d-b107-1edec278a73d` at 21:34:43Z, old pod SIGTERM
   21:31:24Z, ≈3 m 19 s off-window — REPRINTED the chain still degraded:
   `link 00:03.1 8.0 GT/s x4 (max 16.0 GT/s x4) -> c2:00.0 8.0 GT/s x4 (max
   32.0 GT/s x16) -> c3:00.0 32.0 GT/s x16 (max 32.0 GT/s x16) -> c4:00.0
-  32.0 GT/s x16 (max 32.0 GT/s x16) [read at 48% busy]` plus the same WARN
-  (§D10.2). The rate did not move BECAUSE THE
-  LINK DID NOT MOVE (D35); D33 re-witnessed — the engine doc's "a link stuck
-  one level down clears on reboot" advice is WITNESSED-FALSE here. Spend the
-  next power cycles on rungs 1–3, not on a cheap re-run.
-- **Rung 1 — RESEAT, cost ~0, do it first:** the SFF-8611 cable at BOTH ends
-  until the latch clicks, plus full 24-pin/AC seating (a shallow 24-pin is a
-  documented malfunction class, R10-S7). With cause (a) dead above, seat/
-  channel integrity (cause (d), R10-Q2) is the surviving STRONG candidate —
-  a fresh cold training that fails Gen4 EQ and falls back to Gen3 is exactly
-  cause (c)-via-channel.
-- **Rung 2 — CABLE SWAP, cost ~0:** a known Gen4-rated SHORT SFF-8611 cable
-  (the owner's own framing); same witness, same cold-boot law.
+  32.0 GT/s x16 (max 32.0 GT/s x16) [read at 48% busy]` plus the same WARN.
+  The rate did not move BECAUSE THE LINK DID NOT MOVE. D33's verdict stands
+  re-witnessed — the engine doc's "a link stuck one level down clears on
+  reboot" advice is WITNESSED-FALSE here. The ORDER is still a safety step (the dock is
+  not hot-plug-capable, R10-S4) — obey it on every attempt below; it is no
+  longer a candidate.
+- **CLOSED TWICE — BIOS / per-slot firmware (D38(2), §R13-Q5).** The board is
+  a Framework Desktop on 03.06 — the LATEST published — and NO version ships
+  per-slot PCIe content (3.03/3.05/3.06 release notes audited: PD/EC/OPAL,
+  RAM/GRUB, AMD-PI/encoder-fix — no slot speed menu anywhere). The GMKtec
+  EVO-X3 lead (R9-S17) is an SEO page for a board this lab does not own; the
+  boot-hang fix in that same thread came from a KERNEL update. "Firmware"
+  stops appearing in this ladder — the ONE branch that re-opens it is Rung 0
+  printing no `Phy16` block at all on `00:00:03.1`.
+- **RETIRED — the redriver-purchase rung (§R13-Q5, D39).** Not a purchase
+  any more: the bay part is an M2-1955-OCU, vendor-described "Built-in PCIe
+  ReDriver to extend PCIe Gen4, 16GT/s…" (R13-S4) — not a rung to run: it
+  recommended buying hardware this rig already owns; §R12's error,
+  acknowledged and RETIRED in §R13-Q5. No R29Q physical-switches anecdote
+  survives it either — different part — and ASM1955's exact silicon class
+  stays UNVERIFIED (no public datasheet; ASMedia's own taxonomy lists the
+  analog redriver family separately, not its retimer lines, R13-S5).
+- **CLOSED — the adapter-identity rung.** The owner answered it in one
+  sentence: the part is the M2-1955-OCU above. Its invisibility to
+  `lspci -t` is expected, not suspicious — an analog redriver is by design
+  invisible to the topology; a *retimer* (not our part) is the protocol
+  device that splits training so each side initializes separately ("Link
+  subdivision", R13-S2/S3), and participating retimers are DETECTED, not
+  invisible: our root port reads `Retimer- 2Retimers-` — no detected unit,
+  which is exactly the expected signature of a purely analog part in the
+  path (R13-Q1(b)). Absence from the topology proves nothing about it.
+
+LIVE LADDER (§R13-Q5, D39 — re-pointed from §R10/§D10.8):
+
+- **Rung 0 — the FREE HOST-END READS, minutes (§R13-Q4, D39).** AER is withheld
+  (`_OSC: platform does not support [SHPCHotplug AER]`) — and three reads
+  need none of it: root-port `Phy16Sta` on `00:00:03.1`, the Data-Parity-Mismatch
+  registers at cap+0x10/+0x14/+0x18, and `DevSta: CorrErr+` from the base
+  PCIe capability (Device Status works without AER — creeping correctables
+  on c2/c4 mean Gen4 traffic really errored). Corrected commands — BOTH old
+  mistakes were mine and cost the owner a round, so they are named:
+  `sudo lspci -vvv -s 00:00:03.1 | grep -A4 'Physical Layer 16.0'` (the
+  earlier `sed -n '/…16.0 GT/s/,+4p'` FAILS — the pattern contains a slash);
+  and `sudo lspci -vvv -s c2:00.0` — `-s` wants the bare slot form, not a
+  doubled `0000:` domain prefix. Legacy-lspci fallback: find the 16GT cap's
+  hex offset N via `lspci -vvv … | grep Capabilities`, then READ it —
+  `sudo setpci -s 00:00:03.1 $((N+0xC)).l` (owner-lane, reads only; recent
+  tools take the symbolic `ECAP_16GT+0x0C` form). The three-way branch (§R13 VERDICT):
+  host `EquComplete-` while the card reads `+` ⇒ the ends DISAGREED — preset
+  or per-port behavior ⇒ Rung 1 (socket) leads; host `+` with non-zero parity
+  or moving CorrErr ⇒ it LIVED Gen4 and lost margin in traffic ⇒ Rung 2
+  (cable/chain) leads; no `Physical Layer 16.0` block on the root port at
+  all ⇒ incomplete Gen4 exposed on the port — the only finding that re-opens
+  firmware (D38(2)), and straight to the terminal fork.
+- **Rung 1 — M.2 SOCKET SWAP, cost ~0, one-time, trivial rollback (D39's new
+  free A/B).** The two M.2 sockets sit on DIFFERENT root ports: `00:02.5`
+  hosts the NVMe, `00:03.1` the dock chain (§D11.3, D38(4)) — so moving the
+  bay card to the other socket is a per-port behavior test no previous ladder
+  had: Gen4 on `00:02.5` ⇒ `00:03.1`'s port/PI side owns the defect; nothing
+  to buy. Score it `LnkSta` + `Phy16Sta` after a cold boot — and respect the
+  dock's power order every time (safety, per the FALSIFIED rung above; the
+  ritual is not the fix). Inference-backed, not externally witnessed (D38(5)
+  honesty) — but it is THE experiment for the Rung-0 asymmetry branch.
+- **Rung 2 — RESEAT + SHORT known-Good cable (merged old rungs 1+2):**
+  SFF-8611 at BOTH ends until the latch clicks; full 24-pin/AC seating
+  (shallow 24-pin is a documented malfunction class, R10-S7); then a short
+  (~30 cm class — Martin_Roth's working build, R12-S2) known-Gen4 SFF-8611
+  cable — the platform's own counsel is "keep that cable" and the DEG1 is
+  "picky about generic cables" (R11-S2); every added mating interface degrades
+  signal integrity (LiKenun, R13-S6). With the signature now read as
+  trained-then-parked, this is the margin-shrink move, not a lottery ticket.
 - **Rung 3 — DOCK BYPASS, the DECISIVE separator (R10-Q3 verbatim logic):**
   card + the SAME cable straight onto the board's own OCuLink port (open
   frame), or the dock + card on a second Gen4 host. Gen4 while bypassed ⇒
@@ -104,18 +182,48 @@ order (§D10.8, R10-Q5):
   host-port ↔ cable ↔ card triple owns it. The dock trains Gen4 in other
   hands (chimolog's 7.07 GB/s 3DMark witness, R10-S8) and the card's class
   is ruled out — other hosts report this card at Gen4 x4 (R10-Q2 (f), §R9).
-- **Rung 4 — BIOS slot menu, LAST and trust-flagged:** the speed PIN is
-  already ruled out (TargetSpeed reads 16GT/s, D34); what survives is a
-  platform EQ/DTLSM tuning difference or an explicit per-slot "Gen4, not
-  Auto" menu — and ONLY if such a menu exists on this board. The EVO-X3-class
-  lead (R9-S17) is an SEO page; no primary GMKtec/AMD BIOS document exists —
-  the menu's existence here is UNVERIFIED; do not promise it.
-- **Terminal fork (only if rungs 1–4 ALL still print `LnkSta 8GT/s x4` under
-  load):** the passive path cannot hold Gen4 in this chassis (§R10-Q5). Then
-  the choice is an active dock (redriver/PEX-switch) the DEG1 is NOT — it
-  has neither, and buying one rides TP2 §2's hardware lane, an owner
-  decision and never a repo step — or accepting the 3.94 GB/s ceiling and
-  pursuing the profile levers / TP2 instead.
+- **Rung 4 — the RELEARN (a WRITE; radiance must be down first — the same
+  OWNER-EXECUTED scale lane the runbook uses at step 3 for strata and at
+  step 10 for radiance):** remove the root-port device, then rescan —
+  OWNER-EXECUTED: `echo 1 > /sys/bus/pci/devices/0000:00:03.1/remove` then
+  `echo 1 > /sys/bus/pci/rescan` (canonical form: remove the bridge
+  subtree, rescan after) — and watch `dmesg -w` LIVE: the port driver
+  LIVE: the port driver narrates the Gen4 attempt in its own words (EQ fail /
+  speed-downgrade traces). Branches (R13-Q4 (f)): lands Gen3 AGAIN with
+  parity/CorrErr moving ⇒ marginal channel confirmed, stop chasing throughput;
+  lands 16 GT/s once ⇒ latch/staleness class, and the spec's own re-run knob —
+  `LnkCtl3: Perform Equalization` plus a retrain — becomes the repeatable
+  owner RE-RUN until reboot (a different thing from the FALSIFIED dock
+  ritual above). D39's distinction holds: this RE-RUNS training,
+  it is not a speed override — the NOT-fixes below stay true for overrides.
+- **PARKED — Lane Margining, a detour not a rung (§R13-Q1 tool branch).** The
+  capability prints (`[450 v1] Lane Margining at the Receiver`) but nobody has
+  armed it: `PortCap: Uses Driver-`, `PortSta: MargReady-/MargSoftReady-` —
+  arming means device-config WRITES with link-disturb potential, and no
+  mainstream Linux tool is evidenced (UNVERIFIED, R13-S1). The free reads +
+  relearn answer the question first; do not spend an evening here.
+- **The platform census, plainly (§R13-Q3, D38(3), D39).** A Framework Desktop
+  has no native OCuLink — the community method is literally "take up one of
+  the nvme slots to an oculink adapter" (R13-S6), which is exactly this rig —
+  and NO Framework Desktop owner has EVER published a negotiated link speed:
+  the in-field photo builds state no rate (R13-S7), and the closest same-model
+  build — Frix_Rioux's llama-bench run on this very model at pp 324.8 / tg
+  21.1 (R12-S2) — sits inside OUR band. "Others have done this build
+  successfully" therefore most likely means "done at Gen3". Our reads can be
+  the first published receipt set for this platform — post them either way.
+  And if the chain simply cannot hold 16 GT/s, the bandwidth road is the
+  second card (TP2) or a switch-dock purchase — not another cable.
+- **Terminal fork (only if rungs 0–4 all keep printing `LnkSta 8GT/s x4`
+  under load):** the chain cannot hold the 16 GT/s eye in traffic — trained
+  ≠ stable; TI's "the fastest rate it can stably support" is the epitaph
+  (R13-S2). The honest spend then: the SECOND card (TP2 — halves the per-rank
+  crossing; §R11-Q5 prices a narrow link at ~54% of prefill lost for
+  weights-crossing regimes like ours), or a switch-dock lane (§R11's hardware
+  lane; the DEG1 itself is passive with no switch and no retimer, §R9/D33 —
+  a purchase is the owner's call, never a repo step) — or accept 3.94 GB/s
+  and run the §D8 profile levers at zero cost. The 3.94→7.88 GB/s dream is
+  formally dead on this chassis if this branch lands; link-first was still
+  the right ordering, and the link's floor is here (R13-Q5).
 
 NOT-fixes — recorded so this checklist never re-lists a dead end as a cure.
 §R10-Q4's law verbatim: "Anything that doesn't land LnkSta first is not a
@@ -129,7 +237,9 @@ fix, it's hygiene."
   and with the config theory dead the override class collapses to
   link-down/unbootable risk for zero speed upside; the runtime retrain
   itself showed "no effect" in the field case (R10-S9). Recorded to STOP
-  attempts.
+  attempts. D39's line of distinction: the spec's `LnkCtl3 Perform Equalization`
+  re-run knob (Rung 4) RETRIES the training — a different thing from
+  pretending a faster rate, and still owner-lane.
 - **STABILITY — due regardless, explicitly NOT a throughput fix.** The
   report STILL prints `runtime pm active (control auto)` after the cold
   cycle (§D10.3) and the root port ships `d3cold_allowed=1` by default:
@@ -146,8 +256,10 @@ fix, it's hygiene."
 
 Any rung's receipt: re-read the engine startup report AND capture
 `GET /diagnostics` under a long prefill — the link widths under load are
-the receipt; a rung scores ONLY when the engine line and `journalctl -k -b`
-both show 16.0 GT/s. The payoff model is unchanged: Gen4 x4 buys prefill
+the receipt; a rung scores ONLY when `LnkSta` reads 16.0 GT/s x4 and the
+engine line + `journalctl -k -b` agree — `Phy16Sta: EquComplete+` alone is
+NOT the win (the card prints it even while the link parks at 8, §R13).
+The payoff model is unchanged: Gen4 x4 buys prefill
 249→~450–500 t/s and warm decode toward the ~35 t/s compute floor (§D8).
 
 ## 2. MEMLOCK — 8 MiB in the container; the node-lane-only truth
