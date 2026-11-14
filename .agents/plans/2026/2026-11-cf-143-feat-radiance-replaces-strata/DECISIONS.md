@@ -1385,6 +1385,47 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    the next natural reboot (the unit is enabled, but this box has taught us to verify rather than
    assume). Authority: the owner's paste, 2026-11-14.
 
+ - 2026-11-14 human+coord D47 (THE WIRE IS NOT THE LIMITER ANY MORE — MEASURED AT ZERO, AND DECODE IS
+   ~41 t/s: the single-card question is CLOSED with receipts): the fair probe on the EPP-fixed box
+   returned two consecutive 2000-token completions at **41.1 and 41.3 tok/s** (wall 49.04 s and
+   48.92 s, `finish=length`, prompt=20 ⇒ a clean sustained-decode measurement, no cache and no KV
+   streaming involved), and the replacement metric arithmetic came back
+   **`decoded 4000 tokens | KV stream 0.0 MiB/token | 0.00 ms/token at 7.51 GB/s`**. So the figure
+   that replaced my VOID bound is not "small" — during sustained decode at short context the KV host
+   mirror moves **nothing**, which retires the wire theory of this box entirely (and retires §D8's
+   miss-fraction model as an explanation for the remaining gap, since m was solving for a term the
+   counters say is zero). Two consequences stated plainly: (1) **~24 ms/token of compute/host is
+   the whole step**, and we are at 24.3 ms — **better than the docs' own 28–29 ms `--tp 1`
+   reference**, so the EPP change plausibly bought real ground (but see the confound in (3)); (2) the
+   70+ expectation is now dead by measurement rather than by census: reaching it would need
+   ~14 ms/token total, i.e. **less time than a single step currently takes**, and no bandwidth
+   purchase changes that. TP2 remains the documented route (62.3–64.8 docs / 137 L1T).
+   (2b) A LIVE CONTRADICTION OF §R15 THAT MUST NOT BE BURIED: two of the chat requests now report
+   **`cache 12288`** with TTFT collapsing **25.44 s → 6.27 s** at prompt≈14.0–14.9k tokens, while
+   every pre-fix receipt read `cache 0`. §R15's reading was that `--kv-resident` **force-disables
+   the prefix tier**, which would predict no hits at all. Either the mirror suppresses only the
+   *host* tier while on-card prefix reuse lives, or §R15's doc reading is wrong on this point. That
+   distinction is worth real money here (it is the difference between "our agent workload pays
+   12 s TTFT per turn forever" and "it does not"), so it is flagged for the next doc round to settle
+   against the GUIDE rather than resolved by me from three log lines.
+   (3) HONEST CONFOUND on the EPP gain: the same log window reads `18.4 → 25.1 → 41.1 → 41.3` t/s in
+   time order, so warm-up and EPP are not separable from this evidence; the clean claim is only that
+   the **steady-state pair is 41.1/41.3**, and that it beats the documented floor. To attribute the
+   delta to EPP, re-run the identical two-shot probe after `systemctl disable epp-performance.service`
+   + reboot (or with EPP set back to `balance_performance`), which is owner-lane and reversible.
+   (4) The 11.6 t/s row is NOT a regression signal — it overlaps other traffic in the window
+   (concurrency is the documented elasticity story), and it is the reason the ticket's acceptance bar
+   remains runbook **step 6's 8-session gate**, which still has never been run.
+   Authority: the owner's paste, 2026-11-14. Net for the ticket: radiance on one R9700 is now
+   **verified working at ~41 t/s sustained decode**, on a confirmed Gen4 x4 path with **zero wire
+   cost during sustained decode**, and prefill re-derived from the same window as
+   **14,020 tokens ÷ 25.44 s ≈ 551 tok/s** (and `14,865 − 12,288 cached ÷ 6.27 s ≈ 411 tok/s` on the
+   hit path) — consistent with §D8's 450–500 Gen4 band and roughly 3.6× the old 142 tok/s read.
+   (The 0.43–0.50 s TTFT rows are a 20-token prompt and measure request overhead, NOT prefill rate;
+   they must not be quoted as 1.6k tok/s, which is the error I nearly wrote into this record.) The
+   remaining gap to the owner's 70+ expectation is structural to the card count, not a
+   misconfiguration.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
