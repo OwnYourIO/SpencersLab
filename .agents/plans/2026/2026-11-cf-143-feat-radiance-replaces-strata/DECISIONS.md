@@ -1591,6 +1591,73 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    on` (a relief valve, not a gain), `--deterministic`, APU hiding (§R18/D49), ngram-ram at TP1.
    Authority: the owner's dump + RESEARCH §R16 (lines 4063–4293).
 
+ - 2026-11-14 research+coord D52 (**THE HIDE QUESTION, FINALLY DISPOSED: we "haven't managed" for
+   two honest reasons — the safe routes are firmware/boot-time and unproven on this exact unit, and
+   by now there is nothing left to buy**). Chain of record: D48 declined → §R18 fact-checked the
+   guide → D49/D50 the crash and the recovery → §R17 the mechanism, settled with kernel text.
+   (1) **Method ranking, now grounded in the kernel rather than in folklore.** The only acceptable
+   host-side form is **boot-time `pci-stub.ids=1002:1586,1002:1640`**: pci-stub's probe claims the
+   device *before any driver binds*, so **no detach transition ever exists** to enter the reset path
+   — and both functions must be claimed, because the audio-function-of-an-absent-graphics-driver
+   hazard is documented as an actual panic class on NVIDIA (`nv_audio_dynamic_power()` dereferencing
+   the sibling's drvdata without checking the loaded driver is a sound driver). **udev
+   `driver_override` is rejected**: it *creates* the detach race if amdgpu wins probe (a cited
+   warning that pci-stub must be made a dependency of the DRM driver or it loads second).
+   **Runtime unbind is permanently banned** — driver-detach reset on a multi-function SoC slot that
+   carries the owner's USB bus and the PSP, with `amd_iommu=off` meaning no group containment;
+   D49 already paid for that one line of prose, and the kernel's own scope rules now complete the
+   post-mortem (per-function reset only "if the device supports it", a multifunction guard returning
+   `-ENOTTY` without `per_func_slot`, and `reset_subordinate` explicitly affecting *every* device
+   behind the bridge). `vfio` stays declined (§R18; the kernel's own word for its no-IOMMU mode is
+   "unsafe DMA"). (2) **Every prize is zero or tidiness**: perf is dead by our own counters (D47's
+   `0.0 MiB/token`; ~41 t/s = the engine's documented `--tp 1` floor), RAM is at the floor already
+   (the engine prints the APU at `512.00 MiB`, and the n-gram tier is capacity-bound at
+   `38.96 < 47.68`, not APU-bound), KFD/`rocminfo` cleanliness is real but small, the t1m.me-style
+   plugin/advertisement failure mode would hit our `7551` row equally well, and the box's *demonstrated*
+   crash class came from **touching** `c5`, never from its presence. (3) **The cost is the router**:
+   `amd.com/gpu-8060s` disappears, its one repo claimant is the llama-swap overlay
+   (`services/gpu-ai/prod/values.yaml:174,176`) which strands at its next restart — a C10 replay —
+   plus the catalog's `-strix` lane, D24's APU-rows-carry law with its parity fixtures, and the
+   router's unified-GGUF serving class, permanently. §R17 writes the full **code-first same-wave
+   change list** (overlay → skill → ledger/ConfigMap → six test files → seven runbook anchors/notes →
+   and only then the host); the reverse order is exactly the outage we already had. (4) **The goal is
+   already met without it**: per-product naming makes mis-allocation structurally impossible
+   (per-name buckets; the bare pool is zero-capacity so a stray claim Pends by design), a
+   ValidatingAdmissionPolicy banning bare `amd.com/gpu` would be redundant, and radiance cannot reach
+   the APU anyway (one allocated render node, `1 device(s) [0:gfx1201]`, and §R16 found its own
+   harness selects by that same env). **The genuinely open door §R17 found is not the APU at all**:
+   whole-directory `/dev/dri` hostPath mounts (`charts/llama-swap/values.yaml:1470`,
+   `charts/vllm/values.yaml:594`) hand *any* container every render node — that is fixed by naming
+   devices, and it is the one hide-adjacent change with a real safety payoff and no router cost.
+   (5) **Kicker worth saying out loud**: strata co-residency arithmetic re-opens *without* hiding
+   anything — `~35 + 64 + 4.1 + 1.2 ≈ 111.2 ≤ 125.08` — so if the owner's underlying wish is "both
+   engines again", the door being held shut is **the 110 pair**, not the APU. Final disposition:
+   **do not disable**; if curiosity outranks the recommendation, the next step is a
+   **look-only BIOS tour in a maintenance window** (no writes) to produce the first data point on
+   whether 03.06 even exposes a graphics-device page, with §R17's code-first wave as the hard
+   precondition of any actual change. Authority: RESEARCH §R17 (lines 4297–4536).
+
+ - 2026-11-14 human D53 (**OWNER OVERRIDES D52: "Tell me how to disable the APU!!!" — recorded as a
+   deliberate decision against the recommendation, so the ticket's record shows the call was the
+   owner's and not a drift**). Disposition stands as analysis (§R17: prizes zero-or-tidiness, cost =
+   the router lane); disposition does NOT stand as a veto. Conditions under which the how-to was
+   handed over, restated so no future agent re-litigates them: **(a) code first** — the
+   `amd.com/gpu-8060s` add in the gpu-ai llama-swap overlay and the catalog's `-strix` lane are a
+   same-wave change, because a host disable deletes the pool and the pod strands at its next restart
+   (C10's replay, and the pod keeps Running until then, which is the trap); **(b) boot-time claim or
+   firmware only** — `pci-stub.ids=1002:1586,1002:1640` on the kernel command line (claims before any
+   driver binds, so no detach path into the reset machinery) or a BIOS graphics disable if 03.06
+   exposes one; **runtime unbind is permanently banned** (D49: it reset a multifunction SoC slot
+   carrying the owner's USB bus and the PSP with no IOMMU containment — that is the crash we already
+   paid for); **(c) rollback rehearsed** — an unmodified second boot entry kept, `sdbootutil
+   update-predictions` or a LUKS recovery key in hand **if** the root is sealed (check `lsblk` for
+   crypto_LUKS first; the observed cmdline showed plain `root=UUID=… rootflags=subvol=@/.snapshots/1/snapshot`,
+   so sealing may not apply), and snapper/`grub-bls` previous-snapshot boot as the escape hatch.
+   Standing UNVERIFIED items the owner accepts by proceeding: whether Framework's 03.06 exposes a
+   graphics-disable page at all; whether the unit POSTs and what console it routes to with the iGPU
+   off; Tumbleweed initrd specifics for guaranteeing the stub wins the probe race. Authority: the
+   owner's instruction, 2026-11-14.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
