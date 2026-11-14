@@ -1086,6 +1086,48 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    keep advertising a redriver purchase or an adapter-identity mystery to an owner who answered
    both in one sentence. Authority: RESEARCH §R13 (lines 3148–3440).
 
+ - 2026-11-14 human+coord D40 (THE HOST-END READ LANDS — both ends of the external link say Gen4
+   equalization COMPLETED, and the link is still at 8 GT/s; the owner's verbatim reads):
+   root port `00:00:03.1` **implements** cap 0x26 — `Capabilities: [410 v1] Physical Layer 16.0
+   GT/s` / **`Phy16Sta: EquComplete+ EquPhase1- EquPhase2- EquPhase3- LinkEquRequest-`** — plus
+   `DevSta: CorrErr- NonFatalErr- FatalErr- UnsupReq-` and `LnkCtl2: Target Link Speed: 16GT/s,
+   EnterCompliance- SpeedDis-` with `LnkSta: Speed 8GT/s, Width x4`; the card's upstream bridge
+   `c2:00.0` remains `EquComplete+ Phase1+ Phase2+ Phase3+`; and `c4:00.0` (the GPU function, i.e.
+   the CARD-INTERNAL c3→c4 hop) reads `EquComplete-` with `MargReady+`.
+   READINGS, with the uncertainty named: (1) **the `c4:00.0` result is not our link** — that is the
+   internal Gen5 hop (already at 32 GT/s per its own `LnkSta`), whose 16 GT/s status is simply
+   unused; only `00:03.1`↔`c2:00.0` is the external link. (2) The root port's **phase bits all '-'
+   with EquComplete+** is either (a) this root complex not implementing the per-phase evaluated
+   bits (plausible — the bits are per-implementation readable as "did *this* port evaluate that
+   phase", and the phases a downstream port owns differ from the upstream's), or (b) Gen4
+   equalization was completed by the upstream port while the host side skipped its own phase
+   evaluation. Either way **the port that controls the speed change declares EquComplete+ and
+   LinkEquRequest- (no re-EQ requested), yet the negotiated speed is Gen3** — so §R13's
+   "host-EQ-failed ⇒ move the socket" branch is NOT what we have, and the live possibilities
+   collapse to: a **post-EQ speed-change abort** (SI margin in traffic — which §R13 already showed
+   is spec-normal "the fastest rate it can stably support"), or a **firmware/boot-sequence clamp**
+   that never actually executed the speed change. (3) The all-'-' `DevSta` is **uninformative, not
+   clean**: `_OSC` withheld AER, so those bits are not populated — which is why the next reads must
+   use the AER-INDEPENDENT per-lane `LnkErrSta` (inside the PCIe capability) and the
+   bridge `SecSta`.
+   ACTION THEREFORE (cost order, and it reorders §R13's ladder): **rung 1 becomes a forced RELEARN
+   / retrain of the link** — cheap, reversible, and the only read that separates a boot-sequence
+   clamp from a margin problem, because a retrain that lands `16GT/s` means the negotiation is
+   capable and merely never ran at boot, while a retrain that returns `8GT/s` convicts the channel.
+   Owner-lane commands (radiance scaled down first; a retrain blinks the link, so this is not run
+   beside live traffic): `setpci -s 00:00:03.1 CAP_EXP+0x10.w=20:20` (LnkCtl bit 5 = Retrain Link,
+   value:mask form), then re-read `LnkSta` on both `00:00:03.1` and `c2:00.0`; or the heavier
+   `remove`+`rescan` route which re-enumerates and narrates in `dmesg`. Then the AER-free error
+   reads (`grep -A6 LnkErrSta` on both ends, `SecSta` on the root port). **The M.2 socket swap drops
+   to rung 2** (it is still free and still worth doing, but the host-end read took away its
+   justification), cable to rung 3, and the terminal fork unchanged: if a retrain cannot hold 16
+   GT/s, the chassis path is Gen3 and the bandwidth money belongs to TP2, not another cable.
+   Also still open on the BIOS question: the AMD CBS-style per-slot PCIe speed override (the
+   Framework BIOS menu is documented as sparse, so this is "look and report", not "assume").
+   Authority: the owner's paste, 2026-11-14; §R13's host-end branch is now resolved as
+   "EquComplete+ at the host too", superseding the "host may not have agreed" reading while
+   leaving §R13's TI mechanism (trained-then-parked is spec-normal) fully intact.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
