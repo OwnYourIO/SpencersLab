@@ -3658,3 +3658,265 @@ deviations: none — read-only, RESEARCH.md only. Per instruction the D44 retrac
 friction: the docs' TP1 ms-vs-tok/step ambiguity (whether 28–29 ms already includes MTP) is unresolved and load-bearing for the upper band — flagged UNVERIFIED rather than guessed, and made the first thing the stream_bytes/best-tile reads will settle; llamaperf pagination capped at 20 of 74 reports; radiatorcat surfaced no matching entity (likely a handle I couldn't resolve — recorded, not hunted further).
 open_questions: [the pair-snapshot MiB/token (decides wire-vs-host for the residual 35→?); whether the docs' 28–29 ms TP1 figures include MTP; any real single-card fn 70+ receipt the owner can point to; governor-persistence effect size at our step cadence]
 next_suggested: coord run the action list top-down — governor persistence (zero cost, the only untested lever at Gen4) and the Q4-2 metrics pair before ANY profile or hardware conversation; fold the §R14 census + the ≤107-vs-197 bound into the tuning note's LINK-successor section (the link is fixed; this is its epilogue), re-point the note's remaining rows per the D36 law, and if the owner still wants the 70+ class this quarter, TP2's receipts are pre-registered (137 t/s sustained, docs' 62–65 @2×16GB) and the TP2 card already carries the host-math upgrade (R8-Q5).
+
+---
+
+## §R15 — the n-gram RAM tier vs the KV host mirror vs the session count: what each knob requires, what it costs, and which trade actually buys decode
+
+Owner round 2026-11-15. Authorities re-read (RQ1, §R8, §R13–§R14, §D6/§D8/§D10/§D11,
+D17/D28/D29/D33–D44). The frame-resetting live measurement (this round's premise,
+post-D44): **Gen4 x4 in service**, and the first REAL /metrics pair —
+`kv_stream_bytes_total{in}=410,673,152` over `generation_tokens_total=2385` ⇒
+**~172 KiB/token of KV-stream crossing ≈ 0.02 ms at 7.51 GB/s**, and even charging the
+mover's entire cumulative `71.40 GiB h2d` to 2385 tokens caps the expert-placement leg
+at ~31.8 MiB/token ≈ **4.2 ms** — against the ~28 ms step ⇒ **the wire is now ≤15% of
+step time; the remaining ~24 ms is non-wire** (§D8's prefill forecast independently
+confirmed at ~467 tok/s). D44's retraction stands: the old "~83–100 MiB/token"
+cumulative÷unsourced-denominator bound is VOID and is NOT rebuilt here. Docs citations
+R15-S# (GUIDE.md + compose profiles @v1.17.0, fetched 2026-11-15); public reports
+R15-S3 (llamaperf, Nov 13–14 rows); power docs R15-S4/S5.
+
+### R15 VERDICT (the single recommendation the docs support)
+
+**For radiance + ONE R9700 + the owner's 8×200K envelope, the engine's own docs support
+NO decode step above ~35–40 t/s (no-spec) / the documented 28–29 ms creator step — and
+of the two knobs that COULD move the ~24 ms of non-wire step time, one is arithmetically
+locked out by the other: `--ngram-placement ram` needs the table's 47.68 GiB free
+"after the pinned host pools … under every memory cgroup … and refuses the start
+otherwise" [R15-S1] (71.04 + 47.68 + 4 > 110 ⇒ refusal, our own gate arithmetic), while
+dropping `--kv-resident` to make room puts the sparse group's ~6.00 KiB/token a rank of
+QSA cache back on the card (~9.3 GiB at 8×200K [R15-S1]) and shrinks the expert slab
+from 17.76 to ~8.5 GiB — roughly doubling the miss stream before the tier question even
+matters, and the docs' measured verdict on the mirror's own speed effect is
+"**Decode is unchanged**" [R14-S2/R15-S1] either way.** The `--max-num-seqs 8→4` trade
+moves ≤15%×~8% of step time — visible nothing, because the wire stopped binding.
+**The two actions the docs+measurement DO support: (1) make EPP=`performance` persistent
+and re-run the fixed probe — the box has run every boot at `balance_performance`
+(the engine's conflated "cpu-governor" note is about EPP, and the kernel docs say the
+governor NAME `powersave` is normal under amd-pstate-epp [R15-S4] — so this is the one
+untested lever against the host-thread half of the 24 ms, at zero capability cost; print
+it with `energy_performance_preference` + the best-tile ms); (2) if the goal is actually
+>40–70 t/s sustained multi-turn on this model, the documented configuration for that is
+TWO cards: the creator's own `flashnext.yaml` TP2 profile serves `--max-num-seqs 8
+--max-model-len 200000` WITHOUT streaming (prefix tier `--prefix-cache-mib 4096`), the
+measured TP2 rows run 62–65 t/s with MTP at long prompts [R14-S2], L1T measured 137 t/s
+sustained [R14-S1] — and at TP2's host shape (pool 2×12288, no mirror) the n-gram RAM
+tier finally fits (~83 GiB ≤ 110) and its documented benefit ("a step has no host work")
+becomes reachable. Every published single-card fn number above ~40 t/s is another engine,
+another quant, or offload (Q4 table) — none contradicts the docs' TP1 floor.** Stated
+per the round-law: no change below spends the 8×200K envelope without saying so in the
+same sentence — and the ones that would spend it are named and rejected here.
+
+### R15-Q1 — `--ngram-placement ram` / `ram=DIR`: requirements and benefit, verbatim
+
+- **What it is/needs** [R15-S1, GUIDE §4.3 lookup-tables block]: "An n-gram table
+  (Qwen3.8-Flash-Next's is 47.7 GiB) is read a few rows a token. **`disk` reads rows from
+  the container through a row cache with direct reads on the host; about half of a step's
+  rows are first-seen, so steps wait on the drive.** `ram` copies the table into host
+  memory at load (12 to 40 s more startup, depending on the page cache) and **the card's
+  gather kernel reads the pinned copy, so a step has no host work.** … **`ram` needs the
+  table's size free after the pinned host pools and the prefix cache's host tier, with
+  `--host-headroom-mib` to spare (default 4 GiB), under every memory cgroup the process
+  sits in, and refuses the start otherwise.** `auto` takes the first of vram, ram and
+  disk that holds the table. **Without a device kernel for the gather (no libr4d)** the
+  table is read on the host: … `ram` is a copy in locked huge pages, which **also needs a
+  memlock limit that large** (`--ulimit memlock=-1`/`LimitMEMLOCK=infinity`)."
+  ⇒ correction of a drift inside our own record: **the memlock gate belongs to the
+  no-libr4d host-gather fallback; our box (radiance image ships libr4d for gfx1201) dies
+  on the cgroup-free-space gate, not on the 8 MiB rlimit** — the engine's live note
+  "the memlock limit is one of the things that keeps `--ngram-placement auto` off it"
+  (§D6.3) is the engine hedging both paths; the binding one here is the first.
+- **`ram=DIR`** [R15-S1]: "makes the pinned copy a file, `DIR/ngram-<id>.tab`, in a
+  tmpfs, mapped MAP_SHARED and pinned for the cards … **two engines on separate card
+  sets (`ROCR_VISIBLE_DEVICES`) hold one table in host memory.** The first engine …
+  fills the file; a second … checks samples … and only pins it. The `<id>` is a hash of
+  the container's path, size and mtime and the table's place in it." (= the TP2-era
+  fn+q27 co-residency lever; per-process pin accounting + `amdgpu.no_system_mem_limit=1`
+  caveat carried from RQ1 [S2].)
+- **Measured benefit:** the docs publish the disk-vs-ram DELTA only qualitatively
+  ("steps wait on the drive" vs "no host work"); no % figure in GUIDE. Community band
+  3–10% carried [RQ1: bigcherry "moving the n-gram table to disk costs about 10%",
+  L1T voices ~3%]. **On this rig's NEW numbers the stakes are clearer than % of rate:
+  disk-tier step-waits are exactly the class that can hide inside the ~24 ms non-wire
+  residue** — worth knowing, unreachable at 8×200K (below).
+- **Does the mirror-drop make it fit?** NO twice over: gate math
+  `110 − 47.68 − 4 = 58.3` needed "after the pinned host pools" vs pool+placement+arena
+  ≈ 46 GiB even with the mirror gone ⇒ ~12 GiB margin − 47.68 table ⇒ **refusal**;
+  AND the on-card consequence above (QSA ~9.3 GiB eats the slab; docs' own direction
+  sentence: streaming's "VRAM it gave up went to the expert slab" — reversing it
+  reverses the gift). **The ram tier is TP2-era hardware arithmetic, not a
+  single-card flag** (TP2 host: 24+4+~3+47.68+4 ≈ 83 ≤ 110 ✓, mirror optional —
+  flashnext.yaml serves 8×200K on two ranks WITHOUT `--kv-resident` [R15-S2]).
+
+### R15-Q2 — `--kv-resident`: purpose, costs, prefix-tier relation (all doc-quoted)
+
+- Purpose [R15-S1 §4.4.1]: "keeps the whole KV cache of the model's sparse attention
+  group in pinned host RAM and only a ring of N tokens on the cards. Each decode step
+  makes the blocks it selected resident, copying in the missing ones and evicting the
+  coldest; an evicted block is already in the host copy. **Prefill reads the cache one
+  layer at a time from the host copy. The ring is a fixed size at any context length,
+  so the context is no longer bounded by VRAM**: holding two 262k-token conversations
+  on two 16 GB cards, the cache went from 3.84 GB of VRAM a card to 0.74 GB of VRAM and
+  3.22 GB of host RAM, **and the VRAM it gave up went to the expert slab.**"
+- Costs, doc-exact: ring "6.00 KiB a token a rank at fp8 … 192 MiB at 32,768"; prefill
+  stage "512 B a token a rank"; host copy "`--max-num-seqs` × `--max-model-len` tokens
+  per rank"; "The VRAM pool is the larger of ring and stage, not their sum"; ring
+  minimum: "Use 32,768 … and to one decode step's selection (max-num-seqs × (1+spec) ×
+  513 blocks)"; "At or above max-num-seqs × max-model-len the ring covers the context
+  and nothing streams."
+- **Speed effects, doc-measured (their own table [R14-S2/R15-S1]): decode UNCHANGED**
+  (39.89 off / 39.78 on; 62.3 / 64.8 with MTP), **prefill +1–2%** (2722→2783 @62K;
+  2635→2669 @250K), perplexity +0.5% [RQ1 carried]. So kv-resident is a CAPACITY flag,
+  not a speed flag — dropping it is not "faster host-free decode", it is a slab loss
+  (Q1) that pays nothing back on either leg.
+- Prefix-tier relation [R15-S1]: "**The prefix cache's host tier
+  (`--prefix-cache-mib`) is turned off while a group streams; prefix hits still work
+  from VRAM (§4.8)**" — and §4.8's measured cliff (carried §R14: "the second turn took
+  **173.0 s at a 0.0% prefix hit** with a pool too small for both sessions, and **3.0 s
+  at 99.0%** with one large enough; the fall-off is sharp; `kv_util` shows a pool
+  approaching it") plus §4.8's own purpose line [RQ1: "Restoring a 200K-token turn
+  costs a copy over PCIe; recomputing it costs minutes"]. **For the owner's 37-message
+  agent workload the doc-favored shape is the prefix tier** (idle-turn resume is its
+  literal use-case) — but at 8×200K on one card the VRAM backing is exactly what
+  streaming exists to free, so the honest read is: **we are on the docs' capacity lane
+  and pay the documented multi-turn cliff (our `cache 0` receipts) — switching lanes
+  drops either the sessions or the context, and at TP2 both lanes fit (creator profile
+  = 8×200K + prefix tier + no streaming).**
+
+### R15-Q3 — Seq/context arithmetic: does freed KV reach the slab, and what does it buy?
+
+- Docs' elastic law [R15-S1]: "**The KV pool is always elastic.** It holds the blocks
+  in use plus a buffer … and **the expert plane grows into what it releases**, so a
+  model whose experts do not fit never streams weights to pay for unused cache" +
+  "The cache takes the rest, **up to what it could ever address (`--max-num-seqs` ×
+  `--max-model-len`)**, and lends every block no live request holds back to the expert
+  slab in place" + "The cache never gets less than one `--max-model-len` sequence" +
+  the direction law "with a lending cache, **a larger `--host-pool-mib` takes experts
+  off the card and gives the cache more**" (symmetrically: a smaller cache-addressing
+  frees slab). ⇒ **YES, halving seqs flows KV→slab automatically; no doc minimums tie
+  `expert_tiered` to seq count** (docs say none; `--deterministic` is the only stated
+  placement killer [R15-S1]).
+- Size of the prize at OUR post-Gen4 state: 4×200K frees ≈2.3 GiB KV ⇒ +~950 slab units
+  (2.42 MiB each) ≈ +3.8 pp residency ⇒ m≈0.17→~0.155; the wire leg was ≤15% of step
+  ⇒ step change ≈ −1% — **noise, because we are at the compute/host-thread floor the
+  docs themselves print: "the decode step goes from 29.0 to 28.0 ms at one sequence"
+  (creator TP1) [R14-S2/R15-S1]**. Our ~35 t/s IS that 28–29 ms norm (the ticket's
+  standing reading); whether those ms figures already include MTP is **UNVERIFIED** (the
+  flashnext-tp1 flags DO ship `--num-speculative-tokens 3`, and their measured TP2 rows
+  show tok/step 2.87–3.45 — if the TP1 ms are per-step-with-MTP, the creator's
+  single-card expectation is ~80–100 t/s and OUR 35 would say something is still wrong;
+  if they are per-token, 35 IS the norm. **The best-tile + `accept` counters in one
+  fixed-probe run settle which world we are in — that read is this round's one open
+  experiment, and it is free**).
+- `--num-speculative-tokens`/`--max-num-batched-tokens` step-cost, doc-quoted: MTP
+  drafts "3 tokens in 3 serial passes" with the tok/step table above (the ×1.6
+  long-context multiplier); batched-tokens is the PREFILL lever ("A prefill step copies
+  every pooled expert across the link once… a 4096-token step amortises that copy over
+  twice the tokens of a 2048-token one (26K prompts: **2545 vs 1413 tok/s**)"
+  [R15-S2 yaml header]) + `--prefill-interleave/--busy-prefill-chunk` protect decode
+  cadence (`steps_held` [R15-S1]). Neither changes decode step floor directly.
+- **Answer to "is decode compute-bound now?": per the docs' own TP1 reference and our
+  ≤15%-wire measurement — effectively yes; the doc-supportable single-card decode lever
+  left is whatever the 24 ms host-side residue contains (EPP, ngram disk-waits), and
+  neither is a session/context knob. No tier change moves the 28–29 ms floor.**
+
+### R14→R15-Q4 — Published single-card fn >40 t/s: the complete table (headline stated)
+
+| report | engine | card | quant | rate | context/notes | why it is not our config |
+|---|---|---|---|---|---|---|
+| RTX 5090 (Nov 14, 2026) | **basalt** | 1× 32GB | **NVFP4 + int8 KV** | **297.7 t/s** (their own table: spec-rows 170–387) | 16K/64K | different engine + NVFP4 weights + NVIDIA [R15-S3] |
+| RX 9070 (Nov 14, 2026) | **Strata** | 1× 16GB | **IQ2 GGUF** | **60.0 t/s** | "Ryzen 7 5800X, 48 GB DDR4-2133, NVMe" — "frames the run as a joke" | 2-bit-class quant + RAM-offload engine + 16GB card — not 32GB gfx1201, not radiance [R15-S3] |
+| M5 Ultra 256GB (Nov 14) | oMLX | Apple SoC | oQ8e + n-gram offload | 100 t/s (130k–200k ctx) | 3 concurrent | Apple unified 256GB [R15-S3] |
+| DGX Station GB300 (Nov 13) | SGLang | ~250GB VRAM | NVFP4 | 221 t/s | single-stream | server silicon [R15-S3] |
+| 2×R9700 llama.cpp-TP (Nov 13) | llama.cpp patched | **2 cards** | BF16_P12 packed | 91.4 best, 73.0–80.9 with MTP | 512-token prompts | two cards, other engine [R15-S3] |
+| 2×R9700 radiance (L1T) | radiance | **2 cards** | iq4r | 137 sustained | TP2 | two cards [R14-S1] |
+| docs' own 2×16GB TP2 | radiance | **2 cards** | iq4r | 39–40 no-spec / 62–65 MTP | 62K/250K | two cards [R14-S2] |
+| **radiance, 1× R9700/gfx1201, this model** | **radiance** | **1× 32GB** | iq4r (113.6 GiB pack) | **none found — creator docs' TP1 reference = the 28–29 ms step (≈35 t/s); our post-Gen4 ~35 IS the published ceiling class for this exact stack** | — | — |
+
+**HEADLINE (say it plainly):** there is **no published radiance-FP8/IQ4R Flash-Next
+decode above ~40 t/s on one 32 GiB gfx1201 card**, at any context length, in any source
+this round reached — every >40 row is a different engine, a smaller quant, or ≥2 cards.
+The owner's "70+ on one R9700" is, on the evidence, either the dense q27 lane (which
+DOES exceed 70 single-card territory in creator aggregates [S5/S8]) or TP2 rows
+misremembered as single-card. **Stop optimizing toward 70+ on one card for iq4r fn:
+the docs' own floor is where we are.** (UNVERIFIED: the MTP-or-not reading of the
+28–29 ms row — one free best-tile probe decides it, per Q3.)
+
+### R15-Q5 — EPP persistence, short and cited
+
+- The governor NAME is not the problem: kernel amd-pstate docs describe active-mode
+  EPP operation with the dynamic preference listed "while running under the
+  **powersave** governor" — `powersave` + `amd-pstate-epp` + EPP IS the intended mode;
+  the engine's "cpu governor powersave" note conflates the name with the lever
+  [R15-S4: docs.kernel.org/admin-guide/pm/amd-pstate.html, fetched 2026-11-15].
+- **EPP is the lever:** `energy_performance_preference` — "Lower epp values shift the
+  bias towards improved performance"; `default` = "set by platform firmware"; a
+  `dynamic` mode exists which "will register with the platform profile handler to
+  receive notifications of user desired power state" — i.e., a desktop-side power
+  daemon (power-profiles-daemon class) legitimately rewrites EPP at boot/on events and
+  is the standard reason a `cpupower`-enabled box reads `balance_performance` anyway
+  [R15-S4]. (ppd's exact profile→EPP table could NOT be fetched (gitlab sign-wall) —
+  **UNVERIFIED mapping**; the one-command owner read settles who owns the box:
+  `systemctl is-enabled power-profiles-daemon tuned tlp cpupower` +
+  `cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference` after each
+  candidate service is restarted.)
+- Persistence routes that survive reboot on Tumbleweed, ranked: (1) if ppd present:
+  `powerprofilesctl set performance` (the daemon re-asserts its profile; fighting it
+  with cpupower is the fight the owner is losing); (2) mask competing daemons and
+  restore cpupower state at boot (`cpupower frequency-set --set-epp performance` + its
+  systemd unit's save/load — cpupower(1) man NOT re-fetched this round: mechanics
+  **UNVERIFIED**, the read above costs less than the man page); (3) tuned's EPP
+  profile if tuned is installed; (4) brute durable: a tmpfiles.d line writing
+  `performance` to the per-CPU `energy_performance_preference` at boot (standard
+  mechanism; existence of that unit is verified any box has tmpfiles.d — the write
+  itself is owner-decided). **Print that proves it worked: the engine's own next-boot
+  line flips to `energy preference performance` AND the fixed-probe best-tile drops
+  below the 28–29 ms reference.** The host-gap sentence (GUIDE, carried §D8.3) is why
+  a per-step host thread is EPP-sensitive on MoE serving.
+
+### R15 — Conflicts / corrections / UNVERIFIED
+
+- **Correction to §R14 carried forward, amplified:** with the first real /metrics pair
+  in hand, the wire term measured ≤15% of step — §R14's residency-ladder table stays
+  valid but its motivation inverts: seq/ctx knobs once bought wire back; post-Gen4 the
+  wire is no longer where the time is. The ≤107-vs-197 MiB/token bound from §R14 is
+  superseded as a DECISION input (kept as history) by this round's direct measurement —
+  and, per D44, it must never be quoted as a capability bound.
+- **Corrections to our own record:** memlock 8 MiB is not what blocks the ram ngram
+  tier (Q1: the cgroup-free gate is; memlock matters only in the no-libr4d host-gather
+  fallback) — the §D6.3 engine note overstated memlock's role for OUR image;
+  "fix the governor" language retires (Q5 — EPP, not governor name).
+- **No contradiction** with §R8's capacity law, the naming lane, or TP2 docs — §R15
+  only adds that TP2 is where both the prefix-tier resume AND the ngram-ram tier (and
+  therefore the docs' >40 decode regime) become jointly reachable, reinforcing TP2 as
+  the performance answer (its doc receipts 62–65/137 t/s).
+- **UNVERIFIED:** the ppd→EPP mapping (service ownership read substitutes); cpupower
+  save/restore flag mechanics; whether the 28–29 ms TP1 row includes MTP (the free
+  best-tile probe decides); the exact QSA on-card bytes at 8×200K if streaming is
+  dropped (ring-cost 6.00 KiB/token is the doc's per-rank figure — 9.3 GiB is our
+  multiplication); that libr4d's gather kernel is in the radiance 1.17.0 image for
+  gfx1201 (inferred from the image's own kernel-library story [S1/S3 DOCKER.md] — the
+  live boot prints do not name the gather path); any radiance single-card iq4r >40 t/s
+  receipt existing beyond this round's search space (searched: llamaperf model+GPU
+  pages, L1T ×3 threads, codeberg issues/README/GUIDE/compose, HF, X — none).
+
+### R15 — Sources (accessed 2026-11-15 unless noted)
+
+| # | URL | What it is |
+|---|---|---|
+| R15-S1 | codeberg.org/api/v1/repos/StillDeadcode/radiance/raw/docs/GUIDE.md?ref=v1.17.0 (fetched, §4.3 + §4.4.1 + §4.5 windows) | The placement/kv-resident doc set verbatim: ngram table size + disk "steps wait on the drive" + ram "no host work" + the cgroup-free gate + memlock-fallback clause + ram=DIR sharing; §4.3 elastic/lending/headroom/never-less-than-one-sequence laws + "larger pool ⇒ fewer resident experts"; §4.4.1 purpose ("context no longer bounded by VRAM", VRAM-given-up→slab), ring/stage/host-copy costs, ring minimums/raise rules, prefix-tier-off-while-streaming, metrics names; steps_held/prefill-interleave semantics |
+| R15-S2 | codeberg.org/.../raw/deploy/compose/flashnext-tp1.yaml?ref=v1.17.0 (fetched) | The creator's ONE-card profile, header verbatim: 42 GiB pool, "process pins about 49 GiB of host memory and wants a host with 64 GB of RAM", n-gram disk, "prefill step copies every pooled expert… one-card prefill is link-bound", 2545 vs 1413 tok/s chunk law, "At 4 sequences the cache holds 301K tokens, one and a half 200K-token sessions"; flag list (no kv-resident; prefix-cache-mib 4096) |
+| R15-S3 | llamaperf.com/model/qwen3-8-flash-next (fetched, 3 windows; Nov 13–14 2026 reports) | The single-card census: basalt/RTX-5090 NVFP4 297.7 (spec-rows 170–387); **Strata/RX-9070 IQ2 60.0 t/s on a 5800X+DDR4 (RAM-offload framing, "joke" attribution)**; oMLX/M5-Ultra 100 @130–200K; SGLang/DGX 221; llama.cpp-TP-2×R9700 MTP 91.4/73–81; each row's engine/quant/GPU stated in the page's own words |
+| R15-S4 | docs.kernel.org/admin-guide/pm/amd-pstate.html (fetched) | EPP attribute semantics (lower=performance, default=firmware-set, dynamic mode), dynamic mode "while running under the powersave governor" + platform-profile registration — governor-name normality, EPP-is-the-lever, daemon-ownership mechanism |
+| R15-S5 | wiki.archlinux.org/title/Power_management (fetched + search render) | EPP named-profile list (default/performance/balance_performance/balance_power/power); the ppd/tuned/tlp/cpupower competing-tool registry on rolling distros |
+| (inherited) | R14-S1..S6, §D8/§D10/§D11, D44, §R8/§R9 power-tie falsification, [S2/S5/S7/S8/S12] | carried; nothing re-fetched contradicted |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R15 appended)]
+commands_run: [repo reads (RQ1, §R8, §R13–§R14, §D6/§D8/§D10/§D11, D33–D44 incl. D44 retraction) => pass; codeberg raw fetches GUIDE.md @v1.17.0 ×2 (ngram/kv-resident/elastic/prefill sections) + flashnext-tp1.yaml + README model table => pass; llamaperf model page ×3 windows (full single-card census incl. RX9070/Strata row) + R9700 GPU page (carried) => pass; docs.kernel.org amd-pstate (EPP/dynamic/powersave texts) => pass; web_url_read ArchWiki Power_management ×3 windows (tool registry; ppd mapping not in fetched windows → UNVERIFIED); gitlab ppd README refused (sign-in wall) → labeled; searxng ×4 (one ERR batch, serialized around) => pass; arithmetic re-derived: 172 KiB/token & ≤4.2 ms wire ≤15% (launch's own numbers checked: 410673152/2385, 71.40GiB/2385, 7510 MiB/s, 28 ms base), QSA ≈6 KiB/token →9.3 GiB slab loss, TP2 ram fit ~83≤110, slab+950-units sensitivity => pass]
+deviations: none — read-only, only RESEARCH.md written. The round's central answer is negative-as-instructed: the docs support no higher single-card iq4r decode and both speed-tier alternatives are priced out or capacity-spending — stated as the headline with the complete cross-engine table, and the coordinator's ≤15%-wire measurement was used (not overridden) as the premise for the inversion of §R14's motivation.
+friction: the ppd→EPP exact mapping and cpupower save mechanics resisted clean fetch (gitlab sign-wall / man page not reached) — substituted a one-command ownership read rather than guessing; the 28–29 ms-MTP ambiguity could NOT be resolved from docs text and became the round's designated free probe instead of being argued; the QSA-drop slab cost used the doc's per-rank ring figure × our 1.6M tokens (labeled multiplication, not measured).
+open_questions: [the best-tile + acceptance probe (one fixed run decides per-step vs per-token reading of the creator 28–29 ms AND which world our 35 lives in); which service owns EPP on this box (is-enabled read); whether the radiance image's gather is device-side for our card (assumed libr4d — cheap to confirm from a boot CONFIGURATION line)];
+next_suggested: coord: (1) hand the owner the EPP-ownership read + `powerprofilesctl set performance` (or mask-then-persist) and re-run the §D8.3 fixed probe with the best-tile and `/metrics` acceptance counters — the ONLY remaining zero-cost decode experiment per this round; (2) fold the headline into DECISIONS at next touch — single-card iq4r ≈ the documented floor; 70+ is two-card territory — so the decode-improvement budget moves to the TP2 follow-up card, where flashnext.yaml's prefix-tier shape plus (for the first time) the ngram-ram tier are both affordable; (3) retire the tuning note's EPP-confused "fix the governor" wording per D36's re-pointing law (governor name is normal; EPP is the lever; cite R15-S4); (4) no session/ctx/placement changes — §R15-Q3 measured them sub-noise against the now-confirmed non-wire step.

@@ -1311,6 +1311,55 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    `/stats`' `stream_bytes ÷ decode_tokens` — the number that replaces my invented one. Authority:
    the owner's reads, 2026-11-14 15:38Z, and their 70+ report.
 
+ - 2026-11-14 research+coord D45 (THE DECODE FLOOR IS DOCUMENTED, AND THE TWO knobs the owner asked
+   about LOCK EACH OTHER OUT; the wire question is now closed by measurement): the owner's first
+   real `/metrics` read (D44-adjacent) settles what §R14 could only bound — KV streaming is
+   `410,673,152 B ÷ 2385 tokens` ≈ **172 KiB/token ≈ 0.02 ms**, and even charging the mover's
+   entire cumulative `71.40 GiB h2d` to those tokens gives ~31.8 MiB/token ≈ **4.2 ms**, against a
+   ~28 ms step ⇒ **the wire is ≤15% of step time**, and prefill at **~467 tok/s** matches §D8's
+   Gen4 forecast. The coordinator's VOID bound (D44) is therefore fully superseded by measurement,
+   not by better arithmetic. §R15's answers, all doc-quoted:
+   (1) **`--ngram-placement ram` is gated on free RAM, not on memlock** — GUIDE §4.3's requirement
+   is "the table's size free after the pinned host pools … under every memory cgroup … and refuses
+   the start otherwise"; our earlier §D6.3 attribution of the RAM tier to `RLIMIT_MEMLOCK` was a
+   drift (that clause belongs to the no-`libr4d` host-gather fallback). It is **doubly dead at
+   8×200K**: `71.04 + 47.68 + 4 > 110` refuses the start, AND the only way to make room — dropping
+   `--kv-resident` — moves the QSA group's ~6.00 KiB/token onto the card (~9.3 GiB) and **shrinks
+   the expert slab 17.76 → ~8.5 GiB**, i.e. it reverses the docs' own "the VRAM it gave up went to
+   the expert slab" benefit. So the two knobs the owner asked about are mutually exclusive: **you
+   cannot fund the n-gram RAM tier by unloading the KV mirror.**
+   (2) **`--kv-resident` is a CAPACITY flag** — decode-neutral by measurement (39.89 vs 39.78),
+   prefill +1–2%, and its purpose is "the context is no longer bounded by VRAM"; while it streams,
+   the **prefix tier is force-off**, so our `cache 0` / ~12 s TTFT on a 37-message agent workload is
+   the DOCUMENTED price of the capacity lane we are on (the GUIDE's cliff: 173 s @0.0% vs 3.0 s
+   @99.0%). §R14's "dropping the mirror buys zero decode" is confirmed and now has a reason.
+   (3) **Session/context edits are noise for decode, not levers.** KV→slab elasticity is real in the
+   docs, but with wire ≤15%, `--max-num-seqs 8→4` is worth **≈−1% of step time** while spending half
+   the owner's session envelope — so NO profile edit is justified at 8×200K, each either
+   sub-noise or capability-spending.
+   (4) **THE HEADLINE, and it ends a multi-day expectation: there is no published single-card
+   iq4r-FlexNext decode above ~40 t/s anywhere** — every faster row is another engine
+   (RTX-5090/basalt 297.7, **RX-9070/Strata IQ2 60.0**, M5-Ultra/oMLX, DGX/SGLang), another quant, or
+   **two+ cards** (radiance TP2 62.3–64.8 measured by the docs, 137 on L1T). The "people get 70+ on
+   one R9700" memory maps onto the dense q27 lane or TP2 rows. **Our ~35 t/s is the creator's own
+   documented `--tp 1` floor (28–29 ms), reached.** Stop optimizing for the other number.
+   (5) **EPP, not governor-name, and it survived `cpupower` for a documented reason**: kernel
+   amd-pstate docs — under `amd-pstate-epp` the governor name `powersave` IS the intended mode, EPP
+   is the lever ("lower epp values shift the bias towards improved performance"), and a `dynamic`
+   mode exists that lets a desktop power daemon legitimately re-assert EPP. That is why the owner's
+   `enabled` cpupower unit left `balance_performance` in place across a reboot, and it corrects my
+   instruction of the last two days (the note's "governor" language needs the same re-point). The
+   persistent route is `powerprofilesctl set performance` or masking the asserting service;
+   ppd→EPP mapping stayed UNVERIFIED behind a sign-in wall, so the round substituted an ownership
+   read. **This is the last untested zero-cost experiment on the box** and the only remaining single-card
+   candidate, because the other ~24 ms/token is host-side.
+   ONE FREE MEASUREMENT OWED, and it decides whether 35 is "the floor" or still anomalous: the docs'
+   28–29 ms is ambiguous about whether it includes speculative acceptance — run the fixed ≥2000-token
+   probe and read the **best-tile / steps-held** counters. Then: any remaining performance budget
+   belongs to **TP2**, where the docs make 62–137 t/s, the prefix-tier resume AND the n-gram RAM tier
+   simultaneously reachable (~83 GiB host ≤ 110) — which is AD-144's argument, now stated with
+   numbers instead of hope. Authority: RESEARCH §R15 (lines 3664–3922).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
