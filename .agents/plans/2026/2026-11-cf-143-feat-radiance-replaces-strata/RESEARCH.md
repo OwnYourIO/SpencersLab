@@ -4291,3 +4291,246 @@ deviations: none — read-only; only RESEARCH.md written. The round's instructio
 friction: the GUIDE's flag table's exact-string search for --expert-pin-top returning nothing required a triple re-check (pin-top/--expert-pin/'pin ' + spec.md + TOOLS.md) before declaring undocumented — cheap insurance against a false negative; the 76.28-vs-72.4 pinned/peak ordering is a genuine instrumentation contradiction whose resolution needs one VmLck read we are not permitted to take — logged as the round's flagged-UNVERIFIED rather than reconciled by assumption.
 open_questions: [the stats-capture pass' hot-set shape (decides whether a pin pilot is worth running at all), expert-pin-top's per-layer-vs-global semantics (undocumented — decide empirically or ask upstream on Codeberg), VmLck/memory.current live reconciliation, whether 2048-vs-4096 flips at the owner's actual agent mix (docs' table isn't ours)]
 next_suggested: coord: (1) offer the owner exactly two actions — a free `--expert-stats` capture afternoon + optional informed pin pilot (row 1, zero envelope cost, ≤+3–5% honest cap), and AD-144/TP2 as the only 70+ road with receipts; (2) fold the two corrections (§R15 blanket → host-tier-only; drafter ≠ PLE table) into the next DECISIONS round and the D47(2b) open item, which this round closes with docs; (3) put the VmLck/peak reconciliation on the runbook's next-touch list; (4) record that nothing else in the dump should be edited — the `auto`/`from the container` block is the engine's own optimum and the docs say why (Q4).
+
+---
+
+## §R17 — disabling the Strix Halo iGPU safely: BIOS vs boot-time stubbing, what survives, and what it costs the router
+
+Owner round 2026-11-15: *"The other thing is we haven't managed to disable the APU."*
+The one attempt — my runtime `unbind` of `0000:c5:00.0` — **hard-crashed the box**
+(D49; mechanism: `00:08.1-[c5]` is the whole SoC slot: display + 2×HD-audio + CCP/PSP
++ USB xHCI, and a runtime unbind routes through a device/slot reset with
+`amd_iommu=off` ⇒ no group containment; recorded as a well-supported hypothesis — no
+dmesg survived). Carried WITHOUT re-argument: D48 (hide declined; premise stale post
+naming), §R18 (vfio=IOMMU-group-bound here; noiommu knob kernel-labelled unsafe;
+pci-stub works IOMMU-free), D21/B1 (router is scheduled FROM `amd.com/gpu-8060s`;
+C10 = the 11 h 40 m strand that proves it), §R15/§R16 + D47 (perf reason DEAD:
+~41 t/s ≈ documented TP1 floor, wire **0.0 MiB/token** measured), the runbook's live
+pool facts (bare `amd.com/gpu` at **zero capacity** on this node, `Insufficient
+amd.com/gpu`-forever for strays). External cites R17-S# accessed 2026-11-15.
+
+### R17 VERDICT (first)
+
+**A safe ROUTE exists in principle — two, actually — but on THIS machine neither is
+proven, and neither is WORTH TAKING NOW. Recommendation: don't disable (nothing
+verifiable is bought: perf is dead by measurement, the RAM gain is ~0 because we
+already print `512.00 MiB VRAM`, mis-scheduling is closed by named pools, and the last
+open "accidental APU" hole — the hostPath `/dev/dri` lanes in charts/llama-swap:1470
+and charts/vllm:594 — is closed by pinning render nodes, not by surgery); re-derive
+ONLY at the strata cutover / deliberate APU-lane retirement, and then by the
+boot-time method only (BIOS if the Framework menu turns out to exist, else
+`pci-stub.ids=1002:1586,1002:1640` via initrd-respecting modprobe, CODE-FIRST
+same-wave: overlay + catalog + ledger/tests before host change). Runtime unbind is
+BANNED outright — one line, forever true: it re-triggers D49 (slot reset through the
+SoC's USB+PSP functions, no IOMMU containment, box down, no log).**
+
+Safety logic of the boot-time route, stated with sources: with `pci-stub.ids=…` the
+function is **claimed by the stub at first driver match and never has a live driver to
+detach from** — pci-stub's probe literally logs `"claimed by stub"` and returns (its
+header: "Simple stub driver to reserve a PCI device… Usage is simple, allocate a new id
+to the stub driver and bind the device to it"; param `ids` = "Initial PCI IDs …
+vendor:device[:subvendor…] multiple comma separated entries" [R17-S3]); the kernel's
+reset surface is scoped by isolation and **refuses where absent** (ABI: "Some devices
+allow an individual function to be reset without affecting other functions in the same
+slot… For devices that have this support, a file named reset will be present"
+[R17-S4]; pci.c carries the multifunction rejection clause `dev->multifunction &&
+!dev->slot->per_func_slot → -ENOTTY` and bus-function reset wired through
+`pci_dev_reset_iommu_prepare` [R17-S5]) — i.e., reset machinery is a property of the
+**detach/rebind transition while drivers hold the device live**; firmware-disable and
+boot-stub both act *before any driver binds*, so D49's class cannot occur — that is
+the evidence-qualified safety argument (kernel-mechanism quotes above + GTR9-Pro's
+working headless boot with `BIOS iGPU Advanced Control. Enabled` on the same SoC
+proves at minimum this silicon boots fine with the iGPU in ordinary host service
+[R17-S1]). The flip side: **no report of a Strix Halo desktop booting with the iGPU
+DISABLED was found at all** — POST/console with firmware-off = UNVERIFIED; the
+handoff that governs it: "Linux will use the primary GPU, selected by the system
+firmware" [R17-S7] + efifb's GOP rule ("The system must be booted via the EFI stub…
+supports firmware with Graphics Output Protocol displays" [R17-S8]) — and a Framework
+Desktop that loses its board HDMI/DP (iGPU-owned ports) keeps the R9700's outputs only
+if firmware agrees; SSH-managed box ⇒ recoverable by CMOS-reset, but a cold-boot
+experiment, not a warm one.
+
+### R17-Q1 — BIOS route on THIS machine: what's established vs UNVERIFIED
+
+- **Framework Desktop-specific menu: UNVERIFIED.** No Framework doc/report for an
+  iGPU-disable (or GFX Configuration page exposure) was found (searches this round:
+  zero hits naming a Desktop BIOS graphics toggle; one community "BIOS feature
+  request: AMD Memory Guard (TSME)" thread shows AMD CBS internals ARE partially
+  surfaced on the platform [R17-S9 — title-level]).
+- **Same-SoC existence proof (other vendor):** GTR9 Pro (Beelink, AI Max+ 395):
+  "BIOS iGPU Advanced Control. Enabled." + "Advanced → AMD CBS → NBIO Common Options
+  → IOMMU → grayed out on GTR9 Pro (controlled via GRUB instead)" + "Dedicated
+  Graphics Memory 512M (GPU uses GTT instead)" [R17-S1] — the menu family exists on
+  Strix Halo boards; even the *enabling* of that path headless is in service today.
+- **Generic AMD desktop path** (context, not this-box authority): ASRock
+  "Advanced → AMD CBS → NBIO Common Options → GFX Configuration" for disabling the
+  APU [R17-S2] + AMD PBS `Primary Video Adaptor [Int Graphics (IGD)]/[Ext Graphics
+  (PEG)]` (R9-S9 carried).
+- **What the firmware knob TOUCHES on this exact unit:** daimonionnn's extraction of
+  the Framework BIOS image shows AMD PBS machinery present (`Non-Eval Discrete GPU
+  Support` "disabled on Framework too"; Reddit fragment: "Framework Desktop ships this
+  same option disabled") and, on the MS-S1 twin, that "the byte cannot be written from
+  any channel a user has" [R9-S10 carried] — plan for locked-out variables until
+  proven otherwise on our unit (`dmidecode`-confirmed BIOS 03.06).
+- **Boot/POST with iGPU disabled + dGPU attached:** UNVERIFIED here; the AMD
+  reference-design norm is PEG-first boot only when selected (PBS byte above); the
+  honest owner test sequence is written in Q2/verdict (one-variable COLD cycle,
+  monitor on the R9700 first, CMOS-clear as escape).
+- **Effects on IOMMU/link-training:** no source says either way — UNVERIFIED; note
+  our box runs iommu-off deliberately, so the GTR9 observation ("IOMMU grayed out;
+  GRUB-controlled") matches our posture pattern; R9700 link training already survives
+  full reboots of any shape (D44/D50 Gen4 stable post-crash), so nothing in this
+  class has shown it fragile.
+
+### R17-Q2 — Three methods compared (kernel-grounded)
+
+| method | mechanism | reset exposure | notes for THIS box |
+|---|---|---|---|
+| **Boot `pci-stub.ids=1002:1586,1002:1640`** (kernel cmdline) | stub claims the functions at first probe match; probe = log+return 0 [R17-S3]; amdgpu/snd_hda never bind | **none at bind time** (no prior driver to detach); the ONLY reset surface that could ever fire later is the sysfs reset ABI, which we will not touch | must also bind the AUDIO function (passthrough-community norm `ids=1002:1586,1002:1640` — strixhalo.wiki vfio line carried §R18/S6: stubbing display while snd_hda keeps `:00.1` leaves the mixed state whose danger class is documented on the NVIDIA side: "nv_audio_dynamic_power() … puts the results into a struct snd_card * without first checking that the loaded driver is a sound driver … driver data was the drvdata for vfio" → panic [R17-S10]; AMD APU equivalent behavior UNVERIFIED, but the cheap fix is binding both functions) |
+| **udev `driver_override` at boot** (systemd rule `echo pci-stub > …/driver_override; bind`) | documented ABI: "only a driver with a name matching the value written … will have an opportunity to bind … does not automatically unbind the device" (R18-S5 carried) | **fires the detach/reset path if amdgpu got there first** — exactly the ordering trap: "Set pci-stub as a dependency for drm, otherwise the graphics driver will be loaded before the pci-stub driver" [R17-S6]; on openSUSE the initrd must carry pci-stub (dracut `add_drivers+=` + cmdline param) — mechanics UNVERIFIED for Tumbleweed specifics | strictly worse than the cmdline form on this box; keep the cmdline form only |
+| **RUNTIME unbind (what we did)** | driver-detach → device reset path with the card LIVE and multifunction siblings in the same slot | **this is the D49 crash** — kernel guard logic shows why no per-function isolation can be assumed: per-function reset exists only "if the device supports it" (reset/reset_method ABI presence test, R17-S4/S5), and slot/bus resets "will affect all devices attached through this bridge" (`reset_subordinate` ABI, R17-S4) | **BANNED. Reason line (say it every time): runtime unbind of a c5 function is a driver-detach reset on a multifunction SoC slot carrying the USB controller + PSP, with no IOMMU containment — it already killed this box once (D49).** |
+| **vfio-pci (the hide-doc's recommendation)** | needs an IOMMU group; our posture has iommu OFF; escape hatch self-described: "intended for usages where **unsafe DMA** can be performed by userspace drivers w/o physical IOMMU protection" [R18-S4 carried] | n/a (not applicable here) | remains declined (§R18 stands) |
+
+Console/fb continuity under any route: the boot-time stub leaves the R9700 as the
+only amdgpu; firmware-off leaves only the dGPU; efifb/simple-framebuffer handoff is
+firmware-driven [R17-S7/S8] — the box is SSH-first, so a dead console is annoyance,
+not outage, PROVIDED the experiment happens with physical access.
+
+### R17-Q3 — What disabling BUYS now (real vs tidiness)
+
+- **PERF: nothing measured.** D47 counters: wire 0.0 MiB/token at sustained decode;
+  §R9's channels: power-tie falsified by our own `power cap 300 W` print; loaded-router
+  DRAM contention is an OPEN A/B (and hiding would *delete the router's lane to avoid a
+  measurement of it* — upside-down).
+- **RAM: ~0.** Engine already prints `512.00 MiB VRAM` for c5 = the GTR9-documented
+  BIOS floor ("512M (GPU uses GTT instead)" [R17-S1]); Strix exposes system RAM via
+  dynamic GTT anyway (kyuz0/ROCm docs carried §R9/§R15). Ngram-ram gate math is
+  capacity-bound, not carve-bound: `110 − 71.04 = 38.96 < 47.68 + 2 (or +4)` —
+  freeing 0.5 GiB changes NOTHING; the tier stays TP1-dead, TP2-feasible.
+- **KFD/ROCm tidiness: real but small.** Host-side tools stop offering gfx1151
+  (`rocminfo` two-agent → one-agent); removes the accidental multi-GPU pipeline whose
+  documented failure mode is the (closed, Strata-side) mixed-gen corruption class
+  [R18-S3]. For OUR serving lanes this changes nothing (named pools already bind the
+  identity; hostPath `/dev/dri` lanes are enumerated by node, not KFD).
+- **Stability from gfx1151 leaving: near-none.** The t1m.me class ("plugin stops
+  advertising after a kernel update") was ruled docs-lead-code (§R6) and would hit the
+  7551/C0 row exactly as much as the 1586 row — hiding removes a pool, not the risk
+  class. The real stability lesson from our own record points the other way: the box's
+  crash class came from *touching* c5 at runtime (D49), and the archeoCodix D3cold
+  family (§R13 carry) attaches to the chain, not to APU presence.
+- **Security surface: minor, real.** One less always-on DMA-capable peripheral; but
+  with iommu off, isolation was never there to begin with.
+
+### R17-Q4 — What it BREAKS, and the code-first change list (same-wave law)
+
+Node-side consequence if the gfx (and audio) functions leave amdgpu: the plugin's
+sysfs walk sees one device ⇒ node advertises **`amd.com/gpu-r9700-1: 1` only**;
+`amd.com/gpu-8060s` **disappears**; bare `amd.com/gpu` stays at zero-capacity
+(runbook :202). Every workload still requesting the vanished pool strands at its next
+restart — repo audit (reads this round): **exactly one claimant —
+`services/gpu-ai/prod/values.yaml:174,176` (llama-swap main container, limits+requests
+`amd.com/gpu-8060s: 1`, the D21/B1 belt)**; C10/D26 already priced that failure at
+11 h 40 m. Capability permanently given up: **the router's 8060S unified-GGUF serving
+lane + the catalog's `-strix` sibling (models skill :59, manual/secondary route) +
+the strata `-strix` fallback profile** — i.e., the local fast lane the outer
+llama-swap exists to serve.
+
+Required edits, in force-order (all of 1–6 merge AND verify before any host action):
+1. `services/gpu-ai/prod/values.yaml`: delete the `gpu-8060s` add + its null-out
+   commentary (the chart default is bare `amd.com/gpu: 1` — on a product-named node
+   with NO bare capacity, the router must go **GPU-free**: `limits {amd.com/gpu:
+   null}` and no add) — this IS the D21/B1 reversal; say it in the commit.
+2. `.rulesync/skills/pipeline-models/SKILL.md` (`-strix` row) + regenerated
+   `.opencode/skills/` — retire the fallback lane (AGENTS.md table carries no
+   `8060s` string — grep-verified this round; nothing to edit there).
+3. `charts/amd-gpu/values.yaml:8-10` ledger (drop the 1586→`gpu-8060s` rows or
+   mark them retired) + the patched `amdgpu.ids` ConfigMap APU rows become inert
+   (keep the rows or drop them — but the **D24 APU-rows-must-carry law and its parity
+   fixtures must be formally repealed first**, since the live-device half of it
+   dies with the device).
+4. Tests re-pin (same wave, red-first): `tests/services/amd-gpu-naming.sh` n1–n4
+   (`APU_CLAIM`, overlay-sole-location sweep, ledger-comment grep),
+   `charts/amd-gpu/tests/{amd_gpu_testlib.py:9-21,65-66, test_provenance.py}`,
+   `charts/llama-swap/tests/test_cf143_naming_flip.py` (whole file's premise
+   disappears → delete-with-record), `charts/radiance/tests/radiance_testlib.py`
+   `APU_CLAIM` + cross-chart name-identity test, `tests/notes/{radiance-runbook,
+   radiance-tp2}.sh` needles.
+5. Notes: `radiance-on-target-acceptance.md` step-0 revision table (:83 1586 row),
+   :202/:254/:286/:297/:404 pool expectations, :774 D21 leg; `radiance-host-tuning.md`
+   §12 + APU rows (§R18/D48's "no hide" text becomes "hide executed by route X");
+   TP2 doc §5 (its interdependency closes as satisfied-or-obsolete).
+6. Only then the host change (cold-boot, physical access, one variable).
+Post-cutover strata note: at zero GPU claims the restore-back arithmetic re-opens
+(110 + router-noGPU + floor ≈ 111.2 ≤ 125.08 even *without* hiding — hiding is not
+what buys co-residency; the 110-radiance pair is).
+
+### R17-Q5 — The cheap alternative (keep, don't hide): does it fully close the goal?
+
+Yes for the doc's stated goal. (a) **Named pools already guarantee allocation** —
+`gpu-r9700-1` buckets only R9700 devices, `gpu-8060s` only the APU (§R6-Q1 dpm
+per-name plugins); bare `amd.com/gpu` is zero-capacity so a legacy-stray is
+Pending-forever, loud-by-design. (b) **A ValidatingAdmissionPolicy forbidding bare
+`amd.com/gpu` is redundant** — the resource name exists nowhere schedulable on this
+node; a CEL policy could additionally REQUIRE every GPU pod to name a pool, but
+`hostPath` pods bypass the API surface anyway (see d). (c) **Host-side accidental
+use** (rocminfo/HIP tools): `HIP_VISIBLE_DEVICES`/`ROCR_VISIBLE_DEVICES=0`-style
+scoping is the documented one-liner habit (and radiance's own harness uses exactly
+this env to pin backends, §R16). (d) **The only real open door** is pods that
+hostPath-mount the whole `/dev/dri` directory (llama-swap inner at
+charts/llama-swap/values.yaml:1470-77; retired-vllm chart at :594-597): they see
+renderD129 because it's the host's, not because k8s gave it — the precise, zero-risk
+fix (if ever wanted) is mounting named device nodes (`/dev/dri/renderD128` char-dev
+hostPath per lane) or `devicePath` entries, not deleting a device from the SoC.
+**Recommendation: keep — don't disable — now; re-open only inside the APU-lane
+retirement (strata cutover), and then boot-time methods only.**
+
+### R17 — Conflicts / refinement / UNVERIFIED
+
+- **Refines §R18's "hide later at cutover" line** (it left the method unspecified):
+  this round specifies the *only two acceptable forms* (firmware, if menu proven;
+  else cmdline `pci-stub.ids` both functions, initrd-aware) and BANS the udev-override
+  (ordering trap) and vfio/noiommu (kernel-declared unsafe; posture conflict) on this
+  box. No conflict with D48/D49 — D49's crash analysis is upgraded with the kernel's
+  reset-scope quotes [R17-S4/S5]; the hypothesis label stays (no dmesg survived).
+- **UNVERIFIED:** Framework Desktop's exposure of ANY iGPU-disable/graphics-device
+  menu on 03.06; POST/console behavior with firmware-off on this unit (and whether its
+  rear video is iGPU-routed); snd_hda-vs-stubbed-gfx behavior on gfx1151 specifically
+  (NVIDIA class-hazard cited, AMD analog unproven — mitigated by stubbing BOTH
+  functions, the community norm [S6/R18-S6]); openSUSE initrd steps to make
+  `pci-stub.ids` win the amdgpu race (general pattern [R17-S6] cited, Tumbleweed
+  specifics not fetched); `c5:00.0`'s actual `reset_method` contents (owner's
+  `cat /sys/bus/pci/devices/0000:c5:00.0/reset_method` — read-only — would complete
+  the D49 post-mortem; offered, not requested); whether the R9700 gives console
+  output *during POST* on this firmware (BIOS primary-device behavior).
+- **Do-not-do list, one line each, standing:** runtime unbind of any c5 function —
+  driver-detach reset on a live multifunction SoC slot with no IOMMU groups = D49;
+  vfio with noiommu — the kernel's own word for it is "unsafe DMA"; udev-override
+  without initrd dependency — amdgpu wins the probe race and you've re-entered the
+  detach path; BIOS without physical access + cold-cycle plan — a video-routing
+  surprise becomes a blind reboot.
+
+### R17 — Sources (accessed 2026-11-15)
+
+| # | URL | What it is |
+|---|---|---|
+| R17-S1 | gist.github.com/diskerror/af7f5507… ("Beelink GTR9 Pro — Headless Debian 13 & Llama.cpp") | Same-SoC BIOS facts: "Dedicated Graphics Memory: 512M (GPU uses GTT instead)"; "iGPU Advanced Control. Enabled"; "IOMMU → grayed out on GTR9 Pro (controlled via GRUB instead)" — headless Strix Halo serving rig + carve-out floor |
+| R17-S2 | youtube watch?v=ni83RxxwLxw ("Disabling AMD Integrated Graphics (APU/iGPU)") | The generic AMD path: "Advanced } AMD CBS } NBIO Common Options } GFX Configuration" |
+| R17-S3 | raw.githubusercontent.com/torvalds/linux/master/drivers/pci/pci-stub.c | Stub semantics verbatim: header comment; `ids` param "Initial PCI IDs … vendor:device[:subvendor[:subdevice[:class[:class_mask]]]] and multiple comma separated entries"; probe = "claimed by stub" |
+| R17-S4 | raw …/Documentation/ABI/testing/sysfs-bus-pci (reset, reset_method, reset_subordinate, remove, driver_override entries) | Reset-scope law: per-function reset exists only "if supported" (file present); "reset_subordinate … will affect all devices attached to the system through this bridge … use with caution" |
+| R17-S5 | raw …/drivers/pci/pci.c (windows) | multifunction guard `dev->multifunction && !dev->slot->per_func_slot → -ENOTTY`; bus-function reset via `pci_dev_reset_iommu_prepare` — reset is scoped by isolation, which our `amd_iommu=off` posture removes |
+| R17-S6 | gist.github.com/kaapstorm/4e51ff5f… (GPU passthrough) | Ordering trap quote: "Set pci-stub as a dependency for drm, otherwise the graphics driver will be loaded before the pci-stub driver"; stub both gfx+audio ids together |
+| R17-S7 | makeuseof-style "Explaining CSM, efifb=off…" (search render) + wiki kernel fb | "Linux will use the primary GPU, selected by the system firmware" — firmware owns console routing at boot |
+| R17-S8 | kernel.org/doc/html/latest/fb/efifb.html | "The system must be booted via the EFI stub… supports both firmware with Graphics Output Protocol (GOP) displays…" |
+| R17-S9 | community.frame.work "BIOS feature request: AMD Memory Guard (TSME)" (title-level) | Framework surfaces some AMD CBS internals — existence-of-graphics-page still unproven (listed as lead, not authority) |
+| R17-S10 | github.com/NVIDIA/open-gpu-kernel-modules issues/1365 | Cross-function audio hazard class: `nv_audio_dynamic_power()` derefs the audio function's drvdata "without first checking that the loaded driver is a sound driver" → panic; AMD-APU analog UNVERIFIED, motivates stubbing both functions |
+| (internal) | D48/D49/D50, §R15/§R16/§R18, D21/B1+C10/D26, runbook :83/:202/:254/:286/:297/:404/:774, charts greps (this round) | blast-radius + carried rulings; R9-S9/S10/S2, R18-S3/S4/S5/S6 carried where re-quoted |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R17 appended)]
+commands_run: [repo reads (D48–D50 incl. D49's mechanism record; §R15/§R16/§R18 carried; grep blast-radius: gpu-8060s consumers = the one overlay + ledger/tests/comment lines across 4 charts+services files + runbook 7 anchors + models skill :59; hostPath /dev/dri doors at llama-swap:1470 + vllm:594; AGENTS.md has no 8060s string) => pass; raw kernel fetches: drivers/pci/pci-stub.c (ids param + probe behavior), Documentation/ABI/testing/sysfs-bus-pci (reset/reset_method/reset_subordinate/remove/driver_override entries), drivers/pci/pci.c (multifunction -ENOTTY guard + iommu-prepare path) => pass; searxng ×5 batches (Framework BIOS menu hunt — negative, GTR9 gist + ASRock path + audio-hazard example + efifb/boot-primary found; one batch partially aborted, serialized) => pass]
+deviations: none — read-only, only RESEARCH.md written. The verdict is a refusal-with-conditions, stated as such: no safe route is *proven* on this exact machine (framework menu existence and POST behavior UNVERIFIED), none is *needed* now (perf dead by D47's counters, RAM ~0 by the 512M print + unchanged gate math, mis-allocation closed by shipped naming), and the only acceptable future forms are pre-driver-binding ones (firmware or cmdline stub of BOTH functions) behind a full code-first revert wave. D49's ban on runtime unbind is restated with the upgraded kernel quotes and stays absolute.
+friction: zero primary evidence exists for "Strix Halo desktop booted with iGPU firmware-disabled" — the honest gap was kept as UNVERIFIED rather than filled from generic-AMD-desktop practice; Framework's BIOS surface stayed behind the same doc wall as in §R18 (only a title-level CBS thread found); Tumbleweed initrd specifics for making pci-stub win the probe race were pattern-cited (gist) not fetched from openSUSE docs — labeled.
+open_questions: [does 03.06's Setup actually expose GFX Configuration / Primary Video Adaptor on this unit (owner's one-look BIOS tour settles it, no risk to look); rear-panel video routing during POST; c5 reset_method contents (completes the D49 post-mortem); whether anyone upstream has ever posted a Strix Halo iGPU-off boot — if the owner tries it, it must be the documented cold-cycle-with-monitor-on-the-dGPU experiment]
+next_suggested: coord reply to the owner: "we haven't managed to disable" — correct, and the recommendation is not to: the disable's three possible prizes are all zero-or-tidiness now (perf dead by our own counters, RAM already at minimum, mis-scheduling closed by the named pools), and its one real cost is the router lane D21 was built to protect; if the desire survives into the strata cutover, §R17-Q4 is the change list (code-first, same-wave, B1-reversal labeled) and §R17-Q2 is the only two acceptable host methods (firmware if the menu proves real, else pci-stub.ids of both functions, cold boot, physical access) — with the runtime unbind explicitly and permanently banned (D49). Fold a two-line summary into DECISIONS next round as the hide-question's final disposition (D48 → §R18 → D49 → this), and put the harmless BIOS *look* (no changes) on the owner's next maintenance window if curiosity outranks the recommendation.
