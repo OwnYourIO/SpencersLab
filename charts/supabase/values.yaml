@@ -20,7 +20,7 @@ app-template:
         migrate:
           image:
             repository: supabase/postgres
-            tag: 17.11.0.007
+            tag: 17.12.0.000
           command: ["/bin/bash", "/scripts/migrate.sh"]
           env:
             PGDATABASE: supabase
