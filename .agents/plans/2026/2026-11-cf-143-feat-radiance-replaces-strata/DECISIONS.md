@@ -1512,6 +1512,40 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    unit is enabled and should have applied itself), and check the router recovered. Authority: the
    owner's report, 2026-11-14, and §D11's topology read that I had in hand and did not use.
 
+ - 2026-11-14 human+coord D50 (BOX RECOVERED; MY POST-CRASH VERIFICATION READ THE WRONG PORT, and
+   the crash's cause is now confirmed by the owner's own device list): the node is back and the
+   hiding experiment left **no residue** — `c5:00.0` is on `amdgpu` again, the whole SoC slot is on
+   its real drivers (audio `1002:1640`→`snd_hda_intel`, `CCP/ASP`→`ccp`, `1022:1587`→`xhci_hcd`),
+   pools are restored (`amd.com/gpu-r9700-1=1`, `amd.com/gpu-8060s=1`, bare `amd.com/gpu=0`),
+   **EPP reads `performance` on 32/32 cores after a real reboot** (the §D6.4/D46 non-persistence
+   question is closed by the `epp-performance.service` unit, not assumed), and `dmesg` shows no
+   btrfs corruption on the CoW root. Two items of substance:
+   (1) **D49's mechanism is confirmed by hardware, not inference**: the owner's `lspci -nnk` shows
+   the Logitech receiver enumerating on `usb-0000:c5:00.4-1.1`, i.e. **the interactive USB bus is a
+   sibling function of the display function I told them to unbind** — unbinding one function of that
+   slot takes input, PSP and audio down with it. Recording it that way because it converts D49's
+   "well-supported hypothesis" into observed fact, and it is the strongest possible form of the law:
+   *read the slot, not just the device*, which is now the third time this ticket paid for skipping
+   that step (D38 register, D44 denominator, D49/D50 bus).
+   (2) **My verification block was aimed at the wrong port.** Post-swap, the GPU chain is under
+   `00:02.5-[c1-c3]` and `00:00:03.1-[c4]` is the **NVMe**, so the `16GT/s x4 EquComplete+ Ph1/2/3+`
+   read at `00:00:03.1` is the WD SN7100 performing normally — true but not the thing being asked —
+   and `c2:00.0`'s `32GT/s x16 / EquComplete-` is likewise an internal hop, the same mis-aimed-read
+   class §D43 already logged. The authoritative witness for the host↔card link is therefore the
+   **engine's own `link` line** (which resolves device identity by construction, per §D8/§D10), with
+   `00:02.5` and `c1:00.0` as the correct lspci pair; recorded here so the corrected commands exist
+   somewhere other than chat.
+   (3) **THE ACTUAL LIVE FINDING FROM THIS PASTE, and it is the D29/D44 either/or arriving on
+   schedule**: the pod list shows **`gpu-ai-llama-swap-strata … 1/1 Running`** and **no radiance pod
+   at all**. Strata's request (~64 Gi per §D6.1's archaeology, its own `110Gi` limit) plus radiance's
+   scheduled `110Gi` is `> 125.08` — the two cannot co-reside by arithmetic, so whichever started
+   second is unschedulable/Pending, and strata coming back is the resurrection path §D7/§D43 warned
+   about (git renders strata at `replicas: 1`; a sync or a re-deploy restores it). This is not a
+   defect and not the crash's fault: it is the consequence of the 110 ruling meeting the Q5 "keep
+   strata live" ruling, and **the owner must now pick one** — run radiance and leave strata at 0, or
+   scale radiance down and let strata serve. It is also the moment the Deferred cutover row was
+   written for. Authority: the owner's paste, 2026-11-14.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
