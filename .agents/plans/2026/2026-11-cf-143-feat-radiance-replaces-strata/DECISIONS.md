@@ -987,6 +987,62 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
     fiction and the falsified Rung-0, so the branch's remaining docs-only delta
     (d645b7cf8 + 3261a92f3) is the last thing between the owner's console and a dead end.
 
+ - 2026-11-14 research+coord D38 (§R12 — the owner's hardware reads, MY register mis-attribution,
+   and the "others have done this build" claim, now answered with receipts):
+   (1) **THE PARADOX WAS MINE, NOT THE MACHINE'S.** I read the owner's
+   `EqualizationComplete+ EqualizationPhase1+ Phase2+ Phase3+` as "Gen4 equalization COMPLETED yet
+   the link sits at Gen3" and built a diagnosis on that. It isn't: those bits live in the **base
+   PCIe capability's Link Status 2 register = the LEGACY 8.0 GT/s (Gen3) EQ status** (pciutils
+   `lib/header.h`: `EQU_COMP 0x02 / PHASE1 0x04 / PHASE2 0x08 / PHASE3 0x10 / EQU_REQ 0x20`), while
+   **16 GT/s** status is a separate extended capability (`PCI_EXT_CAP_ID_16GT 0x26`, status at
+   cap+0x0C, printed by lspci as its own `Phy16Sta:` block, with Data-Parity-Mismatch regs at
+   +0x10/0x14/0x18). So the paste proves Gen3 EQ completed (normal) and says NOTHING about Gen4.
+   LAW (and the correction of a D37-shaped mistake, this time about HARDWARE rather than my own
+   process): **never diagnose from a register field whose owning capability I have not checked** —
+   read the tool's decoder source or the spec for the bit I am interpreting, then interpret. The
+   one free read that branches the whole problem: `Phy16Sta` on `00:00:03.1` AND `c2:00.0`.
+   (2) **THE BIOS RUNG IS CLOSED BY FACT, TWICE.** The box is on **03.06**, which is the LATEST
+   published for the Desktop (resources.frame.work lists 3.06/3.05/3.03/3.02, "Stable Latest"), and
+   the release-note audit has **zero per-slot PCIe content in any version** (3.03: PD/EC/
+   SecureBoot/OPAL; 3.05: RAM modules, GRUB boot, downgrade path; 3.06: AMD PI 1.0.0.2c, a
+   video-encoder boot-hang fix, an iGPU-24GB fix, CVEs). So §R11's "check 3.06" candidate and the
+   GMKtec-world "explicit Gen4, not Auto" menu lead are BOTH dead: no per-slot speed menu is
+   documented for this platform at all. And the boot-hang lineage matters — the same thread's
+   Frix_Rioux had it fixed by a **kernel** update, which is why "firmware" must stop appearing in
+   our ladder.
+   (3) **THE OWNER'S CLAIM IS SUPPORTED — WITH AN UNCOMFORTABLE TWIST.** A working Framework Desktop
+   + **DEG1** + RX 9070 XT (gfx1201, same card class) build on Linux exists, running **llama-bench
+   on the SAME Qwen3.8-Flash-Next model at pp 324.8 / tg 21.1** — which is *the same ballpark as our
+   own 16.4–19.3 t/s decode and ~250-class prefill*, with no `LnkSta` receipt published anywhere on
+   that platform. Read honestly: "others have done this build" may mean "others did it **at Gen3**",
+   and the 142–160 t/s community numbers belong to Gen5 x8/x8 rigs. No Framework-Desktop
+   16 GT/s x4 receipt exists in any source found — and no Framework report posts `LnkSta` at all,
+   which is exactly the gap our case could fill (worth publishing either way).
+   (4) **PLATFORM SETTLED + TWO CONFOUNDERS REMOVED.** `Desktop (AMD Ryzen AI Max 300 Series)` —
+   Framework's own copy says "The **PCIe x4** slot lets you connect …", so electrically x4 by design
+   and "16" is the x16-length connector (or a Laptop-16 conflation). New `lspci -t` puts the NVMe on
+   its own root port `00:02.5-[c1]`, so **the n-gram disk tier and the dock link do not contend** —
+   §D11's last open topology question closed, §D8's math unaffected.
+   (5) REVISED LADDER (§R12-Q5): rung 0 = the `Phy16Sta` + AER + Data-Parity reads (free, and it
+   decides whether we have an EQ-failure problem or a channel-quality problem); rung 1 = identify the
+   **bay adapter card** — never once recorded in this ticket — including the K993G-BK7-**R29Q**
+   anecdote of undocumented **physical switches** on the part another Framework builder used, which
+   is the closest thing found to the owner's "a setting I was supposed to enable"; rung 2 = reseat +
+   short known-Good cable; rung 3 = EOP4A-class redriver insert; rung 4 = bypass controls (native
+   OCuLink host / open frame); rung 5 = kernel/`d3cold`/`runpm` hygiene, STABILITY only. BIOS, the
+   dock-first ritual, `pcie_aspm=off` and `setpci` speed overrides are formally CLOSED/DENIED with
+   citations — and no redriver purchase until rung 0 says `EquComplete-`, because if Gen4 was never
+   attempted, a channel fix is what is being bought; if Gen4 WAS attempted and failed parity, the
+   honest answer is TP2 (the x4 wall) or the profile levers, at §R11's ~54%-lost-to-narrow-link
+   pricing for weights-crossing regimes like ours.
+   (6) LOCK/CLAIM STATE, recorded because it changed shape: the `AI` claim was reaped 00:45:29Z and
+   the recovery rule was followed — re-claimed under the **card-id pipeline**
+   (`f014f568…`, locks/Na5LxMaY3ptABWhAy.json), NOT `AI`; a stale `default` claim left by a scout
+   session on this card is unowned by me and will age out at the 2 h mark; the ticket's records are
+   now landed on the branch, and the plan remains reopened at wave 11 for the note's ladder fold.
+   Authority: RESEARCH §R12 (lines 2879–3144); supersedes §R11's firmware candidate and my D37-
+   adjacent register reading; nothing in §D8/§R8/§R9's capacity math moves.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

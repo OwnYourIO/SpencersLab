@@ -2624,3 +2624,521 @@ deviations: none beyond scope — read-only; only RESEARCH.md touched. One delib
 friction: the DEG1 official manual is unreachable (manuals.plus bot-block; Minisforum's product-info SPA has no fetchable PDF) — the requirement is carried by the Newegg manual transcription + STH + chimolog, three-way consistent, recorded as such; lspci LnkSta2 bit-name semantics vary by version so the read instruction says "capture verbatim, don't paraphrase" rather than decoding from memory.
 open_questions: [which of Q5 steps 1-4 turns the read (ladder is owner-executed; step-4 bypass is the definitive one); whether the board's BIOS exposes a per-slot speed menu at all (R9-S17 trust-flag unresolved, GMKtec publishes no EVO-X3 guide); whether a degraded Gen3 training latches across warm reboots on this chipset (mechanism plausible, no source — the ritual is the test); official DEG1 manual PDF wording]
 next_suggested: coord fold R10 into the tuning note's LINK section at its next touch (D34 named it the fold target): replace the now-moot "BIOS-pin" discriminator with the Q5 ladder (ritual→reseat→cable→BYPASS→BIOS), add the `d3cold_allowed=0` + `amdgpu.runpm=0` STABILITY row (with the [R10-S6] same-port precedent), and record the NOT-fixes (aspm-off/retrain-as-cure) so the record stops re-listing them; owner runs steps 1-3 tonight (zero risk) and the bypass (step 4) decides whether the DEG1 itself is the suspect — if it is, the AG02/redriver-tier swap or the TP2 §2 PEX lane become purchases, and until `LnkSta` says 16GT/s the §D8 rate model stands unchanged.
+
+---
+
+## §R11 — Framework Desktop + Minisforum DEG1 + RDNA4 (R9700/RX-9070-class) on Linux: documented working builds and what they set
+
+Owner round 2026-11-14, lead verbatim: "the framework desktop 16, R9700, and deg1 — I
+know others have done this build successfully before." Authorities re-read first (D33–D37,
+§D8/§D10, §R9/§R10); nothing established there is re-litigated — the base facts carried in:
+TargetSpeed=16 pin arm CLOSED (D34), dock-first ritual FALSIFIED by the owner's own cold
+boot 4d6202d9 (D35/§D10), aspm-off and retrain are NOT speed fixes (R10-S9), DEG1 passive
+(R9-B1), c2/c3 = the card's own Navi bridges (R9-B4), rates on the m-model (§D10.4).
+External citations R11-S#, accessed 2026-11-14; every load-bearing claim carries its
+quoted clause; gaps labeled UNVERIFIED. NOTE the repo's own silence (grep this round): the
+ticket has NEVER recorded which adapter/riser sits between the host's slot and the OCuLink
+cable — only the DEG1 end was ever identified. That hole is §R11's headline.
+
+### R11 VERDICT (first)
+
+**The owner's claim is SUPPORTED — and the successful builds differ from ours in exactly
+one recorded way we have never tested: every Framework-Desktop eGPU-over-OCuLink build that
+reports working puts a REDRIVER-BEARING adapter card in the internal PCIe x4 slot with a
+short (~30 cm) cable, or sits on a factory-native OCuLink port.** Found: Framework Desktop
++ **2× Radeon AI PRO R9700**, one "on an oculink connector on the internal x4 slot", Fedora
+44, working, its instability attributed to **firmware 3.06** ("I'm attributing that change
+to the latest 3.06 firmware, but it's possible that the fix was in a kernel update")
+[R11-S1]; Framework Desktop + **DEG1** via "minisforum eop4a card (**with redriver**)"
+[identical phrasing], card enumerated (RTX 5060 Ti, Windows driver struggle) [R11-S1];
+Framework Laptop 16 + RX 9070 XT over OCuLink, "Fedora doesn't have any issue detecting
+the 9070 xt and it just works" [R11-S1]; plus the two passive-path successes that frame the
+boundary: native OCuLink mini-PC + DEG1 measured **7.07 GB/s** [R10-S8] and the MS-S1 Max's
+"R9700 over OCuLink at **Gen4 x4** on root port 00:03.1" [R9-S10]. Conversely every
+documented FAILURE/DEGRADE story on the bare passive chain matches our symptom family: DEG1
+"would not enumerate" on a GMKTec M7 [R9-S16]; Jeff Geerling's DEG1 run "**picky about
+generic cables and needed a ReDriver adapter for one card**" [R11-S2]; the FW16 dual-M.2
+builder: "Maybe DEG1 requires specially made cables… the cable quality plays a role with
+every OcuLink eGPU" [R11-S3]. **Revised first rung: OPEN THE CASE AND READ THE ADAPTER CARD
+(photo/part number; redriver or plain M.2→SFF-8611 riser?) and the cable length — zero
+risk, and it is the ONLY rung whose success pattern is documented on this exact
+machine-class.** The BIOS-per-slot-speed rung from §R10 stays dead on this platform
+(Framework's published BIOS material lists no PCIe/slot-speed menu — see Q2), but the
+**firmware version check (3.06, released 2026-08-03)** is real and cheap, because
+(a) 3.06 updates **AMD PI to StrixHaloPI-FP11 1.0.0.2c** — AMD PI being the platform
+PCIe/memory init firmware — and fixes a PCIe-device boot hang ("Fixed a boot hang issue
+occurring with specific video encoder cards") [R11-S4], and (b) the one two-R9700 Framework
+owner dates the stability change to it [R11-S1].
+
+### R11-Q1 — The found builds (table; link + quote each)
+
+| build | chain as documented | OS | speed/workload evidence | quote (URL) |
+|---|---|---|---|---|
+| **Martin_Roth, Framework Desktop + 2× R9700** | "run with 2 eGPUs. One is **on an oculink connector on the internal x4 slot**… The second is using an **m.2 to PCIe x4 adapter on the rear m.2 slot**. The power supply on the oculink station powers both cards"; parts: "JMT ADT-K993G-BK7 **PCIE 5.0 X4** / M.2 NVMe to OCuLink SFF-8611 External Dock Adapter (**K993G-BK7-R29Q-30cm**)", "XRIKUI NGFF M.2 M-Key to PCIe X4 Expansion Card Adapter", "Glotrends 300mm **PCIe 4.0 X4 Riser Cable**" | **Fedora 44** | working, multi-week; instability→3.06 | community.frame.work/t/framework-desktop-with-egpu/79178 posts #13/#15 (Aug 24–25 2026), accessed 2026-11-14 [R11-S1] |
+| **NappDev, Framework Desktop + DEG1** | "i got a **minisforum deg1 dock** hooked it all with to the framework desktop with a **minisforum eop4a card(with redriver)**" | Windows 11 | enumerates (RTX 5060 Ti); game-launch driver issue — not a link issue | same thread post #9, Apr 9 2026 [R11-S1]; EOP4A product: "PCIe to OCuLink Card. Features a **Redriver chip** for lossless signals. Ideal for eGPU, AI compute & external NVMe" store.minisforum.com/products/minisforum-eop4a-pcie-adapter-card, accessed 2026-11-14 [R11-S5] |
+| **Deja, Framework Laptop 16 + RX 9070 XT (RDNA4)** | FW16 expansion bay + OCuLink (dual-boot 2280/2230) | **Fedora** | "**Fedora doesn't have any issue detecting the 9070 xt and it just works** unlike Windows"; Windows later hit "AMD drivers timeout error" | same thread posts #8/#10 [R11-S1] |
+| **Samuel_Sylvester, FW Desktop + RTX 3090** | OCuLink, "More info to come" | — | enumerated+working claim, no speed receipt | same thread post #4, Dec 28 2025 [R11-S1] |
+| **Ernie_Hobbs, FW Desktop + RX 7900 XTX** | USB4 eGPU×2, THREE enclosures "fried", then "switched to **Oculink**" | Windows | working after switch; dock-electronics mortality data point | same thread posts #3/#12 [R11-S1] |
+| **chimolog (JP), GMKtec EVO-X1 (HX370) + DEG1** | factory OCuLink port → bundled cable → DEG1 | Win 11 | **3DMark PCIe feature test avg 7.07 GB/s (theoretical 8.0)** — DEG1 CAN do Gen4 x4 [R10-S8] | chimolog.co/minisforum-deg1/ (2025-04-21) |
+| **daimonionnn, Minisforum MS-S1 Max + R9700 + DEG2** | factory OCuLink, "R9700 over OCuLink at **Gen4 x4 on root port 00:03.1**" (their CONTROL machine) | Win | works; the failing unit was a DIFFERENT MS-S1 (root port vanished — PBS/EVAL rabbit-hole, closed) [R9-S10] | github daimonionnn/multi-gpu-llm-toolkit doc/oculink-amd-dgpu.md |
+| **our lab rig (contrast)** | internal-slot adapter (**identity UNRECORDED — see headline**) + DEG1, "LnkCap 16GT/s x4" port → **stuck `8GT/s x4`** | TW/k3s | §D10.2, 48% busy, ritual-compliant cold boot | EXPLORE §D8/§D10, DECISIONS D34/D35 |
+
+Pattern: no published Framework-Desktop-class build runs the eGPU on a plain passive
+M.2/adapter riser into a DEG1 — the two redriver-bearing adapter cards named by the
+working owners (EOP4A "with redriver"; K993G-BK7, sold as "PCIE 5.0 X4" — redriver
+presence on THAT SKU: UNVERIFIED) + 30 cm cable are the delta; the passive successes are
+all factory-OCuLink hosts with the short bundled cable (66 cm, "Keep that cable"
+[R11-S2]).
+
+### R11-Q2 — Framework Desktop PCIe reality + BIOS options (and the "16" disambiguation)
+
+- **Two different machines exist.** *Framework Desktop* (Ryzen AI MAX 300/395, 10×10 chassis;
+  GitHub: "Framework Desktop uses a **standard size Mini-ITX Mainboard** with standard ATX
+  connectors" [R11-S6]) has, per community enumeration, "4 PCIe slots: 2x M.2, 1x WiFi slot,
+  **1x PCIex4**" [R11-S7: community.frame.work/t/pcie-block-diagram/70104, accessed
+  2026-11-14] — that x4 slot (electrical x4; gen not officially documented — **UNVERIFIED**,
+  though the working builds treat it as Gen4-class) is where Martin_Roth put his OCuLink
+  connector ("the internal x4 slot"). *Framework Laptop 16* exposes "**up to 8 PCIe lanes
+  (x8 PCIe 4.0)**" in its expansion bay per the community module doc, with a Framework-blessed
+  direction ("Framework CEO Nrp… confirmed… 'thinking about OCuLink for the Expansion Bay'")
+  [R11-S3: framework.wiki/docs/community-projects/hardware/oculink-expansion-bay-module/,
+  accessed 2026-11-14]; Framework's own blog previews "the OcuLink Dev Kit"
+  [R11-S8: frame.work/blog/framework-laptop-16-upgrades-and-oculink-dev-kit — full text
+  NOT FETCHED (408 timeout); title/snippet only]. The owner's "framework desktop 16"
+  elides the two; our root-port-00:03.1 evidence says **Desktop-family**, and the adapter
+  card in our bay/slot is the unidentified link segment (Q1 headline).
+- **BIOS per-slot PCIe speed: NO documented setting.** The official resources page for
+  the current BIOS lists highlights + component versions only — 3.06 (released
+  2026-08-03): "Update AMD PI to 1.0.0.2c… Fixed a boot hang issue occurring with
+  specific video encoder cards… Resolved an issue where the iGPU memory size was
+  incorrectly capped at 24 GB…" components `EC ec_306_bb3566e`, `AMD PI
+  StrixHaloPI-FP11 1.0.0.2c` [R11-S4: resources.frame.work/downloads/desktop/amd-ryzen-
+  ai-max-300/3.06/, accessed 2026-11-14] — no PCIe/ASPM/speed menu is documented anywhere
+  in Framework's fetched material. The "Advanced → PCI Subsystem Settings → Gen4 not Auto"
+  menu belongs to the **GMKtec EVO-X3** world (tldevtech, SEO-trust-flagged [R9-S17]) and
+  GMKtec "does not yet publish an EVO-X3 BIOS guide" [R9-S8]. **So: our §R10/§D36 rung-4
+  "BIOS/EQ, UNVERIFIED" is now demoted to documented-absent on the Framework lane
+  (no menu evidence exists at all) — the live firmware lever on this platform is
+  VERSION (3.06 AMD PI), not a toggle.** Say it plainly: the BIOS-pin rung is guesswork
+  on this machine unless we are actually on a GMKtec-class board — which the owner's own
+  "framework desktop" wording denies.
+- **Any Framework Desktop "Gen4-capable but trains Gen3" report?** None found in the
+  fetched record (their documented failure modes are driver/enumerate/power, and the x4-slot
+  eGPU **instability** fixed by 3.06-era updates). Our Gen3-latched state therefore has
+  **no published Framework Desktop twin** — which is precisely why the adapter-card identity
+  (our unrecorded segment vs everyone else's redriver cards) is the rung with external
+  backing.
+- **Risk note for the firmware rung:** "Framework Desktop bricked after BIOS 3.06 update"
+  exists (community.frame.work/t/84069 — title-level; the same 3.06 added "single-ROM BIOS
+  Crisis Recovery" [R11-S4] which is its own mitigation) — flag when recommending.
+
+### R11-Q3 — DEG1 revisions and companion parts
+
+- **Siblings:** **DEG2** — "OCuLink (PCIe 4.0 ×4)… Thunderbolt 5 input next to OCuLink, with
+  a hardware switch between them… M.2 2280 slot, a 2.5GbE port… 140 W power delivery back to
+  the host. Both paths run at PCIe 4.0 x4" (2.5GbE "over the Thunderbolt 5 link" — OCuLink
+  alone = GPU only) [R11-S2: computingforgeeks.com/best-oculink-egpu-mini-pc/ (Oct 19–21
+  2026, prices/stock-checked), accessed 2026-11-14; spec also on minisforum.com/products/deg2].
+  **AOOSTAR EG02** — OCuLink + TB5 + "150 W DC line out"; AG03 reviewed at geeky-gadgets.
+  Same OCuLink generation on every sibling — no Gen5 DEG exists. **The deltas that matter
+  vs DEG1 are the extras, not the link.**
+- **DEG1's cable is part of the product:** "ChargerLAB measured the bundled cable at about
+  **66 cm. **Keep that cable**: when Jeff Geerling ran the DEG1 from a Raspberry Pi through
+  an M.2-to-OCuLink adapter, it was **picky about generic cables and needed a ReDriver
+  adapter for one card**… It does not support hot-plugging, so power the dock before the
+  mini PC." [R11-S2]. Plus the retail-listing "force power-on mode so the dock can start
+  with the PSU" (same Newegg "ForcePowerOn" button row as R9-S13) — the closest thing to a
+  user-switchable "power setting" on the DEG1; no jumper/PIN-13/PERST quirk is documented
+  anywhere fetched (**UNVERIFIED** — the ritual being falsified in D35 makes any such
+  requirement moot for our Gen3 state anyway).
+- **Known-good adapter-tier parts (the working builds' other half):** Minisforum **EOP4A**
+  "PCIe to OCuLink Card… Redriver chip" [R11-S5]; **JMT/ADT K993G-BK7** "PCIE 5.0 X4 / M.2
+  NVMe to OCuLink SFF-8611" with 30 cm cable [R11-S1]; generic passive risers correlate with
+  the failure side (Geerling; the FW16 thread: "Maybe DEG1 requires specially made cables.
+  But in addition to that, **the cable quality plays a role with every OcuLink eGPU**. For
+  example, my cheap non-DEG1 setup doesn't handle PCIe…" — snippet truncated mid-clause
+  [R11-S3-adjacent: community.frame.work/t/oculink-egpu-works-with-the-dual-m-2-expansion-
+  bay-module/62273 p.7 as rendered by search 2026-11-14 — exact continuation UNVERIFIED]).
+  Length doctrine unchanged from R10-S2 (degradation until ~1.5 m is cable-quality-driven,
+  redrivers bridge what quality can't).
+
+### R11-Q4 — RDNA4 + Linux specifics on this class
+
+- **Driver-side: quiet.** Fedora/FW16 "just works" for the 9070 XT [R11-S1]; the radiance
+  container ships its own ROCm/kernels (ticket S16) and our host amdgpu binds and serves
+  the R9700 fine (§D8) — no gfx1201 kernel/link-training defect found in any fetched
+  report; older-kernel enablement version for gfx1201 NOT separately verified this round
+  (moot at TW 7.3.0) — **UNVERIFIED** but irrelevant to the link.
+- **The documented RDNA4-on-OCuLink-on-Linux bug family is POWER-STATE, not speed** —
+  the whole reason our stability row exists: D3cold root-port bus-loss ("device lost from
+  bus!") fixed by udev `d3cold_allowed=0`, BACO-variant still open, `amdgpu.runpm=0` as
+  the cause-D workaround [R10-S6] — all on the SAME `00:03.1`+`1002:1478/1479` chain
+  signature. Nothing there claims or fixes Gen3-vs-Gen4; `setpci`/aspm non-fixes per
+  [R10-S9].
+- **IOMMU:** internal record governs — `amd_iommu=off`, engine "iommu off (no IOMMU is
+  registered)" + "dma copy lists IN USE", gate corrected in D28(5); no external report this
+  round ties IOMMU state to Gen4-vs-Gen3 training (ROCm's own Strix-Halo page doesn't
+  mention per-slot PCIe; requirement is kernel 6.18.4+ KFD patches for gfx1151 compute
+  [R10-era rocm doc, unchanged]).
+- **The Strix power-tie: not a Framework-exposed setting.** No Framework BIOS item for
+  external-GPU power was found in fetched material; the AMD PBS option machinery exists but
+  is retail-hidden, and the MS-S1 Reddit plea thread states "**Framework Desktop ships this
+  same option disabled**" (+daimonionnn's diff: "Non-Eval Discrete GPU Support is disabled
+  on Framework too") [R11-S9: reddit.com/r/MINISFORUM/comments/1wnkrfk… — fetched null
+  (body UNVERIFIED); clause quoted from the search-rendered snippet; corroborated by
+  R9-S10]. Our box prints 300 W today (D33); **re-read the engine power-cap line after any
+  BIOS move** — that is the honest monitoring rule.
+
+### R11-Q5 — What fixing the link buys, priced by external numbers
+
+| evidence | regime | measurement | read-across to radiance-on-our-box |
+|---|---|---|---|
+| Geerling RTX 4090 on **PCIe 3.0 x1** (1/8 of our width AND half our gen) | Qwen3-30B Q4 fully in VRAM, generation | 41.05 → 42.51 t/s = **3.4%** penalty [R11-S2] | the portion of our decode that touches NO link (resident experts, compute) — confirms the ~35 t/s compute floor is floor, not the link |
+| gpt-oss-120b, **12 of 36 layers in system RAM** (TB3 ≈2.7 GB/s vs x16) | prompt processing | 140 → 304 t/s = **54%** lost to the narrow link [R11-S2] | OUR exact failure mode by mechanism ("when some layers stay in system RAM… **the link becomes the bottleneck**"), and our regime is worse (41.52 GiB pool crossing per-use); Gen3→Gen4 ≈ the ×2 this row implies |
+| ChargerLAB through a DEG1 | link | **6.0–6.7 GB/s** measured (of 7.9) [R11-S2]; chimolog 7.07 GB/s [R10-S8] | what our receipt should say after the fix: engine prefill 249→~450–500 (§D8.2 model bracketed) |
+| morgwai dual-3090 (DEG1 ~6000 MiB/s + UT4G ~3600 vs TB3 daisy ~2700+2700) | layer-split, weights resident per card | "virtually identical" (70B: 17.96 vs 17.83) [R9-S3/R11-S2] | why OTHER people's LLM reports claim the link doesn't matter — none of them streams 41.5 GiB of experts per-use like our profile |
+| daimonionnn TB5-vs-OCuLink same-lane-count | activations vs weights crossing | **2.7–3.3%** vs **7.9–12.8%** [R9-S3] | our m-curve (0.17–0.29 + 90–100 MiB/token churn, D10.5) says we are firmly in the "weights cross" class — link first, again |
+
+**Honest sum:** Gen4 doubles BOTH legs' link-bound ceilings (prefill ~2× toward the
+450–500 measured-class; warm decode 19.3→toward the ~35 floor, §D8.2/D29 framing) — but
+note what Q5's own evidence adds now: at x4-Gen4 the *remaining* x4-vs-x16 width tax on
+streamed weights persists (~1/4 of desktop slot bandwidth vs the x16 rows above), so the
+140–160 class stays the TP2/x16 conversation, unchanged.
+
+### R11-Q6 — Verdict + REVISED owner ladder (supersedes §R10-Q5/§D36 ordering; changes in BOLD)
+
+(a) "Others have done this build successfully": **SUPPORTED** — two-R9700 Framework Desktop
+on Fedora via the internal x4 slot [R11-S1] is the closest known twin; the DEG1 end works
+7.07 GB/s on hosts that respect its cable/adapter tier [R10-S8]. Every documented delta
+from our chain: **redriver-bearing adapter card, 30 cm cable, (one case) firmware 3.06.**
+(b) Externally-backed rungs, cost order: **(1) adapter-card + cable-length ID/read (zero
+risk, the ONLY rung with a same-machine success pattern to copy)** → (2) 30 cm known-Good
+cable swap (Geerling/chimolog "keep that cable") → **(2b) EOP4A-class redriver card (or
+K993G-BK7) — ~$30-50, the part the working builds actually use** → (3) dock-bypass
+open-frame control (kept: decisive either way) → (4) firmware **3.06 check/apply** with
+the brick-risk note + power-cap re-read (Q4) → (5) stability hygiene (unchanged,
+D36/C14) → **DEAD: "BIOS per-slot speed" (documented-absent on Framework — Q2) and the
+ritual (falsified D35) — remove both from the tuning note's ladder at next touch.**
+(c) Check FIRST (one thing): `sudo dmidecode -s bios-version` + `journalctl` boot banner —
+**are we pre- or post-3.06 (2026-08-03)?** — alongside the case-opening adapter ID;
+both are minutes, both map directly onto [R11-S1]/[R11-S4] citations.
+(d) If the redriver card + short cable + bypass STILL train Gen3: our 3.94 GB/s is this
+chassis+cable+slot combination's real behavior — the published working builds will then
+have no remaining delta to give us, and the honest levers are profile (pool/ctx/seqs,
+§R8/D28 law) and TP2/x16 (the width rows in Q5 price that road too); record "Framework
+Desktop DEG1 Gen3-latched, cause unresolved" as the ticket's own datum (we found NO
+published twin of our state — that itself is a finding).
+
+### R11 — Conflicts / UNVERIFIED (loud parts)
+
+- **Contradiction to §R10's ladder, stated loudly:** §R10 ranked the power-sequence ritual
+  #1 — D35/§D10 falsified it live; §R11 then replaces its top rung with the
+  adapter-card/redriver delta backed by the working-build record [R11-S1/S2/S5]. §R10's
+  mechanism content (EQ grammar, aspm non-fix, DEG1 passivity) stands; only its rung-1
+  ordering is superseded — twice now, by evidence.
+- **Contradiction to §R9's "best fit = host-BIOS slot pin" (D33's phrasing):** on a genuine
+  Framework Desktop there is **no documented per-slot speed setting** (Q2); the tldevtech
+  menu is GMKtec-world. If our machine is NOT a Framework Desktop, this reverses — the
+  dmidecode/board check settles the branch in one command.
+- **UNVERIFIED:** our adapter card's identity/redriver presence and cable length (never
+  recorded in the ticket — the headline); K993G-BK7 redriver presence (marketing string
+  only); Framework Desktop x4 slot GEN officially (community-observed x4; Framework doc not
+  fetched); Framework blog Dev-Kit body (408); Reddit MS-S1 thread body (fetched null —
+  clause quoted from search render); the 62273 cable quote beyond its truncation point;
+  gfx1201 kernel-support version history; whether 3.06 (or its EC update) touches PCIe
+  training at all beyond "AMD PI updated" + video-encoder boot-hang fix (the working-owner
+  attribution is user-level, with his own kernel-update hedge quoted).
+
+### R11 — Sources (accessed 2026-11-14)
+
+| # | URL | What it is |
+|---|---|---|
+| R11-S1 | community.frame.work/t/framework-desktop-with-egpu/79178 (posts #3,#4,#6,#8,#9,#10,#12,#13,#15) | The Framework Desktop eGPU master thread: 2×R9700 on Fedora via internal x4 slot + OCuLink adapter parts list + "3.06 firmware" stability attribution; DEG1+EOP4A(redriver) build; 9070 XT Fedora "just works"; three-fried-USB4-docks then OCuLink; DDU/Code-43 Windows notes |
+| R11-S2 | computingforgeeks.com/best-oculink-egpu-mini-pc/ (Oct 2026) | x4-link cost table (Geerling 3.4%; gpt-oss pp 54%; generation ~3%); ChargerLAB 6.0–6.7 GB/s through DEG1; bundled cable ≈66 cm, "Keep that cable", Geerling DEG1 "picky about generic cables… needed a ReDriver adapter"; DEG1/DEG2/EG02/K12 spec+buy guide; morgwai dual-dock comparison linked |
+| R11-S3 | framework.wiki/docs/community-projects/hardware/oculink-expansion-bay-module/ | FW16 bay "x8 PCIe 4.0", community OCuLink module, Framework CEO quote on OCuLink direction |
+| R11-S4 | resources.frame.work/downloads/desktop/amd-ryzen-ai-max-300/3.06/ | Official BIOS 3.06 (2026-08-03): "Update AMD PI to 1.0.0.2c", "Fixed a boot hang issue occurring with specific video encoder cards", iGPU-mem-24GB fix, crisis recovery; component table (EC ec_306_bb3566e / AMD PI StrixHaloPI-FP11 1.0.0.2c); no PCIe/slot-speed menu anywhere |
+| R11-S5 | store.minisforum.com/products/minisforum-eop4a-pcie-adapter-card | "MINISFORUM EOP4A PCIe to OCuLink Card. Features a Redriver chip for lossless signals. Ideal for eGPU, AI compute & external NVMe" |
+| R11-S6 | github.com/FrameworkComputer/Framework-Desktop (README raw) | Official: "standard size Mini-ITX Mainboard with standard ATX connectors" (mainboard docs repo) |
+| R11-S7 | community.frame.work/t/pcie-block-diagram/70104 | "The desktop seems to have 4 PCIe slots: 2x M.2, 1x WiFi slot, **1x PCIex4**" + no definitive official lane map published ("wait until they release official documentation") |
+| R11-S8 | frame.work/blog/framework-laptop-16-upgrades-and-oculink-dev-kit | Framework's own OCuLink Dev Kit preview (title/snippet only — 408 on fetch) |
+| R11-S9 | reddit.com/r/MINISFORUM/comments/1wnkrfk/mss1_max_please_enable_amd_dgpus_over_oculink/ | Search-rendered clauses: "A retail AMD card on OCuLink has no way. Framework Desktop ships this same option disabled"; body fetch returned null — flagged |
+| (inherited) | R10-S1/S6/S8/S9, R9-S3/S10/S15/S16/S17, R10-era rocm docs | carried per §R9/§R10; nothing re-fetched contradicts |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R11 appended)]
+commands_run: [repo reads: DECISIONS D33-D37 full, EXPLORE §D10 (falsification record + 49/50/48% census + m-curve), STATE/C14/tuning-note ladder grep for adapter-card silence (CONFIRMED: EOP4A/K993G/redriver-card never recorded for OUR rig) => pass; global-searxng web_search (degraded mid-round: 6/10 succeeded, aborts on batch 2-3) + websearch ×2 for firmware/bay => pass; web_url_read: FW community thread (3 windows, posts #3-#16), computingforgeeks (3 windows incl the full x4-cost table), resources.frame.work 3.06 notes (2 windows), PCIe block-diagram thread, framework.wiki module doc, Framework-Desktop GitHub README raw; EOP4A/DEG2 product pages via search + partial fetch; reddit thread body fetch returned null (flagged); frame.work blog 408 (title-only, flagged) => pass]
+deviations: none — read-only, RESEARCH.md only. Answered the "which machine" disambiguation the owner's "desktop 16" conflates (Desktop vs Laptop 16) with both documented, because the ladder branches on it (dmidecode settles in one command). Declared the honest negative twice: no published Framework Desktop Gen3-latch twin exists (our state is a first-report candidate), and no documented Framework per-slot PCIe menu (a ladder rung retired on evidence, not preference).
+friction: searxng aborted several queries under concurrency — fell back to native websearch per the round's allowance and serialized; three primary sources stayed unreachable (reddit body, FW blog 408, 62273 quote truncation) — each quoted only at the level the rendered snippet supports, marked UNVERIFIED beyond.
+open_questions: [our adapter card's identity (redriver or plain riser) + cable length — THE missing variable, zero-risk read; our BIOS version vs 3.06 (and whether the user-attributed x4-slot stability gain applies before recommending anything); whether the Desktop x4 slot is Gen4 electrically (Framework doc pending); if adapter+cable+3.06 still train Gen3 → publish our Gen3-latch as the first documented case of its shape]
+next_suggested: coord re-points the tuning note's LINK ladder AT THE NEXT TOUCH (D36's own re-pointing law) to R11-Q6's ordering — adapter/cable ID and redriver card above the dead BIOS-pin and ritual rungs, firmware 3.06-check kept but re-labeled user-attributed — and hand the owner the two-minute reads (open case photo, `dmidecode -s bios-version`); fold the §D10/§R10/§R11 supersede chain into DECISIONS at the next round; everything else (stability hygiene, §R8 receipt law, TP2 road) already on record.
+
+---
+
+## §R12 — Framework Desktop (BIOS 03.06) + DEG1 + R9700: successful builds, and why a link with COMPLETED Gen4 equalization still sits at Gen3
+
+Owner round 2026-11-14. Authorities re-read (D33–D37, §D8/§D10/§D11, §R9/§R10/§R11);
+settled facts NOT re-litigated: ritual falsified (D35), BIOS-pin-vs-TargetSpeed closed
+(D34), aspm/retrain non-fixes (R10-S9), DEG1 passive + c2/c3 = card's own Navi bridges
+(§R9/§D11). NEW owner data (2026-11-14, verbatim): `dmidecode` ⇒ manufacturer
+**Framework**, product **"Desktop (AMD Ryzen AI Max 300 Series)"**, BIOS **03.06**;
+`LnkSta: Speed 8GT/s, Width x4 / DLActive+` and `LnkSta2: … EqualizationComplete+
+EqualizationPhase1+ EqualizationPhase2+ EqualizationPhase3+ LinkEqualizationRequest-
+Retimer- 2Retimers- …`; `SltCap: … HotPlug- Surprise-`; `lspci -t` dock chain
+`00:03.1-[c2-c4]`, APU `00:08.1-[c5]`, NPU `00:08.2-[c6]`, **NVMe under a different root
+port `00:02.5-[c1]`**. Citations R12-S#, accessed 2026-11-14; UNVERIFIED items labeled.
+
+### R12 VERDICT (first, with the two loud corrections)
+
+**(1) The "strange signature" is not strange — because it does not say what §R10/D34
+suspected and not what the owner read into it: the four `EqualizationComplete+
+Phase1/2/3+` bits in `LnkSta2` are the LEGACY 8.0 GT/s (Gen3) equalization status, and
+the 16 GT/s (Gen4) equalization status lives in a DIFFERENT register.** lspci's own
+decoder proves the split: base-PCIe-cap `LnkSta2` decodes `PCI_EXP_LINKSTA2_EQU_COMP
+0x02 / EQU_PHASE1 0x04 / PHASE2 0x08 / PHASE3 0x10 / EQU_REQ 0x20` (introduced for the
+Gen3 EQ procedure) while a separate extended capability — `PCI_EXT_CAP_ID_16GT 0x26
+/* Physical Layer 16.0 GT/s */` — carries `PCI_16GT_STATUS 0x0C: EQU_COMP 0x0001 /*
+Equalization 16 GT/s Complete */, PHASE1..3, EQU_REQ /* Link Equalization Request 16
+GT/s */` and lspci prints it as its own block (`Phy16Sta:`) [R12-S1:
+github.com/pciutils/pciutils ls-ecaps.c + lib/header.h, raw-fetched 2026-11-14]. So the
+owner's paste proves **Gen3 EQ completed at 8 GT/s (which it must, for a healthy Gen3
+link) and that NO 16 GT/s equalization request is pending — it is SILENT on whether
+Gen4 EQ ever succeeded**. The genuinely unresolved question — "trained-then-parked" vs
+"Gen4 EQ never completed at all" — is answerable in ONE free read (Q2 table, read #1):
+the `Phy16Sta` status on `00:03.1` AND `0000:c2:00.0`, plus the 16GT cap's Data-Parity-
+Mismatch registers. **LOUDAhead: this SUPERSEDES §R10/D34's cautious wording ("Phase-1-
+only evidence … do not read as proof") — the right reading is now: all four LnkSta2
+phase bits belong to the 8.0 GT/s procedure, so they are neither proof FOR Gen4-EQ
+success nor even partial evidence; and it equally denies the owner's natural read
+("completed Gen4 EQ but sits at Gen3") — no such paradox exists in the data yet.**
+
+**(2) The successful builds exist — but NONE publishes a 16 GT/s receipt on this
+platform, and one runs it OLDER than our BIOS:** Framework Desktop + **DEG1 + RX 9070 XT
+(gfx1201!) on Linux**, llama-bench on the SAME model family (`Qwen3.8-Flash-Next`
+GGUF, ROCm 10.0, 15/85 tensor-split with the 8060S): "I'm still using **bios 3.02**",
+earlier boot hangups fixed by a **kernel** update ("I think updating the kernel fixed
+it. I have it boot normally with Linux 6.18.9 … and Linux 7.0.13 … It still hangup for
+a while before post but it boot fine"), results **pp512 324.80 ± 19.52, tg128 21.13
+± 0.19 t/s**, no link-speed read posted [R12-S2: community.frame.work/t/framework-
+desktop-with-egpu/79178 post #18, 2026-08-31, accessed 2026-11-14]; plus §R11's
+Martin_Roth 2×R9700-on-Fedora build (also no speed receipt). **Verdict on the owner's
+lead: "done successfully" = enumerated-and-serving, yes; "at Gen4 x4", NOT shown by any
+Framework-Desktop report we can find.** Where Gen4 receipts DO exist they belong to
+native-port hosts or redriver-assisted paths (EVO-X1 7.07 GB/s R10-S8; MS-S1 Gen4 x4
+R9-S10; "needed a ReDriver adapter for one card" R11-S2). **This supersedes §R11's
+firmware rung: the box is ALREADY on 03.06 — the exact version §R11 said to check —
+so the check is CLOSED by fact; §R11's causal lead (Martin_Roth) self-hedged and
+Frix_Rioux's working box sits on 3.02, pointing the kernel (not BIOS) as the moving
+part on this product line.**
+
+### R12-Q1 — Framework release notes, audited (no PCIe-laden fix pending)
+
+Resources page hierarchy for "Desktop → AMD Ryzen™ AI Max 300 Series" lists **3.06, 3.05,
+3.03, 3.02** only — 3.06 flagged "Released 2026-08-03 · 20.4 MB **Stable Latest**" ⇒
+**nothing newer than 03.06 exists for this product today** [R12-S3:
+resources.frame.work/downloads/desktop/amd-ryzen-ai-max-300/3.06/ (sidebar + header),
+accessed 2026-11-14]. Release-note audit (fetched):
+- **3.03** (2025-08-06): "Updated PD to 0.0.0E · Updated EC … dbx key … SAMSUNG's 128G
+  LPDDR5 … Fixed an issue where hardware encryption on OPAL drives could cause a missing
+  boot drive" — **zero PCIe/eGPU/slot content** [R12-S4].
+- **3.05** (2026-04-02): "Added support for new LPDDR5 128GB modules · Resolved an issue
+  causing slow boot times in GRUB and Linux environments · You can downgrade to a
+  previous BIOS version" — no PCIe content [R12-S5].
+- **3.06** (2026-08-03): "Update AMD PI to 1.0.0.2c … Fixed a boot hang issue occurring
+  with specific video encoder cards … Resolved an issue where the iGPU memory size was
+  incorrectly capped at 24 GB" + six CVE fixes; components `EC ec_306_bb3566e`,
+  `AMD PI StrixHaloPI-FP11 1.0.0.2c` (§R11 fetch) — AMD PI is platform-init firmware,
+  the only PCIe-adjacent thing across all four notes, and we already run it. No per-slot
+  PCIe speed item exists in ANY Framework Desktop BIOS changelog fetched.
+Conclusion: the firmware branch of this investigation is exhausted — 03.06 is current
+AND is what §R11's success-attribution named; a working build at 3.02 out-ranks the
+attribution. Kernel-side remains open (Frix: 6.18.9/7.0.13 fixed boot; our 7.3.0-1
+post-dates both, boot works — the boot-hang class is not ours).
+
+### R12-Q2 — The signature decoded, and the read-only discriminations (cost order)
+
+Reading convention established by [R12-S1]: lspci ≥ current decodes per-speed EQ status
+separately (`Phy16Sta`); the owner's grep window (`-A2`) cut the base-cap print short of
+any Phy16 block even if present. Reads (ALL read-only; the two writes flagged):
+
+1. **`sudo lspci -vvv -s 00:00:03.1 | sed -n '/Physical Layer 16.0 GT/s/,+2p'`** (same on
+   `0000:c2:00.0`); if the block is absent on an older lspci: locate the cap offset from
+   `lspci -vv` ("Capabilities: [xxx] Physical Layer 16.0 GT/s") then
+   `sudo setpci -s 00:00:03.1 <off+0x0c>.l` — decode bits 16GT/s Status @ +0x0C:
+   `0x1 EquComplete / 0x2 Ph1 / 0x4 Ph2 / 0x8 Ph3 / 0x10 LinkEquRequest16` [R12-S1].
+   **Meaning:** EquComplete-**⇒ Gen4 EQ never finished → pure channel/margin problem
+   (no paradox), jump straight to the redriver/cable rungs; EquComplete+ with `LnkSta`
+   at 8GT ⇒ true trained-then-parked → go to read 2; `LinkEquRequest16+` on the bridge
+   side = firmware/hardware asking for re-EQ — log it.**
+2. **Post-EQ fallback evidence (cause a):** `sudo lspci -vvv -s 0000:c2:00.0 | grep -E
+   'UESta|CESta|BadTLP|Replay'` + `journalctl -k -b | grep -iE 'aer|bad tlp|corrected
+   error|replay'` + the 16GT cap's parity-mismatch registers `+0x10 Local DPM / +0x14
+   First-Retimer DPM / +0x18 Second-Retimer DPM` [R12-S1]. Rising `RxErr+/BadTLP+/
+   BadDLLP+` correctable counters ⇒ link ran 16 and fell back on errors (SI margin);
+   all-zero with EquComplete- ⇒ never even got there — consistent with a cable/adapter
+   loss budget rather than a flaky-but-live Gen4.
+3. **Lane Margining readiness (cause c, read-only half):** lspci decodes cap `0x27
+   Lane Margining at the Receiver` printing `PortCap: UsesDriver- / PortSta:
+   MargReady? MargSoftReady?` [R12-S1]. A `+` proves the silicon supports in-band
+   margining; RUNNING a margin sweep is a per-device WRITE sequence with no mainstream
+   Linux tool and can briefly disturb the link — owner-decided, deferred; treat the
+   flag as capability-confirmation only.
+4. **Firmware/ACPI cap (cause d): searched — NO report of a Framework ACPI/DSDT slot-
+   speed cap, no per-slot menu in BIOS docs, and the LnkCtl2 TargetSpeed=16 read (D34)
+   already contradicts any hard cap.** Negative-verify cheaply if desired:
+   `sudo acpidump -b && acpixtract -a *.dat && iasl -d dsdt.dat && grep -i -E
+   'MAXL|GEN|Speed' dsdt.dsl` — owner-lane, read-only; UNVERIFIED payoff.
+5. **Equalization-bypass negotiation (Gen5-era mechanism, context):** the 32GT cap
+   decodes `Phy32Cap: EqualizationBypass- NoEqualizationNeeded-` + "Enhanced Link
+   Behavior Control: Full Equalization required / Equalization bypass to highest rate
+   support / No Equalization Needed" [R12-S1] — those knobs formalize EQ-bypass at
+   32 GT/s and up; for 16 GT/s on this part the actionable state is simply EquComplete,
+   which is read 1. (Quoted here so a future reader doesn't re-open "bypass suggested"
+   as a theory: LnkSta2 as printed carries no such bit; it's a Phy32Cap field.)
+6. **Passive-channel loss at 16 GT/s (cause e)** — practical record unchanged and
+   re-confirmed: bundled DEG1 cable ≈66 cm, "Keep that cable"; generic cables "picky",
+   "needed a ReDriver adapter for one card" [R11-S2]; hub length rule "doesn't matter
+   much … until 1.5m" [R10-S2]. **The adapter-card tier is the platform's own answer:**
+   Framework users who work around the x4 slot's reach use redriver cards (EOP4A
+   "Features a Redriver chip" [R11-S5]; JMT K993G-BK7-**R29Q** — and note BCC's
+   unanswered question "Did you touch any of the **switches** in the R29Q? … I can make
+   my Aoostar AG01 work with an M.2-OCuLink adaptor, but **not** with the R29Q"
+   [R12-S2 post #19]: the R29Q reportedly carries physical switches whose purpose is
+   UNVERIFIED — if our bay already holds such a card, its switch positions are a
+   literal candidate for the owner's "a setting I was supposed to enable").
+
+**Q2 bottom line:** the observed quartet does NOT mean completed-Gen4; the first read
+above collapses the branch tree — most likely outcome is `Phy16Sta: EquComplete-`
+(Gen4 EQ never finished), which converts this ticket's whole EQ/speculation chapter
+into the plain channel-quality lane (cable → adapter switches → redriver → bypass →
+accept). If EquComplete+ AND error counters move, THEN the trained-then-parked story is
+alive and the margin/parity reads (2, 3) explain it.
+
+### R12-Q3 — Framework Desktop × OCuLink/eGPU build register (this machine, speed receipts noted)
+
+| report (date) | chain | OS | BIOS | link/speed receipt |
+|---|---|---|---|---|
+| **Frix_Rioux** [R12-S2 #18, 2026-08-31] | **DEG1** + RX 9070 XT (gfx1201) via the Desktop's OCuLink path | Linux (Debian-kernels 6.18.9/7.0.13; boot hang fixed by kernel not BIOS) | **3.02** | none published; llama-bench on Qwen3.8-Flash-Next GGUF ROCm 10.0 15/85 split: **pp512 324.8 ± 19.5, tg128 21.1 ± 0.2** |
+| **Martin_Roth** [R12-S2 #13/#15, 2026-08-24/25; §R11] | internal **x4 slot** → JMT **K993G-BK7 "PCIE 5.0 X4" + 30 cm** OCuLink → DEG1-class PSU-fed dock; 2nd card via M.2→PCIe adapter; 2× **R9700** | **Fedora 44** | 3.06-era ("attributing…3.06…possible…kernel update") | **no LnkSta posted** |
+| NappDev [R12-S2 #9; §R11] | **DEG1** + "minisforum eop4a card(with redriver)" + RTX 5060 Ti | Win11 | — | enumerated; game-launch driver issue |
+| Samuel_Sylvester [R12-S2 #4, 2025-12-28] | OCuLink + RTX 3090, "works… more info to come" | — | — | none |
+| Ernie_Hobbs [R12-S2 #3/#12] | USB4 eGPUs (×3, fried) → switched to OCuLink (7900 XTX) | Win | — | survival anecdote |
+| BCC [R12-S2 #19/#20] | AG01 dock works via M.2-OCuLink **but not via R29Q**; AOOSTAR vendor: "Not compatible with rx9070xt… instantaneous power consumption is too high" (vendor statement as quoted in forum) | — | — | negative-DOA data point for that combo |
+| **any published 16 GT/s x4 on Framework Desktop** | — | — | — | **NONE found this round or §R11's — stated plainly.** The Gen4 receipts in-corpus are native-port (EVO-X1/MS-S1/GMKtec K12-class) or redriver-tier; Framework's own product copy calls the slot "the **PCIe x4 slot** lets you connect … 50Gbps RoCE NICs" [R12-S6: frame.work Desktop page snippet, accessed 2026-11-14] |
+
+### R12-Q4 — Platform facts, the "16" disambiguation, and the NVMe win
+
+- **Machine:** dmidecode settles it — **Framework "Desktop (AMD Ryzen AI Max 300
+  Series)"**, the 10×10 machine, BIOS 03.06. There is no "Framework Desktop 16";
+  **Framework Laptop 16** is the other product (x8 bay; community OCuLink bay module
+  [R11-S3]; a custom x8 OCuLink module review headline: "…**1-2% performance hit**"
+  [R12-S7: notebookcheck.net title, accessed 2026-11-14]). The owner's "16" most
+  plausibly conflates the Desktop's x16-length connector with the Laptop 16 brand.
+- **Slot electricals:** official Framework copy: "**The PCIe x4 slot** lets you connect
+  high-speed, low-latency 50Gbps RoCE NICs like the Intel E810" [R12-S6]; third-party
+  review title-level: "the **baffling PCIe x4 slot**" [R12-S8: matthewjayhunter.com
+  Framework Desktop review, search-rendered, page body fetch came back empty — quote
+  labeled]. Community block-diagram agrees: "4 PCIe slots: 2x M.2, 1x WiFi slot, 1x
+  PCIe**x4**" [R11-S7]. **So the eGPU path is a Gen4-class x4 link by design —
+  the LnkCap `16GT/s x4` we carry is the slot telling the truth; width is the platform,
+  speed is the open question (Q2). x8/x16 lane counts on this machine: none exposed to
+  the dock path.** §D11's "not-determinable" board identity is CLOSED.
+- **Root-port layout from the new `lspci -t` — the good news, confirmed:** NVMe (the
+  n-gram disk) sits under its **own** root port `00:02.5-[c1]`, separate from the dock's
+  `00:03.1-[c2-c4]`; APU `00:08.1-[c5]`, NPU `00:08.2-[c6]`. **The §D11.3 open question
+  ("whether c1 shares the 00:03.x upstream") is CLOSED: disk traffic and expert
+  streaming do NOT contend on any shared uplink** — which removes a confounder from
+  §D8's tier reasoning without changing any of its arithmetic (the disk's 3.42 GB/s
+  O_DIRECT story and the link's 3.94 GB/s story were always independent terms; now
+  provably so). It also re-confirms D6.6's "width is physical, speed is the defect"
+  (the `link-capped` note stands).
+- **`SltCap: HotPlug- Surprise-`** — no slot-event plumbing exists; matches the DEG1
+  no-hotplug doctrine and [R10-S6]'s same-signature finding; nothing to enable there.
+
+### R12-Q5 — REVISED owner ladder (external-backed vs inference, cost order)
+
+0. **Read Q2-#1 (+2): Phy16Sta on 00:03.1 and c2:00.0, then the AER/parity counters.**
+   Backed: the register split is tool-fact [R12-S1]; free; minutes; **decides which
+   branch this whole problem is in.** (New — replaces §R10/§R11's implicit
+   "trained-then-parked" framing until proven.)
+1. **Inspect the bay: which adapter card, and its SWITCHES** (EOP4A-class redriver?
+   R29Q-style DIP/slide switches — the BCC question unanswered [R12-S2 #19];
+   photo + part number). Backed externally by the working-build delta (§R11 Q1/Q6) +
+   the switches anecdote; inference: that our card lacks a redriver.
+2. **Reseat both ends + swap to a short (≈30 cm) known-Good SFF-8611 cable** —
+   backed: "Keep that cable" / 30 cm in the working builds [R11-S1/S2].
+3. **Redriver-tier insert** (EOP4A "with redriver" is the Framework-Desktop-eGPU part
+   the community actually used; ~$30-50) — backed [R11-S1 #9, R11-S5]; the failure
+   signature it addresses is exactly `Phy16Sta: EquComplete-`.
+4. **Bypass controls:** DEG1+cable+card on a native-OCuLink host (the chimolog/MS-S1
+   class — if it Gen4s there, the bay-side path owns it), or dock-free open-frame on
+   our bay's card. Decisive either way (unchanged §R10 rung-3 logic).
+5. **Kernel-side hygiene, already ours to verify:** Frix's boot-hang was kernel-fixed
+   and his working kernels are 6.18.9/7.0.13 while we run 7.3.0 — no link-speed claim
+   either way; keep as a **stability** note only (`d3cold_allowed=0` + `amdgpu.runpm=0`
+   row from C14/D36 stays, unchanged, explicitly NOT a throughput fix).
+6. **CLOSED/DENIED rungs, stated plainly:** BIOS update — **none newer than our 03.06
+   exists** [R12-S3]; BIOS slot-pin — no menu documented on this product (Q1/Q4,
+   D34's TargetSpeed read); power-ritual — falsified (D35); aspm-off/retrain-as-cure/
+   setpci — non-fixes (R10-S9); AG01-dock-with-9070xT-class — vendor-declared
+   power incompatibility [R12-S2 #20].
+7. **Terminal fork:** if reads 0-4 keep printing 8GT/s ⇒ **this bay-adapter+cable+DEG1
+   passive combination does not close a 16 GT/s eye in this chassis**, publish it (our
+   ticket would be the first documented Framework-Desktop Gen3-latch with the full
+   register trail), and spend the money where §R11-Q5 prices it: weights-CROSSING the
+   narrow link costs ~54% of pp (gpt-oss row) and defines our regime, while weights-
+   RESIDENT costs ~3% (Geerling row) — a second R9700 (TP2) halves BOTH crossing terms
+   by halving each rank's host-pool traffic and doubles compute; profile levers
+   (§D8.5-5/D28 law) remain the no-spend fallback. **3.94 GB/s is then the honest
+   ceiling and the tuning conclusions (§R8/§R9/§D8) all stand unchanged.**
+
+### R12 — Conflicts / SUPERSEDES / UNVERIFIED
+
+- **Supersedes (loud):** (i) §R10-D34's careful "Phase-1-only … at the trained speed"
+  reading is REFINED to the tool-true statement: ALL FOUR base LnkSta2 EQ bits are the
+  8.0 GT/s procedure's status; 16 GT/s status is a separate cap (0x26) whose bits
+  nobody has read yet — so the round's premise "completed Gen4 EQ at Gen3 speed"
+  DISSOLVES pending read Q2-#1 (no contradiction with the owner's data; a
+  re-attribution of it). (ii) §R11's first-check "BIOS 3.06" rung → CLOSED as a fix
+  (already 03.06; latest published; the thread's own causal claim self-hedged and a
+  working build runs 3.02). (iii) §D11.3 NVMe-vs-dock upstream question → CLOSED
+  (separate root port 00:02.5; the confounder is gone, §D8 math untouched).
+  (iv) The launch's own framing "a link with COMPLETED Gen4 equalization still sits at
+  Gen3" — challenged at the front per its instruction: the completion is Gen3's until
+  `Phy16Sta` says otherwise.
+- **Nothing in this round disturbs:** §D8's m-model/rate law, §R8's capacity verdict,
+  §R9's APU adjudication, the C07/D24 naming machinery, or the NOT-fixes table.
+- **UNVERIFIED list:** whether `Phy16Sta` reads EquComplete- on our ports (the round's
+  central pending read); the R29Q's switch purposes and whether our bay carries one;
+  our adapter card's identity (still unrecored — first-ladder item); Frix_Rioux's link
+  speed (never posted — his 324.8 pp could be Gen3 OR Gen4 traffic, unattributable);
+  the exact pciutils version that began printing Phy16Sta (worked from master;
+  fallback raw-read recipe given); mjh review body (empty fetch — title quote only);
+  AOOSTAR AG01/9070XT vendor claim (forum-quoted, not vendor-page); any DSDT MAXL-style
+  cap (searched — none reported; the grep itself not run); LMR margining tooling on
+  Linux (stated as absent by search, not proven).
+
+### R12 — Sources (accessed 2026-11-14)
+
+| # | URL | What it is |
+|---|---|---|
+| R12-S1 | raw.githubusercontent.com/pciutils/pciutils/refs/heads/master/ls-ecaps.c + lib/header.h | The decoder authority: base-cap LnkSta2 bit defines (EQU_COMP 0x02…EQU_REQ 0x20, RETIMER/2RETIMERS, CROSSLINK, FLIT) vs `PCI_EXT_CAP_ID_16GT 0x26` "Physical Layer 16.0 GT/s" with `PCI_16GT_STATUS 0x0C` = {EquComplete 0x1, Ph1 0x2, Ph2 0x4, Ph3 0x8, LinkEquRequest16 0x10} printed as `Phy16Sta:`; +0x10/+0x14/+0x18 Local/1st-Retimer/2nd-Retimer **Data Parity Mismatch** status; Secondary PCIe cap prints only LnkCtl3/LaneErrStat; LMR cap (0x27) prints `PortSta: MargReady/MargSoftReady`; Phy32Cap/Phy32Sta + "Enhanced Link Behavior Control" table (Equalization bypass / No Equalization Needed) |
+| R12-S2 | community.frame.work/t/framework-desktop-with-egpu/79178 (posts #4,#6,#9,#12,#13,#15,#17,#18,#19,#20 — fetched again this round incl. pages beyond §R11's window) | The Framework Desktop eGPU thread, now including **Frix_Rioux #18**: DEG1 + RX 9070 XT + Linux, **BIOS 3.02**, kernel-fixed boot, llama-bench Qwen3.8-Flash-Next ROCm 10.0 (pp 324.8 / tg 21.1); **BCC #19** R29Q "switches" question + AG01-via-M.2 works; **#20** AOOSTAR "Not compatible with rx9070xt … instantaneous power consumption is too high"; Martin_Roth #15/#17 detail (single-PSU chain, M.2→PCIe second card) |
+| R12-S3 | resources.frame.work/downloads/desktop/amd-ryzen-ai-max-300/3.06/ | 3.06 "Released 2026-08-03 … Stable **Latest**"; version list = 3.06/3.05/3.03/3.02 ⇒ nothing newer; component table (EC ec_306_bb3566e, AMD PI StrixHaloPI-FP11 1.0.0.2c) |
+| R12-S4 | resources.frame.work/downloads/desktop/amd-ryzen-ai-max-300/3.03/ | 3.03 (2025-08-06) highlights: PD/EC, Secure Boot CA, LPDDR5 support, OPAL fix — no PCIe items |
+| R12-S5 | resources.frame.work/downloads/desktop/amd-ryzen-ai-max-300/3.05/ | 3.05 (2026-04-02) highlights: 128GB modules, GRUB/Linux slow-boot fix, downgrade support — no PCIe items |
+| R12-S6 | frame.work Desktop product page (search-rendered clause) | "The **PCIe x4 slot** lets you connect high-speed, low-latency 50Gbps RoCE NICs like the Intel E810…" — official electrical x4 statement |
+| R12-S7 | notebookcheck.net "User showcases custom OCuLink X8 module for the Framework Laptop 16 with 1-2% performance hit" | Title-level; Laptop 16 (x8 bay) context for the "16" conflation |
+| R12-S8 | matthewjayhunter.com/post/reviews/hardware/framework_desktop/ (search render: "the baffling PCIe x4 slot, 5GbE…70B LLMs on Linux") | Third-party confirmation of the x4 slot framing; body fetch empty → title-level only |
+| (inherited) | R11-S1..S9, R10-S1..S9, R9-S10/S15/S16/S18, §D8/§D10/§D11, D33–D37 | carried; nothing re-fetched contradicted them except the re-attributions listed above |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R12 appended)]
+commands_run: [repo reads (D33–D37, EXPLORE §D10/§D11 incl. its paste-ready block, §R9/§R10/§R11 re-read; grep confirms our bay adapter was never recorded) => pass; raw fetches: pciutils ls-ecaps.c (2 windows) + lib/header.h (2 windows) — LnkSta2 vs PCI_EXT_CAP_ID_16GT 0x26 / PCI_16GT_STATUS 0x0C bit map, Phy16Sta print, DPM status regs, LMR cap print => pass; web_url_read: resources.frame.work 3.03/3.05 pages (3.06 inherited verbatim from §R11), community 79178 later pages (Frix/BCC/AOOSTAR finds) => pass; searxng searches ×7 (degraded: one batch aborted; one noise-heavy) + websearch ×1 fallback => pass; mjh review body fetch returned empty and PCI_LMR offset guess untouched — both logged UNVERIFIED rather than guessed ]
+deviations: none — read-only, RESEARCH.md only. The launch framed the signature as "completed Gen4 EQ at Gen3 speed"; I was explicitly invited to challenge it and DO so loudly and on-source (tool-decode authority): those completion bits are the 8.0 GT/s register; the Gen4 status is a different, unread register (0x26 cap, +0x0C) — the paradox is pending, not real. No settled ticket fact (D34/D35/§D8/§R8/§R9) was re-litigated.
+friction: searxng aborted one query batch and one query returned junk (Samsung/XDA noise) — recovered via the native websearch and by re-querying; pciutils path guessing cost one 404 (file lives at repo root, not lib/) — resolved via the trees API; lspci's Phy16Sta print exists in master but the introducing version is unrecorded → the ladder ships the setpci-equivalent read so the rung never depends on distro-lspci age.
+open_questions: [Phy16Sta on 00:03.1/c2:00.0 — the single read that selects the branch (EquComplete- channel problem vs trained-then-parked error problem); our bay adapter's identity and any physical switches (R29Q anecdote); Frix_Rioux's actual link speed (follow-up ask if the owner ever pings the thread); whether the 16GT parity-mismatch/DPM registers move during a Gen4 attempt]
+next_suggested: coord hand the owner Q2's read-#1 (one command pair, copy-pasteable) BEFORE any hardware spend — if it prints EquComplete- the case closes as channel quality and ladder rungs 1–3 (adapter ID → short cable → EOP4A-class redriver card) execute in that order against the working-build precedent; fold the supersede lines (LnkSta2 bit-attribution; §R11 firmware rung CLOSED at 03.06-latest; NVMe-contender confounder closed) into DECISIONS + the tuning note's §1 at next touch per the D36 re-pointing law, and restate the terminal fork verbatim: if still 8GT/s after all that, publish the first documented Framework-Desktop Gen3-latch and move the money to TP2 or the §D8 profile levers — the rate model and every prior capacity verdict stand.
