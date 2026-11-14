@@ -13,7 +13,7 @@
 FROM python:3.15-slim-bookworm
 
 # renovate: datasource=git-refs depName=assafelovic/gpt-researcher
-ARG GPTR_VERSION=5cdad9cb434754188b78bd998df18dd8d502cf7e
+ARG GPTR_VERSION=ddd4db36208d9c8e49f3b2436efda97baecb5433
 
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
