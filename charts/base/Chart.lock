@@ -7,6 +7,6 @@ dependencies:
   version: v1.21.3
 - name: gateway-api-crds
   repository: https://charts.christianhuth.de
-  version: 1.2.5
-digest: sha256:9dd45ee7af3bf0052d0c134bc19167d7bdc92f76f6da6ca8f162612b3fe1a7db
-generated: "2026-11-03T09:57:32.934050234Z"
+  version: 1.3.1
+digest: sha256:4817fa89417cf6195f1bd2caa748b400a931b58e748cdd7bbb6c43bbe0998519
+generated: "2026-11-13T15:56:39.158903575Z"
