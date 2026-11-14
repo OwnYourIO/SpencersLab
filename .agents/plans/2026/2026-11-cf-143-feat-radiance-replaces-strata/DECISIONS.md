@@ -1360,6 +1360,31 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    simultaneously reachable (~83 GiB host ≤ 110) — which is AD-144's argument, now stated with
    numbers instead of hope. Authority: RESEARCH §R15 (lines 3664–3922).
 
+ - 2026-11-14 human+coord D46 (EPP IS NOW `performance` AND STICKING — the first owner-lane command
+   I authored that worked as specified on the first try, and the last zero-cost single-card
+   experiment is now in play): the tmpfiles.d line was deleted and replaced by
+   `/etc/systemd/system/epp-performance.service` (oneshot, `WantedBy=multi-user.target`,
+   `After=cpupower.service` + `Wants=cpupower.service` precisely because cpupower is enabled and can
+   write EPP first), proven by `cat /sys/.../cpu*/cpufreq/energy_performance_preference | sort |
+   uniq -c` ⇒ **`32 performance`** with `is-enabled` showing both units enabled. This closed the
+   §D6.4 non-persistence question the kernel-docs way (§R15/D45: `powersave` is the intended
+   governor NAME under `amd-pstate-epp`; EPP is the lever; `dynamic` lets a daemon re-assert it), and
+   it is why the last four commands I dictated failed in four different ways — the fix was not better
+   memory of syntax but a form that cannot be mis-remembered plus the read that proves it took effect.
+   WHAT THIS BUYS AND WHAT IT DOES NOT: it targets the ~24 ms of NON-wire step time, so the honest
+   expectation is single-digit percent, not 2×; the standing finding from §R15 is unchanged — our
+   ~35 t/s equals the creator's documented single-card `--tp 1` floor. The decisive ambiguity is
+   whether the docs' 28–29 ms INCLUDES speculative acceptance, and only a fair probe answered on a
+   `performance` box can settle it: same prompt, `max_tokens ≥ 2000`, twice, second run quoted, with
+   Δ`radiance:kv_stream_bytes_total{dir="in"}` ÷ Δ`vllm:generation_tokens_total` recorded before and
+   after (the measurement that replaced my VOID 83–100 MiB/token bound) plus the engine's own
+   `/stats`/request `done` lines. If that lands near ~35–40 with the wire still at ≤15% of step, the
+   single-card question is CLOSED with receipts and the remaining budget belongs to
+   **TP2/AD-144** (docs-measured 62.3–64.8 with MTP at 62K; 137 on L1T), where the n-gram RAM tier
+   and the prefix-tier resume stop competing with each other. Persistence should also be re-read at
+   the next natural reboot (the unit is enabled, but this box has taught us to verify rather than
+   assume). Authority: the owner's paste, 2026-11-14.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
