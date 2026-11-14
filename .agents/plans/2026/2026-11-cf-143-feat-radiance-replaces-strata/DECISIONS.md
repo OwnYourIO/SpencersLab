@@ -1245,6 +1245,40 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    AUTHORITY: the owner's paste, 2026-11-14 (D41's "prime suspect SELinux" is superseded by
    evidence; the phase-bit and no-LnkErrSta findings in D41 stand unchanged).
 
+ - 2026-11-14 human+coord D43 (**THE RETRAIN EXPERIMENT RAN, AND IT CAME BACK GEN3 — so the
+   boot-clamp hypothesis is dead and the physical chain is the remaining suspect**): the owner's
+   `echo 1 | sudo tee /sys/bus/pci/devices/0000:c2:00.0/reset` printed
+   `tee: '…/reset': Inappropriate ioctl for device` **but the reset DID execute** — `dmesg` shows
+   `pcieport 0000:c2:00.0: resetting` / `reset done` and a full amdgpu resume on `c4:00.0` (PCIE
+   GART re-enabled, PSP/SMU resumed, rings re-registered). Two corrections and one conclusion:
+   (1) **my D42 hedge was wrong** — I wrote that a sysfs reset "might also be refused"; it is not,
+   because lockdown gates *userspace config writes* and this path is the kernel's own. The
+   `ioctl`-flavoured error is noise from how that attribute reports, not a failure: **verify a
+   refused-looking write against `dmesg`, which I should have said rather than hedged**.
+   (2) The `Width x4 (downgraded)` flag on `c2:00.0` is NOT new information — that bridge's own
+   `LnkCap` advertises x16 while the OCuLink path is physically x4 by design (§R12-Q4), so the
+   width flag is lspci comparing the link to an advertised maximum we already knew was aspirational.
+   Do not let it be read as a fresh degradation.
+   (3) **The conclusion is the speed flag.** A secondary-bus reset re-initialises the link from
+   Detect, and with `LnkCtl2 TargetSpeed: 16GT/s` set on the root port, this was a genuine fresh
+   negotiation — not a stale boot-time latch — and it landed at `8GT/s (downgraded)` on both ports
+   with `Phy16Sta: EquComplete+` unchanged. That is what falsifies "capable but never ran at boot"
+   (D40's first branch, which the failed `setpci` had left undecided) and leaves the physical
+   chain: the socket path, the riser/adapter's channel, or the cable. Ladder therefore re-ranks
+   WITHOUT further software rungs: **(i) move the adapter to the other M.2 socket (different root
+   port, `00:02.5` vs `00:03.1` — free, and now the highest-value test), (ii) a shorter known-Good
+   Gen4 cable, (iii) dock bypass/open frame** — re-reading `LnkSta` after each with the same
+   reset-then-read method that just worked (`…/reset` + `dmesg` + `LnkSta`), and accepting, if all
+   three still say 8GT/s, that this chassis path is Gen3 and the bandwidth answer is TP2, per
+   §R13's terminal fork. BIOS/firmware, the ritual, aspm, setpci and "buy a redriver" all stay
+   retired, and **no further retrain attempts are worth making** — the register said what it says.
+   (4) OPERATIONAL, not analysis: the reset hit a **live** GPU. `dmesg` shows a clean resume, but
+   any in-flight radiance request died with it and the pod will have restarted — cheap by design
+   (the init marker skips in <1 s, the pack is intact and already hash-verified), yet the runbook's
+   own discipline exists for this reason, and the honest note is that this experiment should have
+   been run with radiance scaled down first as D42 said; the outcome is unaffected, the method was
+   not. Authority: the owner's paste, 2026-11-14.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
