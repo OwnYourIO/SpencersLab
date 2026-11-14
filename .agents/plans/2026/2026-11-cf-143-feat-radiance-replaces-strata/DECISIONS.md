@@ -1469,6 +1469,49 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    (lines 3926–4059), including its UNVERIFIED list (VAP GA flag, Framework BIOS UMA documentation,
    audio-function stub behavior, ROCm device-order authority).
 
+ - 2026-11-14 human+coord D49 (**MY INSTRUCTION CRASHED THE BOX — recorded as the ticket's only
+   self-inflicted outage, and it closes the hiding question permanently**): the owner ran the
+   trial step I dictated, `echo 0000:c5:00.0 | sudo tee /sys/bus/pci/drivers/amdgpu/unbind`, and the
+   machine went down. I called that step "reversible, survives only until the next boot." **It is
+   not safe on this hardware, and I should have seen why from our own topology read.** §D11's
+   `lspci -tvv` shows the iGPU is not alone in its slot: `00:08.1-[c5]--+-00.0 (8060S display)
+   +-00.1 (HD Audio) +-00.2 (CCP/ASP) +-00.4 (USB xHCI) +-00.6 (HD Audio)` — so `c5` carries the
+   **SoC's USB controller and the PSP/CCP alongside the display function**. Unbinding one function of
+   a multi-function PCIe device routes through a device/slot reset (FLR, or a Secondary Bus Reset on
+   `00:08.1`), and a bus reset takes **everything behind that port with it** — while `amd_iommu=off`,
+   our deliberate posture, means there is no IOMMU group containment and no isolation for the
+   in-flight DMA of whatever else lives on that bus. That is the mechanism (stated as the
+   well-supported hypothesis, not a proven read: a hard crash leaves no `dmesg` we could retrieve),
+   and it is why the §R18 source list's own "reset-bug" and VM-passthrough notes were the warning I
+   under-weighted. **The lesson is the same one this ticket keeps charging me for**: I reasoned about
+   the device as an isolated object instead of reading the bus it sits on — the register-misread
+   (D38), the wrong-denominator bound (D44), and now the wrong-blast-radius instruction.
+   RECOVERY FACTS the owner needs, stated plainly: **nothing in what I dictated persists.** The trial
+   was three runtime writes with no udev rule, no initrd rebuild, no kernel command-line change, so a
+   power cycle restores the previous state on its own and **no TPM/boot-measurement re-sealing is
+   implicated** (we never touched boot entries). Because the box died mid-write on a btrfs
+   snapshot/CoW root, the post-boot checks below matter more than the crash itself.
+   RULING, now with an incident behind it: **HIDING THE APU IS OFF THE TABLE — do not attempt it by
+   any method on this machine.** `pci-stub.ids=`/`driver_override` on the kernel command line is the
+   persistent variant and therefore *worse* (the reset happens at driver-bind time, before userspace
+   exists, with the same USB/PSP neighbours and possibly the console). The D48 decline stands and is
+   strengthened: the goal (no mis-allocation) is already delivered by product naming, the gain is
+   ~0.5 GiB and zero throughput, and the measured cost of trying is now **a dead host for an
+   unknown amount of time** — on top of the router-starvation cost D48 already priced. The cutover-day
+   runbook survives ONLY as a document, with the hazard banner it now needs; if the APU lane is ever
+   genuinely retired, the right mechanism then is **the BIOS iGPU disable** (a firmware decision made
+   before any driver binds, so no in-flight reset) — not a Linux-level bind/unbind trick, and not
+   anything I should recommend without researching that specific claim.
+   POST-BOOT VERIFICATION IS NOW THE ACTIVE WORK, and one item is load-bearing for the whole two-day
+   hunt: **the Gen4 link may re-latch to Gen3 after a hard power cycle** (D35/D43/D44 — the socket
+   swap, not the boot, fixed it, and a dirty reboot is precisely the class of event that loses a
+   negotiated speed). The owner must re-read `LnkSta`/`Phy16Sta` on both ends, confirm `pinned 71.04`
+   and the marker-skip boot, verify the 113.6 GiB pack still passes the hash gate (a crash during a
+   read-only phase is benign, but a btrfs CoW tear is not something to assume away), re-confirm
+   `amd.com/gpu-8060s` is back, re-read `energy_performance_preference` (the `epp-performance.service`
+   unit is enabled and should have applied itself), and check the router recovered. Authority: the
+   owner's report, 2026-11-14, and §D11's topology read that I had in hand and did not use.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
