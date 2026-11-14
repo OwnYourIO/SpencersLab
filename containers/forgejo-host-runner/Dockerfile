@@ -20,7 +20,7 @@ FROM docker.io/library/node:22-bookworm-slim
 # reproduce Netlify's output, and SCSS/.Resize only exist in the extended
 # binary.
 # renovate: datasource=github-releases depName=gohugoio/hugo
-ARG HUGO_VERSION=0.151.0
+ARG HUGO_VERSION=0.170.0
 # manual-pin: sha256 of the tarball from the same release's
 # hugo_${HUGO_VERSION}_checksums.txt; bump with HUGO_VERSION — a stale
 # digest must fail the build, not get auto-trusted.
