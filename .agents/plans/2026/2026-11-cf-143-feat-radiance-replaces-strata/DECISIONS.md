@@ -1426,6 +1426,49 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    remaining gap to the owner's 70+ expectation is structural to the card count, not a
    misconfiguration.
 
+ - 2026-11-14 research+coord D48 (§R18 — **HIDING THE 8060S IS DECLINED, and the owner's guide is
+   preserved as the cutover-day procedure**): the doc's motivating premise — "the plugin advertises
+   both cards as one `amd.com/gpu` so a pod can get the built-in graphics" — was **true pre-C07 and
+   is false on this box**: plugin v1.31.0.12 with `-resource_naming_strategy=product` over the D24
+   patched `amdgpu.ids` advertises `amd.com/gpu-r9700-1` and `amd.com/gpu-8060s` with **no bare
+   pool**, so a mis-allocation is structurally impossible; radiance gets exactly one render node and
+   prints `1 device(s) [0:gfx1201]`. Claim-by-claim: the device-count argument is **true-as-documented
+   and dead-as-shipped** (no which-subset control; §R6 found it unimplemented in the binary);
+   `ROCR_VISIBLE_DEVICES` **cannot** fix a mis-allocation (Allocate mounts nodes, sets no env — the
+   2026-11-07 index-order crash is that scar, and §R7's GUIDE harness shows the flag is for
+   selecting, not rescuing); **Strata PR #3636's 71–74 vs 46–49 and 2,530 vs 1,627 measure USING the
+   8060S in a layer-split with the expert arena in host RAM, not the tax of merely SEEING it** — the
+   presence-tax the doc infers has no evidence, and this ticket measured it from the other side
+   (§D47: `0.0 MiB/token` on the wire during sustained decode; radiance prints `not serving`; the
+   router's `/v1/models` had every model `unloaded`); mixed-gen corruption issue **#2706 is real but
+   requires both devices in one pipeline**, which per-product naming makes unreachable; and the RAM
+   argument is **inert** — `card 0000:c5:00.0 … 512.00 MiB VRAM` in the engine's own print is the
+   documented BIOS minimum, Strix allocation is dynamic-GTT regardless, and the §R15 ngram-ram gate
+   needs `71.04 + 47.68 + 4 = 122.72`, which beats 110 and every hiding-gain.
+   WHY IT WOULD COST SOMETHING REAL: the doc's recommended `vfio-pci` route is unavailable on this
+   box by prior decision — `amd_iommu=off` is the deliberate working posture (§R9/§D33: the
+   `iommu=pt` gate was the error; radiance's `dma copy lists` path runs under off), and vfio's only
+   no-IOMMU escape is kernel-labelled *"unsafe DMA … w/o physical IOMMU protection"* (vfio.rst),
+   which this ticket declines. `pci-stub` (via `driver_override`, no IOMMU, reversible) DOES work —
+   and it deletes `amd.com/gpu-8060s`, which is the resource the **llama-swap router is scheduled
+   from** under the owner's own D21/B1 ruling. Leaving the add in place with no pool is the
+   **C10 class of failure we just lived for 11 h 40 m**, re-invited by choice; taking the add out
+   leaves the pod schedulable but ends the APU's Vulkan/GGUF serving lane and the catalog's
+   `-strix` fallback. Neither is a hiding "side effect" — it is the whole content of the trade.
+   RULING: **do nothing now**. Keep the doc, corrected as §R18 tables it, as the **retirement
+   runbook for cutover day**: if/when the owner deliberately retires the APU serving lane, the
+   order is **code first** (drop the `gpu-8060s` add from the gpu-ai overlay — a D21/B1 reversal,
+   and the same-wave law means docs/overlays/names move together), then `pci-stub` **per function**
+   (`1002:1586`, leaving `1002:1640` audio alone — no Strix-Halo report exists for the co-binding
+   question, flagged UNVERIFIED), then verify, with rollback = rebind + revert the overlay. The
+   revisit trigger is singular and named: **the strata cutover**, which is itself an open owner
+   decision (Deferred: at 110 strata cannot co-reside, so that decision is already an either/or).
+   Also recorded: the doc's honest self-caveat — the vfio/pci-stub steps are **standard Linux
+   practice, not hardware-specific sourced advice** — is exactly where this cluster's specifics
+   (product naming, `amd_iommu=off`, the APU-as-router-pool) override it. Authority: RESEARCH §R18
+   (lines 3926–4059), including its UNVERIFIED list (VAP GA flag, Framework BIOS UMA documentation,
+   audio-function stub behavior, ROCm device-order authority).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

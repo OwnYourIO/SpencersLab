@@ -3920,3 +3920,140 @@ deviations: none — read-only, only RESEARCH.md written. The round's central an
 friction: the ppd→EPP exact mapping and cpupower save mechanics resisted clean fetch (gitlab sign-wall / man page not reached) — substituted a one-command ownership read rather than guessing; the 28–29 ms-MTP ambiguity could NOT be resolved from docs text and became the round's designated free probe instead of being argued; the QSA-drop slab cost used the doc's per-rank ring figure × our 1.6M tokens (labeled multiplication, not measured).
 open_questions: [the best-tile + acceptance probe (one fixed run decides per-step vs per-token reading of the creator 28–29 ms AND which world our 35 lives in); which service owns EPP on this box (is-enabled read); whether the radiance image's gather is device-side for our card (assumed libr4d — cheap to confirm from a boot CONFIGURATION line)];
 next_suggested: coord: (1) hand the owner the EPP-ownership read + `powerprofilesctl set performance` (or mask-then-persist) and re-run the §D8.3 fixed probe with the best-tile and `/metrics` acceptance counters — the ONLY remaining zero-cost decode experiment per this round; (2) fold the headline into DECISIONS at next touch — single-card iq4r ≈ the documented floor; 70+ is two-card territory — so the decode-improvement budget moves to the TP2 follow-up card, where flashnext.yaml's prefix-tier shape plus (for the first time) the ngram-ram tier are both affordable; (3) retire the tuning note's EPP-confused "fix the governor" wording per D36's re-pointing law (governor name is normal; EPP is the lever; cite R15-S4); (4) no session/ctx/placement changes — §R15-Q3 measured them sub-noise against the now-confirmed non-wire step.
+
+---
+
+## §R18 — hiding the 8060S APU: fact-check of the owner's guide, and what this cluster's own decisions change
+
+Owner round 2026-11-15: fact-check the owner's note **"Hiding the Strix Halo APU
+Graphics with One R9700"** against external sources and against what THIS cluster
+already decided/measured (D21/B1, D24, §R6/§R7, §R9 APU verdict, TP2 §5/§6, tuning
+note §12 "No hide experiments", §D46/D47 EPP+wire-zero results). The doc was written
+against the PRE-C07 world (one `amd.com/gpu` pool, plugin `nodeId`-ascending picks,
+no patched table) — most of its premises are history here. External cites R18-S#,
+accessed 2026-11-15.
+
+### R18 VERDICT (first)
+
+**Don't hide.** The doc's *goal* — "no pod ever gets the wrong GPU" — is already
+**fully closed on this box by the shipped scheduler lane** (first-party
+`charts/amd-gpu` running v1.31.0.12 `-resource_naming_strategy=product` over the
+D24 patched `amdgpu.ids`, node advertising `amd.com/gpu-r9700-1: 1` +
+`amd.com/gpu-8060s: 1`, bare `amd.com/gpu` gone ⇒ a stray bare claim is
+Pending-forever "loud by design", §R6-Q4/§D6), and its *side-effect* is the single
+failure mode this ticket actually lived: stranding the `gpu-8060s` claim the llama-swap
+router is scheduled from — i.e. **C10, 11 h 40 m, re-executed at the router's next
+restart.** On the mechanics: the doc's RECOMMENDED route (vfio) is unavailable here
+without reversing `amd_iommu=off` or enabling the kernel's self-described
+*“unsafe DMA … w/o physical IOMMU protection”* noiommu knob [R18-S4] — declined; its
+fallback (pci-stub/driver_override) works without IOMMU [R18-S5] but delivers ~0.5 GiB
+RAM (we already print the APU at the `512.00 MiB VRAM` BIOS-minimum [R18-S7]) and zero
+measured performance: §R9 found no attested idle-APU cost, §D46/D47 measured
+**0.0 MiB/token wire during sustained decode** at 41.1/41.3 t/s — the APU is not where
+anything is. Revisit only at the strata-cutover, if/when the owner intentionally kills
+the APU serving lane (then hiding is tidy, cheap, and coherent) — procedure below.
+
+### R18-CLAIM-TABLE (each: verdict for THIS box + citation)
+
+| # | doc claim | verdict here | why |
+|---|---|---|---|
+| 1a | "the AMD device plugin advertises every GPU as `amd.com/gpu`; naming strategies only affect partitioned Instinct cards" | **WRONG-for-this-box** (was true pre-C07) | `.12` docs list product as a first-class strategy for any card: "`single`, `mixed` or `product`" [R18-S1]; §R6 source-verified `product` = per-marketing-name pools for consumer cards; our node advertises the named pools (live, §D6/§D8, final-review witnesses) |
+| 1b | "device-count limits how many, not which" | **true-as-documented, dead-as-shipped** | docs: "Setting `AMD_GPU_DEVICE_COUNT` to a value lower than the physical count ensures only a subset of GPUs are made available" — subset identity unspecified [R18-S1]; §R6 proved the .12 binary implements neither it nor `CONFIG_FILE_PATH` (docs lead code; t1m.me class) |
+| 1c | "`ROCR_VISIBLE_DEVICES` in a pod can't fix a mis-allocation" | **TRUE** | the plugin's `Allocate` returns only device nodes, "no env visibility" (S13; §R6-Q4): kubelet mounts what it allocated — env can re-order what /dev/kfd shows but cannot conjure the right render node; our own 2026-11-07 vllm crash is the index-order scar [S15] |
+| 2 | "Strata PR #3636 measured 71–74 vs 46–49 decode; 2,530 vs 1,627 at 64K" | **TRUE but measures USE, not presence — and supports §R9, not the hide thesis** | the comparison is "the two ways to run the pair: **the 8060S + R9700 layer split**, and **the R9700 alone with the 8060S hidden and the whole expert arena in the Strix Halo's RAM**" [R18-S2] — a *split-serving* engine being kept OFF the APU beats *using* the APU; it says nothing about a visible-idle APU taxing a dGPU. (Its "71–74" is **Strata IQ3_S + RAM arena** on a Gen4-x4 box — another non-radiance, another-quant data point for §R15's census; radiance iq4r single-card still unshown >40, and our D47 41.1/41.3 now *beats* the creator's TP1 floor.) |
+| 3 | "gfx11-before-gfx12 corruption (Strata #2706); device order not guaranteed across boots" | **TRUE of Strata in split mode; NEUTRALIZED for radiance here** | #2706 (closed): "STRATA_HC_UPMIX on a gfx11 + gfx12 layer split corrupts prefill on the gfx12 stage (gr_upmix caches its arch check from the first device)… Nothing crashes and nothing is logged" [R18-S3] — requires using both devices in one pipeline. radiance gets ONE render node (`Allocate` mounts `/dev/kfd` + `card1/renderD128`, S13/§R6): agent enumeration via kfd still *lists* the APU, but its render node isn't in the container, so compute on it fails at open (node-permission class, Unix-device mechanics + kubelet device-plugins doc R6-S16), and the engine prints exactly one: `1 device(s) [0:gfx1201]` (§D8.5); the GUIDE's own harness selects backends by env ("`ROCR_VISIBLE_DEVICES=99`" host-tier tests [R18-S8]) — radiance honors the standard env. Order-unstability is moot when the POOL is the identity: `gpu-r9700-1` claims can bucket only R9700 nodes (§R6-Q1 dpm per-name pools). |
+| 4 | "iGPU unused → set BIOS carve-out minimum; ~123–125 GiB available; hiding + 0.5 GB frees it" | **true-in-general, INERT here** | we ALREADY print `512.00 MiB VRAM` for c5 (§D8.1) = the documented Linux minimum ("set the iGPU memory size (UMA frame buffer) to its 512 MB minimum in the BIOS" [R18-S7]); Strix Halo memory is dynamic GTT anyway (EVO-X3 twin: "only 1GiB visible VRAM, while AMDGPU exposes a 120GiB graphics translation table aperture", R9-S8 carried). Ram-tier arithmetic unchanged: gate needs `71.04 + 47.68 + 4 = 122.72` free under the cgroup vs pod **110** (or 114 with any hiding-gained +0.5 GiB — the doc's own RAM argument cannot reach 122.72), and node math caps any pod at ~119.8 (125.08 − 4.125 − 1.158, §R8/D6.2) ⇒ **ram-tier stays refused; verdict §R15-Q1 untouched by hiding.** |
+| 5a | vfio bind (recommended) | **unavailable-as-recommended** | `amd_iommu=off` (deliberate, D28(5): "dma copy lists IN USE", NPU already sacrificed) ⇒ no IOMMU groups; vfio's escape is the knob the kernel itself labels "intended for usages where **unsafe DMA** can be performed by userspace drivers w/o physical IOMMU protection" (`enable_unsafe_noiommu_mode`) [R18-S4] — not a reasonable posture for this multi-tenant lab node; reversing `amd_iommu=off` contradicts our own working-path evidence (§R9/D28(5)). |
+| 5b | pci-stub fallback (no IOMMU) | **mechanically viable** | per-function override is documented and IOMMU-free: `echo pci-stub > /sys/bus/pci/devices/0000:c5:00.0/driver_override` semantics per the ABI doc ("only a driver with a matching name will … bind … does not automatically unbind", April 2014 [R18-S5]); functions `1002:1586`+`1002:1640` [R18-S6/S17]. The USB-controller-in-the-group warning [R18-S6] is a **vfio-with-IOMMU** hazard and does not apply to per-function pci-stub — but nothing says so in the doc; standard-Linux-practice, flagged. |
+| 5c | "plug a monitor into the R9700" | **irrelevant here (SSH-managed headless), true-in-general** | the APU's display outputs go dead; our access path is network+R9700 console — no cost, no risk, stated as the doc does. |
+| 5d | hide → KFD/ttm/plugin/router effects | **THE cost** | c5 leaves amdgpu ⇒ leaves KFD and the plugin's `/sys/module/amdgpu/drivers/pci:amdgpu` walk ⇒ **`amd.com/gpu-8060s` disappears from node status** ⇒ the D21/B1 overlay claim `limits."amd.com/gpu-8060s": 1` strands at the router's next restart — **the exact C10/D26 11 h 40 m failure class** — plus the catalog's `-strix` fallback dies and the D24 APU-rows-carry ledger/test pins go stale (all of them code changes, not host-only). |
+| 6 | goal-achieving alternatives | **all already shipped; nothing left to add** | per-product naming (C07/D24, live), explicit per-workload pools (radiance→`gpu-r9700-1`, router→`gpu-8060s`), stray-bare-claim=Pending guard ("loud by design", §R6-Q4-3), optional belt `HIP_VISIBLE_DEVICES=0` env on the radiance pod ("a belt to the suspenders … one values edit", §D8.5), k8s `ValidatingAdmissionPolicy`/CEL could force every GPU pod to name a pool (GA status UNVERIFIED this round — page fetch returned nav-only; mechanism itself documented at kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/); NFD/NodeFeatureRule unneeded (no NFD, §D11.2). |
+| 7 | TP2: "nothing here changes" | **CONFIRMED (and hiding would only COST)** | TP2 §6: a second 7551/C0 "resolves to the same product name and **joins the same pool**: the node advertises `amd.com/gpu-r9700-1: 2`" — the doc's "worse with a second card" claim is bare-pool arithmetic from the world before C07; P2P stays the no-p2pdma host-mailbox lane regardless of the APU (§R11 carry); power-tie falsified by our 300 W print (D33); hiding the APU before TP2 would additionally delete the router's pool for zero TP2 benefit. |
+
+### R18 — RECOMMENDATION + the if-ever procedure (for the strata-cutover lane only)
+
+**Hide it: NO. Hide it later: ONLY as part of a deliberate APU-lane retirement**
+(strata cutover Q5 lane), because at that point the router's `gpu-8060s` claim is being
+removed by design anyway and hiding becomes free. The asymmetry is the whole story:
+**mis-scheduling risk today = zero (pool identity), router-starvation risk if hidden =
+one restart away, benefit = ~0.5 GiB and a measured 0.**
+
+If ever executed, the procedure for THIS box (and its K8s-side consequence spelled
+out — it is a D21/B1 REVERSAL, a code change in the same wave):
+1. **Pre-flight reads (all read-only, all reversible by doing nothing):**
+   `lspci -nn -d 1002:` (expect c5:00.0 `1002:1586` + c5:00.1 `1002:1640` + whatever
+   else the SoC exports), `cat /sys/class/drm/card2/device/power/{control,runtime_status}`
+   (expect `on`/`active`, §D8.1), router `/v1/models` (know the lane you're about to
+   strand — §D8.5 witness: every model `unloaded` was this ticket's APU-cost null).
+2. **CODE FIRST, same-wave law (D18 applied to host changes):** repoint
+   `services/gpu-ai/prod/values.yaml` llama-swap overlay off `amd.com/gpu-8060s`
+   (drop the GPU claim, or bare-if-on-bare-pool-node — it is NOT, so: no GPU),
+   re-point the D24 ledger's APU rows/tests, retire the catalog `-strix` fallback,
+   land + sync BEFORE any host bind, so the router is already GPU-free when the pool
+   vanishes — the C10 lesson inverted.
+3. **Host bind (pci-stub route; NOT vfio, see 5a):** `echo pci-stub > …c5:00.0/driver_override;
+   echo 0000:c5:00.0 > /sys/bus/pci/drivers/amdgpu/unbind; echo 0000:c5:00.0 >
+   /sys/bus/pci/drivers/pci-stub/bind` (same pair for `:00.1`), per the documented
+   override semantics [R18-S5]; persist later via a modprobe/install-script step
+   (kernel-parameter variant `pci-stub.ids=1002:1586,1002:1640` +
+   `driver_override`-style early-bind ordering — bootargs edit, owner-lane).
+4. **Rollback:** clear override + rebind `amdgpu` both functions (`echo > driver_override;
+   echo …:00.0 > drivers/amdgpu/bind`), revert step 2 in GitOps. Verify: plugin reprints
+   `Reporting 1 devices as amd.com/gpu-8060s` and node status regains the pool.
+5. **Prints that prove each state:** node `.status.capacity` (`gpu-8060s` absent /
+   present), plugin `-v=5` log device-map lines (§R6-Q4-5(b)), router pod Running with
+   the new claim shape, radiance UNTOUCHED throughout (`gpu-r9700-1: 1` and its 41 t/s
+   baseline, §D47) — and the runbook's `power cap` line re-read post-any-BIOS-change
+   (Strix power-tie guard, D33).
+
+### R18 — Conflicts / UNVERIFIED
+
+- **Conflicts with our own record, resolved by precedence:** the doc re-opens exactly
+  what D21/B1 (owner ruling) and TP2 §5 (this ticket's interdependency finding)
+  CLOSED; the tuning note §12 already says "No hide experiments: `vfio-pci` on the APU
+  would strand the router". Nothing here contradicts §R9's narrowed APU answer
+  (idle-enumeration cost = zero attested; loaded-co-serving = open A/B question the
+  doc's hide does NOT answer — if the APU is ever the co-serving suspect, the loaded
+  router A/B (§R9 action) measures it in minutes, router alive).
+- **Corrections carried:** PR #3636's 71–74 row joins §R15's census as another
+  other-engine/other-quant single-card-class datapoint (Strata, IQ3_S, arena-in-RAM);
+  it does NOT revive the 70+ expectation for radiance iq4r (our 41.1/41.3 stands as
+  documented-floor-plus).
+- **UNVERIFIED:** the owner's doc §5 exact wording (read second-hand via this launch);
+  whether hiding the iGPU frees ANY further RAM on the Framework Desktop BIOS beyond the
+  512 MiB already printed (no Framework BIOS menu doc found; the cfg "512 MB minimum"
+  line is generic Strix-Halo advice [R18-S7]); ValidatingAdmissionPolicy GA version
+  (nav-only fetch); behavior of `snd_hda`/audio function left bound while display is
+  stubbed on this exact SoC (no Strix-Halo report found; the passthrough guide binds
+  both [R18-S6]); whether a pci-stubbed c5 changes the engine's `not serving` HARDWARE
+  block line count (cosmetic; the walk enumerates display devices); "device order not
+  guaranteed across boots" as a general ROCm claim (our [S15] injury + index-order
+  history is the evidence we have; no ROCm doc fetched asserting it).
+- **Blunt note the doc makes itself:** every mechanic it cites is standard Linux PCI
+  practice (vfio/pci-stub/console/BIOS carve) — and standard practice meets THIS box at
+  three points: no IOMMU (vfio arm dead), the router schedules BY THE APU POOL NAME
+  (hide arm costs the router), and the pools already name-identify the cards (goal
+  arm moot).
+
+### R18 — Sources (accessed 2026-11-15)
+
+| # | URL | What it is |
+|---|---|---|
+| R18-S1 | raw.githubusercontent.com/ROCm/k8s-device-plugin/v1.31.0.12/docs/user-guide/configuration.md (fetched) | Flag table incl. "`single`, `mixed` or `product`"; `AMD_GPU_DEVICE_COUNT` section + "ensures only a subset of GPUs are made available" (no which-subset control); CONFIG_FILE_PATH YAML example (docs-side existence; binary doesn't implement either — §R6) |
+| R18-S2 | github.com/Niko1221/Strata pull/3636 via api.github.com (fetched) | The Strix-Halo+R9700 benchmark PR: "the two ways to run the pair, measured with fresh engines: the 8060S + R9700 layer split, and the R9700 alone with the 8060S hidden and the whole expert arena in the Strix Halo's RAM"; "the R9700 alone beats the split: 64K prompt 1,627 -> 2,530 tok/s, 200K first token 141 s -> 87 s, decode at depth 46-49 -> 71-74"; "decode (82.9 vs 48.1 tok/s)"; IQ3_S quant, "OCuLink PCIe 4.0 x4" |
+| R18-S3 | github.com/Niko1221/Strata issue/2706 via api.github.com (fetched; state=closed) | The gfx11→gfx12 upmix corruption, in Strata's split path: "caches its arch check from the first device … Nothing crashes and nothing is logged" + rel-RMS table (1e-7 on gfx1151 stages vs 0.43–0.70 on gfx1201 stages) |
+| R18-S4 | raw.githubusercontent.com/torvalds/linux/master/Documentation/driver-api/vfio.rst (fetched) | "VFIO also supports a no-IOMMU mode, intended for usages where unsafe DMA can be performed by userspace drivers w/o physical IOMMU protection. This mode is controlled by the parameter: /sys/module/vfio/parameters/enable_unsafe_noiommu_mode" + the capability-matrix table |
+| R18-S5 | raw.githubusercontent.com/torvalds/linux/master/Documentation/ABI/testing/sysfs-bus-pci (fetched) | `driver_override` ABI (April 2014): per-device driver pinning incl. stub drivers, "does not automatically unbind … may be cleared with an empty string" — the IOMMU-free reversible route |
+| R18-S6 | strixhalo.wiki/Guides/VM_iGPU_Passthrough (raw-backed fetch) | The iGPU function set `1002:1586,1002:1640` + `disable_vga=1`; "the last one is a USB controller" in the passthrough set; the "reset bug … only once per boot of the host" (VM-passthrough context); blacklists for host-off |
+| R18-S7 | computingforgeeks.com best-oculink guide (fetched in §R14, carried) + jdhodges.com Strix-Halo VGM guide (search render) | "On a Strix Halo Linux box, first set the iGPU memory size (UMA frame buffer) to its 512 MB minimum in the BIOS. Leaving the 96 GB carve-out in place … starves the operating system"; VGM = Adrenalin/BIOS carve semantics |
+| (internal) | §R6/§R7 (naming+constants), D21/B1+C10/D26 (router starvation), D24 (patched table), §D8.5/§D10/§D11 (APU prints), §D46/D47 (EPP + wire 0.0), TP2 §5/§6, tuning §12, [S13/S15/S16/S18] | the ticket's settled record this fact-check adjudicates against |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R18 appended)]
+commands_run: [repo reads (owner-doc traces via grep: TP2 §5 verbatim, tuning note §12 "No hide experiments", STATE R9 summary; D45/D46/D47 full text; §R6/§R7/§R9/§R11/§R15 re-read) => pass; api.github.com fetches: Strata pull/3636 (numbers + split-vs-hidden framing) and issue/2706 (corruption mechanism, closed) => pass; raw fetches: ROCm device-plugin configuration.md @v1.31.0.12 (naming/count/config-file doc lines), torvalds vfio.rst (noiommu "unsafe DMA" text), sysfs-bus-pci (driver_override ABI), radiance GUIDE @v1.17.0 (ROCR_VISIBLE_DEVICES=99 harness line; no --device flag) => pass; strixhalo.wiki VM_iGPU_Passthrough via reader (ids/USB-controller/reset-bug), VGM/cfg quotes via search renders => pass; k8s VAP page nav-only (GA claim marked UNVERIFIED); ram arithmetic (122.72 vs 110/114; 0.5 GiB already-minimum) re-derived => pass]
+deviations: none — read-only; RESEARCH.md only. The doc's headline evidence (PR #3636) was checked and it cuts against the hide thesis here: it measures USE-of-APU-split vs USE-of-RAM-arena with the APU hidden — a Strata split-mode result, not a presence-tax result; stated with its own words. The verdict is also blunt in the doc's favor where it's right (1c, the goal, the general Linux mechanics) and blunt against it where this box differs (vfio arm dead on iommu-off; goal already closed; hide costs the router pool).
+friction: the owner's document file itself was not in-repo (searched notes+plan folders) — fact-checked claim-by-claim from the launch's verbatim quotes and labeled as such; the VAP reference page resisted the reader (nav-only) — mechanism cited, version claim left UNVERIFIED; no source exists for "audio function left bound while display stubbed" on this SoC — flagged rather than extrapolated from desktop-GPU practice.
+open_questions: [whether the strata cutover (Q5 lane) retires the APU serving class at all — that, not mis-scheduling fear, is the only future trigger for hiding; any Framework Desktop BIOS menu documentation for the UMA carve (would upgrade the "already at minimum" from our engine print to doc-confirmed); audio-function co-binding behavior on stub (no report found)]
+next_suggested: coord reply to the owner's doc with the table: keep it as the cutover-day runbook (its §5 mechanics are fine, its §1 premises are pre-C07), record R18 in the next DECISIONS fold as "hiding: no — goal closed by shipped naming, sole cost = router starvation (C10 class), revisit only inside the strata-cutover APU-lane retirement (procedure §R18: code first, pci-stub per-function, rollback = rebind+revert)", and spend nothing: the measured ~41 t/s on a confirmed Gen4/wire-zero box is where the compute floor is; the 70+ class is TP2's documented lane (62–65 docs-measured, 137 L1T), already carded as AD-144.
