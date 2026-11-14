@@ -1128,6 +1128,123 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    "EquComplete+ at the host too", superseding the "host may not have agreed" reading while
    leaving §R13's TI mechanism (trained-then-parked is spec-normal) fully intact.
 
+ - 2026-11-14 human+coord D41 (THE RETRAIN TEST COULD NOT RUN, AND THE REFUSAL IS ITSELF THE
+   FINDING; plus this chain turns out to have NO error counters at all): the owner's
+   `setpci -s 00:00:03.1 CAP_EXP+0x10.w=20:20` died on **`pcilib: sysfs_write: write failed:
+   Operation not permitted`** — a config-space write refused by the kernel (the prime suspect is
+   **kernel lockdown** with Secure Boot on, which is exactly the mode where `/sys/.../config`
+   writes are denied; `cat /sys/kernel/security/lockdown` settles it in one command). Consequences,
+   stated carefully because the test did NOT run and nothing may be concluded from the unchanged
+   reads: (1) **Rung 1 is NOT falsified — it is blocked**, so the speed-change question stays open;
+   (2) **if lockdown is what refused it, then every `setpci`-based mitigation is off the table on
+   this box** — including the "capable but never ran at boot ⇒ script a retrain" persistence
+   branch I sketched in D40 — which leaves only BIOS/firmware configuration, a physical topology
+   change (socket/cable/dock), or the driver-level reset path below, and turns any
+   "retrain-on-boot" idea into a Secure-Boot policy decision the owner must choose to make, not
+   something this repo can hand them; (3) the read-only alternatives that do NOT touch config
+   space are `echo 1 | sudo tee /sys/bus/pci/devices/0000:00:03.1/reset` (a bus reset forces the
+   downstream link to retrain, with radiance deliberately down first) and the heavier
+   `remove`+`rescan` pair that re-enumerates the subtree and lets the port driver narrate the
+   attempt in `dmesg` — the reset route is the one to try, and the verdict rule from D40 is
+   unchanged in shape: 16 GT/s after the reset ⇒ capable-but-never-ran-at-boot (then the ONLY
+   durable fixes are a BIOS/firmware setting or a physical change, because writing config is
+   denied), still 8 GT/s ⇒ channel cannot hold Gen4.
+   (4) **No error visibility exists on this chain**: `grep -A6 'LnkErrSta'` printed NOTHING for
+   both `00:00:03.1` and `c2:00.0` (the ports do not expose the per-lane Lane Error Status bits
+   that lspci would print) and `DevSta` is unpopulated because `_OSC` withheld AER — so my AER-free
+   substitute from D40 does not exist on this hardware either. The margin hypothesis therefore
+   **cannot be measured, only experimented on**, which is worth saying before the owner buys
+   anything: we have no counter that would move if the channel were marginal.
+   (5) A live detail to re-verify rather than explain away: the SAME c2:00.0 port that earlier read
+   `Phy16Sta: EquComplete+ EquPhase1+ EquPhase2+ EquPhase3+` now reads `EquComplete+
+   EquPhase1- EquPhase2- EquPhase3-` with `LnkSta: 8GT/s (downgraded)` — the phase-evaluated bits
+   CLEARED between reads. My inference (unproven): an intervening link event — e.g. the amdgpu
+   probe/reset path during the radiance pod's restarts — retrained the port, and those bits are
+   only meaningful for the EQ run that just happened. The cheap check is to read `Phy16Sta` twice
+   across a known link event; if the bits track retrains, then **`EquComplete+` on the host is even
+   weaker evidence than D40 assumed** (it may be residue of a recent retrain rather than proof the
+   boot negotiation completed), and the honest summary becomes: both ends show Gen4 EQ status, the
+   link runs Gen3, no counter explains why, and the only discriminator left is the reset experiment
+   plus, if it stays Gen3, a physical topology change.
+   RECORD ACTION: D40's "Rung 1 = setpci retrain" is superseded in the note (fold #4): the setpci
+   line is kept ONLY as the documented-denied attempt (with the EPERM text quoted), and the reset
+   path becomes the actionable command, with the lockdown check as rung 0's first read. Authority:
+   the owner's paste, 2026-11-14.
+
+ - 2026-11-14 human+coord D41 (MY RUNG-1 COMMAND WAS DENIED — and the phase bits moved between
+   reads, which is the more informative half of the paste):
+   (1) **The retrain did not happen, so nothing about the clamp-vs-margin question is decided.**
+   `sudo setpci -s 00:00:03.1 CAP_EXP+0x10.w=20:20` returned
+   **`pcilib: sysfs_write: write failed: Operation not permitted`** — the write was refused before
+   touching the register, and the `LnkSta: 8GT/s` that followed is therefore the SAME observation as
+   before the attempt, not a result. Rung 1 is WITHDRAWN as written, not executed. Prime suspect
+   for the refusal, straight from this machine's own boot line: **`security=selinux selinux=1`** —
+   an enforcing SELinux policy denies userspace writes to PCIe config space through sysfs, which is
+   exactly this shape of `EPERM` for a command run as root (kernel lockdown is the alternative and
+   is checkable in one line). The reads that settle it are `getenforce`,
+   `cat /sys/kernel/security/lockdown`, and `sudo dmesg | grep -iE 'avc.*denied.*(config|sysfs)'` /
+   `sudo ausearch -m avc -ts recent` — a denial naming this write makes it a POLICY question for the
+   owner, not a hardware finding, and the ladder must then route through the kernel's own reset path
+   instead of raw config writes.
+   (2) **`Phy16Sta` phase bits CLEARED between two reads of the same port** — earlier
+   `c2:00.0: EquComplete+ EquPhase1+ EquPhase2+ EquPhase3+`, now
+   `c2:00.0: EquComplete+ EquPhase1- EquPhase2- EquPhase3-`, with `LnkSta 8GT/s (downgraded),
+   Width x4 (downgraded)` and `LinkEquRequest-` throughout. Read carefully, this is informative:
+   the phase-evaluated bits are per-attempt state, so a link event happened in that window (the
+   amdgpu probe/reset on the pod's restarts, or the failed write's neighbours) and **the host's
+   `EquComplete+` is weaker evidence than D40 treated it as** — it can describe the most recent
+   retrain, not the boot negotiation. What survives from D40 stands on the new read anyway: both
+   ends still say complete, the link still runs Gen3, and nothing requested re-EQ.
+   (3) **The AER-free substitute I recommended does not exist on this hardware either**: `grep -A6
+   'LnkErrSta'` printed NOTHING for both `00:00:03.1` and `c2:00.0` — these ports do not expose
+   per-lane Lane Error Status, and `DevSta` is unpopulated because `_OSC` withheld AER. So
+   **there is no counter on this box that would move if the channel were marginal**: the margin
+   hypothesis is experiment-only, and that is a strong argument against buying anything before the
+   experiment is possible.
+   (4) REVIVED NEXT STEPS, in cost order, with the config-write route marked as policy-gated:
+   rung 0 = the three one-liners above (`getenforce`, the lockdown read, the AVC grep) — they decide
+   whether Rung 1 is a five-minute test or a deliberate security decision; rung 1 (kernel path,
+   does not need raw config writes) = `echo 1 | sudo tee /sys/bus/pci/devices/0000:c2:00.0/reset`
+   **with radiance deliberately scaled down first**, then re-read `LnkSta`/`Phy16Sta` on both ends
+   and `dmesg` for the port driver's own narration; rung 2 = the physical M.2 socket swap (different
+   root port: `00:02.5` vs `00:03.1`, §D11/§R13); rung 3 = shorter/known-Good cable; rung 4 = dock
+   bypass. Verdict rule unchanged: 16 GT/s after a retrain ⇒ capable-but-never-ran-at-boot (and if
+   SELinux is what blocks writes, then a scripted retrain is NOT available and the durable options
+   collapse to a BIOS/firmware setting or the physical change); still 8 ⇒ channel/chain, and per (3)
+   we could never have measured it, so the experiment is the only evidence available.
+   Authority: the owner's paste, 2026-11-14. Note for the record: this is the third time in this
+   ticket that an owner-lane command I authored was wrong (`sed` address, `lspci -s` form, and now a
+   `setpci` write the platform refuses) — the fold-into-the-note law (D36(4)) applies to my COMMANDS
+   as much as to my claims, so the commands are corrected in the document, not just in chat.
+
+ - 2026-11-14 human D42 (WHY THE RETRAIN WRITE WAS REFUSED — kernel LOCKDOWN, not SELinux; and the
+   test therefore still has an unblocked route): the owner's two reads settle D41's open
+   either/or. `getenforce` = **Enforcing** but `ausearch -m avc -ts recent` = **`<no matches>`** ⇒
+   SELinux never touched the call, so my prime suspect was wrong, and the actual cause is the
+   second one: `cat /sys/kernel/security/lockdown` = `none [integrity] confidentiality` — the
+   bracketed value is the ACTIVE mode, so this box runs in **lockdown=integrity** (the consequence
+   of Secure Boot being enabled), and under lockdown the kernel permits **reading** PCI config
+   space and refuses **writing** it with `EPERM`. That is exactly the asymmetry observed — every
+   `lspci -vvv` worked, the `setpci` write did not — and it means D41's Rung 1 stays UNRUN, with
+   the clamp-vs-margin question still undecided.
+   WHAT THIS DOES NOT MEAN: that the experiment is dead. Lockdown gates *userspace config writes*;
+   it does not gate the kernel's own reset/retrain machinery, so the unblocked routes are
+   `echo 1 | sudo tee /sys/bus/pci/devices/0000:c2:00.0/reset` (kernel-internal path; scores on
+   both ends afterwards) and the `remove`+`rescan` pair, with radiance deliberately down first per
+   §D7. If BOTH of those are also refused, then no software route to a retrain exists on this
+   platform and the ladder is physical from there (M.2 socket swap → cable → bypass).
+   THE DECISION THAT IS THE OWNER'S ALONE: turning Secure Boot off would lift lockdown and make
+   `setpci`/scripted-retrain approaches available, but that is a **security-posture change on a
+   machine the lab boots daily**, and it is NOT a tuning knob — the ticket's position, stated so a
+   future reader does not "helpfully" disable it: if a durable fix requires disabling Secure Boot,
+   the physical rung (socket/cable) or TP2 is the cheaper answer. Recorded also because it
+   retroactively explains a silence: lockdown-mode restrictions are why nothing in this ticket can
+   reach AER-style or config-level detail on this box — the `_OSC` withholding and this refusal are
+   two different gates on the same platform's firmware posture, and our diagnosis has been fighting
+   both at once.
+   AUTHORITY: the owner's paste, 2026-11-14 (D41's "prime suspect SELinux" is superseded by
+   evidence; the phase-bit and no-LnkErrSta findings in D41 stand unchanged).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
