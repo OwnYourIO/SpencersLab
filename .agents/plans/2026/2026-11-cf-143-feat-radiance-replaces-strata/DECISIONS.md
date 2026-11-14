@@ -1279,6 +1279,38 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    been run with radiance scaled down first as D42 said; the outcome is unaffected, the method was
    not. Authority: the owner's paste, 2026-11-14.
 
+ - 2026-11-14 human D44 (**THE SOCKET WAS THE FAULT — Gen4 x4 achieved for the price of a
+   screwdriver**): the owner moved the M.2→OCuLink adapter to the board's OTHER M.2 socket and the
+   host↔card link now reads `LnkSta: Speed 16GT/s, Width x4` with `Phy16Sta: EquComplete+
+   EquPhase1+ EquPhase2+ EquPhase3+ LinkEquRequest-`. D43's verdict rule resolved on the second
+   branch — the physical chain — and the culprit was the socket/root-port path: not the cable, not
+   a defective dock PCB, not firmware, and not a redriver the rig already had. Reading rules
+   recorded so this is not misread later: `c1:00.0`'s `(downgraded)` flags are permanent and
+   harmless (the bridge's own `LnkCap` advertises 32GT/s x16 — the CARD's ceiling, so any platform
+   link under it reads "downgraded"); the `32GT/s x16` hops are card-internal (D43); and the two
+   `2.5GT/s x16 (overdriven)` ports are unoccupied platform ports, not our chain. **My D40/D43
+   "host agreed ⇒ clamp-vs-margin" framing was chasing the wrong signal: the speed VALUE mattered,
+   the adjective did not.** Topology after the swap (`lspci -tvv`, `readlink -f
+   /sys/class/nvme/nvme0/device`): GPU under `00:02.5-[c1-c3]`, NVMe under `00:03.1-[c4]` — the
+   two devices TRADED root ports, so the shared-upstream contention I raised is REFUTED by the
+   read, not by reassurance.
+   THEN THE PART THAT COSTS ME A CLAIM: the owner reports performance landed where I predicted
+   (~35 t/s) and says **single-card R9700 builds are getting 70+**, so my "70+ is unreachable by
+   bandwidth" arithmetic is SUSPECT AT ITS INPUTS, not just its conclusion — I divided the report's
+   cumulative `mover: 71.40 GiB h2d` (which includes the cold-load promotion of ~17.76 GiB into
+   VRAM) by a token denominator of 884 that **no record in this ticket actually sources**, and got
+   "~83–100 MiB/token" as if it were measured. A cumulative counter over an unverified denominator
+   is exactly the vocabulary-not-arithmetic class this ticket has been correcting all week, and it
+   produced a confident, wrong ceiling. RETRACTED as a bound; kept as a hypothesis to test. The
+   honest statement is: the link fix is confirmed and worth ~2×, and the remaining gap between
+   ~35 and 70+ has NO established cause — the suspects are host-side, not wire-side (the n-gram
+   disk tier's 4096-byte non-aligned spans on btrfs, memlock 8 MiB, the 46.2% "looked back on
+   routed" prefetch waste and 36% readmits, `powersave`/`balance_performance` per-rank host work,
+   THP compaction stalls at 71 GiB pinned), plus whatever the published 70+ configurations do
+   differently. §R14 is commissioned on exactly that question, with the decisive read being
+   `/stats`' `stream_bytes ÷ decode_tokens` — the number that replaces my invented one. Authority:
+   the owner's reads, 2026-11-14 15:38Z, and their 70+ report.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

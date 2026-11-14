@@ -3436,3 +3436,225 @@ deviations: none — read-only, RESEARCH.md only. Where the evidence contradicte
 friction: ASMedia's site exposes product pages via JS-lists the reader can't walk — ASM1955's own page was not reachable at all (search found only category siblings); the Intel PDF yielded TOC not body for the subdivision section (TI carries the needed sentence); one eproductsolutions URL 404'd while the identical SKU text survived in search renders — quoted as such and labeled.
 open_questions: [host-port `Phy16Sta` + DPM + DevSta reads — the branch-splitter (Q4-a/a2/c, three minutes); whether 00:03.1 even implements cap 0x26; socket-swap outcome (00:02.5 vs 00:03.1 per-port behavior); what a relearn (f) prints in dmesg during its Gen4 attempt; ASM1955's true silicon class; any Framework Desktop owner who will ever post a LnkSta]
 next_suggested: coord hand the owner the Q4-a/a2/c command block (free, splits the diagnosis) and the socket-swap as rung 1 — then re-touch C14's note ladder to DELETE the retired redriver-purchase line (per D36's own re-pointing law, a falsified row must be re-pointed in the same ticket) substituting "socket swap → short known-Good cable → open-frame bypass → relearn experiment", keeping the terminal fork's economics (TP2/profile) verbatim; if the host end shows EquComplete- while the card shows +, that asymmetry is the finding of the two-day investigation and belongs in DECISIONS at the next fold.
+
+---
+
+## §R14 — single-R9700 radiance decode at 70+ tok/s: published evidence, the configurations, and what this rig must change to reach it
+
+Owner round 2026-11-14, post-D44: link now **Gen4 x4** (socket swap was the fault), rates landed
+**~35 t/s warm** exactly as §D8's model predicted, and the owner's claim under test: *"with radiance
+and ONE R9700, people are getting 70+ tok/s."* Authorities re-read: RQ1/RQ4/RQ5, §R8 (on-card 200K
+funding; 2.94 KiB/token), §R9–§R13 (link hunt, TI spec grammar), §D8 (m-model, receipts), §D10
+(exit banner: 20678 dispatches / 46.2% looked-back / 36% readmits / 71.40 GiB cumulative h2d),
+D28/D29/D33–**D44** (incl. D44's retraction of my per-token figure — carried verbatim below).
+Citations R14-S#, accessed 2026-11-14. UNVERIFIED items labeled; nothing here moves the capacity
+verdicts (§R8) or the naming/NAT lanes.
+
+### R14 VERDICT (first)
+
+**The 70+ reports are real, and every one we could source is NOT our comparison: either it is
+the OTHER model on one card (q27-class dense, 124–130 t/s single-stream, 586–678 aggregate @
+conc8 — L1T table [R14-S1]) or it is Flash-Next on TWO+ cards (fn TP2 single-stream sustained
+**137 t/s**, 1103 @conc16 [R14-S1]; 4×R9600D TP4 162–175 [R14-S1]; engine's own TP2 measured
+table 62.3–64.8 with MTP, 39–40 without [R14-S2]).** For **Qwen3.8-Flash-Next on ONE R9700**,
+the radiance docs' own TP1 figure is the **28–29 ms decode step** ("decode step goes from 29.0
+to 28.0 ms at one sequence and from 101.3 to 95.3 ms at four" [R14-S2] — the same sentence the
+ticket reads as ≈35 t/s, and the docs' TP2 table shows tok/step 1.00 at 39.9 t/s ≈ 25 ms, i.e.
+the ms figures are per-STEP), and **no sustained long-context single-card fn number above ~40
+t/s (no spec) or the MTP-band ~50–65 (TP2-class) is published anywhere we searched** — the
+llamaperf "70 tok/s" row is a 4-card **Strata** configuration (different engine, 256 GB system
+RAM, Q4_K_XL GGUF [R14-S4]), and the only third-party single-card fn-class numbers in the
+aggregators are llama.cpp q27 rows (29.8 t/s at 4-bit on a lone R9700 [R14-S4]). **Our ~35
+post-fix is exactly where the published single-card fn-TP1 evidence sits.** The arithmetic
+agrees: 70 t/s sustained at Gen4 x4 requires ≤ ~107 MiB/token crossing (7510/70), vs our
+receipt-derived ~197 (m≈0.17 miss stream, §D8.2) — and closing that gap on one card means
+freeing KV-backed VRAM into the expert slab, which the owner's **8×200K** envelope (D17/Q10,
+the kv-resident lever) is precisely what forbids. **Answer to the owner: real — on two cards
+(q27: on one); at 8×200K×1-card it is not published by anyone, including the engine's own
+docs.** The cheapest honest next moves, ranked: (1) **run the fixed probe with the CPU
+governor actually set to performance AND persistent — this box has NEVER been measured at
+Gen4×performance-governor** (every boot to date printed `powersave` — §D6.4/D8.1/D10.1);
+(2) the `stream_bytes ÷ decode_tokens` pair-snapshot (the number D44 commissioned — it says
+whether what's left is wire or host); (3) the 4 KiB-span n-gram disk tier (≤10% band, RQ1;
+only worth it after (1)); (4) the TP2 follow-up card, where 70+ on "radiance and R9700s"
+stops being a rumor and becomes the published norm (137 t/s at two).
+
+### R14-Q1 — The published-numbers table (links, quotes, comparability)
+
+| # | rate | model | cards | engine/quant | context/concurrency | host & link | ngram/limits | comparability to us |
+|---|---|---|---|---|---|---|---|---|
+| R14-A | **137 t/s single-stream sustained**; 1103 @conc16 | **Flash-Next MoE** | **2× R9700, TP2** | radiance (creator-adjacent thread) | "sustained" single stream; conc at 16 | **Ryzen 9950X3D, 91 GB host** | disk-tier default assumed | THE likeliest source of the owner's memory — same model, but TP2; our envelope is TP1-8×200K [R14-S1] |
+| R14-B | 124–130 t/s single, 586–678 @conc8 | **q27 dense** (FP8/MXFP4 27B) | 2× R9700 TP2 | radiance | same | 9950X3D | — | dense≠MoE: "The dense models are faster in single-stream… less total weight to stream per token" [R14-S1] |
+| R14-C | 162–175 t/s single; 250–324 @conc8 | Flash-Next / q27 | **4× R9600D TP4** | radiance | single-stream sustained | EPYC 9575F, **512 GB** | — | 4 cards + server RAM [R14-S1] |
+| R14-D | **62.3 (56.8–67.7) / 64.8 (53.2–76.5) t/s; 39.89/39.78 without MTP; 50.56/50.86 @249,939-prompt** | Flash-Next, fp8 KV | **2× 16 GB gfx1201 TP2** | radiance **v1.17.0 docs** | 2,048 tokens decoded, 1 request | docs' rig (62K/250K prompts) | streaming on/off both | the ENGINE's own measured ceiling for fn decode — and its 250K row is 50.9 t/s WITH MTP [R14-S2] |
+| R14-E | **29.0 → 28.0 ms step @1 seq; 101.3 → 95.3 ms @4 seq** | Flash-Next | **1× R9700 (`--tp 1`, flashnext-tp1 flags)** | radiance docs | 1 and 4 seqs | docs creator rig (x16 class) | prefetch off→on | = ≈35.7 → 35.7… per-step t/s at tok/step 1 (≈36→35.7); our ~35 is ON this number; with MTP multiplier (tok/step 2.87–3.45 per R14-D) it COULD reach ~100 — **no TP1+MTP sustained row is published to confirm; UNVERIFIED which reading the 28–29 ms already includes** [R14-S2] |
+| R14-F | 200 t/s c=1; 500 at c=8 | q27-MXFP4 | 2× R9700 | radiance | llama-style bench | guide rig | x16 Gen5 | the L1T guide headline (TP2, dense) [R14-S3] |
+| R14-G | "140–160 output, ~3200 pp… **up from about 70**", 4 cards, 256 GB | Flash-Next Q4_K_XL GGUF | 4× R9700 | **Strata** (not radiance) | llama-bench class | workstation | RAM-heavy | the only literal "70→" row found; wrong engine AND four cards [R14-S4] |
+| R14-H | 29.8 gen t/s | Qwen3.8-27B | **1× R9700** | llama.cpp 4-bit | llama-bench | — | — | single-card, dense, non-radiance — still no fn-on-one-card row anywhere on the R9700 aggregator page we fetched [R14-S4] |
+| R14-I | **pp 324.8 / tg 21.1** | Qwen3.8-Flash-Next Q4_K_XL | **1 card (9070 XT, 16 GB!)** + 8060S split `-ts 15/85` | llama.cpp ROCm | llama-bench, FW Desktop class | BIOS 3.02 | RAM+APU side | our nearest twin build's published tg — 21 t/s, i.e. BELOW us; llama.cpp≠radiance but shows the single-consumer-AM-card fn reality [R12-S2 Frix, re-verified] |
+| R14-J | "19.2 → 29.7 → 184.9 t/s" (llama.cpp default → tuned → "vLLM Radiance MXFP4") | q27 | 2× R9700 | mixed | X-post | — | — | viral progression post — dense model, dual card [R14-S5] |
+
+**Census conclusion (stated plainly):** every sourced >70 t/s Flash-Next row involves ≥2 cards;
+every sourced single-card row is either q27-dense or ≤40 t/s; the docs' own TP1 fn step-time
+(28–29 ms) sits at our post-fix rate; and the llamaperf R9700 page (74 reports) surfaced no
+radiance-fn-TP1 entry in the window fetched (its engine list for the card: llama.cpp/vLLM/
+Strata/ExLlamaV3). If the owner has a specific 70+ single-card fn receipt, it is not in any
+public source this round found — send it and we'll audit the flags.
+
+### R14-Q2 — Doc-grounded counter semantics (what each number MEANS)
+
+From the v1.17.0 GUIDE (fetched; the ticket's mis-read history — `0 dispatches`, `154` — makes
+this the round's second-most-important section):
+- **Prefetch accounting:** "Every 2048 predictions it checks the share of its copies the steps
+  routed; **under 30% it rests** (no prediction, no copy) for 8192 passes… **On Qwen3.8-
+  Flash-Next at `--tp 1` with the `flashnext-tp1` flags about half the copies are used**"
+  [R14-S2] ⇒ **our 46.2% "looked back on routed" ≈ the doc's own TP1 norm — normal, not
+  inefficiency; the 36% readmits are the heat engine re-promoting demoted units (demotion is
+  cheap; the doc's design comment: "A miss… for a host-pinned unit crosses the link on the
+  step's critical path", heat.h, §D8.2) — no documented tuning knob exists (D8.2(b) law:
+  "nothing we ship gates the mover; nothing we ship can tune it").**
+- **kv-stream counters (the D44-commissioned measurement, now doc-grounded):** "`/metrics`
+  carries `kv_resident_blocks`, `kv_stream_misses_total` and `kv_stream_bytes_total`" and
+  "The startup receipt's `kv streaming:` lines name the ring, the stage and the host copy"
+  [R14-S2]. `/stats` carries step/budget planes (e.g. `steps_held` under `--prefill-interleave`
+  [R14-S2]); the dashboard's decode tile: "`best` is the fastest window of 32 consecutive
+  single-stream steps this process has run… nothing is compared until 32 have been averaged"
+  [R14-S2] — the fixed probe's scoreboard.
+- **kv-resident's decode effect, MEASURED by the docs: none** — "Decode is unchanged, with and
+  without MTP… streaming" (their table: 39.89 off / 39.78 on; 62.3 off-MTP / 64.8 on-MTP
+  @62K) [R14-S2]. **Dropping `--kv-resident` therefore buys ZERO decode and puts the QSA group
+  back on the card — it would SHRINK the expert slab** (residency arithmetic below). The
+  counter-claim to retire any hope here: the eager host mirror is the 8×200K enabler, and the
+  docs' 250K-prompt row is where their own long-context ceiling lives (50.9 t/s, TP2!).
+- **Prefix-cache cliff (explains our `cache 0` receipts):** "When the pool cannot hold the live
+  sessions, it drops prefixes the next turn wanted… On Qwen3.8-Flash-Next at a 200K context
+  with two ~184K-token sessions, the second turn took **173.0 s at a 0.0% prefix hit** with a
+  pool too small for both sessions, and **3.0 s at 99.0%** with one large enough. The fall-off
+  is sharp; `kv_util` shows a pool approaching it" [R14-S2]. Our per-request `(cache 0)` is
+  the documented state of an 8×200K box whose VRAM pool funds live sessions, not retained
+  prefixes (tier force-off by kv-resident anyway) — honest framing for step-6 expectations.
+- **Preemption/placement flags:** `--preempt-wait-ms` "how long a preempted prefill may wait
+  for its whole-recompute gate before reclaiming cache blocks and preempting lowest-priority
+  running requests" [R14-S2]; embedding/tower `ram` placements are **pinned host above the
+  pool**, refused when the cgroup can't hold them "after the pools, with `--host-headroom-mib`
+  … default 4 GiB" [R14-S2]; ngram `auto` = "the fastest tier with room once every other
+  weight is placed" and disk = "read from the container through a row cache" [R14-S2].
+- **"Why is decode slow" checklist: the docs carry no such section** (searched) — the kit they
+  DO ship is: the best/recent tiles, `kv_util`, the streaming/`kv_stream_*` counters, the
+  prefetch resting log, and the step-time ambiguity note above. This round's Q4 table
+  operationalizes that kit; anything beyond it is our inference, labeled.
+
+### R14-Q3 — Residency, arithmetically, and the t/s-per-capability ladder
+
+Our card today (receipts, §D8.1/D10): usable 31.86; static 5.40; **experts resident 17.76
+(74% of elastic 23.89)**; **KV 4.51 = 8×200K funded (2.94 KiB/token × 1.6M)**; prefill staging
+1.63; unclaimed 0.09. Expert universe: 25,078 movable units × 2.42 MiB ≈ **60.6 GiB routed** —
+of which the card holds 30%, the pinned pool the rest (§D8.2). Per-token wire at Gen4 x4
+(7,510 MiB/s): **70 t/s ⇒ ≤107 MiB/token ⇒ m ≤ ~0.09 at zero churn**; our warm m≈0.17 ⇒
+~197 MiB/token ⇒ wire ceiling **~38 t/s** — the owner's ~35 landing is the model, not a bug.
+Freeing VRAM into the slab is the ONLY single-card lever (capability cost priced per [R14-S2]):
+
+| knob | VRAM→slab effect | m / ceiling effect | capability cost |
+|---|---|---|---|
+| `--max-num-seqs 8→4` | KV 4.51→~2.8 GiB, +~1.7 GiB slab (+~700 units, +5.6pp residency) | m 0.17→~0.15 ⇒ ~45–50 t/s ceiling, **with spec ~×2.9: the band that could touch 70+ UNVERIFIED as sustained** | halves the 8-session target (owner's Q10/D17 core) + the 173 s/0%-hit cliff sharpens at 4×200K live [R14-S2] |
+| `--max-num-seqs 8→2` | KV→~1.6 GiB, +~3 GiB slab | ceiling ~55–60 t/s (m~0.12) | 2 sessions is not the goal — same redefinition as runbook "fewer live sessions" rung |
+| `--max-model-len 200K→128K` | mirror AND KV scale (2.56→1.64M tokens; KV 4.51→~3.3 with 8 seqs) | ~ +10% on both wire legs | forfeits the trained 200K promise; catalog true-axis re-pin (R8-Q4 ladder-2 law) |
+| drop `--kv-resident` | QSA back on-card ⇒ KV GROWS — slab SHRINKS | **decode documented-unchanged** [R14-S2]; mirror −~27 GiB host but wire worse | forfeits the 8×200K lever AND the ~35 we have — strictly dominated |
+| `--ngram-placement ram` | frees NOTHING on-card (disk row-cache ≠ VRAM) but kills the 4 KiB-span path (+ its ~3–10% band) | +3–10% at most (RQ1) | DEAD arithmetically: 71.04+47.68 = 118.72 > 110 cap (D8.4-4) — needs the memlock drop-in AND an envelope change; TP2's host shape (~30–35 GiB pinned) is where ram-tier becomes affordable |
+| `--embedding-placement ram` (already) / `--gpu-headroom-mib 96→48` | +~0.05 GiB slab only | noise | none left to take safely |
+| **TP2 (second R9700)** | universe splits per rank; pool 12288×2; prefix tier affordable; L1T measured the outcome | **137 t/s sustained** [R14-S1]; docs' 62–65 @MTP-62K [R14-S2] | capital + the re-enumeration/APU/plugin laws (RQ4/TP2 doc) + D29's strata-inversion persists at ≤52 host |
+
+**Most t/s per unit of lost capability:** for the OWNER'S stated goal (8×200K + agent traffic):
+nothing single-card beats the governor fix + `stream_bytes` measurement (cost: zero capability);
+after that **`--max-num-seqs 8→4` is the only knob that plausibly reaches the 70+ zone at
+200K-class depth** (via spec-multiplied ~45–50 step-rate), and it spends half the session
+target — an owner ruling, never a silent edit (D28 law). Everything else either dominates
+negatively (drop kv-resident) or waits for the second card (TP2 = the real 70+).
+
+### R14-Q4 — The non-wire suspects, ranked, each with its read
+
+| rank | suspect | evidence & doc cite | read-only test (owner) | verdict |
+|---|---|---|---|---|
+| 1 | **CPU governor / host-gap** | box printed `powersave, epp balance_performance` at EVERY boot incl. the Gen4 one (§D10.1); engine note (carried §D8.3): per-rank serial host work "shows as **host gap between steps**"; published magnitude for MoE decode: **UNVERIFIED** (none found) | set tuned/performance + re-verify persistence ACROSS REBOOT (§D6.4 law: bare writes die), then the fixed probe's best-tile + `journalctl` powersave line gone | **the only untested zero-cost lever at Gen4 — run first** |
+| 2 | **wire-vs-host unknown (the D44 number)** | docs define `kv_stream_bytes_total` [R14-S2]; mover bytes are cumulative-with-cold-load (D44) | `GET /metrics` at two points ≥10 min of steady serving: `Δkv_stream_bytes_total ÷ Δoutput_tokens` (KV leg) + `Δ` of the per-step bytes the dashboard exposes + `best` tile vs the 28 ms/step doc floor; (mover h2d needs boot-relative reading: subtract the post-warm baseline) | the ratio decides whether remaining gap is wire (≈197 MiB/token class) or host — **measure before any other spend** |
+| 3 | **n-gram disk 4 KiB spans (btrfs)** | statx dioalign unsupported on btrfs (man-pages 6.19, §D6.5); "disk = … io_uring row cache (~85 MiB, O_DIRECT, ~half first-seen rows)" [S2 §4.3, carried]; miss cost = a 4 KiB direct read off the SN7100 (3.42 GB/s measured single-stream, §D6.5); published delta **3–10%** [RQ1:773–774] | request end-to-end rate with `--ngram-placement` left `auto`-resolved (disk) vs the same probe after the pack moves to ext4/XFS (owner storage lane, §D6.5-opt-a); no counter needed — the band is small | **third-order; fix #1 before entertaining #3** |
+| 4 | **memlock 8 MiB** | RAM ngram tier arithmetically dead at ANY pod cap (118.72>110, D8.4-4); io_uring ring works at 8 MiB today (live `io_uring available`); k8s has no per-pod rlimit (D6.3) — node-lane drop-in only; containerd inherits the unit's limits (D6.3 precedent + repo strata-prep idiom) — an *external* authoritative doc that containerd propagates the unit rlimit was NOT separately fetched this round: **UNVERIFIED detail** (our k3s precedent [S18]/§D6.3 is the working basis) | post-drop-in: engine HARDWARE `memlock` line flips to unlimited; decode delta expected ≈ 0 | **0 tok/s today** — bundle with a planned k3s-restart window only (D28-5 law: don't oversell it) |
+| 5 | **THP/compaction at 71 GiB pinned** | host prints `huge pages always (defrag madvise)` + `AnonHugePages ≈74.9 GiB` = the pinned pool IS THP-backed successfully (§D8.4-6); compact_fail/allocstall are CUMULATIVE-since-boot incl. two fill storms | 60-s idle `/proc/vmstat` delta of `compact_stall|allocstall_*` DURING the fixed probe: near-zero ⇒ not binding (the §R8-Q4 law); if nonzero mid-step ⇒ host-stall confirmed | risk is BOOT-time fill order, not per-step — mitigation already true (radiance boots first after reboot) |
+| 6 | **swap 425 MiB** | mlocked pages "preventing that memory from being paged to the swap area" (mlock(2), carried R10-S2): the pinned tier cannot be the swapped bytes — they're non-pinned anon; Wilde's zram lesson [S9] | `memory.swap.current` + `pswpout` delta during probe; keep flat | watch, don't act |
+| 7 | **spec settings** | fn pack carries MTP-3 (RQ0); docs measure tok/step 2.87–3.45 (R14-D/E); dense rows use 7 (`--num-speculative-tokens 7`, q27 only) [R14-S3] | `/stats` acceptance/drafter counters or the boot CONFIGURATION line — nothing to change for fn (3 is the pack's depth) | normal; do not copy q27's 7 onto fn (depth exists in the pack, not the flag) |
+
+### R14-Q5 — Expectation, honestly, and the ordered action list
+
+**(a) achievable at our 8×200K envelope: NO** — no published, no doc row, and the wire
+arithmetic (107 vs 197 MiB/token) says the single card would have to more than halve its miss
+stream to get there, which its KV budget forbids. **(b) achievable at a reduced envelope:
+plausibly yes at 4×200K with MTP (the ~45–50 step-rate × ~2.9 acceptance band, UNVERIFIED as
+sustained) — that is an owner capability decision, and note L1T got 137 only at TWO cards.**
+**(c) single-session/short-context reports: yes — and that is what the 70+ corpus actually is
+(R14-A/B/C/D tables); the q27-dense lane ALREADY exceeds 70 on one card in our own lane plan
+(llama-perf q27 rows [S8]). (d) for fn-on-one-R9700 sustained long-context: not evidenced
+anywhere, including the engine's own docs.**
+
+Actions, cheapest first, each with its proving print:
+1. **Governor persistence to performance + reboot-verify + fixed probe** — prints: engine HARDWARE
+   line `cpu governor performance`, best-tile ms vs the 28–29 ms doc floor. [zero $]
+2. **The pair-snapshot `kv_stream_bytes_total ÷ Δtokens` read** (Q4-2) — prints: MiB/token;
+   ≤107 with 70 t/s means host-bound; ~190 means wire-bound; between means churn adds. [zero $]
+3. **Reseat/verify the dock-side chain at Gen4 and log `LnkSta` + engine `link` line** — the new
+   Gen4 state is load-stable only since 15:38Z; one long-prefill `/diagnostics` sample closes
+   that. [zero $]
+4. **Step-6 8-session gate + 8×200K with the fixed probe (runbook, never run)** — prints per
+   §R8-Q4 thresholds; it is also the first REAL multi-session decode number to compare against
+   the 1103-conc16/586-conc8 aggregate class above. [zero $]
+5. **Only if owner wants 70+ this quarter: TP2** — buy card #2 (the TP2 doc §1-§14 lane; the
+   137 t/s single-stream sustained [R14-S1] and the docs' 62–65+MTP long-context [R14-S2] are
+   the pre-registered receipts; host ~30–48 GiB class re-opens the strata co-residency
+   arithmetic (R8-Q5) and drops the mirror entirely).
+6. **Deferred by arithmetic, kept on record:** ngram-ram tier (needs the memlock drop-in AND
+   a smaller envelope), pack-move to XFS (≤10% class), pool-down rungs (they trade the very
+   residency the speed needs — §D8.5-5 law: profile negotiation, owner call).
+
+### R14 — Conflicts / SUPERSEDES / UNVERIFIED
+
+- **D44's retraction carried, and completed:** my "~83–100 MiB/token" was cumulative-mover-by-
+  invented-denominator — void. The replacement method is now doc-grounded (Q4-2); the
+  ≤107-vs-~197 MiB/token statement above is OUR model's arithmetic re-derived from the §D8.2
+  receipts (unit size 2.42 MiB × 48 × 10 × m), not a fresh measurement — it bounds the
+  discussion; the stream_bytes read will replace both.
+- **Supersedes nothing settled in §D8/§R8–§R13** — the ~35 landing CONFIRMS §D8.2's Gen4
+  prediction (37–40 ceiling). Refines one: §D8.4-3/§D6.4's "governor = free second swing,
+  magnitude unproven" becomes **the top of the action list** now the link is fixed.
+- **Ladder note for coord (D36 re-pointing law):** the tuning note's LINK section is now
+  DONE-FIXED (socket swap, D44); its remaining value is the §R14 action list — re-point at
+  next touch: governor-persistence promoted to first, the retired hardware rungs deleted,
+  `stream_bytes` added as the standing before/after instrument.
+- **UNVERIFIED:** whether the docs' 28–29 ms TP1 figures include MTP (which would raise the
+  single-card fn expectation band to ~80–100 short-context — no sustained TP1+MTP row
+  published, ours or anyone's); any real 70+ single-card fn-TP1 receipt (send the link);
+  containerd unit-rlimit propagation beyond our own k3s precedent; tuned-vs-bios governor
+  persistence route (C12 AC2 lane); llamaperf's remaining 54 R9700 reports (20-window fetch);
+  the exact `/stats` field names beyond the documented `steps_held`/metrics trio (the full
+  field-table fetch did not return a §5.7/5.8 listing this round — carried from RESEARCH
+  [S2] §5.7/5.8 access 2026-11-11).
+
+### R14 — Sources (accessed 2026-11-14)
+
+| # | URL | What it is |
+|---|---|---|
+| R14-S1 | forum.level1techs.com/t/175-t-s-on-rdna4-with-180b-models-testing-radiance-on-many-r9700s-and-r9600ds…/258397.json (posts, fetched) | THE performance table: 4×R9600D TP4 (EPYC 512GB): fn 162–175 single-stream, 250–274 @8; 2×R9700 TP2 (9950X3D, 91GB): **fn 137 single-stream sustained, 1103 @16**, dense 124–130/586–678; the dense-vs-MoE explanation sentence; token budgets/qualitative runs incl. "the less quantized the model, the better" |
+| R14-S2 | codeberg.org/api/v1/repos/StillDeadcode/radiance/raw/docs/GUIDE.md?ref=v1.17.0 (fetched, 4 windows) | Engine docs @ our pin: kv-streaming measured table (39.89/39.78; **62.3 (56.8–67.7)/64.8 (53.2–76.5)** tok-step 2.87–3.45 @61,971; **50.56/50.86 @249,939**) + "Decode is unchanged, with and without…"; prefetch paragraph ("about half the copies are used" TP1; **29.0→28.0 ms @1seq / 101.3→95.3 @4**); `kv_stream_bytes_total`/`kv_resident_blocks`/`kv_stream_misses_total` metrics defs; `steps_held`; best/recent-32-step tile semantics; the 173.0 s 0.0%-hit vs 3.0 s 99.0% prefix cliff at 2×~184K; `--host-headroom-mib` 4 GiB placement gate; placement table (embedding/ngram/vram/ram/disk) |
+| R14-S3 | forum.level1techs.com/t/ultimate-2x-r9700-guide-for-qwen-3-8-27b-mxfp4-200t-s-c-1-500t-s-at-c-8/257789.json (fetched; = ticket [S7], extended) | The 2-card guide: q27 "~200 tok/s single, ~500 at 8 concurrent"; launch blocks show the headline rates are TP2 (`--tp 2 --tp-wire wht6`, `HIP_VISIBLE_DEVICES=0,1`), q27-fp8 "~130 tok/s sustained", fn row "~125 tok/s", `--num-speculative-tokens 7` dense-only recipe |
+| R14-S4 | llamaperf.com/gpu/radeon-ai-pro-r9700-32gb (fetched; 20 of 74 reports) | Aggregator: q27 29.8 t/s @4-bit single card; **DeepSeek V4.1 Flash: "140–160 tok/s… up from about 70 tok/s" on FOUR R9700 via STRATA** (the only literal ~70 row); engine mix on the card is llama.cpp/vLLM/Strata-heavy — no radiance-fn-TP1 row in the fetched window |
+| R14-S5 | x.com/TeksEdge status 2097838715288813780 (search render) | "19.2 → 29.7 → **184.9 tok/s**" llama.cpp→tuned→radiance-class progression, q27, **dual** R9700 — the viral shape of the owner's memory, dual-card |
+| R14-S6 | huggingface.co/gostar77/qwen3.8-flash-next-radiance-q5-w5dn64-bf16ple (fetched) | Community fn pack + "validated profile": **`--tp 2 --tp-wire exact --host-pool-mib 12288 --prefix-cache-mib 12288 --max-num-seqs 2 --max-model-len 262144 --num-speculative-tokens 3`** + `RADIANCE_DISABLE_VMEM=1` — the community's long-context fn convention is TP2 + prefix-tier + FEW seqs, i.e. exactly the envelope reduction our Q3 table prices |
+| (inherited) | §D8/§D10 receipts; R10-S2/S9; R12-S2 (Frix pp324.8/tg21.1); S2 §4.x/§5.x/§6.1 (accessed 2026-11-11, re-fetched for the passages quoted); mlock/statx carried | comparability anchors and the model's own numbers |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R14 appended)]
+commands_run: [repo reads (RQ1/Serving-envelope re-read, §R8/§R9–§R13, §D6–§D11, DECISIONS D39–D44 incl. D44's retraction verbatim) => pass; web fetches: L1T 258397.json ×2 windows (performance table found), L1T 257789.json ×2 (TP2 launch blocks), codeberg GUIDE.md @v1.17.0 ×2 fetches + 8 targeted cuts (measured tables/prefetch/metrics-tile-cliff semantics), README.md @v1.17.0 (model table), llamaperf R9700 page, HF gostar77 card, btrfs-man5 (nodatacow constraint note), codeberg issues q= (no perf issues), searxng ×8 + websearch ×1 (radiatorcat = no signal; TeksEdge/X post captured) => pass; arithmetic re-derived from §D8.2 unit sizes (1162 MiB all-miss; 107-MiB/token 70-t/s bound; 4-seq slab +700-unit sensitivity) => pass]
+deviations: none — read-only, RESEARCH.md only. Per instruction the D44 retraction was carried and completed rather than re-derived: the replacement method is the docs' own `kv_stream_bytes_total`. The round's most interesting contradiction is with the launch's own hope, said plainly: the owner's 70+ claim is real but systematically TP2/dense/4-card/Strata — no sourced fn-on-one-R9700 row exceeds ~40 (no spec) / the 62–65 doc band (TP2, MTP) at long context; our ~35 is the published single-card reality, and the docs' own TP1 28–29 ms row sits exactly on it.
+friction: the docs' TP1 ms-vs-tok/step ambiguity (whether 28–29 ms already includes MTP) is unresolved and load-bearing for the upper band — flagged UNVERIFIED rather than guessed, and made the first thing the stream_bytes/best-tile reads will settle; llamaperf pagination capped at 20 of 74 reports; radiatorcat surfaced no matching entity (likely a handle I couldn't resolve — recorded, not hunted further).
+open_questions: [the pair-snapshot MiB/token (decides wire-vs-host for the residual 35→?); whether the docs' 28–29 ms TP1 figures include MTP; any real single-card fn 70+ receipt the owner can point to; governor-persistence effect size at our step cadence]
+next_suggested: coord run the action list top-down — governor persistence (zero cost, the only untested lever at Gen4) and the Q4-2 metrics pair before ANY profile or hardware conversation; fold the §R14 census + the ≤107-vs-197 bound into the tuning note's LINK-successor section (the link is fixed; this is its epilogue), re-point the note's remaining rows per the D36 law, and if the owner still wants the 70+ class this quarter, TP2's receipts are pre-registered (137 t/s sustained, docs' 62–65 @2×16GB) and the TP2 card already carries the host-math upgrade (R8-Q5).
