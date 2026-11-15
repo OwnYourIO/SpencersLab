@@ -82,25 +82,20 @@ hash (DERIVED from §D4's ~5.8–13.6 min bound at 113.6 GiB, scaled by
 18/113.6 — the boot prints the truth), plus the fetch. A slow first boot is
 the download doing its job, not a failure: the chart's startupProbe gives
 the engine a 30-minute envelope (`/health`, 10 s × 180) and the peer route
-keeps `responseHeader: 1800` for the first byte. Do not delete the pod
-mid-hash.
+keeps `responseHeader: 1800` for the first byte.
 
 Two staging laws, carried from the fn lane (the init script ships both):
 the marker is written only AFTER the checksum passes — pack-on-disk without
 its marker is download-complete at best, staged never; and a resumed
 download that answers rc 33 ("the file is already completely retrieved")
 is DONE, not a failure — the hash gate still runs before the marker lands.
-Receipts:
 
-```bash
-kubectl -n default logs deploy/gpu-ai-radiance-q27 -c radiance-fetch | tail -10
-```
+These laws print their proof into the `radiance-fetch` init's log — and at
+rest there is no such log: the q27 deployment renders at 0 replicas
+(Step 0), so nothing can be read off a pod that does not exist yet. The
+receipt itself is Step 2's first read.
 
-Expect `radiance-q27 staging: complete` (or the marker-skip line on later
-boots). On a `sha256 MISMATCH` line the init exits 1 and the pod restarts
-the fetch — stop and report, do not retry past a second mismatch.
-
-## Step 2 — THE SWITCH (OWNER-EXECUTED; the order IS the discipline)
+## Step 2 — THE SWITCH, THEN THE STAGING RECEIPT (OWNER-EXECUTED; the order IS the discipline)
 
 fn DOWN first, then q27 UP. Not etiquette — arithmetic. Both-up lands
 **Pending, not OOM**, because three INDEPENDENT blockers exist and any one
@@ -120,7 +115,7 @@ Down:
 
 ```bash
 # OWNER-EXECUTED — operator runs this; the repo never scripts it (D54(1)):
-kubectl scale deployment gpu-ai-radiance --replicas=0
+kubectl -n default scale deploy/gpu-ai-radiance --replicas=0
 ```
 
 Wait until fn's pod is actually gone — the card releases at pod termination
@@ -135,8 +130,23 @@ Then up:
 
 ```bash
 # OWNER-EXECUTED — only after the read above shows fn's pod gone:
-kubectl scale deployment gpu-ai-radiance-q27 --replicas=1
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=1
 ```
+
+The UP-scale creates the q27 pod — the first moment in this document where
+any read against it can resolve. Its init runs first, and the `radiance`
+engine container starts only once that init exits clean, so the staging
+receipt below is also the wait-gate for Step 3's engine reads:
+
+```bash
+kubectl -n default logs deploy/gpu-ai-radiance-q27 -c radiance-fetch | tail -10
+```
+
+Expect `radiance-q27 staging: complete` (or the marker-skip line on later
+boots). Until that line prints, an empty or partial read is Step 1's slow
+first boot still running: wait, and do not delete the pod mid-hash. On a
+`sha256 MISMATCH` line the init exits 1 and the pod restarts the fetch —
+stop and report, do not retry past a second mismatch.
 
 **The don't-sync law.** Any sync re-applies git over a hand-scale (D31/D32)
 — the flip is a PARKED state that reverts at the next sync or a re-deploy
@@ -152,7 +162,8 @@ scale — not on a click; the click is how the parked state ends.
 
 The first boot of the `.rad` on OUR card is the experiment §R19 handed up:
 it prints whether one 200K session fits and what the served aggregate
-actually is. Write nothing here — read and paste.
+actually is. Write nothing here — read and paste, and start only once
+Step 2's staging receipt has printed.
 
 The expectation first — this is the ONE shipped q27 profile, the landed
 `radiance-q27:` subtree's args list verbatim (the contract script
@@ -173,6 +184,10 @@ kubectl -n default port-forward svc/gpu-ai-radiance-q27 8000:8000 &
 curl -s http://127.0.0.1:8000/diagnostics
 kill %1
 ```
+
+If `port-forward` has no endpoint yet or `curl` refuses the connection,
+the engine is still loading inside the 30-minute envelope Step 1 priced —
+wait and re-run these lines rather than restarting anything.
 
 Read, in order:
 
@@ -324,12 +339,12 @@ wait for the release read, THEN fn UP:
 
 ```bash
 # OWNER-EXECUTED — swap-back, q27 down first (same order law, D54(1)):
-kubectl scale deployment gpu-ai-radiance-q27 --replicas=0
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=0
 ```
 
 ```bash
 # OWNER-EXECUTED — after the pods read shows q27 gone:
-kubectl scale deployment gpu-ai-radiance --replicas=1
+kubectl -n default scale deploy/gpu-ai-radiance --replicas=1
 ```
 
 Expect the expensive direction: fn repays its minutes-class 113.6 GiB boot
