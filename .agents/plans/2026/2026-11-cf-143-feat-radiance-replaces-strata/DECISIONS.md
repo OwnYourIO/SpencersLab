@@ -1658,6 +1658,164 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    off; Tumbleweed initrd specifics for guaranteeing the stub wins the probe race. Authority: the
    owner's instruction, 2026-11-14.
 
+ - 2026-11-15 human D54 (**OWNER Q27 RULINGS — "Please add support for 27b in radiance" ACTIVATEs
+   the Deferred row at :1696** ("q27-on-radiance second lane … unlocks with card 2 (TP2) /
+   post-cutover"). The owner's supplied engine recipe (`radiance --model
+   /models/qwen3.8-27b-mxfp4.rad --tp 1 --max-num-seqs 8 --max-model-len 200000 --kv-cache-dtype
+   fp8 --prefix-cache-mib 4096 --host 0.0.0.0 --port 8000 --api-key "$RADIANCE_API_KEY"`) is
+   consumed WITH two riders ruled off it (auth, host form) and one normalization; the pack is
+   `StillDeadcode/qwen3.8-27b-mxfp4` → `qwen3.8-27b-mxfp4.rad`, 19,377,119,232 B (18.05 GiB), lfs
+   `a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8`, ungated, DRAFTING IN-PACK
+   (z-lab DFlash2 merged — no draft flag, it is a parse error). Authorities: RESEARCH §R19
+   (4537–5041) + EXPLORE §D54 (1682–1858). THE FOUR RULINGS, verbatim intent:
+   **(1) SHAPE = pod-swap, own pod, owner scales**: "I want to manage it same way I do
+   strata/radiance. Add a new pod and I'll scale up/down." → `radiance-q27` ships as its OWN
+   Application (roster `chart: radiance` override — D56), and **git renders it at `replicas: 0`**,
+   because two radiance pods can NEVER both schedule: `amd.com/gpu-r9700-1` is a ONE-device pool
+   (D24/§R6) and the chart-baked claim is NON-SUBTRACTABLE (D26 — overlays ADD, never remove), so
+   an idle pod at 1 would sit Pending-forever and LOOK like a defect; 0 is the honest resting
+   state. Switch order documented as law: scale fn DOWN, THEN q27 UP; the fn=1/q27=0 pair in git
+   is the resting state and a hand-scale REVERTS at the next sync (the any-sync-reapplies-git law
+   witnessed at D31/D32 — the 16:29:51Z click that wiped the owner's 94 — and re-witnessed in the
+   recovery round D50/D51). **The co-exidency arithmetic that forbids ANY alternative (§R19-Q1/Q3,
+   §D54-H) — three INDEPENDENT blockers, cite-don't-re-derive:** (a) scheduler: pool capacity 1 +
+   non-subtractable claims ⇒ second pod Pends; (b) VRAM: fn TP1 holds ~28–30 of the ~31.86 GiB
+   usable card while q27 wants 18.07 weights + ~12.48 KV = 30.55 > our 29.30 claimable; (c) host
+   RAM: fn at 110 leaves `125.08 − 110 − 4.125 − 1.158 = 9.80 GiB` free — below the q27 lane's own
+   `limit − printed-pinned ≥ 4` law at any defensible number, so an accidental both-up lands as
+   **Pending, not OOM**. Radiance supports NO in-process model swap, NO multi-model process, NO
+   MIG-style partitioning, and GUIDE §8 prices two engines on one card set at a measured ~3×
+   step-tax (§R19-Q6) — pod-swap is not a shortcut, it is the only shape the record allows on one
+   card. (q27 is ALSO the nice swap citizen: 18 GiB sub-minute-class boot vs fn's minutes-class
+   113.6 GiB — §R19 VERDICT asymmetry.)
+   **(2) AUTH = keyless, like fn**: the recipe's `--api-key "$RADIANCE_API_KEY"` is DROPPED. No
+   such secret exists repo-wide (`RADIANCE_API_KEY`: zero hits), the D8 keyless posture is armed
+   by FOUR test legs (args allowlist bans `--api-key` AND `--api-key-env`; rendered-Secret ban;
+   secret-token-in-templates ban; custom-values "radiance"-substring ban), and adding a key is a
+   DECISIONS change + a fourth custom-values leg, not a values edit (§D54-D). The lane routes
+   cluster-internal through the peers hop; `/health` is key-exempt.
+   **(3) MEMORY = 24 GiB request==limit** (Guaranteed pair, mirroring fn's D29 shape — pod-class
+   law keeps BOTH containers paired, D15; cpu "8" + the gpu claim are chart-inherited).
+   Justification carried (§R19-Q3): pinned host ≈8.5 GiB with `--placement all_vram`
+   (Wilde-measured), derived state+slots+tier band 16–20 GiB, lane law `limit − printed-pinned ≥
+   4` ⇒ 24; fn-110 leaves 9.80 GiB node-free ⇒ q27 can never co-schedule beside fn AT ANY SAFE
+   NUMBER (ruling (1)'s leg c); 24 also fits the AD-144 future: fn TP2 ~81 + 24 + router 4.125 +
+   system 1.158 ≈ 110 of 125.08. The boot receipt can still correct it (D28(6) budget-line law
+   runs the first boot; ladder = overlay one-edit).
+   **(4) CATALOG = the `qwen3.8-27b-radiance` + `-urgent`/`-low` trio ships in the SAME wave,
+   priority BELOW fn**: fn holds 9/5/1 with higher-wins polarity — that polarity is NOT inverted
+   and fn's ranks are NOT stolen; `limit.context` = served truth (200000 = the per-session
+   ceiling, the `--max-model-len`; the ~335–409K AGGREGATE is a concurrency caveat for prose, NOT
+   a context number — q27 is DENSE, "dense attention reads the whole history every step", so
+   context is VRAM-only at ~32 KiB/token fp8 and 8×200K=1.6M is impossible; the owner's own "8 at
+   ~45K each" is the honest envelope, §R19-Q1). **q27 is a runner-model CANDIDATE ONLY AFTER
+   MEASUREMENT on this box; nothing routes to it by default and the pipeline runner-model literal
+   does NOT move.** NO figure ships without its condition (this ticket has been charged TWICE):
+   122 = model card TP1 SINGLE-stream mixed-prompt mean (prose leg 77); 280 = card's 4-stream
+   TOTAL; 116 = Wilde third-party n=4 at 64K on a Gen4 board; fn-TP1 radiance has NO published
+   speed (§R19-Q4). `--prefix-cache-mib 4096` is **Wilde's operational patch, not the model
+   card's**, and 4 GiB < one 200K fp8 conversation (~6.4 GiB) ⇒ the boot's sub-one-conversation
+   warning is EXPECTED partial retention; **the owner's first boot of the `.rad` on OUR card is
+   the load-bearing receipt** (the engine's VRAM-split print decides whether one 200K session
+   fits and what the aggregate becomes; `limit.context` stays 200000 unless that print
+   contradicts it). STILL OPEN, owner-owned, NOT re-asked here: the strata cutover, landing the
+   unmerged docs, moving AD-143 to Review; merge/push stay owner-only.
+
+ - 2026-11-15 coord+plan D55 (**THE INCIDENT RECORD — a reaped lease, a truncated worktree, and
+   two FALSE loss claims; every fact verified from git/pipeline_status at the C15/C16 planning
+   round, 2026-11-15 ~00:5xZ**). **(1) LEASE:** this session's AD-143 claim (card
+   Na5LxMaY3ptABWhAy, pipeline AI) went stale and was **REAPED BY A TIMER at
+   2026-11-14T19:40:32.263Z** (`pipeline_status` `lastReap.reaped: ["Na5LxMaY3ptABWhAy"]` — the
+   second reap of this card's life, D29/D35 era). The lock was **re-acquired with the owner's
+   explicit authorisation** as setId **`c5adbd02-7f73-428a-8735-83f827de55a4`** (pipeline `AI`,
+   holder = coord session `ses_e341cc083ffe5KP95MHTBvLXx7`) — heartbeat live; the boards
+   takeover posture (one sanctioned question, re-claim, record the takeover) was followed.
+   **(2) TRUNCATION:** the worktree copies of `DECISIONS.md` (−67 lines: **D52 + D53** gone) and
+   `RESEARCH.md` (−243 lines: **§R17** gone) had LOST HEAD-committed content — the bytes exist at
+   HEAD (784ff8dd6, 8b8746911) — **suspected from a parallel session; not proven** (no other
+   write reached git, so the cause stays named as suspicion, not verdict). **(3) RESTORATION: a
+   PER-FILE UNION, committed as `601c69e98`** — DECISIONS restored to HEAD (the tree copy was a
+   strict subset: 0 adds/67 dels, content-safe); RESEARCH rebuilt as HEAD's 4,536-byte-identical
+   prefix (§R17 back in its HEAD position) PLUS the never-committed §R19 tail. **(4) THE FALSE
+   CLAIMS, recorded so NOBODY "restores" real work away: the scout round that flagged the
+   truncation ALSO claimed EXPLORE.md −243 and STATE.json −118 — BOTH WERE FALSE**: EXPLORE.md was
+   a PURE **+178/−0** delta (its §D54 was the newest uncommitted WORK, not a loss), and STATE.json
+   parsed IDENTICAL to HEAD. A blind `git checkout` "restore" of those two files would have
+   DELETED the §D54 scout grounding this very round plans against. LAW (appends to the FRICTION
+   records-fold family): **a restoration is legal only after per-file proof — `git diff --stat` +
+   `git show HEAD:<file>` read-back + JSON re-parse — and is applied as a UNION at file
+   granularity, never as a whole-file revert; a line-count CLAIM is not evidence of loss.**
+
+ - 2026-11-15 plan D56 (**Q27 LANE PLAN DECISIONS** — the forks the planner must close before
+   agent-test/dev; alternatives rejected named):
+   **(1) TOPOLOGY = roster `chart:` override on `charts/radiance` + a top-level `radiance-q27:`
+   values subtree** — one chart, TWO releases. Chosen because it keeps the image pin, the
+   amd64 manifest/index digest ledger, the renovate docker comment and the BusyBox
+   hash-gate grammar in ONE file (the duplicated-ledger alternative is the drift class this
+   ticket has been burned by at C09/C11 — two copies fixed and one survives), matches the
+   trio law ("chart entry + ApplicationSet values entry" — here: the roster entry IS the chart
+   entry), and the lever is documented (`charts/base/templates/appset-charts.yaml` :83
+   `{{ if hasKey . "chart" }}` branch; in-repo precedents `chart: zigbee2mqtt` /
+   `chart: actualbudget`; §D54's local probe rendered release `gpu-ai-radiance-q27` rc=0, with
+   the Service+Deployment names deduping from the RELEASE name and `cpu: "8"` +
+   `amd.com/gpu-r9700-1: 1` INHERITED). REJECTED sibling chart dir `charts/radiance-q27` —
+   duplication cost named: second Chart.yaml/Chart.lock/app-template tgz, second values with a
+   duplicated image+digest+renovate block, a second copy of the init checksum-gate (D27 class
+   law guarded in two places drifts), a new CI workflow + re-pinned test_contract path-set, and
+   its only gain (a parallel test suite with copied legs) is purchased anyway by C15's new
+   q27 legs. REJECTED parameterising the existing chart (anchors→inputs): the suite pins
+   chart-DEFAULTS — an anchor rework would re-pin 46 green legs to serve one overlay. NOTE the
+   topology's corollaries: `charts/radiance/values.yaml` ships **ZERO diff** (AC7); the q27
+   subtree REPLACES LISTS (args + init command) by design — the SCALARS-ONLY service law keeps
+   governing the `radiance` subtree byte-exact, and the new `radiance-q27:` subtree is the
+   named, armed exception whose lists are pinned by their own set-equality legs (§D54-B:
+   "truncation IS the intent" for the args); the anchor trap runs in REVERSE — the overlay's
+   `--model` literal is the served path, `app-template.modelPath` under the q27 subtree is
+   decorative. `NOTES.txt` stays UNTOUCHED (rendered per release, wrong-but-inert text for
+   q27; no consumer displays NOTES under ArgoCD — recorded decision, not drift).
+   **(2) CHUNKING = C15 (plumbing + same-wave test re-pin wave) + C16 (owner docs), waves
+   12→13.** Split reason (stated, per the no-churn rule): C16's args-block equality NEEDS the
+   landed subtree (real dependency), the fn runbook's T2 "EXACTLY ONE" block law FORBIDS
+   folding the q27 boot prose into the fn runbook (§D54-F — the q27 doc wants its OWN contract
+   script, the C06 idiom), and §12.14's verify-first doctrine gives a docs rewrite its own
+   test walk — a reviewer can reject the owner-console prose while approving the plumbing and
+   vice-versa. The mandatory SAME-WAVE cohesion is preserved where the law requires it: every
+   third-peer re-pin rides C15's one commit-wave with the values edits that green it.
+   **(3) THE RE-PIN WAVE is enumerated in C15 (not left to discovery)**: `test_config_parity.py:333-337`
+   peer-key wave law `{strata,radiance}` → third peer RED until landed; `test_radiance_peer.py:120-138`
+   golden peers keys (re-capture, golden/gpu-ai.config.yaml three-peer shape);
+   `test_catalog_contract.py:196-206` phantom allowlist reads `peers.radiance.models` ONLY →
+   union over both radiance peers (a q27 row routed via `peers.radiance-q27` is otherwise
+   PHANTOM-RED); `surface.sh` M8-A2 delta equality (`added ==` fn trio EXACTLY vs the frozen
+   86-key `CF143_BASE_KEYS`) → base/delta RE-FROZEN (test lane chooses base+=fn-trio vs
+   per-wave delta law, recorded in TEST_SPEC §12.15); M8-D negative needles cloned per q27 wire
+   id. Meanwhile charts/radiance/tests are CHART-level ⇒ a q27 release is **BLIND, not red** —
+   the new lane gets its OWN legs (args list without ngram/expert_tiered/kv-resident/speculative,
+   24 GiB pair + inherited cpu/claim asserted as contract, pack pin `a4908940…` verbatim ledger,
+   `replicas: 0`, catalog trio, keyless bans inherited). The fn witnesses that must stay
+   byte-green: runbook T2 (5 ok), TEST_SPEC §12.14 frozen sums `110/71.04/118.72/115.28/9.80/38.96`,
+   and `tests/notes/radiance-host-tuning.sh` — **IMMUTABLE this ticket, run-only**.
+   **(4) EVIDENCE = a NEW per-key file `evidence/radiance-q27-peers-expected.yaml`** (D13
+   per-peer-key law; fn's file NOT extended — its `models_states` anticipates a same-peer
+   arena, not a new peer key), test-session authored, dev conforms values to it.
+   **(5) RANKS best guess = q27 trio at 8/4/0** (each strictly below fn's matching 9/5/1,
+   higher-wins kept, fn's ranks untouched; peer floor `priority?` 4 = the q27 default class;
+   cross-POD ordering is meaningless — each pod schedules its own queue — the ranks are the
+   lane's internal class identity). priority-0 semantics UNVERIFIED ⇒ plan OQ-16, smoke reads
+   it, fallback 8/4/2 by prose fold + arm re-pin, never a silent retarget.
+   **(6) `--host ::`** (the fn-lane idiom, live-witnessed on this pod network) ships over the
+   recipe's literal `0.0.0.0` ⇒ plan OQ-15; one value edit if the owner wants the literal.
+   **(7) ARGS = the owner's recipe minus the api-key rider plus the honest served id**; NO
+   `--kv-resident` (dense cannot stream — "Ignored with a warning"), NO ngram/PLE family (q27's
+   family has no n-gram layer — §R19-Q7), NO `--host-pool-mib`/`--placement expert_tiered`
+   (no experts), NO `--num-speculative-tokens` (drafter in-pack; the flag doesn't own it), NO
+   `--gpu-headroom-mib`/`--max-num-batched-tokens`/`--checkpoint-interval` (engine defaults;
+   receipt decides; `--placement all_vram` is the documented lever if the boot print wants it).
+   **(8) PROXY LEG STAYS SKIPPED** (radiance internal-only ruling; no ingress entry invented)
+   — `peers.radiance-q27` is the routing requirement (port 8000, NO `/v1`, explicit models,
+   timeouts 1800/30). **(9) IQR-V4 pack adoption NOT adopted** — the owner asked for the 27b
+   (mxfp4); the Deferred row's IQR-V4 half stays open (quality dial, §R19-S12).
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full
@@ -1695,6 +1853,12 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   `/metrics` is vllm-compat-family, the two existing dashboards are cheap candidates.
 - q27-on-radiance second lane + IQR-V4 pack adoption — unlocks with card 2 (TP2) /
   post-cutover (C03 doc).
+- 2026-11-15 plan ACTIVATION POINTER (owner ask, D54): the q27-on-radiance half of the row
+  above is ACTIVATED NOW as the POD-SWAP lane — `radiance-q27` ships in this ticket (C15
+  plumbing + C16 docs, waves 12–13) at `replicas: 0` on the one card, the owner scaling to
+  flip; the BESIDE-FN co-residency shape of the TP2 §11 sketch still waits for card 2
+  (AD-144) + the §6/§11 pool re-verification law, and the IQR-V4 pack adoption STAYS deferred
+  (the owner asked for the 27b mxfp4 pack only).
 - `AMD_GPU_DEVICE_COUNT` / t1m.me plugin-claim — CLOSED by §R6: the .12 binary implements
   neither `AMD_GPU_DEVICE_COUNT` nor `CONFIG_FILE_PATH` (docs lead code; a count cap
   could never choose a card anyway); the t1m.me kernel-7.1.3 story stays dropped unless

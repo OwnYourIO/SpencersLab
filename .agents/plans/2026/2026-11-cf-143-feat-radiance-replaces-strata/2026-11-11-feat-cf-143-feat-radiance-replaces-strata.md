@@ -1484,3 +1484,65 @@ APPROVED: **this plan is complete.**
 — final reviewer round 6, 2026-11-14 (fresh session; sole write = this record; renders, dep
 updates and the claim-drop synthetic confined to /tmp; cluster reads readonly-tier only; repo
 tree verified clean post-runs).
+
+---
+
+## Rework delta 8 — owner extension: q27 on radiance (C15 + C16) — 2026-11-15, appended per owner ask ("Please add support for 27b in radiance")
+
+plan_status reopened `complete`(=FINAL r6 APPROVED, fourteen chunks)→**approved** for this
+extension wave (the C09→C14 reopen pattern, D54); waves 12→13; **this activates the Deferred
+row DECISIONS:1696** "q27-on-radiance second lane" — the IQR-V4 half of that row STAYS
+deferred. Authorities: RESEARCH §R19 (the q27 round) + EXPLORE §D54 (the file-map) — cited,
+never re-derived. Owner rulings consumed verbatim (D54), NOT re-asked: **pod-swap** (`radiance-q27`
+own Application, git renders `replicas: 0`, owner flips by scaling; two pods NEVER both
+schedule — capacity-1 pool + chart-baked non-subtractable claim (D26) + fn-110 leaves 9.80 GiB),
+**keyless** (the recipe's `--api-key "$RADIANCE_API_KEY"` DROPPED — zero repo hits, four D8
+arms; no fourth custom-values leg), **24 GiB request==limit** (Guaranteed, mirroring fn's D29
+shape), **catalog trio in the same wave ranked below fn** (8/4/0 under fn's un-inverted
+higher-wins 9/5/1; fn's ranks not stolen; rows are a measurement-conditional candidate — the
+runner-model literal does NOT move).
+
+**Topology DECIDED (D56): roster `chart: radiance` override + `radiance-q27:` overlay subtree**
+(one chart, two releases) — the base template's `hasKey "chart"` branch is the documented lever
+(zigbee2mqtt/actualbudget precedents; §D54's local render proved rc=0 + the inherited
+`cpu: "8"`/`gpu-r9700-1: 1`). Rejected `charts/radiance-q27/` sibling dir with its duplication
+cost named: a second image-pin/digest ledger/renovate comment (drift class this ticket keeps
+paying), a second BusyBox init-grammar home (C11 class), new CI workflow + re-pinned
+test_contract path-set. Payoff pinned as an AC: `charts/radiance/values.yaml` **ZERO diff** —
+the chart's 46 legs stay green by construction; every fn-shaped q27 truth is a whole-list
+replacement in the service overlay (§D54-B's list-replacement law, with the anchor trap
+reversed: `--model` moves ONLY because the overlay's args list carries the path literally).
+
+### Chunk table (extension)
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C15 | q27 lane plumbing: roster entry + overlay subtree (args/init/24Gi pair/replicas 0) + `peers.radiance-q27` + catalog trio + pipeline-models row + CI leg + golden + the third-peer re-pin wave + new q27 test legs | L | 12 | [C14] | builds on the landed fn lane; the test re-pin wave (parity 3-peer law, golden keys, phantom allowlist, M8-A2 delta) MUST land same commit-wave as the values edits it greens |
+| C16 | q27 docs: `.agents/notes/radiance-q27-boot.md` (the owner's first-boot receipt step) + TP2 §9/§11 SHIPPED annotation + own contract script `tests/notes/radiance-q27-boot.sh` + tp2-suite re-pin | M | 13 | [C15] | REAL dep: the note's single fenced args block equality-checks the LANDED overlay subtree (C06 idiom); runbook T2's "EXACTLY ONE" fn-block law forces a SEPARATE doc+script (q27 prose inside the fn runbook reds it) — split reason stated in the chunk, not churn |
+
+Wave 12 → C15; wave 13 → C16. Both inside the existing `## Commands` battery; the chunk files
+carry the q27-specific legs. `tests/notes/radiance-host-tuning.sh` stays IMMUTABLE (run-only);
+the strata surfaces, the D8 keyless arms, the §12.14 frozen sums, `charts/radiance/values.yaml`
+and NOTES.txt are do-NOT-touch lists in both chunks. Red-first law holds: agent-test writes
+T-legs BEFORE dev (the third-peer re-pins are RED against today's tree by design; the fn arms
+are GREEN witnesses and must stay byte-untouched).
+
+### Risks (extension)
+- The boot of the `.rad` on OUR card is the load-bearing receipt (§R19 Implications): every
+  q27 number shipped here (200K per-session ceiling, 24 GiB, aggregate ~335–409K) is written
+  to be CONFIRMED OR CORRECTED by the engine's own VRAM-split + budget prints; `limit.context`
+  moves only if that print contradicts it, via DECISIONS→values→arms one wave (D36(4)).
+- Priority-0 semantics (the q27 `-low` rank under fn's 1) is UNVERIFIED engine behavior —
+  best guess shipped; C16's smoke step 5 reads it on the boot lane, correction = prose fold +
+  arm re-pin, never a silent retarget.
+- The idle lane answers 503 through the peer hop (Service exists, endpoints empty) — honest
+  by design, stated in the overlay comment + the boot note; nothing auto-routes there.
+
+### Open questions (extension — for the coord's ONE batched round; best guesses already shipped)
+- **OQ-15** — `--host ::` (shipped, the fn-lane idiom) vs the recipe's literal `0.0.0.0`: both
+  serve, `::` is the live-witnessed form on this pod network. Recommendation: keep `::`; flip
+  is one value edit if the owner wants their literal. (Best guess shipped, NON-BLOCKING.)
+- **OQ-16** — the q27 trio's exact ranks 8/4/0 (each strictly below fn's matching 9/5/1,
+  higher-wins kept, fn's ranks untouched). The engine's priority-0 behavior is unverified
+  (§R19 carries no floor row; vLLM's `priority=0`=unset precedent does NOT transfer).
+  Recommendation: ship 8/4/0, let C16's smoke confirm; fallback 8/4/2 if 0 reads oddly.
+  (Best guess shipped, NON-BLOCKING.)

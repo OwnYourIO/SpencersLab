@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-143-feat-radiance-replaces-strata",
-  "plan_status": "complete",
-  "plan_status_note": "FINAL review round 6 APPROVED (fourteen chunks, ten review rounds, zero blockers/majors) — the repo side of this ticket is DONE; what remains is the owner's hardware rungs (reseat → Gen4 cable → DOCK BYPASS), the two never-run gates (the fixed ≥2000-token probe; runbook step 6's 8-session gate with §R8's capture keys), the branch's docs-only landing delta (d645b7cf8 + 3261a92f3 — main still carries the retimer fiction and the falsified Rung-0), and the card triage. Re-opens so far: C09/C10/C11/C12/C13/C14 (five live defects + one docs refresh), each closed with its own review round and each found by the CLUSTER rather than by a green bar — the ticket's defining pattern.",
+  "plan_status": "approved",
+  "plan_status_note": "REOPENED complete->approved 2026-11-15 for the owner-extension wave (D54/D56): q27 on radiance (C15 wave 12 + C16 wave 13) activates the DECISIONS Deferred row 'q27-on-radiance second lane' (IQR-V4 half stays deferred). Shape RULED by the owner: pod-swap second release of the SAME chart (roster chart: override, git renders radiance-q27 at replicas 0, owner flips by scaling; co-schedule impossible - capacity-1 pool + D26 non-subtractable claim + fn-110 leaves 9.80 GiB), keyless (owner's --api-key rider dropped, D8 arms intact), 24 GiB Guaranteed pair, catalog trio 8/4/0 strictly below fn's 9/5/1 higher-wins (fn ranks not stolen; measurement-conditional; runner-model literal unmoved). Topology + ranks recorded D56; incidents (lock reaped 2026-11-14T19:40:32Z by timer + re-acquired under owner word as setId c5adbd02-7f73-428a-8735-83f827de55a4 (AI); DECISIONS/RESEARCH worktree truncation restored as per-file union at 601c69e98; scout's EXPLORE/STATE loss-claims FALSE - do not 'restore' them) recorded D55. PRIOR STATE (history, unchanged facts): FINAL review round 6 APPROVED (fourteen chunks, ten review rounds, zero blockers/majors); the strata cutover, the docs-only landing delta, and the AD-143 Review move remain OWNER-owned; re-opens so far: C09/C10/C11/C12/C13/C14 (five live defects + one docs refresh), each closed with its own review round and each found by the CLUSTER rather than by a green bar.",
   "coord_session": "ses_e341cc083ffe5KP95MHTBvLXx7",
   "lock_incident": {
     "at": "2026-11-13T16:09:03Z reaped / 18:5xZ re-claimed",
@@ -12,8 +12,8 @@
     "prior_setId": "b60c418b-d45f-4f73-948e-cce3ca140f14"
   },
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 11,
-  "updated_at": "2026-11-14T02:30:00+00:00",
+  "current_wave": 12,
+  "updated_at": "2026-11-15T01:02:00+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -664,15 +664,24 @@
       "last_verdict": "APPROVED (r1 @d645b7cf8: docs-only inside contract; falsified rung receipted and never re-advertised; fiction-ban/marker/stability arms proven by the reviewer's OWN syntheses; DEVIATION 1 — the §14 HEAT-ENGINE heading suffix re-point — ACCEPTED per D36(4) + AC4's token-only freeze + the reviewer's both-ways green proof; 1 minor + 2 nits + 2 info, none blocking)",
       "handoffs": [
         {
-          "role": "tests", "round": 1, "at": "2026-11-13T19:10:00+00:00", "session": "ses_e3341864effeGtB69Py9rDwbH5",
+          "role": "tests",
+          "round": 1,
+          "at": "2026-11-13T19:10:00+00:00",
+          "session": "ses_e3341864effeGtB69Py9rDwbH5",
           "result": "DONE (verify-first, §12.14) — the round's POINT was to move the arms BEFORE dev could be disarmed by them: the suite is green against the PRE-rewrite note AND against the truthful rewrite fixture (4 ok both ways), so no rewrite can silently pass. Resolver extended for §R10/§D10 cite forms (stale §R11/R10-Q99 RED). Fiction-ban hardened (re-advertising the dock's retimer RED; the truthful 'the DEG1 is NOT — it has neither' deny-frame GREEN; a wrapped re-brand inside the ±220 stability window is the documented tripwire-not-proof limit). Stability-vs-speed arm added (isolated re-brand RED). HEAT-ENGINE arms re-pinned to the exit-banner receipt WITH the ledger saying plainly that the evidence moved, not the prose; stale-wording flip GREEN→RED proven. Three test-side defects found and fixed at the arm before dev landed: the line-scoped re-brand window, the `OWNER-lane` hyphen exemption gap, and an escaped-dot substring bug that would have FALSE-REDDENED correct prose. AC4's frozen tokens verified survivable (headings, 30–70/5.8–13.6, 110/71.04/118.72/115.28/9.80/38.96, iommu + don't-sync texts). Naming NON-FLIP witness at the plan sha; aislop's registry-vs-cache float hit exactly as §12.14's footnote predicts (cached binary = the sanctioned route)."
         },
         {
-          "role": "dev", "round": 1, "at": "2026-11-13T19:40:00+00:00", "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
+          "role": "dev",
+          "round": 1,
+          "at": "2026-11-13T19:40:00+00:00",
+          "session": "ses_e2ed4b11affe7aesOCNeuT2c0A",
           "result": "DONE (docs-only, ONE file) — §1 LINK: a Read-toolkit paragraph (engine `link` line + `journalctl -k -b` bandwidth line, BOTH under load; the idle-parks-at-2.5-GT/s trap named; the honest census verbatim '49% → 50% → 48%' with the record's own correction that a '61%' reading NEVER EXISTED), a Discriminator-status paragraph (D34's TargetSpeed=16 read CLOSES the BIOS-pin branch; the defect is electrical/equalization), then the ladder: **Rung 0 FALSIFIED with the receipt** (boot id 4d6202d9… 21:34:43Z, SIGTERM 21:31:24Z, ≈3 m 19 s, chain reprinted `00:03.1 8.0 GT/s x4 (max 16.0) -> c2 8.0 x4 (max 32.0 x16) -> c3/c4 32.0 x16` at 48% busy + the same WARN, 'the rate did not move BECAUSE THE LINK DID NOT MOVE', D33's re-witness that 'clears on reboot' is WITNESSED-FALSE here) → Rung 1 RESEAT (surviving STRONG candidate) → Rung 2 CABLE SWAP → Rung 3 **DOCK BYPASS = the decisive separator** (bypass-Gen4 ⇒ dock owns it; bypass-Gen3 ⇒ host-port/cable/card triple; card class ruled out by witness) → Rung 4 BIOS/EQ LAST and UNVERIFIED ('no primary GMKtec/AMD BIOS doc exists — do not promise it') → the terminal fork (all rungs still 8 ⇒ the passive path can't hold Gen4 here; a redriver/PEX-switch dock is the owner's purchase decision, TP2 §2's lane; the DEG1 has neither, deny-framed) + the rung-scoring receipt law. NOT-fixes: the two verbatim field quotes ('no change to PCIe link speed'; 'no effect') + setpci mooted at TargetSpeed=16 + the law 'anything that doesn't land LnkSta first is not a fix, it's hygiene'; the STABILITY-only d3cold_allowed=0 + amdgpu.runpm=0 row with the ArcheoCodix same-DEG1 precedent, 'explicitly NOT a throughput fix'. §14 HEAT-ENGINE rewritten on the recovered exit banner COMPLETE (20678/12129/13736/11960/9993/4971/36%/min 0 max 300 mean 67.2 sd 94.5/71.40 GiB h2d/19.08/46.2%/49 sweeps) marked READ ARTIFACT for boot B's 0-dispatches and SUPERSEDED for §D8.2(b)'s 154-capacity inference, with the ~90–100 MiB/token churn riding the same link, the m-curve 0.29→0.20→~0.17, '11.0@gen1047 / 16.4@gen1707 = SAME, MID-RAMP, NOT a regression', both unrun gates named without casual directives, and 'the receipt decides, never the rate' kept. §4: one governor second-reboot witness line. Bars: tuning 4 ok (green BEFORE and AFTER — the pre-moved arms), runbook 5 / tp2 3 / radiance 46P / llama-swap 498P+9S / amd-gpu 29P / vllm 36P / naming 5 ok + NON-FLIP / surface 9 + explicit M1..M8 10 / lint / rulesync rc0 / aislop 100-0-0 via the cached binary; git scope = the one note file, zero chart or service files, render-empty by construction. Self-caught at authoring (not at suite time): the 'nothing to write' wrap that would have split a verbatim quote, and the marker-adjacency law from C13 re-armed cleanly."
         },
         {
-          "role": "review", "round": 1, "at": "2026-11-13T20:05:00+00:00", "session": "ses_e29eb1f7cffeAbGMWA7cqGXhPo",
+          "role": "review",
+          "round": 1,
+          "at": "2026-11-13T20:05:00+00:00",
+          "session": "ses_e29eb1f7cffeAbGMWA7cqGXhPo",
           "result": "APPROVED — docs-only proof (render-plane input diff = 0 files), frozen tokens counted equal before→after (14/15 headings byte-identical; TargetSpeed/REPRINTED/1002:1478 only GAINED), falsified rung receipted with zero live re-advertisement repo-wide, fiction-ban and marker arms proven by the reviewer's OWN syntheses (s1 re-advertise retimer → RED, s2 stripped OWNER marker → T3 RED, s3 truncated banner → RED, s4 re-brand → RED when isolated, s5 aspm-as-cure → RED), mover rewrite complete and traceable to §D10.4 with both unrun gates named as GATES not instructions. DEVIATION 1 RULED: ACCEPT the §14 heading-suffix re-point — the suffix WAS the falsified claim, AC4 froze the family TOKEN (byte-preserved, order kept), §12.14 arms only the heading token, and the reviewer independently ran the PRE-rewrite note through the new suite (4 ok) proving suffix-blindness both ways; leaving it would have put a dead cure on the owner's console header. Cross-doc sweep: no stale copy of the claim in runbook/TP2/values. Findings: minor-1 (the 'COMPLETELY' sentence omits 328 declined / 265/3721 starved — armed tokens all present, wording over-claims → fold at next touch), nit-1 rung-0 ellipsis, nit-2 churn divisor clause, info-1 the note's 'verbatim' ttm.pages_limit=293610128 vs the engine's 29360128 (a 9-digit typo in two sites, PRE-EXISTING, unpinned — FINAL r6 one-char fold candidate), info-2 the §12.14 aislop repo-pin suggestion (infra lane). Bars fresh at d645b7cf8 incl NON-FLIP at the full sha and the aislop float re-witnessed (cached 0.20.1 → 100/0/0)."
         }
       ],
@@ -681,10 +690,33 @@
       "review_session_note": "HONESTY CORRECTION (D37(2), caught by FINAL round 6): this is the SAME session that ran the C13 r1 review and the chunk note called it 'fresh' — it was not; I passed the id forward out of convenience. The round re-ran its own bars and synthesized its own fixtures (its findings were new), but the label was false and the contract (chunk reviews are ALWAYS fresh sessions) was broken. Law recorded at D37(2): a sessionID on an agent-review launch is a defect signal for a chunk review — pass none.",
       "commit": "d645b7cf8 (3 files: .agents/notes/radiance-host-tuning.md + tests/notes/radiance-host-tuning.sh + charts/llama-swap/tests/TEST_SPEC.md §12.14) + the r1 prose folds at 3261a92f3; docs-only — zero render-plane files, NON-FLIP re-proved at the full sha",
       "note": "DOCS-ONLY ROUND (D36): tuning-note §1 LINK ladder refreshed on §D10 — rung-0 ritual FALSIFIED by the owner-executed cold boot (boot id 4d6202d9 @21:34:43Z reprinted 8.0 GT/s x4 @48% busy); ladder now reseat -> Gen4-rated cable -> DOCK-BYPASS (decisive, R10-Q3) -> BIOS-EQ last/trust-flagged; NOT-fixes row (pcie_aspm=off no speed R10-S9; setpci moot at TargetSpeed=16) + d3cold_allowed=0 + amdgpu.runpm=0 STABILITY row due regardless (ArcheoCodix same-DEG1 precedent, R10-S6); HEAT-ENGINE rewrite on the recovered exit banner (mover ENGAGED, 0-dispatches=read artifact, 154!=capacity (300 w/ loans), churn ~90-100 MiB/token rides the same link -> link-first strengthened; rates same-mid-ramp; fixed probe + step-6 gate unrun); self-corrections: 61% citation never existed (census 49/50/48), §D8.2(b) superseded; fiction-ban/marker/T4-coherence survival + frozen tokens + render-diff-EMPTY docs-only law. Authority §D10; reopen complete->approved with reason."
+    },
+    "C15": {
+      "status": "pending",
+      "wave": 12,
+      "depends_on": [
+        "C14"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C16": {
+      "status": "pending",
+      "wave": 13,
+      "depends_on": [
+        "C15"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
     }
   },
   "blocked": [],
   "deferred": [
+    "q27-on-radiance second lane — ACTIVATED 2026-11-15 by the owner ask 'Please add support for 27b in radiance' (the DECISIONS Deferred row at :1696 'unlocks with card 2 (TP2) / post-cutover' — the owner's ruling supersedes the unlock-wait: ship now as a POD-SWAP lane, radiance-q27 at replicas 0 on the ONE card, owner scales to flip; the beside-fn co-residency half of the TP2 §11 sketch still waits for card 2 / AD-144). Runs as C15 (plumbing + test re-pin wave, wave 12) + C16 (boot note + TP2 SHIPPED annotation, wave 13). The IQR-V4 pack adoption named in the same deferred row STAYS deferred. Owner rulings recorded at D54; topology + plan decisions at D56; authorities RESEARCH §R19 + EXPLORE §D54.",
     "D45 FOLLOWS-UP (coord, 2026-11-14): three items now owed because §R15 overturned things I asserted earlier — (a) the tuning note's GOVERNOR section still speaks of 'governor powersave' as the suspect and cites the §D6.3 memlock attribution: re-point to EPP-as-lever under amd-pstate-epp (R15-S4) and to the cgroup-free gate as the real ngram-RAM requirement (not RLIMIT_MEMLOCK) at the note's next touch, docs+arm same wave per D36(4); (b) the ONE free experiment left on this box is `powerprofilesctl set performance` (or masking the asserting daemon) then re-reading EPP — the last candidate for the non-wire ~24 ms; (c) the one measurement that decides whether ~35 t/s is THE documented floor or still anomalous is the fixed ≥2000-token probe read against the best-tile / steps-held counters, since the docs' 28–29 ms figure does not state whether it includes speculative acceptance. Also standing from earlier rounds and now the only remaining perf path with evidence: runbook step 6 (8-session gate, never run) and TP2 (AD-144), where 62–137 t/s, the prefix-tier resume and the n-gram RAM tier become simultaneously reachable at ~83 GiB host ≤ 110 — no single-card profile edit qualifies.",
     "C14 r1 minor-1: the note's banner sentence said \"quoted here COMPLETELY\" while dropping the tail clauses (328 dispatches declined on hysteresis; 265 starved of a slab slot, 3721 of a pool slot) — LANDED at 3261a92f3: the tail restored verbatim from §D10.5 AND the claim re-worded to 'the armed counters quoted complete; the full multi-line banner with its per-layer tables is EXPLORE §D10.5', so no over-claim survives in either direction; nit-1 (rung-0 ellipsis → verbatim chain) and info-1 (ttm digit, three sites + DECISIONS paste) landed the same commit — CLOSED (nit-2's optional churn-divisor clause remains a judgement call, not a defect)",
     "D34 LINK-half (owner's LnkCtl2 read, 18:58Z): TargetSpeed=16GT/s while LnkSta=8GT/s ⇒ BIOS-pin hypothesis CLOSED, electrical branch OPEN (dock power sequence → cable/connector → host-port EQ). The tuning note's LINK discriminator now has only one of its two answers live, so its next touch must record that (and the isolation ladder in D34: power order → reseat → swap cable → BYPASS THE DOCK as the definitive test → only then any setpci write, owner-lane with link-down risk). Nothing repo-side ships from this; it is host hardware. RESOLVED BY C14 (rung-0 falsified + ladder landed); what remains open is the owner's physical rungs 1–3 — FORWARD (owner-lane hardware, not repo work)",
