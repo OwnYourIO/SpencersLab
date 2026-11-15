@@ -79,6 +79,29 @@ charts:
     namespace: default
     ServerSideApply: "false"
 
+  # cf-143 C15 (DECISIONS D54/D56, owner "add support for 27b in radiance"):
+  # the q27 pod-swap lane — a SECOND RELEASE of the SAME chart dir. The
+  # `chart:` key renders this release from the existing charts/radiance
+  # (the base appset's hasKey-"chart" path branch, charts/base/templates/
+  # appset-charts.yaml:83; precedents chart: zigbee2mqtt / actualbudget) —
+  # one chart, two releases (D56(1)); a sibling chart dir was REJECTED for
+  # duplicating the image pin, the digest/pack ledgers and the BusyBox
+  # hash-gate grammar, the drift class this ticket keeps paying for. The
+  # base appset derives the Application name serviceName+appName =
+  # gpu-ai-radiance-q27 — the host of the peers.radiance-q27 hop below; a
+  # release name drifting from it silently breaks that route. Git renders
+  # this release at replicas 0 (the radiance-q27 subtree at the foot of
+  # this file): an idle pod at 1 would Pend forever against the capacity-1
+  # gpu-r9700-1 pool and LOOK like a defect — 0 is the honest resting
+  # state and the owner flips the lane by scaling (D54(1)). Keyless chart
+  # (D8/D54(2)): no bitwardenIds here, no custom-values leg — the trio
+  # law's documented skip, same as fn. ServerSideApply "false": the
+  # llama-swap-family shape (gotcha 6).
+  radiance-q27:
+    namespace: default
+    ServerSideApply: "false"
+    chart: radiance
+
 ingress:
   subdomains:
     # cf-105 (D7/Q4 ruling): deliberately NO vllm host — the trio rule's
@@ -103,6 +126,12 @@ ingress:
     # existing llama/ai-llama-swap hosts already carry the chain, and a host
     # of its own would publish the surface the peers hop exists to keep
     # private.
+    # cf-143 C15 (D56(8)): deliberately NO radiance-q27 host either — the
+    # pod-swap release is internal-only under the SAME ruling, so the trio
+    # law's proxy leg stays SKIPPED for it: its clients reach the engine only
+    # through the llama-swap peers.radiance-q27 route below, and inventing a
+    # host here would publish the very surface the peers hop exists to keep
+    # private. Idle at rest the hop answers 503 — loud, not exposed.
     ai-llama-swap:
       service: gpu-ai-llama-swap
       port: 8080
@@ -636,6 +665,44 @@ llama-swap:
         filters:
           setParams:
             "priority?": 5
+      # cf-143 C15 (D54/D56; §11's second-peer sketch resolved): the q27
+      # pod-swap lane joins ADDITIVE beside radiance — charts.radiance-q27
+      # above renders the Service this hop points at. SINGLE source:
+      # charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml
+      # (D13 per-peer-key law, its OWN sibling file — the fn evidence stays
+      # byte-untouched: its models_states anticipates a SAME-peer arena,
+      # not a new key; dev conforms values to it, never the reverse).
+      # Peer laws restated because the clone does not exempt this hop: NO
+      # /v1 suffix — the request path is appended verbatim and a suffix
+      # would double-prefix every route; models lists the served id
+      # EXPLICITLY (peers is not a blanket URL proxy) and the id equals the
+      # q27 subtree's --served-model-name (honest-id law, D7 pattern); the
+      # id stays OUT of the outer matrix/models — peers are invisible to
+      # the solver, so the pod-swap ordering stays operator discipline,
+      # not a matrix arena (D56(8)). No apiKey: keyless like fn (D8/
+      # D54(2)). timeouts 1800/30 are CLONED from fn, not re-priced: the
+      # q27 boot is sub-minute-class against fn's minutes (18 GiB vs
+      # 113.6 GiB — the asymmetry that makes q27 the nice swap citizen,
+      # §R19 VERDICT), but the cold-load first-byte knob keeps the shape.
+      # setParams "priority?" = the set-if-undefined floor 4 — q27's
+      # DEFAULT class under the same higher-wins polarity. fn's 5 floor is
+      # NOT reused (D54: "do not steal fn's ranks"): the trio's 8/4/0 sits
+      # strictly below fn's 9/5/1 with the polarity un-inverted (D56(5));
+      # cross-pod ordering is meaningless anyway — each pod schedules its
+      # own queue, so the ranks are this lane's internal class identity.
+      # Honest caveat: while the q27 pod rests at replicas 0 the hop
+      # answers 503 (the Service exists, endpoints empty) — an INTENTIONAL
+      # idle lane, never silent.
+      radiance-q27:
+        proxy: http://gpu-ai-radiance-q27.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-27b-radiance
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 4
       # cf-143 C01 (owner Q3 ruling, DECISIONS D6): the peers.vllm hop is
       # disabled commented-out beside its charts.vllm entry — this is the
       # vllm-radiance FORK lane (charts/vllm), not the cf-143 radiance engine.
@@ -767,3 +834,195 @@ radiance:
     # the named-pool path sets no ROCr/HIP env (C02 absence law: the plugin's
     # Allocate() injects the card; the vllm lane needed the key only for its
     # hostPath in-pod enumeration).
+
+# cf-143 C15 (DECISIONS D54 owner rulings + D56 topology; §R19; §D54): the
+# q27 POD-SWAP lane — a second radiance release (charts.radiance-q27 with the
+# roster `chart: radiance` override above) serving qwen3.8-27b-mxfp4 on the
+# SAME single R9700, one engine live at a time. This subtree is the appset
+# merge partner for that release: per-app values = merge $extraValues
+# (index $.Values "radiance-q27") (charts/base/templates/appset-charts.yaml),
+# so the whole q27 pod truth ships HERE, not in charts/radiance — that file
+# stays a ZERO-DIFF file on purpose (D56(1): one chart dir, two releases, one
+# image/digest/pack/hash-gate ledger).
+# THE SWITCH DISCIPLINE (D54(1)) — the law this lane lives by:
+#  * Scale ORDER: fn DOWN first, then q27 UP. fn replicas 0 must land before
+#    q27 scales to 1. A both-up lands PENDING, not OOM — three INDEPENDENT
+#    blockers, any one fatal (the §R19/§D54-H arithmetic, cited not
+#    re-derived): the amd.com/gpu-r9700-1 pool is capacity-1 and the
+#    chart-baked claim is non-subtractable (D26: overlays ADD, never remove),
+#    so a second radiance pod Pends against the pool forever; fn TP1 holds
+#    ~28-30 of the ~31.86 GiB usable card while q27 wants 18.07 weights +
+#    ~12.48 KV = 30.55 GiB; and host RAM at fn's 110 pair leaves
+#    125.08 - 110 - 4.125 - 1.158 = 9.80 GiB free — below this lane's own
+#    limit-minus-printed-pinned >= 4 slack law at any safe number.
+#  * RESTING state: git renders the fn 1 / q27 0 pair. The owner flips the
+#    lane by scaling; 0 is not a disable artifact — every byte below is
+#    deploy-ready for the flip.
+#  * D31/D32 law: any sync re-applies git over a hand-scale, so a manual
+#    flip survives only until the next sync — OutOfSync through the switch
+#    window is EXPECTED (that is the parked swap, not a defect to chase).
+#  * Idle honesty: while q27 rests at replicas 0, the peers.radiance-q27 hop
+#    answers 503 — the Service exists, endpoints empty. A loud idle lane,
+#    never a silent one; routing there before the owner scales it up is the
+#    503, by design.
+#  * NO-KEY ruling (D54(2)): the owner's recipe carried an --api-key rider;
+#    it is DROPPED — the lane is keyless like fn (D8). No such secret exists
+#    repo-wide, and keying it would be a DECISIONS change plus a fourth
+#    custom-values leg, not a values edit here.
+radiance-q27:
+  app-template:
+    # Decorative ledger ONLY, said plainly because the anchor trap runs in
+    # REVERSE at this second release: the args below carry the pack path
+    # LITERALLY (the fn serveArgs anchor is chart-side and cannot splice
+    # across documents), so moving this key alone moves NOTHING that renders
+    # (§D54-A/B). The rendered --model and the init PACK are the served
+    # truth; keep the three in step on any retarget anyway.
+    modelPath: /models/radiance/qwen3.8-27b-mxfp4.rad
+    controllers:
+      radiance:
+        # The pod-swap resting state (D54(1)): git renders 0; the owner
+        # scales up to flip the lane (see the switch discipline above). An
+        # idle pod at 1 would Pend forever against the capacity-1 pool and
+        # LOOK like a defect — 0 is the honest shape.
+        replicas: 0
+        containers:
+          radiance:
+            # WHOLE-LIST REPLACEMENT of the chart's fn serveArgs — the fn
+            # block above keeps its scalars-only law; this subtree is the
+            # named, armed exception (D56(1): here truncation IS the
+            # intent, and the q27 lists are pinned by their own
+            # set-equality legs, extra flag as red as a missing one).
+            # The D54-ratified profile = the owner's recipe MINUS the
+            # api-key rider (D54(2)) PLUS the honest served id (D7 pattern:
+            # --served-model-name qwen3.8-27b-radiance, the id peers + the
+            # catalog rows route by). Host normalized to the lane's ::
+            # idiom (OQ-15: the fn idiom wins over the recipe's literal).
+            # ABSENCES are contract (each a named bar, §R19):
+            # no --kv-resident (the arch REFUSES it with a warning — dense
+            # attention reads the whole history every step, it cannot
+            # stream, §R19-Q1(iii)); no --placement/--host-pool-mib (dense,
+            # no experts to place, no host pool to size, §R19-Q7); no
+            # --ngram-placement (q27's family carries no n-gram/PLE layer,
+            # §R19-Q7); no --num-speculative-tokens (the z-lab DFlash2
+            # drafter is compiled into the .rad — "the flag simply doesn't
+            # own the drafter", §R19-Q5, and --draft-model is a parse
+            # error); no --gpu-headroom-mib (co-residency etiquette, moot
+            # in a pod-swap, §R19-Q6). Every number NOT shipped here is
+            # engine-default-and-receipt-decides (D28(6) budget-line law).
+            # WHY the two shipped context numbers: --max-model-len 200000
+            # is the PER-SESSION ceiling (what limit.context reports), NOT
+            # an 8x200K promise — dense context is VRAM-only at ~32
+            # KiB/token fp8 (16 full-attention layers, §R19-Q1), so the
+            # pool funds ~335-409K AGGREGATE tokens and "8 at ~45K each" is
+            # the honest envelope. --prefix-cache-mib 4096 is WILDE'S
+            # operational patch, not the model card's (§R19-Q2): ~131K
+            # tokens of host-side resume pool at 32 KiB/token, and BELOW
+            # one 200K fp8 conversation (~6.4 GiB) — the boot's
+            # tier-smaller-than-one-conversation warning is EXPECTED,
+            # partial retention IS the config. It ships as the given
+            # recipe; nothing here is armed on a measured aggregate — the
+            # owner's first boot of the .rad on OUR card prints the
+            # VRAM-split receipt that confirms or corrects (C16 note hands
+            # it up; limit.context moves only by a DECISIONS line then,
+            # never by silent retarget).
+            args:
+              [
+                "--model", "/models/radiance/qwen3.8-27b-mxfp4.rad",
+                "--port", "8000",
+                "--host", "::",
+                "--tp", "1",
+                "--max-model-len", "200000",
+                "--max-num-seqs", "8",
+                "--kv-cache-dtype", "fp8",
+                "--prefix-cache-mib", "4096",
+                "--served-model-name", "qwen3.8-27b-radiance"
+              ]
+            resources:
+              # 24 GiB request==limit — the D54(3) Guaranteed pair (the D15
+              # pod-class law is carried chart-side: the serve map below
+              # and the chart-baked init pair both stay equal).
+              # Justification at the scalar (§R19-Q3, receipts not vibes):
+              # pinned host ~8.5 GiB measured at --placement all_vram
+              # (Wilde) + the slots/tier-derived state band 16-20 GiB for
+              # this recipe (80 checkpoint slots x 144 MiB + the 4 GiB host
+              # tier + margin) + the lane's own limit-minus-printed-pinned
+              # >= 4 law => 24. cpu "8" and the amd.com/gpu-r9700-1 claim
+              # are NOT re-authored here because they CANNOT be: the map
+              # deep-merge adds/updates keys and NEVER removes (D26), so
+              # they arrive chart-inherited — non-subtractable, and the
+              # rendered pair is asserted exactly that way. The boot
+              # receipt may correct the number; the repair is this overlay
+              # one-edit ADD/UPDATE ruled forward (D28(6)), never a chart
+              # parameterisation.
+              requests:
+                memory: "24Gi"
+              limits:
+                memory: "24Gi"
+        initContainers:
+          radiance-fetch:
+            # Q27 PACK LEDGER (RESEARCH §R19-S1, the init script's own
+            # verification authority, the fn ledger's shape at its new
+            # home): HF StillDeadcode/qwen3.8-27b-mxfp4, file
+            # qwen3.8-27b-mxfp4.rad, 19,377,119,232 bytes (18.05 GiB), lfs
+            # sha256
+            # a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8,
+            # ungated (gated:False verified against the HF API). The
+            # drafter is IN-PACK: the z-lab DFlash2 head ships inside the
+            # .rad (needs radiance >= 1.2.3; this image is 1.17.0), and the
+            # vision tower too — the catalog's [text,image] claim rides
+            # this receipt, retired by C16's smoke leg on failure.
+            # Staging math: 18.05 GiB onto the SHARED llama-swap claim
+            # (fn's 113.6 GiB already there; claim 500Gi — C16's note has
+            # the owner df-check it on-target). First boot downloads +
+            # hashes ONCE: the equality gate at 1000m single-threaded puts
+            # the hash in the ~1-2 min class (§D4's 113.6-GiB bound
+            # ~5.8-13.6 min SCALES with size — DERIVED; the boot prints the
+            # truth), marker-skip after. Sub-minute-class engine load vs
+            # fn's minutes-class boot: the asymmetry that makes q27 the
+            # nice swap citizen (§R19 VERDICT).
+            # The command is the WHOLE-SCRIPT REPLACEMENT of the fn gate
+            # — one pack, one sha, one marker, one URL per release; the
+            # IMAGE stays chart-baked (the BusyBox-family premise is the
+            # chart's pin, C11's identity law). D27's grammar law now
+            # guards BOTH call sites: identical portable shape, the chart
+            # script byte-untouched.
+            command:
+              - sh
+              - -c
+              - |-
+                set -e
+                LFS_SHA=a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8
+                PACK=/models/radiance/qwen3.8-27b-mxfp4.rad
+                MARKER=/models/radiance/.staged-$LFS_SHA
+                URL=https://huggingface.co/StillDeadcode/qwen3.8-27b-mxfp4/resolve/main/qwen3.8-27b-mxfp4.rad
+                mkdir -p /models/radiance
+                if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
+                  echo "radiance-q27 staging: marker + pack present — skipping"
+                  exit 0
+                fi
+                echo "radiance-q27 staging: fetch $PACK (curl-resume, 18.05 GiB class)"
+                # rc 33 = "the file is already completely retrieved" under
+                # --continue-at - : a pack that finished without ever having
+                # written its marker (kill between bytes and touch) is DONE,
+                # not a failure — set -e would otherwise boot-loop on it.
+                rc=0
+                curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
+                if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
+                  echo "radiance-q27 staging: curl failed rc=$rc"
+                  exit "$rc"
+                fi
+                # The marker is written only after the checksum PASSES — the
+                # marker IS the landed-file provenance (C06 step-4 receipt
+                # class, restated for the second pack). BusyBox grammar only,
+                # the D27/§D3b portable equality gate cloned: the hash
+                # applets in this image family know no GNU long options;
+                # equality on the two-space compute form is the only shape
+                # both applet families pass, loudly, with the digests on one
+                # line.
+                actual=$(sha256sum "$PACK" | cut -d' ' -f1)
+                if [ "$actual" != "$LFS_SHA" ]; then
+                  echo "radiance-q27 staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
+                  exit 1
+                fi
+                touch "$MARKER"
+                echo "radiance-q27 staging: complete"

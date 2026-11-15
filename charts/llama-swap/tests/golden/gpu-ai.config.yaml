@@ -1367,6 +1367,16 @@ peers:
     timeouts:
       connect: 30
       responseHeader: 1800
+  radiance-q27:
+    filters:
+      setParams:
+        priority?: 4
+    models:
+    - qwen3.8-27b-radiance
+    proxy: http://gpu-ai-radiance-q27.default.svc.cluster.local:8000
+    timeouts:
+      connect: 30
+      responseHeader: 1800
   strata:
     models:
     - qwen3.8-flash-next-strata

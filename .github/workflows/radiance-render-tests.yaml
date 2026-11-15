@@ -62,3 +62,16 @@ jobs:
         run: |
           python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance') or {}, open('/tmp/radiance-vals.yaml','w'))"
           helm template gpu-ai-radiance charts/radiance -f /tmp/radiance-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      # cf-143 C15 (D7/AC9): the q27 pod-swap release renders from the SAME
+      # chart dir via the roster chart: override — its own extraction+render
+      # leg mirrors the fn subtree leg. Same gotcha-14 hardening:
+      # d.get('radiance-q27') or {} yields {} before the subtree lands (the
+      # chart-defaults render) and the overlay after, so the leg ships ahead
+      # of C15's own values wave without a hand edit. STEPS only — the
+      # trigger paths above stay pinned (test_contract's path-set leg needs
+      # no re-pin; a new STEP moves no path).
+      - name: helm template (q27 service-level values)
+        run: |
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance-q27') or {}, open('/tmp/radiance-q27-vals.yaml','w'))"
+          helm template gpu-ai-radiance-q27 charts/radiance -f /tmp/radiance-q27-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai

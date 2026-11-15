@@ -22,7 +22,10 @@
 # the tree-global bare default are DEAD LAW, the same false-prose honesty
 # pass that cleared values.yaml); the env-gated guard now accepts WAVE-A/B
 # (zero-diff check) and WAVE-C (transfer check: chart bare 1->0 AND services/
-# gpu 0->+ in ONE commit). Comments/fixtures exempt by pattern; the
+# gpu 0->+ in ONE commit), plus the NON-FLIP class — claim-line multiset
+# UNCHANGED per touched file, carrier files included (C15 repair: a
+# claim-neutral wave is neutral wherever it lands). Comments/fixtures exempt
+# by pattern; the
 # off-parity fixture moved by EXACTLY the transferred 2 lines at C10's
 # re-baseline (PROVENANCE era entry — the "zero lines" B1 claim is history).
 #
@@ -195,25 +198,28 @@ if want n2; then
         printf '%s\n' "$stat" | grep -q "$path" || return 1
       done
     }
-    touches_carrier() {
-      for path in charts/llama-swap/values.yaml "$GPU_VALS" "$VALS" charts/amd-gpu/; do
-        printf '%s\n' "$stat" | grep -q "$path" && return 0
-      done
-      return 1
-    }
-    # C11 AC4.4 NON-FLIP class (D27: a grammar fix is NOT a claim wave; a
-    # WAVE-E entry would rot per doc-fix commit — the census keeps the teeth):
-    # NO carrier file touched AND the claim-line census (resource key:
-    # positive-int lines under amd.com/gpu*) UNCHANGED across every file the
-    # commit touches. C11's radiance diff moves zero claim lines — accepted
-    # as NON-FLIP; any claim-moving commit still needs a real wave shape.
+    # C11 AC4.4 NON-FLIP class (D27), census-first as revised at the C15
+    # review (test-lane repair, authorised by the coordinator 2026-11-15):
+    # the DISCRIMINATOR is the claim census itself, not a file-name proxy.
+    # C11's premise — no carrier file touched, so no claim line can move —
+    # held then, but the D56 topology breaks it: the q27 lane is
+    # contractually carrier-touching (the service file carries roster +
+    # overlay + peers) and contractually claim-neutral (claims are chart-
+    # INHERITED, charts/radiance is ZERO-DIFF, so WAVE-A/B/C are all
+    # unreachable). Accepting a carrier wave whose census is UNCHANGED is
+    # therefore census law, not a loosening — and because a bare COUNT census
+    # could bless a same-file claim RENAME (2->2 of a renamed name), the
+    # census now compares the sorted MULTiset of each touched file's claim
+    # lines (indent + name + value byte-equal before vs after): a rename,
+    # drop, add or retarget fails it and still needs a real wave shape. The
+    # teeth C11 recorded ("the census keeps the teeth") run FIRST for the
+    # class: claim-neutral means census-clean, for every file, carrier or not.
     non_flip() {
-      touches_carrier && return 1
       local f b a
       while IFS= read -r f; do
         [ -n "$f" ] || continue
-        b=$(git show "$AMD_GPU_FLIP_COMMIT^:$f" 2>/dev/null | grep -cE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' || true)
-        a=$(git show "$AMD_GPU_FLIP_COMMIT:$f" 2>/dev/null | grep -cE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' || true)
+        b=$(git show "$AMD_GPU_FLIP_COMMIT^:$f" 2>/dev/null | grep -oE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' | sort || true)
+        a=$(git show "$AMD_GPU_FLIP_COMMIT:$f" 2>/dev/null | grep -oE '^[[:space:]]*["'\'']?amd\.com/gpu[-a-z0-9]*["'\'']?:[[:space:]]*["'\'']?[0-9]+' | sort || true)
         [ "$b" = "$a" ] || return 1
       done < <(git show --name-only --format= "$AMD_GPU_FLIP_COMMIT" | sed '/^$/d')
       return 0
@@ -225,7 +231,7 @@ if want n2; then
     elif wave_b; then
       shape="WAVE-B (C09 defect-fix wave: values + runbook)"
     elif non_flip; then
-      shape="NON-FLIP (no carrier file touched; amd.com/gpu* claim census unchanged across the commit's files — the generic claim-neutral class: grammar, figures and doc waves alike, D27 census law)"
+      shape="NON-FLIP (claim census UNCHANGED — sorted claim-line multiset per touched file, carrier files included: a claim-neutral wave is neutral wherever it touches — the C15 repair; any claim-moving commit still needs a real wave shape, D27 census law)"
     else
       fail "n2: same-wave violation — commit $AMD_GPU_FLIP_COMMIT matches NO accepted shape (WAVE-C: charts/llama-swap + services/gpu + services/gpu-ai + the runbook as one commit; WAVE-A: charts/amd-gpu + charts/radiance + $VALS; WAVE-B: charts/amd-gpu + runbook) — a SPLIT carrier leaves a cluster with zero schedulable claims between syncs"
     fi

@@ -734,6 +734,59 @@
           "limit": { "context": 200000 },
           "body": { "priority": 1 }
         },
+        // cf-143 C15 q27 class rows (D54/D56(5), the fn trio's shape cloned
+        // one family down): the pod-swap lane's wire model in three
+        // priority classes — shared modelID, only body.priority differs.
+        // The ranks 8/4/0 sit STRICTLY BELOW fn's 9/5/1 under the SAME
+        // higher-wins polarity (RESEARCH RQ2 — radiance ranks higher-wins
+        // since cf-143): the polarity is NOT inverted here and fn's ranks
+        // are NOT stolen (urgent 8 < 9, default 4 < 5, low 0 < 1). The
+        // default-class floor is server-side in peers.radiance-q27's
+        // filters.setParams "priority?" (services/gpu-ai/prod/values.yaml),
+        // 4 = q27's default class; rows carry their class value
+        // unconditionally, the set-if-undefined operator never rides a row.
+        // Context 200000 is q27's PER-SESSION ceiling (--max-model-len in
+        // the q27 subtree) — the pool's ~335-409K aggregate is a
+        // CONCURRENCY caveat, not a context number (§R19-Q1: dense q27
+        // cannot stream, attention context is VRAM-only at ~32 KiB/token
+        // fp8, so 8x200K is addressed worst-case, never funded).
+        // Pod-swap law: git renders this lane idle (replicas 0) — routing
+        // here before the owner scales the pod up answers 503, and that IS
+        // the idle lane, not an outage. MEASUREMENT-CONDITIONAL: nothing
+        // routes here by default and the pipeline runner-model literal
+        // does NOT move — these rows exist for the owner's opt-in, and the
+        // lane joins the runner pool only after a receipt on THIS box.
+        // Speed prose stays attributed (§R19-Q4 — this ticket has been
+        // charged twice for shipping a figure without its condition): 122
+        // is the model card's TP1 SINGLE-stream mixed-prompt mean (prose
+        // leg 77), 280 is the card's 4-stream TOTAL, 116 is Wilde's
+        // third-party n=4 at 64K on a Gen4 board; fn TP1 radiance has NO
+        // published speed. priority-0 semantics are UNVERIFIED (plan
+        // OQ-16): C16's smoke read confirms them; a correction re-pins via
+        // a DECISIONS line, never a silent retarget. Vision input is the
+        // Q8 pattern again: the tower ships in the .rad (§R19-S1), and
+        // C16's image-smoke leg retires the claim on failure.
+        "qwen3.8-27b-radiance": {
+          "modelID": "qwen3.8-27b-radiance",
+          "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - default priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 4 }
+        },
+        "qwen3.8-27b-radiance-urgent": {
+          "modelID": "qwen3.8-27b-radiance",
+          "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - urgent",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 8 }
+        },
+        "qwen3.8-27b-radiance-low": {
+          "modelID": "qwen3.8-27b-radiance",
+          "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - low priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 0 }
+        },
         "ornith-1.5-122b-strata-q4": {
           "modelID": "ornith-1.5-122b-strata-q4",
           "name": "Ornith 1.5 122B (Strata q36 UD-Q4_K_XL arena, R9700)",

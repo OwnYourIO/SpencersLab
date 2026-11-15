@@ -4474,3 +4474,25 @@ directions at handoff; current doc stays 3 ok). §12.14 frozen sums and the
 tuning suite: untouched. No new NEEDS_INFO: no frozen sum moved — q27's
 9.80 arming reads the OVERLAY region, the fn comment's §12.14 needles stay
 byte-verbatim.
+
+**C15-review-round addendum (same test lane, coordinator-authorised):** the
+`amd-gpu-naming.sh` n2 NON-FLIP class was the wave's one faulty validation —
+D56's topology is contractually carrier-touching (service roster/overlay/
+peers) and claim-neutral (claims chart-INHERITED, `charts/radiance`
+ZERO-DIFF), so the `touches_carrier` file-name proxy made every accepted
+shape unreachable while the census itself certified the commit (dev's dev-tree
+census: `services/gpu-ai/prod/values.yaml 2→2`, five files `0→0`; my re-run
+confirmed). REPAIR: the census now runs FIRST for the class (the C11 note's
+"census keeps the teeth" reading) as a per-file **sorted multiset of claim
+lines** (indent+name+value byte-equal), not a count — the file-name proxy is
+dropped and the rename hole it accidentally guarded (same-file
+`gpu-8060s→gpu-9999z` is count-neutral 2→2) closes stronger than before.
+Teeth re-proven four ways at this commit: bogus sha ⇒ "not a commit";
+planted added-claim wave (all standalone needles pass) ⇒ same-wave
+violation FAIL; planted renamed-pair wave ⇒ FAIL (COUNT equal, multiset
+differs — the old census would have blessed it); dev's real q27 commit
+(`git stash create`) ⇒ NON-FLIP ok; historical WAVE-C 56142d511 still
+verifies with its transfer checks; my own 8308a3719 still NON-FLIP; bare
+run 5 ok. Mechanical completion, not a loosening: no claim-moving wave gains
+a path it lacked (shapes checked first, multiset ⊆ count-equality as a
+rejector), and carrier waves can only pass by being provably neutral.
