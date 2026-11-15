@@ -900,8 +900,9 @@ PY
   # M8-C15: the q27 clone of the serving-fact leg (designed-RED until dev D3
   # lands peers.radiance-q27): the q27 wire id is SERVED via its OWN peer at
   # ITS OWN evidence floor 4 — fn's block above is byte-verbatim, the floor
-  # comparison is per-peer (a 5 on the q27 hop would steal fn's ranks, and
-  # a missing peer makes every q27 catalog row a phantom route).
+  # comparison is per-peer (a 5 on the q27 hop takes a rank D54 records as
+  # NOT stolen, and a missing peer makes every q27 catalog row a phantom
+  # route).
   python3 - <<'PY' || fail "M8: the q27 wire id is not served via peers.radiance-q27 at the evidence floor 4 (C15 serving-fact clone — designed-red naming C15-dev D3)"
 import yaml
 ev27 = yaml.safe_load(open("charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml"))["radiance-q27"]
@@ -914,7 +915,7 @@ assert "/v1" not in (q27.get("proxy") or ""), "the q27 peer proxy carries a /v1 
 floor = ((q27.get("filters") or {}).get("setParams") or {}).get("priority?")
 assert floor == ev27["filters"]["setParams"]["priority?"], (
     f"peers.radiance-q27 priority? floor {floor!r} != the evidence floor (4 — q27's default class; "
-    "fn's 5 is NOT reused: D54 'do not steal fn's ranks'; M8 coherence unit for the q27 lane: "
+    "fn's 5 is NOT reused — D54 records \"fn's ranks are NOT stolen\"; M8 coherence unit for the q27 lane: "
     "catalog 8/4/0 + floor 4)"
 )
 PY

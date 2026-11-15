@@ -278,7 +278,7 @@ Q27_CTX = 200000        # per-session ceiling (--max-model-len); the
 Q27_CAPS_INPUT = ["text", "image"]           # in-pack vision tower (Q8 pattern);
 #                                             # the C16 smoke retires the claim on failure
 Q27_PEER_FLOOR = 4      # q27's default class; fn's 5 floor is NOT reused
-#                        # (D54 "do not steal fn's ranks")
+#                        # (D54 records "fn's ranks are NOT stolen")
 Q27_PEER_URL = f"http://{Q27_RELEASE}.default.svc.cluster.local:8000"   # NO /v1
 Q27_PEERS_EVIDENCE = REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-q27-peers-expected.yaml"
 Q27_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
