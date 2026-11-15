@@ -12,8 +12,8 @@
     "prior_setId": "b60c418b-d45f-4f73-948e-cce3ca140f14"
   },
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
-  "current_wave": 12,
-  "updated_at": "2026-11-15T03:28:29+00:00",
+  "current_wave": 13,
+  "updated_at": "2026-11-15T03:48:09+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -692,19 +692,36 @@
       "note": "DOCS-ONLY ROUND (D36): tuning-note §1 LINK ladder refreshed on §D10 — rung-0 ritual FALSIFIED by the owner-executed cold boot (boot id 4d6202d9 @21:34:43Z reprinted 8.0 GT/s x4 @48% busy); ladder now reseat -> Gen4-rated cable -> DOCK-BYPASS (decisive, R10-Q3) -> BIOS-EQ last/trust-flagged; NOT-fixes row (pcie_aspm=off no speed R10-S9; setpci moot at TargetSpeed=16) + d3cold_allowed=0 + amdgpu.runpm=0 STABILITY row due regardless (ArcheoCodix same-DEG1 precedent, R10-S6); HEAT-ENGINE rewrite on the recovered exit banner (mover ENGAGED, 0-dispatches=read artifact, 154!=capacity (300 w/ loans), churn ~90-100 MiB/token rides the same link -> link-first strengthened; rates same-mid-ramp; fixed probe + step-6 gate unrun); self-corrections: 61% citation never existed (census 49/50/48), §D8.2(b) superseded; fiction-ban/marker/T4-coherence survival + frozen tokens + render-diff-EMPTY docs-only law. Authority §D10; reopen complete->approved with reason."
     },
     "C15": {
-      "status": "in_progress",
+      "status": "done",
       "wave": 12,
       "depends_on": [
         "C14"
       ],
       "dev_rounds": 2,
-      "review_rounds": 1,
-      "last_verdict": "CHANGES_REQUESTED (r1, 8308a3719..801e66693): one blocking — the unsourced 503 idle code, a coord-side invention per D57 — plus four prose Minors; ALL CLEARED by dev r2 0b8d43ba3 (charts/radiance 68/68 green, naming witness NON-FLIP at the real sha, render byte-identical); review r2 pending",
-      "handoffs": [],
-      "note": "RECORDS-CORRECTION ROUND (D57, 2026-11-15): chunk D3/D5/AC8 lines and the plan Risks line now carry SUPERSEDED BY D57 markers (originals kept — supersede, never delete); canonical idle sentence token-pinned to 502 / peer proxy error / no endpoints / loud / never silent."
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2 @13299b53e: every one of the seven r1 items verified closed with quoted evidence and mutation-proven arms; render identity independently re-proven byte-identical 801e66693→d753d7f09; zero blockers / zero majors; its two non-blocking notes — the AC7/r2 zero-diff bar re-scope and the chunks/C15.md:163 D54-paraphrase marker — landed in the same-day records round. r1 was CHANGES_REQUESTED (8308a3719..801e66693): the unsourced 503 idle code, a coord-side invention per D57, plus four prose Minors — all cleared by dev r2 0b8d43ba3)",
+      "handoffs": [
+        {
+          "role": "review",
+          "round": 2,
+          "at": "2026-11-15T03:48:09+00:00",
+          "session": null,
+          "session_note": "r2 session id never reached the records this round writes (the review appended its notes to chunks/C15.md and the coord landed them as 13299b53e); per the C11 law the field stays null rather than a guessed id — the verdict's source is chunks/C15.md '### C15 r2' re-read from disk.",
+          "result": "APPROVED — re-verification round at HEAD 13299b53e. Seven items CLOSED: (1) BLOCKING 503 — git grep -nw 503 over services/.opencode/.rulesync EMPTY (rc1), six 502 carriers speaking the sourced interlock, D57 cited in three carriers with honest coord-side provenance; (2) blocker (b) now compares against the 29.30 claimable ceiling; (3) roster copy reduced to a pointer, all five switch facts in the one header, the AC8 arm PASSES against it; (4) D54 quote byte-exact at values.yaml:689, grep -rn steal charts tests EMPTY, five further test-lane drifts closed or honestly declared (argv-elided code citation adjudicated legitimate); (5) 24 GiB arithmetic re-stated as two independent non-addend legs; (6) modelPath arm proven to BITE by one-side mutation in /tmp (new leg FAILS, render arms stay green — the r1 gap closed); (7) headroom leg proven to read the real subtree comment (stripping the arithmetic FAILS). C16 boot-validator interlock exercised standalone: canonical green, 503 red, dropped-token red, wrapped-line tokens match. RENDER: 801e66693→d753d7f09 service render + q27 release render BYTE-IDENTICAL (278 lines, md5 826a5eb013a2d485163f3ad62205673d). BARS: charts/radiance 68 passed / 0 failed (both designed-red legs flipped); llama-swap 500P/9S; amd-gpu 29; vllm 36; surface 9 ok + M8 1 ok at two base shas (bare + CF143_BASE_SHA=0d9b41785); runbook 5 / host-tuning 4 (IMMUTABLE, absent from every diff) / tp2 3; q27-boot still designed-red naming C16 (expected); naming bare 5 ok + NON-FLIP at 0b8d43ba3, d753d7f09 and 13299b53e, RED at a bogus sha; charts/radiance/values.yaml and custom-values/ ZERO bytes; RADIANCE_API_KEY grep empty; rulesync --check rc0 twin byte-equal; aislop score 100, 0 errors / 0 warnings (107 files). Supersede-never-delete verified: chunks/C15.md +225/−1, the single deletion a re-flowed line keeping its words inside its marker. Two NON-BLOCKING notes carried (see next row): (a) the AC7/r2 bar literally reads tests/notes/ and now collides with C16's own validator — re-scope recommended; (b) chunks/C15.md:163 still carries the D54 paraphrase unmarked — one-line follow-up recommended, non-gating (no shipped carrier contains it)."
+        },
+        {
+          "role": "coord-records",
+          "round": 2,
+          "at": "2026-11-15T03:48:09+00:00",
+          "session": null,
+          "session_note": "this records-only subagent round on the coordinator's root claim; writes confined to .agents/plans/** records.",
+          "result": "LANDING OF THE TWO R2 NOTES + STATE ADVANCE. (a) AC7/r2 zero-diff bar RE-SCOPED supersede-in-place in chunks/C15.md ## Commands: the whole-tree form 'git diff <base>..<sha> -- charts/radiance/values.yaml tests/notes/' kept as written with a marker naming review r2's note as the reason (the tree legitimately carries C16's validator tests/notes/radiance-q27-boot.sh, test lane re-pinned at 84394772c on coordinator instruction), and a re-scoped line added for the three fn witnesses it actually protects — tests/notes/radiance-runbook.sh, tests/notes/radiance-host-tuning.sh, tests/notes/radiance-tp2.sh — plus charts/radiance/values.yaml and custom-values/; AC7's own 'tests/notes/radiance-*' parenthetical marked to the same effect. Same wording checked elsewhere: chunks/C16.md carries NO whole-tree form (its AC3 already names the four protected files) and the plan of record none (its Commands battery names suites individually) — nothing to edit there; TEST_SPEC §12.15/§12.16 checked and they carry only named-witness rows, NO whole-tree bar — nothing to route. (b) chunks/C15.md:163 now carries the D57 quote-fidelity marker naming D54's recorded words 'fn's ranks are NOT stolen' (DECISIONS.md:1707) and the byte-exact shipped carrier (values.yaml:689, dev r2 0b8d43ba3). Byte-unequal-citation sweep of chunks/C15.md+chunks/C16.md: no other unmarked owner-ruling quote found (the r1/r2 report-internal quotes are annotated history carrying their correction in-place; the D3-line and the deferred-line 'do not steal' sites outside these two files are DECISIONS.md:1857 and the review reports — history quoting the defect, no marker owed). Two REPORT-ONLY pointer observations, not fixed (line-number pointers rot under append-only law): C15.md:7's deferred-row pointer ':1696' drifted to DECISIONS.md:1901 when D54's own entry was inserted above it (verified against fccca35de), and C16.md:134's §9 quote splices two byte-exact fragments around an elided 'for fn+q27 — capacity-ruled,' (report to coord; C16 dev is annotating that section live). C15 set done with the r2 verdict and rounds 2/2; C16 set in_progress with its idle-law guard restated; current_wave 13; FRICTION.md gained the two class rows (prose-as-evidence; bar-wording-vs-legitimate-addition). json.tool parse clean; nothing outside .agents/plans/** touched; the two concurrent dev-session notes files left alone."
+        }
+      ],
+      "note": "RECORDS-CORRECTION ROUND (D57, 2026-11-15): chunk D3/D5/AC8 lines and the plan Risks line now carry SUPERSEDED BY D57 markers (originals kept — supersede, never delete); canonical idle sentence token-pinned to 502 / peer proxy error / no endpoints / loud / never silent. REVIEW R2 CLOSED + RECORDS ROUND (2026-11-15): r2 APPROVED at 13299b53e (bars in the review-r2 handoff row; the r1-outcome section's 'Review r2 pending' line carries its CLOSED marker); the two non-blocking r2 notes landed — ## Commands/AC7 zero-diff bar re-scoped supersede-in-place to the three fn witnesses + charts/radiance/values.yaml + custom-values/, and the D54 paraphrase at the D3 line carries the D57 quote-fidelity marker."
     },
     "C16": {
-      "status": "pending",
+      "status": "in_progress",
       "wave": 13,
       "depends_on": [
         "C15"
@@ -713,7 +730,7 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "IDLE-LAW GUARD (D57 records-correction): the note's idle sentence must be written from DECISIONS D57 + TEST_SPEC §12.16 (T5's 502 interlock: 502 / peer proxy error / no endpoints / loud / never silent), NEVER from chunks/C15.md's SUPERSEDED text; the T5 validator reddens on the superseded code and on any dropped token. Guard line added to the chunk's What-must-NOT-be-done section."
+      "note": "IDLE-LAW GUARD (D57 records-correction): the note's idle sentence must be written from DECISIONS D57 + TEST_SPEC §12.16 (T5's 502 interlock: 502 / peer proxy error / no endpoints / loud / never silent), NEVER from chunks/C15.md's SUPERSEDED text; the T5 validator reddens on the superseded code and on any dropped token. Guard line added to the chunk's What-must-NOT-be-done section. IN PROGRESS (dev lane started 2026-11-15): the guard STANDS through the dev round — tests/notes/radiance-q27-boot.sh is designed-red naming C16 until the note lands (its T1; T2-T5 read the landed C15 subtree and the five-token interlock); C15's 503 sites are annotated superseded history, not sources. The concurrent dev round writes .agents/notes/radiance-q27-boot.md and annotates radiance-second-gpu-tp2.md — the records lane touches neither."
     }
   },
   "blocked": [],
