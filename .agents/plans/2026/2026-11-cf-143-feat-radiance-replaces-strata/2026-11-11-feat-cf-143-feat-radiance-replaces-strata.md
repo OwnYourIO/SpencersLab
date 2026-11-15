@@ -1581,3 +1581,185 @@ are GREEN witnesses and must stay byte-untouched).
   capacity, the aggregate stays ~335–409K, and the first-boot receipt remains the witness, not
   a smaller number. C16's owner-facing note is written from THIS correction (guard added to
   `chunks/C16.md`), never from the superseded brief.
+
+---
+
+## FINAL whole-plan review round 7 (q27 extension C15+C16 + three-engine coherence) —
+2026-11-15, fresh session, HEAD `adb0a304b`, main == origin/main == `da46cee2e`
+
+**Verdict: APPROVED.** Zero blockers, zero majors. The extension's code range
+`8b8746911..adb0a304b` was reviewed as what the run has grown blind to — the three-way
+(fn / q27 / strata) interaction — not re-counted chunk-wise. Six minors carry (all records
+or docs lane, none gates); detail in chunks/C15.md and chunks/C16.md round-7 notes.
+
+**BAR (all fresh, sequential, PATH-exported, zero repo writes outside .agents/plans):**
+pytest per-directory: charts/radiance **68P/0F** · charts/llama-swap **500P/9S/0F** (skips
+enumerated: 8× RUN_HF_CHECK + 1× RUN_FLAG_AUDIT, the standing network-evidence gates) ·
+charts/amd-gpu **29P** · charts/vllm **36P** · notes suites: runbook **5 ok**, host-tuning
+**4 ok**, tp2 **3 ok**, q27-boot **5 ok** · surface.sh bare **9 ok**, `M8` **1 ok**,
+`M1..M8 @CF143_BASE_SHA=0d9b41785` **10 ok** · naming **5 ok** bare, NON-FLIP at
+`AMD_GPU_FLIP_COMMIT=801e66693` and `=adb0a304b`, **RED rc1** at a bogus sha · helm lint ×4
+charts + 2 umbrellas **0 failed**, `helm template` charts/radiance + services/gpu-ai/prod +
+services/gpu/prod rc0 · `git grep -l RADIANCE_API_KEY -- charts services custom-values tests
+.github` **empty (rc1)** · `git grep -nw 503 -- services .opencode .rulesync` **empty (rc1)**
+· rulesync `generate --check` **rc0** · aislop: npx-refusal reproduced (registry float now
+**0.22.1**, third sighting of the class), cached-binary 0.22.0 `ci --changes` = **0 errors /
+0 warnings / 107 files, rc0** · `python3 -m json.tool STATE.json` rc0 · **resting pair
+rendered by this review's own hands**: `gpu-ai-radiance-q27` → Service+Deployment
+`replicas: 0`; `gpu-ai-radiance` → Service+Deployment `replicas: 1`.
+
+**Three-engine coherence (FOCUS 1):** fn 110/110 Guaranteed on `gpu-r9700-1: 1` + router on
+`gpu-8060s: 1` + q27 at 0 are mutually consistent as git renders them; strata remains the one
+git-vs-live fork (git renders 1, live hand-parked 0, D31/D50). A full re-sync of
+gpu-ai-llama-swap re-applies strata=1 → the newcomer **Pends by arithmetic** (110+64+6.3 =
+180.3 > 125.08), never OOMs, exactly the runbook :364-373 guard; q27 is a separate
+Application and unaffected by that sync. A node reboot with everything at git state is the
+same either/or decided by the scheduler's admit order; a reboot mid-swap (fn 0 / q27 1)
+PERSISTS the swap — hand-scales live in the Deployment specs, only a SYNC reverts them
+(q27 note :151-159 states the law and the 2026-11-14 counter-witness). Catalog advertising
+ids whose peers have no pod is BY DESIGN (llama-swap neither health-checks nor hides): fn
+trio serves; q27 trio answers the five-token 502 interlock (carriers re-counted: values ×3,
+jsonc, skill source+twin, boot note, evidence header); strata ids answer the same 502 class
+while parked — all loud, none silent. Honest-id law holds across BOTH radiance trios: fn
+200000 = served per-session AND funded at 8×200K (§R8 on-card receipt 4.49 GiB/1.6M tokens);
+q27 200000 = per-session ceiling with the ~335–409K aggregate stated as a concurrency caveat
+(D54(4)) and the first-boot print reserved as the witness — the one pressure point (Wilde's
+263K fit-to-available probe) is written as the thing the receipt confirms, not a promise.
+No note tells the operator two different things about the same switch: the fn runbook never
+mentions q27 (byte-law, fn-only operators unaffected) and the q27 note defers to the
+runbook's step-10 strata dance verbatim (radiance-q27-boot.md:356-358).
+
+**Same-wave drift (FOCUS 2) — named pairs, none blocking:** (a) TP2 `:250` "Priority stays
+higher-wins 9/5/1 across BOTH pods" and §11 item 6 `:342-344` `body.priority 9/5/1` vs the
+SHIPPED q27 trio 8/4/0 + peer floor 4 (D56(5), values :706, jsonc rows) — the C16 annotation
+correctly covered §9's capacity ruling and §11 item 5's plumbing but left the priority EXAMPLE
+as pre-D54 prose (un-armed by radiance-tp2.sh, verified by grep); fold at the TP2 doc's next
+touch. (b) pipeline-models fn favorited row (source :60 + twin :61) "first request may pay a
+minutes-class load, ~66 GiB" — the figure's source (runbook :487) prices it as the
+BOOT-TIME working set (113.60 − 47.7), while the print-priced budget is 71.04 (runbook
+:503/:515-517), and a peer request never pays a lazy load at all — it fails loud (502 class)
+while the pod is not Ready (D57's own mechanism): a child-shape clause surviving on a
+machine-facing row; un-armed by surface.sh → prose fold, same wave source+twin. No other
+figure/claim pair found: the six q27 carriers, D54-D57, §R19, the boot note, and the shipped
+subtree agree on 19,377,119,232 B / 18.05 file / 18.07 weights / 12.48 pool / 30.55 vs 29.30 /
+9.80 / 24 pair / 8-4-0 / 502 / ~1-2 min DERIVED.
+
+**Numbers audit (FOCUS 3):** every launched figure lands sourced, derived-and-labelled, or
+UNVERIFIED-and-labelled. Sourced receipts: 110 (D29 owner verbatim), 71.04/47.68 (engine
+prints), 125.08 (§D6.2 live read 131,151,320 Ki), 19,377,119,232 + lfs a4908940 (R19-S1/S5,
+test-armed), 16 GT/s x4 (D44/D51), 41.1/41.3 + ~551 (D47 measured), 122/77/164/280 (R19-A
+card), 116 (R19-B Wilde). Derived-and-labelled: 9.80/115.28/118.72/38.96/30.55 (~335–409K,
+32 KiB/token, ~131K tier tokens, ~6.4 GiB, ~1-2 min hash, the 115.28 components 4.125+1.158
+— testlib :68-70 ledger with live-read provenance). UNVERIFIED-and-labelled: slot count
+(UNVERIFIED-4), load-peak (UNVERIFIED-3), 370–400K-as-quote (UNVERIFIED-1), priority-0
+(OQ-16), 122's rig host/link (UNVERIFIED-2 — boot-note table row omits the caveat, carried
+NIT-3). D57-status: `git grep -nw 503` empty. One ERA-history item, correctly non-live: the
+DORMANT vllm note's "Strata's 116 Gi-limit" is era-true (pre-D29), retired-header covered.
+No bare figure found asserted anywhere.
+
+**Fictions (FOCUS 4):** zero retired claims survive as LIVE assertions on the branch — retimer
+(all hits deny-framed/labelled history), dock-first Rung 0 (FALSIFIED with boot receipt :139),
+`iommu=pt` (gate-wrong correction, two-doc-armed), page-cache starvation (quoted + REFUTED at
+all three carriers), `--spec-ngram` conflation (D51 correction chapter :531+), the 503 (swept,
+supersede-marked history only), the prefix-cache reduction claim (corrected in note :226-231;
+the ~131K line reads host-side RESUME capacity, not a reduction). ON MAIN (docs delta
+unmerged): `radiance-host-tuning.md:58-59` still ADVISES "cable or the retimer", and the LINK
+chapter still frames Gen3 as the open defect without D44's socket-swap closure / D51's
+RESOLVED chapter — main never carried the 503, q27, or the §R10 ritual (they predate or
+bypass its landing), so main's live fiction set is exactly those two sentences + absence of
+every post-C13 correction. Landing the branch remainder is the cure (docs-only, zero
+render-plane).
+
+**Lane usability (FOCUS 5):** walked the note end-to-end as operator — scale order OWNER-
+EXECUTED line-adjacent, init-before-engine ordering, staging receipt as wait-gate, engine
+reads gated, peer path shape verified in render + evidence + golden (proxy base no `/v1`,
+public chain `/v1` only, port 8000 = Service port, timeouts 1800/30 cloned with the sub-minute
+rationale), keyless end-to-end (no Authorization exists to send; `/health` key-exempt probes
+inherited). Links NO test covers (all owner-receipt by design, and named as such): the live
+router→peer→engine hop (step 5 smoke), the first real 18-GiB download+hash (CI has no daemon;
+grammar armed, runtime is on-target territory per C11's own law), the shared-claim headroom
+(step-1 `df` OWNER-EXECUTED — 113.6 + 18.05 + strata's tables against 500Gi is honestly
+priced, not repo-measured), and q27's actual `/dev/shm` demand against the inherited
+`shm 2Gi` sizeLimit (§R19 silent — nothing prices it; if q27 ever needs more, emptyDir
+writes fail at the cap — worth one line in the receipt paste-back). Two-releases-one-PVC is
+clean: distinct pack filenames, distinct `.staged-<sha>` markers, per-release PACK/MARKER,
+init containers cannot race behind a capacity-1 claim (C15 r1's proof re-accepted).
+
+**Unnamed risks (FOCUS 6):** (1) post-marker corruption never re-hashes (round-7 minor —
+deferred row + card recommended, XFS storage card natural home); (2) a Sync click on
+gpu-ai-radiance-q27 mid-use ENDS the parked swap (kills the running engine on the 0-replica
+apply — the law is stated note :158-159/step 7, but it stays human-factor residual);
+(3) the pipeline runner-model literal still routes `…-strata-q4` — with strata parked a Local-
+provider scheduled run gets the 502 class until the owner scales strata up or re-rules the
+literal (AGENTS.md: the literal moves only by owner word — correct as owned, but now a
+three-way engine choice); (4) priority-0 semantics unverified (armed as receipt step 5 — the
+acceptable D57 shape); (5) traffic mid-hash/mid-load = 502 loud, consistent with the idle law
+(no queue-behind-load myth survives on a live surface — except the SKILL row, minor (b) above).
+
+**Records fold owed by coord:** STATE C16 row → done/dev_rounds 2/review_rounds 2/verdict +
+handoffs; commit the working-tree C16 r2 note + both round-7 notes + this record; plan_status
+→ complete (rounds 1-7); deferred array gains the post-marker-integrity row (and the two
+unfiled-card questions adjudicated NON-BLOCKING: the marker card and the APU-hide banner —
+the banner has no repo carrier to hang on (pci-stub lives only in records under a standing
+ban), so it rides the cutover ticket's intake instead).
+
+**Owner hand-back (unchanged heads, round-7 states):** merge the branch remainder (C14+C15+
+C16 + records — the landing also cures main's retimer fiction); then the owner lanes exactly
+as listed at round 6 plus the new receipt: runbook step 6 (8-session gate), the fixed probe /
+`--expert-stats` afternoon, the VmLck+memory.peak pair read, the q27 first boot per
+`.agents/notes/radiance-q27-boot.md` (paste the step-3 block back — it is the witness that
+confirms or corrects 200000/24Gi/the aggregate), the strata cutover either/or, AD-143 → Review
+on your word. Nothing else in seven rounds of review history remains open.
+
+— final reviewer round 7, 2026-11-15 (fresh session; sole writes = this record + the C15/C16
+round-7 notes under .agents/plans; no implementation or validation file touched; renders via
+/tmp-free direct helm on the repo charts [read-only]; cluster: no reads this round — the live
+truth was read by D50/D51 records and needs no re-witness for a docs/plumbing delta).
+
+### Round-7 records fold (coord records lane, 2026-11-15, post-APPROVAL)
+
+This subsection extends the review's record above; the review's own text is byte-unchanged. The
+"Records fold owed by coord" that record names is DONE:
+
+- **STATE.json**: C16 → `done` with `dev_rounds 2` / `review_rounds 2`; handoff rows for both
+  review rounds added — r1 CHANGES_REQUESTED (MAJOR-1 the ordering defect: the staging-receipt
+  command sat in Step 1 while the pod it reads does not exist until Step 2's UP-scale, so an
+  owner following the note in order hits a kubectl error on a box with one engine down; plus
+  MINOR-1, `-n default` missing on four scale lines) cleared by dev r2 `adb0a304b`, and r2
+  APPROVED with the fence-by-fence runnability proof (12/12 fences runnable in document order).
+  Session ids: review r1 and r2 `ses_e22a1d994ffesON63fnVC5birG` (r2 continued r1's session —
+  labelled as such per the D37(2) labelling law; the pairing is the coordinator's launch record,
+  not a guess), dev r2 `ses_e228e0b8bffeSGbbxAJzGufyKK`; dev r1's id reached no records file, so
+  its row is `null` + session_note (landing git-proven at `412c299cd`) per the C11 invented-id
+  law. `plan_status` → **complete** with the review history rounds 1–7: rounds 1–6 closed
+  C01–C14 pre-extension, round 7 is this extension's final whole-plan review — APPROVED, zero
+  blockers, zero majors. `current_wave` → 14 = terminal (there is no wave 14; all waves done).
+- **Minor dispositions — pointers only, contents stay in the review record above and are NOT
+  restated here as plan fact**: Minor 1 and Minor 2 (the FOCUS 2 named pairs) route to the
+  **post-approval prose fold**, the C13 precedent — docs-only, and for the pipeline-models row
+  source+twin land in one wave. NIT-1, NIT-3 and the FOCUS 5 `shm 2Gi` line ride the same fold.
+  That fold is IN FLIGHT at write time (a concurrent dev round on
+  `.agents/notes/radiance-second-gpu-tp2.md`, `.agents/notes/radiance-q27-boot.md` and the
+  pipeline-models SKILL source+twin — surfaces this records lane does not touch). Minor 3 (the
+  STATE C16 row staleness) is CLOSED by the advance above. NIT-2: no action — r2's "do not
+  re-touch" stands.
+- **STATE.deferred** gains the two genuinely-future rows, each with its status: post-marker
+  integrity (the marker makes restarts ~1 s but skips the sha256 gate, so a pack damaged after
+  its pass boots unverified; round 7's `unclean` grep across folder + notes found zero carriers
+  — this row is the hazard's first record; recommended to ride the existing storage/XFS
+  follow-up card `SEadqvfPHA6T2MwJS` as its natural home, with the D49 crash named as the event
+  class that produces exactly such a boot) — FORWARD; and q27's unpriced `shm 2Gi` — the fold
+  lands it as an UNVERIFIED receipt line, so the row records **owner read closes it**, not an
+  open defect. Plus one row recording round 7's two pointer findings as **ACCEPTED** —
+  `chunks/C15.md:6-7`'s `(:1696)` deferred-row pointer drifted to DECISIONS.md:1901 under
+  append-only law (line-pointers rot), and `chunks/C16.md:134`'s §9 splice quote verified
+  byte-exact against both fragments — recorded so a future round does not re-litigate either.
+- **FRICTION.md** gains the round-7 class row: an owner-facing console command placed BEFORE the
+  resource it reads exists — a defect no arm could catch, because validators parse content, not
+  document order; resolution: the review's fence-by-fence precondition walk is the durable check
+  for any future owner-facing note.
+- **DECISIONS.md** untouched by this fold: D54/D56/D57 already cover the rulings, and round 7
+  made no new ruling — dispositions and future-work rows live here and in STATE.deferred, so no
+  new decision row is owed. The review's two unfiled-card questions fold per its own record: the
+  marker hazard rides the XFS card rather than a card of its own; the APU-hide banner rides the
+  strata-cutover ticket's intake (no repo carrier exists under the standing ban).
