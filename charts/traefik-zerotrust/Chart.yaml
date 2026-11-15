@@ -4,7 +4,7 @@ version: 1.0.33
 appVersion: 2.11.10
 dependencies:
 - name: traefik
-  version: 42.2.0
+  version: 42.4.0
   repository: https://traefik.github.io/charts
 # Maybe this actually isn't used for proxy-remote
 #- name: crowdsec
