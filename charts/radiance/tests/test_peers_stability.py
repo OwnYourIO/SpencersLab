@@ -55,3 +55,32 @@ def test_served_id_never_contains_strata():
     assert R.SERVED_ID == "qwen3.8-flash-next-radiance"
     for retired in ("strata", "vllm"):
         assert retired not in R.SERVED_ID, f"C02 D7: the served id embeds the {retired} era"
+
+
+# --- cf-143 C15: the q27 peer, the same per-peer law at the second release -------
+
+
+@helm_skip
+def test_q27_served_id_matches_the_q27_peer_evidence_single_source():
+    """C15 T2 ("extend per-peer"): the q27 evidence file (D13 per-key
+    sibling — its own models_states chain) names the served id the q27
+    subtree's --served-model-name renders, and the proxy equals the
+    appset-derived q27 cluster DNS (no /v1 — the request path appends
+    verbatim, the peer law is release-independent). Designed-red until
+    C15-dev lands the radiance-q27 subtree: the render raises naming C15."""
+    ev = R.radiance_q27_peers_evidence()
+    assert ev["models_allowed"] == [R.Q27_SERVED_ID], (
+        f"cf-143 C15: q27 evidence models_allowed {ev['models_allowed']} != [{R.Q27_SERVED_ID!r}]"
+    )
+    assert ev["proxy"] == R.Q27_PEER_URL, (
+        f"cf-143 C15: q27 evidence proxy {ev['proxy']!r} != {R.Q27_PEER_URL!r} "
+        "(gpu-ai + appName radiance-q27, the peers hop's host)"
+    )
+    docs, _raw = R.render_q27()
+    pairs = R.flag_pairs([str(a) for a in (R.serve_container(R.deployment(docs)).get("args") or [])])
+    assert pairs.get("--served-model-name") == ev["models_allowed"][0], (
+        f"cf-143 C15: q27 render serves {pairs.get('--served-model-name')!r}, want the "
+        "evidence id — the q27 lane gets ONE served-id authority (the fn D7 pattern)"
+    )
+    for retired in ("strata", "vllm"):
+        assert retired not in R.Q27_SERVED_ID, f"cf-143 C15: the q27 id embeds the {retired} era"

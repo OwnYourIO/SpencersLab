@@ -1,0 +1,56 @@
+# Pinned expectation for the cf-143 C15 ADDITIVE radiance-q27 peer on the
+# gpu-ai outer llama-swap render (2026-11-cf-143-feat-radiance-replaces-strata;
+# DECISIONS D13 per-peer-key law extended to the third peer: the strata and
+# radiance files stay valid and UNEDITED, this sibling joins beside them).
+# Authored in the cf-143 C15 test session; dev must not edit this file —
+# dev conforms services/gpu-ai/prod/values.yaml to it, never the reverse
+# (same header law as radiance-peers-expected.yaml).
+#
+# This file is the SINGLE source for the radiance-q27 peer shape. Consumers
+# (test_config_parity's q27 wave arm, test_radiance_peer's golden q27 block,
+# test_strata_wiring + test_flashnext_blast_radius carve arms,
+# charts/radiance/tests/test_peers_stability.py's q27 leg and the C15
+# q27-lane legs) read it live, so a test-session re-author re-aligns them
+# automatically.
+#
+# The shape clones peers.radiance (the §11 sketch's second-peer shape,
+# resolved by D54/D56): proxy = the gpu-ai-radiance-q27 release's cluster
+# DNS on port 8000, NO /v1 suffix (request paths append verbatim — every
+# peer's own law); explicit models list (peers is not a blanket proxy) —
+# exactly the one q27 --served-model-name id; responseHeader 1800 / connect
+# 30 timeouts copied from the fn peer (the cold-load first-byte knob; the
+# q27 boot is sub-minute-class, but the peer shape is a clone, not a re-price).
+#
+# filters.setParams "priority?" = 4 is the set-if-undefined floor equal to
+# the q27 DEFAULT class (D54: fn's 5 floor is NOT reused — "do not steal
+# fn's ranks"; the trio's 8/4/0 sit strictly below fn's 9/5/1 under the
+# UN-inverted higher-wins polarity). Honest caveat armed by C15: the
+# engine's priority-0 semantics are UNVERIFIED (plan OQ-16) — C16's smoke
+# read confirms them; these arms pin the AUTHORED values, not a claimed
+# behaviour, and a correction re-pins the arms, never a silent retarget.
+#
+# Keyless posture inherited from fn (D8/D54(2)): no apiKey here, no secret
+# anywhere on the lane. While the q27 pod rests at replicas 0 the hop
+# answers 503 (the Service exists, endpoints empty) — an INTENTIONAL idle
+# lane, never silent (D54 ruling; the C16 boot note owns the console text).
+#
+# models_states is APPEND-ONLY history; the seeded state is the one-id list
+# the owner recipe + honest-id law rule (peer models exactly
+# [qwen3.8-27b-radiance], the --served-model-name of the q27 overlay args,
+# C15/Q27_PROFILE). A second q27 arena would be the next appended state —
+# waves route through the test session.
+radiance-q27:
+  proxy: http://gpu-ai-radiance-q27.default.svc.cluster.local:8000
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  filters:
+    setParams:
+      "priority?": 4
+  models_must_include:
+    - qwen3.8-27b-radiance
+  models_allowed:
+    - qwen3.8-27b-radiance
+  models_states:
+    # cf-143 C15 seeded (the one-id first state; wire siblings share it):
+    - [qwen3.8-27b-radiance]

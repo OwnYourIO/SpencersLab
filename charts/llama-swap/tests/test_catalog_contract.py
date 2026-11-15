@@ -200,12 +200,30 @@ def test_c05_no_phantom_catalog_entries(catalog):
     # the wire id serves once, -urgent/-low are body.priority variants of
     # the same model). Empties with the peer the same way; rows that
     # outlive a removed peer fall back to phantom-red.
+    # cf-143 C15 RE-PIN (designed-RED until the q27 peer lands): the
+    # allowlist is the UNION of the two radiance peers' wire lists, read
+    # from THEIR evidence files (D13 per-key single source — the q27 trio
+    # rows must route via peers.radiance-q27, and without this union they
+    # would phantom-RED at dev's commit; the render-vs-evidence conformance
+    # is pinned by the parity wave-leg and the q27 per-peer legs, so
+    # routing through the evidence cannot outlive a removed peer silently).
     rad_wire = set(((L.rendered_config("gpu-ai").get("peers") or {}).get("radiance") or {}).get("models") or [])
     rad_routed = {k for k, e in catalog.items()
                   if k in rad_wire or (e or {}).get("modelID") in rad_wire}
+    q27_ev = L.radiance_q27_peers_evidence()
+    q27_wire = set(q27_ev["models_allowed"])
+    q27_rendered = ((L.rendered_config("gpu-ai").get("peers") or {}).get("radiance-q27") or {}).get("models") or []
+    assert q27_rendered == q27_ev["models_allowed"], (
+        f"cf-143 C15: peers.radiance-q27.models {q27_rendered!r} != the evidence "
+        f"{q27_ev['models_allowed']} — the q27 serving authority is not landed "
+        "(designed-red naming C15-dev: the peer block D3)"
+    )
+    q27_routed = {k for k, e in catalog.items()
+                  if k in q27_wire or (e or {}).get("modelID") in q27_wire}
     phantoms = []
     for key in sorted(catalog):
-        if key in served or key in aliases or key in peers_routed or key in vllm_routed or key in rad_routed:
+        if (key in served or key in aliases or key in peers_routed or key in vllm_routed
+                or key in rad_routed or key in q27_routed):
             continue
         if key.endswith(WORKLOAD_ALIAS_SUFFIXES):
             continue

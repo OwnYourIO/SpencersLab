@@ -4395,3 +4395,82 @@ to review: invoke the cached binary directly
 — same engine, same verdict (100/0/0). Coord may want a repo-visible pin
 (package.json devDependency or a documented hash path) so the gate command
 stops floating; recorded here because every agent session runs this bar.
+
+### 12.15 C15 test round — the q27 lane: third-peer re-pin wave + the new legs (test session, 2026-11-15; wave 12, D54/D56, §R19, §D54)
+
+Owner extension consumed, not re-litigated: a SECOND radiance release
+(`radiance-q27`) via the roster `chart:` override on the ONE existing chart
+dir — `charts/radiance/values.yaml` is a ZERO-DIFF file by design (D56(1)),
+so the q27 truth lives in the `radiance-q27:` service overlay subtree
+(whole-list replacement) and its test legs read THAT subtree plus a
+same-chart render under release name `gpu-ai-radiance-q27`. Red-first:
+16 arms RED today naming C15 (the §D54 probe's promise is a leg, not an
+excuse); the fn witnesses all stay green (the bar below is verbatim).
+
+**Re-pin wave (T2 enumeration + one recorded catch):**
+
+| arm | re-pin | today |
+|---|---|---|
+| `test_config_parity._assert_strata_peers` | wave law moves to the FINAL state: `wave == {strata, radiance, radiance-q27}` (strict — C15 ships peer+golden+roster in ONE commit, no interim survives a boundary; the vllm/third-phantom-is-drift wording survives in the message) + the q27 evidence-conformance arm (proxy/timeouts/floor 4/models vs ITS OWN file) | RED (gpu-ai) |
+| `test_radiance_peer.test_t3_golden_three_peer_shape` (renamed) | golden peers keys `{strata, radiance}` EXACT → three-key set + golden-q27-block-vs-evidence; **the re-capture itself is C15-DEV's paired obligation (D8, §12 golden law) — this session authored NO golden from values that don't exist**; the message names C15-dev as the owner | RED |
+| `test_catalog_contract.test_c05_no_phantom_catalog_entries` | phantom allowlist = peers.radiance.models (render-read, fn property byte-kept) ∪ the q27 wire list, with `q27_rendered == q27_ev.models_allowed` pinned (else the fn leg's auto-emptying property is silently weakened; the conformance IS the C15 red) | RED |
+| `charts/radiance/tests/test_peers_stability.py` (the §D54-F :32-66 file — lives in the radiance suite, not llama-swap's: the launch's directory attribution is a slip) | per-peer extension: q27 evidence ↔ Q27 constants ↔ q27-render served id (one id authority; proxy law release-independent) | RED |
+| `test_coexistence_wiring` | scalars-only leg STAYS SCOPED to the fn `radiance` subtree (the q27 block is list-replacement BY DESIGN — the anchor trap makes scalars useless there; D56(1) — the new leg's docstring records the carve-out); ADD: q27 ingress skip-comment (RED today, greens at D4) + q27-id-out-of-outer-matrix clone (green drift bar); custom-values ban UNMOVED (its "radiance" substring already covers any q27 key — not widened, no key ships) | 1 RED / 1 green-drift |
+| `test_strata_wiring` :177 + `test_flashnext_blast_radius._cf77_peers_carved` :212 | the C04 precedent's SAME-WAVE duty (§12: "anything that hardcodes peers-map equality gets the wave carve") — the sanctioned wave grows the q27 state and the carve/leg pins it to evidence; **§D54-F's enumeration MISSED these two** (the §12.3 class law caught them: dev's landing would have false-redd them) | green both ways |
+| `tests/pipeline-models/surface.sh` M8 | A: TWO trios HOLD (fn loop byte-verbatim; q27 loop pins 8/4/0 + shared modelID + ctx 200000 + [text,image]; the strict-below-fn relation is the exact-value arithmetic — priority-0 semantics UNVERIFIED, arms pin the AUTHORED value, C16's smoke is the receipt); **A2 RE-FROZEN: base gains fn's trio → added == q27 trio EXACTLY** (the recorded test-lane choice; rejected: a per-wave multi-delta law); C15 serving-fact clone (peers.radiance-q27 == its evidence, floor 4, no /v1); D: negative needle cloned per q27 wire id; E: favorited-table q27-row needle (source AND mirror — D6 + the rulesync twin); bare M1..M7 UNTOUCHED | M8 RED; bare 9 ok |
+| `charts/radiance/tests/test_q27_lane.py` (NEW, 18 legs) + `radiance_testlib.py` Q27 constant block | roster entry EXACT {namespace, ServerSideApply:"false", chart: radiance}; render legs (replicas 0, args set-equality, absence set, 24Gi pair + INHERITED cpu/claim, init four-literals + C11 grammar at the SECOND call site + rejected D27 forms, kinds ban, name dedup, sentinel-free); AC8 comment legs (DOWN-first, resting fn 1 / q27 0, D31/D32 + OutOfSync-expected, 503-idle, no-key ruling, 9.80 headroom); pack-ledger verbatim at the new home; AC4 keyless `git grep` (the env token is ASSEMBLED in-test — the ban scopes `tests/` too, so no source file may spell it); CI: q27 extraction needle (RED until D7) + both-wave-state execution (green). `test_contract.py:113-120` path-set pin needs NO re-pin (D7 adds STEPS not paths — the leg walks runs only; recorded test-lane call) | 14 RED / 3 green-drift |
+| `evidence/radiance-q27-peers-expected.yaml` (NEW) | per-key D13 sibling, test-authored, dev-must-not-edit header, models_states seeded [qwen3.8-27b-radiance], floor 4, keyless, 503-idle note, OQ-16 honesty comment | fixture |
+
+**HOLD-green across the wave (witnesses, UNMOVED):** the 46 fn radiance legs,
+`radiance-runbook.sh` T2 one-block law (the q27 boot docs ride C16 with
+their OWN contract script — folding a q27 args block into the fn runbook
+would red or weaken it, §D54-F), `radiance-host-tuning.sh` (IMMUTABLE,
+run-only), §12.14 frozen sums `110/71.04/118.72/115.28/9.80/38.96`
+(q27 touches none of fn's numbers), the strata surfaces (Q5), golden/gpu.*
+hygiene, M1..M7, vllm 36 + amd-gpu 29 + naming 5.
+
+### 12.16 C16 test round — the q27 boot-note contract + the tp2 re-pin (test session, 2026-11-15; wave 13, §12.14 verify-first applies)
+
+NEW `tests/notes/radiance-q27-boot.sh` (T1-T5, the runbook's contract idiom
+pointed at `.agents/notes/radiance-q27-boot.md`): **designed-red naming C16**
+— the note does not exist yet (the chunk's split reason: the note's single
+fenced args block must equal the LANDED C15 subtree, a real dependency).
+T1 existence + steps 0-7 + posture + OWNER-EXECUTED command law + the §R19
+citation resolver EXTENDED (generic `§R<n>` / `R<n>-Q<m>` / `R<n>-S<m>` /
+`R19-A..F` receipt rows resolve against RESEARCH.md — never dodge citations
+by dropping them, the AC4-C14 precedent; the note MUST cite §R19 at least
+once); T2 EXACTLY ONE fenced args block, multiset-equal to the landed
+`radiance-q27:` subtree args (parse-compare vs the render source, never a
+re-typed copy; any second args block reds); T3 marker law (same-or-previous
+line, C13 r1: repair by prose re-arrangement, never by loosening the arm) +
+the fn-DOWN-first/q27-UP-second order on the RAW text (the self-test caught
+a join-lines window-leak defect at authoring — the §12.14 fixture habit
+applied to our own arms); T4 attribution (122 → model-card/TP1/single-stream
+with the prose-77/mixed co-window; 116 → Wilde/third-party + n=4/64K/Gen4;
+280 → 4-stream-total; the no-fn-speed arm reds any Flash-Next radiance
+tok/s figure absent a negation word) — **synthesis-proven GREEN-BOTH-WAYS
+inside the leg**: the truthful attributed row PASSES and the bare-122 +
+fn-figure fixtures FAIL the validator at every run (exit 2 on self-defect —
+a half tripwire is LOUDER than a missing note); T5 the ban legs (no
+`--api-key` in ANY fenced command; the env token appears only in
+dropped-marked prose — the token is assembled at runtime, the AC4 ban
+scopes tests/; no `/v1` on printed proxy URLs; the don't-sync law names
+BOTH `gpu-ai-radiance-q27` and `gpu-ai-llama-swap`; 503-while-idle honesty;
+the reversed-order fixture REDS — self-proven). Verified at handoff against
+a conforming fixture set via the documented env overrides (§12.5 law):
+truthful note + landed-subtree fixture ⇒ 5 ok; second args block ⇒ T2 RED;
+bare 122 ⇒ T4 RED; fenced keyed rider ⇒ T5 RED; published fn figure ⇒
+T4 RED. Re-pin of `radiance-tp2.sh` (C16 T2): the T2 resolver gains the
+same generic-round extension (the SHIPPED annotation cites §R19 — silently
+inert cites are the AC4-C14 class); T3 gains the §9/§11 arms — the §9
+ruling sentence + the sketch's `radiance-tp2` token SURVIVE D2's annotation
+(rewrite-in-place reds), and a dated `SHIPPED (cf-143 C15` note must carry
+the resolved-plumbing set (radiance-q27 naming, roster `chart:` override,
+per-key evidence, pod-swap-at-replicas-0 shape, the still-locked card-2/
+AD-144 + RE-VERIFICATION limit) — **ONE-WAY/green-both-ways by necessity**:
+C15's own AC10 demands tp2.sh 3 ok BEFORE dev D2 lands, and the truthful
+fixture + the truncated + rewrite fixtures prove the arms bite (both
+directions at handoff; current doc stays 3 ok). §12.14 frozen sums and the
+tuning suite: untouched. No new NEEDS_INFO: no frozen sum moved — q27's
+9.80 arming reads the OVERLAY region, the fn comment's §12.14 needles stay
+byte-verbatim.

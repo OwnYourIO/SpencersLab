@@ -1,0 +1,441 @@
+# cf-143 C15 — the q27 lane contract (chunks/C15.md T3/T4/T6; AC1/AC2/AC3/
+# AC4/AC8/AC10). A SECOND RELEASE of the same chart dir: the gpu-ai roster
+# gains radiance-q27 with a `chart: radiance` override (D56(1) — one chart,
+# two releases), and every q27 truth ships as a whole-list replacement in
+# the top-level `radiance-q27:` overlay subtree of
+# services/gpu-ai/prod/values.yaml. charts/radiance/values.yaml stays a
+# ZERO-DIFF file by design — which is why the q27 arms read the OVERLAY and
+# render the chart with the q27 release name, never the chart defaults.
+#
+# Red state at handoff (designed): every subtree/render/comment leg is RED
+# against today's tree (no radiance-q27 subtree exists yet) and greens with
+# C15-dev's single commit (D1-D8). The legs that stay GREEN now are drift
+# bars: the keyless grep ban (AC4), the base-appset lever needle, and the
+# CI extraction leg that works before AND after the subtree lands (C01
+# gotcha-14 idiom).
+#
+# Run per-directory: python3 -m pytest charts/radiance/tests -v
+
+from __future__ import annotations
+
+import collections
+import re
+import subprocess
+
+import pytest
+import yaml
+
+import radiance_testlib as R
+
+_ok, _reason = R.helm_ready()
+helm_skip = pytest.mark.skipif(not _ok, reason=_reason)
+
+BASE_APPSET = R.REPO_ROOT / "charts" / "base" / "templates" / "appset-charts.yaml"
+
+
+def _q27_docs():
+    docs, _raw = R.render_q27()
+    return docs
+
+
+# --- AC1: the roster entry and the name law -------------------------------------
+
+
+def test_c15_roster_entry_is_the_chart_override():
+    """C15 AC1 / D1: the gpu-ai charts: map carries
+    {appName: radiance-q27, chart: radiance, namespace: default,
+    ServerSideApply: "false"} EXACTLY — the roster `chart:` key is the
+    documented second-release lever (D56; precedents zigbee2mqtt /
+    actualbudget), and ServerSideApply "false" clones the llama-swap-family
+    shape of the fn entry (gotcha 6)."""
+    doc = yaml.safe_load(R.SERVICE_VALUES.read_text())
+    entry = (doc.get("charts") or {}).get(R.Q27_APP_NAME)
+    assert isinstance(entry, dict), (
+        "cf-143 C15: charts.radiance-q27 missing from services/gpu-ai/prod/values.yaml — "
+        "dev D1 (the roster entry) has not landed; designed-red naming C15"
+    )
+    assert entry == R.Q27_ROSTER, (
+        f"cf-143 C15: charts.radiance-q27 is {entry}, want EXACTLY {R.Q27_ROSTER} "
+        "(internal chart, chart-dir override, no version/repository keys)"
+    )
+
+
+def test_c15_appset_chart_lever_and_name_derivation_present():
+    """Name-law evidence (the coexistence n1 idiom): the base appset derives
+    the Application name as {{serviceName}}-{{ .appName }} (→
+    gpu-ai-radiance-q27 — the host the peers.radiance-q27 hop points at) and
+    resolves the git PATH through the `hasKey "chart"` branch (charts/base/
+    templates/appset-charts.yaml:83). Green today, drift-barred: if either
+    shape moves, the second release silently breaks and this names C15."""
+    text = BASE_APPSET.read_text()
+    assert 'name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}"' in text, (
+        "cf-143 C15: the base appset Application-name derivation changed — the q27 "
+        "Application name gpu-ai-radiance-q27 derives from exactly this template"
+    )
+    assert '{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}' in text, (
+        'cf-143 C15: the appset `chart:` path branch is gone — D56\'s topology (one chart dir, '
+        "two releases) has no lever; re-read charts/base before trusting any q27 wiring"
+    )
+
+
+# --- AC2: the pod truth of the q27 release ---------------------------------------
+
+
+@helm_skip
+def test_c15_q27_release_renders_rc0():
+    """The §D54 probe's promise as a leg: the SAME chart dir renders cleanly
+    under release name gpu-ai-radiance-q27 with the subtree overlaid
+    (helm rc 0 — the render helper raises AssertionError naming C15 on any
+    failure, missing subtree included)."""
+    R.render_q27()
+
+
+@helm_skip
+def test_c15_q27_pod_rests_at_zero_replicas():
+    """D54(1): git renders replicas: 0 — the honest resting state. An idle
+    pod at 1 would Pend forever (capacity-1 pool + non-subtractable claim,
+    D26) and LOOK like a defect; the owner flips the lane by scaling."""
+    deploy = R.deployment(_q27_docs())
+    assert deploy["spec"].get("replicas") == R.Q27_REPLICAS, (
+        f"cf-143 C15: q27 Deployment replicas is {deploy['spec'].get('replicas')!r}, want 0 "
+        "(the shipped resting state — pod-swap, not co-residency; §R19/§D54-H arithmetic)"
+    )
+
+
+@helm_skip
+def test_c15_q27_args_are_the_profile_set_equality():
+    """C15 AC2: the rendered q27 args EQUAL the Q27_PROFILE constant as a
+    set (extra flag as red as a missing one — the fn AC3 idiom), each flag
+    once. --model is compared against the ARGS literal (the anchor trap runs
+    in reverse: a cosmetic modelPath re-pin in the subtree does NOT move the
+    args and must not be used as the spliced source — §D54-A/B)."""
+    args = [str(a) for a in (R.serve_container(R.deployment(_q27_docs())).get("args") or [])]
+    assert args, "cf-143 C15: the q27 serve container renders no args"
+    pairs = R.flag_pairs(args)
+    want = dict(R.Q27_PROFILE)
+    missing = {f: v for f, v in want.items() if pairs.get(f) != v}
+    extra = {f: v for f, v in pairs.items() if f not in want}
+    assert not missing and not extra, (
+        "cf-143 C15: q27 serve args diverge from the D54-ratified profile\n"
+        f"  missing/incorrect: {missing}\n  extra: {extra}"
+    )
+    seen = collections.Counter(a for a in args if a.startswith("--"))
+    dupes = {f: c for f, c in seen.items() if c > 1}
+    assert not dupes, f"cf-143 C15: duplicated q27 flags {dupes}"
+
+
+@helm_skip
+def test_c15_q27_absence_set():
+    """C15 AC2 / D56(7): the q27 profile omits eight fn/expert flags, each a
+    named bar — see the Q27_ABSENT_FLAGS reasons in the testlib (dense model:
+    no streaming mirror, no n-gram/PLE layer, no experts, drafter in-pack;
+    keyless per D8/D54). Set-equality reddens extras anyway; this leg names
+    WHICH refusal each survivor would resurrect."""
+    args = [str(a) for a in (R.serve_container(R.deployment(_q27_docs())).get("args") or [])]
+    joined = " ".join(args)
+    pairs = R.flag_pairs(args)
+    for flag in R.Q27_ABSENT_FLAGS:
+        assert flag not in pairs and flag not in joined, (
+            f"cf-143 C15: {flag} shipped in the q27 args — "
+            + (
+                "keyless ruling D8/D54(2) (the owner's api-key rider is DROPPED)"
+                if "api-key" in flag
+                else "the arch REFUSES kv-resident on a non-streaming dense model (§R19-Q1(iii))"
+                if flag == "--kv-resident"
+                else "q27's family has no n-gram/PLE layer (§R19-Q7)"
+                if flag in ("--ngram-placement",)
+                else "no experts to place and no host pool to size (§R19-Q7, D56(7))"
+                if flag in ("--placement", "--host-pool-mib")
+                else "co-residency etiquette only — moot in a pod-swap (§R19-Q6)"
+                if flag == "--gpu-headroom-mib"
+                else "the DFlash2 drafter is IN-PACK; 'the flag simply doesn't own the drafter' (§R19-Q5)"
+            )
+        )
+    assert "serve" not in args, (
+        "cf-143 C15: a `serve` VERB token in the q27 args — the engine takes args "
+        "directly (the fn RQ0 law is engine-wide, not per-release)"
+    )
+
+
+@helm_skip
+def test_c15_q27_guaranteed_pair_with_inherited_claims():
+    """D54(3)/AC2: memory 24Gi request==limit (Guaranteed pair; §R19-Q3 band
+    + the lane's `limit − printed-pinned ≥ 4` law). cpu "8" and the
+    amd.com/gpu-r9700-1 claim are INHERITED from the chart's baked pair — the
+    overlay map deep-merge ADDS/UPDATES, never removes (D26), the §D54 probe
+    witnessed the inheritance — so this leg asserts the RENDERED pair equals
+    exactly {cpu 8, memory 24Gi, claim 1} in BOTH requests and limits."""
+    res = R.resources(R.serve_container(R.deployment(_q27_docs())))
+    want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
+    assert res.get("requests") == want, (
+        f"cf-143 C15: q27 requests {res.get('requests')} != {want} — the 24Gi pair authored "
+        "at the overlay, cpu/claim chart-INHERITED (non-subtractable, D26)"
+    )
+    assert res.get("limits") == want, f"cf-143 C15: q27 limits {res.get('limits')} != {want}"
+
+
+@helm_skip
+def test_c15_q27_kinds_banned():
+    """AC2 / D8 inherited: the q27 release renders NO Secret, ExternalSecret,
+    Ingress or ServiceAccount — keyless (no secret chain to wake), internal-only
+    (no ingress invented), tokenless (createDefaultServiceAccount false is
+    chart-baked and the overlay cannot re-open it)."""
+    docs = _q27_docs()
+    for kind, why in (
+        ("Ingress", "radiance is internal-only — the trio law's proxy leg stays SKIPPED (D56(8))"),
+        ("Secret", "keyless D8/D54(2) — no secret surface on the q27 lane either"),
+        ("ExternalSecret", "keyless — no bitwarden leg, no fourth custom-values leg"),
+        ("ServiceAccount", "createDefaultServiceAccount=false (chart-baked, the overlay inherits it)"),
+    ):
+        found = [d["metadata"]["name"] for d in docs if d.get("kind") == kind]
+        assert not found, f"cf-143 C15: {kind} rendered by the q27 release ({why}): {found}"
+
+
+@helm_skip
+def test_c15_q27_names_dedup_to_the_release():
+    """AC2 (the §D54 probe's witnessed fullname law): exactly one Service and
+    one Deployment, both named gpu-ai-radiance-q27 (the release name dedups,
+    NOTES.txt's fullname idiom), Service on port 8000 — the peer proxy's
+    target."""
+    docs = _q27_docs()
+    deps = [d for d in docs if d.get("kind") == "Deployment"]
+    svcs = R.services(docs)
+    assert len(deps) == 1 and len(svcs) == 1, (
+        f"cf-143 C15: q27 render carries {len(deps)} Deployments / {len(svcs)} Services — "
+        "the controller-name dedup the probe witnessed broke"
+    )
+    for obj, kind in ((deps[0], "Deployment"), (svcs[0], "Service")):
+        assert obj["metadata"]["name"] == R.Q27_RELEASE, (
+            f"cf-143 C15: {kind} name {obj['metadata']['name']!r}, want {R.Q27_RELEASE!r}"
+        )
+    ports = (svcs[0]["spec"].get("ports") or [])
+    assert len(ports) == 1 and ports[0].get("port") == 8000, (
+        f"cf-143 C15: q27 Service ports {ports}, want exactly 8000 (the peer hop's clone shape)"
+    )
+
+
+@helm_skip
+def test_c15_q27_render_sentinel_free():
+    """AC10's q27 half: the release render carries no OVERRIDE_* sentinel —
+    the lane ships no bitwardenIds, so nothing resolves per-environment."""
+    _docs, raw = R.render_q27()
+    assert "OVERRIDE_" not in raw, (
+        "cf-143 C15: the q27 render leaks a sentinel: "
+        f"{[ln for ln in raw.splitlines() if 'OVERRIDE_' in ln][:3]}"
+    )
+
+
+# --- AC3: the init grammar guards BOTH call sites ---------------------------------
+
+
+@helm_skip
+def test_c15_q27_init_carries_the_four_pack_literals():
+    """C15 AC3: the q27 init script (overlay command replacement) pins the
+    pack ledger as runnable literals — LFS_SHA a4908940…, PACK the q27
+    .rad, MARKER the .staged-<sha> success artifact, URL the HF resolve
+    path (the marker accepts the $-interpolated fn idiom or the expanded
+    form, same three shapes the fn marker law accepted)."""
+    init = R.fetch_init(R.deployment(_q27_docs()))
+    body = "\n".join(str(t) for t in (init.get("command") or []))
+    assert f"LFS_SHA={R.Q27_PACK_LFS_SHA}" in body, (
+        "cf-143 C15: the q27 init does not assign the ledgered lfs sha in full — "
+        "the marker/gate provenance chain starts here"
+    )
+    assert f"PACK={R.Q27_MODEL_PATH}" in body, (
+        f"cf-143 C15: q27 init PACK is not {R.Q27_MODEL_PATH} — one pack, one path"
+    )
+    assert re.search(r"MARKER=/models/radiance/\.staged-(\$LFS_SHA|" + R.Q27_PACK_LFS_SHA + r")", body), (
+        "cf-143 C15: no .staged-<lfs-sha> MARKER (interpolated or expanded) — the vllm/fn "
+        "marker law carries to the second call site"
+    )
+    assert f"URL={R.Q27_PACK_URL}" in body, (
+        f"cf-143 C15: q27 init URL is not the ungated resolve path {R.Q27_PACK_URL}"
+    )
+
+
+@helm_skip
+def test_c15_q27_init_grammar_is_the_portable_equality():
+    """C15 AC3 / D27 class law at the NEW call site: the overlay script must
+    use the BusyBox-portable compute+compare equality gate (the C11 shape),
+    carry the rejected GNU forms (--check/--status/-cs/-c -s) as ABSENT from
+    its hash-applet lines, keep curl --continue-at - with the rc-0/33
+    tolerance, and touch the marker only AFTER the guard (exit-1 precedes
+    touch). The chart's own script is byte-untouched — its identical legs
+    live in test_render.py; D27's law guards BOTH copies."""
+    init = R.fetch_init(R.deployment(_q27_docs()))
+    command = init.get("command") or []
+    assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
+        "cf-143 C15: the q27 init is no longer [sh -c <script>] — the grammar legs' "
+        "parse anchor moved; re-read §D3b and re-pin (not silently vacuous)"
+    )
+    script = command[2]
+    lines = script.splitlines()
+
+    def _has_all(tokens, line):
+        return all(tok in line for tok in tokens)
+
+    assert any(_has_all(R.EQ_GATE_TOKENS, ln) for ln in lines), (
+        f"cf-143 C15: no compute line {' '.join(R.EQ_GATE_TOKENS)!r} in the q27 script — "
+        "the portable equality gate is absent (the live CrashLoop shape, C11 class)"
+    )
+    assert any(_has_all(R.NEQ_TEST_TOKENS, ln) and ln.strip().startswith("if") for ln in lines), (
+        'cf-143 C15: no [ "$actual" != "$LFS_SHA" ] test in the q27 script'
+    )
+    assert any(_has_all(R.MISMATCH_ECHO_TOKENS, ln) for ln in lines), (
+        "cf-143 C15: the q27 MISMATCH echo must name BOTH expected= and actual= on one line"
+    )
+    touch_i = next((i for i, ln in enumerate(lines) if 'touch "$MARKER"' in ln), None)
+    assert touch_i is not None, "cf-143 C15: touch $MARKER vanished from the q27 script"
+    neq_i = next(i for i, ln in enumerate(lines) if _has_all(R.NEQ_TEST_TOKENS, ln))
+    exit_i = next((i for i, ln in enumerate(lines) if "exit 1" in ln and i > neq_i), None)
+    assert exit_i is not None and exit_i < touch_i, (
+        "cf-143 C15: marker-touch must follow the guard's exit-1 (loud-failure shape, "
+        "the C11 ordering law at the second call site)"
+    )
+    curl_line = next((ln for ln in lines if ln.strip().startswith("curl ")), None)
+    assert curl_line and "--continue-at -" in curl_line and '-output "$PACK"' in curl_line, (
+        "cf-143 C15: the q27 curl staging line lost --continue-at - / $PACK output (the "
+        "resume + rc-33 tolerance is the interrupted-fetch survival mechanism)"
+    )
+    assert any("-ne 33" in ln for ln in lines), (
+        "cf-143 C15: the rc-33 (already-retrieved) tolerance is missing — a completed "
+        "download without a marker would boot-loop"
+    )
+    problems = []
+    for ln in lines:
+        if not R.HASH_APPLET_RE.search(ln):
+            continue
+        stripped = ln.strip()
+        if re.search(r"--[A-Za-z-]+", stripped):
+            problems.append(("GNU long option dies in BusyBox (exit 1 → no marker)", stripped))
+        for bad_form in R.REJECTED_GATE_FORMS:
+            if bad_form in stripped:
+                problems.append((f"rejected D27 shape {bad_form!r}", stripped))
+    assert not problems, (
+        "cf-143 C15: q27 checksum-gate grammar vs the pinned BusyBox image family —\n  "
+        + "\n  ".join(f"{why}: {line}" for why, line in problems[:6])
+    )
+
+
+@helm_skip
+def test_c15_q27_init_image_stays_busybox_family():
+    """The overlay replaces the COMMAND only; the init IMAGE stays
+    chart-baked (the pinned curlimages/curl — BusyBox family, §D3b premise).
+    A q27 swap to another family silently un-rules the grammar law (the C11
+    identity-gate lesson, re-armed at the second call site)."""
+    init = R.fetch_init(R.deployment(_q27_docs()))
+    repo = str(init.get("image", "")).rsplit(":", 1)[0]
+    assert repo in R.BUSYBOX_FAMILY_REPOS, (
+        f"cf-143 C15: q27 init image repo {repo!r} left the BusyBox-family set — the grammar "
+        "ban must be re-ruled against the new family, not pass vacuously"
+    )
+
+
+# --- T4/AC8: the overlay's comment-carried law ------------------------------------
+
+
+def test_c15_q27_pack_ledger_comment_verbatim():
+    """C15 T4 (the fn :96-117 leg's shape, applied at the NEW home): the
+    overlay's ledger comment stays verbatim-complete — repo, file,
+    19,377,119,232 bytes (18.05 GiB), lfs sha in full, ungated. A truncated
+    ledger is the drift class this ticket keeps paying for."""
+    flat = " ".join(R.q27_region_text().split())
+    assert R.Q27_PACK_REPO in flat, "cf-143 C15: the q27 ledger omits the HF repo"
+    assert R.Q27_PACK_FILE in flat, "cf-143 C15: the q27 ledger omits the pack file name"
+    assert re.search(r"19[,_]?377[,_]?119[,_]?232", flat), (
+        f"cf-143 C15: the pack byte count {R.Q27_PACK_BYTES:,} is not in the q27 ledger"
+    )
+    assert re.search(r"18\.05[^\n]{0,16}GiB", flat, re.I), (
+        "cf-143 C15: the ~(18.05 GiB) human figure is missing (the staging math the docs cite)"
+    )
+    assert R.Q27_PACK_LFS_SHA in flat, "cf-143 C15: the q27 ledger truncates the lfs sha"
+    assert re.search(r"(?i)ungated", flat), "cf-143 C15: 'ungated' is not stated (§R19-S1)"
+
+
+def test_c15_q27_switch_discipline_comments():
+    """C15 AC8 (T3(h)): the radiance-q27 subtree's comments carry the five
+    switch facts, grep-token armed and review-verified:
+    1. scale ORDER — fn DOWN first, THEN q27 UP (both-up lands Pending, not
+       OOM — three independent blockers, §R19/§D54-H);
+    2. RESTING STATE — git renders fn 1 / q27 0;
+    3. the D31/D32 law — any SYNC re-applies git over hand-scales, OutOfSync
+       through the window is EXPECTED (the parked state, not a defect);
+    4. 503-while-idle honesty — the hop answers 503 at rest, never silent;
+    5. the no-key ruling — the owner's --api-key rider is DROPPED (D54),
+       WITHOUT writing the env token itself (AC4's grep scopes services/).
+    Designed-red until dev D2 lands the subtree + comments."""
+    flat = " ".join(R.q27_region_text().split())
+    missing = []
+    down = re.search(r"(?i)\bfn\b[^\n]{0,90}(down|scaled?[^\n]{0,25}\b0\b|replicas[=: ]{1,2}0)", flat)
+    up = re.search(r"(?i)q27[^\n]{0,90}(up|scaled?[^\n]{0,25}\b1\b|replicas[=: ]{1,2}1)", flat)
+    if not (down and up and re.search(r"(?i)(first|before|then|order)", flat)):
+        missing.append("scale order (fn DOWN first, then q27 UP)")
+    if not re.search(r"(?i)pending", flat):
+        missing.append("the both-up lands Pending reason (§R19/§D54-H)")
+    if not re.search(r"(?i)resting|git renders", flat):
+        missing.append("the resting-state marker")
+    if not re.search(r"(?i)fn\s*1\s*/\s*q27\s*0|fn\s*1[^\n]{0,40}q27\s*0|q27\s*0[^\n]{0,40}fn\s*1", flat):
+        missing.append("the resting pair (fn 1 / q27 0)")
+    if not re.search(r"(?i)D31", flat) or not re.search(r"(?i)D32", flat):
+        missing.append("the D31/D32 citation")
+    if not re.search(r"(?i)sync[^\n]{0,100}(re-?applies?|revert|over[rs])", flat):
+        missing.append("any-sync-reapplies-git law")
+    if not re.search(r"(?i)outofsync[^\n]{0,100}(expected|by design|parked|is the parked|not a defect)", flat):
+        missing.append("OutOfSync-through-the-window is EXPECTED")
+    if not re.search(r"(?i)503[^\n]{0,140}(idle|endpoints?|empty|while|at rest)|(?:idle|at rest|replicas[:= ]{1,2}0)[^\n]{0,140}503", flat):
+        missing.append("the 503-while-idle honesty")
+    if not re.search(r"(?i)api-?key", flat) or not re.search(r"(?i)(dropped|keyless)", flat):
+        missing.append("the no-key ruling (rider DROPPED, D54)")
+    assert not missing, (
+        "cf-143 C15 / AC8: the radiance-q27 subtree comments lack: " + "; ".join(missing)
+    )
+
+
+def test_c15_keyless_grep_stays_clean():
+    """AC4: git grep -l "RADIANCE_API"+"_KEY" over charts services
+    custom-values tests .github prints NOTHING. Green TODAY (zero hits
+    repo-wide, §D54-D) and the ban that must STAY green: a dev comment
+    quoting the owner's rider verbatim reddens HERE. The fn ABSENT_FLAGS
+    legs (test_serve_args) stay green untouched — this leg inherits the ban
+    onto the new subtree and this suite."""
+    out = subprocess.run(
+        ["git", "grep", "-l", R.keyless_env_token(), "--",
+         "charts", "services", "custom-values", "tests", ".github"],
+        capture_output=True, text=True, cwd=R.REPO_ROOT, timeout=120,
+    )
+    assert out.returncode == 1 and not out.stdout.strip(), (
+        f"cf-143 C15/AC4: the keyless env name appears in {out.stdout.split()!r} — D54(2) "
+        "rules it out; name the dropped rider WITHOUT writing the token (the ban scopes tests/ too)"
+    )
+
+
+# --- T6: the CI leg ---------------------------------------------------------------
+
+
+def test_c15_ci_workflow_gains_the_q27_extraction_step():
+    """C15 T6 / AC9: radiance-render-tests.yaml carries the hardened
+    d.get('radiance-q27') or {} extraction + a q27 render leg (the workflow
+    file's own line is what CI executes; the path-set pin at
+    test_contract.py:113-120 needs NO re-pin — dev D7 adds STEPS, not trigger
+    paths). Designed-red until D7 lands."""
+    text = R.WORKFLOW.read_text()
+    assert "d.get('radiance-q27') or {}" in text, (
+        "cf-143 C15: the CI workflow lacks the hardened q27 extraction step — the leg must "
+        "work BEFORE (yielding {}) and AFTER the subtree lands (gotcha 14, the C01 lesson)"
+    )
+    assert R.Q27_RELEASE in text, (
+        f"cf-143 C15: no {R.Q27_RELEASE} render leg in the workflow — the q27 subtree is not "
+        "covered by CI until D7 adds it"
+    )
+
+
+def test_c15_q27_extraction_expression_works_pre_land():
+    """The executable half (offline, no helm): running the workflow's
+    extraction expression against the live service values yields a DICT in
+    BOTH wave states — {} pre-C15, the subtree after (the AC6
+    generation-witness law extended to the second release)."""
+    doc = yaml.safe_load(R.SERVICE_VALUES.read_text())
+    extracted = doc.get("radiance-q27") or {}
+    assert isinstance(extracted, dict), (
+        f"cf-143 C15: the q27 extraction yields {type(extracted).__name__}, want a dict"
+    )

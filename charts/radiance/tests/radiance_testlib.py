@@ -198,6 +198,216 @@ INDEX_DIGEST = "sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e5
 # path appends verbatim).
 PEER_URL = "http://gpu-ai-radiance.default.svc.cluster.local:8000"
 
+# --- cf-143 C15 q27 lane (D54 owner rulings; §R19; §D54 file-map) ------------
+# The q27 truth lives in the SERVICE OVERLAY (the top-level radiance-q27:
+# subtree of services/gpu-ai/prod/values.yaml), never in the chart: the
+# topology is one chart dir, two releases (D56 — roster `chart: radiance`
+# override), and charts/radiance/values.yaml stays a ZERO-DIFF file by
+# design so the fn suite's 46 green legs cannot move (DECISIONS D56(1)).
+# Every value here is the owner-ruled constant (C15/D54) — dev conforms the
+# subtree to it, never the reverse.
+Q27_APP_NAME = "radiance-q27"
+Q27_RELEASE = "gpu-ai-radiance-q27"          # Application name = serviceName+appName;
+#                                             # renders fn's own Service+Deployment name
+Q27_SERVED_ID = "qwen3.8-27b-radiance"       # honest-id law (D7 pattern): the served
+#                                             # name is the model, not fn's trio
+Q27_MODEL_PATH = "/models/radiance/qwen3.8-27b-mxfp4.rad"   # the chart's model dir idiom;
+#                                             # the anchor trap runs in REVERSE here: the
+#                                             # overlay args carry the path LITERALLY
+Q27_PACK_REPO = "StillDeadcode/qwen3.8-27b-mxfp4"
+Q27_PACK_FILE = "qwen3.8-27b-mxfp4.rad"
+Q27_PACK_BYTES = 19_377_119_232              # ~18.05 GiB (§R19-S1/S5)
+Q27_PACK_LFS_SHA = "a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8"
+Q27_PACK_URL = f"https://huggingface.co/{Q27_PACK_REPO}/resolve/main/{Q27_PACK_FILE}"
+
+# The D54-ratified serving profile (owner recipe MINUS the --api-key rider —
+# D54(2) keyless; host normalized to the lane's `::` idiom — plan OQ-15
+# resolved; served-name added per the honest-id law). Set equality is
+# EXACT and order-insensitive (AC2, the fn AC3 idiom): an extra flag is as
+# red as a missing one.
+Q27_PROFILE = {
+    "--model": Q27_MODEL_PATH,
+    "--tp": "1",
+    "--max-num-seqs": "8",
+    "--max-model-len": "200000",
+    "--kv-cache-dtype": "fp8",
+    "--prefix-cache-mib": "4096",             # Wilde's operational patch, NOT the card's
+    #                                          # (§R19-Q2); below one 200K fp8 conversation,
+    #                                          # so the boot warning is EXPECTED
+    "--host": "::",
+    "--port": "8000",
+    "--served-model-name": Q27_SERVED_ID,
+}
+
+# Each absence is a named bar with its reason (AC2; §R19-Q1/Q5, D54/D8):
+# --api-key/--api-key-env — keyless ruling, the four D8 bans inherited;
+# --kv-resident — the arch REFUSES it ("dense attention reads the whole
+# history every step", §R19-Q1(iii)); --ngram-placement + --placement +
+# --host-pool-mib — q27's family has no n-gram/PLE layer and no experts
+# (§R19-Q7, D56(7)); --gpu-headroom-mib — co-residency etiquette only,
+# moot in a pod-swap; --num-speculative-tokens — the DFlash2 drafter is
+# in-pack, "the flag simply doesn't own the drafter" (§R19-Q5).
+Q27_ABSENT_FLAGS = (
+    "--api-key",
+    "--api-key-env",
+    "--kv-resident",
+    "--ngram-placement",
+    "--placement",
+    "--host-pool-mib",
+    "--gpu-headroom-mib",
+    "--num-speculative-tokens",
+)
+
+Q27_MEMORY = "24Gi"     # request==limit Guaranteed pair (D54(3)); cpu "8" +
+#                        # the gpu claim arrive chart-INHERITED (map deep-merge
+#                        # adds/updates, never removes — D26) and are asserted
+#                        # in the render legs as exactly that.
+Q27_REPLICAS = 0        # the shipped resting state (D54(1) pod-swap); the
+#                        # 125.08-110-4.125-1.158 = 9.80 GiB node-free headroom
+#                        # makes co-scheduling arithmetically dead — both-up
+#                        # lands Pending, not OOM (§R19/§D54-H).
+Q27_HEADROOM_GIB = "9.80"
+Q27_CATALOG_PRIOS = {   # OQ-16 approved: each STRICTLY below fn's 9/5/1,
+    "urgent": 8,        # higher-wins polarity NOT inverted, fn rows
+    "default": 4,       # byte-unchanged. priority-0 SEMANTICS UNVERIFIED —
+    "low": 0,           # C16's smoke read confirms; the arms pin the
+}                       # AUTHORED value, not a claimed behaviour.
+Q27_CTX = 200000        # per-session ceiling (--max-model-len); the
+#                        # ~335-409K aggregate is a CONCURRENCY caveat, not a
+#                        # context number (§R19-Q1).
+Q27_CAPS_INPUT = ["text", "image"]           # in-pack vision tower (Q8 pattern);
+#                                             # the C16 smoke retires the claim on failure
+Q27_PEER_FLOOR = 4      # q27's default class; fn's 5 floor is NOT reused
+#                        # (D54 "do not steal fn's ranks")
+Q27_PEER_URL = f"http://{Q27_RELEASE}.default.svc.cluster.local:8000"   # NO /v1
+Q27_PEERS_EVIDENCE = REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-q27-peers-expected.yaml"
+Q27_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+
+# AC4's keyless ban scopes `tests` too, so this suite may not embed the env
+# name contiguously — the token is ASSEMBLED at read time. A source that
+# spells it out would green the ban by absence of evidence; assembling keeps
+# the grep leg honest about its own files.
+_KEYLESS_ENV_TOKEN = "RADIANCE_API" + "_KEY"
+
+
+def keyless_env_token() -> str:
+    return _KEYLESS_ENV_TOKEN
+
+
+def q27_service_block() -> dict | None:
+    """The top-level radiance-q27: block of the gpu-ai service values, or
+    None while C15-dev's D2 has not landed (designed-red naming C15, never a
+    skip — the subtree and these legs ship in ONE commit-wave)."""
+    if not SERVICE_VALUES.is_file():
+        return None
+    return yaml.safe_load(SERVICE_VALUES.read_text()).get(Q27_APP_NAME)
+
+
+def q27_region_text() -> str:
+    """Raw text of the radiance-q27: subtree INCLUDING its law comments —
+    YAML parses no comments, and AC8's switch discipline is comment-carried,
+    so the comment arms read this window (the leading comment block plus the
+    subtree lines up to the next top-level key)."""
+    assert SERVICE_VALUES.is_file(), (
+        "cf-143 C15: services/gpu-ai/prod/values.yaml missing — the q27 overlay has no host"
+    )
+    lines = SERVICE_VALUES.read_text().splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^" + Q27_APP_NAME + r":", ln)), None)
+    assert start is not None, (
+        "cf-143 C15: no top-level radiance-q27: subtree in the gpu-ai service values — dev D2 "
+        "has not landed (comment legs are designed-red until the overlay block exists; C15 owns it)"
+    )
+    top = start
+    while top > 0:
+        prev = lines[top - 1]
+        if prev.strip() == "" or prev.lstrip().startswith("#"):
+            top -= 1
+            continue
+        break
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"^[^ \t#]", lines[i])), len(lines))
+    return "\n".join(lines[top:end])
+
+
+def radiance_q27_peers_evidence() -> dict:
+    """Load + self-validate the q27 peer evidence (the fn loader's model laws:
+    a non-empty duplicate-free models_states chain whose last state equals
+    models_allowed). D13 per-key law: the fn file stays byte-untouched; this
+    sibling is the q27 block's single source, and dev conforms values to it."""
+    assert Q27_PEERS_EVIDENCE.is_file(), (
+        f"cf-143 C15: {Q27_PEERS_EVIDENCE} missing — the q27 peer evidence is the "
+        "test-session single source (D13 per-key extension)"
+    )
+    data = yaml.safe_load(Q27_PEERS_EVIDENCE.read_text())
+    assert isinstance(data, dict) and isinstance(data.get(Q27_APP_NAME), dict), \
+        "radiance-q27-peers-expected.yaml must carry a radiance-q27: mapping"
+    ev = data[Q27_APP_NAME]
+    states = ev.get("models_states")
+    assert isinstance(states, list) and states, \
+        "q27 evidence needs models_states — every wave's exact peer list is pinned"
+    final = ev.get("models_allowed")
+    assert isinstance(final, list) and final and states[-1] == final, \
+        "q27 evidence: last models_states must equal models_allowed"
+    for i, ids in enumerate(states):
+        assert isinstance(ids, list) and ids and len(set(ids)) == len(ids), \
+            f"models_states[{i}] must be a non-empty duplicate-free list"
+    return ev
+
+
+def expected_radiance_q27_peer(ev: dict, models: list) -> dict:
+    """The sanctioned rendered peers.radiance-q27 block for one models list —
+    proxy/timeouts/filters verbatim from the evidence, models one of the
+    states (the wave law). Derives nothing it does not read."""
+    assert models in ev["models_states"], (
+        f"peers.radiance-q27 models {models} is not one of the sanctioned waves "
+        f"{ev['models_states']} — wave changes route through the test session"
+    )
+    return {
+        "proxy": ev["proxy"],
+        "models": models,
+        "timeouts": ev["timeouts"],
+        "filters": ev["filters"],
+    }
+
+
+@functools.lru_cache(maxsize=None)
+def _render_q27_cache() -> tuple:
+    """Render the SAME chart dir with release name gpu-ai-radiance-q27 and
+    the extracted radiance-q27 subtree (the appset-merge shape: per-app
+    values = merge $extraValues (index $.Values $appName)). Missing subtree
+    is a RED naming C15, not a skip: the subtree is C15-dev's own landing."""
+    block = q27_service_block()
+    assert isinstance(block, dict), (
+        "cf-143 C15: services/gpu-ai/prod/values.yaml carries no top-level radiance-q27: "
+        "subtree — dev D2 has not landed; the q27 render legs are designed-red until it does "
+        "(no q27 subtree exists against today's tree — §12 red-first law)"
+    )
+    with tempfile.TemporaryDirectory(prefix="radiance-q27-test-") as tmp:
+        vals = Path(tmp) / "vals.yaml"
+        with vals.open("w") as fh:
+            yaml.safe_dump(block, fh)
+        out = subprocess.run(
+            [
+                "helm", "template", Q27_RELEASE, str(CHART_DIR),
+                "-f", str(vals),
+                "--set", "domain=spencerslab.com",
+                "--set", "clusterName=gpu-ai",
+            ],
+            capture_output=True, text=True, timeout=300,
+        )
+        if out.returncode != 0:
+            raise AssertionError(
+                f"C15: helm template failed for the q27 release ({Q27_RELEASE}):\n{out.stderr}"
+            )
+        docs = tuple(d for d in yaml.safe_load_all(out.stdout) if d)
+        return docs, out.stdout
+
+
+def render_q27():
+    """(docs, raw stdout) for the gpu-ai-radiance-q27 release render."""
+    ok, reason = helm_ready()
+    assert ok, reason
+    return _render_q27_cache()
+
 
 def helm_ready() -> tuple[bool, str]:
     if shutil.which("helm") is None:

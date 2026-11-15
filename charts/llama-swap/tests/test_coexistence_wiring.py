@@ -212,11 +212,46 @@ def test_no_radiance_ingress_host_and_two_skip_comments():
 
 def test_custom_values_gains_no_radiance_key():
     """D8: keyless + ungated packs = no secret surface = no custom-values leg
-    (the trio law's secrets-condition documented in the chunk)."""
+    (the trio law's secrets-condition documented in the chunk). C15 NOTE: the
+    "radiance" SUBSTRING check already covers any radiance-q27 key — the
+    fourth D8 leg stays UNMOVED and is deliberately NOT widened to name
+    q27 specifically (we ship no secret, so no q27 key may appear at all)."""
     text = CUSTOM_VALUES.read_text()
     assert "radiance" not in text.lower(), (
         "cf-143 C04/D8: custom-values/gpu-ai/prod-values.yaml gained a radiance key — "
         "the lane ships no secrets; a bitwardenId here contradicts D8"
+    )
+
+
+# --- cf-143 C15: the q27 siblings of the coexistence laws -------------------------
+
+
+def test_c15_no_radiance_q27_ingress_host_and_q27_skip_comment():
+    """C15 D4/T2 (the third-peer wave's coexistence half): NO radiance-q27
+    key under ingress.subdomains (the proxy leg STAYS skipped — D56(8),
+    internal-only like fn), AND the subdomains region carries the q27 skip
+    sentence beside the radiance/vllm/strata mirrors. The skip-comment arm
+    is DESIGNED-RED until dev D4 lands the comment; the no-host arm is green
+    now and must STAY green (a proxy entry invented for q27 is the drift).
+    The scalars-only leg above stays SCOPED to the fn radiance subtree: the
+    q27 overlay REPLACES LISTS (args + init command) BY DESIGN — the
+    anchor-trap law makes scalars useless there (D56(1); TEST_SPEC §12.15)."""
+    svc = _svc()
+    subs = (svc.get("ingress") or {}).get("subdomains") or {}
+    offenders = [k for k in subs if "radiance-q27" in k]
+    assert not offenders, f"cf-143 C15: ingress.subdomains carries {offenders} — q27 is internal-only too (D56(8))"
+    text = S.SERVICE_VALUES.read_text()
+    m = re.search(r"^\s*subdomains:\s*$", text, re.M)
+    assert m, "cf-143 C15: no ingress.subdomains block to search for the q27 skip comment"
+    rest = text[m.end():]
+    stop = re.search(r"^[a-z]", rest, re.M)
+    region = rest[: stop.start() if stop else len(rest)]
+    comment_lines = [ln for ln in region.splitlines() if ln.lstrip().startswith("#")]
+    q27_skips = [ln for ln in comment_lines if "radiance-q27" in ln.lower() or ("q27" in ln.lower() and "radiance" in ln.lower())]
+    assert q27_skips, (
+        "cf-143 C15: no radiance-q27 internal-only skip comment in the subdomains block — "
+        "dev D4 lands the mirror sentence ('deliberately NO radiance-q27 host either'); "
+        "designed-red naming C15 until it does"
     )
 
 
@@ -240,4 +275,25 @@ def test_radiance_id_stays_out_of_the_outer_matrix_and_models():
     # render the radiance appset entry serves beside (coexistence, Q5).
     assert "strata" in (cfg.get("peers") or {}), (
         "cf-143 C04: peers.strata gone from the render — nothing in this ticket disables strata"
+    )
+
+
+@helm_mark
+def test_c15_q27_id_stays_out_of_the_outer_matrix_and_models():
+    """C15 T2 (q27 sibling of the :223-240 idiom): the peers join is not a
+    matrix join — the q27 wire id must never register in the outer models
+    map or a matrix var/set (local ids would shadow the peer, the R3 Q5.2
+    precedence law the fn leg mirrors). Green today (the id serves nowhere
+    outer yet); it exists to catch dev D3 registering q27 wrong."""
+    cfg = L.rendered_config("gpu-ai")
+    models = set(L.all_models_of(cfg))
+    served_id = "qwen3.8-27b-radiance"
+    assert served_id not in models, (
+        f"cf-143 C15: {served_id} rendered as an OUTER llama-swap model — the q27 peer join "
+        "must not register it in the outer models map (shadow class, fn precedent)"
+    )
+    matrix = cfg.get("matrix") or {}
+    vars_blob = yaml.safe_dump(matrix.get("vars") or {}) + yaml.safe_dump(matrix.get("sets") or {})
+    assert served_id not in vars_blob, (
+        "cf-143 C15: the q27 id joined a matrix var/set — peers are not matrix members (D56(8))"
     )

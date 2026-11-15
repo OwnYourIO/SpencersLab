@@ -124,10 +124,12 @@ def test_c03_ac2_non_flashnext_models_identical_gpu_ai():
 # set retires {strata, vllm}) and the radiance peer joins ADDITIVE beside
 # strata (Q5), pinned to its own sibling evidence file radiance-peers-
 # expected.yaml (D13: the per-key authority pattern), read live and never
-# hand-copied. Anything else — another top-level key, a third peer beyond the
-# sanctioned {strata} / {strata, radiance} waves, an apiKey on either entry, a
-# byte off strata proxy/timeouts, or a models list outside the sanctioned
-# states — stays RED.
+# hand-copied. cf-143 C15 joins the sanctioned wave THIRD (q27): the set
+# {strata, radiance, radiance-q27} is carved while the q27 entry deep-equals
+# ITS OWN evidence file radiance-q27-peers-expected.yaml. Anything else —
+# another top-level key, a fourth peer beyond the sanctioned waves, an apiKey
+# on any entry, a byte off strata proxy/timeouts, or a models list outside
+# the sanctioned states — stays RED.
 # The helper READS BOTH EVIDENCE FILES LIVE, so the run-2 re-author of the
 # strata file (proxy URL flipping from gpu-ai-strata to the consolidated
 # gpu-ai-llama-swap-strata name) re-aligns the sanctioned state automatically:
@@ -203,7 +205,11 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
     # vllm comment-out, {strata, radiance} once C04's additive join lands;
     # a live vllm key or any other third peer REFUSES the carve, so the
     # era violation goes red with the rest of the surface it guards).
-    if not isinstance(peers, dict) or set(peers) not in ({"strata"}, {"strata", "radiance"}):
+    # cf-143 C15 re-pin (the class law the C04 round recorded: ANY peers-map
+    # equality leg gets the wave carve-out when a sanctioned join lands —
+    # blast-radius missed the launch's file list but dev's q27 commit would
+    # false-red it): the q27 join is sanctioned, any OTHER third key is not.
+    if not isinstance(peers, dict) or set(peers) not in ({"strata"}, {"strata", "radiance"}, {"strata", "radiance", "radiance-q27"}):
         return False
     entry = peers["strata"]
     if not isinstance(entry, dict) or set(entry) != {"proxy", "models", "timeouts"}:
@@ -221,6 +227,12 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
     if "radiance" in peers:
         ev = L.radiance_peers_evidence()
         if peers["radiance"] != L.expected_radiance_peer(ev, peers["radiance"].get("models")):
+            return False
+    # cf-143 C15: the same per-key law for the q27 join (its own evidence
+    # file; a divergent q27 block REFUSES the carve like any other drift).
+    if "radiance-q27" in peers:
+        ev27 = L.radiance_q27_peers_evidence()
+        if peers["radiance-q27"] != L.expected_radiance_q27_peer(ev27, peers["radiance-q27"].get("models")):
             return False
     return True
 

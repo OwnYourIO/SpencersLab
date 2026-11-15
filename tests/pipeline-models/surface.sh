@@ -808,25 +808,66 @@ for (const [k, prio] of [['qwen3.8-flash-next-radiance', 5],
   if (caps.tools !== true)
     errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true`);
 }
+// M8-A extended by cf-143 C15: TWO trios HOLD — fn's loop above stays
+// byte-unchanged (its 9/5/1 are not stolen, not inverted, not re-pinned) and
+// the q27 trio joins STRICTLY BELOW it at 8/4/0 (OQ-16 approved; higher-wins
+// polarity preserved on both). priority-0 semantics are UNVERIFIED engine
+// behaviour (no doc floor row; vLLM's priority=0=unset precedent does NOT
+// transfer) — these arms pin the AUTHORED values, and C16's smoke read is
+// the receipt that confirms them; a correction re-pins via prose fold, never
+// a silent retarget (§R19-Q4/D56(5)).
+for (const [k, prio] of [['qwen3.8-27b-radiance', 4],
+                         ['qwen3.8-27b-radiance-urgent', 8],
+                         ['qwen3.8-27b-radiance-low', 0]]) {
+  const e = models[k];
+  if (!e) { errs.push(`${k}: catalog row missing (C15 adds the q27 trio)`); continue; }
+  if (e.modelID !== 'qwen3.8-27b-radiance')
+    errs.push(`${k}: modelID is ${e.modelID}, want the shared q27 wire value qwen3.8-27b-radiance (honest-id law, the fn trio's D7 pattern cloned)`);
+  if (!e.limit || e.limit.context !== 200000)
+    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 200000 (q27's PER-SESSION ceiling = its --max-model-len; the ~335-409K aggregate is a CONCURRENCY caveat, not a context number — §R19-Q1)`);
+  if (!e.body || e.body.priority !== prio)
+    errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio} (OQ-16: 8/4/0 sits strictly below fn's 9/5/1 without inverting higher-wins — the strict-less-than relation is this exact-pin arithmetic, fn's rows pinned above)`);
+  if (!e.name) errs.push(`${k}: no descriptive name`);
+  else if (!/radiance/i.test(e.name))
+    errs.push(`${k}: name "${e.name}" does not carry the Radiance disambiguation (fn's trio shares the model family — the name must name the lane)`);
+  const caps = e.capabilities || {};
+  if (!capEq(caps.input, ['text', 'image']))
+    errs.push(`${k}: capabilities.input is ${JSON.stringify(caps.input)}, want ["text","image"] (Q8 pattern — vision tower in-pack §R19-S1; the C16 smoke retires the claim on failure)`);
+  if (!capEq(caps.output, ['text']))
+    errs.push(`${k}: capabilities.output is ${JSON.stringify(caps.output)}, want ["text"]`);
+  if (caps.tools !== true)
+    errs.push(`${k}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true`);
+}
 // M8-A2 (chunks/C05.md Tests, "Catalog-shape test — live-row set =="):
 // the cf-143 DELTA contract against the test-wave frozen base (captured
 // 2026-11-11 from the parsed catalog). Exactly +3 radiance rows, exactly
 // -3 vllm rows, everything else byte-present ("strata rows five-ish as
 // today" rides this same equality; M3's HOLD legs keep their shape).
+// cf-143 C15 RE-FREEZE — test-lane choice RECORDED HERE (chunks/C15.md T5;
+// TEST_SPEC §12.15): the base gains fn's landed radiance trio
+// (CF143_C15_BASE_KEYS = the frozen 86 + trio), so the delta law keeps the
+// original exact-equality shape: added == the Q27 trio, removed == the vllm
+// trio. Alternative rejected: a per-wave multi-delta law (two deltas to
+// reason about at once — drift-prone in exactly the ledger style this
+// ticket keeps paying for). The 86-key snapshot stays as the historical
+// base; the C15 base is derived from it, never re-captured from the live
+// catalog (a live-capture base would freeze unrelated future growth).
 const CF143_BASE_KEYS = ["home-3b-v3","home-3b-v3-gpu","local/qwen3.8-27b","ornith-1.5-122b-q3","ornith-1.5-122b-q4","ornith-1.5-122b-q5","ornith-1.5-122b-q6","ornith-1.5-122b-strata-q4","qwen3-vl-2b-bf16","qwen3-vl-2b-bf16:caption","qwen3-vl-2b-bf16:tags","qwen3-vl-2b-q4","qwen3-vl-2b-q4:caption","qwen3-vl-2b-q4:tags","qwen3-vl-2b-q8","qwen3-vl-2b-q8:caption","qwen3-vl-2b-q8:tags","qwen3-vl-30b-a3b","qwen3-vl-30b-a3b-bf16","qwen3-vl-30b-a3b-bf16:caption","qwen3-vl-30b-a3b-bf16:tags","qwen3-vl-30b-a3b-q4","qwen3-vl-30b-a3b-q4:caption","qwen3-vl-30b-a3b-q4:tags","qwen3-vl-30b-a3b-q8","qwen3-vl-30b-a3b-q8:caption","qwen3-vl-30b-a3b-q8:tags","qwen3-vl-30b-a3b-thinking-bf16","qwen3-vl-30b-a3b-thinking-q4","qwen3-vl-30b-a3b-thinking-q8","qwen3-vl-4b","qwen3-vl-4b-bf16","qwen3-vl-4b-bf16:caption","qwen3-vl-4b-bf16:tags","qwen3-vl-4b-q4","qwen3-vl-4b-q4:caption","qwen3-vl-4b-q4:tags","qwen3-vl-4b-q8","qwen3-vl-4b-q8:caption","qwen3-vl-4b-q8:tags","qwen3-vl-4b-thinking-bf16","qwen3-vl-4b-thinking-q4","qwen3-vl-4b-thinking-q8","qwen3-vl-8b","qwen3-vl-8b-bf16","qwen3-vl-8b-bf16:caption","qwen3-vl-8b-bf16:tags","qwen3-vl-8b-q4","qwen3-vl-8b-q4:caption","qwen3-vl-8b-q4:tags","qwen3-vl-8b-q8","qwen3-vl-8b-q8:caption","qwen3-vl-8b-q8:tags","qwen3.6-27b-q6","qwen3.6-27b-q8","qwen3.6-35b-a3b-1m","qwen3.6-35b-a3b-bf16","qwen3.6-35b-a3b-q6","qwen3.6-35b-a3b-q8","qwen3.6-35b-a3b-q8-visual","qwen3.8","qwen3.8-27b-bf16","qwen3.8-27b-q4","qwen3.8-27b-q6","qwen3.8-27b-q8","qwen3.8-27b-q8-1m","qwen3.8-27b-q8-visual","qwen3.8-27b-vllm","qwen3.8-27b-vllm-low","qwen3.8-27b-vllm-urgent","qwen3.8-flash-next-heretic-q4","qwen3.8-flash-next-orca-q6","qwen3.8-flash-next-q3","qwen3.8-flash-next-q4","qwen3.8-flash-next-strata","qwen3.8-flash-next-strata-orca","qwen3.8-flash-next-strata-q4","qwen36-heretic","qwen36-huihui","qwen38-ara","qwen38-heretic","qwen38-humanlike","qwen38-orca","qwen38-orca-f16","qwen38-rana","whisper-large-v3"];
+const CF143_C15_BASE_KEYS = CF143_BASE_KEYS.concat(["qwen3.8-flash-next-radiance",
+    "qwen3.8-flash-next-radiance-urgent", "qwen3.8-flash-next-radiance-low"]);
 const liveKeys = Object.keys(models).sort();
-const added = liveKeys.filter(k => !CF143_BASE_KEYS.includes(k));
-const removed = CF143_BASE_KEYS.filter(k => !liveKeys.includes(k));
-const wantAdded = ['qwen3.8-flash-next-radiance', 'qwen3.8-flash-next-radiance-urgent', 'qwen3.8-flash-next-radiance-low'].sort();
+const added = liveKeys.filter(k => !CF143_C15_BASE_KEYS.includes(k));
+const removed = CF143_C15_BASE_KEYS.filter(k => !liveKeys.includes(k));
+const wantAdded = ['qwen3.8-27b-radiance', 'qwen3.8-27b-radiance-urgent', 'qwen3.8-27b-radiance-low'].sort();
 const wantRemoved = ['qwen3.8-27b-vllm', 'qwen3.8-27b-vllm-urgent', 'qwen3.8-27b-vllm-low'].sort();
 if (JSON.stringify(added) !== JSON.stringify(wantAdded))
-  errs.push(`live catalog rows added vs the cf-143 base are ${JSON.stringify(added)}, want exactly the radiance trio (C05 delta contract)`);
+  errs.push(`live catalog rows added vs the cf-143 C15 base are ${JSON.stringify(added)}, want exactly the q27 trio (C15 delta contract — DESIGNED-RED until D5 lands the rows; fn's trio lives inside the re-frozen base)`);
 if (JSON.stringify(removed) !== JSON.stringify(wantRemoved))
-  errs.push(`live catalog rows removed vs the cf-143 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable + C05 delta — every other row stays live, strata included)`);
+  errs.push(`live catalog rows removed vs the cf-143 C15 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable + C05 delta — every other row stays live, strata AND fn's radiance trio included)`);
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/rad-catalog.js" "$CAT" \
-    || fail "M8: the radiance catalog contract is violated (trio HOLD: shared modelID, body.priority 9/5/1 higher-wins, ctx 200000, input [text,image], tools true; delta equality vs the frozen cf-143 base — chunks/C05.md Tests + M8 header)"
+    || fail "M8: the radiance catalog contract is violated (TWO trios HOLD: fn 9/5/1 + q27 8/4/0 — shared modelIDs, higher-wins un-inverted, ctx 200000, input [text,image], tools true; delta equality vs the re-frozen cf-143 C15 base (added == q27 trio exactly) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
   # M8-B: cross-chart context needle — the catalog's 200000 == the SHIPPED
   # maxModelLen scalar (single-sources honesty law; reads charts/radiance/
   # values.yaml, so it names C02 until the chart lands).
@@ -856,9 +897,33 @@ sev = yaml.safe_load(open("charts/llama-swap/tests/evidence/strata-peers-expecte
 strata_models = (peers.get("strata") or {}).get("models") or []
 assert strata_models in sev["models_states"], f"peers.strata.models {strata_models} left the sanctioned waves (Q5 violation)"
 PY
+  # M8-C15: the q27 clone of the serving-fact leg (designed-RED until dev D3
+  # lands peers.radiance-q27): the q27 wire id is SERVED via its OWN peer at
+  # ITS OWN evidence floor 4 — fn's block above is byte-verbatim, the floor
+  # comparison is per-peer (a 5 on the q27 hop would steal fn's ranks, and
+  # a missing peer makes every q27 catalog row a phantom route).
+  python3 - <<'PY' || fail "M8: the q27 wire id is not served via peers.radiance-q27 at the evidence floor 4 (C15 serving-fact clone — designed-red naming C15-dev D3)"
+import yaml
+ev27 = yaml.safe_load(open("charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml"))["radiance-q27"]
+svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
+peers = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers") or {}
+q27 = peers.get("radiance-q27")
+assert q27 is not None, "peers.radiance-q27 missing — C15 dev D3 has not landed (designed-red naming C15)"
+assert q27.get("models") == ev27["models_allowed"], f"peers.radiance-q27.models {q27.get('models')!r} != the evidence-ruled q27 id list"
+assert "/v1" not in (q27.get("proxy") or ""), "the q27 peer proxy carries a /v1 suffix — request paths append verbatim (every peer's law)"
+floor = ((q27.get("filters") or {}).get("setParams") or {}).get("priority?")
+assert floor == ev27["filters"]["setParams"]["priority?"], (
+    f"peers.radiance-q27 priority? floor {floor!r} != the evidence floor (4 — q27's default class; "
+    "fn's 5 is NOT reused: D54 'do not steal fn's ranks'; M8 coherence unit for the q27 lane: "
+    "catalog 8/4/0 + floor 4)"
+)
+PY
   # M8-D: the negative needle (local-ids-shadow-peers law, R3 Q5.2 mirrored
   # from M3): the radiance wire id must NOT be a local llama-swap model id.
-  python3 - <<'PY' || fail "M8: qwen3.8-flash-next-radiance is declared as a local llama-swap model id — it would shadow the unqualified radiance peer (the very precedence bug that kept the vllm id out of the local map)"
+  # cf-143 C15: the needle CLONES per q27 wire id — the same shadow class
+  # applies to gpu-ai-radiance-q27 (a local q27 id would out-rank the peer
+  # and silently misroute the very lane the pod-swap exists to serve).
+  python3 - <<'PY' || fail "M8: a radiance/q27 wire id is declared as a local llama-swap model id — it would shadow its own unqualified peer (the precedence bug that kept the vllm id out of the local map)"
 import yaml
 def model_ids(cfg):
     out = set((cfg or {}).get("models") or {})
@@ -869,7 +934,8 @@ def model_ids(cfg):
 chart = yaml.safe_load(open("charts/llama-swap/values.yaml"))
 svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
 ids = model_ids(chart.get("config") or {}) | model_ids((svc.get("llama-swap") or {}).get("config") or {})
-assert "qwen3.8-flash-next-radiance" not in ids, "the radiance wire id is a local model id in the chart or gpu-ai overlay config"
+for wire in ("qwen3.8-flash-next-radiance", "qwen3.8-27b-radiance"):
+    assert wire not in ids, f"{wire} is a local model id in the chart or gpu-ai overlay config"
 PY
   for f in "$PM_SRC" "$PM_GEN"; do
     [ -f "$f" ] || fail "M8[C05]: $f missing"
@@ -923,6 +989,13 @@ def favrow(cell):
     return None
 if not favrow("qwen3.8-flash-next-radiance"):
     errs.append("favorited models: no gpu-ai row keyed qwen3.8-flash-next-radiance")
+# cf-143 C15 (D6): the q27 lane joins the favorited table as a MEASURED
+# OPT-IN candidate beside fn — designed-red until D6 lands the row + the
+# generated twin. The class table keeps fn's routes UNTOUCHED (the fn trio
+# rows above stay pinned byte-verbatim; q27 never becomes a default route
+# and the runner-model literal does not move — D54(4)).
+if not favrow("qwen3.8-27b-radiance"):
+    errs.append("favorited models: no gpu-ai row keyed qwen3.8-27b-radiance (C15/D6 adds the q27 lane as a measured opt-in candidate)")
 if not favrow("qwen3.8-flash-next-strata-q4"):
     errs.append("favorited models: the strata-q4 row vanished — Q5 says it STAYS (still the default)")
 vllm_rows = [ln for ln in lines if "qwen3.8-27b-vllm" in ln]
@@ -972,10 +1045,10 @@ PY
   if [ -n "${CF143_BASE_SHA:-}" ]; then
     touched=$(git diff --name-only "$CF143_BASE_SHA"...HEAD -- .rulesync/rules/overview.md .agents/loops/pipeline-worker.md)
     [ -z "$touched" ] || fail "M8[Q5]: the deferred surfaces were touched: $touched — loops/AGENTS runner literals ride the cutover ruling, NOT this run (DECISIONS Deferred)"
-    ok "M8: radiance trio HOLD (9/5/1 higher-wins, shared modelID, ctx 200000 == shipped maxModelLen, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence, floor 5) + strata KEEP needles + negative peer-id bar + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the loops/overview diff inventory vs $CF143_BASE_SHA"
+    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, ctx 200000, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4 — C15 clone) + re-frozen delta (added == q27 trio vs the C15 base) + strata KEEP needles + negative peer-id bars (both wire ids) + re-pinned class/favorited tables on source AND mirror (q27 favorited row included) + chart polarity comment + the loops/overview diff inventory vs $CF143_BASE_SHA"
   else
     skip "M8: Q5 diff-inventory leg not run — review sets CF143_BASE_SHA=<merge-base> and re-runs M8 (git diff check, chunks/C05.md AC3)"
-    ok "M8: radiance trio HOLD (9/5/1 higher-wins, shared modelID, ctx 200000 == shipped maxModelLen, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence, floor 5) + strata KEEP needles + negative peer-id bar + re-pinned class/favorited tables on source AND mirror + chart polarity comment"
+    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, ctx 200000, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4 — C15 clone) + re-frozen delta (added == q27 trio vs the C15 base) + strata KEEP needles + negative peer-id bars (both wire ids) + re-pinned class/favorited tables on source AND mirror (q27 favorited row included) + chart polarity comment"
   fi
 fi
 

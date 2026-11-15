@@ -168,10 +168,14 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     )
     cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
     # cf-143 C01+C04 wave law (test-session re-pin of the cf-105 two-peer
-    # pin): vllm retired to commented-out (Q3), radiance joins ADDITIVE
-    # (Q5) — exactly {strata} until C04 lands, then {strata, radiance}; a
-    # live vllm key, a third phantom, or a missing strata peer is drift.
-    assert set(cfg["peers"]) in ({S.PEER_NAME}, {S.PEER_NAME, "radiance"}), (
+    # pin): vllm retired to commented-out (Q3), radiance joined ADDITIVE
+    # (Q5). cf-143 C15 extends the sanctioned wave with the q27 join —
+    # {strata, radiance} (C15 pending) and {strata, radiance, radiance-q27}
+    # (C15 landed); a live vllm key, a fourth phantom, or a missing strata
+    # peer is drift (the class law: every peers-map-equality leg gets the
+    # wave carve when a sanctioned join lands).
+    assert set(cfg["peers"]) in ({S.PEER_NAME}, {S.PEER_NAME, "radiance"},
+                                 {S.PEER_NAME, "radiance", "radiance-q27"}), (
         f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143 wave"
     )
     # cf-86 wave law: the peers models list equals the sanctioned list for the
@@ -195,6 +199,15 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
         assert rad == L.expected_radiance_peer(ev, rad.get("models")), (
             f"radiance peer is {rad}, want the evidence-derived sanctioned block — "
             "cf-143 C04 pins the exact hop from the sibling evidence file"
+        )
+    # cf-143 C15: the q27 hop, same per-key law at its OWN evidence file
+    # (floor 4 — q27's default class, fn's 5 NOT reused, D54).
+    if "radiance-q27" in cfg["peers"]:
+        ev27 = L.radiance_q27_peers_evidence()
+        q27 = cfg["peers"]["radiance-q27"]
+        assert q27 == L.expected_radiance_q27_peer(ev27, q27.get("models")), (
+            f"radiance-q27 peer is {q27}, want the q27-evidence-derived sanctioned block "
+            "(no /v1, one-id wave, 1800/30, priority? floor 4, keyless D54(2))"
         )
 
 

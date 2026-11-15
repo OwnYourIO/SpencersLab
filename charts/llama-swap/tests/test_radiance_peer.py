@@ -114,28 +114,38 @@ def yaml_strata_evidence() -> dict:
     return yaml.safe_load((L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml").read_text())["strata"]
 
 
-# --- T3: the re-captured golden carries BOTH peers, strata byte-identical -----
+# --- T3: the re-captured golden carries ALL THREE peers, strata byte-identical ----
 
 
-def test_t3_golden_two_peer_shape():
-    """C04 AC2 (golden half): the peers subtree of the re-captured golden is
-    strata (byte-identical to the sanctioned shape) + radiance (the new
-    block); the vllm era block is gone (C01's re-capture removed it and this
-    capture must not re-add it)."""
+def test_t3_golden_three_peer_shape():
+    """C04 AC2 (golden half) RE-PINNED by C15 T2: the peers subtree of the
+    re-captured golden is strata (byte-identical to the sanctioned shape) +
+    radiance + the q27 join — the THREE-key set is the sanctioned C15 state.
+    DESIGNED-RED today: the shipped golden is the two-peer capture and the
+    values block it would mirror does not exist yet. The re-capture itself
+    is C15-DEV's paired obligation in the SAME commit as the values edit
+    (chunks/C15.md T7/T5; §12 golden law) — this session authors no golden
+    from values that don't exist."""
     golden = L.golden_config("gpu-ai")
     gp = _peers(golden)
-    assert set(gp) == {"strata", "radiance"}, (
-        f"cf-143 C04 T3: golden peers keys {sorted(gp)} — after the C04 re-capture the golden "
-        "mirrors exactly the two live peers (vllm retired, radiance joined)"
+    assert set(gp) == {"strata", "radiance", "radiance-q27"}, (
+        f"cf-143 C15 T3: golden peers keys {sorted(gp)} — golden/gpu-ai.config.yaml is "
+        "still the two-peer capture; C15-DEV owns the three-peer re-capture (D8) in the "
+        "same commit as the peers.radiance-q27 values block, per the §12 golden law"
     )
     cfg = L.rendered_config("gpu-ai")
     assert gp == _peers(cfg), (
-        "cf-143 C04 T3: the golden's peers subtree diverges from the fresh render — "
+        "cf-143 C15 T3: the golden's peers subtree diverges from the fresh render — "
         "re-capture per TEST_SPEC §1 with the values edit (paired obligation)"
     )
     ev = L.radiance_peers_evidence()
     assert gp["radiance"] == L.expected_radiance_peer(ev, gp["radiance"].get("models")), (
         "cf-143 C04 T3: the golden's radiance block is not the evidence-sanctioned shape"
+    )
+    ev27 = L.radiance_q27_peers_evidence()
+    assert gp["radiance-q27"] == L.expected_radiance_q27_peer(ev27, gp["radiance-q27"].get("models")), (
+        "cf-143 C15 T3: the golden's radiance-q27 block is not ITS OWN evidence-sanctioned "
+        "shape (D13 per-key; floor 4, no /v1, no apiKey)"
     )
 
 

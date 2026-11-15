@@ -324,21 +324,24 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     assert peers is not None, "gpu-ai: config.peers missing — C03 wiring not landed"
     # cf-143 C01+C04 wave law (test-session re-pin, DECISIONS D13 + Q3/Q5):
     # the vllm era peer retired to commented-out (Q3 — disable, reversible),
-    # and the radiance peer joins ADDITIVE beside strata (Q5 — strata lives,
-    # not one byte moves). The sanctioned peer-key states are therefore
-    # {strata} (C01 landed, C04 pending) and {strata, radiance} (C04
-    # landed); {strata, vllm} is the retired era and anything else is drift.
-    # The cf-86 models_states machinery is the precedent for wave-tolerant
-    # pins: every intermediate state is EXACT, never a superset grab-bag.
+    # and the radiance peer joined ADDITIVE beside strata (Q5 — strata lives,
+    # not one byte moves). cf-143 C15 RE-PIN (designed-RED until the q27
+    # values block lands): the third sanctioned join lands the FINAL wave
+    # state {strata, radiance, radiance-q27} — the {strata} era and the
+    # two-peer interim are closed history now (C15 dev ships peer + golden +
+    # roster in ONE commit, so no intermediate state survives a commit
+    # boundary; "every intermediate state is EXACT, never a superset
+    # grab-bag" — the cf-86 models_states precedent).
     wave = set(peers)
-    assert wave in ({"strata"}, {"strata", "radiance"}), (
-        f"peer entries {sorted(wave)} are not a sanctioned cf-143 wave "
-        "({strata} after C01's vllm comment-out; {strata, radiance} once C04's "
-        "radiance join lands) — a live vllm peer or a third phantom is drift"
+    assert wave == {"strata", "radiance", "radiance-q27"}, (
+        f"peer entries {sorted(wave)} are not the landed cf-143 wave — DESIGNED-RED until "
+        "C15-dev lands peers.radiance-q27 (the sanctioned shape is the radiance era PLUS the "
+        "q27 join; a live vllm peer or any other third phantom is drift)"
     )
     assert golden_peers == peers, (
         f"peers block {None if golden_peers is None else sorted(golden_peers)} "
-        f"!= fresh {sorted(peers)} — the re-captured golden must mirror both peers"
+        f"!= fresh {sorted(peers)} — the re-captured golden must mirror all three peers "
+        "(the C15 golden re-capture is dev's paired obligation, TEST_SPEC §12 golden law)"
     )
     p = peers["strata"]
     assert "apiKey" not in p, "inner apiKeys: [] is the quarantine posture — a key here contradicts Q4/Q5"
@@ -370,6 +373,28 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
             f"radiance peer is {r} — must equal the evidence-derived sanctioned block "
             "(proxy no-/v1, one-id models wave, timeouts 1800/30, priority? floor 5, "
             "no apiKey: keyless D8)"
+        )
+    # cf-143 C15: the q27 hop, its OWN per-key evidence file (D13; the fn
+    # file stays byte-untouched — its models_states anticipates a SAME-peer
+    # arena, not a new key). Read live: dev conforms values to the evidence,
+    # never the reverse. The floor is 4 — q27's default class; fn's 5 is NOT
+    # reused (D54 "do not steal fn's ranks").
+    if "radiance-q27" in wave:
+        ev27 = L.radiance_q27_peers_evidence()
+        q = peers["radiance-q27"]
+        assert q == L.expected_radiance_q27_peer(ev27, q.get("models")), (
+            f"radiance-q27 peer is {q} — must equal the evidence-derived sanctioned block "
+            "(proxy http://gpu-ai-radiance-q27.default.svc.cluster.local:8000 NO /v1, "
+            "one-id models wave [qwen3.8-27b-radiance], timeouts 1800/30, "
+            "priority? floor 4, no apiKey: keyless D54(2))"
+        )
+        assert "/v1" not in q.get("proxy", ""), (
+            f"cf-143 C15: q27 proxy {q.get('proxy')!r} carries a /v1 suffix — request paths "
+            "append verbatim (every peer's own law, the clone does not exempt it)"
+        )
+        assert "apiKey" not in q, (
+            "cf-143 C15: a q27 peer apiKey contradicts the keyless ruling (D54(2)) — "
+            "the owner's recipe rider was DROPPED, no secret ships on this lane"
         )
 
 

@@ -89,6 +89,14 @@ m_r7 = re.search(r"(?m)^## §?R7", research)  # heading carries the § literally
 r7_part = research[m_r7.start():] if m_r7 else ""
 r7q = {int(m.group(1)) for m in re.finditer(r"(?m)^### R7-Q([0-9]+) —", r7_part)}
 
+# cf-143 C16 re-pin (AC4-C14 precedent: EXTEND the resolver, never dodge by
+# dropping citations): the §9/§11 SHIPPED annotations cite the later rounds —
+# every §R<n> section, R<n>-Q<m> sub-heading and R<n>-S<m> source row
+# resolves generically (§R19 included).
+sections = {}
+for m in re.finditer(r"(?m)^## §?(R[0-9]+)\b", research):
+    sections[m.group(1).lstrip("R")] = m.start()
+
 def numbered_items(section_text):
     return len(re.findall(r"(?m)^\d+\.\s", section_text))
 
@@ -123,6 +131,14 @@ for m in re.finditer(r"(?<![A-Za-z0-9])R7\s*[-–]\s*Q\s*([0-9]+)", doc):
     cites.append(("R7Q", int(m.group(1)), None))
 for m in re.finditer(r"§\s*R7(?![\w-])", doc):
     cites.append(("S7", None, None))
+# C16 generic-round extracts (run AFTER the R6/R7 special forms so the row
+# shape of those legs stays byte-verbatim; duplicates are set-collapsed):
+for m in re.finditer(r"(?<![A-Za-z0-9])R(\d+)\s*[-–]\s*Q\s*(\d+)", doc):
+    cites.append(("RQn", (int(m.group(1)), int(m.group(2))), None))
+for m in re.finditer(r"(?<![A-Za-z0-9])R(\d+)\s*[-–]\s*S\s*(\d+)", doc):
+    cites.append(("RSn", (int(m.group(1)), int(m.group(2))), None))
+for m in re.finditer(r"§\s*R(\d+)(?![\w-])", doc):
+    cites.append(("S", int(m.group(1)), None))
 for m in re.finditer(r"(?<![A-Za-z0-9])R6\s+OQ\s*(\d+)", doc, re.I):
     cites.append(("R6OQ", None, int(m.group(1))))
 for m in re.finditer(r"(?<![A-Za-z0-9-])OQ\s*(\d+)", doc, re.I):
@@ -134,7 +150,7 @@ if not cites:
              "RESEARCH.md heading (RQ<n> / R6-Q<n>(-<row>) / §R6 / OQ<m> forms, T4-style)")
 
 errs = []
-for kind, n, extra in sorted(set(cites), key=lambda c: (c[0], c[1] or 0, c[2] or 0)):
+for kind, n, extra in sorted(set(cites), key=lambda c: (c[0], str(c[1]), c[2] or 0)):
     if kind == "RQ":
         if n not in rq:
             errs.append(f"RQ{n}: no '## RQ{n} —' heading in RESEARCH.md")
@@ -152,6 +168,21 @@ for kind, n, extra in sorted(set(cites), key=lambda c: (c[0], c[1] or 0, c[2] or
     elif kind == "S7":
         if not m_r7:
             errs.append("§R7: RESEARCH.md has no R7 section")
+    elif kind == "RQn":
+        sec, q = n
+        if str(sec) not in sections:
+            errs.append(f"§R{sec}: no '## §R{sec}' section in RESEARCH.md")
+        elif not re.search(r"(?m)^### R%s-Q%s\b" % (sec, q), research[sections[str(sec)]:]):
+            errs.append(f"R{sec}-Q{q}: no '### R{sec}-Q{q}' heading in the §R{sec} block")
+    elif kind == "RSn":
+        sec, s = n
+        if str(sec) not in sections:
+            errs.append(f"§R{sec}: no '## §R{sec}' section in RESEARCH.md")
+        elif not re.search(r"(?m)^\| R%s-S%s \|" % (sec, s), research[sections[str(sec)]:]):
+            errs.append(f"R{sec}-S{s}: no source row '| R{sec}-S{s} |' in the §R{sec} Sources table")
+    elif kind == "S":
+        if str(n) not in sections:
+            errs.append(f"§R{n}: RESEARCH.md has no '## §R{n}' section")
     elif kind == "R6OQ":
         if extra > r6_oq:
             errs.append(f"R6 OQ{extra}: the R6 open-questions list has only {r6_oq} numbered items")
@@ -167,7 +198,7 @@ PY
   then
     fail "T2: a RESEARCH citation in the doc does not resolve (C03 AC1 — stale pointer, diagnostics above)"
   fi
-  ok "T2: citation resolver — every RQ<n>/R6-Q<n>(-row)/§R6/OQ<m> reference in the doc lands on a real heading of this folder's RESEARCH.md (incl. the §R6 block)"
+  ok "T2: citation resolver — every RQ<n>/R6-Q<n>(-row)/§R6/§R<n>/R<n>-Q<n>/R<n>-S<n>/OQ<m> reference in the doc lands on a real heading of this folder's RESEARCH.md (incl. the §R6 block and the C16-extension generic rounds — the SHIPPED annotations' §R19 cites resolve, never dodge)"
 fi
 
 # --- T3: the needle set + the two absence bars -----------------------------------
@@ -231,6 +262,43 @@ need(re.escape(os.environ["RAD_R9700"]), "the D24-renamed pool name (same-revisi
 need(r"(?i)(re-?verif|carries?\b|added?\b)[^.\n]{0,160}(before|beforehand|first)[^.\n]{0,80}(tp2|schedul|trusting)|(tp2|second|third)[^.\n]{0,120}(re-?verif|verify|before trusting)", "the TP2 re-verification law (§6 bullet, minimal-table era)")
 need(r"(?i)minimal|patched[ -]table|amdgpu\.ids", "the minimal patched-table provenance (the law\u2019s mechanism)")
 need(r"(?i)dra|resourceclaim", "the R6 ranked-2 DRA alternative lane (recorded as the alternative, not the plan)")
+
+# cf-143 C16 re-pin — the §9/§11 annotated strings (§D54-F: "a q27 doc that
+# edits TP2 §9/§11 strings re-pins this suite same-wave"). TWO shapes:
+# (1) UNCONDITIONAL survival: the §9 capacity ruling sentence and the §11
+# sketch key radiance-tp2 stay present — D2 ANNOTATES, it does not rewrite
+# (the sketch is the historical deferred shape; the shipped names ride the
+# dated note). Green on today's doc, red on a rewrite-in-place.
+# (2) ONE-WAY annotation arms (§12.14 green-both-ways law): silent until the
+# "SHIPPED (cf-143 C15" token appears — C15's wave has its own bar demanding
+# tp2.sh 3 ok BEFORE dev D2 lands, so an unconditional demand here would
+# false-red the pre-annotation tree — then fully armed: the note must name
+# the RESOLVED plumbing and the still-locked co-residency shape, never a
+# truncated copy. A half-written annotation REDS.
+need(r"two peer pods on one GPU is NOT feasible",
+     "the §9 single-card capacity ruling (C16 D2 adds a POINTER — the ruling sentence itself must survive)")
+if "radiance-tp2" not in doc:
+    errs.append("§11's sketch key radiance-tp2 vanished — D2 annotates the sketch with a dated SHIPPED note BESIDE it ('the key names radiance-tp2 in the sketch became radiance-q27'); rewriting the sketch in place deletes the historical deferral the annotation exists to record")
+
+m11 = re.search(r"(?ms)^## 11\..*?(?=^## |\Z)", doc)
+if m11 and "SHIPPED (cf-143 C15" in m11.group(0):
+    f11 = " ".join(m11.group(0).split())
+    for pat, what in (
+        (r"(?i)radiance-q27", "the shipped subtree/peer name radiance-q27 (the sketch's radiance-tp2 resolved)"),
+        (r"(?i)chart:\s*['\"]?radiance|roster[^.]{0,60}chart", "the RESOLVED plumbing: roster `chart:` override on charts/radiance (D56)"),
+        (r"(?i)evidence", "the per-key evidence file resolution (D13 chain)"),
+        (r"(?i)pod-?swap[^\n]{0,120}replicas[: ]{1,2}0|replicas[: ]{1,2}0[^\n]{0,120}pod-?swap", "the SHAPE statement: pod-swap at replicas 0 on ONE card"),
+        (r"(?i)(ad-?144|second card)[^.]{0,160}re-?verif|re-?verif[^.]{0,160}(ad-?144|second card)|unlock[^.]{0,160}(card 2|second card)", "the honest limit: beside-fn co-residency STILL unlocks only with card 2 (AD-144) + the pool RE-VERIFICATION law"),
+    ):
+        if not re.search(pat, f11):
+            errs.append(f"§11 SHIPPED annotation lacks {what}")
+if m11 and re.search(r"(?i)honored", m11.group(0)):
+    errs.append("the HONORED pointer was written into §11 — it belongs to §9 (the ruling §9 made); keep each section's annotation where its ruling lives")
+
+m9 = re.search(r"(?ms)^## 9\..*?(?=^## |\Z)", doc)
+if m9 and re.search(r"(?i)honored", m9.group(0)):
+    if not (re.search(r"(?i)not bypassed", m9.group(0)) and re.search(r"§R19|R19-Q", m9.group(0))):
+        errs.append("§9's HONORED pointer must read as D2 instructs: the ruling was HONORED, NOT BYPASSED — the pod-swap lane is exactly what the single-card arithmetic allows, cited to §R19")
 
 if errs:
     print("; ".join(errs), file=sys.stderr)

@@ -884,6 +884,67 @@ def expected_radiance_peer(ev: dict, models: list) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# cf-143 C15 radiance-q27 peer evidence — the D13 per-key law's third
+# sibling: fn's radiance file stays byte-untouched (its models_states chain
+# anticipates a same-peer arena, not a new peer key — DECISIONS D56(4)), the
+# q27 join gets its OWN file and these twin loaders, same header law (dev
+# conforms values to the evidence, never the reverse).
+# ---------------------------------------------------------------------------
+
+RADIANCE_Q27_PEERS_EVIDENCE = TESTS_DIR / "evidence" / "radiance-q27-peers-expected.yaml"
+
+
+def radiance_q27_peers_evidence() -> dict:
+    """Load + self-validate the q27 peer evidence (the radiance loader's
+    model laws: a non-empty duplicate-free models_states chain whose last
+    state equals models_allowed). Fixture breakage is loud, never silent."""
+    if not RADIANCE_Q27_PEERS_EVIDENCE.is_file():
+        raise AssertionError(
+            f"{RADIANCE_Q27_PEERS_EVIDENCE.name} evidence is missing (cf-143 C15 — test-session property)"
+        )
+    data = yaml.safe_load(RADIANCE_Q27_PEERS_EVIDENCE.read_text())
+    if not isinstance(data, dict) or not isinstance(data.get("radiance-q27"), dict):
+        raise AssertionError(f"{RADIANCE_Q27_PEERS_EVIDENCE.name} must carry a radiance-q27: mapping")
+    ev = data["radiance-q27"]
+    states = ev.get("models_states")
+    if not isinstance(states, list) or not states:
+        raise AssertionError(
+            f"{RADIANCE_Q27_PEERS_EVIDENCE.name} needs models_states — every wave's exact "
+            "ordered peer list is pinned so consumers stay wave-correct"
+        )
+    final = ev.get("models_allowed")
+    if not isinstance(final, list) or not final or states[-1] != final:
+        raise AssertionError(
+            f"{RADIANCE_Q27_PEERS_EVIDENCE.name}: last models_states must equal models_allowed "
+            "(the ruled final peer set)"
+        )
+    for i, ids in enumerate(states):
+        if not isinstance(ids, list) or not ids or len(set(ids)) != len(ids):
+            raise AssertionError(f"models_states[{i}] must be a non-empty duplicate-free list")
+        if not set(ids) <= set(final):
+            raise AssertionError(f"models_states[{i}] names a peer outside the final set")
+    return ev
+
+
+def expected_radiance_q27_peer(ev: dict, models: list) -> dict:
+    """The sanctioned rendered peers.radiance-q27 block for one models list —
+    the radiance builder's shape (proxy/models/timeouts/filters read from
+    the evidence; the q27 file's floor is 4, the q27 default class — fn's 5
+    is NOT reused, D54 "do not steal fn's ranks")."""
+    if models not in ev["models_states"]:
+        raise AssertionError(
+            f"peers.radiance-q27 models {models} is not one of the sanctioned peer waves "
+            f"{ev['models_states']} — wave changes route through the test session"
+        )
+    return {
+        "proxy": ev["proxy"],
+        "models": models,
+        "timeouts": ev["timeouts"],
+        "filters": ev["filters"],
+    }
+
+
 # --- HF loader-pick simulation (llama.cpp common/download.cpp@889edf43) -----
 # The `-hf repo:QUANT` legs in this chart are resolved by llama-server's own
 # downloader, so a catalog ref can name a repo whose best-match pick is a
