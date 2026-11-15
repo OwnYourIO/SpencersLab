@@ -4534,3 +4534,508 @@ deviations: none — read-only, only RESEARCH.md written. The verdict is a refus
 friction: zero primary evidence exists for "Strix Halo desktop booted with iGPU firmware-disabled" — the honest gap was kept as UNVERIFIED rather than filled from generic-AMD-desktop practice; Framework's BIOS surface stayed behind the same doc wall as in §R18 (only a title-level CBS thread found); Tumbleweed initrd specifics for making pci-stub win the probe race were pattern-cited (gist) not fetched from openSUSE docs — labeled.
 open_questions: [does 03.06's Setup actually expose GFX Configuration / Primary Video Adaptor on this unit (owner's one-look BIOS tour settles it, no risk to look); rear-panel video routing during POST; c5 reset_method contents (completes the D49 post-mortem); whether anyone upstream has ever posted a Strix Halo iGPU-off boot — if the owner tries it, it must be the documented cold-cycle-with-monitor-on-the-dGPU experiment]
 next_suggested: coord reply to the owner: "we haven't managed to disable" — correct, and the recommendation is not to: the disable's three possible prizes are all zero-or-tidiness now (perf dead by our own counters, RAM already at minimum, mis-scheduling closed by the named pools), and its one real cost is the router lane D21 was built to protect; if the desire survives into the strata cutover, §R17-Q4 is the change list (code-first, same-wave, B1-reversal labeled) and §R17-Q2 is the only two acceptable host methods (firmware if the menu proves real, else pci-stub.ids of both functions, cold boot, physical access) — with the runtime unbind explicitly and permanently banned (D49). Fold a two-line summary into DECISIONS next round as the hide-question's final disposition (D48 → §R18 → D49 → this), and put the harmless BIOS *look* (no changes) on the owner's next maintenance window if curiosity outranks the recommendation.
+## §R19 — the q27 lane: what `qwen3.8-27b-mxfp4` actually needs on one R9700, and what it honestly serves
+
+Owner ask 2026-11-15: "add support for 27b in radiance. This bit makes me think it's possible",
+plus their quoted serve instructions (`hf download StillDeadcode/qwen3.8-27b-mxfp4 …`, then
+`radiance --model /models/qwen3.8-27b-mxfp4.rad --tp 1 --max-num-seqs 8 --max-model-len 200000
+--kv-cache-dtype fp8 --prefix-cache-mib 4096 --host 0.0.0.0 --port 8000 --api-key
+"$RADIANCE_API_KEY"`, "about 18 GiB", fp8 KV "about 370–400K tokens in total across all sessions,
+against about 200K with the 16-bit default", "8 sessions works at around 45K each, 2–3 at 128K, or
+one near 200K plus short ones", "The drafter is built into the model file", and the earlier
+attribution ruling: "116 tok/s is a third-party measurement and 122 is the model card's figure,
+both for the 27B on one R9700. Flash-Next on a single R9700 in Radiance has no published speed.").
+Authorities carried WITHOUT re-argument: §R8 (200K funded ON-CARD at fn's 2.94 KiB/token; mirror
+eager; pin-to-the-receipt law), §R14 census (every >70 row is TP2/dense/other-engine), §R15
+(streaming-vs-prefix-tier law, creator TP1 floor 28–29 ms, flashnext-tp1.yaml "pins about 49 GiB
+… wants a host with 64 GB"), §R16 (the `--attn-prefill-fp8` kernel gate naming q27's geometry;
+prefix host-tier suppression narrowed), §R18/D49/D52/D53 (APU law), D17/D21/D24/D26/D29/D44/D47/D50/D51
+(envelope, naming, claims, router, 110 pair, wire-zero, crash, verification hygiene). Live baseline
+per the launch (claimable 29.30 / elastic 23.89 / fn 23.16+42.70+47.68 / node 125.08) is premise,
+not re-derived. New citations R19-S# (accessed 2026-11-15 unless carried); arithmetic marked
+DERIVED is ours from sourced inputs, never presented as a doc's number.
+
+### R19 VERDICT (first)
+
+**Yes — q27 can be added, and it fits: 18.07 GiB of weights + a ~12.48 GiB KV pool is a
+receipt-witnessed placement on one 32 GB card at the owner's exact flags — but it is NOT the
+8×200K envelope, because q27 cannot stream: the docs' streaming table names the dense Qwen3.x
+family "no … dense attention reads the whole history every step" [R19-S2 §4.4.1], so its entire
+context cost is VRAM-only, funded at ~32 KiB/token fp8 (16 full-attention layers × 4 KV heads ×
+head_dim 256 × K+V × 1 B, DERIVED from [R19-S6] geometry), ~11× fn's streamed on-card 2.94
+KiB/token. The owner's "370–400K aggregate" is arithmetically TRUE against Wilde's measured pool
+(12.48 GiB ÷ 32 KiB ≈ 409K, less the 144–288 MiB/sequence delta-net state → ~335–409K band), and
+"about 200K with 16-bit" is the same division at 64 KiB/token ≈ 204K — but the sentence's source
+is not attributable in any fetched surface (UNVERIFIED as a quote, verified as arithmetic).
+Because fn-TP1 alone holds ~28–30 GiB of the card (carried [S3/S8]) and q27 needs 30+ GiB of VRAM
+plus fn's 71 GiB of pins cannot coexist with anything, the honest architectures are exactly two:
+**(A) q27 as a SWAP lane — llama-swap-managed child or manual pod-swap, one engine holding the
+card at a time (q27 boots sub-minute-class vs fn's minutes — the asymmetry that makes q27 the
+nice swap citizen), and (B) q27 RESIDENT with fn as the swap guest (q27 is "fully VRAM-resident
+and its host side is scaffolding, not model state" [R19-S7], pinned ~8.5 GiB class vs fn's 71).
+What is NOT available: in-process model switching (zero doc surface), two-model serving from one
+process (`--model` is a single required path), and any k8s co-residency of fn's 110/110 pod with
+a q27 pod (node arithmetic: 125.08 − 110 − 4.125 − 1.158 = 9.8 GiB free — below even the smallest
+defensible q27 pin estimate, and the `gpu-r9700-1` pool has capacity 1 anyway). Speed receipts:
+122 = card's single-stream TP1 mean over eight mixed prompts (768 tokens, greedy, drafter auto;
+prose leg only 77!), 116 = Wilde's n=4 TP1 follow-up mean at 64k context — both radiance, both
+SINGLE-stream; the published serving-shape numbers are 280 tok/s TOTAL at 4 streams (card TP1)
+and 50/user @8 lanes at 64k (TP2, Wilde) — never publish 122 alone as a serving figure.**
+
+### R19-Q1 — Does q27 fit 8×200K on one R9700? NO — and the card arithmetic that says so
+
+**(i) The owner's own inputs reconcile — shown both ways.** Card/pack: "`qwen3.8-27b-mxfp4.rad` —
+18.05 GiB" [R19-S1]; carried exact bytes `19,377,119,232` [S5]. Receipt: "18.07 GiB weights + 12.48
+GiB KV" on one card, "The KV is small because the architecture is hybrid — most layers are
+delta-net with fixed-size state, so long context is cheap" [R19-S7]. Against our live claimable
+(29.30 GiB, engine-computed): 18.07 + 12.48 = 30.55 > 29.30 — so q27 does NOT get a fn-sized
+claimable on OUR card configuration; Wilde's 32 GB card printed its own split. DERIVED (ours):
+q27 paged-KV per token at fp8 = 16 FULL ATTENTION layers ("64 layers, full_attention_interval 4 →
+layers 3,7,…,63 are FULL ATTENTION (16 of them); the other 48 are GATED DELTA NET"; "num_attention_heads
+24 num_key_value_heads 4 head_dim 256 → GQA 6", [R19-S6]) × 2 (K+V) × 4 KV heads × 256 B × 1 B/E4M3
+= 32,768 B = **32 KiB/token** (+ per-(sequence,head) descales, "E4M3 cache with per-(sequence,
+head) descales" [R19-S2 §4.4]); bf16 doubles to 64 KiB/token ("It halves what a token of context
+costs" [R19-S2 §4.4]). Pool math (DERIVED): 12.48 GiB ÷ 32 KiB ≈ 409K tokens with the full pool
+paged, ≈ 335K after 8×288 MiB of speculative-state copies (below) — i.e. the owner's "370–400K"
+sits INSIDE the band, and "about 200K with the 16-bit default" = 12.48÷64 KiB ≈ 204K. ✓ both
+owner sentences survive the division.
+
+**(ii) The per-sequence state, which fn also has but at a different price.** "On a hybrid model
+every sequence owns its delta-net state, two copies with speculation. Qwen3.8-Flash-Next keeps 54
+MiB a copy on each card, so 32 sequences take 3.4 GiB of the cache share. The 27B in bf16, with no
+experts to give way, then holds about 117K tokens of attention cache, less than one 200K request,
+and startup warns that a longer one would be refused. The 27B in FP8 holds 2.8 full-length
+sessions at 32, the 35B-A3B ten." [R19-S2 §4.4 "Many sequences"]. Geometry of the 27B state:
+"The recurrent state is f32: 48 x 128 x 128 x 4 = 3 MiB per layer, **144 MiB per sequence** across
+the 48 linear layers" [R19-S6]; checkpoint slots: "113 MB on Flash-Next at `--tp 2`, **144 MiB on
+Qwen3.8-27B**" [R19-S2 §4.11 table]. So at 8 sequences q27 pays ~1.125–2.25 GiB (1–2 copies) of
+the cache share for state that scales with SEQUENCE COUNT, not context — the same class fn's boot
+receipt showed as "1.72 GiB of it per-sequence state".
+
+**(iii) Why fn's 4.49 GiB/1,600,000 tokens is NOT comparable — say it explicitly.** fn's
+measured 2.94 KiB/token (§R8, boot B) is a **streamed, hybrid-MoE** number: fn is "48 layers of
+12 x (3 x GatedDeltaNet -> MoE, then 1 x QSA -> MoE) … 24 query heads, 2 KV heads, head_dim 256
+-> GQA 12" [R19-S6] — only 12 sparse QSA layers carry a streamed cache group, and `--kv-resident
+32768` moved that group's whole KV to a pinned host mirror (eager, 8×200K-sized), leaving ~3 KiB/
+token paged on-card plus the 54 MiB/seq state. q27 is different on every axis: 16 full-attention
+layers (not 12 sparse), 4 KV heads (not 2), **cannot stream at all** ("Qwen3.5/3.6/3.8 dense
+(`qwen35_*`, `qwen35moe_fp8`) | no | | dense attention reads the whole history every step"
+[R19-S2 §4.4.1 table]), and pays 144 MiB (not 54 MiB) of per-sequence state. `--kv-resident` on
+q27 is "Ignored with a warning on an architecture that cannot stream" [R19-S2 §4.11]. The
+~11×/token gap (32 KiB vs 2.94 KiB) is geometry + the missing escape hatch, not a quality loss —
+and note the docs' own fn worked example (7.32 KiB/token, both groups on-card) [R19-S2 §4.3]
+shows the 2.94 is config-specific anyway: the D28/RQ1 law stands, plan off the receipt, not off
+any rate.
+
+**(iv) Does any doc state KV bytes/token or max concurrent tokens for q27 on 32 GB?** Not in
+bytes/token — and that is the answer to the launch's sub-question. What the docs DO state: the
+TP2 pool in TOKENS, measured, on our exact card family: "On two R9700s at the serve flags of
+`qwen3.8-27b-mxfp4.yaml` with `--max-num-batched-tokens 2048` and 12 GiB a card left to another
+engine … `fp8` | KV pool **518 800 tokens** | … `fp8_v4` | 664 400 (+28%) | … `k6_v4` | 755 184
+(+46%)" [R19-S2 §4.4 table]; and the generic receipt instruction "The line `kv: the pool backs N%
+of the worst case ... M full-length sessions` counts only the part of the pool that holds context;
+compare M with the sessions you expect to keep live" [R19-S2 §4.4]. The model card states the
+single-card claim without tokens: "It also fits one 32 GB card: `--tp 1`, the same flags
+otherwise." [R19-S1]. So: on 32 GB, q27's honest envelope is **aggregate ~370–400K tokens
+(DERIVED, corroborated by Wilde's pool bytes and the TP2 token rows), addressed worst-case as
+8×200K** — the owner's "8 at ~45K each" is exactly the pool, not the addressing.
+
+### R19-Q2 — What the flag quartet ACTUALLY serves
+
+- **`--max-model-len 200000` gates a single session at 200K — per-request honesty holds.** Flag
+  table: "`--max-model-len N` | 0 | context bound; 0 takes the model's training context" and
+  "`--max-model-len` reserves nothing per request; it is the worst case the pool is sized
+  against" [R19-S2]. The card: "Context | 262,144 tokens trained; 200K tested" [R19-S1]. So a
+  catalog `limit.context: 200000` row for q27 at these flags is honest — subject only to the
+  pool actually backing one such session, which at TP1 fp8 it does (~6.4 GiB of a 12.48 GiB pool,
+  DERIVED) — whereas the same flag at **bf16 × 32 seqs** is the doc's own refusal example ("about
+  117K tokens … startup warns that a longer one would be refused" [R19-S2 §4.4]). Wilde watched
+  the 263K probe behave the other way at TP1 fp8: "the engine boots, but the KV budget refuses to
+  grow past 12.46 GiB. One card caps around 200k; no crash, no refusal, just fit-to-available"
+  [R19-S7].
+- **`--prefix-cache-mib 4096` is HOST RAM, beside the VRAM pool.** "copy finished conversations'
+  KV to host memory, up to N MiB (§4.8)" / "It enables the host tier … It holds attention blocks
+  only; a hybrid model's linear-state snapshots are already in host memory, in the
+  `--checkpoint-slots` store" [R19-S2]. §4.8: "By default a finished conversation's KV blocks stay
+  in VRAM, held by the prefix cache, until evicted under pressure … With a host tier, a
+  conversation is copied to host memory when its request finishes and keeps its VRAM copy. Its
+  VRAM can then be given up at no cost … Nothing is written to a drive." So the 4 GiB is neither
+  taken out of the KV pool nor resident in VRAM — it sits on the pinned-host side (it appears in
+  the RAM-placement gate's subtraction list: "the table's size free after the pinned host pools
+  and the prefix cache's host tier" — §4.3, carried §R15) — and fn's live `--prefix-cache-mib 0
+  (off)` is the same flag, host tier, off; §R16's narrowing (streaming suppresses the HOST tier
+  only) is unchanged and moot for q27, which never streams.
+- **The 4096 value is below one q27 200K conversation — the docs will SAY SO.** "A conversation
+  larger than the tier keeps its start there and is prefilled again past it once VRAM gives the
+  rest up; the startup log warns when the tier holds less than one `--max-model-len` conversation
+  and says how many MiB would" [R19-S2 §4.8]. DERIVED: one 200K fp8 conversation ≈ 6.4 GiB of
+  attention blocks > 4 GiB ⇒ expect the warning on q27's boot with the owner's command;
+  not an error, a partial-retention config. (And it is nobody's doc-required flag: the card's
+  Serve block, the compose profile and the README recommended table all run q27 with **no**
+  `--prefix-cache-mib` at all [R19-S1/S3/S5] — the 4096 rider is **Wilde's operational patch**:
+  "add `--prefix-cache-mib 4096` to the 27B service (its follow-up TTFT was 1.5-2.3 s against
+  Flash-Next's 0.6 s with the flag set)" [R19-S7]. This ticket's prior attribution already ruled
+  it ("the `--prefix-cache-mib 4096` rider is Wilde's operational patch, not the card's" — [S8],
+  restated §R19 confirms it at full text.)
+- **Admission shape at 8 sequences:** concurrency is capped by the flag, capacity by the pool:
+  docs "Every model here serves `--max-num-seqs` up to 32" [R19-S2 §4.4] and README lists the
+  q27 recommended row at 32 ("Qwen3.8-27B FP8 and MXFP4 … `--tp 2 --max-num-seqs 32 --max-model-len 200000 --kv-cache-dtype fp8`",
+  with the 8-keeps explained: "on a hybrid model each sequence holds its own recurrent state,
+  and 32 of them take that memory from the attention cache" [R19-S5]) — the owner's 8 is a
+  deliberate HALF of the docs' own shape, chosen to keep the aggregate ~45K/session inside
+  ~370–400K of pool. Overflow is handled by the carried [S2] priority/preemption machinery
+  (preemption-by-recompute; queue ceiling → 429), not by refusal.
+- **The block-table cost exists for q27 too:** "Block tables. The step batch's tables are carved
+  for every sequence at the full context and charged to the VRAM budget (`step staging` in the
+  receipt), so they come out of the cache share" [R19-S2 §4.4]. So 8×200K ADDRESSED still buys a
+  worst-case staging table on q27 even though only ~2 sessions' worth of context is actually
+  backable — the boot receipt's `step staging` line is the number, same law as fn's 1.63.
+
+### R19-Q3 — Host RAM of the q27 lane: one measurement, a doc-decomposed band, and silence where the docs are silent
+
+- **The only field measurement on exactly this model/config:** "Radiance 27B MXFP4, TP1 | 18.07
+  GiB weights + 12.48 GiB KV, one card | **8.5 GiB (7.89 pinned)** | measured 2026-11-08, docker
+  stats + engine log (--placement all_vram)" — and TP2 costs "8.5 GiB (same 7.89 pinned — TP
+  collectives stage through pinned host memory)" [R19-S7 RAM table]. Characterization: "the dense
+  27B is the only one of these that coexists comfortably on a 62 GiB box … it is fully
+  VRAM-resident and its host side is scaffolding, not model state" [R19-S7]. (Wilde's run was
+  compose-shaped: `--max-num-seqs 32 --max-model-len 200000` [R19-S3], on his 62 GiB box.)
+- **Docs-decomposed terms for OUR recipe (8 seqs, 200K, +4 GiB tier) — DERIVED band:**
+  (1) checkpoint store, q27-sized: "auto: … geometric backoff keeps 9 for a 200000-token session
+  at a 2048-token interval, and one more for a running turn" ⇒ 10/seq × 8 = **80 slots × 144 MiB
+  = 11.25 GiB pinned**, inside the auto cap ("`auto` takes at most an eighth of host memory
+  (and never less than 8 slots where the host can pin them), and never more than the host can
+  pin after the host pools, the host tier, the activation arenas and `--host-headroom-mib`"
+  [R19-S2 §4.8/§4.11]; our ⅛ = 15.6 GiB ⇒ no clamp). (2) host tier `--prefix-cache-mib 4096` ⇒
+  **+4.0 GiB**. (3) the residue of Wilde's 7.89 pinned on a 62 GiB box (⅛ ≈ 7.75 — i.e. his pin
+  was ALREADY the clamped slot store; "scaffolding" ≈ the 0.1–0.9 GiB margin + io_uring/misc —
+  small, carried O_DIRECT row-cache class). (4) embedding in `ram` (default placement — "the
+  token embedding" is a placement-flag item on fn's receipt at ~1 GiB class) and load-time page
+  staging: the docs do NOT quantify the read-once load path for a `.rad` whose weights go
+  straight to VRAM ("libr4d reads those bytes directly … no permutation, repacking or
+  dequantisation" [R19-S6]) — the 18 GiB flows through host memory at least transiently (page
+  cache or staging; charge class per carried [R8-S1]); **unquantified by any doc — say so
+  plainly.** ⇒ Steady-state pinned estimate **≈ 15–16 GiB** (11.25 + 4 + ~0.5–1), cgroup total
+  class **≈ 16–20 GiB**, load peak **UNVERIFIED** (Wilde's number is "steady state shortly after
+  healthy"). If the pod DROPS `--prefix-cache-mib`: ≈ 11–13 GiB. If seqs go to 32: slots auto
+  clamp at ⅛ host = 15.6 GiB and the band shifts up — another receipt-decides item.
+- **Pod/node consequence (the launch's decision question):** a q27 pod at, say, Guaranteed
+  32/32 (its band + 4 GiB engine rule + margin) leaves **125.08 − 32 − 4.125(router) − 1.158 =
+  87.8 GiB** node-free — the first radiance lane that leaves real slack on this box. But
+  fn-110 + q27-anything is arithmetically dead (9.80 free) and, independently, dead at the
+  scheduler: `amd.com/gpu-r9700-1: 1` is capacity-1 per node (D24/§R6 — one pod gets the card,
+  a second claim Pends by design). **The q27 lane never coexists with fn on this card or this
+  node's budget; it replaces or swaps.** The coexistence question then reduces to §R19-Q6/Q7.
+
+### R19-Q4 — Speed receipts, attributed properly (and what batch/concurrency each actually is)
+
+| # | figure | source type | URL (accessed) | exact quant | exact card/host | engine | shape — what it measures |
+|---|---|---|---|---|---|---|---|
+| R19-A | **122 tok/s** | **model card** (creator) | [R19-S1] "one stream, all eight prompts (tok/s) \| 122" | AWQ-MXFP4 + DFlash2 (this .rad) | "Radeon AI PRO R9700 (gfx1201), one card (`--tp 1`)"; host/link NOT stated (UNVERIFIED) | radiance | **single-stream**, greedy, 768 tok × 8 prompts (prose, code, explanation, JSON, Rust, German, 2 reasoning), "depth 7" drafter auto, `--max-num-seqs 8 --max-model-len 200000 --kv-cache-dtype fp8`; prose leg alone **77**, code leg **164**; "four streams, total … **280**" |
+| R19-B | **116.0 (78.9–154.5)** | **third-party (Thomas Wilde)** | [R19-S7] "The n=4 re-run (`H-27b-t1`, same protocol as the G rows) puts TP1 follow-up decode at avg 116.0 (78.9-154.5) at 64k and 93.5 (62.7-110.7) at 128k" | same .rad | two-R9700 Z490 build, **Gen4 x4** (page's own framing), 62 GiB host, measured 2026-11-08 | radiance | **single-user ladder rows**: 64k-context FOLLOW-UP decode, n=4 avg, at ~66k cached context; cold rows 126.9/109.8; spread explained by draft acceptance ("the constrained 'exactly four sentences' follow-up cratered draft acceptance to 21-27%") |
+| R19-C | 280 (4 streams) / 550–555 (16 streams) | card TP1 total / docs TP2 table | [R19-S1]; [R19-S2 §4.4 "decode, 1 / 16 streams … 134-140 / 550-555 tok/s"] | MXFP4 | card: one R9700; docs: 2×R9700, 12 GiB/card carve, Gen5-era creator rig | radiance | **the honest aggregate-shape rows** — note docs' TP2 aggregate is at `--max-num-batched-tokens 2048` AND "12 GiB a card left to another engine" |
+| R19-D | 50/user, 106 box @8 lanes (64k); 66/user, 288 box @8 lanes (~600 tok) | third-party (Wilde) | [R19-S7] concurrency tables (his numbers are TP2!) | MXFP4 | 2×R9700 Gen4 x4 | radiance | **8-lane serving reality**: "The Flash-Next box total roughly doubles with eight users; the 27B's is flat" + "its TTFT balloons to **10.2 s** (vs Flash-Next's 2.1 s)" at 64k; the caveat that must ship with any figure: "**quoting a throughput number without its context length and headcount is meaningless**" |
+| R19-E | "up to 227 tok/s on code, 208 tok/s HumanEval average, 3.8x llama.cpp" | third-party, **OTHER engine** | https://www.lucebox.com/blog/qwen38-r9700 (fetched 2026-11-15; page metadata datePublished 2026-08-21) | "an off-the-shelf quant" + "z-lab DFlash2 block-diffusion drafter" | "a single AMD Radeon AI PRO R9700" | **lucebox** ("The lucebox engine now runs Qwen3.8-27B…"), NOT radiance | single-stream benchmark sweep; include as context only — never as our lane's receipt |
+| R19-F | 29.8 t/s gen, llama.cpp 4-bit, one R9700 | aggregator (carried [R14-S4]) | llamaperf.com/gpu/radeon-ai-pro-r9700-32gb (accessed 2026-11-14) | llama.cpp 4-bit | one R9700 | llama.cpp | llama-bench class, single stream |
+
+**Attribution ruling, verbatim-survivable:** the owner's pair ("116 is a third-party measurement,
+122 is the model card's figure, both for the 27B on one R9700") is VERIFIED as stated — 116 =
+[R19-S7] (third party, Gen4 board), 122 = [R19-S1] (creator card) — and BOTH are single-stream.
+Additional hygiene this round adds: (a) 122 is a **mixed-prompt mean** whose prose leg is 77 —
+publishing "122" for a chat-heavy lane overstates prose by ~1.6×; (b) 116 is a **64k-context
+follow-up** mean, not a cold or short-context figure (cold 126.9); (c) neither number's rig has
+our EPP/wire state (Wilde ran Gen4 x4 at depth-2 Z490 — same link class we now have, different
+board); (d) the card itself gives the batch leg (280 @4 streams) — the serving-safety line the
+catalog should carry is **122 single-stream / 280 at 4 streams (TP1)**, with the TP2 rows kept
+separate [R19-S2]. "Flash-Next on a single R9700 in Radiance has no published speed" also
+RE-SURVIVES: nothing in this round's fetches adds one (fn TP1 docs floor 28–29 ms carried §R14).
+
+### R19-Q5 — mxfp4 on gfx1201, flag orthogonality, required flags, key minimum
+
+- **mxfp4 on gfx1201 is the ENGINE'S OWN SHIPPED PATH, kernel-gated the way §R16 found for fp8
+  attention.** "The release's `quantization_config` names the tool, not a served form … the model
+  is served by its family's quantised plugin (`qwen35_fp8` for Qwen3.8-27B…)" and Quark MXFP4 is
+  read "**byte for byte: the same codes and exponents. A checkpoint of this form is also served
+  as it stands (§3.4)**" [R19-S2 §3]. Plugin descriptor: "`arch/qwen35_fp8` | `qwen35` |
+  `fp8_e4m3` | the same, block-scaled FP8 weights and activations" with MXFP4 trunk rows beside
+  it [R19-S6]. The kernels: "libr4d has their kernels for Qwen3.8-27B's attention (head_dim 256,
+  gqa 6)" [R19-S2 §4.4] — libr4d being the gfx1200/1201 library (carried RQ0(a)). The card's
+  speed table IS that path measured on "Radeon AI PRO R9700 (gfx1201)" [R19-S1]. **No doc caveat
+  found restricting mxfp4 on RDNA4** (searched GUIDE v1.17.0 + main for refusal language around
+  mxfp4/gfx1201 — none; the refusal class the docs DO carry is per-kernel and named at startup:
+  "the server refuses them, naming the plugin, anywhere else"). Changelog context: v1.17.0
+  "IQR kernels that now decode faster than the MXFP4 checkpoint" [R19-S12] — mxfp4 is the
+  baseline being beaten, i.e. fully supported and measured.
+- **`--kv-cache-dtype fp8` ⟂ mxfp4: YES, orthogonal, no conflict.** fp8 is the CACHE dtype
+  ("E4M3 cache with per-(sequence, head) descales… It is a real quantisation that changes the
+  output slightly, so it is only ever set explicitly. **Every architecture serves both widths
+  except GLM-5.3-Flash**, whose latent-attention cache is bf16 only and which refuses `fp8` at
+  startup. The flag sets every attention cache of the deployment, a drafter's (DSpark, DFlash2)
+  included. The delta-net state and the QSA indexer's key tail are recurrent state and keep their
+  own widths." [R19-S2 §4.4]. mxfp4 is the WEIGHT encoding (§3 above). q27 is not the refusal
+  model — it is one of only two models with EXTRA cache options (`fp8_v4`/`k6_v4` "on Qwen3.8-27B
+  and Qwen3.8-Flash-Next" [R19-S2 §4.11]).
+- **Required flags: none beyond `--model`.** The pack's hard requirement is the engine VERSION:
+  "**Needs radiance 1.2.3 or newer.** The drafter's MXFP4 linears and the rescored 2-bit head
+  arrive in 1.2.3; older releases refuse this file" [R19-S1] — we ship v1.17.0 ✓.
+  `--prefix-cache-mib`: NOT required (card/README/compose all default it off, Q2 above).
+  `--max-num-batched-tokens`: q27's shipped rows don't set it; the docs' measured q27 tables ran
+  at 2048 [R19-S2] — the §R16 residency law ("The checkpoint interval caps the chunk … the expert
+  plane loses residency" — moot for a dense model, arena still applies) leaves the engine default
+  as the receipt-decides value; no doc REQUIRES any value for q27. `--num-speculative-tokens`:
+  "If the container carries a draft head, it is used by default at the depth the plugin states …
+  `radiance --draft-model` is an error that says so" [R19-S2 §4.6] — owner's "no speculation flag
+  to set" VERIFIED (and Wilde independently: "the flag simply doesn't own the drafter"
+  [R19-S7]).
+- **`--api-key` minimum:** "An empty `--api-key` value is a startup error: it would guard
+  nothing." [R19-S2 §6.6] — so the owner's `--api-key "$RADIANCE_API_KEY"` FAILS LOUD (refuses
+  startup) if the env is unset, and there is no silently-keyless boot on 0.0.0.0. Docs prefer
+  the env form: `--api-key-env` with the rationale "argv is world-readable in `ps` and /proc,
+  the environment only by the process itself and root. The `:?` still fails closed on an unset
+  value" [R19-S4 compose header] — the shipped chart already uses `--api-key-env` (§R8-era
+  serveArgs; carried). Keyless would NOT be unsafe-by-silence either: machine-view routes are
+  loopback-socket-AND-loopback-Host gated [R19-S2 §6.6, verbatim incl. the DNS-rebinding clause].
+
+### R19-Q6 — Two engines, one card: what radiance supports, and the documented tax
+
+- **(a) Two server instances on one set of cards: DOCUMENTED — §8 "Two engines on one set of
+  cards" — with a measured tax, and it is NOT partitioned VRAM.** The deadlock case is TP
+  collectives: "Two tensor-parallel engines on the same cards can deadlock… On two R9700s
+  (Qwen3.8-27B and a Gemma 3 27B, both `--tp 2`) that hung within a minute of concurrent
+  prefill, and the driver's attempt to evict the queues froze the host"; the fix is a block
+  ceiling (`R4D_AR_MAX_BLOCKS`, "64 for Qwen3.8-27B") which "costs prefill time" [R19-S2 §8].
+  Our fn-TP1 + q27-TP1 pair has no cross-card collective at all (single rank, `--p2p n/a`
+  carried D51) — the deadlock class does not apply, but the QUEUE class does, and it is
+  quantified: "An engine holds up to four queues a card … so two engines fit"; by default
+  "the amdgpu kernel driver leaves to user queues … four of the eight compute queues", and
+  "an R9700 has four compute queue slots and the two servers hold eight, so **every decode
+  step waits for a queue switch**"; measured: "Gemma 4 31B at TP4 beside an idle
+  Qwen3.8-Flash-Next went from 13 ms to 41 ms a step; with `--weight-prefetch off` in the Gemma
+  engine it took 13.8 ms"; the driver-back route: `amdgpu.num_kcq=0` ("`num_cp_queues` then
+  reads 8"), ordering etiquette ("Start them one after the other, and send the first a short
+  request before starting the second") and the q27-row: "Qwen3.8-27B and TranslateGemma 27B on
+  two R9700s, weight reads on in both: … Qwen beside a busy TranslateGemma 42.9 ms a step,
+  against 152-154 tok/s and 41.0-42.8 ms with the default slots and `--weight-prefetch off`;
+  Qwen beside an idle TranslateGemma 18.3 ms a step" [all R19-S2 §8]. VRAM carve: `--gpu-memory-mib
+  N` is "the same knob written as a claim: headroom is the card less N" [R19-S2 §4.3], and §8's
+  etiquette is "Give the engine started first its `--gpu-headroom-mib` for the second" — that is
+  a CLAIM cap per instance, the only partition primitive the docs carry; **MIG-style GPU
+  partitioning on consumer AMD: zero doc surface** (literal "MIG" search of GUIDE v1.17.0: 0
+  hits [R19-S2], plus carried consumer-card facts R6/§R7: per-product pools, no vGPU).
+  **But the co-residency that matters here is VRAM-dead anyway:** fn-TP1 consumes "~28–30 GiB of
+  card in the receipts" (carried [RQ1 line 638-645, S3/S8]) and q27 wants 18.07 + its own KV —
+  "with ONE card the honest choices are: q27 peer always-on + fn as swap-child (or manual
+  compose), or fn peer always-on + q27 child, or wait for card 2 — research flags that *two
+  peer radiance pods on one GPU is NOT feasible for fn+q27* (capacity)" [carried §RQ]. Wilde
+  sized to the same conclusion ("two full engines he sized to one at a time" [S8]). §8's two
+  engines on one card set is real, documented — and useless at fn+q27's full envelopes; nobody
+  has published a shrunken both-fit carve, and inventing one is off-limits (that is envelope-
+  spending on BOTH models — D17 law).
+- **(b) In-process fn↔q27 model swap / resume: DOES NOT EXIST.** Negative search of GUIDE @
+  v1.17.0 AND @ main: zero hits for `hot-swap`, `hot swap`, `model switch`, `load model`,
+  `unload model`, `multi-model`, `--models` [R19-S2/R19-S13]. `--model PATH` is "required: the
+  `.rad` container, a checkpoint served as it stands, or a Hugging Face repo id fetched before
+  startup" — one path, at startup (§3.1 "fetched **before startup**", §3.4) [R19-S2]. The
+  checkpoint machinery the docs DO carry (`--checkpoint-slots`, prefix-resume) is CONVERSATION
+  state, not server state — "Snapshots never take VRAM: each is copied to host memory" (§4.8)
+  and nothing resumes a server onto a different model. The owner's fn-boot pain (minutes-class,
+  113.6 GiB; carried [S7]: "q27 loads 18 GiB — sub-minute plus KV carve" DERIVED) therefore has
+  NO in-engine relief — and it is asymmetric in q27's favor: swapping TO q27 is the cheap
+  direction.
+- **(c) Two models from one process: DOES NOT EXIST** — same negatives, plus the engine's own
+  operational doctrine: "Every model listens on the same port and most use both cards, so run
+  one at a time" [R19-S5 README; the compose common.yaml carries the identical law [R19-S4]].
+- **K8s layer (our cluster specifically):** one card = one pod via the plugin (`gpu-r9700-1: 1`,
+  §R6/§R18-5d: "radiance gets exactly one render node (`Allocate` mounts `/dev/kfd` +
+  `cardN/renderDN`)" — carried); the only existing same-pod escape is the hostPath class §R17
+  flagged (whole-directory `/dev/dri` mounts on llama-swap/vllm charts) — which bypasses
+  scheduler accounting entirely and is the thing §R17 wants FIXED, so any q27 child on the
+  router's hostPath /dev/dri needs the radiance pod scaled to 0 first, by discipline not by the
+  scheduler.
+
+### R19-Q7 — llama-swap: the component already doing this job, on radiance, per its own docs
+
+- **Any OpenAI-compatible server is a first-class swap model — quoted from the project docs.**
+  "`cmd` is the only required setting on a model. It is a plain command line — whatever you
+  would type in a shell to start the server yourself." … "## Any OpenAI-compatible server —
+  Nothing here is llama.cpp-specific. vLLM, SGLang, TabbyAPI, Ollama's OpenAI endpoint and
+  anything else that speaks the API work the same way — start it, tell llama-swap the port,
+  point `checkEndpoint` at something that returns 200. If the upstream expects a different model
+  name than your llama-swap ID, use `useModelName` to rewrite it on the way out." [R19-S8,
+  docs/kb/guides/model-runtime/writing-cmd.md, accessed 2026-11-15]. The three macros
+  `${PORT}`/`${MODEL_ID}`/`${PID}`, the `proxy` default `http://localhost:${PORT}` and the
+  hardcoded-port trap ("**You *must* set `proxy` to match**", "Running in a container? Set it
+  explicitly — `proxy: \"http://127.0.0.1:${PORT}\"`") are all in the same file [R19-S8].
+  **radiance's readiness surface fits the default exactly**: `/health` "Exempt … because load
+  balancers cannot send a bearer token" [R19-S2 §6.6], on 8000 (chart serveArgs carried) — our
+  health-check wiring needs zero adaptation. The precedent is ours too: "#1255 user ran radiance
+  1.10 as a llama-swap child (`proxy: http://127.0.0.1:${PORT}`, `checkEndpoint: /health`,
+  `useModelName`, ulimit wrapper), TP2 2×R9700" [carried S10], and this ticket's fn pod has
+  `healthCheckTimeout: 1800/3600` covering minutes-class loads [EXPLORE §1, carried].
+- **Swap choreography that matters for fn↔q27:** "By default llama-swap keeps a model loaded
+  until something else needs the GPU" [R19-S9]; `ttl`/`globalTTL` per-model idle eviction; and
+  the radiance-specific grace: "`unloadTimeout` decides *how long to wait* for the process to
+  exit once unloading starts… global default 10 s… Too low and llama-swap force-kills a process
+  mid-shutdown" — radiance "finishes the step in flight and releases the cards on SIGTERM" with
+  a documented 60 s grace ("stop_grace_period: 60s" [R19-S4]; carried §RQ "k8s:
+  terminationGracePeriodSeconds ≥ 60") ⇒ an fn child needs `unloadTimeout ≥ 60–120`, not the
+  default 10 [R19-S9]. Coexistence-with-others is a routing choice, not an assumption: "Out of
+  the box llama-swap runs one model at a time. The `routing` section changes that" (group/matrix/
+  capacity routers; `swap: true` per group = one at a time) [R19-S10] — fn+q27 in ONE swap group
+  is exactly the strata-matrix shape this cluster already runs (EXPLORE §1b carried).
+- **Verdict on Q7: YES, llama-swap is the honest time-share answer for one card** — it is a
+  SUPPORTED shape (OpenAI-only requirement, `/health` default, precedent #1255), not a hack.
+  The costs are ours, not llama-swap's: every swap to fn repays the minutes-class 113.6 GiB
+  boot and the eager 71 GiB pin (boot A's lesson — §R8), the children inherit the ROUTER pod's
+  cgroup and memlock posture (carried: "the io_uring/pin budget gets inherited from the
+  llama-swap pod (root UID, 8 MiB memlock)" [#1255/S10] — fn's ngram-disk io_uring works at 8 MiB
+  today per §D6, but the q27 lane's absence of ngram tables makes that leg moot FOR q27: "an
+  n-gram table (Qwen3.8-Flash-Next's is 47.7 GiB)" is fn-only geometry [R19-S2 §4.3/R19-S6 —
+  q27's family block has no PLE/n-gram layer: "New: the gated residual, the n-gram/PLE layer,
+  QSA's indexer…" is listed as qwen4exp-EXTRA [R19-S6]; and q27's declared DFlash2 head makes
+  prompt-lookup refused as its drafter, `--spec-ngram` moot [R19-S2 §4.6]). No 47 GiB-class host
+  table, no expert pool, no host pool flags needed for q27 at all (compose/README rows carry
+  none — [R19-S3/S5]).
+- **What swapping does NOT solve:** the router pod's memory envelope (it would need request/limit
+  sized for fn's 110-class boot, i.e. the SAME node arithmetic as D29's either/or — strata is
+  gone but the fn boot still wants ~71–96 pinned), the `gpu-r9700-1` claim (radiance-as-child
+  reaches the card via the router's hostPath, not the plugin — the §R17 whole-directory
+  `/dev/dri` item becomes LOAD-BEARING for this lane, and naming the devices there is the
+  precondition, per §R17's own finding), and the catalog truth (each swap target needs its own
+  row with its own `limit.context` and its own honest speed legs, Q4 table above).
+
+### R19 — Contradictions with the owner's quoted instructions (flagged directly, per ticket law)
+
+1. **Not a contradiction — an incompleteness: the owner's aggregate claim excludes state.**
+   "370–400K tokens in total across all sessions" survives the division ONLY when the
+   144–288 MiB/sequence delta-net state and the worst-case block tables come out of the same
+   12.48 GiB pool ("two copies with speculation" [R19-S2]; "carved for every sequence at the
+   full context" [R19-S2]). Realistic backable aggregate at their flags: **~335–409K, call it
+   ~350–400K** (DERIVED) — the "8 at ~45K each" line survives (8×45K=360K ✓ inside), but
+   "one near 200K plus short ones" is pool-full at 55–65% of the pool for the whale alone.
+   Publish the RECEIPT line (`kv: the pool backs N% … M full-length sessions`), not the prose.
+2. **Unsourced quote:** the sentences "about 370–400K … against about 200K with the 16-bit
+   default" and "8 sessions works at around 45K each, 2–3 at 128K, or one near 200K plus short
+   ones" appear in NO fetched surface (card [R19-S1], GUIDE @v1.17.0 AND @main [R19-S2/S13],
+   compose [R19-S3], Wilde [R19-S7]) — and note the card never mentions `--prefix-cache-mib`
+   either. Verified as ARITHMETIC, UNVERIFIED as quotations; whoever owns that text should
+   attribute it or the ticket treats it as paraphrase.
+3. **The 122 figure would be a misprint if published alone.** The card's own row is
+   "one stream, all eight prompts" — and its prose leg is **77**. "122 tok/s" on a catalog card
+   without "single-stream, mixed-prompt mean; prose 77; 4-stream total 280" repeats the exact
+   single-stream-as-serving error this launch warned about, and it is ALSO the second-most-mis-
+   readable number in our corpus (Wilde: "quoting a throughput number without its context
+   length and headcount is meaningless" [R19-S7]).
+4. **`--api-key "$RADIANCE_API_KEY"` vs `--api-key-env RADIANCE_API_KEY`:** the docs' own
+   posture (compose common carries the env form + the argv world-readable rationale [R19-S4];
+   our shipped chart uses `--api-key-env` — carried §R8-S3). The owner's form works and fails
+   loud when empty [R19-S2 §6.6], but the chart should not migrate to argv; keep `--api-key-env`
+   in any q27 serveArgs and note the difference rather than copy the quoted command verbatim.
+5. **`--max-num-seqs 8` is HALF the docs' own q27 shape** (32 [R19-S5 README row; R19-S3
+   compose]). 8 is the fn-mirroring choice that keeps the envelope story consistent; the docs
+   offer more for q27 specifically because its per-token KV, while ~11× fn's streamed figure,
+   buys back density at short sessions. Not an error — a decision to make explicitly (more
+   concurrent SHORT sessions vs the same aggregate).
+6. **The owner's "This bit makes me think it's possible" is right for a reason fn can never be:
+   q27 has NO host tier requirement** — "its host side is scaffolding, not model state"
+   [R19-S7], 8.5 GiB vs our fn pod's 71–110 — so the q27 lane fits where fn's cannot, and that
+   asymmetry, not the 122, is what the numbers actually recommend.
+
+### R19 — Radiance does NOT support (explicit list, with the doc line or the proven silence)
+
+- **Multi-model in one process / per-request model selection / hot model switch:** silence —
+  `--model` is one required path, startup-fetched (§3.1/§3.4/flag table); 0 hits for
+  switch/hot-swap/multi-model/`--models`/load-unload-model across GUIDE v1.17.0 and main
+  [R19-S2/S13]; README doctrine "run one at a time" [R19-S5].
+- **GPU partitioning (MIG/vGPU/FRU-slicing) on consumer AMD:** silence — 0 hits for "MIG";
+  the ONLY carve primitive is per-process claim (`--gpu-memory-mib` / `--gpu-headroom-mib`,
+  §4.3/§8 etiquette) [R19-S2].
+- **Two ENGINES at full fn+q27 envelopes on one card:** priced out by receipts, not prohibited:
+  fn ~28–30 GiB/card (carried S3/S8) + q27 18.07+12.48 > 31.86; §8 supports the co-run MECHANISM
+  (queue-slot tax measured, `num_kcq=0` route) but every doc measurement co-running TWO FULL
+  SERVERS sizes at least one down [R19-S2 §8; S8 "two full engines he sized to one at a time"].
+- **KV host-mirror for q27:** explicitly refused — streaming table row "Qwen3.5/3.6/3.8 dense
+  … no … dense attention reads the whole history every step" + flag row "Ignored with a warning
+  on an architecture that cannot stream" [R19-S2].
+- **TP2-era claims (q27 needs ≥1.2.3 only; `wht6`, `--tp-wire` etc. stay carried from §R16 and
+  the TP2 doc — not repeated here; our single card keeps everything at the fn lane's rulings).**
+
+### R19 — UNVERIFIED (standing, named rather than papered over)
+
+1. The exact quoted sentences "370–400K / 200K at 16-bit / 8×~45K / 2–3×128K / one near 200K
+   plus short ones" — not found in card, GUIDE (v1.17.0 or main), compose, or Wilde; arithmetic
+   corroborated, provenance not. (Owner paraphrase? A newer card revision than main@2026-11-15?)
+2. The creator rig behind the card's 122 table: host CPU, PCIe generation, RAM — the card states
+   only "Radeon AI PRO R9700 (gfx1201)"; the GUIDE's q27 rows elsewhere name "PCIe Gen5 x8" for
+   a DIFFERENT measurement (state-f16 table) — do not carry Gen5 to the 122 or vice versa.
+3. q27 pod load-time host peak (Wilde measured steady-state only; the read-once load path's
+   transient page-cache/staging charge is unquantified by any doc — the memory.peak receipt at
+   first boot is the instrument, D28(6) class law).
+4. Whether q27's 144 MiB slot store at `--checkpoint-interval 4096` halves slots-per-sequence
+   (fn arithmetic suggested the geometric-backoff count is interval-bound; the doc example is
+   2048-based) — receipt prints the chosen count ("The startup log says what it chose").
+5. Wilde's "27B's pool (~165 KB per token)" tension with the docs' geometry (32 KiB fp8):
+   his prose figure and the doc tables are not reconcilable from fetched text; treated as
+   unreconciled vocabulary (the RQ1/D28 pin-to-receipt law covers it — no per-token constant is
+   published from either figure).
+6. Any real third-party "116" OUTSIDE Wilde's blog — none found; the launch's "third-party
+   measurement" maps onto [R19-S7] specifically and nothing else.
+7. `--gpu-memory-mib` co-run sizing for fn+q27 at REDUCED envelopes: nobody has published a
+   both-fit carve; if the owner ever wants that shape, it is a receipt-and-ruling project, not
+   a flag edit.
+8. llama-swap child + our device-plugin accounting: the §R17 whole-directory `/dev/dri`
+   hostPath makes a child able to TOUCH the R9700 while the scaled-to-0 radiance pod holds no
+   claim — mechanically true per carried §R17/S13, but we have never RUN radiance-as-child on
+   this box (only #1255's TP2 user did, elsewhere).
+
+### R19 — Implications for the plan (fold)
+
+- The q27 lane is REAL and cheap on host RAM (8.5 GiB class vs fn's 71) — the Deferred row
+  "q27-on-radiance second lane + IQR-V4 pack adoption" can now be argued on [R19-S1/S7] receipts
+  instead of vibes; adjacent, the v1.17.0 IQR-V4 27B packs ("10 to 28 GiB", "decode faster than
+  the MXFP4 checkpoint" [R19-S5/S12]) are the same lane's quality dial — adoption remains an
+  owner call (the deferred row's own wording).
+- Architecture decision the plan must make explicitly (this round's output is the MENU, not the
+  pick): **(A)** second pod swapped by scale dance (two radiance Applications, one card, human/
+  GitOps decides who's live — clean claims, clean cgroups, minutes of fn reload on the way back);
+  **(B)** llama-swap children for both (one front door, TTL choreography, `unloadTimeout ≥ 60–
+  120` for fn, `gpu-r9700-1` claim must move or go hostPath-honest — the §R17 device-naming fix
+  becomes a PRECONDITION chunk); **(C)** wait for TP2/card-2 (AD-144) and run q27 there at the
+  docs' own 32-seq shape. All three are sourced; none contradicts a settled D*.
+- If a q27 lane ships: catalog rows must carry BOTH legs ("122 single-stream mixed-prompt mean
+  [prose 77]; 280 total at 4 streams"), `limit.context: 200000` (200K-tested card statement +
+  context-bound flag semantics), and the boot receipt's `kv: pool backs … M sessions` line in
+  the runbook the same way fn's does; the `--prefix-cache-mib 4096` choice ships with its
+  sub-one-conversation warning understood, or `0` until the owner wants it.
+- No number in this section may ship to values.yaml without the startup receipt (D28(6)) — the
+  whole q27 fit story is receipt-confirmable on first boot of the pack on our card, and that
+  boot is the load-bearing experiment this round hands to the owner.
+
+### R19 — Sources (accessed 2026-11-15 unless noted)
+
+| # | URL | What it is |
+|---|---|---|
+| R19-S1 | huggingface.co/StillDeadcode/qwen3.8-27b-mxfp4/raw/main/README.md (fetched full, 4,035 B) | THE model card: 18.05 GiB file; base `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` + `z-lab/Qwen3.8-27B-DFlash2`; "Needs radiance 1.2.3 or newer"; speed table TP1/TP2 (122 / 204 / 280@4s, prose-code 77/164, "Greedy, 768 tokens each of eight prompts… depth 7, --max-num-seqs 8 --max-model-len 200000 --kv-cache-dtype fp8"); Serve block; "It also fits one 32 GB card: --tp 1, the same flags otherwise"; Context "262,144 trained; 200K tested"; conversion recipe (u2 draft head + rescore) |
+| R19-S2 | codeberg.org/api/v1/repos/StillDeadcode/radiance/raw/docs/GUIDE.md?ref=v1.17.0 (fetched, ~18 targeted windows) | §4.4 long-context law ("--max-model-len reserves nothing per request"; fp8 "halves what a token of context costs", "Every architecture serves both widths except glm5next", drafter cache included); q27 geometry "head_dim 256, gqa 6, 16-token pages" (×2 rows); measured q27 TP2 pool table (fp8 518 800 tokens / fp8_v4 664 400 / k6_v4 755 184, "12 GiB a card left to another engine", decode 134-140/550-555); "Many sequences" paragraph (54 MiB fn state/copy/card, "The 27B in bf16 … about 117K tokens … startup warns", "27B in FP8 holds 2.8 full-length sessions at 32"); receipt line "kv: the pool backs N% of the worst case … M full-length sessions"; block-tables carve law; §4.4.1 streaming table (qwen35 dense = "no"); §4.6 draft-head-defaults + spec-ngram refusal of declared heads; §4.8 host tier verbatim (warn-below-one-conversation, "keeps its start there", checkpoint-slots auto law "at most an eighth of host memory … after the host pools, the host tier … --host-headroom-mib"); §4.11 flag table (--model single required PATH; --max-num-seqs 256 default; --gpu-memory-mib claim/headroom inverse; --kv-cache-dtype row naming q27 fp8_v4/k6_v4; --checkpoint-slots "144 MiB on Qwen3.8-27B"; --prefix-cache-mib 0 default + host copy + off-while-streaming; --kv-resident "Ignored with a warning on an architecture that cannot stream"); §6.6 security full text (empty key = startup error; exemptions incl. /health; loopback socket-AND-Host; --allow-host); §8 verbatim (TP×TP deadlock + R4D_AR_MAX_BLOCKS 64-for-q27 + prefill cost 9.5→9.8→10.3 s; queue-slot story + num_kcq=0 + TranslateGemma/q27 co-run ms/step table; "Give the engine started first its --gpu-headroom-mib for the second"); negative searches: MIG 0, multi-model 0, --models 0, load/unload model 0, swap-class terms 0 |
+| R19-S3 | codeberg.org/.../raw/deploy/compose/qwen3.8-27b-mxfp4.yaml?ref=v1.17.0 (fetched, complete) | Creator's q27 profile verbatim: `--tp 2 --max-num-seqs 32 --max-model-len 200000 --kv-cache-dtype fp8` + `--api-key-env RADIANCE_API_KEY`, NO prefix-cache flag, header "the speculation depth is the drafter's own operating point" |
+| R19-S4 | codeberg.org/.../raw/deploy/compose/common.yaml?ref=v1.17.0 (fetched, complete) | Compose doctrine: "Each model takes both cards … and the same port, so run one at a time"; --api-key-env rationale ("argv is world-readable in `ps` and /proc"); seccomp/io_uring note; `ulimits: memlock: -1`; "finishes the step in flight and releases the cards on SIGTERM"; healthcheck /health 15m start_period |
+| R19-S5 | codeberg.org/.../raw/README.md?ref=v1.17.0 (fetched, windows) | "run one at a time" headline; model table (27B FP8 29 GiB / MXFP4 19 GiB / IQR-V4 "10 to 28 GiB" rows); recommended-flags table (q27 FP8+MXFP4 → `--tp 2 --max-num-seqs 32 …`; q27 bf16 → 8 seqs); "Every model here runs at up to 32 sequences a step. The Flash-Next rows … and the 27B in bf16 keep 8: … each sequence holds its own recurrent state"; libr4d/libr3d/libhalo/libavx plugin families [RQ0 carry re-confirmed] |
+| R19-S6 | codeberg.org/.../raw/docs/ARCHITECTURES.md?ref=v1.17.0 (fetched, windows) | THE geometry: "64 layers, full_attention_interval 4 → layers 3,7,…,63 are FULL ATTENTION (16 of them); the other 48 are GATED DELTA NET; hidden_size 5120 … num_key_value_heads 4 head_dim 256 → GQA 6; attn_output_gate true"; KV groups table (RAD_KV_FULL 16 layers fp8_v4/k6_v4 "head_dim 200/176"; RAD_KV_LINEAR 48×128×128; conv 10240 channels); "The recurrent state is f32: 48 x 128 x 128 x 4 = 3 MiB per layer, 144 MiB per sequence"; qwen4exp contrast block ("48 layers of 12 x (3 x GatedDeltaNet -> MoE, then 1 x QSA -> MoE) … 2 KV heads … GQA 12 … New: … the n-gram/PLE layer, QSA's indexer"); "libr4d reads those bytes directly"; qwen35_w8a8 "declines imported checkpoints … they stay with qwen35_fp8" |
+| R19-S7 | thomaswildetech.com/blog/2026-11-08/what-a-gen4-board-costs-three-engines-two-r9700s-one-benchmark-ladder/ (fetched 2026-11-15 via markdown reader; = ticket [S8], now full-text) | THE third-party TP1 receipts: "18.07 GiB weights + 12.48 GiB KV. The KV is small because the architecture is hybrid — most layers are delta-net"; "avg 116.0 (78.9-154.5) at 64k and 93.5 (62.7-110.7) at 128k … cold rows 126.9/109.8"; "within about 15% of the Flash-Next MoE running on two cards"; 263k probe "KV budget refuses to grow past 12.46 GiB. One card caps around 200k … just fit-to-available"; TP2 "9.68 weights + 20.04 KV, full 262144 fits with ~100 MiB of headroom", follow-up 164.8/158.5; RAM table row "TP1 … 8.5 GiB (7.89 pinned) … --placement all_vram", "the dense 27B … fully VRAM-resident and its host side is scaffolding, not model state", "+~2-4 GiB OS baseline"; concurrency 64k TP2 tables (27B 50/user, box 106, TTFT 10.2 s; "the 27B's is flat"), short-ctx tables (66/288), "quoting a throughput number without its context length and headcount is meaningless"; "For the 27B there is no knob at all: the DFlash2 drafter is compiled into the .rad pack — my attempt to A/B it with the flag failed the guard because the flag simply doesn't own the drafter"; "add --prefix-cache-mib 4096 to the 27B service" footnote; "~165 KB per token for the 27B vs ~60 KB for Flash-Next" (kept unreconciled, UNVERIFIED-5) |
+| R19-S8 | raw.githubusercontent.com/mostlygeek/llama-swap/main/docs/kb/guides/model-runtime/writing-cmd.md (fetched, complete) | Q7 schema: "`cmd` is the only required setting on a model"; ${PORT}/${MODEL_ID}/${PID} macros; proxy default + container guidance; "checkEndpoint (default /health) … until it returns HTTP 200"; loading-progress protocol; "## Any OpenAI-compatible server — Nothing here is llama.cpp-specific. vLLM, SGLang, TabbyAPI, Ollama's OpenAI endpoint and anything else that speaks the API work the same way"; useModelName |
+| R19-S9 | raw.githubusercontent.com/mostlygeek/llama-swap/main/docs/kb/guides/model-runtime/ttl-and-unloading.md (fetched) | "By default llama-swap keeps a model loaded until something else needs the GPU"; ttl −1/0/>0 semantics (inactivity, not lifetime); "unloadTimeout decides how long to wait for the process to exit … global default 10 s … Too low and llama-swap force-kills a process mid-shutdown"; cmdStop for docker; manual /unload + pause endpoints |
+| R19-S10 | raw.githubusercontent.com/mostlygeek/llama-swap/main/docs/kb/guides/routing/groups-and-matrix.md (fetched) | "Out of the box llama-swap runs one model at a time. The routing section changes that"; group router swap/exclusive/persistent semantics; matrix = allowed-concurrent-combinations |
+| R19-S11 | lucebox.com/blog/qwen38-r9700 (fetched 2026-11-15; page metadata datePublished 2026-08-21, author Davide Ciffa) | "The lucebox engine now runs Qwen3.8-27B on a single AMD Radeon AI PRO R9700 with the z-lab DFlash2 block-diffusion drafter: up to 227 tok/s on code, 208 tok/s HumanEval average, 3.8x llama.cpp decode running the same drafter, on an off-the-shelf quant" — third-party single-card, NON-radiance context row only |
+| R19-S13 | codeberg GUIDE @ref=main (negative check) | "370/400K" phrase hunt on the post-1.17.0 docs: no capacity sentence (only the unrelated "16 MiB at 400k tokens" prompt-lookup index line) |
+| R19-S12 | radiance.stilldeadco.de/changelog (fetched, windows) | v1.17.0: "IQR-V4 brings Qwen3.8-27B 15 sizes from 2.5 to 8 bits a weight … on IQR kernels that now decode faster than the MXFP4 checkpoint"; IQ4R-L-V4 "24% below the official FP8 checkpoint at 55% of its size"; M2XFP4 row; carries the IQR-V4 adoption door for the Deferred item |
+| (internal) | carried [S2 §4.3/§4.4.1/§4.6/§5.1/§8][S5 exact bytes/sha][S7][S8][S10 #1255][S11 llmkube][S13 plugin Allocate][R8-S1 cgroup law]; §R8/§R14/§R15/§R16/§R17/§R18 verdicts; D17/D21/D24/D26/D28/D29/D44/D45/D47/D49–D53; EXPLORE §1 (healthCheckTimeout), §1b (groups/ttl today's shape); live baseline per launch | the settled record this section computes against; nothing here re-opens it |
+
+RESULT
+status: DONE
+chunk: research
+files_changed: [.agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/RESEARCH.md (§R19 appended)]
+commands_run: [repo reads (§R8/§R9/§R13/§R14/§R15/§R16/§R18 + RQ0–RQ5 guide-corrections/envelope blocks re-read; DECISIONS D17–D51 read from disk, D52/D53 from HEAD — the on-disk file predates them, worktree carries uncommitted deletions of §R17/D52/D53 which this round did NOT touch) => pass; raw fetches (execute): GUIDE.md @v1.17.0 (×4 calls, ~25 windows: §4.4 long-ctx+measured q27 pool table+many-sequences, §4.4.1 streaming table, §4.6, §4.8 host tier+slots, §4.11 flag rows, §6.6 security, §8 verbatim, negatives MIG/multi-model/--models/swap-terms ×2 refs), qwen3.8-27b-mxfp4.yaml + common.yaml (complete), README.md @v1.17.0, ARCHITECTURES.md (geometry windows), HF q27 card README (complete, 4035 B), GUIDE @main (phrase hunt) => pass; webfetch/searxng: Wilde blog headings+2 sections via web_url_read, llama-swap writing-cmd.md + ttl-and-unloading.md + groups-and-matrix.md (complete), lucebox page, changelog windows => pass; arithmetic (all labeled DERIVED): 32/64 KiB/token from 16×2×4×256×{1,2} B; pool 12.48 GiB ÷ rates → 335–409K and ~204K; 8×45K=360K ≤ pool; state 8×144/288 MiB; slots 80×144 MiB=11.25 ≤ ⅛-host 15.6; host band 15–16 pinned/16–20 cgroup; node 125.08−110−4.125−1.158=9.80 < q27 floor; TP2 518800×32KiB/2≈8.1 GiB/rank vs 31.86−9.68−12−arena ≈ consistent; 409K vs bf16 204K ratio=2.0 ("roughly doubles") => pass]
+deviations: none — read-only; only RESEARCH.md written (appended). Two instructions exercised: (1) the streaming table's qwen35 row was fetched before deriving anything from it; (2) the owner's "370–400K" sentences were hunted to exhaustion (card, GUIDE×2, compose, Wilde) and reported as verified-arithmetic-but-unattributed-quotes rather than blessed as documentation.
+friction: the "165 KB per token" (Wilde TP2) vs 32 KiB/token (docs geometry) gap resisted every reconciliation attempt from fetched text (his KB figures look like a different accounting — pool-with-everything ÷ tokens); flagged UNVERIFIED-5 rather than guessed; the launch's D52/D53 did not exist in the on-disk DECISIONS.md (worktree carries deletions vs HEAD) — read from git HEAD instead of touching the file state.
+open_questions: [the provenance of the owner's quoted capacity sentences (ask the owner which surface they came from — if a newer card revision exists than the one on main@2026-11-15, pin it); the q27 pod load-peak (first-boot receipt decides); slots-at-4096-interval count (startup log names it); whether any shrunken fn+q27 both-fit carve is ever worth a project (nobody has published one; default answer no)]
+next_suggested: coord: (1) hand the owner the menu (A pod-swap / B llama-swap children / C TP2-and-32-seqs) with the q27 host-RAM asymmetry as the headline argument (8.5 vs 71 GiB class) and the 122-single-stream/prose-77/280-at-4 attribution line as the catalog law; (2) if a lane is chosen, the first experiment is the owner's exact quoted boot of the .rad on our card — the startup receipt (weights, kv pool tokens, M sessions, step staging, slots) is the load-bearing datum every figure above is written to be confirmed or corrected by; (3) fold into DECISIONS the two load-bearing silences (no in-process switch; no k8s co-residency with fn-110) so the q27 lane stops being re-incepted as a co-tenant; (4) the §R17 device-naming fix of /dev/dri hostPaths becomes a precondition for architecture B.
