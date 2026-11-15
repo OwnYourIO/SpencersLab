@@ -931,7 +931,7 @@ def expected_radiance_q27_peer(ev: dict, models: list) -> dict:
     """The sanctioned rendered peers.radiance-q27 block for one models list —
     the radiance builder's shape (proxy/models/timeouts/filters read from
     the evidence; the q27 file's floor is 4, the q27 default class — fn's 5
-    is NOT reused, D54 "do not steal fn's ranks")."""
+    is NOT reused, D54 records "fn's ranks are NOT stolen")."""
     if models not in ev["models_states"]:
         raise AssertionError(
             f"peers.radiance-q27 models {models} is not one of the sanctioned peer waves "

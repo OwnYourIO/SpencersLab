@@ -841,8 +841,8 @@ for (const [k, prio] of [['qwen3.8-27b-radiance', 4],
 // M8-A2 (chunks/C05.md Tests, "Catalog-shape test — live-row set =="):
 // the cf-143 DELTA contract against the test-wave frozen base (captured
 // 2026-11-11 from the parsed catalog). Exactly +3 radiance rows, exactly
-// -3 vllm rows, everything else byte-present ("strata rows five-ish as
-// today" rides this same equality; M3's HOLD legs keep their shape).
+// -3 vllm rows, everything else byte-present ("strata five-ish as today"
+// rides this same equality; M3's HOLD legs keep their shape).
 // cf-143 C15 RE-FREEZE — test-lane choice RECORDED HERE (chunks/C15.md T5;
 // TEST_SPEC §12.15): the base gains fn's landed radiance trio
 // (CF143_C15_BASE_KEYS = the frozen 86 + trio), so the delta law keeps the

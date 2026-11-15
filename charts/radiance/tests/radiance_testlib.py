@@ -56,13 +56,14 @@ SCALARS = {
     # 77.88 against the printed whole 71.04 — 71.04 is a BOUNDED residual, the
     # figure to price against, never a decomposition to re-add (D30(2)); the
     # disk n-gram tier is O_DIRECT — its table never enters page cache, so the
-    # "raise the limit starves the cache" reading stands REFUTED (D30(3)). D28 planned the ladder ceiling 96; asked "which
-    # value should charts/radiance ship for gpu-ai?", the owner answered
+    # page-cache-starvation claim D30(3) records ("would STARVE the host page
+    # cache") stands REFUTED. D28 planned the ladder ceiling 96; asked
+    # "Which value should charts/radiance ship for gpu-ai?", the owner answered
     # verbatim "110 GiB (your figure)" — D29 records the ruling (D28's reasoning
     # stands as history, append-only). 110 is NOT a radiance plan figure in the
     # repo (§D6.1): it is STRATA's own limit on this node (charts/llama-swap/
-    # values.yaml:1319-1325, the owner's proven "container dies BEFORE the node"
-    # envelope) — the ruling EXTENDS that node law to radiance. Slack: 110 -
+    # values.yaml:1319-1325, the owner's proven "container must die BEFORE the
+    # node" envelope) — the ruling EXTENDS that node law to radiance. Slack: 110 -
     # 71.04 = 38.96 >= 4 with margin (vs 96's 24.96); the RAM-ngram tier is
     # DEAD at BOTH (71.04+47.68 = 118.72 > 110, §D6/AC2-iv) — 110 is slack,
     # not a tier enabler. Schedulability (§D6.2 exact terms): strata DOWN
@@ -143,7 +144,8 @@ INIT_NAME = "radiance-fetch"
 SERVE_NAME = "radiance"
 # --- C11 applet-grammar law constants (ONE site; DECISIONS D27, EXPLORE §D3b) ----
 # A container image's coreutils-applet FAMILY is part of the image contract:
-# BusyBox hash applets (md5_sha1_sum.c getopt32 "^" "scwbt" — short options only,
+# BusyBox hash applets (md5_sha1_sum.c getopt32 "^" "scwbt" — argv elided from
+# the §D3b call quote; short options only,
 # byte-identical 1_36_1<->master so v1.37.0 is bracketed) reject GNU LONG
 # options at parse (exit 1, "unrecognized option"), while GNU coreutils has no
 # BusyBox `-s` (quiet) — the portable shape is neither flag, it is shell

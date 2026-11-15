@@ -22,9 +22,9 @@
 # q27 boot is sub-minute-class, but the peer shape is a clone, not a re-price).
 #
 # filters.setParams "priority?" = 4 is the set-if-undefined floor equal to
-# the q27 DEFAULT class (D54: fn's 5 floor is NOT reused — "do not steal
-# fn's ranks"; the trio's 8/4/0 sit strictly below fn's 9/5/1 under the
-# UN-inverted higher-wins polarity). Honest caveat armed by C15: the
+# the q27 DEFAULT class (D54: fn's 5 floor is NOT reused — the ruling records
+# "fn's ranks are NOT stolen"; the trio's 8/4/0 sit strictly below fn's 9/5/1
+# under the UN-inverted higher-wins polarity). Honest caveat armed by C15: the
 # engine's priority-0 semantics are UNVERIFIED (plan OQ-16) — C16's smoke
 # read confirms them; these arms pin the AUTHORED values, not a claimed
 # behaviour, and a correction re-pins the arms, never a silent retarget.

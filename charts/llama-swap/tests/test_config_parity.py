@@ -378,7 +378,7 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     # file stays byte-untouched — its models_states anticipates a SAME-peer
     # arena, not a new key). Read live: dev conforms values to the evidence,
     # never the reverse. The floor is 4 — q27's default class; fn's 5 is NOT
-    # reused (D54 "do not steal fn's ranks").
+    # reused (D54 records "fn's ranks are NOT stolen").
     if "radiance-q27" in wave:
         ev27 = L.radiance_q27_peers_evidence()
         q = peers["radiance-q27"]
