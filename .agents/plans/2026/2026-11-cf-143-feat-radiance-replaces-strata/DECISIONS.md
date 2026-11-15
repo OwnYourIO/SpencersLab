@@ -1816,6 +1816,53 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
    timeouts 1800/30). **(9) IQR-V4 pack adoption NOT adopted** — the owner asked for the 27b
    (mxfp4); the Deferred row's IQR-V4 half stays open (quality dial, §R19-S12).
 
+ - 2026-11-15 review+coord D57 (**A COORD-SIDE INVENTION BECAME A SHIPPED "FACT" — the fiction came from
+   ME, not from a subagent, and it is the fourth time this ticket paid for reading a device instead of the
+   bus**): the C15 review round (r1) came back CHANGES_REQUESTED on one blocking finding — every carrier of
+   the q27 idle-behaviour sentence claimed the `peers.radiance-q27` hop "answers **503**" while the pod rests
+   at `replicas: 0`. The reviewer sourced the truth from llama-swap itself: `proxy/peerproxy.go` /
+   `internal/router/peer.go` — *"Network errors are captured by ErrorHandler, returning a structured **502 Bad
+   Gateway**"* (upstream docs and PR #619 show `502 - peer proxy error: …`). At 0 replicas the Service has **no
+   endpoints**, so kube-proxy refuses the dial: a transport error surfaced as **502**, while `/v1/models` keeps
+   advertising the id because llama-swap neither health-checks nor hides a peer — so the part of my claim that
+   mattered ("loud, never silent") survives, and the status code does not. **Provenance, recorded because the
+   lesson is about my own lane:** "503" appears in NO source document in this ticket (grep: zero hits across
+   RESEARCH/DECISIONS/EXPLORE); it originated in my launch prompt to `agent-plan`, was consumed as an answer,
+   propagated into `chunks/C15.md` (AC8 and three lines), and from there into seven implementation carriers AND
+   into a test needle. A plan-level parenthetical written by the coordinator is not evidence, and downstream
+   roles had no way to tell it apart from the sourced figures it sat beside. THE LAW, now armed rather than
+   moralised: a status code, like a number, ships only with its source or with an explicit `UNVERIFIED` marker;
+   the test lane added a sweep leg (`test_c15_503_swept_from_the_idle_law_carriers`, `git grep -nw 503` over
+   `services/ .opencode/ .rulesync/`, the AC4 keyless-grep idiom) so the wrong code cannot come back, and the
+   canonical sentence is token-pinned (`502` / `peer proxy error` / `no endpoints` / `loud` / `never silent`)
+   across test, dev r2, evidence and C16's owner-facing note.
+   THE SAME ROUND CAUGHT A SECOND ERROR OF MINE, in the other direction: I told the owner the ~335–409K q27
+   aggregate was "reduced by `--prefix-cache-mib 4096` ≈ 131K tokens", reasoning that the prefix tier is carved
+   out of the KV pool. **§R19-Q2 says the opposite** — the 4 GiB tier is **host-side**, "neither taken out of the
+   KV pool nor resident in VRAM" — and the shipped comments are correct while my brief was wrong. The correction
+   belongs in the owner-facing record: `--prefix-cache-mib 4096` does NOT eat conversation capacity; the
+   aggregate stays ~335–409K and the first-boot receipt is still the witness, not a smaller number.
+   WHAT THE ROUND ALSO DECIDED (review adjudications, not my preferences): (1) the **decorative
+   `app-template.modelPath`** re-pin in the q27 subtree STAYS — D56(1) already ruled it decorative, the reviewer
+   proved render-inertness by mutating it to garbage and getting a byte-identical manifest, and the site comment
+   names the three-place "keep them in step" law; enforcement parity was restored instead, by the new equality
+   leg, because fn's copy is armed by two dual-edit legs and q27's had zero consumers. (2) The golden's
+   `+10/−0` surgical splice is **honest**: whole-document parse compare to the fresh render passes (all 15
+   top-level keys, 60/60 ids, the full peers map), and the only unpinned layer is the golden's own comment lines
+   — pre-existing documented T4 exemption, not a C15 weakening. (3) The **n2 census repair closed a real hole**,
+   not just a reachability gap: the deleted `touches_carrier` proxy never listed `charts/radiance/values.yaml` at
+   all, so the OLD guard blessed a standalone pool rename in the radiance chart. (4) Four minor prose defects
+   routed to dev r2: the 30.55 GiB blocker must be compared against **29.30 claimable** (§R19-Q1(i)) not just
+   31.86 usable; the roster copy duplicated the Pending-forever prose (comment-slop clause 3); `values.yaml:689`
+   misquotes D54 ("do not steal fn's ranks" vs the recorded "fn's ranks are NOT stolen") — quote fidelity matters
+   when the source is an owner ruling; and the 24 GiB justification added non-addends (16–20 GiB is the
+   **cgroup-total** band already containing the 11.25 GiB slot store and the 4 GiB host tier; 8.5 GiB is the
+   *pinned* figure the `limit − pinned ≥ 4` law consumes — the number is right, the arithmetic prose was fake).
+   (5) Process correction I accept: the dev commit carried two test-lane files because I bundled the escalation
+   into one commit; from here a routed validation repair gets its **own** test-session commit before dev's
+   follow-up, so validation edits never ride implementation commits. Authority: the C15 review r1 report,
+   RESEARCH §R19-Q1/Q2/Q4, EXPLORE §D54, TEST_SPEC §12.15/§12.16 addenda, commits `8308a3719`→`801e66693`.
+
 ## Deferred
 - Strata cutover/retirement — OWNER's metrics decision (Q5 ruling 2026-11-11): the future
   ticket re-authors the peers evidence chain, flips the strata enable-set + peer; the full

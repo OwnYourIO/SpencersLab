@@ -378,7 +378,7 @@ PY
   esac
 fi
 
-# --- T5: the ban legs (keyless, /v1, don't-sync, 503) + order synthesis ----------
+# --- T5: the ban legs (keyless, /v1, don't-sync, the 502 idle law) + order synthesis ----------
 if want t5; then
   [ -f "$NOTE" ] || fail "T5: $NOTE missing (see T1)"
   rc=0
@@ -403,12 +403,24 @@ def problems(text):
     for i, ln in enumerate(lines):
         if "svc.cluster.local" in ln and "/v1" in ln:
             errs.append(f"line {i+1}: a proxy URL printed with a /v1 suffix — request paths append verbatim: {ln.strip()[:90]}")
-    flat = " ".join(lines)
+    # Whitespace-collapsed: markdown prose wraps, and the interlock tokens
+    # must match across line breaks exactly as the pytest validator does.
+    flat = " ".join(text.split())
     sync_windows = [flat[m.start():m.start() + 400] for m in re.finditer(r"(?i)(do ?n[o']t|never)\s+\w*\s*sync\b", flat)]
     if not any("gpu-ai-radiance-q27" in w and "gpu-ai-llama-swap" in w for w in sync_windows):
         errs.append("the don't-sync law does not name BOTH gpu-ai-radiance-q27 and gpu-ai-llama-swap (AC7: the q27 lane AND the strata-window app, the D31/D32 unchanged law)")
-    if not re.search(r"(?i)503[^\n]{0,160}(idle|at rest|replicas[: ]{1,2}0|endpoints|empty)|(?:idle|at rest|scaled? (to|down) 0)[^\n]{0,160}503", flat):
-        errs.append("the 503-while-idle honesty sentence is missing — the hop answers 503 at rest by design, never silent (D54; the overlay comment carries the same law)")
+    # Idle law (C15-r2 re-pin): the note carries the SOURCED interlock — the
+    # 503 the first wave armed was a coord parenthetical treated as evidence
+    # (D54(4) class); llama-swap's ErrorHandler over a no-endpoints dial is
+    # a 502 peer proxy error. Dev writes the canonical sentence verbatim.
+    if re.search(r"(?<![0-9])503(?![0-9])", flat):
+        errs.append("the note still claims the 503 idle code — unsourced and wrong; the sourced "
+                    "shape is the 502 peer-proxy-error sentence (C15-r2 interlock)")
+    for pat, tok in ((r"(?<![0-9])502(?![0-9])", "502"), (r"(?i)peer proxy error", "peer proxy error"),
+                     (r"(?i)\bno endpoints\b", "no endpoints"), (r"(?i)\bloud\b", "loud"),
+                     (r"(?i)never silent", "never silent")):
+        if not re.search(pat, flat):
+            errs.append(f"idle-law interlock token missing: {tok!r} (the canonical sentence: 502 peer proxy error / no endpoints / loud / never silent)")
     # Order runs on the RAW text (joined lines would let [^\n] windows leak
     # across the fence and mis-compare DOWN/UP positions — self-test caught
     # it at authoring, §12.14's fixture-probe habit applied to OUR arms).
@@ -424,11 +436,13 @@ def problems(text):
 correct = ("OWNER-EXECUTED: kubectl scale deployment gpu-ai-radiance --replicas=0\n"
            "OWNER-EXECUTED: kubectl scale deployment gpu-ai-radiance-q27 --replicas=1\n"
            "do not sync gpu-ai-radiance-q27 while using it, and do not sync gpu-ai-llama-swap during any strata dance; "
-           "while the lane idles at replicas 0 the hop answers 503, never silent.")
+           "while q27 rests at replicas 0, the peers.radiance-q27 hop fails with a 502 peer proxy error "
+           "(the Service has no endpoints; llama-swap neither health-checks nor hides peers) — loud, never silent.")
 reversed_fixture = ("OWNER-EXECUTED: kubectl scale deployment gpu-ai-radiance-q27 --replicas=1\n"
                     "OWNER-EXECUTED: kubectl scale deployment gpu-ai-radiance --replicas=0\n"
                     "do not sync gpu-ai-radiance-q27 while using it, and do not sync gpu-ai-llama-swap; "
-                    "while the lane idles at replicas 0 the hop answers 503, never silent.")
+                    "while q27 rests at replicas 0, the peers.radiance-q27 hop fails with a 502 peer proxy error "
+                    "(the Service has no endpoints; llama-swap neither health-checks nor hides peers) — loud, never silent.")
 if problems(correct):
     print("T5 validator self-DEFECT: the correct-order fixture FAILED: " + "; ".join(problems(correct)), file=sys.stderr)
     sys.exit(2)
@@ -441,9 +455,9 @@ if errs:
     print("; ".join(errs[:8]), file=sys.stderr); sys.exit(1)
 PY
   case "$rc" in
-    0) ok "T5: bans hold (no --api-key in any fenced command; the dropped rider appears only as prose marked dropped; no /v1 on printed proxy URLs; don't-sync names BOTH apps; the 503-while-idle honesty stands; the DOWN-first order holds) — order arm synthesis-proven both ways" ;;
+    0) ok "T5: bans hold (no --api-key in any fenced command; the dropped rider appears only as prose marked dropped; no /v1 on printed proxy URLs; don't-sync names BOTH apps; the 502 idle-law interlock holds — 502 / peer proxy error / no endpoints / loud / never silent, 503 purged; the DOWN-first order holds) — order+idle arms synthesis-proven both ways" ;;
     2) fail "T5: the ban validator FAILED ITS OWN fixture probe (a half tripwire cannot bless the note) — the TEST lane owns this repair" ;;
-    *) fail "T5: a ban leg fired (C16 T5 — keyed line in a fence, /v1 on a proxy URL, don't-sync missing an app name, no 503 honesty, or inverted order; diagnostics above)" ;;
+    *) fail "T5: a ban leg fired (C16 T5 — keyed line in a fence, /v1 on a proxy URL, don't-sync missing an app name, a broken 502 idle-law interlock, or inverted order; diagnostics above)" ;;
   esac
 fi
 

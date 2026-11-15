@@ -4418,8 +4418,8 @@ excuse); the fn witnesses all stay green (the bar below is verbatim).
 | `test_coexistence_wiring` | scalars-only leg STAYS SCOPED to the fn `radiance` subtree (the q27 block is list-replacement BY DESIGN — the anchor trap makes scalars useless there; D56(1) — the new leg's docstring records the carve-out); ADD: q27 ingress skip-comment (RED today, greens at D4) + q27-id-out-of-outer-matrix clone (green drift bar); custom-values ban UNMOVED (its "radiance" substring already covers any q27 key — not widened, no key ships) | 1 RED / 1 green-drift |
 | `test_strata_wiring` :177 + `test_flashnext_blast_radius._cf77_peers_carved` :212 | the C04 precedent's SAME-WAVE duty (§12: "anything that hardcodes peers-map equality gets the wave carve") — the sanctioned wave grows the q27 state and the carve/leg pins it to evidence; **§D54-F's enumeration MISSED these two** (the §12.3 class law caught them: dev's landing would have false-redd them) | green both ways |
 | `tests/pipeline-models/surface.sh` M8 | A: TWO trios HOLD (fn loop byte-verbatim; q27 loop pins 8/4/0 + shared modelID + ctx 200000 + [text,image]; the strict-below-fn relation is the exact-value arithmetic — priority-0 semantics UNVERIFIED, arms pin the AUTHORED value, C16's smoke is the receipt); **A2 RE-FROZEN: base gains fn's trio → added == q27 trio EXACTLY** (the recorded test-lane choice; rejected: a per-wave multi-delta law); C15 serving-fact clone (peers.radiance-q27 == its evidence, floor 4, no /v1); D: negative needle cloned per q27 wire id; E: favorited-table q27-row needle (source AND mirror — D6 + the rulesync twin); bare M1..M7 UNTOUCHED | M8 RED; bare 9 ok |
-| `charts/radiance/tests/test_q27_lane.py` (NEW, 18 legs) + `radiance_testlib.py` Q27 constant block | roster entry EXACT {namespace, ServerSideApply:"false", chart: radiance}; render legs (replicas 0, args set-equality, absence set, 24Gi pair + INHERITED cpu/claim, init four-literals + C11 grammar at the SECOND call site + rejected D27 forms, kinds ban, name dedup, sentinel-free); AC8 comment legs (DOWN-first, resting fn 1 / q27 0, D31/D32 + OutOfSync-expected, 503-idle, no-key ruling, 9.80 headroom); pack-ledger verbatim at the new home; AC4 keyless `git grep` (the env token is ASSEMBLED in-test — the ban scopes `tests/` too, so no source file may spell it); CI: q27 extraction needle (RED until D7) + both-wave-state execution (green). `test_contract.py:113-120` path-set pin needs NO re-pin (D7 adds STEPS not paths — the leg walks runs only; recorded test-lane call) | 14 RED / 3 green-drift |
-| `evidence/radiance-q27-peers-expected.yaml` (NEW) | per-key D13 sibling, test-authored, dev-must-not-edit header, models_states seeded [qwen3.8-27b-radiance], floor 4, keyless, 503-idle note, OQ-16 honesty comment | fixture |
+| `charts/radiance/tests/test_q27_lane.py` (NEW; 21 legs after the r2 re-pin) + `radiance_testlib.py` Q27 constant block | roster entry EXACT {namespace, ServerSideApply:"false", chart: radiance}; render legs (replicas 0, args set-equality, absence set, 24Gi pair + INHERITED cpu/claim, init four-literals + C11 grammar at the SECOND call site + rejected D27 forms, kinds ban, name dedup, sentinel-free); AC8 comment legs (DOWN-first, resting fn 1 / q27 0, D31/D32 + OutOfSync-expected, the **502 idle-law interlock** — re-pinned at r2 from the unsourced 503, fixture-self-proven both ways, — no-key ruling) + the r2 additions: `test_c15_q27_headroom_arithmetic_commented` (125.08/9.80 from the overlay region — the arm that CONSUMES the formerly-dead `Q27_HEADROOM_GIB`, §12.16 addendum), `test_c15_q27_subtree_model_path_matches_the_args` (enforcement parity: the render-inert decorative copy must equal the args literal — three-place keep-in-step), `test_c15_503_swept_from_the_idle_law_carriers` (grep-class ban over services/.opencode/.rulesync, the AC4 idiom); pack-ledger verbatim at the new home; AC4 keyless `git grep` (the env token is ASSEMBLED in-test — the ban scopes `tests/` too, so no source file may spell it); CI: q27 extraction needle (RED until D7) + both-wave-state execution (green). `test_contract.py:113-120` path-set pin needs NO re-pin (D7 adds STEPS not paths — the leg walks runs only; recorded test-lane call) | at the r2 test round: 19 green / 2 designed-red naming C15-r2 (AC8 idle-law carrier re-word, 503 sweep purge); at the C15 handoff it was 14 RED / 3 green-drift |
+| `evidence/radiance-q27-peers-expected.yaml` (NEW) | per-key D13 sibling, test-authored, dev-must-not-edit header, models_states seeded [qwen3.8-27b-radiance], floor 4, keyless, the 502 idle-law note (r2 — the first edition's 503 comment repeated the coord parenthetical; corrected test-side, dev cannot edit evidence), OQ-16 honesty comment | fixture |
 
 **HOLD-green across the wave (witnesses, UNMOVED):** the 46 fn radiance legs,
 `radiance-runbook.sh` T2 one-block law (the q27 boot docs ride C16 with
@@ -4455,7 +4455,9 @@ a half tripwire is LOUDER than a missing note); T5 the ban legs (no
 `--api-key` in ANY fenced command; the env token appears only in
 dropped-marked prose — the token is assembled at runtime, the AC4 ban
 scopes tests/; no `/v1` on printed proxy URLs; the don't-sync law names
-BOTH `gpu-ai-radiance-q27` and `gpu-ai-llama-swap`; 503-while-idle honesty;
+BOTH `gpu-ai-radiance-q27` and `gpu-ai-llama-swap`; the 502 idle-law
+interlock — 502 / peer proxy error / no endpoints / loud / never silent,
+with a 503-purge ban (r2 re-pin, see addendum);
 the reversed-order fixture REDS — self-proven). Verified at handoff against
 a conforming fixture set via the documented env overrides (§12.5 law):
 truthful note + landed-subtree fixture ⇒ 5 ok; second args block ⇒ T2 RED;
@@ -4496,3 +4498,35 @@ verifies with its transfer checks; my own 8308a3719 still NON-FLIP; bare
 run 5 ok. Mechanical completion, not a loosening: no claim-moving wave gains
 a path it lacked (shapes checked first, multiset ⊆ count-equality as a
 rejector), and carrier waves can only pass by being provably neutral.
+**Recorded honestly:** the DROPPED `touches_carrier` proxy never listed
+`charts/radiance/values.yaml` at all, so the old guard also blessed a
+standalone radiance claim-line wave (rename the pool in the radiance chart
+with no service file, no runbook, no partner — carrier law is exactly what
+that is); the census-first repair closes THAT hole too, not merely the D56
+reachability gap.
+
+**C15-review-r2 same-wave arm change — the 502 re-pin (test lane, cause
+named):** the AC8 "503-while-idle honesty" arm (test_q27_lane.py), the
+boot-note validator's same arm (radiance-q27-boot.sh T5) and the q27 peer
+evidence header all repeated an unsourced **503** that originated as the
+launch prompt's parenthetical and propagated into the plan as if evidence —
+the D54(4)/§R19-Q4 discipline ("no number without its condition") applies
+to status codes exactly as to tok/s figures. Reviewer-sourced truth (llama-
+swap proxy/peerproxy.go + internal/router/peer.go, docs/PR #619): network
+errors surface as a structured **502 peer proxy error**, and a replicas-0
+Service has NO endpoints, so the dial fails at transport — llama-swap
+neither health-checks nor hides peers, so `/v1/models` still advertises the
+idle lane. "Loud, never silent" SURVIVES; 503 does not. All three carriers
+re-pointed to the canonical sentence's FIVE interlock tokens (502 / peer
+proxy error / no endpoints / loud / never silent) as a vocabulary contract
+with dev's r2; new arms: `_idle_law_missing` fixture-self-proven both ways
+(canonical PASS, bare-503 and token-dropping carriers RED on every run),
+`test_c15_503_swept_from_the_idle_law_carriers` (grep-style class ban, the
+AC4 idiom, over services/.opencode/.rulesync — word-boundary, so port 5030
+and gnetId 15038 are naturally clean), and the two enforcement-parity closes
+(item 3: `Q27_HEADROOM_GIB` now consumed by the overlay-comment arm; item 4:
+the render-inert q27 `modelPath` copy armed against the args literal with
+the three-place keep-in-step law). The AC8 arm is DESIGNED-RED naming
+C15-r2 until dev re-words the carriers — and `AMD_GPU_FLIP_COMMIT=<r2 sha>`
+must stay NON-FLIP: comment-only rewording moves no claim line (proven
+against 801e66693 itself, a carrier-only claim-neutral wave).

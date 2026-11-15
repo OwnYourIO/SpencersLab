@@ -352,6 +352,46 @@ def test_c15_q27_pack_ledger_comment_verbatim():
     assert re.search(r"(?i)ungated", flat), "cf-143 C15: 'ungated' is not stated (§R19-S1)"
 
 
+def _idle_law_missing(text):
+    """The idle-hop interlock validator (C15 review-r2 re-pin of the 503
+    arm — the code was a coord-side parenthetical treated as evidence; the
+    reviewer's sourced truth from llama-swap proxy/peerproxy.go +
+    internal/router/peer.go: network errors surface as a structured
+    502 peer proxy error, and a replicas-0 Service has no endpoints, so the
+    dial itself fails). 'Loud, never silent' survives; 503 does not.
+    Returns the missing-token list: empty means the carrier speaks the
+    canonical law — 502 + 'peer proxy error' + 'no endpoints' + loud +
+    never silent — and has purged every 503 claim. Dev writes EXACTLY the
+    canonical shape (D54(4): no figure or code ships without its source);
+    the five interlock tokens are the agreed vocabulary, nothing else."""
+    missing = []
+    if re.search(r"(?<![0-9])503(?![0-9])", text):
+        missing.append("still claims the 503 code (wrong and unsourced — the sourced code is 502)")
+    for pat, tok in (
+        (r"(?<![0-9])502(?![0-9])", "502"),
+        (r"(?i)peer proxy error", "peer proxy error"),
+        (r"(?i)\bno endpoints\b", "no endpoints"),
+        (r"(?i)\bloud\b", "loud"),
+        (r"(?i)never silent", "never silent"),
+    ):
+        if not re.search(pat, text):
+            missing.append(f"interlock token {tok!r}")
+    return missing
+
+
+# Fixtures the leg proves itself with (§12.14 green-both-ways): the canonical
+# sentence must PASS, a bare-503 carrier and a token-dropping carrier must
+# FAIL. Dev's carriers (the service-values regions, the peers block comment,
+# the catalog comment, the skill rows) are re-pointed at this shape in C15-r2.
+_IDLE_CANON = ("while q27 rests at replicas 0, the peers.radiance-q27 hop "
+               "fails with a 502 peer proxy error (the Service has no endpoints; "
+               "llama-swap neither health-checks nor hides peers) — loud, never silent")
+_IDLE_BAD_503 = ("while q27 rests at replicas 0, the peers.radiance-q27 hop "
+                 "answers 503 — loud, never silent")
+_IDLE_NO_HEADCOUNT = ("while q27 rests at replicas 0, the hop fails with a "
+                      "502 peer proxy error (the Service has no endpoints)")
+
+
 def test_c15_q27_switch_discipline_comments():
     """C15 AC8 (T3(h)): the radiance-q27 subtree's comments carry the five
     switch facts, grep-token armed and review-verified:
@@ -360,10 +400,26 @@ def test_c15_q27_switch_discipline_comments():
     2. RESTING STATE — git renders fn 1 / q27 0;
     3. the D31/D32 law — any SYNC re-applies git over hand-scales, OutOfSync
        through the window is EXPECTED (the parked state, not a defect);
-    4. 503-while-idle honesty — the hop answers 503 at rest, never silent;
+    4. the idle-hop law — RE-PINNED at review r2 from the unsourced 503 to
+       the sourced 502 interlock (_idle_law_missing, self-proven on the
+       fixtures below every run); DESIGNED-RED naming C15-r2 until dev
+       re-words the carrier to the canonical sentence;
     5. the no-key ruling — the owner's --api-key rider is DROPPED (D54),
-       WITHOUT writing the env token itself (AC4's grep scopes services/).
-    Designed-red until dev D2 lands the subtree + comments."""
+       WITHOUT writing the env token itself (AC4's grep scopes services/)."""
+    # Teeth first (§12.14): the validator must green the canonical shape and
+    # redden both lie shapes, or it is half a tripwire — this holds on EVERY
+    # run, independent of where the carrier stands.
+    assert _idle_law_missing(" ".join(_IDLE_CANON.split())) == [], (
+        "cf-143 C15-r2: the idle-law validator fails its own canonical fixture — a broken "
+        "arm cannot bless dev's carrier; the TEST lane owns this repair"
+    )
+    assert _idle_law_missing(" ".join(_IDLE_BAD_503.split())), (
+        "cf-143 C15-r2: the idle-law validator PASSES a bare-503 carrier — half tripwire"
+    )
+    assert _idle_law_missing(" ".join(_IDLE_NO_HEADCOUNT.split())), (
+        "cf-143 C15-r2: the idle-law validator PASSES a carrier dropping loud/never-silent "
+        "— half tripwire"
+    )
     flat = " ".join(R.q27_region_text().split())
     missing = []
     down = re.search(r"(?i)\bfn\b[^\n]{0,90}(down|scaled?[^\n]{0,25}\b0\b|replicas[=: ]{1,2}0)", flat)
@@ -382,12 +438,81 @@ def test_c15_q27_switch_discipline_comments():
         missing.append("any-sync-reapplies-git law")
     if not re.search(r"(?i)outofsync[^\n]{0,100}(expected|by design|parked|is the parked|not a defect)", flat):
         missing.append("OutOfSync-through-the-window is EXPECTED")
-    if not re.search(r"(?i)503[^\n]{0,140}(idle|endpoints?|empty|while|at rest)|(?:idle|at rest|replicas[:= ]{1,2}0)[^\n]{0,140}503", flat):
-        missing.append("the 503-while-idle honesty")
+    missing += [f"idle-hop law: {m}" for m in _idle_law_missing(flat)]
     if not re.search(r"(?i)api-?key", flat) or not re.search(r"(?i)(dropped|keyless)", flat):
         missing.append("the no-key ruling (rider DROPPED, D54)")
     assert not missing, (
-        "cf-143 C15 / AC8: the radiance-q27 subtree comments lack: " + "; ".join(missing)
+        "cf-143 C15 / AC8: the radiance-q27 subtree comments lack: " + "; ".join(missing) +
+        " — an idle-hop-law item names C15-r2: dev re-points the carrier to the canonical "
+        "502 sentence (peer proxy error / no endpoints / loud / never silent, no 503)"
+    )
+
+
+def test_c15_q27_headroom_arithmetic_commented():
+    """D54(1) leg c, now CONSUMING the Q27_HEADROOM_GIB constant (C15-r2
+    gap close: a constant next to a spec claim with no reader is how the
+    spec starts lying about coverage). The overlay's own comment must carry
+    the arithmetic that makes co-scheduling arithmetically dead — the node
+    figure 125.08 and the resulting 9.80 GiB free at fn's 110 — so the
+    replicas-0 resting state keeps its WHY where the next reader looks, not
+    only in DECISIONS."""
+    flat = " ".join(R.q27_region_text().split())
+    assert R.Q27_HEADROOM_GIB in flat, (
+        f"cf-143 C15: the radiance-q27 subtree comment does not state the {R.Q27_HEADROOM_GIB} GiB "
+        "node-free headroom at fn's 110 (§D54-H: 125.08 − 110 − 4.125 − 1.158) — the resting "
+        "replicas 0 must carry its arithmetic"
+    )
+    assert "125.08" in flat, (
+        "cf-143 C15: the 125.08 GiB allocatable term of the co-scheduling death is missing "
+        "from the q27 subtree comment — a bare 9.80 without its inputs is vocabulary, not law"
+    )
+
+
+def test_c15_q27_subtree_model_path_matches_the_args():
+    """C15-r2 enforcement parity (the review's open question): fn's decorative
+    app-template.modelPath copies are armed (test_serve_args.py's dual-edit
+    leg, test_coexistence_wiring's scalars leg) while q27's copy had ZERO
+    consumers — the line is render-inert (reviewer-proven: the overlay args
+    carry the pack path literally; the fn anchor cannot splice across
+    documents), so a retarget that edits only that line would pass CI
+    silently. This leg exists so it cannot silently disagree: subtree
+    modelPath == the Q27_PROFILE --model literal. The law is three-place —
+    modelPath here, the args --model, the init PACK — keep them in step on
+    any retarget, exactly as the subtree's own comment says."""
+    block = R.q27_service_block()
+    assert isinstance(block, dict), (
+        "cf-143 C15: no radiance-q27 subtree (dev D2) — designed-red naming C15"
+    )
+    sub = (block.get("app-template") or {})
+    assert sub.get("modelPath") == R.Q27_PROFILE["--model"], (
+        f"cf-143 C15-r2: the q27 subtree re-pins app-template.modelPath {sub.get('modelPath')!r}, "
+        f"want {R.Q27_PROFILE['--model']!r} — the value the ARGS carry. The line renders nothing "
+        "but is part of the three-place pack truth (modelPath / --model / init PACK): a retarget "
+        "moves all three together (the fn dual-edit law's second-release twin)"
+    )
+
+
+def test_c15_503_swept_from_the_idle_law_carriers():
+    """The class arm for the r2 re-pin (§12.14's law made grep-style, the
+    AC4 idiom): the unsourced 503 may not survive in ANY prose carrier of
+    the idle-hop law — services/, .opencode/, .rulesync/ (word-boundary, so
+    ports like 5030/gnetId 15038 are naturally excluded). DESIGNED-RED
+    naming C15-r2: dev replaces every carrier with the canonical 502
+    sentence (the reviewer sourced llama-swap's ErrorHandler → 502 Bad
+    Gateway 'peer proxy error'; replicas 0 means no endpoints, and
+    llama-swap neither health-checks nor hides peers — loud, never silent,
+    but at the RIGHT code)."""
+    out = subprocess.run(
+        ["git", "grep", "-nw", "503", "--", "services", ".opencode", ".rulesync"],
+        capture_output=True, text=True, cwd=R.REPO_ROOT, timeout=120,
+    )
+    hits = [ln for ln in out.stdout.splitlines() if ln.strip()]
+    assert out.returncode == 1 and not hits, (
+        "cf-143 C15-r2: the unsourced 503 idle-code claim survives in law carriers —\n  "
+        + "\n  ".join(hits[:8])
+        + "\nreplace each with the canonical sentence (502 peer proxy error / no endpoints / "
+        "loud / never silent); the token ban is D54(4)-class: a status code is a number and "
+        "ships only with its source"
     )
 
 

@@ -30,9 +30,12 @@
 # behaviour, and a correction re-pins the arms, never a silent retarget.
 #
 # Keyless posture inherited from fn (D8/D54(2)): no apiKey here, no secret
-# anywhere on the lane. While the q27 pod rests at replicas 0 the hop
-# answers 503 (the Service exists, endpoints empty) — an INTENTIONAL idle
-# lane, never silent (D54 ruling; the C16 boot note owns the console text).
+# anywhere on the lane. Idle law (C15 review-r2 re-pin — the 503 this file
+# first carried was an unsourced coord parenthetical; the sourced truth is
+# llama-swap's ErrorHandler over a no-endpoints dial): while q27 rests at
+# replicas 0, the peers.radiance-q27 hop fails with a 502 peer proxy error
+# (the Service has no endpoints; llama-swap neither health-checks nor hides
+# peers) — loud, never silent (D54; the C16 boot note owns the console text).
 #
 # models_states is APPEND-ONLY history; the seeded state is the one-id list
 # the owner recipe + honest-id law rule (peer models exactly
