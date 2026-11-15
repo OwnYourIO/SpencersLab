@@ -89,13 +89,11 @@ charts:
   # hash-gate grammar, the drift class this ticket keeps paying for. The
   # base appset derives the Application name serviceName+appName =
   # gpu-ai-radiance-q27 — the host of the peers.radiance-q27 hop below; a
-  # release name drifting from it silently breaks that route. Git renders
-  # this release at replicas 0 (the radiance-q27 subtree at the foot of
-  # this file): an idle pod at 1 would Pend forever against the capacity-1
-  # gpu-r9700-1 pool and LOOK like a defect — 0 is the honest resting
-  # state and the owner flips the lane by scaling (D54(1)). Keyless chart
-  # (D8/D54(2)): no bitwardenIds here, no custom-values leg — the trio
-  # law's documented skip, same as fn. ServerSideApply "false": the
+  # release name drifting from it silently breaks that route. What this
+  # release renders, and why it rests at zero replicas, live in ONE place:
+  # the radiance-q27 subtree's switch discipline at the foot of this file.
+  # Keyless chart (D8/D54(2)): no bitwardenIds here, no custom-values leg —
+  # the trio law's documented skip, same as fn. ServerSideApply "false": the
   # llama-swap-family shape (gotcha 6).
   radiance-q27:
     namespace: default
@@ -131,7 +129,9 @@ ingress:
     # law's proxy leg stays SKIPPED for it: its clients reach the engine only
     # through the llama-swap peers.radiance-q27 route below, and inventing a
     # host here would publish the very surface the peers hop exists to keep
-    # private. Idle at rest the hop answers 503 — loud, not exposed.
+    # private. Idle at rest the hop fails with a 502 peer proxy error (the
+    # Service has no endpoints; llama-swap neither health-checks nor hides
+    # peers) — loud, never silent, and still internal-only.
     ai-llama-swap:
       service: gpu-ai-llama-swap
       port: 8080
@@ -686,13 +686,14 @@ llama-swap:
       # §R19 VERDICT), but the cold-load first-byte knob keeps the shape.
       # setParams "priority?" = the set-if-undefined floor 4 — q27's
       # DEFAULT class under the same higher-wins polarity. fn's 5 floor is
-      # NOT reused (D54: "do not steal fn's ranks"): the trio's 8/4/0 sits
+      # NOT reused (D54: "fn's ranks are NOT stolen"): the trio's 8/4/0 sits
       # strictly below fn's 9/5/1 with the polarity un-inverted (D56(5));
       # cross-pod ordering is meaningless anyway — each pod schedules its
       # own queue, so the ranks are this lane's internal class identity.
-      # Honest caveat: while the q27 pod rests at replicas 0 the hop
-      # answers 503 (the Service exists, endpoints empty) — an INTENTIONAL
-      # idle lane, never silent.
+      # Honest caveat: while q27 rests at replicas 0, the peers.radiance-q27
+      # hop fails with a 502 peer proxy error (the Service has no endpoints;
+      # llama-swap neither health-checks nor hides peers, so the id stays
+      # advertised) — an INTENTIONAL idle lane: loud, never silent.
       radiance-q27:
         proxy: http://gpu-ai-radiance-q27.default.svc.cluster.local:8000
         models:
@@ -852,9 +853,10 @@ radiance:
 #    chart-baked claim is non-subtractable (D26: overlays ADD, never remove),
 #    so a second radiance pod Pends against the pool forever; fn TP1 holds
 #    ~28-30 of the ~31.86 GiB usable card while q27 wants 18.07 weights +
-#    ~12.48 KV = 30.55 GiB; and host RAM at fn's 110 pair leaves
-#    125.08 - 110 - 4.125 - 1.158 = 9.80 GiB free — below this lane's own
-#    limit-minus-printed-pinned >= 4 slack law at any safe number.
+#    ~12.48 KV = 30.55 GiB > our 29.30 claimable (§R19-Q1(i)) — claimable
+#    is the ceiling that binds here, not usable; and host RAM at fn's 110
+#    pair leaves 125.08 - 110 - 4.125 - 1.158 = 9.80 GiB free — below this
+#    lane's own limit-minus-printed-pinned >= 4 slack law at any safe number.
 #  * RESTING state: git renders the fn 1 / q27 0 pair. The owner flips the
 #    lane by scaling; 0 is not a disable artifact — every byte below is
 #    deploy-ready for the flip.
@@ -862,9 +864,11 @@ radiance:
 #    flip survives only until the next sync — OutOfSync through the switch
 #    window is EXPECTED (that is the parked swap, not a defect to chase).
 #  * Idle honesty: while q27 rests at replicas 0, the peers.radiance-q27 hop
-#    answers 503 — the Service exists, endpoints empty. A loud idle lane,
-#    never a silent one; routing there before the owner scales it up is the
-#    503, by design.
+#    fails with a 502 peer proxy error (the Service has no endpoints, and
+#    llama-swap neither health-checks nor hides peers, so the id stays
+#    advertised) — loud, never silent: routing here before the owner scales
+#    the lane up is a refusal the client SEES, by design. D57 is the code's
+#    source.
 #  * NO-KEY ruling (D54(2)): the owner's recipe carried an --api-key rider;
 #    it is DROPPED — the lane is keyless like fn (D8). No such secret exists
 #    repo-wide, and keying it would be a DECISIONS change plus a fourth
@@ -880,10 +884,10 @@ radiance-q27:
     modelPath: /models/radiance/qwen3.8-27b-mxfp4.rad
     controllers:
       radiance:
-        # The pod-swap resting state (D54(1)): git renders 0; the owner
-        # scales up to flip the lane (see the switch discipline above). An
-        # idle pod at 1 would Pend forever against the capacity-1 pool and
-        # LOOK like a defect — 0 is the honest shape.
+        # The pod-swap resting state (D54(1)): git renders 0 and the owner
+        # scales up to flip the lane. The switch-discipline header above
+        # states WHY replicas 0 — the three blockers, and the sync law that
+        # makes a hand-scale a parked state rather than a defect.
         replicas: 0
         containers:
           radiance:
@@ -942,11 +946,15 @@ radiance-q27:
               # pod-class law is carried chart-side: the serve map below
               # and the chart-baked init pair both stay equal).
               # Justification at the scalar (§R19-Q3, receipts not vibes):
-              # pinned host ~8.5 GiB measured at --placement all_vram
-              # (Wilde) + the slots/tier-derived state band 16-20 GiB for
-              # this recipe (80 checkpoint slots x 144 MiB + the 4 GiB host
-              # tier + margin) + the lane's own limit-minus-printed-pinned
-              # >= 4 law => 24. cpu "8" and the amd.com/gpu-r9700-1 claim
+              # two INDEPENDENT legs, neither an addend of the other. The
+              # band leg — the cgroup-total for this recipe is 16-20 GiB and
+              # already CONTAINS the 80 slots x 144 MiB checkpoint store
+              # (11.25 GiB) plus the 4 GiB host tier, so 24 clears the band
+              # with the engine's 4 GiB slack (24 >= 20 + 4). The pinned
+              # leg — the ~8.5 GiB Wilde measured at --placement all_vram
+              # feeds the limit-minus-printed-pinned >= 4 law
+              # (24 - 8.5 = 15.5 >= 4). cpu "8" and the
+              # amd.com/gpu-r9700-1 claim
               # are NOT re-authored here because they CANNOT be: the map
               # deep-merge adds/updates keys and NEVER removes (D26), so
               # they arrive chart-inherited — non-subtractable, and the

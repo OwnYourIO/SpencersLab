@@ -750,9 +750,12 @@
         // CONCURRENCY caveat, not a context number (§R19-Q1: dense q27
         // cannot stream, attention context is VRAM-only at ~32 KiB/token
         // fp8, so 8x200K is addressed worst-case, never funded).
-        // Pod-swap law: git renders this lane idle (replicas 0) — routing
-        // here before the owner scales the pod up answers 503, and that IS
-        // the idle lane, not an outage. MEASUREMENT-CONDITIONAL: nothing
+        // Pod-swap law, code sourced at D57: while q27 rests at replicas 0,
+        // the peers.radiance-q27 hop fails with a 502 peer proxy error (the
+        // Service has no endpoints; llama-swap neither health-checks nor
+        // hides peers) — loud, never silent. Routing here before the owner
+        // scales the pod up is the idle lane refusing, not an outage.
+        // MEASUREMENT-CONDITIONAL: nothing
         // routes here by default and the pipeline runner-model literal
         // does NOT move — these rows exist for the owner's opt-in, and the
         // lane joins the runner pool only after a receipt on THIS box.
