@@ -13,7 +13,7 @@
   },
   "test_session": "ses_e3341864effeGtB69Py9rDwbH5",
   "current_wave": 12,
-  "updated_at": "2026-11-15T01:02:00+00:00",
+  "updated_at": "2026-11-15T03:28:29+00:00",
   "kickoff": {
     "card": "Na5LxMaY3ptABWhAy",
     "card_number": 143,
@@ -692,15 +692,16 @@
       "note": "DOCS-ONLY ROUND (D36): tuning-note §1 LINK ladder refreshed on §D10 — rung-0 ritual FALSIFIED by the owner-executed cold boot (boot id 4d6202d9 @21:34:43Z reprinted 8.0 GT/s x4 @48% busy); ladder now reseat -> Gen4-rated cable -> DOCK-BYPASS (decisive, R10-Q3) -> BIOS-EQ last/trust-flagged; NOT-fixes row (pcie_aspm=off no speed R10-S9; setpci moot at TargetSpeed=16) + d3cold_allowed=0 + amdgpu.runpm=0 STABILITY row due regardless (ArcheoCodix same-DEG1 precedent, R10-S6); HEAT-ENGINE rewrite on the recovered exit banner (mover ENGAGED, 0-dispatches=read artifact, 154!=capacity (300 w/ loans), churn ~90-100 MiB/token rides the same link -> link-first strengthened; rates same-mid-ramp; fixed probe + step-6 gate unrun); self-corrections: 61% citation never existed (census 49/50/48), §D8.2(b) superseded; fiction-ban/marker/T4-coherence survival + frozen tokens + render-diff-EMPTY docs-only law. Authority §D10; reopen complete->approved with reason."
     },
     "C15": {
-      "status": "pending",
+      "status": "in_progress",
       "wave": 12,
       "depends_on": [
         "C14"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "CHANGES_REQUESTED (r1, 8308a3719..801e66693): one blocking — the unsourced 503 idle code, a coord-side invention per D57 — plus four prose Minors; ALL CLEARED by dev r2 0b8d43ba3 (charts/radiance 68/68 green, naming witness NON-FLIP at the real sha, render byte-identical); review r2 pending",
+      "handoffs": [],
+      "note": "RECORDS-CORRECTION ROUND (D57, 2026-11-15): chunk D3/D5/AC8 lines and the plan Risks line now carry SUPERSEDED BY D57 markers (originals kept — supersede, never delete); canonical idle sentence token-pinned to 502 / peer proxy error / no endpoints / loud / never silent."
     },
     "C16": {
       "status": "pending",
@@ -711,7 +712,8 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [],
+      "note": "IDLE-LAW GUARD (D57 records-correction): the note's idle sentence must be written from DECISIONS D57 + TEST_SPEC §12.16 (T5's 502 interlock: 502 / peer proxy error / no endpoints / loud / never silent), NEVER from chunks/C15.md's SUPERSEDED text; the T5 validator reddens on the superseded code and on any dropped token. Guard line added to the chunk's What-must-NOT-be-done section."
     }
   },
   "blocked": [],

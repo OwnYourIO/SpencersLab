@@ -1536,6 +1536,13 @@ are GREEN witnesses and must stay byte-untouched).
   arm re-pin, never a silent retarget.
 - The idle lane answers 503 through the peer hop (Service exists, endpoints empty) — honest
   by design, stated in the overlay comment + the boot note; nothing auto-routes there.
+  **[SUPERSEDED BY D57]** the `503` was a coord-side invention in the C15 launch prompt — zero
+  hits in any source doc; review r1 caught it. Sourced truth (llama-swap `proxy/peerproxy.go` /
+  `internal/router/peer.go`): while q27 rests at replicas 0, the peers.radiance-q27 hop fails
+  with a 502 peer proxy error (the Service has no endpoints; llama-swap neither health-checks
+  nor hides peers) — loud, never silent. The honest-by-design / nothing-auto-routes half of the
+  line above survives; the status code does not. See the delta-8 records-correction section
+  below; line kept as written — history is superseded, never deleted.
 
 ### Open questions (extension — for the coord's ONE batched round; best guesses already shipped)
 - **OQ-15** — `--host ::` (shipped, the fn-lane idiom) vs the recipe's literal `0.0.0.0`: both
@@ -1546,3 +1553,31 @@ are GREEN witnesses and must stay byte-untouched).
   (§R19 carries no floor row; vLLM's `priority=0`=unset precedent does NOT transfer).
   Recommendation: ship 8/4/0, let C16's smoke confirm; fallback 8/4/2 if 0 reads oddly.
   (Best guess shipped, NON-BLOCKING.)
+
+### Records-correction — the C15 review round (2026-11-15, D57)
+
+- **What the review round caught:** C15 r1 came back CHANGES_REQUESTED with ONE blocking
+  finding — every carrier of the q27 idle sentence asserted an unsourced `503` where llama-swap
+  actually answers a structured **502 peer proxy error** (`proxy/peerproxy.go` /
+  `internal/router/peer.go`; at `replicas: 0` the Service has no endpoints so the dial is
+  refused at transport, while `/v1/models` keeps advertising the id because llama-swap neither
+  health-checks nor hides peers) — plus four prose Minors. Dev r2 `0b8d43ba3` cleared all five
+  (prose-only, render byte-identical, C15 green 68/68, naming NON-FLIP at the real sha); the
+  test lane re-pinned the arms at `84394772c`, arming the five-token interlock (502 / peer
+  proxy error / no endpoints / loud / never silent) and a `git grep -nw 503` class-sweep leg.
+  Review r2 (closure re-verification) pending.
+- **Coord-side, not subagent-side:** the fiction originated in MY launch prompt to `agent-plan`,
+  appeared in NO source document (zero grep hits across RESEARCH/DECISIONS/EXPLORE), was consumed
+  as an answer, and propagated into this plan, `chunks/C15.md` (D3/D5/AC8), seven implementation
+  carriers and one test needle. Downstream roles cannot tell a plan-level parenthetical from the
+  sourced figures it sits beside — a plan parenthetical is NOT evidence.
+- **The law this produced (D57):** a status code, like a figure, ships only with its source or
+  with an explicit `UNVERIFIED` marker — no exceptions for numbers quoted in a brief.
+- **The second coord error of the same round (D57):** my brief claimed the ~335–409K q27
+  aggregate was "reduced by `--prefix-cache-mib 4096` ≈ 131K tokens", reasoning that the prefix
+  tier is carved out of the KV pool. **§R19-Q2 says the opposite** — the 4 GiB tier is
+  host-side, "neither taken out of the KV pool nor resident in VRAM" — so the shipped comments
+  are right and the brief was wrong: `--prefix-cache-mib 4096` does NOT eat conversation
+  capacity, the aggregate stays ~335–409K, and the first-boot receipt remains the witness, not
+  a smaller number. C16's owner-facing note is written from THIS correction (guard added to
+  `chunks/C16.md`), never from the superseded brief.
