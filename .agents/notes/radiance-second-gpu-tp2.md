@@ -253,6 +253,15 @@ Host-RAM honesty: TP2 relieves VRAM contention, not the RAM pin ceiling —
 pins still sum against the ≈120.6 GiB cap formula with the 4-GiB-free rule,
 and the ngram table is per-process unless `ram=DIR` sharing (§10) [RQ1].
 
+**[HONORED (cf-143 C15/C16, 2026-11-15).]** The q27 lane shipped on the
+single card and this ruling held exactly as written — HONORED, not bypassed:
+two engines on one card were never attempted. What shipped is
+what the single-card arithmetic allows (§R19-Q1/Q3): a pod-swap lane
+resting at `replicas: 0`, fn DOWN first then q27 UP, one engine holding
+the card at a time — see §11's dated SHIPPED note and the console steps
+in `.agents/notes/radiance-q27-boot.md`. The lift condition stated above
+stands unchanged: beside-fn co-residency needs the second card.
+
 ## 10. Host-prep deltas vs the single-card list
 
 The single-card host gates (C06 step-0(e): ReBAR, CWSR=1, ECC-off,
@@ -312,6 +321,24 @@ values change that reaches the cluster through ArgoCD alone:
      `peers.radiance-tp2` block beside the existing two (proxy to the new
      service on 8000, NO `/v1` suffix, timeouts 1800/30, `priority?` floor
      5) · its own per-peer evidence file joins the D13 per-key law.
+     **[SHIPPED (cf-143 C15, 2026-11-15) — the single-card half of this
+     sketch landed, in pod-swap shape.]** Annotate, never rewrite: the
+     sketch above stays verbatim as the historical deferral (the
+     supersede-never-delete idiom of `chunks/C15.md`'s SUPERSEDED
+     markers). The deferred plumbing resolved as: ONE chart dir kept — the
+     roster `charts:` entry took a `chart: radiance` override on
+     `charts/radiance` (D56(1)) — the sibling subtree shipped as
+     `radiance-q27:` (the sketch's `radiance-tp2` key names became
+     `radiance-q27`), the peer joined as `peers.radiance-q27` beside the
+     existing two, and its own per-key evidence file
+     (`charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml`)
+     closed the D13 chain. The shape, plainly: shipped = pod-swap at
+     replicas 0 on ONE card — fn DOWN first, then q27 UP (D54(1); the
+     console steps live in `.agents/notes/radiance-q27-boot.md`). What
+     did NOT ship is the beside-fn co-residency this sketch pictured: it
+     still unlocks only with card 2 (AD-144), and then rides §6's pool
+     RE-VERIFICATION law. Host-RAM re-pin numbers stay untouched
+     (D30(5)/§R8 stand).
 6. **Catalog second row**: for a q27 lane, add rows under the honest-id law
    (e.g. `qwen3.8-27b-radiance` + `-urgent`/`-low` wire-siblings sharing the
    modelID, `body.priority` 9/5/1, `limit.context` = that pod's served
@@ -384,3 +411,8 @@ P2P fallback is the measured mailbox path of §2, not a crash.
 - The doc is the follow-up card's ONLY content source — written
   self-contained so an owner reading the card needs nothing from this
   folder. Card creation itself is a coordinator run-end action (Q6).
+- 2026-11-15 (cf-143 C15/C16): §9 carries a dated HONORED pointer and
+  §11 item 5 a dated SHIPPED note for the q27 lane that landed on ONE
+  card in pod-swap shape. The annotations ADD — the sketch, the
+  single-card ruling and every pre-existing section stay as written;
+  their citations resolve in this folder's RESEARCH.md (the §R19 round).
