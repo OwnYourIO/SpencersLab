@@ -192,10 +192,11 @@ wait and re-run these lines rather than restarting anything.
 Read, in order:
 
 1. **The `/diagnostics` config print** — the flags the engine ACTUALLY has.
-   It must equal the block above; the quick repo-side proof is the same
-   jsonpath read the fn runbook's step 5 uses, aimed at
-   `gpu-ai-radiance-q27`. A mismatch means the overlay drifted — git-class
-   fix, stop.
+   It must equal the block above; the quick repo-side proof is the fn
+   runbook's step-5 jsonpath read aimed at `gpu-ai-radiance-q27` —
+   `kubectl -n default get deploy gpu-ai-radiance-q27 -o jsonpath='{.spec.template.spec.containers[?(@.name=="radiance")].args}' | tr ',' '\n'`
+   (one command, read-only). A mismatch means the overlay drifted —
+   git-class fix, stop.
 2. **The VRAM-split block — `weights by tier` and the `kv cache` lines.**
    This is the pending receipt D54(4) named: the pool line reads
    `kv: the pool backs N% of the worst case … M full-length sessions`
@@ -247,6 +248,14 @@ Read, in order:
    live. Expect `16.0 GT/s x4` — the chapter is CLOSED (D44/D51). A lower
    read after a power event is the known re-latch class (D35/D43): report
    it into the tuning note's LINK chapter; this note fixes nothing.
+8. **The `/dev/shm` footprint.** Round 7 named this unpriced line: the
+   chart ships the lane a 2 GiB memory-backed `/dev/shm` (the `shm`
+   persistence entry of `charts/radiance/values.yaml`) and neither §R19
+   nor the plan prices it. Look at `/dev/shm` usage inside the pod across
+   load and the Step 5 smoke, and at the engine's own complaint if it
+   needs more room. What it decides: whether that 2 GiB chart default is
+   sufficient for a dense 27B lane. UNVERIFIED — no measurement exists;
+   this row fixes the receipt, claims no size, changes no value.
 
 If any print contradicts `200000` or `24`: report it. Do NOT improvise a
 fix — the repair is DECISIONS → values → arms in one wave (D36(4)), never
@@ -317,7 +326,7 @@ serves text perfectly; the claim is what moves.
 
 | figure | exactly what it measures | source |
 |---|---|---|
-| 122 tok/s | the MODEL CARD (creator) TP1, SINGLE-stream mixed-prompt mean — prose leg 77, code leg 164; greedy, 768 tokens × 8 prompts, drafter auto | R19-A |
+| 122 tok/s | the MODEL CARD (creator) TP1, SINGLE-stream mixed-prompt mean — prose leg 77, code leg 164; greedy, 768 tokens × 8 prompts, drafter auto; UNVERIFIED-2: the creator rig's host/link is NOT stated, so the GUIDE's Gen5 never rides onto this figure | R19-A |
 | 280 tok/s | the same card's TP1 4-stream TOTAL (≈70/user) — the batch-shape row | R19-A/R19-C |
 | 116 tok/s | Thomas Wilde, THIRD-PARTY, n=4 follow-up decode at 64K context on a Gen4 board (cold rows 126.9; 93.5 at 128K) | R19-B |
 | 50/user, box 106 | the 8-lane serving reality at 64K on Wilde's TP2 rig — flat box total with more users, TTFT 10.2 s; the batch reality at 8 lanes looks like THIS class, not the single-stream rows | R19-D |

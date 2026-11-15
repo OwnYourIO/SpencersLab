@@ -249,6 +249,13 @@ card outright (weights ~18.07 + KV ~12.48 receipt class; host side ≈8.5 GiB)
 — the session-capable lane it replaces is the same shape on one card today.
 Priority stays higher-wins 9/5/1 across BOTH pods — radiance honors the body
 field on every engine, opposite polarity to the retired vLLM table (RQ2).
+**[SHIPPED rank correction (cf-143 C15/C16, 2026-11-15).]** Annotate, never
+rewrite: this pre-D54 example shipped differently — the q27 trio SHIPPED as
+8/4/0 + peer floor 4 per D56(5) (`services/gpu-ai/prod/values.yaml`,
+`radiance-q27`), while fn keeps 9/5/1, and D54 records that
+"fn's ranks are NOT stolen". The higher-wins polarity above is the surviving
+law and the point of the paragraph; only the example ranks are superseded,
+and each pod schedules its own queue regardless.
 Host-RAM honesty: TP2 relieves VRAM contention, not the RAM pin ceiling —
 pins still sum against the ≈120.6 GiB cap formula with the 4-GiB-free rule,
 and the ngram table is per-process unless `ram=DIR` sharing (§10) [RQ1].
@@ -344,6 +351,13 @@ values change that reaches the cluster through ArgoCD alone:
    modelID, `body.priority` 9/5/1, `limit.context` = that pod's served
    truth) via the rulesync source, `generate --check` clean — mirroring the
    radiance trio C05 lands.
+   **[SHIPPED (cf-143 C15/C16, 2026-11-15) — the example's ranks, not the
+   law.]** This example predates D54/D56(5): the q27 trio SHIPPED as 8/4/0 +
+   floor 4 per D56(5); fn keeps 9/5/1, and D54 records that
+   "fn's ranks are NOT stolen". Annotate, never rewrite — the honest-id
+   law, the wire-sibling shape and the higher-wins polarity stand exactly
+   as sketched; the ranks are per-pod class identity (each pod schedules
+   its own queue).
 7. **Acceptance re-run**: re-run the cf-143 on-target acceptance runbook
    (`.agents/notes/radiance-on-target-acceptance.md`, C06) at the TP2
    shape — its step-0 naming gates now including the new card's §6 receipt,
