@@ -463,7 +463,7 @@ grafana:
       node-exporter-full:
         # renovate: depName="Node Exporter Full"
         gnetId: 1860
-        revision: 45
+        revision: 46
         datasource: Prometheus
       smart:
         # renovate: depName="Dashboard for smartctl_exporter"
@@ -576,7 +576,7 @@ grafana:
       node-exporter-full:
         # renovate: depName="Node Exporter Full"
         gnetId: 1860
-        revision: 45
+        revision: 46
         datasource: Prometheus
       node-feature-discovery:
         url: https://raw.githubusercontent.com/kubernetes-sigs/node-feature-discovery/master/examples/grafana-dashboard.json
