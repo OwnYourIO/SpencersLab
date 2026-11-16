@@ -15,7 +15,7 @@
 # Alpine: Renovate's native deps (re2, better-sqlite3) need glibc. git is
 # required because dry-run/local-platform operate on a git working tree.
 #
-# Built and pushed by .github/workflows/docker-build.yaml as
+# Built and pushed by .forgejo/workflows/containers-build.yaml as
 # ghcr.io/ownyourio/renovate-mcp. No ENTRYPOINT args: the MCPServer supplies
 # runtime configuration via env (RENOVATE_BASE_DIR, RENOVATE_MCP_REQUIRE_CLI).
 FROM node:26-bookworm-slim@sha256:28147155d47dc31abe0a46e0d12b59b2fb3d0a2dcc5dc65fce76a074180b16fe

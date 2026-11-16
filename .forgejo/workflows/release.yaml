@@ -1,0 +1,475 @@
+# Release Charts — the chart bump+publish pipeline running on Forgejo Actions
+# (cf-55). The prod instance's runner is the single chart-version authority:
+# it detects changed charts, test-builds them, commits Chart.yaml patch bumps
+# to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
+# byte-stable consumer contract) and this instance's Helm package registry.
+#
+# Both instances receive the synced copy, so EVERY job guards on the
+# instance-side repo variable ROLE — the repo-scoped comma-list membership
+# variable of the AGENTS.md Hard rule (Forge Actions guards are ROLE
+# membership, never instance URLs): the guards test membership with
+# contains(), so a list value like dev,prod passes, and a non-prod value
+# renders the guard false and nothing fires — an unguarded twin would
+# double-publish from the dev copy (D8). Unset stays narrow here BY
+# DELIBERATE choice, beside containers-build.yaml's widen: this pipeline
+# commits to main and mints releases, so it must never fire unconfigured.
+# Substring caveat: no future role word may contain prod as a substring —
+# "production" would silently widen these guards. has-changes gating belongs
+# at step level.
+name: Release Charts
+on:
+  push:
+    branches: [main]
+    paths:
+      - charts/**
+
+env:
+  # One pin shared by every cr leg (the retired chart-releaser wrapper is
+  # replaced by direct CLI calls, D3). sha256 is the linux_amd64 archive
+  # checksum from the release's own checksums.txt. The asset host rides a
+  # plain variable because no scheme-qualified forge URL may enter a synced
+  # workflow file — the portability law main-sync already obeys.
+  CR_VERSION: "1.10.1"
+  CR_SHA256: "ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b"
+  RELEASES_HOST: github.com
+
+jobs:
+  changes:
+    if: contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    outputs:
+      charts: ${{ steps.detect.outputs.CHARTS }}
+      has_changes: ${{ steps.detect.outputs.HAS_CHANGES }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The default one-commit checkout would make the event-range diff
+          # below return an empty change set — a silently green "nothing
+          # changed" run, the loudest shallow-clone failure (V-6-1).
+          fetch-depth: 0
+      - name: Detect changed charts
+        id: detect
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Pure-git detection (D3). Forgejo event payloads can carry missing
+          # keys (RESEARCH A3): an absent or all-zero 'before' is the
+          # first-push-on-the-branch shape, diff HEAD^ instead.
+          if [ -z "${EVENT_BEFORE}" ] || [ "${EVENT_BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- charts/ || true)
+          else
+            CHANGED_FILES=$(git diff --name-only "${EVENT_BEFORE}" "${EVENT_SHA}" -- charts/ || true)
+          fi
+          # Only strict DNS-safe names with a Chart.yaml — the proven filter
+          # of the container detect loop.
+          CHARTS=$(echo "$CHANGED_FILES" | cut -d'/' -f2 | sort -u | \
+            grep -E '^[a-z0-9]+(-[a-z0-9]+)*$' || true)
+          RESULT="[]"
+          for c in $CHARTS; do
+            if [ -f "charts/$c/Chart.yaml" ]; then
+              RESULT=$(echo "$RESULT" | jq -c --arg c "$c" '. + [$c]')
+            fi
+          done
+          echo "CHARTS=$RESULT" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+          if [ "$RESULT" = "[]" ]; then
+            echo "HAS_CHANGES=false" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+          else
+            echo "HAS_CHANGES=true" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+          fi
+
+  test-build:
+    if: contains(vars.ROLE, 'prod')
+    needs: changes
+    runs-on: ubuntu-24.04
+    strategy:
+      # A sibling chart's failure must not cancel the remaining smokes;
+      # nothing publishes from this leg, so a matrix per chart is safe here.
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJSON(needs.changes.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # V-6-1 law for this workflow: no leg may rely on shallow-clone
+          # semantics, so every checkout pins full depth (the one-commit
+          # default is what silently empties git-based detection).
+          fetch-depth: 0
+      - name: Set up helm
+        # The act job image carries no helm (RESEARCH C1); pinned installer.
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - name: Patch-bump Chart.yaml (local, never pushed)
+        run: |
+          set -euo pipefail
+          python3 - "charts/${{ matrix.chart }}/Chart.yaml" <<'PY'
+          import re, sys
+
+          path = sys.argv[1]
+          text = open(path).read()
+          m = re.search(r"(?m)^version: (\d+)\.(\d+)\.(\d+)$", text)
+          if not m:
+              raise SystemExit(f"{path}: top-level version: is not MAJOR.MINOR.PATCH")
+          new = f"{m.group(1)}.{m.group(2)}.{int(m.group(3)) + 1}"
+          # Only the version: line is rewritten — appVersion stays untouched
+          # (the old action's app_version: false semantics).
+          print(f"test-bump {path}: {m.group(0)} -> version: {new}")
+          open(path, "w").write(text[:m.start(1)] + new + text[m.end(3):])
+          PY
+      - name: Add repositories
+        run: |
+          set -euo pipefail
+          for dir in $(ls -d charts/*/); do
+            # NAME + first URL-shaped field: a dependency with an empty
+            # REPOSITORY column shifts "unpacked" into $3, and
+            # `helm repo add <name> unpacked` breaks this step under bash -e
+            # (cf-77 r2 finding — repro: declared subchart with repository: "")
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; exit } }' | while read name url; do
+              if [[ ! "$url" =~ ^oci:// ]]; then
+                helm repo add "$name" "$url"
+              fi
+            done
+          done
+      - name: Lint and package smoke
+        run: |
+          set -euo pipefail
+          # The GitHub twin's build-only leg (its upload step was disabled);
+          # the consumer contract is proven, so the shape stays: dependency
+          # build offline from Chart.lock against the added repos, then lint
+          # and package. No publish API call.
+          mkdir -p /tmp/chart-smoke
+          helm dependency build "charts/${{ matrix.chart }}"
+          helm lint "charts/${{ matrix.chart }}"
+          helm package "charts/${{ matrix.chart }}" --destination /tmp/chart-smoke
+
+  bump:
+    if: contains(vars.ROLE, 'prod')
+    needs: [test-build, changes]
+    runs-on: ubuntu-24.04
+    concurrency:
+      # Opportunistic only: Forgejo documents concurrency as best-effort and
+      # two runners may interleave runs (RESEARCH A3/V-4) — the idempotent
+      # re-check loop below, not this group, is the safety property.
+      group: release-bump-main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The push negotiation needs the real remote tip, not the
+          # single-commit default checkout (V-6).
+          fetch-depth: 0
+      - name: Bump changed charts and fast-forward main
+        env:
+          CHARTS_JSON: ${{ needs.changes.outputs.charts }}
+          PUBLISHED_INDEX: https://ownyourio.github.io/SpencersLab/index.yaml
+        run: |
+          set -euo pipefail
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          # ONE writer looping every changed chart: the matrix bump was the
+          # known-broken commits-stepping-on-each-other shape (D4). Each
+          # attempt re-derives versions from the REMOTE main tip — the
+          # checkout is a detached HEAD, so only a remote-tracking fetch
+          # refspec reads it correctly; a bare pull cannot (V-6-3) — and
+          # from the published GitHub index. The push is plain, so git
+          # itself refuses a stale head: fast-forward-only, a refused
+          # attempt re-loops and can never overwrite (V-4). No secret
+          # reference: the checkout's automatic same-repo credential pushes
+          # main, and its push re-triggers no workflow — that
+          # non-re-trigger is the loop guard (R3/D5).
+          for attempt in $(seq 1 5); do
+            echo "bump attempt ${attempt} of 5"
+            git fetch origin refs/heads/main:refs/remotes/origin/main
+            git reset --hard refs/remotes/origin/main
+            curl -fsSL -o /tmp/published-index.yaml "$PUBLISHED_INDEX"
+            bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml <<'PY'
+          import json, re, sys
+
+          def ver(s):
+              parts = s.split(".")
+              if len(parts) == 3 and all(p.isdigit() for p in parts):
+                  return tuple(int(p) for p in parts)
+              return None
+
+          # Pair a dashless entry name: with a version: line at the SAME
+          # INDENTATION only. A naive line scan resolves inline
+          # dependencies: pins instead (wrapper charts re-use their
+          # upstream dependency's name — traefik's dependency pin 42.1.3
+          # shadows the real entry version 1.0.103 — minting jump releases
+          # on first fire); this pairing is exact on every key of the live
+          # index.
+          published = {}
+          name = None
+          name_indent = -1
+          for raw in open(sys.argv[2]).read().splitlines():
+              line = raw.lstrip(" ")
+              if line.startswith("- "):
+                  continue
+              indent = len(raw) - len(line)
+              m = re.match(r"name:\s*(\S+)\s*$", line)
+              if m:
+                  name, name_indent = m.group(1), indent
+                  continue
+              m = re.match(r"version:\s*(\S+)\s*$", line)
+              if m and name is not None and indent == name_indent:
+                  v = ver(m.group(1))
+                  if v is not None and (name not in published or v > published[name]):
+                      published[name] = v
+
+          bumped = []
+          for chart in json.loads(sys.argv[1]):
+              path = f"charts/{chart}/Chart.yaml"
+              text = open(path).read()
+              m = re.search(r"(?m)^version: (\S+)$", text)
+              if not m:
+                  raise SystemExit(f"{path}: no top-level version: line")
+              # The index keys and release names carry the Chart.yaml NAME,
+              # which may differ from the directory (live example:
+              # charts/traefik-zerotrust is named traefik); looking the
+              # directory up would silently miss its published versions.
+              n = re.search(r"(?m)^name: (\S+)$", text)
+              key = n.group(1) if n else chart
+              tree = ver(m.group(1))
+              if tree is None:
+                  raise SystemExit(f"{path}: version {m.group(1)!r} is not MAJOR.MINOR.PATCH")
+              # Always land strictly above BOTH the tree and the published
+              # index: a published version is never re-minted (the
+              # skip_existing semantics, D17) and an unpublished-version gap
+              # under interleaved runs is benign, not churn (V-4). The
+              # version: line only is rewritten — appVersion stays untouched.
+              base = max(tree, published.get(key, (0, 0, 0)))
+              nxt = f"{base[0]}.{base[1]}.{base[2] + 1}"
+              open(path, "w").write(text[:m.start(1)] + nxt + text[m.end(1):])
+              bumped.append(chart)
+          print(" ".join(bumped))
+          PY
+            )
+            if [ -z "$bumped" ]; then
+              echo "nothing to bump"
+              exit 0
+            fi
+            for c in $bumped; do
+              git add "charts/$c/Chart.yaml"
+            done
+            git commit -m "chore(release): bump ${bumped}"
+            if git push origin HEAD:refs/heads/main; then
+              echo "bumped and pushed: ${bumped}"
+              exit 0
+            fi
+            echo "push refused (main advanced mid-loop) — re-checking" >&2
+          done
+          echo "bump did not land after 5 attempts" >&2
+          exit 1
+
+  release:
+    if: contains(vars.ROLE, 'prod')
+    needs: [bump, changes]
+    runs-on: ubuntu-24.04
+    env:
+      # The only GitHub-side credential of this workflow (D16): bound once at
+      # job level, serving cr's Releases/Pages writes and the gh-pages push
+      # remote's credential slot (main-sync's proven push shape). The
+      # instance leg never sees it, and this leg never sees the instance pair
+      # (D22) — cross-forge identities must not mix.
+      CR_TOKEN: ${{ secrets.PUSH_TOKEN_GH }}
+      PUSH_URL: ${{ vars.PUSH_URL_GH }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # V-6-1 law for this workflow: full depth everywhere. Here it is
+          # load-bearing for git negotiation itself — the main-tip re-read
+          # and cr's pages worktree/pull sequence cannot run against a
+          # one-commit clone (main-sync.yaml's paid lesson, same class).
+          fetch-depth: 0
+      - name: Set up helm
+        # The act job image carries no helm (RESEARCH C1); pinned installer.
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - name: Install cr
+        run: |
+          set -euo pipefail
+          # Direct cr (D3): the wrapper is not on the instance action mirror
+          # and its repository-context-derived owner/repo would target
+          # CuratedForest on this forge (RESEARCH A2/B1/X5). Pinned version +
+          # sha256; the download and the later API upload share the same
+          # unproven-egress class, first-fire-checked (UA-5).
+          curl -fSL --retry 3 -o /tmp/cr.tar.gz \
+            "https://${RELEASES_HOST}/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz"
+          echo "${CR_SHA256}  /tmp/cr.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.cr-bin"
+          tar -xzf /tmp/cr.tar.gz -C "$HOME/.cr-bin" cr
+          chmod +x "$HOME/.cr-bin/cr"
+          echo "$HOME/.cr-bin" >> "$GITHUB_PATH"
+      - name: Configure Git
+        run: |
+          set -euo pipefail
+          # cr's pages worktree commits the regenerated index locally — it
+          # needs a committer identity in the job.
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Pick up the bump commits and release tags
+        run: |
+          set -euo pipefail
+          # The event checkout predates the bump pushes; publish exactly
+          # main's tip. Detached-HEAD checkout: re-read through the explicit
+          # remote-tracking refspec, never a bare pull (V-6-3), and the tag
+          # fetch precedes any cr invocation in cr-running legs (V-6-2 guard).
+          git fetch origin refs/heads/main:refs/remotes/origin/main
+          git reset --hard refs/remotes/origin/main
+          git fetch --tags
+      - name: Add repositories
+        run: |
+          set -euo pipefail
+          for dir in $(ls -d charts/*/); do
+            # NAME + first URL-shaped field: a dependency with an empty
+            # REPOSITORY column shifts "unpacked" into $3, and
+            # `helm repo add <name> unpacked` breaks this step under bash -e
+            # (cf-77 r2 finding — repro: declared subchart with repository: "")
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; exit } }' | while read name url; do
+              if [[ ! "$url" =~ ^oci:// ]]; then
+                helm repo add "$name" "$url"
+              fi
+            done
+          done
+      - name: Publish GitHub Releases and the Pages index
+        if: needs.changes.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          # Explicit GitHub literals, never forge-context identity: the
+          # consumer contract (index asset URLs, renovate, ArgoCD) is
+          # OwnYourIO/SpencersLab (RESEARCH B1/X5).
+          # No --commit: the bump commits live only on Forgejo main until
+          # main-sync fans them out, so cr's default (empty target_commitish,
+          # GitHub resolves the default-branch head) is the one shape that
+          # can never reference a commit GitHub has not seen.
+          cr package charts/*/
+          cr upload --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --skip-existing --token "$CR_TOKEN"
+          # gh-pages is pushed to GitHub through the credential slot (the
+          # proven main-sync push shape) and cr's pages worktree is pointed
+          # at that named remote: cr's default remote is origin, which here
+          # is the Forgejo checkout — publishing the index there would be
+          # silently wrong. cr builds its worktree from the LOCAL
+          # remote-tracking ref and never fetches it, so fetch gh-pages
+          # through the new remote before invoking cr index.
+          rest="${PUSH_URL#https://}"
+          git remote add publish "https://x-access-token:${CR_TOKEN}@${rest}"
+          git fetch publish refs/heads/gh-pages:refs/remotes/publish/gh-pages
+          cr index --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --push --remote publish --token "$CR_TOKEN"
+
+  forgejo-publish:
+    if: contains(vars.ROLE, 'prod')
+    needs: [bump, changes]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # V-6-1 law for this workflow: full depth everywhere — the
+          # main-tip re-read below is a git negotiation that a one-commit
+          # clone cannot serve.
+          fetch-depth: 0
+      - name: Set up helm
+        # The act job image carries no helm (RESEARCH C1); pinned installer.
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - name: Install cr
+        run: |
+          set -euo pipefail
+          # Direct cr (D3): the wrapper is not on the instance action mirror
+          # and its repository-context-derived owner/repo would target
+          # CuratedForest on this forge (RESEARCH A2/B1/X5). Pinned version +
+          # sha256; the download and the later API upload share the same
+          # unproven-egress class, first-fire-checked (UA-5).
+          curl -fSL --retry 3 -o /tmp/cr.tar.gz \
+            "https://${RELEASES_HOST}/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz"
+          echo "${CR_SHA256}  /tmp/cr.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.cr-bin"
+          tar -xzf /tmp/cr.tar.gz -C "$HOME/.cr-bin" cr
+          chmod +x "$HOME/.cr-bin/cr"
+          echo "$HOME/.cr-bin" >> "$GITHUB_PATH"
+      - name: Pick up the bump commits and release tags
+        run: |
+          set -euo pipefail
+          # Package exactly main's tip: explicit remote-tracking refspec on
+          # the detached-HEAD checkout, never a bare pull (V-6-3), and the
+          # tag fetch precedes any cr invocation in cr-running legs (V-6-2).
+          git fetch origin refs/heads/main:refs/remotes/origin/main
+          git reset --hard refs/remotes/origin/main
+          git fetch --tags
+      - name: Add repositories
+        run: |
+          set -euo pipefail
+          for dir in $(ls -d charts/*/); do
+            # NAME + first URL-shaped field: a dependency with an empty
+            # REPOSITORY column shifts "unpacked" into $3, and
+            # `helm repo add <name> unpacked` breaks this step under bash -e
+            # (cf-77 r2 finding — repro: declared subchart with repository: "")
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; exit } }' | while read name url; do
+              if [[ ! "$url" =~ ^oci:// ]]; then
+                helm repo add "$name" "$url"
+              fi
+            done
+          done
+      - name: Package charts
+        if: needs.changes.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+          # cr package is offline (Chart.lock build + helm package); the
+          # tarballs feed the registry curl below.
+          cr package charts/*/
+      - name: Push packages to the instance Helm registry
+        if: needs.changes.outputs.has_changes == 'true'
+        env:
+          # The Actions job token's package permission check is unimplemented
+          # upstream — the same fact containers-build.yaml already pays with
+          # FORGE_PUSH_TOKEN (a human-minted, non-admin write:package PAT on
+          # the account owning the curatedforest namespace). The username
+          # half of the basic-auth pair is cosmetic — the same
+          # identity-from-the-password fact cf-6's docker login states — so
+          # the curls below pair the literal "forge" with the token.
+          FORGE_PKG_TOKEN: ${{ secrets.FORGE_PUSH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Location from runner-injected env at runtime, credential from the
+          # PAT: no instance URL literal enters the synced file (D14's
+          # portable half). The owner is the literal lowercase curatedforest
+          # namespace — registry names are lowercase-only, the law cf-6's
+          # container pushes already carry with this same literal; the
+          # repository context's capitalized owner string is not a valid
+          # package namespace, so no derivation is attempted.
+          pkg_api="${GITHUB_SERVER_URL}/api/packages/curatedforest/helm/api/charts"
+          index_url="${GITHUB_SERVER_URL}/api/packages/curatedforest/helm/index.yaml"
+          # Authenticated index read — private orgs serve no anonymous index
+          # reads (V-3 [41]); a failure simply means nothing is published
+          # on this instance yet.
+          if curl -fsSL --user "forge:${FORGE_PKG_TOKEN}" "$index_url" -o /tmp/instance-helm-index.yaml; then
+            published=1
+          else
+            published=0
+          fi
+          # A re-push of an existing version overwrites on chartmuseum-style
+          # registries (RESEARCH B4, unverified on Forgejo) — skip versions
+          # already in the instance index so a retry never churns. Name and
+          # version must pair at the SAME INDENTATION: an entry's inline
+          # dependencies pins would otherwise satisfy the lookup.
+          for pkg in .cr-release-packages/*.tgz; do
+            base="$(basename "$pkg" .tgz)"
+            chart="${base%-*}"
+            version="${base##*-}"
+            if [ "$published" = 1 ] && awk -v c="$chart" -v v="$version" '
+              $1 == "name:" { found = ($2 == c); match($0, /^ */); nind = RLENGTH }
+              $1 == "version:" && found { match($0, /^ */); if (RLENGTH == nind && $2 == v) ok = 1 }
+              END { exit ok ? 0 : 1 }
+            ' /tmp/instance-helm-index.yaml; then
+              echo "$chart $version already in the instance registry — skipping"
+              continue
+            fi
+            curl -f -X POST --user "forge:${FORGE_PKG_TOKEN}" --upload-file "$pkg" "$pkg_api"
+          done

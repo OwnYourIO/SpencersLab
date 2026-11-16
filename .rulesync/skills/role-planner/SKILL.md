@@ -57,12 +57,13 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
 5. Decide which skills and MCP servers the Code agent will need, using the
    registries in `AGENTS.md` — it runs in a fresh session and loads only what
    your plan names.
-6. Never plan version bumps — CI bumps `Chart.yaml` `version` automatically on
-   merge to main, and containers are tag-based (a `prod`-role main merge
-   pushes `yy.mm.N` + `:latest` + `:main` to both registries via the forge
-   `containers-build.yaml`; the GitHub `docker-build.yaml` is a
-   `workflow_dispatch`-only manual fallback). Only brand-new charts get an
-   initial version (`1.0.0`).
+6. Never plan version bumps — the forge `release.yaml` bumps `Chart.yaml`
+   `version` when changes land on Forgejo main and publishes dual (GitHub
+   Releases/gh-pages + the instance Helm registry); containers are tag-based (a
+   `prod`-role main merge pushes `yy.mm.N` + `:latest` + `:main` to both
+   registries via the forge `containers-build.yaml`; the GitHub
+   `docker-build.yaml` is a `workflow_dispatch`-only manual fallback). Only
+   brand-new charts get an initial version (`1.0.0`).
 7. Right-size the work: multi-session, cross-subsystem, or new-interface
    changes do not belong in one standalone plan — recommend the `agent-*`
    pipeline (`/pipeline`), which will chunk them with fresh plan/test/dev/

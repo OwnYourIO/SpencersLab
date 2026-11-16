@@ -6,8 +6,12 @@
 # subchart dependency in ANY chart breaks every future release job (run-2
 # FRICTION + DECISIONS 2026-10-28 re-weigh).
 #
-# Green TODAY (nothing touches these files yet); a red names the chunk whose
-# edit violated the ruling — dev may not "fix" these by editing the guard.
+# cf-55 moved the builder: the ruling now binds the MOVED file under
+# .forgejo/workflows/ (its name survives the cutover) and the "must not
+# mention strata" assertion itself is unchanged. The workflow leg is red-first
+# until C01's twin lands; the other six legs stay green. A red names the chunk
+# whose edit violated the ruling (or the cutover that has not landed) — dev
+# may not "fix" these by editing the guard.
 
 from __future__ import annotations
 
@@ -23,9 +27,9 @@ helm = pytest.mark.skipif(not _ok, reason=_reason)
 
 
 def test_c01_release_workflow_carries_no_strata_reference():
-    """The Q-C constraint: .github/workflows/release.yaml stays pristine —
-    no matrix exclusion, no file:// guard, nothing strata-shaped. Its generic
-    charts/** globs are not references."""
+    """The Q-C constraint: the chart release workflow — the Forgejo twin since
+    the cf-55 move — stays pristine: no matrix exclusion, no file:// guard,
+    nothing strata-shaped. Its generic charts/** globs are not references."""
     text = S.read(S.RELEASE_WORKFLOW, "untouched-by-design (Q-C ruling)")
     assert "strata" not in text.lower(), (
         "release.yaml mentions strata — the Q-C ruling forbids workflow edits on this ticket"

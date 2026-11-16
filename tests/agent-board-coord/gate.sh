@@ -911,6 +911,22 @@ fi
 # pair, .opencode/opencode.jsonc, charts/llama-swap/{values.yaml,tests/*},
 # services/gpu-ai/prod/values.yaml and tests/* admits already in this set.
 # Any file a replan adds joins THIS line (cf-106 rule).
+# cf-55 (2026-11-16, agent-test re-anchor round; DECISIONS D31/D32): the
+# rebuilt ticket's own plan folder joins on the same once-per-ticket rule,
+# plus the CHART-HALF surfaces its chunks declare that no wildcard here
+# covers: .forgejo/workflows/release.yaml and its deleted GitHub twin (the
+# path admitted in the composed ".github/"-quote form so this branch's
+# forgejo-ci-surface.sh sweep — which bans the plain deleted path on live
+# surfaces — does not catch its own guard suite), custom-values/infra/prod-values.yaml
+# (C04's [packages] enablement — the first enumerated exception to this arm's
+# "custom-values stay outside" rule, the chunk-declared-serving-file class),
+# and the prose-truth files skills/helm-chart-creation/* +
+# containers/renovate-mcp/Dockerfile (the wekan-mcp pyproject comment rides
+# the existing containers/wekan-mcp/* wildcard).
+# The container-build half is cf-6's — no docker-build or vllm-radiance
+# admits; this branch touches neither file. The strata re-point rides
+# charts/llama-swap/tests/*; the cf-55 suites ride tests/*; sources, mirrors
+# and AGENTS.md ride existing lines.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -979,11 +995,15 @@ if want t14; then
       .github/workflows/amd-gpu-render-tests.yaml|\
       .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
       .agents/notes/radiance-second-gpu-tp2.md|\
+      .agents/plans/2026/2026-11-cf-55-feat-helm-builds-to-forgejo/*|\
+      .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
+      custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
+      containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-143 radiance-serving admits)" ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit and the cf-123 own-folder admit, the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits (whole-ticket scope union; base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

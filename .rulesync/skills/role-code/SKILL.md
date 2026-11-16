@@ -56,8 +56,10 @@ pasted into chat.
 2. Make the edits, one plan step at a time. New charts: the
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
-3. Never bump versions or image tags — CI does it on merge to main (Chart.yaml
-   `version` via `release.yaml`; containers are tag-based: a `prod`-role main
+3. Never bump versions or image tags — CI does it on merge to main (the forge
+   `release.yaml` bumps Chart.yaml `version` when changes land on Forgejo main
+   and publishes dual — GitHub Releases/gh-pages plus the instance's Helm
+   registry; containers are tag-based: a `prod`-role main
    merge pushes `yy.mm.N` + `:latest` + `:main` to both registries via the
    forge `containers-build.yaml`, and the GitHub `docker-build.yaml` is a
    `workflow_dispatch`-only manual fallback). Set an initial version only when

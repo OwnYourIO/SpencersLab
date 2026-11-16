@@ -437,9 +437,14 @@ change.
 - Changes reach `main` **only via a pull request that the user creates or merges**. The agent's work ends at the local commit plus telling the user the branch is ready. Pushing the *feature* branch to origin (e.g. to enable a PR) is allowed **only when the user explicitly asks for it in the session**. Otherwise leave commits local.
 - If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
 - Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
-- **Never bump versions or image tags by hand.** `release.yaml` bumps
-  `Chart.yaml` `version` (patch) on every merge to main and chart-releaser tags
-  `<chart>-<version>` — set `version: 1.0.0` only on a brand-new chart.
+- **Never bump versions or image tags by hand.** `release.yaml` runs on the
+  prod Forgejo Actions: it bumps `Chart.yaml` `version` (patch) when changes
+  land on Forgejo main (idempotent FF-only single-writer loop; GitHub learns
+  the bumps via the main-sync fan-out, never a CI push to GitHub), then
+  publishes DUAL — GitHub Releases + the gh-pages index via cr (consumer
+  contract byte-stable, release tag `<chart>-<version>`) AND the instance's
+  Helm package registry (FORGE_PUSH_TOKEN). Set `version: 1.0.0` only on a
+  brand-new chart.
   Containers are tag-based: on a `prod`-role instance a main/dispatch build
   pushes `yy.mm.N` + `:latest` + `:main` to `ghcr.io/ownyourio/<image>` AND
   the same three tags to that instance's own Forgejo registry as
@@ -454,11 +459,12 @@ change.
   over the vocabulary `{dev, prod}` (e.g. `dev,prod`); job `if:` guards test
   membership with `contains()` — `on:` itself cannot be conditioned, so the
   role/event split lives in the job guards. Unset defaults per file,
-  deliberate in all three `.forgejo` workflows: `containers-build.yaml`
+  deliberate in all four `.forgejo` workflows: `containers-build.yaml`
   widens on unset (a null clause ahead of the membership tests — the
-  single-server case publishes everything), while `main-sync.yaml` and
-  `renovate.yaml` stay narrow on unset (bare membership tests, fail-safe:
-  neither the fan-out nor the daily Renovate pass may fire unconfigured).
+  single-server case publishes everything), while `main-sync.yaml`,
+  `renovate.yaml` and `release.yaml` stay narrow on unset (bare membership
+  tests, fail-safe: neither the fan-out nor the daily Renovate pass may
+  fire unconfigured, and a bump/publish pipeline even less so).
   One shared shape, deliberate per-file polarity. Membership is not
   purely a shape change: a `dev,prod` instance runs the daily Renovate
   pass, which exact equality withheld. Substring caveat:

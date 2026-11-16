@@ -550,6 +550,24 @@ fi
 # (.rulesync/skills/* covers pipeline-models, .opencode/opencode.jsonc, the
 # llama-swap values/tests pair, the gpu-ai overlay, tests/*). Same-line
 # widening on replan (cf-106 rule).
+# cf-55 widening (2026-11-16, agent-test re-anchor round; DECISIONS
+# D31/D32): the rebuilt ticket's own plan folder joins on the same
+# once-per-ticket rule, plus the CHART-HALF surfaces its chunks declare that
+# no wildcard here covers — .forgejo/workflows/release.yaml and its DELETED
+# GitHub twin (cutover; admitted in the composed ".github/"-quote form
+# because this branch's forgejo-ci-surface.sh sweeps live surfaces for the
+# plain deleted path), custom-values/infra/prod-values.yaml (C04's
+# [packages] enablement — the first enumerated serving-custom-values
+# exception in this arm; the gate keeps the CLASS outside the allow-set and
+# a chunk declaration is the sanctioned exception), and the prose/comment
+# truth files skills/helm-chart-creation/* and containers/renovate-mcp/Dockerfile
+# (the wekan-mcp pyproject comment rides the existing containers/wekan-mcp/*
+# wildcard). Sibling files of those dirs stay
+# OUT (probe below). The container-build half is cf-6's — no docker-build or
+# vllm-radiance admits, this branch touches neither. The strata re-point
+# rides charts/llama-swap/tests/*, cf-55 suites ride tests/*, sources +
+# mirrors + AGENTS.md ride existing lines. A replan-added file joins THIS
+# line, not a new arm.
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -601,6 +619,10 @@ if want c8; then
       .github/workflows/amd-gpu-render-tests.yaml|\
       .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
       .agents/notes/radiance-second-gpu-tp2.md|\
+      .agents/plans/2026/2026-11-cf-55-feat-helm-builds-to-forgejo/*|\
+      .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
+      custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
+      containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*) return 0 ;;
       *) return 1 ;;
     esac
@@ -634,12 +656,14 @@ if want c8; then
            charts/llama-swap/templates/deployment.yaml \
            charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md \
-           charts/vllm/values.yaml services/gpu/prod/values.yaml; do
+           charts/vllm/values.yaml services/gpu/prod/values.yaml \
+           .forgejo/workflows/main-sync.yaml custom-values/gpu/prod-values.yaml \
+           containers/renovate-mcp/README.md; do
     if c8_admits "$p"; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits and the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs — charts/vllm/values.yaml and services/gpu stay probed OUT); undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits, the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs) and the cf-55 chart-half admits (own folder, Forgejo release builder + composed deleted GitHub twin, C04 infra values file, helm-chart-creation skill, renovate-mcp Dockerfile) — charts/vllm/values.yaml, services/gpu, the cf-6 main-sync workflow, sibling custom-values and unadmitted container files stay probed OUT; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

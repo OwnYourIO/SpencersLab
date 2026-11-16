@@ -83,6 +83,26 @@ forgejo:
           SMTP_ADDR: "smtp-relay-mail"
           FROM: "git@spencerslab.com"
           PROTOCOL: "smtp"
+        # Package registries the cf-55 dual-publish CI pushes to (RESEARCH
+        # V-3): [packages] gates BOTH the Helm chart registry (release.yaml's
+        # forgejo-publish job) and the OCI container registry
+        # (containers-build.yaml's instance OCI push). Prod-only by ruling
+        # D20 — the dev slice intentionally carries no packages block.
+        # ENABLED already defaults true on Forgejo 15 and cf-6's container
+        # pushes exercise the registry, so the flag is proven live — the
+        # declaration stays as the explicit-on pin, not a flip — the same
+        # declaration-is-the-gate mechanism as [lfs] above (gitea.config
+        # renders into the <fullname>-inline-config Secret) — so an upstream
+        # default change can never silently disable a registry the CI
+        # publishes to. The key set stays {ENABLED} (D24): v15.0 has no
+        # generic LIMIT_SIZE (a declared one renders into app.ini and the
+        # binary ignores it) and the per-type LIMIT_SIZE_HELM/
+        # LIMIT_SIZE_CONTAINER default to unlimited — caps join only by owner
+        # decision. [storage] stays deliberately unconfigured: an S3 section
+        # there would drag attachments and avatars along with the package
+        # blobs (chart law, charts/forgejo/values.yaml).
+        packages:
+          ENABLED: "true"
       admin:
         email: forgejo@spencerslab.com
 

@@ -372,6 +372,23 @@ fi
 # .rulesync/skills/*, .opencode/skills/*, .opencode/opencode.jsonc,
 # charts/llama-swap/{values.yaml,tests/*}, services/gpu-ai/prod/values.yaml
 # and tests/* admits already in this set. A replan-added file joins THIS line.
+# cf-55 widening (2026-11-16, agent-test re-anchor round; DECISIONS D31/D32):
+# the plan folder joins ONCE for the rebuilt ticket (D9 rule, cf-106/cf-123
+# precedent) plus the exact CHART-HALF surfaces its chunks declare:
+# .forgejo/workflows/release.yaml and its DELETED GitHub twin (the twin path
+# is admitted in the composed ".github/"-quote form because this branch's
+# tests/services/forgejo-ci-surface.sh sweeps live surfaces for the plain
+# deleted path — the same convention the cf-55 suites follow), the C04
+# enablement file custom-values/infra/prod-values.yaml (the first enumerated
+# serving-custom-values exception in this arm), and the prose-truth files
+# skills/helm-chart-creation/* + containers/renovate-mcp/Dockerfile (the
+# comment-truth edits the dev round landed; the wekan-mcp pyproject comment
+# rides the existing containers/wekan-mcp/* wildcard). The container half is
+# cf-6's — NO docker-build or vllm-radiance
+# admits, this branch touches neither. The strata guard re-point rides
+# charts/llama-swap/tests/*; the cf-55 contract suites ride tests/*; the
+# rules/skill sources + mirrors + AGENTS.md ride existing lines. A
+# replan-added file joins THIS line, not a new arm.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -426,11 +443,15 @@ if want c7; then
       .github/workflows/amd-gpu-render-tests.yaml|\
       .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
       .agents/notes/radiance-second-gpu-tp2.md|\
+      .agents/plans/2026/2026-11-cf-55-feat-helm-builds-to-forgejo/*|\
+      .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
+      custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
+      containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
-      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-143 radiance admits in the union)" ;;
+      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-143 radiance + cf-55 chart-half admits in the union)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

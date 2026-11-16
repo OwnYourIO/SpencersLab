@@ -1,0 +1,215 @@
+{
+  "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
+  "plan_status": "approved",
+  "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
+  "test_session": "lost-in-restart (2026-11-16 re-anchor round — handback arrived as 'Tool result missing'; the re-anchored suites were verified from disk instead, FRICTION 2026-11-16; a fresh agent-test session routes any later validation_at_fault)",
+  "current_wave": 2,
+  "updated_at": "2026-11-16T22:32:09+00:00",
+  "rebuild": {
+    "at": "2026-11-16",
+    "authority": "D31 (owner rebase directive: 'rebase this work onto main in this branch or another, but move this session too'; scope answer 'New branch, keep old') + D32 (reconciled contract grounded on cf-6's landed conventions) — plan file '## Rebuild onto main (2026-11-16)' section",
+    "base": "043be6645",
+    "branch": "cf-55-feat-helm-builds-to-forgejo-rebuilt",
+    "worktree": "cf-55-feat-helm-builds-to-forgejo-rebuilt",
+    "naming_note": "the -rebuilt suffix is the user-ruling on branch/worktree only (keep the old branch as history); the ticket slug stays cf-55-feat-helm-builds-to-forgejo (board slug field, one line, links THIS coord session), so the ticket folder keeps its name",
+    "legacy_state": "the old run's state is frozen on branch cf-55-feat-helm-builds-to-forgejo at 58ca6dca8; every ported file sha-verified against it (hash-object + diff --no-index): STATE/EXPLORE/RESEARCH byte-identical, chunks verbatim, plan + DECISIONS clean append-only rebuild records",
+    "superseded": {
+      "C02": "D31 — cf-6 (2d213bb10 + 043be6645) LANDED the container-build move on main: containers-build.yaml (calendar tags, contains() guards, FORGE_PUSH_TOKEN dual registry incl. instance OCI, kept .github manual fallback) + its suite. e19181c49 is NOT ported; 572a20308 (t7 v-date generalization) is moot — main's t7 already accepts the calendar form for the other reason"
+    },
+    "model_ruling": "2026-11-16 user ruling: 'I changed your model to a local version. Please continue all work with that.' — supersedes the card's Qwen Flash checklist selection for this run's remaining rounds: subagents run on gpu-ai/qwen3.8-27b-radiance (local 27b lane; the catalog churns, the literal moves only by a fresh user ruling)",
+    "review_shape": "the rebuild is one record-transport pass under the approved plan (the plan file's Rebuild section is the authority): the ported deltas (C01' reconciled release.yaml, C04, C03 re-derived) carry one fresh whole-plan review on the planning tier (step 8) as their review gate — it subsumes per-chunk review for the ported chunks because they are a single coherent D32 contract; dev/test deviations are adjudicated in that round. No needs-replan: the scope change is the user's own directive (D31/D32), not a subagent deviation.",
+    "rounds": [
+      {
+        "role": "dev", "at": "2026-11-16", "status": "DONE (verified from disk — handback lost in restart, FRICTION)",
+        "summary": "reconciled .forgejo/workflows/release.yaml (5 jobs: changes -> test-build -> bump -> release parallel forgejo-publish; contains(vars.ROLE, 'prod') narrow guards on every job; FORGE_PUSH_TOKEN with cosmetic 'forge:' user; literal lowercase curatedforest namespace; ${GITHUB_OUTPUT:-$FORGEJO_OUTPUT} compat idiom; fetch-depth 0 everywhere; cr v1.10.1 pinned + sha256; FF-only single-writer bump loop with same-indent index pairing; no dispatch trigger) + GitHub twin deleted; C04 packages block ported with the why-comment reconciled to containers-build.yaml; C03 surface prose re-derived to the chart half (AGENTS.md four-workflow ROLE law, role skills + rulesync sources, chart-templates, renovate-mcp Dockerfile, wekan-mcp pyproject)"
+      },
+      {
+        "role": "test", "at": "2026-11-16", "status": "DONE (verified from disk — first launch interrupted, handback 'Tool result missing', FRICTION)",
+        "summary": "forgejo-release.sh / forgejo-packages.sh / forgejo-ci-surface.sh re-anchored to the reconciled contract (new files on main); forgejo-docker-build.sh NOT ported (C02 superseded — the file was never on main, nothing to drop); strata testlib + untouched-guard re-pointed at .forgejo/workflows/release.yaml; agent-board-coord admits (agents-md c7/c8, gate t14, rulesync-surface c8) widened chart-half: plan folder + release.yaml + composed-quoted deleted GitHub twin + custom-values/infra/prod-values.yaml + skills/helm-chart-creation/* + containers/renovate-mcp/Dockerfile, with the cf-6 main-sync workflow + sibling custom-values probed OUT; no docker-build or vllm-radiance admits"
+      },
+      {
+        "role": "plan-port", "at": "2026-11-16", "status": "DONE (subagent round errored after the verbatim copy + plan/DECISIONS appends; coord completed the FRICTION append — its own file; chunk Rebuilt sections NOT appended, coord edit grant covers STATE/DECISIONS/FRICTION only — FRICTION-recorded, non-blocking: the rebuild record lives in the plan file's Rebuild section + DECISIONS D31/D32)",
+        "summary": "folder ported verbatim from 58ca6dca8, per-file sha-verified (hash-object: plan/EXPLORE/RESEARCH/STATE byte-identical; plan + DECISIONS append-only verified via diff --no-index)"
+      }
+    ],
+    "vllm_adjudication": "dev round flagged charts/vllm/tests/test_contract.py 'docker-build claims stale at :3/:429/:488' — NOT SUPPORTED: the file (identical to main, untouched by this branch — not in the branch's changed set) carries no docker-build reference at all (full-dump verified; its only workflow reference is the per-chart vllm-render-tests.yaml ladder, and one 'chart-releaser bumps the patch on every merge to main' comment that stays true under the cr tool). Pre-existing state on main, not caused by this round's edits — reported, not fixed, per the not-our-scope ruling."
+  },
+  "final_review": {
+    "at": "2026-11-11T06:35:00Z",
+    "session": "ses_e3722c892ffe9ZJgacvDLiAPZu",
+    "verdict": "APPROVED (whole plan, 8 named seams verified, zero blocking findings)",
+    "posture": "six suites fresh green (15/15+11/11+7/7+6/6+8/8+11/11); guard trio admitted arms green at the real merge-base a6e493b78, three reds pre-existing message-identical (c11/c19/t17) incl tail-leg coverage nobody had run; posture-compare full dirs exact; rulesync x2 no-op + --check; aislop 0/0; credential law + date-tag + ROLE + race re-derivation + blast-radius + mirrors all clean.",
+    "coord_dispositions": "M-1 (three prose surfaces narrate the PR-build lane while R6 keeps it dormant) ROUTED to the D29(2) follow-up sweep card (same class, one coherent owner action; no reopen of an approved chunk for one sentence). N-1 landing order is owner-critical and rides the handoff: register UA-1/UA-1b credentials BEFORE merging cf-55 (the merge itself is the builders' first fire; expect one benign llama-swap chart bump); C04 rides the same PR. N-2 lowercase-invariant re-verification rides the next metadata-action renovate bump per D28."
+  },
+  "final_review_rebuild": {
+    "at": "2026-11-16",
+    "scope": "the reconciled chart-half port onto main per D31/D32 (rebuild.rounds)",
+    "rounds": [
+      { "n": 1, "session": "ses_e19a9aa2affemfAjbrRChvss8o", "verdict": "FAILED — session died on a compaction output-token-limit; its comparison write overwrote the uncommitted reconciled release.yaml with the old-branch version at 22:00 (FRICTION 2026-11-16)" },
+      { "n": 3, "session": "ses_e1986a483ffe006attcIIS0k2G", "verdict": "APPROVED — restore verified facet-by-facet (F1 5× contains() guards, zero equality residue; F2 header law paragraph; F3 3× compat output writes; F4 FORGE_PUSH_TOKEN env + retired pair grep-absent; F5 literal curatedforest, no owner derivation; F6 both forge: curl pairs); diff vs 58ca6dca8 = exactly 14 hunks, all facets, no drift; cf-6 cross-check clean (shared contains() shape, same secret, no URL literals, no tag-scheme conflict); rest unchanged since r2 (C04 8/8 real t6 render, rulesync --check clean, no C02 surface, vllm contract byte-identical to main, scope exactly 17 M + 1 D + 5 untracked); validations all green (forgejo-release 19/19, packages 8/8, ci-surface 7/7, strata 7/7, vllm 1/1, guard trio only pre-existing message-identical c11/t17/c19, helm lint/template 0 failed, aislop 100/100 0 issues). Deviation noted: suite has 19 legs t1-t19, not 16 as the launch prose guessed." }
+    ],
+    "dev_fix_round": {
+      "n": 1, "session": "ses_e198cd47effeGekqdyQOTbeWzE", "at": "2026-11-16",
+      "verdict": "DONE — F1 five guards contains() (zero equality residue, final lines 38/84/150/269/366); F2 header law paragraph D32 verbatim (twin/dual-publish opening kept); F3 all 3 GITHUB_OUTPUT writes compat-idiom (coord's 'four' was a miscount — the file has 3); F4 FORGE_PUSH_TOKEN env block + why-comment, retired pair gone; F5 literal curatedforest pkg_api/index_url + why-comment; F6 both curl forge: auth pairs. forgejo-release 19/19 + forgejo-ci-surface 7/7 (the four B1 reds green); only release.yaml touched. Coord re-verified the restore from the live path via the reviewer's own check (diff vs 58ca6dca8 shows the D32 header; suites machine-pinned the contract)."
+    },
+    "verdict": "APPROVED (round 3, planning tier gpu-ai/qwen3.8-27b-radiance per the 2026-11-16 user local-model ruling) — the rebuild gate is passed"
+  },
+  "approval": {
+    "at": "2026-11-10T22:34:00Z",
+    "by": "owner, in-session question after the batched round (9/9 answers folded, rework verified)",
+    "verdict": "Approve — run the plan (4 chunks: C01, C02, C04 wave 1; C03 wave 2)"
+  },
+  "stage_sessions": {
+    "explore": {"session": "ses_e38c58190ffeqbeo0w5ISvPotD", "at": "2026-11-10", "result": "DONE — EXPLORE.md (390 lines)"},
+    "research_pre": {"session": "ses_e38abed26ffeRC5HhO0A8HKHLt", "at": "2026-11-10", "result": "DONE — RESEARCH.md (578 lines, 37 sources)"},
+    "plan": {"session": "ses_e389277f9ffeWERTTA5oMhOp5b", "at": "2026-11-10", "result": "DONE — draft → batched round (9/9) → rework R1-R9 → approved → post-plan delta D22-D25"},
+    "research_post": {"session": "ses_e38abed26ffeRC5HhO0A8HKHLt (continued)", "at": "2026-11-10", "result": "DONE — RESEARCH.md '## Post-plan round' (V-1..V-6); V-2 plan-changing (auto-token cannot push packages); owner ruled 'Add a Forgejo-PAT secret' → folded as D22-D25 (PUSH_TOKEN_FJ + vars.FJ_PACKAGE_USER; C04 {ENABLED}-only key set, caps absent)"}
+  },
+  "card_write_back": {"at": "2026-11-10T22:40:00Z", "slug_field": "set (first stack line, value was null; link host == kickoff.session_origin — consistency pass)", "deleted_unchecked_items": 39, "approval_comment": "posted; claim comment C7fMn7mXy6rG4fxSs"},
+  "test_wave": {
+    "at": "2026-11-10T23:05:00Z",
+    "session": "ses_e383175a5ffe20PCoFQhNlXlEf",
+    "status": "DONE",
+    "files": ["tests/services/forgejo-release.sh (12 legs)", "tests/services/forgejo-docker-build.sh (11 legs)", "tests/services/forgejo-packages.sh (6 legs/7 checks)", "tests/services/forgejo-ci-surface.sh (6 checks)", "charts/llama-swap/tests/strata_testlib.py", "charts/llama-swap/tests/test_strata_untouched.py"],
+    "posture": "red-for-right-reason at base a6e493b78 (each new suite t1-absence red; strata guard 6/7 with the single re-pointed leg red waiting for C01's twin); green against a SIMULATED post-impl tree (deleted after); 5 targeted mutations each reddened with exact diagnostics; baselines collateral-free (main-sync 8/8, host-runner 11/11, strata 7/7 post-twin, vllm workflow 1/1); bash -n clean; aislop clean (shell outside its languages — recorded honestly)",
+    "suite_level_adjudications": "(a) job-name-set equality pinned t3 C01/C02; (b) vars.PUSH_URL_GH exactly-once via main-sync t5 idiom; (c) t7 bare-git-pull ban reads executable lines only (why-comment may name the wrong shape), force/+refs/git-merge bans file-wide; (d) t6 login-step by pair-co-location+disjointness; (e) t8 accepts inline or variable-composed tag; (f) cache-from pinned on content, no gate assertion (statically indistinguishable); (g) t12 recognizes cr spellings unless checkout carries fetch-tags; (h) C03 t6 adds PUSH_TOKEN_GH/PUSH_TOKEN_FJ presence in AGENTS.md",
+    "open_questions_for_coord": ["C03 sweep reddens a fifth file the chunk task list omits: containers/renovate-mcp/Dockerfile:18 comment cites the deleted builder path — coord accepted: fold the one-line fix into C03's scope (DECISIONS D26)", "job-level if EXACT equality 'vars.ROLE == prod' is law — has-changes/matrix gating goes step-level (SIM-proven satisfiable)", "C01 t8 pins curl --user + FJ_PACKAGE_USER/FJ_PKG_TOKEN step-env reads; differently-named step env is a review judgment, not a weakening"]
+  },
+  "kickoff": {
+    "card": "4NyPcY7WTHaG7TsT8",
+    "card_number": 55,
+    "slug": "cf-55-feat-helm-builds-to-forgejo",
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "cf-55-feat-helm-builds-to-forgejo-rebuilt (2026-11-16 rebuild; the original worktree/branch cf-55-feat-helm-builds-to-forgejo stay untouched as history)",
+    "branch": "cf-55-feat-helm-builds-to-forgejo-rebuilt",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-radiance (2026-11-16 user local-model ruling; originally openrouter/qwen/qwen3.8-flash per the Qwen Flash checklist check)",
+      "code": "gpu-ai/qwen3.8-27b-radiance (2026-11-16 user local-model ruling; originally openrouter/qwen/qwen3.8-flash)"
+    },
+    "local": true,
+    "priority": { "raw": null, "class": "default" },
+    "stages": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+    "hitl": ["Final Review"],
+    "hitl_note": "card checked Chunk Review; owner changed the stop posture in-session 2026-11-11 after C01 (verbatim: 'Continue, don't worry about stopping at each chunk, just stop at the final review') — chunk reviews now run without owner pauses; Final Review is the only HITL stop"
+  },
+  "test_wave_2": {
+    "at": "2026-11-11T06:10:00Z", "session": "ses_e383175a5ffe20PCoFQhNlXlEf (continued)", "status": "DONE",
+    "files": ["tests/services/dev-mcp-fleet.sh (t7 boards-tag arm generalized to dotted date tags, teeth 7-way proven, suite output byte-identical pre/post — three OTHER pre-existing stale verbatim pins belong to its owner ticket)", "tests/agent-board-coord/{agents-md,gate,rulesync-surface}.sh (cf-55 folder/surface/section admits — 5th admit-ritual line found: agents-md c8 AGENTS-section allow-set needed 'Hard rules' for C03's approved rewrite; admit-teeth probes pass)"],
+    "posture": "all guard FULL reds are pre-existing message-identical (c11 cf-106 runner-model, c19, t17); cf-55 battery green; nothing weakened; 5th-admit + stale-pin routings ride D29(2) follow-up card"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 3,
+      "review_rounds": 3,
+      "last_verdict": "APPROVED (round 3, ses_e37b92417ffeFwMcBGdvMVmRe9)",
+      "dev_session": "ses_e38116e2cffeID7daX1EADu6US",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C01", "session": "ses_e38116e2cffeID7daX1EADu6US", "at": "2026-11-11T00:20:00Z",
+          "summary": "forgejo-release.sh 12/12 green; collateral baselines all green (main-sync 8/8, strata 7/7, vllm workflow 1/1, host-runner 11/11); bash -n over 15 run blocks; bump-loop offline sim 6/6; cr v1.10.1 download+sha verified; aislop 100 (vacuous for yaml, run anyway). Files: .forgejo/workflows/release.yaml created, .github/workflows/release.yaml deleted.",
+          "key_adjudications": "explicit remote-tracking fetch+reset instead of bare pull (detached-HEAD law); cr v1.10.1 pinned sha-verified; ADDED git fetch publish gh-pages ref before cr index (source-verified necessity: cr builds its pages worktree from the local tracking ref and never fetches it); empty github.event.before treated like the all-zero sentinel; bump idempotency = patch above BOTH tree and published index",
+          "deviations": "6 recorded in session handback (tip-pickup shape, cr pin version, gh-pages fetch addition, pre-satisfied test task, empty-before guard, tree+published idempotency rule) — review to adjudicate",
+          "friction": "webfetch proxy 403 (curl resolved); smart-git binary grep shape (ls-remote works)",
+          "open_questions": "none"
+        },
+        {
+          "role": "review", "status": "CHANGES_REQUESTED", "chunk": "C01", "session": "ses_e37f2e38dffeuQp153dYWa7jE1", "at": "2026-11-11T00:45:00Z",
+          "verdict": "BLOCKER: changes-job outputs reference steps.detect with no id: detect (workflow can never publish). MAJOR: instance helm upload curl missing -X POST (v15.0 charts route POST-only, source-verified). Minor: skip-guard keys published index by dir name. 2 suite extensions routed (steps-id wiring, upload-method pin). Dev's 6 round-1 deviations all adjudicated APPROVE; cr gh-pages-fetch necessity source-confirmed; bump loop non-vacuous via 12-mutation battery; credential law clean (bump-leg auto-token carve-out correctly not flagged)."
+        },
+        {
+          "role": "dev", "status": "DONE (fix round)", "chunk": "C01", "session": "ses_e38116e2cffeID7daX1EADu6US (continued)", "at": "2026-11-11T01:00:00Z",
+          "summary": "id: detect added; -X POST added (index read stays GET); fix 3 ACCEPTED — published-index lookup keyed by Chart.yaml name (live class: charts/traefik-zerotrust declares name: traefik). Full gate green (12/12 + 8/8 + 7/7 + 1/1 + 11/11), sim 14/14 incl new I_dir_ne_name case."
+        },
+        {
+          "role": "test", "status": "DONE (augment)", "chunk": "C01", "session": "ses_e383175a5ffe20PCoFQhNlXlEf (continued)", "at": "2026-11-11T01:10:00Z",
+          "summary": "forgejo-release.sh += t13 (general steps-id wiring), t14 (POST/GET method split, route-resolving). 14/14 green; teeth proven on scratch mutations; t14 pins the landed index-read shape (409-detection alternative would need fresh review)."
+        },
+        {
+          "role": "review", "status": "CHANGES_REQUESTED (round 2)", "chunk": "C01", "session": "ses_e37dd500bffe5Z6SUQJhOLfCjl", "at": "2026-11-11T01:30:00Z",
+          "verdict": "BLOCKER 3: bump-leg published-index parser value contamination — cr writes entries' dependencies: blocks inline, and wrapper charts pin deps under own names, so published[\"traefik\"] resolves to the 42.1.3 PIN not the 1.0.103 entry version; 9/97 live keys wrong → 8 live charts would mint jump releases silently on first fire (breaks AC6). Reviewer-verified fix: stdlib dashless-name + same-indent version: pairing, exact on all 97 live keys. Suite is value-blind (correct parser still 14/14) → value-semantics leg routed to test session (not a weakening). Round-1 fixes verified closed; t13/t14 sound; nothing else moved."
+        },
+        {
+          "role": "dev", "status": "DONE (round 3)", "chunk": "C01", "session": "ses_e38116e2cffeID7daX1EADu6US (continued)", "at": "2026-11-11T02:10:00Z",
+          "summary": "BLOCKER 3 fixed + RE-DERIVED live (97/97 keys vs PyYAML oracle; 9 contaminated keys named). Consistency: forgejo-publish awk pre-check had the same class → same same-indent guard, live-proven; no other published-index/version read in the file (review-confirmed). Sim 22/22 incl live e2e (traefik-zerotrust→1.0.104, no jump). Gate green at 14-leg suite."
+        },
+        {
+          "role": "test", "status": "DONE (augment t15)", "chunk": "C01", "session": "ses_e383175a5ffe20PCoFQhNlXlEf (continued)", "at": "2026-11-11T02:20:00Z",
+          "summary": "t15 value-semantics pins BOTH carriers (embedded python executed via scratch-namespace readback; awk program extracted from the landed step) on live-verbatim fixtures; 4 mutations each redden t15 alone; t1..t14 byte-unchanged (+316/0). 15/15. Carrier-name coupling (published binding) flagged as a review-judgment class if ever renamed."
+        },
+        {
+          "role": "review", "status": "APPROVED (round 3)", "chunk": "C01", "session": "ses_e37b92417ffeFwMcBGdvMVmRe9", "at": "2026-11-11T02:35:00Z",
+          "verdict": "APPROVED — BLOCKER 3 closed via INDEPENDENT live re-derivation (97/97 vs oracle; e2e loop →1.0.104); awk guard direct-exercised; t15 battery load-bearing; residuals documented non-load-bearing. Full table fresh green (15/15, 8/8, 7/7, 1/1, 11/11, aislop 100). Deferred: traefik dir/name hygiene; NIT5 phantom-key watch."
+        }
+      ],
+      "rebuild": { "at": "2026-11-16", "status": "re-anchored (rebuild dev round, verified from disk; review gate = final_review_rebuild)", "note": "D32 contract on main 043be6645: reconciled release.yaml + GitHub twin deleted; forgejo-release.sh suite re-anchored; strata guard re-pointed at the Forgejo twin" }
+    },
+    "C02": {
+      "status": "superseded",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e3772be78ffeF5b2gA64HAsuym)",
+      "dev_session": "ses_e377bc4c3ffe0bUr1ClelNCFi4",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C02", "session": "ses_e377bc4c3ffe0bUr1ClelNCFi4", "at": "2026-11-11T03:10:00Z",
+          "summary": ".forgejo/workflows/docker-build.yaml created (twin-faithful pure-git detection, matrix fail-fast:false, dual publish ghcr + instance OCI, D15 date tags, D18 registry cache mode=max cache-to non-PR, setup-buildx ordering, exact ROLE guards); .github twin deleted. forgejo-docker-build.sh 11/11 + all collateral green; tag sim proven; docker build no-daemon CI-deferred."
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C02", "session": "ses_e3772be78ffeF5b2gA64HAsuym", "at": "2026-11-11T03:30:00Z",
+          "verdict": "APPROVED — all 5 dev deviations adjudicated APPROVE (single-clock tag = strict improvement over D15's two-call literal; empty-before = C01-approved class; job-if = D26 law; REGISTRY literal neutral; permissions drop mandated). Twin fidelity verified; credential topology grep-clean; why-comment matches V-2 sources. MINOR-1: uppercase CuratedForest owner saved only by metadata-action v6 toLowerCase + Forgejo lowercase-only pattern — coord fold decision: into C03's sweep (one WHY-comment or ${owner,,}). MINOR-2 + PR-cache-from → UA-5/re-enable checklist."
+        }
+      ],
+      "rebuild": { "at": "2026-11-16", "status": "superseded (D31) — the old-branch work (e19181c49) stays on the old branch as history; the container half landed on main with cf-6 (2d213bb10 + 043be6645). NOT executed on the rebuilt branch; its forgejo-docker-build.sh suite not ported (never on main); 572a20308 moot", "note": "see rebuild.superseded" }
+    },
+    "C04": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e375bf547ffey33SQlN6uKIz7B)",
+      "dev_session": "ses_e37620a07ffeQTikmov7RTWcdM",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C04", "session": "ses_e37620a07ffeQTikmov7RTWcdM", "at": "2026-11-11T04:00:00Z",
+          "summary": "custom-values/infra/prod-values.yaml +18: packages {ENABLED: \"true\"} under forgejo.forgejo.gitea.config with 4-fact why-comment (dual-publish gate, V-3 explicit-on declaration, D24 no LIMIT_SIZE, [storage] non-touch). forgejo-packages 7/7 incl t6 real render; infra-forgejo 33/33; all collateral green; aislop clean. (Handback arrived unformatted; review independently verified the claims and recorded full notes in chunks/C04.md.)"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C04", "session": "ses_e375bf547ffey33SQlN6uKIz7B", "at": "2026-11-11T04:20:00Z",
+          "verdict": "APPROVED — all 9 validations fresh green incl t6 genuine render (unquoted ini scalar, no quoting leak); scope exactly one file; key set exactly {ENABLED: \"true\"} (PyYAML re-parse); siblings + dev slice clean; why-comment truthful line-by-line ([lfs] precedent real, cited chart lines exist). MINOR non-blocking: string-typed \"true\" vs bare-bool siblings is the PLAN-PINNED shape — recorded so no future sweep 'normalizes' it. Nit: suite t2 wording 'typed-style parity' loose vs bare-bool neighbors (assertion AC1-correct; optional test touch-up, not chosen)."
+        }
+      ],
+      "rebuild": { "at": "2026-11-16", "status": "ported (rebuild dev round, verified from disk; review gate = final_review_rebuild)", "note": "D32: packages block content-unchanged on main; why-comment reconciled to reference cf-6's containers-build.yaml (the instance OCI push it cites now lives there)" }
+    },
+    "C03": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01", "C02", "C04"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e37437398ffe9WuPiaF701267h)",
+      "dev_session": "ses_e3753e06bffeNwYBlw7WV9QoxC",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C03", "session": "ses_e3753e06bffeNwYBlw7WV9QoxC", "at": "2026-11-11T05:20:00Z",
+          "summary": "Surface parity: .rulesync/rules/overview.md + regenerated AGENTS.md (builders-on-Forgejo law, dual publish, date tags, registry cache, NEW CI credential law bullet), 3 .rulesync skills + mirrors (needles intact, P6 gate passes), container-creation SKILL rewritten post-move, helm-chart-creation SKILL + 2 refs, wekan-mcp-ops, 4 containers README/Dockerfile sites incl D26 renovate-mcp fold-in. ci-surface 6/6; all suites + baselines posture-stable; rulesync x2 no-op + --check clean; aislop vacuous-but-run honest."
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C03", "session": "ses_e37437398ffe9WuPiaF701267h", "at": "2026-11-11T05:50:00Z",
+          "verdict": "APPROVED — stale-path sweep genuinely zero live hits (vendored HACS template + .agents/ history legitimately excluded); six-file extension ADJUDICATED APPROVE (AC5-forced, prose-only); exemptions legitimate; prose truthful vs shipped workflows on every spot-check incl the honest-as-derived tags-list phrasing; rulesync double-idempotent + --check clean; needles all survive. Deferred routings D29(1)(2)(3)."
+        }
+      ],
+      "rebuild": { "at": "2026-11-16", "status": "re-derived (rebuild dev round, verified from disk; review gate = final_review_rebuild)", "note": "D32: surface prose re-derived to the chart half — AGENTS.md four-workflow ROLE law (release.yaml narrow-on-unset), role skills + rulesync sources + mirrors, chart-templates, renovate-mcp Dockerfile, wekan-mcp pyproject; ci-surface suite re-pointed at containers-build.yaml" }
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
