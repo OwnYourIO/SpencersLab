@@ -24,7 +24,7 @@ Push only the run's feature/ticket branch, and only when the run's mandate is re
 
 ## What a push triggers here
 
-A push is build+test, not deploy: `.github/workflows/aislop.yaml` runs `aislop ci --changes` on PRs (every touched file must clear the score floor with no error findings), and `docker-build.yaml` / `release.yaml` fire only on merge to main — ArgoCD syncs only after that user-owned merge.
+A push is build+test, not deploy: `.github/workflows/aislop.yaml` runs `aislop ci --changes` on PRs (every touched file must clear the score floor with no error findings), the forge `containers-build.yaml` PR arm builds and pushes `pr-<branch>-<sha>` to the local registry only (a `prod`-role main merge or `workflow_dispatch` run publishes `yy.mm.N` + `:latest` + `:main` to both registries — merge = publish stays the split), and `release.yaml` fires only on merge to main — the GitHub `docker-build.yaml` is a `workflow_dispatch`-only manual fallback (no push or PR auto-triggers it); ArgoCD syncs only after that user-owned merge.
 
 ## PR creation
 
@@ -41,7 +41,7 @@ Coverage shapes per surface:
 
 - **k8s charts — unit:** load the impacted chart(s) into the test environment, then a playwright login/verify/logout walk over every accessible ingress or gateway object lacking the `skip-testing` annotation (settable in Chart.yaml). **Integration:** the same walk plus a restore of the most recent production kopia backup into the test environment, with data presence confirmed after login. Ledger cards: L7 (test-environment loading and the exact skip-testing key), L8 (the playwright mechanics), L9 (the kopia mechanics), L10 (the charts PR flow).
 - **services:** the same tier flow performed at the `services/` location — ledger card L11.
-- **containers:** builds ride the existing `docker-build.yaml` PR validation — merge = publish stays the split; each container's `testing/` folder ships a values.yaml carrying an app-template that defines how to run the container, and the tests execute against it — ledger card L12.
+- **containers:** builds ride the forge `containers-build.yaml` PR arm — a `dev`-role PR pushes `pr-<branch>-<sha>` to the local registry only, and merge = publish stays the split (a `prod`-role main merge publishes `yy.mm.N` + `:latest` + `:main` to both registries); each container's `testing/` folder ships a values.yaml carrying an app-template that defines how to run the container, and the tests execute against it — ledger card L12.
 - **Test credentials:** one shared dev/test username and password arrive as agent env vars (`$LAB_TEST_USER` / `$LAB_TEST_PASSWORD`), consumed by the agent and the tests alike; how they reach the agent env (k8s Secret plus `coder_env` in the Coder template) is part of L10.
 - **When tests do not exist yet:** prefer live playwright-MCP actions if the app is reachable; otherwise write the tests from prior research and update them once the app runs.
 

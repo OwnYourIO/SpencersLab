@@ -348,14 +348,20 @@ NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
 for n in NEW:
     if n not in readme:
         bad(f't5: README tool list is missing {n}')
-# The docker-build.yaml truth: :v<run_number> (immutable) + :<branch> (rolling).
+# The forge truth (containers-build.yaml, prod-role): calendar yy.mm.N
+# (immutable, minted one past the highest yy.mm.* across both registries)
+# plus the rolling :latest / :main tags, published to ghcr and the
+# instance's own Forgejo registry; a PR build pushes pr-<branch>-<sha>
+# to the instance registry only.
 # The VERSION-file semver story never existed — the claims are stale docs
 # (FRICTION 2026-10-24), so they leave as negatives, not as rewritten prose.
-for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>'):
+# ':latest' retired from the negative tuple on 2026-11-16 (cf-6 C01):
+# under the forge contract it is one of the two published rolling tags.
+for stale in ('bumped by CI', 'semver source of truth', 'v<version>'):
     if stale in readme:
-        bad(f't5: README still carries the stale semver/VERSION claim "{stale}" (docker-build.yaml publishes :v<run_number> + :<branch>)')
-if 'run_number' not in readme:
-    bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
+        bad(f't5: README still carries the stale semver/VERSION claim "{stale}" (containers-build.yaml publishes the calendar yy.mm.N tag + rolling :latest/:main)')
+if 'yy.mm.' not in readme:
+    bad('t5: README must describe the actual tag scheme (calendar yy.mm.N + rolling :latest/:main; PR builds pr-<branch>-<sha>) it already links to')
 
 if f'{TOTAL} typed tools' not in skill:
     bad(f't5: wekan-api SKILL must say {TOTAL} typed tools')

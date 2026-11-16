@@ -398,23 +398,26 @@ mitigations:
 ## In-repo images (`containers/<name>`)
 
 If the MCP server is built in this repo (see the `container-creation` skill),
-the docker-build workflow is tag-based: each build on `main` pushes an
-immutable `:v<run_number>` tag plus the rolling `:main` tag.
+the forge `containers-build.yaml` workflow is tag-based: a `prod`-role main
+merge (or a `workflow_dispatch` run) publishes the `:yy.mm.N` calendar tag
+plus the rolling `:latest` / `:main` tags to both `ghcr.io/ownyourio/<name>`
+and the instance's own Forgejo registry, and a PR pushes
+`pr-<branch>-<sha>` to the instance registry only.
 
-- **Pin `mcp.<name>.image` to the newest published `:v<run_number>` tag** —
+- **Pin `mcp.<name>.image` to the newest published `:yy.mm.N` calendar tag** —
   the repo standard (see "Image tag pinning" in the helm-chart-creation
   skill). Renovate proposes the bump when a newer tag is published.
 - **Brand-new container with no build yet**: reference the rolling `:main`
   tag and add `imagePullPolicy: Always` to the `podTemplateSpec` `mcp`
   container (the MCPServer top level does not render a pull policy), with a
-  note to pin to a `:v<run_number>` once the first build lands. Expect a
-  transient ImagePullBackOff until the workflow publishes the image — see
-  `hivetools.mcp.renovate` in `services/gpu/prod/values.yaml` for this
+  note to pin to a `:yy.mm.N` calendar tag once the first build lands.
+  Expect a transient ImagePullBackOff until the workflow publishes the image
+  — see `hivetools.mcp.renovate` in `services/gpu/prod/values.yaml` for this
   pattern.
 - **Ordering dependency**: the container change must merge and the workflow
   must complete before the pin resolves. Verify the actual tag via GHCR
   (`https://ghcr.io/v2/ownyourio/<name>/tags/list` with an anonymous pull
-  token) rather than assuming the run number.
+  token) rather than assuming the next calendar N.
 
 ## Pattern recipes
 

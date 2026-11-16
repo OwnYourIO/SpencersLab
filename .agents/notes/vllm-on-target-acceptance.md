@@ -59,7 +59,8 @@ Prometheus `prometheus.spencerslab.com`, Grafana `grafana.spencerslab.com`,
 Loki `loki.spencerslab.com`.
 
 Image `ghcr.io/ownyourio/vllm-radiance-mxfp4:main` — the first-build shape;
-step 10's PIN-ME follow-through flips it to the first `:v<run>`. THE single
+step 10's PIN-ME follow-through flips it to the first `:yy.mm.N` calendar
+tag. THE single
 ledger pin (one record, three surfaces: this block, the chart image comment,
 the `containers/vllm-radiance-mxfp4/README.md` ledger): upstream
 `magiccodingman/vllm-radiance:1.0.397` @ digest
@@ -1115,21 +1116,24 @@ is a sizing change (chart values), not a runbook fix.
 
 ## 10. PIN-ME follow-through
 
-After the CI build lands (`docker-build.yaml` pushes `:v<run_number>`
-(immutable) + `:main` (rolling) on the merge touching
-`containers/vllm-radiance-mxfp4/**`):
+After the CI build lands (the forge `containers-build.yaml` pushes the
+`:yy.mm.N` calendar tag + `:latest` + `:main` rolling tags to both
+registries on the `prod`-role merge touching
+`containers/vllm-radiance-mxfp4/**`; a PR on a `dev`-role instance pushes
+`pr-<branch>-<sha>` to the local registry only):
 
 1. In `charts/vllm/values.yaml`, pin the image `tag` to the first
-   `:v<run_number>` (the immutable tag — never `:main` steady-state) and
-   drop `pullPolicy` to the default (delete the `pullPolicy: Always` line).
+   `:yy.mm.N` calendar tag (the immutable tag — never `:main` steady-state)
+   and drop `pullPolicy` to the default (delete the `pullPolicy: Always`
+   line).
 2. Delete the PIN-ME comment.
 3. Re-record the ledger: the `containers/vllm-radiance-mxfp4/README.md`
    tag→pin table — the single base pin is now the tag/digest/source-commit
    triple of the upstream `magiccodingman/vllm-radiance` row, plus our
-   first `:v<run>` (the D12-amended dual surface: the README ledger + the
-   chart image comment — both move in the same change).
+   first `:yy.mm.N` calendar tag (the D12-amended dual surface: the README
+   ledger + the chart image comment — both move in the same change).
 4. Record which leg this landed as: a values-only commit on the ticket
-   branch BEFORE the PR (if the `:v<run>` exists at review time) — or the
+   branch BEFORE the PR (if the calendar tag exists at review time) — or the
    owner's first post-merge follow-up commit.
 
 **The manual-bump procedure** (for a future base move — three reads plus

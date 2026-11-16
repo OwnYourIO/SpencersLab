@@ -57,8 +57,10 @@ pasted into chat.
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
 3. Never bump versions or image tags — CI does it on merge to main (Chart.yaml
-   `version` via `release.yaml`; containers are tag-based, `docker-build.yaml`
-   pushes `:v<run_number>` + `:<branch>`). Set an initial version only when
+   `version` via `release.yaml`; containers are tag-based: a `prod`-role main
+   merge pushes `yy.mm.N` + `:latest` + `:main` to both registries via the
+   forge `containers-build.yaml`, and the GitHub `docker-build.yaml` is a
+   `workflow_dispatch`-only manual fallback). Set an initial version only when
    creating a brand-new chart (`version: 1.0.0`).
 4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before

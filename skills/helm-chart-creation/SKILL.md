@@ -287,10 +287,12 @@ compare against) and they keep deployments reproducible.
 
 Rules, in order:
 
-1. **Default — pin to the newest published version tag** (e.g. `tag: 0.0.12`
-   or `:v<run_number>`). Look the actual tag up in the registry (ghcr.io
-   `v2/<owner>/<image>/tags/list` API, or the Docker Hub tags API) — do not
-   guess or reuse a stale tag from memory.
+1. **Default — pin to the newest published version tag** (e.g. `tag: 0.0.12`,
+   or the `:yy.mm.N` calendar tag for the repo's own `ghcr.io/ownyourio/*`
+   containers — check that the newest is YOURS: a build that predates the
+   merge you ship can already occupy a higher N). Look the actual tag up in
+   the registry (ghcr.io `v2/<owner>/<image>/tags/list` API, or the Docker
+   Hub tags API) — do not guess or reuse a stale tag from memory.
 2. **Use `latest`/a rolling tag only when** the user explicitly asks for it,
    **or** no pinned version exists yet (e.g. a brand-new in-repo container
    that has not had a versioned build). In that case set

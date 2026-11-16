@@ -8,7 +8,9 @@
 # sanctioned flash-attn layer below (D34, source re-pinned by D35), the
 # overlay adds NOTHING — we re-export it under the repo's ghcr namespace
 # because the cluster's pull target must be an in-repo-ledgered artifact and
-# docker-build.yaml's first-build `:v<run>` law needs its target (D23). The
+# the forge containers-build.yaml's first-build calendar-tag law (the first
+# build covering this directory mints the image's first `:yy.mm.N` tag)
+# needs its target (D23). The
 # chart-direct upstream pin stays rejected: it would orphan that artifact and
 # move the ledger home out of README.md.
 #

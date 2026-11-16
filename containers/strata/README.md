@@ -160,17 +160,19 @@ self-tunes with `tools/hip/tune_hipblaslt.cpp` (PR #3636 ran gfx1201 on
 
 ## Publishing — CI, not hand-releases
 
-`.github/workflows/docker-build.yaml` detects this changed directory on PRs
-(build-only, never pushes) and on merges to `main`/`dev` pushes
-`:v<run_number>` (immutable, monotonic) + `:main` (rolling). There is no
-version or tag to bump by hand here. The in-chart strata controller of
+The Forgejo workflow `.forgejo/workflows/containers-build.yaml` detects this
+changed directory on PRs (a `dev`-role PR pushes `pr-<branch>-<sha>` to the
+local registry only) and on merges to `main` pushes the `:yy.mm.N` calendar
+tag (plus the rolling `:latest` / `:main` tags) to both
+`ghcr.io/ownyourio/strata` and the instance's own Forgejo registry. There
+is no version or tag to bump by hand here. The in-chart strata controller of
 `charts/llama-swap` rides a deliberate rolling-tag posture, not a pending
 chore: `:main` + `pullPolicy: Always` is law — the boot guard's self-heal
 window rests on the Always re-pull after CI's `:main` push, and
-`test_strata_thin_init.py`'s rolling-pair arm enforces the pair. `:v<run>`
-builds already exist for this image; adopting one is a Renovate chores
-decision, never a hand-bump here (values twin: the chart's rolling-tag law
-comment). Bundle size: the gfx120x base is ~2.8 GB
+`test_strata_thin_init.py`'s rolling-pair arm enforces the pair. A
+`:yy.mm.N` calendar build of this image lands when the first post-merge
+forge build covers it; adopting one is a Renovate chores decision, never a
+hand-bump here (values twin: the chart's rolling-tag law comment). Bundle size: the gfx120x base is ~2.8 GB
 on disk and the added halo engine root measures
 ~0.65 GB uncompressed (layer-listing arithmetic, 2026-10-28) plus the
 supervisor's single Go binary — the accepted price of one image serving

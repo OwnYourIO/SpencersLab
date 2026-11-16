@@ -10,8 +10,10 @@ digest copy: the Dockerfile adds exactly ONE sanctioned flash-attn pip
 layer and nothing else, so the CI build stays minutes-class — the
 base-layer copy plus a pure-Python install with no CK/HIP compilation —
 with the final cost and size delta CI-owned (cf-77). The cluster pulls the
-in-repo artifact because `docker-build.yaml`'s first-build `:v<run>` law
-needs one (D23); the interface contract C02 builds against is below.
+in-repo artifact because the forge `containers-build.yaml`'s first-build
+calendar-tag law (the first build covering this directory mints the image's
+first `:yy.mm.N` tag) needs one (D23); the interface contract C02 builds
+against is below.
 
 ## Tag -> digest ledger (manual)
 

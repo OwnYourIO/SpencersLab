@@ -56,15 +56,18 @@ wekan-mcp/
 This server is deployed through the lab's GitOps repo — **never
 `kubectl apply`**; ArgoCD syncs everything.
 
-- **Image**: built and pushed automatically by
-  `.github/workflows/docker-build.yaml` on any merge to `main` (or `dev`)
-  that touches `containers/wekan-mcp/`; PRs build but never push. Each
-  merge publishes `ghcr.io/ownyourio/wekan-mcp:v<run_number>` (immutable,
-  keyed to the workflow run) plus the rolling `:main` / `:dev` branch tag.
-  The cluster currently tracks `:main` with `imagePullPolicy: Always`;
-  the follow-up pin step bumps the service values to the immutable
-  `:v<run_number>` of the build that shipped the wanted surface, after
-  which renovate's docker manager proposes future bumps.
+- **Image**: built and pushed automatically by the Forgejo workflow
+  `.forgejo/workflows/containers-build.yaml` on any merge to `main` (or a
+  `workflow_dispatch` run) that touches `containers/wekan-mcp/`; a PR
+  targeting `main` that touches the container pushes `pr-<branch>-<sha>` to
+  the instance registry only. Each main build on a `prod`-role instance
+  publishes the calendar tag `yy.mm.N` (one past the highest `yy.mm.*` tag
+  across both registries) plus the rolling `:latest` / `:main` tags to both
+  `ghcr.io/ownyourio/wekan-mcp` and the instance's own Forgejo registry
+  (`curatedforest/wekan-mcp`). The service values currently carry the legacy
+  `:v162` pin; the one-time bump to the `:yy.mm.N` calendar tag the first
+  post-merge build mints is a Renovate PR, not a manual bump, and
+  renovate's docker manager proposes the bumps after that.
 - **Platform wiring**: declared as the `hivetools.mcp.wekan` entry in
   `services/gpu/prod/values.yaml` (ToolHive `MCPServer` CRD,
   streamable-http, port 8080). The shared hivetools ingress routes
