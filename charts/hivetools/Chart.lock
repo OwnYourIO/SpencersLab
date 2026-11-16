@@ -4,6 +4,6 @@ dependencies:
   version: 0.56.0
 - name: toolhive-operator
   repository: oci://ghcr.io/stacklok/toolhive
-  version: 0.56.0
-digest: sha256:6a10046b1256a042580b4713c0b573e0e0dd28dad97b863d38a2a6757b34f879
-generated: "2026-10-25T14:46:30.474530563Z"
+  version: 0.66.0
+digest: sha256:008ce68591257f80a6bbd6f8f81a0b7e766f3f8c0af8fb2aee19a539cef4b6e8
+generated: "2026-11-16T22:09:10.512271365Z"
