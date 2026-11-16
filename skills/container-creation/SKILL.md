@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio or the instance's own Forgejo registry (same tag set), working with the tag-based containers-build Forgejo workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -35,28 +35,84 @@ containers/
 ```
 
 The directory name is significant: it becomes the image name. The container
-above publishes as `ghcr.io/ownyourio/<container-name>`.
+above publishes as `ghcr.io/ownyourio/<container-name>` and, with the same
+tags, as `<instance-host>/curatedforest/<container-name>` on the building
+instance's own Forgejo registry.
 
 ## Build pipeline
 
-`.github/workflows/docker-build.yaml` builds and pushes containers
-automatically; images are identified by tags.
+`.forgejo/workflows/containers-build.yaml` builds and pushes containers
+automatically on lab Forgejo instances; what an instance publishes is
+decided by its `ROLE` repo variable — a comma list without spaces over
+`{dev, prod}` (e.g. `dev,prod`; unset defaults to both roles), never by an
+instance URL. `on:` cannot be conditioned, so the role/event split lives in
+job `if:` guards. Images are identified by tags.
 
-**Triggers:** pushes to `main`/`dev` that touch `containers/**`, and PRs
-targeting `main`/`dev` that touch `containers/**`.
+**Triggers:** pushes to `main` that touch `containers/**`, pull requests
+targeting `main` that touch `containers/**` (the forge is where PRs live),
+plus `workflow_dispatch`.
 
 **Per changed container directory:**
 
-1. Detects changed container dirs (only strict DNS-safe names with a
-   `Dockerfile` are accepted).
-2. Builds `containers/<name>/Dockerfile` with Buildx + GHA cache.
-3. **On CI (push to `main`/`dev`)** pushes two tags:
-   - `:v<run_number>` — monotonic, immutable (the GitHub `run_number`; this is
-     the GitHub Actions analog of ADO's `v$(Build.BuildId)`).
-   - `:<branch>` — the mutable rolling tag (`:main` / `:dev`) that the cluster
-     pulls.
-4. **On PRs** it builds only — it never pushes, so a PR branch named e.g.
-   `dev` cannot overwrite the mutable `:dev` tag the cluster pulls.
+1. Detects changed container dirs over the event's commit range:
+    - a push diffs the whole `before..sha` range as a tree diff, so every
+      commit between the endpoints counts, not just the tip. The detect
+      job's checkout therefore carries `fetch-depth: 0`: at the shallow
+      default the range endpoints are absent locally and the diff dies on
+      `bad object` (exit 128) — loud, never a silent partial set. The
+      full fetch measured 21.23 MiB / 1,849 ms against the instance from
+      a workspace clone; no run of this workflow has executed yet, so
+      every number here is offline. Depth-0 is not a correctness verdict:
+      a depth-1 checkout plus a targeted fetch of `before` measured
+      correct as well (172 ms) and was declined by owner ruling, not by
+      fact.
+    - a pull request diffs `merge-base..head`, so a base that moved
+      after the head branched contributes nothing. The merge base is
+      resolved with a hand-rolled `git merge-base` call: the
+      `git diff --merge-base` flag would need git ≥ 2.43 and the runner
+      image's git version is unverified.
+    - the first push to a branch carries an all-zero `before`. It is
+      deliberately `tip-only` — `HEAD^..HEAD`, just the pushed commit —
+      and announces itself with a `::warning::` line in the run log.
+    - an empty `before` is fatal: no push payload sends one, so its
+      arrival means a wrong accessor or a misrouted event. A range whose
+      endpoints do not resolve fails the job loudly too.
+    - every run echoes the resolved set with its event and endpoints. An
+      empty set on a real push or PR range warns with `::warning::`; a
+      no-op push (its `before` equals its `sha`) and an empty
+      `workflow_dispatch` list stay silent — emptiness is their correct
+      semantics by ruling. These lines are run-log text; this Forgejo
+      build surfaces nothing richer, and none of it is live-validated.
+    - `total_commits` reads 0 on Forgejo push payloads, so detection
+      never counts commits: an empty commit list is not an empty range.
+   Only strict DNS-safe names with a `Dockerfile` are accepted — the
+   gate applies to every source, a dispatch's named list included.
+2. Builds `containers/<name>/Dockerfile` with plain `docker build` (the
+   runner's persistent dind layer store is the build cache).
+3. **On a main/dispatch build with `prod` in `ROLE`** it pushes three tags
+   — `:yy.mm.N`, `:latest`, `:main` — to **both** registries,
+   `ghcr.io/ownyourio/<name>` and `<instance-host>/curatedforest/<name>`:
+   - `:yy.mm.N` — the calendar release: one past the highest `yy.mm.*` tag
+     across **both** registries, each side advanced past any manifest it
+     already holds, every walk finished before the first push. Neither
+     registry has tag immutability, so a re-run must not overwrite a
+     published release — every successful build publishes the same N
+     everywhere it pushed; failures leave gaps, never clobbers.
+   - `:latest` and `:main` — the mutable rolling tags the cluster pulls,
+     mirrored to both registries.
+4. **On a PR with `dev` in `ROLE`** it pushes `pr-<branch>-<sha>` to the
+   instance's own registry only — the `pr-` prefix and build hash can never
+   shadow a rolling or calendar tag, and ghcr never sees a PR build.
+
+Pushing takes human-minted PATs: `FORGE_PUSH_TOKEN` (non-admin,
+`write:package`) for the instance registry — the Actions job token cannot
+write packages — and `GHCR_PUSH_PAT` for ghcr. The instance-registry host
+is derived from the instance's own server URL inside the workflow; no URL
+literals live in the file.
+
+`.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual
+rebuild fallback on the GitHub side — its automatic trigger blocks are kept
+commented in the file, so it fires on no push and no PR.
 
 **There is no manual release process** — merging to `main` is the entire flow.
 There is nothing to bump and nothing to tag by hand.
@@ -197,10 +253,10 @@ app-template:
         main:
           image:
             repository: ghcr.io/ownyourio/<container-name>
-            # Pinned to the newest immutable :v<run> tag — the repo standard
-            # (see "Image tag pinning" in helm-chart-creation). Renovate
-            # proposes bumps when a newer :v<run> tag is published.
-            tag: v123
+            # Pinned to the newest immutable :yy.mm.N calendar tag — the repo
+            # standard (see "Image tag pinning" in helm-chart-creation).
+            # Renovate proposes bumps when a newer calendar tag is published.
+            tag: 26.11.1
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -209,31 +265,42 @@ app-template:
 
 Two ways to reference the image — **pin by default**:
 
-- **`:v<run_number>`** (default) — an immutable point-in-time tag; pin to the
+- **`:yy.mm.N`** (default) — an immutable calendar-release tag; pin to the
   newest published one — but check that the newest is YOURS: the registry
   maximum is not automatically the right bump target, because a build that
-  predates the merge you ship can already occupy a higher run number. Name
-  your own build's run number. This is the repo standard: reproducible
-  deploys and Renovate-managed upgrades (see the pinned-image rule in the
-  `helm-chart-creation` skill). Grab the run number from the workflow run's
-  `#NNN` label, or registry-side anonymously: the pull-scoped token
+  predates the merge you ship can already occupy a higher N. Name
+  your own build's tag. This is the repo standard: reproducible deploys
+  and Renovate-managed upgrades (see the pinned-image rule in the
+  `helm-chart-creation` skill). Grab the tag from the Forgejo run that
+  built your merge, or registry-side anonymously: the pull-scoped token
   (`GET https://ghcr.io/token?scope=repository:ownyourio/<name>:pull`) plus
   `GET https://ghcr.io/v2/ownyourio/<name>/tags/list`. Do NOT enumerate
   with an untagged `docker buildx imagetools inspect` — untagged, it
-  resolves `:latest` (a real tag that on some images is a legacy
-  pre-tag-scheme publish) and lists nothing.
+  resolves `:latest` (a rolling tag every main build repoints) and lists
+  nothing. Charts still on a legacy `:v<run_number>` pin stay there until
+  the one-time bump PR moves them onto `:yy.mm.N`; meanwhile the calendar
+  versioning rule in `renovate.json` makes Renovate skip those deps
+  silently (no downgrade PRs).
 - **`:main` + `pullPolicy: Always`** — the mutable rolling tag. Use it only for
   a brand-new container that has no pinned tag yet (or when explicitly asked),
   and leave a note to pin it once a versioned build exists.
   `brother-ptouch-automation` is the standing exception (active development —
   it tracks `latest` + `pullPolicy: Always` on purpose).
 
+The instance registries mirror the same tag set 1:1 as
+`<instance-host>/curatedforest/<name>` and allow anonymous pull (the
+`curatedforest` org is public) — a valid manual pull source for debugging.
+Pins stay on ghcr `:yy.mm.N`: the calendar rule in `renovate.json` tracks
+`ghcr.io/ownyourio/*` only, so a forge-registry pin would sit outside the
+rule until that rule widens.
+
 The change loop when pinned:
 
 1. Edit `containers/<name>/Dockerfile` (or source).
-2. Merge to `main` → the workflow rebuilds and repushes the rolling
-   `ghcr.io/ownyourio/<name>:main` plus a fresh immutable `:v<run_number>`.
-3. Bump `image.tag` in `charts/<name>/values.yaml` to the new `:v<run_number>`
+2. Merge to `main` → a `prod`-role instance rebuilds and repushes the
+   rolling `ghcr.io/ownyourio/<name>:main` and `:latest` plus a fresh
+   calendar `:yy.mm.N` — to ghcr and the instance's own registry alike.
+3. Bump `image.tag` in `charts/<name>/values.yaml` to the new `:yy.mm.N`
    (Renovate opens this PR for you once the tag is published).
 
 ## Worked example: brother-ptouch-automation
@@ -251,10 +318,11 @@ The change loop when pinned:
 Before merging a new container to `main`:
 
 - [ ] `containers/<name>/Dockerfile` exists; the build gate is CI — agent
-      sessions have no docker daemon, so `docker-build.yaml` on the pushed
-      branch is authoritative, and build-critical facts (base image layout,
-      binary paths, digests) are verified locally from the pinned images'
-      GHCR layer tar-listings instead
+      sessions have no docker daemon, so the Forgejo
+      `containers-build.yaml` run on the pushed branch is authoritative, and
+      build-critical facts (base image layout, binary paths, digests) are
+      verified locally from the pinned images' GHCR layer tar-listings
+      instead
 - [ ] Runs as non-root user (UID 65532 or other non-zero uid)
 - [ ] Has a clear `ENTRYPOINT`
 - [ ] Exposes a `/health` (or equivalent) endpoint for chart probes if it's a service

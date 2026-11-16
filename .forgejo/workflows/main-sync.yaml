@@ -5,6 +5,10 @@
 # and the pushes cannot ping-pong. An unset ROLE renders empty and fires
 # nothing too (fail-safe).
 #
+# Guards test ROLE membership with contains(), the repo-wide shape, so a
+# list value like dev,prod passes. Unlike containers-build.yaml, whose
+# guards widen on unset, an unset ROLE stays fail-safe here on purpose.
+#
 # Every push is plain and non-force: a refused non-fast-forward or any
 # error exits the step and fails the job, so a target is never overwritten;
 # the instance's built-in push mirror, which overwrites its targets, is not
@@ -22,7 +26,7 @@ on:
 
 jobs:
   push-gh:
-    if: vars.ROLE == 'prod'
+    if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -43,7 +47,7 @@ jobs:
           git push "https://x-access-token:${PUSH_TOKEN}@${rest}" HEAD:refs/heads/main
 
   push-dev:
-    if: vars.ROLE == 'prod'
+    if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6

@@ -7,10 +7,11 @@
 #  - t2: schedule + workflow_dispatch only — schedules fire from the default
 #    branch alone, so branch testing rides the dispatch; a push trigger would
 #    run a full Renovate pass on every push (DECISIONS D6).
-#  - t3: the dev-stage gate — exactly one job guarded vars.ROLE == 'dev';
-#    an unset ROLE fires nothing (same fail-safe class as main-sync), and the
-#    guard's textual reach is capped at the if: and the diag echo so instance
-#    identity stays in prose-free shape (DECISIONS D1/Q1).
+#  - t3: the dev-stage gate — exactly one job guarded by ROLE-list
+#    membership (contains); an unset ROLE fires nothing (same fail-safe class
+#    as main-sync), and the guard's textual reach is capped at the if: and the
+#    diag echo so instance identity stays in prose-free shape (DECISIONS
+#    D1/Q1; cf-6 run -2 migrated the shape, the reach cap did not move).
 #  - t4/m6-pair: immutable full-patch image tag with NO "# renovate:"
 #    annotation anywhere — the native github-actions manager extracts the
 #    container image line (dist extract.js, probe of record 2026-11-10); an
@@ -50,7 +51,10 @@ WF=".forgejo/workflows/renovate.yaml"
 # tests/renovate/* also lets the pair run against a simulated final config.
 RENOVATE="${RENOVATE_CONFIG:-renovate.json}"
 # The UA6 infra flip is exactly two edits: this constant and the workflow if:.
-GUARD="vars.ROLE == 'dev'"
+# cf-6 run -2 (owner ruling OQ-j) migrates the guard to the repo membership
+# convention; narrow-on-unset is the file's own polarity and stays — bare
+# contains() on an unset var is false, so the fail-safe survives the shape.
+GUARD="contains(vars.ROLE, 'dev')"
 
 checks=0
 
@@ -324,7 +328,9 @@ bot_hits = [i for i, leg in enumerate(legs)
 need(not bot_hits,
      f'customManagers legs {bot_hits} mention renovatebot — two managers claiming the image '
      'line is the double-match the owner ruling rejected (DECISIONS D13)')
-need(len(rules) == 9, f'packageRules has {len(rules)} entries, expected 9 (no-net-additions invariant)')
+# 9 was the cf-135 count; cf-6's calendar packageRule (landed on this
+# branch by run -0) is the 10th — re-pinned by cf-6 run -2's C02 ruling.
+need(len(rules) == 10, f'packageRules has {len(rules)} entries, expected 10 (9 since cf-135 plus the calendar rule cf-6 carries on this branch — no net addition beyond that)')
 need(len(legs) == 13, f'customManagers has {len(legs)} legs, expected 13 (no-net-additions invariant)')
 PY
 then

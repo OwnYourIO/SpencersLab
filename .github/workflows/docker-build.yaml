@@ -1,23 +1,31 @@
 name: Build and Push Docker Containers
 
-# Images are identified by tags:
-#   CI on main/dev → push v<run_number> (monotonic immutable tag)
-#                    + <branch> (mutable rolling tag the cluster pulls)
-#   PR builds      → build only, never push (a PR branch must not be able to
-#                    overwrite the ':main' tag)
+# GitHub-side MANUAL rebuild fallback: this workflow runs only on
+# workflow_dispatch. The automatic container pipeline is the Forgejo workflow
+# .forgejo/workflows/containers-build.yaml, which publishes the calendar
+# yy.mm.N plus the rolling latest and main tags on main, and pr-<branch>-<sha>
+# on pull requests. A dispatch here mints v<run_number> (monotonic immutable
+# tag) + <branch>, the tags the build job below computes.
+# The original push/pull_request triggers stay commented in on: as the
+# re-enable affordance; manual dispatch remains the only live trigger.
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'containers/**'
-  pull_request:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'containers/**'
+  # Kept commented on purpose: uncommenting the triggers below makes GitHub
+  # build every push and pull request and mint v<run_number> + <branch>
+  # tags, racing the Forgejo calendar line (yy.mm.N) and outranking its
+  # Renovate pins — re-enabling is an explicit owner decision, and the
+  # pipeline docs must be re-pinned in the same change.
+#   push:
+#     branches:
+#       - main
+#       - dev
+#     paths:
+#       - 'containers/**'
+#   pull_request:
+#     branches:
+#       - main
+#       - dev
+#     paths:
+#       - 'containers/**'
   # Manual rebuild: name the containers to build (comma/space separated). Use
   # this to (re)build a container whose sources did not change in a push, e.g.
   # one whose earlier build was cancelled. Leave empty to auto-detect.

@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Changed-container detection and registry tag math for
+# .forgejo/workflows/containers-build.yaml. Pure shell + coreutils: the
+# workflow parses the tags/list JSON textually because the runner image
+# ships no jq or python.
+#
+#   detect    stdout a sorted JSON array of the containers/<name> dirs to
+#             rebuild, run at the checked-out repo root. Inputs are
+#             environment variables: EVENT_NAME (push|pull_request|
+#             workflow_dispatch), EVENT_BEFORE and SHA (push range), BASE_SHA
+#             and HEAD_SHA (pull-request range), MANUAL_CONTAINERS (dispatch
+#             list, comma/space separated).
+#   next-n    stdin a tags/list JSON body (either registry), env YYMM=yy.mm;
+#             stdout the month's next calendar release number, max(yy.mm.N)+1 or 1.
+#   sanitize  argv branch name; stdout a Docker-tag-safe rolling/PR component.
+
+set -eu
+
+die() {
+  printf 'forgejo-container-detect: %s\n' "$1" >&2
+  exit 2
+}
+
+detect() {
+  local event="${EVENT_NAME:-push}" names n
+
+  if [ "$event" = workflow_dispatch ]; then
+    # A dispatch names its rebuild list outright: it fires on demand with no
+    # commit range behind it, so an empty list builds nothing.
+    names=$(printf '%s' "${MANUAL_CONTAINERS:-}" | tr ', ' '\n\n')
+  else
+    local a b
+    if [ "$event" = pull_request ]; then
+      a="${BASE_SHA:-}"
+      b="${HEAD_SHA:-}"
+      # Detection anchors on the merge base of the two payload shas, not
+      # the base tip: a base that moved after the head branched must not
+      # contribute base-side changes to a PR build, and the trigger filter
+      # that dispatched this run already diffs merge-base..head. The raw
+      # endpoints go to stderr BEFORE the call: git merge-base exits 1 on
+      # an unrelated pair writing nothing, so a red run would otherwise
+      # name no endpoint at all.
+      printf 'detect: merge-base of %s and %s (event %s)\n' "$a" "$b" "$event" >&2
+      a=$(git merge-base "$a" "$b")
+    else
+      local before="${EVENT_BEFORE:-}"
+      if [ -z "$before" ]; then
+        # A v15.0.10 push payload always carries before: a real oid, or the
+        # all-zero sentinel on branch creation. An empty one therefore means
+        # a wrong accessor or an unexpected event routed into the push arm,
+        # and reading it as a first push would silently narrow a multi-commit
+        # push to the tip commit.
+        die 'push arm: EVENT_BEFORE is empty, which no push payload sends'
+      fi
+      if [ -z "${before//[0]/}" ]; then
+        # The first push to a branch carries an all-zero before and
+        # HEAD^..HEAD is the pushed commit — a tip-only range: older
+        # commits of that push stay invisible, and the log line is where
+        # the narrowing announces itself.
+        printf '::warning::first push (all-zero before): tip-only detection over HEAD^..HEAD\n' >&2
+        a='HEAD^'
+        b='HEAD'
+      else
+        a="$before"
+        b="${SHA:-HEAD}"
+      fi
+    fi
+    # The endpoints actually diffed, named on stderr before the call: a red
+    # detection must be diagnosable from the job log alone. stdout stays
+    # exactly the JSON array — the step captures it into its output.
+    printf 'detect: range %s..%s (event %s)\n' "$a" "$b" "$event" >&2
+    # No `|| true` and no masking pipe on the git call itself: a range that
+    # fails to resolve must fail the job, not be reported as "nothing
+    # changed" and silently skip the builds it covers.
+    local changed
+    changed=$(git diff --name-only "$a" "$b" -- containers/)
+    names=$(printf '%s\n' "$changed" | cut -d/ -f2)
+  fi
+
+  # Both gates apply to every source, dispatch lists included: a name in a
+  # free-text or deleted-since input is not a promise that a buildable
+  # directory exists for it.
+  printf '%s\n' "$names" |
+    grep -E '^[a-z0-9]+(-[a-z0-9]+)*$' |
+    while IFS= read -r n; do
+      [ -f "containers/$n/Dockerfile" ] && printf '%s\n' "$n"
+    done |
+    sort -u |
+    json_array
+}
+
+next_n() {
+  local yymm esc tag micro max
+  yymm=${YYMM:?next-n reads the month from YYMM (e.g. 26.11)}
+  esc=${yymm//./\\.}
+  max=0
+  # GHCR answers tags/list as one compact JSON line; keep only the tags
+  # array, then only this month's bare yy.mm.<digits> entries, so legacy
+  # v<run>, rolling and foreign-month tags never feed the comparison.
+  while IFS= read -r tag; do
+    micro=${tag##*.}
+    # The filter above admits digits only, so the compare is numeric and
+    # 26.11.10 outranks 26.11.9.
+    if [ "$micro" -gt "$max" ]; then
+      max=$micro
+    fi
+  done < <(
+    tr -d '\n\r' |
+      sed -n 's/.*"tags"[[:space:]]*:[[:space:]]*\[\([^]]*\)\].*/\1/p' |
+      tr ',' '\n' |
+      sed -n 's/^[[:space:]]*"\([^"]*\)"[[:space:]]*/\1/p' |
+      grep -E "^${esc}\.[0-9]+$" || true
+  )
+  printf '%s\n' "$((max + 1))"
+}
+
+sanitize() {
+  [ "$#" -ge 1 ] || die 'sanitize takes a branch name'
+  printf '%s' "$1" |
+    tr 'A-Z' 'a-z' |
+    tr '/' '-' |
+    sed -e 's/[^a-z0-9._-]/-/g' -e 's/--*/-/g' |
+    cut -c1-128
+}
+
+json_array() {
+  local out='' name
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    out="${out:+$out,}\"$name\""
+  done
+  printf '[%s]\n' "$out"
+}
+
+case "${1:-}" in
+  detect) detect ;;
+  next-n) next_n ;;
+  sanitize)
+    shift
+    sanitize "$@"
+    ;;
+  *) die 'usage: forgejo-container-detect.sh detect | next-n | sanitize <branch>' ;;
+esac

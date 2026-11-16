@@ -1,0 +1,405 @@
+# Build and publish every changed containers/<name> directory. Instance
+# selection is by the repo variable ROLE, never by an instance URL: ROLE is a
+# comma list without spaces over the vocabulary {dev, prod}, the guards test
+# membership with contains() — a case-insensitive substring that never errors
+# on a hand-typed value, where a guard expression that errors fails the job
+# while a false one only skips it — and an unset ROLE matches both role
+# guards, so the single-server default is the widest behavior, never a
+# disabled pipeline. main-sync.yaml keeps the same membership shape but stays
+# narrow on unset (its fail-safe): one shape, per-file polarity, both
+# deliberate. Substring caveat: no future role word may contain dev or prod
+# as a substring — "production" would silently widen the prod guards.
+#
+# Tags. A main/dispatch build on a prod-role instance publishes the calendar
+# release yy.mm.N plus the rolling latest and main to ghcr.io/ownyourio AND
+# the same three tags to this instance's own registry under the lowercase
+# curatedforest owner (repository names are lowercase-only), so the local
+# registry is a drop-in pull source alongside ghcr. A pull request on a
+# dev-role instance publishes pr-<branch>-<sha> to the local registry only:
+# a PR can never move a rolling or calendar tag, and the job works with zero
+# ghcr credentials.
+#
+# Calendar N. Neither registry has tag immutability — re-pushing a taken tag
+# silently overwrites what it names — so N is the union maximum of both
+# registries' month tags, each side advanced past any manifest it already
+# holds, and both walks finish before the first push. Every successful build
+# publishes the same N everywhere it pushed; a failed build leaves a gap on
+# a registry, never a clobber. The ghcr arm pushes first so a half-failed
+# run gaps the registry with no pinned consumers. Only the calendar tag is
+# walked: latest and main are mutable by contract and repoint unconditionally.
+#
+# Credentials. The Actions job token cannot write packages on this build
+# (the registry's permission check for it is an upstream TODO), so the forge
+# registry takes the human-minted FORGE_PUSH_TOKEN PAT — non-admin, owned by
+# an account with write on the curatedforest namespace; docker login reads
+# the identity from the token in the password field, so -u is cosmetic. The
+# same PAT reads tags/list and manifests, so an org-visibility flip cannot
+# degrade the derivation to "no tags, no walk". GHCR_PUSH_PAT stays the ghcr
+# credential. Retention is owner-side: forge Cleanup Rules scoped strictly
+# to pr-.* — latest is code-protected, but main and the calendar line survive
+# only while that pattern stays narrow.
+#
+# Detection. A push diffs the whole before..sha range as trees — every
+# commit between the endpoints lands in the changed set — which is why the
+# detect job checks out with fetch-depth: 0 and the build jobs, which never
+# diff, stay shallow. A pull request diffs merge-base..head, so a base that
+# moved contributes nothing. The first push to a branch (all-zero before)
+# narrows to the tip commit and says so with a ::warning:: log line; an
+# empty before is fatal, because no real push payload sends one and its
+# arrival means a wrong accessor or event. The resolved set is echoed with
+# its event and endpoints, and an empty push or PR set earns a ::warning::
+# except where emptiness is correct semantics: a push whose before equals
+# sha (a no-op ref update, its range empty by definition) and an empty
+# dispatch list (its own build set) both stay silent. Nothing reads
+# event.commits or total_commits: the Actions push payload here leaves
+# total_commits at 0, so a commit-counted range would always come up empty.
+#
+# Runs. Without concurrency:, Forgejo cancels an in-flight run of the same
+# workflow on every new push or PR synchronize event; a cancelled matrix
+# would publish half a tag set, so runs queue instead. The lab runner has
+# capacity 1, so matrix cells serialize through one pod, and every job gets
+# the runner's 30-minute ceiling — a cold build of a large image can hit it.
+# workflow_dispatch shares the release arm: a dispatch from any branch
+# repoints latest and main on both registries and mints a calendar tag in
+# both.
+#
+# Steps are plain shell. Actions resolve through the instance's mirror,
+# whose inventory beyond actions/checkout — the only action used here — is
+# unproven. Fork heads get empty secrets and a read-only token, so the PR
+# leg works for same-repository pull requests only.
+
+on:
+  push:
+    branches: [main]
+    paths: ['containers/**']
+  pull_request:
+    branches: [main]
+    paths: ['containers/**']
+  # Rebuild escape hatch: name the containers to (re)build when their
+  # sources did not change but a publish is due (a failed or cancelled
+  # earlier run). An empty list builds nothing.
+  workflow_dispatch:
+    inputs:
+      containers:
+        description: 'Container names to build (comma/space separated)'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    if: vars.ROLE == null || contains(vars.ROLE, 'dev') || contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    outputs:
+      changed-containers: ${{ steps.detect.outputs.changed-containers }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history is what keeps a multi-commit push's non-tip changes
+          # visible: detection diffs the whole before..sha range, and at the
+          # depth-1 default the endpoints do not exist locally — the step
+          # then dies on 'bad object' (exit 128, loud), never quietly drops
+          # the changes. The depth-0 fetch itself measured 21.23 MiB /
+          # 1,849 ms on this repo from a workspace clone: nothing at the
+          # runner's scale, and one full fetch up front avoids the per-run
+          # targeted-fetch recovery a shallow checkout would have to carry.
+          fetch-depth: 0
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "ROLE=[${{ vars.ROLE }}]"
+          echo "event=${{ forgejo.event_name }}"
+      - name: detect changed containers
+        id: detect
+        env:
+          EVENT_NAME: ${{ forgejo.event_name }}
+          EVENT_BEFORE: ${{ forgejo.event.before }}
+          SHA: ${{ forgejo.sha }}
+          BASE_SHA: ${{ forgejo.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ forgejo.event.pull_request.head.sha }}
+          MANUAL_CONTAINERS: ${{ forgejo.event.inputs.containers }}
+        run: |
+          set -euo pipefail
+          # Assign before emitting: a substitution inside echo's argument
+          # reports echo's exit status, so a failed detection would write an
+          # empty output (and the build matrix would be built from an empty
+          # list) instead of failing this job on the detector's exit.
+          changed=$(bash scripts/forgejo-container-detect.sh detect)
+          # The verdict and the endpoints that produced it go to the job
+          # log: a green run that built nothing must read differently from
+          # one whose range silently resolved to nothing.
+          echo "changed containers: $changed (event $EVENT_NAME before=$EVENT_BEFORE sha=$SHA base=$BASE_SHA head=$HEAD_SHA)"
+          # Forgejo exports the GITHUB_* compatibility family; the FORGEJO_*
+          # name is the fallback per the v15.0 reference.
+          echo "changed-containers=$changed" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+          # An empty push or PR set even though the trigger path-matched
+          # containers is the anomaly worth naming, so it earns a marked log
+          # line. The two correct empties stay silent and both exemptions
+          # are on the guard itself: a push whose before equals sha is an
+          # echo of a no-op ref update, not a finding, and a dispatch list
+          # names its own build set — the empty one is its documented no-op
+          # intent. A PR has no before/sha pair to exempt, so its empty set
+          # always warns.
+          if [ "$EVENT_NAME" != workflow_dispatch ] && [ "$changed" = '[]' ] && { [ "$EVENT_NAME" = pull_request ] || [ "$EVENT_BEFORE" != "$SHA" ]; }; then
+            echo "::warning::changed set resolved empty for event $EVENT_NAME — both build arms will skip"
+          fi
+
+  build-release:
+    if: forgejo.event_name != 'pull_request' && (vars.ROLE == null || contains(vars.ROLE, 'prod')) && needs.detect-changes.outputs.changed-containers != '[]'
+    needs: detect-changes
+    runs-on: ubuntu-24.04
+    name: release ${{ matrix.container }}
+    strategy:
+      # One container's build failure must not cancel its siblings'.
+      fail-fast: false
+      matrix:
+        container: ${{ fromJSON(needs.detect-changes.outputs.changed-containers) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "ROLE=[${{ vars.ROLE }}]"
+          echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
+          # First-fire recorder for the runner's Actions-cache env and the
+          # buildx the job never uses; neither may fail the job.
+          env | grep ACTIONS_ || true
+          docker buildx version || true
+          # The plain docker build below talks to the in-pod dind daemon
+          # (chart socket contract); if it is unreachable, nothing after
+          # this point is worth logging.
+          docker info
+
+      - name: log in to ghcr
+        # The forge's per-run token is forge-scoped and cannot write ghcr;
+        # this PAT (write:packages) is the only credential that can.
+        run: |
+          set -euo pipefail
+          printf '%s' '${{ secrets.GHCR_PUSH_PAT }}' | docker login ghcr.io -u OwnYourIO --password-stdin
+
+      - name: log in to the forge registry and derive its calendar N
+        env:
+          FORGE_SERVER_URL: ${{ forgejo.server_url }}
+        run: |
+          set -euo pipefail
+          # The registry host derives from the env server_url, never from a
+          # literal; the server URL is stored with a trailing slash, and
+          # host//owner/img is an invalid reference, so every strip trims it.
+          # The /v2/ reads below wear an explicit TLS scheme (curl defaults a
+          # scheme-less URL to http, and these reads carry the push PAT);
+          # docker login and the image refs stay bare hostnames, where a
+          # scheme would itself be an invalid reference.
+          forge_registry=${FORGE_SERVER_URL#https://}
+          forge_registry=${forge_registry%/}
+          forge_pat='${{ secrets.FORGE_PUSH_TOKEN }}' && printf '%s' "$forge_pat" | docker login "$forge_registry" -u forge-push --password-stdin
+          forge_api="https://$forge_registry/v2/curatedforest/${{ matrix.container }}"
+          month=$(date +%y.%m)
+          n_forge=1
+          # Mirrored tolerance posture: absence must arrive as an HTTP
+          # status, never a transport failure — 404 NAME_UNKNOWN is this
+          # registry's answer for a package nobody has pushed. 401/403/404
+          # contribute no tags to the union max and earn no walk; any other
+          # code is a malfunction and stays fatal. The walk runs only under
+          # a 200 list, where the manifest 200/404 semantics hold.
+          forge_list=$(curl -sS -w '\n%{http_code}' -u "forge:$forge_pat" "$forge_api/tags/list")
+          forge_list_code=${forge_list##*$'\n'}
+          if [ "$forge_list_code" = 200 ]; then
+            n_forge=$(printf '%s' "${forge_list%$'\n'*}" | YYMM="$month" bash scripts/forgejo-container-detect.sh next-n)
+            forge_manifest_code() {
+              curl -s -o /dev/null -w '%{http_code}' -I \
+                -u "forge:$forge_pat" \
+                -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
+                "$forge_api/manifests/$1"
+            }
+            forge_code=$(forge_manifest_code "$month.$n_forge")
+            forge_advance=0
+            while [ "$forge_code" != 404 ]; do
+              if [ "$forge_code" != 200 ]; then
+                echo "unexpected HTTP $forge_code for $forge_api/manifests/$month.$n_forge" >&2
+                exit 1
+              fi
+              forge_advance=$((forge_advance + 1))
+              if [ "$forge_advance" -gt 50 ]; then
+                echo "no free $month.N tag on the forge registry within 50 of its maximum" >&2
+                exit 1
+              fi
+              n_forge=$((n_forge + 1))
+              forge_code=$(forge_manifest_code "$month.$n_forge")
+            done
+          elif [ "$forge_list_code" != 401 ] && [ "$forge_list_code" != 403 ] && [ "$forge_list_code" != 404 ]; then
+            echo "unexpected HTTP $forge_list_code from $forge_api/tags/list" >&2
+            exit 1
+          fi
+          # Log the tolerated codes: a side that derived N without readable
+          # tags contributed nothing to the union max, and the run log is
+          # where a degraded side stays visible.
+          echo "n_forge=$n_forge list=$forge_list_code"
+          # Fix the calendar month once for the whole job: both walks and
+          # both pushes must use the same month even when the run straddles
+          # the month boundary.
+          echo "month=$month" > calendar.env
+          echo "n_forge=$n_forge" > forge-n.env
+
+      - name: derive the ghcr-side calendar N
+        run: |
+          set -euo pipefail
+          . ./calendar.env
+          ghcr_api="https://ghcr.io/v2/ownyourio/${{ matrix.container }}"
+          n_ghcr=1
+          # The anonymous pull-scoped token is enough to read a published
+          # image's tag list and manifests. Neither read may fail on status:
+          # GHCR answers DENIED (403), not 404, on the token endpoint for a
+          # repository nobody has pushed, and 401/403/404 all mean the month
+          # has no readable calendar tag — the image's first publish,
+          # starting at N=1. The existence walk below runs only under a pull
+          # token: the manifest endpoint answers 401 to every anonymous
+          # request, so its 200/404 semantics hold only for a
+          # read-authenticated check. Any other code is a registry
+          # malfunction, not an absence, and stays fatal; transport errors,
+          # as everywhere here, are fatal via curl's exit code.
+          ghcr_token_resp=$(curl -sS -w '\n%{http_code}' "https://ghcr.io/token?scope=repository:ownyourio/${{ matrix.container }}:pull")
+          ghcr_token_code=${ghcr_token_resp##*$'\n'}
+          if [ "$ghcr_token_code" = 200 ]; then
+            ghcr_token=$(printf '%s' "${ghcr_token_resp%$'\n'*}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+            # A 200 whose body carries no token is a malfunction, not an
+            # absence: an empty bearer would make tags/list answer 401 —
+            # the tolerated no-tags code — and the release would publish
+            # at N=1 over a taken tag with no existence walk to stop it.
+            if [ -z "$ghcr_token" ]; then
+              echo "ghcr token endpoint answered 200 without a token" >&2
+              exit 1
+            fi
+            ghcr_list=$(curl -sS -w '\n%{http_code}' -H "Authorization: Bearer $ghcr_token" "$ghcr_api/tags/list")
+            ghcr_list_code=${ghcr_list##*$'\n'}
+            if [ "$ghcr_list_code" = 200 ]; then
+              n_ghcr=$(printf '%s' "${ghcr_list%$'\n'*}" | YYMM="$month" bash scripts/forgejo-container-detect.sh next-n)
+              ghcr_manifest_code() {
+                curl -s -o /dev/null -w '%{http_code}' -I \
+                  -H "Authorization: Bearer $ghcr_token" \
+                  -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
+                  "$ghcr_api/manifests/$1"
+              }
+              # A taken N means a re-run or a concurrent publish already
+              # minted it; GHCR would silently overwrite that release, so
+              # advance until the manifest is free. Any other HTTP answer
+              # is a registry malfunction, not a free tag. The bound stops
+              # the walk if tag pagination ever hides the true maximum.
+              ghcr_code=$(ghcr_manifest_code "$month.$n_ghcr")
+              ghcr_advance=0
+              while [ "$ghcr_code" != 404 ]; do
+                if [ "$ghcr_code" != 200 ]; then
+                  echo "unexpected HTTP $ghcr_code for $ghcr_api/manifests/$month.$n_ghcr" >&2
+                  exit 1
+                fi
+                ghcr_advance=$((ghcr_advance + 1))
+                if [ "$ghcr_advance" -gt 50 ]; then
+                  echo "no free $month.N tag on ghcr within 50 of the registry maximum" >&2
+                  exit 1
+                fi
+                n_ghcr=$((n_ghcr + 1))
+                ghcr_code=$(ghcr_manifest_code "$month.$n_ghcr")
+              done
+            elif [ "$ghcr_list_code" != 401 ] && [ "$ghcr_list_code" != 403 ] && [ "$ghcr_list_code" != 404 ]; then
+              echo "unexpected HTTP $ghcr_list_code from $ghcr_api/tags/list" >&2
+              exit 1
+            fi
+          elif [ "$ghcr_token_code" != 401 ] && [ "$ghcr_token_code" != 403 ] && [ "$ghcr_token_code" != 404 ]; then
+            echo "unexpected HTTP $ghcr_token_code from the ghcr token endpoint" >&2
+            exit 1
+          fi
+          # Log the tolerated codes (see the forge-N step): a side that read
+          # no tags contributed nothing to the union max, and the run log is
+          # where a degraded side stays visible. ghcr_list_code is unset when
+          # the token read was itself the tolerated absence.
+          echo "n_ghcr=$n_ghcr token=$ghcr_token_code list=${ghcr_list_code:-none}"
+          echo "n_ghcr=$n_ghcr" > ghcr-n.env
+
+      - name: build and push ${{ matrix.container }} to both registries
+        env:
+          FORGE_SERVER_URL: ${{ forgejo.server_url }}
+        run: |
+          set -euo pipefail
+          forge_registry=${FORGE_SERVER_URL#https://}
+          forge_registry=${forge_registry%/}
+          . ./calendar.env
+          . ./forge-n.env
+          . ./ghcr-n.env
+          # One calendar number for the build: the union maximum of the two
+          # walked per-side values, so neither registry can be pushed at an
+          # N the other side has already taken.
+          n=$n_ghcr
+          if [ "$n_forge" -gt "$n" ]; then n=$n_forge; fi
+          ghcr_image="ghcr.io/ownyourio/${{ matrix.container }}"
+          forge_image="$forge_registry/curatedforest/${{ matrix.container }}"
+          ghcr_tags="$ghcr_image:$month.$n $ghcr_image:latest $ghcr_image:main"
+          forge_tags="$forge_image:$month.$n $forge_image:latest $forge_image:main"
+          build_args=()
+          for tag in $ghcr_tags $forge_tags; do
+            build_args+=(-t "$tag")
+          done
+          # No buildx cache flags: the runner's docker-data volume persists
+          # the daemon's layer store across jobs, which already warms the
+          # classic-store build.
+          docker build "${build_args[@]}" "containers/${{ matrix.container }}"
+          # ghcr first: a half-failed run leaves the gap on the forge side,
+          # the newer line the fleet's pins have not adopted.
+          for tag in $ghcr_tags; do
+            docker push "$tag"
+          done
+          for tag in $forge_tags; do
+            docker push "$tag"
+          done
+
+  build-pr:
+    if: forgejo.event_name == 'pull_request' && (vars.ROLE == null || contains(vars.ROLE, 'dev')) && needs.detect-changes.outputs.changed-containers != '[]'
+    needs: detect-changes
+    runs-on: ubuntu-24.04
+    name: pr ${{ matrix.container }}
+    strategy:
+      # One container's build failure must not cancel its siblings'.
+      fail-fast: false
+      matrix:
+        container: ${{ fromJSON(needs.detect-changes.outputs.changed-containers) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "ROLE=[${{ vars.ROLE }}]"
+          echo "event=${{ forgejo.event_name }}"
+
+      - name: log in to the forge registry
+        env:
+          FORGE_SERVER_URL: ${{ forgejo.server_url }}
+        run: |
+          set -euo pipefail
+          forge_registry=${FORGE_SERVER_URL#https://}
+          forge_registry=${forge_registry%/}
+          printf '%s' '${{ secrets.FORGE_PUSH_TOKEN }}' | docker login "$forge_registry" -u forge-push --password-stdin
+
+      - name: build and push the pr tag
+        env:
+          FORGE_SERVER_URL: ${{ forgejo.server_url }}
+        run: |
+          set -euo pipefail
+          forge_registry=${FORGE_SERVER_URL#https://}
+          forge_registry=${forge_registry%/}
+          branch=$(bash scripts/forgejo-container-detect.sh sanitize '${{ forgejo.head_ref }}')
+          # The registry tag grammar caps a tag at 128 characters; bound
+          # the branch component and fail loudly on any oversized result
+          # rather than push a tag the registry would reject.
+          branch=${branch:0:96}
+          sha=$(git rev-parse --short HEAD)
+          pr_tag="pr-$branch-$sha"
+          if [ "${#pr_tag}" -gt 128 ]; then
+            echo "pr tag exceeds the registry tag grammar" >&2
+            exit 1
+          fi
+          tag="$forge_registry/curatedforest/${{ matrix.container }}:$pr_tag"
+          docker build -t "$tag" "containers/${{ matrix.container }}"
+          docker push "$tag"

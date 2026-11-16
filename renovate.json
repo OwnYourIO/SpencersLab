@@ -292,6 +292,16 @@
       "versioning": "regex:^unified-vulkan-(?<major>\\d+)$"
     },
     {
+      "description": "Calendar line owns ghcr.io/ownyourio images: .forgejo/workflows/containers-build.yaml publishes them as yy.mm.N, and the docker datasource's default versioning ranks the legacy v<run_number> tags above every 26.x calendar tag (v162 > 26.11.1), so pins would never cross onto the calendar line. This regex versioning compares calendar tags numerically; a legacy v-pin fails the regex and the dep is a clean silent skip (invalid-version) until the one-time bump PR moves the pin onto the first calendar tag — never a downgrade PR.",
+      "matchPackageNames": [
+        "ghcr.io/ownyourio/*"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    },
+    {
       "description": "Vendored, hash-locked third-party skill content under .agents/ must never receive dependency PRs; its template placeholders (pypi my-hub-api / my-service-api in ha-integration-dev manifest.json templates) are not published packages and would break skills-lock integrity.",
       "matchFileNames": [
         ".agents/**"

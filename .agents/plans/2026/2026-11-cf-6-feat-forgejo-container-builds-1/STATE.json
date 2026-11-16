@@ -1,0 +1,169 @@
+{
+  "feature": "2026/2026-11-cf-6-feat-forgejo-container-builds-1",
+  "plan_status": "complete",
+  "final_review": {
+    "session": "ses_e32af6a19ffekuLMvdR5Cywpg1",
+    "ts": "2026-11-12T11:35:00+00:00",
+    "verdict": "APPROVED — whole plan, cross-chunk",
+    "scope": "merged C02+C03+C04 tree; the plan's Commands re-run as written; owner rework notes 1-5 each tied to the bytes that satisfy them; secrets/privilege hygiene; detector-vs-workflow division of labour",
+    "posture_at_final": "29 ok containers suite, 8 ok main-sync (t4-t8 first real run), 10+10 neighbours, rulesync --check clean, 47/47 run blocks bash -n, aislop 0 errors, fixture-proof 29+8, dev-renovate inline trio valid+matching",
+    "never_run_by_anyone_before_final": [
+      "the Renovate MCP regression line (no chunk/review handoff recorded it; the reviewer ran it at final via the inline configContent route — whole-file path resolution stays NOT-RUN, the dev-cluster server has no worktree visibility)"
+    ],
+    "flagged_by_review": "Until the H3 PATs land, ANY containers/** merge to main produces a loudly red run on infra (the login step fails). The plan implied this; it now leads the owner hand-off.",
+    "reviewer_recommended_cards": [
+      "pipeline-locks: heartbeat must survive a human stop point (idle-reap-at-human-round bit this card twice) and PIPELINE LOCK LOST notices must key on the live claim setId so a re-emit is distinguishable from a new reap",
+      "permission config: anchor the git push deny to the verb position — it currently matches the WORD 'push' inside a commit-message string, so the coordinator cannot write that word in a commit message"
+    ],
+    "reviewer_recommended_cards_status": "NOT created — the owner deleted the 'Create follow-up cards' HITL item at run 0's write-back, so carding is owner-owned; recorded here and on the card instead",
+    "bookkeeping_notes": [
+      "C02/C03 round notes live in STATE.json handoffs (this review appended final-review sections to chunks/C02/C03/C04.md; later reviewers should append to the chunk file, not only to STATE)"
+    ]
+  },
+  "plan_approved_note": "Owner batched round 2026-11-11 (ONE round, 8 merged questions answering the planner's 11 OQs) IS the approval, recorded per the run-0 precedent; the two non-default answers (OQ-3 no probe, OQ-6 mirror the rolling tags on the forge registry) are in DECISIONS.md and were folded by the plan-finalize pass. Approval is revocable: the owner can still send the card to Rework.",
+  "plan_session": "ses_e373915f6ffemcqkZq53l0lDpc",
+  "coord_session": "ses_e3ce656a7ffelq3WkPf5oYEEFL",
+  "test_session": "ses_e345dbe39ffepXgOWSSNOIGwc8",
+  "test_writing": {
+    "session": "ses_e345dbe39ffepXgOWSSNOIGwc8",
+    "ts": "2026-11-11T16:20:00+00:00",
+    "first_fire": "connection refused (cold -strata-q4 arena) — one sanctioned retry, second launch green, per the recorded precedent",
+    "inventory": "29 legs: t1-t11, r1-r5, d1-d8, x1-x4, g1 (+ main-sync suite touched for ONE coupled byte: t3's GUARD -> contains(vars.ROLE, 'prod'))",
+    "posture_at_write": "16 ok / 13 RED-BY-DESIGN: t3+g1 (URL literals + startsWith(forgejo.server_url guards, C02/C04), t5+r1 (job set still build-and-push), t7 (no FORGE_PUSH_TOKEN), t8/t9/t11/r2/r3 (no build-release), r4 (no build-pr), r5 (server_url in if:/run:), x1 (no commented trigger block, C03), main-sync t3 (vars.ROLE == 'prod', C04)",
+    "gates": "C02 => bash tests/services/forgejo-containers-build.sh 't d r' (alias c02) = 24 ok; C03 => x1 = 1 ok; C04/final => full suite = 29 ok",
+    "green_ability_proof": "/tmp/opencode/cf6-fixture-proof.sh replays post-C02/C03/C04 shapes: 29 ok containers + 8 ok main-sync; mutation proof 13/13 + 5/5 red. Scratch fixture left in /tmp/opencode for dev and review to re-run.",
+    "coord_rulings_applied": "see DECISIONS 2026-11-11 (r1 fromJSON scope, t8 push-chain, the static per-side naming contract for C02's dev, c01 selector renamed c02)"
+  },
+  "current_wave": 2,
+  "updated_at": "2026-11-12T11:40:00+00:00",
+  "kickoff": {
+    "slug": "cf-6-feat-forgejo-container-builds-1",
+    "card": "7dAgENe75dBt2FZY6",
+    "worktree": "cf-6-feat-forgejo-container-builds",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata-q4",
+      "code": "gpu-ai/qwen3.8-flash-next-strata-q4"
+    },
+    "local": true,
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "claim": {
+      "key": "card-id",
+      "pipelines": ["7dAgENe75dBt2FZY6"],
+      "setId": "cf35b2da-5f5e-4f08-a261-49114c564ed5",
+      "held_by": "ses_e3ce656a7ffelq3WkPf5oYEEFL",
+      "claimed_at": "2026-11-11T09:02:00+00:00",
+      "release_point": "pipeline_release(outcome done) when the card moves to Review",
+      "history": [
+        "2026-11-10T21:33Z derived-set claim on [CICD] with shared:true, owner-authorized for that claim only; co-tenant card 55 'Move GitHub parallel helm builds to Forgejo' (ses_e38ca0929ffe4wS9EGOd3D9TRf, setId 62e9d100). SetId 1e3fce0b.",
+        "2026-11-11T08:52:35Z the timer reaped the CICD key (lastReap reaped [CICD]) - the run idled at the batched owner question round past the 2 h window, the second time this card lost its claim that way (run 0 logged the same hazard).",
+        "2026-11-11 owner answered the ONE sanctioned continue-anyway question yes; re-claimed under the card-id key (a key no other run contends), takeover comment posted on the card. CICD is free again - card 55's holder went stale with this one - so nothing was re-shared."
+      ]
+    },
+    "board_context": {
+      "at": "2026-11-10T20:43:06.932Z",
+      "source": "launch-prompt Board context block (dev-boards) + live get_card_details/pipeline_status at claim",
+      "board": "TNQJ2BrXenZovngTS",
+      "lists": {
+        "not_started": "XhDyShvuwhGWzWH2z",
+        "executing": "qZ9CLZqCRbv7NQQ6R",
+        "review": "2B6wWGJ8Tetp5QWDJ",
+        "rework": "y9tsvb3AguKWhzCoF",
+        "finished": "DHw56fMKy3qyfudz4",
+        "inbox_backlog": "PjEZ39rXBdpNcpncs"
+      },
+      "card_details": {"at": "2026-11-10T20:43:00Z", "tool": "get_card_details", "degraded": false},
+      "preload": {
+        "at": "2026-11-10T21:35:00+00:00",
+        "tool": "skipped",
+        "degraded": true,
+        "reason": "Owner-addressed resume of a card already located and read (get_card_details carried card_dependencies: []), so no pickup walk, candidate filter or dependency-gate evaluation was left to serve; recorded per the cf-96 degrade law rather than silently omitted."
+      }
+    },
+    "surface_note": "Deliberate deviation (DECISIONS 2026-11-11): run -1 reuses run 0's worktree AND branch cf-6-feat-forgejo-container-builds because run 0's C01/C02 are not in main (9 local commits, never pushed); the branch carries main merged at 7bb44ae5f, so planning happens on post-merge ground. The folder/slug slugs carry the -1 suffix; the surfaces do not.",
+    "plan_file": "2026-11-10-feat-forgejo-container-builds-1.md",
+    "plan_file_note": "Named by the coordinator's launch message (run launched 2026-11-10 workspace clock); kept verbatim so coord/launch text and the folder agree."
+  },
+  "chunks": {
+    "C01": {
+      "status": "dropped",
+      "wave": 1,
+      "depends_on": [],
+      "dropped_reason": "Owner ruling OQ-3 (batched round 2026-11-11): no probe chunk — implement the cannot-error guard directly. Consequence kept in Risks: the false-branch `skipped` of a `vars` job guard and `contains`/`fromJSON` at job level stay unobserved on this instance; the first live observation is a real PR or the H7 pre-merge smoke. chunks/C01.md is a tombstone; its p1 leg was retired with it and H5 is retired as a precondition.",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e3412bcc4ffe29dpGHnNM9gkA5",
+      "review_session": "ses_e33f355c2ffeC7g2lsuIMkG7mo",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        "dev R1: gate c02 24 ok, full 26 ok/3 red; declared the 401/403/404 per-side tolerance reading",
+        "review R1: CHANGES_REQUESTED — B1 forgejo.server_url is AppURL and is code-guaranteed to end in '/' (source-cited), so host//owner/img is an invalid reference and EVERY run dies at docker build before any push (both arms); B2 scheme-less \"$forge_registry/v2/\" makes curl default to http, proven live => write:package PAT in cleartext on the wire every release run, silently working. Plus validation_at_fault on r5 (its https:// whitelist banned the only correct construction, and the green-ability fixture carried the same defect).",
+        "test repair (routed, silent): r5 amended to bless https://$forge_registry (name-scoped to the per-side contract) and given a NEW pin reddening a scheme-less derived-host /v2/ read in any curl/wget block, with GREEN-first teeth proven both directions; leg count and gate arithmetic unchanged (29 legs).",
+        "dev R2: 4 strips / 4 trims, scheme'd API read, degraded sides logged (n_forge=… list=…, n_ghcr=… token=… list=…:-none), build-pr diag step added, and the calendar month derived once and carried via calendar.env (optional item, taken). Gate back to 24 ok.",
+        "review R2: APPROVED — both blockers verified gone (live probes: single-slash host, read over scheme=https), calendar.env mechanism judged sound (missing file fails loudly, no carry path across matrix cells, no || true), both round-1 asks closed. Carried out of C02: header L8-9 'main-sync keeps the same shape' becomes true only at C04; x1 stays C03's gate; g1 + main-sync t3 stay C04's."
+      ],
+      "test_repairs": [
+        "r5 blessing + cleartext-API pin (ses_e345dbe39ffepXgOWSSNOIGwc8, two passes: test-repair-r5, test-repair-r5-pin)"
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e3357d355ffeiOQo8ShZ6rU18x",
+      "review_session": "ses_e33358bf0ffeulcS4zUVNh0xAj",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        "dev R1: docker-build.yaml only — 19 insertions, 0 deletions, comment-only; main's original push:/pull_request: blocks restored verbatim at column 0 so the original indentation survives, with a why-only annotation naming the calendar-tag race that makes re-enablement an owner decision; x1 red-first -> 1 ok; full suite 28 ok / 1 red (g1 = C04).",
+        "dev deviation ACCEPTED by review: C03.md task 3 (re-author x1) and AC3's 'exactly the two files' are structurally unsatisfiable under the plan's own test-authoring order — the leg was re-authored at test-writing time in b598f88a1 and tests/** is read-only to dev; the one-file diff is the correct outcome and the leg's substance is mutation-proven.",
+        "review R1: APPROVED, no blockers. Independent proof set: parsed on: == {workflow_dispatch}; the 12 commented lines are byte-for-byte main's originals minus the '# ' prefix; the uncomment REPLAY yields on: = {push, pull_request, workflow_dispatch} with branches [main, dev] and paths [containers/**] (the col-0 comment marker is what preserves the indent); the build-push-action push: INPUT key is live and unchanged; insert-only diff reconstructed byte-identical; 4 mutations of x1 all red, including commented-parents-without-children, so the leg pins the block not a substring."
+      ],
+      "carried_to_C04": [
+        "C04-c1: docs re-pins must co-name the docker/build-push-action `push:` INPUT key BY NAME, never by line number (C03 shifted it L139 -> L158 and the leg is number-independent), and every docker-build.yaml doc line must keep co-naming workflow_dispatch (x3) while describing the file as manual-only WITH the triggers retained commented.",
+        "C04-c2: main-sync is a fail-fast script, so t4-t8 have not actually executed on this tree yet; C04's gate (full suite + main-sync 8 ok) is their first real run here — the /tmp/opencode/cf6-fixture-proof.sh re-run stays mandatory at C04 and at final review."
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C02", "C03"],
+      "dev_session": "ses_e330f63c6ffeE63aHu7Yq5Op1D",
+      "review_session": "ses_e32ded909ffeC93axF8pKgqyYg",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        "dev R1: main-sync's two guards migrated to bare contains(vars.ROLE,'prod') (unset stays cf-119's fail-safe narrow, per-file polarity intact) + 3-line why-only header gloss; docs re-pinned in .rulesync/rules/overview.md (3 hunks incl. the new ROLE hard rule with the greppable merge-before-flip clause) and skills/container-creation/SKILL.md (5 hunks: dual publish, ROLE-split pipeline with union-max, PAT identity, forge as a pull source, change loop); AGENTS.md regenerated by rulesync, never hand-edited. Full suite 29 ok zero red; main-sync 8 ok (t4-t8 executed on this tree for the first time, C04-c2); rulesync generate --check clean; neighbours 10+10.",
+        "dev deviation ACCEPTED: C04.md lists the main-sync t3 re-pin and the g1 leg as this chunk's test edits; both were authored by the test session in b598f88a1 and tests/** is read-only to dev, so the dev verified them green instead. Same structural conflict as C03's AC3, same resolution.",
+        "dev left containers-build.yaml's header clause alone on the launch's own criterion - it already states the polarity ('same membership shape but stays narrow on unset'), so the migration makes it true without overstatement.",
+        "review R1: APPROVED, no blockers. Independent: g1 mutation-proven (host literal into main-sync => g1 FAIL naming file+pattern; one job regaining equality => BOTH g1 and main-sync t3 red); g1 is os.walk-driven with an empty-directory-red guard, so it is a real repo-wide leg and no upstream workflow slipped past the scout's inventory; main-sync t4-t8 read as real legs with live red branches, none vacuous; zero URL literals / zero server_url outside env: / zero equality form across all 9 workflows; AGENTS.md hunks byte-identical to overview.md (regenerated-only).",
+        "review R1 non-blocking (kept, not gating): the CI-primary sentence attaches dual-publish to pushed-branch runs; SKILL's '1:1' is exact only for the release tag set; stale 'L139' prose survives in the TEST header and x1's message (line-independent leg - test-session surface, not this chunk's); the '3 hunks' claim is 2. Reviewer wrote these into chunks/C04.md's Review notes - the reviewer's own designated surface."
+      ],
+      "carried_to_final_review": [
+        "carry H1 (merge-before-flip), H2/H3 (the two non-admin write:package PATs are NOT yet minted, FORGE_PUSH_TOKEN not yet set) and the never-yet-executed guard posture into the owner handoff - every ROLE gate in this run is author-verified offline only",
+        "re-verify docs against the merged C02+C03+C04 whole, not per chunk",
+        "re-run full suite 29 + main-sync 8 + /tmp/opencode/cf6-fixture-proof.sh at final review",
+        "git show --stat the C04 commit for exactly the four chunk files (AC6 closes at coord commit)"
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "plan_questions_resolved": true
+}

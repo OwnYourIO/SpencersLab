@@ -1,0 +1,176 @@
+{
+  "feature": "2026/2026-11-cf-6-feat-forgejo-container-builds",
+  "plan_status": "complete",
+  "coord_session": "ses_e3ce656a7ffelq3WkPf5oYEEFL",
+  "coord_session_r1": "ses_e423ade47ffe8zlatmkn8fjP5Q",
+  "test_session": "ses_e40bd66bbffeMRe5VEFRNbsIxD",
+  "test_session_r1": "ses_e415dcd1bffeDwRtg59KZEB9dT",
+  "test_session_note": "Routing corrected at the 2026-11-10 resume: the t10/t11 legs (the newest test work) were authored in ses_e40bd66bb per the C01 `test-r2` handoff below, while `test_session` still pointed at the round-1 author. Test fixes route to the freshest author first; if that session is gone, launch a fresh `agent-test` session per the role contract and update this field.",
+  "current_wave": 2,
+  "updated_at": "2026-11-10T16:56:31+00:00",
+  "final_review": {
+    "session": "ses_e39bbfbc7ffenRO63brkI8DXlk",
+    "tier": "planning (gpu-ai/qwen3.8-flash-next-strata-q4 per kickoff.models.plan)",
+    "verdict": "APPROVED",
+    "ts": "2026-11-10T16:56:31+00:00",
+    "scope": "whole plan, `git diff cccedad84..HEAD` (six commits: 6d701dbfd plan of record, f3a998c7b contract suite, 545c4d809 t10/t11, 87ee443c9 C01, 23f429d32 resume bookkeeping, 12c3751c2 C02); the two ancestor model-routing detour commits excluded as owner-directed riders",
+    "evidence": "Every validation re-run by the reviewer, nothing NOT-RUN: FULL suite 23/23, x1 trigger proof, detector bash -n, both YAML parses (on: == {workflow_dispatch}), rulesync generate --check, docs greps zero violations, dev-renovate validate_config valid + test_package_rules x3 faithful, aislop 0 findings, bash -n on all 5 embedded run blocks, three neighbouring suites green, docker build => no-daemon CI-deferred.",
+    "verdict_basis": "Card's verbatim ask delivered (detection, main -> :latest + yy.mm.N, PR -> pr-<branch>-<sha>); narrow-not-delete fully realized with no surviving automatic-GitHub claim in any gated doc face; rule-before-bump real with pins untouched and the one-time bump genuinely handed to live Inbox card 134; seams hold (empty-token guard fails loud before the tags/list read, existence walk stays nested, concurrency/fail-fast/infra guard present).",
+    "non_blocking_minors": [
+      "Human legs #3 must state that the pre-merge `workflow_dispatch` smoke shares the main push arm — it repoints live :latest/:main and mints a real yy.mm.1 calendar tag (harmless: the branch's containers/** is byte-identical to main; that tag is card 134's precondition). The coord's own edit of the plan file is firewall-denied, so the line is recorded in DECISIONS.md and carried into the owner handoff instead; applying it to the plan of record is an agent-plan leg or the owner's own edit.",
+      ".forgejo/workflows/containers-build.yaml:128 interpolates forgejo.head_ref into a single-quoted shell literal (contained by the file's same-repo-PR-only posture; `env:`-passing is the one-line alternative) — explicitly not churned against t8."
+    ],
+    "deferred_by_final_review": [
+      "Docs-parity sweep must move docs AND their test teeth in one change: tests/pipeline-push-pr/surface.sh P7 and tests/wekan-mcp/tools.sh t5 pin the old GitHub-builder/`:v<run>` prose (all neighbouring suites green today).",
+      "The v84/v162 `image:` lines live in services/{dev,gpu}/prod/values.yaml, which no current renovate manager extracts (the plain-image regex manager covers */templates/ only) — card 134 needs a managerFilePatterns extension or a manual bump.",
+      "GitHub-fallback PR-path remnants and the 'immutable' shorthand nit (carried from the C02 round-1 review)."
+    ]
+  },
+  "kickoff": {
+    "slug": "cf-6-feat-forgejo-container-builds",
+    "card": "7dAgENe75dBt2FZY6",
+    "worktree": "cf-6-feat-forgejo-container-builds",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata-q4",
+      "code": "gpu-ai/qwen3.8-flash-next-strata-q4"
+    },
+    "local": true,
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "claim": {
+      "key": "card-id",
+      "pipelines": ["7dAgENe75dBt2FZY6"],
+      "setId": "04fa2c2c-f502-4ffd-b1e0-7b52467113a7",
+      "held_by": "ses_e3ce656a7ffelq3WkPf5oYEEFL",
+      "claimed_at": "2026-11-10T12:49:53+00:00",
+      "lock_path": "/home/coder/SpencersLab/.pipeline/locks/7dAgENe75dBt2FZY6.json",
+      "false_lost_signal": {
+        "at": "2026-11-10T16:40:00+00:00",
+        "what": "the pipeline-locks hook announced `PIPELINE LOCK LOST` for setId 04fa2c2c the moment the final-review subagent returned; the run stopped with no commit and no card move and raised the one sanctioned continue-anyway question",
+        "engine_answer": "pipeline_status showed the SAME setId held by THIS session, state live, heartbeat 5 ms old, and `lastReap` still the unrelated 2026-11-10T05:06:15Z event; the authorized re-claim answered `ok:false reason:already_held` naming this session's own setId — the claim was never lost",
+        "ruling": "owner answered yes; recorded as a spurious hook read (lock file sampled while a long-running subagent kept the session busy), not a reap and not a takeover. No new setId was minted and the release point is unchanged."
+      },
+      "release_point": "pipeline_release(outcome:\"done\") when the card moves to Review",
+      "takeover": {
+        "authorized": "owner in-session 2026-11-10 (the one sanctioned continue-anyway question, answered \"go for it\" over the takeover plan)",
+        "sequence": [
+          "shared `Context` claim setId 644b1dda — co-tenanted with card 124's holder, which the owner ruled a false lock 2026-11-09",
+          "shared `Context` claim setId dee93eec — reaped while the coord idled at the human round (owner continue-anyway #1, card comment posted)",
+          "card-id claim setId 0c1346db-3193-4192-81f3-93db798e8cf2, holder ses_e423ade47ffe8zlatmkn8fjP5Q — that session died at the failed C02 dev launch; the timer reaped key 7dAgENe75dBt2FZY6 at 2026-11-10T05:06:15Z (`lastReap`), so the key was free, not occupied, at this session's claim"
+        ],
+        "derived_label_set_drift": "Card 6's LIVE `Pipeline:` label is `CICD` (label_ids PnhFKk/25Mfu5/NHvBk5 = Provider: Local, Bucket: CICD, Pipeline: CICD). The handoff's `Pipeline: Context` is stale — the owner re-labelled the card after the follow-up card 134 inherited the Context pair. This run keeps the sanctioned card-id takeover key (a key no other run contends); a FUTURE fresh claim derives `[\"CICD\"]`."
+      }
+    },
+    "board_context": {
+      "at": "2026-11-10T11:21:10.208Z",
+      "source": "launch-prompt Board context block (dev-boards preload), plus live `get_card_details` at claim",
+      "board": "TNQJ2BrXenZovngTS",
+      "swimlane_in_process": "jLzy39L7djCRr67SF",
+      "lists": {
+        "not_started": "XhDyShvuwhGWzWH2z",
+        "executing": "qZ9CLZqCRbv7NQQ6R",
+        "review": "2B6wWGJ8Tetp5QWDJ",
+        "rework": "y9tsvb3AguKWhzCoF",
+        "finished": "DHw56fMKy3qyfudz4",
+        "inbox_backlog": "PjEZ39rXBdpNcpncs"
+      },
+      "note": "Lean id map only — the full block lives in the resume launch prompt; the structure is human-owned and drifts, so any id-shaped call error re-resolves live.",
+      "card_details": {"at": "2026-11-10T01:44:00Z", "tool": "get_card_details", "degraded": false},
+      "preload": {
+        "at": "2026-11-10T12:49:53+00:00",
+        "tool": "skipped",
+        "degraded": true,
+        "reason": "Resume re-claim of an already-claimed card: no pickup walk, no candidate filter and no slug resolution left to serve. The dependency gate is satisfied by the live `get_card_details` read (`card_dependencies: []`), so the whole-board export would buy nothing. Recorded per the cf-96 degrade law rather than silently omitted."
+      },
+      "resume": {
+        "by": "ses_e3ce656a7ffelq3WkPf5oYEEFL (agent-board-coord, commit-only alias)",
+        "at": "2026-11-10T12:49:53+00:00",
+        "basis": "D11 resume — the card's `slug` stack names this folder and `plan_status` was not `complete`; no kickoff minting, no new slug",
+        "verified_at_resume": "branch + worktree correct, tree clean, C01 commit 87ee443c9 and the five detour/test commits present, plan_status approved, checklists trimmed (Deployment unchecked => never push), slug stack single line, follow-up card 134 in Inbox, C02 pending with no dev_session"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "session": "ses_e41265384ffe3K0SNJQZI3ZCo3",
+          "status": "DONE",
+          "summary": "C01 implemented; gate `t d` 17/17; full suite x1-x3 red-for-C02; no-daemon CI-deferred shape; deviations: discrete login step, bounded existence-advance (nonzero exit on non-200/404, 50-advance cap), embedded-run-block bash -n self-check",
+          "ts": "2026-11-09T02:05-05:00"
+        },
+        {
+          "role": "review",
+          "session": "ses_e40fce7ecffeyrVCNiIKj8pNfN",
+          "status": "CHANGES_REQUESTED",
+          "summary": "majors: (1) emit site masks detector exit (echo $(...) under set -e) containers-build.yaml:79; (2) curl -f on token endpoint 403s for never-pushed image so first calendar tag of a NEW container can't compute (:132). All validations 17/17 green; 4 dev deviations accepted; deferred: dispatch-from-branch shares push arm (flag before owner smoke)",
+          "ts": "2026-11-09T03:21:06-04:00"
+        },
+        {
+          "role": "dev-r2",
+          "session": "ses_e41265384ffe3K0SNJQZI3ZCo3",
+          "status": "DONE",
+          "summary": "major-1 assign-then-emit; major-2 401/403/404->n=1 + walk nested in pull-token branch (live-probe evidenced); S1-S5 replays green",
+          "ts": "2026-11-09T04:39:43-04:00"
+        },
+        {
+          "role": "test-r2",
+          "session": "ses_e40bd66bbffeMRe5VEFRNbsIxD",
+          "status": "DONE",
+          "summary": "t10/t11 regression legs, mutation teeth 18/1 each",
+          "ts": "2026-11-09T04:39:43-04:00"
+        },
+        {
+          "role": "review-r2",
+          "session": "ses_e409e918fffeqVsDyNcTR3ly0D",
+          "status": "APPROVED",
+          "summary": "19/19 + posture; walk-nesting accepted on evidence (corrects round-1 suggestion); one non-blocking minor: token-200-but-empty extraction -> folded into C02 round",
+          "ts": "2026-11-09T04:39:43-04:00"
+        }
+      ],
+      "dev_session": "ses_e41265384ffe3K0SNJQZI3ZCo3"
+    },
+    "C02": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e3a3bd9b5ffeLFvLQ6HCzqBROn",
+      "handoffs": [
+        {
+          "role": "dev",
+          "session": "ses_e3a3bd9b5ffeLFvLQ6HCzqBROn",
+          "status": "DONE",
+          "summary": "C02 implemented, tree left unstaged at HEAD 23f429d32, exactly 6 files (.github/workflows/docker-build.yaml triggers narrowed to workflow_dispatch with the `containers` input byte-identical and the build-push-action `push:` INPUT key untouched; renovate.json one calendar packageRule; .rulesync/rules/overview.md + skills/container-creation/SKILL.md re-pinned + regenerated AGENTS.md; the folded-in C01 empty-token fail-loud guard in .forgejo/workflows/containers-build.yaml, no `curl -f`). Gate evidence: baseline suite red-first posture confirmed (20 ok, x1/x2/x3 red, x4 HOLD); FULL suite post-edit 23/23 with all C01 legs unregressed; x1 authoritative trigger proof pass; detector bash -n pass; both workflow YAML parses pass; embedded run-block bash -n pass; rulesync generate + --check pass; docs greps pass; dev-renovate check_setup + validate_config (valid) + test_package_rules x3 (new rule decides on ghcr.io/ownyourio/wekan-mcp, UNMATCHED on llama-swap and kubernetes-mcp-server whose rules keep their jobs); npx aislop ci --changes pass (score 100, 0 findings); docker build => no-daemon, CI-deferred (cf-77 shape). Deviations: (1) SKILL.md \"Consuming the image from a Helm chart\" pin guidance re-pinned beyond the three named spots (same file, chunk's Modify line covers it) to kill a surviving :v<run> \"default\" claim; (2) Renovate MCP ran on the whole config inline because the dev-cluster server has no worktree visibility, with a regex-decode fidelity guard. Open: out-of-C02-scope surfaces still naming docker-build.yaml as live -> DEFERRED (see DECISIONS).",
+          "ts": "2026-11-10T13:34:00+00:00"
+        },
+        {
+          "role": "review",
+          "session": "ses_e39e9490fffe6zZLj2XcjFgeZw",
+          "status": "APPROVED",
+          "summary": "Round 1, fresh session; every validation re-run, none NOT-RUN: FULL suite 23/23 (all 19 C01 legs unregressed + x1-x4 green), x1 authoritative trigger proof, detector bash -n, both YAML parses, its own YAML-1.1-aware parse proves on: == {workflow_dispatch} with the `containers` input byte-identical to HEAD, `rulesync generate --check` clean, docs greps with zero co-mention violations across overview.md/SKILL.md/AGENTS.md, dev-renovate validate_config valid + test_package_rules x3 (new rule decides on wekan-mcp, unmatched on llama-swap and kubernetes-mcp-server whose rules keep their jobs, matchQuality faithful), aislop 0 findings, docker build => no-daemon CI-deferred. AC1-AC5 all met; folded-in `.forgejo` diff is exactly the authorized single hunk (200-with-empty-token -> stderr + exit 1, set -euo pipefail safe, `curl -f` stays out, t11 green); `push:` INPUT key untouched per ruling; nothing outside the six files. Non-blocking: an 'immutable' shorthand nit and the vestigial GitHub PR-path remnants (both deferred, not forwarded). Review notes written to chunks/C02.md.",
+          "ts": "2026-11-10T14:12:00+00:00"
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "plan_questions_resolved": true
+}

@@ -175,7 +175,10 @@ def need(cond, msg):
 
 need(set(cfg) == KEYS,
      f'top-level keys are {sorted(map(str, cfg))}, expected exactly {sorted(KEYS)}')
-need(len(rules) == 9, f'packageRules has {len(rules)} entries, expected 9 (D14: no rule lands)')
+# cf-135's D14 "no rule lands" holds at its own 9; cf-6's calendar
+# packageRule (landed on this branch by run -0) is the 10th, and cf-6 run
+# -2's C02 ruling re-pins this count to it.
+need(len(rules) == 10, f'packageRules has {len(rules)} entries, expected 10 (cf-135 D14 stays true at 9 — cf-6\'s calendar rule on this branch is the 10th)')
 need(len(legs) == 13, f'customManagers has {len(legs)} legs, expected 13 (D14: no leg lands)')
 need(cfg.get('$schema') == 'https://docs.renovatebot.com/renovate-schema.json',
      f'$schema is {cfg.get("$schema")!r}')
@@ -191,7 +194,7 @@ PY
 then
   fail "m5: see the m5 detail above"
 fi
-ok "m5: 9 packageRules / 13 customManager legs and every pre-chunk top-level key and value intact"
+ok "m5: 10 packageRules / 13 customManager legs and every pre-chunk top-level key and value intact"
 
 # --- m6: workflow image line native shape (order-tolerant) ----------------------
 if [ ! -f "$WF" ]; then

@@ -1,0 +1,199 @@
+{
+  "feature": "2026/2026-11-cf-6-feat-forgejo-container-builds-2",
+  "plan_status": "complete",
+  "final_review": {
+    "session": "ses_e27bf74c4ffe6Nmtrq30OqppME",
+    "ts": "2026-11-14T05:40:00Z",
+    "verdict": "APPROVED — whole plan, no blocker and no major; plan_status complete is honest",
+    "scope": "cross-chunk: the owner's comment answered with bytes, both regression nets re-proved independently, detector/workflow/docs coherence three ways, guard convention across all three workflows, pinned-vs-present audit of every behaviour this run changed, secrets/privilege/git hygiene, completeness",
+    "posture_at_final": "containers 41 ok / t d 30 / x 5 / g1 1, main-sync 8, forgejo-renovate 8 + t9 skip, move-config 6, neighbours 10/10/9/36, rulesync --check clean, 16/16 run blocks, aislop 0/0 over 106 files, matrix v2 16/16 mutations, green fixture reproduced 41/30/5",
+    "never_run_by_anyone_before_final": "none — the reviewer cross-checked every Commands line against all four commands_run ledgers (test hand-off, C01 R1/R2, C02 R1, C03 R1) and each ran at least once; the run -1 precedent (an unrun Renovate line) did not recur",
+    "independent_proofs": [
+      "both owner fear-shapes re-proved on the reviewer's OWN tar --exclude=.git scratch: deleting the checkout with: block => t12 RED, fetch-depth 0 -> 1 => t12 RED, tip-narrowing the push arm => d9 + d10 RED — the run's premise (both survived 29/29) is now refuted on this tree",
+      "t14's behavioural half reddens on all three exemption removals: drop dispatch exemption, vacuate the before==sha exemption, silence the PR arm",
+      "'no run has executed yet' re-verified live: ls-remote on three remotes shows no cf-6 ref, and the instances' anonymous task APIs answer infra 90 tasks / dev 0 tasks with zero naming containers-build",
+      "renovate consequence double-verified as no-op today: main still carries the equality byte, and infra prod / dev unset / unset all evaluate false under BOTH forms — the only value that flips is a dev,prod list, which exists only if H1 lands"
+    ],
+    "findings": {
+      "blocker": [],
+      "non_blocking": [
+        "NB-1 run-matrix.sh c02-gloss apply-anchor still prototype-bound (/tmp surface, not repo) — recorded as a follow-up, not chased: the harness dies LOUD by design rather than silently certifying drift",
+        "NB-2 x5's first-push/tip-only pairing is paragraph-scoped, so a future SKILL edit could satisfy it unpaired — acceptable debt, today's pairing verified real at sentence level and four other marker families plus both other files are tight",
+        "the dev,prod Renovate consequence sentence is prose and unpinned by convention (main-sync's identical gloss is too); the semantics ARE mechanically pinned",
+        "nit: containers-build.yaml's own header names only main-sync as the narrow sibling — renovate.yaml joined that class via C02",
+        "nit: the suite header's '~L139' citation vs the actual docker-build.yaml:158, parked since C01 R2 (test-session surface)",
+        "nit: SKILL.md 'over the event's commit range' is loose for dispatch (no range)",
+        "dev-renovate test_package_rules INCONCLUSIVE on the inline route (preset-expanded view) — reported as PARTIAL, never as a pass; validate_config valid and the offline pins x2/t8 green"
+      ],
+      "pre_existing_confirmed_unworsened": "kubernetes-mcp-version-floor k2 (9 vs 8 on main, 10 on branch — the 10th is run 0's calendar rule, and run -2 edits no renovate.json byte), chart-yaml-legs k5/k10 replayed identically on a pure-main archive, both forgejo-ssh-* suites byte-identical to main, and the agent-surface c11/t17/c19/A15 staleness class"
+    },
+    "rulings": {
+      "OQ-p": "ACCEPT the renovate migration — it is the owner's own OQ-j word and the repo's membership convention; nothing moves today; the consequence is recorded in both operator carriers. The accept-vs-rehost choice is surfaced to the owner AT H1, not silently taken.",
+      "OQ-o": "NOT run -2's debt; record and card separately. Run -2 owned exactly the two count re-pins its own merge broke (t8/m5, now green)."
+    },
+    "coord_bookkeeping_pre_flip": "the reviewer's one precondition was that STATE.json stop lying about the tree — C03 recorded as done/APPROVED and plan_status flipped only after its committed bytes were verified; that is now closed"
+  },
+  "plan_approved_note": "Owner batched round 2026-11-13 IS the approval (run -1 precedent): 6 merged questions, with the scope answer confirmed after an initial contradiction ('Implement per Q3-Q6'). Two genuinely NEW questions arose from the answers themselves and are carried to the Final Review pause on best guesses, not silently decided: OQ-p (the renovate.yaml migration makes a dev,prod instance run the daily renovate pass, which equality withheld - best guess accept, consistent with the owner's own migrate-here ruling and with run -1's OQ-8 rejection of new per-instance variables; today's values are unaffected: infra prod no, dev dev yes, unset no) and OQ-o (three families of red on main that run -2 does not own - best guess record and card separately).",
+  "plan_session": "ses_e2a4c9823ffehI2vUqYftMQXLB",
+  "coord_session": "ses_e3ce656a7ffelq3WkPf5oYEEFL",
+  "test_session": "ses_e29e6bc4dffeTnOWAw7X02xXNA",
+  "test_writing": {
+    "session": "ses_e29e6bc4dffeTnOWAw7X02xXNA",
+    "ts": "2026-11-13T18:40:00Z",
+    "first_fire": "clean (no cold-arena retry needed — the routing detour to openrouter flash removed the failure mode that opened run -2)",
+    "inventory": "41 ids in the containers suite: t1-t15, r1-r5, d1-d15, x1-x5, g1 (29 -> +t12 t13 t14 t15 +d9 d10 d11 d12 d13 d14 d15 +x5). Parser widened (t1[0-5]|d1[0-5]|x[1-5]); groups stay separate argv, the quoted 't d' form still dies with rc 2; d16/t16/x6 reject.",
+    "posture_at_write": "34 ok / 7 RED: t14 (no changed-containers echo today, C01 B4), d11 (fallback stderr carries no ::warning::/tip-only, C01 A4), d12 (empty before exits 0 tip-only, C01 A5), d14 (two-dot answers [alpha,beta] vs the merge-base pin [beta], C01 B5), d15 (unrelated pair exits 0 with a set; pin wants non-zero + both endpoints on stderr, C01 B5/RP19), x5 (C03 prose absent), g1 (main's renovate.yaml equality byte, C02). t d hands off 25 ok / 5 red -> 30 ok when C01 lands.",
+    "green_at_authoring_pins": "t12 t13 t15 d9 d10 d13 (mutation-attested, not decoration)",
+    "other_cards_suites_touched": {
+      "tests/services/forgejo-renovate.sh": "L10-14 header gloss (membership wording, token-free so t3's reach-sweep stays satisfied), L57 GUARD -> contains(vars.ROLE, 'dev'), L333 t8 count 9 -> 10 with the reason in the FAIL text. Its t3 reach-sweep and everything else are byte-untouched.",
+      "tests/renovate/forgejo-move-config.sh": "L178-181 m5 count 9 -> 10 (reason comment), L197 ok-line text. Nothing else.",
+      "tests/services/forgejo-main-sync.sh": "untouched"
+    },
+    "coord_rulings_on_the_hand_off": [
+      "DEVIATION 1 ACCEPTED (posture reconciliation): after the mandated re-pins, forgejo-renovate hands off RED AT t3 ONLY (fail-fast kills the run before t8, and t8's ==10 pin is green on arrival because this branch already carries the 10th rule) and forgejo-move-config hands off 6 ok PASS. So C02's whole obligation is the renovate.yaml byte + gloss. Plan's post_run_target is unaffected.",
+      "DEVIATION 2 ACCEPTED and carried to review: d14/d15 are IMMUNE to the SHA~1 narrowing by construction (PR endpoints are BASE_SHA/HEAD_SHA, SHA-independent). Their proven teeth are the two-dot revert (matrix m6) plus their red-by-design posture. C01's review must cite AC2(f), not AC2(b), for d14/d15 — a reviewer demanding (b) bite there would be asking for a vacuous leg.",
+      "DEVIATION 3 ACCEPTED (x5 anti-vacuity): SKILL.md already contained 'before the first push' (L66), so a bare marker could not pin the contract; x5 additionally requires ONE paragraph pairing first-push with tip-only, and bans claim-phrases (ui chip / ui annotation / run page / step summary / annotation store / renders an annotation) that the RESEARCH §7 platform facts forbid. Marker vocabulary C03 must land: before..sha or 'whole pushed range', merge-base, first push + tip-only in one block, announce*, 'fetch-depth: 0'.",
+      "DEVIATION 4 ACCEPTED: d15 asserts stdout-empty on the 128 sub-cases and d12 names 'before' case-insensitively — per the plan table, nothing relaxed."
+    ],
+    "scratch_harnesses": "/tmp/opencode/cf6r2-green (green-ability fixture: baseline reproduces 34/7, tip state proves 41 ok / t d 30 / x 5 / g1 1 / renovate 8+skip / move-config 6 / main-sync 8), /tmp/opencode/cf6r2-red-base (depth-drop + narrowing proofs), /tmp/opencode/cf6r2-blind-base (run-1 suite blind-spot replay: both owner fear-shapes survive 28 ok/1), /tmp/opencode/cf6r2-teeth/run-matrix.sh + RESULTS.txt (GREEN-first, 12/12 mutations redden the named legs). Re-run the matrix after ANY byte moves — mandatory on this run.",
+    "reviewer_warning": "wekan-mcp/tools.sh t8 pins git ref 5e35ba6da, so it CANNOT pass inside the re-inited scratch trees (9 ok + 1 known FAIL there; 10 ok in the real tree). Do not chase it in scratch.",
+    "amendment_t14": "2026-11-14, routed from C01 review round 1 — a validation GAP, not validation_at_fault: t14 was faithful to its own NARROWER spec, which is precisely how the dropped before==sha exemption survived round 1. t14 now has a BEHAVIORAL half: it extracts the shipped detect-step run body, stages it with the shipped detector in a git-init'ed scratch repo, and EXECUTES it under five payloads — dispatch-empty silent, before==sha push silent, real empty push warns, real empty PR warns, non-empty push silent. Shape-based, so it blesses any spelling with the right scope (proven GREEN on run -2's prototype case-spelling too). No new ids: 41 ids and the t d = 30 gate are unmoved. Teeth proven: m14-b-drop-before-sha, m14-c-drop-dispatch-exempt and m14-d-pr-gated-on-before each REDDEN t14; shipped bytes GREEN. COORD RULING: the fifth scenario and the payload-faithful forgejo.sha went beyond my instruction and are REQUIRED — without them a never-warns guard, or an empty-sha dispatch env masking a dropped exemption, would satisfy the pin. The harness /tmp/opencode/cf6r2-teeth/run-matrix.sh is now v2 and SELF-REBUILDING (tars the live working tree including uncommitted bytes, applies C02/C03 idempotently, derives the pending-red set from the files instead of hard-coded counts, fails LOUD if anchors match neither state), which removes the prototype-string certification that tripped both the C01 dev and the C01 reviewer. 16/16 as expected. Design fact deliberately NOT encoded: an all-zero before with an empty set WARNS (plus the detector's own stderr tip-only line = two marked lines, one per channel); DECISIONS OQ-e/OQ-k name only the two exemptions, so 'warns' is the ruled reading, and the leg neither demands nor forbids it."
+  },
+  "current_wave": 1,
+  "test_session_note": "see test_writing above",
+  "updated_at": "2026-11-14T02:20:00Z",
+  "kickoff": {
+    "slug": "cf-6-feat-forgejo-container-builds-2",
+    "card": "7dAgENe75dBt2FZY6",
+    "worktree": "cf-6-feat-forgejo-container-builds",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": true,
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "session_origin": "https://openchamber--main--SpencersLab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "claim": {
+      "key": "derived-set",
+      "pipelines": [
+        "CICD"
+      ],
+      "setId": "9cb75b2c-5512-4054-9887-3795a4b8837b",
+      "shared": false,
+      "co_tenants": [],
+      "note": "CICD was free at claim time (card 55's run holds no live lock though its card still sits in Executing), so this claim is exclusive and no co-tenancy override was needed - unlike run -1's shared CICD claim.",
+      "release_point": "pipeline_release(outcome done) when the card moves to Review",
+      "history": [
+        "2026-11-13T13:35Z claimed on the derived set [CICD] (setId 9cb75b2c), exclusive - CICD was free, card 55 held no live lock.",
+        "2026-11-13T21:47:35Z PIPELINE LOCK LOST: pipeline_status shows this session's holder in state failed, age ~0, and lastReap (16:09Z) names only [AI] - so the claim was NOT timer-reaped, it went failed on its own, almost certainly the long agent-test session outrunning the heartbeat. No commit and no card move were made at the signal; the one sanctioned continue-anyway question was asked and the owner answered YES.",
+        "2026-11-14 re-claim under the card-id key REFUSED by the engine: reason already_held, held = setId 9cb75b2c, sessionID ses_e3ce656a7ffelq3WkPf5oYEEFL - i.e. THIS session. pipeline_heartbeat returns ok:true and beats [CICD] (ageMs 2) but the state stays failed, so failed is sticky and unrecoverable by beating, and the same session cannot re-take its own failed claim. Consequence: no takeover comment is warranted and no new setId exists - the named holder is still this run, so no other session can claim this card or CICD while this record stands, which is the safety condition the rule exists to protect. Proceeding on the owner's yes, with the work committed immediately so a crash cannot strand it. ENGINE DEFECT recorded in FRICTION for a follow-up card: a failed claim leaves a session holding a lock it cannot revive and cannot re-take, with no self-service path and no release-and-re-claim affordance (releasing would mean abandoning the card mid-run)."
+      ]
+    },
+    "surface_note": "Run -2 reuses run -1's worktree AND branch cf-6-feat-forgejo-container-builds (runs 0 and -1 are local-only commits there, never pushed; the reviewed line lives in those bytes). **Post-merge ground (owner OQ-j ruling 2026-11-13): main is merged into the branch at 7a82dfb21 (0 behind / 21 ahead, clean, renovate.json auto-merged), so every measurement in this plan is on the merged tree — the draft's 'gate on the pre-merge base, no rebase' deviation is superseded.** Commit-only class: Deployment unchecked, nothing pushed, no merge to main.",
+    "model_routing_note": "openrouter/qwen/qwen3.8-flash for both tiers is the owner's in-session word for this run AND is rule-conformant: main's pipeline-models maps Qwen Flash + Local to gpu-ai/qwen3.8-flash-next-strata-q4 with openrouter flash as the documented fallback when the local route is unavailable — which is this run's cold-arena failure (connection refused / cancelled, twice). No rulesync rule source moves here.",
+    "plan_file": "2026-11-13-feat-forgejo-container-builds-2.md",
+    "lifecycle": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Post Research",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "hitl": [
+      "Final Review"
+    ]
+  },
+  "plan_finalize": {
+    "ts": "2026-11-13T17:55:00Z",
+    "round": "owner batched round 2026-11-13 (OQ-scope IMPLEMENT; OQ-c keep fetch-depth: 0; OQ-a A1+A4+A5; OQ-b ADOPT B5 hand-rolled; OQ-e+OQ-k echo AND warning; OQ-l docs now; OQ-j migrate renovate.yaml here; OQ-f probe stays optional; OQ-m die exit code = dev's choice; OQ-d/g/h/i closed or parked)",
+    "recorded_in": "DECISIONS.md 'owner batched-round answers' + 'post-merge ground' + 'renovate guard semantic consequence'",
+    "chunks_shape": "1 (draft) -> 3: C01 detection+legs M (wave 1), C02 renovate.yaml guard migration + cf-135 suite bytes S (wave 1), C03 docs prose + rulesync regen + x5 S (wave 2, deps C01+C02)",
+    "baseline_on_merged_tree": "containers 28 ok / 1 FAIL (g1 on renovate.yaml equality guard); t d 19 ok; main-sync 8 ok; pipeline-push-pr surface 10 ok; wekan tools 10 ok; pipeline-models surface 9 ok; dockerfile-pins 36 ok; forgejo-renovate 7 ok / red t8 (fail-fast, t9 not reached); forgejo-move-config 4 ok / red m5; kubernetes-mcp-version-floor 1 ok / red k2; chart-yaml-legs 10 ok / red k5+k10; forgejo-ssh-gateway + forgejo-ssh-audit-trail red",
+    "post_run_target": "containers 41 ok (29 + t12-t15 + d9-d15 + x5; hand-off 34 ok / 7 red = 6 red-by-design [t14,d11,d12,d14,d15,x5] + g1; t d hands off 25 ok / 5 red -> 30 ok after C01); forgejo-renovate 8 ok + t9 skip PASS; forgejo-move-config 6 ok PASS; g1 green via C02",
+    "new_open_questions": [
+      "OQ-p renovate guard consequence: contains(vars.ROLE,'dev') fires the daily Renovate pass on a dev,prod instance where == 'dev' did not — interacts with run -1's H1 flip. Best guess: accept.",
+      "OQ-o other cards' red bytes on the merged tree (kubernetes-mcp-version-floor k2, chart-yaml-legs k5/k10, forgejo-ssh-gateway, forgejo-ssh-audit-trail — all red on main too). Best guess: leave, record, card separately."
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e28077c1bffe0kbGFsL2JE6bRx",
+      "review_session": "ses_e27f9f3a6ffeLTGC0o42BgrXM5",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        "dev R1: detector A5 (empty before -> die) + A4 (stderr ::warning:: tip-only) + B5 hand-rolled merge-base with the endpoint line BEFORE the call (RP19) + uniform 'detect: range <a>..<b> (event <name>)' stderr line; workflow fetch-depth: 0 byte-intact with a measured-true comment + B4 echo. t d => 30 ok, full 39/2 (x5 C03, g1 C02).",
+        "review R1: CHANGES_REQUESTED — one blocker. The owner's before==sha WARNING EXEMPTION was silently dropped: shipped guard warned on an empty push whose before==sha, and the header claimed the exemption existed. Proven by RUNNING the step, not by reading a leg — because t14 was faithful to its own narrower spec and pinned only the dispatch exemption. Near-unreachable live (the trigger's whole-range paths filter never dispatches it), ruled as a contract-fidelity defect anyway: contract fidelity is this run's thesis. Also ruled: not validation_at_fault, the spec was written narrower than the ruling; and the exemption deserves a pin, which was routed to the legs' author.",
+        "test amendment (ses_e29e6bc4dffeTnOWAw7X02xXNA): t14 made BEHAVIORAL — executes the shipped step under five payloads; three new mutations redden it; matrix v2 rebuilt to certify shipped rather than prototype bytes. See test_writing.amendment_t14.",
+        "dev R2: guard carries BOTH exemptions visibly on one compound line (dispatch AND before==sha; PR arm warns unconditionally), header sentence re-worded to what the bytes do, detector byte-unchanged. All four emulations RUN on the shipped bytes: before==sha silent / real empty push warns / dispatch silent / empty PR warns. t d stays 30 ok, full 39/2, aislop 0/0.",
+        "review R2: APPROVED — exemption restored on shipped bytes and reviewed as executed-not-read; the reviewer's own round-1 emulation retracted as unfaithful (it left forgejo.sha unset, so empty==empty satisfied the guard — a good lesson that an emulation must carry a faithful payload, which is why t14 now passes a real sha). All 14 t14 mutations plus the dev's 8 AC2 teeth verified green-first; depth-drop => t12, tip-narrowing => d9+d10, two-dot-revert => d14+d15 all bite on the SHIPPED file. No blocker/major; one informational drift item (the suite header's '~L139' line citation for the build-push-action push INPUT key, now L158) deferred to the Final Review HITL pause, test-session surface."
+      ],
+      "coord_rulings": [
+        "dev round 1's three deviations ACCEPTED by review (the if/die form, the honest 'no cheaper shape' rewrite, the registry-neutral L4/L13 edits mandated by RP10)",
+        "the suite-edit obligations in chunks/C01.md were discharged by agent-test at test-writing time — the run-1 structural conflict, resolved the same way, one-file-set accepted"
+      ],
+      "gate": "bash tests/services/forgejo-containers-build.sh t d => 30 ok (hand-off: 25 ok / 5 red) — MET, committed"
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e27e4548effesflR27mpf6t8R4",
+      "review_session": "ses_e27def8d6ffeAvsNt41PMKcXXI",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        "dev R1: renovate.yaml L46 guard is byte-exact bare contains(vars.ROLE, 'dev') — NO null clause (narrow-on-unset is this file's main-sync family); 8-line token-free header gloss carrying the owner consequence (a dev,prod list fires this job and that instance opens its own dependency PRs), the kept unset fail-safe, and the deliberate contrast with containers-build's widen. Single file, +9/-6, nothing else.",
+        "dev R1 gates: g1 1 ok (the arrival-red this chunk existed to close), forgejo-renovate 8 ok + t9 skip, move-config 6 ok, main-sync 8 ok, full containers 40 ok / 1 red (x5 = C03 only), 16/16 run blocks, aislop 0/0.",
+        "review R1: APPROVED, no blockers, no majors. Polarity clean and NOT unified; contains(null,'dev') false by coercion (R1 evaluator cites), so cf-135's unset-fires-nothing intent survives BY THE NEW MECHANISM rather than inherited stale. Token trap robust not lucky: vars.ROLE occurs exactly twice (L46 if:, L65 diag echo) and t3 scans raw lines including comments, so a future header edit writing the token reddens t3 loudly with the line quoted. Gloss truthfulness checked claim by claim — C01's round-1 failure mode (prose asserting what bytes don't do) does not recur. Scope exact: the L43->L46 shift is purely the gloss's +3 lines, YAML-parsed jobs.renovate.if is the pinned byte.",
+        "reviewer's own teeth, both directions: reverting to == 'dev' reddens t3 AND g1; adding the forbidden null clause reddens t3 (g1 green by design — polarity is t3's pin, form is g1's). Fail-fast proof: t4-t8 genuinely executed (ok lines printed before PASS), so C04-c2's unexecuted-leg hazard is closed on this suite too."
+      ],
+      "coord_rulings": [
+        "NB-1 (matrix c02-gloss/m11 anchors stale vs shipped gloss): DEFERRED, deliberately — re-pinning once after C03 lands lets the harness anchor to final bytes for BOTH the gloss and the docs in one pass instead of twice. The reviewer ruled it (a) the harness working as designed (refusing to certify drifted bytes) plus (b) harness maintenance, and explicitly NOT the dev drifting; not validation_at_fault, every repo leg is green on shipped bytes.",
+        "NB-2 (no leg pins the consequence sentence): accepted as convention — per-file header prose is unpinned repo-wide (main-sync's identical header is too) and a consequence leg was not in the plan's Tests table, so it was outside C02's authority. The Final Review pause re-confirms OQ-p with the owner, quoting the gloss verbatim, read together with H1.",
+        "the one-byte-plus-gloss shape is HONEST, not thin: AC1-6 met, pins proven both ways, nothing obligated was skipped."
+      ],
+      "gate": "g1 1 ok AND forgejo-renovate 8 ok + t9 skip AND move-config 6 ok AND main-sync 8 ok — MET, committed"
+    },
+    "C03": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e27d6048cffezZ6hc4NzD3Ab9c",
+      "review_session": "ses_e27def8d6ffeAvsNt41PMKcXXI",
+      "handoffs": [
+        "dev R1: SKILL.md step-1 rewritten into seven sub-bullets + a gate line (whole before..sha tree diff and why depth-0 is load-bearing with the measured 21.23 MiB / 1,849 ms attributed to a workspace clone, depth-0 explicitly NOT a correctness verdict because depth-1+fill was measured cheaper AND correct and declined by owner ruling; hand-rolled merge-base..head for PRs with the git>=2.43 reason; first commit deliberately tip-only AND announced; empty before fatal; unresolvable range loud; echo always, warn on empty push/PR, silent for before==sha and empty dispatch; total_commits reads 0). overview.md gained the compact detection-contract sentence on the CI-primary bullet and the hard rule now names all three workflows with per-file unset defaults plus the dev,prod Renovate consequence. AGENTS.md regenerated, never hand-edited.",
+        "dev deviations ACCEPTED: (1) the literal vars.ROLE token is deliberately ABSENT from doc prose - x5 never demanded it and the workflow files forbid it outside if:/diag echo, so the forms are described in words; (2) dev-renovate ran on a faithful inline reconstruction, with renovate.json invariance pinned by an empty git diff and leg x2, not a fake whole-file pass.",
+        "review R1: APPROVED, no blockers, no majors. AGENTS.md purity proven two ways - changed-line sets identical to overview.md AND an independent tar --exclude=.git regeneration produced a BYTE-IDENTICAL AGENTS.md while touching no other surface, which also verifies the dev's stash/pop round-trip left nothing behind. x5 non-vacuity: all five marker families, the two-file granularity and the banned-claim list each redden the leg on mutation, restore-green after; the fixture tree proves x5 is WORD-INDEPENDENT (it passes on the prototype's different sentences), so it is not overfitted to one dev's phrasing.",
+        "review incident, disclosed and independently verified by coord: a scratch tree was built with cp -a of a WORKTREE, whose .git is a pointer FILE, so the later git init was a no-op and three mutation commits plus two user.* config keys landed on the real branch. Remediated (reset --mixed, keys unset, tree destroyed, gates re-run) and verified - the branch carried only the intended commits by author, and nothing else moved. FRICTION now records that git init alone is NOT isolation and scratch must be built with tar --exclude=.git or git archive."
+      ],
+      "gate": "containers full => 41 ok AND x => 5 ok AND rulesync generate --check clean with regenerated files committed — MET, committed 82413dfd8",
+      "depends_on_note": "C03's detection prose describes C01's shipped bytes; its guard sentence names all three .forgejo workflows and is true only after C02's byte lands."
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "A2 first-push fail-wide vs the empty tree / A3 merge-base-first-push — deferred BY OWNER RULING (OQ-a); d11 pins the chosen posture",
+    "B2 depth-1 + targeted fetch fill / B3 filter: blob:none — declined + parked BY OWNER RULING (OQ-c/OQ-d), measured numbers on the record",
+    "B6 cadence/rebuild-all escape hatch — declined (dispatch already names its list)",
+    "git diff --merge-base FLAG form — declined in favour of hand-rolling (OQ-b); OQ-g (runner git version) closed as MOOT",
+    "Other cards' red bytes on the merged tree: kubernetes-mcp-version-floor k2, chart-yaml-legs k5/k10, forgejo-ssh-gateway, forgejo-ssh-audit-trail (all red on main too) — OQ-o, best guess: card separately",
+    "Docs-parity surfaces pinned by tests/pipeline-push-pr/surface.sh P7 and tests/wekan-mcp/tools.sh t5 (run-0-era card) — C03 re-pins only the container detection/guard sentences, not those files"
+  ]
+}

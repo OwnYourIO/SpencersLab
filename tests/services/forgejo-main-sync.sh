@@ -71,7 +71,12 @@ ok "t2: on: carries exactly push.branches == [main] plus workflow_dispatch"
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
-GUARD = "vars.ROLE == 'prod'"
+# Membership form (C04 migration, OQ-1/OQ-7 ruling): one guard shape
+# repo-wide. Bare contains() keeps unset fail-safe NARROW here on purpose —
+# the cf-119 dev-stage breaker survives — while list values like dev,prod
+# start working; the exact bytes are pinned so either job regaining the
+# equality form reddens this suite (and g1 in the containers suite).
+GUARD = "contains(vars.ROLE, 'prod')"
 raw = open(sys.argv[1]).read()
 jobs = (yaml.safe_load(raw) or {}).get('jobs')
 
@@ -87,7 +92,7 @@ need(set(jobs) == {'push-gh', 'push-dev'},
      f'jobs keys are {sorted(jobs)}, expected exactly push-gh + push-dev')
 for name in ('push-gh', 'push-dev'):
     need((jobs[name] or {}).get('if') == GUARD,
-         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r}")
+         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r} (C04 migrates the equality form to membership; unset stays fail-safe-skipped)")
 # The dev-stage server must fire no job; any dev guard defeats the breaker.
 need("vars.ROLE == 'dev'" not in raw, 'a job guards on vars.ROLE == dev (the dev stage must fire nothing)')
 # URL-based instance detection is retired.
@@ -96,7 +101,7 @@ PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly two jobs, both guarded on vars.ROLE == 'prod'; no dev guard, no server_url"
+ok "t3: exactly two jobs, both guarded on contains(vars.ROLE, 'prod') (membership, unset fail-safe); no dev guard, no server_url"
 
 # --- t4: no force --------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'

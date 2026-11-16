@@ -4,11 +4,14 @@
 # with its own token, and the actions mirror carries no proven inventory
 # beyond actions/checkout to rely on.
 #
-# The job fires only where the instance-side repo variable ROLE is dev (the
-# dev-stage instance); an unset ROLE renders empty and fires nothing — the
-# same fail-safe class as main-sync's header. Moving execution to the other
-# instance is a one-word flip of the job guard plus mirroring the
-# instance-minted variable and secrets there.
+# The job fires where the instance-side repo variable ROLE lists dev. Guards
+# test ROLE membership with contains(), the repo-wide shape, so a list value
+# like dev,prod fires this job too — that instance then runs the daily pass
+# and opens dependency PRs of its own. An unset ROLE renders empty and fires
+# nothing — the same fail-safe class as main-sync's header; containers-build
+# guards widen on unset and this one deliberately does not. Moving execution
+# to the other instance is a one-word flip of the job guard plus mirroring
+# the instance-minted variable and secrets there.
 #
 # The file carries no token value and no instance host: endpoints and repo
 # come from run contexts, and the bot PAT and the GitHub read-only donor
@@ -40,7 +43,7 @@ on:
 
 jobs:
   renovate:
-    if: vars.ROLE == 'dev'
+    if: contains(vars.ROLE, 'dev')
     runs-on: ubuntu-24.04
     # No timeout-minutes: the lab runner's own 30m job ceiling bounds the
     # pass, and a restated value would drift from the runner config.
