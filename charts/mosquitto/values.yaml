@@ -34,7 +34,7 @@ app-template:
             # Newest tag of the bare release stream: 2.1.x ships only with
             # the -alpine suffix (latest = 2.1.2-alpine), so the bare pin
             # stays renovate-annotatable like this repo's other charts.
-            tag: 2.0.22
+            tag: 2.0.23
           ports:
             - containerPort: &port 1883
               name: mqtt
