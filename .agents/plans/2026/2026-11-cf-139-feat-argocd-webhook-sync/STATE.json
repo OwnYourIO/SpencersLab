@@ -1,19 +1,20 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-12T06:20:00Z",
+  "updated_at": "2026-11-17T02:29:00+00:00",
   "kickoff": {
     "slug": "cf-139-feat-argocd-webhook-sync",
     "card": "Y3vPeX4nhtDbsdwCg",
     "worktree": "cf-139-feat-argocd-webhook-sync",
     "branch": "cf-139-feat-argocd-webhook-sync",
     "models": {
-      "plan": "gpu-ai/qwen3.8-flash-next-strata-q4",
-      "code": "gpu-ai/qwen3.8-flash-next-strata-q4"
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
     },
+    "models_reroute": "2026-11-17: user instruction in-session — gpu-ai proxy down (connection refused); every tier now openrouter/qwen/qwen3.8-flash",
     "local": true,
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "priority": { "raw": null, "class": "default" },
@@ -21,13 +22,40 @@
     "board_context": "prompt-time board block lost in context compaction; ids re-resolved live at claim (board TNQJ2BrXenZovngTS, In Process swimlane jLzy39L7djCRr67SF)",
     "preload": { "at": "2026-11-12T03:50+00:00", "tool": "preload_board", "degraded": false },
     "card_details": { "at": "2026-11-12T03:50+00:00", "tool": "get_card_details", "degraded": false },
-    "claim": { "pipelines": ["CICD"], "setId": "a0ea2b6b-94a6-4278-8b02-7ad15a00b89d" }
+    "claim": {
+      "pipelines": ["Y3vPeX4nhtDbsdwCg"],
+      "setId": "e3b643a8-5cd0-46b1-975b-b399f44f2265",
+      "takeover": {
+        "at": "2026-11-17T02:00:00Z",
+        "previous": { "pipelines": ["CICD"], "setId": "a0ea2b6b-94a6-4278-8b02-7ad15a00b89d", "reaped_at": "2026-11-12T08:36:13Z" },
+        "now": { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "e3b643a8-5cd0-46b1-975b-b399f44f2265" },
+        "reason": "lock reaped during a long plan session; server restart; user instructed continue (sanctioned lock-lost answer) — re-claimed under the card-id lock"
+      }
+    }
   },
   "chunks": {
     "C01": {
       "status": "pending",
       "wave": 1,
       "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
