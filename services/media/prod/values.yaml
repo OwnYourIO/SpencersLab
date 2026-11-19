@@ -489,7 +489,7 @@ hivetools:
   mcp:
     argocd:
       enabled: true
-      image: ghcr.io/matthisholleville/argocd-mcp:1.8.0
+      image: ghcr.io/matthisholleville/argocd-mcp:1.10.0
       # stdio transport: the ToolHive proxyrunner drives the server over stdio
       # and serves streamable-http externally. Direct transports are NOT usable
       # here — the operator force-injects MCP_TRANSPORT=<spec.transport> into
