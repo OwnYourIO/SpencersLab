@@ -23,12 +23,12 @@
 # The 0.2.8 -> 0.2.9 step (cf-86 C09, U10.2) brought the chunked DeltaNet
 # prompt kernels and #4708 — era history, recorded because the carry's own
 # hunks were cut against that line.
-FROM ghcr.io/niko1221/strata:0.2.13-rocm-gfx120x AS engine-primary
+FROM ghcr.io/niko1221/strata:0.2.16-rocm-gfx120x AS engine-primary
 
 # gfx1151 sibling bundled for the Strix-alone fallback C05 supervises; its
 # existence at the same flavor tag is what makes the single-image bundle viable
 # (RESEARCH §1 measured, re-measured at 0.2.13 by this bump's tag reads).
-FROM ghcr.io/niko1221/strata:0.2.13-rocm-gfx1151 AS engine-strix
+FROM ghcr.io/niko1221/strata:0.2.16-rocm-gfx1151 AS engine-strix
 
 # Supervisor stage: the golden release-versioned family the existing chart
 # rides, kept honest by the renovate.json versioning packageRule. Manifest
