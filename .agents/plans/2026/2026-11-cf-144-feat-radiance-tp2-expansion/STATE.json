@@ -1,0 +1,163 @@
+{
+  "feature": "2026/2026-11-cf-144-feat-radiance-tp2-expansion",
+  "plan_status": "approved",
+  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status stays 'draft' — the coordinator performs the approved-flip itself [FLIPPED approved by coordinator 2026-11-21, owner word P12]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research.",
+  "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-21T19:55:48Z",
+  "kickoff": {
+    "card": "Cnf563PDBmBoDLSaS",
+    "card_number": 144,
+    "card_title": "Radiance second-GPU (TP2) expansion",
+    "slug": "cf-144-feat-radiance-tp2-expansion",
+    "slug_basis": "slug custom-field unset -> derived cf-<cardNumber>-<type>-<desc>, auto-accepted (never a batched-round item)",
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "cf-144-feat-radiance-tp2-expansion",
+    "branch": "cf-144-feat-radiance-tp2-expansion",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "models_basis": "Model(s) checklist exactly one checked (Qwen Flash) -> that model every tier; card label Provider: API -> hosted openrouter routing; Priority field unset -> class default.",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "local": false,
+    "stages": [
+      "Exploration",
+      "Agent Decides Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review",
+      "Deployment"
+    ],
+    "stages_basis": "card's checked Lifecycle items; Pre/Post Research + Single Session unchecked; the card's vocabulary carries no Session Rename/Worktree Creation items and both legs ran from the blank-default posture (FRICTION row); Exploration DONE by the scout (EXPLORE.md); Agent Decides Research resolved NO research round (P01); Deployment checked -> landing shape follows pipeline-push-pr (branch push + PR are owner-gated legs)",
+    "hitl": [
+      "Planning",
+      "Final Review",
+      "Deployment"
+    ],
+    "checklist_answers": {
+      "services": [
+        "gpu-ai"
+      ],
+      "type": [
+        "feat"
+      ],
+      "models_checked": [
+        "Qwen Flash"
+      ],
+      "lifecycle_checked": [
+        "Exploration",
+        "Agent Decides Research",
+        "Planning",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review",
+        "Deployment"
+      ],
+      "human_in_loop_checked": [
+        "Planning",
+        "Final Review",
+        "Deployment"
+      ]
+    },
+    "claim": {
+      "cardId": "Cnf563PDBmBoDLSaS",
+      "key": "card-id",
+      "setId": "af04989e-ee9b-429c-93c9-05eb1a49caeb",
+      "history": [
+        {
+          "kind": "initial",
+          "pipeline": "AI",
+          "claim_id": "8c6e1e0c",
+          "outcome": "REAPED at 2026-11-21T18:13:03.491Z (stale, no heartbeat)"
+        },
+        {
+          "kind": "takeover",
+          "posture": "PIPELINE LOCK LOST -> exactly one sanctioned question -> owner YES -> re-claim under the card-id key with a fresh claim after_reap; takeover recorded (comments 5Fvt3dBmBpLuzWYm7 claim, Dkj54ceQaCsyfJoKM takeover)",
+          "outcome": "held, setId af04989e-ee9b-429c-93c9-05eb1a49caeb"
+        }
+      ],
+      "claim_comment": "5Fvt3dBmBpLuzWYm7",
+      "takeover_comment": "Dkj54ceQaCsyfJoKM"
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "card_id": "Cnf563PDBmBoDLSaS",
+      "card_number": 144,
+      "note": "lean record (board structure owned by the boards skill preload); AI-Dev board, Repo label default (SpencersLab), Pipeline labels -> AI; card comments carry nothing beyond the lock-takeover YES",
+      "provenance": "follow-up to AD-143 / cf-143-feat-radiance-replaces-strata (its RESEARCH RQ4/§R6/§R7/§R8-Q5 + DECISIONS D21/D24/D29/D30/D54/D56/D57/D58 are this plan's research authority)"
+    },
+    "preload": {
+      "at": null,
+      "at_note": "tick-start preload; exact stamp lives in the coord's launch block",
+      "tool": "preload_board",
+      "cards": 83,
+      "degraded": false
+    },
+    "card_details": {
+      "tool": "get_card_details",
+      "degraded": false
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "receipt_gated": "owner rocminfo receipt (OQ-E)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "deferred",
+      "deferred_note": "OQ-D owner ruling 2026-11-21 ('Defer C04 to a follow-up card', fold round, DECISIONS P13): does NOT execute in this run; spec + sysfs (device,revision) receipt prerequisite preserved in chunks/C04.md; no one creates the follow-up card in-run (card does not check 'Follow-up cards created') — owner's leg via plan Deferred section + final summary comment",
+      "wave": 1,
+      "depends_on": [],
+      "receipt_gated": "owner sysfs (device,revision) receipt for the gpu-box card — prerequisite of the deferred follow-up card (OQ-D)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "shape B (fn TP1 + q27 beside-fn co-residency) — lives only if OQ-A answers B; then C01 is re-planned",
+    "strata restore-back co-existence re-opening at the TP2 memory class (~48+64+6.3≈118.3≤125.08) — CUTOVER ticket decision, recorded §12",
+    "q27 TP2 lane (§envelope row) — not on this card",
+    "shm 2Gi two-rank envelope — first-boot receipt item (OQ-G)",
+    "C03/C04 close as recorded DEFERRED (not red) if their owner receipts do not land in-run"
+  ]
+}
