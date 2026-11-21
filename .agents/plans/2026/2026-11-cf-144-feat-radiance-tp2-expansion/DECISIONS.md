@@ -127,3 +127,23 @@ rejected, why.
 - 2026-11-21 fold: C04 gpu-cluster product-naming extension — DEFERRED BY OWNER out of this run
   to a follow-up card (OQ-D ruling, P13); spec + sysfs-receipt prerequisite preserved in
   `chunks/C04.md`; carding is the owner's leg, nothing creates it in-run.
+
+## Coordinator round records
+- 2026-11-21 coord P14 (**C02 RIDER LAWFUL-IN-WAVE**): C01 review r1's two non-blocking nits were
+  folded into C02's note pass as coordinator-directed riders (N1: dated qualifier appended inside
+  the acceptance-note sizing-row paren, original wording byte-identical; N2: missing comma
+  restored at services/gpu-ai/prod/values.yaml:883, comment-only). C02 review r1 ruled both
+  lawful in-wave — the executed form matches its own round-1 fold suggestion verbatim,
+  byte-preservation proven (933/934 lines untouched), every needle stayed green unedited.
+  Audit line recorded per the reviewer's recommendation.
+- 2026-11-21 coord P15 (**C03 RECEIPT LANDED — VERDICT MOVED (strix leg)**): owner pasted the
+  ai-gpu host `rocminfo`. GPU-agent ordinals: 0=R9700 (Chip ID 0x7551 Rev 1, Uuid
+  GPU-f14f913b0a98ad15, BDFID 49920), 1=R9700 (0x7551 Rev 1, Uuid GPU-d34663795f09a76f,
+  BDFID 50944), 2=APU gfx1151 8060S (0x1586 Rev 0, BDFID 51200, Memory Properties APU).
+  Shipped strata primary `rocrVisibleDevices: "0"` STILL names an R9700 — hide-the-APU intent
+  kept, no move. Shipped strix lane `rocrVisibleDevicesByModel` value `"1"` now names the
+  SECOND R9700, not the APU (the second discrete card inserted ahead of it) — ordinal 2 is the
+  APU today. Mechanical re-pin route engaged per the receipt law: testlib ROCr constants
+  (`ROCR_STRIX` — the one site) + the values pair in ONE wave; the equality arm would otherwise
+  correctly block any half-move. Primary leg closes as an honest no-op; strix leg re-pins "1"→"2"
+  with the dated rocminfo-provenance sentence the suite's one-way arm demands.

@@ -131,21 +131,31 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh session ses_dfff7042effekmZ8HsABi3aL67; riders N1/N2 ruled lawful in-wave)",
+      "dev_session": "ses_e0001d509ffeo5iKlxklHBrO82",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-21T21:3xZ", "session": "ses_e0001d509ffeo5iKlxklHBrO82", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C02 files_changed: [.agents/notes/radiance-second-gpu-tp2.md, .agents/notes/radiance-q27-boot.md, .agents/notes/radiance-on-target-acceptance.md (RIDER N1), services/gpu-ai/prod/values.yaml (RIDER N2)] commands_run: [baselines designed-red confirmed (tp2 T3 / q27-boot T6 on the cf-144 arms); tp2.sh => 3 ok deterministic (AC1 completion proof); q27-boot.sh => 6 ok incl T6 (AC2); pytest radiance => 71/0 x2 (rider moved no needle); runbook 5 ok x2 witness (T2 byte-equality + HOLD-110 + 48-ban green with rider tail); AC3 insert-only: numstat +15/0 and +52/0, zero deleted content lines, 28.07/54.7 + rank example + 502-idle sentence byte-untouched; AC4 per-token equality vs git show 810b5a121 (tp 2 :100/:191; hostPoolMib 12288 :91/:196; prefix-cache 4096 :199; chunk 2048 :201; kv-resident 0 carrier hits; claim 2 x2; memory 110 x1 + 110Gi x2; 48-shipped 0; q27 claim 1 x2) => every annotated number matches; AC5 stale-name 0 hits diff+grep; aislop 0/0 109 files] deviations: (1) riders per coord direction = review r1's two nits — N1 dated qualifier appended INSIDE the acceptance-note sizing-row closing paren (original words byte-identical; dev honestly flags the 'the ladder moves these' tail lives in the ACCEPTANCE note, as review N1 names it, not the chart); N2 missing comma restored at services/gpu-ai/prod/values.yaml:883 (comment-only). (2) Tasks 3-4 (test re-pins) executed as ZERO edits — 981f5e83a already carried the cf-144 arms; annotations landed inside them, no needle moved, no validation_at_fault. (3) STATE.json in the diff is coordinator-owned pre-existing change; not touched. No commits. friction: none open_questions: none next_suggested: review, then commit (2 notes + 2 rider files); final whole-plan review; C03 waits the owner rocminfo paste; C04 stays deferred. [coord-compressed; verbatim in the session transcript]"
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-21T21:5xZ", "session": "ses_dfff7042effekmZ8HsABi3aL67", "status": "DONE", "verdict": "APPROVED",
+          "result": "RESULT status: DONE chunk: C02 verdict: APPROVED files_changed: [chunks/C02.md Review notes only] commands_run: [tp2.sh x2 => 3 ok deterministic; q27-boot.sh x2 => 6 ok incl T6 deterministic; radiance pytest 71/0; runbook 5-ok (HOLD-110 + no-48 printed); host-tuning 4-ok + surface 9-ok + llama-swap 505/9-skip/0-fail + amd-gpu 29 witnesses; numstat/deletion-census +52/0 +15/0 riders 1±1, diff set == declared; byte-identity checks 28.07/54.7 + rank example + 502 line => pass; AC4 per-token fact-check vs git show 810b5a121 => pass; 48-shipped/503/gpu-ai-pro-r9700 scans 0 hits; TEETH: marker-strip reddens tp2 T3, claim-math-strip reddens q27 T6 both arms, standalone co-exist-lie reddens T3 via the absence bar — all bit, scratch /tmp only, tree re-verified green; N1 byte-preservation prefix proof 933/934 lines untouched; aislop 0/0 109 files] deviations: none by reviewer; dev's three ACCEPTED (riders lawful in-wave per coordinator direction matching review r1's own fold suggestion; Tasks 3-4 zero-edit correct; STATE exempt) friction: future-reviewer note — the co-exist absence bar sentence-scopes exemptions, a lie fixture must be a standalone sentence to bite; bar works as designed open_questions: none next_suggested: commit C02 tree; record DECISIONS rider line (coordinator); final whole-plan review; C03 receipt-gated; C04 deferred. [coord-compressed]"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
       "wave": 1,
       "depends_on": [],
-      "receipt_gated": "owner rocminfo receipt (OQ-E)",
+      "receipt_gated": "owner rocminfo receipt (OQ-E) — RECEIPT LANDED 2026-11-21 (owner paste, verbatim in the C03 question answer): GPU-agent ordinals 0=R9700 node1 (Chip ID 0x7551, Rev 1, Uuid GPU-f14f913b0a98ad15, BDFID 49920), 1=R9700 node2 (0x7551, Rev 1, Uuid GPU-d34663795f09a76f, BDFID 50944), 2=APU gfx1151 8060S (0x1586, Rev 0, BDFID 51200, Memory Properties APU). VERDICT MOVED for the strix leg: primary \"0\" still names an R9700 (intent kept, no move); strix lane \"1\" now names the SECOND R9700, not the APU — APU slid to ordinal 2. Mechanical re-pin route engaged (testlib ROCr constants = one site, then values pair in one wave).",
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -175,6 +185,10 @@
     "coord_priming_recommended": "export PATH=$HOME/.local/bin:$PATH && helm dependency update (charts/radiance + charts/llama-swap) before ANY suite run in a fresh worktree — the gitignored app-template tgz otherwise mass-reddens (41-red first pytest; test session's friction line adopted as standing priming)."
   },
   "blocked": [],
+  "coordinator_records": [
+    "P14-RIDER (2026-11-21, C02 round): the two C01 review-r1 nits were folded into C02's note pass as coordinator-directed riders (N1 acceptance-note sizing-row dated qualifier; N2 services/gpu-ai comma) — the reviewer ruled them LAWFUL IN-WAVE (executed form matches C01 r1's own next_suggestion verbatim; byte-preservation proven 933/934). Audit trail per review r2's recommendation.",
+    "P15-C03-RECEIPT (2026-11-21, owner rocminfo paste): GPU-agent ordinals 0=R9700 (f14f913b…/BDFID 49920), 1=R9700 (d3466379…/50944), 2=APU gfx1151 (0x1586/51200, Memory Properties APU). Verdict MOVED for the strix leg only — strix \"1\" now names the second discrete card, APU slid to 2; primary \"0\" stays correct (names an R9700; hide-the-APU intent kept). Mechanical route engaged: testlib ROCr constants (one site) + values pair in ONE wave, per the receipt law + P11 discipline (values file untouched until both halves land)."
+  ],
   "deferred": [
     "shape B (fn TP1 + q27 beside-fn co-residency) — lives only if OQ-A answers B; then C01 is re-planned",
     "strata restore-back co-existence re-opening at the TP2 memory class — CONDITIONAL on the post-TP2-boot receipt DOWN re-pin (P11 HOLD-110 override; the ~118.3 arithmetic was drafted against the rejected 48 and stays recorded in §12/draft context only) — CUTOVER ticket decision, recorded §12",
