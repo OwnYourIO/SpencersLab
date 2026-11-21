@@ -427,6 +427,7 @@ user and let them run it.
 read-only pipeline stages) may use `readonly-*` servers only — never
 `admin-*`. The code agent may use `readonly-*` freely but must ask the
 user for explicit confirmation before using any `admin-*` server.
+The coord family (all six variants) and `agent-board-dispatch` additionally carry the tier-less `global-*` and `readonly-global-*` fleet grants (cf-126), with the `admin-*` tier still gated on explicit user confirmation exactly as for the code agent.
 
 | Server | Use when |
 |---|---|

@@ -11,22 +11,7 @@ permissions:
     resource: '*'
     effect: deny
   - action: read
-    resource: .agents/plans/**
-    effect: allow
-  - action: read
-    resource: .opencode/skills/**
-    effect: allow
-  - action: read
-    resource: .agents/skills/**
-    effect: allow
-  - action: read
-    resource: skills/**
-    effect: allow
-  - action: read
-    resource: .agents/loops/**
-    effect: allow
-  - action: read
-    resource: .opencode/agents/**
+    resource: '*'
     effect: allow
   - action: read
     resource: '*.env'
@@ -58,6 +43,24 @@ permissions:
   - action: question
     resource: '*'
     effect: allow
+  - action: global-searxng*
+    resource: '*'
+    effect: allow
+  - action: global-playwright*
+    resource: '*'
+    effect: allow
+  - action: global-renovate*
+    resource: '*'
+    effect: allow
+  - action: readonly-global-grafana*
+    resource: '*'
+    effect: allow
+  - action: readonly-global-homeassistant*
+    resource: '*'
+    effect: allow
+  - action: readonly-global-wekan*
+    resource: '*'
+    effect: allow
   - action: opencode
     resource: '*'
     effect: allow
@@ -66,6 +69,12 @@ permissions:
     effect: allow
   - action: shell
     resource: opencode api patch /api/session/*
+    effect: allow
+  - action: shell
+    resource: opencode api post /api/session*
+    effect: allow
+  - action: shell
+    resource: opencode api post /api/session/*
     effect: allow
   - action: shell
     resource: bash scripts/kickoff-mint-branch.sh *

@@ -10,23 +10,12 @@ opencode:
     - action: '*'
       resource: '*'
       effect: deny
+    # D12 (cf-126): ONE read allow covers every context file the coord reads
+    # (plan folders, skills, agents, loops, rules, plugin sources, config);
+    # the env denies ride AFTER it — last-match-wins is the whole ordering
+    # law (agents-sync hand-managed-array lesson).
     - action: read
-      resource: .agents/plans/**
-      effect: allow
-    - action: read
-      resource: .opencode/skills/**
-      effect: allow
-    - action: read
-      resource: .agents/skills/**
-      effect: allow
-    - action: read
-      resource: skills/**
-      effect: allow
-    - action: read
-      resource: .agents/loops/**
-      effect: allow
-    - action: read
-      resource: .opencode/agents/**
+      resource: '*'
       effect: allow
     - action: read
       resource: '*.env'
@@ -58,6 +47,28 @@ opencode:
     - action: question
       resource: '*'
       effect: allow
+    # The global fleet (D13 + Ruling OQ9): the six tier-less/readonly
+    # global- rows, verbatim hyphen spellings identical to the dispatcher's —
+    # a respelled name matches nothing behind the deny-all. The admin-* tier
+    # stays denied by the baseline, as for every planner-class agent.
+    - action: global-searxng*
+      resource: '*'
+      effect: allow
+    - action: global-playwright*
+      resource: '*'
+      effect: allow
+    - action: global-renovate*
+      resource: '*'
+      effect: allow
+    - action: readonly-global-grafana*
+      resource: '*'
+      effect: allow
+    - action: readonly-global-homeassistant*
+      resource: '*'
+      effect: allow
+    - action: readonly-global-wekan*
+      resource: '*'
+      effect: allow
     - action: opencode
       resource: '*'
       effect: allow
@@ -66,6 +77,16 @@ opencode:
       effect: allow
     - action: shell
       resource: opencode api patch /api/session/*
+      effect: allow
+    # The session surface (D11/Ruling OQ6): the creation rows are AGENT-side,
+    # both post rows included — the owner-ruled handoff protocol spawns
+    # successor sessions through them. The own-session family stays one block
+    # ahead of the git block; the push tail remains the load-bearing last rows.
+    - action: shell
+      resource: opencode api post /api/session*
+      effect: allow
+    - action: shell
+      resource: opencode api post /api/session/*
       effect: allow
     - action: shell
       resource: bash scripts/kickoff-mint-branch.sh *
