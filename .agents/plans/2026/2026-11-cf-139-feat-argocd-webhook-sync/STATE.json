@@ -57,13 +57,15 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        { "at": "2026-11-21T17:10+00:00", "event": "dev DONE (harness 6/6 + live readonly probes) + review APPROVED with 1 minor + 3 nits deferred to final review; committed a3c2c2f15" }
+      ]
     }
   },
   "blocked": [],
