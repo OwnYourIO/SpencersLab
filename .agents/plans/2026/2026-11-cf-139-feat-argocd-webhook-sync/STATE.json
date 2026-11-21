@@ -46,13 +46,15 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        { "at": "2026-11-21T16:30+00:00", "event": "dev DONE (harness t1-t6 green) + review CHANGES_REQUESTED (runbook pointer path) + fix round dev DONE (t1-t6 green again); committed 0cf6e5338 without full re-review per reviewer note" }
+      ]
     },
     "C03": {
       "status": "pending",
