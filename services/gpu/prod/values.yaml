@@ -523,6 +523,14 @@ coder:
         value: "false"
       - name: CODER_PROMETHEUS_ENABLE
         value: "true"
+      # The coderd container also ships the coder CLI; this mutes the
+      # unlicensed-features warning in CLI output (exec sessions, in-pod
+      # automation). Lab posture by owner decision 2026-11-21: keep the
+      # soft-enforced External Token Encryption keys, silence the nag.
+      # Does NOT touch the web UI banner — that reads the entitlements
+      # payload directly and stays admin-visible.
+      - name: CODER_NO_FEATURE_WARNING
+        value: "true"
 
     envFrom:
       - secretRef:
