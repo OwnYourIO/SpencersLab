@@ -789,11 +789,37 @@ of the Q8 ruling's marketing half (owner ruling Q8 + C05's stake: both
 shipped surfaces point at THIS leg). The engine still serves text
 perfectly; the advertisement is what moves.
 
-`/metrics` sanity only here: the vllm-compat family is live and the two
-existing vLLM-era dashboards are cheap re-import candidates — that is
-FOLLOW-UP CARD #2 (Grafana re-import, Q6). Do NOT edit
-`services/monitoring/prod/values.yaml` in this run; the dashboard question
-rides the second Inbox card, not this window.
+**Scrape + dashboard wiring (cf-145 D-8..D-10).** `/metrics` reaches the
+central Prometheus through the `k8s.grafana.com/scrape` +
+`k8s.grafana.com/metrics.portNumber` pod-annotation pair in the
+`charts/radiance` chart defaults — fn and q27 both carry it. gpu-ai's
+k8s-monitoring annotationAutodiscovery consumes the pair at `podIP:8000`
+`/metrics` on the 60 s feature default into job `radiance` — the pair is
+exactly two keys, no third annotation; the job identity is the
+`app.kubernetes.io/name` label fallback, not a monitor-object `<ns>/<name>`
+shape. The vllm-compat plus native `radiance:` families behind the curl
+above are live-verified on this build (owner pair read 2026-11-15, RESEARCH
+§R15). The engine dashboard ships at tag `v1.17.0`, coupled to the image
+pin, as the `grafana.dashboards.inference.radiance` url entry in
+`services/monitoring/prod/values.yaml` — provider folder `inference`,
+display `Inference`. Nothing is live until the owner's two unconditional
+manual syncs (plan OE-2/OE-3): sync the `gpu-ai` Application, then confirm
+the q27-pod target under job `radiance` on the central Prometheus — that
+sync is also the annotation path's own live proof (enabled on gpu-ai, never
+yet exercised by an annotated pod: R5a); sync the `monitoring-grafana`
+Application and confirm its `download-dashboards` init ran at the rollout —
+url JSONs download only at pod start, so dashboard `radiance` appears in
+`Inference` only after it. The same grafana sync also loads the two
+vllm-era dashboards: pre-existing cf-105 gap, empty panels while the vllm
+lane is dormant, not an incident. The curl above remains the owner-exec
+endpoint sanity — with the job `radiance` target green, the scrape itself
+needs no curl. Contingency, never the default: if that curl ever returns
+404 or the pair turns out absent engine-side, point the dashboard question
+at `/stats` step-time series (L1T-witnessed, RESEARCH §R14; exact field
+table UNVERIFIED) and retire the `/metrics` claims rather than restate
+them. A scrape-side failure of the annotation path on gpu-ai specifically —
+no target after the sync — is the same stop: report and re-rule, never
+flip the mechanism in this runbook.
 
 **Coexistence envelope (Q11 — observe, no auto-mitigate).** During
 radiance-resident windows strata's R9700 arenas are UNAVAILABLE BY THE

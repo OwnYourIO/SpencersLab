@@ -178,7 +178,7 @@
       ]
     },
     "C02": {
-      "status": "in-review",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
@@ -196,17 +196,42 @@
           "friction": "inline python -c quoting false-failed one manual sed assert (artifact, not chart fact); heredoc re-run + T4 test prove bytes correct",
           "open_questions": "none",
           "next": "review; coord commit; C03 unblocked after"
+        },
+        {
+          "at": "2026-11-21",
+          "status": "APPROVED",
+          "chunk": "C02",
+          "review_session": "ses_dffb6530affeMiT7IUiB1U5CjR",
+          "files_changed": [".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C02.md (review notes appended)"],
+          "commands_run": "fresh reproduction: numstat 15+/0- values.yaml-only; suite 10F/83P/1S (10F = exactly C03 reds); filing file 7/7; scrape 9/9; baseline 67P/1S; lint working + HEAD-copy identical warning set; L26 render leg heredoc (CM provider, mkdir, pinned curl, write-path, sed-in-block, vllm default-path preserve); R8 parse over 9 keys zero drift; image-pin cross-check chain closed (values:255 == url tag == testlib IMAGE_TAG)",
+          "deviations": "none; no blockers/majors/minors",
+          "friction": "recurrence of the sed pipeline-continuation false-miss (same class as dev's) — block dump + substring asserts is the proven path",
+          "open_questions": "none",
+          "next": "committed 669910d76; C03 launched"
         }
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "in-review",
       "wave": 2,
       "depends_on": ["C01", "C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_dffb1b240ffeVGnGg57RJWLx1M",
+      "last_verdict": "dev-DONE (0F/93P/1S full suite; one hunk @@ -676,11 +676,37 @@; aislop 100/0/0)",
+      "handoffs": [
+        {
+          "at": "2026-11-21",
+          "status": "DONE",
+          "chunk": "C03",
+          "files_changed": [".agents/notes/radiance-on-target-acceptance.md (+31/-5, step-9 window only)"],
+          "commands_run": "BASELINE test_runbook 10F designed-red; window-scoped phrase checker (same parser as the test): retired phrases + default/radiance absent, T2/T3 pointers present, /stats count==1, no line-break needles => pass; POST 10/10; full suite => 0F/93P/1S (9+7+67+10, sole skip pre-existing llama-swap); git diff => single contiguous hunk inside step 9, runbook the ONLY tracked implementation diff; aislop scan --changes => 100/0/0 (ruff-skip env class)",
+          "deviations": "optional one-sentence addition NOT made (at-most-one permits zero; preserves AC4 one-hunk law); confirmation framing lives inside the replacement paragraph",
+          "friction": "execute-tool JS template literals die on markdown backticks in heredoc payloads — resolution: /tmp/opencode checker via shell, the proven heredoc path",
+          "open_questions": "none",
+          "next": "review (window greps, AC3 cross-equality, AC4/AC5); coord commit runbook + test_runbook_note.py; OE-2/OE-3 remain owner legs"
+        }
+      ]
     }
   },
   "blocked": [],
