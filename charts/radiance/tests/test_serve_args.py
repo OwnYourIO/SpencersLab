@@ -1,21 +1,20 @@
 # cf-143 C02 — the FULL serving profile contract (chunks/C02.md Tests bullet 2;
 # AC3). Q10 ruled the shadow profile VOID: the chart ships the complete
-# RESEARCH "Serving envelope" — pool 43000 / 200K ctx / 8 seqs /
-# --kv-resident 32768 / chunks 4096 / ngram on disk — as SINGLE-SOURCE
-# scalars (args + resources splice from them; D15). Set equality is
-# ORDER-INSENSITIVE (AC3) but EXACT: an extra flag is as red as a missing
-# one, because every stale-guide survivor shipped is a boot-time refusal or
-# a silently different memory story (RESEARCH "Guide corrections").
+# RESEARCH "Serving envelope" as SINGLE-SOURCE scalars (args + resources splice
+# from them; D15). Set equality is ORDER-INSENSITIVE (AC3) but EXACT: an extra
+# flag is as red as a missing one, because every stale-guide survivor shipped
+# is a boot-time refusal or a silently different memory story (RESEARCH "Guide
+# corrections").
 #
-# Absence needles: no `serve` verb (the engine takes args directly), no
-# --expert-vs-cache-ratio (stale), no --prefix-cache-mib (MUTUALLY EXCLUSIVE
-# with --kv-resident — the 8-session lever IS kv-resident; idle sessions
-# re-prefill against the x4-link wall, honest-envelope note per plan Risks),
-# no --api-key (keyless D8/Q3-A).
-#
-# Red state at handoff (designed): all legs red until C02; the dual-edit
-# service leg is gated on C04 (generation-witness law: it binds at once when
-# the service block lands).
+# cf-144 C01 TP2 re-pin (plan P04/OQ-C, owner "Confirm as specced"): the
+# profile is the doc §7 multiset — tp 2 + tp-wire wht6, per-rank pool 12288,
+# chunk 2048, prefix-cache 4096 IN, kv-resident OUT (the ABSENT_FLAGS polarity
+# flipped with it). Memory stays PINNED at 110 — the P11 owner ruling "Hold
+# 110, re-pin after the print" (the 48 draft value must never appear in this
+# suite). Red state at handoff (designed): the flipped legs are RED against
+# today's TP1/claim-1 tree and green against the C01 implementation. The
+# dual-edit service leg stays C04-gated (generation-witness law: it binds at
+# once when the service block lands).
 #
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
@@ -61,21 +60,33 @@ def test_ac3_args_are_the_full_profile_set():
 
 
 def test_ac3_scalar_splice_is_single_source():
-    """The four sizing scalars in chart values are the ONE home: rendered
-    args AND resources both read from them (changing values must not need a
-    second edit anywhere — D15 single-source law)."""
+    """The sizing scalars in chart values are the ONE home: rendered args AND
+    resources both read from them (changing values must not need a second
+    edit anywhere — D15 single-source law). cf-144 C01: hostPoolMib is the
+    TP2 per-rank 12288; guaranteedMemoryGi splices the PAIR at the HELD 110
+    (P11 — this leg is why a silent 110→48 or one-sided pair bump reddens);
+    the tp/recipe constants are carrier-shape-agnostic — if dev ledgered any
+    TP2_LEDGER_KEYS scalar, it must equal the rendered arg, so a HALF-MOVE of
+    one side cannot stay green either way (C01 splice-guard contract)."""
     vals = R.chart_values()
     app = vals.get("app-template") or {}
     for key, want in R.SCALARS.items():
         assert app.get(key) == want, (
-            f"C02 AC3: app-template.{key} is {app.get(key)!r}, want {want} — the scalars are "
-            "the single source (args+resources splice; runbook ladders are ONE edit)"
+            f"cf-144 C01: app-template.{key} is {app.get(key)!r}, want {want} — the scalars are "
+            "the single source (args+resources splice; runbook ladders are ONE edit; "
+            "guaranteedMemoryGi 110 is the P11 HELD value, the DOWN re-pin is post-boot)"
         )
     pairs = R.flag_pairs(_serve_args())
     assert pairs["--host-pool-mib"] == str(app["hostPoolMib"])
     assert pairs["--max-model-len"] == str(app["maxModelLen"])
     assert pairs["--max-num-seqs"] == str(app["maxNumSeqs"])
-    assert pairs["--kv-resident"] == str(R.KV_RESIDENT_TOKENS)
+    for key, flag in R.TP2_LEDGER_KEYS.items():
+        if key in app:
+            assert str(app[key]) == pairs.get(flag) == R.FULL_PROFILE[flag], (
+                f"cf-144 C01: ledgered app-template.{key}={app[key]!r}, rendered {flag}="
+                f"{pairs.get(flag)!r}, profile pins {R.FULL_PROFILE[flag]!r} — a half-move of "
+                "one side does not stay green (carrier-shape-agnostic splice guard)"
+            )
     docs, _ = R.render(service=False)
     res = R.resources(R.serve_container(R.deployment(docs)))
     assert res["limits"]["memory"] == f"{app['guaranteedMemoryGi']}Gi"
@@ -103,9 +114,9 @@ def test_ac3_absence_needles():
     pairs = R.flag_pairs(args)
     for flag in R.ABSENT_FLAGS:
         assert flag not in pairs and flag not in joined, (
-            f"C02 AC3: {flag} shipped — {
-                'prefix-cache is mutually exclusive with --kv-resident (D3: the 8-session lever IS kv-resident)'
-                if flag == '--prefix-cache-mib' else
+            f"C02 AC3 (cf-144 C01 polarity): {flag} shipped — {
+                'TP2 ships the prefix tier and the mirror is mutually exclusive with it — kv-resident back in would take the tier away (P04, doc §7)'
+                if flag == '--kv-resident' else
                 'api-key contradicts the keyless ruling (D8)' if 'api-key' in flag else
                 'stale-guide flag (RESEARCH Guide corrections)'
             }"

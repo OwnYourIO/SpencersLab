@@ -79,8 +79,10 @@ def test_c03_strata_block_nested_without_secret_chain():
     assert "bitwardenIds" not in sub, (
         "bitwardenIds survived inside the relocated strata block — C-A deletes the sentinel chain"
     )
-    assert str(sub.get("rocrVisibleDevices")) == "0", (
-        "default device index the on-target rocminfo gate retargets"
+    assert str(sub.get("rocrVisibleDevices")) == S.ROCR_PRIMARY, (
+        "default device index the on-target rocminfo gate retargets — cf-144 C03: resolves "
+        "through strata_testlib's ROCr constants block (the single re-pin site), so a moved "
+        "rocminfo receipt re-pins ONE place, never needle archaeology"
     )
 
 

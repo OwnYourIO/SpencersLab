@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# cf-143 C16 — the q27 boot note contract (chunks/C16.md Tests T1-T5).
+# cf-143 C16 — the q27 boot note contract (chunks/C16.md Tests T1-T5;
+# cf-144 C02 adds T6 — the TP2 pool=2 / claim-math / parked-window-sync
+# annotation arms, designed-red until the dated boot-note annotation lands).
 # The doc under contract: .agents/notes/radiance-q27-boot.md — the OWNER-
 # CONSOLE document for the pod-swap lane: resting state, staging math, THE
 # SWITCH (fn DOWN first, then q27 UP), the load-bearing first-boot receipt
@@ -52,11 +54,11 @@ ok()  { checks=$((checks + 1)); printf 'ok: %s\n' "$1"; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for t in 1 2 3 4 5; do WANT["t$t"]=1; done
+  for t in 1 2 3 4 5 6; do WANT["t$t"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-5]$ ]] || fail "unknown test id '$a' (expected T1..T5)"
+    [[ "$lc" =~ ^t[1-6]$ ]] || fail "unknown test id '$a' (expected T1..T6)"
     WANT["$lc"]=1
   done
 fi
@@ -458,6 +460,52 @@ PY
     0) ok "T5: bans hold (no --api-key in any fenced command; the dropped rider appears only as prose marked dropped; no /v1 on printed proxy URLs; don't-sync names BOTH apps; the 502 idle-law interlock holds — 502 / peer proxy error / no endpoints / loud / never silent, 503 purged; the DOWN-first order holds) — order+idle arms synthesis-proven both ways" ;;
     2) fail "T5: the ban validator FAILED ITS OWN fixture probe (a half tripwire cannot bless the note) — the TEST lane owns this repair" ;;
     *) fail "T5: a ban leg fired (C16 T5 — keyed line in a fence, /v1 on a proxy URL, don't-sync missing an app name, a broken 502 idle-law interlock, or inverted order; diagnostics above)" ;;
+  esac
+fi
+
+# --- T6: cf-144 C02 — the TP2 annotation arms (claim-math, pool=2, parked-window sync) ----
+if want t6; then
+  [ -f "$NOTE" ] || fail "T6: $NOTE missing (see T1)"
+  rc=0
+  python3 - "$NOTE" <<'PY' || rc=$?
+import re, sys
+text = open(sys.argv[1]).read()
+flat = " ".join(text.split())
+errs = []
+# The dated annotation exists (cf-144 carried into the boot note):
+if "cf-144" not in flat:
+    errs.append("no cf-144 annotation in the boot note — C02's dated marker is missing (annotate-never-rewrite: the historical text stays)")
+# pool is 2 + fn TP2 claim-2 (git truth the owner reads on the next swap):
+if not re.search(r"(?i)pool is (now )?2\b|amd\.com/gpu-r9700-1[^\n]{0,8}[:=][^\n]{0,4}\D{0,3}2\b", flat):
+    errs.append("the note never states the TP2 pool truth: pool is 2 / amd.com/gpu-r9700-1: 2 (git post-C01)")
+if not (re.search(r"(?i)fn[^.]{0,120}(TP2|tensor[ -]parallel 2)[^.]{0,120}claim[^.]{0,40}2|claim[ -]2[^.]{0,120}(TP2|fn)", flat)
+        or re.search(r"(?i)(both cards|2 of 2)", flat)):
+    errs.append("the note never states fn TP2 claim-2 in git (one pod holding BOTH cards)")
+# THE claim-math sentence (P05/OQ-A: the swap discipline is now claim-math,
+# not pool-capacity-1; the fn-DOWN-first order law survives unchanged —
+# T3/T5 keep policing it):
+if not re.search(r"(?i)claim[ -]?math", flat):
+    errs.append("the claim-math re-framing is missing: the swap discipline under fn-TP2 is CLAIM-MATH (fn UP holds both cards ⇒ q27 can only schedule with fn DOWN), annotate-never-rewrite")
+if not re.search(r"(?i)(fn (is )?UP[^.]{0,160}(both|2)|holds both cards)[^.]{0,240}(q27[^.]{0,80}(DOWN|only|schedule)|schedule[^.]{0,80}DOWN)", flat):
+    errs.append("the claim-math arithmetic sentence is missing (fn UP holds both cards ⇒ q27 schedules only with fn DOWN)")
+# Parked-window sync truth from the plan's Landing shape (loud, designed):
+if not re.search(r"(?is)(first|next)[^.]{0,60}TP2 sync[^.]{0,320}Pending[^.]{0,320}(until q27|q27 (DOWN|down|must be)|scale q27|loud|designed|by design)|TP2 sync[^.]{0,320}(q27 UP|UP with)[^.]{0,200}Pending", flat):
+    errs.append("the parked-window sync truth is missing: the FIRST TP2 sync while q27 is UP lands fn Pending until q27 goes DOWN — loud, designed (plan Landing shape; nothing here pre-edits it in GitOps)")
+# Zero-softening bars: the TP2 annotation must not reintroduce the dead
+# capacity-1 phrasing as if it were the ONLY truth, nor move the resting
+# pair. (The 502 interlock, /v1, keyed-line and DOWN-first order pins are
+# byte-stable in T3/T5 and run regardless of this section.)
+if not re.search(r"(?i)capacity-1[^.]{0,240}(was|historical|then|pre[ -]TP2)|(was|were) capacity-1", flat):
+    if re.search(r"(?i)pool is capacity-1|capacity-1 pool", flat):
+        errs.append("the capacity-1 blocker reads as PRESENT-TENSE truth — under cf-144 it is the historical shape (the pool is 2; the blocker moved to claim-math): annotate, never leave the sentence unmarked")
+if not re.search(r"(?i)fn 1 / q27 0|resting", flat):
+    errs.append("the git resting pair (fn 1 / q27 0) lost its statement — TP2 decides NEW git resting state VALUES, not live scale; the pair stays fn 1 / q27 0")
+if errs:
+    print("; ".join(errs[:8]), file=sys.stderr); sys.exit(1)
+PY
+  case "$rc" in
+    0) ok "T6: the cf-144 C02 annotations hold (dated cf-144 marker; pool=2 + fn TP2 claim-2 in git; the claim-math re-framing with its arithmetic; the parked-window first-TP2-sync Pending truth; the capacity-1 blocker stays annotated-as-history and the fn 1 / q27 0 resting pair is stated)" ;;
+    *) fail "T6: a cf-144 C02 boot-note arm fired (diagnostics above) — repair the prose in ONE commit with its needle re-pin (annotate-never-rewrite)" ;;
   esac
 fi
 

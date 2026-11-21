@@ -74,48 +74,91 @@ SCALARS = {
     # the 110 PAIR restores Guaranteed at sync (AC6) — repo is the source of
     # truth, 94 exists nowhere in git. Class law: sum the tiers the engine
     # PRINTS before shipping a memory scalar.
+    #
+    # cf-144 C01 (TP2 flip; P11 OWNER ruling 2026-11-21 "Hold 110, re-pin
+    # after the print"): guaranteedMemoryGi STAYS 110 through this wave — the
+    # draft-shipped 48 is REJECTED (P11 supersedes P03), so no 48 memory value
+    # appears anywhere in this test set; the DOWN re-pin to the printed class
+    # (~30-35 GiB; the llmkube req 40 / lim 48 witness stays the recorded
+    # bracket) is a POST-TP2-BOOT OWNER-RECEIPT leg, never a shipped value —
+    # the first-boot PRINT is the budget authority (D30(2) applied to the TP2
+    # topology). hostPoolMib moves 43000→12288: the TP2 pool is PER RANK
+    # (2×12288 MiB ≈ 24 GiB pinned, doc §7/P04).
     "guaranteedMemoryGi": 110,
-    "hostPoolMib": 43000,
+    "hostPoolMib": 12288,
     "maxModelLen": 200000,
     "maxNumSeqs": 8,
     "cpuCores": 8,
 }
-KV_RESIDENT_TOKENS = 32768        # the owner's KV-to-RAM lever (D3/D17); excludes prefix tier
+# KV_RESIDENT_TOKENS RETIRED at cf-144 C01 (P04): the TP2 recipe drops
+# --kv-resident outright — tier back, mirror gone (mutual exclusion, doc §7).
+# The 32768 lever was the single-card shape (D3/D17 history above); no fn leg
+# may demand it again. Its polarity replacement lives in ABSENT_FLAGS.
 
 # The serveArgs contract — ORDER-INSENSITIVE set equality (AC3): every pair
 # once; the model path splices the values anchor. `--host ::` (IPv6-any),
-# keyless (no --api-key), ngram on disk, spec 3, chunks 4096.
+# keyless (no --api-key), ngram on disk, spec 3.
+# cf-144 C01 re-pin (P04/OQ-C "Confirm as specced"): the doc §7 TP2 recipe —
+# `--tp 2`, `--tp-wire wht6` (a PURE ADD, present nowhere in the TP1 set;
+# verified verbatim against flashnext.yaml/HF card per RQ4), per-rank pool
+# 12288, chunk 4096→2048, `--prefix-cache-mib 4096` IN (the tier is
+# affordable again), `--kv-resident` OUT (tier/mirror mutual exclusion);
+# retained at TP2: checkpoint-interval 4096, ngram disk, served-name, host::,
+# port 8000, the model anchor. maxModelLen/maxNumSeqs/headroom/spec unchanged
+# (P09: the profile move is tp-pinned, not ctx-pinned).
 FULL_PROFILE = {
     "--model": MODEL_PATH,
     "--port": "8000",
     "--host": "::",
-    "--tp": "1",
+    "--tp": "2",
+    "--tp-wire": "wht6",
     "--max-model-len": "200000",
     "--max-num-seqs": "8",
     "--placement": "expert_tiered",
-    "--host-pool-mib": "43000",
+    "--host-pool-mib": "12288",
     "--gpu-headroom-mib": "96",
     "--kv-cache-dtype": "fp8",
-    "--kv-resident": "32768",
+    "--prefix-cache-mib": "4096",
     "--num-speculative-tokens": "3",
-    "--max-num-batched-tokens": "4096",
+    "--max-num-batched-tokens": "2048",
     "--checkpoint-interval": "4096",
     "--ngram-placement": "disk",
     "--served-model-name": SERVED_ID,
 }
 
-# Absence law (AC3 — each is a named bar, RESEARCH 'Guide corrections' + D8):
-# the engine has NO `serve` verb; --expert-vs-cache-ratio is a stale guide
-# flag; --prefix-cache-mib is MUTUALLY EXCLUSIVE with --kv-resident (the
-# 8-session lever IS kv-resident); no --api-key (keyless); NO ROCR/HIP env
-# (the named pool selects the card — plugin injects devices, sets no env).
+# Absence law (AC3 — each is a named bar, RESEARCH 'Guide corrections' + D8;
+# cf-144 C01 polarity flip per P04): the engine has NO `serve` verb;
+# --expert-vs-cache-ratio is a stale guide flag (never ship); --kv-resident
+# NOW joins the fn absence list — the TP2 recipe ships the prefix-cache tier
+# and the mirror is mutually exclusive with it (tier back, mirror gone,
+# doc §7) — while --prefix-cache-mib LEAVES it (it ships); no --api-key
+# (keyless); NO ROCR/HIP env (the named pool selects the cards — plugin
+# injects devices, sets no env; TP2's two-card claim changes nothing here).
 ABSENT_FLAGS = (
     "--expert-vs-cache-ratio",
-    "--prefix-cache-mib",
+    "--kv-resident",
     "--api-key",
     "--api-key-env",
 )
 ABSENT_ENV = ("ROCR_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES")
+
+# Recipe constants dev may ledger as scalars instead of list literals (C01:
+# "dev picks the carrier shape"). The splice guard in test_serve_args reddens
+# any HALF-MOVE: a scalarized key here must equal the rendered arg. A scalar
+# under any other name is an unledgered edit — the set-equality leg alone
+# decides it.
+TP2_LEDGER_KEYS = {
+    "tp": "--tp",
+    "prefixCacheMib": "--prefix-cache-mib",
+    "maxNumBatchedTokens": "--max-num-batched-tokens",
+    "checkpointInterval": "--checkpoint-interval",
+}
+
+# The fn GPU claim COUNT (cf-144 C01, shape A ruling OQ-A/P02): one pod
+# claiming BOTH R9700s — the extended-resource equal-integer pair renders
+# "2" in requests AND limits. ONE edit site (the pool NAME resolves through
+# the amd_gpu_testlib canonical block above; the count is this wave's move).
+FN_GPU_CLAIM_COUNT = "2"
 
 # --- pod shape (Q7 verbatim + Q9 named pools; AC2) --------------------------------
 # The GPU resource-name constants resolve from the CANONICAL block in

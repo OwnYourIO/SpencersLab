@@ -93,6 +93,25 @@ STRIX_ID = "qwen3.8-flash-next-strata-strix"
 PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
+# --- ROCr HOST-INDEX CONSTANTS — cf-144 C03 SINGLE RE-PIN SITE -----------------
+# These name HOST ENUMERATION POSITION, not silicon: position moved when the
+# second R9700 landed 2026-11-21 (device-plugin witness: c3:00.0 card1,
+# c7:00.0 card2, c8:00.0 APU — EXPLORE §0; the ROCm INDEX order is exactly
+# what the owner `rocminfo` receipt decides, plan OQ-E/P07). Today's pair is
+# the PRE-receipt PR #3636 story (dGPU first, chip second). When C03 runs:
+# the values keys charts/llama-swap/values.yaml strata.rocrVisibleDevices /
+# rocrVisibleDevicesByModel AND THESE constants move in ONE wave — legs read
+# through here, never through scattered needles (the D24 GPU-name canonical
+# block is the idiom copied). If the receipt says indices did not move, the
+# chunk closes as an honest NO-OP and this block stays as-is. The suite
+# cannot substitute the receipt: an unchanged pair against a moved host is
+# repo-invisible BY DESIGN — that half of the gate is owner-side (test_strata_
+# enumeration.py header states the posture).
+ROCR_PRIMARY = "0"     # strata.rocrVisibleDevices — must name an R9700 (hide-the-APU intent, PR #3636)
+ROCR_STRIX = "1"       # rocrVisibleDevicesByModel strix lane — must name the OTHER silicon
+ROCR_HOST_GPU_COUNT = 3   # card1 + card2 + APU — the post-2026-11-21 enumeration domain
+ROCR_PRE_CARD2_PAIR = ("0", "1")  # the pre-receipt story; the receipt-marker arm keys off any move
+
 # T0 (owner ruling 2026-11-01, DECISIONS U13): the engine's per-request
 # accounting line — `request prompt P cached C output O prompt_read R ms total
 # S ms prefill X tok/s decode Y tok/s`. The serve progress chatter counts a

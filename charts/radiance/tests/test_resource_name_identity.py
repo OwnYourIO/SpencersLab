@@ -10,12 +10,13 @@
 # read — no second copy of the names; every string resolves through the
 # marked constants block (the one C08 edit site).
 #
-# Red posture (red-first for dev C08): the claim-equality legs go RED again
-# on the renamed-string flip until the T-B sweep lands them (today's
-# charts/radiance values still claim the pre-C08 pool name); the disjointness
-# and ledger-pairing legs track the constants and stay green.
-#
-# meaning").
+# Red posture (cf-144 C01 re-pin): the fn claim-COUNT legs go RED against
+# today's TP1/claim-1 tree and green when the chart pair moves to "2"
+# (shape A, OQ-A owner ruling); the NAME legs (ledger equality, disjointness)
+# are TP2-inert and stay green — the pool string resolves through the
+# canonical amd_gpu_testlib constants block, never needles here. Historical
+# note kept for provenance: at the cf-143 C08 round these legs went red again
+# on the D24 renamed-string flip until the T-B sweep landed them.
 #
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
@@ -35,7 +36,9 @@ helm_skip = pytest.mark.skipif(not _ok, reason=_reason)
 def test_radiance_claim_equals_the_ledger_r9700_pool():
     """AC4: the rendered claim string == the pool the vendored plugin
     advertises for the R9700 (7551/C0) per its ledgered expected-names
-    comment."""
+    comment. cf-144 C01: the TP2 flip moves the COUNT — the pair is exactly
+    {amd.com/gpu-r9700-1: 2} in both maps (shape A, one pod two cards;
+    P02/OQ-A owner ruling); the NAME leg (ledger equality) is TP2-inert."""
     ledger = R.amd_gpu_ledger_names()
     assert "7551" in ledger, (
         "C02 AC4: charts/amd-gpu/values.yaml ledger has no 7551 (R9700) row — the expected-"
@@ -45,7 +48,17 @@ def test_radiance_claim_equals_the_ledger_r9700_pool():
     res = R.resources(R.serve_container(R.deployment(docs)))
     claims = {k for k in (res.get("requests") or {}) | (res.get("limits") or {}) if k.startswith("amd.com/")}
     assert claims == {R.GPU_CLAIM}, (
-        f"C02 AC4: radiance GPU claims {claims}, want exactly {{{R.GPU_CLAIM!r}: 1}} (Q9 named pool)"
+        f"C02 AC4: radiance GPU claims {claims}, want exactly {{{R.GPU_CLAIM!r}}} as the only "
+        "amd.com/ key (Q9 named pool; TP2 moves the count, never the name set)"
+    )
+    want = {R.GPU_CLAIM: R.FN_GPU_CLAIM_COUNT}
+    assert res.get("requests") == (res.get("requests") or {}) | want, (
+        f"cf-144 C01 AC1: serve requests GPU pair {res.get('requests')} — want {want} "
+        "(the TP2 claim of 2 must equal in requests)"
+    )
+    assert res.get("limits") == (res.get("limits") or {}) | want, (
+        f"cf-144 C01 AC1: serve limits GPU pair {res.get('limits')} — want {want} "
+        "(extended resource: requests == limits integer pair, Guaranteed law)"
     )
     assert R.GPU_CLAIM == f"amd.com/{ledger['7551']}", (
         f"C02 AC4: the claimed name {R.GPU_CLAIM!r} != the plugin ledger's 7551 pool "
@@ -114,6 +127,31 @@ def test_pools_are_disjoint_and_llama_swap_owns_the_apu_name():
         f"C02/D21 shield: gpu-cluster llama-swap limits are {gpu_limits}, want exactly "
         f"{{{R.GPU_CLAIM_BARE!r}: 1}} — its external single-naming plugin can advertise only "
         "the bare name; a flip here is the B1 leak"
+    )
+
+
+def _q27_docs_for_identity():
+    docs, _raw = R.render_q27()
+    return docs
+
+
+@helm_skip
+def test_c144_q27_claim_stays_one_under_the_tp2_flip():
+    """cf-144 C01 AC2 (identity view): the chart pair moves to 2, the q27
+    release must still render the GPU claim {amd.com/gpu-r9700-1: 1} in BOTH
+    maps — the truth now arrives OVERLAY-PINNED (P05: the subtree explicitly
+    pins claim 1, because chart inheritance post-flip would strand q27 at 2
+    and pod-swap law dies). The pair-exactness (cpu/memory) lives in
+    test_q27_lane; this leg owns the claim name+count identity."""
+    res = R.resources(R.serve_container(R.deployment(_q27_docs_for_identity())))
+    want = {R.GPU_CLAIM: "1"}
+    got_req = {k: v for k, v in (res.get("requests") or {}).items() if k.startswith("amd.com/")}
+    got_lim = {k: v for k, v in (res.get("limits") or {}).items() if k.startswith("amd.com/")}
+    assert got_req == want and got_lim == want, (
+        f"cf-144 C01 AC2: q27 GPU claims requests={got_req} limits={got_lim}, want exactly "
+        f"{want} in both maps — an overlay pin missing while the chart pair is 2 renders 2 "
+        "(q27 Pending forever beside fn); the chart-vs-overlay proof is test_q27_lane's "
+        "independence leg"
     )
 
 

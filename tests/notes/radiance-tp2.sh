@@ -300,6 +300,78 @@ if m9 and re.search(r"(?i)honored", m9.group(0)):
     if not (re.search(r"(?i)not bypassed", m9.group(0)) and re.search(r"§R19|R19-Q", m9.group(0))):
         errs.append("§9's HONORED pointer must read as D2 instructs: the ruling was HONORED, NOT BYPASSED — the pod-swap lane is exactly what the single-card arithmetic allows, cited to §R19")
 
+# --- cf-144 C02: the TP2-SHIPPED annotation arms (designed-RED until C02
+# lands; annotate-never-rewrite law, cf-143 §9/§11 marker idiom). These pin
+# the OWNERSHIP facts the shipped half must record: shape A, the P11 HOLD-110
+# truth, the pool-2 live witness, the §12 CONDITIONAL re-open, and the C03
+# rocminfo gate TODAY. The marker shape is the cf-143 idiom extended:
+# "SHIPPED (cf-144 ..." — dev copies that dated-marker shape verbatim.
+f144 = " ".join(doc.split())
+def need_c144(pattern, where):
+    if not re.search(pattern, f144, re.I):
+        errs.append(f"cf-144 C02 annotation missing in {where}: {pattern!r}")
+need_c144(r"SHIPPED \(cf-144", "the dated TP2-SHIPPED marker (the §11.5 marker idiom, cf-143 C15's shape carried to cf-144)")
+# Status header: the re-derivation + repo-half-shipped line (doc :11-13 area):
+head144 = " ".join(" ".join(doc.splitlines()[:45]).split())
+if not (re.search(r"cf-144", head144) and re.search(r"(?i)re[ -]deriv", head144)
+        and re.search(r"(?i)shipped", head144)):
+    errs.append("the status header (first 45 lines) lacks the dated cf-144 note that the TP2 ticket re-derived the plan and SHIPPED the repo half (append-only; the 'expansion instructions, not shipped config' line stays readable as history)")
+# §4: the sweep row applies TODAY (card 2 landed 2026-11-21, rocminfo-gated):
+m4 = re.search(r"(?ms)^## 4\..*?(?=^## |\Z)", doc)
+f4 = " ".join(m4.group(0).split()) if m4 else ""
+if not (re.search(r"(?i)card 2 landed[^.]{0,200}2026-11-21", f4)
+        and re.search(r"(?i)(applies TODAY|today)", f4) and re.search(r"rocminfo", f4)):
+    errs.append("§4's annotation is missing/incomplete: 'card 2 landed 2026-11-21 — the sweep row applies TODAY', rocminfo-gated (the original wording stays under the marker)")
+# §6: the pool-2 live witness (EXPLORE §0):
+m6 = re.search(r"(?ms)^## 6\..*?(?=^## |\Z)", doc)
+f6 = " ".join(m6.group(0).split()) if m6 else ""
+if not (re.search(r"(?i)c7:00\.0", f6) and re.search(r"(?i)reporting 2 devices", f6)
+        and re.search(r"(?i)(row already carr|no table edit)", f6)
+        and re.search(r"(?i)rocminfo", f6) and re.search(r"(?i)sysfs", f6)):
+    errs.append("§6's annotation lacks the pool-2 live witness (c7:00.0 + 'Reporting 2 devices as gpu-r9700-1' + the no-table-edit finding) with the formal owner gates kept (per-BDF sysfs + rocminfo receipts)")
+# §11: shape A + the HOLD-110 truth:
+m11b = re.search(r"(?ms)^## 11\..*?(?=^## |\Z)", doc)
+f11b = " ".join(m11b.group(0).split()) if m11b else ""
+if not (re.search(r"(?i)shape A\b", f11b) and re.search(r"(?i)one pod", f11b)
+        and re.search(r"(?i)(claim|gpu-r9700-1)[^.]{0,60}\b2\b", f11b)):
+    errs.append("§11 step 5's SHIPPED annotation lacks the shape-A truth: fn TP2 one pod, claim 2 (OQ-A ruling)")
+if not (re.search(r"(?i)(held at 110|hold 110|110 HELD|HELD[^.]{0,40}110)", f11b)
+        and re.search(r"(?i)print", f11b)
+        and re.search(r"(?i)(post-TP2-boot|first-boot|owner-receipt)", f11b)):
+    errs.append("§11 step 5's annotation lacks the P11 HOLD-110 truth: memory ships HELD at 110, the DOWN re-pin to the printed class is a POST-TP2-BOOT OWNER-RECEIPT leg — 'the first-boot print is the budget authority' (the one §11.5 scalar NOT moved this wave)")
+# §12: CONDITIONAL re-open only, at the 118.3 class, riding CUTOVER:
+m12 = re.search(r"(?ms)^## 12\..*?(?=^## |\Z)", doc)
+f12 = " ".join(m12.group(0).split()) if m12 else ""
+if "118.3" not in f12:
+    errs.append("§12's shipped-110 restatement lacks the ≈118.3 class (48+64+6.3 — the re-open number IF/when the post-boot DOWN re-pin lands; P11 records it CONDITIONAL)")
+if not re.search(r"(?i)if/when|conditional|awaits|only if", f12):
+    errs.append("§12's annotation must state the re-open as CONDITIONAL (if/when the DOWN re-pin lands) — at the held 110 it stays CLOSED (110+64+6.3 = 180.3 > 125.08 remains the shipped truth)")
+if not re.search(r"(?i)CUTOVER", f12):
+    errs.append("§12's annotation loses the CUTOVER-ticket pointer (the co-existence decision does not live on this ticket)")
+# Absence bar: no sentence may claim the co-exist decision WAS TAKEN here
+# (the conditional stays a pointer — plan 'Out of scope' + DECISIONS P11).
+# Sentence-scoped with a NEGATION EXEMPT, self-proven green-both-ways every
+# run (§12.14: the explicit "was NOT decided here" must pass, the bare
+# assertion must red — an arm that reddened its own negation would push dev
+# into silence, the class P11 forbids):
+def _coexist_claim_violations(text):
+    out = []
+    for sent in re.split(r"(?<=[.;])\s+", text):
+        if re.search(r"(?i)co-?exist|co-?resid", sent) and \
+           re.search(r"(?i)(decided|decision (was )?(taken|made|closed|shipped)|resolved (here|in cf-144)|taken (here|on this))", sent) and \
+           not re.search(r"(?i)\bnot\b|never|nothing|\bno\b|awaits|conditional|if/when|rides|only if", sent):
+            out.append(sent.strip()[:120])
+    return out
+
+_truth = "at the held 110 nothing was decided here — no co-existence outcome was decided, the decision still rides the CUTOVER ticket"
+_lie = "the co-existence decision was taken here in cf-144 and the re-open is closed"
+if _coexist_claim_violations(_truth):
+    errs.append("co-exist bar self-DEFECT: it reddens the truthful denial — half tripwire, the TEST lane owns this repair")
+if not _coexist_claim_violations(_lie):
+    errs.append("co-exist bar self-DEFECT: it PASSED the assertion lie — half tripwire, the TEST lane owns this repair")
+for _s in _coexist_claim_violations(f12):
+    errs.append(f"a §12 sentence claims the co-existence decision was TAKEN in cf-144 (no exemption word in sight) — it rides the CUTOVER ticket (P11/OQ-B: recorded, not actioned): {_s!r}")
+
 if errs:
     print("; ".join(errs), file=sys.stderr)
     sys.exit(1)
@@ -307,7 +379,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T3: the needle set is incomplete or an absence bar fired (C03 Tests T3 — diagnostics above)"
   fi
-  ok "T3: needles present (wht6, 12288, 'no RCCL', 120 W, re-enumeration checklist + rocrVisibleDevices, the vfio-pci/1640/8060S interdependency + amd.com/gpu surface, prefix-vs-kv-resident either/or, the shipped pool name + DRA alternative lane); absences hold (no stale-flag use outside its stale mention, no guide GB/s figure without direction-only framing, no serve-verb misuse)"
+  ok "T3: needles present (wht6, 12288, 'no RCCL', 120 W, re-enumeration checklist + rocrVisibleDevices, the vfio-pci/1640/8060S interdependency + amd.com/gpu surface, prefix-vs-kv-resident either/or, the shipped pool name + DRA alternative lane; cf-144 C02: the SHIPPED (cf-144 marker + header re-derivation + §4 today-sweep + §6 pool-2 witness + §11 shape-A/HOLD-110 + §12 conditional 118.3 with the co-exist-decision absence bar); absences hold (no stale-flag use outside its stale mention, no guide GB/s figure without direction-only framing, no serve-verb misuse)"
 fi
 
 printf 'PASS: radiance TP2 expansion-doc contract checks (%d ok)\n' "$checks"

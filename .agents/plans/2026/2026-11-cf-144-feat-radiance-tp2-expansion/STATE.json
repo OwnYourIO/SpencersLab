@@ -1,9 +1,9 @@
 {
   "feature": "2026/2026-11-cf-144-feat-radiance-tp2-expansion",
   "plan_status": "approved",
-  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status stays 'draft' — the coordinator performs the approved-flip itself [FLIPPED approved by coordinator 2026-11-21, owner word P12]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research.",
+  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status approved by coordinator 2026-11-21 after owner word P12; post-plan write-back done: slug stack line set, 34 unchecked items deleted, approved comment 6KY45H7MM65dCrPtp]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research.",
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
-  "test_session": null,
+  "test_session": "ses_e004c659affeGMUL0VAk40tm3F",
   "current_wave": 1,
   "updated_at": "2026-11-21T19:55:48Z",
   "kickoff": {
@@ -152,10 +152,21 @@
       "handoffs": []
     }
   },
+  "test_wave": {
+    "at": "2026-11-21T20:05:00Z",
+    "session": "ses_e004c659affeGMUL0VAk40tm3F",
+    "model": "openrouter/qwen/qwen3.8-flash",
+    "status": "DONE (RESULT received in the coordinator session; the full files-table + ledger ride that hand-back — committed with this records commit)",
+    "summary": "Red-first contracts for C01+C02+C03 (C04 untouched per P13): radiance suite 7 designed-red / 64 pass (sim C01 tree 71/71 green); runbook T2+T5 red; tp2.sh T3 red; q27-boot T6 red; C03 green-BY-DESIGN receipt-gated (moved-world sim: synced 42 pass / half-move 2 red / unprovenanced move provenance-red); inert witnesses green (amd-gpu 29, llama-swap 505/9-skip, host-tuning 4-ok, surface 9-ok); aislop 0/0 over 109 files.",
+    "files": ["charts/radiance/tests/radiance_testlib.py", "charts/radiance/tests/test_serve_args.py", "charts/radiance/tests/test_render.py", "charts/radiance/tests/test_resource_name_identity.py", "charts/radiance/tests/test_q27_lane.py", "tests/notes/radiance-runbook.sh", "tests/notes/radiance-tp2.sh", "tests/notes/radiance-q27-boot.sh", "charts/llama-swap/tests/strata_testlib.py", "charts/llama-swap/tests/test_strata_enumeration.py", "charts/llama-swap/tests/test_strata_wiring.py", "charts/llama-swap/tests/test_strata_config_schema.py"],
+    "test_defects_repaired_by_author": ["orphaned '# meaning\").' fragment in test_resource_name_identity.py", "co-exist absence bar authored negation-exempt + green-both-ways self-proven"],
+    "routing_note_for_C03": "If the owner rocminfo receipt lands MOVED, the values-only edit reddens test_c03_values_match_the_constants_site_pairwise; the ROCr constants block in charts/llama-swap/tests/strata_testlib.py is the ONE re-pin site — that re-pin is test-session property (route back to ses_e004c659…), never a dev edit.",
+    "coord_priming_recommended": "export PATH=$HOME/.local/bin:$PATH && helm dependency update (charts/radiance + charts/llama-swap) before ANY suite run in a fresh worktree — the gitignored app-template tgz otherwise mass-reddens (41-red first pytest; test session's friction line adopted as standing priming)."
+  },
   "blocked": [],
   "deferred": [
     "shape B (fn TP1 + q27 beside-fn co-residency) — lives only if OQ-A answers B; then C01 is re-planned",
-    "strata restore-back co-existence re-opening at the TP2 memory class (~48+64+6.3≈118.3≤125.08) — CUTOVER ticket decision, recorded §12",
+    "strata restore-back co-existence re-opening at the TP2 memory class — CONDITIONAL on the post-TP2-boot receipt DOWN re-pin (P11 HOLD-110 override; the ~118.3 arithmetic was drafted against the rejected 48 and stays recorded in §12/draft context only) — CUTOVER ticket decision, recorded §12",
     "q27 TP2 lane (§envelope row) — not on this card",
     "shm 2Gi two-rank envelope — first-boot receipt item (OQ-G)",
     "C03/C04 close as recorded DEFERRED (not red) if their owner receipts do not land in-run"
