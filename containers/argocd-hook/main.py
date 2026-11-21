@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""argocd-hook — GitHub push-hook relay driving real ArgoCD API syncs.
+"""argocd-hook — push-hook relay driving real ArgoCD API syncs (canonical
+caller: the Forgejo main-sync hook-relay job; GitHub-shaped webhooks are
+also accepted, R3 dual dialect).
 
 The fleet keeps syncPolicy.automated off on every root app by owner ruling
 (cf-139 OQ1) and ArgoCD webhooks only refresh, never sync — so this relay calls
@@ -27,7 +29,7 @@ DEFAULT_PORT = 8080
 DEFAULT_SETTLE_SECONDS = 10.0
 DEFAULT_TARGET_TIMEOUT_SECONDS = 60.0
 MAX_BODY_BYTES = 10 * 1024 * 1024
-GITHUB_SECRET_FILE = "github-webhook"
+HOOK_SECRET_FILE = "hook-secret"
 
 # Target names land verbatim in the audit lines operators grep, so the roster
 # is restricted to what that parser accepts: [A-Za-z0-9_.-]+
@@ -85,8 +87,8 @@ def read_secret_file(path):
             data = f.read()
     except OSError as e:
         raise ConfigError("%s: %s" % (path, e.strerror or e.__class__.__name__))
-    # Secret-rendering tools commonly end files with a newline; GitHub webhook
-    # secrets and ArgoCD API tokens never contain whitespace, so strip is safe.
+    # Secret-rendering tools commonly end files with a newline; HMAC hook
+    # keys and ArgoCD API tokens never contain whitespace, so strip is safe.
     value = data.strip()
     if not value:
         raise ConfigError("%s is empty" % path)
@@ -156,16 +158,20 @@ def build_state(args):
     # Stable partition: remotes keep config order, the `local: true` hub entry
     # goes last — its root sync re-renders the hub and can restart this relay.
     targets = sorted(targets, key=lambda t: t.local)
-    key = read_secret_file(os.path.join(args.secrets_dir, GITHUB_SECRET_FILE))
+    key = read_secret_file(os.path.join(args.secrets_dir, HOOK_SECRET_FILE))
     for t in targets:
         t.token = read_secret_file(os.path.join(args.secrets_dir, t.token_key))
 
     sample = b"argocd-hook self-check"
-    digest = "sha256=" + hmac.new(key, sample, hashlib.sha256).hexdigest()
-    if not verify_signature(key, digest, sample):
-        raise ConfigError("HMAC sign/verify round-trip failed")
-    if verify_signature(key, "sha256=" + "0" * 64, sample):
-        raise ConfigError("HMAC verification accepted a forged digest")
+    digest = hmac.new(key, sample, hashlib.sha256).hexdigest()
+    # Both wire dialects must round-trip and reject a forged digest: a
+    # one-sided implementation must fail startup, not every push at runtime.
+    for dialect, header in (("hub", "sha256=" + digest), ("forgejo", digest)):
+        if not verify_signature(key, header, sample):
+            raise ConfigError("HMAC sign/verify round-trip failed (%s dialect)" % dialect)
+        forged = "sha256=" + "0" * 64 if dialect == "hub" else "0" * 64
+        if verify_signature(key, forged, sample):
+            raise ConfigError("HMAC verification accepted a forged digest (%s dialect)" % dialect)
 
     return RelayState(
         allowed_refs=allowed_refs,
@@ -177,10 +183,14 @@ def build_state(args):
 
 
 def verify_signature(key, header, body):
-    if not header.startswith("sha256="):
-        return False
+    # R3: two wire shapes over one raw body — the hub dialect carries the
+    # "sha256=" prefix (C01's exact compare), X-Forgejo-Signature is bare hex.
+    # The header NAME decides which is required (handler); the shape test here
+    # is defense in depth. Constant-time either way.
     expected = hmac.new(key, body, hashlib.sha256).hexdigest().encode()
-    return hmac.compare_digest(header[len("sha256="):].encode("ascii", "backslashreplace"), expected)
+    if header.startswith("sha256="):
+        header = header[len("sha256="):]
+    return hmac.compare_digest(header.encode("ascii", "backslashreplace"), expected)
 
 
 def ref_tail(ref):
@@ -362,8 +372,15 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(length)
 
         # Verify the raw bytes before trusting anything inside the payload.
-        signature = self.headers.get("X-Hub-Signature-256") or ""
-        if not verify_signature(self.state.key, signature, body):
+        # First-present header decides the dialect, evaluated exclusively: a
+        # malformed or forged hub value 401s even beside a valid forgejo one.
+        signature = self.headers.get("X-Hub-Signature-256")
+        if signature is not None:
+            valid = signature.startswith("sha256=") and verify_signature(self.state.key, signature, body)
+        else:
+            signature = self.headers.get("X-Forgejo-Signature") or ""
+            valid = signature and not signature.startswith("sha256=") and verify_signature(self.state.key, signature, body)
+        if not valid:
             return self._reply(401, "invalid signature\n")
 
         event = self.headers.get("X-GitHub-Event") or ""
@@ -399,7 +416,7 @@ def cmd_check(args):
         print("argocd-hook --check: FAILED — %s" % e, file=sys.stderr)
         return 1
     print("argocd-hook --check: OK")
-    print("hmac round-trip: verified")
+    print("hmac round-trip: verified (hub + forgejo dialects)")
     print("allowed_refs: %s" % ", ".join(state.allowed_refs))
     print("tunables: SETTLE_SECONDS=%g TARGET_TIMEOUT_SECONDS=%g" % (state.settle, state.timeout))
     print("targets (fan-out order, remotes first):")
@@ -426,10 +443,10 @@ def cmd_serve(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="argocd-hook",
-                                     description="GitHub push-hook relay for ArgoCD sync fan-out")
+                                     description="push-hook relay for ArgoCD sync fan-out (canonical caller: Forgejo main-sync hook-relay job)")
     parser.add_argument("--config", required=True, help="path to targets.json")
     parser.add_argument("--secrets-dir", required=True, dest="secrets_dir",
-                        help="directory with the github-webhook HMAC key and one file per tokenKey")
+                        help="directory with the hook-secret HMAC key file and one file per tokenKey")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--check", action="store_true",
                         help="validate config, secrets and HMAC offline; print the roster; exit")

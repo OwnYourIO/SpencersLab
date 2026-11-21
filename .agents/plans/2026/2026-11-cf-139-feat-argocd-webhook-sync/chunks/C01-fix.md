@@ -84,3 +84,134 @@ behavior, re-sign deliveries in both dialects):
 - comment-slop discipline; aislop; commit is coord's.
 
 ## Review notes (review agent fills)
+
+### Round 1 — 2026-11-21 (review agent) — verdict: CHANGES_REQUESTED (one text-only major; security walk clean)
+
+Validations (run fresh in review session):
+
+- `CHUNK_BASE=b7a81c3de bash tests/containers/argocd-hook-relay.sh` => PASS 7/7 (t1..t7)
+- `python3 -m py_compile containers/argocd-hook/main.py` => PASS
+- `npx aislop ci --changes` => PASS — score 100 Healthy, 0 errors, 1 warning
+  (`complexity/file-too-large`: base main.py was 441 lines = exactly the flag
+  threshold, dev's +17 crosses it). Not auto-fixable; splitting the module
+  contradicts the chunk's "smallest correct change" note and AC3's line
+  whitelist, and the single-file stdlib container is the repo convention
+  (`traefik-mqtt-allowlist`). Gate policy is errors+score-floor => CI-green.
+  Explained, not fixed here.
+- Direct `--check` on a scratch hook-secret fixture => exit 0, prints
+  `hmac round-trip: verified (hub + forgejo dialects)` (AC5)
+- Adversarial probe battery: 15 raw-socket cases against the real handler
+  (exact header casing / duplicates / empties), all behaved per spec — detail below.
+
+Findings, severity order:
+
+1. **major — `main.py:446` argparse description is stale GitHub-only framing**
+   (`description="GitHub push-hook relay for ArgoCD sync fan-out"`). AC6: "README +
+   docstring/help … no stale GitHub-webhook-only framing". Rendered `--help` confirms
+   the summary line; the same phrase was replaced in the module docstring but this
+   line was missed. Fix (one line, text-only):
+   `description="push-hook relay for ArgoCD sync fan-out (canonical caller: Forgejo main-sync hook-relay job)"`
+   — then re-run t7 + `--help`. No other AC6 surface missed.
+
+Per-AC trace:
+
+- AC1 ✓ — both dialects verify (hub t3-good + probe E3/E5; forgejo t3 positive legs
+  + probe E7/C04-e2e leg → 202 + fan-out classified ok on live stub); forged/bad
+  401s; `compare_digest` is the ONLY byte comparison of key-derived material, on
+  both paths (`main.py:193`).
+- AC2 ✓ — selection law holds empirically: bare-hex-in-hub 401 (E2b, harness
+  hub-bare), sha256=-in-forgejo 401 (E10, harness), forged-hub-first + valid-
+  forgejo 401 (E2/E4, harness mixed), none 401 (E11). Present-but-empty hub does
+  NOT fall through — the `is not None` selection (not `or ""` truthiness) is the
+  load-bearing detail; correct.
+- AC3 ✓ — every hunk is within signature/secret-file/docstring/help/comment/
+  README lines; event gate, allowed_refs, fan-out, sync calls byte-unchanged.
+- AC4 ✓ (chunk-scoped) — `grep -rn github-webhook containers/` => 0 hits.
+  `charts/` retains `secretKey: github-webhook` (secret-argocd-hook.yaml:18 +
+  chart README:23) — C02-fix scope, expected. NB the other charts "hook-secret"
+  hits are the `argocd-hook-secret` bitwardenIds/ES store-key name — a different
+  identifier, NOT part of the R4 rename.
+- AC5 ✓ — as commands above; `docker` CLI present, daemon down ⇒ `docker build =>
+  no-daemon, CI-deferred` honest-line shape (cf-77), build is
+  `.forgejo/workflows/containers-build.yaml` on the pushed branch.
+- AC6 ✗ — major 1 (argparse description). Docstring ✓, README ✓, --secrets-dir
+  help ✓, --check dual-dialect naming ✓.
+
+Bypass ideas walked (each closed; probe id where empirically tested):
+
+- forged/present-hub + valid-forgejo fallthrough => 401 always (E1 empty-hub,
+  E2/E2b casing'd hub, E4 dup-hub garbage-first; hub branch never reaches the
+  forgejo branch — the if/else split is exclusive, no code path re-checks).
+- header-name casing games => `http.server` headers are an `email.message.Message`
+  (case-insensitive `get`), so any-cased hub header still selects hub dialect (E2,
+  E13 also proves the unchanged event gate is case-insensitive). Casing can only
+  cause REJECTS, never accept: acceptance requires compare_digest equality with
+  HMAC(secret, full raw body).
+- duplicate headers => `get` returns first in document order (E4 401 garbage-first,
+  E5 202 valid-first). Attacker-injectable dupes can only block (DoS, pre-existing
+  crowdsec edge), never bypass.
+- cross-shape replay (`sha256=`+valid digest in forgejo header, bare valid digest
+  in hub header) => both 401 (E2b, E10 `SHA256=` case-variant prefix too —
+  startswith is case-sensitive and the compare rejects regardless).
+- verify-vs-parse ordering => HMAC verified over the raw bytes before any
+  `json.loads`/event gate (E9: forged sig + non-JSON body answers 401, not 400).
+- constant-time => compare_digest over the raw body on both paths; early returns
+  (missing/empty/short/wrong-shape header) depend only on attacker-supplied shape
+  bytes, never secret bytes; expected is fixed 64-byte hex so length-timing is
+  constant.
+- hex-case => lowercase-only acceptance == exactly what `openssl dgst -hmac` (C04,
+  AC4 token `awk '{print $NF}'`) and GitHub emit; E7 lowercase 202 (no
+  false-reject of the sanctioned caller), E6 uppercase 401; prefix strip is an
+  exact 7-byte literal slice.
+- `--check` failure modes => ConfigError texts carry file paths, field names and
+  dialect labels only; t2 asserts SENTINEL/`tok-` never echo; direct run clean.
+
+R4 rename completeness + parity-rule check:
+
+- containers/ fully renamed (constant, --check, help, README, harness fixtures,
+  and harness self-greps for the retired literal — t7).
+- Intermediate inconsistent state (new image filename vs old chart ES secretKey)
+  exists ONLY inside this branch: `git ls-remote` shows the branch unpushed, no
+  PR, and both publish paths that produce consumable artifacts
+  (`containers-build.yaml` main-push :yy.mm.N/:latest/:main; `release.yaml` chart
+  publish) fire only from main — after the single PR that also contains C02-fix
+  (wave 5, same plan). Same-release parity is therefore satisfiable. Even a
+  hypothetical half-land fails loud and visible: missing `hook-secret` at
+  startup is a ConfigError refuse-to-start (proven by t2's rename leg).
+
+Docs-vs-code truth (README): every claim verified against behavior, including
+the first-present/exclusive sentence (probe battery) and the "door, no webhook
+created" line (R2 wording, also t7's grep gate). **R1 limitation clause added
+beyond the task list: KEEP** — without it the pre-existing "Missed deliveries
+are not replayed" sentence becomes misleading under R1 (no webhook, no Actions
+redeliveries, at-most-once job); the added text is exactly DECISIONS'
+ruled-in-documented-limitation and is true against C04's pinned
+warn-and-continue posture. Docs-only, in file scope, not slop (external-system
+fact the code cannot state).
+
+Nits (non-blocking, no rework required):
+
+- `main.py:407` "GitHub's 10s delivery budget" comment — still true for the R2
+  door and the async design; fine to leave or fold a "(and C04's --max-time 15)"
+  into C03-fix's doc sweep. Not part of major 1's one-line fix.
+- `R3` decision-tags in docstring/README/comment: consistent with the repo's
+  established decision-tag precedent (cf-139 OQ1/OQ6/OQ7 tags in approved code);
+  keep as-is.
+
+Deferred (out of C01-fix scope, informational):
+
+- dev's bare `python3 -m py_compile` left `containers/argocd-hook/__pycache__/`
+  — gitignored (`.gitignore:14`), invisible to the Dockerfile (`COPY main.py`),
+  never in the image. Future runs: use `PYTHONPYCACHEPREFIX` like the harness.
+- Test-surface observations for the next re-pin (agent-test, not dev): t6's
+  allow-list `containers/argocd-hook/` would also admit a NON-ignored artifact
+  inside the scope dir; the harness header's AC labels follow C01's numbering
+  (t4=AC4 etc.) rather than C01-fix's 1–6 — traceability comment only, legs are
+  correct.
+
+STATE handoff text (for coord — reviewer writes no STATE): dev_rounds 1,
+review_rounds 1, last_verdict CHANGES_REQUESTED; event line: "dev DONE
+(dual-dialect R3 + hook-secret R4; harness 7/7, py_compile, aislop 0-error) +
+review CHANGES_REQUESTED (1 major: argparse --help description stale GitHub
+framing, AC6 — one-line text fix; security walk 15/15 probes clean, parity
+verified satisfiable)".
