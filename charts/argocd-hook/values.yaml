@@ -17,9 +17,12 @@ domain: OVERRIDE_VIA_APPSET
 allowedRefs:
   - refs/heads/main
 
-# The git origin every root app tracks; the relay matches live apps'
-# spec.source.repoURL against it during the child pass. A public stable URL,
-# deliberately not a cluster-domain literal.
+# The git origin every root app tracks. app_matches byte-compares live
+# spec.source.repoURL against it, never the payload's repository field, and
+# the fleet's annotations still read GitHub (R1 ruling (c); all 9 reachable
+# roots per probe [P §1]). Flipping this value before a same-release
+# annotation flip makes every fan-out a silent skipped xN no-op ([P §3]) -
+# change it only in lockstep with the cluster annotations.
 trackedRepo: https://github.com/OwnYourIO/SpencersLab.git
 
 # Fan-out roster = the 11 fleet root apps (backups/personal have no root

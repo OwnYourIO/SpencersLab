@@ -5,7 +5,9 @@ one Deployment + Service on 8080, the `targets.json` fan-out roster
 ConfigMap, and the two Bitwarden ExternalSecrets. Stateless by design — no
 PVC, no chart Ingress; the only public path is the hub's crowdsec-only
 `proxy.subdomains.argocd-hook` entry in `services/proxy-local/prod/values.yaml`
-(GitHub cannot pass SSO forward-auth, cf-139 OQ2 ruling).
+(the caller is a machine that cannot pass SSO forward-auth — canonical today:
+the Forgejo `main-sync` hook-relay job; the same door fits GitHub-shaped
+deliveries though no webhook is created there, cf-139 OQ2 + R2 rulings).
 
 ## File contract (must match containers/argocd-hook/README.md)
 
@@ -20,8 +22,9 @@ PVC, no chart Ingress; the only public path is the hub's crowdsec-only
   the two sanctioned `clusterHosts` values may reach a render.
 - `/secrets` — one flat directory projected from both ES targets. Key shape
   is flat filenames, pinned here (the relay resolves
-  `--secrets-dir/<tokenKey>`): `github-webhook` (the shared HMAC login item,
-  its password field) plus one file per category carrying that cluster's
+  `--secrets-dir/<tokenKey>` byte-for-byte against them): `hook-secret`
+  (the shared HMAC key both dialects sign with — the `argocd-hook` login
+  item's password field) plus one file per category carrying that cluster's
   `mcp-bot` API token (`argocd-hook-tokens` item custom fields, field name =
   category).
 
@@ -29,7 +32,9 @@ PVC, no chart Ingress; the only public path is the hub's crowdsec-only
 
 - `allowedRefs` — ref accept-list (OQ7: widening for a future non-prod stage
   cluster is one values edit, no code change).
-- `trackedRepo` — repoURL the relay matches live app sources against.
+- `trackedRepo` — repoURL the relay matches live app sources against; stays
+  the GitHub origin under R1 ruling (c) until a same-release fleet-annotation
+  flip (see the values.yaml comment).
 - `targetCategories` — fan-out roster; also drives the tokens ES keys.
 - `clusterHosts` — category -> full route host, only where the live route
   name departs from the derived `cluster.<cat>.<domain>` shape.
