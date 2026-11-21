@@ -60,7 +60,9 @@ Do this BEFORE Step 1 so bootstrap starts clean in one pass.
    API KEYS → ADD KEY), human-executed:
 
    ```bash
-   # human-executed — run against each cluster's argocd (cluster.<cat>.spencerslab.com)
+   # human-executed — run against each cluster's live ArgoCD route host: the derived
+   # cluster.<cat>.spencerslab.com for nine categories, dev on cluster.dev.scifi.farm
+   # and home on cluster.home-lab.spencerslab.com (fixed hosts — appendix)
    argocd account generate-token --account mcp-bot
    ```
 
@@ -131,17 +133,21 @@ Run these in order; each expects the stated relay response and log shape (logs:
   button): a `ping` event verifies the HMAC and answers **200**; the relay starts no
   syncs — zero `target=` lines. A 401 here means the webhook Secret and the Bitwarden
   `argocd-hook` password disagree.
-- **(b) Signed synthetic `refs/heads/main` push** (from any mesh host; `<SECRET>` = the
-  `argocd-hook` item password), human-executed:
+- **(b) Signed synthetic `refs/heads/main` push** (from any mesh host; you will be
+  prompted for the `argocd-hook` item password), human-executed:
 
   ```bash
-  # human-executed
-  BODY='{"ref":"refs/heads/main","after":"0000000000000000000000000000000000000000"}'
-  SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac '<SECRET>' | awk '{print $2}')"
+  # human-executed — read -rs keeps the HMAC out of the command line you copy around;
+  # note openssl still sees it briefly in argv, so run this on a trusted host
+  IFS= read -rs SECRET
+  BODY='{"ref":"refs/heads/main"}'
+  SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $2}')"
   curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://argocd-hook.spencerslab.com/ \
     -H 'Content-Type: application/json' -H 'X-GitHub-Event: push' \
     -H "X-Hub-Signature-256: $SIG" -d "$BODY"
   ```
+
+  The relay only reads `ref` from the push payload — no `after` field is needed.
 
   Expect **202**, then one audit line per target in the log:
   `push accepted ref=refs/heads/main delivery=… targets=11` followed by
@@ -153,9 +159,11 @@ Run these in order; each expects the stated relay response and log shape (logs:
   (also never fires).
 - **(c) Real end-to-end**: merge a no-op-ish PR (docs bump). Watch every reachable root
   app reach Synced — well under the old ≤3-min poll path; record the observed
-  push→Synced latency. Expect a visible sync-failure line for the `home` root until its
-  pre-existing manifest-generation error clears (section 6 note; manual sync fails
-  identically).
+  push→Synced latency. The `home` root's sync will not complete until its pre-existing
+  manifest-generation drift clears: ArgoCD answers the relay's sync POST before the
+  failure lands asynchronously, so the relay logs `target=home result=ok` while the app
+  stays Unknown/OutOfSync — watch the app status, not the relay log (section 6 note;
+  manual sync fails identically).
 
 ## 6. Preflight table (live readonly MCP probes, 2026-11-21)
 
@@ -217,15 +225,20 @@ annotation was ever touched. The fleet is exactly back at today's manual workflo
   every revision in use; widening is section 1's one-values-edit procedure.
 - **Token rotation** = re-mint the `mcp-bot` token on the cluster, re-store it in the
   matching `argocd-hook-tokens` field; the ExternalSecret refreshes within 1 h and the
-  `reloader.stakater.com/auto` pod annotation (shipped in C02) restarts the relay so it
-  re-reads `/secrets` — the relay reads secrets at startup only.
+  `reloader.stakater.com/auto` pod annotation restarts the relay so it re-reads
+  `/secrets` — the relay reads secrets at startup only.
 
 ## Appendix — known anomalies (note-only)
 
 - `cluster.proxy-local.spencerslab.com` publishes a public A record `10.0.77.54` — a
   mesh-only-rule violation, owner ruled NOTE-ONLY (DECISIONS 2026-11-17, OQ4); do not
-  fix here. Relay traffic never routes through it: `targets.json` URLs are the mesh
-  hostnames `cluster.<cat>.spencerslab.com`, which the hub resolves in-mesh.
+  fix here.
+- Relay target hosts are the live-verified mesh route set — the derived
+  `cluster.<cat>.<domain>` form for nine categories, and two fixed hosts from the
+  chart's `clusterHosts` values map where the derived form does not resolve:
+  dev → `cluster.dev.scifi.farm` (its own second apex), home →
+  `cluster.home-lab.spencerslab.com` (its cluster name is `home-lab`). None of
+  them route through the public record above; the hub resolves every host in-mesh.
 - The `home` root's pre-existing helm-dependency manifest-generation error (section 6
   row) also fails manual syncs; the fleet repair for it belongs to a renovate-class
   change outside this ticket (FRICTION 2026-11-21, review C02).
