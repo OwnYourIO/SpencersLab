@@ -52,6 +52,12 @@ coder:
     # client id, password = client secret — the fields secret-coder.yaml
     # reads as ea_client_id/ea_secret).
     coder-external-auth: e04af1ad-d36f-42b3-9aa0-b4ee0035a382
+    # coder-token-encryption — password = base64 of 32 random bytes, exactly
+    # `dd if=/dev/urandom bs=32 count=1 | base64` output. A malformed or
+    # wrong-length key crashloops coderd on the restart that follows the
+    # first sync — generate it fresh, never hand-typed. This slot is
+    # per-cluster: the gpu cluster carries its own distinct item.
+    coder-token-encryption: 4a7b0218-e9af-4205-9fe6-b4ee00347021
 
 forgejo:
   bitwardenIds:
