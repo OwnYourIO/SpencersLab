@@ -228,6 +228,39 @@
         }
       ],
       "rebuild": { "at": "2026-11-16", "status": "re-derived (rebuild dev round, verified from disk; review gate = final_review_rebuild)", "note": "D32: surface prose re-derived to the chart half — AGENTS.md four-workflow ROLE law (release.yaml narrow-on-unset), role skills + rulesync sources + mirrors, chart-templates, renovate-mcp Dockerfile, wekan-mcp pyproject; ci-surface suite re-pointed at containers-build.yaml" }
+    },
+    "C05": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e002c6a5cffej2pRdkWvNPGYG3)",
+      "dev_session": "ses_e003e2462ffehXoDhUqDkZvZTn",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C05", "session": "ses_e003e2462ffehXoDhUqDkZvZTn", "at": "2026-11-21",
+          "summary": "containers/forgejo-runner/{Dockerfile,README.md}; 8/8 suite green incl real hadolint; digest/arch/sidecar/checksums live-verified; renovate regex replay extracts both pins, CR_SHA256 unclaimed; regressions byte-identical baselines; docker build no-daemon CI-deferred"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C05", "session": "ses_e002c6a5cffej2pRdkWvNPGYG3", "at": "2026-11-21",
+          "verdict": "APPROVED — contract 8/8; every live truth claim independently re-measured and EQUAL (act-24.04 head digest, CR_SHA256 vs checksums.txt, helm sidecar live); regressions exact admitted baselines (containers-build only t6/t12/x4, release only t5/t19/t20, ci-surface only t4, trio only c11/t17/c19); all four dev deviations ACCEPT (suite-as-contract, no-SHELL at error-bar precedent, citation-accurate provenance, AC3 re-verification); sidecar-fetched recipe ruled the correct reading of suite+AC (coder-workspace shape, D38). MINOR non-blocking: CR_SHA256 bump-law comment over-widens to HELM_VERSION bumps — teeth already correct, recorded in chunks/C05.md Review notes for a future touch."
+        }
+      ]
+    },
+    "C06": {
+      "status": "not_started",
+      "wave": 2,
+      "depends_on": ["C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0
+    },
+    "C07": {
+      "status": "not_started",
+      "wave": 3,
+      "depends_on": ["C06"],
+      "dev_rounds": 0,
+      "review_rounds": 0
     }
   },
   "blocked": [],
