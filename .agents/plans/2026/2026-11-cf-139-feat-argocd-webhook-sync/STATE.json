@@ -87,22 +87,26 @@
       ]
     },
     "C02-fix": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C01-fix"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        { "at": "2026-11-21T22:20+00:00", "event": "dev DONE (wiring 8/8, render proves ES byte-identical except renamed key, retired literal 0 tree-wide); committed 2dfabee80 via reviewer fast-path class (same as C02 pointer fix); final re-review owns chain re-verify" }
+      ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C01-fix"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        { "at": "2026-11-21T22:50+00:00", "event": "dev DONE (harness 13/13 + offline verify cross-check) + review APPROVED round 1 (run block executed, 11-scenario posture sweep; workflow bytes verified against shipped verify_signature; 1 validation_at_fault: relay t6 stale wave-5 allow-list -> test session repair)" }
+      ]
     },
     "C03-fix": {
       "status": "pending",
