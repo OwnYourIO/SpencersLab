@@ -454,6 +454,11 @@ change.
   `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual
   fallback (its automatic trigger blocks are kept commented); reference
   `:main` (+ `pullPolicy: Always`) or a `:yy.mm.N` pin.
+  The lab's Forgejo job image is `containers/forgejo-runner` (act-24.04
+  base, helm + cr baked in): the `.forgejo` workflows install no tools at
+  run time, and no Renovate lane reads that image's label pin in
+  `charts/forgejo-runner/values.yaml` — it is bumped by hand to the newest
+  published calendar tag.
 - **Forge Actions guards are ROLE membership, never instance URLs.** `ROLE`
   is a repo-scoped Actions variable typed as a comma list without spaces
   over the vocabulary `{dev, prod}` (e.g. `dev,prod`); job `if:` guards test

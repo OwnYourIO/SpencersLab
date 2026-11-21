@@ -16,22 +16,21 @@
 # Substring caveat: no future role word may contain prod as a substring —
 # "production" would silently widen these guards. has-changes gating belongs
 # at step level.
+#
+# Toolchain: the act job image is containers/forgejo-runner — helm and cr
+# bake into it at image-build time (D33: the pipeline's first fire died on a
+# run-time tool download, the flaky-egress class the bake retires). No step
+# installs anything here, and no presence-check step stands in for one
+# (D43): the plain helm/cr calls below ARE the toolchain check — a mis-baked
+# image dies at its first command-not-found, loud and early. The published-
+# index fetch in the bump leg is the one runtime download that survives the
+# bake: it carries data, not a tool, and it rides a bounded --retry (D37).
 name: Release Charts
 on:
   push:
     branches: [main]
     paths:
       - charts/**
-
-env:
-  # One pin shared by every cr leg (the retired chart-releaser wrapper is
-  # replaced by direct CLI calls, D3). sha256 is the linux_amd64 archive
-  # checksum from the release's own checksums.txt. The asset host rides a
-  # plain variable because no scheme-qualified forge URL may enter a synced
-  # workflow file — the portability law main-sync already obeys.
-  CR_VERSION: "1.10.1"
-  CR_SHA256: "ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b"
-  RELEASES_HOST: github.com
 
 jobs:
   changes:
@@ -98,11 +97,6 @@ jobs:
           # semantics, so every checkout pins full depth (the one-commit
           # default is what silently empties git-based detection).
           fetch-depth: 0
-      - name: Set up helm
-        # The act job image carries no helm (RESEARCH C1); pinned installer.
-        uses: azure/setup-helm@v4
-        with:
-          version: v3.16.4
       - name: Patch-bump Chart.yaml (local, never pushed)
         run: |
           set -euo pipefail
@@ -185,7 +179,7 @@ jobs:
             echo "bump attempt ${attempt} of 5"
             git fetch origin refs/heads/main:refs/remotes/origin/main
             git reset --hard refs/remotes/origin/main
-            curl -fsSL -o /tmp/published-index.yaml "$PUBLISHED_INDEX"
+            curl -fsSL --retry 3 -o /tmp/published-index.yaml "$PUBLISHED_INDEX"
             bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml <<'PY'
           import json, re, sys
 
@@ -286,26 +280,6 @@ jobs:
           # and cr's pages worktree/pull sequence cannot run against a
           # one-commit clone (main-sync.yaml's paid lesson, same class).
           fetch-depth: 0
-      - name: Set up helm
-        # The act job image carries no helm (RESEARCH C1); pinned installer.
-        uses: azure/setup-helm@v4
-        with:
-          version: v3.16.4
-      - name: Install cr
-        run: |
-          set -euo pipefail
-          # Direct cr (D3): the wrapper is not on the instance action mirror
-          # and its repository-context-derived owner/repo would target
-          # CuratedForest on this forge (RESEARCH A2/B1/X5). Pinned version +
-          # sha256; the download and the later API upload share the same
-          # unproven-egress class, first-fire-checked (UA-5).
-          curl -fSL --retry 3 -o /tmp/cr.tar.gz \
-            "https://${RELEASES_HOST}/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz"
-          echo "${CR_SHA256}  /tmp/cr.tar.gz" | sha256sum -c -
-          mkdir -p "$HOME/.cr-bin"
-          tar -xzf /tmp/cr.tar.gz -C "$HOME/.cr-bin" cr
-          chmod +x "$HOME/.cr-bin/cr"
-          echo "$HOME/.cr-bin" >> "$GITHUB_PATH"
       - name: Configure Git
         run: |
           set -euo pipefail
@@ -374,26 +348,6 @@ jobs:
           # main-tip re-read below is a git negotiation that a one-commit
           # clone cannot serve.
           fetch-depth: 0
-      - name: Set up helm
-        # The act job image carries no helm (RESEARCH C1); pinned installer.
-        uses: azure/setup-helm@v4
-        with:
-          version: v3.16.4
-      - name: Install cr
-        run: |
-          set -euo pipefail
-          # Direct cr (D3): the wrapper is not on the instance action mirror
-          # and its repository-context-derived owner/repo would target
-          # CuratedForest on this forge (RESEARCH A2/B1/X5). Pinned version +
-          # sha256; the download and the later API upload share the same
-          # unproven-egress class, first-fire-checked (UA-5).
-          curl -fSL --retry 3 -o /tmp/cr.tar.gz \
-            "https://${RELEASES_HOST}/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz"
-          echo "${CR_SHA256}  /tmp/cr.tar.gz" | sha256sum -c -
-          mkdir -p "$HOME/.cr-bin"
-          tar -xzf /tmp/cr.tar.gz -C "$HOME/.cr-bin" cr
-          chmod +x "$HOME/.cr-bin/cr"
-          echo "$HOME/.cr-bin" >> "$GITHUB_PATH"
       - name: Pick up the bump commits and release tags
         run: |
           set -euo pipefail

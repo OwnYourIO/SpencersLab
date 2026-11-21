@@ -268,11 +268,23 @@
       ]
     },
     "C07": {
-      "status": "not_started",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C06"],
-      "dev_rounds": 0,
-      "review_rounds": 0
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_dfff4fc4cffeaYXxubux929UxM)",
+      "dev_session": "ses_dfffd022dffecIkW3JbPQ5D7SH",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C07", "session": "ses_dfffd022dffecIkW3JbPQ5D7SH", "at": "2026-11-21",
+          "summary": "release.yaml: 3 setup-helm + 2 cr installs + top-level env block deleted, vacated slots EMPTY (D43), index fetch +--retry (t20), header/toolchain comments re-truthed; all rebuild laws byte-untouched; rulesync source + AGENTS.md regenerated together. forgejo-release 20/20 green; teeth mutants on t5/t19/t20; full admitted-baseline regression table"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C07", "session": "ses_dfff4fc4cffeaYXxubux929UxM", "at": "2026-11-21",
+          "verdict": "APPROVED — THE proof re-run 20/20 direct; law-by-law fresh-eyes verify (5 contains() guards, FF loop, index pairing, credential topology, zero deleted-env stragglers, bash -n x13); all 4 AC4 mutants independently re-reddened; prose truth-checked (13-manager renovate.json audit: no lane reads the label pin — claim TRUE; 4-workflow install grep clean); trio strengthened to full-leg HEAD-vs-live byte-identical red sets (beyond direct posture, because fail() aborts early); deviations 1-4 ACCEPT; 2 non-blocking nits (header 'one runtime download' over-claim literal; t19 generic-renamed-installer depth) recorded in chunk notes, no routing. aislop ci 108 files (wide-span posture unchanged) score 100."
+        }
+      ]
     }
   },
   "blocked": [],
