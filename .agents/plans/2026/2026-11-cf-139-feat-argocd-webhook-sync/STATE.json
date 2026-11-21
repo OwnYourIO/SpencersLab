@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
-  "current_wave": 4,
-  "updated_at": "2026-11-21T19:55:18+00:00",
+  "current_wave": 6,
+  "updated_at": "2026-11-22T00:20:00+00:00",
   "reopen": { "at": "2026-11-21T20:05:00+00:00", "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub", "lock": { "reaped_setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z", "tag": "after_reap" } },
   "kickoff": {
     "slug": "cf-139-feat-argocd-webhook-sync",
