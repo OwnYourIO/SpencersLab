@@ -17,7 +17,9 @@
 #    container image line (dist extract.js, probe of record 2026-11-10); an
 #    annotation plus the broad YAML legs would double-match (DECISIONS D13).
 #  - t5: credentials and instance identity come ONLY from contexts and secret
-#    refs, so the file is identical-safe on both forges (cf-119 convention).
+#    refs (cf-119 convention), the one deliberate exception being the
+#    RENOVATE_GIT_AUTHOR author stamp — a pinned literal, identical on every
+#    host, so the file stays identical-safe (DECISIONS D21).
 #  - t6/t7: zero uses: steps — the actions mirror's inventory beyond
 #    actions/checkout is unproven and Renovate self-clones with its token
 #    (DECISIONS D8); t7 doubles as the accepted-churn tripwire: merge a
@@ -179,7 +181,7 @@ then
 fi
 ok "t4: container image is an immutable full-patch tag and the file carries no renovate annotation"
 
-# --- t5 [AC4]: env wiring exact, secrets once, no host literals -------------------
+# --- t5 [AC4 + C03 AC2]: env wiring exact, secrets once, no host literals --------
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
@@ -194,6 +196,12 @@ EXPECTED = {
     'RENOVATE_REPOSITORIES': '${{ github.repository }}',
     'RENOVATE_TOKEN': '${{ secrets.RENOVATE_TOKEN }}',
     'RENOVATE_GITHUB_COM_TOKEN': '${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}',
+    # D21: the author stamp pins the guard's accepted identity against /user
+    # discovery drift. The email must be the running PAT account's commit
+    # address (tms@) — stamping bot-and-reviewed@ instead would DEMOTE tms@
+    # from the accepted set while the stuck ranges' head commits stay tms, so
+    # all 85 would remain locked (census arithmetic, DECISIONS D21).
+    'RENOVATE_GIT_AUTHOR': 'Renovate <tms@spencerslab.com>',
 }
 
 
@@ -228,7 +236,7 @@ PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: six exact env keys, each secret ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
+ok "t5: seven exact env keys, each secret ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
 
 # --- t6 [AC5]: two run-only steps, fail-fast, PATH proof -------------------------
 if ! python3 - "$WF" <<'PY'
