@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
   "test_session": "ses_e006a6794ffeHqXl8O0Lx4sLoQ (fix-round test wave, 2026-11-21 — current for validation_at_fault routing; the rebuild-round session was lost-in-restart, its suites were disk-verified)",
-  "current_wave": 2,
+  "current_wave": 3,
   "updated_at": "2026-11-21T19:16:28+00:00",
   "fix_round": {
     "at": "2026-11-21",
@@ -249,11 +249,23 @@
       ]
     },
     "C06": {
-      "status": "not_started",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
-      "review_rounds": 0
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e0008e661ffeafnPTyILReMWop)",
+      "dev_session": "ses_e0024b064ffeXL0Kyed18aEwoP",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C06", "session": "ses_e0024b064ffeXL0Kyed18aEwoP", "at": "2026-11-21",
+          "summary": "charts/forgejo-runner values.yaml (four act-24.04-family labels -> ghcr.io/ownyourio/forgejo-runner:26.11.1, 22.04 byte-stable) + secret-runner.yaml record rewrite (baked truth, no sha256 literal); pin via walk-predicted empty-registry branch (controls disambiguate 403-absence); dev t2/t14 green, gpu 18/18 exit 0 g7 non-vacuous"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C06", "session": "ses_e0008e661ffeafnPTyILReMWop", "at": "2026-11-21",
+          "verdict": "APPROVED — legs validated independently (driver tables, gpu full-run, trio DIRECT per FRICTION posture); render proof: Secret carries exactly 5 prescribed labels, record verbatim, zero sha256/URL/sentinels; record claims true vs C05 Dockerfile on disk (lfs inheritance, /usr/local/bin helm+cr, executable verify commands); calendar-pin-vs-:main deviation PROPERLY JUSTIFIED (law serves pullPolicy services; labels have none; never-re-pull law, D39/D42); g7 teeth proven via 6-mutation live worktree probe, tree byte-identical after; deviations (a)(b)(c) all ACCEPT; 2 nits non-blocking (one-values-line undercount phrasing; immutable-tags wording) recorded in chunk Review notes; UA-8 discoverability acceptable via C05 README:62 + plan landing"
+        }
+      ]
     },
     "C07": {
       "status": "not_started",
