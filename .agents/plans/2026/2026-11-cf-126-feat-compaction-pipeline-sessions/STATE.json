@@ -105,6 +105,8 @@
     "run_tag": null,
     "run_tag_note": "omitted — run tags retired for every flavor (cf-90)",
     "origin_dir": "/home/coder/SpencersLab",
+    "workspace_persistent": true,
+    "workspace_persistent_note": "owner ruling D30 2026-11-21: this run's session STAYS on the branch worktree; the step-10 move-home default is superseded — origin_dir is the historical landing fact, never a move destination; moving home again would need a fresh owner instruction",
     "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-126-feat-compaction-pipeline-sessions",
     "worktree_note": "owner ruling D26 2026-11-21 (second wipe); the original card-driven skip (D28) is superseded for the run's remainder",
     "branch": "cf-126-feat-compaction-pipeline-sessions",
