@@ -153,6 +153,19 @@
       ]
     }
   },
+  "follow_up_cards": {
+    "at": "2026-11-21T21:20:00Z",
+    "authority": "rework-round-2 batched Q8 + Q2 ruling (DECISIONS D22); minted per boards Follow-up cards protocol",
+    "destination": "Inbox PjEZ39rXBdpNcpncs, Backlog swimlane MoZHQz3C4dSW4Atya (re-resolved live via list_lists — the board now carries bucket lists per swimlane, 35 lists total)",
+    "cards": [
+      {"id": "2rqA6j9hEw5WCsGiG", "number": null, "title": "Renovate ignoreTests:true leaves PR merges ungated (cf-135 F1)", "answers": "Services infra / Type chore / Model(s) Qwen Dense (default_checked applied, zero missing/failed)"},
+      {"id": "DYiJjRQbMwqpj7BTj", "title": "Forgejo PR build jobs 'pr coder-workspace'/'pr gpt-researcher-frontend' fail after ~6s (cf-135 F2)", "answers": "Services infra+dev / Type bug / Model(s) Qwen Dense"},
+      {"id": "n5MjQ9iNFoqKN8WLH", "title": "Migrate Renovate to a dedicated bot account + PAT (cf-135 F3)", "answers": "Services infra / Type chore / Model(s) Qwen Dense"}
+    ],
+    "labels_inherited": "Pipeline: CICD + Bucket: CICD + Provider: API via set_card_labels (applied:true, 3 cards) — parent minus Research, none carried",
+    "lineage": "parent_id route answered 405 on the deployed build (WeKan PUT /cards/:id regression class, first observed here) — lineage carried in each body naming parent id grj3HFxsi3WzM5y96; candidate for the pipeline-locks/board-tooling friction pile",
+    "note": "creating these cards is not a run: no claim, no moves, no fields beyond the cards themselves; every move out of Inbox is the owner's"
+  },
   "blocked": [],
   "deferred": []
 }
