@@ -5,8 +5,19 @@
 # argocd-hook subdomain + ExternalSecret bitwardenIds with the custom-values
 # OVERRIDE_NEEDED sentinels shipped through the merge (OQ5 ruling).
 #
-# Contract source: chunks/C02.md "## Tests". AC trace:
-# t1[AC1] t2[AC2] t3[AC3] t4[AC4] t5[AC5] t6[AC6+AC7]
+# C02-fix (rulings R1/R4) re-pin: the HMAC ExternalSecret secretKey renames
+# to hook-secret — byte-equal to the relay's new flat filename (a mismatch
+# is a startup ConfigError crash-loop, visible, in the SAME release). The
+# tokens ES, bitwardenIds keys, trio entries, clusterHosts map, allowedRefs
+# and the trackedRepo VALUE all stay untouched — the chart README and the
+# values comment gain the main-sync origin framing, trackedRepo keeps the
+# GitHub URL because the fleet's live app sources still read GitHub 9/9 and
+# app_matches byte-compares THAT, never the payload's repository field
+# (R1 option (c); flipping early is the silent skipped-x11 no-op trap).
+#
+# Contract source: chunks/C02-fix.md "## Tests". AC trace:
+# t1[AC1] t2[AC1+AC2 render legs] t3[AC2/AC3] t4[AC2+R4 doc/sentinel pairing]
+# t5[AC2 diff scope tightened] t6[AC6+AC7]
 #
 # Helm ladder per tests/services/dev-mcp-fleet.sh: HELM_BIN -> PATH ->
 # ~/.local/bin -> find -> pinned download; the chart renders from a COPY under
@@ -40,6 +51,9 @@ RELEASE="proxy-local-argocd-hook"
 TEST_UUID="test-uuid"
 DOMAIN="test.example.com"
 TRACKED_REPO="https://github.com/OwnYourIO/SpencersLab.git"
+# t4's cross-suite parity leg reads the relay README (test may read any
+# surface; the agreement pin lives here because C02-fix gates both docs).
+CONT_README="${HOOK_CONTAINER_README:-containers/argocd-hook/README.md}"
 # Full path, not basename: the final review caught a plans-folder pointer to
 # the same filename — a basename grep passed it green while the path was dead.
 RUNBOOK=".agents/notes/2026-11-17-argocd-hook-relay.md"
@@ -293,10 +307,28 @@ for e in es:
         rr = d.get("remoteRef") or {}
         if rr.get("key") != test_uuid:
             bad("t2: ExternalSecret %s remoteRef.key is %r — the item id must come from the (test-set) bitwardenIds value, never hardcoded (AC2)" % (target, rr.get("key")))
-    es_info.append({"name": ((e.get("metadata") or {}).get("name")), "target": target, "keys": keys})
-hmac_es = [i for i in es_info if "github-webhook" in i["keys"]]
+    es_info.append({"name": ((e.get("metadata") or {}).get("name")), "target": target, "keys": keys,
+                    "data": data})
+# C02-fix/R4: the HMAC ES maps EXACTLY one key, hook-secret — the flat
+# filename the relay reads from --secrets-dir (containers/argocd-hook-relay.sh
+# make_fixtures writes the same name, and the relay's --check leg proves the
+# pairing end to end). Renamed, not deleted: the leg still proves exactly ONE
+# ES carries the login-item password, nothing else does, and no residual key
+# of any name rides along.
+old_fn = "github-" "webhook"  # the retired filename, split so this harness carries no old literal
+hmac_es = [i for i in es_info if "hook-secret" in i["keys"]]
 if len(hmac_es) != 1:
-    bad("t2: no ExternalSecret maps the HMAC password to secretKey github-webhook (the flat filename C01 reads from --secrets-dir); ES key sets: %r" % [{i["name"]: sorted(i["keys"])[:4]} for i in es_info])
+    bad("t2: no ExternalSecret maps the HMAC password to secretKey hook-secret (the flat filename the relay reads from --secrets-dir, R4); ES key sets: %r" % [{i["name"]: sorted(i["keys"])[:4]} for i in es_info])
+for i in es_info:
+    if old_fn in i["keys"]:
+        bad("t2: an ExternalSecret still maps the retired '%s' secretKey (R4 rename ripple incomplete)" % old_fn)
+if hmac_es[0]["keys"] != {"hook-secret"}:
+    bad("t2: the HMAC ExternalSecret key set is %r, expected exactly {'hook-secret'} — one key, renamed, nothing added" % sorted(hmac_es[0]["keys"]))
+for d in hmac_es[0]["data"]:
+    sr = ((d.get("sourceRef") or {}).get("storeRef") or {})
+    rr = d.get("remoteRef") or {}
+    if sr.get("name") != "bitwarden-login" or rr.get("property") != "password":
+        bad("t2: the hook-secret entry is store %r property %r, expected bitwarden-login/password — the rename must not disturb the login-item mapping (AC1 byte-shape otherwise identical)" % (sr.get("name"), rr.get("property")))
 tokens_es = [i for i in es_info if i not in hmac_es]
 CATS = ["dev", "gpu", "gpu-ai", "grow", "home", "infra", "media", "monitoring", "proxy-local", "proxy-backup", "proxy-remote"]
 missing_tok = [c for c in CATS if not any(c in i["keys"] for i in tokens_es)]
@@ -340,7 +372,7 @@ for m in (c.get("volumeMounts") or []):
         covers_config = True
 if not covers_config:
     bad("t2: no ConfigMap volume mounts to cover /config/targets.json (volumeMounts: %s; configMap volumes: %r)" % ([ (m.get("name"), m.get("mountPath"), m.get("subPath")) for m in (c.get("volumeMounts") or [])], cm_vols))
-print("ok: t2 — args carry the C01 CLI verbatim; probes hit /health on 8080; SETTLE/TARGET_TIMEOUT env wired; both ExternalSecrets source the test bitwardenIds with the flat github-webhook + 11 category key shapes; ES targets are mounted and /config/targets.json resolves from the ConfigMap (AC2)")
+print("ok: t2 — args carry the C01 CLI verbatim; probes hit /health on 8080; SETTLE/TARGET_TIMEOUT env wired; the HMAC ES maps ONLY hook-secret through bitwarden-login/password, the tokens ES the 11 category keys, both sourcing the test bitwardenIds, no retired key name anywhere; ES targets are mounted and /config/targets.json resolves from the ConfigMap (AC2/C02-fix)")
 PY
   then
     ok "t2 passed (AC2)"
@@ -475,13 +507,14 @@ PY
   fi
 fi
 
-# --- t4: trio entries + sentinel 1:1 (AC4) ---------------------------------------
+# --- t4: trio entries + sentinel 1:1 + rename ripple docs (AC2/AC4) ----------------
 if want t4; then
-  if python3 - "$CHART/values.yaml" "$PROXY_VALS" "$CV" "$RUNBOOK" <<'PY'
-import re, sys, yaml
+  if python3 - "$CHART/values.yaml" "$PROXY_VALS" "$CV" "$RUNBOOK" "$CHART/README.md" "$CHART/templates/secret-argocd-hook.yaml" "$CHART" "$CONT_README" <<'PY'
+import os, re, sys, yaml
 
-chart_values, proxy_vals_path, cv_path, runbook = sys.argv[1:5]
+chart_values, proxy_vals_path, cv_path, runbook, chart_readme, hook_tpl, chart_dir, cont_readme = sys.argv[1:9]
 SENT = "OVERRIDE_VIA_CUSTOM_VALUES"
+old_fn = "github-" "webhook"  # retired filename, split: no old literal in this harness
 
 
 def bad(msg):
@@ -530,7 +563,67 @@ for k in sorted(bw):
 cv_text = open(cv_path).read()
 if runbook not in cv_text:
     bad("t4: the custom-values sentinel block carries no pointer to %s — the crash-loop-until-filled posture must be findable from the sentinel (C02 task)" % runbook)
-print("ok: t4 — chart sentinels exact, hub charts: entry well-formed, subdomain entry present, custom-values 1:1 OVERRIDE_NEEDED pairing with the runbook pointer (AC4/OQ5)")
+
+# --- C02-fix rename-ripple + R1 confirmation legs -------------------------------
+tpl_text = open(hook_tpl).read()
+if "secretKey: hook-secret" not in tpl_text:
+    bad("t4: %s does not render the HMAC ES under secretKey hook-secret (R4: this string IS the flat filename the relay reads — the pairing leg is the source, the t2 leg is the render)" % hook_tpl)
+if old_fn in tpl_text:
+    bad("t4: %s still references the retired '%s' key name (R4 rename ripple)" % (hook_tpl, old_fn))
+if 'index .Values "bitwardenIds" "argocd-hook-secret"' not in tpl_text:
+    bad("t4: the hook-secret entry no longer sources the argocd-hook-secret bitwardenIds placeholder — secretKey renamed, uuid source must NOT move")
+for tok, why in (("bitwarden-login", "login-item store"), ("password", "password property"),
+                 ("verbatim", "keys-land-verbatim comment (the flat-filename contract)")):
+    if tok not in tpl_text:
+        bad("t4: %s lost the %s (%r) — AC1: the mapping and the filename-contract comment are otherwise byte-identical" % (hook_tpl, why, tok))
+
+readme_text = open(chart_readme).read()
+if "hook-secret" not in readme_text:
+    bad("t4: the chart README surface list still misses hook-secret (C02-fix README task)")
+if old_fn in readme_text:
+    bad("t4: the chart README still names the retired '%s' file (R4 ripple incomplete)" % old_fn)
+if "main-sync" not in readme_text:
+    bad("t4: the chart README does not frame the caller as the main-sync hook job (C02-fix README task: caller framing follows the rulings)")
+
+stale = []
+for root, _dirs, files in os.walk(chart_dir):
+    for fn in files:
+        p = os.path.join(root, fn)
+        try:
+            if old_fn in open(p, errors="ignore").read():
+                stale.append(os.path.relpath(p, chart_dir))
+        except OSError:
+            pass
+if stale:
+    bad("t4: the retired key name survives under %s: %s (AC3: 0 hits repo-wide under charts/argocd-hook/ after C02-fix)" % (chart_dir, stale))
+
+vals_text = open(chart_values).read()
+# C02-fix adds the WHY above the value: the live app sources still read
+# GitHub (probe [P]) and app_matches byte-compares THAT, so the value stays
+# and only a same-release annotation flip may change it. Designed-red pre-
+# change: the shipped comment explains WHAT is matched, never the flip law.
+m = re.search(r"(?:^[ \t]*#.*\n)+^[ \t]*trackedRepo:", vals_text, re.M)
+if not m or not re.search(r"(?i)flip", m.group(0)):
+    bad("t4: the trackedRepo comment block carries no flip warning (targetRevision/repoURL stay GitHub-sourced under ruling (c); flipping the value before the fleet annotations flip is the silent skipped-xN no-op trap — the comment is that guard rail)")
+if "https://github.com/OwnYourIO/SpencersLab.git" not in vals_text:
+    bad("t4: trackedRepo lost its GitHub URL — under ruling (c) it stays EXACTLY here (t3 pins the value; this is the R1 confirmation leg)")
+
+# Cross-suite doc agreement (plan Commands: the two READMEs are ONE
+# contract surface): the relay README and the chart README must tell the
+# same R1/R4 story about the key file and the caller. R3's full header
+# detail lives in the relay README (and is pinned there by
+# tests/containers/argocd-hook-relay.sh t7); the chart README must at
+# minimum not contradict it and must carry the renamed filename.
+try:
+    cont_text = open(cont_readme).read()
+except OSError as ex:
+    bad("t4: cannot read %s for the cross-suite agreement leg: %s" % (cont_readme, ex))
+for tok in ("hook-secret", "main-sync"):
+    if tok not in cont_text:
+        bad("t4: doc agreement — the relay README (%s) lacks %r while this suite pins it in the chart README: R4/R1 framing must land on BOTH surfaces in the same wave (C02-fix depends on C01-fix for a reason)" % (cont_readme, tok))
+if old_fn in cont_text:
+    bad("t4: doc agreement — the relay README still names the retired '%s' file (the pair would render two different filenames onto one mounted directory)" % old_fn)
+print("ok: t4 — chart sentinels exact, hub charts: entry well-formed, subdomain entry present, custom-values 1:1 OVERRIDE_NEEDED pairing with the runbook pointer; plus the C02-fix ripple: hook-secret template+README with zero retired-name hits in the chart tree, login-item mapping intact, the trackedRepo WHY-comment holding the GitHub URL per R1, and the relay README telling the same key-file/caller story (AC2/AC4/OQ5 + cross-suite parity)")
 PY
   then
     ok "t4 passed (AC4)"
@@ -539,26 +632,27 @@ PY
   fi
 fi
 
-# --- t5: diff scope + add-only on the shared files (AC5) -------------------------
+# --- t5: diff scope — rename ripple only (C02-fix AC2/AC5) ------------------------
+# The trio files moved in the ORIGINAL C02 (add-only then). Under C02-fix they
+# must not move AT ALL: only chart-tree comment/rename lines (plus this wave's
+# test surface and C04's workflow, which legitimately coexist uncommitted).
 if want t5; then
   git rev-parse --verify --quiet "$BASE" >/dev/null ||
     fail "t5: CHUNK_BASE '$BASE' does not resolve (review passes the pre-chunk commit; default HEAD)"
   { git diff --name-only "$BASE" 2>/dev/null || true; git ls-files --others --exclude-standard; } |
     sort -u > "$WORK/changed.txt"
-  if grep -Ev '^(charts/argocd-hook/|services/proxy-local/prod/values\.yaml$|custom-values/proxy-local/prod-values\.yaml$|tests/[^/]+/argocd-hook-|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
-    offenders=$(grep -Ev '^(charts/argocd-hook/|services/proxy-local/prod/values\.yaml$|custom-values/proxy-local/prod-values\.yaml$|tests/[^/]+/argocd-hook-|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
-    fail "t5: C02 changed files outside the scope list (AC5 — no other chart/service/custom-values may move): $offenders"
+  if grep -Ev '^(charts/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.forgejo/workflows/main-sync\.yaml$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
+    offenders=$(grep -Ev '^(charts/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.forgejo/workflows/main-sync\.yaml$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
+    fail "t5: C02-fix changed files outside the chart tree (AC5 — containers/ belongs to C01-fix; images/, custom-values/ and services/ must not move at all in a rename ripple): $offenders"
   fi
   if grep -Eq '^(charts/base/|services/[^/]+/templates/appset\.yaml$)' "$WORK/changed.txt"; then
-    fail "t5: charts/base or a services appset template appears in the C02 change set (AC5 + OQ1: the gate files are off-limits)"
+    fail "t5: charts/base or a services appset template appears in the C02-fix change set (AC5 + OQ1: the gate files are off-limits)"
   fi
-  deletions=$(git diff -U0 "$BASE" -- "$PROXY_VALS" "$CV" 2>/dev/null | grep -c '^-' || true)
-  # the '---' file headers count as '-' lines: two files -> at most 2
-  if [ "$deletions" -gt 2 ]; then
-    git diff -U0 "$BASE" -- "$PROXY_VALS" "$CV" 2>/dev/null | grep '^-' | grep -v '^---' | head -10 >&2
-    fail "t5: $PROXY_VALS / $CV diffs are not ADD-only (more than the two --- headers removed) — the hub file is the live hub config, entries append only (AC5)"
+  if [ -n "$(git diff --name-only "$BASE" -- "$PROXY_VALS" "$CV" 2>/dev/null)" ]; then
+    git diff -U3 "$BASE" -- "$PROXY_VALS" "$CV" 2>/dev/null | head -40 >&2
+    fail "t5: $PROXY_VALS or $CV moved — C02-fix touches only the chart's 3 files (AC2: trio entries, custom-values 1:1 and the uuid block are UNCHANGED, not even a comment)"
   fi
-  ok "t5: change set inside the C02 scope; hub values and custom-values diffs are pure additions (AC5)"
+  ok "t5: change set is the chart tree + test surface only; the trio and custom-values files carry zero hunks (C02-fix AC2/AC5)"
 fi
 
 # --- t6: crowdsec-only entry + standard security posture (AC6+AC7) --------------

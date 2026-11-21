@@ -1,14 +1,29 @@
 #!/usr/bin/env bash
-# argocd-hook relay runbook contract (2026/2026-11-cf-139-feat-argocd-webhook-sync, C03):
+# argocd-hook relay runbook contract (2026/2026-11-cf-139-feat-argocd-webhook-sync, C03-fix):
 # .agents/notes/2026-11-17-argocd-hook-relay.md — the human-executed operator
 # runbook (Bitwarden items + per-cluster mcp-bot tokens + custom-values UUID
-# fill + GitHub webhook) with the live preflight table, smoke procedure,
-# rollback and honest limitations.
+# fill + Actions vault key placement) with the live preflight table, smoke
+# procedure, rollback and honest limitations.
 #
-# Contract source: chunks/C03.md "## Tests". AC trace:
-# t1[AC1] t2[AC2] t3[AC3] t4[AC4] t5[AC5] t6[AC7]
-# (AC6 is the plan-Commands suite — C01/C02 harnesses + helm ladder — re-run by
-# review, not scripted a second time here.)
+# C03-fix re-cut (rulings R1-R4): the trigger is the main-sync hook-relay
+# job, NOT a created webhook (R1 option (c)) — §4 states "nothing to create"
+# and carries the never-create-a-raw-Forgejo-push-webhook race warning plus
+# the R2 future-GitHub-webhook door; §2 adds the Actions vault pair
+# (repo Actions secret ARGOCD_HOOK_SECRET = the argocd-hook item password,
+# repo Actions var ARGOCD_HOOK_URL) with the two-vaults-must-agree sentence;
+# the HMAC key file is hook-secret everywhere (R4); §5 smoke runs the
+# workflow_dispatch trigger plus BOTH signed-curl dialects (hub prefixed and
+# plain-hex with the exact awk recipe C04 uses); §7's leg 1 is the unset-
+# keys kill switch; §8 carries the R1 no-op-at-old-revision limitation with
+# next-push self-heal. t2 additionally greps the workflow file itself —
+# every token the docs quote must exist there (AC6 parity, designed-red
+# until C04 lands).
+#
+# Contract source: chunks/C03-fix.md "## Tests". AC trace:
+# t1[AC1] t2[AC2/AC3/AC4/AC8 + AC6 parity] t3[AC3 rows] t4[AC4 render parity]
+# t5[AC5] t6[diff scope]
+# (AC7 is the all-suites regression set — plan Commands — re-run by review,
+# not scripted a second time here.)
 #
 # Doc-vs-command law: this runbook's commands are all HUMAN-executed by ruling
 # (the plan's Human-owned list) — the script therefore bars only the one thing
@@ -36,6 +51,8 @@ RUNBOOK="${HOOK_RUNBOOK:-.agents/notes/2026-11-17-argocd-hook-relay.md}"
 CHART="${HOOK_CHART:-charts/argocd-hook}"
 PROXY_VALS="${HOOK_PROXY_VALS:-services/proxy-local/prod/values.yaml}"
 CV="${HOOK_CUSTOM_VALUES:-custom-values/proxy-local/prod-values.yaml}"
+# t2's parity legs grep the C04 caller; overridable for mutation testing.
+WF="${MAIN_SYNC_WF:-.forgejo/workflows/main-sync.yaml}"
 RELEASE="proxy-local-argocd-hook"
 DOMAIN="test.example.com"
 BASE="${CHUNK_BASE:-HEAD}"
@@ -129,11 +146,12 @@ fi
 
 # --- t2: section-scoped content tokens (AC2) -------------------------------------
 if want t2; then
-  if python3 - "$RUNBOOK" <<'PY'
+  if python3 - "$RUNBOOK" "$WF" <<'PY'
 import re, sys
 
-runbook = sys.argv[1]
+runbook, wf_path = sys.argv[1:3]
 lines = open(runbook).read().splitlines()
+doc = "\n".join(lines)
 
 
 def bad(msg):
@@ -167,6 +185,8 @@ def need(text, pat, where, flags=0):
         bad("t2: %s lacks %r (AC2/plan section list)" % (where, pat))
 
 
+old_fn = "github-" "webhook"  # retired key filename, split: no old literal in this harness
+
 sec1 = section(1)
 need(sec1, r"allowed_refs", "section 1 (ref model)")
 need(sec1, r"refs/heads/main", "section 1 (shipped default set)")
@@ -174,6 +194,13 @@ need(sec1, r"allowedRefs", "section 1 (the widening values key)")
 need(sec1, r"(?i)widen", "section 1 (widening procedure)")
 need(sec1, r"(?i)(selfHeal|kill.?switch)", "section 1 (kill-switch posture)")
 need(sec1, r"(?i)(stay|keep|untouched|never|not )", "section 1 (annotations stay)")
+# C03-fix §1 origin/dialect/rename bullets:
+need(sec1, r"main-sync", "section 1 (origin: the canonical trigger is the main-sync hook-relay job, R1)")
+need(sec1, r"push-gh", "section 1 (the job fires AFTER push-gh advanced GitHub — the race resolution)")
+need(sec1, r"X-Forgejo-Signature", "section 1 (dialect line: plain hex, R3)")
+need(sec1, r"X-Hub-Signature-256", "section 1 (dialect line: prefixed form kept for the door)")
+need(sec1, r"(?i)(first-present|no fallback)", "section 1 (selection rule: first present header wins, no cross-dialect fallback)")
+need(sec1, r"hook-secret", "section 1 (rename line, R4)")
 
 sec2 = section(2)
 need(sec2, r"argocd-hook-tokens", "section 2 (Step 0 item name)")
@@ -187,19 +214,72 @@ CATS = ["dev", "gpu", "gpu-ai", "grow", "home", "infra", "media", "monitoring", 
 missing = [c for c in CATS if not re.search(r"(?<![\w.-])%s(?![\w-])" % re.escape(c), sec2)]
 if missing:
     bad("t2: section 2 (Step 0) does not name the token field(s) %s — the Bitwarden item's one-field-per-category list must be complete (AC2)" % missing)
+# C03-fix §2: four setup legs now — Bitwarden, mints, UUID fill, ACTIONS VAULT.
+need(sec2, r"ARGOCD_HOOK_SECRET", "section 2 (repo Actions secret, exact key name — R4/vault leg)")
+need(sec2, r"ARGOCD_HOOK_URL", "section 2 (repo Actions var, exact key name — mesh-or-public choice is the owner's)")
+need(sec2, r"(?i)actions", "section 2 (the vault is repo Actions settings, not the cluster)")
+need(sec2, r"(?i)agree", "section 2 (both vaults must AGREE — the sentence that makes a 401 diagnosable)")
+need(sec2, r"401", "section 2 (the disagreement symptom named where the keys are placed)")
+need(sec2, r"hook-secret", "section 2 (key/file references renamed, R4)")
+if re.search(r"(?i)github hmac", sec2):
+    bad("t2: section 2 still frames the HMAC as GitHub's — the shared secret is relay<->main-sync under R1/R3 (AC2)")
 
 sec4 = section(4)
-need(sec4, r"argocd-hook\.spencerslab\.com", "section 4 (payload URL host)")
-need(sec4, r"application/json", "section 4 (content type — form-encoded unsupported)")
-need(sec4, r"(?i)\bpush\b", "section 4 (event)")
-need(sec4, r"(?i)secret", "section 4 (HMAC secret placement)")
+# C03-fix rewrote §4 wholesale: trigger = the main-sync hook-relay job,
+# nothing to create, the unset-keys kill switch, and the R2 door.
+need(sec4, r"hook-relay", "section 4 (the trigger names the job)")
+need(sec4, r"(?i)nothing to create", "section 4 (R1 option (c) headline: no webhook is created anywhere)")
+need(sec4, r"push-gh", "section 4 (fires after push-gh lands GitHub on prod; dev/unset-ROLE fire nothing)")
+need(sec4, r"(?i)(must not|never|do not|don.t|no reason to) create[^.]{0,80}webhook|webhook[^.]{0,80}must not (be )?created?", "section 4 (the RACE WARNING: a raw Forgejo push webhook fires before push-gh and would sync the PREVIOUS revision — the doc must forbid creating one, [P §3])")
+need(sec4, r"(?i)spencerslab\.com", "section 4 (the public edge stays as the future door, R2)")
+need(sec4, r"(?i)(door|future|if you ever|if the owner ever)", "section 4 (R2 wording: the entry is a documented door, not the shipped trigger)")
+need(sec4, r"GitHub", "section 4 (the race-free future webhook is the GitHub-repo one — apps track GitHub under (c))")
+need(sec4, r"(?i)unset[^.]{0,120}ARGOCD_HOOK|ARGOCD_HOOK[^.]{0,120}unset", "section 4 (the unset-keys skip IS the kill switch, same sentence as §7)")
 
 sec5 = section(5)
-need(sec5, r"(?i)ping", "section 5 (smoke a: GitHub Test ping)")
+# C03-fix §5: (a) workflow_dispatch trigger smoke (fallbacks make the
+# payload without a push event), (b) signed curl in BOTH dialects with the
+# exact C04 recipes, (b′) non-matching ref 200, (c) real merge with mirror
+# latency.
+need(sec5, r"workflow_dispatch", "section 5 (smoke a: dispatch main-sync on prod — push-gh no-ops when up to date, hook-relay still fires)")
+need(sec5, r"hook-relay", "section 5 (smoke a greps the JOB's log line)")
+need(sec5, r"code=202", "section 5 (smoke a: the job's audit echo token — must match the workflow exactly, parity leg below)")
+need(sec5, r"(?i)fallback", "section 5 (smoke a: the dispatch payload comes from the fallback defaults, call-out required)")
 need(sec5, r"202", "section 5 (smoke b: accepted push answers 202)")
-need(sec5, r"(?i)(curl|synthetic|signed)", "section 5 (smoke b: signed synthetic push recipe)")
+need(sec5, r"(?i)(curl|synthetic|signed)", "section 5 (smoke b: signed synthetic push recipes)")
+need(sec5, r"sha256=", "section 5 (smoke b: the hub prefixed recipe stays documented — the door's dialect)")
+need(sec5, r"X-Forgejo-Signature", "section 5 (smoke b: the plain-hex recipe, C04's dialect)")
+need(sec5, r"awk '\{print \$NF\}'", "section 5 (smoke b: the plain-hex recipe must be byte-identical to the workflow's signing line — grep it there too, parity leg below)")
+need(sec5, r"(?i)(401)", "section 5 (wrong-value expectations documented for the signed curls)")
 need(sec5, r"(?i)(no.?op|not in|non.?allowed|foreign)", "section 5 (smoke b′: non-allowed-ref push proves the filter live)")
-print("ok: t2 — section 1 states the allowed_refs config-list + widening; Step 0 names both items, all 11 fields, the mint command, the merge-first/OVERRIDE_NEEDED/crash-loop posture and the exact custom-values file; the webhook step pins URL/content-type/secret/push; the smoke step covers ping + 202 + the non-allowed-ref case (AC2)")
+need(sec5, r"push-gh", "section 5 (smoke c: latency now includes the mirror push-gh step)")
+
+sec8 = section(8)
+need(sec8, r"(?i)no-op.{0,40}old revision|old revision.{0,40}no-op", "section 8 (R1 documented limitation: fan-out trigger failure lands the push as a no-op at the old revision)")
+need(sec8, r"(?i)next push", "section 8 (self-heal wording: the next push covers it — the fan-out is SHA-agnostic)")
+need(sec8, r"(?i)redeliver", "section 8 (no Actions redeliveries exist — the asymmetry vs a real webhook must be stated)")
+
+# Doc-wide forbidden sweep:
+if old_fn in doc:
+    bad("t2: the retired key filename '%s' survives in the runbook (AC3: grep 0 — R4 rename ripple)" % old_fn)
+# The creation-step tell is the UI path token (`Settings → Webhooks → Add
+# webhook`). It must vanish doc-wide; the RACE WARNING sentence ("must NOT
+# be created") is required content and deliberately not matched here.
+if re.search(r"(?i)add webhook", doc):
+    bad("t2: a webhook-creation step survives (`add webhook`) — AC1 bars ANY platform's webhook creation as a required step; R1: the mirror job IS the webhook, and the R2 door may describe a future choice, never instruct the button")
+
+# AC6 parity: every token the docs quote about the job must exist in the
+# shipped workflow. Designed-red until C04 lands (job absent).
+try:
+    wf_raw = open(wf_path).read()
+except OSError as ex:
+    bad("t2: cannot read %s for the parity sweep (C03-fix depends on C04): %s" % (wf_path, ex))
+for tok in ("hook-relay", "vars.ARGOCD_HOOK_URL", "secrets.ARGOCD_HOOK_SECRET",
+            "X-Forgejo-Signature", "X-GitHub-Event: push", "workflow_dispatch",
+            "awk '{print $NF}'", "relay accepted", "code="):
+    if tok not in wf_raw:
+        bad("t2: parity — the runbook quotes %r but %s does not contain it (AC6: reviewer greps the workflow for each quoted string; docs-vs-caller drift is the bug class this leg kills)" % (tok, wf_path))
+print("ok: t2 — sections 1/2 carry origin+dialect+rename, the Actions vault pair with the must-agree sentence and hook-secret; §4 is the nothing-to-create job trigger with the race warning, the R2 door and the unset kill switch; §5 has the dispatch smoke and both curl dialects with the exact C04 recipe; §8 states the R1 no-op/next-push-self-heal/redelivery asymmetry; zero retired-name or webhook-creation hits doc-wide; every quoted job token exists in main-sync.yaml (AC1-AC4/AC6/AC8)")
 PY
   then
     ok "t2 passed (AC2)"
@@ -376,7 +456,16 @@ if len(sent) != 2:
     bad("t4: custom-values argocd-hook.bitwardenIds has %d OVERRIDE_NEEDED lines, expected exactly 2 until the owner fills post-merge (OQ5)" % len(sent))
 if rb.count("OVERRIDE_NEEDED") < 2:
     bad("t4: the runbook quotes OVERRIDE_NEEDED fewer than 2 times — step 0 must show both sentinel lines the owner replaces (AC4 parity)")
-print("ok: t4 — runbook Service name == hub entry == render; table roster == targets.json roster (11 categories); both OVERRIDE_NEEDED quotes match the shipped custom-values block (AC4)")
+
+# C03-fix parity against the RENAMED render (waves 4-5 ship the new key):
+# the filename the §2/§5 instructions hand the owner must be the filename
+# the ExternalSecret actually writes into the mounted secret dir.
+render_raw = open(render).read()
+if "secretKey: hook-secret" not in render_raw:
+    bad("t4: the rendered ES does not carry secretKey hook-secret — the runbook's key story cannot precede C02-fix's render (parity pins the SHIPPED filename)")
+if "hook-secret" not in rb:
+    bad("t4: the runbook never names hook-secret while the render ships it (R4 parity: the doc follows the chart, not the draft)")
+print("ok: t4 — runbook Service name == hub entry == render; table roster == targets.json roster (11 categories); both OVERRIDE_NEEDED quotes match the shipped custom-values block; the render's secretKey hook-secret and the runbook key story agree (AC4/C03-fix)")
 PY
     then
       ok "t4 passed (AC4)"
@@ -415,16 +504,29 @@ if head7 is None:
     bad("t5: no section 7 (Rollback) header")
 body = "\n".join(lines[head7 + 1:head8 if head8 is not None else len(lines)])
 
+# C03-fix AC5: leg 1 is the INSTANT source stop — unset the prod instance's
+# ARGOCD_HOOK_URL/ARGOCD_HOOK_SECRET (Actions UI, human; the job then
+# warns-and-skips every run, fleet reverts to manual sync, no git churn).
+# The GitHub webhook disable survives only as disable-IF-EXISTS wording
+# under the R2 door; Recent Deliveries stays. leg 2 (revert PR) stands and
+# must note the revert also removes the hook job.
 checks = (
-    (r"(?i)(disable|remove|delete)[^\n]{0,60}webhook|webhook[^\n]{0,60}(disable|remove|delete)", "leg 1: the GitHub webhook disable/remove step"),
-    (r"Recent Deliveries", "Recent Deliveries/redelivery inspection is named"),
+    (r"(?i)unset[^.]{0,120}ARGOCD_HOOK|ARGOCD_HOOK[^.]{0,120}unset", "leg 1: the unset-keys kill switch (exact Actions key names)"),
+    (r"(?i)(warn|skip)", "the job's warn-and-skip consequence of the unset"),
+    (r"(?i)actions", "leg 1 lives in the repo Actions settings (no git churn)"),
+    (r"Recent Deliveries", "Recent Deliveries/redelivery inspection is named (door-era residue note, stays)"),
     (r"(?i)revert", "leg 2: the git-revert path for the proxy-local entries + chart"),
+    (r"(?i)hook.?relay|hook job", "leg 2 notes the revert also removes the hook-relay job"),
     (r"(?i)residual|nothing else changes|exactly back|back to (the )?(today|manual)|manual workflow", "the no-residual-impact statement (syncPolicy never moved, no prune ever ran)"),
 )
 missing = [what for pat, what in checks if not re.search(pat, body)]
 if missing:
-    bad("t5: rollback section lacks %s (AC5: both legs + the explicit no-residual argument)" % missing)
-print("ok: t5 — rollback names webhook disable with Recent Deliveries, the revert path, and the no-residual statement (AC5)")
+    bad("t5: rollback section lacks %s (AC5: unset-keys leg 1 + revert leg 2 + the explicit no-residual argument)" % missing)
+if re.search(r"(?i)(settings|web ?hooks)\s*(→|->)\s*[^.\n]{0,60}disable", body):
+    # Allowed ONLY as a conditional door-era sentence, never the headline leg.
+    if not re.search(r"(?i)(if (one|it|a github)|ever created|were created|under the)", body):
+        bad("t5: rollback frames webhook-disable as the unconditional leg-1 — the GitHub webhook exists only if the owner ever used the R2 door; conditional wording required (AC5)")
+print("ok: t5 — rollback leg 1 is the unset-keys Actions kill switch with the warn-and-skip consequence, webhook-disable survives only conditional (door-era), the revert leg names the hook-relay removal, Recent Deliveries and the no-residual statement stand (AC5/C03-fix)")
 PY
   then
     ok "t5 passed (AC5)"
@@ -439,8 +541,8 @@ if want t6; then
     fail "t6: CHUNK_BASE '$BASE' does not resolve (review passes the pre-chunk commit; default HEAD)"
   { git diff --name-only "$BASE" 2>/dev/null || true; git ls-files --others --exclude-standard; } |
     sort -u > "$WORK/changed.txt"
-  if grep -Ev '^(\.agents/notes/2026-11-17-argocd-hook-relay\.md$|\.agents/plans/|tests/[^/]+/argocd-hook-|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
-    offenders=$(grep -Ev '^(\.agents/notes/2026-11-17-argocd-hook-relay\.md$|\.agents/plans/|tests/[^/]+/argocd-hook-|\.pipeline/)' "$WORK/changed.txt" | head -20)
+  if grep -Ev '^(\.agents/notes/2026-11-17-argocd-hook-relay\.md$|\.agents/plans/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
+    offenders=$(grep -Ev '^(\.agents/notes/2026-11-17-argocd-hook-relay\.md$|\.agents/plans/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.pipeline/)' "$WORK/changed.txt" | head -20)
     fail "t6: C03 changed files beyond the runbook + plan folder + test surface (AC7 — probe-found defects route back as review findings, not silent edits here): $offenders"
   fi
   ok "t6: change set is runbook + chunk notes + test surface only (AC7)"

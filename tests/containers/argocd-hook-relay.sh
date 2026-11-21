@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
-# argocd-hook relay container contract (2026/2026-11-cf-139-feat-argocd-webhook-sync, C01):
-# HMAC-verified GitHub push hook -> allowed_refs config-list filter -> 202-async
-# fan-out of real ArgoCD API syncs (root first, then OutOfSync repo-sourced
-# children matching the fired ref; prune=false, never force, 409 tolerated,
-# remote clusters first / local last, per-target timeout + isolation).
+# argocd-hook relay container contract (2026/2026-11-cf-139-feat-argocd-webhook-sync, C01-fix):
+# dual-dialect HMAC-verified push hook -> allowed_refs config-list filter ->
+# 202-async fan-out of real ArgoCD API syncs (root first, then OutOfSync
+# repo-sourced children matching the fired ref; prune=false, never force,
+# 409 tolerated, remote clusters first / local last, per-target timeout +
+# isolation).
 #
-# Contract source: chunks/C01.md "## Tests". AC trace:
-# t1[AC1] t2[AC2+AC6] t3[AC3] t4[AC4] t5[AC5] t6[AC7] t7[README/config contract]
+# C01-fix (rulings R3/R4) re-pin: the canonical caller is now the Forgejo
+# main-sync hook-relay job, so deliveries are signed in BOTH dialects —
+# X-Hub-Signature-256 with the sha256= prefix (the R2 GitHub-shaped door,
+# behavior byte-preserved from C01) and X-Forgejo-Signature PLAIN hex (the
+# job's dialect) — with first-present-header selection, hub header present
+# => hub dialect ONLY, no cross-dialect fallback, absent both => 401. The
+# HMAC key file renames github-<n>webhook -> hook-secret (semantics moved
+# off GitHub); t3 gains the forge-delivery e2e leg byte-mirroring C04's
+# payload/header recipe. Event/ref/filter/fan-out semantics are UNCHANGED —
+# every C01 leg is kept and re-signed, not rewritten.
+#
+# Contract source: chunks/C01-fix.md "## Tests". AC trace:
+# t1[AC1] t2[AC2+AC6+dual-check] t3[AC1+AC2 dialect matrix, AC3 semantics]
+# t4[AC4] t5[AC5] t6[AC7] t7[AC4+AC6 README/rename contract]
 # (AC8 is review-verified from the dev RESULT commands_run line, not scripted —
 # and `docker build` has no daemon here: `.forgejo/workflows/containers-build.yaml`
 # on the pushed branch is authoritative, per the plan's Commands section.)
@@ -29,11 +42,21 @@
 #      <url>/api/v1/applications[/<namespace>]/<name>/sync?prune=false — the
 #      harness greps the QUERY for prune=false (a body-prune implementation
 #      fails t4 on purpose), and bars any force flag in query or body.
-#   4. Secret files are byte-exact: `github-webhook` holds the raw HMAC key
-#      (the harness writes it without a trailing newline, so strip or no-strip
-#      implementations both pass) and one file per tokenKey, flat in
-#      --secrets-dir — the C02 token ES shape ("flat filenames win", chunks/
-#      C02.md secret-argocd-hook-tokens task).
+#   4. Secret files are byte-exact: `hook-secret` holds the raw HMAC key
+#      (R4 rename; the harness writes it without a trailing newline, so
+#      strip or no-strip implementations both pass) and one file per
+#      tokenKey, flat in --secrets-dir — the C02 token ES shape ("flat
+#      filenames win", and the rendered ES secretKey must equal this exact
+#      filename byte-for-byte; tests/services/argocd-hook-wiring.sh t2 pins
+#      the chart side of that pair).
+#   5. Signature dialects are harness constants: signed() produces the two
+#      shapes (prefixed for the hub header, plain for the forgejo header);
+#      the selection rule is first-present-of (X-Hub-Signature-256,
+#      X-Forgejo-Signature) with the hub value REQUIRED to carry the prefix
+#      and the forgejo value REQUIRED bare — a malformed present header 401s
+#      even when the other header would verify (no cross-dialect fallback).
+#      The old key filename appears nowhere in this harness, on purpose
+#      (grep gate inside t7).
 #
 # t2-t5 exercise the REAL handler over loopback HTTP against a stdlib stub
 # ArgoCD API (in-process mock-server pattern of tests/containers/
@@ -167,6 +190,24 @@ def sign(secret, body):
     return "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
 
+def sign_plain(secret, body):
+    # R3 forge dialect: bare lowercase hex, no prefix — what openssl
+    # `dgst -sha256 -hmac ... | awk '{print $NF}'` produces in C04's job.
+    return hmac.new(secret, body, hashlib.sha256).hexdigest()
+
+
+def forge_push_body(ref, before, after, full_name):
+    """Byte-mirror of the main-sync hook-relay payload (C04 contract):
+    json.dumps from env with exactly ref/before/after/repository.full_name;
+    tests/services/forgejo-main-sync.sh t11 pins the same key set."""
+    return json.dumps({
+        "ref": ref,
+        "before": before,
+        "after": after,
+        "repository": {"full_name": full_name},
+    }).encode()
+
+
 def push_body(ref):
     return json.dumps({
         "ref": ref,
@@ -297,7 +338,10 @@ def make_fixtures(dirpath, targets, allowed_refs="UNSET"):
     sec_dir = os.path.join(dirpath, "secrets")
     os.makedirs(cfg_dir, exist_ok=True)
     os.makedirs(sec_dir, exist_ok=True)
-    with open(os.path.join(sec_dir, "github-webhook"), "wb") as f:
+    # R4 rename: the shared HMAC key file is hook-secret (semantics moved
+    # off GitHub; the caller is the main-sync hook-relay job). The rendered
+    # chart ExternalSecret secretKey must equal this filename byte-for-byte.
+    with open(os.path.join(sec_dir, "hook-secret"), "wb") as f:
         f.write(GH_SECRET)
     roster = []
     for t in targets:
@@ -385,14 +429,34 @@ class Relay:
             seen[n] = r
         return seen
 
-    def post(self, event, body, sig="good", timeout=8.0):
+    def post(self, event, body, sig="good", timeout=8.0, headers_extra=None):
         headers = {"Content-Type": "application/json"}
         if event is not None:
             headers["X-GitHub-Event"] = event
+        # R3 dialect matrix: good/bad are the hub (prefixed) shape kept
+        # byte-identical from C01; forgejo* are the plain-hex shape the
+        # main-sync job sends; the mixed/bare/prefixed-cross shapes pin the
+        # first-present-header selection rule with NO cross-dialect fallback.
         if sig == "good":
             headers["X-Hub-Signature-256"] = sign(GH_SECRET, body)
         elif sig == "bad":
             headers["X-Hub-Signature-256"] = sign(b"definitely-wrong-secret", body)
+        elif sig == "forgejo":
+            headers["X-Forgejo-Signature"] = sign_plain(GH_SECRET, body)
+        elif sig == "forgejo-bad":
+            headers["X-Forgejo-Signature"] = sign_plain(b"definitely-wrong-secret", body)
+        elif sig == "hub-bare":
+            headers["X-Hub-Signature-256"] = sign_plain(GH_SECRET, body)
+        elif sig == "forgejo-prefixed":
+            headers["X-Forgejo-Signature"] = sign(GH_SECRET, body)
+        elif sig == "mixed":
+            headers["X-Hub-Signature-256"] = sign(b"definitely-wrong-secret", body)
+            headers["X-Forgejo-Signature"] = sign_plain(GH_SECRET, body)
+        elif sig == "mixed-good":
+            headers["X-Hub-Signature-256"] = sign(GH_SECRET, body)
+            headers["X-Forgejo-Signature"] = sign_plain(b"definitely-wrong-secret", body)
+        if headers_extra:
+            headers.update(headers_extra)
         req = urlrequest.Request("http://127.0.0.1:%d/" % self.port,
                                  data=body, headers=headers, method="POST")
         t0 = time.monotonic()
@@ -513,10 +577,35 @@ try:
     r = run_check(cfg_badroster, secrets)
     if r.returncode == 0:
         bad("t2: --check accepted a roster entry without rootApp (C01: --check validates the roster shape)")
+
+    # C01-fix/R4: --check must resolve the key at the NEW flat filename —
+    # deleting hook-secret must fail the self-test even though every other
+    # file is intact. This leg (and the valid-fixture exit 0 above, whose
+    # fixture now ships only hook-secret) reddens until the constant is
+    # renamed.
+    os.remove(os.path.join(secrets, "hook-secret"))
+    r = run_check(cfg, secrets)
+    if r.returncode == 0:
+        bad("t2: --check passed with hook-secret missing (R4: the HMAC key must be read under the new filename — anything still reading the C01 name is rejected)")
+
+    # C01-fix/R3: the --check round trip now runs BOTH dialects (plus both
+    # forgery rejects) and its success output names them — pinned loosely
+    # (header families, not exact sentences) so the contract is the naming,
+    # not the prose.
+    cfg2, secrets2 = h.make_fixtures(os.path.join(work, "t2-restored"),
+                                     [{"name": "dev", "url": stub.url}],
+                                     allowed_refs=["refs/heads/main"])
+    r = run_check(cfg2, secrets2)
+    if r.returncode != 0:
+        bad("t2: --check on the restored hook-secret fixture exited %s (dual-dialect round trip must stay green; C01-fix --check task)\n%s" % (r.returncode, (r.stdout + r.stderr)[:600]))
+    out = (r.stdout + r.stderr).lower()
+    for dialect in ("hub", "forgejo"):
+        if dialect not in out:
+            bad("t2: --check success output never names the %s dialect — R3 pins the dual round-trip lines (C01-fix: 'success line names both')" % dialect)
 finally:
     stub.stop()
 
-print("ok: t2 — py_compile clean; --check exits 0 with the roster table and zero network, fails on malformed JSON, unreadable secrets, bad allowed_refs and bad roster shapes, and never echoes secret bytes (AC2+AC6)")
+print("ok: t2 — py_compile clean; --check exits 0 with the roster table and zero network, names BOTH dialects on success, fails on malformed JSON, unreadable secrets (incl. the hook-secret rename), bad allowed_refs and bad roster shapes, and never echoes secret bytes (AC2+AC6/C01-fix)")
 PY
   then
     ok "t2 passed (AC2+AC6)"
@@ -560,6 +649,21 @@ try:
     status, _ = relay1.post("push", h.push_body("refs/heads/main"), sig="none")
     if status != 401:
         bad("t3: missing X-Hub-Signature-256 returned %s, expected 401" % status)
+
+    # C01-fix/R3 selection matrix — wrong-secret, shape-violating and
+    # cross-dialect deliveries all 401 BEFORE fan-out and before payload
+    # parsing (stub1 must stay silent; checked once after the block):
+    for sigv, why in (
+        ("forgejo-bad", "wrong secret in X-Forgejo-Signature"),
+        ("hub-bare", "bare hex in the hub header (prefix REQUIRED there)"),
+        ("forgejo-prefixed", "sha256= in the forgejo header (must be bare there)"),
+        ("mixed", "forged hub header + valid forgejo header (first-present = hub decides; NO cross-dialect fallback)"),
+    ):
+        status, _ = relay1.post("push", h.push_body("refs/heads/main"), sig=sigv)
+        if status != 401:
+            bad("t3: %s returned %s, expected 401 (R3 per-header verification over the raw body)" % (why, status))
+    if records1:
+        bad("t3: a rejected-signature delivery still reached fan-out (stub saw %r) — every R3 401 must short-circuit before any cluster call" % records1[:2])
 
     status, _ = relay1.post("ping", h.ping_body())
     if status != 200:
@@ -683,7 +787,79 @@ finally:
     relay5.stop()
     stub5.stop()
 
-print("ok: t3 — 401/401 reject matrix, ping 200, foreign-branch 200, tag 200, malformed JSON 400 (zero fan-out each), 202-fires-async for main AND stage under the widened list, absent-allowed_refs defaults to exactly [refs/heads/main] (AC3/OQ7)")
+
+def fan_relay(tag, allowed_refs=None):
+    """Relay + live-apps stub: for the R3 POSITIVE legs (a wrong-shape or
+    wrong-dialect delivery must not just 401 here — an accept must fire)."""
+    records = []
+    stub = h.StubArgo("dev", records, apps=[h.app("dev", h.REPO, "main", "OutOfSync")])
+    stub.start()
+    cfg, secrets = h.make_fixtures(os.path.join(work, "t3-" + tag),
+                                   [{"name": "dev", "url": stub.url}],
+                                   allowed_refs=allowed_refs or WIDENED)
+    relay = h.Relay(main_py, cfg, secrets, os.path.join(work, "t3-%s.log" % tag))
+    relay.start()
+    return records, stub, relay
+
+
+# R3 positive: valid plain-hex forgejo delivery 202s and fans out — the
+# shipped single-dialect relay 401s this, so the leg is designed-red until
+# C01-fix lands (the rename reddens it too; the dialect is the point).
+records6, stub6, relay6 = fan_relay("forgejo-accept")
+try:
+    status, _ = relay6.post("push", h.push_body("refs/heads/main"), sig="forgejo")
+    if status != 202:
+        bad("t3: valid X-Forgejo-Signature plain-hex delivery returned %s, expected 202 (R3: the main-sync job's dialect must verify)" % status)
+    deadline = time.time() + 10
+    while time.time() < deadline and not records6:
+        time.sleep(0.1)
+    if not records6:
+        bad("t3: the accepted forgejo delivery fired no fan-out")
+    res = relay6.wait_results(["dev"], timeout=15)
+    if res.get("dev") != "ok":
+        bad("t3: forgejo-dialect fan-out classified dev=%r, expected ok (AC1: 202 + real fan-out, not just the accept)" % (res,))
+finally:
+    relay6.stop()
+    stub6.stop()
+
+# R3 selection rule, positive side: valid hub header + forged forgejo
+# header — first-present (hub) decides and the hub value verifies, so the
+# delivery is ACCEPTED despite the bogus companion header.
+records7, stub7, relay7 = fan_relay("mixed-good")
+try:
+    status, _ = relay7.post("push", h.push_body("refs/heads/main"), sig="mixed-good")
+    if status != 202:
+        bad("t3: valid hub + forged forgejo headers returned %s, expected 202 (first-present header wins: the hub dialect decides, a bad companion header is irrelevant)" % status)
+finally:
+    relay7.stop()
+    stub7.stop()
+
+# C04 contract end-to-end: the byte-for-byte delivery the main-sync
+# hook-relay job sends (payload key set + header family pinned by
+# tests/services/forgejo-main-sync.sh t11/t12) must be accepted and fan
+# out. Offline proof that caller and relay agree BEFORE either is live.
+records8, stub8, relay8 = fan_relay("forge-e2e")
+try:
+    run_tag = "91234-2"
+    body = h.forge_push_body("refs/heads/main", "0" * 40, "1" * 40,
+                             "OwnYourIO/SpencersLab")
+    status, _ = relay8.post("push", body, sig="forgejo", headers_extra={
+        "X-Forgejo-Event": "push",
+        "X-Forgejo-Delivery": run_tag,
+        "X-GitHub-Delivery": run_tag,
+    })
+    if status != 202:
+        bad("t3: the C04 forge-delivery (exact key set + header family, plain-hex signature) returned %s, expected 202 — caller/relay contract drift would ship as every push silently 401-ing" % status)
+    res = relay8.wait_results(["dev"], timeout=15)
+    if res.get("dev") != "ok":
+        bad("t3: the accepted C04 delivery classified dev=%r, expected ok (audit line required, not just the 202)" % (res,))
+    if "push accepted" not in relay8.log():
+        bad("t3: no `push accepted` audit line for the C04 delivery (the runbook §5 smoke greps exactly this token)")
+finally:
+    relay8.stop()
+    stub8.stop()
+
+print("ok: t3 — dual-dialect matrix (hub+forgejo valid 202-fires, forged/bare-in-hub/prefixed-in-forgejo/forged-hub-first 401s, none 401), C04 forge-delivery e2e 202+fanout+audit, ping 200, foreign-branch 200, tag 200, malformed JSON 400 (zero fan-out each), widened-list stage 202, absent-allowed_refs defaults to exactly [refs/heads/main] (AC1+AC2+AC3/OQ7)")
 PY
   then
     ok "t3 passed (AC3)"
@@ -928,12 +1104,14 @@ if want t6; then
     fail "t6: CHUNK_BASE '$BASE' does not resolve (review passes the pre-chunk commit; default HEAD)"
   { git diff --name-only "$BASE" 2>/dev/null || true; git ls-files --others --exclude-standard; } |
     sort -u > "$WORK/changed.txt"
-  # Allow-list: the three C01 files, this ticket's own test surface (authored by
-  # the test stage — coord may or may not have committed it yet), and plan/pipeline
+  # Allow-list: the three C01-fix files, this ticket's own test surface
+  # (authored by the test stage — coord may or may not have committed it
+  # yet; that includes the C04 harness extension, which is test work that
+  # coexists in the working set from this wave), and plan/pipeline
   # machinery. Everything else in the working set is an AC7 violation.
-  if grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
-    offenders=$(grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
-    fail "t6: files outside the C01 scope changed (AC7 — chart/service/custom-values work belongs to C02): $offenders"
+  if grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
+    offenders=$(grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
+    fail "t6: files outside the C01-fix scope changed (AC7 — chart work belongs to C02-fix, workflow work to C04): $offenders"
   fi
   if git diff "$BASE" 2>/dev/null | grep -qE '^diff --git a/(charts/base/|services/[^/]+/templates/appset\.yaml)'; then
     fail "t6: the diff carries hunks under charts/base/ or a services appset template (AC7 — the kill-switch/gate files are off-limits, OQ1 ruling)"
@@ -941,14 +1119,51 @@ if want t6; then
   ok "t6: working set stays inside the C01 file scope; no charts/base or appset-template hunks (AC7)"
 fi
 
-# --- t7: README config-contract parity --------------------------------------------
+# --- t7: README/R3/R4 contract parity ------------------------------------------------
 if want t7; then
   [ -f "$README" ] || fail "t7: $README missing — the chart (C02) and the runbook (C03) reference it as the shipped contract"
+  # The C01 key filename, built so this harness itself never carries the
+  # old literal (t7's own grep gate below proves that).
+  old_fn='github-''webhook'
   for tok in 'targets.json' 'allowed_refs' '--secrets-dir' '--check' '/health'; do
     grep -qF -- "$tok" "$README" ||
-      fail "t7: README does not document the interface token '$tok' (C01: the 3-6 line README is the config contract downstream consumers pin)"
+      fail "t7: README does not document the interface token '$tok' (C01: the README is the config contract downstream consumers pin)"
   done
-  ok "t7: README documents targets.json / allowed_refs / --secrets-dir / --check / /health (config-contract parity)"
+  # R3: both dialect headers named; R4: hook-secret is the only flat key
+  # filename; the caller framing names main-sync and the no-webhook door.
+  for tok in 'X-Hub-Signature-256' 'X-Forgejo-Signature' 'hook-secret' 'main-sync'; do
+    grep -qF -- "$tok" "$README" ||
+      fail "t7: README lacks '$tok' (C01-fix README task: dual dialect line, hook-secret, caller = main-sync hook-relay job)"
+  done
+  grep -qF 'no webhook created' "$README" ||
+    fail "t7: README must state the GitHub-shaped edge is a door with no webhook created (R2 framing; the runbook parity sweep greps the same sentence)"
+  if grep -qF "$old_fn" "$README"; then
+    fail "t7: README still references the retired '$old_fn' key filename (R4 rename ripple)"
+  fi
+  # main.py + --help must follow the rename (the constant AND its help text;
+  # --check already proves behavior in t2):
+  grep -qF 'hook-secret' "$MAIN" ||
+    fail "t7: main.py does not read the key under hook-secret (C01-fix constant rename)"
+  if grep -qF "$old_fn" "$MAIN"; then
+    fail "t7: main.py still carries the '$old_fn' filename string (C01-fix AC4: zero hits in containers/)"
+  fi
+  help_text=$(python3 "$MAIN" --help 2>&1 || true)
+  printf '%s' "$help_text" | grep -qF 'hook-secret' ||
+    fail "t7: --help does not document the hook-secret HMAC key file (C01-fix: '--secrets-dir help text follows')"
+  # containers/ tree-wide: AC4's grep-0, and BOTH header tokens in main.py
+  # (the dialect switch must be readable in the code, not only the docs).
+  if grep -rqF "$old_fn" "$RELAY_DIR"; then
+    fail "t7: '$old_fn' survives somewhere under $RELAY_DIR (C01-fix AC4: 0 hits in containers/ after the rename)"
+  fi
+  for tok in 'X-Hub-Signature-256' 'X-Forgejo-Signature'; do
+    grep -qF -- "$tok" "$MAIN" ||
+      fail "t7: main.py never names the '$tok' header (R3: both dialect headers are the handler's selection rule, greppable in code)"
+  done
+  # Harness self-gate: no residual old filename anywhere in this file.
+  if grep -qF "$old_fn" "tests/containers/argocd-hook-relay.sh"; then
+    fail "t7: the harness itself still carries the '$old_fn' filename (C01-fix secret-hygiene leg: renamed, not merely re-pointed)"
+  fi
+  ok "t7: README carries the config contract + both dialect headers + hook-secret + main-sync door framing; main.py/--help renamed with zero '$old_fn' hits in $RELAY_DIR and in this harness (C01-fix AC4+AC6)"
 fi
 
 rm -rf "$WORK"
