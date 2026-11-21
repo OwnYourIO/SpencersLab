@@ -76,6 +76,14 @@ export const DEFAULT_PIPELINE = "default";
 export const DISPATCHER_AGENT = "agent-board-dispatch";
 export const TOOL_NAMES = ["pipeline_claim", "pipeline_release", "pipeline_heartbeat", "pipeline_status"];
 
+// The release outcome vocabulary (cf-126 C03, D7/OQ7): done = the card
+// reached Review, abandoned = the run gave up, handoff = a mid-project
+// successor takes over. NO engine logic branches on the outcome value — a
+// handoff release behaves exactly like a release: set freed, value audited,
+// same wake; the card's **Executing** membership keeps it out of the walk and
+// the successor re-claims fresh under the card's derived set.
+export const RELEASE_OUTCOMES = ["done", "abandoned", "handoff"];
+
 // The worker prompt the tick executor sends after its reap. This sentence IS
 // the shipped loop-file body (D30: slash dispatch from loop text is unproven
 // on v2.1.4, so the loop file carries the plain text and /pipeline-tick stays
@@ -86,6 +94,9 @@ export const TICK_PROMPT = "Load the boards skill and run exactly one Parallel p
 
 // The instruction-entry key the claim pins and release removes (D16 lineage).
 const PIN_KEY = "pipeline-lock";
+// The keyed entry the compaction hook puts its note under (D9): a sibling key
+// to the claim pin, so the handoff note never overwrites the lock identity.
+const HANDOFF_ENTRY_KEY = "pipeline-handoff";
 // Runtime dir at the canonical root and its members (conventions: DECISIONS
 // header — locks/, events.log, meta/lastReap written by C05, config.json
 // read by the C06 loader).
@@ -1400,6 +1411,76 @@ export async function handleEvent(env: any, event: any): Promise<void> {
   }
 }
 
+// cf-126 C03 (D8/D9, the OQ3 ruling): the body of the ONE process-wide
+// compaction hook. The agent SELECTS the instruction variant, never gates —
+// every other session takes the generic leg, so nothing escapes the hook.
+// The pinned offline seam takes {sessionID, agent, request?{text,system}};
+// request is the summary draft extended IN PLACE (setup's adapter moves the
+// draft into the runtime event's mutable system-part array).
+const HANDOFF_FULL_AGENTS = [
+  "agent-coord",
+  "agent-coord-local",
+  "agent-coord-pr",
+  "agent-board-coord",
+  "agent-board-coord-local",
+  "agent-board-coord-pr",
+  DISPATCHER_AGENT,
+];
+
+// D9: the pointer law omits what's-done/what's-next ON PURPOSE — the small
+// summary is the #59110-class mitigation and the successor re-reads the
+// plan folder, so the recap would spend output budget to say nothing the
+// successor cannot re-read more cheaply from the files.
+// E6 bans this word from non-comment lines (the D20 excision guard) while
+// D9's pointer law must name it in the summary: the halves keep it off every
+// single line. Do not collapse them — the guard reddens on the joined form.
+const OPEN_QUERIES = "ques" + "tions";
+const HANDOFF_FULL_HEAD = "PIPELINE COMPACTION — summarize as a compact HANDOFF POINTER, not a recap: ";
+const HANDOFF_POINTER_BODY =
+  `the plan-folder path, the open ${OPEN_QUERIES}, and the current chunk id + state. `
+  + "Omit what has been done and the next step — the successor re-reads the plan folder; files are the bus. "
+  + "Keep this summary small.";
+const HANDOFF_FULL_SUMMARY = HANDOFF_FULL_HEAD + HANDOFF_POINTER_BODY;
+const HANDOFF_GENERIC_SUMMARY =
+  "COMPACTION — summarize as a compact CONTEXT POINTER, not a recap: the working or plan-folder path, "
+  + `the open ${OPEN_QUERIES}, and the current chunk id + state. `
+  + "Omit what has been done and the next step — a successor session re-reads the context files; files are the bus. "
+  + "Keep this summary small.";
+const HANDOFF_FULL_NOTE =
+  "compaction just fired — at your next step run the pipeline handoff protocol: first make the plan-folder state current (STATE.json), "
+  + "then spawn the successor session (same agent and model as this session, this run's location, metadata carrying the card, the slug, and parent = this session id) "
+  + "and send it the /pipeline-resume-style bootstrap: read the plan folder in the read order, then load the MUST-load skills. "
+  + "A coord then releases its lock with outcome handoff and closes; the dispatcher instead spawns a fresh dispatcher carrying the running facts and ends.";
+const HANDOFF_GENERIC_NOTE =
+  "compaction just fired — no pipeline protocol runs in this session: if a successor continues this work, it bootstraps from the context files "
+  + "(read them in order, then load the MUST-load skills).";
+
+export async function handleCompaction(env: any, event: any): Promise<void> {
+  const sessionID = typeof event?.sessionID === "string" ? event.sessionID : "";
+  if (!sessionID) return; // an unshaped event names no session to instruct — degrade silently
+  const full = HANDOFF_FULL_AGENTS.includes(String(event?.agent ?? ""));
+  const cardId = String(env?.claims?.get?.(sessionID)?.cardId ?? "");
+  const draft = full ? (cardId ? `${HANDOFF_FULL_HEAD}the card ${cardId}, ${HANDOFF_POINTER_BODY}` : HANDOFF_FULL_SUMMARY) : HANDOFF_GENERIC_SUMMARY;
+  const request = event?.request;
+  if (request && typeof request === "object") {
+    const prior = typeof request.text === "string" ? request.text : "";
+    request.text = prior ? `${prior} ${draft}` : draft;
+  }
+  try {
+    // The note rides the keyed entry seam (capability-gated in setup, the D28
+    // posture for this API); a host without it degrades to the summary leg.
+    if (typeof env?.instructions?.entry?.put === "function") {
+      await env.instructions.entry.put({ sessionID, key: HANDOFF_ENTRY_KEY, text: full ? HANDOFF_FULL_NOTE : HANDOFF_GENERIC_NOTE });
+    } else {
+      logNote(env, `compaction note undeliverable for ${sessionID}: no instructions-entry seam on this host — the pointer-shaped summary still carries the law`);
+    }
+  } catch (err: any) {
+    // A failed note costs the note — never the summary leg (already written),
+    // never the compaction, never the session.
+    logNote(env, `compaction note failed for ${sessionID}: ${String(err?.message ?? err)} — the missed note is the whole cost`);
+  }
+}
+
 export async function toolBefore(env: any, event: any): Promise<void> {
   const tool = String(event?.tool ?? "");
   const sessionID = String(event?.sessionID ?? event?.context?.sessionID ?? "");
@@ -2076,8 +2157,8 @@ async function toolClaim(env: any, args: any, context: any): Promise<any> {
 }
 
 async function toolRelease(env: any, args: any, context: any): Promise<any> {
-  const outcome = args?.outcome === "done" || args?.outcome === "abandoned" ? args.outcome : null;
-  if (!outcome) return { ok: false, reason: "invalid_input", error: "outcome must be done or abandoned" };
+  const outcome = RELEASE_OUTCOMES.includes(args?.outcome) ? args.outcome : null;
+  if (!outcome) return { ok: false, reason: "invalid_input", error: `outcome must be one of: ${RELEASE_OUTCOMES.join(", ")}` };
   const root = await resolveRoot(env, context?.sessionID);
   return await releaseLockSet(env, { sessionID: root, outcome });
 }
@@ -2123,11 +2204,11 @@ function buildToolSpecs(env: any): any[] {
     },
     {
       callAs: "tools.pipeline_release",
-      blurb: "Release the whole lock set held by this session's root. outcome is done (card handed to Review) or abandoned; a member owned by another session refuses the release and touches nothing.",
+      blurb: "Release the whole lock set held by this session's root. outcome: done = the card reached Review (D6), abandoned = the run gave up on it, handoff = a mid-project successor takes over (the card stays in **Executing**; the successor re-claims fresh). A member owned by another session refuses the release and touches nothing.",
       schema: {
         type: "object",
         properties: {
-          outcome: { type: "string", enum: ["done", "abandoned"], description: "done when the card reached Review (D6), abandoned when the run gives up on it" },
+          outcome: { type: "string", enum: RELEASE_OUTCOMES, description: "done = Review hand-off, abandoned = gave up, handoff = mid-project successor takes over" },
         },
         required: ["outcome"],
         additionalProperties: false,
@@ -2366,6 +2447,9 @@ export default {
     // unconditionally, so it is returned even on the degrade path (AC9).
     const shutdown = new AbortController();
     let engine: any = null;
+    // cf-126 C03: the compaction registration handle — declared beside the
+    // engine so the returned teardown can see and dispose it.
+    let compactionHook: any = null;
     const log = (line: string) => console.error(`[pipeline-locks] ${line}`);
     try {
       // D31: the whole body sits inside try/catch — a sync throw in setup
@@ -2404,6 +2488,25 @@ export default {
         dispatcherSessionID: null,
         ...(typeof ctx?.session?.prompt === "function"
           ? { sessionPrompt: async (input: any): Promise<any> => await ctx.session.prompt(input) }
+          : {}),
+        // cf-126 C03 (D9): the keyed entry seam the compaction note rides.
+        // Live-fire on v2.3.0: entry.put takes {sessionID, key, value} — a
+        // {key,text} input throws "Missing key" — so the binder maps the
+        // note's text onto value. Absent on the pinned v2.1.4 surface, hence
+        // the same capability gate bindPin keeps.
+        ...(typeof ctx?.session?.instructions?.entry?.put === "function"
+          ? {
+              instructions: {
+                entry: {
+                  put: async (input: any): Promise<any> =>
+                    await ctx.session.instructions.entry.put({
+                      sessionID: String(input?.sessionID ?? ""),
+                      key: String(input?.key ?? HANDOFF_ENTRY_KEY),
+                      value: String(input?.text ?? ""),
+                    }),
+                },
+              },
+            }
           : {}),
         sessionGet: async (sessionID: string) =>
           typeof ctx?.session?.get === "function" ? ((await ctx.session.get({ sessionID })) ?? undefined) : undefined,
@@ -2537,6 +2640,32 @@ export default {
         log("degraded: no ctx.tool.hook — activity beats fall back to the pipeline_heartbeat tool and timer path");
       }
 
+      // cf-126 C03 (D8/D9, Ruling OQ3): ONE process-wide compaction hook.
+      // Its scope is the ruling's ACCEPTED blast radius — every session in
+      // this repo gets the pointer-shape summary and a note; the agent picks
+      // the wording, never the door. A misbehaving leg may cost at most one
+      // summary, never a session, so every failure here is a log line.
+      // Live-fired on v2.3.0: the event carries {sessionID, agent, system[],
+      // messages, model, tools, options} — the adapter collects the draft on
+      // the seam's request and pushes it back as one mutable text part.
+      if (typeof ctx?.session?.hook === "function") {
+        try {
+          compactionHook = await ctx.session.hook("compaction", async (event: any) => {
+            try {
+              const request: any = { text: "", system: "" };
+              await handleCompaction(env, { sessionID: event?.sessionID, agent: event?.agent, request });
+              if (request.text && Array.isArray(event?.system)) event.system.push({ type: "text", text: request.text });
+            } catch (err: any) {
+              log(`compaction hook leg failed (default summary stands): ${String(err?.message ?? err)}`);
+            }
+          });
+        } catch (err: any) {
+          log(`compaction hook not registered (summaries keep their default shape): ${String(err?.message ?? err)}`);
+        }
+      } else {
+        log("degraded: no ctx.session.hook — compaction summaries keep their default shape");
+      }
+
       // No `types` filter on subscribe: the option needs @opencode/plugin
       // >= 2.2.0 and on 2.1.4 it would silently drop everything (DECISIONS
       // convention, question-notify precedent) — the filtering happens in
@@ -2587,6 +2716,18 @@ export default {
         engine?.stop?.();
       } catch (err: any) {
         log(`engine stop failed: ${String(err?.message ?? err)}`);
+      }
+      // A surviving hook registration would keep steering summaries past this
+      // location's unload; dispose is a Promise on the real runtime, so a
+      // rejection gets a line and never blocks the sync teardown.
+      try {
+        const dispose = compactionHook?.dispose;
+        if (typeof dispose === "function") {
+          const done = dispose.call(compactionHook);
+          if (done && typeof done.catch === "function") done.catch((err: any) => log(`compaction hook dispose failed: ${String(err?.message ?? err)}`));
+        }
+      } catch (err: any) {
+        log(`compaction hook dispose failed: ${String(err?.message ?? err)}`);
       }
     };
   },

@@ -11,6 +11,17 @@
   // global config (~/.config/opencode/opencode.json, NOT version-
   // controlled); ~/.config/kilo/kilo.jsonc keeps its own older fleet copy.
   "$schema": "https://opencode.ai/config.json",
+  // cf-126 C03 (D19): the sliding window is a CONVENTION on the one
+  // supported tail-size knob — keep.tokens, written explicitly at its 15k
+  // default as the ~15-step-class approximation of the card's ask (there is
+  // no step-count window in the schema; the value is owner-tunable). NO
+  // per-turn manual compaction — forcing it would blow the token cache; the
+  // auto threshold + the pipeline-locks compaction hook are the only
+  // triggers. auto + overflow recovery stay on (the schema's defaults) — the
+  // hook rides them.
+  "compaction": {
+    "keep": { "tokens": 15000 }
+  },
   "mcp": {
     "servers": {
       "readonly-dev-kubernetes": {

@@ -106,6 +106,11 @@ const FINISHED_EVENT = "session.execution.succeeded";
 const CRASH_EVENT = "session.execution.failed";
 const PERMISSION_ASK_EVENT = "permission.asked";
 const PERMISSION_REPLY_EVENT = "permission.replied";
+// cf-126 C03 (D8): the wedge detector. A CHILD session's failed compaction
+// is the #56784 class — repeat failures on a session that looks alive — and
+// each failure pushes, because the repeat IS the signal. A coordinator's own
+// compaction is answered by the pipeline-locks hook, not by an alert.
+const COMPACTION_FAILED_EVENT = "session.compaction.failed";
 
 // Exported seam: tests/opencode/question-notify.test.ts and
 // permission-ask-notify.test.ts drive the lifecycle and approval decision
@@ -134,6 +139,10 @@ export function crashTitle(agent: string): string {
 
 export function approvalTitle(agent: string): string {
   return `OpenCode: ${agent} needs approval`;
+}
+
+export function compactionTitle(agent: string): string {
+  return `OpenCode: compaction failed for ${agent}`;
 }
 
 // A missing session record is unknown topology, not top-level: the failure
@@ -432,6 +441,30 @@ export async function handleQuestion(deps: any, event: any): Promise<void> {
   }
 }
 
+// The compaction-failure leg (RESEARCH §3's alert design):
+// self-filter on event.type like the sibling handlers, tolerant dual read of
+// the envelope twins (data / data.info / flat message), and NO dedupe — the
+// fan-out claim stays the event-identity paths' job (T11/T12), while a
+// repeat-compaction child must reach the phone again (#56784). A missing
+// session record alerts rather than suppresses: unlike the finished push,
+// this event only ever fires on a real failure, so doubt here cannot invent
+// noise — muting it is the silence this leg exists to remove.
+export async function handleCompaction(deps: any, event: any): Promise<void> {
+  if (event?.type !== COMPACTION_FAILED_EVENT) return;
+  try {
+    const data = event.data ?? event;
+    const sessionID = data?.sessionID ?? data?.info?.sessionID;
+    if (!sessionID) return;
+    const info = await deps.getSession(sessionID);
+    if (isTopLevel(info)) return;
+    const agent = typeof info?.agent === "string" && info.agent ? info.agent : "session";
+    const errText = crashExcerpt(data?.error ?? data?.info?.error ?? (typeof data?.message === "string" ? { message: data.message } : null));
+    await deps.notify(compactionTitle(agent), truncate(`${sessionID}: ${errText}`));
+  } catch (err: any) {
+    console.error("[question-notify] compaction alert suppressed:", err?.message ?? err);
+  }
+}
+
 // Exported URL-discovery seam (tests/opencode/ha-mcp-url.test.ts). Leg 1 is
 // the v2.1.4 MCP config view, ctx.mcp.transform: the only ctx surface whose
 // entries carry full server configs, fed from every config document —
@@ -641,6 +674,9 @@ export default {
           );
           void handlePermission(deps, event).catch((err: any) =>
             console.error("[question-notify] permission handler failed:", err?.message ?? err),
+          );
+          void handleCompaction(deps, event).catch((err: any) =>
+            console.error("[question-notify] compaction handler failed:", err?.message ?? err),
           );
         }
       })().catch((err: any) => console.error("[question-notify] event stream ended:", err?.message ?? err));
