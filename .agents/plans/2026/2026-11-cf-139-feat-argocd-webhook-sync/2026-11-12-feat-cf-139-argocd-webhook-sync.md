@@ -1,221 +1,235 @@
 # PLAN: cf-139 — Pushes to main auto-sync every cluster (no manual `argocd sync`)
 feature: 2026/2026-11-cf-139-feat-argocd-webhook-sync
 card: AD-139 "Sync ArgoCD with Webhooks" (Y3vPeX4nhtDbsdwCg)
-status: APPROVED 2026-11-17 (batch-2 round) with the re-cut 3-chunk design as-is + two
-folded deltas: OQ5 "merge first, fill later" (sentinels ship through merge; the relay app's
-crash-loop-until-UUID-PR posture is the ruled, accepted behavior) and OQ7 "wider filter"
-(the ref filter is a CONFIG LIST `allowed_refs`, grounded on repo evidence — see Open
-questions (resolved)). OQ6 prune=false/never-force confirmed as ruling.
-Earlier same-day rework from the batched OQ1–OQ4 answers: OQ1 kill-switch KEPT — no flip;
-OQ2 relay IN scope now, hosted proxy-local, one shared HMAC; OQ3 flip-shape recorded for a
-future flip only; OQ4 DNS leak note-only. Old single chunk C01 (pre-flip audit + flip
-runbook) is void — superseded by the relay design below.
+status: REOPENED 2026-11-21 at Final Review (owner ruling, STATE `reopen`), re-cut
+APPROVED same day — rulings R1–R4 folded in, no new open questions. C01–C03 stay
+DONE-AT-REVIEW with their commits; the delta is one new chunk (C04) + three fix rounds
+(C01-fix, C02-fix, C03-fix) behind a test re-pin session.
+Earlier history: APPROVED 2026-11-17 batch-2 (OQ5 merge-first, OQ6 prune=false, OQ7
+config-list filter) atop the OQ1–OQ4 rework (kill-switch KEPT, relay IN scope on
+proxy-local with one shared HMAC; flip-shape recorded for a future flip; DNS leak
+note-only).
 
 ## Goal
 
-Make a push to GitHub `main` land on every cluster automatically, without touching the
-`services.<cat>.selfHeal="false"` kill-switch annotations or any appset gate: an
-HMAC-verified webhook relay (`argocd-hook`) hosted on the proxy-local hub receives the
-GitHub push hook on the single public edge, then drives an ACTUAL SYNC of each cluster's
-root app (and of every still-Out-Of-Sync app sourced from the repo) through that cluster's
-own ArgoCD REST API using the existing `mcp-bot` apiKey RBAC. The card's manual workflow
-("go into each cluster, run argocd sync") is automated; the automated syncPolicy stays off
-everywhere.
+Make a push to `main` land on every cluster automatically, without touching the
+`services.<cat>.selfHeal="false"` kill-switch annotations or any appset gate. The trigger
+is the canonical Forgejo repo's own CI: `.forgejo/workflows/main-sync.yaml` gains a final
+`hook-relay` job (after `push-gh` has advanced GitHub) that POSTs a signed push payload to
+the `argocd-hook` relay; the relay (hosted on the proxy-local hub, one shared HMAC) drives
+an ACTUAL SYNC of each cluster's root app and every still-Out-Of-Sync app tracking that
+ref, through each cluster's own ArgoCD REST API with the existing `mcp-bot` apiKey RBAC.
+The card's manual workflow ("go into each cluster, run argocd sync") is automated; the
+automated syncPolicy stays off everywhere.
 
-## Scope decision — why sync-by-API, not the flip or a refresh webhook
+## Scope decisions — origin, mechanism, race (rulings R1–R3 + OQ1/OQ2)
 
-- Webhooks alone only REFRESH, never sync (RESEARCH [4][10]); with the gate kept off, a
-  refresh would only flip apps to OutOfSync — the user would still sync by hand. So the
-  relay calls the sync API instead.
-- No flip: the user ruled the kill-switch stays (OQ1). Nothing in this plan edits the 11
-  `services/<cat>/prod/templates/appset.yaml` gates, `charts/base/templates/appset-charts.yaml`,
-  or `charts/base/values.yaml`.
-- Direct GitHub→cluster hooks remain physically impossible (`cluster.*` is mesh-only,
-  public NXDOMAIN measured [R Agenda 2]); the one-public-edge relay (shape C) is the chosen
-  inbound form, adapted from refresh-fan-out to sync-fan-out.
+- **Origin (R1, option (c)) — no external webhook.** A raw Forgejo repo webhook is
+  structurally raced: the fleet's app sources track GitHub 9/9, byte-exact, at probe time
+  **[P §1]**, and the forge push hook would fire BEFORE `main-sync` has pushed main to
+  GitHub — every fan-out sync would resolve the previous revision **[P §3]**. The
+  main-sync hook job fires *after* `push-gh` success, so GitHub (what the apps read) has
+  already advanced — timing-correct, zero cluster-secret annotation churn. Rejected:
+  (a) flipping all 11 clusters' `services.repo`/`values.repo` annotations to forge sources
+  (out-of-band human churn + `trackedRepo` atomic-flip trap — flipping while sources are
+  still GitHub makes every root ineligible and the fan-out a silent skipped×10 no-op
+  **[P §3]**); (b) settle/re-verify leg (new relay code + a GitHub read credential).
+  GitHub Actions sync fan-out, N public cluster hooks, centralizing, argocd-notifications
+  and refresh-only webhooks stay rejected (RESEARCH Agenda 2 / OQ1).
+- **Public edge stays (R2).** The shipped crowdsec-only `argocd-hook` Ingress entry is
+  kept. Its meaning shifts from "the path GitHub calls" to "the door stays open": with the
+  fleet tracking GitHub (option c), a real GitHub repo webhook fires race-free and works
+  against the relay TODAY (the `X-Hub-Signature-256` dialect remains fully supported per
+  R3) — the owner declined to close that door. No git change; documentation-only in C03-fix.
+- **Mechanism: sync-by-API, not the flip or a refresh webhook** (unchanged): webhooks alone
+  only refresh and with the gate kept off a refresh lands nothing; no flip — the 12 appset
+  gates, `charts/base` and the annotations stay untouched.
+- **Signature dialect (R3):** the relay accepts BOTH `X-Hub-Signature-256` (GitHub/Forgejo
+  union-header family, `sha256=` prefixed) and `X-Forgejo-Signature` (PLAIN hex
+  HMAC-SHA256, no prefix **[P §4]** — the shipped relay 401s every such delivery today,
+  so this is a code change). Constant-time verify either way, over the raw body;
+  first-present header wins, NO cross-dialect fallback (signature-confusion hygiene);
+  absent both → 401.
+- **Secret key rename (R4):** the flat `/secrets/github-webhook` file + rendered
+  ExternalSecret key becomes `hook-secret` — the key's semantics moved off GitHub (the
+  caller is the Actions job). Ripple: chart ES template, `main.py` constant + help text +
+  READMEs, harness greps, runbook §2. Bitwarden item CONTENT is unchanged (same login
+  item, same password field) — no owner re-mint.
 
 ## Context — verified facts
 
-- **Kill-switch + gate** [E §2, re-verified 2026-11-17]: `services/infra/prod/templates/appset.yaml:126`
-  and `charts/base/templates/appset-charts.yaml:124-143` render `automated` only when the
-  cluster-secret annotation is absent or `"false"`-free; live root apps carry syncOptions only.
-  Kept as-is by ruling. `infra`/`dev`/`gpu`/`home` roots sit OutOfSync today **[E §2 table]**.
-- **Root-app syncOptions lack `RespectIgnoreDifferences`** (service appset renders only
-  `CreateNamespace` + `ServerSideApply`, verified 2026-11-17 at `services/infra/prod/templates/appset.yaml:131-134`);
-  child apps carry it via the charts appset **[E]**. ⇒ the relay MUST use non-force API syncs
-  (force could clobber live-owned fields; the 4 shipped argocd-cm `ignoreDifferences`
-  customizations incl. the system-upgrade `Plan /status` fix protect detection-level sync
-  either way — `charts/base/values.yaml:116-142`, 2026-10-20 incident comment).
-- **Sync-capable credentials already exist fleet-wide**: `mcp-bot` local account
-  (`charts/base/values.yaml:147`) with RBAC `applications get,sync */*` (lines 157-158,
-  re-verified 2026-11-17); tokens minted per-cluster out-of-band into Bitwarden (media
-  precedent `argocd-mcp-media` **[E §4]**); `authMode: sso` does not disable apiKey tokens
-  (sso includes the apikey mode; mcp-bot is live via argocd-mcp). No RBAC change needed.
-- **Proxy-local hub is the correct relay host — verified 2026-11-17**: it owns the public
-  edge hop (RESEARCH Agenda-2 q6, shape C), hosts its own crowdsec-only public exceptions
-  (`forms`, `git`, `forgejo`, `paste` entries in `services/proxy-local/prod/values.yaml:102-131`)
-  and local-hosted charts via its `charts:` block (`smtp-relay` precedent, lines 55-59);
-  public DNS for hub subdomains is published by external-dns from these entries (comment
-  at line 119). From proxy-local the relay reaches every cluster's existing
-  `cluster.<name>.spencerslab.com` argocd-server route over mesh DNS (10.x split-horizon
-  **[R]**) — zero new cluster-side exposure.
-- **Fan-out target roster**: 11 root apps `dev, gpu, gpu-ai, grow, home, infra, media,
-  monitoring, proxy-local, proxy-backup, proxy-remote` (named `<cat>`; `backups`/`personal`
-  have no root app **[E]**). `proxy-remote`/`proxy-backup` have no readonly MCP for probes
-  (manual-preflight rows **[E §5]**).
-- **Tracked revisions (OQ7 grounding, grepped 2026-11-17)**: every root appset source
-  resolves `targetRevision` via `$targetRevision := (eq $stage "prod") | ternary "main" $stage`
-  (e.g. `services/infra/prod/templates/appset.yaml:40`) — `main` for prod stage, the cluster's
-  `stage` annotation verbatim otherwise; repo-sourced children default `dig "version" "main"`
-  (`charts/base/templates/appset-charts.yaml:65`). Every live `version:` entry in `charts:`
-  blocks carries an external `repository:` (helm index, NOT a git ref). The revisions in use
-  as BRANCHES are therefore `{main}` plus any future non-prod `stage` branch; no
-  `services/<cat>/<non-prod>` dir and no origin stage branch exist. ⇒ relay filter is a
-  config list (`allowed_refs`), not a hardcoded ref and not blanket any-ref.
-- **Root-vs-child automated tension is now moot by design**: the relay syncs root + every
-  still-Out-Of-Sync repo-sourced app per cluster, so it works whether or not children carry
-  automated. C03's preflight records the observed state, it gates nothing.
-- Repo standard re-checked 2026-11-17: app-template `5.0.1` (charts/qdrant), custom-values
-  per-chart `bitwardenIds:` blocks (`custom-values/proxy-local/prod-values.yaml`), test
-  harness = per-area bash scripts `tests/<area>/*.sh` with t1..tn checks traced to chunk ACs
-  (in-process stdlib mock precedent: `tests/containers/wekan-mcp-login.sh`).
-- CI moved to Forgejo since the first draft: `.forgejo/workflows/containers-build.yaml` is
-  build-authoritative (prod-role main/dispatch → `:yy.mm.N` + `:latest` + `:main` to ghcr +
-  instance registry; PR on dev-role → `pr-<branch>-<sha>` local registry only); GitHub
-  `docker-build.yaml` is workflow_dispatch fallback. New container ⇒ `docker build =>
-  no-daemon, CI-deferred` is the designed passing AC shape.
+- **[P] = EXPLORE.md "Forgejo rework probe (2026-11-21)" — the ground truth for this
+  re-cut.** Highlights: all 9 reachable clusters' roots AND sampled children carry
+  `https://github.com/OwnYourIO/SpencersLab.git` @ `main` byte-exact (incl. `.git`);
+  repoURLs come from cluster-secret annotations — zero github literals in appset templates;
+  Forgejo signs plain hex, sends the full `X-GitHub-Event`/`X-*-Delivery` header union;
+  the push payload `repository` field is NOT matched by the relay — re-verified against
+  shipped code (`main.py:213-215` byte-exact `app_matches` vs target.repo; only `ref`
+  consumed at `:379`). ⇒ the roster's `trackedRepo` GitHub URL stays CORRECT under (c).
+- **main-sync.yaml shape (read 2026-11-21)**: both jobs guard on the exact bytes
+  `contains(vars.ROLE, 'prod')` (unset stays fail-safe-skipped); destinations/credentials
+  live instance-side (`vars.PUSH_URL_*`, `secrets.PUSH_TOKEN_*`) — "the file carries no
+  repo URL and no token". The C04 job follows BOTH conventions verbatim.
+  `tests/services/forgejo-main-sync.sh` is the offline static contract suite (bash +
+  python3/pyyaml; t3 pins the job SET, t4 bans force spellings, t5 pins instance-side keys
+  count/no-URL-literals/reserved-prefix-ban, t6 pins `set -euo pipefail` heads, t7 pins
+  lab runner labels, t8 push-dev hygiene) — the repo has NO actionlint precedent; this
+  suite is THE validation shape for `.forgejo/**`.
+- Kill-switch/gate + non-force rationale, mcp-bot RBAC (`applications get,sync */*`),
+  proxy-local hosting, fan-out roster of 11 categories (`backups`/`personal` have no root
+  app): unchanged from the shipped plan; final review additionally corrected the roster
+  hosts to the live-verified set (dev → `cluster.dev.scifi.farm`, home →
+  `cluster.home-lab.spencerslab.com` via chart `clusterHosts`, DECISIONS 2026-11-21) —
+  untouched by this re-cut.
+- Shipped-relay facts the fix rounds must respect: module docstring/README still frame
+  GitHub as the caller (cosmetic rename target); `GITHUB_SECRET_FILE` constant at
+  `main.py:30`; header read at `:365`; `--check` HMAC round-trip at `:163-168` (becomes
+  dual-dialect); job failure CANNOT reach the fleet by other means — poll detection only
+  surfaces OutOfSync (automated off), so the fallback is the manual sync this ticket set
+  out to replace (R1 documented limitation, self-heals on the NEXT push since fan-out
+  syncs everything OutOfSync-tracking-main regardless of SHA).
 
 ## Out of scope (ruling-backed)
 
-- Flipping/editing `services.<cat>.selfHeal` annotations or ANY appset gate; adding
-  automated policies anywhere (OQ1: kill-switch kept).
-- Edits to `charts/base` (values or templates) — including ignoreDifferences additions: the
-  old C01 hardening served the flip; under relay-driven non-force syncs the shipped
-  entries suffice. Dropped from plan; kept only as runbook risk context.
-- `cluster.proxy-local` public-A-record leak — **note-only** per OQ4 (recorded in
-  DECISIONS.md; no follow-up card, no fix here).
-- Human actions scripted in the runbook, never executed by agents: GitHub webhook creation,
-  Bitwarden item creation, per-cluster token minting, cluster-secret edits (none needed).
-- ArgoCD `/api/webhook` refresh fan-out (pointless with automated off), argocd-notifications,
-  ApplicationSet webhook, poll-interval tuning, per-cluster public exposure, GitHub Actions
-  direct sync (all rejected in RESEARCH Agenda 2).
+- Flipping/editing `services.<cat>.selfHeal` annotations or ANY appset gate; automated
+  policies anywhere (OQ1). Edits to `charts/base` (values or templates).
+- **Fleet source migration to Forgejo annotations** (option (a) — declined; a future full
+  forge-origin migration is its own ticket, and then `trackedRepo` flips in the SAME
+  release **[P §3]**).
+- Creating the instance-side Actions var/secret, Bitwarden item fill, token mints, GitHub
+  webhook (optional door — NOT created in this run) — human legs, runbook-scripted.
+- `cluster.proxy-local` public-A-record leak — note-only (OQ4). ArgoCD `/api/webhook`
+  refresh fan-out, ApplicationSet webhook, poll-interval tuning, per-cluster exposure.
+- Retiring `ownyourio.github.io` chart index or the `upstream` GitHub remote — not
+  ref-tracked surfaces, stay (probe q5 answer: (c) keeps the GitHub mirror load-bearing).
 
-## Commands (base checks verified 2026-11-12; chart/container checks land with C01/C02)
+## Commands (shipped-legs verified; fix-round legs land with C04/test session)
 
 - `export PATH=$HOME/.local/bin:$PATH` (helm lives in `~/.local/bin`).
-- New chart (C02): `helm dependency update charts/argocd-hook` → `helm lint charts/argocd-hook`
-  → `helm template charts/argocd-hook --set domain=test.example.com --set
-  bitwardenIds.argocd-hook-secret=test-uuid --set bitwardenIds.argocd-hook-tokens=test-uuid`
-  ⇒ valid manifests, Service name matches the proxy entry, 0 `OVERRIDE_` leakage.
-- Regression on base (untouched, must still pass): `helm dependency build charts/base &&
-  helm lint charts/base && helm template charts/base` ⇒ `grep -c
-  'resource.customizations.ignoreDifferences'` ≥ 4, 0 `OVERRIDE_` hits (the silent
-  zero-render trap without dep-build is in FRICTION.md — always build deps first).
-- Service trio (grep trio + 1:1 sentinel check):
-  `grep -n 'argocd-hook' services/proxy-local/prod/values.yaml` ⇒ BOTH a `charts:` entry and
-  an `ingress.subdomains.argocd-hook` entry;
-  `grep -n 'argocd-hook-secret\|argocd-hook-tokens' custom-values/proxy-local/prod-values.yaml`
-  ⇒ every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder in the chart has exactly one UUID line.
-- Gate-untouched check: `git diff --name-only` must show NO `services/*/templates/appset.yaml`,
-  NO `charts/base/**` files.
-- Container (C01): `python3 -m py_compile containers/argocd-hook/*.py`; relay `--check`
-  self-test (config load + HMAC round-trip, no network); `bash tests/containers/argocd-hook-relay.sh`
-  (agent-test authored); `docker build => no-daemon, CI-deferred` — Forgejo
-  `containers-build.yaml` on the pushed branch is authoritative; capture base-image layer
-  facts from GHCR tar-listings.
+- `.forgejo` validation (C04; THE precedent for forge-workflow checks — no actionlint in
+  repo): `bash tests/services/forgejo-main-sync.sh` (extended: job-set re-pin + new
+  hook-relay legs, incl. `bash -n` of every extracted run block) + the suite's existing
+  t4/t5/t6/t7 sweep the new job automatically.
+- Relay (C01-fix): `python3 -m py_compile containers/argocd-hook/main.py`;
+  `main.py --check` dual-dialect round-trip; `bash tests/containers/argocd-hook-relay.sh`
+  (re-pinned: both dialects + `hook-secret` filename); grep `github-webhook` over
+  `containers/ charts/argocd-hook/` ⇒ 0 hits. `docker build => no-daemon, CI-deferred`
+  (Forgejo `containers-build.yaml` authoritative) — the relay image rebuilds on this change.
+- Chart (C02-fix): `helm dependency update charts/argocd-hook && helm lint
+  charts/argocd-hook && helm template charts/argocd-hook --set domain=test.example.com
+  --set bitwardenIds.argocd-hook-secret=test-uuid --set
+  bitwardenIds.argocd-hook-tokens=test-uuid` ⇒ 0 `OVERRIDE_` leakage; ES secretKey
+  renders `hook-secret`; `bash tests/services/argocd-hook-wiring.sh` (re-pinned).
+- Trio + 1:1 sentinel check (unchanged files, re-run): grep `argocd-hook` in
+  `services/proxy-local/prod/values.yaml` (charts entry + subdomain entry), the two UUID
+  lines in `custom-values/proxy-local/prod-values.yaml`.
+- Regression on base (untouched): `helm dependency build charts/base && helm lint
+  charts/base && helm template charts/base` (dep-build first — FRICTION trap; note
+  FRICTION 2026-11-21 open: base dep-build currently hard-fails on a pre-existing
+  renovate-class lock drift on main — NOT cf-139's; validate via vendored 10.11.6
+  tarballs per the recorded resolution).
+- Gate-untouched: `git diff --name-only` shows no `services/*/templates/appset.yaml`, no
+  `charts/base/**`.
+- Runbook (C03-fix): `bash tests/notes/argocd-hook-runbook.sh` (re-pinned: no GitHub-
+  webhook-creation legs, Actions-vault legs + both-dialect smoke + unset-var kill-switch
+  greps present).
 - No unit-test suite; "tests" = the above + `tests/<area>/*.sh` harness files per chunk.
 
 ## Chunks
 
-| id  | title | size | wave | depends_on | why the dependency |
-|-----|-------|------|------|------------|--------------------|
-| C01 | `containers/argocd-hook` relay: HMAC verify → `allowed_refs` config-list filter → 202-async fan-out of API syncs | M | 1 | [] | — (defines the image + config/secret interface C02 bakes) |
-| C02 | `charts/argocd-hook` + proxy-local trio wiring (ApplicationSet entry, crowdsec-only subdomain, ExternalSecret secrets + custom-values 1:1) | M | 2 | [C01] | chart consumes C01's image name, ports, `/health`, `/config` + `/secrets` file contract |
-| C03 | Human runbook + live preflight: GitHub webhook creation, Bitwarden + token minting, bootstrap, smoke test, verification, rollback | M | 3 | [C02] | runbook pins exact chart paths/values, service name, item names and rollout sequence shipped by C02 |
+| id | title | size | wave | status | depends_on | why the dependency |
+|----|-------|------|------|--------|------------|--------------------|
+| C01 | relay container (as shipped) | M | 1 | **DONE-at-review** — `dae5bc5f4` | — | — |
+| C02 | chart + proxy-local trio (as shipped) | M | 2 | **DONE-at-review** — `0cf6e5338` + fix `19cc8f504` (harness `43e69f0b9`) | — | — |
+| C03 | runbook + preflight (as shipped) | M | 3 | **DONE-at-review** — `a3c2c2f15` + fix `0ccf80196` | — | — |
+| C01-fix | relay: dual signature dialect (R3) + `hook-secret` rename (R4), docs reword | S | 4 | pending | [] | sits on shipped C01; everything else consumes its contract |
+| C02-fix | chart ES `secretKey` rename ripple + READMEs/values comments | S | 5 | pending | [C01-fix] | rendered key must match the relay filename byte-for-byte IN THE SAME RELEASE (mismatch = startup ConfigError crash-loop, visible) |
+| C04 | `main-sync.yaml hook-relay` job: payload + plain-hex HMAC POST + instance-side keys + retry/warn posture, suite extension | S | 5 | pending | [C01-fix] | the job's signature only works once the relay accepts the Forgejo dialect (R3); git-parallel with C02-fix |
+| C03-fix | runbook rework: §2 Actions-vault legs, §4 job-origin replacing webhook creation (R2 door documented), §5 both-dialect + dispatch smoke, §7/§8 kill-switch + failure limitations | S | 6 | pending | [C02-fix, C04] | documents the shipped job and final secret names — docs-parity |
+
+Test session precedes all dev rounds: re-pin `tests/containers/argocd-hook-relay.sh`
+(dual dialect, `hook-secret` filename, forge-shaped-delivery e2e leg),
+`tests/services/argocd-hook-wiring.sh` (secretKey grep),
+`tests/notes/argocd-hook-runbook.sh` (post-rework greps); extend
+`tests/services/forgejo-main-sync.sh` (t3 job set → `push-gh/push-dev/hook-relay`; new
+t9–t13 per C04's Tests).
 
 ## Wave order
 
-1. C01 → 2. C02 → 3. C03 (serial: interface → consumer → docs-parity). C03's live probe
-rows are read-only and could run any time; kept in C03 so the runbook ships as one
-reviewable artifact.
+4. C01-fix → 5. C02-fix ∥ C04 (independent of each other; both consume C01-fix's
+contract; the relay-filename vs rendered-key parity closes at wave 5 end) → 6. C03-fix.
+Waves 1–3 done; execution continues serially per the pipeline (test session first).
 
-## Relay behavior (outcome-level)
+## Relay behavior (updated origin block; rest as shipped)
 
-- Ingress: GitHub repo webhook (user-created) → `https://argocd-hook.spencerslab.com/`;
-  `application/json` + `X-Hub-Signature-256` HMAC, verified against one shared fleet secret
-  (OQ2). Invalid → 401. Ref filter: push `ref` must be in the `allowed_refs` CONFIG LIST
-  (OQ7 ruling; seeded `["refs/heads/main"]` — the evidence-grounded in-use revision set,
-  widened per-cluster by a future `stage` branch entry with zero code change);
-  non-matching push → 200 no-op; `refs/tags/*` never fire. `ping` → 200.
-- Answer 202 immediately after verification (GitHub 10s budget), fan out asynchronously.
-- Per target cluster (remote clusters first, proxy-local LAST — self-sync may restart the
-  relay mid-fan-out): list applications → sync root app `<cat>` **only if it tracks the
-  fired ref** (live `spec.targetRevision` match — the ruling-compliant widening: a stage-ref
-  push syncs stage-tracking roots, never prod ones) → settle delay → list again → sync each
-  app whose source repo matches ∧ `targetRevision` equals the fired ref ∧ is OutOfSync
-  (skipping the just-synced root). `prune=false`, never force on every sync (ruled, OQ6;
-  root syncOptions note in Context). HTTP 409 / "operation already running" counts as
-  success; per-target timeout; one target's failure never aborts the others (partial
-  fan-out logged per target).
-- Config: files, never env secrets — `targets.json` (ConfigMap: top-level
-  `allowed_refs` list (default `["refs/heads/main"]`) + roster `[{name, url, rootApp,
-  tokenKey, repo, local?}]`; fan-out matches each live app's `spec.targetRevision` against
-  the fired ref, so per-target syncs only touch apps tracking that branch) and a secrets dir
-  (GitHub HMAC + per-cluster `mcp-bot` tokens). Stateless, no queue — missed deliveries
-  fall back to today's manual sync (documented limitation, no silent loss: logged).
-- Secrets lifecycle (OQ5 ruling, "merge first, fill later"): the chart ships
-  `OVERRIDE_VIA_CUSTOM_VALUES` sentinels and `custom-values/proxy-local/prod-values.yaml`
-  ships `OVERRIDE_NEEDED` UUID lines **through the merge**; `proxy-local-argocd-hook`
-  crash-loops visibly until the owner fills the real Bitwarden item UUIDs in a follow-up
-  commit at their convenience — ruled-in, designed behavior, not an incident.
+- **Trigger (R1):** `hook-relay` job in `.forgejo/workflows/main-sync.yaml`, `needs:
+  push-gh` (GitHub has advanced), guard the exact `contains(vars.ROLE, 'prod')` bytes
+  (dev instance and unset ROLE fire nothing — the file's own fail-safe convention).
+  Payload: GitHub-push-shaped `{"ref", "before", "after",
+  "repository": {"full_name"}}` built with `python3 -m json.tool`-safe json.dumps from
+  env (dispatch/first-push fallbacks: `ref` → `refs/heads/main`, `after` → `github.sha`,
+  `full_name` → `${{ github.repository }}`). Headers: `Content-Type: application/json`,
+  `X-Forgejo-Signature: <plain hex HMAC of raw body>` (openssl-dgst | awk, no `sha256=`
+  prefix), plus the header family a real Forgejo webhook would send (`X-Forgejo-Event:
+  push`, `X-GitHub-Event: push`, delivery ids = run id/attempt — the relay reads
+  `X-GitHub-Event` unchanged). Destination/credentials instance-side: `vars.ARGOCD_HOOK_URL`
+  + `secrets.ARGOCD_HOOK_SECRET` — the workflow file keeps zero URL literals and zero
+  secret values. Unset → skip with `::warning::`, exit 0 (mirror unimpeded; R1 limitation).
+  POST failure after bounded retries (`--retry 3 --retry-delay 5 --max-time 15
+  --retry-all-errors`) → `::warning::`, exit 0 — sync-lands-as-if-no-hook; next push
+  self-heals.
+- **Public edge (R2):** `https://argocd-hook.spencerslab.com/` crowdsec-only entry stays;
+  today it serves `/health`, the future-GitHub-webhook door, and manual signed smokes.
+  Whether the Actions job's `ARGOCD_HOOK_URL` is set to the mesh or public name is
+  instance-side owner choice, proven by the runbook's dispatch smoke.
+- Ref filter (`allowed_refs` list, default `["refs/heads/main"]`), per-app live
+  `spec.targetRevision` match, remote-first/self-last ordering, non-force `prune=false`
+  in query AND body, 409-as-success, per-target isolation/timeout, 202-before-fan-out,
+  stateless-no-replay, OQ5 sentinel lifecycle: ALL UNCHANGED from shipped C01/C02.
 
 ## Human-owned list (never agent-executed)
 
-Plan approval (batch-2 round, done 2026-11-17) · Bitwarden item creation (`argocd-hook`
-HMAC, `argocd-hook-tokens` per-cluster fields) + custom-values UUID fill post-merge at the
-owner's convenience (OQ5 ruling) · per-cluster `mcp-bot` token minting (admin `argocd
-account generate-token`) · GitHub repo webhook creation + secret placement · first-time
-bootstrap syncs (root `proxy-local` + relay app) · verification push · PR open/merge
+Plan approval (done 2026-11-21 — owner ruled at Final Review) · **NEW: on the prod Forgejo
+repo set Actions `vars.ARGOCD_HOOK_URL` (relay URL the runner can reach) +
+`secrets.ARGOCD_HOOK_SECRET` = the `argocd-hook` Bitwarden item password** (same shared
+HMAC, R2/R4 — one value, two vaults) · Bitwarden items + `mcp-bot` token mints +
+custom-values UUID fill (unchanged legs) · first-time bootstrap syncs · smoke (incl. the
+`workflow_dispatch` main-sync trigger) and verification merge · optional GitHub repo
+webhook — explicitly NOT now (R2 door left open for the owner, uncreated) · PR open/merge
 (Deployment stage unchecked: commits stay local) · card Review→Finished.
 
 ## Risks / assumptions
 
-- **Self-mutating hub**: syncing root `proxy-local` re-renders the hub (its own relay app
-  included). Mitigated by self-last ordering + redelivery tolerance; a restart mid-fan-out
-  drops only that push's tail → manual sync fallback, logged.
-- **First sync after long OutOfSync periods applies real drift** (e.g. `infra-seaweedfs`,
-  SSA=false — `.agents/notes/2026-11-10-seaweedfs-incident-findings.md`): identical to what
-  the user's manual sync button does today; preflight table records it, runbook tells the
-  human to glance first. Non-force + shipped ignoreDifferences keep the k3s-incident class
-  of spurious re-applies out of scope; a future chart bump re-verifies key shapes (argo-cd
-  10.11.6 = v3.5.6 only verified).
-- **Hub exposure**: `argocd-hook.spencerslab.com` is a new public POST surface, crowdsec-
-  fronted, no SSO (GitHub can't do OIDC — same exception class as forms/git). Blast radius
-  of a leaked shared HMAC: attacker can trigger syncs of git-main state (no writes to git,
-  no prune, no force) — refresh/sync of already-trusted content. Per-cluster HMAC re-sign
-  was declined (OQ2: shared).
-- No readonly MCP for proxy-remote/proxy-backup **[E §5]**; token mint + verification rows
-  for them are manual in the runbook.
-- gpu-ai/dev appset variant drift **[E §2]** — cosmetic, untouched.
+- **Rename parity window:** a deploy where C01-fix landed but C02-fix didn't (or vice
+  versa) crash-loops the relay at startup (`ConfigError` — filename not found). Waves
+  4–5 close it; both merge in the SAME PR before any sync. Accepted, visible, self-evident.
+- **Job failure = silent-ish until noticed:** warn-and-continue posture (pinned best
+  guess, mirrors the file's unset-ROLE fail-safe philosophy — the mirror must never break
+  over the hook). Mitigation: `::warning::` in every run log + runbook tells the owner
+  where to look; the next successful push self-heals the fleet.
+- **Actions runner reachability of the relay URL is unproven from repo** (instance-side
+  var choice) — the dispatch smoke (§5) is the acceptance leg; mesh name expected (same
+  mesh the relay itself fans out over).
+- Shipped-plan risks stand unchanged: self-mutating hub (self-last), first-sync drift
+  application (preflight table), mirror lag adds seconds after `push-gh` (timing-correct,
+  not instant), home root's pre-existing manifest-generation drift (runbook §6 row — the
+  relay logs `ok` while the app stays Unknown; manual sync fails identically).
+- Forgejo Test-Delivery (real-webhook-type) payload/event name remains unverified **[P
+  q4]** — moot for (c): the job's own payload/header shape is what we control and pin;
+  only a future real Forgejo webhook needs that verification.
 
-## Open questions (resolved in the batch-2 round — none remain)
+## Open questions (batch-3 — all resolved by the owner's four rulings; none remain)
 
-- **OQ5 RESOLVED — "Merge first, fill later":** the branch merges with `OVERRIDE_NEEDED`
-  UUID lines; owner fills real Bitwarden item UUIDs post-merge at convenience; the relay
-  app's crash-loop-until-filled is ruled-in designed behavior (visible, non-destructive).
-- **OQ6 RESOLVED — prune=false confirmed:** status-quo mirror, never force, no prune; git-
-  removed resources need an occasional manual prune sync by choice.
-- **OQ7 RESOLVED — "Wider filter":** ref matching is the `allowed_refs` CONFIG LIST
-  (O(1) change, no hardcoded main); seeded `["refs/heads/main"]` per the Context
-  revision-grounding (main is the only branch revision in use; non-prod `stage` branches
-  enter by config when such a cluster exists); blanket any-ref rejected (feature-branch
-  pushes track nothing — would sync-fire for nothing).
-- Rulings recorded in DECISIONS.md (2026-11-17 batch-2 block). No genuine new gaps; the
-  runbook (C03) documents the filter-widening procedure.
+R1–R4 covered the entire open design space (origin, race, edge, dialect, key name). The
+three micro-calls this plan pinned as designed behavior (not questions): unset-instance-key
+skip-with-warning posture; dispatch payload fallbacks; the job sending the full
+Forgejo-webhook header family so the relay's event handling stays untouched. If the owner
+disagrees with any, each is a one-line follow-up — none gates execution.
 
-## Rejected alternatives (kept from research, reaffirmed by the ruling)
+## Rejected alternatives
 
-Annotation flip (OQ1 "no"); N public cluster webhooks (mesh-only, NXDOMAIN measured);
-GitHub Actions sync fan-out (same reachability wall + write-token sprawl); centralizing
-ArgoCD; argocd-notifications (outbound-only); refresh-only webhook fan-out (does not land
-pushes with automated off — the exact hole this relay fills).
+Everything rejected in waves 1–2 (annotation flip, N public cluster hooks, GitHub Actions
+direct sync, centralizing, notifications, refresh-only fan-out, blanket any-ref) PLUS:
+option (a) fleet-annotation forge migration, option (b) settle/re-verify GitHub leg, a raw
+Forgejo repo webhook on push (the structural race R1 resolves), and closing the public
+edge (R2 declined).

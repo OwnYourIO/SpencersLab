@@ -148,6 +148,78 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   case). Open questions: none remain — all seven (OQ1–OQ7) resolved by ruling; no genuine
   new gap surfaced by the answers.
 
+## Final-review owner reopen 2026-11-21 (rulings R1–R4; evidence = EXPLORE.md
+## "Forgejo rework probe (2026-11-21)" [P] + shipped-code reads; plan re-cut APPROVED)
+- 2026-11-21 human (reopen, STATE `reopen`): the webhook SOURCE must be Forgejo (canonical
+  forge = `git.spencerslab.com`, prod-role infra instance), not GitHub — probe [P] run as
+  the reopen's read-only ground truth before re-planning.
+- 2026-11-21 human: **R1 — race resolution option (c): NO external webhook.**
+  `.forgejo/workflows/main-sync.yaml` gains a final `hook-relay` job (`needs: push-gh`)
+  that POSTs the push payload (`ref`, `before`, `after`, `repository.full_name` —
+  contract pinned in C04; the relay consumes only `ref`) signed `X-Forgejo-Signature`
+  plain-hex HMAC of the raw body, shared secret from the Actions vault. WHY (c): [P §1]
+  all 9 reachable clusters' roots AND sampled children still track GitHub
+  `https://github.com/OwnYourIO/SpencersLab.git@main` BYTE-EXACT (repoURLs from the
+  cluster-secret annotations, no git literal); [P §3] a raw Forgejo push webhook fires
+  BEFORE `main-sync` advances GitHub ⇒ every fan-out would resolve the PREVIOUS
+  revision — the race is structural, not tunable. Rejected: (a) flipping the 11-cluster
+  annotation set to forge sources (+ atomic `trackedRepo` flip — flipping early is the
+  silent skipped×11 no-op trap [P §3]) — out-of-band churn beyond this ticket;
+  (b) settle/re-verify leg — new relay code + a GitHub read credential. Consequence
+  ruled-in as documented limitation: fan-out trigger failure ⇒ that push lands as a
+  no-op at the old revision (no Actions redeliveries; the next push self-heals — the
+  fan-out is SHA-agnostic; fallback = manual sync).
+- 2026-11-21 human: **R2 — the public crowdsec-only Ingress entry STAYS as shipped**
+  (owner wants a real webhook path possible later). No git change; C03-fix documents the
+  door: the race-free future webhook is the GITHUB repo one (apps track GitHub under
+  (c)); a raw Forgejo push webhook must not be created.
+- 2026-11-21 human: **R3 — signature dialect: the relay accepts BOTH**
+  `X-Hub-Signature-256` (GitHub/`sha256=`-prefixed) and `X-Forgejo-Signature`
+  (PLAIN hex, no prefix — verified from Forgejo v17.0 docs in [P §4]; the shipped relay
+  401s such deliveries today, so this is sanctioned CODE work). Constant-time verify
+  either way, per-header verification over the raw body. Plan-pinned detail: first-present
+  header decides the dialect, NO cross-dialect fallback (signature-confusion hygiene);
+  the job sends the full Forgejo-webhook header family (`X-GitHub-Event: push` included)
+  so the relay's event gate stays untouched — keeps the R2 door honest and C04 minimal.
+- 2026-11-21 human: **R4 — secret key rename `github-webhook` → `hook-secret`.** The
+  flat `/secrets` file + rendered ExternalSecret key rename together (semantics moved off
+  GitHub — the caller is now the Actions job). Ripple pinned across chunks: chart ES
+  template + chart README (C02-fix), `main.py` constant/`--check`/help/README + harness
+  fixtures (C01-fix), runbook §2 (C03-fix). Bitwarden item CONTENT unchanged (same login
+  item, same password field) — no owner re-mint. Parity rule: C01-fix + C02-fix ship in
+  the SAME release; a half-landed rename crash-loops the relay at startup (visible
+  `ConfigError`, not silent).
+- 2026-11-21 plan: contract re-verifications against shipped code before pinning (per the
+  reopen brief): `trackedRepo` is matched BYTE-LITERALLY against each app's LIVE
+  `spec.source.repoURL` (`main.py:213-215 app_matches`), NOT against the payload's
+  `repository` field (relay consumes only `ref`, `main.py:379) ⇒ the roster keeps the
+  GitHub URL and stays CORRECT under (c); payload `repository.full_name` is delivery
+  identity only, signature-covered, not matched. Event/delivery headers GitHub-compatible
+  per [P §4] — unchanged. [P §3]'s "flip `trackedRepo` atomically with annotations" stays
+  the standing rule for a future option-(a) migration ticket.
+- 2026-11-21 plan: C04 conventions pinned to the file's own doctrine: guard on the
+  exact bytes `contains(vars.ROLE, 'prod')` (membership, unset fail-safe-narrow — AGENTS.md
+  ROLE convention; dev instance and unset fire nothing, `needs: push-gh` chains the skip),
+  destination+credential instance-side (`vars.ARGOCD_HOOK_URL` +
+  `secrets.ARGOCD_HOOK_SECRET` — zero URL/secret literals in the file, per its header),
+  unset ⇒ `::warning::` + exit 0 (the mirror must never break over the hook — same
+  philosophy as the unset-ROLE posture; pinned best guess, reversible one-liner),
+  bounded POST retries (`--retry 3 --retry-delay 5 --retry-all-errors --max-time 15`) then
+  warn-and-continue. `.forgejo/**` validation = the offline static contract suite
+  `tests/services/forgejo-main-sync.sh` (bash+python3/pyyaml; NO actionlint precedent in
+  repo — inspected) extended t3/t5 + new t9–t13 incl. `bash -n` of every run block; live
+  proof is the human's `workflow_dispatch` smoke (C03-fix §5).
+- 2026-11-21 plan: Chunks re-cut with C01–C03 kept DONE-at-review (commits `dae5bc5f4`
+  / `0cf6e5338`+`43e69f0b9`+`19cc8f504` / `a3c2c2f15`+`0ccf80196`): NEW wave 4 `C01-fix`
+  (S — dialect+rename, the contract everything else consumes); wave 5 `C02-fix` (S — ES
+  key rename ripple) ∥ `C04` (S — main-sync hook job + suite extension, `.forgejo/`
+  in-scope first time); wave 6 `C03-fix` (S — runbook origin/vault/job/door/smoke/kill-
+  switch/limitations). Test session precedes dev: re-pin relay/wiring/runbook suites +
+  extend forgejo-main-sync. `plan_status` stays approved — R1–R4 covered the open design
+  space; the three pinned micro-calls (unset posture, header family, dispatch fallbacks)
+  are implementation judgments, reversible one-liners, NOT new questions.
+
+
 
 ## Final whole-plan review 2026-11-21 (RESEARCH measurement corrected — C02 fix round)
 - 2026-11-21 review(final): **the derived roster host `cluster.<cat>.<domain>` is

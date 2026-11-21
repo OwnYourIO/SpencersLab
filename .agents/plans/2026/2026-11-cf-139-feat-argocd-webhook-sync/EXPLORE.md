@@ -76,3 +76,150 @@ Scouted 2026-11-12 on branch `cf-139-feat-argocd-webhook-sync` (branched from ma
 4. Where should the GitHub webhook(s) be created (per-repo settings → one hook per cluster URL, or one edge → fan-out), and with what secret storage (Bitwarden + ExternalSecret pattern per §4)? Repo-side half only; the GitHub side is a user action.
 5. `infra-seaweedfs` is OutOfSync while `ServerSideApply: "false"` — unrelated drift, but worth a glance during planning so a fleet-wide sync doesn't surprise.
 6. ArgoCD *application* version behind helm chart 10.11.6 (affects webhook API details, e.g. `serverWebhookPath` defaults) — planner should read live (`argocd-cm` or server image tag) rather than assume.
+
+---
+
+# Forgejo rework probe (2026-11-21)
+
+Trigger: owner ruling at Final Review (STATE.json `reopen.reason`): "webhook source must be
+Forgejo (forge migrated to git.spencerslab.com), not GitHub". Read-only probes: live
+`resources_get`/`resources_list` on `argoproj.io/v1alpha1 Application` via the nine
+`readonly-<cluster>-kubernetes` MCP servers (all apps live in ns `default` — re-verified
+2026-11-21 on all nine clusters; the launch hint "ns argocd" is wrong for Applications),
+repo greps, git log/remote reads, and the Forgejo v17.0 webhooks docs (forgejo.org, fetched
+2026-11-21).
+
+## 1. Ground truth: repoURL per cluster TODAY — the fleet STILL tracks GitHub, 9/9
+
+| cluster (MCP server) | root app | git source repoURLs (`services`/`values`/service-path) | targetRevision | chart source (base) | one child app corroborated | root sync (this probe) |
+|---|---|---|---|---|---|---|
+| dev (`readonly-dev-kubernetes`) | `dev` | `https://github.com/OwnYourIO/SpencersLab.git` ×3 | `main` ×3 | `https://ownyourio.github.io/SpencersLab/` @1.0.201 | `dev-cloudnative-pg`: github `main` + chart `cloudnative-pg.github.io` | OutOfSync |
+| gpu (`readonly-gpu-kubernetes`) | `gpu` | github ×3 | `main` | gh-pages index @1.0.198 | `gpu-amd-gpu`: github `main` + chart `rocm.github.io` | Synced |
+| gpu-ai (`readonly-ai-gpu-kubernetes`) | `gpu-ai` | github ×3 | `main` | gh-pages index @1.0.198 | `gpu-ai-amd-gpu`: github `main`, path `charts/amd-gpu` | Synced |
+| grow (`readonly-grow-kubernetes`) | `grow` | github ×3 | `main` | gh-pages index @1.0.202 | `grow-assistant`: github `main`, path `charts/home-assistant` | Synced |
+| home (`readonly-home-kubernetes`) | `home` | github ×3 | `main` | gh-pages index @1.0.202 | `home-bri-budget`: github `main`, path `charts/actualbudget` | **Unknown** |
+| infra (`readonly-infra-kubernetes`) | `infra` | github ×3 | `main` | gh-pages index @1.0.202 | **`infra-forgejo`: github `main`, path `charts/forgejo`** (the app that *deploys the Forgejo instance itself* sources from GitHub) | OutOfSync |
+| media (`readonly-media-kubernetes`) | `media` | github ×3 | `main` | gh-pages index @1.0.202 | `media-audiobookrequest`: github `main`, path `charts/audiobookrequest` | OutOfSync |
+| monitoring (`readonly-monitoring-kubernetes`) | `monitoring` | github ×3 | `main` | gh-pages index @1.0.202 | `monitoring-exporter-mikrotik`: github `main` + chart gh-pages index | Synced |
+| proxy-local (`readonly-proxy-local-kubernetes`) | `proxy-local` | github ×3 | `main` | gh-pages index @1.0.202 | `proxy-local-external-secrets-bitwarden`: github `main`, path `charts/external-secrets-bitwarden` | Synced |
+| proxy-remote | — | **MANUAL ROW** — no readonly MCP server in the catalog (unchanged from §5) | — | — | — | — |
+| proxy-backup | — | **MANUAL ROW** — no readonly MCP server | — | — | — | — |
+
+**Answer 1: no cluster has moved to the Forgejo origin.** Every reachable root app AND every
+sampled child carries the byte-exact string `https://github.com/OwnYourIO/SpencersLab.git`
+(incl. `.git`) at `main`. The two manual rows are structurally identical templates (§2) and
+presumed GitHub too — unverified. Side observations: `home` root now reports sync `Unknown`
+(was Synced 2026-11-12); `media` MCP answered this probe (the 2026-11-12 ECONNREFUSED is
+gone — FRICTION note closed in practice).
+
+## 2. Where repoURL comes from in the repo — it never appears as a literal
+
+- Both appsets render every git `repoURL` from the ArgoCD **cluster-secret annotations**:
+  `services.repo` / `values.repo` / `chart.repo` (service appsets, e.g.
+  `services/infra/prod/templates/appset.yaml:78,81,84,102`; `charts/base/templates/appset-charts.yaml:54,64`).
+  Same for the custom-values URL valueFiles — `services.gpu.customValuesUrls` annotation,
+  the template only carries it as a COMMENT example (appset.yaml:61).
+- Live confirmation (infra root spec, read 2026-11-21): the rendered `valueFiles` still
+  contain `https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/infra/prod-values.yaml`
+  — i.e. **a third GitHub-bound URL surface lives in the cluster secrets, not in git**.
+- Repo-side evidence of the forge migration: it exists for **developers and CI, not for
+  ArgoCD**. `git remote -v` here: `origin` = `https://git.spencerslab.com/CuratedForest/SpencersLab.git`
+  (GitHub is only an `upstream` remote). `.forgejo/workflows/` (containers-build, main-sync,
+  renovate, release) is build/release-authoritative. `grep github.com/OwnYourIO services/`
+  → only clone-URL comments/secrets (`services/{dev,gpu}/prod/values.yaml` coder github-auth,
+  a stale comment in home) — **zero appset/source templates carry it**. So flipping the
+  fleet's git world = editing the 11 cluster-secret annotations (out-of-band, human, cf-11
+  precedent), not a git change.
+
+## 3. The two answers + implications for the fix rounds
+
+**Answer: roots track GitHub ⇒ the fan-out race EXISTS and is structural.** Mechanism, all
+read today: `.forgejo/workflows/main-sync.yaml` (on the prod instance, `push.branches:[main]`,
+ROLE-guarded `contains(vars.ROLE,'prod')`) asynchronously clones (checkout `fetch-depth: 0`)
+and non-force-pushes main to GitHub (`push-gh` job, lines 28-47) and the dev instance
+(`push-dev`, 49-68). A Forgejo-fired webhook therefore hits the relay **before** GitHub —
+which the fleet still reads — has advanced; the sync resolves whatever revision
+`github.com/OwnYourIO/SpencersLab`'s `main` had when ArgoCD last polled it (default 120s+60s
+jitter, no override **[E §4]**). Result: sync-lands-old-revision, every push, deterministically
+(mirror lag = Actions queue + clone + push; add the repo-server cache staleness on top).
+The C03 runbook already reasoned around this: `.agents/notes/2026-11-17-argocd-hook-relay.md:123-124`
+fires the hook on GitHub *precisely because* "main-sync copies main from the Forgejo canonical
+repo" — the owner ruling re-opens that choice. The fix round must pick the resolution (NOT
+this scout's call): **(a)** move the fleet to Forgejo sources (all git repoURL annotations +
+the customValuesUrls raw URLs → forge raw path; GitHub Pages chart index `ownyourio.github.io`
+is semver-not-ref and can stay), then flip `trackedRepo` atomically; **(b)** keep GitHub
+sources and fire the Forgejo hook with a settle/re-verify leg (new code + a GitHub read
+credential — argues against); **(c)** fire from the Forgejo repo but from the main-sync
+workflow AFTER `push-gh` lands (timing-correct, zero annotation churn — needs an HMAC'd POST
+step; arguably still "webhook source = FORGEJO" in the owner's sense). **Decision needed →
+escalate.**
+
+**If the fleet moves to Forgejo (option a), the roster facts change as follows**:
+`trackedRepo` (`charts/argocd-hook/values.yaml:23`, github URL) is consumed byte-literally —
+`app_matches` is exact `s.get("repoURL") == repo` (`containers/argocd-hook/main.py:213-214`),
+no normalization. It is correct-world for all 11 targets TODAY (live string is byte-identical
+incl. `.git`); flipping it while sources stay on GitHub would make every target's root app
+non-eligible → fan-out logs `result=skipped` ×11 — a silent no-op (202 still returned!).
+The flip must therefore be: cluster secrets first, `trackedRepo` in the same release, chosen
+string = exactly what the annotations will be set to (the fork's canonical clone form is
+`https://git.spencerslab.com/CuratedForest/SpencersLab.git` per `git remote -v` origin — with
+or without `.git` is the fix round's contract to pin). Also: the hub itself (proxy-local →
+its root app) is on GitHub too, so option (a) changes the relay's own app's source repo
+mid-flight — bootstrap-ordering note for the runbook.
+
+## 4. Forgejo webhook surface — verified vs assumed (fix rounds + runbook)
+
+VERIFIED (forgejo.org docs v17.0, fetched 2026-11-21 — infra runs Forgejo 17.3.x:
+`charts/forgejo/Chart.yaml:13` dep 17.3.1, renovate tag bump commit 3027dec66 → v17.0 docs
+apply with minor-drift caveat; plus local files):
+- UI path: repo `Settings → Webhooks` at `/:user/:repo/settings/hooks`; type **Forgejo** or
+  **Gitea** (both POST, `application/json` selectable); secret configurable ("Secret" field);
+  Test Delivery button + Recent Deliveries list exist. Org- and instance-level hooks also exist.
+- Headers on an event: Forgejo sends ALL of `X-Forgejo-Event`/`X-Gitea-Event`/
+  **`X-GitHub-Event`** + matching `*-Delivery` UUID headers (docs example block) ⇒ the relay's
+  `X-GitHub-Event` check and `X-GitHub-Delivery` logging (main.py:369,388) **work unchanged**
+  against a Forgejo webhook of type Forgejo. Type→header-family mapping for the *Gitea*
+  webhook type alone is ASSUMED (docs list the union; verify live).
+- Signature: `X-Forgejo-Signature` = **plain hex HMAC-SHA256 of the raw body — no `sha256=`
+  prefix** (docs' PHP reference implementation). The relay reads only `X-Hub-Signature-256`
+  and `verify_signature` REQUIRES the `sha256=` prefix (main.py:179-183,365) ⇒ **every Forgejo
+  delivery 401s today**. This is a code change (accept the bare-hex header in parallel or
+  instead), not a values change — the DECISIONS "fix with values, not code" ruling covered
+  roster hosts only and does not exempt this.
+- Push payload fields: `ref` (full `refs/heads/<branch>`), `before`, `after`,
+  `repository.full_name`, `repository.ssh_url` (`ssh://git@host:PORT/owner/repo.git` form on
+  this fleet, `.agents/notes/2026-10-23-forgejo-git-ssh.md`), `compare_url`, `commits[]` —
+  docs example verified. Local corroboration: `.forgejo/workflows/release.yaml:54` reads
+  `${{ github.event.before }}` (Actions context mirrors the payload; its comment warns
+  "Forgejo event payloads can carry missing keys" — handle absent `before`/first-push).
+  Relay consumes `ref` only (main.py:379) — `refs/heads/main` in, `["refs/heads/main"]`
+  filter matches unchanged. Gitea-type signature header name (`X-Gitea-Signature`) = ASSUMED
+  from the launch brief, unverified by my fetch.
+- Ping/test event: GitHub sends `ping`; Forgejo's Test Delivery semantics (event name +
+  payload shape) NOT verified → fix round must test against the live instance before
+  rewriting the runbook's smoke steps.
+
+GitHub-coupled surfaces the fix round must sweep (all read 2026-11-21): relay code
+(main.py:25-30 `GITHUB_SECRET_FILE`/`github-webhook` filename, 179-183, 365-388; README.md:3,16);
+chart (`values.yaml:20-23` comment+default; `templates/secret-argocd-hook.yaml:18`
+`secretKey: github-webhook` — flat filename is the relay's file contract, renaming touches
+chart+relay+harness+Bitwarden item field together); harness
+(`tests/containers/argocd-hook-relay.sh:391-395` signs `X-Hub-Signature-256` +
+`X-GitHub-Event` — add/switch to Forgejo-shaped deliveries, keep both if dual-format);
+runbook (`.agents/notes/2026-11-17-argocd-hook-relay.md:114-146,199` — webhook creation
+steps, curl smoke headers, kill switch all point at GitHub repo settings).
+
+## Open questions (fix rounds / owner — scout does not decide)
+
+1. Which race resolution (option a/b/c above) does the owner rule? Whole roster + runbook +
+   human-action list shape depends on it.
+2. Is `CuratedForest/SpencersLab` on the prod forge PUBLIC? The fleet's ArgoCD repo-server
+   has zero repo-creds wiring ([E §1]); private sources would add per-cluster credential work
+   to option (a).
+3. Exact strings the 11 cluster-secret annotations will take (`…/SpencersLab` vs `…/SpencersLab.git`,
+   raw-values URL form `/raw/branch/main/…` — form assumed from Gitea convention, verify live).
+4. Forgejo Test Delivery event name/payload (ping-equivalent) and Gitea-type signature header
+   — verify against the live instance, not docs.
+5. Whether the `ownyourio.github.io` chart index and `upstream` GitHub remote stay (they can —
+   not ref-tracked surfaces), or the owner expects a fuller GitHub retirement than this ticket
+   must implement.
