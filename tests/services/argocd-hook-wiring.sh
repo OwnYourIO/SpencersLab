@@ -40,7 +40,9 @@ RELEASE="proxy-local-argocd-hook"
 TEST_UUID="test-uuid"
 DOMAIN="test.example.com"
 TRACKED_REPO="https://github.com/OwnYourIO/SpencersLab.git"
-RUNBOOK="2026-11-17-argocd-hook-relay.md"
+# Full path, not basename: the final review caught a plans-folder pointer to
+# the same filename — a basename grep passed it green while the path was dead.
+RUNBOOK=".agents/notes/2026-11-17-argocd-hook-relay.md"
 BASE="${CHUNK_BASE:-HEAD}"
 CATS="dev gpu gpu-ai grow home infra media monitoring proxy-local proxy-backup proxy-remote"
 
@@ -371,6 +373,9 @@ def load(path):
 
 
 CATS = ["dev", "gpu", "gpu-ai", "grow", "home", "infra", "media", "monitoring", "proxy-local", "proxy-backup", "proxy-remote"]
+# Live-verified exceptions to the derived cluster.<cat>.<domain> route shape.
+OVERRIDE_HOSTS = {"dev": "cluster.dev.scifi.farm",
+                  "home": "cluster.home-lab.spencerslab.com"}
 
 pv = load(proxy_vals_path)
 sub = ((pv.get("proxy") or {}).get("subdomains") or {}).get("argocd-hook")
@@ -413,6 +418,7 @@ cv = load(chart_values_path)
 if cv.get("trackedRepo") != tracked_repo:
     bad("t3: chart values trackedRepo is %r, expected %r — the git origin ArgoCD tracks (C02 values task)" % (cv.get("trackedRepo"), tracked_repo))
 locals_ = []
+host_errs = []
 for e in roster:
     n = e.get("name")
     if e.get("rootApp") != n:
@@ -421,23 +427,46 @@ for e in roster:
         bad("t3: roster entry %s tokenKey is %r, expected %s (flat secret file per category)" % (n, e.get("tokenKey"), n))
     if e.get("repo") != tracked_repo:
         bad("t3: roster entry %s repo is %r, expected the trackedRepo value %r (spec-driven fan-out matches live app spec.source.repoURL against it)" % (n, e.get("repo"), tracked_repo))
-    want_url = "https://cluster.%s.%s" % (n, domain)
+    # Live-verified roster (final whole-plan review 2026-11-21, readonly Ingress
+    # + DNS reads): the argocd-server route is cluster.<cat>.<domain> for nine
+    # categories; dev's own domain annotation is scifi.farm and home's
+    # clusterName is home-lab, so the derived form is a dead hostname on those
+    # two — they arrive as fixed full hosts injected from chart values. An
+    # override elsewhere (or none here) means the render diverges from the
+    # routes that actually answer pushes.
+    if n in OVERRIDE_HOSTS:
+        want_url = "https://" + OVERRIDE_HOSTS[n]
+        why = "fixed values-injected host — the derived cluster.<cat>.<domain> form does not resolve on this cluster"
+    else:
+        want_url = "https://cluster.%s.%s" % (n, domain)
+        why = "derived mesh route (must track --set domain; no per-category override expected)"
     if e.get("url") != want_url:
-        bad("t3: roster entry %s url is %r, expected %r (mesh cluster route, domain-injected — no cluster-side exposure)" % (n, e.get("url"), want_url))
+        host_errs.append("%s: rendered %r, expected %r (%s)" % (n, e.get("url"), want_url, why))
     if e.get("local"):
         locals_.append(n)
+if host_errs:
+    bad("t3: roster URLs diverge from the live-verified argocd-server hosts (%s)" % "; ".join(host_errs))
 if locals_ != ["proxy-local"]:
     bad("t3: entries flagged local: %s, expected exactly ['proxy-local'] — the self-sync ordering law depends on the flag (C01 fan-out)" % (locals_,))
 
 raw = open(render).read()
-if "spencerslab.com" in raw.lower():
-    hits = [ln for ln in raw.splitlines() if "spencerslab.com" in ln.lower()][:3]
-    bad("t3: the render carries a literal spencerslab.com with domain=test.example.com set — the cluster URLs must be domain-injected from OVERRIDE_VIA_APPSET (AC3): %s" % hits)
+# AC3's literal-domain ban guards the DERIVED leg against a baked prod domain.
+# The two sanctioned override hosts legitimately contain spencerslab.com /
+# scifi.farm (route truth, not an assumption), so the ban strips exactly those
+# host strings first — a third hardcoded domain anywhere in the render still
+# trips it, and the nine derived URLs are already pinned to the injected test
+# domain by the exact-equality leg above.
+stripped = raw
+for oh in OVERRIDE_HOSTS.values():
+    stripped = stripped.replace(oh, "<sanctioned-override-host>")
+if "spencerslab.com" in stripped.lower():
+    hits = [ln for ln in stripped.splitlines() if "spencerslab.com" in ln.lower()][:3]
+    bad("t3: the render carries a literal spencerslab.com outside the two pinned override hosts — derived cluster URLs must be domain-injected from OVERRIDE_VIA_APPSET (AC3): %s" % hits)
 
 blob2 = targets_of(render2)
 if sorted(blob2.get("allowed_refs") or []) != ["refs/heads/main", "refs/heads/stage"]:
     bad("t3: --set allowedRefs[0/1] did not reach targets.json (allowed_refs: %r) — OQ7's one-values-edit widening is not plumbed" % (blob2.get("allowed_refs"),))
-print("ok: t3 — hub entry == rendered Service %s on 8080; targets.json ships allowed_refs [refs/heads/main], the 11-category roster with rootApp/tokenKey/repo/url per contract, exactly one local flag, no literal domain in the render, and allowedRefs overrides flow (AC3/OQ7)" % release)
+print("ok: t3 — hub entry == rendered Service %s on 8080; targets.json ships allowed_refs [refs/heads/main], the 11-category roster with rootApp/tokenKey/repo per contract and urls per the live-verified host set (dev/home fixed, nine derived), exactly one local flag, no un-sanctioned literal domain in the render, and allowedRefs overrides flow (AC3/OQ7)" % release)
 PY
   then
     ok "t3 passed (AC3)"
