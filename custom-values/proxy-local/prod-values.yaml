@@ -41,3 +41,15 @@ hivetools:
   keycloak:
     realm: SpencersLab
 
+# Relay secrets (cf-139). OQ5 ruling "merge first, fill later": these
+# OVERRIDE_NEEDED lines ship through the merge on purpose - the
+# proxy-local-argocd-hook release crash-loops visibly until the owner
+# creates the two Bitwarden items, mints the per-cluster mcp-bot tokens and
+# replaces both lines with real item UUIDs per the runbook
+# .agents/notes/2026-11-17-argocd-hook-relay.md
+# (its section 2 is the fill + first-bootstrap procedure).
+argocd-hook:
+  bitwardenIds:
+    argocd-hook-secret: OVERRIDE_NEEDED
+    argocd-hook-tokens: OVERRIDE_NEEDED
+

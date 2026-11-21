@@ -57,6 +57,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  argocd-hook:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 proxy:
   middlewares: 
@@ -125,6 +130,20 @@ proxy:
           - "kube-system-crowdsec@kubernetescrd"
     forgejo:
       target: infra
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+
+    # GitHub push-hook relay (cf-139), hosted on this hub. GitHub clients
+    # cannot pass hub Keycloak, so this is a crowdsec-only public exception
+    # like the forms/git/paste rows above; external-dns publishes the public
+    # host from these entries. The service:/port: keys point the backend
+    # straight at this release's own Service (local-service shape as in the
+    # torrents/streams entries) instead of the ExternalName hop.
+    argocd-hook:
+      service: proxy-local-argocd-hook
+      port: 8080
       middlewares: "kube-system-crowdsec@kubernetescrd"
       ingressRoute:
         middlewares:

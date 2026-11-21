@@ -1,0 +1,16 @@
+apiVersion: v2
+name: argocd-hook
+description: GitHub push-hook relay that fans real ArgoCD API syncs out to every
+  cluster root app over mesh DNS (cf-139). Deployed on the proxy-local hub only;
+  public exposure is the hub's crowdsec-only argocd-hook subdomain.
+type: application
+version: 1.0.0
+# The container is built in-repo (containers/argocd-hook); no prod-role build has
+# published a :yy.mm.N calendar tag yet, so appVersion tracks the rolling :main
+# ref until the chart can pin a calendar tag (helm-chart-creation "Image tag
+# pinning" rule 2).
+appVersion: main
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/
