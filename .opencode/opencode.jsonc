@@ -1171,6 +1171,12 @@
       "effect": "allow"
     }
   ],
+  // question-notify (the HA phone pushes for question / pending-approval /
+  // finished events) is owner-disabled 2026-11-21. The `-` prefix removes a
+  // discovered plugin by its declared ID (`local.question-notify` in its
+  // export), so the hand-managed file under .opencode/plugin/ stays untouched
+  // and this entry alone is the toggle.
+  "plugins": ["-local.question-notify"],
   "disabled_providers": [
     "kilo",
     "llama",
