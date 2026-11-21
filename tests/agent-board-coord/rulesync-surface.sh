@@ -126,10 +126,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 25); do WANT["c$i"]=1; done
+  for i in $(seq 1 26); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-5])$ ]] || fail "unknown check id '$a' (expected c1..c25)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-6])$ ]] || fail "unknown check id '$a' (expected c1..c26)"
     WANT["$a"]=1
   done
 fi
@@ -357,28 +357,77 @@ EOF
   # family contract (API containment, git-only rows, variant rosters,
   # shapes) now guards this surface strictly in agent-perms A12 +
   # coord-inwork i4 + gate t17, which are stronger than "port + two shell
-  # allows". What stays is the position pin: the two scoped opencode-api
-  # session allows sit directly after the single opencode '*' allow, so the
-  # in-work-mark machinery keeps its anchor whatever the block grows around
-  # it (cf-52 arm-B twin, atpos form, parsed instead of line-level).
-  python3 - "$AGENT_GEN" <<'PY'
+  # allows". What stays is the position pin — cf-126 C02 / Ruling OQ6
+  # (validation_at_fault via coord, DECISIONS D24 route) grew the scoped
+  # session-API family to FOUR rows: get→patch→post→post, the two creation
+  # rows landing beside get/patch as the sanctioned C03 handoff transport.
+  # The pin is the same law — only these session allows, in order, directly
+  # after the single opencode '*' anchor — applied to the grown family; the
+  # shipped checker also runs against the fabricated mutants (a dropped
+  # creation post row, a reordered pair) so the equality is proven non-
+  # vacuous, mirroring agent-perms family.py's re-pinned api mode.
+  cat >"$TMP/c2api.py" <<'PY'
 import re, sys, yaml
 m = re.match(r"^---\n(.*?)\n---\n", open(sys.argv[1]).read(), re.S)
 assert m, "no YAML frontmatter"
 fm = yaml.safe_load(m.group(1)) or {}
-perms = fm.get("permissions") or []
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+perms = outer.get("permissions") or fm.get("permissions") or []
 API = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
-       {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+       {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"},
+       {"action": "shell", "resource": "opencode api post /api/session*", "effect": "allow"},
+       {"action": "shell", "resource": "opencode api post /api/session/*", "effect": "allow"}]
 api_rows = [p for p in perms if p.get("action") == "shell" and str(p.get("resource", "")).startswith("opencode api")]
 if api_rows != API:
-    print(f"opencode-api rows {api_rows}, want exactly the two scoped session allows (containment)"); sys.exit(1)
+    print(f"opencode-api rows {api_rows}, want exactly the four-row scoped session family get->patch->post->post in order (containment: the OQ6 lift sanctions the /api/session CREATION rows, nothing beyond the family)")
+    sys.exit(1)
 anchors = [i for i, p in enumerate(perms) if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
 if len(anchors) != 1:
-    print(f"want exactly one opencode '*' allow anchor, found {len(anchors)}"); sys.exit(1)
-if perms[anchors[0] + 1:anchors[0] + 3] != API:
-    print("the api pair does not sit directly after the opencode '*' allow"); sys.exit(1)
+    print(f"want exactly one opencode '*' allow anchor, found {len(anchors)}")
+    sys.exit(1)
+if perms[anchors[0] + 1:anchors[0] + 5] != API:
+    print("the four-row api family does not sit directly after the opencode '*' allow (the pinned splice position — the in-work-mark machinery keeps its anchor whatever the block grows around it)")
+    sys.exit(1)
+print("ok")
 PY
-  ok "c2: generated agent frontmatter — shape/name/color/desc/dev-boards/roster-slot pins plus API containment at the pinned position (the port byte-walk retired to the absolute family guards)"
+  python3 "$TMP/c2api.py" "$AGENT_GEN" \
+    || fail "c2: generated agent-board-coord mirror violates the four-row session-API family at the pinned position (the cf-126 C02 shape; reason above)"
+  # Fabricated-drift controls: dropping a creation post row and reordering
+  # the head of the family must each redden the SAME shipped checker.
+  python3 - "$AGENT_GEN" "$TMP/c2-drop.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+k = next(i for i, r in enumerate(rows) if r.get("resource") == "opencode api post /api/session*")
+del rows[k]
+target["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if python3 "$TMP/c2api.py" "$TMP/c2-drop.md" >/dev/null 2>&1; then
+    fail "c2 control: dropping one creation-post row passed the family pin — the four-row containment is vacuous"
+  fi
+  python3 - "$AGENT_GEN" "$TMP/c2-order.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+ig = next(i for i, r in enumerate(rows) if r.get("resource") == "opencode api get /api/session*")
+ip = next(i for i, r in enumerate(rows) if r.get("resource") == "opencode api patch /api/session/*")
+rows[ig], rows[ip] = rows[ip], rows[ig]
+target["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if python3 "$TMP/c2api.py" "$TMP/c2-order.md" >/dev/null 2>&1; then
+    fail "c2 control: the reordered get/patch mutant passed — the family ORDER (last-match-wins splice) is not enforced"
+  fi
+  ok "c2: generated agent frontmatter — shape/name/color/desc/dev-boards/roster-slot pins plus the four-row session-API family (get→patch→post→post) at the pinned splice position (cf-126 C02/OQ6 re-pin; drop and reorder mutants redden; the port byte-walk stays retired to the absolute family guards)"
 fi
 
 # --- c3: the generated agent — body keeps the skeleton ------------------------
@@ -623,7 +672,9 @@ if want c8; then
       .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
-      .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*) return 0 ;;
+      .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
+      .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
+      .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*) return 0 ;;
       *) return 1 ;;
     esac
   }
@@ -1684,6 +1735,83 @@ MD
   python3 "$TMP/window.py" --ci "$TMP/role-coord-hollow.md" 900 'sole committer' 'ticket branch' 'never main' >/dev/null 2>&1 \
     && fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — a role-coord copy whose sole-committer sentence was stripped still passes the window"
   ok "c24[cf-106 C04 AC1/AC3/AC5/AC6/AC8]: the code-pr twin has an honest parsed mirror; pipeline-role-coord (source + mirror) states the roster gain, the dev-first preference with the DECISIONS record, the bounded push under the sole-committer rule and the ask-as-deny consequence; pipeline-push-pr brings code-pr into the governed set on both trees; permissions.md carries the code-pr matrix row and a cf-106 drift entry; the wording needles are satisfiable (synthetic compliant skill) and responsive (stripped copy rejected)"
+fi
+
+# --- c26: cf-126 C01/C02 — the dispatcher mirror, the family counts, the frozen collector --
+# chunks/C01.md Tests ("the generated mirror exists for the new agent and is
+# honest to its source (the family count arm extends)") + chunks/C02.md Tests
+# ("the six mirrors honest to the six sources (the family count arm holds at
+# six)"). Mirror honesty here is PARSED equality (rulesync re-serializes
+# bytes; the rule list plus its order is the runtime contract — the same
+# division of duty as agent-perms A12's pairsync loop). The collector half is
+# the C01 AC1 negative control: agent-board.md (source AND mirror) byte-
+# frozen against the base — the dispatcher is ADAPTED FROM its shape, the
+# file itself never moves (D2). DESIGNED RED: the dispatcher legs until C01
+# lands and regenerates; the six-coord legs and the collector freeze HOLD
+# green now and must survive every wave of this ticket.
+if want c26; then
+  DISP_SRC=".rulesync/subagents/agent-board-dispatch.md"
+  DISP_GEN=".opencode/agents/agent-board-dispatch.md"
+  COORD6=(.rulesync/subagents/agent-coord.md .rulesync/subagents/agent-coord-local.md
+          .rulesync/subagents/agent-coord-pr.md .rulesync/subagents/agent-board-coord.md
+          .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md)
+  cat >"$TMP/parsed.py" <<'PY'
+# Parsed permission-list equality source<->mirror (dict + order — the honest
+# mirror invariant; byte equality lives where rulesync copies verbatim).
+# Mirror frontmatter is FLAT (no opencode: nesting), so every field reads
+# nested-then-flat (the pairsync normalization) — a top-level-only read
+# false-reds on every healthy pair.
+import re, sys, yaml
+def rows(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no frontmatter"
+    fm = yaml.safe_load(m.group(1)) or {}
+    outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+    perms = outer.get("permissions") or fm.get("permissions") or []
+    return (fm.get("name"),
+            outer.get("mode", fm.get("mode")),
+            outer.get("color", fm.get("color")),
+            [ {k: v.get(k) for k in ("action","resource","effect")} for v in perms ])
+a, b = rows(sys.argv[1]), rows(sys.argv[2])
+if a != b:
+    diff = next((i for i, (x, y) in enumerate(zip(a[3], b[3])) if x != y), None)
+    print(f"{sys.argv[1]} vs {sys.argv[2]}: name {a[0]!r}/{b[0]!r} mode {a[1]!r}/{b[1]!r} rows {len(a[3])}/{len(b[3])}"
+          + (f" — first divergence at row {diff}: {a[3][diff]} vs {b[3][diff]}" if diff is not None else ""))
+    sys.exit(1)
+print("ok")
+PY
+  [ -f "$DISP_SRC" ] || fail "c26[C01 AC1]: $DISP_SRC missing — the dispatcher agent is C01's new surface (designed red before dev)"
+  [ -f "$DISP_GEN" ] || fail "c26[C01 AC1]: generated mirror $DISP_GEN missing — rulesync must generate it in the same landing (never hand-written)"
+  python3 "$TMP/parsed.py" "$DISP_SRC" "$DISP_GEN" \
+    || fail "c26[C01 AC1]: the dispatcher mirror is not honest to its source — regenerate, never hand-edit .opencode/"
+  for f in "${COORD6[@]}"; do
+    g=".opencode/agents/$(basename "$f")"
+    python3 "$TMP/parsed.py" "$f" "$g" \
+      || fail "c26[C02 AC4]: coord source $f and its mirror $g diverge after the C02 widening — the six mirrors must be regenerated WITH the six sources (HOLD arm: green at base, red on a half-regenerate)"
+  done
+  # Family counts: the coord family holds at SIX (aliases are its, the
+  # dispatcher is a new, distinct agent — D2); the board-agent tree gains
+  # exactly the dispatcher as its FIFTH name.
+  n_coord=$(ls .rulesync/subagents/agent-coord.md .rulesync/subagents/agent-coord-local.md .rulesync/subagents/agent-coord-pr.md \
+              .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md 2>/dev/null | wc -l)
+  [ "$n_coord" -eq 6 ] || fail "c26[C02 AC1]: the coord family counts $n_coord, want the family held at six (the widening touches them; nothing retires)"
+  n_boardfam=$(ls .rulesync/subagents/agent-board.md .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md \
+                 .rulesync/subagents/agent-board-coord-pr.md .rulesync/subagents/agent-board-dispatch.md 2>/dev/null | wc -l)
+  [ "$n_boardfam" -eq 5 ] || fail "c26[C01 AC1]: the board-agent tree counts $n_boardfam of five (collector + three coord variants + dispatcher) — the dispatcher source is missing (designed red before C01 dev)"
+  # The collector freeze: byte-identical to base, source AND mirror, plus
+  # the fabricated-drift control that proves a single byte would be caught.
+  for f in .rulesync/subagents/agent-board.md .opencode/agents/agent-board.md; do
+    [ -f "$f" ] || fail "c26[C01 AC1]: $f missing at the working tree (harness fault)"
+    git cat-file -e "${BASE}:$f" 2>/dev/null || fail "c26[C01 AC1]: $f not in base $BASE (harness fault)"
+    git show "${BASE}:$f" >"$TMP/base-board-copy.md"
+    cmp -s "$f" "$TMP/base-board-copy.md" \
+      || fail "c26[C01 AC1 negative]: $f differs from base — agent-board.md (the /wekan-board-context collector) is BYTE-UNTOUCHED by law (D2; the dispatcher is ADAPTED FROM its shape, the file never moves)"
+  done
+  sed 's/^name: agent-board$/name: agent-boardX/' .rulesync/subagents/agent-board.md >"$TMP/board-moved.md"
+  git show "${BASE}:.rulesync/subagents/agent-board.md" >"$TMP/board-base.md" 2>/dev/null
+  cmp -s "$TMP/board-moved.md" "$TMP/board-base.md" \
+    && fail "c26 control: a one-word mutation of the collector still matched the freeze — the byte pin is vacuous"
+  ok "c26[C01 AC1 + C02 AC1/AC4]: the dispatcher source exists with an honest generated mirror; the six coord pairs stay parsed-honest through the widening; the coord family holds at six and the board-agent tree counts five; agent-board.md (source + mirror) is byte-frozen to base and the fabricated byte-move is caught"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

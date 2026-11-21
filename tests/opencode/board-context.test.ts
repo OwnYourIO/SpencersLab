@@ -673,11 +673,16 @@ describe("S2 resolveBoardContext — six-leg sequence and per-list card assembly
   });
 });
 
-describe("S3 agent filter — the three whole board-coord ids (AC 1)", () => {
-  it("accepts exactly the three explicit ids and nothing else", () => {
+describe("S3 agent filter — the four scheduled-surface ids (AC 1; cf-126 C01 quadruple)", () => {
+  // cf-126 C01 AC4 re-pin: the dispatcher counts as a board-reading surface
+  // (it reads the board on every tick and its first prompt is the first tick,
+  // so the structural block helps) — the quadruple is the three board-coord
+  // names + agent-board-dispatch. The collector `agent-board` stays OUT: its
+  // contract is the /wekan-board-context command's, untouched (D2).
+  it("accepts exactly the four ids and nothing else", () => {
     const is = seam("isBoardCoordAgent");
-    for (const agent of ["agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr"]) {
-      assert.equal(is(agent), true, `${agent} must pass the filter`);
+    for (const agent of ["agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr", "agent-board-dispatch"]) {
+      assert.equal(is(agent), true, `${agent} must pass the filter (red before C01 dev — the quadruple is the landed shape)`);
     }
     for (const agent of ["agent-coord", "agent-board", "code", "agent-coord-local", "build", "", undefined, null]) {
       assert.equal(is(agent as any), false, `${String(agent)} must not pass the filter`);
@@ -687,8 +692,20 @@ describe("S3 agent filter — the three whole board-coord ids (AC 1)", () => {
   it("lists the roster as whole values — no globs, no prefixes", () => {
     const roster = (mod.BOARD_COORD_AGENTS ?? mod.default?.BOARD_COORD_AGENTS) as string[];
     assert.ok(Array.isArray(roster), "BOARD_COORD_AGENTS must be exported");
-    assert.deepEqual([...roster].sort(), ["agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr"]);
+    assert.deepEqual([...roster].sort(), ["agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr", "agent-board-dispatch"]);
     for (const entry of roster) assert.ok(!entry.includes("*"), `roster entry ${entry} is a glob, not a whole value`);
+  });
+
+  // C01 AC4 second half: the claim-time card-details hook keys on
+  // pipeline_claim (CLAIM_TOOLS) and must stay exactly that — the dispatcher
+  // never claims, so its name may appear in the plugin ONLY inside the
+  // BOARD_COORD_AGENTS roster (one occurrence). A second occurrence means a
+  // new by-name gate crept into the claim path.
+  it("keeps the claim-time card-details path keyed on the claim tool, not on names", () => {
+    const source = readFileSync(".opencode/plugin/board-context/index.ts", "utf8");
+    assert.match(source, /CLAIM_TOOLS = new Set\(\["pipeline_claim"/, "the claim-details set no longer keys on pipeline_claim — C01 leaves it unchanged (red names the moved hook, not the roster)");
+    const dispatcherMentions = source.split("agent-board-dispatch").length - 1;
+    assert.equal(dispatcherMentions, 1, "agent-board-dispatch must appear exactly once (the roster entry added by C01) — zero means the roster is un-widened (red before C01 dev), a second occurrence means a by-name gate crept into the claim path");
   });
 });
 

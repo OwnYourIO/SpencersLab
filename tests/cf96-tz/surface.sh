@@ -163,19 +163,39 @@ PY
 fi
 
 # --- t3: instants stay instants — the OQ4 encoding boundary (C09 T3 / AC4) --------------
+# cf-126 C01 AC3 SUPERSESSION (why): the card-mandated quadruple rewrites one
+# executable line of the gate script (the liveness disjunction), so the
+# byte-pin leg this arm shipped is unsatisfiable BY DESIGN. The law it proved
+# — the gate is epoch-only by construction — is re-pinned as CONTENT: the
+# gate still stamps instants with epoch-ms arithmetic ONLY, and the ban is
+# now explicit — no displayed-stamp formatter (localIso / toISOString /
+# date -u) may ever enter the gate. The boards recipe, Date.now() and mtime
+# legs below are unchanged; the controls strip/inject SEMANTIC tokens.
 if want t3; then
   git rev-parse --verify "$BASE_REF" >/dev/null 2>&1 || fail "harness: base ref $BASE_REF unresolved (CF96_TZ_BASE=<ref>)"
-  git diff --quiet "$BASE_REF" -- "$GATE" \
-    || fail "t3[C09 AC2/AC4]: $GATE changed since $BASE_REF — the gate is epoch-only by construction and needs ZERO change (OQ4 ruling; the byte-pin is the proof)"
   grep -qF 'date +%s%3N' "$GATE" \
     || fail "t3[C09 AC4]: the gate's epoch-ms stamp expression vanished — instants are VALUES, not stamps; they are never reformatted"
+  if hits=$(grep -nE 'localIso|toISOString|date -u' "$GATE"); then
+    printf '%s\n' "$hits" >&2
+    fail "t3[C09 AC4, cf-126 content re-pin]: the gate grew a displayed-stamp formatter — the gate is epoch-only by construction (OQ4 ruling); the quadruple filter edit must not carry stamp machinery in"
+  fi
   grep -qF '$(date +%s%3N)' "$BOARDS_SRC" \
     || fail "t3[C09 AC4]: the boards no-op-marker recipe must keep the epoch-ms inline (`$(date +%s%3N)`) — pipelineNoop.at stays epoch-ms by definition"
   grep -qF 'Date.now()' "$LOCKS" \
     || fail "t3[C09 AC4]: Date.now() pass-throughs must survive the stamp pass (instants)"
   grep -qF 'mtimeMs' "$LOCKS" \
     || fail "t3[C09 AC4]: mtimes stay mtimes — the reaper's disk arm depends on them"
-  ok "t3[C09 AC4]: gate.sh byte-untouched vs $BASE_REF; epoch fields + mtime usage pinned unchanged (instants preserved)"
+  # Controls: strip the epoch token / inject a stamp formatter — each leg
+  # must go red on its mutant, proving the greps key the law's substance.
+  sed 's/+%s%3N/+%s/' "$GATE" >"$TMP/t3-noepoch.sh"
+  if grep -qF 'date +%s%3N' "$TMP/t3-noepoch.sh"; then
+    fail "t3 control: the epoch-stripped mutant still matched the epoch leg — the leg is vacuous"
+  fi
+  { cat "$GATE"; printf '%s\n' 'NOW_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"'; } >"$TMP/t3-stamp.sh"
+  if ! grep -nE 'localIso|toISOString|date -u' "$TMP/t3-stamp.sh" >/dev/null; then
+    fail "t3 control: the stamp-injected mutant escaped the epoch-only ban — the ban is vacuous"
+  fi
+  ok "t3[C09 AC4, cf-126 re-pin]: the gate stays epoch-only as CONTENT (date +%s%3N present, no display-stamp formatter), the boards/Date.now/mtime pins intact; both semantic mutants redden (instants preserved)"
 fi
 
 # --- t4: the prose rule sentences — boards, conventions, collector (C09 T3/T4) ----------

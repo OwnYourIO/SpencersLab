@@ -34,6 +34,18 @@
 # marker-recipe order and the whole-metadata read-merge-write mandate — are
 # green now and must stay green through the C03 edit.
 #
+# cf-126 RE-PIN (2026-11-19, agent-test; 2026-11-cf-126-feat-compaction-
+# pipeline-sessions): the ruled marker vocabulary grows to SIX — the owner's
+# OQ10 ruling adds the dispatcher's proxy exit `delegated` (D15). N2/N3/N7
+# re-pin accordingly (designed red until C01 lands the skill text). N4's
+# one-loop-file arm is superseded by Ruling OQ1: the ruled shape is TWO files
+# — pipeline-worker.md byte-untouched PLUS the NEW pipeline-dispatch.md —
+# until a future owner ruling git-rms the old file, which re-pins rather
+# than deletes the arm (same settled-value law as the enabled row). N8 is
+# new: the dispatcher loop file's shape, body contract and the old-file-
+# untouched negative. DESIGNED REDS: N2/N3/N4/N7/N8 until C01, the N8 model
+# leg until C04's gated flip; N1/N5/N6 stay HOLD green.
+#
 # AC trace (cf-106 C03b re-pin, ask 8 + the OQ5 reconciliation): N2 also names the
 # three tick stops as marked exits in the subsection; N3 scans the five-token
 # reason vocabulary for a third normative home (agents-sync dated changelog rows
@@ -51,7 +63,7 @@
 # chunk's proof surface per OQ-N2).
 #
 # Usage:
-#   bash tests/noop-marker/surface.sh            # N1..N7
+#   bash tests/noop-marker/surface.sh            # N1..N8
 #   bash tests/noop-marker/surface.sh N2         # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -60,6 +72,7 @@ QN=".opencode/plugin/question-notify/index.ts"
 BOARD_SRC=".rulesync/skills/boards/SKILL.md"
 BOARD_GEN=".opencode/skills/boards/SKILL.md"
 LOOP=".agents/loops/pipeline-worker.md"
+LOOPD=".agents/loops/pipeline-dispatch.md"
 RULES_SRC=".rulesync/rules/overview.md"
 HOURLY=".rulesync/commands/pipeline-boards-hourly.md"
 
@@ -73,11 +86,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7; do WANT["n$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["n$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^n[1-7]$ ]] || fail "unknown check id '$a' (expected N1..N7)"
+    [[ "$lc" =~ ^n[1-8]$ ]] || fail "unknown check id '$a' (expected N1..N8)"
     WANT["$lc"]=1
   done
 fi
@@ -192,30 +205,32 @@ sys.exit(1 if hits else 0)
 PY
 
 cat >"$TMP/subsec.py" <<'PY'
-"""The boards 'No-op marker' subsection: exactly the five reason tokens (cf-106
-C03b extends the writer predicate to the three tick stops) and exactly ONE shared
-archive recipe — the five exits cite the subsection, they never restate the recipe.
+"""The boards 'No-op marker' subsection: exactly the SIX reason tokens (cf-106
+C03b extends the writer predicate to the three tick stops; cf-126 OQ10's owner
+ruling adds the dispatcher's proxy exit) and exactly ONE shared
+archive recipe — the six exits cite the subsection, they never restate the recipe.
 """
 import re, sys
-FIVE = {"no-cards", "no-claimable-cards", "gate-skip", "gate-live", "board-check-unavailable"}
+SIX = {"no-cards", "no-claimable-cards", "gate-skip", "gate-live", "board-check-unavailable", "delegated"}
 text = open(sys.argv[1]).read()
 m = re.search(r"(?ms)^#{3,4}[^\n]*No-op marker[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)", text)
 if not m:
     print("no 'No-op marker' subsection"); sys.exit(1)
 s = m.group(1)
-found = set(re.findall(r"[`\"]((?:no|gate|board-check)-[a-z][a-z-]*)[`\"]", s))
-if not FIVE <= found:
-    print(f"the subsection is missing reason token(s) {sorted(FIVE - found)} "
-          f"(C03b adds gate-skip, gate-live, board-check-unavailable to the two existing stops)")
+found = set(re.findall(r"[`\"]((?:no|gate|board-check)-[a-z][a-z-]*|delegated)[`\"]", s))
+if not SIX <= found:
+    print(f"the subsection is missing reason token(s) {sorted(SIX - found)} "
+          f"(C03b adds gate-skip, gate-live, board-check-unavailable to the two existing stops; "
+          f"cf-126 OQ10 adds delegated, the proxy-forward exit)")
     sys.exit(1)
-if extra := found - FIVE:
-    print(f"the subsection invents reason token(s) {sorted(extra)} outside the ruled five — AC1 pins exactly "
-          f"five marked exits; a sixth needs a DECISIONS ruling, not a skill edit")
+if extra := found - SIX:
+    print(f"the subsection invents reason token(s) {sorted(extra)} outside the ruled six — AC1 pins exactly "
+          f"six marked exits; a seventh needs a DECISIONS ruling, not a skill edit")
     sys.exit(1)
 if s.count('{"archived": true}') != 1:
     print('the subsection states the archive PATCH '
           f'{s.count(chr(123) + chr(34) + "archived" + chr(34) + ": true" + chr(125))} times — the recipe has '
-          'ONE home and the five exits cite it')
+          'ONE home and the six exits cite it')
     sys.exit(1)
 print("ok")
 PY
@@ -258,8 +273,13 @@ if want n2; then
       python3 "$TMP/sectwin.py" --ci "$f" 1400 'No-op marker' "$stop" 'exit' \
         || fail "N2[cf-106 C03b AC1/AC2]: $f's No-op marker subsection does not name '$stop' as a marked exit — the three tick stops must run the same recipe (red until C03b extends the predicate)"
     done
+    # cf-126 OQ10/D15: the sixth token — the dispatcher's proxy-forward exit
+    # rides the SAME marked+archived recipe (the reader stays reason-agnostic,
+    # so the subsection is the only writer-side home the token must appear in).
+    python3 "$TMP/sectwin.py" --ci "$f" 1600 'No-op marker' 'delegated' 'exit' \
+      || fail "N2[cf-126 C01 AC6/D15]: $f's No-op marker subsection does not name 'delegated' as a marked exit — the proxy-forward end (a live dispatcher existed, the tick delegated to it) is the sixth marked exit (red until C01 extends the predicate and regenerates)"
   done
-  ok "N2[C02 AC3 + cf-106 C03b AC1/AC2]: boards pair carries the marker subsection with its tokens; the two legacy exits cite it and the three tick stops are named as marked exits"
+  ok "N2[C02 AC3 + cf-106 C03b AC1/AC2 + cf-126 C01 AC6]: boards pair carries the marker subsection with its tokens; the two legacy exits cite it, the three tick stops and the delegated proxy exit are named as marked exits"
 fi
 
 # --- N3: exactly-two homes, single reader, marker-blind gate (C02 AC4) ----------
@@ -277,11 +297,16 @@ if want n3; then
   # pair (writer authority) plus the plugin comment (reader parity). The agents-sync
   # permissions reference is excepted: its mentions sit inside dated changelog rows
   # recording past tickets (append-only history, same law as the cf-106 C02 sweep).
-  if ! out=$(python3 "$TMP/strays.py" --tokens gate-skip,gate-live,board-check-unavailable,no-claimable-cards \
-        --allow "$BOARD_SRC,$BOARD_GEN,$QN,.rulesync/skills/agents-sync/references/permissions.md,.opencode/skills/agents-sync/references/permissions.md" \
+  # cf-126 C01 (OQ10 ruling): the vocabulary is six; `delegated` joins the scan.
+  # The rules source joins the ALLOW set for it alone: overview.md's rewritten
+  # "Pipeline worker iterations" section must NAME the exit to summarize it
+  # (AC7); the generated AGENTS.md sits outside the scanned roots. Restating the
+  # RECIPE there stays the defect the window pins are for.
+  if ! out=$(python3 "$TMP/strays.py" --tokens gate-skip,gate-live,board-check-unavailable,no-claimable-cards,delegated \
+        --allow "$BOARD_SRC,$BOARD_GEN,$QN,.rulesync/rules/overview.md,.rulesync/skills/agents-sync/references/permissions.md,.opencode/skills/agents-sync/references/permissions.md" \
         .rulesync .opencode skills 2>&1); then
     printf '%s\n' "$out" >&2
-    fail "N3[cf-106 C03b AC1]: a marker reason token found outside the boards pair + the plugin comment — a third normative copy of the marker vocabulary (cite the subsection, never restate it)"
+    fail "N3[cf-106 C03b AC1 + cf-126 C01]: a marker reason token found outside the boards pair + the plugin comment + the rules source (delegated only) — a third normative copy of the marker vocabulary (cite the subsection, never restate it)"
   fi
   # cf-106 C03b AC3: the gate SCRIPT stays marker-blind — it prints a verdict and
   # touches no session; the RUN that reads the verdict marks and archives.
@@ -329,11 +354,16 @@ if want n4; then
     python3 "$TMP/win.py" --ci "$f" 400 'scheduled' 'no-work' \
       || fail "N4[C02 Tasks]: $f lacks the silence-rule clause (a top-level scheduled-finished push happens unless the coord marked the session no-work) — red before C02 dev"
   done
-  # cf-106 C10: the scheduler docs describe ONE loop file — a docs surface that
-  # still enumerates the retired pair teaches a task that no longer exists.
+  # cf-106 C10 pinned ONE loop file; Ruling OQ1 (2026-11-17, cf-126) supersedes
+  # the single-task shape for the cutover: TWO files — pipeline-worker.md stays
+  # BYTE-UNTOUCHED (no fingerprint rotation, no re-approval), the NEW
+  # pipeline-dispatch.md carries the dispatcher task. The old OpenChamber task's
+  # deletion is the owner's hygiene step and deletes NO file; a future owner
+  # git-rm would re-pin this count, never delete this arm (same settled-value
+  # law as the enabled row above).
   n_loop=$(find .agents/loops -maxdepth 1 -name '*.md' 2>/dev/null | wc -l)
-  [ "$n_loop" -eq 1 ] \
-    || fail "N4[cf-106 C10 AC1]: .agents/loops/ holds $n_loop loop files while the scheduler docs describe the runner — one scheduled task is the contract (red until C10's git rm lands)"
+  [ "$n_loop" -eq 2 ] && [ -f "$LOOP" ] && [ -f "$LOOPD" ] \
+    || fail "N4[cf-126 Ruling OQ1 re-pin of cf-106 C10]: .agents/loops/ holds $n_loop loop files — the ruled shape is exactly TWO (the byte-untouched pipeline-worker.md + the new pipeline-dispatch.md), red before C01 lands the second file and HOLD after"
   for f in AGENTS.md "$RULES_SRC"; do
     grep -qF 'pipeline-worker-local' "$f" \
       && fail "N4[cf-106 C10 AC4]: $f still names the retired pipeline-worker-local task as part of the live scheduler shape — the pair is superseded by the single runner"
@@ -397,12 +427,13 @@ sys.exit(0)
 PY
     then fail "N6[C03]: marker-recipe-before-archive order broken in $f (reason above)"; fi
   done
-  # cf-106 C03b AC2: ONE shared recipe now serves five ends. The subsection must
+  # cf-106 C03b AC2: ONE shared recipe now serves the marked ends (five then,
+  # six since cf-126 OQ10). The subsection must
   # keep the archive PATCH and the never-ask sentence together — if the shared
-  # recipe loses the never-ask clause, all five ends regain the ask at once.
+  # recipe loses the never-ask clause, all marked ends regain the ask at once.
   for f in "$BOARD_SRC" "$BOARD_GEN"; do
     python3 "$TMP/sectwin.py" --ci "$f" 900 'No-op marker' '{"archived": true}' 'never ask' \
-      || fail "N6[cf-106 C03b AC2]: $f's shared marker recipe no longer carries the archive PATCH and the never-ask sentence in one passage — the five marked exits inherit whatever this passage says"
+      || fail "N6[cf-106 C03b AC2]: $f's shared marker recipe no longer carries the archive PATCH and the never-ask sentence in one passage — the marked exits (six since cf-126 OQ10) inherit whatever this passage says"
   done
   ok "N6[C03 AC1 + cf-106 C03b AC2]: the no-op ends archive {\"archived\": true} after the marker write with the never-ask + failure-still-clean posture, on one shared recipe; marker recipe order and the whole-metadata mandate intact"
 fi
@@ -420,31 +451,31 @@ if want n7; then
   grep -q 'third-home.md' "$TMP/ghost.out" \
     || fail "N7 control: the stray scanner fired but did not name the fabricated home — its reporting is broken (output: $(head -2 "$TMP/ghost.out" | tr '\n' ' '))"
   ok "N7[cf-106 C03b AC1 control]: the stray scanner catches a fabricated third marker home — N3's single-home arm bites"
-  # (2) dev-facing: the boards subsection names exactly the five reason tokens, in
-  #     source and mirror (AC1), and states the archive PATCH once as the shared
-  #     recipe (the exits cite the subsection, they never restate the recipe).
-  # Controls first: a copy patched to the ruled five tokens must PASS the checker
-  # (the pin can go green), and the same copy plus an invented sixth token must FAIL
+  # (2) dev-facing: the boards subsection names exactly the ruled six reason
+  #     tokens, in source and mirror (AC1), and states the archive PATCH once as
+  #     the shared recipe (the exits cite the subsection, they never restate it).
+  # Controls first: a copy patched to the ruled six tokens must PASS the checker
+  # (the pin can go green), and the same copy plus an invented seventh token must FAIL
   # it (the closure bites). Fabricating both sides is what makes the red above and the
   # green it turns into both meaningful.
-  python3 - "$BOARD_SRC" "$TMP/boards-five.md" "$TMP/boards-sixth.md" <<'PYX'
+  python3 - "$BOARD_SRC" "$TMP/boards-six.md" "$TMP/boards-seventh.md" <<'PYX'
 import re, sys
 t = open(sys.argv[1], encoding="utf-8").read()
 m = re.search(r"(?m)^#{3,4}[^\n]*No-op marker[^\n]*$", t)
-five = ('\nMarked exits and their reason values: `no-cards`, `no-claimable-cards`, `gate-skip`, '
-        '`gate-live`, `board-check-unavailable`.\n')
-six = five + 'A stale-lock stop would write `gate-timeout`.\n'
-open(sys.argv[2], "w", encoding="utf-8").write(t[:m.end()] + five + t[m.end():])
-open(sys.argv[3], "w", encoding="utf-8").write(t[:m.end()] + six + t[m.end():])
+six = ('\nMarked exits and their reason values: `no-cards`, `no-claimable-cards`, `gate-skip`, '
+       '`gate-live`, `board-check-unavailable`, `delegated`.\n')
+seventh = six + 'A stale-lock stop would write `gate-timeout`.\n'
+open(sys.argv[2], "w", encoding="utf-8").write(t[:m.end()] + six + t[m.end():])
+open(sys.argv[3], "w", encoding="utf-8").write(t[:m.end()] + seventh + t[m.end():])
 PYX
-  python3 "$TMP/subsec.py" "$TMP/boards-five.md" >/dev/null 2>&1 \
-    || fail "N7 control: a subsection carrying exactly the ruled five tokens plus the shared recipe FAILED the closure pin — the pin cannot go green when C03b lands, so it is broken"
-  python3 "$TMP/subsec.py" "$TMP/boards-sixth.md" >/dev/null 2>&1 \
-    && fail "N7 control: a subsection inventing a sixth reason token (gate-timeout) passed the closure — AC1's five-exact count is not enforced"
-  ok "N7[cf-106 C03b AC1 control]: the five-token closure accepts a ruled-five copy and rejects an invented sixth token — the dev-facing pin is a genuine red/green pair"
+  python3 "$TMP/subsec.py" "$TMP/boards-six.md" >/dev/null 2>&1 \
+    || fail "N7 control: a subsection carrying exactly the ruled SIX tokens (OQ10 included) plus the shared recipe FAILED the closure pin — the pin cannot go green when C01 lands, so it is broken"
+  python3 "$TMP/subsec.py" "$TMP/boards-seventh.md" >/dev/null 2>&1 \
+    && fail "N7 control: a subsection inventing a seventh reason token (gate-timeout) passed the closure — the ruled-six exact count is not enforced"
+  ok "N7[cf-106 C03b AC1 control + cf-126 OQ10 re-pin]: the six-token closure accepts a ruled-six copy and rejects an invented seventh token — the dev-facing pin is a genuine red/green pair"
   for f in "$BOARD_SRC" "$BOARD_GEN"; do
     python3 "$TMP/subsec.py" "$f" \
-      || fail "N7[cf-106 C03b AC1/AC2]: the boards marker subsection failed the five-token/one-recipe pin for $f (reason above; designed red until C03b extends the writer predicate to the three tick stops)"
+      || fail "N7[cf-106 C03b AC1/AC2 + cf-126 OQ10]: the boards marker subsection failed the six-token/one-recipe pin for $f (reason above; designed red until C03b's three stops and cf-126's delegated token land)"
   done
   # (3) dev-facing: the plugin comment names the writer's five tokens and the two
   #     never-mute rules (crash push, reap alert), comment-only parity (AC4).
@@ -472,7 +503,112 @@ PYX
     python3 "$TMP/win.py" --ci "$f" 900 'cannot mark itself' 'dies' \
       || fail "N7[cf-106 C03b AC5]: $f does not state the mid-turn limit (a run that dies before reaching an exit cannot mark itself) — the plan requires it written once, honestly, instead of a guessed engine-side fix"
   done
-  ok "N7[cf-106 C03b AC1/AC2/AC4/AC5]: five-token marker subsection with one shared recipe, plugin comment parity (tokens + crash + reap-ungated), three hourly stop branches citing the marker+archive exit, and the mid-turn limit sentence"
+  ok "N7[cf-106 C03b AC1/AC2/AC4/AC5 + cf-126 OQ10]: six-token marker subsection with one shared recipe, plugin comment parity (tokens + crash + reap-ungated), three hourly stop branches citing the marker+archive exit, and the mid-turn limit sentence"
+fi
+
+# --- N8: cf-126 C01/C04 — the dispatcher loop file + the old-file untouched ------
+# The loop-file pin the chunk places "alongside the scheduler-docs-truth arms":
+# the NEW pipeline-dispatch.md's frontmatter shape (the five OpenChamber-synced
+# fields), its body contract lines (the live-dispatcher lookup, the proxy
+# forward + `delegated` exit, the self-marker patch, the one-iteration wake),
+# its comment block (the OQ1 ruling + the model-ruling note + C04 as the flip
+# wave), and the NEGATIVE half: pipeline-worker.md stays byte-untouched on its
+# own agent/model literals — a fabricated repurposing of the old file reddens.
+# ONE model arm, ONE state (the chunk's C04 re-pin law): the expected literal
+# is the gated radiance value — C01 ships flash-next-strata-q4 (D14), so THIS
+# leg stays red through waves 1-3 and flips only when C04's gate facts land.
+if want n8; then
+  [ -f "$LOOPD" ] || fail "N8[C01 AC2]: $LOOPD missing — the OQ1 ruling names a SECOND, dedicated loop file while pipeline-worker.md stays byte-untouched beside it (designed red before C01 dev)"
+
+  python3 - "$LOOPD" <<'PY' || fail "N8[C01 AC2]: the dispatcher loop file fails its frontmatter/body contract (reason above)"
+import re, sys
+text = open(sys.argv[1]).read()
+# re.S is load-bearing: the YAML block is multi-line and `.` must cross
+# newlines (the C01 test-repair round caught this regex never matching).
+m = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n?([\s\S]*)$", text, re.S)
+assert m, "no YAML frontmatter block"
+fields = {}
+for line in m.group(1).splitlines():
+    fm = re.match(r"^([A-Za-z_-]+):\s*(.*)$", line)
+    if fm:
+        fields[fm.group(1)] = fm.group(2).strip().strip('"')
+errs = []
+recognized = {"agent", "enabled", "model", "name", "schedule", "timezone"}
+unknown = sorted(set(fields) - recognized)
+if unknown:
+    errs.append(f"frontmatter carries keys OpenChamber ignores silently: {unknown}")
+for k in ("agent", "enabled", "model", "name", "schedule"):
+    if k not in fields:
+        errs.append(f"missing the decided field {k}")
+if fields.get("name") != "pipeline-dispatch":
+    errs.append(f"name is {fields.get('name')!r}")
+if fields.get("agent") != "agent-board-dispatch":
+    errs.append(f"agent is {fields.get('agent')!r}, want agent-board-dispatch (the loop task runs the dispatcher)")
+if fields.get("schedule") != "0 * * * *":
+    errs.append(f"schedule is {fields.get('schedule')!r}, want the hourly 0 * * * * (mirrors the old task's cadence)")
+if fields.get("enabled") != "true":
+    errs.append(f"enabled is {fields.get('enabled')!r}, want true (ships ready; the owner creates the task as USER step 1)")
+if len(re.findall(r"^model:", m.group(1), re.M)) != 1:
+    errs.append("more than one model row — the YAML would silently take the last")
+# The model VALUE is NOT checked here (the single C04-state leg runs after
+# every content leg, last in N8 — the one-arm-one-state pin must not mask
+# the shape/body legs it shares the file with).
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+body = m.group(2)
+low = body.lower()
+checks = [
+    (("opencode api get /api/session",), "the live-dispatcher lookup leg (opencode api get /api/session + filter)"),
+    (("pipelineDispatcher",), "the metadata.pipelineDispatcher marker leg"),
+    (("api post", "prompt"), "the proxy forward: POST the same tick text to the live dispatcher session"),
+    (("delegated",), "the no-op delegated marker + archived exit on the forward leg"),
+    (("api patch",), "the self-marker leg: patch YOUR OWN record's metadata before loading the skill"),
+    (("pipeline_status",), "the iteration starts first with pipeline_status"),
+]
+for needles, label in checks:
+    if all(n in low or n in body for n in needles):
+        continue
+    print(f"body lacks {label}")
+    sys.exit(1)
+if "agent-board-dispatch" not in low:
+    print("body never names the dispatcher agent (the filter leg)"); sys.exit(1)
+if not re.search(r"exactly one parallel pipeline loops iteration|one parallel pipeline loops iteration", low):
+    print("the body must load the boards skill and run exactly ONE Parallel pipeline loops iteration"); sys.exit(1)
+print("ok")
+PY
+
+  # The comment block carries the ruling trail a future reader needs (the
+  # vehicle choice, the byte-untouched law, and that the model row moves only
+  # by a fresh owner ruling — C04 is named as the wave).
+  python3 "$TMP/win.py" --ci "$LOOPD" 1800 'oq1' 'byte-untouched' 'pipeline-worker' \
+    || fail "N8[C01 AC2]: $LOOPD's comment block does not name the OQ1 ruling and the byte-untouched law of the old loop — the two-file posture is a ruling, it must read as one (red before C01 dev)"
+  python3 "$TMP/win.py" --ci "$LOOPD" 1800 'ruling' 'c04' \
+    || fail "N8[C01 AC2/C04]: the comment block does not keep the model-ruling note AND name C04 as the model-flip wave"
+
+  # The untouched negative on the OLD file: its own agent + the settled
+  # 2026-11-09 runner literal stay exactly as committed (pipeline-locks-tick
+  # T2 pins the same bytes from the node side; this leg is the loop-docs-home
+  # half the chunk asked for, with the repurposing control below).
+  grep -qE '^agent: agent-board-coord$' "$LOOP" \
+    || fail "N8[C01 AC2 negative]: $LOOP's agent row moved — the OLD loop is byte-untouched by law (Ruling OQ1); repurposing it is the rejected shape"
+  grep -qE '^model: gpu-ai/qwen3.8-flash-next-strata-q4$' "$LOOP" \
+    || fail "N8[C01 AC2 negative]: $LOOP's settled 2026-11-09 model literal moved — the old file changes NEVER, its task's deletion is the owner's hygiene step"
+  sed 's/^agent: agent-board-coord$/agent: agent-board-dispatch/' "$LOOP" >"$TMP/repurposed.md"
+  if grep -qE '^agent: agent-board-coord$' "$TMP/repurposed.md"; then
+    fail "N8 control: the fabricated repurposing copy still matched the untouched pin — the negative arm is vacuous"
+  fi
+
+  # ONE arm, ONE state — the model leg LAST so it never masks the content
+  # legs above. The expected literal is the C04-extended state (the chunk's
+  # re-pin law); C01 ships the runner literal gpu-ai/qwen3.8-flash-next-strata-q4
+  # (D14 — the rotation stays body+agent in wave 1), so red here IS the single
+  # designed red, named C04 and gated on the owner's merge/scale/receipt facts.
+  if ! grep -qE '^model: gpu-ai/[^ ]+$' "$LOOPD"; then
+    fail "N8[C04 AC5]: $LOOPD carries no single literal model row (the frontmatter leg counted the row; here the value read fails) — harness-shape fault"
+  fi
+  grep -qE '^model: gpu-ai/qwen3.8-27b-radiance$' "$LOOPD" \
+    || fail "N8[C04 AC5, DESIGNED RED]: the dispatcher loop file's model row is not gpu-ai/qwen3.8-27b-radiance — the single C04-state pin (one arm, one state per chunks/C04.md Tests); C01 shipped the strata runner literal (D14) and it stays until C04's gate lands the owner ruling + fix-radiance-context merge + q27 scale-up + dated 8-session receipt, then this leg flips and no other N8 leg moves"
+  ok "N8[C01 AC2 + C04 AC5]: dispatcher loop file exists with the five-field shape, the tick body (lookup, proxy forward with delegated, self-marker patch, one iteration), the ruling trail in its comment block; the old worker file reads byte-untouched and the repurposing mutant reddens; the model leg (the single C04-state pin) is evaluated last and reddens ALONE until the gate lands"
 fi
 
 printf 'PASS: no-op marker contract checks (%d ok)\n' "$checks"

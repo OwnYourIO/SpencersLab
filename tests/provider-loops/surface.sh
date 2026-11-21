@@ -20,7 +20,9 @@
 # boards-skill citation of the rewritten Provider filtering section] t6[AC5 gate
 # script untouched + gate subset green] t7[AC3 negative posture — no
 # current-state text still claims two tasks or an API-only scheduled walk] plus
-# t8[AC4 single-file sweep: the deleted file's name lives only in records].
+# t8[AC4 loop-file state — cf-126 Ruling OQ1 re-pin of the single-file
+# sweep: exactly the two ruled files, worker byte-stable, no third walker;
+# the deleted file's name still lives only in records].
 #
 # cf-123 C02 (ask A: loop header trim): t9[AC4 header weight — the comment
 # block is ≤25 non-empty lines, a re-bloat reddens even if every pinned byte
@@ -269,12 +271,71 @@ PY
   ok "t5[cf-106 C10 AC3]: the loop body cites the boards Provider filtering section, and that section reads as per-card routing with the unlabeled ask"
 fi
 
-# --- t6: the gate script is UNTOUCHED, and its contract still passes (AC5) -----
+# --- t6: the gate CONTENT law holds, and its contract still passes (AC5) -------
+# cf-126 C01 AC3 SUPERSESSION (why): the card-mandated liveness QUADRUPLE
+# rewrites the single map(select ...) filter line, so the byte-unchanged pin
+# this arm shipped is unsatisfiable BY DESIGN. The stated law survives as
+# CONTENT pins — the runner rides the gate, it does not replace it: verdict
+# vocabulary byte-exact, the LIVE-branch read-only ban list and the
+# marker-blindness intact, the operand defaults intact — with the filter line
+# itself pinned to exactly the quadruple. Fabricated-drift controls strip
+# semantic tokens (the dispatcher leg, a verdict emission, the marker
+# vocabulary), never bytes. The gate-suite child run (the operand logic
+# end-to-end) is unchanged below.
 if want t6; then
   git rev-parse --verify "$BASE" >/dev/null 2>&1 \
     || fail "harness: base ref '$BASE' does not resolve (CHUNK_BASE=<ref>)"
-  git diff --quiet "$BASE" -- "$GATE_SCRIPT" \
-    || fail "t6[cf-106 C10 AC5]: $GATE_SCRIPT changed since $BASE — the runner rides the gate, it does not replace it (verdict vocabulary + LIVE-branch read-only ban list byte-unchanged)"
+  cat >"$TMP/gatecontent.py" <<'PY'
+# One shipped checker for the live script AND every mutant — the controls
+# exercise the SAME code the live leg runs; a reconstructed check proves
+# nothing.
+import sys
+text = open(sys.argv[1]).read()
+errs = []
+QUAD = ('| map(select(.agent == "agent-board-coord" or .agent == "agent-board-coord-local"'
+        ' or .agent == "agent-board-coord-pr" or .agent == "agent-board-dispatch"))')
+if QUAD not in text:
+    errs.append("the liveness disjunction is not the exact quadruple filter line (cf-126 C01 AC3; the pre-flip triple or any re-spelling is drift)")
+if text.count('.agent == ') != 4:
+    errs.append(f"{text.count('.agent == ')} name conjuncts, want exactly the four on the single filter line — the runner rides the gate, it does not replace it")
+for em in ("say_run() { printf 'GATE: RUN %s\\n' \"$1\"; exit 0; }",
+           "say_skip() { printf 'GATE: SKIP %s\\n' \"$1\"; exit 1; }",
+           "printf 'GATE: LIVE %s (%ss) %s\\n' \"$id\" \"$age\" \"$title\""):
+    if em not in text:
+        errs.append(f"verdict emission moved: {em!r} — the three-state contract is the command surface")
+for banned in ('pipelineNoop', 'archiv', 'opencode api patch', 'opencode api post',
+               'list_swimlanes', 'get_board', 'list_cards', 'move_card', 'add_comment'):
+    if banned in text:
+        errs.append(f"the gate grew {banned!r} — it prints a verdict and touches no session and no board (marker-blind + read-only-ban law)")
+if "this gate never reads the board" not in text:
+    errs.append("the LIVE-branch guidance lost its never-reads-the-board sentence (the board check stays the agent's own read-only turn)")
+for op in ("THRESHOLD_MIN_DEFAULT=15", "GRACE_MIN_DEFAULT=5", "map(select(.id != $self))",
+           'now="$(date +%s%3N)"'):
+    if op not in text:
+        errs.append(f"operand logic moved: {op!r}")
+print("; ".join(errs))
+sys.exit(1 if errs else 0)
+PY
+  python3 "$TMP/gatecontent.py" "$GATE_SCRIPT" \
+    || fail "t6[cf-126 re-pin of cf-106 C10 AC5]: $GATE_SCRIPT violates the gate CONTENT law (reason above) — the quadruple filter, the three verdict emissions, the marker/board bans and the operand defaults"
+  # Controls: each semantic-token mutant must redden for its NAMED reason.
+  sed 's/ or .agent == "agent-board-dispatch"//' "$GATE_SCRIPT" >"$TMP/t6-mquad.sh"
+  if out=$(python3 "$TMP/gatecontent.py" "$TMP/t6-mquad.sh" 2>&1); then
+    fail "t6 control: the dispatcher-leg-stripped mutant passed the content checker — the quadruple pin is vacuous"
+  fi
+  case "$out" in
+    *"quadruple filter line"*) ;;
+    *) fail "t6 control: the leg-stripped mutant reddened for the wrong reason ($out)" ;;
+  esac
+  sed 's/GATE: RUN %s/GATE: RUN/' "$GATE_SCRIPT" >"$TMP/t6-mverdict.sh"
+  if python3 "$TMP/gatecontent.py" "$TMP/t6-mverdict.sh" >/dev/null 2>&1; then
+    fail "t6 control: a mutated RUN emission passed the verdict-vocabulary pin"
+  fi
+  cp "$GATE_SCRIPT" "$TMP/t6-mmarker.sh"; printf '%s\n' '# pipelineNoop marker would land here' >>"$TMP/t6-mmarker.sh"
+  if python3 "$TMP/gatecontent.py" "$TMP/t6-mmarker.sh" >/dev/null 2>&1; then
+    fail "t6 control: a mutant carrying the marker vocabulary passed the marker-blind ban"
+  fi
+  ok "t6[cf-126 C01 re-pin]: the gate CONTENT law holds (exact quadruple filter, three byte-exact verdict emissions, marker-blind + board-blind bans, operand defaults) and all three semantic mutants redden for their named reasons"
   # gate ids t1..t21 MINUS t17: t17 is the known pre-existing red at main HEAD
   # (warm-location permissions drift — a Review card outside this ticket),
   # excluded from these gates per the header note; everything else must pass.
@@ -285,7 +346,7 @@ if want t6; then
   done
   bash "$GATE_SUITE" $gate_ids >"$TMP/gate.log" 2>&1 \
     || { tail -n 12 "$TMP/gate.log" >&2; fail "t6[cf-106 C10 AC5]: the gate suite (ids excluding the known-red t17) is not green — log above"; }
-  ok "t6[cf-106 C10 AC5]: gate script byte-unchanged vs $BASE and the gate contract passes (t1..t21 minus the pre-existing t17)"
+  ok "t6[cf-106 C10 AC5, cf-126 re-pin]: gate content-law holds vs the shipped script and the gate contract passes (t1..t21 minus the pre-existing t17)"
 fi
 
 # --- t7: NEGATIVE pins — the two-task posture may not survive (AC3) ------------
@@ -310,16 +371,68 @@ if want t7; then
   ok "t7[cf-106 C10 AC3]: negatives hold — no 'both may claim' wording, no current-state surface teaching an API-only walk, the Local planned taker, or a second scheduled task, and the fabricated split is caught"
 fi
 
-# --- t8: single-file sweep — the retired name lives only in records (AC4) ------
+# --- t8: the loop-file state is the ruled two-file cutover; the retired name lives only in records --
+# cf-126 C01 AC2 / Ruling OQ1 SUPERSESSION (why): cf-106 C10's single-runner law
+# was pinned file-level (exactly one loop file) — the owner's OQ1 ruling moves
+# the scheduled walk to a NEW dedicated loop file (.agents/loops/pipeline-dispatch.md,
+# the agent-board-dispatch task) while .agents/loops/pipeline-worker.md stays
+# BYTE-UNTOUCHED beside it; the old OpenChamber task's deletion is owner
+# hygiene, and a future owner git-rm of the old file re-pins this set (never
+# deletes the arm — same settled-value law as noop-marker N4's count). The
+# law this arm guards — the repo teaches ONE scheduled walk, no duplicate
+# walking file — moves to the CONTENT of the two-file state: exactly these
+# two named files (a third walker reddens; the controls prove both directions
+# bite), the old one byte-stable vs base, and the retired second-task name
+# still absent from every live surface (the stray leg below is unchanged).
 if want t8; then
-  [ -d .agents/loops ] || fail "t8[cf-106 C10 AC4]: .agents/loops/ is gone (harness fault)"
-  n_files=$(find .agents/loops -maxdepth 1 -name '*.md' | wc -l)
-  [ "$n_files" -eq 1 ] || fail "t8[cf-106 C10 AC4]: .agents/loops/ holds $n_files loop files, want exactly one — AC1's single runner is a file-level fact, not just a frontmatter one"
+  [ -d .agents/loops ] || fail "t8[cf-126 re-pin of cf-106 C10 AC4]: .agents/loops/ is gone (harness fault)"
+  cat >"$TMP/loopset.py" <<'PY'
+# The ruled file set, as a shipped checker (live AND the control fixtures run
+# the same code — a reconstructed check proves nothing).
+import os, sys
+d = sys.argv[1]
+names = sorted(n for n in os.listdir(d) if n.endswith(".md") and os.path.isfile(os.path.join(d, n)))
+want = sorted(["pipeline-worker.md", "pipeline-dispatch.md"])
+errs = []
+extra = [n for n in names if n not in want]
+missing = [n for n in want if n not in names]
+if extra:
+    errs.append(f"a third loop file appears ({extra}) — the ruled cutover state is the two named files; a duplicate walking task is exactly what the one-scheduled-walk law forbids")
+if missing:
+    errs.append(f"missing ruled file(s) {missing} — pipeline-worker.md stays byte-untouched until owner hygiene, pipeline-dispatch.md is cf-126 C01's new dispatcher task (Ruling OQ1)")
+print("; ".join(errs))
+sys.exit(1 if errs else 0)
+PY
+  python3 "$TMP/loopset.py" .agents/loops \
+    || fail "t8[cf-126 re-pin of cf-106 C10 AC4]: the loop-file state is not the ruled two-file cutover (reason above)"
+  git diff --quiet "$BASE" -- .agents/loops/pipeline-worker.md \
+    || fail "t8[cf-126 C01 AC2, Ruling OQ1]: .agents/loops/pipeline-worker.md changed since $BASE — the old loop is byte-untouched BY RULING (the rejected shape was repurposing it in place; the dispatcher gets its own file)"
+  # Controls: both directions must bite — a THIRD walker file reddens the
+  # set, and the two-file set minus the dispatcher file reddens too (a
+  # one-sided or absent fixture would prove the checker vacuous).
+  mkdir -p "$TMP/third-loop" "$TMP/only-old"
+  cp .agents/loops/pipeline-worker.md .agents/loops/pipeline-dispatch.md "$TMP/third-loop/"
+  printf -- '---\nname: pipeline-extra\nschedule: 0 * * * *\nenabled: true\nmodel: x\nagent: y\n---\nbody\n' >"$TMP/third-loop/pipeline-extra.md"
+  if out=$(python3 "$TMP/loopset.py" "$TMP/third-loop" 2>&1); then
+    fail "t8 control: the third-loop-file fixture passed the two-file set pin — the no-duplicate-walker guard is vacuous"
+  fi
+  case "$out" in
+    *"third loop file"*) ;;
+    *) fail "t8 control: the third-file fixture reddened for the wrong reason ($out)" ;;
+  esac
+  cp .agents/loops/pipeline-worker.md "$TMP/only-old/"
+  if out=$(python3 "$TMP/loopset.py" "$TMP/only-old" 2>&1); then
+    fail "t8 control: the missing-dispatcher fixture passed the set pin — the existence leg is vacuous"
+  fi
+  case "$out" in
+    *"missing ruled file"*) ;;
+    *) fail "t8 control: the missing-file fixture reddened for the wrong reason ($out)" ;;
+  esac
   # The retired file name may survive ONLY in this ticket's records and the
   # retirement runbook (dated history is history); never in a live surface.
   strays=$(grep -rln 'pipeline-worker-local' .agents/loops .rulesync .opencode scripts AGENTS.md 2>/dev/null || true)
   [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "t8[cf-106 C10 AC4]: the retired loop file's name still lives in a live surface above — the deletion is a repo-side fact (the live task's retirement is the owner's)"; }
-  ok "t8[cf-106 C10 AC4]: exactly one loop file; the retired name appears in no live surface (records and the runbook only)"
+  ok "t8[cf-126 re-pin of cf-106 C10 AC4]: the loop-file state is exactly the ruled two files (no third walker, no missing dispatcher, worker byte-stable vs base — both fixture mutants redden for their named reasons); the retired pipeline-worker-local name appears in no live surface"
 fi
 
 # --- t9: header weight guard — the comment block stays lean (cf-123 C02 AC4) --

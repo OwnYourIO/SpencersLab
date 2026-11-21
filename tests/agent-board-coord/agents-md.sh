@@ -101,10 +101,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 12); do WANT["c$i"]=1; done
+  for i in $(seq 1 14); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c(1[0-2]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c12)"
+    [[ "$a" =~ ^c(1[0-4]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c14)"
     WANT["$a"]=1
   done
 fi
@@ -437,6 +437,8 @@ if want c7; then
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
+      .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
+      .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
       .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
       charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\
       .github/workflows/vllm-render-tests.yaml|.github/workflows/radiance-render-tests.yaml|\
@@ -448,10 +450,10 @@ if want c7; then
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
-      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-143 radiance + cf-55 chart-half admits in the union)" ;;
+      *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-124 plan-folder + cf-143 radiance + cf-55 chart-half admits in the union)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-124 plan-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
@@ -465,6 +467,12 @@ fi
 # amendment to the feature-branch hard rule, mandated in overview.md and
 # regenerated into AGENTS.md by exactly that section (its content is pinned by
 # c12, the same division of duty as every other widened section).
+# cf-6 (merged on main) and the cf-55 re-anchor round (2026-11-16, DECISIONS
+# D31/D32) both rewrite "Hard rules" — the calendar-tag/forge-builder
+# sentence and the chart release clause + instance credential law. The
+# merged cf-6 wave landed its section edit without widening this arm (its
+# chunk gates saw AGENTS.md committed); at cf-55's final review the section
+# differs from the base for real, so the set names it now.
 if want c8; then
   if git diff --quiet "$BASE" -- AGENTS.md 2>/dev/null; then
     ok "c8: AGENTS.md shows no delta vs $BASE (committed) — content checks c2-c6 carry the gate"
@@ -681,6 +689,78 @@ PY
       || fail "c12[cf-124 C05 negative]: $f lost the feature/fix-branch hard rule the D28 clause extends — the amendment rides beside the law, never replaces it"
   done
   ok "c12[cf-124 C05 AC1/AC2]: the feature-branch hard rule carries the gated-mint clause — unchecked Worktree Creation pairs with uncommitted-in-place work, a zero-commit spelling, and main named in the same breath, while the feature/fix-branch law survives (rules source + generated AGENTS.md; red until C05 edits and regenerates); the window control proves co-location is required"
+fi
+
+# --- c13: cf-126 C01 AC7 — the worker paragraph states the dispatcher model ----
+# The "Pipeline worker iterations" rewrite + the Agents-section roster mention
+# are one generated pair: overview.md is the source, AGENTS.md regenerates, so
+# both surfaces must carry the doctrine or the mirror and the law disagree.
+# Needles only (the semantic pairing, never a prose copy): loop vehicle = the
+# NEW pipeline-dispatch.md, the dispatcher agent name, the release wake, the
+# delegated exit, the fallback path; plus the agent-* paragraph naming
+# agent-board-dispatch beside the family. DESIGNED RED until C01 edits
+# overview.md and regenerates. c8's section-allow set already admits "Pipeline
+# worker iterations" and "Agents" — no widening owed here.
+if want c13; then
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c13[C01 AC7]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 2400 'pipeline-dispatch' 'agent-board-dispatch' \
+      || fail "c13[C01 AC7]: $f's worker section does not pair the NEW loop file pipeline-dispatch.md with the agent-board-dispatch runner — the OQ1 second-file ruling must read in the doctrine (red before C01 dev)"
+    python3 "$TMP/negwin.py" --ci "$f" 2400 'release' 'wake' 'delegated' \
+      || fail "c13[C01 AC7/D6/D15]: $f never pairs the lock-release wake with the delegated no-op exit — both are the dispatcher model's visible surface in the worker paragraph (red before C01 dev)"
+    python3 "$TMP/negwin.py" --ci "$f" 2400 'fallback' 'walk' \
+      || fail "c13[C01 AC7/D5]: $f lost the fallback law (the walk stays in the coord for /pipeline-boards, /pipeline-boards-hourly and a manual named-card launch — the evaluation answer) — must stay stated (red before C01 dev)"
+    # The gate now counts the dispatcher name (OQ2): the worker paragraph must
+    # pair the gate with the dispatcher for the cutover to read truthfully.
+    python3 "$TMP/negwin.py" --ci "$f" 900 'gate' 'dispatcher' \
+      || fail "c13[C01 AC7/OQ2]: $f's worker paragraph never pairs the gate with the dispatcher — the widened liveness count is part of the shape it must teach (red before C01 dev)"
+    # The Agents-section roster mention (AC7 tail).
+    python3 "$TMP/negwin.py" --ci "$f" 1600 'agent-board-coord-pr' 'agent-board-dispatch' \
+      || fail "c13[C01 AC7]: $f's agent-family paragraph does not name agent-board-dispatch beside the board-coord variants (red before C01 dev)"
+  done
+  # Fabricated-drift control: a copy with the loop-file name moved out of
+  # every window must redden the pairing arms (c10/c11 control discipline).
+  python3 - "$RULES_SRC" "$TMP/c13-off.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read().replace("pipeline-dispatch", "pipeline-XXXXX")
+open(sys.argv[2], "w", encoding="utf-8").write(t)
+PY
+  if python3 "$TMP/negwin.py" --ci "$TMP/c13-off.md" 2400 'pipeline-dispatch' 'agent-board-dispatch' >/dev/null 2>&1; then
+    fail "c13 control: the renamed-loop-file copy still passed the pairing arm — the pin is vacuous"
+  fi
+  ok "c13[C01 AC7]: worker paragraph states the dispatcher model (loop vehicle, runner, release wake, delegated, fallback, gate count) and the family paragraph names agent-board-dispatch, on rules source AND generated AGENTS.md; the fabricated rename control reddens"
+fi
+
+# --- c14: cf-126 C02 AC5 — the privilege paragraph gains the global-MCP line ----
+# The MCP section's "Agent privilege rules" paragraph gains one line (the
+# C02 task): the coord family + agent-board-dispatch carry the tier-less
+# global-* and readonly-global-* grants, the admin-* tier stays
+# user-confirmation-gated as for the code agent. The per-server TABLE is
+# byte-unchanged (c4 pins its dev row; a table edit reddens there and in
+# c8's section diff) — this arm pins the paragraph line alone. DESIGNED RED
+# until C02 lands.
+if want c14; then
+  for f in "$RULES_SRC" AGENTS.md; do
+    python3 "$TMP/negwin.py" --ci "$f" 700 'coord family' 'global-' \
+      || fail "c14[C02 AC5]: $f's privilege rules never pair the coord family with the global- grants (read-only tiers only; red before C02 dev)"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'admin' 'confirmation' \
+      || fail "c14[C02 AC5]: $f lost the admin-tier confirmation caveat in the privilege rules (it must ride beside the new grant line, not vanish with the rewrite; red before C02 dev)"
+  done
+  # Fabricated drift: the admitted line removed from a copy must redden the
+  # first window (the plan names this exact probe).
+  python3 - "$RULES_SRC" "$TMP/c14-off.md" <<'PY'
+import re, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r"[^\n]*coord family[^\n]*global-[^\n]*\n", t, re.I)
+if not m:
+    sys.exit(0)  # the live arms are already red pre-C02; nothing to strip
+open(sys.argv[2], "w", encoding="utf-8").write(t[:m.start()] + t[m.end():])
+PY
+  if [ -s "$TMP/c14-off.md" ]; then
+    python3 "$TMP/negwin.py" --ci "$TMP/c14-off.md" 700 'coord family' 'global-' >/dev/null 2>&1 \
+      && fail "c14 control: deleting the privilege line did not redden the pairing — the pin rides scattered text, not the line"
+  fi
+  ok "c14[C02 AC5]: the privilege paragraph pairs the coord family with the global- grants and keeps the admin-confirmation caveat on both surfaces; the line-deleted control reddens"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

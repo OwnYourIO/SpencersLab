@@ -85,6 +85,34 @@
 //     stay — the literal is one constant, never a forked near-clone.
 //   On lock-lost the pin payload also carries the takeover hint: the reaped
 //     cardId, the pipeline set and a reap stamp read from locks/.reaped/.
+//   cf-126 C01/C03 additions (X arms; repo-wide hook scope — the OQ3 ruling):
+//     handleEvent gains ONE tracking leg: a session.created/session.updated
+//     record carrying agent "agent-board-dispatch" AND
+//     metadata.pipelineDispatcher === true writes the record's sessionID
+//     into env.dispatcherSessionID — the leg sits BEFORE the parentID
+//     early-return (the dispatcher is top-level) and touches nothing else;
+//     a record matching only one leg tracks nothing; the leg never throws.
+//   handleCompaction(env, event) -> Promise<void> — the body of the ONE
+//     process-wide compaction hook (it fires for every session; the agent
+//     SELECTS the instruction variant, never gates):
+//     event = { sessionID?, agent?, request? { text?: string, system?:
+//       string } } — the summary request is extended IN PLACE. env gains
+//     instructions?: { entry: { put(input:{key?, text}) => Promise<any> } }
+//     (the ctx.session.instructions.entry.put seam) and keeps env.log for
+//     notes. Agents in {the six *-coord variants, agent-board-dispatch} take
+//     the FULL leg: the summary gains the compact-pointer law (card id when
+//     a claim exists, plan-folder path, open questions, current chunk id +
+//     state) INCLUDING the explicit "omit what has been done and the next
+//     step — the successor re-reads" + "files are the bus" wording, and one
+//     entry.put lands whose text starts from "compaction just fired" and
+//     names the successor spawn, the STATE.json currency and the handoff
+//     release. EVERY other agent takes the generic leg: the same
+//     pointer-shape summary law generalized to the context files and a
+//     generic successor-bootstrap entry — the generic pair carries NO lock
+//     or card vocabulary. A missing/unshaped event (null, no sessionID) and
+//     a throwing entry seam degrade to one note: the hook NEVER throws into
+//     the compaction path (a misbehaving hook may cost one summary, never a
+//     session). setup registers the "compaction" session hook exactly once.
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -1001,5 +1029,188 @@ describe("U3 the takeover signal on lock-lost (cf-106 C09 AC 1-2)", () => {
     // promises lease extension would overstate the plugin (C02 dev-note:
     // "answers the question", never "extends"/"renews"/"refreshes").
     assert.doesNotMatch(text, /\b(?:extends?|extending|renews?|renewing|refresh(?:es|ing)?)\b/i, "the string never mentions extending/renewing/refreshing a lease — refusal, no-self-reclaim and the 2 h window stay exactly as shipped");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-126 C03/C01 — the repo-wide compaction hook, its two instruction legs,
+// and the dispatcher-session tracking. Designed red until the seams land (the
+// import-time seam() names the missing export, the repo's red-before-dev
+// convention). C03's verify-on-running-build duty maps the runtime event into
+// these shapes; the offline contract is what dev must satisfy.
+// ---------------------------------------------------------------------------
+describe("X1 dispatcher tracking through the event stream (C01 AC5 seam, D6)", () => {
+  const rec = (sessionID: string, extra: any) => ({
+    type: "session.updated",
+    data: { info: { sessionID, agent: "agent-board-dispatch", metadata: { pipelineDispatcher: true }, ...extra } },
+  });
+
+  it("a top-level record carrying the agent AND the marker tracks the sessionID", async () => {
+    const { env } = baseEnv();
+    // The dispatcher never claims and has no parent — the tracking leg must
+    // fire BEFORE the parentID early-return that gates child mapping.
+    await seam("handleEvent")(env, rec("ses_disp1", {}));
+    assert.equal(env.dispatcherSessionID, "ses_disp1", "the release wake reads exactly this member (core W1); red before C01 dev");
+  });
+
+  it("session.created tracks identically (both record events carry the shape)", async () => {
+    const { env } = baseEnv();
+    await seam("handleEvent")(env, { ...rec("ses_disp2", {}), type: "session.created" });
+    assert.equal(env.dispatcherSessionID, "ses_disp2");
+  });
+
+  it("one leg short tracks nothing: no marker, or the wrong agent, or no record", async () => {
+    const a = baseEnv();
+    await seam("handleEvent")(a.env, { type: "session.updated", data: { info: { sessionID: "s1", agent: "agent-board-dispatch" } } });
+    assert.notEqual(a.env.dispatcherSessionID, "s1", "agent without metadata.pipelineDispatcher is not the dispatcher session");
+    const b = baseEnv();
+    await seam("handleEvent")(b.env, { type: "session.updated", data: { info: { sessionID: "s2", agent: "agent-board-coord", metadata: { pipelineDispatcher: true } } } });
+    assert.notEqual(b.env.dispatcherSessionID, "s2", "the marker on another agent names no dispatcher");
+    const c = baseEnv();
+    await seam("handleEvent")(c.env, { type: "session.updated", data: { info: { sessionID: "s3", metadata: { pipelineNoop: { reason: "no-cards" } } } } });
+    assert.notEqual(c.env.dispatcherSessionID, "s3", "the sibling pipelineNoop marker must not be read as the dispatcher marker");
+  });
+
+  it("the tracking leg never throws on malformed records (event pump stays alive)", async () => {
+    const { env } = baseEnv();
+    for (const junk of [null, {}, { type: "" }, { type: "session.updated" }, { type: "session.updated", data: { info: { agent: "agent-board-dispatch", metadata: "not-an-object" } } }]) {
+      await seam("handleEvent")(env, junk as any);
+    }
+    assert.notEqual(env.dispatcherSessionID, true, "junk tracked nothing it can name");
+  });
+});
+
+describe("X2 the compaction hook — FULL leg for the coord variants and the dispatcher (C03 AC1, D8/D9/OQ3)", () => {
+  const FULL = ["agent-coord", "agent-coord-local", "agent-coord-pr", "agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr", "agent-board-dispatch"];
+
+  function compEnv(opts: any = {}) {
+    const { env } = baseEnv();
+    const puts: any[] = [];
+    const notes: string[] = [];
+    env.log = (line: string) => void notes.push(line);
+    env.instructions = {
+      entry: {
+        put: async (input: any) => {
+          if (opts.putThrows) throw new Error("entry put failed");
+          puts.push(input);
+        },
+      },
+    };
+    return { env, puts, notes };
+  }
+
+  for (const agent of FULL) {
+    it(`${agent}: pointer-shape summary injection + the handoff entry`, async () => {
+      const { env, puts } = compEnv();
+      const request: any = { text: "", system: "" };
+      await seam("handleCompaction")(env, { sessionID: "ses_x", agent, request });
+      const sum = `${request.text ?? ""} ${request.system ?? ""}`;
+      assert.match(sum, /omit what has been done/i, "the pointer law is explicit: what's-done/what's-next stays OUT — the successor re-reads the plan folder (D9 dodges the #59110 class)");
+      assert.match(sum, /files are the bus/i, "the summary names the shared-memory law it points at");
+      assert.match(sum, /open questions/i, "the pointer carries the open questions");
+      assert.match(sum, /chunk/i, "and the current chunk id + state");
+      assert.equal(puts.length, 1, "exactly one instructions.entry per compaction");
+      assert.match(puts[0].text ?? "", /compaction just fired/i, "the note opens as the event it answers");
+      assert.match(puts[0].text ?? "", /successor/i, "spawn the successor");
+      assert.match(puts[0].text ?? "", /STATE\.json/, "make the plan-folder state current FIRST");
+      assert.match(puts[0].text ?? "", /handoff/, "release with outcome handoff (coord) / end after the fresh spawn (dispatcher)");
+    });
+  }
+
+  it("the card id rides the pointer WHEN the session holds a claim", async () => {
+    const { env } = compEnv();
+    env.claims.set("ses_x", { setId: "set-x", cardId: "card-7", pipelineSet: ["a"] });
+    const request: any = { text: "", system: "" };
+    await seam("handleCompaction")(env, { sessionID: "ses_x", agent: "agent-board-coord", request });
+    const sum = `${request.text ?? ""} ${request.system ?? ""}`;
+    assert.match(sum, /card-7/, "a claimed session names its card in the pointer (C03 Tasks: card id WHEN PRESENT)");
+    const unclaimed = compEnv();
+    const request2: any = { text: "", system: "" };
+    await seam("handleCompaction")(unclaimed.env, { sessionID: "ses_y", agent: "agent-board-coord", request: request2 });
+    assert.doesNotMatch(`${request2.text} ${request2.system}`, /undefined|null/, "no claim must not leak an undefined card into the summary");
+  });
+
+  it("a throwing entry seam costs a note, never the session (C03 Notes for dev)", async () => {
+    const { env, notes } = compEnv({ putThrows: true });
+    const request: any = { text: "", system: "" };
+    await seam("handleCompaction")(env, { sessionID: "ses_x", agent: "agent-coord", request });
+    assert.ok(notes.length >= 0);
+    assert.match(`${request.text} ${request.system}`, /omit what has been done/i, "the summary leg survived the entry failure — one cost is the missed note, never the turn");
+  });
+
+  it("setup registers the compaction hook exactly once (process-wide, no per-agent set)", async () => {
+    const runtimeDir = mkdtempSync("/tmp/opencode/pllocks-x2.XXXXXX");
+    const sessionHooks: string[] = [];
+    const ctx: any = {
+      tool: { transform: async (fn: any) => void fn({ namespace: "", add: () => {} }), hook: async () => {} },
+      command: { transform: async (fn: any) => void fn({ add: () => {} }) },
+      event: { subscribe: () => ({ [Symbol.asyncIterator]: () => ({ next: async () => ({ value: undefined, done: true }) }) }) },
+      session: {
+        get: async () => undefined,
+        prompt: async () => {},
+        hook: async (name: string) => void sessionHooks.push(name),
+        instructions: { entry: { put: async () => {}, remove: async () => {} } },
+      },
+      mcp: { list: async () => [] },
+      location: { directory: runtimeDir },
+    };
+    const settled: any = await Promise.race([
+      mod.default.setup(ctx),
+      new Promise((r) => setTimeout(() => r("pending"), 2000)),
+    ]);
+    assert.notEqual(settled, "pending", "setup must return with the hook registration inlined or scheduled");
+    try {
+      try {
+        await until(() => sessionHooks.filter((n) => n === "compaction").length >= 1, 1500);
+      } catch {
+        /* counted below — the assertion names the red */
+      }
+      const n = sessionHooks.filter((x) => x === "compaction").length;
+      assert.equal(n, 1, `exactly one process-wide compaction hook (repo-wide, the OQ3 ruling — NOT seven per-agent hooks), saw ${JSON.stringify(sessionHooks)}`);
+    } finally {
+      // A red assert must not leak a live plugin: its beat timers would hold
+      // the event loop open and the file would die on the runner timeout
+      // instead of reporting the red (found at test-wave run).
+      if (typeof settled === "function") settled();
+    }
+  });
+});
+
+describe("X3 the compaction hook — generic leg for every other agent (C03 AC1, the OQ3 blast radius)", () => {
+  function compEnv() {
+    const { env } = baseEnv();
+    const puts: any[] = [];
+    env.log = () => {};
+    env.instructions = { entry: { put: async (input: any) => void puts.push(input) } };
+    return { env, puts };
+  }
+
+  for (const agent of ["agent-test", "agent-dev-local", "agent-board", "code", "planner", "debug", undefined, null]) {
+    it(`${String(agent)}: the pointer-shape summary + the generic bootstrap note, no lock/card protocol`, async () => {
+      const { env, puts } = compEnv();
+      const request: any = { text: "", system: "" };
+      await seam("handleCompaction")(env, { sessionID: "ses_g", agent, request });
+      const sum = `${request.text ?? ""} ${request.system ?? ""}`;
+      assert.match(sum, /omit what has been done/i, "the generic leg keeps the same pointer law — the blast radius IS the repo-wide re-shape (OQ3 ruling)");
+      assert.match(sum, /context files|plan.?folder/i, "and points the successor at the context files");
+      assert.equal(puts.length, 1, "the generic leg still lands exactly one note");
+      const note = puts[0].text ?? "";
+      assert.match(note, /compaction just fired/i);
+      assert.match(note, /successor|bootstrap/i, "the note is the generic successor-bootstrap shape");
+      assert.doesNotMatch(note, /release the lock|pipeline_claim|outcome handoff/i, "non-coord sessions get NO lock/card protocol (the full leg's machinery would misfire there)");
+    });
+  }
+
+  it("missing/unshaped events degrade silently: no throw, no puts", async () => {
+    const { env, puts } = compEnv();
+    for (const junk of [null, undefined, {}, { type: "something-else" }, { agent: "agent-coord" }]) {
+      await seam("handleCompaction")(env, junk as any);
+    }
+    assert.equal(puts.length, 0, "an event without a sessionID carries no session to instruct");
+  });
+
+  it("a request-free event (the host passed no summary draft) still never throws", async () => {
+    const { env } = compEnv();
+    await seam("handleCompaction")(env, { sessionID: "ses_r", agent: "agent-coord" });
   });
 });

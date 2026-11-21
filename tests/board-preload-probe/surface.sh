@@ -199,20 +199,58 @@ PY
   ok "B4[OQ-N1]: permissions.md coord + board-coord rows and the drift log carry the scoped probe grant (source + mirror)"
 fi
 
-# --- B5: containment — exactly the six coord files, no broader mint (review rule)
+# --- B5: containment — exactly the six coord files, the session-API family scoped (review rule) --
+# cf-126 C02 / Ruling OQ6 SUPERSESSION of the 2026-10-29 rejection (validation_
+# at_fault via coord, DECISIONS D24 route; dev + review adjudicated arm-side
+# debt — the code is correct): this leg's literal ban on 'opencode api post'
+# encoded "the script is the grant" against a BROAD mint. The owner batch
+# round then ruled the session-CREATION rows the sanctioned C03 handoff
+# transport (D11/OQ6) and C02 landed exactly them — A12's api containment is
+# re-pinned to the four-row family by this ticket's own test wave. The law
+# this arm still guards — no broader mint than the scoped family beside the
+# probe script — survives as a POSITIVE containment pin: the api shell rows
+# are EXACTLY get→patch→post→post on the /api/session forms (the two
+# sanctioned shapes), no 'opencode run' anywhere (that ban is untouched by
+# OQ6), and the holders leg above is unchanged. The shipped checker also
+# runs against a fabricated arbitrary-endpoint mutant so the equality is
+# proven to bite; a fifth api grant or a non-session POST endpoint reddens.
 if want b5; then
   holders=$(grep -l 'board-preload-probe' .rulesync/subagents/*.md || true)
   want_h="$(printf '%s\n' "${CF_SRC[@]}" | sort)"
   got_h="$(printf '%s\n' $holders | sort)"
   [ "$got_h" = "$want_h" ] \
     || fail "B5[OQ-N1]: the probe grant appears outside the six coord variants (got: $got_h) — review treats any broader mint as a deviation"
-  for f in "${CF_SRC[@]}"; do
-    grep -qE 'resource: opencode api post' "$f" \
-      && fail "B5[OQ-N1]: $f grew 'opencode api post' — the rejected widening shape (A12's api containment breaks; the script is the grant)"
-    grep -qE 'resource: opencode run' "$f" \
-      && fail "B5[OQ-N1]: $f grew raw 'opencode run' — purpose-bound script only"
+  cat >"$TMP/apifamily.py" <<'PY'
+import re, sys, yaml
+path = sys.argv[1]
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+assert m, f"{path}: no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+perms = outer.get("permissions") or fm.get("permissions") or []
+FAMILY = ["opencode api get /api/session*", "opencode api patch /api/session/*",
+          "opencode api post /api/session*", "opencode api post /api/session/*"]
+api = [str(p.get("resource", "")) for p in perms
+       if p.get("action") == "shell" and str(p.get("resource", "")).startswith("opencode api")]
+errs = []
+if api != FAMILY:
+    errs.append(f"api shell rows {api}, want exactly the four-row /api/session family in order — the OQ6 lift covers ONLY the two session-creation shapes beside get/patch; any other endpoint or verb is the rejected broad mint")
+if any(str(p.get("resource", "")).startswith("opencode run") for p in perms):
+    errs.append("an 'opencode run' shape appeared — OQ6 sanctioned scoped api rows, never the raw CLI run; the probe script remains the live-fire grant")
+print("; ".join(errs))
+sys.exit(1 if errs else 0)
+PY
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    python3 "$TMP/apifamily.py" "$f" \
+      || fail "B5[cf-126 C02 re-pin of OQ-N1]: $f violates the scoped session-API family (reason above)"
   done
-  ok "B5[OQ-N1]: grant scoped to the six coord variants; no api-post or opencode-run shape anywhere in the family"
+  # Fabricated drift: repoint one creation post at a non-session endpoint —
+  # the positive pin, like the old ban, must refuse arbitrary POST shapes.
+  sed 's|opencode api post /api/session\*|opencode api post /api/config*|' "${CF_SRC[0]}" >"$TMP/b5-mutant.md"
+  if python3 "$TMP/apifamily.py" "$TMP/b5-mutant.md" >/dev/null 2>&1; then
+    fail "B5 control: the arbitrary-endpoint mutant passed the containment pin — the family equality is vacuous (the banned broad mint would slip through)"
+  fi
+  ok "B5[cf-126 C02 re-pin of OQ-N1]: probe grant scoped to the six coord variants; all twelve family files carry exactly the four-row /api/session family with no 'opencode run' shape, and the non-session-POST mutant reddens"
 fi
 
 # --- B6: cf-106 C06/C07 — the live-fire legs name the enriched payload --------

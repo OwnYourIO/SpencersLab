@@ -154,6 +154,20 @@
 # wait on C04 (peers.radiance) and C02 (the chart scalars/polarity comment)
 # — all predecessors of C05's wave, so C05's bar is a full green.
 #
+# cf-126 C04 RE-PIN (2026-11-19, agent-test; 2026-11-cf-126): POSTURE
+# INVERSION, deliberate and plan-ordered. Chunks/C04.md Tests commands the
+# default-row arms re-pinned to the radiance-lane state — so M1's blank/
+# Local-only default legs and M8-E's three class rows are DESIGNED RED from
+# this test wave until C04's gate lands, and the cf-143 sentence above
+# ("C01..C04 reviews run bare and must PASS") no longer holds for this
+# ticket: waves 1-3 run their chunk subsets WITHOUT pipeline-models (the
+# chunk Tests sections name none for C01-C03); final review runs the full
+# set and reads any surviving M1/M8-E/M9 red as C04 GATED-UNMET (STATE.json
+# gates), never as a defect to fix by weakening — the flip happens only on
+# the owner's merge + scale-up + dated 8-session receipt. NEW M9 carries the
+# D54(4) post-receipt state (explicit-run, like M8). Full battery line for
+# reviews: bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 M7 M8 M9.
+#
 # Usage:
 #   bash tests/pipeline-models/surface.sh            # M1..M7 (cf-143 default)
 #   bash tests/pipeline-models/surface.sh M3 M4      # subset
@@ -184,7 +198,7 @@ if [ "$#" -eq 0 ]; then
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^m[1-8]$ ]] || fail "unknown check id '$a' (expected M1..M8)"
+    [[ "$lc" =~ ^m[1-9]$ ]] || fail "unknown check id '$a' (expected M1..M9)"
     WANT["$lc"]=1
   done
 fi
@@ -310,9 +324,13 @@ if want m1; then
     # windowed, not bare grep, so a stray mention elsewhere cannot satisfy it.
     python3 "$TMP/win.py" --ci "$f" 300 'qwen3.8-flash-next-q3' 'explicit' \
       || fail "M1[AC2]: $f no longer documents qwen3.8-flash-next-q3 as the explicit-request alternate in the combination bullet (cf-83 Q1)"
-    # Local-only default follows the 27b default (q6 → q4)
-    python3 "$TMP/win.py" --ci "$f" 300 'no model' 'qwen3.8-27b-q4' \
-      || fail "M1[AC1]: $f's Local-only default is not qwen3.8-27b-q4 (was q6; C06 re-cuts it)"
+    # Local-only default follows the blank Model(s) default — cf-126 C04
+    # RE-PIN: the default route moved to the q27 radiance lane (owner ruling
+    # 2026-11-17 + the 8-session gate receipt), so both default legs want
+    # radiance; the explicit 27b+Local COMBO above stays q4 (D12 carve-out:
+    # a mapping, not a default). DESIGNED RED until C04's gate facts land.
+    python3 "$TMP/win.py" --ci "$f" 300 'no model' 'qwen3.8-27b-radiance' \
+      || fail "M1[AC1 cf-126 C04 re-pin]: $f's Local-only default is not qwen3.8-27b-radiance (follows the blank-default row; was q4 — the C04 flip) — designed red until the gated flip lands"
     # stale q6 mappings removed outright
     grep -qF 'qwen3.8-flash-q6' "$f" && fail "M1[AC1]: $f still references qwen3.8-flash-q6 — C06 drops it outright, not as a fallback"
     grep -qF '27b → `gpu-ai/qwen3.8-27b-q6`' "$f" && fail "M1[AC1]: $f still maps 27b to q6 as the default route"
@@ -339,13 +357,35 @@ if want m1; then
       && fail "M1[AC3]: $f names strix outside the strata-q4 row's operations clause (Q3: that clause is strix's one location)"
     python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-27b-q6' 'alternate' \
       || fail "M1[AC1]: $f's q6 row was not re-labelled the verified alternate (C06 Tasks)"
-    # cf-106 C02 (OQ-7 ruling, ask 10): the ROUTING default flips local-first —
-    # a blank Model(s) resolves to the dense local route for BOTH tiers, and
-    # openrouter becomes the documented explicit-choice/fallback provider.
-    python3 "$TMP/win.py" --ci "$f" 700 'no model' 'both tiers' 'qwen3.8-27b-q4' \
-      || fail "M1[AC4 cf-106 C02]: $f never resolves a BLANK Model(s) to gpu-ai/qwen3.8-27b-q4 for BOTH tiers — the default flip is C02's second half (red before C02: the table still defaults both tiers to openrouter)"
+    # cf-106 C02 (OQ-7 ruling) flipped the routing default local-first;
+    # cf-126 C04 re-pins the ROW: a blank Model(s) now resolves to the q27
+    # radiance lane for BOTH tiers, cited to the 2026-11-17 owner ruling AND
+    # the dated 8-session gate receipt (the D54(4) post-receipt state — the
+    # receipt date is dev-supplied, so the leg pins the DATE SHAPE next to
+    # the citation words, never a literal date).
+    python3 "$TMP/win.py" --ci "$f" 700 'no model' 'both tiers' 'qwen3.8-27b-radiance' \
+      || fail "M1[AC1 cf-126 C04]: $f never resolves a BLANK Model(s) to gpu-ai/qwen3.8-27b-radiance for BOTH tiers — the gated default flip (red by design until C04's gate facts land; C01-C03 keep q4 shipping today)"
+    python3 - "$f" <<'PY' || fail "M1[AC1 cf-126 C04]: the blank-default row lacks the ruling + dated receipt citation (diagnostics above)"
+import re, sys
+text = re.sub(r"\s+", " ", open(sys.argv[1]).read())
+i = text.lower().find("blank model")
+if i < 0:
+    i = text.lower().find("no item checked")
+assert i >= 0, "no blank-Model(s) sentence found to inspect"
+window = text[i:i + 900]
+missing = [w for w in ("ruling", "receipt") if w not in window.lower()]
+if not re.search(r"20\d\d-\d\d-\d\d", window):
+    missing.append("a dated citation (yyyy-mm-dd)")
+if missing:
+    print(f"blank-default sentence lacks {missing} within 900 chars"); sys.exit(1)
+PY
+    # The pre-flip default becomes the drift: a restored q4-both-tiers row
+    # after the flip is the history the clause must not still teach.
+    if python3 "$TMP/win.py" --ci "$f" 300 'no item checked' 'qwen3.8-27b-q4' >/dev/null 2>&1; then
+      fail "M1[AC1 cf-126 C04]: $f still resolves the blank Model(s) row to gpu-ai/qwen3.8-27b-q4 — the default moved to the q27 lane by the 2026-11-17 ruling with the gate receipt; the combo/bg rows keep q4, the DEFAULT sentence may not"
+    fi
     python3 "$TMP/win.py" --ci "$f" 700 'gpu-ai' 'default' 'openrouter' 'fallback' \
-      || fail "M1[AC4 cf-106 C02]: $f never states the local-first provider posture (gpu-ai is the default, openrouter the documented explicit-choice/fallback) — red before C02 lands it"
+      || fail "M1[AC4 cf-106 C02]: $f never states the local-first provider posture (gpu-ai is the default, openrouter the documented explicit-choice/fallback) — unchanged by C04 (the lane moves, the posture stands)"
     # An explicit Qwen Dense check WITHOUT Local still routes openrouter — the
     # flip changes the default, not the label's own mapping (chunk AC4).
     python3 "$TMP/win.py" --ci "$f" 500 'dense' 'openrouter/qwen/qwen3.8-27b' \
@@ -369,7 +409,7 @@ if first_local > first_or:
 PY
     then fail "M1[AC4 cf-106 C02]: $f's favorited-models table does not lead with the local rows (ids and verification notes unchanged — only the order moves)"; fi
   done
-  ok "M1[AC1–AC4]: pipeline-models carries the four-option picker with Qwen Dense replacing Qwen 27b (no fifth option, no stale 27b label), the q4 27b+Local route with the unless-escape, the pinned combination bullet routing Flash+Local to flash-next-strata-q4 with the pre-ruling strata/q3 route strings gone and q3 documented as the explicit-request alternate, Local-only q4, stale q6 routes gone, the single strata-q4 favorited row with the peers/arena clause, the blank-Model(s) → gpu-ai/qwen3.8-27b-q4 both-tiers default with the local-first posture and an explicit Dense check still mapping to openrouter, and a favorited table that leads with the local rows"
+  ok "M1[AC1–AC4]: pipeline-models carries the four-option picker with Qwen Dense replacing Qwen 27b (no fifth option, no stale 27b label), the q4 27b+Local route with the unless-escape, the pinned combination bullet routing Flash+Local to flash-next-strata-q4 with the pre-ruling strata/q3 route strings gone and q3 documented as the explicit-request alternate, Local-only following the blank default onto the q27 radiance lane (cf-126 C04 re-pin, with the dated ruling + receipt citation and the stale q4-default bar), stale q6 routes gone, the single strata-q4 favorited row with the peers/arena clause, the blank-Model(s) → gpu-ai/qwen3.8-27b-radiance both-tiers default with the local-first posture and an explicit Dense check still mapping to openrouter, and a favorited table that leads with the local rows"
 fi
 
 # --- M2: pipeline-kickoff — four options, cites, strata derivation (AC1–AC3) -----
@@ -974,15 +1014,30 @@ errs = []
 header = [ln for ln in lines if "class" in ln or "priority" in ln]
 if not any(("radiance" in ln and "body.priority" in ln) for ln in header):
     errs.append("the class table value column is not renamed engine-scoped (Radiance body.priority)")
-r1 = find(["urgent", "qwen3.8-flash-next-radiance-urgent"], rx=r"1\s*[–\-—]\s*3")
-if not r1 or not re.search(r"\|\s*9\s*\|", r1):
-    errs.append("no urgent row (1-3 / urgent / qwen3.8-flash-next-radiance-urgent / 9)")
-r2 = find(["default", "qwen3.8-flash-next-radiance", "5", "unset"], must_not=["-urgent", "-low"])
-if not r2 or not re.search(r"\|\s*5\s*\|", r2):
-    errs.append("no default row (unset / default / qwen3.8-flash-next-radiance / 5)")
-rl = find(["low", "qwen3.8-flash-next-radiance-low"], rx=r"8\s*[–\-—]\s*9")
-if not rl or not re.search(r"\|\s*1\s*\|", rl):
-    errs.append("no low row (8-9 / low / qwen3.8-flash-next-radiance-low / 1)")
+# cf-126 C04 RE-PIN of the three class-table rows: the default/urgent/low
+# routes move to the q27 trio (8/4/0); the background row and the polarity
+# law stay; the floor citation follows the default class onto q27 (verify,
+# never re-derive — M8-C15 already pins the serving-side floor 4). fn's
+# catalog trio and favorited rows survive UNTOUCHED above (M8-A) — the table
+# moved, the inventory did not. DESIGNED RED until C04's gate facts land.
+r1 = find(["urgent", "qwen3.8-27b-radiance-urgent"], rx=r"1\s*[–\-—]\s*3")
+if not r1 or not re.search(r"\|\s*8\s*\|", r1):
+    errs.append("no urgent row (1-3 / urgent / qwen3.8-27b-radiance-urgent / 8) — the C04 class-row move (was fn-urgent/9)")
+r2 = find(["default", "qwen3.8-27b-radiance", "unset"], must_not=["-urgent", "-low"])
+if not r2 or not re.search(r"\|\s*4\s*\|", r2):
+    errs.append("no default row (unset / default / qwen3.8-27b-radiance / 4) — the C04 default-class flip cites the q27 lane's own priority (was fn/5)")
+rl = find(["low", "qwen3.8-27b-radiance-low"], rx=r"8\s*[–\-—]\s*9")
+if not rl or not re.search(r"\|\s*0\s*\|", rl):
+    errs.append("no low row (8-9 / low / qwen3.8-27b-radiance-low / 0) — the C04 move (was fn-low/1)")
+# The stale pre-flip cells are the drift the two-tree sweep must not hide:
+# a restored fn class row after the flip redds here (M8-A's catalog pins and
+# the favorited fn rows are NOT this sentence — the table taught routes, the
+# inventory teaches serving).
+for stale in (["urgent", "qwen3.8-flash-next-radiance-urgent"], ["low", "qwen3.8-flash-next-radiance-low"]):
+    if find(stale):
+        errs.append(f"class table still carries the pre-C04 route cell {stale} — only the Model-row column moved, and it moved fully")
+if find(["default", "qwen3.8-flash-next-radiance", "unset"], must_not=["-urgent", "-low"]):
+    errs.append("class table default row still routes fn radiance — C04 moved the default class to the q27 lane")
 r3 = find(["background", "qwen3.8-27b-q4"]) 
 if not r3 or not re.search(r"\b10\s*\+", r3):
     errs.append("the background row (10+ / qwen3.8-27b-q4) changed — the chunk rules it UNCHANGED")
@@ -993,8 +1048,8 @@ if not re.search(r"retired vllm lane[^\n]{0,120}lower-wins|lower-wins[^\n]{0,120
     errs.append("the vLLM-history sentence lacks the RETIRED-lane (lower-wins) mark")
 if "never port" not in low_t:
     errs.append("'never port those numbers to radiance' is missing (Q2 verbatim guard)")
-if not re.search(r'peers\.radiance[^\n]{0,80}priority\?[^\n]{0,30}= ?5|priority\?[^\n]{0,40}=? ?5[^\n]{0,120}peers\.radiance', low_t):
-    errs.append('the floor sentence is not re-pinned to peers.radiance.filters.setParams "priority?" = 5')
+if not re.search(r'peers\.radiance-q27[^\n]{0,80}priority\?[^\n]{0,30}= ?4|priority\?[^\n]{0,40}=? ?4[^\n]{0,120}peers\.radiance-q27', low_t):
+    errs.append('the floor sentence is not re-pinned to peers.radiance-q27.filters.setParams "priority?" = 4 — the C04 default-class move carries the set-if-undefined floor citation onto the q27 lane (verify, never re-derive: the serving floor already stands at 4, M8-C15)')
 def favrow(cell):
     for ln in lines:
         cells = [c.strip().strip("`").strip() for c in ln.strip().strip("|").split("|")]
@@ -1064,6 +1119,78 @@ PY
     skip "M8: Q5 diff-inventory leg not run — review sets CF143_BASE_SHA=<merge-base> and re-runs M8 (git diff check, chunks/C05.md AC3)"
     ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, ctx 200000, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4 — C15 clone) + re-frozen delta (added == q27 trio vs the C15 base) + strata KEEP needles + negative peer-id bars (both wire ids) + re-pinned class/favorited tables on source AND mirror (q27 favorited row included) + chart polarity comment"
   fi
+fi
+
+# --- M9: cf-126 C04 — the D54(4) doctrine post-receipt state (designed-red ---
+# until the gate lands; run EXPLICITLY like M8: `bash tests/pipeline-models/
+# surface.sh M9`). Contract per chunks/C04.md Tests: the retired clause is
+# GONE, the ruling + dated receipt citation stands beside the D54(4) record
+# (history stays citable — the HANDLE survives, the routing bar does not),
+# with the two fabricated drifts the chunk names: clause restored ⇒ red,
+# citation removed ⇒ red. Checked on the PM source AND generated mirror (a
+# half-regenerate cannot pass M9 + M6 together).
+if want m9; then
+  cat >"$TMP/bar.py" <<'PY'
+# The absence bar as a script (the live loop and the fabricated-drift control
+# run the SAME code — a reconstructed check would prove nothing).
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+if "NEVER a default route" in t:
+    print("the retired D54(4) clause 'NEVER a default route' is present — the owner ruling + the q27 gate receipt retired it; the runner tier now points here by default (red until C04's gate facts land, named by the gate, never skipped)")
+    sys.exit(1)
+print("ok")
+PY
+  cat >"$TMP/cite.py" <<'PY'
+import re, sys
+t = re.sub(r"\s+", " ", open(sys.argv[1]).read())
+i = t.find("D54(4)")
+if i < 0:
+    print("the D54(4) handle vanished entirely — the measurement history stays citable even as the clause retires (C04 AC4: retired, not deleted)")
+    sys.exit(1)
+win = t[max(0, i - 900):i + 900]
+missing = [w for w in ("receipt", "ruling") if w not in win.lower()]
+if not re.search(r"20\d\d-\d\d-\d\d", win):
+    missing.append("a dated citation (yyyy-mm-dd)")
+if missing:
+    print(f"the D54(4) passage lacks {missing} within +/-900 chars — the post-receipt doctrine must cite the owner ruling AND the 8-session gate receipt WITH its date (the depth figure 262144 belongs to the receipt, OQ5)")
+    sys.exit(1)
+print("ok")
+PY
+  for f in "$PM_SRC" "$PM_GEN"; do
+    [ -f "$f" ] || fail "M9[C04 AC4]: $f missing (harness fault)"
+    python3 "$TMP/bar.py" "$f" || fail "M9[C04 AC4]: $f fails the retired-clause bar (reason above)"
+    python3 "$TMP/cite.py" "$f" || fail "M9[C04 AC2/AC4]: $f fails the post-receipt citation contract (reason above)"
+  done
+  # Fabricated drift 1: restore the clause in a copy — the SAME bar script
+  # must reject it (an uncaught mutant = vacuous pin).
+  python3 - "$PM_SRC" "$TMP/m9-restored.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+i = t.find("D54(4)")
+if i < 0:
+    sys.exit(0)  # cite.py's live arm already reddens with its own name; the controls run against the landed shape
+open(sys.argv[2], "w", encoding="utf-8").write(t[:i] + "NEVER a default route and no runner tier points here. " + t[i:])
+PY
+  if [ -s "$TMP/m9-restored.md" ]; then
+    if python3 "$TMP/bar.py" "$TMP/m9-restored.md" >/dev/null 2>&1; then
+      fail "M9 control: the clause-restored copy passed the absence bar — the retirement is not enforced"
+    fi
+  fi
+  # Fabricated drift 2: strip the receipt citation — cite.py must redden.
+  python3 - "$PM_SRC" "$TMP/m9-noreceipt.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+low = t.lower()
+i = low.find("receipt")
+if i < 0:
+    sys.exit(0)  # unlanded: nothing to strip; the live arm already reds
+open(sys.argv[2], "w", encoding="utf-8").write(t[:i] + "note" + t[i + len("receipt"):])
+PY
+  if [ -s "$TMP/m9-noreceipt.md" ]; then
+    python3 "$TMP/cite.py" "$TMP/m9-noreceipt.md" >/dev/null 2>&1 \
+      && fail "M9 control: the citation-stripped copy still satisfied the dated-citation arm — the receipt citation is not actually pinned"
+  fi
+  ok "M9[C04 AC2/AC4]: the retired NEVER-a-default-route clause is absent, the D54(4) handle survives with a dated ruling + receipt citation on source AND mirror; both fabricated mutants (clause restored / citation stripped) are rejected by the same scripts the live loop runs"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

@@ -78,6 +78,17 @@
 # count moves 24 -> 25 with the agent-explore source landing.
 # SELECTION NOTE: nothing in this suite is pre-existing-red today; the drift
 # reds live in the sibling suites (gate t17/i4/s4/m4 — see gate.sh header).
+# cf-126 TEST WAVE (2026-11-19, agent-test; 2026-11-cf-126-feat-compaction-
+# pipeline-sessions): DESIGNED REDS — A20 + A16 (until C01 lands the
+# dispatcher source, its mirror, and the count moves 26 -> 27), A12 + A21
+# (until C02 lands the read-*/env-denies, the six fleet rows and the four-row
+# API family on all six coord sources AND mirrors; family.py's api `want` is
+# re-pinned to the four rows, the gate t17 / coord-inwork i4 / session-origin
+# s4 copies keep their own two-row form and stay in the pre-existing-red set
+# this ticket does not touch). Per-chunk gates run the subset each chunk
+# owns: C01 = A16 A20 (C02 adds A12 A14 A21). A15 stays a PRE-EXISTING red
+# from main's C05-C07 window (verified byte-identical in a detached tree at
+# the test wave), not this ticket's.
 #
 # cf-72 re-pin (2026-10-29, card #72, candidate B): the coord family's git
 # surface is no longer a reads allow-list — A12's GIT_SHARED/TAIL_* block (and
@@ -232,11 +243,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 19); do WANT["a$i"]=1; done
+  for i in $(seq 1 21); do WANT["a$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^a([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected A1..A19)"
+    [[ "$lc" =~ ^a([1-9]|1[0-9]|2[0-1])$ ]] || fail "unknown check id '$a' (expected A1..A21)"
     WANT["$lc"]=1
   done
 fi
@@ -683,17 +694,23 @@ def cmd():
     elif op == "api":
         path = sys.argv[2]
         p = perms(path)
-        want = [sh("opencode api get /api/session*", "allow"), sh("opencode api patch /api/session/*", "allow")]
+        # cf-126 C02 (D11/OQ6) re-pin: the own-session API family GROWS to four
+        # rows — the two session-creation shell rows land beside get/patch (the
+        # handoff protocol's transport). DESIGNED RED until C02 lands them on
+        # all six coord sources AND mirrors; the containment duty is unchanged
+        # (exactly these rows, no fifth API grant, no other effect).
+        want = [sh("opencode api get /api/session*", "allow"), sh("opencode api patch /api/session/*", "allow"),
+                sh("opencode api post /api/session*", "allow"), sh("opencode api post /api/session/*", "allow")]
         api = [r for r in p if r.get("action") == "shell" and str(r.get("resource", "")).startswith("opencode api")]
         if api != want:
-            fail(f"api: {path} opencode-api shell rows are {api}, want exactly the two scoped session allows in order "
-                 f"(the in-work-mark containment: no third API grant, no other effect)")
+            fail(f"api: {path} opencode-api shell rows are {api}, want exactly the four scoped session allows in order "
+                 f"(get, patch, then the two creation rows — the C02 widening; no fifth API grant, no other effect)")
         anchors = [i for i, r in enumerate(p) if r == {"action": "opencode", "resource": "*", "effect": "allow"}]
         if len(anchors) != 1:
             fail(f"api: {path} must carry exactly one opencode '*' allow anchor, found {len(anchors)}")
         first = [i for i, r in enumerate(p) if r in want]
-        if not first or p[anchors[0] + 1:anchors[0] + 3] != want:
-            fail(f"api: {path} the two session allows must sit directly after the opencode '*' allow (the pinned splice position)")
+        if not first or p[anchors[0] + 1:anchors[0] + 5] != want:
+            fail(f"api: {path} the four session allows must sit directly after the opencode '*' allow (the pinned splice position; the git tail stays the last rows)")
     elif op == "board":
         path = sys.argv[2]
         p = perms(path)
@@ -1730,6 +1747,14 @@ def strip_jsonc(s):
 SERVERS = set(json.loads(strip_jsonc(open(".opencode/opencode.jsonc").read()))
               .get("mcp", {}).get("servers", {}))
 FAMILY = ("dev", "admin", "readonly", "global")
+# cf-126 C02 (OQ9 ruling): the six global- rows the coord family and the
+# dispatcher carry name MACHINE-GLOBAL fleet servers — not repo-resolvable.
+# The arm adapts per the plan: those six verbatim spellings are exempt from
+# the project-config lookup; ANY other global-family glob (a respelling, a
+# new tier, an admin-global grant) still fails the lookup and reddens here.
+FLEET = {"global-searxng", "global-playwright", "global-renovate",
+         "readonly-global-grafana", "readonly-global-homeassistant",
+         "readonly-global-wekan"}
 
 def offenders(path):
     m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -1743,7 +1768,7 @@ def offenders(path):
         if not a.endswith("*"):
             continue
         stem = a[:-1].split("*")[0]
-        if stem in FAMILY:
+        if stem in FAMILY or stem in FLEET:
             continue
         if stem.startswith(FAMILY) and stem not in SERVERS:
             bad.append(a)
@@ -1764,7 +1789,7 @@ PY
   sed 's/dev-boards\*/dev_boards*/' .rulesync/subagents/agent-board-coord.md >"$TMP/fake-divergent.md"
   python3 "$TMP/mcpshape.py" control "$TMP/fake-divergent.md" \
     || fail "A14[AC6]: NEGATIVE CONTROL FAILED — the guard accepted a fabricated dev_boards* (it degenerated; real spelling drift would pass silently)"
-  ok "A14[AC6]: every per-server MCP action glob in .rulesync/subagents/ equals a name registered in .opencode/opencode.jsonc mcp.servers verbatim (hyphen included); separator-substituted fabrication rejected; family-wide globs exempt"
+  ok "A14[AC6]: every per-server MCP action glob in .rulesync/subagents/ equals a name registered in .opencode/opencode.jsonc mcp.servers verbatim (hyphen included) or one of the six documented machine-global fleet names (cf-126 C02 adaptation — the global- rows live outside repo config); separator-substituted fabrication rejected; family-wide globs exempt"
 fi
 
 # --- A15: cf-76 C07 — pipeline_* lock surface on the board-coord trio ----------
@@ -2065,8 +2090,8 @@ fi
 # matrix rows name their unmoved text. HOLD after landing.
 if want a16; then
   mapfile -t permed < <(grep -l 'permissions:' .rulesync/subagents/*.md)
-  [ "${#permed[@]}" -eq 26 ] \
-    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-106 C04-re-pinned 26 (cf-90's 24 + cf-96 C02's agent-explore + this chunk's code-pr twin). The count is a PIN: adding or retiring a permission-bearing source moves it deliberately, in the chunk that does it."
+  [ "${#permed[@]}" -eq 27 ] \
+    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-126 C01-re-pinned 27 (the cf-106 C04 26 + this chunk's agent-board-dispatch source — DESIGNED RED until C01 lands it; the mirror rides A16's own mirror loop). The count is a PIN: adding or retiring a permission-bearing source moves it deliberately, in the chunk that does it."
   no_perm_landing=$(grep -L 'permissions:' .rulesync/subagents/*.md | grep -v '/[0-9]' || true)
   [ -z "$no_perm_landing" ] \
     || fail "A16[C01 fact]: a NON-stage agent lost its permission block: $no_perm_landing (the nine stage agents are the permissionless set — W3 verified)"
@@ -2160,7 +2185,7 @@ PY
     python3 "$TMP/sectgrep.py" "$f" section 'Drift incidents' 'ls *' \
       || fail "A16[C01 matrix]: $f Drift-incidents section has no ls-* entry for the 2026-10-29 ruling (12 sources, re-pinned suites)"
   done
-  ok "A16[C01 AC1-AC5]: 26 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source + the cf-106 C04 code-pr twin), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
+  ok "A16[C01 AC1-AC5]: 27 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source + the cf-106 C04 code-pr twin + the cf-126 C01 dispatcher source), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
 fi
 
 # --- A17: cf-106 C04 AC2/AC3 — the standalone `code` family git matrix --------
@@ -2504,6 +2529,353 @@ PY
   hits=$(battery_sweep "$TMP/widened-mirror.md")
   [ -n "$hits" ] || fail "A19[C04 AC7]: NEGATIVE CONTROL FAILED — a fabricated 'aislop ci --changes' allow row in the mirror's top-level row shape is not caught (the sweep is shape-blind)"
   ok "A19[C04 AC7]: no subagent source or generated mirror allow-lists the validation battery (node --test, pytest, bash tests/, aislop, py_compile, rulesync generate), the global array still leads with its universal ask default, and fabricated battery rows are caught"
+fi
+
+# --- A20: cf-126 C01 — the dispatcher agent's grant set ------------------------
+# chunks/C01.md Tests: the new agent file parses (frontmatter + permissions);
+# the grant set is pinned — the read-* + env-denies-after shape, dev-boards*,
+# the four opencode api session rows INCLUDING both post rows, execute allow,
+# edit deny, subagent deny — and fabricated drift reddens. Permission ORDER
+# is load-bearing (last-match-wins): the env denies must sit AFTER `read *`,
+# the shell catch-all deny BEFORE its exception rows, the api rows after that.
+# DESIGNED RED until C01 lands the source and rulesync generates the mirror;
+# the policy-probe leg (deny containment) already holds today by absence.
+DISPATCH_SRC=".rulesync/subagents/agent-board-dispatch.md"
+DISPATCH_GEN=".opencode/agents/agent-board-dispatch.md"
+if want a20; then
+  cat >"$TMP/dispatch.py" <<'PY'
+import fnmatch, re, sys, yaml
+path = sys.argv[1]
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+if not m:
+    print("no YAML frontmatter — the agent file must parse"); sys.exit(1)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+perms = (outer.get("permissions") or fm.get("permissions") or [])
+# Sources nest under opencode:, generated mirrors are flat — read nested-
+# then-flat (the pairsync normalization) or the mirror run fails for shape,
+# not for content.
+mode = outer.get("mode", fm.get("mode"))
+color = outer.get("color", fm.get("color"))
+errs = []
+def row(a, r, e):
+    return {"action": a, "resource": r, "effect": e}
+def has(w):
+    return w in perms
+def idx(w):
+    return next((i for i, p in enumerate(perms) if p == w), None)
+if fm.get("name") != "agent-board-dispatch":
+    errs.append(f"name is {fm.get('name')!r}")
+if mode != "primary":
+    errs.append(f"mode is {mode!r}, want primary")
+COLOR_SRC = ".rulesync/subagents/agent-board.md"
+try:
+    board_color = (yaml.safe_load(re.match(r"^---\n(.*?)\n---\n", open(COLOR_SRC).read(), re.S).group(1)) or {}).get("opencode", {}).get("color")
+except Exception:
+    board_color = None
+if not re.match(r"^#[0-9a-fA-F]{6}$", str(color or "")):
+    errs.append(f"color {color!r} is not a #RRGGBB literal")
+elif board_color and color == board_color:
+    errs.append("color is agent-board's — the dispatcher carries a distinct color (C01 Tasks)")
+if not perms or perms[0] != row("*", "*", "deny"):
+    errs.append("deny-all baseline missing as the first row")
+READ_ALL = row("read", "*", "allow")
+ENVD, ENVD2 = row("read", "*.env", "deny"), row("read", "*.env.*", "deny")
+i_read, i_env, i_env2 = idx(READ_ALL), idx(ENVD), idx(ENVD2)
+if i_read is None:
+    errs.append("no single `read *` allow (the D12 shape: ALL context files, not the enumerated six)")
+if i_env is None or i_env2 is None:
+    errs.append("the *.env / *.env.* read denies are gone (the only read exclusion — D12)")
+elif i_read is None or i_env < i_read or i_env2 < i_read:
+    errs.append("env denies sit BEFORE the read-* allow — last-match-wins would let env reads through (the position is the whole game)")
+for w in [row("skill", "*", "allow"), row("question", "*", "allow"), row("execute", "*", "allow")]:
+    if not has(w):
+        errs.append(f"missing {w['action']} '*' allow")
+db = [i for i, p in enumerate(perms) if p.get("action") == "dev-boards*"]
+if len(db) != 1 or perms[db[0]] != row("dev-boards*", "*", "allow"):
+    errs.append("the single dev-boards* MCP allow (hyphen spelling, resource '*') is broken")
+if any(p.get("action") == "dev*" for p in perms):
+    errs.append("a broad dev* allow appeared (D21 law: narrow dev-boards* only)")
+if any(str(p.get("action", "")).startswith("admin-") and p.get("effect") == "allow" for p in perms):
+    errs.append("an admin-* MCP allow row exists (the tier stays denied by the baseline)")
+API = [row("shell", "opencode api get /api/session*", "allow"),
+       row("shell", "opencode api patch /api/session/*", "allow"),
+       row("shell", "opencode api post /api/session*", "allow"),
+       row("shell", "opencode api post /api/session/*", "allow")]
+api = [p for p in perms if p.get("action") == "shell" and str(p.get("resource", "")).startswith("opencode api")]
+if api != API:
+    errs.append(f"api shell rows are {[p.get('resource') for p in api]}, want exactly the four get/patch/post/post session rows (OQ6 ruling: the creation rows are AGENT-side; both post rows are part of the contract)")
+SHELL_DENY = row("shell", "*", "deny")
+i_sd = idx(SHELL_DENY)
+if i_sd is None:
+    errs.append("no shell '*' deny before the one-row exceptions")
+else:
+    for w in API + [row("shell", "date *", "allow"), row("shell", "ls", "allow"), row("shell", "ls *", "allow"),
+                    row("shell", "pwd", "allow"), row("shell", "pwd *", "allow")]:
+        i = idx(w)
+        if i is None:
+            errs.append(f"missing shell allow row {w['resource']!r}")
+        elif i < i_sd:
+            errs.append(f"shell allow {w['resource']!r} sits BEFORE the shell '*' deny — the catch-all would swallow it")
+for w in [row("edit", "*", "deny"), row("subagent", "*", "deny")]:
+    if not has(w):
+        errs.append(f"missing {w['action']} '*' deny (the dispatcher writes no files and launches no subagents — reads + session spawns only)")
+def read_verdict(resource):
+    out = None
+    for p in perms:
+        if p.get("action") == "read" and fnmatch.fnmatch(resource, str(p.get("resource", ""))):
+            out = p.get("effect")
+    return out or "deny"
+if read_verdict(".env") != "deny" or read_verdict("app.env.production") != "deny":
+    errs.append("EFFECTIVE read of an env file is not deny (the D12 order broken in fact, not just text)")
+if read_verdict("AGENTS.md") != "allow" or read_verdict(".opencode/opencode.jsonc") != "allow" or read_verdict(".rulesync/rules/overview.md") != "allow":
+    errs.append("EFFECTIVE read of context files (AGENTS.md / opencode.jsonc / .rulesync) is not allow — read * missing or shadowed")
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+PY
+  [ -f "$DISPATCH_SRC" ] || fail "A20[C01 AC1]: $DISPATCH_SRC missing — the dispatcher agent is C01's new surface (designed red before dev, not a harness fault)"
+  [ -f "$DISPATCH_GEN" ] || fail "A20[C01 AC1]: generated mirror $DISPATCH_GEN missing — sources and generated land in the same rulesync generate commit"
+  python3 "$TMP/dispatch.py" "$DISPATCH_SRC" || fail "A20[C01 AC1]: $DISPATCH_SRC violates the dispatcher grant contract (reason above)"
+  python3 "$TMP/dispatch.py" "$DISPATCH_GEN" || fail "A20[C01 AC1]: the generated mirror $DISPATCH_GEN violates the dispatcher grant contract — the mirror is the runtime surface"
+  for cmd in "opencode api post /api/session" "opencode api post /api/session/ses_x/prompt" "opencode api get /api/session" "opencode api patch /api/session/ses_x" "ls -a" "pwd" "date +%s%3N"; do
+    v=$(python3 "$TMP/family.py" policy "$DISPATCH_SRC" "$cmd" 2>/dev/null || true)
+    [ "$v" = "allow" ] || fail "A20[C01 AC1]: effective verdict for '$cmd' is '$v', want allow — the row order must grant it through the shell catch-all (last-match-wins)"
+  done
+  for cmd in "git status" "bash scripts/agent-board-coord-gate.sh" "helm lint charts/radiance" "node --test tests/opencode/pipeline-locks-core.test.ts"; do
+    v=$(python3 "$TMP/family.py" policy "$DISPATCH_SRC" "$cmd" 2>/dev/null || true)
+    [ "$v" != "allow" ] || fail "A20[C01 AC1]: '$cmd' evaluates allow — the dispatcher's shell surface is the API family + ls/pwd/date ONLY; spawns and reads, never git, never the battery"
+  done
+  # Fabricated-drift controls: each mutant must redden dispatch.py with a
+  # reason naming the contract it breaks (an uncaught mutant = vacuous pin).
+  python3 - "$DISPATCH_SRC" "$TMP/d-splice.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+env_rows = [r for r in rows if r.get("action") == "read" and str(r.get("resource", "")).startswith("*.env")]
+rows = [r for r in rows if r not in env_rows]
+i = next(k for k, r in enumerate(rows) if r.get("action") == "read" and r.get("resource") == "*")
+rows[i:i] = env_rows  # deny BEFORE the allow — last-match-wins flips env reads open
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -f "$TMP/d-splice.md" ]; then
+    out=$(python3 "$TMP/dispatch.py" "$TMP/d-splice.md" 2>&1) \
+      && fail "A20 control: env denies spliced BEFORE the read-* allow passed the grant pin — the last-match-wins ordering law is not enforced"
+    case "$out" in *"BEFORE the read-"*) ;; *) fail "A20 control: the reorder mutant reddened for the wrong reason ($out) — the control must prove the ordering rule bites, not a duplicate-row or missing-row rule" ;; esac
+  fi
+  python3 - "$DISPATCH_SRC" "$TMP/d-nopost.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = [r for r in (target.get("permissions") or [])
+        if not (r.get("action") == "shell" and r.get("resource") == "opencode api post /api/session*")]
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -f "$TMP/d-nopost.md" ]; then
+    python3 "$TMP/dispatch.py" "$TMP/d-nopost.md" >/dev/null 2>&1 \
+      && fail "A20 control: dropping one post row passed the grant pin — the four-row API set (OQ6) is not enforced"
+  fi
+  python3 - "$DISPATCH_SRC" "$TMP/d-editallow.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = [{**r, "effect": "allow"} if (r.get("action") == "edit" and r.get("resource") == "*") else r
+        for r in (target.get("permissions") or [])]
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -f "$TMP/d-editallow.md" ]; then
+    python3 "$TMP/dispatch.py" "$TMP/d-editallow.md" >/dev/null 2>&1 \
+      && fail "A20 control: an edit '*' flipped to allow passed the grant pin — the no-files-written contract is not enforced"
+  fi
+  ok "A20[C01 AC1]: the dispatcher source + mirror parse and carry the exact grant set (read-* with env denies AFTER, dev-boards*, the four session-API rows incl. both posts, execute/skill/question allows, edit/subagent denies, ls/pwd/date after the shell catch-all, distinct color); effective verdicts prove the order; the reorder/no-post/edit-allow mutants all redden"
+fi
+
+# --- A21: cf-126 C02 — the coord-family surface widening -----------------------
+# chunks/C02.md Tests: per-variant arms for the new shapes on the SIX sources
+# and SIX mirrors (family count holds at six; the dispatcher already carries
+# the identical read/API shape via A20): the read-* + env-denies-after
+# position, the six global- MCP rows verbatim (the hyphen law), the two post
+# session rows (family.py's api position rule, re-pinned in A12's loop), NO
+# admin-global-* allow anywhere, and the git tail as the load-bearing LAST
+# rows. DESIGNED RED until C02 lands; alias parity re-runs green through
+# A12's untouched parity arms on the widened blocks.
+if want a21; then
+  cat >"$TMP/widened.py" <<'PY'
+import re, sys, yaml
+path = sys.argv[1]
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+if not m:
+    print("no YAML frontmatter"); sys.exit(1)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+perms = (outer.get("permissions") or fm.get("permissions") or [])
+errs = []
+def row(a, r, e): return {"action": a, "resource": r, "effect": e}
+def idx(w): return next((i for i, p in enumerate(perms) if p == w), None)
+base_path = sys.argv[2] if len(sys.argv) > 2 else None
+if not perms or perms[0] != row("*", "*", "deny"):
+    errs.append("deny-all baseline moved")
+READ_ALL = row("read", "*", "allow")
+i_read = idx(READ_ALL)
+if i_read != 1:
+    errs.append(f"`read *` allow is at {i_read}, want directly AFTER the deny-all baseline at index 1 (D12/OQ8)")
+if i_read is not None:
+    for envr in (row("read", "*.env", "deny"), row("read", "*.env.*", "deny")):
+        i = idx(envr)
+        if i is None:
+            errs.append(f"env deny {envr['resource']} lost")
+        elif i < i_read:
+            errs.append(f"env deny {envr['resource']} sits BEFORE read * — env reads would win (last-match-wins is the whole game)")
+LEGACY = [".agents/plans/**", ".opencode/skills/**", ".agents/skills/**", "skills/**", ".agents/loops/**", ".opencode/agents/**"]
+left = [p.get("resource") for p in perms if p.get("action") == "read" and p.get("resource") in LEGACY]
+if left:
+    errs.append(f"enumerated context read rows survive ({left}) — read * SUBSUMES them, all six must be gone")
+FLEET = ["global-searxng*", "global-playwright*", "global-renovate*",
+         "readonly-global-grafana*", "readonly-global-homeassistant*", "readonly-global-wekan*"]
+missing = [a for a in FLEET if not any(p.get("action") == a and p.get("effect") == "allow" for p in perms)]
+if missing:
+    errs.append(f"global- MCP rows missing or not allow: {missing} (six rows, verbatim hyphen spellings — an underscore respelling matches NOTHING behind the deny-all)")
+if any(str(p.get("action", "")).startswith("admin-global") and p.get("effect") == "allow" for p in perms):
+    errs.append("an admin-global-* allow row exists (D13: the admin tier stays denied by the baseline — no rows added)")
+if any(p.get("effect") == "allow" and p.get("action") in FLEET and p.get("resource") != "*" for p in perms):
+    errs.append("a fleet MCP row carries a non-'*' resource (the row shape is action NAME*, resource '*', allow)")
+last = perms[-1]
+if base_path:
+    # The tail law as the file's own comment states it: the git/push floor
+    # rows (and the plan-state edit rows that close the block) are the
+    # load-bearing LAST rows — the widening must leave the block's final
+    # row EXACTLY where base had it. Comparing against the base copy is the
+    # honest form of "never reorder", the one a prose grep could not be.
+    mb = re.match(r"^---\n(.*?)\n---\n", open(base_path).read(), re.S)
+    if not mb:
+        errs.append("base copy has no frontmatter (harness fault)")
+    else:
+        fmb = yaml.safe_load(mb.group(1)) or {}
+        ob = fmb.get("opencode") if isinstance(fmb.get("opencode"), dict) else {}
+        pb = ob.get("permissions") or fmb.get("permissions") or []
+        if pb and perms[-1] != pb[-1]:
+            errs.append(f"the LAST permission row moved vs base ({pb[-1]} -> {perms[-1]}) — new rows land before the tail, never after it (the push floor/exception ladder is load-bearing)")
+elif not (last.get("action") == "shell" and str(last.get("resource", "")).startswith("git")):
+    errs.append("no base copy and the last row is not a git row (harness fault — the caller must pass the base copy)")
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+PY
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    if git cat-file -e "${BASE}:${f}" 2>/dev/null; then
+      git show "${BASE}:${f}" >"$TMP/w-base.md"
+      python3 "$TMP/widened.py" "$f" "$TMP/w-base.md" || fail "A21[C02 AC1/AC3]: $f does not carry the widened shape on the base-tail law (reason above) — designed red until C02 lands, then a drift on ANY of the six sources AND its mirror reddens here; the family count holds at six"
+    else
+      python3 "$TMP/widened.py" "$f" || fail "A21[C02 AC1/AC3]: $f does not carry the widened shape (reason above; no base copy at $BASE — the tail leg is skipped, the shape legs are not)"
+    fi
+  done
+  # The two post rows beside get/patch: family.py's api mode (four rows, the
+  # pinned splice position) — re-pinned above, exercised here per-variant so
+  # this arm owns its own red, not A12's.
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    python3 "$TMP/family.py" api "$f" || fail "A21[C02 AC1]: $f — the four-row own-session API family (get/patch + the two creation posts) is broken or misplaced (a fabricated drift that removes one post row reddens exactly here; the git tail stays last)"
+  done
+  # Fabricated-drift controls on one landed-shaped mutant each (splices run
+  # against the FIRST coord source; while C02 is unlanded they are inert —
+  # the live loop above is already red with the named reason).
+  python3 - "${CF_SRC[1]}" "$TMP/w-order.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+env_rows = [r for r in rows if r.get("action") == "read" and str(r.get("resource", "")).startswith("*.env")]
+rows = [r for r in rows if r not in env_rows]
+try:
+    i = next(k for k, r in enumerate(rows) if r.get("action") == "read" and r.get("resource") == "*")
+except StopIteration:
+    sys.exit(0)  # read * absent: the live arm is red already; nothing to reorder
+rows[i:i] = env_rows
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -s "$TMP/w-order.md" ]; then
+    out=$(python3 "$TMP/widened.py" "$TMP/w-order.md" 2>&1) \
+      && fail "A21 control: env denies moved BEFORE read * passed the position pin — the D12 ordering law is not enforced"
+    case "$out" in *"BEFORE read"*) ;; *) fail "A21 control: the reorder mutant reddened for the wrong reason ($out)" ;; esac
+  fi
+  python3 - "${CF_SRC[1]}" "$TMP/w-underscore.md" <<'PY'
+import re, sys
+src, dst = sys.argv[1], sys.argv[2]
+t = open(src).read()
+if "global-searxng*" not in t:
+    sys.exit(0)  # C02 unlanded — the live loop is red with the named reason
+open(dst, "w").write(t.replace("global-searxng*", "global_searxng*"))
+PY
+  if [ -s "$TMP/w-underscore.md" ]; then
+    python3 "$TMP/widened.py" "$TMP/w-underscore.md" >/dev/null 2>&1 \
+      && fail "A21 control: a respelled global_searxng* passed — the hyphen law (the dead-literal class A14 exists for) is not enforced here"
+  fi
+  python3 - "${CF_SRC[1]}" "$TMP/w-admin.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+if not any(r.get("action") == "read" and r.get("resource") == "*" for r in rows):
+    sys.exit(0)  # unlanded — inert by design
+rows.insert(3, {"action": "admin-global-wekan*", "resource": "*", "effect": "allow"})
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -s "$TMP/w-admin.md" ]; then
+    python3 "$TMP/widened.py" "$TMP/w-admin.md" >/dev/null 2>&1 \
+      && fail "A21 control: a fabricated admin-global-wekan* allow passed — the admin-tier absence pin is vacuous (OQ9)"
+  fi
+  python3 - "${CF_SRC[1]}" "$TMP/w-tail.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode") if isinstance(fm.get("opencode"), dict) else {}
+target = outer if outer.get("permissions") else fm
+rows = list(target.get("permissions") or [])
+if not rows:
+    sys.exit(0)
+rows.append({"action": "read", "resource": "AGENTS.md", "effect": "allow"})
+target["permissions"] = rows
+fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if [ -s "$TMP/w-tail.md" ]; then
+    # The live loop overwrote w-base.md with the last mirror's base; the
+    # tail control compares against the FIRST source's own base copy.
+    git show "${BASE}:${CF_SRC[1]}" >"$TMP/w-tail-base.md" 2>/dev/null \
+      || fail "A21 control: ${CF_SRC[1]} has no base copy at $BASE — the tail control cannot run (harness fault once the shape landed)"
+    if out=$(python3 "$TMP/widened.py" "$TMP/w-tail.md" "$TMP/w-tail-base.md" 2>&1); then
+      fail "A21 control: a row appended AFTER the block's last row passed — the load-bearing-last-rows law is vacuous"
+    fi
+    case "$out" in
+      *"LAST permission row moved"*) ;;
+      *) fail "A21 control: the after-tail mutant reddened for the wrong reason ($out) — the pin must name the tail law" ;;
+    esac
+  fi
+  ok "A21[C02 AC1-AC3]: all twelve coord files carry the widened shape (read * at index 1 with env denies AFTER and the six legacy rows subsumed, six verbatim fleet MCP rows with no admin-global allow, the four-row API family in position, the git tail last); the reorder/underscore/admin-allow/after-tail mutants each redden for their named reason; alias parity holds through A12's untouched guards"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

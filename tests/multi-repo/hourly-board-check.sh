@@ -95,28 +95,68 @@ PY
   then checks=$((checks + 1)); else fail 't1: the filtered-count contract is not satisfied (reason printed above)'; fi
 fi
 
-# --- t2: gate script is comment-only-changed; --help legend intact (AC2) ------
+# --- t2: the gate script's logic is confined to the sanctioned quadruple; --help legend intact (AC2) --
+# cf-126 C01 AC3 SUPERSESSION (why): the card-mandated liveness quadruple
+# REWRITES the map(select ...) filter line, so "the diff touches comment
+# lines only" is unsatisfiable BY DESIGN. The stated law — the script's
+# executable logic must not change beyond what the card commands — is
+# re-pinned as CONTENT: the filter line pinned to exactly the quadruple,
+# the verdict emissions byte-exact, the operand defaults intact, the
+# marker-blind + board-blind bans intact; comment and usage prose may move
+# (the usage legend MUST, or it teaches the retired triple). Controls strip
+# semantic tokens, never bytes. The --help legend and the D11 rationale legs
+# below are unchanged.
 if want t2; then
-  diff_out=$(git diff "$DIFF_BASE" -- "$GATE_SCRIPT" || true)
-  if [ -n "$diff_out" ]; then
-    # Anything starting with '-' other than the diff header is a deletion or
-    # a rewritten line — the D11 history is append-only per the chunk Notes.
-    if printf '%s\n' "$diff_out" | grep -E '^-' | grep -vE '^--- ' | grep -q .; then
-      fail "t2: the gate diff vs $DIFF_BASE deletes/rewrites lines — only comment APPENDS are allowed (D11 block is load-bearing history)"
-    fi
-    if printf '%s\n' "$diff_out" | grep -E '^\+[^+]' | grep -vE '^\+\s*(#|$)' | grep .; then
-      fail "t2: the gate diff adds a non-comment line — the script's executable logic must not change (AC2)"
-    fi
-    ok "t2: gate-script diff vs $DIFF_BASE touches comment lines only (no logic, no verdict, no flag changes)"
-  else
-    ok "t2: gate script unchanged vs $DIFF_BASE (comment-only diff, vacuously green)"
+  T2D="/tmp/opencode/multi-repo-t2.$$.d"; mkdir -p "$T2D"; trap 'rm -rf "$T2D"' EXIT
+  cat >"$T2D/gatecontent.py" <<'PY'
+# Shipped checker, live AND mutants (the controls exercise the same code).
+import sys
+text = open(sys.argv[1]).read()
+errs = []
+QUAD = ('| map(select(.agent == "agent-board-coord" or .agent == "agent-board-coord-local"'
+        ' or .agent == "agent-board-coord-pr" or .agent == "agent-board-dispatch"))')
+if QUAD not in text:
+    errs.append("the liveness disjunction is not the exact quadruple filter line — the ONLY executable change cf-126 C01 AC3 sanctions (the triple or any wider edit is drift)")
+if text.count('.agent == ') != 4:
+    errs.append(f"{text.count('.agent == ')} name conjuncts, want exactly the four on the single filter line")
+for em in ("say_run() { printf 'GATE: RUN %s\\n' \"$1\"; exit 0; }",
+           "say_skip() { printf 'GATE: SKIP %s\\n' \"$1\"; exit 1; }",
+           "printf 'GATE: LIVE %s (%ss) %s\\n' \"$id\" \"$age\" \"$title\""):
+    if em not in text:
+        errs.append(f"verdict emission moved: {em!r} — verdicts and flags stay untouched (AC2)")
+for banned in ('pipelineNoop', 'archiv', 'opencode api patch', 'opencode api post',
+               'list_swimlanes', 'get_board', 'list_cards', 'move_card', 'add_comment'):
+    if banned in text:
+        errs.append(f"the gate grew {banned!r} — no marker, archive, session-write or board call crosses into the script (AC2's ban list)")
+for op in ("THRESHOLD_MIN_DEFAULT=15", "GRACE_MIN_DEFAULT=5", "map(select(.id != $self))",
+           "--threshold <minutes>", "--grace <minutes>", "--json <file|->"):
+    if op not in text:
+        errs.append(f"operand/flag surface moved: {op!r}")
+print("; ".join(errs))
+sys.exit(1 if errs else 0)
+PY
+  python3 "$T2D/gatecontent.py" "$GATE_SCRIPT" \
+    || fail "t2[cf-126 re-pin of AC2]: $GATE_SCRIPT violates the gate CONTENT law (reason above) — the executable surface moved beyond the sanctioned quadruple"
+  sed 's/ or .agent == "agent-board-dispatch"//' "$GATE_SCRIPT" >"$T2D/t2-mquad.sh"
+  if python3 "$T2D/gatecontent.py" "$T2D/t2-mquad.sh" >/dev/null 2>&1; then
+    fail "t2 control: the dispatcher-leg-stripped mutant passed — the quadruple confinement pin is vacuous"
   fi
+  sed 's/GATE: RUN %s/GATE: RUN/' "$GATE_SCRIPT" >"$T2D/t2-mverdict.sh"
+  if python3 "$T2D/gatecontent.py" "$T2D/t2-mverdict.sh" >/dev/null 2>&1; then
+    fail "t2 control: a mutated RUN emission passed the verdict leg — the emissions pin is vacuous"
+  fi
+  ok "t2[cf-126 re-pin of AC2]: the gate's executable logic is confined to the sanctioned quadruple (filter line exact, verdict emissions byte-exact, bans intact, defaults/flags present), and the leg-stripped and verdict-mutated copies redden"
 
   help_out=$(bash "$GATE_SCRIPT" --help 2>&1) || fail "t2: bash $GATE_SCRIPT --help exited non-zero"
   for marker in 'GATE: RUN' 'GATE: LIVE' 'GATE: SKIP'; do
     printf '%s\n' "$help_out" | grep -qF "$marker" || fail "t2: --help lost the '$marker' verdict legend"
   done
-  ok "t2: --help exits 0 printing the GATE: RUN / GATE: LIVE / GATE: SKIP legend"
+  # The usage legend follows the filter (the retired triple-ids sentence would
+  # teach a gate that hides the dispatcher): four ids named in --help.
+  for n in agent-board-coord agent-board-coord-local agent-board-coord-pr agent-board-dispatch; do
+    printf '%s\n' "$help_out" | grep -qF "\"$n\"" || fail "t2[cf-126 C01]: --help never names \"$n\" — the usage legend teaches the liveness set, and C01 moved the set to the quadruple"
+  done
+  ok "t2: --help exits 0 printing the GATE: RUN / GATE: LIVE / GATE: SKIP legend and the four explicit liveness ids"
 
   python3 - "$GATE_SCRIPT" <<'PY'
 import re, sys

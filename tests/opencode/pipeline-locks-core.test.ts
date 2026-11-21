@@ -102,6 +102,31 @@
 //     deletes a file only when its holder list empties; all-or-nothing per
 //     holder set — a mismatch on any member touches nothing. Audit release
 //     with outcome, clears claims/storage, removes the pin.
+//   cf-126 C01/C03 release-wake + handoff-outcome additions (W1/W2 arms; the
+//   return shape {ok, released, setId} is FROZEN — the wake never leaks into
+//   it, and a release never fails because of the wake):
+//     env gains two optional members the release reads:
+//       dispatcherSessionID?: string|null  the plugin-owned tracked id —
+//         written by handleEvent when a session record carries
+//         agent "agent-board-dispatch" AND metadata.pipelineDispatcher true
+//         (X1 arms in the engine suite pin the tracking; the marker is a
+//         sibling of pipelineNoop in the same metadata namespace, never
+//         nested);
+//       sessionPrompt?(input:{sessionID, text}) => Promise<any>  the
+//         ctx.session.prompt seam (the /pipeline-tick say() posture).
+//     On every successful release whose `released` set is NON-EMPTY, after
+//     cleanup and before return: tracked id => one sessionPrompt whose text
+//     names the released cardId, the outcome verbatim, and the next-pickable-
+//     card instruction; no tracked id (or a failed prompt) => exactly one
+//     logNote line and the release still succeeds — the hourly tick
+//     self-heals. Multiple releases queue multiple prompts (accepted; the
+//     lock surface dedupes the second walk). An empty released set wakes
+//     nothing.
+//     The outcome vocabulary gains "handoff": the release TOOL accepts it,
+//     the schema/blurb name it (done = Review, abandoned = gave up, handoff =
+//     mid-project successor takes over), the audit records it verbatim, and
+//     NO engine logic branches on the token — a handoff release behaves
+//     exactly like a release and fires the same wake leg.
 //   lockStatus(env, {sessionID?}) -> Promise<{groups: Array<{setId, cardId,
 //     holders, shared, pipelineSet, ageMs, state}>, session, lastReap}>
 //     (C03 status + cf-106 C08: `holders` names every live holder — cardId,
@@ -818,5 +843,144 @@ describe("V2 releaseLockSet per holder (cf-106 C08 AC 3)", () => {
     assert.equal(out.ok, false);
     assert.equal(out.reason, "not_owner", "a bookkeeping claim without a holder entry is not an owner");
     assert.equal(JSON.parse(readFileSync(join(env.locksDir, "alpha.json"), "utf8")).holders.length, 2, "the refused release removed nobody's hold");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-126 C01/C03 — the release wake and the `handoff` outcome (chunks/C01.md
+// Tests "release-wake arms"; chunks/C03.md Tests `handoff` outcome arms).
+// Red until C01 dev lands the wake leg (the seam the header contract names),
+// green after; W2 additionally waits on C03's vocabulary leg.
+// ---------------------------------------------------------------------------
+describe("W1 the release wake — non-empty releases ping the tracked dispatcher (C01 AC5, D6)", () => {
+  function wakeEnv(opts: any = {}) {
+    const env = baseEnv();
+    env.dispatcherSessionID = opts.dispatcher === undefined ? "ses_disp" : opts.dispatcher;
+    const prompts: any[] = [];
+    const notes: string[] = [];
+    env.sessionPrompt = opts.noPrompt
+      ? undefined
+      : async (input: any) => {
+          if (opts.promptThrows) throw new Error("prompt leg failed");
+          prompts.push(input);
+        };
+    env.log = (line: string) => void notes.push(line);
+    return { env, prompts, notes };
+  }
+
+  it("a done release with a tracked dispatcher prompts it with cardId + outcome + the walk instruction", async () => {
+    const { env, prompts } = wakeEnv();
+    const res = await seam("claimLockSet")(env, { cardId: "card-9", pipelines: ["a", "b"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
+    assert.equal(out.ok, true);
+    assert.deepEqual(out.released, ["a", "b"]);
+    assert.equal(prompts.length, 1, "exactly one wake per non-empty release (C01 AC5)");
+    assert.equal(prompts[0].sessionID, "ses_disp", "the wake goes to the tracked dispatcher id");
+    assert.match(prompts[0].text, /card-9/, "the text names the released cardId");
+    assert.match(prompts[0].text, /done/, "and the outcome verbatim");
+    assert.match(prompts[0].text, /next pickable card/i, "and the check-for-the-next-card instruction (the boards Dispatcher section is the walk's authority)");
+    void res;
+  });
+
+  it("the return shape is frozen — {ok, released, setId}, and the wake never moves it", async () => {
+    const { env } = wakeEnv();
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
+    assert.deepEqual(Object.keys(out).sort(), ["ok", "released", "setId"], "C04/C05 teardown legs rely on this exact shape (C01 Notes for dev: the wake must not change it)");
+  });
+
+  it("no tracked dispatcher: the release still succeeds with one fail-loud note and no throw (C01 AC5 negative)", async () => {
+    const { env, prompts, notes } = wakeEnv({ dispatcher: null });
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
+    assert.equal(out.ok, true, "a release NEVER fails because of the wake leg");
+    assert.equal(prompts.length, 0, "nothing to prompt");
+    assert.equal(notes.filter((n) => /dispatcher/i.test(n)).length, 1, `exactly one logNote naming the miss (the hourly tick self-heals), saw ${JSON.stringify(notes)}`);
+  });
+
+  it("a failing prompt leg degrades to a note — the release and its cleanup stay green (negative control)", async () => {
+    const { env, notes } = wakeEnv({ promptThrows: true });
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "abandoned" });
+    assert.equal(out.ok, true, "the wake failure must cost nothing but the wake");
+    assert.deepEqual(lockFiles(env), [], "the set is still released");
+    assert.ok(notes.some((n) => /dispatcher|wake/i.test(n)), `a failed prompt lands a logNote, saw ${JSON.stringify(notes)}`);
+  });
+
+  it("an empty release (a session holding nothing) wakes nothing", async () => {
+    const { env, prompts, notes } = wakeEnv();
+    const out = await seam("releaseLockSet")(env, { sessionID: "s-quiet", outcome: "done" });
+    assert.equal(out.ok, true, "the idempotent quiet-success posture is unchanged");
+    assert.deepEqual(out.released, []);
+    assert.equal(prompts.length, 0, "C04/C05 teardowns fire idle releases — a wake per empty release would spam the dispatcher");
+    assert.equal(notes.length, 0, "an empty release is the designed state, not a miss");
+  });
+
+  it("two releases queue two wakes — the dedupe lives on the lock surface, not here", async () => {
+    const { env, prompts } = wakeEnv();
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    await seam("claimLockSet")(env, { cardId: "c2", pipelines: ["b"], sessionID: "s2" });
+    await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
+    await seam("releaseLockSet")(env, { sessionID: "s2", outcome: "abandoned" });
+    assert.equal(prompts.length, 2, "C01 Tasks accepts the double walk: the second finds nothing or another card");
+    assert.match(prompts[1].text, /abandoned/, "each wake names ITS outcome");
+  });
+
+  it("the wake fires even with no sessionPrompt collaborator at all (absent seam behaves like the miss)", async () => {
+    const env = baseEnv();
+    env.dispatcherSessionID = "ses_disp";
+    const notes: string[] = [];
+    env.log = (line: string) => void notes.push(line);
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
+    assert.equal(out.ok, true, "an un-wired host (the offline setup degrade) still releases");
+    assert.ok(notes.some((n) => /dispatcher|wake/i.test(n)), `fail-loud on the absent prompt seam, saw ${JSON.stringify(notes)}`);
+  });
+});
+
+describe("W2 the handoff outcome — vocabulary + behavior, zero logic branch (C03 AC2, D7/OQ7)", () => {
+  it("a release with outcome handoff frees the set, audits the token verbatim, and fires the wake", async () => {
+    const env = baseEnv();
+    env.dispatcherSessionID = "ses_disp";
+    const prompts: any[] = [];
+    env.sessionPrompt = async (input: any) => void prompts.push(input);
+    const res = await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a", "b"], sessionID: "s1" });
+    const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "handoff" });
+    assert.equal(out.ok, true, JSON.stringify(out));
+    assert.deepEqual(lockFiles(env), [], "a handoff release behaves exactly like a release (C03 Notes: the reaper and the walk never branch on the token)");
+    const rel = readEvents(env).filter((l) => l.ev === "release").pop();
+    assert.equal(rel.outcome, "handoff", "the audit records the token verbatim — the successor's re-claim must read as continuation, not give-up (D7)");
+    assert.equal(rel.setId, res.setId);
+    assert.equal(prompts.length, 1, "the release-wake leg fires on handoff too (C03 Tasks: the dispatcher checks for other cards)");
+  });
+
+  it("the release tool accepts handoff end-to-end through the registered spec", async () => {
+    const runtimeDir = mkdtempSync("/tmp/opencode/pllocks-handoff.XXXXXX");
+    const { ctx, seen } = fakeSetupCtx({ runtimeDir });
+    const cleanup = await setupBounded(ctx);
+    try {
+      const releaseSpec = seen.toolSpecs.find((s: any) => s.name === "pipeline_release");
+      assert.ok(releaseSpec, "pipeline_release spec registered");
+      const specText = JSON.stringify(releaseSpec);
+      assert.match(specText, /handoff/, "the release tool contract names the token (C03 AC2: the tool contract text + the boards transport note carry the three-value gloss)");
+      assert.match(specText, /mid-project successor/, "and its gloss — handoff = the mid-project successor takes over");
+      await callTool(seen.toolSpecs, "pipeline_claim", { cardId: "c-h", pipelines: ["handofflane"] }, { sessionID: "ses_h" });
+      const text = await callTool(seen.toolSpecs, "pipeline_release", { outcome: "handoff" }, { sessionID: "ses_h" });
+      const body = typeof text === "string" ? text : JSON.stringify(text ?? {});
+      assert.doesNotMatch(body, /invalid_input|must be done or abandoned/, `outcome:"handoff" must not be refused (red before C03 dev), saw ${body}`);
+    } finally {
+      if (typeof cleanup === "function") cleanup();
+    }
+  });
+
+  it("the done/abandoned vocabulary and behavior are unchanged by the new token", async () => {
+    const env = baseEnv();
+    env.sessionPrompt = async () => {};
+    env.dispatcherSessionID = null;
+    env.log = () => {};
+    await seam("claimLockSet")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1" });
+    assert.equal((await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" })).ok, true);
+    const rel = readEvents(env).filter((l) => l.ev === "release").pop();
+    assert.equal(rel.outcome, "done", "the K7 done/abandoned audit legs stay byte-identical in behavior (C03 AC2)");
   });
 });

@@ -898,6 +898,14 @@ fi
 # containers/wekan-mcp/*, skills/wekan-mcp/*, .agents/loops/* and
 # .rulesync/* + .opencode/{commands,skills}/*. Harness state, not repo drift
 # (plan DECISIONS baseline note).
+# cf-124 (2026-11-11, agent-test): same once-per-ticket admission for this
+# ticket's plan folder (its artifact + plan files ride the folder; without it
+# the committed planning round reddens t14 through the whole-ticket walk and
+# masks board-context t6's designed roster red behind a scope message).
+# cf-126 (2026-11-19, agent-test): same once-per-ticket admission — this
+# ticket's surfaces all ride existing lines (subagents/mirrors, loops,
+# scripts/*, the three plugins, the skills pair trees, rules source +
+# AGENTS.md, opencode.jsonc, tests/*); only the folder joins.
 # cf-143 (2026-11-12, agent-test round, chunks/C01..C07 files-in-scope): the
 # serving-model ticket for the radiance engine — own plan folder on the D9
 # rule, plus the serving surfaces its chunks declare, exact-file style per
@@ -988,6 +996,7 @@ if want t14; then
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
+      .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
       .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml|\
       .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
       charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\
@@ -1000,10 +1009,10 @@ if want t14; then
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) (whole-ticket scope union; base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-124 own-folder admit, the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -1210,6 +1219,15 @@ if want t20; then
     || fail "t20[C03]: $GATE lacks the exact quoted -local name (red before C03)"
   grep -qF '"agent-board-coord-pr"' "$GATE" \
     || fail "t20[C03]: $GATE lacks the exact quoted -pr name (red before C03)"
+  # cf-126 C01 AC3 re-pin: the disjunction becomes the QUADRUPLE — the
+  # dispatcher counts as LIVE while active (its own time.updated freshness
+  # within the 15-min threshold; ACTIVE-ONLY, the OQ2 ruling: no heartbeat
+  # machinery). The exact filter line is the chunk's quoted shape: the triple
+  # expression GAINS the fourth leg, nothing else in the gate moves.
+  grep -qF '"agent-board-dispatch"' "$GATE" \
+    || fail "t20[cf-126 C01]: $GATE lacks the exact quoted agent-board-dispatch name (red before C01 dev)"
+  grep -qF 'map(select(.agent == "agent-board-coord" or .agent == "agent-board-coord-local" or .agent == "agent-board-coord-pr" or .agent == "agent-board-dispatch"))' "$GATE" \
+    || fail "t20[cf-126 C01]: $GATE's liveness disjunction is not the quadruple on the exact map(select(...)) line (the triple + the fourth leg, in that order)"
   ! grep -qE 'startswith|StartsWith|\| startswith' "$GATE" \
     || fail "t20[C03]: $GATE matches agent names by prefix — C03 pins explicit enumeration (agents-sync lesson: exact names only)"
   ! grep -qF 'map(select(.agent == "agent-board-coord"))' "$GATE" \
@@ -1220,20 +1238,39 @@ if want t20; then
     grep -qF "$n" "$TMP/t20-help.txt" \
       || fail "t20[C03]: --help/usage text never names $n — the header/usage update is part of the filter widening"
   done
-  for n in agent-board-coord agent-board-coord-local agent-board-coord-pr; do
+  # The --help/usage sweep above keeps its three-name loop: C01's task is the
+  # filter-line edit and NO other gate change (AC3), so widening the help
+  # pin would force an out-of-scope usage edit on dev. The FIXTURE loop below
+  # is what extends to the quadruple.
+  for n in agent-board-coord agent-board-coord-local agent-board-coord-pr agent-board-dispatch; do
     envelope "$(sess "ses_$n" "$n" "fresh $n run" 2400 360)" >"$TMP/t20-$n.json"
     run_gate --json "$TMP/t20-$n.json"
     expect_verdict "t20 fixture: one fresh $n session counts as live" 2 "^GATE: LIVE ses_$n( |$)"
   done
   envelope "$(sess ses_a1 agent-board-coord 'stale alias' 2400 1200)" \
            "$(sess ses_a2 agent-board-coord-local 'stale local' 2400 1200)" \
-           "$(sess ses_a3 agent-board-coord-pr 'stale pr' 2400 1200)" >"$TMP/t20_stale.json"
+           "$(sess ses_a3 agent-board-coord-pr 'stale pr' 2400 1200)" \
+           "$(sess ses_a4 agent-board-dispatch 'stale dispatch' 2400 1200)" >"$TMP/t20_stale.json"
   run_gate --json "$TMP/t20_stale.json"
-  expect_verdict "t20 fixture: only stale board-coord sessions -> RUN" 0 '^GATE: RUN( |$)'
+  expect_verdict "t20 fixture: only stale board-coord/dispatcher sessions -> RUN" 0 '^GATE: RUN( |$)'
   envelope "$(sess ses_x agent-coord-pr 'fresh foreign coord' 2400 120)" >"$TMP/t20_foreign.json"
   run_gate --json "$TMP/t20_foreign.json"
   expect_verdict "t20 fixture: a fresh NON-board-coord session stays RUN" 0 '^GATE: RUN( |$)'
-  ok "t20[C03]: liveness set = the three explicit board-coord names (alias + -local + -pr) in code AND usage text, no prefix matching, old single-literal filter gone; fixtures prove LIVE each / RUN stale-only / RUN foreign"
+  # Fabricated-drift control (cf-126 C01 Tests: "a fabricated drift (removing
+  # the dispatcher name) reddens"): a copy of the landed filter minus the
+  # fourth leg must answer RUN to a fresh dispatcher session — the LIVE
+  # verdict flows from the name leg, not an incidental match. Pre-C01 the
+  # copy equals the script and this leg passes trivially; the greps above are
+  # the designed red until dev lands the quadruple.
+  sed 's/ or .agent == "agent-board-dispatch"//' "$GATE" >"$TMP/t20-nodisp.sh" \
+    || fail "t20 control: the gate script is unreadable (harness fault)"
+  RC=0
+  GATE_NOW_MS="$NOW_MS" timeout 30 bash "$TMP/t20-nodisp.sh" --json "$TMP/t20-agent-board-dispatch.json" >"$TMP/g.out" 2>"$TMP/g.err" || RC=$?
+  [ "$RC" -eq 0 ] \
+    || fail "t20 control: the dispatcher-leg-stripped copy answered rc=$RC (first line '$(head -1 "$TMP/g.out")') — want RUN: the fixture pair cannot tell the legs apart unless the stripped copy degrades"
+  head -1 "$TMP/g.out" | grep -qE '^GATE: RUN' \
+    || fail "t20 control: the dispatcher-leg-stripped copy still counted the fresh dispatcher LIVE — the quadruple pin is vacuous (name-leg matching not proven)"
+  ok "t20[C03 + cf-126 C01]: liveness set = the four explicit ids (alias + -local + -pr + agent-board-dispatch) as the exact quadruple filter line, no prefix matching, old single-literal filter gone; fixtures prove LIVE each / RUN stale-only / RUN foreign, and the leg-stripped copy degrades to RUN (the dispatcher leg is load-bearing)"
 fi
 
 # --- t18: Session origin block contract across all four command files (C03) ---
