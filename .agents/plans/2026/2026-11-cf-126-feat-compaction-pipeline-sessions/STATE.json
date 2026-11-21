@@ -1,7 +1,8 @@
 {
   "feature": "2026/2026-11-cf-126-feat-compaction-pipeline-sessions",
   "plan": "2026-11-17-feat-compaction-pipeline-sessions.md",
-  "plan_status": "approved",
+  "plan_status": "complete",
+  "plan_completed_at": "2026-11-21T17:05 +0000 — FINAL whole-plan review APPROVED (wave scope C01+C02+C03 + records; ses_e00dd0343ffe7cOObHKJfPLrYJ). C04 is NOT done: it remains owner-gated (fix-radiance-context unmerged → scale-up → 262144 receipt); its four designed-red arms (M1/M8/M9, N8-model-leg) are the verified-coherent flip set for a follow-on wave the owner cards from the final summary (Follow-up cards stage was unchecked on the card, so no cards were created).",
   "plan_approved_at": "2026-11-17T03:42 +0000 (owner approval at the plan-approval gate; the batched OQ1-OQ10 round preceded it, rulings landed in the re-work; the HITL `Planning` stop was satisfied at the same hand-off)",
   "coord_session": "ses_e18d38cb8ffevu2NSfkIn7LJaJ",
   "coord_session_note": "retroactively captured 2026-11-21 via session_rename under owner ruling D25 (the UI had this session mis-titled 'cf-147 Forgejo Runner Builds'; corrected to the slug); the D15 rename-skip degrade is superseded by the owner's instruction",
@@ -84,6 +85,14 @@
       "model": "openrouter/qwen/qwen3.8-flash",
       "result": "2026-11-19 D24 route: c2 leg-2 four-row family; B5 ban -> STRENGTHENED positive containment (twelve files); t4 admissions schema (dispatcher row + widened carries, five-fixture proved) + scope-noted t6 A15-name widening; t4 left DELIBERATELY RED naming the C02-dev matrix obligation",
       "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
+    },
+    {
+      "role": "review",
+      "agent": "agent-review",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "round": "final",
+      "result": "status: DONE | chunk: final | verdict APPROVED (wave scope C01+C02+C03+records; C04 excluded as owner-gated). FULL battery twice byte-identical: 382/382 node arms; 24 bash suites green per-arm; rulesync no-op x2 + --check; aislop 100/0/0 (108 files); JSONC keep.tokens=15000 no agents key; opencode models q27 resolvable; two-tree pristine@7886e20b4 confirms all 15 pre-existing reds there; negative controls zero-diff; STATE parse clean. RED LEDGER exactly 22: 4 C04-designed flip set (M1/M8/M9, N8-model-leg — coherent future pins) + 2 D28-ruled commit-shape (wekanctx t5 + ppgates t6, sole violator a3e8428af) + 15 two-tree-proven pre-existing (t17, c11, c19, A15, provloops t1/t3, i4, m4, s4, S5, ppgates t4/t7, portha t4, portlbf t4, devmcp t7) + 1 ATTRIBUTION-CORRECTED branch-caused re-pin debt (seaweedfs t5.4 — vacuously-green-at-HEAD guard vs cf-126's sanctioned overview rewrite; test-side mechanical fix owed, D24-class inventory). Carry-ins adjudicated: (a) settled-constant promotion DEFER (card/inbox candidate); (b) OPEN_QUERIES needle-pin DEFER (E6 already guards the behavior — reviewer's reasoning); (c) T14 two arms DEFER (hardening); (d) 'Both handlers' stale comment + (e) silent non-array-system skip → one-line landing sweep candidate; (f) warm-location matrix wording DEFER; (g) t5/t6 confirmed ruled-artifact attribution; (h) qn-disabled inertness = report material. Records note: branch has TEN commits (record correction); earlier 'pre-existing' tag on seaweedfs t5.4 corrected to branch-caused. Wording nits (Provider-ask actor sentence; updated_at narrative) recorded in the plan's Final review section for opportunistic fold-in, no-re-litigate posture.",
+      "session": "ses_e00dd0343ffe7cOObHKJfPLrYJ"
     }
   ],
   "kickoff": {
