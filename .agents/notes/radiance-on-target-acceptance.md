@@ -26,6 +26,19 @@ quoted from the card's deployment guide — the guide's stale items are
 corrected in RESEARCH's Guide-corrections table and stay corrected here.
 Anything neither source answers is an `OPEN — measure` line, never a guess.
 
+**TP2 provenance (cf-144, dated 2026-11-21).** WeKan card #144
+(`cf-144-feat-radiance-tp2-expansion`, folder
+`.agents/plans/2026/2026-11-cf-144-feat-radiance-tp2-expansion/`) flipped the
+fn lane to tensor-parallel 2 on the second R9700: the card-doc §7 profile
+(tp 2, tp-wire wht6, per-rank pool 12288, prefix tier 4096 IN, kv-resident
+OUT, chunk 2048) and the claim of 2 (`amd.com/gpu-r9700-1: "2"`, shape A).
+The memory scalar is HELD at 110 by the owner's batched ruling "Hold 110,
+re-pin after the print" (cf-144 DECISIONS P11) — the DOWN re-pin to the
+first-boot printed class is a POST-TP2-BOOT owner-receipt leg, and the
+step-5 block plus the step-1 scalars line carry that hold. TP2-shaped
+sentences added here ride the annotate-never-rewrite law; the single-card
+text above and below them stays as written history.
+
 **Ground rules.** The cluster's only input is git: ArgoCD applies everything,
 no step here runs a repo-side mutation and nothing instructs applying
 manifests directly with kubectl (the repo's first hard rule). Host-side
@@ -58,18 +71,18 @@ the gates below stay the pre-deploy bar; the tuning note is the one-variable-
 at-a-time loop AFTER the boot receipts, and the iommu/ReBAR/CWSR/ECC/zram
 reads it shares with this file carry the SAME corrected posture in both.
 
-**(a) — NAMING receipt (sysfs device+revision, both cards).** The amd-gpu
+**(a) — NAMING receipt (sysfs device+revision, BOTH R9700s).** The amd-gpu
 plugin's product naming maps each card to a resource name from the MINIMAL
 PATCHED `amdgpu.ids` table — the ConfigMap `charts/amd-gpu` ships and mounts
 over the image's baked file (the D24 lane ruling; derivation and mechanism
 verified in the §R7 round, sanitizer §R6-Q1) — keyed by the PCI (device,
 revision) pair the plugin
-itself reads (§R6-Q1; RESEARCH RQ3 documents the enumeration). Prove the
-pair from sysfs first:
+itself reads (§R6-Q1; RESEARCH RQ3 documents the enumeration). Prove
+the pair from sysfs first — the TP2 gate (cf-144 C01) reads EVERY card on
+the driver bus, not one position:
 
 ```bash
-for d in /sys/module/amdgpu/drivers/pci:amdgpu/0000:c4:00.0 \
-         /sys/module/amdgpu/drivers/pci:amdgpu/0000:c5:00.0; do
+for d in /sys/module/amdgpu/drivers/pci:amdgpu/0000:*; do
     printf '%s device=%s revision=%s\n' "${d##*/}" "$(cat "$d/device")" "$(cat "$d/revision")"
 done
 ```
@@ -82,11 +95,30 @@ Expected-name derivation — match the reads against the PATCHED table rows
 | `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700-1` |
 | `0x1586` | one of `0xc1`/`0xc3`/`0xc6`/`0xd1` | Radeon 8060S (Strix APU) | `amd.com/gpu-8060s` |
 
-Derive the names from the device reads, not from BDF position: the plugin's
-KFD topology map enumerated `c4:00.0` as nodeId 0 / card1 / renderD128
-(RESEARCH RQ3 — the APU-first class that crash-looped the vLLM lane), which
-is why c4 is expected to read `0x1586`, but the pair is the authority. The
-revision expectation itself is the §R6 residual this gate closes (R6 OQ1).
+The TP2 expectation (dated 2026-11-21, card 2 landed): the two R9700 BDFs
+read `0x7551` / `0xc0` — the 7551/C0 pair ×2, i.e. BOTH discrete cards
+carry the same pair and the APU reads a carried 1586 row (the device-plugin
+witness names `c3:00.0` + `c7:00.0` as the two 7551 devices and `c8:00.0`
+as the APU — EXPLORE §0). Derive the names from the device reads, not from
+BDF position: the pre-TP2 read expected `c4:00.0`/`c5:00.0` and enumerated
+the APU-first (RESEARCH RQ3 — the nodeId-ascending class that crash-looped
+the vLLM lane); card 2 shifted host enumeration, which is exactly WHY the
+pair, not the position, is the authority.
+The revision expectation itself is the §R6 residual this gate closes (R6
+OQ1).
+
+Then assert the POOL (the TP2 form of doc §6's re-verification law — the
+same-name card joined the same pool, no table edit was needed):
+
+```bash
+kubectl describe node ai-gpu | grep -E "amd\.com"
+```
+
+Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1`. The bare
+`amd.com/gpu` key reads PRESENT AT COUNT 0 — kubelet retention of the
+pruned single-naming advertisement (§D2.2), not a capacity-absent signal:
+read it as 0, never as "missing". A NONZERO bare capacity means a
+gate-(a) fallback fired → decision tree below, step 0.
 
 **Fallback trap + decision tree.** A (device, revision) pair the MINIMAL
 patched table does not carry — by construction that is every pair beyond
@@ -135,6 +167,15 @@ floor 1.158 = 115.28 ≤ 125.08 → it fits, 9.80 GiB free (§D6.2's exact live
 terms; engine rule 110 − 71.04 printed = 38.96 ≥ 4). Radiance scheduling
 REQUIRES step 3. Record the actual allocatable figure in place.
 
+The TP2 claim side (cf-144 C01 dated addition — the memory terms above are
+UNCHANGED, the scalar is HELD at 110 through the flip, P11): fn now asks
+`amd.com/gpu-r9700-1: 2` — TWO of the node's two cards — so a second
+radiance pod (the q27 lane) cannot schedule while fn is UP even though the
+pool doubled: blocker (a) moved from pool CAPACITY to claim MATH, and the
+swap law (fn DOWN first) survives as that claim math. Beside-fn stays
+RAM-dead too at the held value: 110 + q27 24 + router 4.125 + system 1.158
+= 139.3 > 125.08.
+
 **(c) — GID resolution.** `/dev/kfd` and the render nodes decide the
 service-block extension question:
 
@@ -178,7 +219,9 @@ first:
 
 | Check | Command (on the node) | Gate / record |
 |---|---|---|
-| ReBAR / BAR0 | `lspci -vv -d 1002:7551 \| grep -E "Region 0"` | expect the 32G-size BAR window (Above-4G + ReBAR on, RESEARCH Guide-corrections; the rig doc's own check) — `[VERIFY: printed Region 0 size]` |
+| ReBAR / BAR0 | `lspci -vv -d 1002:7551 \| grep -E "Region 0"` per card | TP2 gate (doc §10 item 1): the printed window must read size=32G on BOTH cards (per-card receipts — P2P needs the large BAR; at TP1 the no-ReBAR tax was only 0.4–1.8% decode, it is "critical only for TP2") — `[VERIFY: printed Region 0 size per card]` |
+| P2P kernel config | `zcat /proc/config.gz \| grep -E "CONFIG_(HSA_AMD_P2P\|PCI_P2PDMA)"` | both `=y` (or `=m` loaded) — the TP2 card↔card P2P path wants both (doc §10 item 2, RESEARCH RQ3); record what is in effect — `[VERIFY: config lines]` |
+| P2P bandwidth | `rocm-bandwidth-test` on the node (owner-run, card↔card) | the P2P witness sampled UNDER LOAD — expect the switch-fabric class ~13.4 GB/s symmetric (RQ4 direction-only; the guide's precise switch numbers stay UNVERIFIABLE, do not quote them); the host-memory mailbox fallback is the engine's own probe-and-fallback and costs only decode noise / prefill −2–10% — `[VERIFY: bandwidth table]` |
 | CWSR | `cat /sys/module/amdgpu/parameters/cwsr_enable` | must read `1` — the engine REFUSES startup otherwise (RESEARCH RQ3) |
 | ECC off | `cat /sys/module/amdgpu/parameters/ras_enable; cat /sys/class/drm/card*/device/mem_info_vram_total` | expect `0` and `34208743424` bytes = 32,624 MiB (~31.86 GiB usable — the ECC-off recovery, RESEARCH RQ3) |
 | iommu | `cat /proc/cmdline` | CORRECTED GATE (C12/§D6.6 — the old C06 line expected `iommu=pt`; the gate was WRONG, not the host): `amd_iommu=off` is the proven working posture for this engine's host-staging path (`dma copy lists` ACTIVE on DMA engine 0; no RCCL in radiance; the strata trio carrier strata-host-prep-gpu-ai.md §1.2) — record which is in effect; re-verify `rocm-bandwidth-test` + `HSA_AMD_P2P`/`PCI_P2PDMA` before any TP2/P2P experiment. Side effect: off also bars the NPU driver (`amdxdna … Running without IOMMU not supported`) — the owner's fact, their call, no radiance action |
@@ -199,8 +242,8 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Served id (single authority, D7) | `qwen3.8-flash-next-radiance` — plus the wire-siblings `-urgent` / `-low` sharing the modelID (catalog rows, C05) |
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
-| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
-| Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup) / `hostPoolMib: 43000` / `maxModelLen: 200000` / `maxNumSeqs: 8` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
+| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
+| Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup; cf-144 P11 2026-11-21, annotate-never-rewrite: the TP2 flip HELD this scalar — the DOWN re-pin to the first-boot printed class is a POST-TP2-BOOT owner-receipt leg and this line re-pins only when that print exists) / `hostPoolMib: 12288` per rank at TP2 (2×12288 MiB ≈ 24 GiB pinned; the single-card era read 43000) / `maxModelLen: 200000` / `maxNumSeqs: 8` / `tp: 2` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
 | Patched table | the `amdgpu-ids` ConfigMap in `charts/amd-gpu/values.yaml` — 10 data rows (1 renamed 7551/C0 `r9700-1` row + 9 carried 1586 rows), rows spliced from the fetched v1.31.0.12 baked file (authority `sha256:382ef0d5282fd8f5c17872c9f3641518d08a93e8c8e12b190e37005d48f3b1fa`, recorded in the test fixture header) |
@@ -273,7 +316,10 @@ same wave. Expect, in order:
    `864da8694ab58ed8096e31dd49983736a130309b0ce058dfdf8bbe4fd843c6f5`
    (455 bytes as rendered — recompute from `helm template charts/amd-gpu`
    on any table edit) — plus "Reporting 1 devices as amd.com/gpu-…" per pool
-   (§R6-Q4's fifth-receipt list, receipt b). Any other count means the
+   (§R6-Q4's fifth-receipt list, receipt b; cf-144 dated: at TP2 the R9700
+   pool prints "Reporting 2 devices as amd.com/gpu-r9700-1" — the live
+   witness of card 2 joining the same name, EXPLORE §0 — while the APU pool
+   stays at 1). Any other count means the
    overlay did not apply (or the table moved): the stock file is a
    different number — re-run the step-0 tree, do not proceed.
 
@@ -283,14 +329,17 @@ same wave. Expect, in order:
    kubectl describe node ai-gpu | grep -E "amd\.com"
    ```
 
-   Expect `amd.com/gpu-r9700-1: 1` AND `amd.com/gpu-8060s: 1`, and the bare
+   Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1` at the TP2
+   shape (cf-144 dated: the R9700 pool reads 2 since card 2 joined the same
+   7551/C0 name — gate (a)'s per-BDF receipts above; the pre-TP2 reading was
+   one device per pool), and the bare
    `amd.com/gpu` at COUNT 0 — the key is PRESENT at zero, not literally
    absent (§D2.2: kubelet retention of the pruned single-naming 1.31.0.9
    advertisement; "ABSENT" was the pre-C10 wording's wrong expectation).
-   Read it as: a zero bare residue with both named pools at 1 = both cards
-   matched the patched table; a NONZERO bare capacity without a
-   single-naming history = a gate-(a) fallback fired → decision tree, step
-   0. Receipt c of the same five-receipt list.
+   Read it as: a zero bare residue with the named pools at their TP2 counts
+   (2 + 1) = every card matched the patched table; a NONZERO bare capacity
+   without a single-naming history = a gate-(a) fallback fired → decision
+   tree, step 0. Receipt c of the same five-receipt list.
 
 4. llama-swap post-rollout check: its Deployment template changed in the
    same wave, so the running pod serves until the replacement with
@@ -455,27 +504,31 @@ law; the contract suite diffs this block against the chart):
 --model /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
 --port 8000
 --host ::
---tp 1
+--tp 2
+--tp-wire wht6
 --max-model-len 200000
 --max-num-seqs 8
 --placement expert_tiered
---host-pool-mib 43000
+--host-pool-mib 12288
 --gpu-headroom-mib 96
 --kv-cache-dtype fp8
---kv-resident 32768
+--prefix-cache-mib 4096
 --num-speculative-tokens 3
---max-num-batched-tokens 4096
+--max-num-batched-tokens 2048
 --checkpoint-interval 4096
 --ngram-placement disk
 --served-model-name qwen3.8-flash-next-radiance
 ```
 
-Absence law is part of the needle: NO `serve` verb anywhere (the engine
-takes args directly — RESEARCH RQ0), NO prefix-cache flag (mutually
-exclusive with `--kv-resident`, D3/D17), NO api-key flag (keyless, D8), and
-the stale guide's `expert-vs-cache-ratio` knob is absent because v1.17.0 has
-no such flag (RESEARCH Guide-corrections). A mismatch here means the
-service overlay or the chart drifted — stop, this is a git-class fix.
+Absence law is part of the needle (cf-144 P04 polarity flip baked in): NO
+`serve` verb anywhere (the engine takes args directly — RESEARCH RQ0), NO
+`--kv-resident` (the mirror is RETIRED at TP2 — it is mutually exclusive
+with the prefix tier, and the tier now ships: `--prefix-cache-mib 4096` is
+IN, one lever or the other, never both, card doc §7), no api-key flag
+(keyless, D8), and the stale guide's `expert-vs-cache-ratio` knob is absent
+because v1.17.0 has no such flag (RESEARCH Guide-corrections). A mismatch
+here means the service overlay or the chart drifted — stop, this is a
+git-class fix.
 
 ## Step 6 — Startup watch + the 8-session acceptance gate at FULL sizing
 
@@ -484,9 +537,12 @@ then follow the engine log. Expect, in this order:
 
 - init `radiance-fetch` completes (step 4 receipts) → engine container
   starts;
-- the engine loads its ~66 GiB working set — the 113.60 GiB pack minus the
-  47.7 GiB n-gram table that stays streamed from disk (RESEARCH RQ0/
-  Guide-corrections arithmetic). That read is MINUTES-class: the readiness
+- the engine loads its ~66 GiB class working set — the 113.60 GiB pack
+  minus the 47.7 GiB n-gram table that stays streamed from disk (RESEARCH
+  RQ0/ Guide-corrections arithmetic). cf-144 dated: at TP2 this class
+  SPLITS across both ranks (tensor-parallel weights per card, per-rank
+  host pool 12288 MiB staging), the minutes-class read law is unchanged.
+  That read is MINUTES-class: the readiness
   gate is the startupProbe hitting `/health` every 10s for up to 180
   failures (the chart's 30-minute envelope — the llmkube probe law; probe a
   model endpoint and you run real inference on every kubelet tick, so the
@@ -507,7 +563,12 @@ then follow the engine log. Expect, in this order:
   is a defect, never a ladder shortcut.
 
 **The gate (RESEARCH OQ3 closes here):** the profile must START and then
-HOLD 8 CONCURRENT 200K-class sessions on THIS host. The published refusal
+HOLD 8 CONCURRENT 200K-class sessions on THIS host — at the TP2 profile
+(cf-144 C01: tp 2, per-rank pool 12288, chunk 2048). The cache lever the
+gate runs on changed with the flip: the gate now exercises the prefix tier
+`--prefix-cache-mib 4096` (P04 "tier back, mirror gone"), and the TP1-era
+mirror lever cannot return beside it under the same mutual-exclusion law.
+The published refusal
 ("2×262k host copy does not fit beside the weights") was the reference rig,
 a smaller host (RESEARCH RQ1) — the 124 GiB box is the ruling's bet; this
 run is the datum. Pin the expectation for the receipt: the engine's own
@@ -522,7 +583,12 @@ D17-era per-token arithmetic (mirror ≈19.3
 at the ~12 KiB/token class → "60–70 GiB-class pins", the owner's
 "60Gi-class" words) UNDER-RESERVED the mirror shipped 1.17.0 books
 (~20 KiB/token at 8×200K) — D28 records the slip; the shipped scalar is
-110 on the printed receipt (D29), never a per-token figure.
+110 on the printed receipt (D29), never a per-token figure. Cf-144 dated
+(P11): report 2 is TP1-print history, and the shipped 110 rode that print —
+the TP2 acceptance run walks the SAME law on ITS OWN print (the budget-line
+law, D28 class): the first TP2 boot's printed budget is the authority for
+the memory DOWN re-pin, which is a post-TP2-boot owner-receipt leg, never
+a number predicted ahead of it.
 
 **The 8-session gate's receipt list (§R8, D30(4) — owner-run, all
 read-only during the fill):** cgroup `memory.peak` ≤ 100 (the cap the ramp
@@ -535,16 +601,30 @@ the ramp; and the engine's own `pinned by this process …` inside the
 71–78 GiB window. The standing law rides the list: **the receipt decides,
 never the rate** (D17/D28/D30(2) — don't plan off any per-token figure).
 
+TP2 receipt adds (cf-144 C01): the prefix tier SHIPS now, so the Wilde
+pinned-demotion-burst class is LIVE on this profile — watch the fill for
+the pinned reclaim burst shape, because this class needs ≥ 15 GiB genuinely
+free pinned headroom for demotions to land without an OOM hit (doc §7 tier
+caveat), and if the tier's demotions go hostile on the receipts the escape
+hatch is `--prefix-cache-mib 0` (an owner-sign-off serveArgs edit, never a
+pre-emptive softening). The /dev/shm 2Gi emptyDir cap must likewise cover
+the TP2 two-rank staging envelope — the OQ-G accepted posture is that the
+value ships unchanged and the first-boot shm usage is the receipt item
+that confirms or moves it (owner ruling, not a guess).
+
 Eight-session fill skeleton (through the peer hop, long-context bodies,
 step 9's chain): drive 8 concurrent sessions to the 200K-class depth while
 `/stats` shows running/waiting fill; PASS = eight admitted without
 refusal-class errors and decode steady.
 
-The honest-envelope line, stated before any number is celebrated:
-`--kv-resident` makes 8×200K RAM-fit and excludes the prefix-cache tier in
-the same motion — every idle session's return re-prefills against the
-Gen4-x4 wall (the 450–600 tok/s @55k class), the cost this acceptance
-window pays knowingly (RESEARCH RQ1, the plan's risk law).
+The honest-envelope line, stated before any number is celebrated: the TP2
+shape INVERTS this paragraph's lever (cf-144 P04) — what ships now is the
+`--prefix-cache-mib 4096` host TIER, which lets an idle session's return
+RESUME instead of re-prefilling, and what retired is the TP1 mirror that
+bought 8×200K RAM-fit by excluding that tier in the same motion. The wall
+is still real where the tier misses: a miss re-prefills against the
+Gen4-x4 wall (the 450–600 tok/s @55k class), the residual cost this
+acceptance window pays knowingly (RESEARCH RQ1, the plan's risk law).
 
 If the gate refuses, the ladder (every rung a DOCUMENTED OPTION, never a
 shipped value; every rung is a ONE-scalar edit of the `charts/radiance/values.yaml`
@@ -558,25 +638,36 @@ own reconciliation; re-run the gate after each):
   4). If a PROFILE change bites the rule again, re-walk the printed sums
   before choosing any new rung (budget-line law, not the old rungs). One
   scalar.
-- ladder DOWN by pool first: `hostPoolMib` 43000 → 40000 → 36000. One
-  scalar; experts spill back onto the card, KV room shrinks — measure the
+- ladder DOWN by pool first: the TP1-era rungs `hostPoolMib` 43000 → 40000
+  → 36000 are single-card-envelope history (cf-144 dated, annotate-never-
+  rewrite: that ladder predates the per-rank pool). The TP2 pool ships at
+  12288 PER RANK; its DOWN rungs are ruled by the first-boot receipts under
+  the receipt law (never a pre-emptive softening), same mechanics: one
+  scalar, experts spill back onto the card, KV room shrinks — measure the
   receipt line change.
 - ladder DOWN by context next: `maxModelLen` 200000 → 128K-class (131072) →
   64K-class (65536) at 8 seqs. One scalar — but the catalog `limit.context`
   rows MUST follow the engine (true-axis law: the advertisement holds only
   while the shipped ctx does — a re-pin of 200000 is a paired edit).
-- fewer live sessions: `maxNumSeqs` 8 → 4 — halves the reserved kv-resident
-  host copy (reserved as max-num-seqs × max-model-len however short the
-  requests, RESEARCH RQ1). This CONCEDES the 8-session acceptance target;
-  it is a redefinition, an owner call recorded.
-- LAST resort, explicit OWNER SIGN-OFF recorded: the mutually-exclusive
-  prefix-cache-tier swap — drop `--kv-resident 32768`, add
-  `--prefix-cache-mib 4096` (the v1.17.0 published 4-seq recipe: "few live
-  + host-tier for idle", pool backs ~301K tokens ≈ 1.5×200K at 4 seqs,
-  RESEARCH RQ1/Serving envelope). This is a serveArgs edit, not a scalar;
-  it trades the acceptance target's shape and re-opens the Wilde
-  pinned-demotion-burst class (step 9's note). The engine-side escape
-  hatch recorded: `--prefix-cache-mib 0`.
+- fewer live sessions: `maxNumSeqs` 8 → 4 — halves the reserved per-slot
+  footprint. Cf-144 dated, annotate-never-rewrite: the TP1 wording named
+  the kv-resident host copy here (reserved as max-num-seqs ×
+  max-model-len however short the requests, RESEARCH RQ1); that mirror
+  retired with the lever, and at TP2 the halving releases card-KV funding
+  and prefix-tier pressure instead. This CONCEDES the 8-session acceptance
+  target; it is a redefinition, an owner call recorded.
+- LAST resort, explicit OWNER SIGN-OFF recorded: the tier swap this rung
+  used to describe SHIPPED at TP2 — dropping `--kv-resident 32768` and
+  adding `--prefix-cache-mib 4096` (the v1.17.0 published 4-seq recipe:
+  "few live + host-tier for idle", pool backs ~301K tokens ≈ 1.5×200K at
+  4 seqs, RESEARCH RQ1/Serving envelope) became the chart DEFAULT via
+  cf-144 P04, annotate-never-rewrite: the text above is how it landed, not
+  a live rung anymore. The remaining last-resort cache lever on the TP2
+  profile is the tier escape hatch `--prefix-cache-mib 0` — dropping the
+  tier (a serveArgs edit, not a scalar; the mirror must NOT come back
+  beside the tier under the same mutual-exclusion law, doc §7). It re-pays
+  the honest-envelope re-prefill wall (this step's line above) and is a
+  redefinition of the acceptance shape, owner-recorded.
 
 Every rung moves ONE scalar (D15's single-source law is why the chart keeps
 them as scalars); record which rung the receipts chose.
@@ -601,13 +692,35 @@ and re-read live via `/diagnostics`:
   startup log prints; PIN TO THAT RECEIPT, not to any per-token constant in
   the docs (the 7.32-vs-30-vs-60 KiB/token contradiction, RESEARCH RQ1, is
   resolved operationally exactly this way);
-- the ttm / memlock / cgroup / swap lines (step 0(d)/(e) corroboration).
+- the ttm / memlock / cgroup / swap lines (step 0(d)/(e) corroboration);
+- the TP2 adds (cf-144, doc §8): the STARTUP REPORT now also prints the
+  card↔card P2P and tp-wire lines — capture those UNDER LOAD as well (the
+  idle links park at Gen1 exactly like the PCIe widths, so a cold read
+  misreports the wire); pair the capture with the node-level
+  `rocm-bandwidth-test` card↔card witness from step 0(e);
+- the two-rank staging shape: the pool tokens line prints per rank —
+  record BOTH ranks and the /dev/shm usage alongside them (the OQ-G
+  receipt item above).
+
+The TP2 pre-registered expectations (doc §8 — the Wilde Gen4 column is
+THIS lab's plan column; the creator-rig numbers are the ceiling, the
+llmkube line the production-class witness): single-stream decode
+142–146 t/s; prefill 2,816–3,552 tok/s; the ~15.7 GiB KV-pool class
+(~60 KB/token — one 262k whale or ~4×64k); 8×64k aggregate ~252 t/s (278
+with speculation off). Expectations, not claims — pin the startup receipt,
+not any per-token constant (RQ1's standing law). The documented override
+lever for the wire: `--p2p off|on|auto` — the engine probes P2P per-pair at
+launch and falls back to host-memory mailboxes by itself (decode noise /
+prefill −2–10%, RQ4); forcing the lever is an owner on-target call for the
+acceptance run, never a shipped chart flag (cf-144 P04's flag set is fixed).
 
 Bands, not constants, for what the run should measure (pre-registered —
 these are expectations, not claims; RESEARCH RQ1/Serving envelope):
 prefill on the OCuLink Gen4 x4 expects **450–600 tok/s at 55k-class depth**
-(chunk 4096 ≈ 2× the chunk-2048 class; the 454-tok/s measurement on the
-same link class is the anchor); single-stream decode ~30–35 t/s WITHOUT
+(the 454-tok/s measurement on the same link class is the anchor; cf-144
+dated: that band was priced while the shipped chunk read 4096 — the TP2
+profile ships chunk 2048 (P04), so the band RE-READ at the shipped chunk
+is itself a measurement item); single-stream decode ~30–35 t/s WITHOUT
 speculation, higher with MTP accepted (the fn pack's native MTP-3 head,
 RESEARCH RQ0). Record the measured numbers — they feed the follow-up cards
 and the owner's metrics file.
@@ -691,8 +804,11 @@ record `kubectl top pod` splits before/after each transition. The Wilde
 pinned-demotion-burst class (RESEARCH Contradictions: experts reclaim VRAM
 → idle sessions demote PINNED in one burst, invisible to reclaim) applies
 ONLY if the step-6 last-resort prefix-tier shape was adopted — it is MOOT
-on the shipped `--kv-resident` profile. No GitOps mitigation exists for
-any of it and none may be improvised.
+on the shipped `--kv-resident` profile. Cf-144 dated, annotate-never-
+rewrite: that mootness ENDED with the TP2 flip — the tier now SHIPS and
+the mirror is retired (P04), so this class is LIVE on the shipped profile
+and step 6's ≥ 15 GiB genuinely-free watch is its receipt. No GitOps
+mitigation exists for any of it and none may be improvised.
 
 ## Step 10 — Restore-back (Q10's other half — an either/or at 110)
 
@@ -792,11 +908,24 @@ replica with no GitOps archaeology.
 
 ## OPEN — measure (nothing above answered it)
 
-- The 8×200K kv-resident start on THIS host (OQ3) — step 6's run is the
+- The 8×200K concurrent start on THIS host (OQ3) — step 6's run is the
   first known datum anywhere; whatever it prints replaces the envelope
-  arithmetic as the authority for the scalars.
-- Measured prefill/decode on the lab's x4 at the shipped chunk — step 7's
-  bands are expectation classes, not lab numbers.
+  arithmetic as the authority for the scalars. Cf-144 dated: at TP2 the
+  lever is the prefix tier, and the first TP2 boot's print is additionally
+  the authority for the memory DOWN re-pin of the HELD scalar (P11 — a
+  post-boot owner-receipt leg, never a number predicted ahead of it).
+- Prefill/decode measured on the lab's x4 at the shipped chunk — step 7's
+  bands are expectation classes, not lab numbers (the shipped chunk moved
+  4096→2048 at TP2, cf-144 P04: the re-read at 2048 is the live item).
+- Power cap — whether this board caps the OCuLink-mounted cards at the
+  ~120 W class stays OPEN (doc §3): read sclk ramp and `power_cap_usd`
+  under sustained decode in the TP2 acceptance run and compare against the
+  slot-mounted 210 W norm; expectation, not claim — decode falls with the
+  ceiling, prefill mostly not.
+- Whether the `ram=DIR` shared n-gram-table form (doc §10 item 4) pays off
+  across the two ranks — OPEN — measure per doc §7; the default `disk`
+  placement is what ships, and `amdgpu.no_system_mem_limit=1` belongs only
+  to a ram=DIR adoption decision.
 - Whether a second concurrent image-pair request behaves differently from
   the single image leg — not sourced anywhere; record if tested.
 

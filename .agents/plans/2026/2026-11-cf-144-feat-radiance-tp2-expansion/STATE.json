@@ -111,13 +111,24 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh session ses_e000b0f1dffe5E0nCxximQAwTI; two non-blocking nits folded into C02's pass)",
+      "dev_session": "ses_e0024db70fferjxAcAwUS7XwKi",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-21T20:4xZ", "session": "ses_e0024db70fferjxAcAwUS7XwKi", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C01 files_changed: [charts/radiance/values.yaml, services/gpu-ai/prod/values.yaml, .agents/notes/radiance-on-target-acceptance.md] commands_run: [PATH export + helm dependency update x3 => pass; pytest radiance baseline 7F/64P designed-reds confirmed; radiance-runbook.sh baseline FAIL T2 designed; tp2.sh T3 / q27-boot.sh T6 baseline FAIL C02-owned; pytest charts/radiance/tests -q => pass 71/71 x3 determinism 0 skips; runbook 5 ok x2; host-tuning 4 ok untouched; surface 9 ok untouched; llama-swap 505/9-skip/0-fail diff-touches-none; amd-gpu 29; helm lint 0 failed; helm template radiance + AC1 facts pair {cpu 8, 110Gi, gpu-r9700-1: 2} both maps, TP2 multiset, kv-resident/expert-vs-cache-ratio/api-key absent, tp-wire present; q27 workflow-route extraction+render + AC2 facts {cpu 8, 24Gi, gpu-r9700-1: 1} both maps replicas 0, fn-overlay claim 2, OVERRIDE_ sweep clean; AC6 git grep => 72 pre-existing plan-history hits, 0 new, 11 canonical added; AC7 => exactly 3 in-scope files; aislop 0/0 109 files (shell posture honest); tp2/q27-boot re-run still red demanding ONLY C02's note files] deviations: (1) tp:2 ledgered as scalar, prefix/chunk/checkpoint stay list-literals (splice guard green). (2) chart :111-113 DISAPPEARS sentence rewritten to dated present-at-count-0 (gotcha 8; not enumerated in Tasks). (3) chart shm comment dated OQ-G annotation, value unchanged 2Gi. (4) runbook gate-(a) receipt loop moved to per-BDF wildcard driver-dir form (positions shifted under TP2; pair-count pinned over BDF-pair), step-2/1/6/7 era flips with dated annotate-never-rewrite markers, TP1 text retained as history where enumerated, Wilde-class MOOT->LIVE. (5) No 48/40 memory shape entered the runbook (P11 ban); rejected-48 named only where the chunk mandated. friction: (1) non-breaking-space edit miss (cf-143 class) -> cat -A + re-issue. (2) tp2 T3 / q27-boot T6 stay red at hand-off = designed, C02-owned, recorded so nobody re-diagnoses. open_questions: none next_suggested: review C01 (teeth: flip tp back -> red; strip overlay pin -> q27 renders 2; reintroduce --kv-resident -> red), then commit + launch C02 (note annotations = the only remaining designed-red carriers).",
+          "coord_note": "full verbatim hand-back in the coordinator session transcript; this is the faithful compression (cf-58 coord-compressed-handoff precedent). Deviation (2)'s site was enumerated in the launch's own instruction (absence-law/count-0 prose), so adjudication belongs to the review."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-21T21:0xZ", "session": "ses_e000b0f1dffe5E0nCxximQAwTI", "status": "DONE", "verdict": "APPROVED",
+          "result": "RESULT status: DONE chunk: C01 verdict: APPROVED files_changed: [chunks/C01.md Review notes only] commands_run: [radiance pytest 71/0/0-skip x3 deterministic incl scratch; runbook 5-ok (T2 byte-equality + HOLD-110 printed); host-tuning 4-ok + surface 9-ok byte-untouched; llama-swap 505/9-skip/0-fail ZERO diff touches (P09 inert proven); amd-gpu 29; helm lint clean; AC1/AC2 own renders via workflow extraction exact (pair {8,110Gi,gpu-r9700-1 2} both maps, §7 multiset exact, kv-resident/expert-vs-cache-ratio/api-key absent, tp-wire present; q27 {8,24Gi,claim 1} both maps replicas 0); no 48-shipped anywhere; OVERRIDE_ 0; deterministic; teeth ALL SIX bit (tp carrier flip 2-red, tp scalar-only splice-red, overlay-pin-strip renders 2 4-legs-red incl independence, kv-resident reintroduced 2-red, one-side memory/claim red, T2 equality bites both directions), restored; tp2 T3 + q27-boot T6 red naming ONLY C02 files; stale-name grep 0 new; diff set == 3 declared; Chart.yaml/peers/evidence/golden/catalog untouched; 502 sentence untouched; aislop 0/0 109 files] deviations: none by reviewer; dev's five all ACCEPTED — deviation 2 ruled IN SCOPE under the gotcha-8 law the chunk invokes at its own notes task (chart prose was the last contradicted carrier; annotate-never-rewrite honored; no needle pinned the old token); gate-(a) wildcard loop = robust superset under the enumeration-shift gotcha friction: none (priming recipe held; full-copy scratch teeth clean) open_questions: none next_suggested: commit the approved C01 tree; launch C02 (T3/T6 needles are its completion proof); fold the two nits (notes sizing-row 'the ladder moves these' tail vs chart scalar-carrier contradiction; switch-discipline header missing comma) into C02's note pass. [coord-compressed faithfully; verbatim in the session transcript]"
+        }
+      ]
     },
     "C02": {
       "status": "pending",
