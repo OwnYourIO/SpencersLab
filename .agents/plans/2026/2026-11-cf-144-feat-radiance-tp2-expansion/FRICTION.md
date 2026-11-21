@@ -37,3 +37,13 @@ Agents report via RESULT `friction:`; coord appends (its own items included).
   missed by one space. · resolution: verify byte-exact indentation with
   `sed -n 'A,Bp' <file> | cat -A` before re-issuing the edit; both retries then matched.
   Fold-only artifact work — no content decision affected. · ignored
+- 2026-11-21 · coord(close) · **heartbeat attribution flapped three times this run**: each
+  banner (or `no_claim` answer) fired while `pipeline_status` showed the SAME setId LIVE under
+  this session seconds later — twice without a reap record at all, once WITH a real reap the
+  claim had genuinely lost (the owner's YES then gated the card-id takeover). The two surfaces
+  disagree because the in-memory registration and the lock file are separate authorities. ·
+  resolution: never act on the banner alone — re-read `pipeline_status` + `pipeline_heartbeat`
+  before committing anything (this run paused commits until the engine answered live both
+  times). Machinery fix belongs to the pipeline-locks surface, not this repo's contracts. ·
+  open (follow-up-card candidate; second documented sighting in cf-144's own final-review
+  record)

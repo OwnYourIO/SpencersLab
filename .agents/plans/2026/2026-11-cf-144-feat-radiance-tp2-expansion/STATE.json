@@ -1,11 +1,19 @@
 {
   "feature": "2026/2026-11-cf-144-feat-radiance-tp2-expansion",
-  "plan_status": "approved",
-  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status approved by coordinator 2026-11-21 after owner word P12; post-plan write-back done: slug stack line set, 34 unchecked items deleted, approved comment 6KY45H7MM65dCrPtp]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research.",
+  "plan_status": "complete",
+  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status approved by coordinator 2026-11-21 after owner word P12; post-plan write-back done: slug stack line set, 34 unchecked items deleted, approved comment 6KY45H7MM65dCrPtp]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research. COMPLETE 2026-11-21T22:58Z: final whole-plan review APPROVED (fresh planning-tier session ses_dffb22106ffe1No8JLCoUh32ys — 0 blockers/0 majors/0 minors, 2 nits [STATE stamp — closed here; launch-text commit miscount — records agree], full battery re-derived, all seven cross-chunk sweeps coherent, M-3 hole self-proved closed, rebase conflict-free); flipped to complete by the coordinator at close (owner's HITL Final Review checkout pending in-session).",
+  "final_review": {
+    "at": "2026-11-21T22:58:01Z",
+    "session": "ses_dffb22106ffe1No8JLCoUh32ys",
+    "tier": "planning (openrouter/qwen/qwen3.8-2.4t-a95b — the planning-tier launch the pipeline-models default gives the final whole-plan review; chunk rounds ran the run's routed code model qwen3.8-flash)",
+    "verdict": "APPROVED — 0 blocker / 0 major / 0 minor; 2 nits (N-F1 STATE updated_at stamp — closed by this write; N-F2 launch-prose '6 commits' vs 5 — records match, no artifact impact)",
+    "posture": "battery fresh green (radiance 71/0, llama-swap 507/0/9-skip directory-wide incl. the 2 new M-3 legs, amd-gpu 29, runbook 5/tp2 3/q27-boot 6/host-tuning 4/surface 9, lint x3, renders AC1/AC2/C03 facts exact both layers, 48-sweep comment-context-only, stale-name 0 live, notes insert-only +52/0 +15/0, oracle byte-untouched, M-3 scratch mutation => exactly 2 reds + carve-leg green-under-pin, test-weakening sweep clean, aislop 100/0/0 109 files); drift: origin/main 21 ahead, intersection with the branch's 28-file set EMPTY — owner's rebase expects zero conflicts.",
+    "second_sighting_note": "the reviewer independently classified the heartbeat-attribution flap (pipeline_heartbeat no_claim while pipeline_status shows the same setId LIVE ~7 s old) as a machinery follow-up candidate — recorded here as the second documented sighting; also captured in STATE kickoff.claim.history (third banner)."
+  },
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
   "test_session": "ses_e004c659affeGMUL0VAk40tm3F",
-  "current_wave": 1,
-  "updated_at": "2026-11-21T19:55:48Z",
+  "current_wave": 3,
+  "updated_at": "2026-11-21T22:58:01Z",
   "kickoff": {
     "card": "Cnf563PDBmBoDLSaS",
     "card_number": 144,

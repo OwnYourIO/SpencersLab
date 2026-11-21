@@ -248,3 +248,183 @@ HITL stages for this card).
   `(device,revision)` receipt prerequisite live in `chunks/C04.md` for whoever cards it. NO ONE
   creates that follow-up card in this run (the card does not check "Follow-up cards created");
   carding it is the OWNER's leg, riding this section + the run's final summary comment.
+
+## Final Review (whole-plan) — 2026-11-21 — verdict: **APPROVED**
+
+Reviewer: fresh `agent-review` session (final whole-plan review, HITL stage). Surface:
+the plan Goal + every acceptance criterion + all four chunk files + DECISIONS P01–P17 +
+FRICTION + EXPLORE + STATE, against the FULL branch diff `7886e20b4..HEAD` (5 commits:
+ff73f8398 records, 981f5e83a test wave, 810b5a121 C01, 6046d3c6f C02+records, 0c9b3eeb8
+C03 wave incl. the M-1/M-2/M-3 micro-round folds; 28 files — 3 notes, 9 plan-folder
+records, 6 llama-swap test-lane files + values.yaml, 5 radiance test-lane files +
+values.yaml, services/gpu-ai/prod/values.yaml, 3 tests/notes contracts). Working tree
+clean before and after; nothing taken on any prior session's word — every command below
+re-run fresh in THIS session, priming recipe first (`export PATH=$HOME/.local/bin:$PATH`
++ `helm dependency update charts/radiance charts/llama-swap charts/amd-gpu`),
+whole-directory proofs throughout (never three-file sims).
+
+**Validation battery (all pass, this session):**
+1. `python3 -m pytest charts/radiance/tests -q` → **71 passed / 0 failed / 0 skipped**.
+2. `python3 -m pytest charts/llama-swap/tests -q` → **507 passed / 0 failed / 9 skipped**
+   (the standing RUN_FLAG_AUDIT/RUN_HF_CHECK evidence gates — documented shape; the +2
+   over the C03-wave 505 are the M-3 coverage legs, present and armed).
+3. `python3 -m pytest charts/amd-gpu/tests -q` → **29 passed**.
+4. `bash tests/notes/radiance-runbook.sh` → **5 ok** (T2 prints the args-block ≡ chart
+   serveArgs multiset equality with 12288/200000/8/tp-2 pinned BOTH sides,
+   guaranteedMemoryGi HELD at 110 and the no-48 bar; T5 carries the cf-144 TP2 receipt set).
+5. `bash tests/notes/radiance-tp2.sh` → **3 ok** · `bash tests/notes/radiance-q27-boot.sh`
+   → **6 ok** (incl. T6) · `bash tests/notes/radiance-host-tuning.sh` → **4 ok**
+   (byte-untouched witness) · `bash tests/pipeline-models/surface.sh` → **9 ok**
+   (byte-untouched witness).
+6. `helm lint charts/radiance` / `charts/llama-swap` / `charts/amd-gpu` → **0 failed** each.
+7. `bash tests/services/amd-gpu-naming.sh` → **5 ok** — extra witness only; this is the
+   C04-deferred leg and it stays green BECAUSE nothing C04-shaped moved.
+8. `npx --yes aislop@0.20.0 ci --changes` → **score 100 / 0 errors / 0 warnings / 0
+   fixable over 109 supported files, 0 unsupported**; code-quality, ai-slop and security
+   engines RAN (format/lint skipped with honest reasons: no formatter/linter for the
+   detected languages — the shell posture is honest, no silent file-class exclusion).
+
+**Render facts (my own extraction + parse, workflow route
+`.github/workflows/radiance-render-tests.yaml:57-77` verbatim):**
+- AC1 — fn chart-defaults AND fn service-overlay renders BOTH: requests==limits
+  `{cpu "8", memory "110Gi", amd.com/gpu-r9700-1 "2"}`, replicas 1; args multiset
+  EXACTLY the §7/P04 set (16 flag/value pairs + the `--model` anchor resolving to the
+  chart modelPath; value-diffs 0, extra 0, missing 0) incl. `--tp 2`, `--tp-wire wht6`,
+  `--host-pool-mib 12288`, `--prefix-cache-mib 4096`, `--max-num-batched-tokens 2048`;
+  `--kv-resident` / `--expert-vs-cache-ratio` / `--api-key` all ABSENT; OVERRIDE_ 0.
+- AC2 — q27 overlay render: `{cpu "8" (chart-inherited), memory "24Gi",
+  amd.com/gpu-r9700-1 "1"}` in BOTH maps (the overlay pin wins over the chart's 2),
+  replicas 0, its own lane still tp 1; OVERRIDE_ 0.
+- C03 — strata chart-ON render AND gpu-ai service-overlay render BOTH: strix
+  `ROCR_VISIBLE_DEVICES=2`; primary/orca/q4/ornith all `=0`; OVERRIDE_ 0 in the chart
+  render, 1 in the overlay render = the pre-existing parent hf-token sentinel (legit,
+  unchanged). gpu-ai `OVERRIDE_VIA_CUSTOM_VALUES` count base 1 → HEAD 1; the
+  services/dev, services/infra, services/gpu values files are untouched by the branch,
+  so the sentinel posture across them is unchanged by construction (the launch's
+  "dev/infra/gpu 1/1/1" reading: zero drift is the verified fact — no file changed).
+
+**Cross-chunk sweeps (the fell-between-chunks duty):**
+- (a) SAME-NUMBERS coherence: tp 2 / claim 2 (fn) + 1 (q27) / pool 12288 / chunk 2048 /
+  prefix 4096 / memory HELD 110 / ordinals 0-primary + 2-strix state identically in the
+  C01 chart values, the C02 annotations (both notes + acceptance-note provenance block),
+  the C03 enumeration (values + strata_testlib constants), and the runbook (T2 pins BOTH
+  sides). The only 43000 survivors are dated single-card-era history sentences (chart
+  comment, acceptance-note sizing row + the explicitly TP1-era-marked ladder DOWN rung
+  whose TP2 replacement text ships beside it). **No drift found.**
+- (b) T2 law: my OWN extraction of the acceptance note's fenced args block — exactly ONE
+  candidate block, multiset-EQUAL to the chart serveArgs (anchor resolved). Holds after
+  all waves.
+- (c) P15 receipt ≡ shipped plumbing ≡ suite: the values comment carries the dated
+  provenance tokens (rocminfo + receipt + 2026-11-21, DECISIONS P15 cite) and the stale
+  "dGPU first, chip second" story is gone from the window; strata_testlib's constants
+  block quotes the same receipt verbatim (Uuids GPU-f14f913b0a98ad15 /
+  GPU-d34663795f09a76f, BDFIDs 49920/50944/51200, chip ids); the provenance arm
+  (`test_c03_moved_pair_requires_dated_rocminfo_provenance_in_the_comment`) passes in
+  the 507-green suite. ONE story, three carriers.
+- (d) P16 carve + M-3: spot-proved MYSELF on a scratch copy (`/tmp`, real tree verified
+  `git status`-clean before and after, mutation file restored cmp-byte-equal): injected
+  an overlay `rocrVisibleDevicesByModel` strix pin `"1"` into
+  services/gpu-ai/prod/values.yaml → **exactly 2 red — both M-3 legs
+  (`test_c03_overlay_merged_bymodel_resolution_equals_the_site`,
+  `test_c03_merged_service_overlay_render_strix_env_equals_the_site`) naming '1' != '2'
+  with layer attribution — while the P16 coexistence carve leg STAYED GREEN**, proving
+  the reviewer-found silent-pass hole was real and is now closed by exactly the legs the
+  ledger claims; pin removed → 18 green. The carve helper itself is strix-block-scoped,
+  single-line, both-sides-sentinelled, fail-loud on 0×/2× degeneracy (read, not trusted).
+- (e) Notes insert-only: `git diff 7886e20b4..HEAD --numstat -- .agents/notes/` =
+  radiance-second-gpu-tp2.md **+52/0**, radiance-q27-boot.md **+15/0** (zero historical
+  deletions — annotate-never-rewrite holds); radiance-on-target-acceptance.md +191/−62
+  adjudicated: every deleted line is a C01-mandated re-author class (args-block
+  re-extraction per the T2 extract-never-retype law, gate-(a) TP2 per-BDF wildcard form
+  replacing the c4/c5-literal loop, scalar-pin flips 43000→12288 / tp / chunk, the
+  absence-law polarity paragraph, TP1-era ladder/honest-envelope lines each replaced by
+  dated cf-144-marked TP2 text, and the N1 sizing-row rider) — no un-sanctioned
+  historical deletion. The 502-idle sentence (D57 token-pinned): zero 502-bearing lines
+  in either note diff; the q27-boot 502 lines are byte-identical to base. Oracle
+  fixture: `git diff --quiet 7886e20b4..HEAD -- charts/llama-swap/tests/evidence/` →
+  CLEAN (byte-untouched); golden dir untouched.
+- (f) C04 leak check: ZERO diff under services/gpu/, charts/amd-gpu/,
+  tests/services/amd-gpu-naming.sh, test_cf143_naming_flip.py (D21 shield intact), any
+  Chart.yaml (no version touch anywhere), peers files, evidence, golden, custom-values,
+  .github. Diff file set == the sanctioned set: chunk-declared implementation files +
+  STATE.test_wave.files + the P16-routed test_coexistence_wiring.py + plan-folder
+  records. No leftover scaffolding, no temp/debug residue, tree clean.
+- (g) Bookkeeping ≡ commit log: STATE chunk statuses (C01 done/APPROVED r1, C02
+  done/APPROVED r1, C03 done/APPROVED r1 + micro-round, C04 deferred with the P13 note),
+  verdicts and session ids all match the five commits' content and order; the P14/P15
+  coordinator records match the riders and receipt in the diffs. Two harmless nits below.
+- 48-ban (P11): the only `48` occurrences in shipped carriers are comment-context
+  records (the REJECTED draft-48 history + the llmkube "req 40 / lim 48" bracket + the
+  runbook's own 48/40 absence-bar detector) — **no shipped 48 value anywhere**;
+  `guaranteedMemoryGi: 110` + the 110Gi pair is the only memory truth in the tree.
+- Stale-name sweep: `gpu-ai-pro-r9700` — 0 live hits repo-wide (charts/services/tests/
+  custom-values/notes); the 13 diff-added lines carrying it are ALL plan-folder
+  law-carrier text (plan/DECISIONS/EXPLORE/FRICTION/STATE/chunks quoting the pre-D24
+  name to state the ban) — **no new claim-shaped hit**.
+- Test-lane weakening sweep: zero deleted skip/xfail marks; the 5 deleted assert lines
+  are the designed re-pins (ROCR default-pin → receipted constants, q27/fn limits `want`
+  dicts → the TP2 pairs, kv-resident presence → retired-with-marker), each replaced by
+  its re-pinned arm; the only added skip shape is the standard helm-guard `skipif`
+  definition in the new enumeration file (helm present → legs ran).
+
+**Drift note (owner's pre-PR rebase leg):** origin/main is 21 commits ahead of the
+branch point 7886e20b4. `git diff --name-only 7886e20b4..origin/main` ∩ the branch's
+28-file set = **EMPTY** — no main-side commit touches any file this branch changed (the
+main-side Chart.lock regen f418cc01c touched charts/base + services/home locks only,
+neither in this branch). **The rebase should expect ZERO conflicts.** Usual law still
+applies: a re-based branch push is an owner-authorized forced update of the FEATURE
+branch only, never main.
+
+**Findings:** no blocker, no major, no minor on any shipped artifact. Two nits
+(non-blocking, coordinator-owned, no rework round warranted):
+- N-F1 `STATE.json` `updated_at` ("2026-11-21T19:55:48Z") lags the file's own newest
+  content (the C03 micro-round handoff ~23:4xZ) — displayed-stamp hygiene only; refresh
+  at close.
+- N-F2 the launch text counted "6 commits" while naming 5; `git rev-list --count
+  7886e20b4..HEAD` = **5** and STATE/DECISIONS bookkeeping matches those 5 — the
+  miscount is in the launch prose, not in the records.
+
+**Goal + card-intent walk (whole-plan):** TP2 shipped per doc §7 on both R9700s
+(claim "2" pair, §7 multiset exact, pool live at 2 with NO amdgpu.ids table edit) ✓;
+memory HELD at 110 with the DOWN re-pin deferred to the first-boot print (P11 honored
+to the byte) ✓; q27 pod-swap kept correct with the explicit overlay claim-1 pin +
+claim-math annotations ✓; strata enumeration receipt-checked and re-pinned (strix "2",
+primary "0" honest no-op, P15/P16/P17 routes all sanctioned) ✓; notes layer annotated
+SHIPPED, annotate-never-rewrite, insert-only ✓; gpu-cluster product naming DEFERRED
+with zero C04-shaped leak ✓; Deployment-checked landing shape respected — everything is
+committed locally on `cf-144-feat-radiance-tp2-expansion`, nothing pushed, nothing on
+main ✓. Nothing fell between chunks: the wave boundaries (test wave → C01 → C02 riders
+→ C03 receipt-gated wave → micro-round) leave every carrier coherent and every
+designed-red discharged by its owning wave.
+
+**Deferred (separate from the verdict — owner-owned legs and follow-ups):**
+1. Push + PR + merge + sync + the rebase onto origin/main: OWNER-gated
+   (pipeline-push-pr discipline; rebase conflict-free per the drift note).
+2. First TP2 boot: capture the printed budget → the memory DOWN re-pin from HELD 110 to
+   the printed class (~30–35 GiB; llmkube 40/48 bracket recorded) is a POST-BOOT
+   OWNER-RECEIPT leg (P11, D29-shaped ruling + one-scalar edit), and the §12
+   co-existence re-open (≈118.3 ≤ 125.08) rides the CUTOVER ticket only after it.
+3. On-target acceptance receipts: runbook step-0 TP2 gates (per-BDF sysfs 7551/C0 ×2,
+   pool asserts 2+1+bare-at-0), ReBAR size=32G BOTH cards, HSA_AMD_P2P/PCI_P2PDMA,
+   rocm-bandwidth-test + P2P/wire lines UNDER LOAD, 8-session gate at the TP2 profile,
+   Wilde-class pinned-burst watch (≥15 GiB free), shm 2Gi two-rank envelope (OQ-G),
+   ~120 W power-cap question — all OWNER-executed.
+4. C04 follow-up card (gpu-cluster product naming): OWNER cards it; spec + sysfs
+   (device,revision) receipt prerequisite preserved in chunks/C04.md.
+5. Strata on-target [VERIFY] posture (live pod-visible rocrVisibleDevices re-check after
+   syncs) stays OPEN as an owner leg (P17); and the doc §4 stale ordinal cells
+   ("0 = R9700, 1 = 8060S" header + row-2 "1") remain needle-unbound historical text —
+   P17 bars in-run churn; a dated post-C03 annotation is a natural next-notes-wave or
+   owner-directed leg (C03 review's Deferred, carried here).
+6. Follow-up-card candidate (repo machinery, not this ticket): the **pipeline-locks
+   heartbeat-attribution flap class** — seen 3× this run (STATE claim history): one real
+   reap→takeover (sanctioned question, owner YES) and TWO spurious PIPELINE LOCK LOST
+   banners, the second with `pipeline_heartbeat` answering ok:false reason:no_claim
+   while the very next `pipeline_status` showed the SAME setId LIVE-held at ~7 s age and
+   lastReap naming only an unrelated card. The lock store never lost the claim; the
+   flap lives in the heartbeat path's own attribution. Card-worthy against the plugin.
+
+Verdict: **APPROVED** — the plan is complete. Coordinator's close legs: mark the plan
+complete in STATE, refresh the stamp (N-F1), post the final summary comment to AD-144
+(incl. the Deferred list above — carding C04 and the heartbeat-flap class are the
+owner's legs), and hand the branch to the owner for the push/PR legs.
