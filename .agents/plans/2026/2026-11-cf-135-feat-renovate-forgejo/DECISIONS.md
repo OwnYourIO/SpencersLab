@@ -133,6 +133,104 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   coordinator-owned (owner already conditionally approved on this fold: "Approve — run
   all waves").
 
+## Round 3 — rework round 2 (owner live-review 2026-11-21; folded by plan from RESEARCH §R2/§R3)
+- 2026-11-21 plan: D17 R2 fold — conflict resolution = ONE config key,
+  `gitIgnoredAuthors: ["bot-and-reviewed@spencerslab.com"]`. Grounded live: origin/main..
+  renovate-branch email census (12× tms + 4× bot-and-reviewed + 1 mixed, 2026-11-21
+  `git log` on `node-26.x`); guard = `isBranchModified` scanning ALL commits' author ∪
+  committer emails against the DISCOVERED gitAuthor (tms-as-bot PAT — self-consistent for
+  its own commits) ∪ gitIgnoredAuthors. Rejected, each with R2 citations: `ignorePrAuthor`
+  (global-only PR-DISCOVERY filter — the brief's hypothesis, corrected §R2.B),
+  setting `rebaseWhen` (auto→conflicted IS the wanted policy — documentation-only),
+  `gitAuthor`/`RENOVATE_GIT_AUTHOR` (discovery is documented-best §R2.A), any
+  instance/webhook work for the checkbox (§R2.C proved the machinery intact end-to-end;
+  ticks are one-shot requests consumed by the NEXT daily pass — latency by construction,
+  #90's 15:02Z tick predicts its own heal at ~06:2xZ 11-22, U7 check recipe).
+  THE MAIN-REBUILD LAW (recorded for the merge flow, UA11): rebuilding `main` history
+  while `renovate/*` branches are open is what poisoned the fleet (11-19 15:41–15:51Z
+  event, forensics §R2.0/7); avoid it, or pair every such rebuild with the automatic
+  recovery this delta enables (and add any new orphaned-author email here). Supersedes
+  nothing from Round 1 — the shipped runner works as designed.
+- 2026-11-21 plan: D18 R3 fold — Chart.lock ownership = the built-in `helmv3` PM
+  (platform-independent, enabled by `config:recommended`, runs real `helm dependency
+  update` — §R3.A); the default Renovate image ships NO helm, and `binarySource=install`
+  tool resolution rides github-releases→api.github.com — anonymous = the proven failure
+  (`No tool releases found.` on all 22 helm PRs, community-corroborated #39399). Delta =
+  `"constraints": {"helm": "3.22.1"}`: the exact single version short-circuits before any
+  GitHub lookup (dist containerbase.js:303), is deterministic token-independent, and
+  matches the repo's helm-v3 law + the coder-workspace Dockerfile ARG (live-verified
+  v3.22.1; m8 pins the pair so k09 ARG bumps can't silently stale it — the §R3.D.1
+  drift knob). Rejected: token-provisioning as the SOLE fix (restores the anonymous
+  resolution dependency on every pass + picks helm v4-latest, violating the v3 law —
+  §R3.C honest-consequence paragraph); postUpdateOptions/enabledManagers (R3 ruled both
+  irrelevant). Drift repair = one manual generator commit (C04); daily passes never
+  re-run artifacts on completed branches, so no automatic path exists.
+- 2026-11-21 plan: D19 delta shape — two S chunks, both wave 1, independent: C03 (the
+  two keys + suite learn/extend: m5 keyset red-first, m7 value pins, m8 ARG-pair pin) and
+  C04 (lock regeneration + NEW permanent suite `tests/renovate/chart-lock-consistency.sh`
+  as the U16-class yaml-only-merge regression net). The contains()-guard variant on
+  canonical is LEFT ALONE (owner/cf-6 live edit; its header even documents D12/D13 itself;
+  cf-6 run −2 already re-pinned the three suites' GUARD/count strings — verified by diff
+  against main 2026-11-21 — so the test wave touches only forgejo-move-config.sh).
+  Workflow file: zero changes this round (R2 recommended delta confirmed: keys-only).
+  Repair as its own commit, not folded with config (different evidence classes: generator
+  output vs hand-edited JSON; cleaner revert). Rebase-onto-main before any wave;
+  re-fingerprint Commands §4 post-rebase (k2 red grows to count 10≠8 — same single
+  failure class; suite pins at main's re-pinned values).
+- 2026-11-21 plan: D20 deferrals ruled for the batched round (best guesses): bot-account
+  migration of RENOVATE_TOKEN (R2 structural follow-up — revives R1 §2b with the
+  human-edit-blindness evidence; needs user+PAT+one-time ignorePrAuthor-env handover —
+  new card if the owner says go); U15 dead `lockFileMaintenance` blocks in rules 3/4
+  (separate cleanup decision); F1 ignoreTests-vs-red-CI posture note and F2 the 6-s
+  `pr …` build failures (cf-6 surface) as follow-up cards; U16 (who merged #19/#53/#63)
+  recorded as owner-side history, no chunk; U8/canonical-Renovate-home acceptance
+  pending the owner's word (behaviourally canonical IS the home today).
+
+- 2026-11-21 plan: D21 Q1 OWNER OVERRIDE — "Also pin a git author": the delta adds
+  `RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"` as a job-env line on the
+  canonical workflow (contains-guard file stays per D22/Q3). CHOSEN VALUE ground-ruled
+  against R2, rejecting the launch-recommended `Renovate <bot-and-reviewed@spencerslab.com>`:
+  the guard accepts {effective gitAuthorEmail} ∪ gitIgnoredAuthors (all author AND
+  committer emails in base..head, isBranchModified — R2 §A), and the live stuck-range
+  census carries TWO email classes — tms@ (12 PR-HEAD commits per sampled range: the
+  running bot IS the tms PAT account; discovery today stamps exactly that) and
+  bot-and-reviewed@ (orphaned rebuild commits). Stamping bot-and-reviewed would DEMOTE
+  tms@ from the accepted set while the existing 85 branches' head commits stay tms —
+  recovery fails (arithmetically verified 2026-11-21: accepted={bot-and-reviewed} →
+  uncovered {tms} → guard still fires). Stamping tms@ + ignoring bot-and-reviewed keeps
+  the accepted set exactly the census: recovery holds and the stamp adds determinism.
+  The brief's own verify-clause ("whether the platform bot user's email should be the
+  address instead") is thus answered YES — the platform bot user (PAT account) email.
+  DOUBLE-SAFETY recorded: (1) the stamp pins the authorized author against `/user`
+  metadata drift (account rename/email change no longer moves the guard floor; new
+  commits also carry the stamp via writeGitAuthor — self-consistent); (2)
+  gitIgnoredAuthors covers the foreign orphan class; (3) residual docs-danger (identity
+  non-unique/personal → human tms edits invisible to the guard) is UNCHANGED from the
+  discovery regime and is honestly closed only by F3 (dedicated bot account, deferred).
+  PAIRING LAW: the stamp email and gitIgnoredAuthors are one arithmetic — any change of
+  either moves the other in the same edit (C03 AC8 re-checks the live census at dev
+  time; a third email appearing = new ignored entry, stamp unchanged — owner's running
+  identity is not re-decidable by a worker). Name kept "Renovate" (cosmetic to the
+  guard, legible in blame, aligned with F3's future direction).
+- 2026-11-21 plan: D22 ROUND-3 FOLD RULINGS (batched answers verbatim-folded) —
+  Q1: OVERRIDE accepted, D21 (config side unchanged: two keys; +1 env line +1 header
+  why-line; t5 six→seven red-first). Q2: deferral stands, F3 named as a card. Q3:
+  contains()-guard variant LEFT — acceptance of the owner/cf-6 live edit recorded (suites
+  already migrated; equality-flip would be a separate ticket). Q4: CANONICAL ACCEPTED as
+  the Renovate home — round-1 UA4 (dev-runner repair) and UA5 (dev first-fire) marked
+  SUPERSEDED-AS-GATE (repair stays valid infra housekeeping, decoupled from cf-135;
+  first-fire happened in production 11-19→11-21 on canonical), round-1 R1/R6/R7 likewise
+  superseded; instance gaps re-expressed canonically (UA7 token-verify, UA8 label, UA10
+  observation chain). Q5: separate chunks stand (C03 = keys+stamp; C04 = lock repair).
+  Q6: constraints.helm "3.22.1" confirmed + m8 parity leg. Q7: next-pass timing accepted
+  (manual workflow_dispatch recorded as a UA OPTION, no obligation). Q8: coordinator
+  mints THREE follow-up cards at run end: F1 (ignoreTests-vs-CI-parity posture note),
+  F2 (6-s `pr …` containers-build PR-arm failures on canonical), F3 (dedicated renovate
+  bot account + PAT migration handover incl. one-time
+  `RENOVATE_IGNORE_PR_AUTHOR=true` pass — global-only env option, R2 §B). Approval: owner
+  "Approve — run the delta" — plan_status flip + STATE C03/C04 stubs are coordinator-
+  owned; nothing re-opened from round-1 rulings.
+
 ## Deferred
 - UA6 infra flip (Q1 ruling), GitHub-side `renovate/*` branch cleanup (Q7), Forgejo PR-CI
   gate-parity workflow (Q8), ArgoCD-source/merge→deploy path verification (Q6/OQ-3) —
@@ -142,3 +240,10 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - Repairing pre-existing red `kubernetes-mcp-version-floor.sh` k2 (stale packageRules count
   9≠8, cf-93-family drift) — same treatment since the Q3 override removed our rule-add
   (D14); a future rule-touching ticket flips it as its own test-session edit.
+- FOLLOW-UP CARDS TO MINT AT RUN END (owner ruling Q8, D22 — coordinator leg, three):
+  F1 ignoreTests-vs-red-CI posture note; F2 the 6-s `pr …` containers-build PR-arm
+  failures on canonical; F3 dedicated renovate bot account + PAT migration (one-time
+  `RENOVATE_IGNORE_PR_AUTHOR=true` handover pass; closes the docs non-unique-identity
+  danger D21 carries forward). The former U8 canonical-vs-dev home question RESOLVED by
+  the Q4 acceptance (D22) — off the deferred list. U15 dead lockFileMaintenance blocks
+  stay deferred (own decision if the owner asks).

@@ -1,6 +1,7 @@
 {
   "feature": "2026/2026-11-cf-135-feat-renovate-forgejo",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "plan_status_note": "REWORK ROUND 2 reopened 2026-11-21 (was complete after the round-1 final review): owner's in-session three asks + batched round answered (Q1 OVERRIDE also-pin-git-author -> D21 with the census-ground stamp value; Q2 bot-account migration deferred to follow-up card F3; Q3 contains()-guard variant LEFT; Q4 canonical ACCEPTED as Renovate home; Q5 separate chunks; Q6 exact 3.22.1; Q7 next-pass timing accepted; Q8 mint F1/F2/F3 cards) + approval 'Approve — run the delta'. Delta chunks C03 (two renovate.json keys + workflow RENOVATE_GIT_AUTHOR stamp) and C04 (two regenerated Chart.locks); test wave re-pins forgejo-move-config m5/m7/m8 + forgejo-renovate t5 six->seven + new chart-lock-consistency.sh, all red-first.",
   "approval": {
     "at": "2026-11-10T17:05:00Z",
     "by": "owner, in the batched plan-question round ('Approve — run all waves', conditional on folding the Q3/Q4 rulings — folded by the plan fold pass, see DECISIONS Round-2 D12–D16)",
@@ -45,7 +46,9 @@
       "claim_comment": "Nko2MSgJvBSoJzH6h",
       "history": [
         "2026-11-10 ~15:31Z claimed at pickup; moved to Executing + claim comment under the held claim",
-        "2026-11-10 ~16:2xZ PIPELINE LOCK LOST banner fired mid plan-session drain; stopped the step per contract; pipeline_status showed setId 12855aae still LIVE under this session (age ~25s, no reap — lastReap 05:06Z pre-dated the claim); the one sanctioned question was answered YES (owner: continue) -> pipeline_heartbeat ok, beaten [CICD]; run continues under the ORIGINAL CICD key — no card-id takeover (the engine never lost attribution; flap class of the cf-123 claim.history pattern)"
+        "2026-11-10 ~16:2xZ PIPELINE LOCK LOST banner fired mid plan-session drain; stopped the step per contract; pipeline_status showed setId 12855aae still LIVE under this session (age ~25s, no reap — lastReap 05:06Z pre-dated the claim); the one sanctioned question was answered YES (owner: continue) -> pipeline_heartbeat ok, beaten [CICD]; run continues under the ORIGINAL CICD key — no card-id takeover (the engine never lost attribution; flap class of the cf-123 claim.history pattern)",
+        "2026-11-21 REWORK ROUND (owner in-session directive; card stays in Review — no board move): re-claimed CICD after the earlier done-release — ok:true, new setId b7b71184-a2cf-49cc-a19d-be9544499103; three owner asks (conflicted PRs not rebased / rebase-retry checkbox inert on Forgejo / Chart.lock parity vs the old GitHub-side Renovate); flow = research x2 -> delta plan round -> batched round -> approval -> Test Writing/dev/review; reopen comment yQseDscuaTxAyJTtg",
+        "2026-11-21 SECOND PIPELINE LOCK LOST banner (same false-flap class, 2nd occurrence): fired during the long research-1 drain; stopped the step, asked the one sanctioned question for this event (owner: continue), heartbeat ok:true beaten [CICD]; engine showed the set LIVE under this session throughout (~14 s old, no reap). pipeline_status also revealed the CICD set now SHARED (shared:true) with card 4NyPcY7WTHaG7TsT8 'cf-55: Move GitHub parallel helm builds to Forgejo (fix round: helm baked into runner image)' holder ses_e38ca0929ffe4wS9EGOd3D9TRf — human-sanctioned co-tenancy per C08; this run holds card #135's holder only and releases only its own"
       ]
     },
     "board_context": {
@@ -112,6 +115,24 @@
         "RESULT (dev, ses_e3967318dffe2qjqflfkOYZ6qx, coord-compressed faithfully) status: DONE chunk: C02 files_changed: [.forgejo/workflows/renovate.yaml (NEW, sole change)] commands_run: [python3 yaml.safe_load => pass; forgejo-move-config.sh => pass (6 ok, m6 flipped green binding the image line); forgejo-renovate.sh => pass (8 ok + t9 designed skip-with-loud-note); FORGEJO_RENOVATE_PROBE=1 => fail pre-commit BY DISCOVERY (local platform enumerates git ls-files, dist scm.js:36 — untracked file invisible; needles themselves exact) — treated as ordering property, NOT a test defect (test is correct; post-commit the leg can go 9-ok, no repair routed); scratch-repo t9-equivalent (tracked copy, CLI 44.181.5, --platform=local --dry-run=lookup) => pass (all 4 needles: github-actions claims the packageFile, extracts ghcr.io/renovatebot/renovate depType container, proposes 44.181.5->44.227.0 full-patch); config-validator => pass; baselines forgejo-main-sync 8 / dockerfile-pins 36-0 / system-upgrade 3 green, version-floor k2-ONLY + chart-yaml-legs k5+k10-ONLY fail-as-baseline (zero new failures); GHCR digest read anonymous => pass; aislop => pass 0/0/91 (YAML outside scored languages, honest note); git scope => only the new untracked file] deviations: header-comment wording choices inside mandated content (quiet-minute why; digest comment names the GHCR image-index read); scratch repo as t9 proof vehicle (diagnostic only) friction: t9 pre-commit discovery gap — resolved by scratch proof, documented open_questions: none next_suggested: coord commits C02; review re-runs expecting 6-ok/8-ok + designed t9 skip crediting the scratch native-extraction proof",
         "RESULT (review r1, ses_e395d7bbdffeABwngQuQjwAtbH, coord-compressed faithfully) status: DONE chunk: C02 verdict: APPROVED files_changed: [chunks/C02.md (Review notes only)] commands_run: [yaml.safe_load => pass; forgejo-move-config.sh => pass (6 ok, m6 green as required); forgejo-renovate.sh => pass (8 ok + t9 designed skip-with-loud-note); reviewer's own scratch-repo tracked-copy probe (CLI 44.181.5, local/lookup) => pass (4 needles + nesting + 44.181.5->44.227.0, depName once — no double-match); forgejo-main-sync 8 ok / dockerfile-pins 36-0 / system-upgrade 3 ok green; kubernetes-mcp-version-floor fail-as-baseline k2 ONLY; chart-yaml-legs fail-as-baseline k5+k10 ONLY; renovate-config-validator pass; aislop 0/0/91; anonymous GHCR digest HEAD => comment exact; D12/D13 absence greps pass; git scope pass (new file + STATE bookkeeping only)] deviations: none — no validations weakened; probe intentionally not run in-repo pre-commit (discovery gap credited, scratch re-proof done) friction: none new (reviewer's own grep-case slip, re-ran with -i) open_questions: none next_suggested: coord commits C02; final whole-plan review; post-merge belt: FORGEJO_RENOVATE_PROBE=1 should print 9 ok"
       ]
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
     }
   },
   "blocked": [],
