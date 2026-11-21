@@ -1,7 +1,8 @@
 {
   "feature": "2026/2026-11-cf-126-feat-compaction-pipeline-sessions",
   "plan": "2026-11-17-feat-compaction-pipeline-sessions.md",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "reopen_note": "2026-11-21 owner in-session rulings D31-D34 (C05: wedge-alert relocation to pipeline-locks listener-only, step-10 skill-law inversion, question-notify push-layer retirement card). Card back in Executing under fresh card-id claim 73cd3ebd-7161-4a35-bbb7-4fdcff9d1991 (prior a67a283f released done at the closing). REPLAN APPROVED 2026-11-21T18:20 +0000 (owner approval at the gate; C05 as designed incl. the planner's four flagged decisions: T14 remove-with-replacement, listener records-all/no-dedupe, 'Both handlers' closed-as-moot, step-10 inversion keeping the legacy sequence as owner-requested leg). Test re-pin wave in flight -> C05 dev -> review -> final delta re-check -> second Review hand-off. C04 remains owner-gated, untouched.",
   "plan_completed_at": "2026-11-21T17:05 +0000 — FINAL whole-plan review APPROVED (wave scope C01+C02+C03 + records; ses_e00dd0343ffe7cOObHKJfPLrYJ). C04 is NOT done: it remains owner-gated (fix-radiance-context unmerged → scale-up → 262144 receipt); its four designed-red arms (M1/M8/M9, N8-model-leg) are the verified-coherent flip set for a follow-on wave the owner cards from the final summary (Follow-up cards stage was unchecked on the card, so no cards were created).",
   "plan_approved_at": "2026-11-17T03:42 +0000 (owner approval at the plan-approval gate; the batched OQ1-OQ10 round preceded it, rulings landed in the re-work; the HITL `Planning` stop was satisfied at the same hand-off)",
   "coord_session": "ses_e18d38cb8ffevu2NSfkIn7LJaJ",
@@ -93,6 +94,13 @@
       "round": "final",
       "result": "status: DONE | chunk: final | verdict APPROVED (wave scope C01+C02+C03+records; C04 excluded as owner-gated). FULL battery twice byte-identical: 382/382 node arms; 24 bash suites green per-arm; rulesync no-op x2 + --check; aislop 100/0/0 (108 files); JSONC keep.tokens=15000 no agents key; opencode models q27 resolvable; two-tree pristine@7886e20b4 confirms all 15 pre-existing reds there; negative controls zero-diff; STATE parse clean. RED LEDGER exactly 22: 4 C04-designed flip set (M1/M8/M9, N8-model-leg — coherent future pins) + 2 D28-ruled commit-shape (wekanctx t5 + ppgates t6, sole violator a3e8428af) + 15 two-tree-proven pre-existing (t17, c11, c19, A15, provloops t1/t3, i4, m4, s4, S5, ppgates t4/t7, portha t4, portlbf t4, devmcp t7) + 1 ATTRIBUTION-CORRECTED branch-caused re-pin debt (seaweedfs t5.4 — vacuously-green-at-HEAD guard vs cf-126's sanctioned overview rewrite; test-side mechanical fix owed, D24-class inventory). Carry-ins adjudicated: (a) settled-constant promotion DEFER (card/inbox candidate); (b) OPEN_QUERIES needle-pin DEFER (E6 already guards the behavior — reviewer's reasoning); (c) T14 two arms DEFER (hardening); (d) 'Both handlers' stale comment + (e) silent non-array-system skip → one-line landing sweep candidate; (f) warm-location matrix wording DEFER; (g) t5/t6 confirmed ruled-artifact attribution; (h) qn-disabled inertness = report material. Records note: branch has TEN commits (record correction); earlier 'pre-existing' tag on seaweedfs t5.4 corrected to branch-caused. Wording nits (Provider-ask actor sentence; updated_at narrative) recorded in the plan's Final review section for opportunistic fold-in, no-re-litigate posture.",
       "session": "ses_e00dd0343ffe7cOObHKJfPLrYJ"
+    },
+    {
+      "role": "plan",
+      "agent": "agent-plan (continuation, replan)",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "status: DONE | chunk: plan (replan, C05 added per D31-D34) | plan of record amended (35243 B: Chunks +C05 row M/w5/deps[C03]; Wave item 5 = final delta re-check + second Review hand-off; NEW Closing-round-rulings provenance section; Risks +2 incl. never-live-fired-envelope probe posture; OQ3 CLOSED entry annotated SUPERSEDED-by-D32) + chunks/C05.md NEW (15111 B: 6 tasks, 7 ACs, test re-pin inventory, dev notes). Planner decisions (design-call grant): (1) T14 = remove-with-replacement + qn creep-back ABSENCE guard; (2) listener records EVERY session.compaction.failed, no filter, no dedupe, new audit token ev:compaction_failed, zero logic branches, events.log reader tolerance a named dev check; (3) C03 minor-1 'Both handlers' self-heals, closed as moot; (4) step-10 inversion: full legacy sequence survives as owner-requested leg, move-before-removal ordering kept, origin_dir stays the only sanctioned home destination, i8 is the sole step-10-default pinner (3 sub-arms re-pin in the test wave). i8/H4(T14, H1-H9, seam greps) verified; C04 + historical final-review record untouched. No open questions — the four rulings are answers. APPROVED by owner 2026-11-21T18:20.",
+      "session": "ses_e18888123ffeG9AlDujsRa52fT"
     }
   ],
   "kickoff": {
@@ -134,7 +142,7 @@
     "preload": { "at": "claim 2026-11-17T01:51-ish", "tool": "preload_board", "cards": 195, "degraded": false },
     "card_details": { "at": "claim", "tool": "get_card_details", "degraded": false },
     "claim": {
-      "setId": "a67a283f-3123-4592-a370-44f224a42b44",
+      "setId": "73cd3ebd-7161-4a35-bbb7-4fdcff9d1991",
       "pipelines": ["PpN4g7xQDD4LXEuPW"],
       "at": "2026-11-21T15:10 +0000",
       "note": "fresh card-id-key claim after the second reap (history: Context-set claim 9c5800dd reaped in gap 1; card-id claim c2a1d9ee reaped 2026-11-19T21:58 after the C03 session went silent; the owner's 2026-11-21 continuation answers the sanctioned question)"
@@ -190,6 +198,16 @@
           "files_changed": [".opencode/plugin/pipeline-locks/index.ts", ".opencode/plugin/question-notify/index.ts", ".rulesync/skills/boards/SKILL.md", ".opencode/skills/boards/SKILL.md", ".rulesync/skills/pipeline-role-coord/SKILL.md", ".opencode/skills/pipeline-role-coord/SKILL.md", ".opencode/opencode.jsonc"]
         }
       ]
+    },
+    "C05": {
+      "title": "Closing-round relocation: pipeline-locks compaction-failed listener (record-only), question-notify C03-leg extraction, step-10 stay-in-worktree inversion",
+      "status": "pending",
+      "wave": 5,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
     },
     "C04": {
       "title": "27b-radiance default-model flip: the three pipeline-models doctrine surfaces + the runner literal, gated on the owner ruling + the fix-radiance-context merge + the q27 pod scale-up + the runbook 8-session gate receipt",
