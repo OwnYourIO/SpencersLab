@@ -264,6 +264,14 @@ grafana:
           allowUiUpdates: true
           options:
             path: /var/lib/grafana/dashboards/logs
+        - name: inference
+          orgId: 1
+          folder: Inference
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/inference
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -673,6 +681,13 @@ grafana:
         datasource:
           - name: DS_PROMETHEUS
             value: Prometheus
+    inference:
+      radiance:
+        # Pinned to the radiance TAG v1.17.0 — the same release the
+        # charts/radiance image pin holds (cf-143 C02 ledger).
+        # renovate can't track a raw URL: bump this WITH the image pin.
+        url: https://codeberg.org/StillDeadcode/radiance/raw/tag/v1.17.0/deploy/grafana/radiance.json
+        datasource: Prometheus
   sidecar:
     dashboards:
       enabled: true
