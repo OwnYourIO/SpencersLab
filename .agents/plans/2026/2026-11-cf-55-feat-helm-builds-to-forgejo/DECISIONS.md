@@ -386,3 +386,33 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
   compat idiom; .github/workflows/docker-build.yaml STAYS (cf-6 manual fallback) so
   only release.yaml's GitHub twin is deleted; the bump-loop/cr/published-index/
   date-pairing-free laws from D13-D17/D22's surviving half carry unchanged.
+- 2026-11-21 human+coord D33 (owner continuation directive — the rebuild PR merged
+  to main and the FIRST FIRE failed): the rebuilt branch landed via PR (release.yaml
+  on origin/main is blob 12160c7fe = the post-fix-restore hash; per-path diffs of all
+  32 shipped files against origin/main show our content fully merged, main having
+  evolved only via later tickets). Owner ruling verbatim: "this is still cf-55 work.
+  You'll need to pull in main, but keep the same naming, we're just testing and
+  fixing what you've done previously." Evidence of failure: runner "Set up helm"
+  step, read ECONNRESET downloading helm-v3.16.4-linux-amd64.tar.gz from
+  get.helm.sh, all three retries, exitcode 1 — the exact egress unknown cf-55
+  RESEARCH flagged for UA-5 first-fire observation, now live-proven flaky/blocked.
+  FIX APPROACH (owner-confirmed from three options): a CUSTOM act-runner image with
+  helm BAKED IN — built by our own containers-build.yaml pipeline, published to the
+  instance registry — with the setup-helm steps retired from the workflows. Branch
+  handling: git reset --hard origin/main (the redundant squash-merged replay dropped;
+  36f6f542d stays reachable as merged history; the remote feature branch, if it still
+  exists at 36f6f542d, diverges — its forced update is owner-gated per the
+  explicit-request law, never performed by this run unasked). The run now lands under
+  main's newer conventions (13-item Lifecycle; Session Rename + Worktree Creation are
+  no-ops here — folder, worktree, branch and session all exist from the original run).
+- 2026-11-21 human D34 (lease posture): the CICD pipeline key is held live by card
+  #135's run (Renovate move, ses_e39eb7bc4ffectkAy9nSpDDzuF); the owner answered the
+  batched claim question "Share CICD with #135" — pipeline_claim(cardId #55,
+  ["CICD"], shared:true) lands set 627dcc2c as co-tenant; release removes only this
+  card's holder (holders-not-files law, cf-106 C08).
+- 2026-11-21 human D35 (models, superseding chain): "use openrouter flash going
+  forward" — every tier of this run's remaining rounds routes
+  openrouter/qwen/qwen3.8-flash, supersedes both the card's Model(s) checklist
+  (Qwen Flash, API provider) and the 2026-11-16 local-model ruling for all future
+  launches in this ticket; the original card checklist stays untouched on the board
+  as the frozen kickoff record.

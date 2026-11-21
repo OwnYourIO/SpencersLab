@@ -388,3 +388,294 @@ straight from the git path — they are "versioned by CI, not renovate"
   per-instance Actions variables/secrets beyond cf-119's UA3 record; existence of
   any GitHub→Forgejo pull mirror (cf-119 OQ-1 answer: manual flow, no mirror).
 - Whether `catthehacker/ubuntu:act-*` carries helm — first-fire or a docs probe.
+
+## Fix-round scout (2026-11-21)
+
+Written by `agent-explore` for the D33 fix round (first-fire failure: runner
+"Set up helm" → read ECONNRESET downloading `helm-v3.16.4-linux-amd64.tar.gz`
+from get.helm.sh, 3 retries, exitcode 1; owner ruling = bake helm into a custom
+act-runner image built by our own containers-build pipeline, served by the
+instance registry). Worktree at `origin/main` `b80fae102`. Everything below is
+grounded from disk reads + readonly MCP probes run this session; §F0 marks what
+is NOT provable from here.
+
+### F1. Helm/tool runtime-install surfaces (`.forgejo/workflows/`)
+
+- `azure/setup-helm@v4` with `version: v3.16.4` — exactly three steps, all in
+  `release.yaml`: job `test-build` (`.forgejo/workflows/release.yaml:101-105`),
+  job `release` (`:289-293`), job `forgejo-publish` (`:377-381`). Every comment
+  on them cites "The act job image carries no helm (RESEARCH C1)". There is NO
+  `get.helm.sh` literal in any workflow — the download happens inside the
+  action (RESEARCH C2 remedy-1 [30]: mirrored action, node24, get.helm.sh
+  default, checksums automatic).
+- Other runtime DOWNLOADS in the same family (all `release.yaml`):
+  - `Install cr` steps: `curl -fSL --retry 3` of `chart-releaser_1.10.1_linux_amd64.tar.gz`
+    from `https://${RELEASES_HOST}/helm/chart-releaser/releases/download/...`
+    (`RELEASES_HOST: github.com`, env `:32-34`), sha256-verified — job `release`
+    `:294-308` and job `forgejo-publish` `:382-396`. Same egress-fragility class
+    as the helm download (github.com from the job container); the file's own
+    comment names it "unproven-egress class, first-fire-checked (UA-5)".
+  - bump leg fetches the published index: `curl -fsSL -o /tmp/published-index.yaml
+    $PUBLISHED_INDEX` where PUBLISHED_INDEX = `https://ownyourio.github.io/SpencersLab/index.yaml`
+    (`:168`, `:188`) — GitHub-Pages egress, same class.
+  - `forgejo-publish` instance curls (`:452`, `:474`) target the instance's own
+    host (LAN-side, different path); containers-build curls hit ghcr.io +
+    `GITHUB_SERVER_URL` registries (API reads, not tool installs).
+- NO tool installs at run time in the other three files: `main-sync.yaml` is
+  git+checkout only (`:32-47`, `:53-68`); `renovate.yaml` has ZERO `uses:` steps
+  and runs all tools inside its container image (`:50-70`); `containers-build.yaml`
+  installs nothing — its tool curls are registry `/v2/` reads
+  (`:208-284`). (The `.github/workflows` family runs on GitHub-hosted runners
+  with helm preinstalled — outside this fix's scope, RESEARCH C1 helm row.)
+- First-fire survival, as far as the evidence reaches: `test-build` is the FIRST
+  setup-helm in the needs chain (`changes → test-build → bump →
+  release/forgejo-publish`, `:84-85`, `:150-151`, `:269-270`, `:366-367`), so a
+  "Set up helm" failure means: job `changes` PASSED (actions/checkout@v7 cloned,
+  full-depth git negotiation worked, `jq` present — `:73` — and the
+  `GITHUB_OUTPUT` write worked), and inside `test-build` the Checkout step and
+  the `azure/setup-helm@v4` CLONE both passed before the action's own download
+  died. `bump`, `release`, `forgejo-publish` never executed (unmet needs) — no
+  bump commit, no release, no registry push (consistent with main @ b80fae102
+  carrying no `<chart>-<version>` activity). Steps sharing the fragility that
+  never got to prove themselves: every `curl github.com` above, plus
+  `helm repo add`/`helm dependency build` chart-repo egress (`:123-147`,
+  `:326-339`, `:406-419`), cr's API uploads/index push (`:340-363`), and the
+  registry curls in containers-build (`:208-355`).
+- Agent-side get.helm.sh fallbacks exist in many tests/services suites
+  (`tests/services/dev-forgejo-runner.sh:140-160`, `gpu-forgejo-runner.sh:106-126`,
+  plus dev-git-auth, dev-mcp-fleet, forgejo-lfs, forgejo-ssh-gateway,
+  gpu-coder-sso, hivetools-kubernetes-mcp-toml, infra-forgejo,
+  media-lidarr-betanin-mount...) — different class (Coder-workspace egress, with
+  skip-on-failure semantics), listed only so a de-helm sweep does not confuse
+  them for runner-side installs.
+
+### F2. Act-runner deployment
+
+- Chart: `charts/forgejo-runner` (ONE release = one registration = one pod;
+  declarative v13 registration via the ExternalSecret-rendered `config.yaml` —
+  values.yaml:54-68). Aliased twice: `forgejo-runner-dev`
+  (`services/dev/prod/values.yaml:114-117`) and `forgejo-runner-gpu`
+  (`services/gpu/prod/values.yaml:119-122`). No infra-cluster deployment:
+  `services/infra/prod/values.yaml` has no forgejo-runner entry (grep empty;
+  infra runner un-wired per values.yaml:2-6 + DECISIONS 2026-10-25).
+- Default job image = the LABEL→IMAGE map, not a separate "default image" key:
+  `runner.labels` (`charts/forgejo-runner/values.yaml:107-112`), rendered
+  verbatim into `server.connections.default.labels`
+  (`charts/forgejo-runner/templates/secret-runner.yaml:138-143`):
+  `ubuntu-latest|ubuntu-24.04|docker|node22 → docker://ghcr.io/catthehacker/ubuntu:act-24.04`,
+  `ubuntu-22.04 → act-22.04`. NO `:free`-style labels exist in this deployment.
+- Daemon + dind pins: runner `data.forgejo.org/forgejo/runner:13.2.0`
+  (values.yaml:197-203, renovate helm-values-tracked per comment :200-202);
+  dind sidecar `docker:29.9.2-dind` privileged initContainer (values.yaml:158-165);
+  `DOCKER_HOST: unix:///var/run/docker.sock` + `CREDENTIALS_DIRECTORY` env
+  (values.yaml:219-223).
+- config.yaml (secret-runner.yaml:86-118): `capacity: 1`, `timeout: 30m`,
+  `shutdown_timeout: 5m`, `cache.enabled: true` (docker mode: NO `cache.dir` —
+  it lands in `~/.cache/actcache` under `HOME=/data` on the 2Gi `data` VCT,
+  values.yaml:126-132), `container.privileged: false` (:109-110). VCTs:
+  `data` 2Gi + `docker-data` 10Gi local-path (values.yaml:124-147) —
+  docker-data is the job-image store ("without it every job re-pulls its
+  images", :136-137).
+- URL + identity slices (the ONLY things overridden):
+  `services/dev/prod/values.yaml:176-178` (`url: http://dev-forgejo-http:3000`),
+  `services/gpu/prod/values.yaml:271-273` (`url: https://git.spencerslab.com`);
+  Bitwarden ids `custom-values/dev/prod-values.yaml:92-98`
+  (`runner-token: d3dafd1a-…`, item `dev-forgejo-dev-runner`) and
+  `custom-values/gpu/prod-values.yaml:109-118` (`22a71ee4-…`, item
+  `forgejo-runner`, an INFRA-instance record).
+- Live probe 2026-11-21 (readonly MCP): gpu pod `gpu-forgejo-runner-gpu-0`
+  Running since 2026-11-05T21:09:43Z, runner container
+  `data.forgejo.org/forgejo/runner:13.2.0`, STS VCTs data 2Gi + docker-data
+  10Gi local-path; dev pod `dev-forgejo-runner-dev-0` Running since
+  2026-11-09T15:15:58Z, runner `:13.2.0`, init `docker.io/library/docker:29.9.2-dind`.
+  Secrets list/get RBAC-denied on both clusters ("kubernetes-mcp-readonly cannot
+  list secrets"), infra STS list returns RBAC-masked empties — same posture as
+  §11 of the original EXPLORE.
+- Job-level `container:` in this deployment: `renovate.yaml:50-51` USES it
+  (`container.image: ghcr.io/renovatebot/renovate:44.181.5`) on the same
+  `runs-on: ubuntu-24.04` act-label runner. Authored + statically contracted
+  (cf-135, plan complete, `.agents/plans/2026/2026-11-cf-135-feat-renovate-forgejo/STATE.json`
+  plan_status "complete"); its header (:21-23) records the measured law "these
+  runners never re-pull a tag they have already cached — a floating tag or a
+  minor rollup would stick at its first-pull content forever" (same finding as
+  RESEARCH C2 remedy-3 citing docs: "container images, once downloaded, are
+  never updated"). Whether a `container:` job ran GREEN live is not provable
+  from the repo (cf-135 UA5 "first-fire watch" stayed an open owner action;
+  card #135's infra-flip continuation was live at 2026-11-21 per D34).
+
+### F3. containers/ shape
+
+- Existing images (`ls containers/`): brother-ptouch-automation,
+  coder-workspace, forgejo-host-runner, gpt-researcher, gpt-researcher-frontend,
+  music-assistant, okd-enketo, renovate-mcp, snapcast, strata,
+  traefik-mqtt-allowlist, vllm-radiance-mxfp4, wekan-mcp (13).
+- Standard parts: `Dockerfile` REQUIRED (every dir has one); README.md optional
+  (forgejo-host-runner, strata, vllm-radiance-mxfp4, wekan-mcp); build-context
+  extras by name — `files/` + `carry/` (strata), `sync/` + `.dockerignore`
+  (forgejo-host-runner; strata has none); per-image python test dirs under
+  `containers/<img>/tests/` exist for forgejo-host-runner (pytest t01-t13 for
+  the bundled sync tooling) and strata (`tests/test_dockerfile.py`) — NO
+  workflow runs them (grep of .github/.forgejo finds no reference; they are
+  executed by the owning ticket's agent sessions).
+- Renovate pins in Dockerfiles: `# renovate: datasource=… depName=…` comment
+  directly above an `ARG` line (forgejo-host-runner/Dockerfile:14,22,31,39;
+  coder-workspace/Dockerfile:40-74) — claimed by the customManagers at
+  `renovate.json:112` (git-pin ARGs) and `:134`
+  ("Pinned tools in containers/*/Dockerfile", node-version|golang-version|
+  forgejo-releases|npm). THE existing bake-helm precedent:
+  `containers/coder-workspace/Dockerfile:49-50`
+  (`# renovate: datasource=github-releases depName=helm/helm` +
+  `ARG HELM_VERSION=v3.22.1`) installed at build time from
+  get.helm.sh + sha256sum -c + version assert (`:142-149`).
+- Detection (`scripts/forgejo-container-detect.sh:24-90`): push diffs the whole
+  `before..sha` range under `containers/` (:76), name = 2nd path segment,
+  gates = DNS-safe regex `^[a-z0-9]+(-[a-z0-9]+)*$` AND
+  `[ -f containers/<n>/Dockerfile ]` (:84-86); PR = merge-base..head (:33-44);
+  first push (all-zero before) = tip-only + ::warning:: (:55-62); dispatch list
+  shares the gates (:27-30, :80-82). THERE IS NO REGISTRATION LIST anywhere —
+  a new `containers/<name>/Dockerfile` touched by a push to main on the prod
+  instance is built automatically (workflow paths
+  `.forgejo/workflows/containers-build.yaml:71-77`; build context = the dir,
+  :347). Caveat the fix round must know: the detector's header (:3-5) claims
+  "the runner image ships no jq or python" (RESEARCH C1 contradicts — act
+  images DO ship both; the script stays coreutils-only, which is what
+  containers-build.yaml:267 actually relies on).
+- Tags + push targets (containers-build.yaml:13-20, :331-355): calendar
+  `yy.mm.N` union-max across BOTH registries (walk :184-245 forge, :247-319
+  ghcr), plus `:latest` + `:main` rolling; push to `ghcr.io/ownyourio/<name>`
+  (login :177-183, `GHCR_PUSH_PAT`) and `<host-from-forgejo.server_url>/curatedforest/<name>`
+  (login :184-198, `FORGE_PUSH_TOKEN`, lowercase namespace literal). PR on a
+  dev-role instance: `pr-<branch>-<sha>` local registry only (:357-405).
+  Host is derived in-workflow, never a literal (:189-197) — so on the prod
+  (infra) instance the local registry is `git.spencerslab.com/curatedforest/…`,
+  reachable by the gpu-hosted runner which dials that same host (F2).
+
+### F4. Runner-pull path (can the runner start jobs from the instance registry?)
+
+- Today job images come from PUBLIC ghcr (labels, F2) and are pulled by the
+  in-pod dind dockerd over `DOCKER_HOST` (values.yaml:158-165, :219-223); the
+  pull is anonymous — nothing in the rendered config.yaml carries registry
+  credentials (secret-runner.yaml:86-143 has no auth key at all; chart is
+  host-free by design, values.yaml:54-59).
+- In-step `docker login` (containers-build.yaml:180-198) writes the config of
+  the docker CLIENT inside the job container — that authenticates PUSHES from
+  steps; it does not and cannot authenticate the daemon-side pull of the job
+  image itself (the pull precedes every step).
+- The runner daemon process runs in the runner container with `HOME=/data` on
+  the persistent `data` VCT (values.yaml:126-132, donor image declares it too —
+  containers/forgejo-host-runner/Dockerfile:121-124 echoes the fact) — the
+  plausible anchor point for a future client-side docker config
+  (`/data/.docker/config.json`), but NOTHING in the repo writes such a file
+  today (grep: no `.docker/config` surface).
+- Instance-registry pull auth: per cf-6 the `curatedforest` packages inherit
+  the org's PUBLIC visibility ⇒ credential-free pull "by anything that can
+  reach the host" (`.agents/plans/2026/2026-11-cf-6-feat-forgejo-container-builds-1/RESEARCH.md:620-626`,
+  marked [LIVE] via `/api/v1/orgs/CuratedForest` → 200 on BOTH instances),
+  gated on `service.REQUIRE_SIGNIN_VIEW` (unset anywhere in
+  charts/forgejo/values.yaml or custom-values/infra — grep empty; app.ini is
+  owner-side, not readable here). `skills/container-creation/SKILL.md:291-293`
+  restates it ("allow anonymous pull ... a valid manual pull source"). So the
+  pull can plausibly work WITHOUT auth — but no run has ever pulled an instance
+  registry image as a JOB image (the first such label would be this fix's
+  subject); app-level REQUIRE_SIGNIN_VIEW and host-reachability from the gpu
+  cluster (`git.spencerslab.com` — the runner already dials it, F2 slice) are
+  the unverified links, marked in §F0.
+
+### F5. Tool needs per workflow (what a baked image must carry)
+
+- `release.yaml` `changes`: bash, git (full-depth), `jq -c` (:73), grep/cut/sort
+  (:68-69). `test-build`: checkout (node action runtime), python3 (:109),
+  helm (:131-147), awk/tail/head (:131), bash (`[[ ]]` :132). `bump`: git,
+  curl (:188), python3 heredoc (:189-249), seq, date-free. `release`: curl,
+  sha256sum, tar, chmod (:302-308), git, helm, cr, awk, remote-add/fetch
+  (:360-363), `cr package/upload/index` (:351-363). `forgejo-publish`: same
+  cr install pair (:390-396), curl POST upload/index read (:452-474),
+  basename/awk (:462-471).
+- `containers-build.yaml`: bash + coreutils + the detector (pure shell, sed/tr
+  :107-124), curl (:208-284), `date +%y.%m` (:200), git, docker CLI (build/push
+  /login, :180-355) + `docker buildx version`/`docker info` diag (:171-175) —
+  the act image ships the docker CLI + buildx plugin, daemon comes from dind
+  (RESEARCH C1/C2). `main-sync.yaml`: git + bash only. `renovate.yaml`: nothing
+  beyond its container image's `renovate` binary (:62-70).
+- Base images used by the repo's own container builds (pattern to follow):
+  `data.forgejo.org/forgejo/runner:13.2.1` as BINARY DONOR +
+  `docker.io/library/node:22-bookworm-slim` base (forgejo-host-runner/Dockerfile:14-17);
+  `debian:13-slim@sha256:…` (coder-workspace:29); `python:3.15-slim-bookworm`
+  (brother-ptouch:1, gpt-researcher:13, traefik-mqtt-allowlist:1,
+  wekan-mcp:14); `ghcr.io/...` donors for rebuild-on-upstream
+  (okd-enketo:6, vllm-radiance-mxfp4:37, strata:26-57).
+- Act-image inventory baseline (what is ALREADY present, so what the baked
+  image must not regress) — RESEARCH C1 table (:329-361): git (+`safe.directory`),
+  git-lfs, jq, python3.12 + pip/venv/pipx, node 20+24 with tool-cache dirs,
+  yq, docker CLI + buildx + compose, sudo/apt; ABSENT: helm (the whole point),
+  gh, go, cosign.
+
+### F6. Test surfaces the fix must touch or extend
+
+- `tests/services/dev-forgejo-runner.sh` pins of the runner config (docker-mode
+  contract): ACT_LABELS constant :257-262 (image refs embedded), labels-set
+  equality leg :466-467, dind image `docker:29.9.2-dind` :312-324 (+t13 gid
+  :1508, :1561, :1605), runner image `data.forgejo.org/forgejo/runner:13.2.0`
+  + command/env/mount consistency :330-377, renovate helm-values extraction of
+  both pins :605-612, LFS-capability comment beside the labels map :615-689
+  (labels: key location is asserted — :658-660). ANY label→image re-point
+  reddens :466-467 (and the constant); a labels-map restructure additionally
+  reddens t14.
+- `tests/services/gpu-forgejo-runner.sh`: same ACT_LABELS equality :223-229 +
+  :269-271; VCT/local-path/replica shape :243-260; URL pin :55 + banned hosts
+  :58; blast-radius g7 :660-671 — pins the charts/forgejo-runner diff at AT
+  MOST 2 changed `docker://` lines vs the diff base :668-670 — written for
+  cf-104 C04's single-line swap, it is a live tripwire: a 5-label re-point (10
+  docker:// lines touched) reddens it against any base predating the swap, so
+  the fix round must plan for this leg (it reads `GPU_RUNNER_DIFF_BASE`, :65).
+- `tests/services/forgejo-release.sh` (setup-helm pins): t4 label whitelist
+  :163-179 (LABELS :167); t5 action allow-list — `ALLOWED = ('actions/checkout@',
+  'azure/setup-helm@')` :187, per-step membership check :198-205,
+  setup-helm-must-carry-version :206-208, retired-wrapper bans :209-212. NOTE
+  (what-the-evidence-shows): t5 only REQUIRES uses-membership, never the
+  presence of setup-helm — retiring the three steps does not redden t5 by
+  itself; it survives as an over-permissive allowance until the leg is amended
+  to ban the action (and the t5 message :217 still names it). The legs that DO
+  bind helm availability are the behavior ones: t6 (helm loops :219-242),
+  t12 checkout/tag ordering :502-548, and t19's cr-runtime-download contract
+  :984-1022 (the same egress class as helm — CR_VERSION/CR_SHA256/RELEASES_HOST
+  env pins :1004-1009, both-leg composed-URL + sha256 checks :1010-1017) —
+  if cr is also baked or re-sourced, t19 is the carrier to amend.
+- `tests/services/forgejo-ci-surface.sh` (whole-state fence): pins
+  `.forgejo/workflows/` holding EXACTLY the four-workflow family (header
+  :8-11) and the GitHub-side inventory (:12-14) — a new workflow FILE under
+  .forgejo or resurrecting a .github twin reddens it; edits inside the four
+  files are its intended companion (250 lines; run-battery in cf-55 STATE).
+- New-image suite placement (the pattern a `containers/forgejo-runner` suite
+  follows): `tests/containers/<name>.sh` — `tests/containers/forgejo-host-runner.sh:1-27`
+  is the template (static Dockerfile contract + hadolint + per-leg subset argv,
+  the `docker build => no-daemon, CI-deferred` designed-passing shape t10,
+  AGENTS "Pipeline specifics"; `.dockerignore` exclusion leg t7; FROM-pin and
+  renovate-annotation legs t1/t2). In-image `containers/<img>/tests/` python
+  suites are for shipped tooling only (forgejo-host-runner sync tools) — CI
+  never runs either kind; agent sessions + the first real build run are the
+  executors (same CI-primary law that made this first fire the authoritative
+  helm-install test).
+- Validation-command shapes for the planner: `bash tests/services/forgejo-release.sh`,
+  `bash tests/services/forgejo-ci-surface.sh`, `bash tests/services/dev-forgejo-runner.sh`,
+  `bash tests/services/gpu-forgejo-runner.sh`,
+  `bash tests/services/forgejo-containers-build.sh` (41-ok full battery, header
+  subset discipline :24-30), `bash tests/containers/<new-image>.sh`, plus the
+  detector fixtures the run-2 legs execute verbatim (forgejo-containers-build.sh:31-36).
+
+### F0. Not verifiable from this seat (hand-offs)
+
+- Per-job/per-step run logs of the failed fire: the instance Actions API answers
+  404 anonymously (`GET /api/v1/repos/CuratedForest/SpencersLab/actions/...`,
+  probed 2026-11-21) — the "which jobs survived" reasoning in §F1 is chain
+  logic on the owner-reported step name, not a fetched log.
+- Whether the instance registry serves anonymous `/v2/` PULLS end-to-end today
+  (cf-6 proved org visibility [LIVE], never a pull from a runner-side daemon —
+  §F4); whether `REQUIRE_SIGNIN_VIEW` is set in the live app.ini (owner-side).
+- Whether a job-level `container:` has ever gone GREEN on either lab runner
+  (cf-135 UA5 stayed an open owner action; §F2).
+- The exact contents of the deployed runner Secret's config.yaml (RBAC-denied;
+  §F2) — pinned indirectly by the two runner suites' render legs.
+- What `ghcr.io/catthehacker/ubuntu:act-24.04` carries TODAY at the rolling tag
+  (RESEARCH C1 is upstream-source proof, and no renovate manager reads the
+  label lines — values.yaml:127-129 records "a bump is manual").
