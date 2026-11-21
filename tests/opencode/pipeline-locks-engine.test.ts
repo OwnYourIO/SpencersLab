@@ -113,6 +113,18 @@
 //     a throwing entry seam degrade to one note: the hook NEVER throws into
 //     the compaction path (a misbehaving hook may cost one summary, never a
 //     session). setup registers the "compaction" session hook exactly once.
+//   cf-126 C05 (D32) wedge listener: handleEvent gains a `session.compaction.
+//     failed` branch — tolerant envelope read per the plugin's existing
+//     dual-read convention (data / data.info / flat; the exact v2.3.0 shape
+//     is NOT live-proven, the multi-shape arms stand until the dev probe
+//     records it). Appends {ev:"compaction_failed", sessionID, agent-or-
+//     "unknown", error excerpt, cardId/setId when the session maps to a
+//     claim else null} and lands a logNote. RECORD ONLY: no notify/HA
+//     surface anywhere in the listener, no dedupe (the repeat IS the
+//     #56784 signal), no top-level/child filter, no logic branch (lock
+//     files, beats and the executing set untouched — same law as the
+//     `handoff` token). A shapeless event (no sessionID) records nothing
+//     and never throws (the hook's silent-degrade precedent).
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -1212,5 +1224,151 @@ describe("X3 the compaction hook — generic leg for every other agent (C03 AC1,
   it("a request-free event (the host passed no summary draft) still never throws", async () => {
     const { env } = compEnv();
     await seam("handleCompaction")(env, { sessionID: "ses_r", agent: "agent-coord" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-126 C05 (D32) — the wedge listener: session.compaction.failed → audit
+// row + logNote, RECORD ONLY. Designed red until C05 dev lands the
+// handleEvent branch; every assert pins the SEAM CONTRACT above. Placement
+// call: the dispatch owner (engine) — the core suite stays store-level and
+// carries no listener arms.
+// ---------------------------------------------------------------------------
+describe("X4 compaction-failed listener — record-only wedge audit (C05 AC1/AC3, D32)", () => {
+  const ERR = { type: "compaction_failed", message: "Compaction summary reached the output token limit" };
+  const failed = (sessionID: string, extra: any = {}) => ({
+    type: "session.compaction.failed",
+    data: { sessionID, agent: "agent-test", error: ERR, ...extra },
+  });
+
+  function listenerEnv() {
+    const { env } = baseEnv();
+    const notes: string[] = [];
+    env.log = (line: string) => void notes.push(line);
+    return { env, notes };
+  }
+  const failedRows = (env: any) => readEvents(env).filter((l: any) => l.ev === "compaction_failed");
+
+  it("audit row per envelope shape — data, data.info, flat (AC1)", async () => {
+    for (const event of [
+      failed("ses_a"),
+      { type: "session.compaction.failed", data: { info: { sessionID: "ses_a", agent: "agent-test", error: ERR } } },
+      { type: "session.compaction.failed", sessionID: "ses_a", agent: "agent-test", error: ERR },
+    ]) {
+      const { env, notes } = listenerEnv();
+      await seam("handleEvent")(env, event as any);
+      const rows = failedRows(env);
+      assert.equal(rows.length, 1, `shape ${JSON.stringify(event).slice(0, 60)}: exactly one audit row per failed compaction`);
+      assert.equal(rows[0].sessionID, "ses_a");
+      assert.equal(rows[0].agent, "agent-test");
+      assert.match(JSON.stringify(rows[0].error ?? ""), /output token limit/, "the error excerpt rides the row");
+      assert.ok(notes.some((n) => /compaction/i.test(n)), "every record also lands a logNote line");
+    }
+  });
+
+  it("agent falls back to 'unknown' when the envelope omits it (AC1)", async () => {
+    const { env } = listenerEnv();
+    await seam("handleEvent")(env, { type: "session.compaction.failed", data: { sessionID: "ses_u", error: ERR } } as any);
+    const rows = failedRows(env);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].agent, "unknown", "unreadable agent records as unknown, never drops the row");
+  });
+
+  it("a claimed session lands cardId + setId; an unmapped session lands null (AC1)", async () => {
+    const mapped = listenerEnv();
+    await claimed(mapped.env, "s1", ["a"]);
+    await seam("handleEvent")(mapped.env, failed("s1") as any);
+    const rows = failedRows(mapped.env);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].cardId, "card1", "the claim the session holds rides the wedge row");
+    assert.ok(rows[0].setId, "and its setId");
+    const orphan = listenerEnv();
+    await seam("handleEvent")(orphan.env, failed("ses_orphan") as any);
+    const orphans = failedRows(orphan.env);
+    assert.equal(orphans.length, 1, "unmapped sessions STILL record — there is no filter to spare a row");
+    assert.equal(orphans[0].cardId ?? null, null, "no claim maps, so cardId is null");
+    assert.equal(orphans[0].setId ?? null, null);
+  });
+
+  it("child sessions record like roots — the qn child filter is NOT copied (AC1)", async () => {
+    const { env } = listenerEnv();
+    await claimed(env, "s1", ["a"]);
+    await seam("handleEvent")(env, { type: "session.created", data: { sessionID: "ses_c", parentID: "s1" } });
+    await seam("handleEvent")(env, failed("ses_c") as any);
+    const rows = failedRows(env);
+    assert.equal(rows.length, 1, "record-every-event: a mapped child's failure records too");
+    assert.equal(rows[0].cardId, "card1", "the mapped child inherits the root claim onto the row");
+  });
+
+  it("two consecutive failures on the same session = two rows — no dedupe (AC1, #56784)", async () => {
+    const { env } = listenerEnv();
+    await seam("handleEvent")(env, failed("ses_d") as any);
+    await seam("handleEvent")(env, failed("ses_d") as any);
+    assert.equal(failedRows(env).length, 2, "the REPEAT is the wedge-class signal the listener exists to record — dedupe would erase it");
+  });
+
+  it("shapeless events record nothing and never throw (AC1 degrade)", async () => {
+    const { env } = listenerEnv();
+    for (const junk of [{}, null, { type: "session.compaction.failed" }, { type: "session.compaction.failed", data: null }, { type: "" }]) {
+      await seam("handleEvent")(env, junk as any);
+    }
+    assert.equal(failedRows(env).length, 0, "no sessionID ⇒ no record");
+  });
+
+  it("RECORD ONLY — locks, beats and the executing set stay untouched (AC1 zero-branch law)", async () => {
+    const { env } = listenerEnv();
+    await claimed(env, "s1", ["a", "b"]);
+    const before = readEvents(env).length;
+    const hb = readRecord(env, "a").heartbeatAt;
+    await seam("handleEvent")(env, failed("s1") as any);
+    assert.equal(readRecord(env, "a").heartbeatAt, hb, "the wedge listener must not beat");
+    assert.equal(readRecord(env, "b").heartbeatAt, readRecord(env, "b").heartbeatAt);
+    const rows = readEvents(env);
+    assert.equal(rows.length - before, 1, "exactly one line lands — the audit row");
+    assert.equal(rows[rows.length - 1].ev, "compaction_failed");
+    assert.equal(env.executing.size, 0, "no executing-set mutation");
+  });
+
+  it("non-compaction events produce no wedge rows (AC1 byte-unchanged legs)", async () => {
+    const { env } = listenerEnv();
+    await claimed(env, "s1", ["a"]);
+    await seam("handleEvent")(env, { type: "session.created", data: { sessionID: "ses_c", parentID: "s1" } });
+    await seam("handleEvent")(env, { type: "session.execution.started", data: { sessionID: "s1" } });
+    await seam("handleEvent")(env, { type: "session.execution.succeeded", data: { sessionID: "s1" } });
+    assert.equal(failedRows(env).length, 0, "the listener branches on NOTHING but the failed-compaction event");
+  });
+
+  it("the listener never notifies — spy call count stays zero (AC1, record-only law)", async () => {
+    const { env } = listenerEnv();
+    let notifyCalls = 0;
+    env.notify = async () => { notifyCalls++; };
+    await seam("handleEvent")(env, failed("s1") as any);
+    assert.equal(failedRows(env).length, 1, "the record lands");
+    assert.equal(notifyCalls, 0, "D32: listener only, no push — the plugin never gains a phone surface");
+  });
+
+  it("source scans: listener branch present, notify call-sites absent from its region (AC1 negative controls)", () => {
+    assert.ok(PLUGIN_SRC.includes("session.compaction.failed"), "handleEvent must branch on the event (drift removing the branch reddens this)");
+    assert.ok(PLUGIN_SRC.includes("compaction_failed"), "the audit token stands verbatim in source (the ev value is pinned, not computed)");
+    const start = PLUGIN_SRC.indexOf("session.compaction.failed");
+    const end = PLUGIN_SRC.indexOf("event handler failed", start);
+    assert.ok(start >= 0 && end > start, "the branch sits inside handleEvent (its catch closes the region)");
+    const region = PLUGIN_SRC.slice(start, end);
+    const notifyIn = (text: string) => /notify|sendHaReapAlert|haNotify/.test(text);
+    assert.ok(!notifyIn(region), "the wedge-listener region must reach no notify/HA surface — record-only");
+    // Non-vacuity: the region scanner catches an inserted call-site, and the
+    // presence scanner catches a removed branch.
+    assert.ok(notifyIn(region + "\nawait notify(env, 'creep');"), "region scanner blind to an added notify call-site");
+    assert.ok(!region.replace(/session\.compaction\.failed/g, "").includes("session.compaction.failed"), "presence scanner blind to a stripped branch");
+  });
+
+  it("events.log readers tolerate the new ev token (dev note, reader-indifference)", async () => {
+    const { env } = listenerEnv();
+    await claimed(env, "s1", ["a"]);
+    await seam("appendEvent")(env, { ev: "compaction_failed", sessionID: "s1", agent: "agent-test", error: "x", cardId: "card1", setId: "set1" });
+    const status = await seam("lockStatus")(env, {});
+    assert.ok(status.groups.some((g: any) => g.cardId === "card1"), "status still reads the claim past the unknown row");
+    await seam("handleEvent")(env, { type: "session.execution.failed", data: { sessionID: "s1" } });
+    assert.ok(readEvents(env).some((l: any) => l.ev === "exec_failed"), "the exec path still audits after the wedge row");
   });
 });

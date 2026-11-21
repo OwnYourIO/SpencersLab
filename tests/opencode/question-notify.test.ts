@@ -1073,96 +1073,53 @@ describe("T13 the real setup(): two instances, one question event, one transport
 // leg is deliberately unspecified. Red before dev: the seam is absent and the
 // subscription row does not name the event.
 // ---------------------------------------------------------------------------
-describe("T14 session.compaction.failed — the child wedge alert (C03 AC3)", () => {
-  const COMPACTION_FAILED_EVENT = "session.compaction.failed";
-  const OUTPUT_LIMIT = { type: "provider_error", message: "Compaction summary reached the output token limit" };
+// ---------------------------------------------------------------------------
+// cf-126 C05 (D32) — the T14 wedge-alert arms are REMOVED as-is: the subject
+// (compaction-failed alerting) was extracted from question-notify by the
+// wedge-relocation, and the detection+record behavior is re-homed on the
+// pipeline-locks engine arms (engine X4). Replacement below is the creep-back
+// guard: the compaction leg must stay out of this plugin (C05 AC2/AC3). The
+// scanner's bite is proven by a synthetic clean/dirty fixture pair; the real-
+// file absence assert fails until dev extracts (designed red). 65 arms
+// survive the T14 removal — the chunk's surviving-arms count.
+// ---------------------------------------------------------------------------
+describe("T15 compaction-leg extraction — creep-back guard (C05 AC2/AC3, D32)", () => {
+  const qnSource = readFileSync(".opencode/plugin/question-notify/index.ts", "utf8");
+  const COMPACTION_TOKENS = [
+    "COMPACTION_FAILED_EVENT",
+    "handleCompaction",
+    "compactionTitle",
+    "session.compaction.failed",
+  ];
+  const tokensIn = (text: string) => COMPACTION_TOKENS.filter((tk) => text.includes(tk));
 
-  function compactionFailedEvent(sessionID: string, error: any, extra: any = {}) {
-    return { type: COMPACTION_FAILED_EVENT, data: { sessionID, error, ...extra } };
-  }
-
-  async function runCompaction(deps: any, event: any) {
-    let error: any = null;
-    try {
-      await seam("handleCompaction")(deps, event);
-    } catch (err) {
-      error = err;
-    }
-    return error;
-  }
-
-  it("exports handleCompaction as a function (C03 Tasks: join the seam trio)", () => {
-    assert.equal(typeof seam("handleCompaction"), "function", "handleCompaction(deps, event) joins handleLifecycle/handlePermission/handleQuestion — red before C03 dev");
+  it("the plugin carries no compaction leg — strings and dispatch gone (C05 AC2)", () => {
+    assert.deepEqual(
+      tokensIn(qnSource),
+      [],
+      `C05 D32 extracted the compaction leg from question-notify; these tokens must not survive: ${JSON.stringify(tokensIn(qnSource))}`,
+    );
   });
 
-  it("a child-session compaction failure pushes the alert carrying the error text", async () => {
-    const { deps, calls } = fakeDeps({ getSession: async () => childSession() });
-    const error = await runCompaction(deps, compactionFailedEvent("ses_child", OUTPUT_LIMIT));
-    assert.equal(error, null, `the seam must resolve, threw ${error?.message ?? error}`);
-    await settle();
-    assert.equal(calls.notify.length, 1, `expected one wedge push, got ${JSON.stringify(calls.notify)}`);
-    assert.match(calls.notify[0].title, /compaction/i, "the title reads as the compaction class — the relaunch-fresh doctrine (boards skill) keys on it, not a generic stop");
-    assert.match(calls.notify[0].message, /output token limit/, "the StructuredError message rides the alert (#59110 names itself)");
-  });
-
-  it("reads the error through the shipped envelope shapes (tolerant dual-read, T7 law)", async () => {
-    for (const event of [
-      compactionFailedEvent("ses_child", OUTPUT_LIMIT),
-      { type: COMPACTION_FAILED_EVENT, data: { info: { sessionID: "ses_child", error: OUTPUT_LIMIT } } },
-      { type: COMPACTION_FAILED_EVENT, data: { sessionID: "ses_child", message: OUTPUT_LIMIT.message } },
+  it("the remaining legs survive untouched (C05 AC2: lifecycle, permission, suppression)", () => {
+    for (const keep of [
+      "session.execution.succeeded",
+      "session.execution.failed",
+      "permission.asked",
+      "permission.replied",
+      "noWorkSuppressed",
     ]) {
-      const { deps, calls } = fakeDeps({ getSession: async () => childSession() });
-      assert.equal(await runCompaction(deps, event), null);
-      await settle();
-      assert.equal(calls.notify.length, 1, `shape ${JSON.stringify(event).slice(0, 60)} must reach the alert`);
-      assert.match(calls.notify[0].message, /output token limit/);
+      assert.ok(qnSource.includes(keep), `the extraction must not touch the surviving legs — '${keep}' vanished`);
     }
+    assert.match(qnSource, /Both handlers/, "the dispatch-loop comment keeps the two-handler truth the extraction restores (C03 minor-1 closes as moot)");
   });
 
-  it("two failures on the same child are two alerts — the repeat IS the wedge signal", async () => {
-    const { deps, calls } = fakeDeps({ getSession: async () => childSession() });
-    assert.equal(await runCompaction(deps, compactionFailedEvent("ses_child", OUTPUT_LIMIT)), null);
-    assert.equal(await runCompaction(deps, compactionFailedEvent("ses_child", { message: "Compaction summary reached the output token limit (2)" })), null);
-    await settle();
-    assert.equal(calls.notify.length, 2, "handleCompaction dedupes nothing by session: a repeat is the #56784 shape the alert exists to surface (fan-out dedup stays the event-identity claim's job, T11/T12)");
-  });
-
-  it("the live subscription routes compaction events through the seam (the subscription row extends by one type)", async () => {
-    const stream = makeStream();
-    const { ctx, seen } = fakeCtx({
-      events: stream.iterable,
-      sessions: { ses_comp: childSession("agent-test") },
-    });
-    let cleanup: any;
-    try {
-      const pending = Symbol("setup still pending");
-      const settled = await Promise.race([
-        mod.default.setup(ctx),
-        new Promise((resolve) => setTimeout(() => resolve(pending), 1000)),
-      ]);
-      assert.notEqual(settled, pending, "setup must return while the stream is open (T8 law, unchanged)");
-      cleanup = settled;
-      assert.ok(await until(() => seen.subscribeArgs.length > 0), "setup subscribes to ctx.event");
-      stream.push(compactionFailedEvent("ses_comp", OUTPUT_LIMIT));
-      assert.ok(
-        await until(() => seen.sessionIDs.includes("ses_comp"), 2000),
-        "the loop must hand session.compaction.failed to the compaction seam (child lookup observed) — red before C03 lands the subscription leg",
-      );
-      await settle();
-    } finally {
-      stream.stop();
-      if (typeof cleanup === "function") cleanup();
-    }
-  });
-
-  it("the three existing event types' dispatch is byte-unchanged (AC3: arms hold)", async () => {
-    // Regression posture: FINISHED/CRASH/permission.asked semantics belong to
-    // T6/T10/T12 + permission-ask-notify.test.ts and must stay green together
-    // with this file's new leg — the subscription row GAINS, never swaps.
-    const src = readFileSync(".opencode/plugin/question-notify/index.ts", "utf8");
-    for (const token of ["session.execution.succeeded", "session.execution.failed", "permission.asked"]) {
-      assert.ok(src.includes(token), `the shipped subscription lost ${token} — C03 adds a type, it never removes one`);
-    }
-    assert.ok(src.includes(COMPACTION_FAILED_EVENT), "session.compaction.failed is not subscribed yet — red before C03 dev");
+  it("scanner bite: clean fixture reads empty, a restored-dispatch fixture is caught (C05 AC3 control)", () => {
+    let clean = qnSource;
+    for (const tk of COMPACTION_TOKENS) clean = clean.split(tk).join("");
+    assert.deepEqual(tokensIn(clean), [], "clean fixture must read empty (harness fault)");
+    const dirty = `${clean}\n// creepback\nconst COMPACTION_FAILED_EVENT = "session.compaction.failed";\nvoid handleCompaction(event);\n`;
+    const hits = tokensIn(dirty);
+    assert.ok(hits.includes("COMPACTION_FAILED_EVENT") && hits.includes("handleCompaction") && hits.includes("session.compaction.failed"), `scanner blind to a restored compaction leg: ${JSON.stringify(hits)}`);
   });
 });

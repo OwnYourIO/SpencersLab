@@ -9,7 +9,8 @@
 #   H1[line a: failed compaction is the PRIMARY signal]
 #   H2[line b: successor bootstrap = the /pipeline-resume convention]
 #   H3[line c: no-per-turn-manual-compaction law]
-#   H4[line d: subagent relaunch-FRESH doctrine + the upstream failure ids]
+#   H4[line d: subagent relaunch-FRESH doctrine + the upstream failure ids;
+#       re-pinned under C05/D32 to the pipeline-locks record wording]
 #   H5[line e: the dispatcher's fresh-start reset]
 #   H6[line f: repo-wide scope note, cite-only (the OQ3 ruling)]
 #   H7[8b cross-reference in pipeline-role-coord cites the Stage map]
@@ -92,6 +93,24 @@ if token not in t:
 open(dst, "w", encoding="utf-8").write(t.replace(token, ""))
 PY
 
+cat >"$TMP/sectneg.py" <<'PY'
+# Section-scoped ABSENCE scan (cf-126 C05 AC4): the reword must leave NO
+# retired alert-surface mention inside the Context-handoff section — the
+# wedge detector is now the pipeline-locks listener, and the skill states
+# the record, not the phone leg.
+import re, sys
+path = sys.argv[1]
+banned = sys.argv[2:]
+text = open(path, encoding="utf-8").read()
+m = re.search(r'(?ms)^#+[^\n]*Context handoff[^\n]*\n(.*?)(?=^#+[^\n]*$|\Z)', text)
+if not m:
+    print("section-missing")
+else:
+    body = m.group(1).lower()
+    hits = [b for b in banned if b.lower() in body]
+    print(",".join(hits))
+PY
+
 # The section the dev adds is named "Context handoff (compaction)" per the
 # chunk; the title needle 'Context handoff' matches any heading carrying it.
 
@@ -137,15 +156,31 @@ if want h4; then
     # doctrine reads as preference, and the #59110 exposure stays invisible.
     python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' '56784' '57187' '59110' \
       || fail "H4[C03 AC4]: $f's relaunch law does not name the upstream failure shapes (#56784/#57187/#59110) as the reason — the reason must ride the rule (red before C03 dev)"
-    python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' 'alert' 'coord' \
-      || fail "H4[C03 AC4/D8]: $f does not state that the relaunch decision is the coord's and the HA alert (question-notify) is the wedge detector"
+    # cf-126 C05 (D32) re-pin: the 'alert' 'coord' pair retired with the
+    # question-notify leg — the record wording takes its place (listener +
+    # record-only + the coord's decision). Window arithmetic: 'coord' first
+    # occurs in the intro's protocol sentence, 'listener'/'record-only' in
+    # the (d) bullet — the 1800 span covers the intro-to-(d) distance the
+    # reword keeps.
+    python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' 'listener' 'record-only' 'coord' \
+      || fail "H4[cf-126 C05 AC4 re-pin, D32]: $f's Context-handoff section does not carry the record wording — the pipeline-locks LISTENER RECORDS each session.compaction.failed (audit row + logNote — record-ONLY, no push; the owner ruling) as the wedge-DETECTION record, the relaunch decision stays the coord's (red until C05 dev rewords)"
+    hits=$(python3 "$TMP/sectneg.py" "$f" 'HA alert' 'question-notify')
+    [ -z "$hits" ] || fail "H4[cf-126 C05 AC4]: $f's Context-handoff section still mentions the retired alert surface ($hits) — the phone leg left with the qn extraction; the skill states the record"
   done
   python3 "$TMP/stripcopy.py" "$BD_SRC" "$TMP/h4-off.md" '59110' \
     || fail "H4 control: could not fabricate the drift copy (anchor missing — the live pin is vacuous)"
   if python3 "$TMP/sectwin.py" --ci "$TMP/h4-off.md" 1800 'Context handoff' '59110' >/dev/null 2>&1; then
     fail "H4 control: the copy stripped of the #59110 citation still passed — the failure-shapes pin is vacuous"
   fi
-  ok "H4[C03 AC4]: relaunch-fresh doctrine + upstream ids + coord-decides/alert-detects split (source + mirror); stripped copy reddens"
+  # Record-wording control: with the reword landed, stripping the
+  # record-only wording must redden the third sub-needle (pre-landing the
+  # live sectwin call above already exits red, so this runs only post-dev).
+  python3 "$TMP/stripcopy.py" "$BD_SRC" "$TMP/h4-plain.md" 'record-only' \
+    || fail "H4 control: could not fabricate the record-stripped copy (anchor missing — the live pin is vacuous)"
+  if python3 "$TMP/sectwin.py" --ci "$TMP/h4-plain.md" 1800 'Context handoff' 'record-only' >/dev/null 2>&1; then
+    fail "H4 control: the record-wording-stripped copy still passed — the record pin is vacuous"
+  fi
+  ok "H4[C03 AC4 + cf-126 C05 AC4]: relaunch-fresh doctrine + upstream ids + coord-decides/record-detects split (record wording in, alert mentions out; source + mirror); stripped and alert-restoring copies redden"
 fi
 
 # --- H5: the dispatcher's fresh-start reset (line e) ------------------------------

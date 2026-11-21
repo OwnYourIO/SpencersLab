@@ -101,6 +101,13 @@
       "model": "openrouter/qwen/qwen3.8-flash",
       "result": "status: DONE | chunk: plan (replan, C05 added per D31-D34) | plan of record amended (35243 B: Chunks +C05 row M/w5/deps[C03]; Wave item 5 = final delta re-check + second Review hand-off; NEW Closing-round-rulings provenance section; Risks +2 incl. never-live-fired-envelope probe posture; OQ3 CLOSED entry annotated SUPERSEDED-by-D32) + chunks/C05.md NEW (15111 B: 6 tasks, 7 ACs, test re-pin inventory, dev notes). Planner decisions (design-call grant): (1) T14 = remove-with-replacement + qn creep-back ABSENCE guard; (2) listener records EVERY session.compaction.failed, no filter, no dedupe, new audit token ev:compaction_failed, zero logic branches, events.log reader tolerance a named dev check; (3) C03 minor-1 'Both handlers' self-heals, closed as moot; (4) step-10 inversion: full legacy sequence survives as owner-requested leg, move-before-removal ordering kept, origin_dir stays the only sanctioned home destination, i8 is the sole step-10-default pinner (3 sub-arms re-pin in the test wave). i8/H4(T14, H1-H9, seam greps) verified; C04 + historical final-review record untouched. No open questions — the four rulings are answers. APPROVED by owner 2026-11-21T18:20.",
       "session": "ses_e18888123ffeG9AlDujsRa52fT"
+    },
+    {
+      "role": "test",
+      "agent": "agent-test (continuation)",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "status: DONE | chunk: test-c05 (via RETRY 1 — attempt 0 died pre-work on the provider-stream class, second occurrence, clean-tree-verified relaunch, zero loss) | C05 test wave complete: T14's six arms REMOVED (subject being extracted by dev) + T15 creep-back guard ADDED (four compaction tokens ABSENT in question-notify/index.ts; synthetic clean/dirty scanner fixture proves bite; surviving-legs arm guards the rest incl. 'both handlers' truth-moot); engine X4 describe ADDED (11 arms: 8 designed-red — three-shape audit rows ev:compaction_failed + unknown-agent fallback + claim-mapped ids vs null + child-records-like-roots + two-events-two-rows no-dedupe + record-only zero-branch + notify-spy silent + source scans; 3 green guards — shapeless degrade, non-compaction no-rows, events.log reader tolerance); handoff H4 third sub-needle re-pinned 'alert'/'coord' -> 'listener'/'record-only'/'coord' (+section-scoped absence scan for 'HA alert'/'question-notify' in-section, 1800-window arithmetic valid); coord-inwork i8 re-pinned for the step-10 INVERSION (conditional-sequence window, sanctioned-destination + step-0 qualifier, ask-ONCE kept, 'either way' removal, containment pin kept; drift mutants: unconditional-restored + grant-deleted both redden). Determinism: pairs byte-identical (normalized); anchors W2 3/3, X2 10/10 hold; collateral H1-H3/H5-H9 7 ok, i1-i3/i5-i7/i9 6 ok; qn 65 survivors load clean, engine 66 pre-existing all pass. Placement decision recorded: ALL listener arms in engine suite (handleEvent dispatch owner), core carries none. Deviations: events.log tolerance promoted red-note -> green guard arm; 'both handlers' closed-as-moot guarded in surviving-legs. open_questions: none. Designed-red inventory for C05 dev: exactly 14 flips (X4 x8, T15 x1, H4 x1, i8 x1 + mirror legs via rulesync regen).",
+      "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
     }
   ],
   "kickoff": {
@@ -201,12 +208,13 @@
     },
     "C05": {
       "title": "Closing-round relocation: pipeline-locks compaction-failed listener (record-only), question-notify C03-leg extraction, step-10 stay-in-worktree inversion",
-      "status": "pending",
+      "status": "in_progress",
       "wave": 5,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
+      "test_wave": "DONE (test-c05 via retry 1 — first attempt died PRE-WORK on the provider-stream class, 2nd occurrence; clean-tree verified before relaunch): 14 designed-red arms for dev — engine X4 x8 (three-shape audit rows ev:compaction_failed, unknown-agent fallback, claim-mapped ids vs null, child-like-roots, two-events-two-rows, record-only zero-branch, notify-spy silent, source scans), qn T15 x1 (compaction-token ABSENCE assert; 2 green guards), handoff H4 x1 (record-wording sectwin + absence scan, 1800-window valid), coord-inwork i8 x1 (conditional sequence, sanctioned destination, step-0 qualifier, ask-ONCE kept; 2 drift mutants proven). Green-now guards: shapeless degrade, non-compaction no-rows, events.log tolerance. No collateral (W2/X2 anchors, H-family, i-family all as approved). Placement call: all listener arms engine-side, core untouched.",
+      "last_verdict": "test wave DONE (designed-red handed to dev); C05 dev launched 2026-11-21 fresh agent-dev-pr session on openrouter flash per D22 posture",
       "handoffs": []
     },
     "C04": {

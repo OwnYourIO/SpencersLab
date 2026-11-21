@@ -812,8 +812,11 @@ fi
 # stay "awful" in ancestry while their code is in main, so the recipe is a
 # changed-paths diff — `git branch --merged` is explicitly NOT the gate
 # (batched-round refinement, DECISIONS). Landed: warm → session_move home →
-# worktree_remove → branch delete. Not landed: ask ONCE, default KEEP, never
-# force, move home anyway. The -deploy variant closes only its OWN worktree.
+# worktree_remove → branch delete — but the sequence runs ONLY as the
+# explicit-owner-requested leg; the default is STAY in the ticket worktree
+# (cf-126 C05 / D33 INVERSION, superseding the move-home-anyway default the
+# bullet used to carry). Not landed: ask ONCE, default KEEP, never force. The
+# -deploy variant closes only its OWN worktree.
 if want i8; then
   for f in "$RC_SRC" "$RC_GEN"; do
     [ -f "$f" ] || fail "i8: $f missing (harness fault)"
@@ -823,18 +826,77 @@ if want i8; then
       || fail "i8[C03 AC2]: $f lacks the content-based landed check recipe (merge-base + changed-paths `--name-only` diff vs main)"
     python3 "$TMP/win.py" --ci "$f" 1200 'branch --merged' 'not the gate' \
       || fail "i8[C03 AC2]: $f never rejects ancestry as the landing gate — `git branch --merged main` NOT being the gate is the ruled shape (squash landings count)"
-    python3 "$TMP/win.py" --ci "$f" 1500 'landed' 'warm' 'session_move' 'worktree_remove' \
-      || fail "i8[C03 AC2]: the landed path is not the pinned sequence warm → session_move home → worktree_remove → branch delete (warm-first is the kickoff lesson, cited not restated)"
+    # cf-126 C05 (D33) RE-PIN: the sequence stays pinned warm-first but the
+    # DEFAULT inverts — the closing session STAYS in the ticket worktree and
+    # the warm → session_move-home → worktree_remove → branch-delete run is
+    # the explicit-owner-requested leg only. DESIGNED RED: pre-C05 the
+    # bullet carries no stay/owner-request pairing near the sequence, so the
+    # window reddens.
+    python3 "$TMP/win.py" --ci "$f" 2000 'landed' 'stay' 'owner' 'request' 'warm' 'worktree_remove' \
+      || fail "i8[C05 AC5, D33]: $f's landed bullet is not the conditional sequence — STAY in the ticket worktree as the default with the warm → session_move-home → worktree_remove → branch-delete run retained ONLY as the explicit-owner-requested leg (warm-first cited not restated; move before removal) (red until C05 dev inverts the default)"
     grep -qF 'origin_dir' "$f" \
       || fail "i8[C03 AC2]: $f never names STATE.json kickoff.origin_dir as the session_move-home destination"
+    # cf-126 C05 (D33) RE-PIN: the destination grant stays but becomes
+    # QUALIFIED — origin_dir is the only SANCTIONED move-home destination
+    # and reaching it requires the owner request (the D30 landing fact).
+    # DESIGNED RED: pre-C05 'sanctioned' sits thousands of chars from any
+    # origin_dir mention; the pairing window cannot close.
+    python3 "$TMP/win.py" --ci "$f" 1200 'origin_dir' 'sanctioned' \
+      || fail "i8[C05 AC5]: $f never qualifies kickoff.origin_dir as the sanctioned move-home destination (grant kept, qualified; red until C05 dev)"
+    # Step-0's origin sentence carries the same qualifier (AC5): if the
+    # 'moves the session home' claim survives at all, owner-request wording
+    # must sit inside the same sentence region — an unqualified leftover is
+    # the superseded default restated. DESIGNED RED: pre-C05 step 0 states
+    # the move unconditionally.
+    python3 - "$f" <<'PY' || fail "i8[C05 AC5]: $f step-0 origin sentence still states an unqualified move-home (the D33 qualifier is missing)"
+import sys
+t = open(sys.argv[1]).read().lower()
+anchor = "moves the session home"
+i = t.find(anchor)
+if i >= 0:
+    seg = t[max(0, i - 400):i + 400]
+    if "owner" not in seg:
+        sys.exit(1)
+PY
     python3 "$TMP/win.py" --ci "$f" 1200 'once' 'default keep' 'never force' \
       || fail "i8[C03 AC2]: the not-landed path is missing — ask ONCE whether to delete, default KEEP, obey never force"
+    # cf-126 C05 (D33): the NOT-landed ask-ONCE law is KEPT, but the
+    # move-home-either-way tail is dropped — the superseded 'either way'
+    # unconditional-move sentence must not survive the inversion. DESIGNED
+    # RED: pre-C05 the tail is present.
+    if grep -qF 'either way' "$f"; then
+      fail "i8[C05 AC5, D33]: $f still carries the move-home 'either way' tail — the inversion drops it (the session stays in the worktree unless the owner requests the move)"
+    fi
     python3 "$TMP/win.py" --ci "$f" 700 'deploy' 'own worktree' \
       || fail "i8[C03 AC2]: the split is not stated — the -deploy variant closes its OWN worktree; this step owns the ticket run's surfaces (branch stays coord-owned, landing-gated)"
     python3 "$TMP/win.py" --ci "$f" 900 'worktree_remove' 'session_move' 'opencode tool' \
       || fail "i8[C03 Tasks]: the hard-rule sentence was not widened — the scoped worktree_remove + session_move-home use must ride inside the never-any-other-opencode-tool containment, not beside it"
   done
-  ok "i8[C03 AC2]: RC pair carries the work-complete cleanup step — content-based landed check (ancestry rejected), landed sequence, origin_dir destination, ask-once-default-keep not-landed path, deploy-surface split, and the widened opencode-tool containment"
+  # Fabricated-drift controls (C05 AC5): (1) a restored UNCONDITIONAL
+  # move-home default (stay/owner-request wording stripped from the landed
+  # bullet) must redden the conditional-sequence window — proving the pin
+  # keys the inversion, not just the words; (2) a deleted session_move grant
+  # must redden the containment window.
+  python3 - "$RC_SRC" "$TMP/i8-uncond.md" <<'PY' || fail "i8 control: could not fabricate the unconditional copy (anchor missing — live pin vacuous)"
+import sys
+src, dst = sys.argv[1], sys.argv[2]
+t = open(src, encoding="utf-8").read()
+i = t.find("Landed")
+if i < 0:
+    sys.exit(1)
+head, body = t[:i], t[i:]
+for tok in ("stays", "owner", "request"):
+    body = body.replace(tok, "XXXX")
+open(dst, "w", encoding="utf-8").write(head + body)
+PY
+  if python3 "$TMP/win.py" --ci "$TMP/i8-uncond.md" 2000 'landed' 'stay' 'owner' 'request' 'warm' 'worktree_remove' >/dev/null 2>&1; then
+    fail "i8 control: the unconditional-restored copy still passed the conditional-sequence pin — the D33 inversion is not enforced"
+  fi
+  sed 's/session_move/XXXXmove/g' "$RC_SRC" >"$TMP/i8-nodest.md"
+  if python3 "$TMP/win.py" --ci "$TMP/i8-nodest.md" 900 'worktree_remove' 'session_move' 'opencode tool' >/dev/null 2>&1; then
+    fail "i8 control: the deleted-grant copy still passed the containment pin — the grant containment is not enforced"
+  fi
+  ok "i8[C03 AC2 + C05 AC5]: RC pair carries the work-complete cleanup step — content-based landed check (ancestry rejected), the CONDITIONAL landed sequence (STAY default + owner-requested warm → session_move-home → worktree_remove → delete), the qualified sanctioned destination (step-0 sentence included), ask-once-default-keep not-landed path with the 'either way' tail dropped, deploy-surface split, the widened opencode-tool containment; both drift mutants redden"
 fi
 
 # --- i9: cf-124 C05 — the in-work mark is keyed on the CAPTURED sessionID ------
