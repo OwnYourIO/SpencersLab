@@ -161,3 +161,7 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 /role-dev
 
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes a session's summary into a compact pointer and leaves a keyed instructions note telling you to bootstrap from your context files. On a fresh start, re-read the plan, brief or ticket files you were handed in their read order, and reload your MUST-load skills before continuing. The mechanics live in those files and in your own contract — load them, never re-derive from this paragraph.

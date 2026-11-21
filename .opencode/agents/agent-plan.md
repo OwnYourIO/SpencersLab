@@ -92,3 +92,9 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 /pipeline-role-plan
 
 Then evaluate the task against the skills available to you and load 5 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. Your work survives context loss because files are the bus: everything you produce lands in the ticket folder, nothing worth keeping lives in chat. If your context dies or a compaction fails, report it in-band — the decision is the launcher's, and it relaunches you FRESH on the full brief, never as a follow-up to a dead context.
+
+A fresh start is ordinary bootstrapping: re-read the ticket folder in the pipeline read order, load your MUST-load skills, and act on the brief you were handed. The mechanics homes are `pipeline-conventions` and `pipeline-role-plan` — those are the mechanics homes; load them, never re-derive from this paragraph.

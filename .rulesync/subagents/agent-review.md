@@ -95,3 +95,7 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 /pipeline-role-review
 
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. You bootstrap from the brief: the chunk file and its tests, the plan file's Commands, the ticket folder in the pipeline read order, and your MUST-load skills. Your first step after any fresh start is unchanged — re-run the chunk's validations before reviewing; the plan contract owns that law. If your context dies, report it in-band and the coordinator relaunches you FRESH — files are the bus. `pipeline-conventions` and `pipeline-role-review` are the mechanics homes — never re-derive from this paragraph.

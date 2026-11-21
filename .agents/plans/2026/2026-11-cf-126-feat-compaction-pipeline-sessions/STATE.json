@@ -249,12 +249,13 @@
     },
     "C06": {
       "title": "Agent-definition narratives: appended 'Compaction & fresh-start' sections across the 25-file roster (16 full + 9 generic), drafted OpenChamber prompt artifact",
-      "status": "in_progress",
+      "status": "in_review",
       "wave": 6,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "dev_session": "ses_dffa7ac7fffeA9KLJsuaiMd04d",
       "review_rounds": 0,
-      "last_verdict": "plan round-3 APPROVED by owner 2026-11-22T23:05 (all five planner proposals adopted); test wave DONE (test-c06): 50 designed-red legs in NEW tests/agent-narratives/surface.sh (N1-N8: presence/template/role/single-authority-ban/generic-absence on sources+mirrors; N6 append-only prefix freeze + twins; N7 OUT-roster freeze; N8 artifact verbatim) + one REQUIRED S7 re-pin (ask/review/planner byte-freeze -> strict append-only prefix freeze — roster consequence, intent preserved, self-proving bite; validation-at-fault route flagged, not left as inevitable dev-red); nine-surface regression reproduced approved ledger EXACTLY (S5 greenness proven INHERITED via HEAD-file copies — zero wave-caused reds). C06 dev launching now.",
+      "last_verdict": "dev DONE (round 1, ses_dffa7ac7fffeA9KLJsuaiMd04d, 2026-11-22): 25 sources appended (script-validated append-only + twin law), 25 mirrors regenerated (run-2 no-op, --check clean), all 50 N1-N5 legs flipped green with N6/N7/N8 + controls HELD; regression nine surfaces + broad sibling sweep byte-equal across trees (zero casualties); aislop 100/0/0 over 108 files. PROBE OUTCOME: governs-unverified (designed degrade) — upstream main's compaction settings govern KNOBS ONLY (CompactionSettings.tsx:26,37-42; config-v2.ts:683-688 strict schema 400s any prompt field; session-lead/runtime.ts:165 POSTs compact with empty body); the only summary-instruction surface is the /summary magic-prompt block (magicPrompts.ts:365-390, non-destructive handoff path, default says do-not-compact). So the owner's 'compaction prompt' field is fork-side or IS the /summary block — USER step 7's empirical fire doubles as identification; artifact's pure-obedience wording is the safe composition either way (RESEARCH L241 ordering). No repo change follows either way per D35. Review round 1 next.",
       "handoffs": [
         {
           "role": "plan",

@@ -212,3 +212,7 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
 
 The testing tiers a `-pr` push feeds are `pipeline-push-pr`'s `-pr testing flow (assumed)` section — draft PR = unit tier, ready PR = integration tier, CI runs both on the pushed branch, and every mechanic is assumed in place under the L7-L12 ledger cards. Push the branch and report the CI expectation; never implement or restate those mechanics.
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. You bootstrap from the brief, not from memory: the chunk file, the ticket folder in the pipeline read order, and your MUST-load skills re-tell you everything the launch carried — never re-ask what the brief already answers. If your context dies, report it in-band; the coordinator relaunches you FRESH on the same brief — files are the bus. The mechanics live in `pipeline-conventions` and `pipeline-role-dev` — load them, never re-derive from this paragraph.

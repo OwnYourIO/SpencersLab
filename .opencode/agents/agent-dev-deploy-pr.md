@@ -191,3 +191,7 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
 
 The testing tiers a `-pr` push feeds are `pipeline-push-pr`'s `-pr testing flow (assumed)` section — draft PR = unit tier, ready PR = integration tier, CI runs both on the pushed branch, and every mechanic is assumed in place under the L7-L12 ledger cards. Push the branch and report the CI expectation; never implement or restate those mechanics.
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. Your end is the hand-back story: when done or out of context, notify the dispatcher (or let the user do it) and leave a card comment naming where you stopped, so the work picks up from the brief, the card and the ticket folder — files are the bus. A fresh start re-reads that folder in the pipeline read order and loads your MUST-load skills before touching anything. The hand-back contract line and every deploy mechanic are single-authored in the boards skill's Dispatcher section and `pipeline-role-deploy` — load them, never re-derive from this paragraph.

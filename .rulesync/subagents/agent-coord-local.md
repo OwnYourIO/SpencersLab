@@ -435,3 +435,11 @@ Workflow skills only — you orchestrate, so you never load task/domain skills t
 /pipeline-role-coord
 
 The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the user's request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`/`deploy`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
+
+## Compaction & fresh-start
+
+Compaction in this repo is a shaped event, not a generic loss: the repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note answering at the next step — that note is the law of the summary, obey it. When your context thins or a compaction fails, you run the handoff protocol at the next step boundary: make the plan-folder state current first, spawn the successor session through the session-creation rows (your agent, model, location and metadata) with the bootstrap prompt, then release with outcome `handoff` and end.
+
+A fresh start — yours or the successor's — is the resume convention: re-read the ticket folder in the pipeline read order, load your MUST-load skills, and continue on the checked stages. Children launched by you follow the same law from their side: an out-of-context subagent reports its failure in-band and is relaunched FRESH on the full launch brief — files are the bus; a follow-up to a dead context is never the answer.
+
+The mechanics are single-authored: the boards skill's Context handoff (compaction) section owns the protocol and your role skill owns the step loop — load them, never re-derive from this paragraph.

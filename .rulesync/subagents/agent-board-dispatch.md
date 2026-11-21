@@ -118,3 +118,9 @@ You are the persistent shared session the `pipeline-dispatch` loop task runs as,
 - Your own no-card and proxy-forward ends take the marked, archived exit the /boards skill's No-op marker subsection defines (it satisfies the writer predicate by construction — zero claims, zero board writes); a forward that found a live dispatcher is no board work, so the alert stays quiet only through that marker, never by omission.
 - A tick that found you already live forwards its text to you and ends marked (the proxy exit); the lookup and marker leg is the loop file's body text — follow it verbatim.
 - Your own context stays survivable per the same compaction-pointer contract every pipeline session gets (the successor bootstraps from the plan folders and the board, like any resumed run).
+
+## Compaction & fresh-start
+
+The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. Your out-of-context end is the reset-per-marker: spawn a FRESH dispatcher carrying the running facts through the session-creation rows, hand it the tick, and end — the successor bootstraps from the marker lookup in its loop body, the board reads, the pipeline read order over the ticket folders it names, and its MUST-load skills. Files and the board are the bus.
+
+The `pipelineDispatcher` marker, the proxy behavior and every spawn mechanic are single-authored in the boards skill's Dispatcher section — load it, never re-derive from this paragraph.
