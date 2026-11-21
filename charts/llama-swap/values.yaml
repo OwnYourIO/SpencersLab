@@ -1499,6 +1499,9 @@ app-template:
 # ---------------------------------------------------------------------------
 strata:
   # ROCr device index for the engine (PR #3636 hid the 8060S APU with 0).
+  # The owner's 2026-11-21 rocminfo receipt from ai-gpu (DECISIONS P15) lists
+  # host ordinals 0 and 1 as the gfx1201 R9700s and 2 as the gfx1151 8060S
+  # APU, so 0 hides the APU while naming a discrete card.
   # Injected into every model's env at render; the on-target rocminfo gate
   # (C04 runbook) retargets it with a values edit, not a template edit.
   rocrVisibleDevices: "0"
@@ -1506,16 +1509,17 @@ strata:
   # Per-model ROCr overrides; a model absent here inherits the value above.
   # The strix fallback must name the OTHER silicon: the primary's index
   # deliberately hides the 8060S, so reusing that value would leave the
-  # gfx1151 model with no device to bind. "1" mirrors PR #3636's
-  # enumeration (dGPU first, chip second) — VERIFY at the same rocminfo
-  # gate; on a chip-only node (the fallback's main scenario) the chip is 0,
-  # so set "0" or "" to inherit there.
+  # gfx1151 model with no device to bind. "2" is the APU's ordinal in that
+  # rocminfo receipt — the second R9700 took 1 ahead of the chip, so the
+  # pre-card2 "1" would run the gfx1151 engine against a gfx1201 card. On a
+  # chip-only node (the fallback's main scenario) the chip is 0, so set "0"
+  # or "" to inherit there.
   # New R9700 rungs (the orca Uncensored arena, the Q4 rung) get NO
   # entry here on purpose: they target the same dGPU as the primary and
   # inherit the global index — per-rung entries would multiply the
   # retargeting surface at the rocminfo gate without naming a difference.
   rocrVisibleDevicesByModel:
-    qwen3.8-flash-next-strata-strix: "1"
+    qwen3.8-flash-next-strata-strix: "2"
 
   # -------------------------------------------------------------------------
   # The INNER llama-swap declared config. configmap-strata.yaml renders this

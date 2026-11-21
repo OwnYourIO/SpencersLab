@@ -116,6 +116,25 @@ rejected, why.
   rides the plan's Deferred section + the final summary comment, and carding it is the OWNER's
   leg.
 
+- 2026-11-21 coord P16 (**C03 ORACLE-LEG CONFLICT — mechanical re-scope routed to the test
+  lane**): the C03 values move (strix "1"→"2", receipt P15) is inherently one render line at
+  odds with cf-143's `test_strata_render_byte_equal_to_pre_ticket_baseline` (frozen pre-ticket
+  oracle byte-pins the strix `ROCR_VISIBLE_DEVICES=1` env injection; dev proved the divergence
+  is EXACTLY that one line — profile/Deployment/Service stay equal). The leg's INTENT (strata
+  docs unchanged by cf-144 beyond the receipt-driven enumeration) survives its re-scope; the
+  letter cannot coexist with a correct C03. Route: silent mechanical repair to the author
+  session (ses_e004c659…) — expected shape per the chunk's own "golden ONLY if the render
+  moves" clause: a dated cf-144-sanctioned-divergence carve-out for exactly the strix ROCr
+  line, zero softening elsewhere; re-pin proof = the whole-directory suite, not a three-file
+  simulation (dev's friction lesson: designed-red sets cannot reach era-oracle legs).
+- 2026-11-21 coord P17 (**receipt retires the enumeration question, NOT the runbook posture**):
+  the rocminfo receipt settles host GPU ordinals; the strata runbook's on-target [VERIFY]
+  posture (live pod-visible re-check of rocrVisibleDevices after syncs) stays OPEN as an owner
+  leg — P15's "formal gates remain" line governs. Notes stale-index cells (doc §4-era "1"/
+  dGPU-first story): C02's TP2-SHIPPED annotation already covers the doc sweep-row posture;
+  further dated annotation only where a needle can pin it — no unbound prose churn (audit
+  routed to the test lane with the oracle re-scope).
+
 ## Deferred
 - Shape B co-residency (OQ-A answer-dependent; P02).
 - Strata restore-back co-existence arithmetic at the TP2 class (~118.3 ≤ 125.08 re-opens) —

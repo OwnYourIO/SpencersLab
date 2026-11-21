@@ -150,6 +150,68 @@ def test_c03_rendered_inner_config_carries_the_pinned_indices():
         )
 
 
+# --- overlay-merged strix resolution (cf-144 C03 review minor M-3) -------------
+
+
+def _c03_merged_bymodel() -> tuple:
+    """The MERGED strata index state the gpu-ai release actually renders from:
+    the service overlay's strata block deep-merges OVER the chart's (the appset
+    `index $.Values` merge), so an overlay-added rocrVisibleDevicesByModel map
+    wins per-key. Returns (merged_global, merged_bymodel) as strings/dicts —
+    pure values reads, deterministic, no cluster."""
+    chart_sub, _ = _chart_strata_block()
+    overlay = S.service_strata_overlay()
+    merged_global = str(overlay.get("rocrVisibleDevices",
+                                    chart_sub.get("rocrVisibleDevices")))
+    bymodel = {**(chart_sub.get("rocrVisibleDevicesByModel") or {}),
+               **(overlay.get("rocrVisibleDevicesByModel") or {})}
+    return merged_global, {str(k): str(v) for k, v in bymodel.items()}
+
+
+def test_c03_overlay_merged_bymodel_resolution_equals_the_site():
+    """cf-144 C03 review minor (M-3): the hole was silent — an overlay-added
+    `strata.rocrVisibleDevicesByModel` strix pin (e.g. the stale "1") merges
+    OVER the chart key in the live appset shape, the chart-level equality leg
+    reads only the chart side, and the P16 oracle carve SENTINELS exactly the
+    rendered strix ROCr line — so such a pin could pass the whole suite.
+    This leg resolves the strix lane through the MERGED values with the
+    template's own precedence (configmap-strata.yaml: `default primary
+    (get byModel model)` — byModel non-empty wins, else global) and demands
+    the constants site. Any merged strix resolution — chart, overlay-added,
+    or overlay-overridden — that is not ROCR_STRIX reddens HERE, naming the
+    overlay as the divergent layer when it is the author."""
+    merged_global, merged_bymodel = _c03_merged_bymodel()
+    resolved = merged_bymodel.get(S.STRIX_ID) or merged_global
+    assert resolved == S.ROCR_STRIX, (
+        f"cf-144 C03 M-3: MERGED strix resolution is {resolved!r}, want {S.ROCR_STRIX!r} "
+        f"(the constants site). byModel layers — chart: "
+        f"{(_chart_strata_block()[0].get('rocrVisibleDevicesByModel') or {})!r}, overlay: "
+        f"{(S.service_strata_overlay().get('rocrVisibleDevicesByModel') or {})!r} — an "
+        "overlay byModel pin must match the receipted site or go absent; editing it is "
+        "the same one-wave law as the chart key (values-only, never the template)"
+    )
+
+
+@helm
+def test_c03_merged_service_overlay_render_strix_env_equals_the_site():
+    """M-3's end-to-end twin: render the gpu-ai SERVICE-OVERLAY MERGE (the
+    exact P16 oracle path) and read the strix model's ROCR_VISIBLE_DEVICES
+    env line from the strata-config inner config. The oracle leg cannot
+    witness this (the carve sentinel removes strix's line from its compare);
+    this leg compares it raw against the site, so the shipped value and any
+    future layer drift are both caught at the render, not only at the
+    values."""
+    docs, _raw = S.render_service_overlay("gpu-ai")
+    env = S.env_list(S.inner_config(docs)["models"][S.STRIX_ID])
+    rocr = [e for e in env if e.startswith("ROCR_VISIBLE_DEVICES=")]
+    assert rocr == [f"ROCR_VISIBLE_DEVICES={S.ROCR_STRIX}"], (
+        f"cf-144 C03 M-3: merged overlay render injects {rocr} for {S.STRIX_ID}, want "
+        f"exactly [ROCR_VISIBLE_DEVICES={S.ROCR_STRIX}] — this is the line the P16 carve "
+        "exempts FROM THE ORACLE, which is precisely why this leg exists (the exemption "
+        "must never become an open door for a third value)"
+    )
+
+
 # --- the receipt-provenance one-way arm (fires ONLY in a moved world) ----------
 
 

@@ -6,7 +6,9 @@
 #    Service, config/profile ConfigMaps) compared against the checked-in
 #    pre-ticket baseline evidence/cf143-pre-ticket-strata/ (captured by the
 #    cf-143 test session at the clean branch tip) — byte-identical docs,
-#    now and after every cf-143 wave. Plus the service-level parse pins:
+#    now and after every cf-143 wave; cf-144 C03 adds the ONE receipted
+#    divergence carve (strix ROCr line, P15/P16 — see the leg), everything
+#    else stays byte-pinned. Plus the service-level parse pins:
 #    the seven-flag strata enable-set still enabled:true, the matrix/preload
 #    blocks un-disturbed.
 #  * RADIANCE LANDS BESIDE IT — the charts.radiance appset entry renders
@@ -57,6 +59,47 @@ def _strata_docs(docs) -> list:
 # --- half 1: strata renders AS TODAY ------------------------------------------
 
 
+_C144_ROCR_SENTINEL = "ROCR_VISIBLE_DEVICES=__CF144_C03_CARVED__"
+
+
+def _c144_carve_strix_rocr(doc: dict, side: str) -> dict:
+    """cf-144 C03 sanctioned-divergence normalizer (DECISIONS P15/P16).
+
+    Replaces, inside the strata-config ConfigMap's config.yaml string, the
+    SINGLE ``- ROCR_VISIBLE_DEVICES=<idx>`` env item of the STRIX model block
+    (``qwen3.8-flash-next-strata-strix:``) with a sentinel, and returns the
+    doc copy. Identification is model-key + ROCR-token scoped — a blanket
+    env-line or whole-strix-model exclusion would let other drift through,
+    which is why the helper FAILS LOUD instead of no-op'ing when the block or
+    the line shape is not found exactly once on EITHER side: zero hits means
+    the oracle/render layout moved under the carve's feet (re-pin the helper,
+    don't widen it), >1 hits means a second ROCr line appeared inside strix —
+    exactly the unauthorized class the carve must not swallow."""
+    data = doc.get("data") or {}
+    cfg = data.get("config.yaml")
+    assert isinstance(cfg, str), f"cf-144 carve/{side}: strata-config carries no config.yaml string"
+    lines = cfg.split("\n")
+    starts = [i for i, ln in enumerate(lines)
+              if re.match(r'^  "?' + re.escape(S.STRIX_ID) + r'"?:\s*$', ln)]
+    assert len(starts) == 1, (
+        f"cf-144 carve/{side}: strix model key found {len(starts)}× at 2-indent in the "
+        "config.yaml string, want exactly 1 — the model-block layout moved; re-pin THIS "
+        "helper against the render shape, never widen the carve"
+    )
+    start = starts[0]
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"^(?:\S|  [^ \t-])", lines[i])),
+               len(lines))
+    hits = [i for i in range(start, end)
+            if re.match(r"^\s+- ROCR_VISIBLE_DEVICES=\S+$", lines[i])]
+    assert len(hits) == 1, (
+        f"cf-144 carve/{side}: strix model block carries {len(hits)} ROCR_VISIBLE_DEVICES "
+        "env lines, want exactly 1 — the sanctioned divergence is that single line; a "
+        "missing/duplicated shape here is layout drift, not a license to blanket-exclude"
+    )
+    lines[hits[0]] = f"    - {_C144_ROCR_SENTINEL}"
+    return {**doc, "data": {**data, "config.yaml": "\n".join(lines)}}
+
+
 def test_baseline_fixture_present():
     assert BASELINE.is_file(), (
         f"cf-143 C04: pre-ticket strata baseline {BASELINE} missing — fixture breakage, "
@@ -69,7 +112,15 @@ def test_strata_render_byte_equal_to_pre_ticket_baseline():
     """C04 AC1 (the executable reading of "ZERO changed lines inside the strata
     enable-set"): the four strata docs in the live service-overlay render must
     parse-equal the pre-ticket baseline. The baseline was captured at a clean
-    tree, so any strata-surface move by C01/C04/C05/C07 reds HERE, naming Q5."""
+    tree, so any strata-surface move by C01/C04/C05/C07 reds HERE, naming Q5.
+    cf-144 C03 SANCTIONED DIVERGENCE (DECISIONS P15/P16): exactly ONE line may
+    differ — the STRIX model's ROCR_VISIBLE_DEVICES env-injection line in the
+    strata-config ConfigMap — re-pinned "1"→"2" per the owner rocminfo receipt
+    2026-11-21 (GPU-agent ordinals 0/1 = R9700s, 2 = APU gfx1151). The oracle
+    itself stays byte-untouched as the pre-ticket truth; the carve is applied
+    to BOTH sides at strix-block scope by the helper below, so any OTHER
+    strata-doc change — including a second ROCr move on another model, or any
+    other line inside the strix block — still reddens this leg."""
     assert BASELINE.is_file(), f"cf-143 C04: baseline fixture {BASELINE} missing"
     baseline = yaml.safe_load(BASELINE.read_text())
     assert isinstance(baseline, list), f"cf-143 C04: baseline fixture is {type(baseline).__name__}, want a list of docs"
@@ -77,10 +128,17 @@ def test_strata_render_byte_equal_to_pre_ticket_baseline():
     current = _strata_docs(docs)
     assert len(current) == len(baseline) == 4, "cf-143 C04: baseline/live doc count mismatch"
     for b, c in zip(baseline, current):
+        if (c.get("kind"), (c.get("metadata") or {}).get("name")) == ("ConfigMap", S.CM_CONFIG):
+            b = _c144_carve_strix_rocr(b, "baseline-oracle")
+            c = _c144_carve_strix_rocr(c, "live-render")
         assert b == c, (
             f"cf-143 C04/Q5: strata {c['kind']}/{c['metadata']['name']} render diverged from "
             "the pre-ticket baseline — the cf-143 waves are ADDITIVE; a strata diff here is "
-            "rejected outright by review (chunks/C04.md notes-for-dev)"
+            "rejected outright by review (chunks/C04.md notes-for-dev). The cf-144 P15/P16 "
+            "carve normalizes ONLY the strix model's ROCR_VISIBLE_DEVICES line inside "
+            "strata-config (both sides sentinelled before this compare) — so a red here is "
+            "a delta OUTSIDE that one line: another doc, another model, or another item "
+            "inside the strix block"
         )
 
 
