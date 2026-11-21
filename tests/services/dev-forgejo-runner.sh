@@ -4,7 +4,8 @@
 # + one dind sidecar per release, all resources named after the release
 # name, one ExternalSecret per release (bitwarden-login; uuid<-username,
 # token<-password), one server.connections.default entry in config.yaml
-# (5-label act set, timeout 30m, shutdown_timeout 5m), hardened runner
+# (5-label act set — since the cf-55 fix round four of them ride the baked
+# job image, timeout 30m, shutdown_timeout 5m), hardened runner
 # (13.2.0 pin, dumb-init daemon, drop ALL, no register, no registration
 # env), VCTs data 2Gi + docker-data 10Gi local-path, grace 300 + fsGroup
 # 1000, no Ingress/LoadBalancer/cluster RBAC — deployed TWICE by the dev
@@ -23,8 +24,9 @@
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
 # leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) +
-# C06's identity pin (same leg, extended in place) + cf-104 C04's LFS-
-# capability record (t14, written BEFORE the pinned-red t5 because the harness
+# C06's identity pin (same leg, extended in place) + the labels-map
+# capability record (t14; cf-104 C04, re-derived to the cf-55 fix-round
+# baked-toolchain truth by D41; written BEFORE the pinned-red t5 because the harness
 # stops at the first failing leg and an appended leg would never run) — ONE
 # script stays the runner contract (predecessor ruling, DECISIONS.md).
 #
@@ -249,17 +251,22 @@ def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
 
-# GitHub-parity act-image label set (conflict ruling 3) — the exact set the
-# single connection must advertise. The node22 entry carries the act family
-# deliberately: the node:22-bookworm image ships no git-lfs, and job images
-# are not renovate-tracked, so bumps are manual + red-first here (the t2 stop
-# until charts/forgejo-runner matches).
+# The baked-runner label set (cf-55 fix round, D39/D40): the four
+# act-24.04-family labels resolve to ghcr.io/ownyourio/forgejo-runner — the
+# repo-built derivative of the digest-pinned act-24.04 base with helm and cr
+# baked in (containers/forgejo-runner, C05). The pin is an immutable
+# calendar tag because these runners never re-pull a tag they have cached:
+# a rolling ref would freeze silently at first-pull content. Bumps are
+# manual + red-first here — no renovate manager reads the label lines.
+# ubuntu-22.04 stays the plain act tag (D40: no job uses it, and a
+# 24.04-content image behind a 22.04 label would lie about its OS). DESIGNED
+# RED until C06 re-points charts/forgejo-runner/values.yaml (the t2 stop).
 ACT_LABELS = {
-    'ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
+    'ubuntu-latest:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'ubuntu-24.04:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-    'docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
+    'docker:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'node22:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
 }
 # Chart default runner.url — the standalone-render stand-in; the per-app
 # top-level slices override it at deploy time.
@@ -464,13 +471,13 @@ try:
                 if conn.get('token_url') != 'file:$CREDENTIALS_DIRECTORY/token':
                     bad(f't2: {release} — default.token_url is {conn.get("token_url")!r}, expected file:$CREDENTIALS_DIRECTORY/token')
                 if set(conn.get('labels') or []) != ACT_LABELS:
-                    bad(f't2: {release} — default.labels are {conn.get("labels")!r}, expected the 5-label act set (ruling 3)')
+                    bad(f't2: {release} — default.labels are {conn.get("labels")!r}, expected the baked 5-label set: four act-24.04-family labels on ghcr.io/ownyourio/forgejo-runner plus plain act-22.04 (cf-55 D39/D40)')
                 runner_cfg = (cfg or {}).get('runner') or {}
                 if runner_cfg.get('timeout') != '30m':
                     bad(f't2: {release} — config runner.timeout is {runner_cfg.get("timeout")!r}, expected 30m (ruling 4)')
                 if runner_cfg.get('shutdown_timeout') != '5m':
                     bad(f't2: {release} — config runner.shutdown_timeout is {runner_cfg.get("shutdown_timeout")!r}, expected 5m (ruling 4)')
-        ok(f't2: {release} — ExternalSecret — bitwarden-login, target {release!r}, uuid(username)+token(password) from this release\'s item, token + config.yaml with the act label set, timeout 30m, shutdown_timeout 5m, chart-default url')
+        ok(f't2: {release} — ExternalSecret — bitwarden-login, target {release!r}, uuid(username)+token(password) from this release\'s item, token + config.yaml with the baked 5-label set, timeout 30m, shutdown_timeout 5m, chart-default url')
 
         if 'OVERRIDE_' in raw:
             bad(f't2: {release} — the rendered output still carries an OVERRIDE_* sentinel after --set bitwardenIds.runner-token')
@@ -612,14 +619,15 @@ else
     fi
   fi
 fi
-# --- t14: cf-104 C04 LFS-capability record beside the labels map (red-first) -
-# Job images are not renovate-tracked and their git-lfs comes from the act
-# images' upstream installer, so nothing in a render proves a job can run
-# `git lfs`: the record next to the labels map is the only repo-visible
-# statement of it (plus t2 for the map itself). This leg asserts the RECORD
-# only — the labels map stays t2's (ACT_LABELS), and the dev trio-exemption
-# comment window stays t5's (widening that window is the false-positive class
-# this suite already carries), so neither is re-checked here.
+# --- t14: baked-toolchain capability record beside the labels map (red-first) -
+# The cf-55 fix round re-derives cf-104's LFS record to the baked truth
+# (D41/C06): the record must name the image the four 24.04-family labels
+# resolve to, helm+cr as IN-image facts, the manual calendar-pin bump, and —
+# only on the act-22.04 limb — the installer-pin caveat; the no-digest rule
+# and the git-lfs↔labels binding survive. The labels map itself stays t2's
+# (ACT_LABELS), and the dev trio-exemption comment window stays t5's
+# (widening that window is the false-positive class this suite already
+# carries), so neither is re-checked here.
 if python3 - "$RUNNER/templates/secret-runner.yaml" "$WORK/t14-count" <<'PY'
 import re, sys
 
@@ -681,51 +689,40 @@ try:
             break
         j += 1
     if not block:
-        bad(f't14: {tpl} has no comment beside the labels map — the five labels are only provably LFS-capable if the map documents what its images ship (cf-104 C04)')
+        bad(f't14: {tpl} has no comment beside the labels map — the labels only provably carry their toolchain if the map documents what its images ship (cf-104 C04 + cf-55 fix round)')
     record = collapse(block)
 
     if 'sha256:' in record:
-        bad(f't14: the record embeds an image digest ({record[record.index("sha256:"):][:40]}…) — the act tags are rolling, so a digest here goes stale silently; the verified digests live in the ticket EXPLORE note, not in the chart')
-    ok('t14: a comment block sits beside the labels map and carries no pinned digest (rolling tags go stale silently)')
+        bad(f't14: the record embeds an image digest ({record[record.index("sha256:"):][:40]}…) — digests here go stale silently and no renovate manager reads these lines; the verified base digest lives in the ticket EXPLORE note, not in the chart')
+    ok('t14: a comment block sits beside the labels map and carries no pinned digest')
+
+    if 'ownyourio/forgejo-runner' not in record:
+        bad('t14: the record does not name ghcr.io/ownyourio/forgejo-runner — the four act-24.04-family labels resolve to the repo-built baked job image, and the block beside the map is where that fact is recorded (cf-55 D39)')
+    ok('t14: the record names the baked image the 24.04-family labels resolve to')
 
     if not re.search(r'git[\s-]*lfs', record, re.I):
-        bad('t14: the record never names git-lfs — the fact being recorded is that the job images can run `git lfs` (EXPLORE R2b; the node22 swap to act-24.04 is the change)')
+        bad('t14: the record never names git-lfs — jobs must see that the label set maps to LFS-capable images (EXPLORE R2b)')
     if not near(record, r'label', r'git[\s-]*lfs'):
-        bad('t14: git-lfs is not tied to the label set — the record has to say that every advertised label maps to an image carrying git-lfs, not just that LFS exists somewhere')
+        bad('t14: git-lfs is not tied to the label set — the record has to say the advertised labels map to images carrying git-lfs, not that LFS exists somewhere')
     ok('t14: the record states that the label set maps to git-lfs-bearing images')
 
-    if not (re.search(r'installer|act\.sh', record, re.I)
-            and re.search(r'\bpin|verif|not (?:the|from) the tag|in-job|image build', record, re.I)):
-        bad('t14: no installer-pin caveat — the act images get git-lfs from the upstream installer (act.sh), NOT from the tagged build, so the tag alone does not prove LFS presence; the plan verifies it in-job (V6)')
-    ok('t14: the git-lfs install is recorded as installer-pinned (act.sh), not implied by the tag')
+    if not (near(record, r'\bhelm\b', r'\bcr\b')
+            and near(record, r'\b(?:helm|cr)\b', r'baked|in the image|image ships|inside the image')):
+        bad('t14: the record does not name helm and cr as baked into the job image — C07 retires every runtime install only while the map says the toolchain is IN (D33/D37); jobs must verify helm version / cr --version in-job')
+    ok('t14: the record states helm and cr are baked into the image (verify in-job)')
 
-    # Window-based, not one fixed phrase: the fact ships as "Node 20/24",
-    # "Node 20 and 24", "Node in act-24.04 is 20/24" — all record it.
-    node_versions_ok = False
-    for m in re.finditer(r'\bnode\b', record, re.I):
-        window = record[max(0, m.start() - 60):m.end() + 80]
-        if re.search(r'\b20\b', window) and re.search(r'\b24\b', window):
-            node_versions_ok = True
-            break
-    if not node_versions_ok:
-        bad('t14: the record omits the Node versions act-24.04 actually ships (20/24) — that is the fact that makes the node22 label name misleading')
-    ok('t14: act-24.04 records Node 20/24')
+    # The installer-pin caveat now belongs to the act-22.04 limb alone: the
+    # baked labels inherit git-lfs from their digest-pinned act base, while
+    # plain act-22.04 still gets it from the upstream act.sh installer, so
+    # its tag alone proves nothing (cf-104 V6 + cf-55 D40).
+    if not (near(record, r'22\.04', r'installer|act\.sh', 160)
+            and re.search(r'\bpin|not (?:the|from) the tag|never the tag', record, re.I)):
+        bad('t14: the act-22.04 limb lost the installer-pin caveat — plain act-22.04 gets git-lfs from the upstream installer (act.sh), NOT from the tagged build, so the tag alone does not prove the binary there; the baked labels inherit from their pinned base instead')
+    ok('t14: the act-22.04 limb records git-lfs as installer-pinned (act.sh), not implied by the tag')
 
-    for m in re.finditer(r'node[\s-]*22', record, re.I):
-        window = record[max(0, m.start() - 160):m.end() + 160]
-        if not re.search(r'slot|label name|name,?\s*(?:not|but)|no longer|guarantee|misnomer|despite', window, re.I):
-            bad(f't14: node22 is mentioned without stating it is a slot name, not a Node-22 guarantee: …{window}… (Q14 answer: the guarantee is dropped, and a reader must not re-add it or file the label as a bug)')
-    ok('t14: node22 is recorded as a label/slot name, not a Node-22 guarantee (Q14)')
-
-    if not near(record, r'daemon', r'\b(?:no|not|never|without)\b[^.;]{0,60}git[\s-]*lfs|git[\s-]*lfs[^.;]{0,60}\b(?:no|not|never|without)\b', 160):
-        bad('t14: the record does not state that the runner DAEMON image needs no git-lfs — otherwise a reader "fixes" the daemon image too, which changes nothing (EXPLORE R2a)')
-    ok('t14: the daemon image is recorded as needing no git-lfs (only job images run git lfs)')
-
-    if not near(record, r'clone|checkout', r'https|url', 160):
-        bad('t14: the record does not say the runner clones over HTTPS from the connection url — that is why job LFS depends on the instance, not on the job image')
-    if not near(record, r'lfs', r'iff|only if|only while|works only|depends|requires|serves|enabled', 200):
-        bad('t14: the record does not record the coupling: LFS inside a job works only while the Forgejo instance serves an [lfs] store (EXPLORE R2) — otherwise a job LFS failure reads as a runner bug')
-    ok('t14: the HTTPS clone + instance-serves-[lfs] coupling is recorded')
+    if not ('calendar' in record.lower() and near(record, r'bump|pin', r'manual', 160)):
+        bad('t14: the record omits the manual calendar-tag bump law — label pins are immutable calendar tags bumped by hand and re-checked here first; no renovate manager reads these lines, and a rolling ref would freeze at first-pull content (D39)')
+    ok('t14: the record states the calendar label pins bump manually')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
