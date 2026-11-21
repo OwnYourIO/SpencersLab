@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-135-feat-renovate-forgejo",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "plan_status_note": "REWORK ROUND 2 reopened 2026-11-21 (was complete after the round-1 final review): owner's in-session three asks + batched round answered (Q1 OVERRIDE also-pin-git-author -> D21 with the census-ground stamp value; Q2 bot-account migration deferred to follow-up card F3; Q3 contains()-guard variant LEFT; Q4 canonical ACCEPTED as Renovate home; Q5 separate chunks; Q6 exact 3.22.1; Q7 next-pass timing accepted; Q8 mint F1/F2/F3 cards) + approval 'Approve — run the delta'. Delta chunks C03 (two renovate.json keys + workflow RENOVATE_GIT_AUTHOR stamp) and C04 (two regenerated Chart.locks); test wave re-pins forgejo-move-config m5/m7/m8 + forgejo-renovate t5 six->seven + new chart-lock-consistency.sh, all red-first.",
   "approval": {
     "at": "2026-11-10T17:05:00Z",
@@ -10,7 +10,15 @@
   "coord_session": "ses_e39eb7bc4ffectkAy9nSpDDzuF",
   "test_session": "ses_e397ed47affePXlRjDO6EI0ly9",
   "current_wave": 1,
-  "updated_at": "2026-11-10T19:40:00Z",
+  "updated_at": "2026-11-21T21:05:00Z",
+  "final_review_round2": {
+    "at": "2026-11-21T21:00:00Z",
+    "session": "ses_e003b96ceffeqQXV7MoTOsABvF",
+    "model": "openrouter/qwen/qwen3.8-flash (planning tier of this run's routing)",
+    "verdict": "APPROVED",
+    "scope": "whole rework-round-2 delta: 65b220458 record .. 9702cce93 test wave .. ade147f4b C03 .. fb16ea99f C04, over origin/main (7219bf588 at review time; base verified current, branch 4-ahead/0-behind, linear, unpushed)",
+    "summary": "Full battery fresh: forgejo-move-config 8 ok, forgejo-renovate 8 ok + t9 skip, FORGEJO_RENOVATE_PROBE=1 9 ok (belt discharged on the tracked rebased tree), chart-lock-consistency 3 ok zero drift rows, validator exit 0, R2c dry-run rc=0 under the plan's node-24 PATH (log content: gitIgnoredAuthors x3, constraints x3, helmv3 x4, limits 0 x3, 226 files, ERROR=0, noise 67+3 exact), env7 assert pass, baselines fingerprint-exact with zero new failures, aislop 0/0/0 108 files, rulesync N/A verified, purity diffs mechanical, forbidden-token greps 0 hits, live census re-fetch reproduces D21 line-for-line with the counterfactual re-failing on evidence, m8 parity live-verified. All three owner asks mapped to shipped artifacts or recorded rulings. Zero findings; three bookkeeping nits (depends_on harmonize, updated_at, FRICTION stamp re-status) closed in this commit."
+  },
   "final_review": {
     "at": "2026-11-10T19:30:00Z",
     "session": "ses_e3958145dffeAVvcOgIq2jN33F",
@@ -133,7 +141,7 @@
     "C04": {
       "status": "done",
       "wave": 1,
-      "depends_on": ["C03"],
+      "depends_on": [],
       "dev_rounds": 1,
       "dev_session": "ses_e004deda4ffehYwiDGruoAOwcG",
       "review_rounds": 1,
