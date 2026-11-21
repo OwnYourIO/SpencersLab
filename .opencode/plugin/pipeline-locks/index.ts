@@ -1406,9 +1406,42 @@ export async function handleEvent(env: any, event: any): Promise<void> {
       }
       await markSetFailed(env, root, entry, type);
     }
+
+    // cf-126 C05 (D32): the wedge listener — record every failed compaction,
+    // no filter/dedupe/branch; the law sits in recordCompactionFailure. A
+    // shapeless event records nothing (the hook's silent-degrade precedent).
+    if (type === "session.compaction.failed") {
+      if (!sessionID) return;
+      await recordCompactionFailure(env, data, sessionID);
+      return;
+    }
   } catch (err: any) {
     logNote(env, `event handler failed for ${String(event?.type ?? "")}: ${String(err?.message ?? err)}`);
   }
+}
+
+// cf-126 C05 (D32): body of the wedge listener. RECORD ONLY: the repeat IS
+// the #56784 wedge signal, so nothing dedupes and nothing filters children
+// out; nothing branches on the record downstream — lock files, beats and
+// the executing set keep their own paths (the `handoff` outcome's law). The
+// live v2.3 envelope is {sessionID, reason, error} flat under data with no
+// agent field — hence the "unknown" fallback — while the compat twins are
+// not disproven, so the tolerant triple read stands.
+async function recordCompactionFailure(env: any, data: any, sessionID: string): Promise<void> {
+  const agent = String(data?.agent ?? data?.info?.agent ?? "") || "unknown";
+  const rawError = data?.error ?? data?.info?.error;
+  const excerpt = (typeof rawError === "string" ? rawError : String(rawError?.message ?? rawError?.type ?? "")).slice(0, 500);
+  const root = await resolveRoot(env, sessionID);
+  const entry = await findClaim(env, root);
+  await appendEvent(env, {
+    ev: "compaction_failed",
+    sessionID,
+    agent,
+    error: excerpt,
+    cardId: entry?.cardId ?? null,
+    setId: entry?.setId ?? null,
+  });
+  logNote(env, `compaction failed recorded for ${sessionID} (agent ${agent}): ${excerpt || "no error text"}`);
 }
 
 // cf-126 C03 (D8/D9, the OQ3 ruling): the body of the ONE process-wide
