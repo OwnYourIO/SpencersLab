@@ -16,8 +16,8 @@ PVC, no chart Ingress; the only public path is the hub's crowdsec-only
   `cluster.<cat>.<domain>` for nine categories, fixed full hosts from the
   `clusterHosts` values map for dev (second apex scifi.farm) and home
   (cluster name home-lab), where the derived form does not resolve. Only
-  the derived leg tracks the injected domain — no baked prod domain may
-  reach a render.
+  the derived leg tracks the injected domain — no baked prod domain beyond
+  the two sanctioned `clusterHosts` values may reach a render.
 - `/secrets` — one flat directory projected from both ES targets. Key shape
   is flat filenames, pinned here (the relay resolves
   `--secrets-dir/<tokenKey>`): `github-webhook` (the shared HMAC login item,

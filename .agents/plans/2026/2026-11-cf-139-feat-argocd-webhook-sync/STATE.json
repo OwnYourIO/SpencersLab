@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
-  "current_wave": 1,
-  "updated_at": "2026-11-21T15:05:00+00:00",
+  "current_wave": 3,
+  "updated_at": "2026-11-21T19:55:00+00:00",
   "kickoff": {
     "slug": "cf-139-feat-argocd-webhook-sync",
     "card": "Y3vPeX4nhtDbsdwCg",
@@ -49,11 +49,12 @@
       "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 2,
+      "dev_rounds": 3,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
       "handoffs": [
-        { "at": "2026-11-21T16:30+00:00", "event": "dev DONE (harness t1-t6 green) + review CHANGES_REQUESTED (runbook pointer path) + fix round dev DONE (t1-t6 green again); committed 0cf6e5338 without full re-review per reviewer note" }
+        { "at": "2026-11-21T16:30+00:00", "event": "dev DONE (harness t1-t6 green) + review CHANGES_REQUESTED (runbook pointer path) + fix round dev DONE (t1-t6 green again); committed 0cf6e5338 without full re-review per reviewer note" },
+        { "at": "2026-11-21T19:45+00:00", "event": "final-review Major 1 fix round: test repair 43e69f0b9 + clusterHosts 19cc8f504, wiring green; re-review APPROVED (hosts live-verified again in-session)" }
       ]
     },
     "C03": {
