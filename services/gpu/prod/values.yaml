@@ -19,8 +19,8 @@ bitwardenIds:
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
-  # External-auth provider + at-rest token key for coderd (consumed by
-  # templates/secrets-coder.yaml). These new keys deliberately use the CURRENT
+  # External-auth provider for coderd (consumed by
+  # templates/secrets-coder.yaml). This key deliberately uses the CURRENT
   # OVERRIDE_VIA_CUSTOM_VALUES standard — the coder-sso-secret/coder-pg keys
   # above still resolve through the legacy cluster-annotation mechanism and
   # are not migrated here.
@@ -28,9 +28,6 @@ bitwardenIds:
   # client id, password = client secret). Per-cluster item under a shared key —
   # the dev twin is a different vault item (the coder-pg precedent).
   coder-external-auth: OVERRIDE_VIA_CUSTOM_VALUES
-  # password = base64 of 32 random bytes, coderd's at-rest key for stored
-  # external tokens; a wrong-length key crashloops coderd on restart.
-  coder-token-encryption: OVERRIDE_VIA_CUSTOM_VALUES
 
   mcp-pg-coder: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-open-webui: OVERRIDE_VIA_CUSTOM_VALUES
@@ -508,7 +505,7 @@ open-webui:
       type: RuntimeDefault
 coder:
   coder:
-    # coderd reads the external-auth/encryption env from coder-secrets at
+    # coderd reads the external-auth env from coder-secrets at
     # process start only; Reloader (cluster-wide on gpu, deployed by base —
     # open-webui already carries the same annotation) restarts it when the
     # Secret changes, so the first provider sync does not sit inert.
