@@ -118,6 +118,11 @@ export const BOARD_COORD_AGENTS = [
   "agent-board-coord",
   "agent-board-coord-local",
   "agent-board-coord-pr",
+  // cf-126 C01: the shared dispatcher reads the board on every tick and its
+  // first prompt is the first tick, so the structural block helps it too. The
+  // claim-time card-details leg keys on the claim tool, never on names — the
+  // dispatcher never claims and rides the roster only (AC4).
+  "agent-board-dispatch",
 ];
 
 export function isBoardCoordAgent(agent: unknown): boolean {

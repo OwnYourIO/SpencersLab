@@ -1,12 +1,12 @@
 ---
 name: boards
-description: "WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority, the one scheduled walk serving both Provider flavors with the card's Provider: label routing models inside the run; candidates additionally skipped by the pickup-only dependency gate when an outbound `related-to` prerequisite is unsatisfied), the claim-time `preload_board` consumer with its degrade law, the grouped-sibling flow running a card's inbound-`related-to` companions under one claim, card-driven kickoff where the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the two custom fields — `slug` (combined `[<slug>](<session link>)` value) and `Priority` (NUMBER, the serving-class kickoff input; model choice still rides the Model(s) checklist) — supply the answers pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), the follow-up-card protocol landing Inbox (Backlog swimlane) with `parent_id` + `fixes`-edge lineage, the archive-and-never-ask no-cards exit, and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow."
+description: "WeKan AI-Dev board flow for the agent-board-coord pipeline variant and the agent-board-dispatch shared session — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority, the dispatcher's one scheduled walk serving both Provider flavors with the card's Provider: label routing models inside the run, the coord keeping the walk as the fallback path with a handed-off intake brief consumed without re-asking, and candidates additionally skipped by the pickup-only dependency gate when an outbound `related-to` prerequisite is unsatisfied; the coord-to-coord spawn hand-off, the lock-release wake and the deploy follow-up live in the Dispatcher section), the claim-time `preload_board` consumer with its degrade law, the grouped-sibling flow running a card's inbound-`related-to` companions under one claim, card-driven kickoff where the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the two custom fields — `slug` (combined `[<slug>](<session link>)` value) and `Priority` (NUMBER, the serving-class kickoff input; model choice still rides the Model(s) checklist) — supply the answers pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), the follow-up-card protocol landing Inbox (Backlog swimlane) with `parent_id` + `fixes`-edge lineage, the archive-and-never-ask no-cards exit plus the delegated proxy exit, and the batched question protocol. MUST-loaded by agent-board-coord and agent-board-dispatch at run start; load it anywhere else when working the WeKan AI-Dev board card flow."
 targets: ["*"]
 ---
 
 # Boards
 
-Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (plan folders, chunks, gates, RESULT handoffs) is unchanged from `pipeline-conventions` and `pipeline-role-coord`; this skill defines only the board surface — where work comes from, what the card already answers, how a card moves, and how questions reach the user.
+Board-driven intake and exit for the `agent-board-coord` family and the `agent-board-dispatch` shared session. The pipeline machinery (plan folders, chunks, gates, RESULT handoffs) is unchanged from `pipeline-conventions` and `pipeline-role-coord`; this skill defines only the board surface — where work comes from, what the card already answers, how a card moves, and how questions reach the user.
 
 ## Board facts
 
@@ -40,7 +40,7 @@ The single authority for the Lifecycle consumption; `pipeline-role-coord` and th
 | `Chunk Development` | the chunk loop's implementation: the coord's `agent-dev-local`/`agent-dev-pr` variant implements, one chunk at a time. With `Chunk Review` also checked the loop alternates dev→review per chunk; with `Chunk Review` unchecked the loop runs DEV-ONLY — a chunk completes on the dev's DONE plus validations-green `commands_run` evidence, judged by the coord from the command list itself (never on the dev's word); the dev still runs every command, determinism mandatory |
 | `Chunk Review` | the per-chunk fresh-session `agent-review` step — validations first, then review. Checked-stages-only: unchecked it is SKIPPED end to end (the OQ15 ruling), never silently absorbed into `Chunk Development`'s gate |
 | `Final Review` | the whole-plan review — one fresh `agent-review` session over all chunks, on the planning-tier model |
-| `Deployment` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way; a checked `Deployment` additionally launches the coord's deploy fixer per `pipeline-role-coord` step 8b — definition-only until first fire. NOT in the blank default set: the owner declined card #124's ask to default it (OQ3, D16), so no default run reaches this row |
+| `Deployment` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way; a checked `Deployment` additionally brings in the deploy fixer — for the board family that is the dispatcher's TOP-LEVEL `agent-dev-deploy-pr` spawn after the final whole-plan review (the Dispatcher section's deploy follow-up, which replaces the `pipeline-role-coord` step-8b subagent launch for board-family runs; the non-board coord family keeps its 8b launch unchanged), and the fixer stays definition-only until first fire. NOT in the blank default set: the owner declined card #124's ask to default it (OQ3, D16), so no default run reaches this row |
 | `Single Session` | OPT-IN run-shape (never in the blank default; OQ6 keeps it in the checklist): replaces the Test Writing/Chunk Development/Chunk Review run-shape — ONE session of the coord's `agent-dev-local`/`agent-dev-pr` variant implements the whole approved plan (running the plan's Commands itself — no chunk loop, no separate test session, no per-chunk reviews), then ONE final `agent-review`; the other checked stages still run, in card order |
 | `Follow-up cards created` | the coordinator creates the deferred follow-up cards the ask produced, per the Follow-up cards section (cited, never restated here) — every one lands in the **Inbox** list of the Backlog swimlane, never in auto-pickup. Unchecked (it is not in the blank default, D16): the run creates no follow-up cards and the deferred asks ride the plan's open questions and the final summary comment for the human to card |
 | `Human in the Loop` | the mirror checklist's checked items are the run's stop points — each checked stage pauses the run for the human through the `question` tool (its Board-facts row and the Card-driven kickoff section carry the rules, cited not restated). Unchecked as a stage: the card sets no stop of its own — the plan-approval pause is pipeline doctrine and applies whatever the checks (the `Planning` row) |
@@ -147,13 +147,29 @@ Resume vs new run (D11) — before minting anything, read the card's `slug` cust
   follows this rule even when older lines name earlier runs.
 - Unset, or no matching folder → fresh kickoff.
 
+**The handed-off intake (D5)** — a coord launched with a named candidate is exactly the step-1 shape: a card id given in the launch → `get_card` it; that card is the request. The shared dispatcher's spawn rides that shape and adds a launch brief; its pre-resolved answers (provider, model tiers, variant, sibling group) are CONSUMED, never re-asked — the card-driven-kickoff law applies to the brief just as it applies to the card. A race at claim — a set free at the dispatcher's availability check, occupied at this coord's `pipeline_claim` — ends the run `status: NEEDS_INFO` naming the holders; the card stays pickable and the next tick re-walks (the dispatcher pre-filters, it never claims).
+
+**The walk above is the FALLBACK path (D5, the removal-evaluation answer):** it stays the coord's own work for `/pipeline-boards`, `/pipeline-boards-hourly` and a manual named-card launch. Only the SCHEDULED walk moved — to the shared dispatcher session (Dispatcher section below), which runs steps 1-5 identically and hands off BEFORE the claim; the coord keeps the claim, the board moves and the kickoff whatever the entry path was.
+
 ### Provider filtering — one scheduled walk, per-card routing by Provider label
 
-OpenChamber's scheduled tasks have no label filter — and there is one scheduled walk, not two: the single loop task serves both Provider flavors, and the card's `Provider: API` / `Provider: Local` label routes models inside the run rather than filtering pickups. A `Provider: Local` card and an unlabeled card are both eligible to the one walk; the label sets the provider, it never gates eligibility. The label is resolved exactly like the `Pipeline:` derivation — `get_card`'s `label_ids` against `get_board`'s labels, the single-card read being the source (the by-list projection strips labels; the board-context block's `labels:` section carries these labels automatically — new labels ride it with no code change). The Provider label never locks: the lock identity stays the `Pipeline:` derivation alone.
+OpenChamber's scheduled tasks have no label filter — and there is one scheduled walk, run by the shared dispatcher session (the dispatcher section below): the dispatcher's hourly tick walks the board once and hands each pickable card to a fresh coord run, while the card's `Provider: API` / `Provider: Local` label routes models inside the handed-off run rather than filtering pickups. A `Provider: Local` card and an unlabeled card are both eligible to that scheduled walk; the label sets the provider, it never gates eligibility. The label is resolved exactly like the `Pipeline:` derivation — `get_card`'s `label_ids` against `get_board`'s labels, the single-card read being the source (the by-list projection strips labels; the board-context block's `labels:` section carries these labels automatically — new labels ride it with no code change). The Provider label never locks: the lock identity stays the `Pipeline:` derivation alone.
 
-- **One task, both flavors** — the single scheduled walk takes `Provider: API` cards, `Provider: Local` cards and unlabeled cards alike: it is the steady-state taker of the unlabeled pool, the pickup intent the final-approval round planned (not a lock race).
+- **One scheduled walk, both flavors** — the dispatcher's walk takes `Provider: API` cards, `Provider: Local` cards and unlabeled cards alike: it is the steady-state taker of the unlabeled pool, the pickup intent the final-approval round planned (not a lock race). The card's Provider label answers inside the spawned run — the dispatch decision applies no provider filter, and the fallback walk (Card pickup above) reads this same section.
 - **Ask on the unlabeled card** — a run that takes an unlabeled card MUST ask the user which provider applies — ONE question in the kickoff round, before consuming the Model(s) checklist or any provider routing — and request the user apply the matching `Provider:` label. The question's option list leads with `Local` as the RECOMMENDED first answer (the self-hosted provider is the routing default in `pipeline-models`), with `API` as the explicit hosted choice. That ask is the only place a human learns a card needs a `Provider:` label — it is never weakened. Labels stay human-owned (D17/D19): the agent never creates or mutates them, so the ask ends with the human labeling. A scheduled run holding the claim waits on the answer (question-notify pushes the ask) — the accepted steady-state trade-off. A manual run — a launch naming a card id — takes its card even unlabeled, and it asks under this rule too.
 - **Routing, once the provider is set** — a run with `Provider: Local` (or an unlabeled card answered `Local`) routes EVERY tier through the `pipeline-models` local mapping (treat the Model(s) checklist as `Local`-checked); a run with `Provider: API` routes from the checklist as today — and "as today" covers a blank checklist too, so a `Provider:` label never rewrites the standard default selection (`Qwen Dense`, resolved by `pipeline-models`): the labels add the `Local` treatment or withhold it, they never pick the model. `pipeline-models` stays the size-and-mapping authority — cite it, never restate its table.
+
+## Dispatcher (shared session)
+
+The shared dispatcher (`agent-board-dispatch`, run by the `.agents/loops/pipeline-dispatch.md` scheduled task) is ONE persistent session that owns the SCHEDULED board walk and the hand-off. The walk is SHARED authority, not a copy: the dispatcher runs Card pickup steps 2-5 exactly as written — the Repo identity filter, the dependency gate, the Provider routing of Provider filtering and the lock-availability pre-filter all read from their homes above; what it does NOT do is claim: the coord it spawns performs `pipeline_claim` itself, so the lock holder is always the working session (the release owner-check and the heartbeat root depend on it), and the dispatcher writes no board state at all — reads and session spawns only.
+
+The spawn contract, per pickable card: resolve the card's Model(s) checklist to the tiers through `pipeline-models` (the mapping authority — cited, never restated), read the checked Lifecycle `Deployment` bit for the variant — checked ⇒ spawn `agent-board-coord-pr`, default ⇒ `agent-board-coord-local` — then create the coord session with `agent` + `model` + `location` (the project root: the coord's own kickoff mints its worktree per the checked `Worktree Creation` stage) + `metadata` (the card id, `cardNumber`, the slug, `parent` = the dispatcher's own session id, the provider answer, the variant), and send the first prompt as the card-driven-kickoff launch text carrying the launch brief: the card title, description and comments, the resolved slug, the pre-resolved checklist answers (never re-asked at kickoff), the provider answer — for an unlabeled card the dispatcher asks the user ONE question and records the answer in the brief — the resolved model tiers, and the sibling group (the grouped-sibling trigger, inbound `related-to` edges, evaluated once at walk time; the coord keeps the sibling moves).
+
+Exits: a walk that finds nothing pickable takes the marked, archived `no-cards` exit; a tick that found a live dispatcher forwards its tick text to that session and ends with the `delegated` marker (the No-op marker subsection below — the dispatcher claims nothing and writes no board, so the writer predicate holds by construction, and it keeps its own session id: the rename leg is skipped).
+
+The deploy follow-up (the board family's shape, D18): when a spawned coord's final whole-plan review passes and the card's Lifecycle `Deployment` is checked, the dispatcher spawns a TOP-LEVEL `agent-dev-deploy-pr` session — the card, plan-folder, worktree and branch brief, plus this contract line: "when done or out of context, notify the dispatcher (or let the user do it) and leave a card comment". This replaces the `pipeline-role-coord` step-8b SUBAGENT launch for board runs (a child would sit past the depth bound and the user works with the deploy session directly); the non-board coord family keeps its 8b launch unchanged, and the deploy agent stays definition-only until its first owner-triggered fire.
+
+The dispatcher's own context reset rides the same repo-wide compaction pointer contract every session in this repo gets (cf-126 C03 owns the mechanics; this section names the contract only): a successor dispatcher bootstraps from the marker lookup in its loop text and the board reads — files and the board are the bus.
 
 ## Parallel pipeline loops
 
@@ -175,14 +191,19 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 A run that ends without ever claiming marks its OWN session record so the
 finished push can stay quiet on scheduled ticks: top-level `metadata.pipelineNoop =
 { at: <epoch-ms>, reason: "no-cards" | "no-claimable-cards" | "gate-skip" |
-"gate-live" | "board-check-unavailable" }` — never nested under `openchamber.*`
-(the app owns that namespace; the run only reads `openchamber.kind` there).
-Exactly five marked exits cite this subsection and run it: the Card pickup
-step-5 empty walk (reason `no-cards`), the Parallel-pipeline-loops claim-cap
-stop (reason `no-claimable-cards`), and the three tick stops the hourly gate
-reaches — a `GATE: SKIP` verdict (reason `gate-skip`), a `GATE: LIVE` verdict
-with a filtered-in card (reason `gate-live`), and a board check that failed
-closed (reason `board-check-unavailable`). Writer predicate, conjunctive:
+"gate-live" | "board-check-unavailable" | "delegated" }` — never nested under
+`openchamber.*` (the app owns that namespace; the run only reads
+`openchamber.kind` there). Exactly six marked exits cite this subsection and
+run it: the Card pickup step-5 empty walk (reason `no-cards`), the
+Parallel-pipeline-loops claim-cap stop (reason `no-claimable-cards`), the
+three tick stops the hourly gate reaches — a `GATE: SKIP` verdict (reason
+`gate-skip`), a `GATE: LIVE` verdict with a filtered-in card (reason
+`gate-live`), and a board check that failed closed (reason
+`board-check-unavailable`) — and the dispatcher's proxy-forward end (reason
+`delegated`: a tick that found a live dispatcher forwarded its work and did
+none of its own; the reader's predicate stays reason-agnostic, OQ10).
+Writer predicate,
+conjunctive:
 ZERO successful `pipeline_claim` (a `locked`/`ok:false` answer is not a claim;
 a held lock means work — never mark, the alert stays) AND zero board writes.
 Recipe — the whole-metadata mandate of the `pipeline-kickoff` in-work mark
@@ -197,7 +218,11 @@ envelope → merge the marker into the CURRENT FULL metadata →
 inline via `$(date +%s%3N)`. Any leg failing → end cleanly anyway: no marker
 means the alert stands (fail-loud), never a retry loop, never a stall. RESULT
 posture is unchanged — no-op ends still report `status: NEEDS_INFO` and stop
-cleanly; the marker write or its failure rides in `commands_run`.
+cleanly; the marker write or its failure rides in `commands_run`. The
+dispatcher's own ends satisfy the writer predicate by construction (it never
+claims and never writes the board), and the dispatcher keeps its session id —
+the rename leg is skipped, the marker and archive run against that id
+directly (D15).
 
 The gate SCRIPT stays marker-blind — it prints a verdict and touches no
 session; the RUN that reads a SKIP / LIVE-with-filtered-in-cards /
@@ -209,7 +234,7 @@ run keeps alerting — there the marker is forensic evidence, not a mute button
 stamp, never a gate (OQ2).
 
 Archive exit — a no-op end does not idle in the session list: once the
-marker write is attempted, all five no-op exits above continue with the same
+marker write is attempted, all six no-op exits above continue with the same
 session record — `opencode api patch /api/session/<id> -d '{"archived": true}'`
 — OpenCode's native archive, the very route OpenChamber's own archive sends
 (live-verified), on the sessionID the no-op rename already returned. The
@@ -407,6 +432,7 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 - **Plan approved** (after the question round) → `add_comment` that the plan is approved (plan path, worktree/branch), then the Post-plan card write-back below.
 - **Each chunk done** → `add_comment` with the chunk status (chunk id, dev/review verdict, commit).
 - **All chunks done + final whole-plan review passed** → `move_card` to **Review** + summary comment: branch, commit range, validation results, plan path; once the comment lands, `pipeline_release(outcome:"done")` hands the lock set back (D6 — **Review** is the release point, **Finished** never touches the lock).
+- **The release wakes the dispatcher** — every successful release with a non-empty set (done, abandoned, and the C03 handoff release alike) posts the released card, the outcome and the next-pickable-card instruction to the tracked dispatcher session through the `pipeline-locks` plugin: the coord-side "trigger the shared session at lock clear" IS this same mechanism plus this doctrine — no second actor — and the coord never pings the dispatcher itself, it is ending. A wake that cannot be addressed costs only the wake; the next hourly tick self-heals.
 - **Never** `move_card` to **Finished** — a human moves Review → **Finished** (accept) or → **Rework** (send back).
 - Card picked from **Rework**: read its full comment history (`list_comments`) first; the comments are the rework context.
 - **Resume vs new run**: apply the D11 rule from Card pickup; a resumed run re-claims without re-minting the slug or re-running kickoff.

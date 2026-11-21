@@ -69,6 +69,11 @@ import { basename, dirname, join } from "node:path";
 // exactly once in this file (core suite K1, A15's python parity reader).
 export const LABEL_PREFIX = "Pipeline:";
 export const DEFAULT_PIPELINE = "default";
+// The shared dispatcher session (cf-126 C01, D6): the release wake's address.
+// The plugin tracks its id from the event stream when the record carries this
+// agent AND the metadata.pipelineDispatcher marker (a sibling of the no-op
+// marker in the same metadata namespace, never nested).
+export const DISPATCHER_AGENT = "agent-board-dispatch";
 export const TOOL_NAMES = ["pipeline_claim", "pipeline_release", "pipeline_heartbeat", "pipeline_status"];
 
 // The worker prompt the tick executor sends after its reap. This sentence IS
@@ -832,6 +837,35 @@ async function findClaim(env: any, sessionID: string): Promise<any | null> {
   return null;
 }
 
+// cf-126 C01 (D6): every non-empty release wakes the tracked dispatcher so
+// the next pickable card is found without waiting for the hourly tick. The
+// wake never branches on the outcome value — done, abandoned and the C03
+// handoff release all queue the same walk prompt (multiple releases in one
+// window are accepted; the lock surface dedupes the second walk). A failed
+// or unaddressable wake costs only the wake: the release has already
+// committed its cleanup, and the next hourly tick self-heals the miss.
+async function wakeDispatcher(env: any, cardId: any, outcome: any): Promise<void> {
+  const dispatcher = typeof env?.dispatcherSessionID === "string" ? env.dispatcherSessionID : "";
+  const what = `card=${String(cardId ?? "?")} outcome=${String(outcome ?? "?")}`;
+  if (!dispatcher) {
+    logNote(env, `release wake skipped (${what}): no tracked dispatcher session — the hourly tick self-heals`);
+    return;
+  }
+  if (typeof env?.sessionPrompt !== "function") {
+    logNote(env, `release wake undeliverable (${what}): dispatcher ${dispatcher} tracked but this host exposes no session-prompt seam — the hourly tick self-heals`);
+    return;
+  }
+  try {
+    await env.sessionPrompt({
+      sessionID: dispatcher,
+      text:
+        `pipeline-locks: a lock set was released (${what}). Check for the next pickable card and spawn a coord session if one is eligible (boards skill, Dispatcher section) — if there is another process, might as well check and start it up.`,
+    });
+  } catch (err: any) {
+    logNote(env, `release wake failed (${what}): prompt to dispatcher ${dispatcher}: ${String(err?.message ?? err)} — the hourly tick self-heals`);
+  }
+}
+
 export async function releaseLockSet(env: any, input: any): Promise<any> {
   const sessionID = String(input?.sessionID ?? "");
   const entry = await findClaim(env, sessionID);
@@ -890,6 +924,10 @@ export async function releaseLockSet(env: any, input: any): Promise<any> {
   } catch (err: any) {
     logNote(env, `release pin cleanup failed: ${String(err?.code ?? err)}`);
   }
+  // cf-126 C01: the wake leg runs AFTER cleanup, BEFORE return, and only on a
+  // non-empty released set — the {ok, released, setId} shape and the quiet
+  // empty release (C04/C05 teardown legs) stay frozen.
+  if (set.length > 0) await wakeDispatcher(env, entry.cardId, input?.outcome);
   return { ok: true, released: set, setId: entry.setId };
 }
 
@@ -1294,6 +1332,17 @@ export async function handleEvent(env: any, event: any): Promise<void> {
 
     if (CREATED_EVENTS.includes(type)) {
       if (!sessionID) return;
+      // cf-126 C01 (D6): dispatcher tracking sits ABOVE the parentID
+      // early-return below — the dispatcher is a top-level session, so the
+      // child-mapping gate would otherwise never read its record. Both legs
+      // must agree (exact agent id AND the pipelineDispatcher marker);
+      // malformed or single-legged records track nothing and never throw,
+      // or the event pump would die for a shape the compat twin can emit.
+      const recAgent = String(data?.agent ?? data?.info?.agent ?? "");
+      const recMeta: any = data?.metadata ?? data?.info?.metadata;
+      if (recAgent === DISPATCHER_AGENT && recMeta && typeof recMeta === "object" && recMeta.pipelineDispatcher === true) {
+        env.dispatcherSessionID = sessionID;
+      }
       const parentID = String(data?.parentID ?? data?.info?.parentID ?? "");
       if (!parentID || env?.sessToRoot?.has(sessionID)) return;
       const root = await resolveRoot(env, parentID);
@@ -2348,6 +2397,14 @@ export default {
         // Resolved once at first board use, outside the D24-pinned per-card
         // call sequence (see openBoardClient).
         boardId: null,
+        // cf-126 C01 (D6): the wake's address, written by handleEvent's
+        // tracking leg, and its prompt seam. An absent ctx.session.prompt
+        // leaves sessionPrompt unset, so the wake's own degrade line names
+        // the missing seam instead of a no-op call "succeeding".
+        dispatcherSessionID: null,
+        ...(typeof ctx?.session?.prompt === "function"
+          ? { sessionPrompt: async (input: any): Promise<any> => await ctx.session.prompt(input) }
+          : {}),
         sessionGet: async (sessionID: string) =>
           typeof ctx?.session?.get === "function" ? ((await ctx.session.get({ sessionID })) ?? undefined) : undefined,
         // The claim-time and reap-timer legs run the real guarded reaper —

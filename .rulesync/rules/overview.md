@@ -132,7 +132,7 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,explore,research,test,dev-pr,dev-local,dev-deploy,dev-deploy-pr,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
+- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,explore,research,test,dev-pr,dev-local,dev-deploy,dev-deploy-pr,review,fuser,board-coord,board-coord-local,board-coord-pr,board-dispatch}.md`;
   the implementer ships as `agent-dev-local`/`agent-dev-pr` — no commits (the
   coordinator commits each approved chunk; the pr variant additionally pushes
   the ticket branch); coords launch their matching dev; the deploy pair
@@ -160,7 +160,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   variants; manual launches run ungated via `/pipeline-boards` or
   `/pipeline-boards-pr`; the hourly scheduled launch runs the gated
   `/pipeline-boards-hourly` on the alias, and the gate counts all three
-  board-coord names): pulls work from
+  board-coord names beside the shared dispatcher session
+  `agent-board-dispatch` — the `.agents/loops/pipeline-dispatch.md` task's
+  agent, which walks the board on the scheduled path and spawns the coord,
+  never claiming itself (see Pipeline worker iterations)): pulls work from
   the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
   the card's standard checklists plus the `slug` custom field (an append-only
   stack of combined `[<slug>](<session link>)` link values, newest LAST)
@@ -296,25 +299,63 @@ managed) serializes board work per pipeline: a card's `Pipeline:<name>`
 board labels name the locks it takes — no such label means the single
 `default` pipeline, and several labels block all of those pipelines
 all-or-nothing. Cards with disjoint sets run as parallel
-`agent-board-coord` iterations; the hourly entry point is the one live
-OpenChamber loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as
-synced and enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo
-file ships `enabled: true` — the owner's own toggle, landed via main
-080c9878a; scheduler hygiene stays human-owned) running the owner-ruled
-runner model `gpu-ai/qwen3.8-flash-next-strata-q4` (owner ruling
-2026-11-09, confirmed in-session; supersedes cf-106 OQ-14 2026-11-03 — the
-catalog churns, so the literal moves only by a fresh user ruling), and
-`/pipeline-boards-hourly` + its gate stay the documented fallback. The
-Provider label is per-card routing inside the run: the one task serves both
-flavors and the card's `Provider:` label routes the model, so the walk
-applies no provider filter (the `boards` skill's Provider filtering section
-owns the routing + the unlabeled-card ask). The top-level
+`agent-board-coord` iterations.
+
+The scheduled walk lives in ONE shared dispatcher session (cf-126, the
+OQ1 ruling): the loop file `.agents/loops/pipeline-dispatch.md` runs
+`agent-board-dispatch` — the collector adapted into the dispatcher —
+hourly at `0 * * * *` on the owner-ruled runner model
+`gpu-ai/qwen3.8-flash-next-strata-q4` (owner ruling 2026-11-09, confirmed
+in-session; supersedes cf-106 OQ-14 2026-11-03 — the catalog churns, so
+the literal moves only by a fresh user ruling; C04 is the wave that may
+flip this loop's model row, gated on that chunk's owner facts). Each tick
+either forwards its text to the live dispatcher session (the proxy
+forward — end with the `delegated` marker) or the dispatcher itself
+walks `Rework → Not Started → Low Priority`, pre-filters candidates by
+lock availability, and spawns a fresh TOP-LEVEL
+`agent-board-coord-local`/`agent-board-coord-pr` session per pickable
+card — setting that coordinator's variant from the card's checked
+Lifecycle `Deployment` bit and its model tiers from the Model(s)
+checklist, and handing it the pre-resolved launch brief; the dispatcher
+never claims and never writes the board — the spawned coord performs
+`pipeline_claim`, so the lock holder stays the working session. The lock
+release wakes the dispatcher: every non-empty `pipeline_release` posts
+the released card and the outcome to the tracked dispatcher session
+through the plugin — done/abandoned (and the C03 `handoff`) alike — and a
+wake that cannot be addressed costs only the wake; the next hourly tick
+self-heals. The old loop file `.agents/loops/pipeline-worker.md` stays
+BYTE-UNTOUCHED (verified 2026-10-29 as synced and enabled at
+`0 * * * *` in OpenChamber's scheduledTasks; the repo file ships
+`enabled: true` — the owner's own toggle, landed via main 080c9878a):
+the owner creates the `pipeline-dispatch` task from the new file and
+deletes the old task as scheduler hygiene; inside that overlap window
+the dedupe rides the lock surface and **Executing** membership, so no
+card is double-run or lost, and scheduler decisions stay human-owned
+either way. The hourly gate (`scripts/agent-board-coord-gate.sh`) counts
+the dispatcher name beside the three board-coord names — a live
+dispatcher session answers LIVE while its own `time.updated` stays fresh
+(ACTIVE-ONLY, the OQ2 ruling: no heartbeat machinery) — and
+`/pipeline-boards-hourly` + its gate stay the documented fallback.
+
+The Provider label is per-card routing inside the run: the dispatcher's
+one scheduled walk serves both flavors and the card's `Provider:` label
+routes the model, so the walk applies no provider filter (the `boards`
+skill's Provider filtering section owns the routing + the unlabeled-card
+ask). The walk itself stays in the coord as the FALLBACK path (D5, the
+removal-evaluation answer): `/pipeline-boards`, `/pipeline-boards-hourly`
+and a manual named-card launch still walk, claim and kick off in-session
+— only the scheduled path moved. A board run's checked `Deployment`
+additionally gets its deploy fixer as the dispatcher's TOP-LEVEL
+`agent-dev-deploy-pr` spawn after the final whole-plan review (the
+`boards` skill's Dispatcher section; the non-board coord family keeps its
+`pipeline-role-coord` step-8b subagent launch). The top-level
 "finished" push reaches the phone unless the coord marked the session
 no-work AND the launch was of the scheduled kind — the `boards`
 skill's no-op marker, read by `question-notify`. Every no-work end is a
-marked, archived exit: the two claim-free exits and the three tick stops
+marked, archived exit: the two claim-free exits, the three tick stops
 (a gate SKIP verdict, a LIVE verdict with a filtered-in card, or an
-unavailable board check) all run the same marker + archive recipe, so a
+unavailable board check) and the dispatcher's proxy-forward end
+(`delegated`) all run the same marker + archive recipe, so a
 no-work tick leaves no alert and no idle row; manual no-ops and any crash
 still push.
 `/pipeline-tick` (plugin command) reaps stale locks
