@@ -148,3 +148,27 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   case). Open questions: none remain — all seven (OQ1–OQ7) resolved by ruling; no genuine
   new gap surfaced by the answers.
 
+
+## Final whole-plan review 2026-11-21 (RESEARCH measurement corrected — C02 fix round)
+- 2026-11-21 review(final): **the derived roster host `cluster.<cat>.<domain>` is
+  wrong for 2 of 11 targets.** Live reads (readonly route Ingresses in ns
+  `default` on each cluster + mesh DNS resolution, 2026-11-21) are ground truth:
+  dev's argocd-server route is `cluster.dev.scifi.farm` (dev's own `domain`
+  annotation is the fleet's second apex scifi.farm) and home's is
+  `cluster.home-lab.spencerslab.com` (home's `clusterName` is `home-lab`); the
+  derived forms answer NXDOMAIN. RESEARCH Agenda-2's "cluster.{…} → workspace
+  split-horizon 10.x" measurement line is disproved for these two entries;
+  EXPLORE §3's display-name warning (`home→home-lab`) was never reconciled with
+  the roster, and the C02 round-1 review's "EXPLORE §5 confirms the 11
+  cluster.<name> routes" citation was false (§5 contains no such confirmation).
+  The frozen research record must not be re-trusted for route hosts — re-verify
+  against live Ingresses.
+- 2026-11-21 ruling (coord→dev): **fix with values, not code** — chart
+  `clusterHosts` map (category → full host, no scheme; defaults exactly
+  {dev: cluster.dev.scifi.farm, home: cluster.home-lab.spencerslab.com});
+  `templates/configmap-targets.yaml` renders `https://` + (override ||
+  derived), keeping the template free of domain literals. No `main.py` change
+  (the relay is config-driven); no other category gets an entry. Harness t3
+  repinned to the live-verified host set (commit 43e69f0b9); its
+  spencerslab.com ban leg strips exactly the two sanctioned hosts, so a third
+  baked domain still trips it.

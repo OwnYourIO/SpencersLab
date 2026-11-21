@@ -40,6 +40,17 @@ targetCategories:
   - proxy-backup
   - proxy-remote
 
+# Live-verified exceptions to the derived cluster.<cat>.<domain> route shape
+# (route Ingress + DNS reads on each cluster, 2026-11-21). dev's argocd-server
+# route serves on the fleet's second apex scifi.farm (dev's own domain
+# annotation), and home's cluster name is home-lab, so its route host is not
+# its category name. Full hosts without scheme; a category absent here keeps
+# the derived form. The relay can only fan out to names that answer, so these
+# values are route truth - correct them against live Ingresses, never guess.
+clusterHosts:
+  dev: cluster.dev.scifi.farm
+  home: cluster.home-lab.spencerslab.com
+
 app-template:
   defaultPodOptions:
     securityContext:

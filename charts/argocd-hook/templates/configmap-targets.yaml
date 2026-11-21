@@ -4,15 +4,17 @@ The relay's --config file (contract: containers/argocd-hook/README.md).
 Rendered here rather than via the library's configMaps: key because cluster
 URLs need the top-level `domain` value, and the subchart tpl context cannot
 see parent values (helm-chart-creation "app-template subcharts cannot see
-top-level values"). cluster.<cat>.<domain> is the mesh-only ArgoCD route each
-root appset already exposes - the relay talks to it over mesh DNS, so no
-cluster gains a new public surface.
+top-level values"). Each target's host is its clusterHosts full host when
+one is mapped, else the derived mesh-route form cluster.<cat>.<domain>.
+Both shapes name argocd-server routes the clusters already expose, reached
+over mesh DNS - no cluster gains a new public surface.
 */ -}}
 {{- $targets := list -}}
 {{- range $cat := .Values.targetCategories -}}
+  {{- $host := get $.Values.clusterHosts $cat | default (printf "cluster.%s.%s" $cat $.Values.domain) -}}
   {{- $entry := dict
         "name" $cat
-        "url" (printf "https://cluster.%s.%s" $cat $.Values.domain)
+        "url" (printf "https://%s" $host)
         "rootApp" $cat
         "tokenKey" $cat
         "repo" $.Values.trackedRepo
