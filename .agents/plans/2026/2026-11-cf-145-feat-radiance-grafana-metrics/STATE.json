@@ -1,0 +1,189 @@
+{
+  "feature": "2026-11-cf-145-feat-radiance-grafana-metrics",
+  "plan_status": "approved",
+  "coord_session": "ses_e6f3deb96ffe42qI5WBzeC47TA",
+  "test_session": "ses_dffd43e53ffeUX8VsfUTa7LUfU",
+  "current_wave": 1,
+  "updated_at": "2026-11-21T22:08:34Z",
+  "plan_file": "2026-11-21-feat-radiance-grafana-metrics.md",
+  "kickoff": {
+    "card": "JixKJ5g9yiWHmgakN",
+    "card_number": 145,
+    "card_title": "Radiance Grafana dashboard + metrics scrape wiring",
+    "slug": "cf-145-feat-radiance-grafana-metrics",
+    "type": "feat",
+    "run_tag": null,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "priority": { "raw": 5, "class": "default", "note": "unset at claim; stamped 5 at write-back 2026-11-21 (string-typed transport on the NUMBER field)" },
+    "write_back": { "at": "2026-11-21", "slug_stack": "line appended (was unset)", "priority": "stamped", "unchecked_items_deleted": 36, "consistency_check": "slug link half == kickoff.session_origin — pass" },
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash",
+      "local": false,
+      "source": "owner in-session instruction 2026-11-21: openrouter flash for all work going forward; matches Model(s)=Qwen Flash + Provider: API"
+    },
+    "pipelines": ["AI"],
+    "pipeline_set_source": "label Pipeline: AI (Bucket: AI is not a lock label)",
+    "claim": { "setId": "8ed5bf24-db58-4004-af07-2ef6da1d4a50", "exclusive": true, "takeover": false },
+    "claim_takeover": {
+      "at": "2026-11-21",
+      "reason": "AI lock reaped mid-run (engine restart, status showed zero groups); PIPELINE LOCK LOST hook fired",
+      "owner_answer": "Yes, continue under the card-id lock",
+      "setId": "80402038-307b-4e3b-979b-be19bbd951cf",
+      "lockKey": "JixKJ5g9yiWHmgakN",
+      "mechanic": "first fresh claim answered already_held (root record pinned to reaped setId); released own phantom root, re-claimed under card-id key — ok",
+      "card_untouched": true
+    },
+    "approval": {
+      "at": "2026-11-21",
+      "basis": "owner batched-round answer: Approve, run it — conditional on faithful rework; rework round-2 RESULT deviations: none beyond the answers; coord verified plan file line-by-line (R5a/R5b/R8 groundings, C02 re-size S->M as consequence of OQ-4)",
+      "lock_note": "post-takeover heartbeat ok:true + already_held(mine) on re-claim probe prove the card-id lock live; status groups enumeration blind to the entry — quirk filed in FRICTION"
+    },
+    "repo": "SpencersLab",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-145-feat-radiance-grafana-metrics",
+    "branch": "cf-145-feat-radiance-grafana-metrics",
+    "branch_minted_at": "7219bf58874934d8927a8b1fa7226c2c4ed5086d",
+    "commits": "per-chunk by coord",
+    "stages": {
+      "lifecycle_checked": ["Exploration", "Agent Decides Research", "Planning", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+      "leading_gates": "card's Lifecycle predates Session Rename/Worktree Creation items — absence is generation drift, not opt-out; both gates run per the blank default (DECISIONS 2026-11-21)",
+      "off": ["Deployment", "Single Session", "Pre Research", "Post Research", "Follow-up cards created (absent)"],
+      "hitl_stop": "Final Review (checked) + plan-approval pause (doctrine)"
+    },
+    "preload": { "at": "2026-11-21T21:55Z", "tool": "preload_board", "cards": "board-wide, In Process swimlane", "degraded": false },
+    "card_details": { "at": "2026-11-21T21:56Z", "tool": "get_card_details", "degraded": false, "note": "no block on claim answer; explicit call, tools/list probe first" },
+    "dependency_gate": "pass — board has 5 dependency lines, none touch card 145 (list_board_dependencies)",
+    "grouped_siblings": "none (no inbound related-to edges)",
+    "board_context": {
+      "collected": "2026-11-21T21:15:25.228Z",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj",
+        "Resume Later": "Hy9AEjEvxqh5ksRgC"
+      },
+      "custom_fields": { "slug": "RaNeqvh9YoT4bnkZ8", "Priority": "fp5vnD5YrA7oAxPiK", "session_retired_never_read": "zZw4PwMoLeodJy3eT" }
+    }
+  },
+  "exploration": {
+    "status": "done",
+    "session": "ses_e0003600fffe5cqb4oKgSr2eL7",
+    "handoffs": [
+      {
+        "at": "2026-11-21",
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": [".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/EXPLORE.md"],
+        "commands_run": "repo reads/greps; git ancestry; readonly-ai-gpu-kubernetes (pods/SM/PM/CRD, positive control); readonly-monitoring-kubernetes Application/ConfigMap reads; readonly-global-grafana prometheus queries x7 + dashboard enumeration; webfetch radiance.json @v1.17.0 — all pass",
+        "deviations": "none — readonly-only, no pod exec, no writes outside ticket folder",
+        "friction": "k8s MCP returns null for absent CR kinds (validate with positive control); grafana search caps 50 rows (enumerate via grafana_api_request)",
+        "open_questions": "ServiceMonitor (cross-cluster proven via cnpg) vs k8s.grafana.com annotations (chart precedent, unproven on gpu-ai); dashboard provider folder/entry name; owner-exec legs: /metrics port-forward curl + manual monitoring-grafana sync/rollout (also resurrects two stale vllm dashboards — pre-existing); research need: none",
+        "next": "agent-plan from EXPLORE.md §6 — 3 chunks, render/grep-level ACs"
+      }
+    ]
+  },
+  "plan_handoffs": [
+    {
+      "at": "2026-11-21",
+      "status": "DONE",
+      "chunk": "plan",
+      "files_changed": [
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/2026-11-21-feat-radiance-grafana-metrics.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C03.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/STATE.json",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/DECISIONS.md"
+      ],
+      "commands_run": "helm lint/template services/gpu-ai/prod + services/monitoring/prod + charts/radiance (after helm dependency update) => pass; pytest charts/radiance/tests/test_renovate_ledger.py -q (4 passed, suite runs locally) => pass; repo reads/greps; parent RESEARCH RQ5/675-676 + SS R14/SS R15 windows; runbook 628-702 => all grounding verified",
+      "deviations": "none — plan-only; no implementation files touched; readonly local command verification (helm/pytest reads) fits the planning-stage contract",
+      "friction": "charts/radiance helm template fails locally until `helm dependency update` (app-template tgz not vendored) — recorded in plan Commands so test/dev don't rediscover it",
+      "open_questions": "8 recorded in the plan (mechanism OQ-1, monitor name OQ-2, interval OQ-3, folder/key OQ-4, AC boundary OQ-5, /stats contingency OQ-6, parent-DECISIONS closure OQ-7, gpu-ai sync posture OQ-8) — all carried best guesses; batched round owned by coord",
+      "next_suggested": "coord runs the batched plan-question round (or owner approves as-is) -> plan_status approved -> agent-test writes the three chunk test files red-first"
+    },
+    {
+      "at": "2026-11-21",
+      "status": "DONE",
+      "chunk": "plan",
+      "round": 2,
+      "files_changed": [
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/2026-11-21-feat-radiance-grafana-metrics.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C03.md",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/STATE.json",
+        ".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/DECISIONS.md"
+      ],
+      "commands_run": "owner batched answers folded (OQ-1/4/8 overridden, OQ-2/3/5/6/7 kept): grounding reads charts/vllm gate+pair blocks, charts/radiance defaultPodOptions + Chart.yaml dep 5.0.1, existing suite reloader-annotation leg => no collision; k8s-monitoring 4.5.5 + grafana 10.1.0 chart sources pulled and read (annotation keys, job label-fallback = app.kubernetes.io/name -> 'radiance', interval default 60s, dashboardProviders name==key==path coupling law) => grounded; grafana subtree extract + helm template => RC=0 (provisioning CM + download script + vllm curls present, mechanism proof); helm dependency update charts/radiance + lint/template of the three surfaces => 0 failed; pytest charts/radiance/tests -q => 67 passed / 1 loud pre-existing skip; STATE.json JSON-valid re-checked after edit => pass",
+      "deviations": "none beyond the owner's answers: rework folded EXACTLY the eight batched answers (D-11 records the scope law); C02 re-sized S->M for the two coupled surfaces + render legs; draft-1 lines kept in DECISIONS as superseded history (D-8..D-11)",
+      "friction": "k8s-monitoring annotation-autodiscovery internals live in the feature SUBCHART (charts/feature-annotation-autodiscovery), not the top-level templates (top-level grep for k8s.grafana.com hits only a finalizer hook) — resolution: pulled+extracted the chart and read _pods.alloy.tpl/_services.alloy.tpl directly; same-class note for the grafana chart: url entries never appear in dashboards-json ConfigMaps, they are download_dashboards.sh curl+sed writes resolved by provider-name==key (templates/_config.tpl)",
+      "open_questions": "none — no genuine new gap surfaced from the rework (annotation pair verifiably covers both releases via chart-default inheritance; 46-green suite has no colliding leg; grafana render leg proven end-to-end this round); the one accepted-risk the owner already ruled on is carried as R5a: the annotations path is enabled-but-unproven-live on gpu-ai and OE-2 is its live proof leg",
+      "next_suggested": "coord records the owner's approval re-confirmation -> plan_status approved -> agent-test writes the three chunk test files red-first (test_scrape_annotations.py, test_dashboard_filing.py, test_runbook_note.py)"
+    }
+  ],
+  "test_handoffs": [
+    {
+      "at": "2026-11-21",
+      "status": "DONE",
+      "chunk": "test-writing (C01+C02+C03)",
+      "files_changed": ["charts/radiance/tests/test_scrape_annotations.py (9 legs)", "charts/radiance/tests/test_dashboard_filing.py (7)", "charts/radiance/tests/test_runbook_note.py (10)"],
+      "commands_run": "3 per-file pytest runs => 18 designed-red / 7 green-by-design; full suite 18F/75P/1S; existing-files-only 67P/1S baseline intact; grafana 10.1.0 render infra proven; git porcelain => only the 3 new test files",
+      "deviations": "C01 T4 absence-guard legs green pre-implementation by construction (written per the guard AC, kept as double-wire tripwire); helm pull uses --repo with values-read repository (same authority, CI-portable)",
+      "friction": "first shell call aborted (location shut down), immediate retry clean",
+      "open_questions": "none",
+      "next": "C01 dev (wave 1), then C02 dev, C03 after both; dev turns the 18 reds green without touching preserve pins"
+    }
+  ],
+  "chunks": {
+    "C01": {
+      "status": "in-progress",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_dffc7ae30ffe319nPpqhC6DFdE",
+      "dev_note": "round-1 first launch ses_dffcadb9affeDc3SeVZCJqX5QK crashed on harness transport error (tool-call delta missing id/name) mid-turn; fresh relaunch instructed to ground-truth-check for partial edits and report them in deviations",
+      "last_verdict": "dev-DONE (tree pristine pre-relaunch; 9/9 C01 legs green; 15 by-design reds remain; aislop 100/0/0)",
+      "handoffs": [
+        {
+          "at": "2026-11-21",
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": ["charts/radiance/values.yaml (+29/-1, two ruled regions + sanctioned one-clause comment extension)"],
+          "commands_run": "PATH export; helm dependency update pre/post; pytest BASELINE 18F/75P/1S => as designed; pytest POST 15F/78P/1S (C01 9/9 green; 15F = 5 C02 + 10 C03 by-design); helm lint/template charts/radiance pass; gpu-ai umbrella lint+template pass; monitoring lint pass; sentinel greps pass (pair==2, banned==0, no monitor objects under gpu-ai, gpu-ai/monitoring diffs empty); render eyeball fn=true/8000 + gate-off keys inert; aislop scan --changes => score 100, 0 errors/0 warnings",
+          "deviations": "crashed session left tree pristine (nothing to repair); reloader-absence comment +1 clause per chunk allowance; aislop ruff engines skipped env-wide (identical at baseline)",
+          "friction": "none new",
+          "open_questions": "none",
+          "next": "review; then coord commit; C02 independent"
+        }
+      ]
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

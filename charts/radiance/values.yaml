@@ -203,6 +203,17 @@ app-template:
      "--ngram-placement", "disk",
      "--served-model-name", "qwen3.8-flash-next-radiance"]
 
+  # cf-145 D-8 (owner batched ruling: annotation autodiscovery over a raw
+  # ServiceMonitor) — the charts/vllm D8 idiom: the gate for the
+  # k8s.grafana.com/* scrape pair in defaultPodOptions below. 60 s is the
+  # k8s-monitoring v4 annotationAutodiscovery feature default, so NO
+  # metrics.scrapeInterval annotation (cf-143 Q5 ruling carried — exactly two
+  # keys). The gate lives INSIDE this app-template subtree because the map is
+  # tpl'd against the subchart values: at chart top level the subchart cannot
+  # read it (vllm's working layout).
+  monitoring:
+    annotations: true
+
   global:
     nameOverride: &chartName radiance
     # The engine pod never calls the K8S API, so no ServiceAccount object is
@@ -210,6 +221,21 @@ app-template:
     createDefaultServiceAccount: false
 
   defaultPodOptions:
+    # cf-145 D-8 (charts/vllm D8 shape verbatim): exactly two
+    # k8s.grafana.com/* annotations — the scrape gate + portNumber 8000 (the
+    # engine's --port, containerPort and service port already agree). app-template
+    # 5.0.1 tpl's the whole map against the subchart values, so gate-OFF keeps
+    # the keys with inert (empty) values instead of dropping them — an empty
+    # value is what disables the scrape. The single-quoted ternaries are plain
+    # literals: this pair carries no anchor dependency, so the per-document
+    # anchor law (file header) never runs on it. No job/path/interval keys —
+    # autodiscovery fills the defaults (job = the app.kubernetes.io/name label
+    # fallback "radiance" for both releases, path /metrics); adding a third key
+    # needs a DECISIONS line. Chart defaults, so the q27 overlay inherits —
+    # no per-release wiring.
+    annotations:
+      k8s.grafana.com/scrape: '{{ .Values.monitoring.annotations | ternary "true" "" }}'
+      k8s.grafana.com/metrics.portNumber: '{{ .Values.monitoring.annotations | ternary "8000" "" }}'
     terminationGracePeriodSeconds: 180
     # The engine drains in-flight work ~60-120 s on SIGTERM (1.17.0 compose
     # stop_grace_period 60 s + teardown margin). NOT strata's 420 — that
@@ -262,7 +288,9 @@ app-template:
       # No reloader.stakater.com/auto annotation ON PURPOSE: the repo
       # standard exists to restart pods when mounted ConfigMaps/Secrets
       # change — this pod mounts neither (keyless D8, no config surface),
-      # so the annotation would be inert drift.
+      # so the annotation would be inert drift. This absence scopes the
+      # reloader key only: the cf-145 D-8 k8s.grafana.com/* scrape pair is a
+      # different concern and rides in defaultPodOptions.
       containers:
         radiance:
           image:
