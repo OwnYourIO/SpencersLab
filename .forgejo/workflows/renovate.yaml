@@ -32,10 +32,20 @@
 # human-merge posture (neither class is in any automerge list).
 #
 # The job-env RENOVATE_GIT_AUTHOR stamp pins the commit identity independently
-# of platform /user discovery: the edited-branch guard accepts that email plus
-# renovate.json's gitIgnoredAuthors (DECISIONS D17/D21). Orphaned pipeline-bot
-# commits stay ignorable, and drift of the forge account's real name or email
-# can no longer silently change what the guard authorizes.
+# of platform /user discovery. Its value is minted instance-side as a
+# repo-scoped Actions variable — D21's pairing-law address, Renovate
+# <tms@spencerslab.com>, the running PAT account's commit email — a variable
+# not a secret because the identity is public in every commit header
+# (DECISIONS D23). Guard arithmetic per D17/D21: the variable's value ∪
+# renovate.json's gitIgnoredAuthors covers every author email on an open
+# PR-head, so orphaned pipeline-bot commits stay ignorable and drift of the
+# forge account's real name or email cannot silently change what the guard
+# authorizes. With the variable absent, its env value renders empty, empty
+# env values are skipped, and discovery silently takes effect again: recovery
+# still holds — the discovered email is the one open PR-heads carry — but the
+# stamp no-ops without a signal, voiding the determinism it exists for;
+# hence the variable is created on the executing instance before this file
+# merges (owner action UA12).
 #
 # Schedules are read from the default branch only, so branch testing rides a
 # manual dispatch run.
@@ -64,7 +74,7 @@ jobs:
       RENOVATE_REPOSITORIES: ${{ github.repository }}
       RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
       RENOVATE_GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
-      RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"
+      RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}
     steps:
       - name: diag
         run: |
