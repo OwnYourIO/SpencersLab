@@ -131,13 +131,18 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "dev_session": "ses_e004deda4ffehYwiDGruoAOwcG",
+      "review_rounds": 1,
+      "review_session": "ses_e00439d3cffeDT0p2u6BPglXTe",
+      "last_verdict": "APPROVED (r1, 2026-11-21: 7/7 ACs; diff purity proven mechanically (remainder byte-identical to HEAD with version/digest/generated lines excluded; generated stamps 21 s apart = sequential generator calls); generator-side integrity re-proved (dependency build from zeroed charts/ left the lock sha byte-identical); k5 unchanged-in-class by construction (yaml-only input, Chart.yaml byte-clean); mutation net re-proved live both pairs; k3 green on the REAL duplicate-mirror shape — not a loosened assertion; zero findings, two bookkeeping nits)",
+      "handoffs": [
+        "RESULT (dev, ses_e004deda4ffehYwiDGruoAOwcG, coord-compressed faithfully) status: DONE chunk: C04 files_changed: [charts/base/Chart.lock, services/home/prod/Chart.lock] commands_run: [helm v3.16.4 in-tree dependency update both charts => pass (exit 0 each; argo-cd fetched 10.18.2, wekan 12.99.0 fetched, indexes live); chart-lock-consistency => pass 3 ok exit 0 (k2 zero drift rows; red-first baseline re-confirmed at start = 3 rows); forgejo-move-config 8 ok; forgejo-renovate 8 ok + t9 skip; helm lint charts/base pass (pre-existing INFO/WARNING classes); home/prod lint via /tmp copy + dependency build (tracked lock sha identical before/after) pass; helm template both (25,954 / 51,295 lines; wekan+boards alias trees render from vendored 12.99.0; app-template-4.6.2 annotations = wrapper charts' own vendored deps, our 7 5.0.1 aliases render — no anomaly); version-floor fail-as-baseline k2-ONLY 10!=8 unchanged; chart-yaml-legs k5+k10 ONLY (k5's wekan tuple now reads 12.99.0|12.99.0 vs its stale 12.65.0 pin — same pre-existing class); main-sync 8 / dockerfile-pins 36-0 / system-upgrade 3 green; aislop 100/0/0/108 honest scope note; k2 mutation-sanity scratch proof (yaml-only 10.18.3 reddens k2 with the row shape) => pass, scratch deleted; git scope => exactly the two locks; merge-base ancestor => base current] deviations: (a) task-3 'REWRITE beyond the two wekan lines' expectation superseded by observed v3.16.4 behavior (keeps 16-entry duplicate-mirror shape; test-wave deviation 1 confirmed; hand-shape forbidden); (b) user-wide helm repo cache refreshed by design; (c) gitignored vendored .tgz dirs left for reviewer offline lint/template friction: none new open_questions: none next_suggested: coord commits locks AS-IS; review re-runs + battery; C03+C04 land together before next 06:17Z pass",
+        "RESULT (review r1, ses_e00439d3cffeDT0p2u6BPglXTe, coord-compressed faithfully) status: DONE chunk: C04 verdict: APPROVED files_changed: [chunks/C04.md (Review notes only)] commands_run: [chart-lock-consistency => pass 3 ok exit 0; forgejo-move-config 8 ok; forgejo-renovate 8 ok + t9 skip; helm lint both (base in-tree, home/prod /tmp copy) pass; dependency build from zeroed charts/ on the copy => lock sha 66a702e4... identical before/after; helm template both 51,295/25,954 lines + greps (wekan/boards 12.99.0 x12, argo-cd 10.18.2 x43, zero stale; 7 aliases 5.0.1; 4.6.2 = wrapper-internal confirmed); main-sync 8 / dockerfile-pins 36-0 / system-upgrade 3 green; version-floor k2-ONLY; chart-yaml-legs k5+k10-ONLY with k5 UNCHANGED-IN-CLASS proven by construction (yaml-only input, Chart.yaml byte-clean vs HEAD, stale-12.65.0-pin branch); aislop 0/0/0 108; purity remainder diffs => byte-identical both; generated stamps 21 s apart; mutation scratch both-pair k2-red with spec row shapes, deleted; git scope => two locks + coord STATE only; tests//renovate.json/.forgejo/ diff empty; check-ignore => vendored dirs pre-existing rule] deviations: none friction: wekan legacy chart: label form — greps keyed accordingly (documented) open_questions: none next_suggested: coord commits locks, final whole-delta review; owner lands C03+C04 together before 06:17Z; F1/F2/F3 mint + Review move are coord legs"
+      ]
     }
   },
   "blocked": [],
