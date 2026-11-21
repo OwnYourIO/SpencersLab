@@ -231,6 +231,37 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   "Approve — run the delta" — plan_status flip + STATE C03/C04 stubs are coordinator-
   owned; nothing re-opened from round-1 rulings.
 
+## Round 3 — owner line-note fold (2026-11-21, branch HEAD d21c2c1ea)
+- 2026-11-21 plan: D23 C05 stamp-to-variable — owner line-noted `.forgejo/workflows/renovate.yaml:67`
+  ("should be a variable/secret set in Forgejo") on the landed C03 literal. CHOSEN SHAPE:
+  repo-scoped Actions VARIABLE `RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}`
+  (NOT a secret: the identity is public in every commit header — the census that proved
+  it was an anonymous API read; secrets are for credentials and mask values; the repo
+  convention for non-secret instance-side config is Actions variables per the cf-119
+  ROLE/PUSH_URL_* lineage, now law in AGENTS.md's Forgejo conventions — ROLE-membership,
+  repo-scoped not instance-global, no instance values in workflow files). D21's VALUE
+  arithmetic is unchanged; only its LOCATION moves: m7/gitIgnoredAuthors stay
+  repo-pinned (they read renovate.json); the stamp value becomes instance config the
+  suites can only pin as a REFERENCE (t5 exact-value flips to exact-shape — a literal
+  re-introduction or vars-name typo both redden via the same string equality; once-count
+  extended to the new `vars.` ref). UNSET VERDICT dist-verified (decisive for ordering):
+  empty-string env values are SKIPPED at `env.js:114` (`if (!envVal) continue;`),
+  `gitAuthor` has no static default, so `modules/platform/index.js:36–43` falls through
+  to gitea/forgejo `/user` DISCOVERY = `Spencer H <tms@spencerslab.com>` — exactly the
+  email the stuck heads carry, so unset does NOT re-lock the 85 (not the D21-rejected
+  value failure — that needed a FOREIGN accepted email) and does NOT crash; it silently
+  degrades to the pre-stamp regime, voiding only the determinism guarantee. Therefore
+  UA12-before-merge is ORDERING-MANDATORY for the law, not incident-avoidance, and the
+  header paragraph must state the fallback (comment-accuracy law: the shipped "pinned
+  literal, identical on every instance" prose is false post-edit — it also breaks the
+  round-1 instance-neutrality convention the literal itself had silently violated).
+  Rejected: `secrets.RENOVATE_GIT_AUTHOR` (masks a public value; wrong tool class);
+  config-side `gitAuthor` key (would duplicate authority across repo and instance — the
+  stamp deliberately lives in env per D21); dropping the stamp entirely (owner line-note
+  asked to KEEP the pin, just instance-side). F3 consequence: bot-account migration now
+  flips one instance variable + PAT rotation + adds old tms@ to gitIgnoredAuthors; the
+  minted F3 card is NOT rewritten — coordinator may post the location note; D21 pairing
+  law body-text now names the variable location (recorded here + plan Round-3 section).
 ## Deferred
 - UA6 infra flip (Q1 ruling), GitHub-side `renovate/*` branch cleanup (Q7), Forgejo PR-CI
   gate-parity workflow (Q8), ArgoCD-source/merge→deploy path verification (Q6/OQ-3) —
@@ -244,6 +275,9 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   F1 ignoreTests-vs-red-CI posture note; F2 the 6-s `pr …` containers-build PR-arm
   failures on canonical; F3 dedicated renovate bot account + PAT migration (one-time
   `RENOVATE_IGNORE_PR_AUTHOR=true` handover pass; closes the docs non-unique-identity
-  danger D21 carries forward). The former U8 canonical-vs-dev home question RESOLVED by
-  the Q4 acceptance (D22) — off the deferred list. U15 dead lockFileMaintenance blocks
+  danger D21 carries forward). D23 LOCATION UPDATE (card NOT rewritten; coord may post
+  it): with the stamp instance-side, F3 flips the one instance variable
+  `RENOVATE_GIT_AUTHOR` + rotates the PAT + adds old tms@ to gitIgnoredAuthors. The
+  former U8 canonical-vs-dev home question RESOLVED by the Q4 acceptance (D22) — off
+  the deferred list. U15 dead lockFileMaintenance blocks
   stay deferred (own decision if the owner asks).

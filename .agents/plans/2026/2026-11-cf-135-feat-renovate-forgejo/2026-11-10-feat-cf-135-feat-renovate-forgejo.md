@@ -481,3 +481,94 @@ verbatim rulings; nothing re-opened from round-1 decisions).
   across ~55 charts and the ⚠️ artifact comment AUTO-REMOVED — the combined proof that
   D21 restored rebase and D18 restored locks. Stale Edited/Blocked comments on recovered
   PRs are EXPECTED cosmetic residue (U11/R10) — not a bug.
+
+---
+
+## Round 3 (2026-11-21, owner line-note) — stamp-to-variable micro-delta (C05)
+
+Owner line-noted `.forgejo/workflows/renovate.yaml:67` (the C03 stamp, landed
+`ade147f4b`): the literal `RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"`
+*"should be a variable/secret set in Forgejo"*. DECISIONS D23 records the fold; rounds
+1–2 sections above stand as delivered record (C03/C04 remain done — this is the ONE
+follow-up line, not a revert).
+
+**Design — VARIABLE, not secret** (D23): the git identity is public in every commit
+header (R2 §R2.0/6 — the census itself is a public-API read); Forgejo secrets exist for
+credentials and mask values; non-secret instance-side config of record is Actions
+variables (`ROLE`, `PUSH_URL_*` — cf-119 lineage). Shape:
+`RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}`. This also aligns with the repo
+law now recorded in AGENTS.md Forgejo conventions (ROLE-membership guards, comma-list
+repo-scoped variables "never the instance-global Actions scope", no instance values in
+workflows) — and restores the file's instance-neutrality the literal broke (round-1
+"identical-safe on both instances" law).
+
+**Unset-behavior verdict (dist-verified, D23)** — what happens when the variable is
+ABSENT and `${{ vars.X }}` renders to empty string:
+- `workers/global/config/parse/env.js:114` — `if (!envVal) continue;`: empty string is
+  JS-falsy ⇒ the env key is SKIPPED entirely; `config.gitAuthor` stays undefined (the
+  option carries NO static default — `config/options/index.js` `gitAuthor` entry).
+- `modules/platform/index.js:36–43` — `if (config?.gitAuthor)` false ⇒ falls to
+  `platformInfo.gitAuthor`: gitea/forgejo `/user` DISCOVERY returns
+  `Spencer H <tms@spencerslab.com>` ⇒ `setGitAuthor(discovered)`.
+⇒ **unset ≠ re-lock, ≠ crash**: the guard's accepted email = tms@ (discovered) ∪
+{bot-and-reviewed@ (ignored)} — exactly the set that unlocks the 85 in the first place.
+The silent fallback is the pre-stamp D17 regime: recovery holds, but D21's determinism
+law (account-metadata drift can't silently move the accepted identity) is VOID — the
+feature becomes a no-op without any signal. Hence **UA12 below is ordering-mandatory:
+set the variable BEFORE merging C05**, and the header paragraph (line-note target) must
+state this fallback honestly (comment-accuracy law — the current "pinned literal,
+identical on every instance" text becomes false at merge time otherwise).
+
+**Delta:**
+
+| id  | title | size | wave | depends_on | why |
+|-----|-------|------|------|------------|-----|
+| C05 | workflow stamp literal → `${{ vars.RENOVATE_GIT_AUTHOR }}` (+ header why-paragraph correction) | S | 1 | [] | single line + comment; suites' t5 flips red-first in the same round |
+
+- Test obligation (agent-test, red-first BEFORE dev): `tests/services/forgejo-renovate.sh`
+  t5 EXPECTED entry flips `'Renovate <tms@spencerslab.com>'` →
+  `'"${{ vars.RENOVATE_GIT_AUTHOR }}"'`-shaped value pin `'${{ vars.RENOVATE_GIT_AUTHOR }}'`
+  (exact string — literal-reintroduction reddens via value mismatch, vars-name typos
+  redden via the same exact equality); extend the boundary-anchored once-count to the
+  new `vars.RENOVATE_GIT_AUTHOR` reference (max-count 1 file-wide; t5's reserved-prefix
+  regex already scans `vars.` refs and `RENOVATE_` is not a banned prefix — verified).
+  Header-comment line 21 (the "pinned literal" prose) rewritten with the pin.
+  **Verified unaffected**: t9's needles read the dry-run PAYLOAD
+  (`"packageFile"`/`"depType"` — never env values; local platform ignores job env);
+  m6/m7/m8 read renovate.json + Dockerfile ARG; chart-lock suite disjoint. Baselines at
+  this pass: forgejo-renovate 8 ok + t9 designed-skip, forgejo-move-config 8 ok,
+  chart-lock-consistency 3 ok, validator green (all re-run 2026-11-21).
+- C05 dev: ONE env line (`:67`) + the header stamp paragraph (`:34–39`) rewritten to
+  name: instance-minted repo-scoped Actions variable `RENOVATE_GIT_AUTHOR`, value per
+  D21 pairing law (`Renovate <tms@spencerslab.com>` — the running PAT account's commit
+  email), the dist-verified unset fallback (discovery in effect → D21 determinism lost,
+  recovery itself unaffected), and the UA12-before-merge ordering. No other repo file.
+- Commands (round 3):
+  - R3a: `bash tests/services/forgejo-renovate.sh` — the re-pinned battery; t9 stays
+    default-OFF (probe needles are payload-shape, env-agnostic — re-pin NOT needed there).
+  - R3b: `npx -y -p renovate@44.181.5 renovate-config-validator renovate.json` — config
+    untouched by C05: green is a REGRESSION assertion, not a change gate.
+  - Regression exact-fingerprints: `forgejo-move-config.sh` 8 ok / `chart-lock-consistency.sh`
+    3 ok / `forgejo-main-sync.sh` unchanged / §4 pre-existing reds unmoved; aislop clean.
+- User actions (round 3):
+  - UA12 · BEFORE merging C05: create repo-scoped Actions variable `RENOVATE_GIT_AUTHOR`
+    on the **canonical** repo (`CuratedForest/SpencersLab` @ git.spencerslab.com), value
+    `Renovate <tms@spencerslab.com>` exactly. Ordering matters for the D21 law, not for
+    the 85 (unset degrades silently to discovery — verdict above). Mirror to the dev
+    forge only if/when Renovate runs there (UA6/round-2 Q4 posture).
+  - UA13 · post-merge observation (next pass): PR-head commits flip author NAME from
+    `Spencer H` to `Renovate` (email stays tms@ — the visible proof the variable is
+    live, the only anonymous tell); guard recovery continues (dirty→clean rebases).
+- F3 note (card already minted to Inbox — NOT rewritten here; coordinator may post the
+  card the location update): with the stamp instance-side, the bot-account migration
+  flips ONE instance variable (`RENOVATE_GIT_AUTHOR` → new unique identity) + rotates the
+  PAT + adds the OLD tms@ email to gitIgnoredAuthors for legacy branch heads; D21's
+  pairing law now names that variable location.
+
+## Open questions — round 3
+None outstanding: the variable-vs-secret choice is grounded (public identity + ROLE
+precedent + AGENTS.md convention), the unset semantics are dist-verified (env.js:114 +
+platform/index.js:36–43), and the exact value is unchanged from D21's owner-folded
+ruling. Best-guesses baked inline: once-count extension for the vars ref (symmetry with
+the secrets pins; cheap negative control), and the author-name-flip observation as the
+variable's liveness proof.
