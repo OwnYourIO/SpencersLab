@@ -416,3 +416,128 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
   (Qwen Flash, API provider) and the 2026-11-16 local-model ruling for all future
   launches in this ticket; the original card checklist stays untouched on the board
   as the frozen kickoff record.
+
+## Decisions — fix round: baked runner toolchain (2026-11-21)
+
+- 2026-11-21 plan D36 (fix-round image design, per D33's owner-confirmed
+  approach and RESEARCH C2 remedy-3): `containers/forgejo-runner/` builds the
+  job image behind the runner's act labels as a DERIVATIVE of the current
+  production base — `FROM ghcr.io/catthehacker/ubuntu:act-24.04@sha256:<head
+  digest>` (digest verified live 2026-11-21, dev re-verifies) — plus helm and
+  cr baked to `/usr/local/bin`. The no-regression law (the image serves all
+  four .forgejo workflows' jobs: containers-build needs the docker CLI +
+  buildx, every job needs the node action runtime + git/git-lfs/jq/python3)
+  is satisfied BY CONSTRUCTION: the derivative is the RESEARCH C1 inventory
+  plus two static binaries — rebuilding that inventory on a slim base was
+  rejected (a too-thin image silently breaks the OTHER pipelines sharing the
+  runner; the multi-GB re-assembly buys nothing). Documented deviation from
+  the container-creation non-root law: no USER/ENTRYPOINT/CMD/COPY lines — a
+  job shell keeps the act base's root user because today's jobs apt-get and
+  write system paths (the law serves service containers, not job images).
+  Suite placement (D41) keeps the Dockerfile contract in tests/containers/.
+- 2026-11-21 plan D37 (cr is BAKED too; the first-fire's whole fragility
+  class retires): the two `Install cr` steps (release.yaml :294, :382) are
+  the same github.com-egress class that killed the first fire, land in the
+  two jobs it never reached, and cr is a static binary — same bake recipe,
+  pin pair (1.10.1 + the review-verified sha256) migrates from workflow env
+  to Dockerfile ARG with a renovate github-releases annotation. REJECTED:
+  vendoring the tarball into git (~15 MB binary, re-opens the supply-chain
+  review the sha pin closed); leaving it as download-with-retry (keeps the
+  exact failure mode that motivated the fix round waiting in the untested
+  legs). The remaining runtime egress in release.yaml is the bump leg's
+  published-index fetch — DATA, not a tool install, un-bakeable by nature —
+  hardened instead with `curl --retry 3` (new leg t20 pins the hardening).
+- 2026-11-21 plan D38 (helm version ADOPTS v3.22.1, not the first-fire's
+  v3.16.4): the failed fire pinned v3.16.4 for twin-parity; v3.22.1 is both
+  the repo's existing baked-pin (containers/coder-workspace
+  Dockerfile:49-50, already on an active renovate lane) and the
+  GitHub-hosted-runner preinstall the pre-move workflows implicitly used
+  (RESEARCH C1 helm row), so it is the closer parity — same v3 major,
+  ArgoCD renders with v3. One-ARG revert to v3.16.4 if the owner rules
+  literal-parity instead (Open question 2; impact nil-to-minor on chart
+  rendering).
+- 2026-11-21 plan D39 (pull side + tag law): the labels name
+  `docker://ghcr.io/ownyourio/forgejo-runner:<calendar tag>` — anonymous
+  ghcr pull is the runner's PROVEN path (every lab job already pulls ghcr;
+  ownyourio repos answer anonymous manifest/tags probes, verified live
+  2026-11-21), while the instance-registry anonymous /v2/ pull has never
+  been exercised runner-side (EXPLORE §F4/F0 — cf-6 proved org visibility
+  only) and the dev runner would additionally need WAN reach to
+  git.spencerslab.com; the upgrade to LAN pulls is a separate
+  owner-verified move (UA-10), so the fix round avoids BOTH unproven paths
+  rather than routing one as a bet. Tag form: the AGENTS containers law
+  offers `:main + pullPolicy: Always` or a `:yy.mm.N` pin; the runner has
+  no pullPolicy knob on labels and the measured law "runners never re-pull
+  a tag they already cached" (RESEARCH C2 remedy-3, renovate.yaml header
+  :21-23) makes any rolling ref silently freeze — so an IMMUTABLE calendar
+  pin is the only safe shape; a wrong/stale pin fails LOUD (pull error),
+  never stale. First tag determinism: a brand-new image's first build
+  publishes `<yy.mm>.1` (both registry walks see no tags → `next_n`
+  max+1=1 — code-verified 2026-11-21). Since the branch is commit-only (no
+  pushable build lane pre-merge), C06 pins dev-time `date +%y.%m`.1 after
+  a live tags/list probe, and a merge crossing the month boundary is the
+  owner's one-line amend (UA-8). Bumps thereafter are manual + red-first
+  (no renovate manager reads the label lines — the values.yaml law comment
+  survives the re-point, re-worded).
+- 2026-11-21 plan D40 (re-point scope + merge-order safety): exactly the
+  four act-24.04-family labels (`ubuntu-latest`, `ubuntu-24.04`, `docker`,
+  `node22`) move to the baked image; `ubuntu-22.04` stays plain act-22.04
+  (no workflow requests it; a 24.04-content image behind a 22.04 label
+  would lie about its OS; helm/cr jobs request the 24.04 family — t4's
+  whitelist already bounds what jobs may ask). Intermediate states: the
+  ONLY unsafe overlap is a retired workflow ahead of a flipped label
+  (helm-less image + no installer), so chunk order C06→C07 is the
+  merge-order law too — flipped label + old workflow is safe (setup-helm
+  is idempotent over a present binary), old label + new workflow must
+  never ship. Bootstrap race: the same merge flips the labels AND first
+  builds the image, so a job scheduled after the ArgoCD sync but before
+  the build would need image X to build image X — the recommended landing
+  is split merges (UA-7: C05 alone first, the build publishes the pin's
+  literal on the still-old-image runner; C06+C07 follow); a single PR is
+  survivable with the DESIGNED loud shapes (release fire reds at `helm:
+  command not found` or a pull error, both self-heal on re-run after
+  tag+sync+restart; that re-run is the clean first fire). Rollout risk is
+  real — a wrong image ref idles ALL Forgejo CI on both runners — so the
+  plan carries the owner first-fire observation (UA-7..UA-9) incl. the
+  10Gi docker-data cold-pull watch with the owner-run prune command (no
+  agent pod-exec per AGENTS MCP law).
+- 2026-11-21 plan D41 (test surfaces, scheduled from explore_handoff): the
+  new image's suite is `tests/containers/forgejo-runner.sh` — the
+  tests/containers/forgejo-host-runner.sh pattern (static Dockerfile
+  contract + hadolint-with-skip + `docker build => no-daemon,
+  CI-deferred` designed passing shape, cf-77) — NOT
+  `containers/<img>/tests/` (that shape is for python tooling shipped in
+  the image; none ships here; CI runs neither kind, the first real build
+  is the authoritative test either way). Flips: forgejo-release t5
+  (checkout-only allow-list, azure/setup-helm banned file-wide) + t19
+  (runtime-cr contract → BAKED-toolchain contract, presence of
+  Verify-toolchain legs pinned, cr/helm invocations still pinned) + new
+  t20 (index-curl --retry); dev/gpu-forgejo-runner ACT_LABELS constants +
+  gpu g2 equality; gpu g7 RE-ARMED not deleted (its values.yaml-untouched
+  + 2-docker-line cap exist to fence cf-104's single-line swap and would
+  otherwise fence out this very change — replaced by bounded-semantic
+  teeth: at most 8 changed docker:// lines, only act-24.04-out /
+  forgejo-runner-in shapes, ubuntu-22.04 byte-stable, dev-surface
+  invariance kept); dev t14 record re-derived to the rewritten template
+  comment (no-digest rule stays, git-lfs-binding stays, helm+cr-baked +
+  manual-bump added); forgejo-ci-surface NO edit (inventory/guard legs
+  survive; prose must dodge its banned-token list); guard-trio admits
+  (agents-md c7, gate t14, rulesync-surface c8) widen for
+  charts/forgejo-runner/* and containers/forgejo-runner/* with
+  provenance, bound against MAIN's newer trio versions per the STATE
+  conventions_shift.
+ - 2026-11-21 human D42 (batched plan round — landing shape): the owner chose the
+   SINGLE PR over the recommended UA-7 split: C05+C06+C07 land in one merge, riding
+   the DESIGNED loud red shapes (helm command not found / pull error) whose re-run
+   after the image publishes + sync + restart is the clean first fire; UA-8 (one-line
+   pin amend if the merge crosses into December and 26.11.1 predates the real tag)
+   stands as the owner contingency. UA-7's split option is retired by this ruling.
+   D37/D38/D39/D40 (cr baked, helm v3.22.1, ghcr pull source, 22.04 label unmoved)
+   were CONFIRMED unchanged in the same round; the plan was APPROVED to run
+   C05 -> C06 -> C07.
+ - 2026-11-21 human D43 (batched plan round — scope trim): the three added
+   "Verify toolchain" steps in C07 are RETIRED (owner answer over the recommended
+   keep): no helm-version/cr-version presence steps enter release.yaml; t5/t19
+   flips survive without presence assertions per the planner's own note. The t20
+   index-curl --retry hardening (resilience, not a presence assertion) and the
+   D41 test-surface schedule otherwise stand as planned.
