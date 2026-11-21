@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
   "test_session": "ses_e006a6794ffeHqXl8O0Lx4sLoQ (fix-round test wave, 2026-11-21 — current for validation_at_fault routing; the rebuild-round session was lost-in-restart, its suites were disk-verified)",
   "current_wave": 3,
@@ -23,6 +23,11 @@
       "ghcr_fact": "ownyourio/forgejo-runner tags/list => 403 resource-denied (repo absent = registry provably empty); control probe proved the recipe works; shipped pin 26.11.1 stands as the walk-predicted literal (UA-8 contingency armed)"
     },
     "test_session_fix_round": "ses_e006a6794ffeHqXl8O0Lx4sLoQ",
+    "final_review_fix_round": {
+      "at": "2026-11-21", "session": "ses_dffede315ffe4BSjmicj7KZThL", "tier": "planning (flash per D35)",
+      "verdict": "APPROVED — 8/8 seams (S1 image->labels tag-chain proven end-to-end incl live empty-registry re-probe; S2 labels->workflows: all 11 runs-on ride the baked image, base-inheritance carries lfs/docker/node/jq/python for the other three workflows; S3 zero NEW reds anywhere, no suite expects deleted surfaces; S4 prose parity rulesync-clean + 13-manager regex replay proves the hand-bump claim; S5 landing matches D42 verbatim, zero split-merge residue; S6 records complete; S7 fresh gate table all-green/admitted; S8 6 commits, 0 merges, nothing pushed, exactly 22 sanctioned files)",
+      "carried": "3 minors in chunk notes (Dockerfile:41 wording, header one-download over-claim, values:112 undercount); nit: stale /tmp/opencode/restore-review worktree registration from the 2026-11-16 dead session — owner-side removal; observation: containers-build t6/t12 v6-vs-v7 pins stay admitted-red until their owner ticket re-anchors"
+    },
     "c05_dev_round": "ses_e003e2462ffehXoDhUqDkZvZTn DONE 2026-11-21 — containers/forgejo-runner/{Dockerfile,README.md} only; 8/8 image suite GREEN (real hadolint 2.15.1 at error threshold); digest + arch-child + helm sidecar + cr checksums live-verified; renovate customManagers[8] regex replay extracts both pins, CR_SHA256 provably unclaimed; regressions baseline-diffed byte-identical (release 17G+3 designed-red, host-runner 11/11, containers-build 38+3 ALL pre-existing, ci-surface t4 pre-existing); deviations adjudicated ACCEPT (suite-as-contract, no-SHELL at repo bar, provenance-comment truth fix, added offline verification); aislop vacuous for Dockerfile/MD recorded honest (FRICTION). NOTE: unplanned bookkeeping commit dca02bb94 found mid-round and KEPT after content verification (FRICTION)"
   },
   "rebuild": {
