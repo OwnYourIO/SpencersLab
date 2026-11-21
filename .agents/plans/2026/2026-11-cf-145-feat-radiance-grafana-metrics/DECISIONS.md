@@ -26,4 +26,4 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - 2026-11-21 plan D-11 (rework scope law): exactly the eight batched answers folded (OQ-2/3/5/6/7 kept, re-expressed; OQ-1/4/8 overridden); nothing else moved. Commands re-verified post-rework: `helm dependency update charts/radiance` + lint/template of the three surfaces all 0-fail, `pytest charts/radiance/tests -q` => 67 passed / 1 LOUD pre-existing skip (llama-swap dep leg; the skip names its remedy — not the silent mass-skip class), grafana 10.1.0 subtree render => RC=0 with dashboardproviders.yaml + download_dashboards.sh + both vllm curls present. C02 re-sized S→M (two coupled surfaces + render legs).
 
 ## Deferred
-- ...
+- Final-review nits (owner's call, none blocking): test_dashboard_filing.py:295 assert message missing one `f`-prefix (future-failure display only); plan/C01 provenance line-numbers pinned at branch-@7219bf5 (relocate with the cf-143-era ledgers if ever re-cited); "46-green suite" kept as the cf-143-era guarantee NAME beside the live 67P/1S baseline (D-8 self-disambiguates).

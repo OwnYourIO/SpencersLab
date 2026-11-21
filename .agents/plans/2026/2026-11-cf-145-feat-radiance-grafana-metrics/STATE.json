@@ -1,6 +1,6 @@
 {
   "feature": "2026-11-cf-145-feat-radiance-grafana-metrics",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e6f3deb96ffe42qI5WBzeC47TA",
   "test_session": "ses_dffd43e53ffeUX8VsfUTa7LUfU",
   "current_wave": 1,
@@ -141,6 +141,15 @@
       "next": "C01 dev (wave 1), then C02 dev, C03 after both; dev turns the 18 reds green without touching preserve pins"
     }
   ],
+  "final_review": {
+    "at": "2026-11-21",
+    "status": "APPROVED",
+    "session": "ses_dffa30f21ffe4Vhdw1deCQoe05",
+    "evidence": "fresh full range 7219bf5..8a84ea293: 93P/0F/1S suite; 67P baseline; all lints/renders pass; own sentinel 30/30; vllm byte-identical precedent; D-11 zero-diff on forbidden surfaces; aislop 100/100; eight owner rulings honored in the whole",
+    "minor_coord_owned": "plan OE-2 PromQL bracket-form -> label-selector fix: routed to plan session (edit denied to coord by design = firewall correct), APPLIED + grep-verified by ses_dfff64cc4ffeEPtJRzMpi1DgN2",
+    "deferred_nits": ["test assert message f-prefix", "provenance line numbers", "46-green name"],
+    "handoff_statement": "R2 vllm-resurrection + R5a re-rule framing carried into the card summary comment"
+  },
   "chunks": {
     "C01": {
       "status": "done",
@@ -212,13 +221,13 @@
       ]
     },
     "C03": {
-      "status": "in-review",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01", "C02"],
       "dev_rounds": 1,
       "review_rounds": 1,
       "dev_session": "ses_dffb1b240ffeVGnGg57RJWLx1M",
-      "last_verdict": "dev-DONE (0F/93P/1S full suite; one hunk @@ -676,11 +676,37 @@; aislop 100/0/0)",
+      "last_verdict": "APPROVED (commit 8a84ea293)",
       "handoffs": [
         {
           "at": "2026-11-21",
@@ -230,6 +239,18 @@
           "friction": "execute-tool JS template literals die on markdown backticks in heredoc payloads — resolution: /tmp/opencode checker via shell, the proven heredoc path",
           "open_questions": "none",
           "next": "review (window greps, AC3 cross-equality, AC4/AC5); coord commit runbook + test_runbook_note.py; OE-2/OE-3 remain owner legs"
+        },
+        {
+          "at": "2026-11-21",
+          "status": "APPROVED",
+          "chunk": "C03",
+          "review_session": "ses_dffaa22a7ffediHgN2h8dnjBd2",
+          "files_changed": [".agents/plans/2026/2026-11-cf-145-feat-radiance-grafana-metrics/chunks/C03.md (review notes appended)"],
+          "commands_run": "fresh: suite 93P/0F/1S counted; dirty-scope check (note + bookkeeping only, test_runbook untracked-new); landed-HEAD grep battery (pair keys values.yaml:193-194 exactly-two, inference provider 267-274, entry /tag/v1.17.0/ 684-690); window checker /tmp/opencode PASS (in-window hunk, outside-window byte-identity, retired+de-fanged absent, pointers present, /stats==1, curl block retained, narration clean); parent RESEARCH §R14/§R15 witnesses located; aislop 100/100",
+          "deviations": "none; review-side /tmp checker via shell heredoc (write-tool external-dir denied — consistent with FRICTION)",
+          "friction": "recurred classes only: location-shutdown first-call abort (retry clean); unanchored needle matched 'runbook' (word-boundary fix) — substring needle class",
+          "open_questions": "none",
+          "next": "committed 8a84ea293; final whole-plan review carries R2 vllm-resurrection statement"
         }
       ]
     }
