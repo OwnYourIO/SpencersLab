@@ -1107,10 +1107,13 @@ if want t6; then
   # Allow-list: the three C01-fix files, this ticket's own test surface
   # (authored by the test stage — coord may or may not have committed it
   # yet; that includes the C04 harness extension, which is test work that
-  # coexists in the working set from this wave), and plan/pipeline
-  # machinery. Everything else in the working set is an AC7 violation.
-  if grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
-    offenders=$(grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
+  # coexists in the working set from this wave), C04's committed workflow
+  # file (a sibling chunk landing ahead of a relay re-run must not read as
+  # a scope violation — same admission argocd-hook-wiring.sh t5 already
+  # carries), and plan/pipeline machinery. Everything else in the working
+  # set is an AC7 violation.
+  if grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.forgejo/workflows/main-sync\.yaml$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | grep -q .; then
+    offenders=$(grep -Ev '^(containers/argocd-hook/|tests/[^/]+/argocd-hook-|tests/services/forgejo-main-sync\.sh$|\.forgejo/workflows/main-sync\.yaml$|\.agents/|\.pipeline/)' "$WORK/changed.txt" | head -20)
     fail "t6: files outside the C01-fix scope changed (AC7 — chart work belongs to C02-fix, workflow work to C04): $offenders"
   fi
   if git diff "$BASE" 2>/dev/null | grep -qE '^diff --git a/(charts/base/|services/[^/]+/templates/appset\.yaml)'; then
