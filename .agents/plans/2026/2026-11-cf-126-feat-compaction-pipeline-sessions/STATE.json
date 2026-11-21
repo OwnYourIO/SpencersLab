@@ -1,0 +1,194 @@
+{
+  "feature": "2026/2026-11-cf-126-feat-compaction-pipeline-sessions",
+  "plan": "2026-11-17-feat-compaction-pipeline-sessions.md",
+  "plan_status": "approved",
+  "plan_approved_at": "2026-11-17T03:42 +0000 (owner approval at the plan-approval gate; the batched OQ1-OQ10 round preceded it, rulings landed in the re-work; the HITL `Planning` stop was satisfied at the same hand-off)",
+  "coord_session": "ses_e18d38cb8ffevu2NSfkIn7LJaJ",
+  "coord_session_note": "retroactively captured 2026-11-21 via session_rename under owner ruling D25 (the UI had this session mis-titled 'cf-147 Forgejo Runner Builds'; corrected to the slug); the D15 rename-skip degrade is superseded by the owner's instruction",
+  "test_session": "ses_e0af1fb97ffecU0dbqN6qLeH3z",
+  "current_wave": 3,
+  "updated_at": "2026-11-21T15:30 +0000 (SECOND WIPE + RECOVERY: durable branch posture per owner rulings D25-D26-D27; re-emission wave in flight in the worktree; this file reconstructed by the coordinator from its context — verbatim-block fidelity not guaranteed past the reconstruction notes)",
+  "recovery": {
+    "wipe_event": "2026-11-19..21 — main checkout (/home/coder/SpencersLab) lost ALL uncommitted/untracked cf-126 work (C01+C02 implementations, every test arm, the ticket folder down to an empty chunks/ skeleton); no stash, no ref, tree clean at 7886e20b4; three unrelated main commits landed in the window (coder-encryption fix + revert, question-notify disable)",
+    "lock_history": "the 2026-11-19 card-id claim (setId c2a1d9ee) was reaped 2026-11-19T21:58 (the silent C03 dev session starved the heartbeat); FRESH claim taken 2026-11-21 under the card-id key — setId a67a283f-3123-4592-a370-44f224a42b44 — the owner's 2026-11-21 continuation answered the sanctioned question (D25-D26 rulings ARE the answer)",
+    "durable_surfaces": {
+      "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-126-feat-compaction-pipeline-sessions",
+      "branch": "cf-126-feat-compaction-pipeline-sessions",
+      "branch_minted_from": "main 7886e20b4 (MINTED 7886e20b408f781d0b9479f5425eb30d9f0ac187)",
+      "commits": "resumed under owner ruling D26 — coordinator is the sole committer, per-surface restore commits; push stays forbidden (no explicit request)",
+      "origin_dir_stays": "/home/coder/SpencersLab (step-10 cleanup home)"
+    },
+    "reemission_wave_2026-11-21": {
+      "explore": "DONE — EXPLORE.md re-emitted verbatim (47 lines, wc + head/tail verified; shell-heredoc route per the permission-drift friction)",
+      "research": "in flight — RESEARCH.md",
+      "plan": "in flight — plan of record + chunks/C01-C04 (final post-rework state)",
+      "test": "in flight — all test surfaces final post-repair-3 state incl. tests/dispatcher + tests/handoff new suites",
+      "c01-dev": "in flight — seven source surfaces (no mirrors, no rulesync)",
+      "c02-dev": "QUEUED wave 2 — six coord sources + overview privilege line + permissions.md matrix, then rulesync generate for all mirrors",
+      "coordinator": "STATE/DECISIONS/FRICTION reconstructed by coord (this file + the 2026-11-21 reconstruction-noted pair)",
+      "restore_commits": "coord commits per surface after each wave completes, message citing the approved round being restored"
+    },
+    "c03_probe": {
+      "session": "ses_e0a19a771ffe3twfKZ4mubUit9",
+      "status": "BLOCKED recon — ZERO repo files written before going idle (loss set is exactly C01+C02+tests+records, NOT C03 code)",
+      "hold": "full frozen C03 implementation design (v2.3.0 seam remaps: ctx.session.hook('compaction') mutable-system-array event -> adapter; entry.put binder {key,text}->{key,value}; needle-window arithmetic; sibling-pin inventory complete); baseline ledger captured pre-wipe (X2 10/0/10, X3 10/0/10, W2 3/2/1 sole red = release-tool vocab leg, T14 6/0/6, H1-H8 red, H9 green); scratch probe files live at /tmp/opencode/cf126-probe/",
+      "death": "self-inflicted SIGTERM via broad `pkill -f \"opencode serve\"` (matched its own shell / the session server) — workspace rule adopted: exact-PID kills only (FRICTION)",
+      "resume": "after the reconstruction review, C03 implementation launches in the worktree with the auth'd live-fire probe (OPENCODE_PASSWORD set pre-launch) as step one"
+    }
+  },
+  "handoffs": [
+    {
+      "role": "explore",
+      "agent": "agent-explore",
+      "model": "gpu-ai/qwen3.8-27b-radiance",
+      "result": "status: DONE | files: EXPLORE.md | open_questions: (1) the D54(4) default-model doctrine conflict needs an owner ruling/measurement receipt; (2) no session-creation surface today — the plan must choose the mechanism (opencode api post /api/session* shell rows vs a plugin ctx.session write; the /pipeline-tick precedent at pipeline-locks L2122-2132); (3) the exact-name lists (gate script L227, board-context BOARD_COORD_AGENTS L117-121) must gain any new agent name | grounding: repo state HEAD 405b942b9 on main; fix-radiance-context UNMERGED (main 200000 the source of record)",
+      "grounding": "repo state HEAD 405b942b9 on main (ahead 8 of origin/main); the fix-radiance-context branch read only as a branch-existence fact (UNMERGED retarget; main 200000 the source of record)"
+    },
+    {
+      "role": "research",
+      "agent": "agent-research",
+      "model": "gpu-ai/qwen3.8-27b-radiance",
+      "result": "status: DONE | files: RESEARCH.md | five open questions (loop vehicle; whole-hour vs active-only liveness; hook scope; compaction.model; receipt depth) | verdicts: (a) shared session + per-card handoff SUPPORTED; (b) lock-release trigger SUPPORTED; (c) coord read-priv widening SUPPORTED; (d) custom compaction instructions CONVENTION-PLUS-SUPPORTED-HOOK; (e) sliding-window CONVENTION-ONLY (keep.tokens the only knob); (f) 27b-radiance default BLOCKED until ruling + receipt"
+    },
+    {
+      "role": "plan",
+      "agent": "agent-plan",
+      "model": "gpu-ai/qwen3.8-27b-radiance",
+      "result": "status: DONE | 4 chunks / 4 waves | OQ1-OQ10 returned for one batched owner round | re-worked on the owner's 2026-11-17 rulings (OQ1 second dispatcher file, OQ3 all agents, OQ4 session model, OQ5 262144; the rest held) — open questions closed | approved 2026-11-17T03:42"
+    },
+    {
+      "role": "test",
+      "agent": "agent-test",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "status: DONE | chunk: test | full designed-red inventory across C01-C04 (see the 2026-11-19 reconstruction-note record in DECISIONS + the card comments; the verbatim RESULT pre-dates the second wipe and is summarized here: every chunk's validation arms written + run twice byte-identical; new suites tests/dispatcher + tests/handoff; deviations: offline SEAM CONTRACTS, N4/family.py HOLD re-pins, t20 triple in --help; open questions routed to coord and closed by D20/D21)",
+      "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
+    },
+    {
+      "role": "test-repair",
+      "agent": "agent-test (continuation)",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "2026-11-19 mechanical route (validation_at_fault): five repairs verified + deterministic (N8 re.S; four sibling gate byte->content re-pins; noop + gate behavior re-runs clean)",
+      "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
+    },
+    {
+      "role": "test-repair-2",
+      "agent": "agent-test (continuation)",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "2026-11-19 C01 review's validation_at_fault item CLOSED: provider-loops t8 re-pinned from loop-file COUNT to its actual law (one scheduled walk, no duplicate walker) with both drift fixtures asserted; determinism twice; t7 green proves no phrasing red traded",
+      "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
+    },
+    {
+      "role": "test-repair-3",
+      "agent": "agent-test (continuation)",
+      "model": "openrouter/qwen/qwen3.8-flash",
+      "result": "2026-11-19 D24 route: c2 leg-2 four-row family; B5 ban -> STRENGTHENED positive containment (twelve files); t4 admissions schema (dispatcher row + widened carries, five-fixture proved) + scope-noted t6 A15-name widening; t4 left DELIBERATELY RED naming the C02-dev matrix obligation",
+      "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z"
+    }
+  ],
+  "kickoff": {
+    "card": "PpN4g7xQDD4LXEuPW",
+    "card_number": 126,
+    "title": "Compaction and Pipeline Sessions",
+    "slug": "cf-126-feat-compaction-pipeline-sessions",
+    "slug_origin": "derived at claim (card's slug field was unset); the stack field now carries the combined [<slug>](<session link>) line, refreshed in place 2026-11-21 under D25",
+    "type": "feat",
+    "run_tag": null,
+    "run_tag_note": "omitted — run tags retired for every flavor (cf-90)",
+    "origin_dir": "/home/coder/SpencersLab",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-126-feat-compaction-pipeline-sessions",
+    "worktree_note": "owner ruling D26 2026-11-21 (second wipe); the original card-driven skip (D28) is superseded for the run's remainder",
+    "branch": "cf-126-feat-compaction-pipeline-sessions",
+    "branch_source": "kickoff-mint-branch.sh MINTED at 7886e20b4 on the owner-ruling relocation 2026-11-21",
+    "commits": "coordinator-only per D26; restore commits per reconstructed surface; push forbidden (pipeline-push-pr explicit-request condition absent)",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com (claim-once record; reuse, never re-resolve)",
+    "board_context": "2026-11-21 launch block (dev-boards, collected 2026-11-21T14:59:12Z) recorded at the resume",
+    "services": ["agent context"],
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash",
+      "local": false,
+      "note": "owner ruling 2026-11-19 (resume): openrouter flash for every remaining role — supersedes the 2026-11-17 radiance both-tiers ruling for the run's remainder (three #59110 deaths on radiance); the completed explore/research/plan hand-offs stay recorded on radiance"
+    },
+    "priority": {
+      "raw": null,
+      "class": "default",
+      "stamped": false,
+      "note": "D20 conditional stamp remains unreachable through the string-only setter schema (FRICTION entry 3, open)"
+    },
+    "stages": ["Exploration", "Pre Research", "Planning", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+    "stages_basis": "Checked-stages-only, card order (the boards Stage map). Done: Exploration, Pre Research, Planning, Test Writing, C01 dev+review, C02 dev+review. In flight 2026-11-21: reconstruction of C01/C02/test/record surfaces, then C03 dev+review, C04 owner-gated, Final Review. Unchecked/skipped: Agent Decides Research, Post Research, Deployment, Single Session. Session Rename retroactively performed 2026-11-21 (D25); Worktree Creation retroactively performed (D26).",
+    "hitl": ["Planning", "Deployment"],
+    "hitl_note": "Planning stop satisfied 2026-11-17 at the approval; the Deployment stop remains vacuous (stage not in the checked set)",
+    "preload": { "at": "claim 2026-11-17T01:51-ish", "tool": "preload_board", "cards": 195, "degraded": false },
+    "card_details": { "at": "claim", "tool": "get_card_details", "degraded": false },
+    "claim": {
+      "setId": "a67a283f-3123-4592-a370-44f224a42b44",
+      "pipelines": ["PpN4g7xQDD4LXEuPW"],
+      "at": "2026-11-21T15:10 +0000",
+      "note": "fresh card-id-key claim after the second reap (history: Context-set claim 9c5800dd reaped in gap 1; card-id claim c2a1d9ee reaped 2026-11-19T21:58 after the C03 session went silent; the owner's 2026-11-21 continuation answers the sanctioned question)"
+    }
+  },
+  "chunks": {
+    "C01": {
+      "title": "The shared-session dispatcher: the adapted agent, the NEW loop file (the OQ1 ruling — pipeline-worker byte-untouched), the exact-name lists, the release wake trigger, the Deployment-row/8b board-family doctrine",
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "dev_session": "ses_e0aafb09bffes6ZuoXdH7FhIrn",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review round 1, 2026-11-19) — SURFACE UNDER RECONSTRUCTION 2026-11-21 (dev re-emission in flight); the verdict stands, the bytes must reproduce it — the restore review + final review re-verify",
+      "handoffs": [
+        { "role": "dev", "agent": "agent-dev-pr", "round": 1, "result": "DONE 2026-11-19 — dispatcher agent + pipeline-dispatch.md + gate quadruple + board-context quadruple + wakeDispatcher + boards Dispatcher section + overview/AGENTS; C01 subset green twice byte-identical; zero commits; full ledger in the card comment CHUNK C01 DONE + DECISIONS D23 (reconstructed summary; verbatim RESULT lost in wipe 2)", "files_changed": [".rulesync/subagents/agent-board-dispatch.md", ".opencode/agents/agent-board-dispatch.md", ".agents/loops/pipeline-dispatch.md", "scripts/agent-board-coord-gate.sh", ".opencode/plugin/board-context/index.ts", ".opencode/plugin/pipeline-locks/index.ts", ".rulesync/skills/boards/SKILL.md", ".opencode/skills/boards/SKILL.md", ".rulesync/rules/overview.md", "AGENTS.md"] },
+        { "role": "review", "agent": "agent-review", "round": 1, "result": "APPROVED 2026-11-19 — validations reproduced byte-identical twice; gate-comment deviation ACCEPTED; wake posture CORRECT; single-authority RESPECTED; one validation_at_fault (t8) — closed by test-repair-2", "files_changed": ["chunks/C01.md (Review notes)"] }
+      ]
+    },
+    "C02": {
+      "title": "Coord-family surface widening: the read-context grant, the global- MCP rows, the session-creation shell rows (six variants)",
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 2,
+      "dev_session": "ses_e0a5de42fffe8Qn0OzxUlPH4HC",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review round 1, 2026-11-19): all arms green byte-identical 2-3x; matrix truth verified cell-by-cell; B5 STRENGTHENED; settled-constant promotion DEFERRED TO FINAL — SURFACE UNDER RECONSTRUCTION 2026-11-21 (wave 2 of the re-emission; verdict stands, restore review re-verifies)",
+      "handoffs": [
+        { "role": "dev", "agent": "agent-dev-pr", "round": 1, "result": "DONE 2026-11-19 — six coord sources widened (read*/env-denies, six fleet rows, four-row api family), mirrors, overview privilege line, matrix cells where admitted; pre-wave reconstruction tree attributed every disputed red; c2/B5 re-pin debt routed (D24); full ledger in the card comment CHUNK C02 DONE (reconstructed summary; verbatim RESULT lost in wipe 2)", "files_changed": [".rulesync/subagents/agent-coord{,-local,-pr}.md", ".rulesync/subagents/agent-board-coord{,-local,-pr}.md", ".opencode/agents/ mirrors", ".rulesync/rules/overview.md", "AGENTS.md", ".rulesync/skills/agents-sync/references/permissions.md"] },
+        { "role": "test-repair-3", "agent": "agent-test", "round": null, "result": "see top-level handoffs[role=test-repair-3] — c2/B5/t4 landed; t4's named obligation handed to dev round 2" },
+        { "role": "dev", "agent": "agent-dev-pr", "round": 2, "result": "DONE fix-matrix 2026-11-19 — t4 flipped GREEN: dispatcher matcher row + four frozen coord-family carries per the admission schema; wekan-mcp t1-t6 all green; aislop 99/0-err (reconstructed summary)", "files_changed": [".rulesync/skills/agents-sync/references/permissions.md", ".opencode/skills/agents-sync/references/permissions.md"] },
+        { "role": "review", "agent": "agent-review", "round": 1, "result": "APPROVED 2026-11-19 — six widened blocks identical-shape; matrix no-lie spot-check; B5 containment strengthened; t4 sound-by-structure; promotion deferred (reconstructed summary)", "files_changed": ["chunks/C02.md (Review notes)"] }
+      ]
+    },
+    "C03": {
+      "title": "Compaction + handoff protocol: the plugin compaction hook (repo-wide — every agent, the OQ3 ruling), the engine `handoff` outcome, the subagent relaunch doctrine, the 15-step-class keep.tokens",
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "dev_session": "ses_e0a19a771ffe3twfKZ4mubUit9",
+      "review_rounds": 0,
+      "last_verdict": "NOT STARTED before the gap: the C03 probe (2026-11-21) proved zero files written, full design + baseline ledger held in the session; resume AFTER the reconstruction review",
+      "handoffs": [
+        { "role": "dev-probe", "agent": "agent-dev-pr (status probe)", "round": 0, "result": "BLOCKED recon — zero repo writes; full frozen design (v2.3.0 hook/event/entry.put remaps, needle arithmetic, sibling-pin inventory); baseline ledger X2 10/0/10 X3 10/0/10 W2 3/2/1 T14 6/0/6 H1-H8 red H9 green; death: self-SIGTERM via broad pkill -f (FRICTION rule: exact-PID kills only); resume: auth'd live-fire probe first, then implementation in the worktree" }
+      ]
+    },
+    "C04": {
+      "title": "27b-radiance default-model flip: the three pipeline-models doctrine surfaces + the runner literal, gated on the owner ruling + the fix-radiance-context merge + the q27 pod scale-up + the runbook 8-session gate receipt",
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "gates": [
+        "owner ruling 2026-11-17 (present — the model-correction comment + the in-session ruling)",
+        "fix-radiance-context merge (200000 -> 262144 retarget; branch fix-radiance-context @ e8fa061fe still UNMERGED at 2026-11-21 — main's radiance rows still serve 200000)",
+        "q27 pod scale-up (fn down FIRST, then q27 up — one-card/one-engine law; git renders replicas 0)",
+        "runbook 8-session gate receipt on the q27 lane (depth 262144 — the OQ5 ruling; the runbook line updates with the fix-radiance-context merge; PASS = 8 admitted without refusal-class errors + the read-only receipt list)"
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": ["see DECISIONS.md Deferred — settled-constant promotion + kickoff-warm-location matrix wording ride the final review; C02 review's two items + the pin-inventory law are the friction-followup candidates"]
+}
