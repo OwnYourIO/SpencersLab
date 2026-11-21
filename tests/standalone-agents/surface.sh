@@ -713,18 +713,37 @@ if want s7; then
   variants=$(ls .rulesync/subagents/code-*.md 2>/dev/null || true)
   [ "$variants" = ".rulesync/subagents/code-pr.md" ] \
     || fail "S7[AC5 + cf-106 C04 AC3]: code variants are [$variants] — want exactly .rulesync/subagents/code-pr.md (red before C04 creates the twin; a code-local/code-deploy variant would re-break the cf-58 no-variants rule)"
-  # code.md left the byte-freeze with the isolation landing (2026-10-27,
+  # code.md left the byte-freeze with the isolation landing (2026-10-29,
   # bug-coord-opencode-perms): its sanctioned delta is the three opencode_*
   # workspace-isolation rows, pinned present below; the pipeline-MUST-load
   # and no-variants pins above stay the file's real invariants.
-  moved=$(git diff --name-only "$TB" -- .rulesync/subagents/ask.md .rulesync/subagents/review.md \
-          .rulesync/subagents/planner.md | grep -v '^$' || true)
-  [ -z "$moved" ] || fail "S7[AC5]: $moved changed vs ticket base $TB — these three subagent files must be byte-unchanged (the fold-ins land in their role SKILLs, not the agent files)"
+  # cf-126 C06 RE-PIN (D35 roster): ask/review/planner are IN-scope for the
+  # appended '## Compaction & fresh-start' narrative, so the byte-freeze leg
+  # becomes an APPEND-ONLY PREFIX FREEZE — every byte before the sanctioned
+  # section stays immovable (the fold-in law survives verbatim: prose that
+  # moves an existing line reddens here, and mechanics stay in the role
+  # SKILLs). Green now (files untouched); green again only for a pure append.
+  python3 - "$TB" .rulesync/subagents/ask.md .rulesync/subagents/review.md .rulesync/subagents/planner.md <<'PY' || fail "S7[cf-126 C06 re-pin of the byte-freeze leg]: ask/review/planner moved pre-existing bytes vs $TB or gained a non-sanctioned tail (append-only is the law — tests/agent-narratives owns the section's shape)"
+import subprocess, sys
+tb = sys.argv[1]
+hdr = "## Compaction & fresh-start"
+for path in sys.argv[2:]:
+    old = subprocess.run(["git", "show", f"{tb}:{path}"], capture_output=True, text=True, check=True).stdout
+    new = open(path, encoding="utf-8").read()
+    if not new.startswith(old):
+        print(f"{path}: bytes BEFORE any appended section moved vs {tb} — the sanctioned C06 change is an APPEND of '{hdr}', nothing else"); sys.exit(1)
+    tail = new[len(old):].lstrip("\n")
+    if tail and not tail.startswith(hdr):
+        print(f"{path}: the appended tail is not the sanctioned section ({tail[:60]!r})"); sys.exit(1)
+    if tail.count(hdr) > 1:
+        print(f"{path}: sanctioned section appears more than once"); sys.exit(1)
+print("ok")
+PY
   for row in opencode_worktree_create opencode_worktree_list opencode_session_move; do
     grep -qF "action: $row" .rulesync/subagents/code.md \
       || fail "S7[AC5]: code.md lost the workspace-isolation row '$row' (sanctioned 2026-10-27; execute deliberately ungranted — Code Mode falls to the global ask)"
   done
-  ok "S7[AC5 + cf-106 C04 AC3]: code.md clean of pipeline MUST-loads, carrying the sanctioned isolation rows; the code variant set is exactly the cf-106 -pr twin; ask/review/planner subagent files byte-unchanged vs $TB"
+  ok "S7[AC5 + cf-106 C04 AC3]: code.md clean of pipeline MUST-loads, carrying the sanctioned isolation rows; the code variant set is exactly the cf-106 -pr twin; ask/review/planner carry only the append-only prefix-freeze re-pin (cf-126 C06 D35 roster)"
 fi
 
 # --- S8: permissions.md Standalone-agents subsection + mirror integrity -----------
