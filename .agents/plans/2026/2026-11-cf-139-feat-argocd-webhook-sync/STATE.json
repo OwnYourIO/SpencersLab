@@ -109,13 +109,15 @@
       ]
     },
     "C03-fix": {
-      "status": "pending",
+      "status": "done",
       "wave": 6,
       "depends_on": ["C02-fix", "C04"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        { "at": "2026-11-21T23:40+00:00", "event": "dev DONE: runbook rewritten to (c) reality; ALL FOUR suites green together for the first time (runbook 6/6, relay 7/7, wiring 8/8, main-sync 13/13); forbidden-literal sweeps 0; final re-review owns the chain verdict" }
+      ]
     }
   },
   "blocked": [],
