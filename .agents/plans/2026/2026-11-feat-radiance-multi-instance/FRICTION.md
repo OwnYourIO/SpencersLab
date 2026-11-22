@@ -377,3 +377,23 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   never into the repo) before the owner is asked, so the trade is stated on evidence: keep script bytes in the
   lane block (equivalence intact) vs move them to a chart-side/env carrier (parameterized, but the rendered
   pod spec changes and the fixtures must be re-derived). · open (verification + owner ruling)
+- 2026-11-22 · coord · **my `--amend` orphaned a commit hash already written into the permanent record.** I
+  committed round 3 as `3d412e3d3`, recorded that hash in STATE, then amended the message to disclose the
+  bundled test repairs — which rewrote the commit to `5cd3c2c42` and left the recorded hash pointing at a
+  dangling object reachable from no ref. **The reviewer caught it**, verified the trees byte-identical, and asked
+  for a re-point. A future session grepping that hash finds nothing and either loses the evidence trail or
+  "repairs" it wrongly.
+  · resolution: STATE re-pointed to the live hash with the orphan named. Standing rule: **never amend after
+  writing a hash into a record — append a follow-up commit instead; if an amend is unavoidable, immediately
+  `git grep -n <old-hash>` across the plan folder and re-point.** Note the root cause: the D37 staging mistake
+  (directory path swept `tests/` in) is what created the amend in the first place — staging explicitly would
+  have avoided both errors. · fixed-by-this-recipe (machinery half OPEN: nothing verifies that hashes recorded
+  in plan folders still resolve; a `git cat-file -e` sweep would be a cheap gate)
+- 2026-11-22 · review(C03 r3) · **two stale-comment minors, both assigned, neither a code defect.** (a)
+  `tests/notes/radiance-roster.sh:76-79` still claims "today the blocks still author args" — false at HEAD since
+  round 3 removed them; it is a TEST file, so it belongs to the test session and is fixed when C06 re-pins that
+  suite (already assigned). (b) `services/gpu-ai/prod/values.yaml:1315` labels the resting-twins header "(C05)"
+  though D46 landed them as C03 round-3 output — an implementation comment, so C05's dev brief carries it as a
+  one-line ownership relabel.
+  · resolution: both carried verbatim into their owning briefs; behaviour unaffected, neither blocks. · open
+  (C05/C06 briefs)
