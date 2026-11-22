@@ -807,12 +807,16 @@
         // floor is server-side in each lane's peers filters.setParams
         // "priority?" (services/gpu-ai/prod/values.yaml): 3 for flash-TP1, 2
         // for 27b-TP2, each lane's OWN default row, never a stolen rank; the
-        // set-if-undefined operator never rides a row. Context is 200000 —
-        // what each pod actually serves (--max-model-len in its subtree) —
-        // NOT the six owner rows' 262144 trained figure (D27 protects those
-        // rows as-is; re-pinning any of them is an owner act, and the split
-        // between the two figures is the catalog's own fn-q27 precedent, not
-        // drift). Nothing routes here by default and the runner-model literal
+        // set-if-undefined operator never rides a row. limit.context is the
+        // family figure: the trained 262,144 window the CLIENT budgets
+        // against. Served admission is the other number, the lane's own
+        // RADIANCE_MAX_MODEL_LEN 200000, which charts/radiance composes into
+        // --max-model-len. The pod refuses a request past it, so a client that
+        // fills the trained window meets a loud refusal: the cost the owner
+        // accepted for one family-wide figure, as the fn/q27 rows state.
+        // Re-pinned from 200000 to 262144 by owner ruling 2026-11-23 (C05
+        // authored these six at 200000). Nothing routes here by default and
+        // the runner-model literal
         // does NOT move: both lanes rest at replicas 0 (git resting state,
         // flipped only by an owner scale act), so while a lane rests its
         // peers hop fails with a 502 peer proxy error — the Service has no
@@ -824,42 +828,42 @@
           "modelID": "qwen3.8-flash-next-radiance-tp1",
           "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - default priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 3 }
         },
         "qwen3.8-flash-next-radiance-tp1-urgent": {
           "modelID": "qwen3.8-flash-next-radiance-tp1",
           "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - urgent",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 7 }
         },
         "qwen3.8-flash-next-radiance-tp1-low": {
           "modelID": "qwen3.8-flash-next-radiance-tp1",
           "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - low priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 2 }
         },
         "qwen3.8-27b-radiance-tp2": {
           "modelID": "qwen3.8-27b-radiance-tp2",
           "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - default priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 2 }
         },
         "qwen3.8-27b-radiance-tp2-urgent": {
           "modelID": "qwen3.8-27b-radiance-tp2",
           "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - urgent",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 6 }
         },
         "qwen3.8-27b-radiance-tp2-low": {
           "modelID": "qwen3.8-27b-radiance-tp2",
           "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - low priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 1 }
         },
         "ornith-1.5-122b-strata-q4": {
