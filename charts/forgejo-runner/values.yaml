@@ -12,9 +12,12 @@
 # hugo-pipeline; docker is the default and the shape this file ships):
 #   docker — the pod below: privileged DinD sidecar + runner container, the
 #            5-label baked job-image set (four act-24.04-family labels on
-#            ghcr.io/ownyourio/forgejo-runner, ubuntu-22.04 plain act),
-#            DOCKER_HOST at the in-pod socket, shared into job containers
-#            via config container.docker_host (cf-6, 2026-11-21).
+#            git.spencerslab.com/curatedforest/forgejo-runner — the dev
+#            release overrides the list with its own registry's refs in
+#            its services slice, cf-6 run-1 2026-11-22; ubuntu-22.04
+#            plain act), DOCKER_HOST at the in-pod socket, shared into
+#            job containers via config container.docker_host (cf-6,
+#            2026-11-21).
 #   host   — jobs run directly in the runner container (the toolchain image,
 #            ghcr.io/ownyourio/forgejo-host-runner). Helm parses values.yaml
 #            as plain YAML, so the toggle cannot gate this file's structure;
@@ -102,27 +105,44 @@ runner:
   # unchanged.
   backend: docker
   # Advertised runner labels, rendered verbatim into config.yaml's
-  # server.connections.default.labels. The docker default is the cf-55
-  # baked set (D39/D40): the four act-24.04-family labels (ubuntu-latest,
-  # ubuntu-24.04, docker, node22) name the repo-built job image
-  # ghcr.io/ownyourio/forgejo-runner — helm and cr baked over the
-  # act-24.04 base, containers/forgejo-runner — while ubuntu-22.04 stays
-  # a plain act tag (no job requests it, and a 24.04-content image behind
-  # a 22.04 label would lie about its OS). The pins are immutable calendar
-  # tags and no renovate manager reads these lines, so a bump is manual:
-  # one values line plus the ArgoCD sync. Rolling refs are forbidden here
-  # (":main"/":latest" included) — these runners never re-pull a tag they
-  # have cached, so a floating pin would freeze silently at first-pull
-  # content, while a wrong calendar pin fails loudly as a pull error.
+  # server.connections.default.labels. The docker default is the baked
+  # job-image set (cf-55 D39/D40), re-pointed to the instance registries
+  # by the family-B per-release ruling (cf-6-debug-forge-runner-docker-1,
+  # 2026-11-22): the four act-24.04-family labels (ubuntu-latest,
+  # ubuntu-24.04, docker, node22) name
+  # git.spencerslab.com/curatedforest/forgejo-runner — the repo-built
+  # image (containers/forgejo-runner: helm and cr baked over the
+  # act-24.04 base) on the INFRA instance registry, which the gpu
+  # release rides as the default. The pull is done by the in-pod dind
+  # daemon with no credentials, so these refs only work while the
+  # package is anonymously readable. The dev release overrides the
+  # whole list in its services slice to pull the same build from its
+  # own registry (git.scifi.farm) — a runner never cross-pulls another
+  # instance's copy. ubuntu-22.04 stays a plain act tag in every set
+  # (no job requests it, and a 24.04-content image behind a 22.04
+  # label would lie about its OS). The 26.11.1 is bootstrap
+  # provenance: owner-built and pushed to BOTH registries by hand
+  # 2026-11-22, not minted by the containers-build pipeline. The pins
+  # are immutable calendar tags and no renovate manager reads these
+  # lines or the dev slice's — and the dev ROLE's builds never mint
+  # calendar tags, so that registry's copy is bootstrap-only — a bump
+  # is therefore manual across BOTH pin sites AND BOTH registries:
+  # push the new tag to git.spencerslab.com and git.scifi.farm, then
+  # move the chart default and the dev slice together; a site or
+  # registry left behind rides its old immutable tag forever,
+  # silently. Rolling refs are forbidden here (":main"/":latest"
+  # included) — these runners never re-pull a tag they have cached, so
+  # a floating pin would freeze silently at first-pull content, while
+  # a wrong calendar pin fails loudly as a pull error.
   # Host releases override with their own labels (labels are how jobs
   # route, so a host runner must never carry act labels it cannot
   # execute).
   labels:
-    - ubuntu-latest:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
-    - ubuntu-24.04:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
+    - ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
+    - ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
     - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
-    - docker:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
-    - node22:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
+    - docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
+    - node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
 
 app-template:
   controllers:

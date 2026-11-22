@@ -253,22 +253,30 @@ def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
 
-# The baked-runner label set (cf-55 fix round, D39/D40): the four
-# act-24.04-family labels resolve to ghcr.io/ownyourio/forgejo-runner — the
-# repo-built derivative of the digest-pinned act-24.04 base with helm and cr
-# baked in (containers/forgejo-runner, C05). The pin is an immutable
-# calendar tag because these runners never re-pull a tag they have cached:
-# a rolling ref would freeze silently at first-pull content. Bumps are
-# manual + red-first here — no renovate manager reads the label lines.
-# ubuntu-22.04 stays the plain act tag (D40: no job uses it, and a
-# 24.04-content image behind a 22.04 label would lie about its OS). DESIGNED
-# RED until C06 re-points charts/forgejo-runner/values.yaml (the t2 stop).
+# The baked-runner label set — the CHART DEFAULT (cf-55 fix round, D39/D40;
+# re-pointed to the infra instance registry by cf-6-debug-forge-runner-docker-1
+# on 2026-11-22, family B per-release ruling): the four act-24.04-family
+# labels resolve to the repo-built derivative of the digest-pinned act-24.04
+# base with helm and cr baked in (containers/forgejo-runner), published as
+# git.spencerslab.com/curatedforest/forgejo-runner — the ref the gpu release
+# rides; the dev release overrides the labels in its own services slice
+# (t17), because each runner pulls from its OWN instance registry. The
+# ghcr.io/ownyourio pin this leg carried since the cf-55 fix round named a
+# calendar tag that was walk-predicted and never minted (EXPLORE §2/§3).
+# The pin is an immutable calendar tag because these runners never re-pull a
+# tag they have cached: a rolling ref would freeze silently at first-pull
+# content. Bumps are manual + red-first here — no renovate manager reads the
+# label lines. ubuntu-22.04 stays the plain act tag (D40: no job uses it, and
+# a 24.04-content image behind a 22.04 label would lie about its OS). t2
+# renders the chart standalone, so this is the chart-default truth, never a
+# services slice. DESIGNED RED until the run-1 DEV move lands
+# charts/forgejo-runner/values.yaml (the t2 stop).
 ACT_LABELS = {
-    'ubuntu-latest:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
-    'ubuntu-24.04:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
+    'ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-    'docker:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
-    'node22:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
+    'node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
 }
 # Chart default runner.url — the standalone-render stand-in; the per-app
 # top-level slices override it at deploy time.
@@ -473,7 +481,7 @@ try:
                 if conn.get('token_url') != 'file:$CREDENTIALS_DIRECTORY/token':
                     bad(f't2: {release} — default.token_url is {conn.get("token_url")!r}, expected file:$CREDENTIALS_DIRECTORY/token')
                 if set(conn.get('labels') or []) != ACT_LABELS:
-                    bad(f't2: {release} — default.labels are {conn.get("labels")!r}, expected the baked 5-label set: four act-24.04-family labels on ghcr.io/ownyourio/forgejo-runner plus plain act-22.04 (cf-55 D39/D40)')
+                    bad(f't2: {release} — default.labels are {conn.get("labels")!r}, expected the baked 5-label chart default: four act-24.04-family labels on git.spencerslab.com/curatedforest/forgejo-runner plus plain act-22.04 (cf-55 D39/D40; infra-instance re-pin cf-6-debug-forge-runner-docker-1, 2026-11-22)')
                 runner_cfg = (cfg or {}).get('runner') or {}
                 if runner_cfg.get('timeout') != '30m':
                     bad(f't2: {release} — config runner.timeout is {runner_cfg.get("timeout")!r}, expected 30m (ruling 4)')
@@ -699,8 +707,8 @@ try:
         bad(f't14: the record embeds an image digest ({record[record.index("sha256:"):][:40]}…) — digests here go stale silently and no renovate manager reads these lines; the verified base digest lives in the ticket EXPLORE note, not in the chart')
     ok('t14: a comment block sits beside the labels map and carries no pinned digest')
 
-    if 'ownyourio/forgejo-runner' not in record:
-        bad('t14: the record does not name ghcr.io/ownyourio/forgejo-runner — the four act-24.04-family labels resolve to the repo-built baked job image, and the block beside the map is where that fact is recorded (cf-55 D39)')
+    if 'curatedforest/forgejo-runner' not in record:
+        bad('t14: the record does not name curatedforest/forgejo-runner — since the cf-6 run-1 re-point (2026-11-22, family B per-release) the act-24.04-family labels resolve to the repo-built baked job image on the instance registries (chart default git.spencerslab.com, dev slice git.scifi.farm — the bare org/name substring covers both hosts), and the block beside the map is where that fact is recorded (cf-55 D39 lineage)')
     ok('t14: the record names the baked image the 24.04-family labels resolve to')
 
     if not re.search(r'git[\s-]*lfs', record, re.I):
@@ -852,6 +860,130 @@ except Exception as ex:
 PY
   then
     checks=$((checks + $(cat "$WORK/host-count")))
+  else
+    exit 1
+  fi
+fi
+# --- t17: dev release's own-registry labels override via the slice (red-first) -
+# The appset merges ONLY the top-level forgejo-runner-dev: slice into the dev
+# release, so from cf-6-debug-forge-runner-docker-1 (2026-11-22, family B
+# per-release ruling) the dev job-image labels come from that slice: the dev
+# runner pulls its OWN instance registry (git.scifi.farm/curatedforest/
+# forgejo-runner), not the infra-registry chart default. Helm REPLACES lists
+# wholesale — planning proved a four-entry overlay silently DROPPED
+# ubuntu-22.04 — so this leg pins the EXACT five-set, the act-22.04 entry
+# byte-identical to the chart default's, the slice url, and run-0's
+# container block surviving the overlay (a partial or mistyped override must
+# die here, loudly, never as a silently label-less runner). DESIGNED RED from
+# authoring until the DEV slice hunk lands: today the slice carries only
+# runner.url, so the overlay render shows the chart default, not the dev set.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t17: dev-slice overlay render not run (dependency update unavailable)"
+else
+  t17_slice="$WORK/t17-dev-slice.yaml"
+  if ! python3 - "$DEV_VALUES" "$t17_slice" <<'PY'
+import re, sys, yaml
+
+src, out = sys.argv[1:3]
+# Same lenient anchor handling as t5's loader (REDEFINED anchors are legal
+# YAML that PyYAML refuses to compose).
+lines = []
+with open(src) as f:
+    for line in f:
+        line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+        line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+        lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get('forgejo-runner-dev')
+if not isinstance(block, dict):
+    print(f'FAIL: t17: {src} has no top-level forgejo-runner-dev: slice to extract — the appset merges only this key into the dev release', file=sys.stderr)
+    sys.exit(1)
+with open(out, 'w') as f:
+    yaml.safe_dump(block, f)
+PY
+  then
+    exit 1
+  fi
+  t17_out="$WORK/t17-render.yaml"
+  if ! "$helm_bin" template "$RELEASE_DEV" "$runner_copy" \
+      -f "$t17_slice" \
+      --set "bitwardenIds.runner-token=$TEST_UUID_DEV" \
+    >"$t17_out" 2>"$WORK/t17-render.err"; then
+    tail -n 30 "$WORK/t17-render.err" >&2
+    fail "t17: helm template of $RUNNER (release $RELEASE_DEV, -f the extracted forgejo-runner-dev slice) failed (log kept at $WORK/t17-render.err)"
+  fi
+  if python3 - "$t17_out" "$runner_out_dev" "$WORK/t17-count" <<'PY'
+import sys, yaml
+
+t17_render, default_render, count_file = sys.argv[1:4]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+# The dev five-set (AC2): four git.scifi.farm calendar refs + the plain
+# act-22.04 entry the override must re-declare (Helm replaces lists — the
+# act-22.04 line carries no forgejo-runner ref, so it disappears from a
+# partial override).
+DEV_LABELS = {
+    'ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+    'ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+    'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
+    'docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+    'node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+}
+# The slice's own values, restated here so a slice hunk that fixes labels
+# but moves the url or breaks the container merge dies naming t17.
+SLICE_URL = 'http://dev-forgejo-http:3000'
+CONTAINER = {'privileged': False, 'docker_host': 'unix:///var/run/docker.sock'}
+
+def labels_and_conn(render_file):
+    docs = [d for d in yaml.safe_load_all(open(render_file)) if d]
+    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+    if len(es) != 1:
+        bad(f't17: the render has {len(es)} ExternalSecret(s), expected exactly one')
+    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+    cfg = yaml.safe_load(data.get('config.yaml') or '')
+    conns = (((cfg or {}).get('server') or {}).get('connections') or {})
+    if set(conns) != {'default'}:
+        bad(f't17: config connections are {sorted(conns)}, expected exactly [default]')
+    return cfg, conns['default']
+
+try:
+    raw = open(t17_render).read()
+    cfg, conn = labels_and_conn(t17_render)
+    labels = conn.get('labels') or []
+    if len(labels) != 5:
+        bad(f't17: the slice overlay rendered {len(labels)} labels {sorted(labels)}, expected exactly 5 — Helm REPLACES lists wholesale, so every entry the dev release must advertise has to be re-declared in the slice; a dropped entry is invisible to the runner until a job requests it and dies unscheduled (cf-6 run-1 planning trap)')
+    if set(labels) != DEV_LABELS:
+        bad(f't17: the dev release labels are {sorted(labels)}, expected the dev five-set {sorted(DEV_LABELS)} — four git.scifi.farm/curatedforest/forgejo-runner calendar refs (own-registry pull, owner ruling 2026-11-22) plus the plain act-22.04 entry')
+    _, default_conn = labels_and_conn(default_render)
+    default22 = [l for l in (default_conn.get('labels') or []) if l.startswith('ubuntu-22.04:')]
+    got22 = [l for l in labels if l.startswith('ubuntu-22.04:')]
+    if got22 != default22:
+        bad(f't17: the re-declared ubuntu-22.04 entry is {got22!r} but the chart default renders {default22!r} — the override must copy the act-22.04 line byte-identical, or the two releases advertise the same label with different backends')
+    if conn.get('url') != SLICE_URL:
+        bad(f't17: the overlay render has default.url {conn.get("url")!r}, expected the slice url {SLICE_URL!r} — the labels override must not disturb the per-app URL flow (t5/t9/t10 pin it elsewhere)')
+    if (cfg or {}).get('container') != CONTAINER:
+        bad(f't17: the overlay render config.container is {(cfg or {}).get("container")!r}, expected exactly {CONTAINER!r} — run-0 pinned this block so jobs reach the in-pod dind socket; the slice overlay must not disturb it')
+    if 'OVERRIDE_' in raw:
+        bad('t17: the overlay render carries an OVERRIDE_* sentinel after --set of the sentinel UUID')
+    ok('t17: the extracted forgejo-runner-dev slice renders the dev five-set on git.scifi.farm + byte-identical act-22.04, exactly 5 labels, the slice url, run-0 container block, zero sentinels (list-replacement trap pinned)')
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't17: the dev-slice overlay render could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/t17-count")))
   else
     exit 1
   fi
