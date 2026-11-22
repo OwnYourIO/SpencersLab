@@ -4632,3 +4632,51 @@ prove T2 can fail. Designed-red until the note ships.
 it the helm-guarded legs skip silently), and `helm dependency update` the four
 charts that vendor the app-template. Fail-fast bash suites print only the first
 red — run arms individually to enumerate them.
+
+### 13.2 C05 landing round — the M8-A2 re-freeze, the five-peer enumeration wave, the golden re-capture (test session, 2026-11-23)
+
+The C05 dev round landed the two resting lanes (radiance-flash-tp1,
+radiance-q27-tp2: full trios + peers entries + catalog rows, D19/D28/D45);
+this round lands the test surface against that tree. Three duties, per §9.
+
+**Golden re-capture (the paired obligation).** `golden/gpu-ai.config.yaml`
+re-captured per §1 from the C05 tree. DELTA, annotations excluded: exactly
+**+20 / −0 lines, pure growth, all inside `peers`** — the two new blocks
+`radiance-flash-tp1` (floor 3, id `qwen3.8-flash-next-radiance-tp1`) and
+`radiance-q27-tp2` (floor 2, id `qwen3.8-27b-radiance-tp2`), each proxy
+`…:8000` NO `/v1`, timeouts 30/1800. Mandated by D19; floors are each lane's
+OWN default class (D28/D45), block bytes deep-equal to each lane's own peers
+evidence file (D13). models/matrix/macros/hooks/scalars byte-untouched — the
+capture script verified old-content-is-a-subsequence (no replace/delete opcode
+span) BEFORE writing, and the structural arms were green pre-capture (§8.3
+cadence). The dated capture note is the golden's first annotation block.
+`evidence/flashnext-pre-chunk-baseline/` is deliberately NOT re-captured:
+it pins the pre-C01 era (the baseline IS the era witness); its carve legs
+were extended, not refreshed.
+
+**Enumeration pins — the five-key wave everywhere.** The sanctioned peers
+set is now `{strata, radiance, radiance-q27, radiance-flash-tp1,
+radiance-q27-tp2}`; re-pinned at all four pinned sites:
+`_assert_strata_peers` (test_config_parity), the strata_wiring wave tuple,
+the blast-radius `_cf77_peers_carved` carve, and `test_t3_golden_three_peer_shape`
+(name kept as era label; body is the five-peer law). Each site ALSO grew a
+per-lane evidence arm for the two resting lanes (the fn/q27 arms' precedent):
+the carve excludes the whole peers subtree from the blast-radius diff loop,
+so a mutated resting peer would otherwise ride the carve in silently — each
+lane's block must now deep-equal its OWN evidence file at every pinned site.
+The two new lanes share one parameterized loader/builder pair in
+`llama_swap_testlib` (`radiance_lane_peers_evidence` /
+`expected_radiance_lane_peer` keyed by lane) rather than two more
+twin-parser clones; the fn/q27 loaders stay as era pins. The phantom-catalog
+allowlist grew by exactly the two resting routed ids — evidence-backed
+exceptions only (the lane renders + its evidence file exists), never an
+allowlist-of-everything.
+
+**M8-A2 re-freeze (pipeline-models axis).** The frozen catalog delta is now
+the 86-key base + fn trio + q27 trio + the two new trios, minus the retired
+vllm trio — verbatim-aligned with M9-B's base (one formulation, not three).
+The planted-seventh arm (a catalog key outside the frozen delta reddens M8)
+was re-verified against the live jsonc with the negative control, and the
+`limit.context` fail-message now names both figures (served 200000 vs the
+owner's trained 262144, D27). The ctx verdict itself is an OWNER finding
+reported by this round, not applied here.

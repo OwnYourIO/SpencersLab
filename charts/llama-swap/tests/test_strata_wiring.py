@@ -171,14 +171,18 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
     # cf-143 C01+C04 wave law (test-session re-pin of the cf-105 two-peer
     # pin): vllm retired to commented-out (Q3), radiance joined ADDITIVE
-    # (Q5). cf-143 C15 extends the sanctioned wave with the q27 join —
-    # {strata, radiance} (C15 pending) and {strata, radiance, radiance-q27}
-    # (C15 landed); a live vllm key, a fourth phantom, or a missing strata
-    # peer is drift (the class law: every peers-map-equality leg gets the
-    # wave carve when a sanctioned join lands).
+    # (Q5). cf-143 C15 extended the wave with the q27 join; the
+    # cf-radiance C05 round completes it (D19): the two resting lanes' peers
+    # join, so the landed wave is strata + the four radiance lanes. The
+    # intermediate states are closed history; a live vllm key, an unlisted
+    # sixth peer, or a missing strata peer is drift (the class law: every
+    # peers-map-equality leg gets the wave carve when a sanctioned join
+    # lands).
     assert set(cfg["peers"]) in ({S.PEER_NAME}, {S.PEER_NAME, "radiance"},
-                                 {S.PEER_NAME, "radiance", "radiance-q27"}), (
-        f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143 wave"
+                                 {S.PEER_NAME, "radiance", "radiance-q27"},
+                                 {S.PEER_NAME, "radiance", "radiance-q27",
+                                  "radiance-flash-tp1", "radiance-q27-tp2"}), (
+        f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143/C05 wave"
     )
     # cf-86 wave law: the peers models list equals the sanctioned list for the
     # inner arenas this render actually serves (evidence models_states), so the
@@ -211,6 +215,16 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
             f"radiance-q27 peer is {q27}, want the q27-evidence-derived sanctioned block "
             "(no /v1, one-id wave, 1800/30, priority? floor 4, keyless D54(2))"
         )
+    # cf-radiance C05 (D19): the two resting lanes' hops, each pinned to its OWN
+    # evidence file — floors 3 / 2, the lanes' own default classes (D28/D45).
+    for lane in L.RESTING_RADIANCE_LANES:
+        if lane in cfg["peers"]:
+            ev_lane = L.radiance_lane_peers_evidence(lane)
+            hop = cfg["peers"][lane]
+            assert hop == L.expected_radiance_lane_peer(ev_lane, hop.get("models")), (
+                f"C05/D19: peers.{lane} is {hop}, want the lane's own evidence-derived sanctioned "
+                "block (no /v1, one-id wave, 1800/30, its OWN priority? floor, keyless D8)"
+            )
 
 
 # --- custom-values extraction (r2-C03) -------------------------------------------

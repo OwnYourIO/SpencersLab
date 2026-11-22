@@ -974,34 +974,57 @@ for (const [k, prio] of [['qwen3.8-27b-radiance', 4],
 }
 // M8-A2 (chunks/C05.md Tests, "Catalog-shape test — live-row set =="):
 // the cf-143 DELTA contract against the test-wave frozen base (captured
-// 2026-11-11 from the parsed catalog). Exactly +3 radiance rows, exactly
-// -3 vllm rows, everything else byte-present ("strata five-ish as today"
-// rides this same equality; M3's HOLD legs keep their shape).
+// 2026-11-11 from the parsed catalog). Exactly -3 vllm rows, everything
+// else byte-present ("strata five-ish as today" rides this same equality;
+// M3's HOLD legs keep their shape).
 // cf-143 C15 RE-FREEZE — test-lane choice RECORDED HERE (chunks/C15.md T5;
 // TEST_SPEC §12.15): the base gains fn's landed radiance trio
 // (CF143_C15_BASE_KEYS = the frozen 86 + trio), so the delta law keeps the
-// original exact-equality shape: added == the Q27 trio, removed == the vllm
-// trio. Alternative rejected: a per-wave multi-delta law (two deltas to
-// reason about at once — drift-prone in exactly the ledger style this
-// ticket keeps paying for). The 86-key snapshot stays as the historical
-// base; the C15 base is derived from it, never re-captured from the live
-// catalog (a live-capture base would freeze unrelated future growth).
+// original exact-equality shape. Alternative rejected then and still
+// rejected: a per-wave multi-delta law (two deltas to reason about at once
+// — drift-prone in exactly the ledger style this ticket keeps paying for).
+// The 86-key snapshot stays as the historical base; later bases are derived
+// from it, never re-captured from the live catalog (a live-capture base
+// would freeze unrelated future growth).
+// D19/C05 RE-FREEZE — 2026-11-23 (test landing round), same precedent, one
+// step up: the C15 delta (the q27 trio) has become history, so the base
+// gains the LANDED q27 trio too (D19_BASE_KEYS = C15 base + q27 trio) and
+// the live delta is exactly D19's SIX new trio rows — flash-TP1's and
+// 27b-TP2's trios — added, the vllm trio removed, nothing else. This is
+// deliberately M9-B's law restated at M8's parse point, NOT a third
+// formulation (M9-B derives the same base from CF143_BASE_KEYS + landed
+// trios and wants the same six); the freeze keeps its teeth — the
+// exact-equality shape means a SEVENTH row reddens the leg, which is what
+// a frozen delta is for.
 const CF143_BASE_KEYS = ["home-3b-v3","home-3b-v3-gpu","local/qwen3.8-27b","ornith-1.5-122b-q3","ornith-1.5-122b-q4","ornith-1.5-122b-q5","ornith-1.5-122b-q6","ornith-1.5-122b-strata-q4","qwen3-vl-2b-bf16","qwen3-vl-2b-bf16:caption","qwen3-vl-2b-bf16:tags","qwen3-vl-2b-q4","qwen3-vl-2b-q4:caption","qwen3-vl-2b-q4:tags","qwen3-vl-2b-q8","qwen3-vl-2b-q8:caption","qwen3-vl-2b-q8:tags","qwen3-vl-30b-a3b","qwen3-vl-30b-a3b-bf16","qwen3-vl-30b-a3b-bf16:caption","qwen3-vl-30b-a3b-bf16:tags","qwen3-vl-30b-a3b-q4","qwen3-vl-30b-a3b-q4:caption","qwen3-vl-30b-a3b-q4:tags","qwen3-vl-30b-a3b-q8","qwen3-vl-30b-a3b-q8:caption","qwen3-vl-30b-a3b-q8:tags","qwen3-vl-30b-a3b-thinking-bf16","qwen3-vl-30b-a3b-thinking-q4","qwen3-vl-30b-a3b-thinking-q8","qwen3-vl-4b","qwen3-vl-4b-bf16","qwen3-vl-4b-bf16:caption","qwen3-vl-4b-bf16:tags","qwen3-vl-4b-q4","qwen3-vl-4b-q4:caption","qwen3-vl-4b-q4:tags","qwen3-vl-4b-q8","qwen3-vl-4b-q8:caption","qwen3-vl-4b-q8:tags","qwen3-vl-4b-thinking-bf16","qwen3-vl-4b-thinking-q4","qwen3-vl-4b-thinking-q8","qwen3-vl-8b","qwen3-vl-8b-bf16","qwen3-vl-8b-bf16:caption","qwen3-vl-8b-bf16:tags","qwen3-vl-8b-q4","qwen3-vl-8b-q4:caption","qwen3-vl-8b-q4:tags","qwen3-vl-8b-q8","qwen3-vl-8b-q8:caption","qwen3-vl-8b-q8:tags","qwen3.6-27b-q6","qwen3.6-27b-q8","qwen3.6-35b-a3b-1m","qwen3.6-35b-a3b-bf16","qwen3.6-35b-a3b-q6","qwen3.6-35b-a3b-q8","qwen3.6-35b-a3b-q8-visual","qwen3.8","qwen3.8-27b-bf16","qwen3.8-27b-q4","qwen3.8-27b-q6","qwen3.8-27b-q8","qwen3.8-27b-q8-1m","qwen3.8-27b-q8-visual","qwen3.8-27b-vllm","qwen3.8-27b-vllm-low","qwen3.8-27b-vllm-urgent","qwen3.8-flash-next-heretic-q4","qwen3.8-flash-next-orca-q6","qwen3.8-flash-next-q3","qwen3.8-flash-next-q4","qwen3.8-flash-next-strata","qwen3.8-flash-next-strata-orca","qwen3.8-flash-next-strata-q4","qwen36-heretic","qwen36-huihui","qwen38-ara","qwen38-heretic","qwen38-humanlike","qwen38-orca","qwen38-orca-f16","qwen38-rana","whisper-large-v3"];
 const CF143_C15_BASE_KEYS = CF143_BASE_KEYS.concat(["qwen3.8-flash-next-radiance",
     "qwen3.8-flash-next-radiance-urgent", "qwen3.8-flash-next-radiance-low"]);
+const D19_BASE_KEYS = CF143_C15_BASE_KEYS.concat(["qwen3.8-27b-radiance",
+    "qwen3.8-27b-radiance-urgent", "qwen3.8-27b-radiance-low"]);
 const liveKeys = Object.keys(models).sort();
-const added = liveKeys.filter(k => !CF143_C15_BASE_KEYS.includes(k));
-const removed = CF143_C15_BASE_KEYS.filter(k => !liveKeys.includes(k));
-const wantAdded = ['qwen3.8-27b-radiance', 'qwen3.8-27b-radiance-urgent', 'qwen3.8-27b-radiance-low'].sort();
+const added = liveKeys.filter(k => !D19_BASE_KEYS.includes(k));
+const removed = D19_BASE_KEYS.filter(k => !liveKeys.includes(k));
+const wantAdded = ['qwen3.8-flash-next-radiance-tp1', 'qwen3.8-flash-next-radiance-tp1-urgent',
+                   'qwen3.8-flash-next-radiance-tp1-low',
+                   'qwen3.8-27b-radiance-tp2', 'qwen3.8-27b-radiance-tp2-urgent',
+                   'qwen3.8-27b-radiance-tp2-low'].sort();
 const wantRemoved = ['qwen3.8-27b-vllm', 'qwen3.8-27b-vllm-urgent', 'qwen3.8-27b-vllm-low'].sort();
-if (JSON.stringify(added) !== JSON.stringify(wantAdded))
-  errs.push(`live catalog rows added vs the cf-143 C15 base are ${JSON.stringify(added)}, want exactly the q27 trio (C15 delta contract — DESIGNED-RED until D5 lands the rows; fn's trio lives inside the re-frozen base)`);
+const deltaOk = (add, rem) =>
+  JSON.stringify(add) === JSON.stringify(wantAdded) && JSON.stringify(rem) === JSON.stringify(wantRemoved);
+if (!deltaOk(added, removed))
+  errs.push(`live catalog rows added vs the D19 base are ${JSON.stringify(added)}, want exactly the six new trio rows (D19 full trios for the two resting lanes — the frozen delta bars a seventh row as firmly as it bars a missing one; fn's and q27's trios live inside the re-frozen base)`);
 if (JSON.stringify(removed) !== JSON.stringify(wantRemoved))
-  errs.push(`live catalog rows removed vs the cf-143 C15 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable + C05 delta — every other row stays live, strata AND fn's radiance trio included)`);
+  errs.push(`live catalog rows removed vs the D19 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable — every other row stays live, strata AND the landed radiance trios included)`);
+// Teeth (M9-A2's philosophy carried onto the freeze): the planted seventh row
+// MUST fail the equality. If a future edit loosens the gate to a superset
+// check, this arm reddens first — a delta that cannot refuse growth is a
+// inventory print, not a freeze.
+if (deltaOk(added.concat(['qwen3.8-planted-seventh']).sort(), removed))
+  errs.push('M8-A2 is vacuous: a planted seventh row passed the frozen-delta equality');
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/rad-catalog.js" "$CAT" \
-    || fail "M8: the radiance catalog contract is violated (TWO trios HOLD: fn 9/5/1 + q27 8/4/0 — shared modelIDs, higher-wins un-inverted, ctx 200000, input [text,image], tools true; delta equality vs the re-frozen cf-143 C15 base (added == q27 trio exactly) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
+    || fail "M8: the radiance catalog contract is violated (FOUR trios under one ladder: fn 9/5/1 + q27 8/4/0 HOLD + D19's two resting-lane trios via M9 — shared modelIDs, higher-wins un-inverted, ctx 262144 the owner's trained figure with the served 200000 reconciled in prose, input [text,image], tools true; frozen delta vs the D19 base (added == the six new trio rows exactly, a seventh row refuses) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
   # M8-B: the ctx axis, both ends + the documented divergence. The cf-143 leg
   # asserted catalog ctx == the shipped maxModelLen; the owner's 2026-11-22
   # catalog edit (b3d7fada8, D27) makes the two figures deliberately different,

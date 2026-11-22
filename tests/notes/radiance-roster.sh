@@ -73,10 +73,12 @@ def lane(key):
     ctrl = ((doc.get(key) or {}).get("app-template") or {}).get("controllers", {}).get("radiance", {})
     res = cont.get("resources") or {}
     served = None
-    # D43 (2026-11-22) heads-up for C06: the served id's carrier moves to the
-    # lane env (RADIANCE_SERVED_ID) when the serve-argv leaves the blocks —
-    # re-aim this read THEN (the roster legs are C06's to re-pin; today the
-    # blocks still author args and this stays true).
+    # STALE READ, C06's to re-aim: D43 (2026-11-22) landed with C05 — the
+    # served id's carrier IS the lane env (RADIANCE_SERVED_ID) now; the
+    # blocks no longer author --served-model-name args, so this args read
+    # returns "" for every radiance lane. The roster suite is red-for-C06
+    # (the note itself is missing); the re-aim and the legs are C06's to
+    # land together — fixing the read without the note would green nothing.
     args = [str(a) for a in (cont.get("args") or [])]
     if "--served-model-name" in args:
         served = args[args.index("--served-model-name") + 1]

@@ -209,7 +209,12 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
     # equality leg gets the wave carve-out when a sanctioned join lands —
     # blast-radius missed the launch's file list but dev's q27 commit would
     # false-red it): the q27 join is sanctioned, any OTHER third key is not.
-    if not isinstance(peers, dict) or set(peers) not in ({"strata"}, {"strata", "radiance"}, {"strata", "radiance", "radiance-q27"}):
+    # cf-radiance C05 (D19): the wave completes at strata + the FOUR radiance
+    # lanes' peers — the two resting lanes' joins are sanctioned siblings;
+    # anything outside the listed states still REFUSES the carve.
+    if not isinstance(peers, dict) or set(peers) not in (
+            {"strata"}, {"strata", "radiance"}, {"strata", "radiance", "radiance-q27"},
+            {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}):
         return False
     entry = peers["strata"]
     if not isinstance(entry, dict) or set(entry) != {"proxy", "models", "timeouts"}:
@@ -234,6 +239,15 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
         ev27 = L.radiance_q27_peers_evidence()
         if peers["radiance-q27"] != L.expected_radiance_q27_peer(ev27, peers["radiance-q27"].get("models")):
             return False
+    # cf-radiance C05 (D19): the carve EXCLUDES the whole peers subtree from the
+    # diff loop once sanctioned, so each resting lane's block must be deep-equal
+    # to its own evidence HERE — a mutated resting peer would otherwise ride the
+    # carve in silently (the same reasoning that put the fn/q27 arms inside).
+    for lane in L.RESTING_RADIANCE_LANES:
+        if lane in peers:
+            ev_lane = L.radiance_lane_peers_evidence(lane)
+            if peers[lane] != L.expected_radiance_lane_peer(ev_lane, peers[lane].get("models")):
+                return False
     return True
 
 

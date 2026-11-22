@@ -220,10 +220,30 @@ def test_c05_no_phantom_catalog_entries(catalog):
     )
     q27_routed = {k for k, e in catalog.items()
                   if k in q27_wire or (e or {}).get("modelID") in q27_wire}
+    # cf-radiance C05 landing round (D19): the two RESTING lanes' peers join as
+    # the fourth and fifth serving authorities, the q27 idiom verbatim — wire
+    # ids from each lane's OWN evidence file (D13 per-key single source) with
+    # the rendered peer list asserted equal to it, so the allowlist cannot
+    # outlive a removed peer silently: delete a lane's peers block and its trio
+    # falls back to phantom-red here. Resting posture is deliberate — a peers
+    # entry is an authority, not an endpoint; while the lane rests at replicas 0
+    # the hop answers 502-loud (D20's accepted consequence), and the rows are
+    # routed only through the owner's explicit opt-in.
+    resting_routed = set()
+    for lane in L.RESTING_RADIANCE_LANES:
+        lane_ev = L.radiance_lane_peers_evidence(lane)
+        lane_wire = set(lane_ev["models_allowed"])
+        lane_rendered = ((L.rendered_config("gpu-ai").get("peers") or {}).get(lane) or {}).get("models") or []
+        assert lane_rendered == lane_ev["models_allowed"], (
+            f"C05/D19: peers.{lane}.models {lane_rendered!r} != its evidence {lane_ev['models_allowed']} "
+            "— the resting lane's serving authority has not landed (designed-red naming C05-dev's peer block)"
+        )
+        resting_routed |= {k for k, e in catalog.items()
+                           if k in lane_wire or (e or {}).get("modelID") in lane_wire}
     phantoms = []
     for key in sorted(catalog):
         if (key in served or key in aliases or key in peers_routed or key in vllm_routed
-                or key in rad_routed or key in q27_routed):
+                or key in rad_routed or key in q27_routed or key in resting_routed):
             continue
         if key.endswith(WORKLOAD_ALIAS_SUFFIXES):
             continue
