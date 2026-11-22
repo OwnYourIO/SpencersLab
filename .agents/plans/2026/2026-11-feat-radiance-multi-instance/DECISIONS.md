@@ -298,7 +298,14 @@ rejected, why.
   sessions from it, so my C01 brief was wrong to list M6 as expected-green and the reviewer correctly claimed
   nothing. Later briefs record M6 as "not run, no claim".
 - 2026-11-22 owner-ruling D35 (**C03 fork RESOLVED: the CHART owns the generic init script; byte-equivalence is
-  RELAXED for that one carrier**). Asked with the mechanism verified (app-template 5.0.1 renders `command`/
+  RELAXED for that one carrier**). PATH ANNOTATION (correction, not a change of ruling): the four budget paths
+  are stated in the suite's Deployment-rooted grammar as
+  `$.spec.template.metadata.annotations["checksum/configMaps"]`, `$.spec.template.spec.volumes`,
+  `$.spec.template.spec.initContainers[0].volumes`+`volumeMounts`, `$.spec.template.spec.initContainers[0].command`.
+  My original shorthand "`spec.volumes`" meant the POD-SPEC volumes; a Deployment has no `spec.volumes`, so the
+  test needle written from my shorthand named a nonexistent path and made both arms of the delta leg fail for
+  ANY carrier. The ruling's intent is unchanged; the exact path is now recorded so no later round re-derives it
+  from the shorthand. Asked with the mechanism verified (app-template 5.0.1 renders `command`/
   `args` via plain `toYaml`, no `tpl`; only configMap data and env are tpl'd), the owner chose the parameterized
   shape over keeping the pre-move fixtures green, accepting that the LIVE fn lane's pod spec changes. Binding
   consequences, recorded as rulings not notes: (1) **AC1 is replaced, never deleted** — the equivalence legs

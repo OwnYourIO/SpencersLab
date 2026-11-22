@@ -302,6 +302,28 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   "parameterized init" row (plan ~:205) + C03 task-1 wording are a plan-internal contradiction, now surfaced to
   the owner. · resolution: byte-equivalence kept; the supersession row gets corrected whichever way the ruling
   goes. · SUPERSEDED by D35 (owner, 2026-11-22): byte-equivalence is RELAXED for this one carrier — the chart owns the script and AC1 becomes an intentional-delta proof over exactly four paths. The contradiction this row surfaced was real and is now ruled, not worked around. · closed-by-ruling
+- 2026-11-22 · dev(C03 r2) · **two authoring defects shipped inside the delta-budget suite.** (a) My D35
+  shorthand "`spec.volumes`" was transcribed literally into `DELTA_BUDGET` as `$.spec.volumes`, but the suite's
+  diff grammar is DEPLOYMENT-rooted and a Deployment has no `spec.volumes` — so BOTH arms of the delta leg
+  failed for any carrier (the real pod-volume path fell outside the budget, and the budgeted entry can never
+  exist). (b) `_assert_block_shape()` takes 3 parameters while both call sites pass 4 → `TypeError`, so two
+  legs asserted nothing at all.
+  · resolution: path annotation added to DECISIONS D35 (intent unchanged; never widen a budget to fit a bad
+  needle), repairs routed to the test session with a demand to re-confirm the planted-drift teeth AFTER the
+  path fix and to plant one NEW unauthorized drift the old needle would have missed. Rule for every path-list
+  gate: state paths in the grammar the comparing code actually uses, and re-derive a quoted path from the
+  object being diffed rather than from ruling prose. · open (repair in flight)
+- 2026-11-22 · dev(C03 r2) · **the correct shape of a test-blocked handoff**: dev proved its delta out-of-band
+  (replaying the 3-arg body in a scratch script; replaying the diff under correct grammar), reported
+  NEEDS_INFO, and left the legs red with the fixtures byte-untouched — no fixture laundering, no test edit, no
+  "temporary relaxation". It also caught my stale brief baseline (llama-swap 510P, not 509P) and re-measured
+  with its own files reverted to show the suite was unmoved.
+  · resolution: treat out-of-band proof + honestly red legs as a PASSING handoff shape; a green obtained by
+  editing the gate is not. Applied to C04-C06 briefs. · fixed-by-this-recipe
+- 2026-11-22 · dev(C03 r2) · **`.aislop/history.jsonl` gains a line whenever the aislop CLI runs** — it is
+  machine churn, not a work artifact, and it keeps showing up in porcelain output mid-round.
+  · resolution: disposition requested from the test session via `git log -- .aislop/history.jsonl`; until then
+  I neither stage nor read meaning into it. · open (history.jsonl disposition)
 - 2026-11-22 · review(C02) · **`boards` SKILL "Default selection: `Qwen Dense`" now reads two ways** — the board
   RULE's checked item (accurate: OQ13, rule dormant) versus the blank-route default (radiance). NOT fixable
   inside C02: c11 and M5 pin the sentence verbatim as HOLD, so prose tidying would break two green arms, and
