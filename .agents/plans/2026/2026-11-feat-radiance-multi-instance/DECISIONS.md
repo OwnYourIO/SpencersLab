@@ -430,6 +430,37 @@ rejected, why.
   churn revert + stop-at-t17/c19, pushing full-suite runs that exercised write arms `gate t14` and
   `rulesync-surface c7` (content no-op, tree byte-clean, self-disclosed). Later briefs: per-arm invocation, and
   no churn-revert mandate.
+- 2026-11-22 coord-ruling D45 (**peer floors for the two new lanes are 3 / 2, and the `5/4` text in
+  `chunks/C05.md` is STALE — closing the test wave's only NEEDS_INFO against myself, not against the owner**).
+  The D43 re-pin found `chunks/C05.md:42-43/:61/:96` asserting floors 5/4 (inherited cf-143 D56(5) per-lane
+  fn-class wording) while `radiance_testlib.py` carries `FLASH_TP1_PEER_FLOOR = 3` / `Q27_TP2_PEER_FLOOR = 2`.
+  **D28 already ruled this**: each peer's `setParams "priority?"` floor equals that lane's OWN base row, which is
+  the real per-lane coherence law cf-143 established and which D28 said explicitly survives unchanged — so 3/2
+  is correct and the chunk text predates it (the D43 fold rewrote C05's roster scope but not this line). The
+  test constants STAND; no leg is re-aimed back. `chunks/C05.md` is not editable by my tier, so the correction is
+  recorded here, carried verbatim into C05's launch brief, and named for the planner's next fold. Lesson:
+  when a chunk file and a test constant disagree, check the RULING CHRONOLOGY before deciding which is stale —
+  here the older prose won an argument it had already lost.
+- 2026-11-22 coord-ruling D46 (**C03 round 3 landed the D43 shape; the two resting-lane blocks are ACCEPTED as
+  C03 output and C05's scope is reduced accordingly — overlap resolved by ruling, not by silence**). Round 3
+  shipped: the serve FORM as a second `serve.sh` key on the existing tpl'd `radiance-fetch` carrier, with
+  `${VAR:?… is required}` loud guards, FORM-fixed flags (`--port 8000 --host :: --max-num-seqs 8
+  --kv-cache-dtype fp8`), ten optional-env arms, exactly ONE boot echo of the composed argv, and `exec radiance
+  "$@"` by **bare name** (the image's ENTRYPOINT resolves it; POSIX-only for busybox ash). Lanes converted
+  args→env with held numbers byte-exact; NOTES re-aimed. Suite moved **65F → 10F/135P**, and all four composed
+  vectors are set-equal to their ruled profiles (34 / 18 / 32 / 20 items) — proven by EXECUTING the shipped form
+  against rendered env, not by static assertion.
+  Overlap: my dispatch brief said "author lane DATA shapes only, the four Applications are C05's", and round 3
+  also authored the two resting blocks (`radiance-flash-tp1`, `radiance-q27-tp2`) at EOF, which the folded
+  `chunks/C05.md` lists as C05's. **Ruling: the blocks stay landed** — re-home-ing green work to redo it is
+  churn, and D31's baseline moves by ruling, not by quiet reassignment. C05's remaining scope is therefore the
+  four roster `charts:` entries, the peers entries, the catalog trios (D19), the CI extraction steps and M9 (the
+  8 designed reds left), and its dev brief MUST NOT re-author the blocks — I carry this verbatim into that brief,
+  and the planner owes `chunks/C05.md` the same scope trim (my tier cannot edit chunk files).
+  Separately: round 3 refused to satisfy a test by adding an inert `replicas` key, naming it a gotcha-11 decoy
+  authority. That is the right call and is the third time this ticket has caught a green being purchasable with a
+  fake lever; the repair demand I sent the test session includes asserting the ABSENCE of such keys, so the
+  temptation is gated and not merely declined.
 - 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
   work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
   introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
