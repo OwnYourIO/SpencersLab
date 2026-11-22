@@ -577,8 +577,51 @@ rejected, why.
   t1" and "agents-md c11 RED" are now GREEN (both re-pinned in C02), and llama-swap reads 517P where the plan says
   507P from C05/C06 test growth. Not failures — stale expectations. A round that trusts them either chases ghosts
   or mistakes growth for drift; read the baseline from the current tree, and the planner owes the fold.
+- 2026-11-23 coord-ruling D52 (**FINAL WHOLE-PLAN REVIEW: APPROVED_WITH_CONDITIONS — every condition was a
+  record defect I authored, and all are closed; plus three new standing coordinator rules**).
+  **Conditions closed this round:** (1) `STATE.json` C04 carried **duplicate JSON keys** — my later edit appended
+  `review_rounds: 0` / `last_verdict: null` *after* the approved values, and JSON's silent last-wins meant any
+  parser read an approved chunk as never-reviewed. Removed. (2) `STATE.json` C06 was stale (`review-in-flight`,
+  `dev_rounds: 0`) though approved with two follow-up rounds; re-filed with the verdict and the commits that
+  closed its minors. (3) `premise_verified` **mislabelled t17** as "warm-location permissions drift"; the actual
+  base-reproduced failure is the coord-family permissions contract on `.rulesync/subagents/agent-coord.md`,
+  introduced by pre-merge-base `40d4eaf15`. Corrected, with credit to `chunks/C06.md:191` which had it right.
+  (4) **D50 appeared twice** — my second edit attempt matched an anchor that existed twice. Marked in place
+  (append-only) with the first declared canonical, rather than deleted. (5) **Ruling-numbering register, so the
+  gaps are known rather than rediscovered:** **D34 exists only in FRICTION** (the aislop scan-scope ruling was
+  drafted into the wrong document), and **D36/D37 sit at :472/:478, after D43-D51**, because I appended late
+  discoveries at the point of relevance instead of in sequence. Key by NUMBER, not position; D34's canonical text
+  stays in FRICTION until a planner fold moves it.
+  **Three new standing rules the review earned, all mine:** (a) **every STATE/JSON write must round-trip parse
+  WITH duplicate-key detection** — last-wins duplication is invisible to `json.load` alone and was caught here
+  only because a reader noticed a contradiction; (b) **pre-existing-red proofs belong at the PR MERGE-BASE**, not
+  at an intermediate in-ticket commit — the final review re-proved c19/t17 at `193c12798` where I had accepted
+  `f9107f346`, and a mid-branch base can itself contain the regression you are exonerating; (c) **export
+  `PATH=$HOME/.local/bin` before notes-suite legs** — two of this review's first reds were harness faults from a
+  missing helm on PATH, and a false red that gets explained is a false red that could have been filed as a
+  finding.
+  **What the review did NOT fault:** the tree. All five asks land (ask 3 explicitly qualified: scheduling-level
+  exclusivity, NodeId order, and the strata park — **not** in-pod card pinning, which R-Q1/R-Q4 prove is
+  structurally inexpressible); no unruled change in the 74-file diff; held numbers re-derived and matching; zero
+  designed reds except the out-of-ticket pair, re-proved at merge-base.
+- 2026-11-23 coord-ruling D53 (**state-file key naming is part of the D52 class: a `plan_status_`-prefixed key is
+  read as authority, so provenance must not wear that prefix**). Fixing D52's duplicate `plan_status_note` by
+  renaming the stale one to `plan_status_lineage` preserved the bytes but kept the hazard: the value opens with
+  "**APPROVED** 2026-11-22 …", so a resume scan pulling `plan_status*` finds two adjacent status-shaped strings
+  that disagree — the same shadowing, demoted from parse-level to semantic-level and sitting in the one file that
+  decides whether a future run resumes this folder or starts `<slug>-1`. Renamed to `intake_provenance`
+  (value untouched; `rounds[]` already carries the chronology, and folding it there would be a third copy of
+  DECISIONS D19/D26 facts). Rule: **a fix that removes a collision but leaves the authority-shaped name in place
+  has fixed the parser and not the reader** — prefix namespace in state files is part of the contract, and the
+  check that catches this is a human asking "what does a fresh session grep?" rather than any JSON validator.
+  Also recorded: D52's duplicate-key rule earned its keep immediately — delegated verification found a
+  SECOND duplicate I had introduced while writing the lesson about the first, one line from the repaired pair,
+  and a rename I could not parse-check myself is exactly what the rule is for.
 - 2026-11-23 coord-ruling D50 (**my own commit message `263696e91` states two falsehoods; corrected here, not
   amended; and review notes belong in the chunk file — my briefs were over-restrictive**).
+  **[DUPLICATE — the identical D50 entry appears above this one; my second edit attempt matched an anchor twice.
+  Kept rather than deleted because rulings are append-only, and marked because ambiguity over which is canonical
+  is exactly the defect the final review flagged. The FIRST entry is canonical.]**
   (a) C06's reviewer found that the message I wrote claims "**fn + q27-TP2 is the only co-booting pair**" and
   quotes a "**122.5 GiB against 110**" figure. Neither is in the tree. The roster matrix says the opposite of the
   first: fn claims 2 of 2 cards, so **fn co-boots with NOTHING** — 2+2 was never arithmetically possible on a
