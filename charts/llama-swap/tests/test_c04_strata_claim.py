@@ -204,18 +204,46 @@ def test_c04_determinism_prose_states_both_legs():
 
 
 def test_c04_supersession_annotation_on_the_2026_10_27_ruling():
-    """C04 AC3 (annotate-never-rewrite): the dated 2026-10-27 device-access line gains
-    the 2026-11-22 supersession citation (claim added, device-access rationale alive),
-    and the chart's "either way" comment gets the ruling line that made it law."""
-    overlay = OVERLAY.read_text()
-    assert re.search(r"2026-11-22", overlay), (
-        "C04: the gpu-ai overlay carries no 2026-11-22 supersession date — the claim reversal must be "
-        "readable at the site a future editor trusts"
+    """C04 AC3 (annotate-never-rewrite): the dated 2026-10-27 device-access ruling is
+    SUPERSEDED at its sites by dated annotations — the overlay's strata region gains the
+    claim-added line, and the chart's privileged-hostPath "either way" comment gains the
+    ruling that made mount-survival law.
+
+    RE-ARMED in the test session after the C01 dev comment false-greened the first cut:
+    a bare date token anywhere in a file is not a supersession (dev's naming comment at
+    the chart carried 2026-11-22 for the pool rename and the HEAD text already said
+    "either way"), so every arm below demands windowed CO-OCCURRENCE — the supersession
+    vocabulary bound to both ruling dates / to the claim words — and the overlay arm is
+    scoped to the strata region, not the file. DESIGNED RED until C04 writes the
+    annotations: neither site carries the supersession vocabulary today."""
+    region = " ".join(_overlay_strata_region().split())
+    assert re.search(r"(?i)supersed", region), (
+        "C04 AC3: the gpu-ai overlay's strata region carries no supersession annotation — D17 overturns the "
+        "NO-CLAIM half of the 2026-10-27 device-access ruling and the reversal must read at the site a future "
+        "editor trusts (a date token alone does not count — the naming wave supplies those incidentally)"
     )
-    chart = (L.REPO_ROOT / "charts" / "llama-swap" / "values.yaml").read_text()
-    assert re.search(r"(?i)either way", chart) and re.search(r"2026-11-22", chart), (
-        "C04: charts/llama-swap/values.yaml's privileged-hostPath \"either way\" comment never cites the "
-        "ruling that made it law (D17 keeps the mounts; the comment must say why they survive a claim)"
+    for cite in ("2026-10-27", "2026-11-22"):
+        assert cite in region, (
+            f"C04 AC3: the strata region lost its {cite} citation — supersession is done by citation, never "
+            "by deletion (annotate-never-rewrite: the annotation names both rulings)"
+        )
+    assert re.search(r"(?i)supersed[^.]{0,220}claim|claim[^.]{0,220}supersed", region), (
+        "C04 AC3: no supersession sentence BINDS the claim change — D17 supersedes the no-claim half "
+        "(claim for scheduling, privileged hostPath for runtime); an annotation that never names what moved "
+        "is decoration"
+    )
+    chart = " ".join((L.REPO_ROOT / "charts" / "llama-swap" / "values.yaml").read_text().split())
+    i = chart.lower().find("either way")
+    assert i >= 0, (
+        "C04: the privileged-hostPath 'either way' sentence left charts/llama-swap/values.yaml — D17 KEEPS the "
+        "mounts; that sentence is the runtime-posture anchor and is annotated, never deleted"
+    )
+    window = chart[max(0, i - 300): i + 300].lower()
+    assert ("d17" in window or "supersed" in window) and "claim" in window, (
+        "C04 AC3: the 'either way' comment never cites the ruling that made mount-survival-under-claim law — it must "
+        "carry D17 (or the supersession) AND the claim words within one window; the 2026-11-22 token naming wave "
+        "dropped near this text is a NAMING date, not this ruling — that incidental satisfaction is exactly what "
+        "this re-arm rejects"
     )
 
 

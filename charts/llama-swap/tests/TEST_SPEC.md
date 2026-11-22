@@ -4553,7 +4553,8 @@ has a designed-red contract naming it. The pipeline-models axis of the same wave
 M8-H runner-literal pairing, the new M9 fleet arm) is recorded in
 `tests/pipeline-models/TEST_SPEC.md` §1–§6 and is not repeated here.
 
-**C01 — pool rename `gpu-r9700-1` → `gpu-r9700` (owner ruling D21).** The name
+**C01 — pool rename `"gpu-r9700" + "-1"` (assembled, per the needle law) →
+`gpu-r9700` (owner ruling D21).** The name
 space is now three tiers: HISTORICAL (`gpu-ai-pro-` + product, what the marketing
 string sanitizes to — the derivation witness), RETIRED (this ticket's victim),
 LIVE (`gpu-r9700`). Every test-side literal of the retired tier is **assembled**

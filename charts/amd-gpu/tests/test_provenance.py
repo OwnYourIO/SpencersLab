@@ -472,7 +472,8 @@ def test_placement_guard_teeth_on_synthetic_tree(tmp_path):
 
 RETIRED_R9700_POOL = "gpu-r9700" + "-1"
 RETIRED_R9700_CLAIM = A.GPU_RESOURCE_PREFIX + RETIRED_R9700_POOL
-NEW_R9700_POOL = "gpu-r9700"
+NEW_R9700_PRODUCT = "r9700"                    # the ids-table PRODUCT FIELD (D21)
+NEW_R9700_POOL = "gpu-" + NEW_R9700_PRODUCT    # pool == sanitizer prefix + product — the derivation, spelled
 NEW_R9700_CLAIM = A.GPU_RESOURCE_PREFIX + NEW_R9700_POOL
 # `gpu-r9700` is a PREFIX of the retired name, so a needle without a trailing
 # boundary cannot tell a live claim from a straggler. Every pattern here carries
@@ -507,12 +508,16 @@ def retired_tier_hits(root):
 def test_r9700_rename_ruling_strings():
     """C01 AC1/AC4: the constants carry the ruling strings — product field exactly
     `r9700`, pool `gpu-r9700`, and a retired-tier constant ASSEMBLED (never a
-    whole literal) so the sweep has a needle that cannot trip itself. Designed-red
-    naming C01: today the constants still carry the cf-143 pair."""
-    assert A.R9700_PRODUCT_STRING == NEW_R9700_POOL, (
-        f"the 7551/C0 product field is {A.R9700_PRODUCT_STRING!r}, want EXACTLY {NEW_R9700_POOL!r} "
-        "(owner ruling D21: the ids-table product field, not the marketing string — the sanitizer port "
-        "proves `AI PRO R9700` derives the HISTORICAL pool instead)"
+    whole literal) so the sweep has a needle that cannot trip itself. The C01
+    re-pin landed with the naming wave: green-at-C01-review, and the bar that
+    keeps the constants block from rotting back or carrying the retired string
+    whole."""
+    assert A.R9700_PRODUCT_STRING == NEW_R9700_PRODUCT, (
+        f"the 7551/C0 product field is {A.R9700_PRODUCT_STRING!r}, want EXACTLY {NEW_R9700_PRODUCT!r} "
+        "(owner ruling D21: the ids-table PRODUCT FIELD, not the marketing string and not the pool — "
+        "the sanitizer prefixes gpu- unconditionally, so product==pool would derive gpu-gpu-r9700 and "
+        "'AMD Radeon AI PRO R9700' derives the HISTORICAL pool; test_table_rows_match_the_fetched_"
+        "authority enforces the same derivation against the shipped row)"
     )
     assert A.R9700_POOL_NAME == NEW_R9700_POOL, (
         f"the R9700 pool constant is {A.R9700_POOL_NAME!r}, want {NEW_R9700_POOL!r} — the rename's "

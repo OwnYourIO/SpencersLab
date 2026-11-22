@@ -8,7 +8,8 @@
 # Contents: the format header lines + the version line + EVERY 7551 row + EVERY 1586
 # row of the baked table, byte-verbatim (tabs/spaces included). The shipped patched
 # table must equal: header + version + every 1586 row byte-equal + exactly the
-# 7551,C0 row with its product string replaced by 'r9700-1' — and nothing more
+# 7551,C0 row with its product string replaced by 'r9700' (C01/D21 re-pin; the
+# C08-era value carried the now-retired suffix) — and nothing more
 # (minimality; AC7). The 1586 parity is the APU-rows-must-carry grave case: a
 # dropped row falls that SKU to bare amd.com/gpu and strands the live gpu-ai
 # overlay consumer (D21/B1).
