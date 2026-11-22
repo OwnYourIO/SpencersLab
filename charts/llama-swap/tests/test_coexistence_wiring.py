@@ -3,12 +3,16 @@
 #
 # Two halves, one file:
 #  * STRATA AS TODAY — the strata render legs (controller Deployment,
-#    Service, config/profile ConfigMaps) compared against the checked-in
-#    pre-ticket baseline evidence/cf143-pre-ticket-strata/ (captured by the
-#    cf-143 test session at the clean branch tip) — byte-identical docs,
-#    now and after every cf-143 wave; cf-144 C03 adds the ONE receipted
-#    divergence carve (strix ROCr line, P15/P16 — see the leg), everything
-#    else stays byte-pinned. Plus the service-level parse pins:
+#    Service, config/profile ConfigMaps) against a THREE-LAYER truth: the
+#    pre-ticket baseline evidence/cf143-pre-ticket-strata/ (captured at the
+#    cf-143 clean tip) stays FROZEN history and the divergence from it is
+#    bounded by the C04 (D17+D26) four-leaf budget — claims, park, memory
+#    mirror, nothing else; the post-C04 evidence
+#    evidence/c04-post-ticket-strata/ byte-pins today's sanctioned shape so
+#    any FUTURE strata move reddens at full sensitivity instead of riding
+#    the budget; and the cf-144 P15/P16 strix-ROCR carve (see the helper)
+#    normalizes its one receipted line on both sides of every comparison.
+#    Plus the service-level parse pins:
 #    the seven-flag strata enable-set still enabled:true, the matrix/preload
 #    blocks un-disturbed.
 #  * RADIANCE LANDS BESIDE IT — the charts.radiance appset entry renders
@@ -20,20 +24,28 @@
 #
 # Red state at handoff (designed): the strata baseline + enable-set legs are
 # GREEN NOW (they must STAY green — a red there names a chunk that touched
-# strata, which review rejects) and the radiance-entry legs are RED until
-# C04's values edit lands.
+# strata, which review rejects); the radiance-entry legs went green with
+# C04's landed values edit.
 #
 # Run with the suite (per-directory): python3 -m pytest charts/llama-swap/tests -v
 
 from __future__ import annotations
 
+import copy
 import re
+import sys
 
 import pytest
 import yaml
 
 import llama_swap_testlib as L
 import strata_testlib as S
+
+# cross-chart import idiom test_c04_strata_claim.py / test_cf143_naming_flip.py use
+_amd_tests = L.REPO_ROOT / "charts" / "amd-gpu" / "tests"
+if str(_amd_tests) not in sys.path:
+    sys.path.insert(0, str(_amd_tests))
+import amd_gpu_testlib as A  # noqa: E402
 
 _ok, _ok_reason = L.helm_ready()
 helm_mark = pytest.mark.skipif(not _ok, reason=_ok_reason)
@@ -107,39 +119,225 @@ def test_baseline_fixture_present():
     )
 
 
+# --- C04 bounded delta (D17 + D26): the one-time divergence from the frozen
+# pre-ticket baseline, encoded the way C03's delta budget is (DECISIONS D35
+# doctrine): enumerated ruled leaves + planted-drift teeth, never a blanket
+# "ignore strata resources" carve. ----------------------------------------------------------------
+
+
+C04_POST_EVIDENCE = L.TESTS_DIR / "evidence" / "c04-post-ticket-strata" / "gpu-ai.strata-docs.yaml"
+
+# The four leaves C04 (D17 claim + D26 park) moves against the pre-ticket
+# baseline, in this file's leaf grammar (D17's shorthand "the claim +1 in
+# requests/limits" and the D26 park; the memory leaf is the requests side of
+# the cgroup ceiling riding INTO requests — the number is pre-ticket chart
+# truth, limits.memory 110Gi, see the verdict note on the leg).
+C04_DEPLOY_BUDGET = frozenset({
+    "$.spec.replicas",
+    f'$.spec.template.spec.containers[0].resources.requests["{A.R9700_CLAIM}"]',
+    f'$.spec.template.spec.containers[0].resources.limits["{A.R9700_CLAIM}"]',
+    "$.spec.template.spec.containers[0].resources.requests.memory",
+})
+
+# Each ruled leaf must carry its RULED value, not merely "have moved" (the
+# both-arms law from C03: an absent claim is as wrong as a second claim).
+C04_RULED_VALUES = {
+    "$.spec.replicas": "0",
+    f'$.spec.template.spec.containers[0].resources.requests["{A.R9700_CLAIM}"]': "1",
+    f'$.spec.template.spec.containers[0].resources.limits["{A.R9700_CLAIM}"]': "1",
+    "$.spec.template.spec.containers[0].resources.requests.memory": S.STRATA_CGROUP_LIMIT,
+}
+
+
+def _join(path: str, key) -> str:
+    return f"{path}.{key}" if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(key)) \
+        else f'{path}["{key}"]'
+
+
+def _leaf_paths(node, path: str) -> set:
+    if isinstance(node, dict) and node:
+        return {p for k, v in node.items() for p in _leaf_paths(v, _join(path, k))}
+    return {path}
+
+
+def _leaf_diff(a, b, path: str = "$") -> set:
+    """Leaf paths where two docs differ. Same list law as the C03 delta engine
+    (charts/radiance/tests/test_c03_generic_shell.py): length change or scalar
+    elements are OPAQUE at the list path; equal-length dict lists descend by
+    index, so a swap inside a listed container stays nameable drift."""
+    if isinstance(a, dict) and isinstance(b, dict):
+        out = set()
+        for k in sorted(set(a) | set(b)):
+            p = _join(path, k)
+            if k not in a:
+                out |= _leaf_paths(b[k], p)
+            elif k not in b:
+                out |= _leaf_paths(a[k], p)
+            else:
+                out |= _leaf_diff(a[k], b[k], p)
+        return out
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return {path}
+        if a and all(isinstance(x, dict) for x in a) and all(isinstance(y, dict) for y in b):
+            return {p for i, (x, y) in enumerate(zip(a, b)) for p in _leaf_diff(x, y, f"{path}[{i}]")}
+        return {path} if a != b else set()
+    return {path} if a != b else set()
+
+
+def _docs_by_id(docs) -> dict:
+    return {(d["kind"], (d.get("metadata") or {}).get("name")): d for d in docs}
+
+
+def _ruled_value_checks(dep: dict) -> dict:
+    """path -> live str-value for each budget leaf (the missing/value arm: the
+    ruled moves must have LANDED with the ruled values)."""
+    ci = dep["spec"]["template"]["spec"]["containers"][0]
+    res = ci.get("resources") or {}
+    req, lim = res.get("requests") or {}, res.get("limits") or {}
+    return {
+        "$.spec.replicas": str(dep["spec"].get("replicas")),
+        f'$.spec.template.spec.containers[0].resources.requests["{A.R9700_CLAIM}"]': str(req.get(A.R9700_CLAIM)),
+        f'$.spec.template.spec.containers[0].resources.limits["{A.R9700_CLAIM}"]': str(lim.get(A.R9700_CLAIM)),
+        "$.spec.template.spec.containers[0].resources.requests.memory": str(req.get("memory")),
+    }
+
+
 @helm_mark
-def test_strata_render_byte_equal_to_pre_ticket_baseline():
-    """C04 AC1 (the executable reading of "ZERO changed lines inside the strata
-    enable-set"): the four strata docs in the live service-overlay render must
-    parse-equal the pre-ticket baseline. The baseline was captured at a clean
-    tree, so any strata-surface move by C01/C04/C05/C07 reds HERE, naming Q5.
-    cf-144 C03 SANCTIONED DIVERGENCE (DECISIONS P15/P16): exactly ONE line may
-    differ — the STRIX model's ROCR_VISIBLE_DEVICES env-injection line in the
-    strata-config ConfigMap — re-pinned "1"→"2" per the owner rocminfo receipt
-    2026-11-21 (GPU-agent ordinals 0/1 = R9700s, 2 = APU gfx1151). The oracle
-    itself stays byte-untouched as the pre-ticket truth; the carve is applied
-    to BOTH sides at strix-block scope by the helper below, so any OTHER
-    strata-doc change — including a second ROCr move on another model, or any
-    other line inside the strix block — still reddens this leg."""
+def test_strata_render_moves_from_pre_ticket_baseline_only_on_the_ruled_leaves():
+    """C04 AC1/AC4 vs the FROZEN pre-ticket baseline (re-pinned from cf-143's
+    whole-render byte-equality by D17 + D26 — the strata surface legitimately
+    diverges now, and the divergence is the enumerated FOUR-LEAF budget: the
+    claim pair positive-ADDED at count 1 (D17), replicas 1→0 (D26 K1 park),
+    and requests.memory 64Gi→110Gi (the cgroup ceiling, whose number is
+    PRE-TICKET chart truth: the baseline's own limits.memory is 110Gi — C04
+    mirrors requests TO the existing ceiling, it invents nothing; the
+    consequence, strata+fn being RAM-unschedulable together (110+110 >
+    125.08 node RAM), is the never-co-exist law enforced a second time below
+    the GPU claim's 1+2 > 2, and the only lawful bring-up (fn→0 first, C06
+    runbook) fits with room: strata 110Gi + the always-on main pod's 4.125Gi
+    requests on the same node). BOTH arms bind (C03 doctrine): NOTHING
+    outside the budget may differ on ANY of the four docs (the two ConfigMaps
+    and the Service carry ZERO budget — the cf-144 strix-ROCR carve stays
+    applied to both sides for the config ConfigMap), and each ruled leaf must
+    carry its ruled VALUE, not merely have moved. Dev's proof
+    /tmp/opencode/c04/byte-equal-delta-proof.txt measured exactly these four
+    leaves at the same paths."""
     assert BASELINE.is_file(), f"cf-143 C04: baseline fixture {BASELINE} missing"
     baseline = yaml.safe_load(BASELINE.read_text())
     assert isinstance(baseline, list), f"cf-143 C04: baseline fixture is {type(baseline).__name__}, want a list of docs"
     docs, _raw = S.render_service_overlay("gpu-ai")
-    current = _strata_docs(docs)
-    assert len(current) == len(baseline) == 4, "cf-143 C04: baseline/live doc count mismatch"
-    for b, c in zip(baseline, current):
-        if (c.get("kind"), (c.get("metadata") or {}).get("name")) == ("ConfigMap", S.CM_CONFIG):
+    live = _docs_by_id(_strata_docs(docs))
+    base = _docs_by_id(baseline)
+    assert set(live) == set(base), f"strata doc set changed: {sorted(set(live) ^ set(base))}"
+    unauthorized = []
+    for doc_id in sorted(base):
+        b, c = base[doc_id], live[doc_id]
+        if doc_id == ("ConfigMap", S.CM_CONFIG):
             b = _c144_carve_strix_rocr(b, "baseline-oracle")
             c = _c144_carve_strix_rocr(c, "live-render")
+        budget = C04_DEPLOY_BUDGET if doc_id[0] == "Deployment" else frozenset()
+        unauthorized += [f"{doc_id[1]}:{p}" for p in sorted(_leaf_diff(b, c) - budget)]
+    assert not unauthorized, (
+        f"C04/D17+D26: strata render moved OUTSIDE the four-leaf budget: {unauthorized}. "
+        "The cf-143 waves are ADDITIVE and C04 rules exactly claims+park+memory-mirror; a "
+        "fifth leaf here names an unauthorized strata change (review rejects outright). The "
+        "cf-144 P15/P16 carve normalizes ONLY the strix ROCR_VISIBLE_DEVICES line inside "
+        "strata-config (both sides sentinelled before this compare)"
+    )
+    dep = live[("Deployment", S.STRATA_OBJECT_NAME)]
+    mismatches = {p: (C04_RULED_VALUES[p], got) for p, got in _ruled_value_checks(dep).items()
+                  if got != C04_RULED_VALUES[p]}
+    assert not mismatches, (
+        f"C04/D17+D26: ruled leaves not landed at ruled values (want/ got): {mismatches} — "
+        "the budget binds BOTH ways: the claim pair at 1, the park at 0, requests.memory at "
+        f"the {S.STRATA_CGROUP_LIMIT} cgroup ceiling (designed-red naming C04 until it lands)"
+    )
+
+
+@helm_mark
+def test_strata_render_byte_equal_to_post_c04_evidence():
+    """The FORWARD byte-pin: the live strata docs equal the checked-in
+    post-C04 evidence exactly (strix-ROCR carve applied to both sides). The
+    budget absorbs ONE sanctioned divergence — the one C04 ruled — and this
+    leg makes that absorption one-time: from C04 forward the strata surface
+    is byte-pinned again (cf-143's Q5 doctrine continued against post-C04
+    truth), so a future move reddens at full sensitivity instead of hiding
+    inside the budget's arms. Re-pinning the evidence is a ruling-and-retest
+    act, never a silent refresh."""
+    assert C04_POST_EVIDENCE.is_file(), (
+        f"C04: post-ticket strata evidence {C04_POST_EVIDENCE} missing — test-session "
+        "artifact (chunks/C04.md Tests flip-list); re-capture per the provenance header in "
+        "the evidence file itself, never hand-edit"
+    )
+    pinned = _docs_by_id(yaml.safe_load(C04_POST_EVIDENCE.read_text()))
+    docs, _raw = S.render_service_overlay("gpu-ai")
+    live = _docs_by_id(_strata_docs(docs))
+    assert set(pinned) == set(live), f"strata doc set moved since C04: {sorted(set(pinned) ^ set(live))}"
+    for doc_id in sorted(pinned):
+        b, c = pinned[doc_id], live[doc_id]
+        if doc_id == ("ConfigMap", S.CM_CONFIG):
+            b = _c144_carve_strix_rocr(b, "evidence-side")
+            c = _c144_carve_strix_rocr(c, "live-render")
         assert b == c, (
-            f"cf-143 C04/Q5: strata {c['kind']}/{c['metadata']['name']} render diverged from "
-            "the pre-ticket baseline — the cf-143 waves are ADDITIVE; a strata diff here is "
-            "rejected outright by review (chunks/C04.md notes-for-dev). The cf-144 P15/P16 "
-            "carve normalizes ONLY the strix model's ROCR_VISIBLE_DEVICES line inside "
-            "strata-config (both sides sentinelled before this compare) — so a red here is "
-            "a delta OUTSIDE that one line: another doc, another model, or another item "
-            "inside the strix block"
+            f"strata {doc_id[0]}/{doc_id[1]} diverged from the post-C04 evidence — every strata "
+            "surface move after C04 needs a ruling, a budget/legs update AND an evidence re-pin "
+            "in the SAME test wave; a red here with no fresh ruling is unauthorized drift"
         )
+
+
+@helm_mark
+def test_c04_strata_budget_catches_planted_drift():
+    """Teeth of the budget leg (the D31 half-tripwire class): plant FOUR
+    drifts on synthetic copies of the live render — an image-tag swap INSIDE
+    the listed container, a profile-ConfigMap value append, dropping the
+    limits.memory key, and pulling the requests claim — and show the engine
+    + arms catch each: the first three as unauthorized leaves, the fourth by
+    the ruled-value arm (removal erases the diff, exactly the hole both arms
+    close). Green always; this leg proves the gate is live."""
+    docs, _raw = S.render_service_overlay("gpu-ai")
+    base = _docs_by_id(yaml.safe_load(BASELINE.read_text()))
+    clean = _docs_by_id(_strata_docs(docs))
+
+    def delta_of(live: dict):
+        bad = []
+        for doc_id in base:
+            b, c = base[doc_id], live[doc_id]
+            if doc_id == ("ConfigMap", S.CM_CONFIG):
+                b = _c144_carve_strix_rocr(b, "teeth-baseline")
+                c = _c144_carve_strix_rocr(c, "teeth-live")
+            budget = C04_DEPLOY_BUDGET if doc_id[0] == "Deployment" else frozenset()
+            bad += _leaf_diff(b, c) - budget
+        return bad
+
+    dep_id = ("Deployment", S.STRATA_OBJECT_NAME)
+
+    p = {k: copy.deepcopy(v) for k, v in clean.items()}
+    dci = p[dep_id]["spec"]["template"]["spec"]["containers"][0]
+    dci["image"] = str(dci.get("image", "")).rsplit(":", 1)[0] + ":planted"
+    assert "$.spec.template.spec.containers[0].image" in delta_of(p), \
+        "C04 teeth: planted image swap inside the ruled containers list passed as authorized"
+
+    p = {k: copy.deepcopy(v) for k, v in clean.items()}
+    cm_id = ("ConfigMap", S.CM_PROFILE)
+    key = sorted(p[cm_id]["data"])[0]
+    p[cm_id]["data"][key] += "\n# planted"
+    assert _join("$.data", key) in delta_of(p), \
+        "C04 teeth: planted profile-ConfigMap drift passed on the ZERO-budget side"
+
+    p = {k: copy.deepcopy(v) for k, v in clean.items()}
+    del p[dep_id]["spec"]["template"]["spec"]["containers"][0]["resources"]["limits"]["memory"]
+    assert "$.spec.template.spec.containers[0].resources.limits.memory" in delta_of(p), \
+        "C04 teeth: dropping the cgroup ceiling key erased its own diff — the one-sided leaf law is dead"
+
+    p = {k: copy.deepcopy(v) for k, v in clean.items()}
+    del p[dep_id]["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"][A.R9700_CLAIM]
+    bad = {p2: (C04_RULED_VALUES[p2], got) for p2, got in _ruled_value_checks(p[dep_id]).items()
+           if got != C04_RULED_VALUES[p2]}
+    assert f'$.spec.template.spec.containers[0].resources.requests["{A.R9700_CLAIM}"]' in bad, (
+        "C04 teeth: a PULLED requests-claim left no diff against the claim-less baseline and "
+        "the ruled-value arm did not catch it — the both-arms law is half-wired"
+    )
 
 
 def test_strata_enable_set_unchanged_seven_flags():

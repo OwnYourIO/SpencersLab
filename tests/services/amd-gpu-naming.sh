@@ -340,31 +340,93 @@ $bad"
   # claims into this same file's radiance blocks, so the admission holds on both
   # sides of that wave; the python leg below keeps it honest by requiring the
   # claims to sit INSIDE a radiance lane's container resources, not anywhere in
-  # the file.
+  # the file. Placement WIDENED by C04/D17 (2026-11-22 owner ruling): strata is
+  # a REAL claimant — the llama-swap release's strata controller (overlay
+  # positive-ADD, D26 carrier law) is the one non-radiance admitted home; the
+  # python twin in charts/llama-swap/tests/test_cf143_naming_flip.py moved in
+  # the same wave (that widening is the twin-drift bug this edit closes).
   bad=$(claim_grep "$R9700_CLAIM" | grep -vE '^charts/radiance/|^services/gpu-ai/prod/values\.yaml:' || true)
   if [ -n "$bad" ]; then
-    fail "n3 (AC4): live claims of the renamed pool outside the sanctioned homes (charts/radiance + the gpu-ai service file's radiance lanes) —
+    fail "n3 (AC4): live claims of the renamed pool outside the sanctioned homes (charts/radiance + the gpu-ai service file's radiance lanes and strata controller) —
 $bad"
   fi
-  python3 - "$VALS" "$R9700_CLAIM" <<'PY' || fail "n3: a service-file R9700 claim sits outside a radiance lane's container resources (see diagnostics)"
+  python3 - "$VALS" "$R9700_CLAIM" <<'PY' || fail "n3: a service-file R9700 claim sits outside an admitted lane's container resources (see diagnostics)"
 import sys, yaml
 path, claim = sys.argv[1], sys.argv[2]
 doc = yaml.safe_load(open(path)) or {}
-errs = []
-def walk(node, keys):
-    if isinstance(node, dict):
-        for k, v in node.items():
-            if str(k) == claim:
-                lane = keys[0] if keys else ""
-                shape = len(keys) >= 6 and keys[1:3] == ["app-template", "controllers"] \
-                    and keys[-1] in ("requests", "limits") and keys[-2] == "resources"
-                if not str(lane).startswith("radiance") or not shape:
-                    errs.append(f"{keys} -> {v!r} (want a radiance* release, .../containers/<name>/resources/{{requests,limits}})")
-            walk(v, keys + [str(k)])
-    elif isinstance(node, list):
-        for i, v in enumerate(node):
-            walk(v, keys + [f"[{i}]"])
-walk(doc, [])
+def admitted(keys):
+    # keys = path down to the requests/limits map (claim key not included —
+    # the diagnostic identity the same-wave python twin also walks).
+    # D30 twin-drift law: this predicate is the bash twin of the python stray
+    # guard in charts/llama-swap/tests/test_cf143_naming_flip.py — move HERE and
+    # there together, never one alone.
+    lane = keys[0] if keys else ""
+    shape = len(keys) >= 6 and keys[1:3] == ["app-template", "controllers"] \
+        and keys[-1] in ("requests", "limits") and keys[-2] == "resources"
+    radiance = str(lane).startswith("radiance")
+    # C04/D17: the strata claimant — llama-swap release, strata controller,
+    # strata container. Pinned controller-AND-container-named: a claim planted
+    # on the MAIN llama-swap container (which carries only the APU claim) is
+    # drift, not a strata claim that moved house.
+    strata = lane == "llama-swap" and keys[3:6] == ["strata", "containers", "strata"]
+    return shape and (radiance or strata)
+def law_errs(doc):
+    found = []
+    def walk(node, keys):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if str(k) == claim:
+                    if not admitted(keys):
+                        found.append(f"{keys + [str(k)]} -> {v!r} (want a radiance* release or the llama-swap strata controller, .../containers/<name>/resources/{{requests,limits}})")
+                    else:
+                        lane = keys[0] if keys else ""
+                        if lane == "llama-swap" and str(v) != "1":
+                            found.append(f"{keys + [str(k)]} -> {v!r}: D17 rules strata's claim at count 1 in BOTH maps")
+                        elif lane != "llama-swap" and not isinstance(v, str):
+                            found.append(f"{keys + [str(k)]} -> {v!r}: radiance lanes ship the QUOTED string form — the C01 AC3 sharpness law, moved here from the bash sweep (which cannot see structure): an int claim in a radiance block is drift, not a form the sweep sanctions")
+                walk(v, keys + [str(k)])
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, keys + [f"[{i}]"])
+    walk(doc, [])
+    return found
+errs = law_errs(doc)
+# Teeth of the admission+form law itself (the always-pass class): plant claims on
+# admitted homes (must stay quiet) and on UNadmitted/unformed shapes (must each
+# error). An allow-list nobody probes is a blanket carve with extra syntax.
+def plant(keys, val="1"):
+    d, cur = {}, None
+    for k in keys[:-1]:
+        nxt = {}
+        if cur is None:
+            d = cur = {k: nxt}
+        else:
+            cur[k] = nxt
+        cur = nxt
+    cur[keys[-1]] = val
+    return d
+L = ["app-template", "controllers"]
+C = ["containers"]
+RAD = ("radiance", *L, "radiance", *C, "radiance", "resources")
+STR = ("llama-swap", *L, "strata", *C, "strata", "resources")
+teeth = [
+    ((*RAD, "requests"), "1", False),
+    ((*RAD, "limits"), "2", False),
+    # int 1 on strata is the C07/C10 APU-claim idiom D17 cites as the shape
+    # precedent (amd.com/gpu-8060s: 1 at services/gpu-ai/prod/values.yaml:205) —
+    # admitted, not a form drift.
+    ((*STR, "requests"), 1, False),
+    ((*STR, "limits"), "1", False),
+    ((*RAD, "requests"), 1, True),
+    ((*STR, "limits"), "2", True),
+    (("llama-swap", *L, "llama-swap", *C, "llama-swap", "resources", "requests"), "1", True),
+    (("gpu", *L, "strata", *C, "strata", "resources", "requests"), "1", True),
+    ((*STR[:-1], "claims"), "1", True),
+]
+for keys, val, want_err in teeth:
+    got = bool(law_errs(plant(list(keys) + [claim], val)))
+    if got != want_err:
+        errs.append(f"TEETH: planted {val!r} at {keys} {'passed the law' if not got else 'was rejected'} — want {'rejection' if want_err else 'admission'}; the admission+form law is losing its teeth")
 if errs:
     print("; ".join(errs), file=sys.stderr); sys.exit(1)
 PY
@@ -412,12 +474,16 @@ $(printf '%s\n' "$stale" | head -24)"
   shipped=$(claim_grep "$R9700_CLAIM" || true)
   [ -n "$shipped" ] \
     || fail "n3 (C01 AC3 sharpness): the R9700 sweep matches NO live claim line in charts/ or services/ — charts/radiance ships the pair as a QUOTED string ($R9700_CLAIM: \"2\"), so a sweep that misses it turns every stray-guard in this block vacuous"
-  unquoted=$(printf '%s\n' "$shipped" | grep -vE ":[[:space:]]*[\"'][0-9]+[\"'][[:space:]]*$" || true)
-  if [ -n "$unquoted" ]; then
-    fail "n3 (C01 AC3 sharpness): shipped R9700 claim line(s) outside the sanctioned QUOTED form — the container claim values are strings and the sweep's shape assumption needs re-reading, not widening:
-$unquoted"
-  fi
-  ok "n3: carrier-law sweep clean AND SHARP — quoted and bare claim values both matched (the shipped pair form is SEEN, not skipped), bare claims ONLY in services/gpu/prod/values.yaml, the APU name ONLY in the gpu-ai overlay, the R9700 pool ONLY in charts/radiance, the retired tier absent from all four AC4 scopes, and the planted-straggler probe proves both sweeps fire (C01 AC1/AC3 on top of the C10/D26 carrier law)"
+  # The per-line FORM check this arm used to run ("every shipped claim QUOTED")
+  # was a shape assumption that died with C04/D17: the strata claim rides the
+  # C07/C10 APU idiom, an unquoted int (amd.com/gpu-8060s: 1 is the precedent
+  # D17 cites verbatim). A grep cannot tell "unquoted strata idiom" from
+  # "unquoted drift inside a radiance block", so the form law moved UP into the
+  # structural python leg above (radiance ⇒ quoted string, strata ⇒ count 1,
+  # either type), teeth-probed there. Dropping the blanket check does not drop
+  # the sharpness: the non-empty arm above still pins that the sweep SEES the
+  # quoted pair, and every shipped line is structurally adjudicated below.
+  ok "n3: carrier-law sweep clean AND SHARP — quoted and bare claim values both matched (the shipped pair form is SEEN, not skipped), bare claims only on the bare-carrier file and the strata idiom lines, the APU name ONLY in the gpu-ai overlay, the R9700 pool ONLY in charts/radiance + the gpu-ai file, the retired tier absent from all four AC4 scopes, and the planted-straggler probe proves both sweeps fire (C01 AC1/AC3 on top of the C10/D26 carrier law)"
 fi
 
 # --- n4: the vendored chart's expected-names ledger (the C02 authority) ---------
