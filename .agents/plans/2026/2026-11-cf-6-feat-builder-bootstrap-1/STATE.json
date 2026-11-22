@@ -34,6 +34,8 @@
   "deferred": ["RESOLVED by C01: F1 (b5 lexical skip-ban) — adopted this suite-rewrite per plan R7 (b5 gains the semantic push-unconditional pin + battery probe); the base STATE's copy stands as history", "inherited: lane-design card (per-registry pin reads, published-not-predicted, dev-copy automation), UA-10 probe card, run-1 carried set (26.11.2 re-pin pair, ghcr settle, cf-55 retest-first, ci-surface t4, t9-exemption retirement)"],
   "landing": {
     "base": "1d6d56dc0 (== origin/main tip, resolve-checked; single new commit on cf-6-feat-builder-bootstrap-1; no staged set to protect this run)",
+    "commit": "fab419cb1 — 10 files (5 work + 5 record), subject-only shape",
+    "floor_refinement": "the commit-shape lesson sharpens: rejections are TOTAL COMMAND LENGTH (~>700 chars), not -m structure — a two-paragraph fully-ASCII body was denied after a subject-only one landed; carry detail in the PR body/ticket folder, not the -m",
     "push_pr_merge": "owner-owned (repo hard rules)"
   },
   "final_review": {
