@@ -1,28 +1,35 @@
 #!/usr/bin/env bash
 # Offline contract suite for .forgejo/workflows/builder-bootstrap.yaml — the
-# SINGLE-PURPOSE recovery lane: on a prod-role instance a bare
+# SINGLE-PURPOSE recovery lane, FORGE-ONLY: on a prod-role instance a bare
 # workflow_dispatch (no input at all) (re)mints THE lab build image,
-# containers/forgejo-runner, to ghcr + the building instance's own registry
-# under the surviving calendar law (ticket 2026/2026-11-cf-6-feat-builder-bootstrap-1, C01).
+# containers/forgejo-runner, to the building instance's own registry ONLY —
+# the calendar N and the push chain are that single registry's, under the
+# single-registry calendar law (owner rulings 2026-11-22, R-B + OQ-1=B;
+# ticket 2026/2026-11-cf-6-feat-builder-bootstrap-2, C01).
 #
-# AC trace (C01.md Acceptance criteria): b1[AC1 no-input trigger — THE
-# ANTI-TRAP LEG] b2[AC2 paradox guard on the scheduling surface] b3[AC3
-# bare-membership clause pin] b4[AC3/AC1 single-job flow] b5[AC5 calendar
-# law + F1 push-unconditional] b6[AC6 closed credential surface] b7[AC7
-# detector law, flipped halves] b8[AC4 fixed target] b9[AC9 docs law pair,
-# single-purpose truth] b10[AC10 syntax] bt1..bt10[AC8 battery].
+# AC trace (C01.md Acceptance criteria): b1[AC3 no-input trigger — THE
+# ANTI-TRAP LEG, byte-stable] b2[AC3 paradox guard on the scheduling
+# surface, byte-stable] b3[AC3 bare-membership clause pin, byte-stable]
+# b4[AC3 single-job flow, byte-stable] b5[AC2 single-registry calendar law
+# + F1 push-unconditional] b6[AC1 shrunk closed credential surface + ghcr
+# name bans] b7[AC1/AC2 detector law, next-n ×1 REQUIRED + ghcr-read
+# ABSENCE teeth] b8[AC1/AC2 fixed target, ghcr refs banned absolutely]
+# b9[AC5 docs law pair at the single-registry truth] b10[AC3 syntax + 3-run-
+# block recount] bt1..bt10[AC4 battery, incl. the bt3/bt4 reversal probes].
 #
-# Red posture (authored against the STILL-GENERAL shipped file): RED at
-# b1 (inputs mapping + accessors live), b3 (publish carries the '!= []'
-# skip clause the single job may not keep), b4 (detect job + matrix
-# present), b7 (detect-mode call present), b8 (matrix-templated build
-# context, no forgejo-runner refs, name carriers live), b9 (lane surfaces
-# still say any-container service), bt7 (its anchor bytes — the fixed
-# context — do not exist yet). GREEN at b2/b5/b6/b10 because the reduction
-# preserves the scheduling surface, the calendar law, the closed credential
-# surface and the run-block syntax — legs aimed at not-yet-shipped shapes
-# are honest about which half of the contract already holds. All 20 ok
-# after DEV lands the reduced lane.
+# Red posture (authored against the shipped dual-push+dual-walk file at
+# 2b11120a8 — the plan's fact 9 cut map): RED at b5 (the ghcr push chain +
+# union math violate the single-registry pins), b6 (secrets set carries
+# GHCR_PUSH_PAT, two logins, two push sides), b7 (next-n ×2 — the parity
+# read-walk is the banned shape under OQ-1=B — and the ghcr reads trip the
+# absence teeth), b8 (ghcr trio refs + the ghcr_image/ghcr_tags carriers),
+# b9 (overview/AGENTS/SKILL still claim the ghcr+own target), bt3/bt4
+# (their anchors assert the forge-only absence the shipped file violates —
+# a cannot-bite anchor is itself a FAIL, authored RED by construction).
+# GREEN at b1/b2/b3/b4/b10 and bt1/bt2/bt5..bt10 — the cut preserves the
+# trigger/scheduling/guard/flow shapes and the surviving pins' anchors exist
+# in BOTH files. 13 ok / 7 red at authoring; 20 ok after DEV lands the cut
+# plus the docs trio (SIM-proved shape, plan fact 10).
 #
 # Subset discipline (41-suite idiom, groups as separate argv words):
 #   bash tests/services/forgejo-builder-bootstrap.sh            # all 20
@@ -31,14 +38,17 @@
 #   bash tests/services/forgejo-builder-bootstrap.sh b2 bt1     # per-leg
 #
 # The battery mutates TMP COPIES of the workflow — the repo is never written.
-# Probes anchor on the TARGET bytes (the fixed build context, the mirrored
-# walk blocks, the `for tag in $ghcr_tags` chains): a probe whose anchor
-# cannot bite the landed file is itself a FAIL the dev surface must answer —
-# a battery leg never passes vacuously. Probe redness is exact: the mutation
+# Probes anchor on the TARGET bytes (the fixed build context, the forge walk
+# blocks, the `for tag in $forge_tags` chain, and for the two R-B reversal
+# probes the ABSENCE shapes they first assert): a probe whose anchor cannot
+# bite the landed file is itself a FAIL the dev surface must answer — a
+# battery leg never passes vacuously. Probe redness is exact: the mutation
 # must redden its named leg(s) and nothing else that was green (documented
 # collateral: bt7 tolerates b4 — the restored matrix context re-enters the
-# matrix-flow ban; bt10 tolerates b3+b6 — the URL-bearing ref trips the
-# host greps; bt4 is a compound probe whose two mutations BOTH land on b5).
+# matrix-flow ban; bt10 tolerates b3+b6 — the URL-bearing ref trips the host
+# greps; bt3 restores the ghcr push arm and reddens [b5 b6 b8]; bt4 is the
+# compound READ-walk reversal + F1 wrapper, named [b5 b7] with b8 as
+# collateral — the restored walk's payload ref trips b8's absolute ban).
 #
 # Pins and their why:
 #   - b1 is THE ANTI-TRAP LEG (plan R1): the owner hit the blank-dispatch
@@ -60,44 +70,66 @@
 #     is a dangling reference (R2), and its return is the general lane.
 #   - b4 pins the single job and the absence of every flow carrier (strategy/
 #     matrix/needs/outputs keys, fromJSON, the matrix. accessor).
-#   - b5 keeps the shipped calendar methods (t11 tolerance posture, r2
-#     all-reads-before-any-push, r3 chain attribution, t8 transitive chain
-#     walk) AND absorbs the base review's F1: every docker push sits
-#     UNCONDITIONALLY in its attributed for-chain — a semantic
-#     manifest-inspect skip written without the banned lexicon would pass
-#     the old lexical ban but fails this structural one, and bt4's wrapper
-#     mutation proves it.
-#   - b6 is the P4' closed set, byte-stable through the reduction: secrets
-#     exactly {GHCR_PUSH_PAT, FORGE_PUSH_TOKEN}, vars exactly {ROLE}, two
-#     logins, two push sides, zero second-instance names.
-#   - b7 flipped its halves per R3: next-n REQUIRED exactly twice (the
-#     walks' month math rides the shared script — P6 reuse), the detect-mode
-#     call FORBIDDEN (bt7 restores it to prove the return of the general
-#     lane reddens here), no all-expansion, no sanitize/pr- shape, no
-#     writes under scripts/.
-#   - b8 is the FIXED TARGET (its behavioral detect-shape subject died with
-#     the input): exactly one docker build, final context
-#     containers/forgejo-runner, both registry refs naming forgejo-runner,
-#     and ZERO name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./
+#   - b5 keeps the surviving calendar methods on the forge side only (t11
+#     tolerance posture, r2 all-reads-before-any-push, r3 chain attribution,
+#     t8 transitive chain walk, the fixed month via calendar.env) AND the
+#     base review's F1, at full strength after the C01 review MINOR: every
+#     docker push sits UNCONDITIONALLY in its attributed for-chain — the
+#     push's control stack must be EXACTLY the chain (no wrapper above it),
+#     and no skip-flow (continue/break) or tag-existence probe (manifest
+#     inspect, /manifests/) may sit inside a chain body, which closes the
+#     guard-before-push skip the lexical ban cannot see; bt4's wrapper
+#     mutation proves the leg bites. B's new halves: the N is the single
+#     walked forge value (n=$n_forge REQUIRED, union math FORBIDDEN), and
+#     every docker push attributes to the forge side (any ghcr-attributed
+#     push is R-B returning).
+#   - b6 is the shrunk closed set (R-B + OQ-1=B): secrets exactly
+#     {FORGE_PUSH_TOKEN}, vars exactly {ROLE}, exactly ONE login on the
+#     derived forge host, one push side, zero second-instance names AND the
+#     raw ban of both ghcr credential names (GHCR_PUSH_PAT and
+#     PUSH_TOKEN_GH) comments included — the lane holds no ghcr credential
+#     of any name; the header negates in generic prose, never by naming
+#     dead keys.
+#   - b7 is the owner's named tooth: next-n REQUIRED exactly ONCE (the
+#     single forge walk rides the shared script's month math — P6 reuse,
+#     OQ-1=B) and the ghcr calendar READ is the ABSENCE shape — no
+#     ghcr.io/token, no ghcr_api/ghcr_list/ghcr_manifest/ghcr_token read in
+#     any CODE line (comments may recount history; bt4 restores the walk
+#     and reddens here). The detect-mode call stays FORBIDDEN (bt7 proves
+#     it), no all-expansion, no sanitize/pr- shape, no writes under scripts/.
+#   - b8 is the FIXED TARGET with the ghcr ban absolute: exactly one docker
+#     build, final context containers/forgejo-runner, the forge refs
+#     naming the image while the ghcr payload substring counts ZERO
+#     file-wide (its only remaining home was the read step — deleted), no
+#     ghcr_image/ghcr_tags identifiers and no ghcr.io host anywhere, and
+#     ZERO name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./
 #     containers/* glob/container= variables) anywhere — a lane that could
-#     name another container is not this lane.
-#   - b9 rewrites the doc pins for the new truth: the five-workflow
-#     enumeration + narrow-class law pair SURVIVES unchanged (ci-surface
-#     t1's five-set is R8's byte-frozen neighbor), while the lane-wording
-#     surfaces must say single-purpose. The residue ban is scoped to the
-#     five live lane surfaces of the b9 RESIDUE tuple exactly — the
-#     workflow file, .rulesync/rules, skills/container-creation,
-#     AGENTS.md, containers/ — NOT repo-wide —
-#     by the two grounded R9 exemptions: containers-build.yaml's own
-#     dispatch description says what is true OF IT (that file is FORBIDDEN
-#     anyway), and this suite carries the banned phrases inside b9's
-#     prohibition tuples as teeth, not residue (tests/ is outside the
+#     name another container or another registry is not this lane.
+#   - b9 rewrites the doc pins for the single-registry truth: the
+#     five-workflow enumeration + narrow-class law pair SURVIVES unchanged
+#     (ci-surface t1's five-set is R8's byte-frozen neighbor), while the
+#     lane-wording surfaces must say own-registry-ONLY with a
+#     single-registry N and NO parity claim. SIM-CAUGHT AUTHORING PIN: the
+#     pair-block ghcr-target ban anchors on the LANE-SENTENCE TAIL (from
+#     'builder-bootstrap' onward), not the whole block — the AGENTS/
+#     overview bullet legitimately carries containers-build's own
+#     ghcr.io/ownyourio/<image> dual-publish sentence in the SAME block
+#     BEFORE the lane sentence, so a block-wide ban false-positives on the
+#     correct landing tree (plan fact 10; proved red-then-green by the
+#     /tmp SIM). The SKILL ban stays block-level: its lane paragraph is
+#     standalone. The residue ban remains scoped to the five live lane
+#     surfaces of the b9 RESIDUE tuple exactly — the workflow file,
+#     .rulesync/rules, skills/container-creation, AGENTS.md, containers/ —
+#     NOT repo-wide, by the two grounded R9 exemptions: containers-build's
+#     own dispatch description says what is true OF IT (that file is
+#     FORBIDDEN anyway), and this suite carries the banned phrases inside
+#     b9's prohibition tuples as teeth, not residue (tests/ is outside the
 #     sweep paths by design).
 #   - b10 floors at 2 extracted run blocks (unchanged) and PRINTS the
-#     count: the reduced lane is 5 blocks (was 7); the count is a
-#     bar-reading fact for review, not a hard pin, because step-splitting
-#     (merging the ghcr login into diag) is DEV's honest latitude under
-#     the chunk's b6-two-logins condition.
+#     count: the B-cut lane is 3 blocks (was 5); the count is a bar-reading
+#     fact for review, not a hard pin, because step-splitting (e.g. keeping
+#     login and walk in separate steps) is DEV's honest latitude while b6's
+#     one-login pin holds.
 #   - pyyaml resolves the bare `on:` key to boolean True (YAML 1.1): the
 #     trigger read takes doc.get(True) or doc.get('on'); a scalar
 #     `on: workflow_dispatch` and a null-value mapping are the same legal
@@ -396,7 +428,7 @@ PY
   ok 'b4: single job `publish` — jobs exactly {publish}; zero strategy/matrix/needs/outputs/timeout-minutes/container:/services: keys anywhere; zero fromJSON carriers; the matrix. accessor absent; uses is checkout@v7 only and shallow [C01 AC1/AC3, R2]'
 }
 
-# --- b5: calendar law mirror + the F1 semantic push pin -------------------------
+# --- b5: single-registry calendar law + the F1 semantic push pin -----------------
 leg_b5() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b5: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -414,7 +446,7 @@ def need(cond, msg):
         print(f'FAIL: b5: {msg}', file=sys.stderr)
         sys.exit(1)
 
-need(steps_txt, 'publish has no run steps — the calendar law is unpinnable (C01 Tasks name the pair of walks + the build/push step)')
+need(steps_txt, 'publish has no run steps — the calendar law is unpinnable (C01 Tasks name the forge walk step + the build/push step)')
 
 statements = []
 for text in steps_txt:
@@ -436,9 +468,11 @@ def side(stmt):
         return 'forge'
     return None
 
-# t11 methodology: every registry read answers absence as an HTTP code, never
-# a fail-flag; the walk lives inside its side's list-200 branch; ghcr keeps
-# the pull-token nesting and the 200-without-token fatal guard.
+# t11 methodology on the surviving side only: every registry read answers
+# absence as an HTTP code, never a fail-flag, and the walk lives inside the
+# forge list-200 branch. The ghcr parity walk is the banned shape (OQ-1=B):
+# no pull-token nesting, no 200-without-token guard to keep — their absence
+# is pinned here and by b7's read ban.
 reads = [s for s in statements if 'curl' in s and ('tags/list' in s or 'manifests/' in s or 'ghcr.io/token' in s)]
 need(reads, 'no curl read of a registry endpoint in publish — N is registry-derived (P5)')
 def fail_flag(call):
@@ -453,14 +487,15 @@ def fail_flag(call):
             return t
     return None
 for c in reads:
-    need(fail_flag(c) is None, f'the registry read {c.strip()!r} carries a fail-flag — absence answers 403 (ghcr token) or 404 (forge), and a fail-flagged read dies before next-n (41-suite major-2 posture, mirrored)')
+    need(fail_flag(c) is None, f'the registry read {c.strip()!r} carries a fail-flag — absence arrives as an HTTP code (401/403/404 are the tolerated forge-side codes) and a fail-flagged read dies before next-n (41-suite major-2 posture, surviving on the one side)')
     need('%{http_code}' in c, f'the registry read {c.strip()!r} does not capture the HTTP code — mirrored tolerance posture')
 
 joined = '\n'.join(steps_txt)
-defaults = re.findall(r'(?m)^[ \t]*(n_ghcr|n_forge)=1[ \t]*(#.*)?$', joined)
-need(len(defaults) >= 2, f'{len(defaults)} per-side n=1 default line(s), expected one per side (tolerated absence falls through to the month first release, RD8 mirrored)')
+defaults = re.findall(r'(?m)^[ \t]*n_forge=1[ \t]*(#.*)?$', joined)
+need(len(defaults) >= 1, f'{len(defaults)} forge n=1 default line(s), expected one (single-registry walk, OQ-1=B)')
+need('n_ghcr=1' not in joined, 'an n_ghcr default line survives — OQ-1=B ruled the ghcr walk away, its per-side default is the parity walk returning')
 nncalls = [s for s in statements if 'next-n' in s]
-need(len(nncalls) >= 2, f'{len(nncalls)} next-n call(s), expected two (the union max walks BOTH registries, fact 10; b7 pins the exact count)')
+need(len(nncalls) >= 1, f'{len(nncalls)} next-n call(s), expected the single forge walk (b7 pins the exact count)')
 for c in nncalls:
     need('YYMM=' in c, f'next-n call {c.strip()!r} does not pass YYMM — the month arrives via env exactly as containers-build does')
 
@@ -477,33 +512,28 @@ def if_block(pred):
                 j += 1
             return i, j
     return None
-for want in ('ghcr', 'forge'):
-    blk = if_block(lambda ln, w=want: w in ln.lower() and 'list' in ln and '200' in ln)
-    need(blk, f'no {want}-side list-200 branch — the existence walk may run only where the tags/list read answered 200 (mirrored)')
-    walk = '\n'.join(lines[blk[0] + 1:blk[1]])
-    need(re.search(r'(?m)^[ \t]*while\b', walk) and 'manifests/' in walk,
-         f'the {want} advance-walk (while + manifests) must sit inside its list-200 branch (mirrored: a side that answered 404 contributes no tags and gets no walk)')
-    tol = [ln for ln in lines if want in ln.lower() and '_code' in ln and all(code in ln for code in ('401', '403', '404'))]
-    need(tol, f'no {want}-side 401/403/404 tolerance branch — anything else than those codes stays fatal (mirrored posture)')
-token_blk = if_block(lambda ln: 'token' in ln.lower() and '200' in ln and 'forge' not in ln.lower())
-need(token_blk, 'no ghcr token-200 branch — the ghcr reads need the pull token (its manifest endpoint answers 401 anonymously)')
-gl = if_block(lambda ln: 'ghcr' in ln.lower() and 'list' in ln and '200' in ln)
-need(token_blk[0] < gl[0] and gl[1] <= token_blk[1], 'the ghcr tags/list branch is not nested inside the pull-token branch')
-token_body = '\n'.join(lines[token_blk[0] + 1:token_blk[1]])
-need(re.search(r'\[\s*-z\b', token_body) and 'exit 1' in token_body,
-     'the ghcr token branch lost its 200-without-token fail-loud guard — an empty bearer would turn tags/list into the tolerated 401 and publish over a taken tag with no walk')
+blk = if_block(lambda ln: 'forge' in ln.lower() and 'list' in ln and '200' in ln)
+need(blk, 'no forge-side list-200 branch — the existence walk may run only where the tags/list read answered 200')
+walk = '\n'.join(lines[blk[0] + 1:blk[1]])
+need(re.search(r'(?m)^[ \t]*while\b', walk) and 'manifests/' in walk,
+     'the forge advance-walk (while + manifests) must sit inside its list-200 branch')
+tol = [ln for ln in lines if 'forge' in ln.lower() and '_code' in ln and all(code in ln for code in ('401', '403', '404'))]
+need(tol, 'no forge-side 401/403/404 tolerance branch — anything else than those codes stays fatal')
+need(if_block(lambda ln: 'ghcr' in ln.lower() and 'list' in ln and '200' in ln) is None,
+     'a ghcr list-200 branch survives — OQ-1=B ruled the parity walk away, its branch is the banned shape (b7 reads the code lines too)')
 
-# r2 methodology: every walk finishes before the first push.
+# r2 methodology: the walk finishes before the first push.
 push_i = [i for i, s in enumerate(statements) if 'docker push' in s]
 read_i = [i for i, s in enumerate(statements) if s in reads]
 need(push_i, 'no docker push in publish — the lane must publish')
-need(max(read_i) < min(push_i), 'a registry read or walk sits after the first docker push — the union max must complete before any publish (fact 10, mirrored)')
+need(max(read_i) < min(push_i), 'a registry read or walk sits after the first docker push — the calendar walk must complete before any publish (AC2)')
 
-# union max + fixed month + three-tag trio per side + ghcr-then-own order
-need(re.search(r'n=\$n_ghcr\b', joined), 'no n=$n_ghcr seed line — the calendar N is the union maximum of the two walked sides (fact 10)')
-need(re.search(r'n_forge["\x27]?\s*-gt', joined), 'no -gt advance against n_forge — union max, not per-side N')
+# single-registry N + fixed month + three-tag trio + the one forge chain
+need(re.search(r'n=\$n_forge\b', joined), 'no n=$n_forge derivation — the calendar N is the single-registry walk (OQ-1=B)')
+need('n=$n_ghcr' not in joined and re.search(r'n_forge["\x27]?\s*-gt', joined) is None,
+     'union-max math survives — B retired the ghcr side')
 need(raw.count('date +%y.%m') == 1, f'date +%y.%m occurs {raw.count("date +%y.%m")} time(s), expected exactly 1 (the month is fixed once per job and shared via calendar.env, mirrored)')
-need(re.search(r'echo "month=\$month" > calendar\.env', joined), 'the fixed month is never written to calendar.env (the family mechanism both walks and the build read)')
+need(re.search(r'echo "month=\$month" > calendar\.env', joined), 'the fixed month is never written to calendar.env (the family mechanism the walk and the build both read)')
 
 def has_cal(text):
     return '$month' in text or '%y.%m' in text
@@ -521,21 +551,18 @@ for i, s in enumerate(statements):
         stack.pop()
     if 'docker push' in s:
         a = side(s) or (side(stack[-1]) if stack else None)
-        need(a is not None, f'unattributable docker push: {s!r} — every push must carry the ghcr/forge token in its line or its enclosing for: list (r3 method; the mirror ships exactly two attributed chains)')
+        need(a is not None, f'unattributable docker push: {s!r} — every push must carry its side token in the line or its enclosing for: list (r3 method; the side token is how a restored ghcr-attributed chain gets named — the B lane ships exactly one attributed chain)')
         push_lines[a].append((i, s))
         if stack:
             push_lists[a].append(stack[-1])
-need(push_lines['ghcr'] and push_lines['forge'], 'the push chains do not cover both registries (targets are ghcr + the building instance only, P4\x27)')
-gi = [i for i, _ in push_lines['ghcr']]
-fi_ = [i for i, _ in push_lines['forge']]
-need(max(gi) < min(fi_), 'a forge push precedes a ghcr push — the mirrored order is ghcr first so a half-failed run gaps the side with no pinned consumers (fact 10)')
+need(push_lines['forge'] and not push_lines['ghcr'], 'the push chains must be the forge chain ALONE — any ghcr-attributed push is the R-B shape returning (OQ-1=B)')
 
 assignments = {}
 for s in statements:
     if '=' in s and not s.startswith('#'):
         assignments.setdefault(s.split('=', 1)[0].strip(), s)
-PREFIX = {'ghcr': 'ghcr.io/ownyourio/', 'forge': 'curatedforest'}
-for token, lines_t in (('ghcr', push_lines['ghcr']), ('forge', push_lines['forge'])):
+PREFIX = {'forge': 'curatedforest'}
+for token, lines_t in (('forge', push_lines['forge']),):
     chain = [s for _, s in lines_t] + push_lists[token]
     seen = set()
     for _ in range(3):
@@ -545,7 +572,7 @@ for token, lines_t in (('ghcr', push_lines['ghcr']), ('forge', push_lines['forge
     blob = '\n'.join(chain)
     need(PREFIX[token] in blob, f'the {token} push chain builds no image-qualified reference ({PREFIX[token]}<image>) (t8 chain discipline)')
     need('latest' in blob and re.search(r'\bmain\b', blob) and has_cal(blob),
-         f'the {token} push chain does not reach all three tags (calendar + latest + main, the trio both targets carry, AC5)')
+         f'the {token} push chain does not reach all three tags (calendar + latest + main, the trio the single target carries, AC2)')
 
 # no skip-if-exists logic in any runnable line (the lane's own comments may
 # state the law by name — the ban reads code, not prose); the N+1 law travels
@@ -555,11 +582,17 @@ need(not re.search(r'(?i)skip[- _]?if[- _]?exists|already (pushed|published)|tag
      'a skip-if-exists shape appears in code — every successful publish mints a fresh N; skipping would freeze the line (P5)')
 
 # F1 (base review, closed HERE per R7): the LEXICAL ban above only sees the
-# skip vocabulary. The semantic skip — an `if docker manifest inspect ...;
-# then continue; fi` around a push — would pass the vocabulary check while
-# freezing latest/main against the calendar law. Structural teeth: every
-# docker push sits DIRECTLY in its attributed for-chain body, inside no
-# if/while/case wrapper. bt4's wrapper mutation proves the leg bites.
+# skip vocabulary. The semantic forms it cannot see are closed structurally —
+# the C01 review MINOR's B1 probe (`if docker manifest inspect ...; then
+# continue; fi` inside the chain body) is exactly this gap. Three teeth: (1)
+# a docker push is legal only when its control stack is EXACTLY its for-chain
+# — an if/while/case wrapper anywhere above it (around the whole chain) is a
+# conditional publish; (2) inside a chain body no statement may skip: a
+# continue/break is the guard-before-push flow freeze; (3) inside a chain
+# body no statement may probe tag existence (docker manifest inspect, a
+# /manifests/ read) — the walked N is the only arbiter. bt3/bt4 mutate the
+# wrapper and restored-arm shapes to prove the leg bites; the landed lane
+# carries none of these shapes.
 for text in steps_txt:
     ctrl = []
     for ln in text.splitlines():
@@ -575,9 +608,14 @@ for text in steps_txt:
         elif re.match(r'^(done|fi|esac)\b', st):
             if ctrl:
                 ctrl.pop()
+        if 'for' in ctrl:
+            need(re.match(r'^(continue|break)\b', st) is None,
+                 f'chain-body skip-flow {st[:90]!r} (control stack {ctrl}) — nothing inside a push chain may skip iterations; a conditional continue/break is the guard-before-push semantic skip the lexical ban cannot see (F1/R7)')
+            need('docker manifest inspect' not in st and '/manifests/' not in st,
+                 f'chain-body tag-probe {st[:90]!r} (control stack {ctrl}) — nothing inside a push chain may ask whether a tag is taken; the walked N is the only arbiter, a probe-guarded chain is a semantic skip-if-exists (F1/R7)')
         if 'docker push' in st:
-            need(ctrl and ctrl[-1] == 'for',
-                 f'docker push {st[:90]!r} is not directly inside a for-chain body (control stack {ctrl}) — every push must be UNCONDITIONAL; a conditional wrapper is a semantic skip-if-exists (F1/R7)')
+            need(ctrl == ['for'],
+                 f'docker push {st[:90]!r} is not DIRECTLY inside its for-chain with nothing wrapped around it (control stack {ctrl}) — every push must be UNCONDITIONAL; any if/while/case wrapper above the push is a semantic skip-if-exists (F1/R7)')
 
 need(re.search(r'(?i)(n\s*\+\s*1|advance until|gaps?[ ,;]?[^.\n]*never[^.\n]*clobber)', raw),
      'the file never states the registry-max-walk / gaps-never-clobbers law (launch pin: re-dispatch mints N+1 — the law text travels with the lane)')
@@ -587,15 +625,15 @@ need(re.search(r'(?i)(n\s*\+\s*1|advance until|gaps?[ ,;]?[^.\n]*never[^.\n]*clo
 # builds a /v2/ URL on a forge-named variable must wear the scheme.
 for s in statements:
     if 'curl' in s and '/v2/' in s and 'forge' in s.lower() and '$' in s:
-        need('https://' in s, f'curl reads a forge /v2/ endpoint over a scheme-less URL ({s[:110]!r}) — curl defaults to http and would ship FORGE_PUSH_TOKEN in cleartext (fact 10 scheme law)')
+        need('https://' in s, f'curl reads a forge /v2/ endpoint over a scheme-less URL ({s[:110]!r}) — curl defaults to http and would ship FORGE_PUSH_TOKEN in cleartext (the scheme law, surviving on the one side)')
 PY
   then
     return 1
   fi
-  ok "b5: calendar law mirrored + F1 closed — per-side ghcr_/forge_ walks with tolerance posture and the token-200/empty-token guards, all walks before the first push, union max + one fixed month + calendar.env, three-tag trio per side, ghcr-then-own chains, NO skip-if-exists lexically AND every docker push unconditionally in its for-chain, N+1 law text present [C01 AC5, P5, R7]"
+  ok "b5: calendar law, single-registry + F1 closed — the forge walk with tolerance posture inside its list-200 branch (no ghcr branch may exist), every read before the first push, one fixed month via calendar.env, the N derived from the forge walk alone with union math banned, the three-tag trio reached by the one attributed forge chain, NO skip-if-exists lexically AND every docker push unconditionally in its for-chain, N+1 law text present [C01 AC2, P5, R7; OQ-1=B]"
 }
 
-# --- b6: the P4' NO-PEER closed set (byte-stable through the reduction) ---------
+# --- b6: the shrunk NO-PEER closed set (R-B + OQ-1=B) ----------------------------
 leg_b6() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b6: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -616,18 +654,18 @@ def need(cond, msg):
 # identifier, and FORGE_PUSH_TOKEN_DEV must not pass as FORGE_PUSH_TOKEN.
 secrets = set(re.findall(r'\bsecrets\.([A-Za-z_][A-Za-z0-9_]*)', raw))
 vars_ = set(re.findall(r'\bvars\.([A-Za-z_][A-Za-z0-9_]*)', raw))
-need(secrets == {'GHCR_PUSH_PAT', 'FORGE_PUSH_TOKEN'},
-     f'secrets.* set is {sorted(secrets)}, expected exactly GHCR_PUSH_PAT + FORGE_PUSH_TOKEN — the credential surface is CLOSED by the owner ruling 2026-11-22 (P4\x27); a new secret needs a new ruling, and it reddens here first')
+need(secrets == {'FORGE_PUSH_TOKEN'},
+     f'secrets.* set is {sorted(secrets)}, expected FORGE_PUSH_TOKEN ALONE — the credential surface is CLOSED and shrunk by the owner rulings 2026-11-22 (R-B + OQ-1=B; P4\x27 lineage): the lane holds no ghcr credential of any name; a new secret needs a new ruling, and it reddens here first')
 need(vars_ == {'ROLE'},
      f'vars.* set is {sorted(vars_)}, expected exactly ROLE — no second-registry variable may ever enter this lane (P4\x27)')
-for tok in ('FORGE_DEV_REGISTRY', 'FORGE_PUSH_TOKEN_DEV', 'PUSH_URL_DEV', 'PUSH_TOKEN_DEV',
-            'scifi.farm', 'spencerslab'):
+for tok in ('GHCR_PUSH_PAT', 'PUSH_TOKEN_GH', 'FORGE_DEV_REGISTRY', 'FORGE_PUSH_TOKEN_DEV',
+             'PUSH_URL_DEV', 'PUSH_TOKEN_DEV', 'scifi.farm', 'spencerslab'):
     need(raw.count(tok) == 0,
-         f'{tok!r} occurs {raw.count(tok)} time(s), expected zero — any second-instance name, minted or literal, is the peer arm the ruling rejected (fact 13)')
+         f'{tok!r} occurs {raw.count(tok)} time(s) in raw text, comments included, expected zero — the two ghcr credential names are retired on this lane (R-B deletes the arm, so R-A never renames it; naming a dead key would relitigate the surface b6 closes), and any second-instance name, minted or literal, is the peer arm the ruling rejected')
 
 logins = [ln.strip() for ln in raw.splitlines() if 'docker login' in ln and not ln.strip().startswith('#')]
-need(len(logins) == 2, f'{len(logins)} docker login lines, expected exactly 2 (ghcr + the building instance — two targets, full stop, AC6)')
-need(any('ghcr.io' in l for l in logins), 'no login reaches ghcr.io')
+need(len(logins) == 1, f'{len(logins)} docker login lines, expected exactly 1 (the derived forge host only — OQ-1=B)')
+need(not any('ghcr' in l for l in logins), 'a login reaches ghcr — the R-B shape returned')
 need(any(re.search(r'\$\{?forge_registry', l) for l in logins), 'no login reaches the derived $forge_registry host')
 
 def side(stmt):
@@ -661,18 +699,18 @@ for s in statements:
         stack.pop()
     if 'docker push' in s:
         a = side(s) or (side(stack[-1]) if stack else None)
-        need(a is not None, f'unattributable docker push: {s!r} — the two-chain pin needs every push side-named (b5 shares the method)')
+        need(a is not None, f'unattributable docker push: {s!r} — the forge-only pin needs every push side-named (b5 shares the method)')
         sides.append(a)
-need(set(sides) == {'ghcr', 'forge'},
-     f'push sides are {sorted(set(sides))}, expected exactly ghcr + forge — a third chain name is a third target (P4\x27); the arm ORDER is b5\'s law, not this leg\'s')
+need(set(sides) == {'forge'},
+     f'push sides are {sorted(set(sides))}, expected exactly forge — one registry is the ruling (OQ-1=B); a second side name is the R-B arm returning (P4\x27 lineage); the chain SHAPE is b5\x27s law, not this leg\x27s')
 PY
   then
     return 1
   fi
-  ok "b6: NO-PEER pin, byte-stable — secrets.* exactly {GHCR_PUSH_PAT, FORGE_PUSH_TOKEN}, vars.* exactly {ROLE}, zero second-instance names anywhere, exactly two logins (ghcr.io + the derived forge host) and two push chains (ghcr, forge) — a future cross-host arm reddens HERE (owner ruling 2026-11-22, P4'; R6) [C01 AC6]"
+  ok "b6: closed surface, SHRUNK — secrets.* exactly FORGE_PUSH_TOKEN alone, vars.* exactly ROLE, both ghcr credential names raw-banned comments-included, zero second-instance names anywhere, exactly ONE login on the derived forge host and one push side (forge) — the lane holds no ghcr credential of any name; a future cross-host arm reddens HERE (owner rulings 2026-11-22, R-B + OQ-1=B; P4' lineage) [C01 AC1]"
 }
 
-# --- b7: detector law, halves flipped per R3 -------------------------------------
+# --- b7: detector law — single walk REQUIRED, ghcr read ABSENT --------------------
 leg_b7() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b7: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -699,12 +737,14 @@ for job in jobs.values():
                     code_all.append(st)
 code_joined = '\n'.join(code_all)
 
-# REQUIRED half: the two walks keep calling the shared script's month math
-# (P6 reuse — re-inlining the arithmetic would fork it away from
-# containers-build's proven single source; ruling OQ-1 best-guess).
+# REQUIRED half: the ONE surviving walk keeps calling the shared script's
+# month math (P6 reuse — re-inlining the arithmetic would fork it away
+# from containers-build's proven single source). Under OQ-1=B the count
+# is exactly one: the shipped ×2 (the union parity walk) is now the RED
+# shape, the owner's named tooth.
 nncalls = [s for s in code_all if 'next-n' in s]
-need(len(nncalls) == 2,
-     f'{len(nncalls)} next-n call(s), expected exactly 2 — the two registry walks ride the shared detector for the month math (R3: the surviving calendar-law mirror)')
+need(len(nncalls) == 1,
+     f'{len(nncalls)} next-n call(s), expected exactly 1 — the lane walks the instance registry alone (OQ-1=B)')
 for c in nncalls:
     need('YYMM=' in c, f'next-n call {c!r} does not pass YYMM — the month arrives via env exactly as containers-build does')
 
@@ -714,6 +754,9 @@ for c in nncalls:
 # lane's history.
 need(re.search(r'forgejo-container-detect\.sh[ \t]+detect', code_joined) is None,
      'a detect-mode call appears — the detection step died with the dispatch input; a returned call means the general any-container lane is re-entering (R3)')
+for tok in ('ghcr.io/token', 'ghcr_api', 'ghcr_manifest', 'ghcr_list', 'ghcr_token'):
+    need(tok not in code_joined,
+         f'{tok!r} survives in code — OQ-1=B bans EVERY ghcr read shape (the instance-registry walk stands alone; bt4 restores the parity walk and reddens here)')
 need('containers/*/' not in code_joined and not re.search(r'=\s*["\x27]all["\x27]', code_joined),
      "an all-expansion shape appears in code — the keyword expansion died with the input (R3)")
 
@@ -734,7 +777,7 @@ PY
   then
     return 1
   fi
-  ok "b7: detector law, flipped halves — next-n REQUIRED exactly twice (YYMM env, the surviving calendar-law mirror), the detect-mode call and the all-expansion FORBIDDEN, no sanitize/pr- shape, no run body writes under scripts/ (bt7 restores the detect call and reddens this leg) [C01 AC7, R3]"
+  ok "b7: detector law, single walk + ABSENCE teeth — next-n REQUIRED exactly ONCE (YYMM env; the shipped ×2 parity walk is RED — the owner's named tooth), no ghcr read shape in code (ghcr.io/token / ghcr_api / ghcr_list / ghcr_manifest / ghcr_token — bt4 restores the walk and reddens here), the detect-mode call and the all-expansion FORBIDDEN, no sanitize/pr- shape, no run body writes under scripts/ (bt7 restores the detect call and reddens this leg) [C01 AC1/AC2, R3; OQ-1=B]"
 }
 
 # --- b8: the fixed target (repurposed — no input to exercise behaviorally) --------
@@ -781,12 +824,12 @@ if builds:
 
 n_ghcr = raw.count('ownyourio/forgejo-runner')
 n_own = raw.count('curatedforest/forgejo-runner')
-need(n_ghcr >= 1 and n_own >= 1,
-     f'image refs: ownyourio/forgejo-runner x{n_ghcr}, curatedforest/forgejo-runner x{n_own}, expected at least one each — both push targets must name the build image (the R4 payload naming b2 released)')
+need(n_ghcr == 0 and n_own >= 1,
+     f'image refs: ownyourio/forgejo-runner x{n_ghcr} (expected 0 — no ghcr arm, OQ-1=B), curatedforest/forgejo-runner x{n_own} (expected >= 1 — the single push target names the build image)')
 
-for tok in ('picked', 'MANUAL_CONTAINERS', 'matrix.', 'containers/*'):
+for tok in ('picked', 'MANUAL_CONTAINERS', 'matrix.', 'containers/*', 'ghcr_image', 'ghcr_tags', 'ghcr.io'):
     need(raw.count(tok) == 0,
-         f'{tok!r} occurs {raw.count(tok)} time(s), expected zero — every name-carrier shape (variable, matrix, glob loop) died with the input; any of them returning means a lane that could name ANOTHER container (R4)')
+         f'{tok!r} occurs {raw.count(tok)} time(s), expected zero — every name-carrier shape (variable, matrix, glob loop) died with the input and every ghcr ref shape with R-B: any of them returning means a lane that could name ANOTHER container or ANOTHER registry (R4; OQ-1=B)')
 code_lines = [ln for ln in raw.splitlines() if ln.strip() and not ln.strip().startswith('#')]
 carrier = [ln.strip() for ln in code_lines if re.search(r'(?i)[a-z0-9_]*container[a-z0-9_]*\s*=\s*["\x27$]', ln)]
 need(not carrier,
@@ -795,10 +838,10 @@ PY
   then
     return 1
   fi
-  ok "b8: FIXED TARGET — exactly one docker build with final context containers/forgejo-runner; both registry refs (ghcr ownyourio + curatedforest) name forgejo-runner; zero name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./containers-glob/container= variable) anywhere [C01 AC4, R4]"
+  ok "b8: FIXED TARGET, ghcr ban absolute — exactly one docker build with final context containers/forgejo-runner; the forge ref names curatedforest/forgejo-runner while the ghcr payload substring counts ZERO file-wide and no ghcr_image/ghcr_tags/ghcr.io shape appears (OQ-1=B: the only home the payload string had was the deleted read step); zero name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./containers-glob/container= variable) anywhere [C01 AC1/AC2, R4]"
 }
 
-# --- b9: the doc law pair, rewritten to the single-purpose truth -----------------
+# --- b9: the doc law pair, rewritten to the single-registry truth ----------------
 leg_b9() {
   if ! python3 - <<'PY'
 import os, re, sys
@@ -873,18 +916,25 @@ if not errs:
         for b in lane_blocks:
             if 'forgejo-runner' not in b and 'build image' not in b:
                 errs.append(f'{f}: the builder-bootstrap lane block does not name the build image (containers/forgejo-runner) it (re)mints — single purpose is the ruling (R9)')
+            tail = b[b.index('builder-bootstrap'):]
+            if 'ghcr.io/ownyourio' in tail or ('ghcr' in tail and 'only' not in tail and 'alone' not in tail):
+                errs.append(f'{f}: the builder-bootstrap lane block still claims a ghcr target/parity — the lane is single-registry (OQ-1=B)')
     # 4. SKILL names the lane with its REAL surface: no-input dispatch,
-    #    ghcr + the building instance, the build image (fact 7g discipline:
-    #    the doc moves must not drift the target list).
+    #    the building instance's own registry ONLY (no ghcr arm), the
+    #    build image (fact 7g discipline: the doc moves must not drift
+    #    the target list). The SKILL ban reads block-level: its lane
+    #    paragraph is standalone (chunks/C01.md).
     skill_lane = [b for b in blocks(texts[LANE]) if 'builder-bootstrap' in b]
     if not skill_lane:
         errs.append(f'{LANE}: no block names the builder-bootstrap lane anymore')
     for b in skill_lane:
-        ok_pos = ('dispatch' in b and 'ghcr' in b
-                  and ('own registry' in b or 'building instance' in b)
+        ok_pos = ('dispatch' in b and ('own registry' in b or 'building instance' in b)
+                  and ('only' in b or 'alone' in b)
                   and NOINPUT.search(b) and ('forgejo-runner' in b or 'build image' in b))
+        if 'ghcr.io/ownyourio' in b or 'to ghcr' in b:
+            ok_pos = False
         if not ok_pos:
-            errs.append(f'{LANE}: the lane block does not pair builder-bootstrap with the no-input dispatch, ghcr + the building instance, and the build image it mints (R9: single-purpose truth)')
+            errs.append(f'{LANE}: the lane block does not pair builder-bootstrap with the no-input dispatch, the own-registry-ONLY single-registry target, and the build image it mints (R9 single-purpose truth + OQ-1=B single-registry truth)')
     # 5. README byte-kept: the base deviation-2 fix ALREADY wrote it
     #    single-purpose-true, so its claims pin here while the file stays
     #    untouched (the bar's git-diff proof is the byte half).
@@ -910,7 +960,7 @@ if not errs:
                 errs.append(f'{f}: carries {tok} — a peer-arm identifier has no home in any doc surface (P4\x27)')
         for b in blocks(texts[f]):
             if 'builder-bootstrap' in b and re.search(r'(?i)scifi\.farm|spencerslab|(dev|peer|second|cross)[ -]registry', b):
-                errs.append(f'{f}: a builder-bootstrap block claims a peer/dev/second-registry target — the lane publishes ghcr + the building instance ONLY (owner ruling 2026-11-22)')
+                errs.append(f'{f}: a builder-bootstrap block claims a peer/dev/second-registry target — the lane publishes the building instance\x27s own registry ONLY (owner ruling 2026-11-22)')
 
 if errs:
     for e in errs:
@@ -920,7 +970,7 @@ PY
   then
     return 1
   fi
-  ok "b9: doc law pair at the SINGLE-PURPOSE truth — residue grep (any named container / any container's / name the containers / empty-list clause) EMPTY over exactly the five live lane surfaces (R9's two grounded exemptions encoded by the scoped path list); overview+AGENTS keep the five-workflow narrow-class enumeration AND name the build image in the lane block; SKILL pairs the lane with the no-input dispatch + ghcr + own; README byte-keeps its single-purpose claims; four-workflow ban, x3 rule and peer-claim bans unchanged [C01 AC9, R8/R9]"
+  ok "b9: doc law pair at the SINGLE-REGISTRY truth — residue grep (any named container / any container's / name the containers / empty-list clause) EMPTY over exactly the five live lane surfaces (R9's two grounded exemptions encoded by the scoped path list); overview+AGENTS keep the five-workflow narrow-class enumeration, name the build image, and their lane-sentence TAILS say own-registry-ONLY with no ghcr target/parity claim (TAIL-scoped pin: containers-build's legitimate dual sentence shares the block — SIM fact 10); SKILL pairs the lane with the no-input dispatch + own-only alone + no-ghcr-arm; README byte-keeps its single-purpose claims; four-workflow ban, x3 rule and peer-claim bans unchanged [C01 AC5, R8/R9; OQ-1=B]"
 }
 
 # --- b10: embedded run syntax ----------------------------------------------------
@@ -943,12 +993,12 @@ for jname, job in ((doc or {}).get('jobs') or {}).items():
 print(n)
 PY
 )
-  [ "$n" -ge 2 ] || { printf 'FAIL: b10: extracted %s run block(s), expected at least the walk+push pair (floor unchanged; the reduced lane reads 5, was 7 — the count below is the bar fact)\n' "$n" >&2; return 1; }
+  [ "$n" -ge 2 ] || { printf 'FAIL: b10: extracted %s run block(s), expected at least the walk+push pair (floor unchanged; the B-cut lane reads 3, was 5 — the count below is the bar fact)\n' "$n" >&2; return 1; }
   local b
   for b in "$dir"/*.sh; do
     bash -n "$b" || { printf 'FAIL: b10: the embedded run block %s is not bash -n clean\n' "$(basename "$b")" >&2; return 1; }
   done
-  ok "b10: all $n embedded run blocks parse under bash -n (every run step is plain shell, the family steps law; reduced-lane expectation is 5, floor is >= 2)"
+  ok "b10: all $n embedded run blocks parse under bash -n (every run step is plain shell, the family steps law; B-cut expectation is 3 blocks — was 5, floor is >= 2)"
 }
 
 # --- battery: mutation probes on TMP copies (the repo is never written) ----------
@@ -1011,40 +1061,49 @@ open(p, 'w').write(t.replace(s, "if: vars.ROLE == null || " + s[len('if: '):]))
 PY
 }
 mut_bt3() { python3 - "$1" <<'PY'
+import sys
+p = sys.argv[1]
+t = open(p).read()
+code = '\n'.join(ln for ln in t.splitlines() if not ln.strip().startswith('#'))
+assert 'docker login ghcr' not in code and 'ghcr_image' not in code, 'R-B push-arm reversal anchor already violated'
+anchor = '      - name: build and push'
+assert anchor in t, 'no build-and-push step to precede the restored arm with'
+login = ("      - name: log in to ghcr\n        run: |\n          set -euo pipefail\n"
+         "          printf '%s' '${{ secrets.PUSH_TOKEN_GH }}' | docker login ghcr.io -u OwnYourIO --password-stdin\n")
+t = t.replace(anchor, login + anchor, 1)
+mark = '          forge_tags='
+assert mark in t, 'no forge trio definition to restore the ghcr trio beside'
+ghcrdef = ('          ghcr_image="ghcr.io/ownyourio/forgejo-runner"\n'
+           '          ghcr_tags="$ghcr_image:$month.$n $ghcr_image:latest $ghcr_image:main"\n')
+t = t.replace(mark, ghcrdef + mark, 1)
+chain = ('          for tag in $ghcr_tags; do\n            docker push "$tag"\n          done\n')
+fmark = '          for tag in $forge_tags; do'
+idx = t.index(fmark)
+open(p, 'w').write(t[:idx] + chain + t[idx:])
+PY
+}
+mut_bt4() { python3 - "$1" <<'PY'
 import re, sys
 p = sys.argv[1]
 t = open(p).read()
-m = re.search(r'(?m)([ \t]+)for tag in \$ghcr_tags; do\n(?:.*\n)*?\1done\n', t)
-assert m, 'no ghcr push loop of the mirrored shape'
-m2 = re.search(r'(?m)([ \t]+)for tag in \$forge_tags; do\n(?:.*\n)*?\1done\n', t)
-assert m2 and m2.start() >= m.end(), 'no forge push loop after the ghcr one'
-own, ghcr = m2.group(0), m.group(0)
-new = t[:m.start()] + own + t[m.end():m2.start()] + ghcr + t[m2.end():]
-open(p, 'w').write(new)
-PY
-}
-mut_bt4() { # compound: (1) delete the ghcr existence-walk block; (2) wrap the
-# ghcr push chain in a condition — both mutations must land ONLY on b5
-# (the walk guard and the F1 semantic push pin, same named leg).
-python3 - "$1" <<'PY'
-import sys
-p = sys.argv[1]
-lines = open(p).read().splitlines(keepends=True)
-idx = next((i for i, l in enumerate(lines) if 'ghcr_code=$(ghcr_manifest_code' in l and 'while' not in l), None)
-assert idx is not None, 'no ghcr existence-walk start to delete'
-ind = lines[idx][:len(lines[idx]) - len(lines[idx].lstrip())]
-end = idx
-while not (lines[end].rstrip() == ind + 'done'):
-    end += 1
-    assert end < len(lines) + 100, 'unbalanced walk block'
-lines = lines[:idx] + lines[end + 1:]
-t = ''.join(lines)
-import re
-m = re.search(r'(?m)^([ \t]*)for tag in \$ghcr_tags; do\n([ \t]*)docker push "\$tag"\n\1done\n', t)
-assert m, 'no unconditional ghcr push loop to wrap'
+code = '\n'.join(ln for ln in t.splitlines() if not ln.strip().startswith('#'))
+assert 'ghcr.io/token' not in code, 'read-walk restoration anchor already violated'
+anchor = '      - name: build and push'
+assert anchor in t, 'no build-and-push step to restore the read-walk before'
+walk = ('      - name: derive the ghcr-side calendar N\n'
+        '        run: |\n'
+        '          set -euo pipefail\n'
+        '          . ./calendar.env\n'
+        '          ghcr_api="https://ghcr.io/v2/ownyourio/forgejo-runner"\n'
+        '          ghcr_token_resp=$(curl -sS -w \'\\n%{http_code}\' "https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull")\n'
+        '          ghcr_list=$(curl -sS -w \'\\n%{http_code}\' "$ghcr_api/tags/list")\n'
+        '          n_ghcr=$(printf 1 | YYMM="$month" bash scripts/forgejo-container-detect.sh next-n)\n'
+        '          echo "n_ghcr=$n_ghcr" > ghcr-n.env\n')
+t = t.replace(anchor, walk + anchor, 1)
+m = re.search(r'(?m)^([ \t]*)for tag in \$forge_tags; do\n([ \t]*)docker push "\$tag"\n\1done\n', t)
+assert m, 'no unconditional forge push loop to wrap'
 g1, g2 = m.group(1), m.group(2)
-wrapped = (g1 + 'for tag in $ghcr_tags; do\n' + g2 + 'if true; then\n' + g2 + '  docker push "$tag"\n'
-           + g2 + 'fi\n' + g1 + 'done\n')
+wrapped = (g1 + 'for tag in $forge_tags; do\n' + g2 + 'if true; then\n' + g2 + '  docker push "$tag"\n' + g2 + 'fi\n' + g1 + 'done\n')
 open(p, 'w').write(t[:m.start()] + wrapped + t[m.end():])
 PY
 }
@@ -1148,8 +1207,8 @@ PY
 
 leg_bt1()  { probe bt1  mut_bt1  b2   ''        'runs-on flipped to the baked ubuntu-24.04 (the paradox via a schedulable-but-unpublished label; g1 also reddens in the real tree — cross-suite tooth)'; }
 leg_bt2()  { probe bt2  mut_bt2  b3   ''        'the null-widen clause added to the guard (the dev-mints-calendar hazard P3 rejected)'; }
-leg_bt3()  { probe bt3  mut_bt3  b5   ''        'the ghcr/own push chains swapped (the gap would land on the pinned side)'; }
-leg_bt4()  { probe bt4  mut_bt4  b5   ''        'the ghcr existence-walk deleted AND the ghcr push wrapped in a condition (walk gone; the F1 semantic skip-if-exists the lexical ban could not see)'; }
+leg_bt3()  { probe bt3  mut_bt3  'b5 b6 b8' ''  'the ghcr push-arm restored (login + trio + chain — the full R-B push reversal)'; }
+leg_bt4()  { probe bt4  mut_bt4  'b5 b7' 'b8'   'the ghcr READ-walk restored (b7: next-n x1 + absence) AND the forge push wrapped in a condition (b5: the F1 semantic skip-if-exists)'; }
 leg_bt5()  { probe bt5  mut_bt5  'b3 b6' ''     'the instance host literal inserted in a comment (g1 counts comments; the b3/b6 re-pin must too)'; }
 leg_bt6()  { probe bt6  mut_bt6  b6   ''        'a peer push arm with vars.FORGE_DEV_REGISTRY + secrets.FORGE_PUSH_TOKEN_DEV added (the NO-PEER ruling own teeth)'; }
 leg_bt7()  { probe bt7  mut_bt7  'b7 b8' 'b4'   'the general lane sneak-in: detect call restored + the fixed build context loosened to the matrix (b4 tolerated — the matrix. accessor re-enters through the same string)'; }

@@ -119,8 +119,10 @@ whole point: it is the bootstrap paradox the lane exists to break), fires
 only on `workflow_dispatch` with no input at all (owner ruling
 2026-11-22: the dispatch is the button; it mints exactly this one image),
 stays confined to `prod`-role instances by a narrow ROLE guard, and
-publishes the same three tags to ghcr and the building instance's own
-registry under the calendar law above. A recovery lane, not a second
+publishes the same three tags to the building instance's own registry
+ONLY, walking that registry's calendar tags alone — a bare dispatch
+(re)mints exactly this image and nothing reaches ghcr from this lane
+(owner ruling 2026-11-22, R-B + OQ-1=B). A recovery lane, not a second
 automatic publisher.
 
 `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual

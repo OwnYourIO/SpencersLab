@@ -37,22 +37,26 @@
 # therefore inert by guard, not by accident: the recovery story is
 # prod-role-only.
 #
-# Targets (owner ruling 2026-11-22, P4'): ghcr.io/ownyourio AND the
-# building instance's own registry, the same three tags on both — NO
-# third target of any shape, no extra credential or variable (the
-# credential surface is closed by contract suite b6; a future cross-host
-# arm must earn a fresh owner ruling first).
+# Targets (owner rulings 2026-11-22, R-B + OQ-1=B): the building
+# instance's own registry ONLY — the lane neither pushes nor reads ghcr
+# (the bootstrap build goes to the Forgejo instance, not github, and its
+# calendar number is walked from that registry alone). NO third target
+# of any shape, NO ghcr credential: the credential surface is closed by
+# contract suite b6 to the forge push PAT; a future cross-host arm must
+# earn a fresh owner ruling first.
 #
-# Calendar law, mirrored from containers-build exactly: N is one past
-# the highest yy.mm.* tag across BOTH registries, each side advanced
-# past any manifest it already holds, every walk finished before the
-# first push; one fixed month per job; push order ghcr then own so a
-# half-failed run gaps the side the fleet has not pinned. There is NO
-# skip-if-exists mode: every successful publish mints a fresh N, and a
-# re-dispatch of unchanged content mints N+1 too — gaps, never clobbers.
-# Expect the first cold mint of the ~10GB-class build image to run near
-# the 30-minute runner ceiling; a timeout red is retry-safe under this
-# law and each retry resumes warm.
+# Calendar law, single-registry (OQ-1=B): N is one past the highest
+# yy.mm.* tag ON THE INSTANCE REGISTRY, advanced past any manifest it
+# already holds, the walk finished before the first push; one fixed
+# month per job; the one push chain carries the trio. The lane's N may
+# legitimately differ from what containers-build's two-registry union
+# would mint for the same content — the fleet consumes instance-registry
+# refs for this image, so that divergence is accepted by ruling, not
+# overlooked. There is NO skip-if-exists mode: every successful publish
+# mints a fresh N, and a re-dispatch of unchanged content mints N+1 too
+# — gaps, never clobbers. Expect the first cold mint of the ~10GB-class
+# build image to run near the 30-minute runner ceiling; a timeout red is
+# retry-safe under this law and each retry resumes warm.
 #
 # Renovate churn warning: the runs-on line below is the paradox guard.
 # The built-in runs-on manager proposes repo-wide bumps; one auto-PR
@@ -61,7 +65,7 @@
 #
 # Steps are plain shell; the instance registry host is derived from the
 # server URL inside steps, never a literal; the Actions job token cannot
-# write packages, so pushes use the two human-minted PATs.
+# write packages, so the pushes use the human-minted forge PAT.
 
 on:
   workflow_dispatch:
@@ -90,13 +94,6 @@ jobs:
           # this point is worth logging.
           docker info
 
-      - name: log in to ghcr
-        # The forge's per-run token is forge-scoped and cannot write ghcr;
-        # this PAT (write:packages) is the only credential that can.
-        run: |
-          set -euo pipefail
-          printf '%s' '${{ secrets.GHCR_PUSH_PAT }}' | docker login ghcr.io -u OwnYourIO --password-stdin
-
       - name: log in to the forge registry and derive its calendar N
         env:
           FORGE_SERVER_URL: ${{ forgejo.server_url }}
@@ -118,9 +115,9 @@ jobs:
           # Mirrored tolerance posture: absence must arrive as an HTTP
           # status, never a transport failure — 404 NAME_UNKNOWN is this
           # registry's answer for a package nobody has pushed. 401/403/404
-          # contribute no tags to the union max and earn no walk; any other
-          # code is a malfunction and stays fatal. The walk runs only under
-          # a 200 list, where the manifest 200/404 semantics hold.
+          # contribute no tags and earn no walk; any other code is a
+          # malfunction and stays fatal. The walk runs only under a 200
+          # list, where the manifest 200/404 semantics hold.
           forge_list=$(curl -sS -w '\n%{http_code}' -u "forge:$forge_pat" "$forge_api/tags/list")
           forge_list_code=${forge_list##*$'\n'}
           if [ "$forge_list_code" = 200 ]; then
@@ -150,91 +147,15 @@ jobs:
             echo "unexpected HTTP $forge_list_code from $forge_api/tags/list" >&2
             exit 1
           fi
-          # Log the tolerated codes: a side that derived N without readable
-          # tags contributed nothing to the union max, and the run log is
-          # where a degraded side stays visible.
+          # Log the tolerated codes: a list read that answered 401/403/404
+          # left N at its default with no existence walk, and the run log
+          # is where that degraded read stays visible.
           echo "n_forge=$n_forge list=$forge_list_code"
-          # Fix the calendar month once for the whole job: both walks and
-          # both pushes must use the same month even when the run straddles
+          # Fix the calendar month once for the whole job: the walk and the
+          # push trio must use the same month even when the run straddles
           # the month boundary.
           echo "month=$month" > calendar.env
           echo "n_forge=$n_forge" > forge-n.env
-
-      - name: derive the ghcr-side calendar N
-        run: |
-          set -euo pipefail
-          . ./calendar.env
-          ghcr_api="https://ghcr.io/v2/ownyourio/forgejo-runner"
-          n_ghcr=1
-          # The anonymous pull-scoped token is enough to read a published
-          # image's tag list and manifests. Neither read may fail on status:
-          # GHCR answers DENIED (403), not 404, on the token endpoint for a
-          # repository nobody has pushed, and 401/403/404 all mean the month
-          # has no readable calendar tag — the image's first publish,
-          # starting at N=1. The existence walk below runs only under a pull
-          # token: the manifest endpoint answers 401 to every anonymous
-          # request, so its 200/404 semantics hold only for a
-          # read-authenticated check. Any other code is a registry
-          # malfunction, not an absence, and stays fatal; transport errors,
-          # as everywhere here, are fatal via curl's exit code.
-          ghcr_token_resp=$(curl -sS -w '\n%{http_code}' "https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull")
-          ghcr_token_code=${ghcr_token_resp##*$'\n'}
-          if [ "$ghcr_token_code" = 200 ]; then
-            ghcr_token=$(printf '%s' "${ghcr_token_resp%$'\n'*}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
-            # A 200 whose body carries no token is a malfunction, not an
-            # absence: an empty bearer would make tags/list answer 401 —
-            # the tolerated no-tags code — and the release would publish
-            # at N=1 over a taken tag with no existence walk to stop it.
-            if [ -z "$ghcr_token" ]; then
-              echo "ghcr token endpoint answered 200 without a token" >&2
-              exit 1
-            fi
-            ghcr_list=$(curl -sS -w '\n%{http_code}' -H "Authorization: Bearer $ghcr_token" "$ghcr_api/tags/list")
-            ghcr_list_code=${ghcr_list##*$'\n'}
-            if [ "$ghcr_list_code" = 200 ]; then
-              n_ghcr=$(printf '%s' "${ghcr_list%$'\n'*}" | YYMM="$month" bash scripts/forgejo-container-detect.sh next-n)
-              ghcr_manifest_code() {
-                curl -s -o /dev/null -w '%{http_code}' -I \
-                  -H "Authorization: Bearer $ghcr_token" \
-                  -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
-                  "$ghcr_api/manifests/$1"
-              }
-              # A taken N means a re-run, a concurrent publish, or an
-              # earlier dispatch already minted it; the registries have no
-              # tag immutability and would silently overwrite, so advance
-              # until the manifest is free — a re-dispatch of unchanged
-              # content mints N+1 by design. Any other HTTP answer is a
-              # registry malfunction, not a free tag. The bound stops the
-              # walk if tag pagination ever hides the true maximum.
-              ghcr_code=$(ghcr_manifest_code "$month.$n_ghcr")
-              ghcr_advance=0
-              while [ "$ghcr_code" != 404 ]; do
-                if [ "$ghcr_code" != 200 ]; then
-                  echo "unexpected HTTP $ghcr_code for $ghcr_api/manifests/$month.$n_ghcr" >&2
-                  exit 1
-                fi
-                ghcr_advance=$((ghcr_advance + 1))
-                if [ "$ghcr_advance" -gt 50 ]; then
-                  echo "no free $month.N tag on ghcr within 50 of the registry maximum" >&2
-                  exit 1
-                fi
-                n_ghcr=$((n_ghcr + 1))
-                ghcr_code=$(ghcr_manifest_code "$month.$n_ghcr")
-              done
-            elif [ "$ghcr_list_code" != 401 ] && [ "$ghcr_list_code" != 403 ] && [ "$ghcr_list_code" != 404 ]; then
-              echo "unexpected HTTP $ghcr_list_code from $ghcr_api/tags/list" >&2
-              exit 1
-            fi
-          elif [ "$ghcr_token_code" != 401 ] && [ "$ghcr_token_code" != 403 ] && [ "$ghcr_token_code" != 404 ]; then
-            echo "unexpected HTTP $ghcr_token_code from the ghcr token endpoint" >&2
-            exit 1
-          fi
-          # Log the tolerated codes (see the forge-N step): a side that read
-          # no tags contributed nothing to the union max, and the run log is
-          # where a degraded side stays visible. ghcr_list_code is unset when
-          # the token read was itself the tolerated absence.
-          echo "n_ghcr=$n_ghcr token=$ghcr_token_code list=${ghcr_list_code:-none}"
-          echo "n_ghcr=$n_ghcr" > ghcr-n.env
 
       - name: build and push
         env:
@@ -245,18 +166,13 @@ jobs:
           forge_registry=${forge_registry%/}
           . ./calendar.env
           . ./forge-n.env
-          . ./ghcr-n.env
-          # One calendar number for the build: the union maximum of the two
-          # walked per-side values, so neither registry can be pushed at an
-          # N the other side has already taken.
-          n=$n_ghcr
-          if [ "$n_forge" -gt "$n" ]; then n=$n_forge; fi
-          ghcr_image="ghcr.io/ownyourio/forgejo-runner"
+          # One calendar number for the build: the instance registry's own
+          # walked value — the single-registry walk is the ruling (OQ-1=B).
+          n=$n_forge
           forge_image="$forge_registry/curatedforest/forgejo-runner"
-          ghcr_tags="$ghcr_image:$month.$n $ghcr_image:latest $ghcr_image:main"
           forge_tags="$forge_image:$month.$n $forge_image:latest $forge_image:main"
           build_args=()
-          for tag in $ghcr_tags $forge_tags; do
+          for tag in $forge_tags; do
             build_args+=(-t "$tag")
           done
           # No buildx cache flags: the runner's docker-data volume persists
@@ -265,11 +181,6 @@ jobs:
           # that volume and every later dispatch resumes warm, which is what
           # keeps the 30-minute ceiling survivable on a cold mint.
           docker build "${build_args[@]}" "containers/forgejo-runner"
-          # ghcr first: a half-failed run leaves the gap on the forge side,
-          # the newer line the fleet's pins have not adopted.
-          for tag in $ghcr_tags; do
-            docker push "$tag"
-          done
           for tag in $forge_tags; do
             docker push "$tag"
           done
