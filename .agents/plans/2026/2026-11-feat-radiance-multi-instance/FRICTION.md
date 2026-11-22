@@ -241,3 +241,22 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   said "M6 green", yet repo law bars read-only sessions from running it — the correct behavior was to run
   nothing and claim nothing, which is what happened. · resolution: later briefs say "M6: not run, no claim"
   (DECISIONS D33(c)). · fixed-by-this-recipe
+- 2026-11-22 · dev(C02) · **the D30 re-pin sweep MISSED a suite: `tests/agent-board-coord/rulesync-surface.sh`
+  arm c11 still demanded the cf-83-era routing** (`'flash' 'local' 'flash-next-strata' 'assume'` inside 600
+  chars of the boards mirror), which the re-pinned authority itself forbids (`pipeline-models/surface.sh:668`
+  bars strata text from boards; `:662` requires radiance in the same window). Green at baseline, red after
+  C02, and unsatisfiable without needle-hacking (a bare `-strata` token would pass the stale leg while
+  violating the intent at `:664-667`). Its header still read "red before C01 dev".
+  · resolution: re-pin routed to the test session with the dated ruling chain in the leg message. Lesson:
+  **a routing-authority re-pin must enumerate every suite that byte-pins routing prose**, not only the suites
+  the plan named — the test wave's list came from EXPLORE §1 and this file was not in it. · open (in flight)
+- 2026-11-22 · dev(C02) · **two reds proved PRE-EXISTING by building a scratch detached worktree at HEAD**
+  (`rulesync-surface` c19, `gate` t17) — the right way to separate "my change broke it" from "it was already
+  broken", at the cost of one throwaway worktree.
+  · resolution: per-arm characterization demanded from the test session — stale test encoding / later chunk of
+  this ticket / outside-the-ticket drift — none absorbed silently. · open (classification owed)
+- 2026-11-22 · coord · **the roster T4 harness fix was reported "in flight" twice and shipped neither time**
+  (`4c267ca58` carried NI-1/NI-2/C04-re-arm only). A repeated promise that never lands reads as progress in
+  the record, which is worse than an honest open row.
+  · resolution: batched into the current repair turn with proof demanded (run T4 alone, quote the new message).
+  Standing rule: **an escalation closes on observed output, never on an intention.** · open (until quoted)
