@@ -15,5 +15,7 @@ Append-only. What blocked or slowed runs, each with the resolution used. Status:
 
 - 2026-11-21 dev/C03: execute-tool JS template literals break on markdown backticks embedded in heredoc payloads (syntax-error artifact). Resolution used: write the checker to /tmp/opencode and run it via shell — the proven heredoc path from the C02 note. [open]
 
+- 2026-11-22 review: readonly-MCP arg shapes cost corrective calls (kubernetes `resources_list` answers null-not-items[]; grafana `api_request` wants `endpoint`; `query_prometheus` wants `expr` + `endTime` + instant queryType) — pin these in the next reviewer brief. [open]
+
 ## Fixed
-- ...
+- 2026-11-22 coord: FRICTION edit consumed the `## Fixed` heading (oldString-omitted-in-newString slip; append-only law restored same turn). [fixed 2026-11-22]

@@ -9,12 +9,14 @@
 # releases (plan R5b). Live proof on the cluster is OWNER leg OE-2 (R5a —
 # enabled-but-unproven on gpu-ai); these legs stop at the render contract.
 #
-# Red state at handoff (designed): T1-T3 RED until C01-dev lands the gate +
-# pair (the pod template renders NO annotations on today's tree). T4 is a
+# Exactness law (owner-verify A1, post ConfigMap-carrier refactor): the
+# ruled pair is pinned as the EXACT k8s.grafana.com/* subset, and the full
+# pod map is pinned against the known-complete key set — pair ∪
+# {checksum/configMaps} — so any NEW annotation reddens too. T4 is a
 # single-path ABSENCE guard — green before and after (it exists so the retired
 # draft-1 ServiceMonitor path can never sneak in beside the annotations). T5
-# preserve legs are green today and must STAY green: the pair lands beside a
-# byte-stable digest ledger (values.yaml:224-242) and no reloader annotation.
+# preserve legs are green and must STAY green: the pair lands beside a
+# byte-stable digest ledger (LEDGER_REGION_LINES) and no reloader annotation.
 #
 # Run per-directory: PATH=$HOME/.local/bin:$PATH python3 -m pytest charts/radiance/tests -v
 
@@ -36,6 +38,9 @@ PAIR = {
     "k8s.grafana.com/scrape": "true",
     "k8s.grafana.com/metrics.portNumber": "8000",
 }
+
+# D35/D43 ConfigMap-carrier roll: the chart owns the fetch.sh/serve.sh ConfigMaps and app-template hashes them onto the pod — the one non-ruled key the map may carry, outside the k8s.grafana.com namespace (value is a rolling content hash, so the legs pin KEY-SET membership).
+CHECKSUM_KEY = "checksum/configMaps"
 
 # The keys the D8/Q5 exactly-two law deliberately leaves UNSHIPPED (plan R5b):
 # metrics.path -> the autodiscovery default /metrics; metrics.scrapeInterval
@@ -62,18 +67,25 @@ def _pod_annotations(render_result) -> dict:
 @helm_skip
 def test_t1_fn_render_carries_exactly_the_pair():
     """The gate+pair ship in the CHART defaults, so the fn release inherits
-    them without any overlay help. Exactly-two is the D8 law: the annotation
-    map equals the pair — no third k8s.grafana.com key, no legacy flavor."""
+    them without any overlay help. Exactly-two is the D8 law over the
+    k8s.grafana.com/* namespace — no third ruled-namespace key, no legacy
+    flavor — and the full map is pinned to the known-complete key set (pair +
+    the D35/D43 checksum roll), so an unruled new annotation reddens too."""
     ann = _pod_annotations(R.render(service=False))
     assert ann, (
-        "cf-145 C01: the fn pod template renders NO annotations — the gate + "
-        "defaultPodOptions.annotations pair has not landed in charts/radiance/values.yaml "
-        "yet (designed-red; DECISIONS D-8)"
+        "cf-145 C01: the fn pod annotation map is absent/EMPTY — neither the ruled pair nor the "
+        "D35/D43 checksum roll reached pod metadata.annotations at all; the pair-missing case this "
+        "guard fronts, with the key-by-key detail on the subset assertion below"
     )
-    assert ann == PAIR, (
-        f"cf-145 C01 AC1: pod annotations are {ann}, want EXACTLY {PAIR} — "
+    assert {k: v for k, v in ann.items() if k.startswith("k8s.grafana.com/")} == PAIR, (
+        f"cf-145 C01 AC1: the ruled k8s.grafana.com/* subset of {ann} is not the pair — "
         "the vllm D8 pair, gate-resolved to \"true\"/\"8000\" (a missing key, a renamed "
         "key, or a non-string value each break the autodiscovery contract, plan R5b)"
+    )
+    assert set(ann) == set(PAIR) | {CHECKSUM_KEY}, (
+        f"cf-145 C01 AC1: the full pod annotation map {sorted(ann)} is not the known-complete set "
+        "(ruled pair ∪ checksum/configMaps) — any NEW annotation rides the engine pod only with a "
+        "DECISIONS line behind it"
     )
 
 
@@ -96,16 +108,20 @@ def test_t1_legacy_prometheus_io_flavor_absent():
 
 @helm_skip
 def test_t2_q27_render_inherits_pair():
-    """One chart dir, two releases: the radiance-q27 overlay deep-merges over
-    the chart defaults and removes nothing (D26/D56), so q27's pod carries the
-    identical pair — the owner's unified-coverage intent made checkable.
-    job identity stays `radiance` for BOTH (same app.kubernetes.io/name label
-    fallback, R5b): this render already carries the label pre-C01."""
+    """One chart dir, releases deep-merge over the chart defaults and remove
+    nothing (D26/D56), so q27's pod carries the identical ruled subset AND the
+    same known-complete full-map pin as fn — the owner's unified-coverage
+    intent made checkable. job identity stays `radiance` for BOTH (same
+    app.kubernetes.io/name label fallback, R5b)."""
     ann = _pod_annotations(R.render_q27())
-    assert ann == PAIR, (
-        f"cf-145 C01 AC1: q27 pod annotations are {ann}, want EXACTLY {PAIR} — "
+    assert {k: v for k, v in ann.items() if k.startswith("k8s.grafana.com/")} == PAIR, (
+        f"cf-145 C01 AC1: the q27 ruled k8s.grafana.com/* subset of {ann} is not the pair — "
         "the pair must inherit through the overlay (if fn went green and this stayed "
         "red, the overlay would be stripping defaultPodOptions — a scope bug)"
+    )
+    assert set(ann) == set(PAIR) | {CHECKSUM_KEY}, (
+        f"cf-145 C01 AC1: the q27 full pod annotation map {sorted(ann)} is not the known-complete set "
+        "(ruled pair ∪ checksum/configMaps)"
     )
     docs, _raw = R.render_q27()
     labels = ((R.deployment(docs)["spec"]["template"].get("metadata") or {}).get("labels") or {})
@@ -121,21 +137,29 @@ def test_t2_q27_render_inherits_pair():
 @helm_skip
 def test_t3_gate_off_yields_inert_empty_pair():
     """The whole-map tpl law (app-template 5.0.1): `--set
-    app-template.monitoring.annotations=false` keeps both keys with empty
+    app-template.monitoring.annotations=false` keeps both ruled keys with empty
     values — an empty value is what disables the scrape (vllm comment law).
     Pinned so a future gate flip disables the scrape the DOCUMENTED way rather
-    than the map disappearing and the contract drifting."""
+    than the map disappearing and the contract drifting. The checksum roll
+    keeps riding the map with the gate off (it is a different concern), so the
+    empty-value law scopes the k8s.grafana.com/* subset while the full map
+    stays the known-complete set."""
     ann = _pod_annotations(
         R.render(service=False, extra_set="--set app-template.monitoring.annotations=false")
     )
-    assert set(ann) == set(PAIR), (
+    ruled = {k: v for k, v in ann.items() if k.startswith("k8s.grafana.com/")}
+    assert set(ruled) == set(PAIR), (
         f"cf-145 C01 AC1 (gate leg): with monitoring.annotations=false the render carries {sorted(ann)} — "
         "the ternary shape keeps the KEYS and empties the VALUES (keys vanishing means the "
         "pair is not ternary-templated; keys absent entirely means it has not landed at all)"
     )
-    assert all(v == "" for v in ann.values()), (
-        f"cf-145 C01 AC1 (gate leg): gate-OFF values {ann} — both must be the EMPTY string "
+    assert all(v == "" for v in ruled.values()), (
+        f"cf-145 C01 AC1 (gate leg): gate-OFF ruled values {ruled} — both must be the EMPTY string "
         "(ternary \"\" branch); a non-empty value with the gate off is the flip the pin exists to catch"
+    )
+    assert set(ann) == set(PAIR) | {CHECKSUM_KEY}, (
+        f"cf-145 C01 AC1: the gate-OFF full pod annotation map {sorted(ann)} is not the known-complete set "
+        "(ruled pair keys ∪ checksum/configMaps)"
     )
 
 
@@ -240,10 +264,15 @@ def test_t5_digest_ledger_region_byte_stable():
 @helm_skip
 def test_t5_reloader_annotation_still_absent():
     """Complements the existing 46-green leg (test_render.test_reloader_annotation_absent)
-    on the POST-C01 annotation map: the scrape pair lands beside — never
-    replacing — the on-purpose absence of reloader.stakater.com (the chart
-    mounts no ConfigMaps/Secrets, values.yaml comment ~218-221). Green today
-    (empty map), must stay green after."""
+    on the post-C01 annotation map: the scrape pair lands beside — never
+    replacing — the on-purpose absence of reloader.stakater.com. The chart DOES
+    mount one ConfigMap since the carrier refactor (radiance-fetch holding the
+    fetch.sh/serve.sh FORMs, values.yaml:131-136, mounted :528-533), and the
+    no-reloader rationale moved with it (values.yaml:325-329): the restart the
+    carrier needs is already driven by the CHECKSUM_KEY roll (D35), the pod
+    mounts no Secret surface at all, and a reloader would only add a second
+    restart path. Green with the ruled pair + checksum roll on the map, must
+    stay green."""
     ann = _pod_annotations(R.render(service=False))
     stale = [k for k in ann if "reloader.stakater.com" in k]
     assert not stale, f"cf-145 C01 AC3 (preserve): reloader annotation(s) {stale} reached the pod template"

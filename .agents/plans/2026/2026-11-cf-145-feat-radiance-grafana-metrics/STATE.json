@@ -4,7 +4,7 @@
   "coord_session": "ses_e6f3deb96ffe42qI5WBzeC47TA",
   "test_session": "ses_dffd43e53ffeUX8VsfUTa7LUfU",
   "current_wave": 1,
-  "updated_at": "2026-11-21T22:08:34Z",
+  "updated_at": "2026-11-22T23:05:00Z",
   "plan_file": "2026-11-21-feat-radiance-grafana-metrics.md",
   "kickoff": {
     "card": "JixKJ5g9yiWHmgakN",
@@ -151,6 +151,12 @@
       "test": { "session": "ses_dffd43e53ffeUX8VsfUTa7LUfU", "status": "DONE", "shipped": "guard leg landed verbatim + red-paths re-proven both hosts md5-restored; k5 literal 12.65.0->12.99.0 grounded off Chart pair; k10 'docker' extended per flat-token convention + header law-comment corrected; all five legs RC=0; radiance suite 96/0/1 unchanged", "discovery_truth": "tests/renovate legs have NO CI wiring anywhere — manual convention; recorded in FRICTION" }
     }
   ],
+  "post_refactor": {
+    "at": "2026-11-22",
+    "directive": "owner: pull main (major radiance refactor landed), adapt, then owner deploys",
+    "rebase": "8/8 cf-145 commits skipped as already-applied (merged via feat-radiance-multi-instance) — branch AT main@54cc84188",
+    "verify": { "session": "ses_dfac817a7ffej697d6BQ4pxoBZ", "verdict": "ADAPT", "holds": "unified job radiance across 4 lanes (no per-lane nameOverride), tag chain 1.17.0 closed, filing + R8 intact, lints + tests/notes + tests/renovate green (k2 pre-existing family aside)", "adaptations": "A1 3 exact-map test legs vs checksum/configMaps (test session) · A2 runbook 2-lane prose (dev, DONE) · A3 plan OE legs (plan, DONE) · A4 radiance-2.x renovate branch pre-refactor, regen-and-move-all-legs when taken · A5 kubernetes-mcp-version-floor k2 (10 vs 8) awaits owner word" }
+  },
   "final_review": {
     "at": "2026-11-21",
     "status": "APPROVED",

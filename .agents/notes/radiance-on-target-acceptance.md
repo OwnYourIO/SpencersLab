@@ -806,7 +806,9 @@ perfectly; the advertisement is what moves.
 **Scrape + dashboard wiring (cf-145 D-8..D-10).** `/metrics` reaches the
 central Prometheus through the `k8s.grafana.com/scrape` +
 `k8s.grafana.com/metrics.portNumber` pod-annotation pair in the
-`charts/radiance` chart defaults — fn and q27 both carry it. gpu-ai's
+`charts/radiance` chart defaults — all four roster releases carry it
+(fn, q27, flash-tp1, q27-tp2; no per-lane nameOverride, so the label
+fallback below unifies every lane into the one job). gpu-ai's
 k8s-monitoring annotationAutodiscovery consumes the pair at `podIP:8000`
 `/metrics` on the 60 s feature default into job `radiance` — the pair is
 exactly two keys, no third annotation; the job identity is the
@@ -817,8 +819,16 @@ above are live-verified on this build (owner pair read 2026-11-15, RESEARCH
 pin, as the `grafana.dashboards.inference.radiance` url entry in
 `services/monitoring/prod/values.yaml` — provider folder `inference`,
 display `Inference`. Nothing is live until the owner's two unconditional
-manual syncs (plan OE-2/OE-3): sync the `gpu-ai` Application, then confirm
-the q27-pod target under job `radiance` on the central Prometheus — that
+manual syncs (plan OE-2/OE-3): sync the LANE Application —
+`gpu-ai-radiance` for the steady fn target. The shared appset renders one
+Application per `charts:` entry and nothing auto-syncs (§D7), so an
+umbrella sync only regenerates the lane children and applies nothing; a
+parked lane (`-q27`, `-flash-tp1`, `-q27-tp2`) has no live objects until
+its own Application is synced too — step 12's scale act presumes that
+sync. Then confirm the running radiance pod's target under job `radiance`
+on the central Prometheus — fn is the git steady-state lane (replicas: 1),
+a parked lane contributes a target only inside its synced Step-12 window,
+and the job's target set swaps podIP on any lane swap or restart — that
 sync is also the annotation path's own live proof (enabled on gpu-ai, never
 yet exercised by an annotated pod: R5a); sync the `monitoring-grafana`
 Application and confirm its `download-dashboards` init ran at the rollout —
