@@ -23,7 +23,7 @@
 `radiance`, `radiance-q27`, `radiance-flash-tp1`, `radiance-q27-tp2` (four releases off
 the one `charts/radiance` chart, per the roster `chart:` override) plus the claimed,
 parked `strata` lane inside the `gpu-ai-llama-swap` Application (C04/D17 made strata a
-real claimant; cf-143 OQ-K parked it at zero replicas in the same wave). Values below
+real claimant; OQ-K parked it at zero replicas in the same wave). Values below
 are the shipped renders; the served id rides the `RADIANCE_SERVED_ID` env entry (the
 D43 shape — the compose wrapper, not an args list, carries it to the engine).
 
@@ -68,7 +68,7 @@ law, C04/D17).
 
 ## MoE bring-up and restore (owner scale acts only)
 
-MoE bring-up is one owner scale act in order: scale fn → 0, wait for the fn pod to be gone, then scale strata → 1 — the reverse restores fn, both directions ruled by the 2026-11-22 parked posture (cf-143 OQ-K). Any other order boots a Pending pair: fn's
+MoE bring-up is one owner scale act in order: scale fn → 0, wait for the fn pod to be gone, then scale strata → 1 — the reverse restores fn, both directions ruled by the 2026-11-22 parked posture (OQ-K). Any other order boots a Pending pair: fn's
 claim pair (2) plus strata's claim (1) is 3 over a pool of 2, and even claim-free the
 host RAM of fn's held 110 beside strata's mirrored 110 exceeds the node. These are
 OWNER scale moves (the Q10 law: the strata dance is never GitOps-ized); with git at
@@ -131,3 +131,8 @@ lines, pins the held value against them, and UP moves only by a fresh owner ruli
 the same discipline cf-144's post-boot DOWN re-pin leg carries for fn (cf-144 P11).
 The step-by-step capture lives in the runbook's per-lane acceptance step
 (`.agents/notes/radiance-on-target-acceptance.md`, Step 12).
+
+[2026-11-23 C06] The `32 GB dGPU` patched-table ledger tag in
+`charts/amd-gpu/values.yaml` was deliberately NOT restored with this wave — cf-143's
+review judged it non-required and D32(iii) authorized the drop; the sizing facts live
+in `.agents/notes/radiance-host-tuning.md` (`mem_info_vram_total` 34208743424 B).

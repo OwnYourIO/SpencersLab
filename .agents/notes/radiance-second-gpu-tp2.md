@@ -202,7 +202,7 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
   checklist, not §6's pool arithmetic.
   **[2026-11-22 C06 — the no-claim half is superseded; annotate, never rewrite.]**
   C04/D17 gave the strata block a real claim pair (`amd.com/gpu-r9700: 1`, parked at
-  `replicas: 0` per cf-143 OQ-K), so "never held a plugin claim" is pre-C04 history;
+  `replicas: 0` per OQ-K), so "never held a plugin claim" is pre-C04 history;
   C04's UUID-capability annotation in §4 covers the enumeration side. The
   host-enumeration half stands: a claim pins WHO may be scheduled beside
   the lane, never WHICH chip the container enumerates (the `/dev/dri` hostPath half

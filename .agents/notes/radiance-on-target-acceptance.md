@@ -253,7 +253,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 
 > **[2026-11-22 C06 — the Strata row above is landing-era; annotate, never
 > rewrite.]** Three moves since: strata carries a REAL claim (1 of the pool of 2) and
-> parks at `replicas: 0` in the same wave (this ticket's D17 answering cf-143 OQ-K —
+> parks at `replicas: 0` in the same wave (this ticket's D17 answering OQ-K —
 > the "stays live" half is superseded, the MoE bring-up order takes its place); the
 > gpu-ai overlay mirrors its memory REQUEST to the 110Gi ceiling (the pod classes
 > Burstable — cpu requests 8 with no cpu limit, per the D44 correction of the earlier
