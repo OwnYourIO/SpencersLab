@@ -101,4 +101,4 @@ End every hand-back with the RESULT block from `/pipeline-conventions`: what you
 
 The repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. Your work survives context loss because files are the bus: everything you produce lands in the ticket folder, nothing worth keeping lives in chat. If your context dies or a compaction fails, report it in-band — the decision is the launcher's, and it relaunches you FRESH on the full brief, never as a follow-up to a dead context.
 
-A fresh start is ordinary bootstrapping: re-read the ticket folder in the pipeline read order, load your MUST-load skills, and act on the brief you were handed. The mechanics home is `pipeline-conventions` — those are the mechanics homes; load them, never re-derive from this paragraph.
+A fresh start is ordinary bootstrapping: re-read the ticket folder in the pipeline read order, load your MUST-load skills, and act on the brief you were handed. The mechanics home is `pipeline-conventions` — load it, never re-derive from this paragraph.
