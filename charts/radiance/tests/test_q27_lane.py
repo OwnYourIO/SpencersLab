@@ -162,7 +162,8 @@ def test_c15_q27_absence_set():
 def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
     """D54(3)/AC2 pair truth, re-pinned by cf-144 C01 (P05): memory 24Gi
     request==limit stays overlay-authored; cpu "8" stays chart-INHERITED;
-    the amd.com/gpu-r9700-1 claim arrives OVERLAY-PINNED at "1" — under the
+    the R9700 pool claim (GPU_CLAIM, from the amd-gpu constants) arrives
+    OVERLAY-PINNED at "1" — under the
     TP2 chart pair (2) plain inheritance would render 2 and strand q27
     Pending beside a live fn, so the subtree must author the claim itself
     (D26: overlays ADD/UPDATE, never REMOVE — an UPDATE is the lawful
@@ -223,7 +224,7 @@ def _c144_q27_sim_render(chart_claim: str, strip_overlay_pin: bool = False):
 @helm_skip
 def test_c144_q27_subtree_authors_the_claim_pin_exactly():
     """cf-144 C01 AC2 (authored-value view, designed-RED today): the pin must
-    be REAL bytes in the subtree — both maps carry amd.com/gpu-r9700-1: "1"
+    be REAL bytes in the subtree — both maps carry the R9700 claim at "1"
     beside the 24Gi pair and NOTHING else (cpu stays chart-inherited, P05).
     A render-only pass could still let a future edit drift the pin; this leg
     pins the authored map itself: requests == limits == {memory 24Gi,
@@ -255,7 +256,7 @@ def test_c144_q27_claim_does_not_track_the_chart_count():
     got = {m: (res.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
     assert got == {"requests": "1", "limits": "1"}, (
         f"cf-144 C01: overlay-pinned q27 claim under a simulated chart-2 renders {got}, want "
-        "1/1 — the subtree must author amd.com/gpu-r9700-1: '1' in BOTH maps (P05); today "
+        f"1/1 — the subtree must author {R.GPU_CLAIM}: '1' in BOTH maps (P05); today "
         "there is no pin, so this leg is designed-red naming C01"
     )
     res_np = _c144_q27_sim_render("2", strip_overlay_pin=True)

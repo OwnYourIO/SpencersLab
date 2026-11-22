@@ -61,7 +61,8 @@ CATALOG=".opencode/opencode.jsonc"
 # future lane move edits here + that block, never needle archaeology). T3's
 # name needles read these; the patched-table/watch sentences are pinned there
 # too (T-E docs sweep).
-R9700_CLAIM="amd.com/gpu-r9700-1"
+R9700_CLAIM="amd.com/gpu-r9700"    # D21 (2026-11-22): ids-table product `r9700`
+RETIRED_R9700_CLAIM="amd.com/gpu-r9700"-"1"   # split: the needle must not be its own hit
 APU_CLAIM="amd.com/gpu-8060s"
 
 checks=0
@@ -293,13 +294,20 @@ cat_text = open(catalog).read()
 errs = []
 
 # Names block (step 1): served id, peer URL, both resource names, the scalars.
+POOL_NAMES = (r9700_claim, apu_claim)
 for needle, what in (
     ("qwen3.8-flash-next-radiance", "the served id"),
     ("gpu-ai-radiance.default.svc.cluster.local:8000", "the peer URL (no /v1)"),
-    (r9700_claim, "the R9700 pool name (D24 renamed)"),
+    (r9700_claim, "the R9700 pool name (D21-renamed)"),
     (apu_claim, "the APU pool name"),
 ):
-    if needle not in rb:
+    # Pool needles carry a TRAILING BOUNDARY: the live R9700 pool is a prefix of the
+    # tier this ticket retires, so a bare substring hit would bless a note that only
+    # still names the retired pool.
+    if needle in POOL_NAMES:
+        if not re.search(re.escape(needle) + r"(?![0-9-])", rb):
+            errs.append(f"the names block never names {what}: {needle!r} (as a live name, not as a prefix)")
+    elif needle not in rb:
         errs.append(f"the names block never names {what}: {needle!r}")
 
 # Triple digest ledger, PAIRED across surfaces (chunk T3):
@@ -366,7 +374,7 @@ if not re.search(r"(?i)belt.and.braces", rb) or "gfx1201" not in rb:
 # the doc must say so (receipts + the mount-stops-applying watch).
 if not re.search(r"(?i)patched[- \t]table|amdgpu\.ids", rb):
     errs.append("the runbook never names the patched-table/amdgpu.ids provenance (D24: the gate-(a) "
-                "receipts now derive gpu-r9700-1 THROUGH the ConfigMap'd table)")
+                "receipts now derive the R9700 pool name THROUGH the ConfigMap'd table)")
 if not re.search(r"(?i)watch[\n]{0,160}(ids|mount|lookup|baked)|ids[\n]{0,80}(path|lookup)[\n]{0,120}(watch|baked|falls? back|stops? applying)", rb):
     errs.append("the mount-stops-applying WATCH sentence (image IDs-path move => baked name returns "
                 "=> claim Pending; receipts catch it) is missing (C08 T-E)")
@@ -627,8 +635,8 @@ need144(r"(?i)ReBAR[^\n]{0,160}size\s*=\s*32G[^\n]{0,120}(both|per)[ \t-]?cards?
         "gate-(e)/step-0 TP2 form: the ReBAR receipt stated as `size=32G` on BOTH cards (doc §10 item 1 — P2P-critical)")
 need144(r"(?i)(7551/C0|0x7551)[^\n]{0,160}(× ?2|x ?2|both|two|second)",
         "gate-(a) TP2 form: the (device,revision) receipt runs on BOTH R9700s (7551/C0 x2 expected — EXPLORE §0: card2 is the same pair)")
-need144(r"amd\.com/gpu-r9700-1[\"']?[ \t]*:[ \t]*[\"']?2\b",
-        "the node-status assert `amd.com/gpu-r9700-1: 2` (pool live at 2; gate-(a) TP2 form)")
+need144(r"amd\.com/gpu-r9700(?![0-9-])[\"']?[ \t]*:[ \t]*[\"']?2\b",
+        "the node-status assert on the live pool at 2 (gate-(a) TP2 form)")
 need144(r"amd\.com/gpu-8060s[\"']?[ \t]*:[ \t]*[\"']?1\b",
         "the node-status assert `amd.com/gpu-8060s: 1` beside the pool-2 line")
 need144(r"(?is)(startup[ \t-]report|STARTUP REPORT|boot report)[^.]{0,400}(p2p|tp[ \t-]wire|wire lines)[^.]{0,400}under[ \t-]load|(under[ \t-]load|sample under load)[^.]{0,400}(p2p|tp[ \t-]wire|wire lines)",

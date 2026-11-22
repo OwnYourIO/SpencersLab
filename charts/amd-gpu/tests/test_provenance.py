@@ -358,7 +358,7 @@ def test_minimality_note_and_no_impossible_literal():
     impossible = "amd.com/" + "r9700-1"   # assembled: the rejected string, never present
     assert impossible not in text, (
         f"C08/D24: {impossible!r} shipped — the plugin's code constants make it UNREACHABLE; "
-        "only amd.com/gpu-r9700-1 exists (the -1 carries no scheduling meaning)"
+        "only the gpu-prefixed pool exists (the retired tier's -1 suffix carried no scheduling meaning)"
     )
 
 
@@ -451,4 +451,206 @@ def test_placement_guard_teeth_on_synthetic_tree(tmp_path):
     assert stray == ["charts/other-chart/values.yaml"], (
         f"C08 AC4 teeth probe: expected exactly the one stray placement, got {stray} — "
         "the allow list has become an always-pass (or an over-broad admit)"
+    )
+
+
+# --- AC4, third tier: the 2026-11-feat-radiance-multi-instance pool rename ------
+#
+# D21 settles the 7551/C0 product field to EXACTLY `r9700`, which makes the name
+# space three-tiered: the HISTORICAL pool (`gpu-ai-pro-` + the product, what the
+# marketing string derives — the sanitizer leg above is its proof), the RETIRED
+# pool (the cf-143 name, assembled below, what every claim carried until this
+# ticket), and the LIVE pool. R-Q5 is why the sweep is absolute: after the roll
+# the retired name advertises capacity 0 permanently, so a pod spec still
+# claiming it PENDINGs forever and bare `amd.com/gpu` (at 0) catches nothing.
+#
+# Every literal below is ASSEMBLED except the ruling strings themselves: a test
+# file naming the retired pool whole would be the residue AC4 exists to find
+# (the vllm_testlib LEGACY_REF precedent this file already follows — and the
+# reason the pre-existing impossible-literal message above no longer spells it).
+
+
+RETIRED_R9700_POOL = "gpu-r9700" + "-1"
+RETIRED_R9700_CLAIM = A.GPU_RESOURCE_PREFIX + RETIRED_R9700_POOL
+NEW_R9700_POOL = "gpu-r9700"
+NEW_R9700_CLAIM = A.GPU_RESOURCE_PREFIX + NEW_R9700_POOL
+# `gpu-r9700` is a PREFIX of the retired name, so a needle without a trailing
+# boundary cannot tell a live claim from a straggler. Every pattern here carries
+# one; the word-boundary leg below plants both spellings to prove it.
+NEW_CLAIM_RX = re.compile(r"amd\.com/gpu-r9700(?![0-9-])")
+
+
+def retired_tier_hits(root):
+    """Paths under the AC4 scopes still carrying the retired pool name (chunk
+    C01 AC1: zero hits across charts/, services/, tests/, .agents/notes/ —
+    history lives in plan folders and git, outside these scopes)."""
+    hits = []
+    for scope in _SCAN_SCOPES:
+        base = root / scope
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            rel = str(path.relative_to(root))
+            if rel.endswith((".tgz", ".pyc", ".png", ".ico")):
+                continue
+            try:
+                body = path.read_text(errors="ignore")
+            except OSError:
+                continue
+            if RETIRED_R9700_POOL in body:
+                hits.append(rel)
+    return hits
+
+
+def test_r9700_rename_ruling_strings():
+    """C01 AC1/AC4: the constants carry the ruling strings — product field exactly
+    `r9700`, pool `gpu-r9700`, and a retired-tier constant ASSEMBLED (never a
+    whole literal) so the sweep has a needle that cannot trip itself. Designed-red
+    naming C01: today the constants still carry the cf-143 pair."""
+    assert A.R9700_PRODUCT_STRING == NEW_R9700_POOL, (
+        f"the 7551/C0 product field is {A.R9700_PRODUCT_STRING!r}, want EXACTLY {NEW_R9700_POOL!r} "
+        "(owner ruling D21: the ids-table product field, not the marketing string — the sanitizer port "
+        "proves `AI PRO R9700` derives the HISTORICAL pool instead)"
+    )
+    assert A.R9700_POOL_NAME == NEW_R9700_POOL, (
+        f"the R9700 pool constant is {A.R9700_POOL_NAME!r}, want {NEW_R9700_POOL!r} — the rename's "
+        "single edit site (the whole tree resolves through this block)"
+    )
+    assert A.R9700_CLAIM == NEW_R9700_CLAIM, (
+        f"the R9700 claim constant is {A.R9700_CLAIM!r}, want {NEW_R9700_CLAIM!r} — prefix and pool move together"
+    )
+    retired = getattr(A, "RETIRED_R9700_POOL_NAME", None)
+    assert retired == RETIRED_R9700_POOL, (
+        f"amd_gpu_testlib.RETIRED_R9700_POOL_NAME is {retired!r}, want the assembled {RETIRED_R9700_POOL!r} "
+        "— C01 adds the retired tier to the canonical constants block (assembled, exactly like the "
+        "historical one above it, so the AC4 sweep cannot false-red on its own needle)"
+    )
+    assert A.HISTORICAL_R9700_POOL_NAME == "gpu-ai-pro-" + "r9700", (
+        "the historical tier moved — D21 keeps it as the derivation witness: the marketing string "
+        "sanitizes to this name, which is the evidence that the product field is NOT the marketing string"
+    )
+
+
+def test_sanitizer_port_reaches_the_new_pool():
+    """C01 AC4: the reachability proof — the patched product field must sanitize to
+    the pool the claims ask for, and the marketing string must STILL derive the
+    historical tier (that leg is what makes the marketing-identity annotation a
+    comment and not a row)."""
+    assert A.sanitize_product("r9700") == NEW_R9700_POOL, (
+        f"sanitize('r9700') = {A.sanitize_product('r9700')!r}, want {NEW_R9700_POOL!r} — if the port "
+        "does not reach the new pool, the rename never advertises and every claim PENDINGs (R-Q5)"
+    )
+    assert A.sanitize_product("AMD Radeon AI PRO R9700") == A.HISTORICAL_R9700_POOL_NAME, (
+        "the marketing string must keep deriving the historical pool — D21 records it as the row's "
+        "MARKETING IDENTITY in the ledger comment precisely because it is not the product field"
+    )
+
+
+def test_marketing_identity_annotation_in_the_ledger():
+    """C01 AC1 (D21): the ledger comment beside the 7551/C0 row records the marketing
+    name as an IDENTITY ANNOTATION — the row itself stays the sanitized field, the
+    comment is where `AMD Radeon AI PRO R9700` lives."""
+    text = A.chart_values_text()
+    assert "AMD Radeon AI PRO R9700" in text, (
+        "the amd-gpu values ledger never names the row's marketing identity — D21 settled the product "
+        "field to `r9700` and requires the marketing string to be RECORDED, as a ledger comment"
+    )
+
+
+def test_zero_stale_renamed_pool_and_placement():
+    """C01 AC1/AC2 (re-authored AC4): NEITHER retired tier survives in the scanned
+    scopes — the pre-C08 derived pool (the existing arm) and the cf-143 pool this
+    ticket retires (assembled constant, so the sweep's own needle stays clean) —
+    and the live name sits only in its sanctioned homes."""
+    old_hits, stray_hits = name_scope_violations(A.REPO_ROOT)
+    assert not old_hits, (
+        f"AC4 zero-stale (historical tier): {old_hits[:8]} still carry it — the sweep stays absolute"
+    )
+    retired = retired_tier_hits(A.REPO_ROOT)
+    assert not retired, (
+        f"C01 AC1 zero-stale (retired tier): {len(retired)} file(s) still name the retired pool, e.g. "
+        f"{retired[:8]} — after the roll that name advertises capacity 0 forever, so a surviving claim "
+        "is a pod that PENDINGs with no fallback under it (R-Q5); the wave is one commit for exactly this"
+    )
+    assert not stray_hits, (
+        f"AC4 placement: the pool string appears OUTSIDE its sanctioned sites: {stray_hits[:8]} "
+        "(allowed: amd-gpu, radiance, the two comment-only carve files incl. llama-swap TEST-RECORDS, "
+        "the notes docs, tests/)"
+    )
+
+
+def test_new_claim_placement_is_word_boundary_safe():
+    """C01 AC1's second half: `grep -rnE 'amd\\.com/gpu-r9700([^-]|$)'` finds ONLY
+    sanctioned sites. Same law, boundary-aware regex, so a retired straggler can
+    neither satisfy nor hide this placement check."""
+    offenders = []
+    for scope in _SCAN_SCOPES:
+        base = A.REPO_ROOT / scope
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            rel = str(path.relative_to(A.REPO_ROOT))
+            if rel.endswith((".tgz", ".pyc", ".png", ".ico")):
+                continue
+            try:
+                body = path.read_text(errors="ignore")
+            except OSError:
+                continue
+            if NEW_CLAIM_RX.search(body) and not rel.startswith(_NEW_NAME_ALLOW):
+                offenders.append(rel)
+    assert not offenders, (
+        f"C01 AC1: the live claim appears outside its sanctioned homes: {offenders[:8]}"
+    )
+
+
+def test_impossible_claim_shapes_barred_repo_wide():
+    """C01 AC4 (extends the chart-only arm above): the two code-impossible strings —
+    amd.com/ + the bare product, and amd.com/ + the retired pool's bare product —
+    appear NOWHERE in the scanned scopes. The plugin builds every pool name as
+    amd.com/ + 'gpu-' + the sanitized product, so a claim without the 'gpu-'
+    prefix is a string no mechanism can serve (§R7-Q1)."""
+    impossible = ["amd.com/" + "r9700", "amd.com/" + "r9700-1"]
+    for scope in _SCAN_SCOPES:
+        base = A.REPO_ROOT / scope
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            rel = str(path.relative_to(A.REPO_ROOT))
+            if rel.endswith((".tgz", ".pyc", ".png", ".ico")):
+                continue
+            try:
+                body = path.read_text(errors="ignore")
+            except OSError:
+                continue
+            for bad in impossible:
+                assert bad not in body, (
+                    f"C01 AC4: {rel} carries the impossible claim string {bad!r} — unreachable through "
+                    "the plugin's code constants, so it can only ever mislead a reader or a grep"
+                )
+
+
+def test_retired_tier_scan_teeth(tmp_path):
+    """The retired-tier arm must be a real guard: a straggler planted INSIDE a
+    sanctioned home (placement would wave it through) must be caught, and a tree
+    carrying only the live claim must read clean — the prefix relationship is
+    exactly where a false-green would come from."""
+    home = tmp_path / "charts" / "amd-gpu"
+    other = tmp_path / "charts" / "other-chart"
+    home.mkdir(parents=True)
+    other.mkdir(parents=True)
+    (home / "values.yaml").write_text(
+        f"# sanctioned placement, retired straggler inside it\nclaims: [{RETIRED_R9700_CLAIM}: \"2\"]\n")
+    (other / "values.yaml").write_text(
+        f"# clean live claim only\nclaims: [{NEW_R9700_CLAIM}: \"1\"]\n")
+    hits = retired_tier_hits(tmp_path)
+    assert hits == ["charts/amd-gpu/values.yaml"], (
+        f"retired-tier teeth probe got {hits} — want the planted straggler in the sanctioned home and "
+        "nothing from the live-claim-only file (either the arm is blind inside admitted paths, or the "
+        "prefix of the live name is tripping it)"
     )

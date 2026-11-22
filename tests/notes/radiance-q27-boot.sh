@@ -45,6 +45,11 @@ VALS="${RAD_Q27_VALS:-services/gpu-ai/prod/values.yaml}"
 
 # The keyless env token the DROPPED rider carried is banned from any runnable
 # line; assembled here because the AC4 repo-wide grep scopes tests/.
+# The pool name follows the canonical constants block
+# (charts/amd-gpu/tests/amd_gpu_testlib.py); SPLIT so this file stays a clean
+# subject of the C01 zero-stale sweep.
+R9700_CLAIM="amd.com/gpu-r9700"
+RETIRED_R9700_CLAIM="amd.com/gpu-r9700"-"1"
 KEYLESS_ENV_TOKEN="RADIANCE""_API_KEY"
 
 checks=0
@@ -467,8 +472,9 @@ fi
 if want t6; then
   [ -f "$NOTE" ] || fail "T6: $NOTE missing (see T1)"
   rc=0
-  python3 - "$NOTE" <<'PY' || rc=$?
-import re, sys
+  RAD_R9700="$R9700_CLAIM" python3 - "$NOTE" <<'PY' || rc=$?
+import os, re, sys
+POOL = os.environ["RAD_R9700"]
 text = open(sys.argv[1]).read()
 flat = " ".join(text.split())
 errs = []
@@ -476,8 +482,8 @@ errs = []
 if "cf-144" not in flat:
     errs.append("no cf-144 annotation in the boot note — C02's dated marker is missing (annotate-never-rewrite: the historical text stays)")
 # pool is 2 + fn TP2 claim-2 (git truth the owner reads on the next swap):
-if not re.search(r"(?i)pool is (now )?2\b|amd\.com/gpu-r9700-1[^\n]{0,8}[:=][^\n]{0,4}\D{0,3}2\b", flat):
-    errs.append("the note never states the TP2 pool truth: pool is 2 / amd.com/gpu-r9700-1: 2 (git post-C01)")
+if not re.search(r"(?i)pool is (now )?2\b|" + POOL + r"(?![0-9-])[^\n]{0,8}[:=][^\n]{0,4}\D{0,3}2\b", flat):
+    errs.append(f"the note never states the TP2 pool truth: pool is 2 / {POOL}: 2 on the LIVE pool name (git post-C01)")
 if not (re.search(r"(?i)fn[^.]{0,120}(TP2|tensor[ -]parallel 2)[^.]{0,120}claim[^.]{0,40}2|claim[ -]2[^.]{0,120}(TP2|fn)", flat)
         or re.search(r"(?i)(both cards|2 of 2)", flat)):
     errs.append("the note never states fn TP2 claim-2 in git (one pod holding BOTH cards)")

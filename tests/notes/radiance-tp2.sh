@@ -30,7 +30,7 @@ CARD_TITLE="Radiance second-GPU (TP2) expansion"
 # ---------------------------------------------------------------------------
 # GPU RESOURCE-NAME CONSTANTS — C08 D24 lane ruling landed (marked bash twin
 # of charts/amd-gpu/tests/amd_gpu_testlib.py; future lane moves edit both).
-R9700_CLAIM="amd.com/gpu-r9700-1"
+R9700_CLAIM="amd.com/gpu-r9700"    # D21 (2026-11-22): ids-table product `r9700`
 APU_CLAIM="amd.com/gpu-8060s"
 R9700_POOL="${R9700_CLAIM#amd.com/}"
 
@@ -255,7 +255,8 @@ if re.search(r"radiance\s+serve\b", doc, re.I):
 
 # Product-naming world (post-C07 reading of TP2): the pool-count-2 mechanic +
 # the revision receipt carrying to the new card + the DRA alternative lane.
-need(re.escape(os.environ["RAD_R9700"]), "the D24-renamed pool name (same-revision second card joins the same pool, count 2 — the pool-count mechanics are name-agnostic, the STRING is the ruling)")
+need(re.escape(os.environ["RAD_R9700"]) + r"(?![0-9-])",
+     "the D21-renamed pool name (same-revision second card joins the same pool, count 2 — the pool-count mechanics are name-agnostic, the STRING is the ruling)")
 # C08 T-E (amendment): the TP2 RE-VERIFICATION LAW — a second/third card is absent from the
 # MINIMAL patched table by construction; its (device,revision) row must carry or be ADDED
 # before TP2 scheduling is trusted (bare-fallback trap).
@@ -328,12 +329,12 @@ f6 = " ".join(m6.group(0).split()) if m6 else ""
 if not (re.search(r"(?i)c7:00\.0", f6) and re.search(r"(?i)reporting 2 devices", f6)
         and re.search(r"(?i)(row already carr|no table edit)", f6)
         and re.search(r"(?i)rocminfo", f6) and re.search(r"(?i)sysfs", f6)):
-    errs.append("§6's annotation lacks the pool-2 live witness (c7:00.0 + 'Reporting 2 devices as gpu-r9700-1' + the no-table-edit finding) with the formal owner gates kept (per-BDF sysfs + rocminfo receipts)")
+    errs.append("§6's annotation lacks the pool-2 live witness (c7:00.0 + 'Reporting 2 devices as <live pool>' + the no-table-edit finding) with the formal owner gates kept (per-BDF sysfs + rocminfo receipts)")
 # §11: shape A + the HOLD-110 truth:
 m11b = re.search(r"(?ms)^## 11\..*?(?=^## |\Z)", doc)
 f11b = " ".join(m11b.group(0).split()) if m11b else ""
 if not (re.search(r"(?i)shape A\b", f11b) and re.search(r"(?i)one pod", f11b)
-        and re.search(r"(?i)(claim|gpu-r9700-1)[^.]{0,60}\b2\b", f11b)):
+        and re.search(r"(?i)(claim|gpu-r9700(?![0-9-]))[^.]{0,60}\b2\b", f11b)):
     errs.append("§11 step 5's SHIPPED annotation lacks the shape-A truth: fn TP2 one pod, claim 2 (OQ-A ruling)")
 if not (re.search(r"(?i)(held at 110|hold 110|110 HELD|HELD[^.]{0,40}110)", f11b)
         and re.search(r"(?i)print", f11b)

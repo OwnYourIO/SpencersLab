@@ -37,7 +37,7 @@ def test_radiance_claim_equals_the_ledger_r9700_pool():
     """AC4: the rendered claim string == the pool the vendored plugin
     advertises for the R9700 (7551/C0) per its ledgered expected-names
     comment. cf-144 C01: the TP2 flip moves the COUNT — the pair is exactly
-    {amd.com/gpu-r9700-1: 2} in both maps (shape A, one pod two cards;
+    the ledger pool at 2 in both maps (shape A, one pod two cards;
     P02/OQ-A owner ruling); the NAME leg (ledger equality) is TP2-inert."""
     ledger = R.amd_gpu_ledger_names()
     assert "7551" in ledger, (
@@ -138,7 +138,7 @@ def _q27_docs_for_identity():
 @helm_skip
 def test_c144_q27_claim_stays_one_under_the_tp2_flip():
     """cf-144 C01 AC2 (identity view): the chart pair moves to 2, the q27
-    release must still render the GPU claim {amd.com/gpu-r9700-1: 1} in BOTH
+    release must still render the GPU claim (the ledger pool, count 1) in BOTH
     maps — the truth now arrives OVERLAY-PINNED (P05: the subtree explicitly
     pins claim 1, because chart inheritance post-flip would strand q27 at 2
     and pod-swap law dies). The pair-exactness (cpu/memory) lives in

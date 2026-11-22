@@ -619,3 +619,165 @@ def amd_gpu_ledger_names() -> dict:
             if device in ln and device not in out:
                 out[device] = m.group(2)
     return out
+
+
+# --- 2026-11-feat-radiance-multi-instance C05: the four-lane roster -------------
+# Two RESTING releases join fn + q27 (ask 4's 4x deployment). The values here are
+# the ticket's SPECS, authored in the test session; dev conforms
+# services/gpu-ai/prod/values.yaml to them (the D13 single-source law the evidence
+# YAMLs carry). Priority classes come from
+# tests/pipeline-models/TEST_SPEC.md §3 as resolved by the coordinator's follow-up
+# ruling (urgent/def cross-lane unique and strictly below the live lanes, trios
+# strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie ACCEPTED
+# — separate engines never compete for queue slots); keys are the catalog SUFFIX
+# classes: urgent > default > low under higher-wins, matching surface.sh M9-A's
+# table. Do not "simplify" a row without re-running that proof.
+FLASH_TP1_APP_NAME = "radiance-flash-tp1"
+FLASH_TP1_RELEASE = "gpu-ai-" + FLASH_TP1_APP_NAME
+FLASH_TP1_SERVED_ID = "qwen3.8-flash-next-radiance-tp1"
+FLASH_TP1_MEMORY = "110Gi"          # the fn pair held: same working set, same cgroup price
+FLASH_TP1_CLAIM_COUNT = "1"         # one card, quoted string (the shipped claim shape)
+FLASH_TP1_PEER_FLOOR = 3            # == this lane's own default class, never fn's 5
+FLASH_TP1_CATALOG_PRIOS = {"urgent": 7, "default": 3, "low": 2}
+FLASH_TP1_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+FLASH_TP1_PEER_URL = f"http://{FLASH_TP1_RELEASE}.default.svc.cluster.local:8000"   # NO /v1
+FLASH_TP1_PEERS_EVIDENCE = (
+    REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-flash-tp1-peers-expected.yaml"
+)
+# The transcription source, named by commit: the cf-143 TP1-era array (the file as
+# it stood BEFORE e7536b2c9 flipped the fn lane to TP2). The lane is that array with
+# EXACTLY one value swapped — the served-model-name — so the proof leg is a diff,
+# not a re-derived flag list.
+FLASH_TP1_TRANSCRIPTION = ("e7536b2c9^", "charts/radiance/values.yaml")
+
+Q27_TP2_APP_NAME = "radiance-q27-tp2"
+Q27_TP2_RELEASE = "gpu-ai-" + Q27_TP2_APP_NAME
+Q27_TP2_SERVED_ID = "qwen3.8-27b-radiance-tp2"
+Q27_TP2_MEMORY = "24Gi"             # q27's pair held (D28(6): the boot print adjudicates)
+Q27_TP2_CLAIM_COUNT = "2"           # both cards: the TP2 shape of the same pool
+Q27_TP2_PEER_FLOOR = 2              # == this lane's own default class
+Q27_TP2_CATALOG_PRIOS = {"urgent": 6, "default": 2, "low": 1}
+Q27_TP2_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+Q27_TP2_PEER_URL = f"http://{Q27_TP2_RELEASE}.default.svc.cluster.local:8000"        # NO /v1
+Q27_TP2_PEERS_EVIDENCE = (
+    REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-q27-tp2-peers-expected.yaml"
+)
+Q27_TP2_EXTRA_FLAGS = ("--tp", "2", "--tp-wire", "wht6")   # the ONLY add over the q27 array
+
+# The roster's four releases, in ladder order. `resting` lanes ship replicas 0 and
+# are never a default route; `live` lanes are the ones the tables name today.
+LANES = {
+    FLASH_TP1_APP_NAME: {
+        "release": FLASH_TP1_RELEASE,
+        "served_id": FLASH_TP1_SERVED_ID,
+        "memory": FLASH_TP1_MEMORY,
+        "claim": FLASH_TP1_CLAIM_COUNT,
+        "floor": FLASH_TP1_PEER_FLOOR,
+        "prios": FLASH_TP1_CATALOG_PRIOS,
+        "roster": FLASH_TP1_ROSTER,
+        "peer_url": FLASH_TP1_PEER_URL,
+        "evidence": FLASH_TP1_PEERS_EVIDENCE,
+        "pack": (MODEL_PATH, PACK_REPO, PACK_BYTES, PACK_LFS_SHA),
+        "resting": True,
+    },
+    Q27_TP2_APP_NAME: {
+        "release": Q27_TP2_RELEASE,
+        "served_id": Q27_TP2_SERVED_ID,
+        "memory": Q27_TP2_MEMORY,
+        "claim": Q27_TP2_CLAIM_COUNT,
+        "floor": Q27_TP2_PEER_FLOOR,
+        "prios": Q27_TP2_CATALOG_PRIOS,
+        "roster": Q27_TP2_ROSTER,
+        "peer_url": Q27_TP2_PEER_URL,
+        "evidence": Q27_TP2_PEERS_EVIDENCE,
+        "pack": (Q27_MODEL_PATH, Q27_PACK_REPO, Q27_PACK_BYTES, Q27_PACK_LFS_SHA),
+        "resting": True,
+    },
+}
+NEW_LANE_NAMES = tuple(LANES)
+
+
+def lane(name: str) -> dict:
+    spec = LANES.get(name)
+    assert spec is not None, f"no C05 lane spec named {name!r} (known: {sorted(LANES)})"
+    return spec
+
+
+def lane_block(name: str) -> dict | None:
+    """The top-level <lane>: block of the gpu-ai service values, or None while
+    C05-dev has not landed it — a designed red naming C05, never a skip."""
+    if not SERVICE_VALUES.is_file():
+        return None
+    return yaml.safe_load(SERVICE_VALUES.read_text()).get(name)
+
+
+def lane_region_text(name: str) -> str:
+    """Raw text (comments included) of one lane's top-level subtree — the
+    comment-carried laws (skip paragraph, 502-idle sentence, switch discipline)
+    are only visible here."""
+    lines = SERVICE_VALUES.read_text().splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^" + re.escape(name) + r":", ln)), None)
+    assert start is not None, (
+        f"C05: services/gpu-ai/prod/values.yaml carries no top-level {name}: block — dev's lane "
+        "has not landed (the comment legs are designed-red naming C05 until it does)"
+    )
+    top = start
+    while top > 0:
+        prev = lines[top - 1]
+        if prev.strip() == "" or prev.lstrip().startswith("#"):
+            top -= 1
+            continue
+        break
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"^[^ \t#]", lines[i])), len(lines))
+    return "\n".join(lines[top:end])
+
+
+@functools.lru_cache(maxsize=None)
+def _render_lane_cache(name: str) -> tuple:
+    block = lane_block(name)
+    assert isinstance(block, dict), (
+        f"C05: no {name}: subtree to render — the lane is designed-red until dev lands it"
+    )
+    with tempfile.TemporaryDirectory(prefix=f"radiance-lane-{name}-") as tmp:
+        vals = Path(tmp) / "vals.yaml"
+        with vals.open("w") as fh:
+            yaml.safe_dump(block, fh)
+        out = subprocess.run(
+            ["helm", "template", lane(name)["release"], str(CHART_DIR),
+             "-f", str(vals), "--set", "domain=spencerslab.com", "--set", "clusterName=gpu-ai"],
+            capture_output=True, text=True, timeout=300,
+        )
+        if out.returncode != 0:
+            raise AssertionError(
+                f"C05: helm template failed for the {name} lane ({lane(name)['release']}):\n{out.stderr}"
+            )
+        return tuple(d for d in yaml.safe_load_all(out.stdout) if d), out.stdout
+
+
+def render_lane(name: str):
+    """(docs, raw stdout) for one resting lane's release render."""
+    ok, reason = helm_ready()
+    assert ok, reason
+    return _render_lane_cache(name)
+
+
+def lane_peers_evidence(name: str) -> dict:
+    """Load + self-validate a resting lane's peer evidence (the q27 loader's laws,
+    the D13 per-key scope: each lane owns one file, siblings stay untouched)."""
+    path = lane(name)["evidence"]
+    assert path.is_file(), (
+        f"C05: {path} missing — the resting lanes' peer evidence is test-session-authored "
+        "(the D13 per-key single source dev conforms to)"
+    )
+    data = yaml.safe_load(path.read_text())
+    assert isinstance(data, dict) and isinstance(data.get(name), dict), f"{path.name} must carry a {name}: mapping"
+    ev = data[name]
+    states = ev.get("models_states")
+    assert isinstance(states, list) and states, f"{name} evidence needs models_states (the wave law)"
+    final = ev.get("models_allowed")
+    assert isinstance(final, list) and final and states[-1] == final, \
+        f"{name} evidence: last models_states must equal models_allowed"
+    for i, ids in enumerate(states):
+        assert isinstance(ids, list) and ids and len(set(ids)) == len(ids), \
+            f"{name} models_states[{i}] must be a non-empty duplicate-free list"
+    return ev

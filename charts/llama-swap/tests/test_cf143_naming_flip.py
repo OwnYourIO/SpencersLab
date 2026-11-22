@@ -226,8 +226,11 @@ def test_no_retirement_instructions_survive_the_chain():
 
 
 def _live_claim_lines(path, claim):
-    """Non-comment lines carrying `claim: <int>` — the live-claim shape."""
-    pat = re.compile(rf"^\s*{re.escape(claim)}:\s*[0-9]+\s*(#.*)?$")
+    """Non-comment lines carrying `claim: <count>` — the live-claim shape, QUOTED or
+    bare. The shipped overlay pins are strings (`: "1"`), so a bare-only pattern reads
+    a file full of claims as empty and every stray-guard built on it passes by silence
+    (the C01 AC3 sharpness law, same defect in this carrier)."""
+    pat = re.compile(rf"^\s*{re.escape(claim)}:\s*[\"']?[0-9]+\"?\s*(#.*)?$")
     return [f"{i}: {ln.strip()[:100]}" for i, ln in enumerate(path.read_text().splitlines(), 1)
             if pat.match(ln) and not ln.lstrip().startswith("#")]
 
@@ -316,24 +319,38 @@ def test_apu_name_lives_only_in_the_gpu_ai_overlay():
     assert _live_claim_lines(GPU_AI_SERVICE, APU_CLAIM), (
         "C07/D21: the gpu-ai overlay carries NO live APU claim line — the flip leg is missing"
     )
-    # R9700 stray-guard (C02+ claim site): live R9700 claims belong ONLY in
-    # charts/radiance (+ the amd-gpu ledger, comments exempt) — a stray
-    # elsewhere still reds here.
-    rad = L.REPO_ROOT / "charts" / "radiance" / "values.yaml"
-    svc_hits = _live_claim_lines(GPU_AI_SERVICE, R9700_CLAIM)
+    # R9700 stray-guard, RE-PINNED by 2026-11-feat-radiance-multi-instance C04
+    # (D17) and C05: the pool's live claims have TWO sanctioned homes — the
+    # charts/radiance chart defaults (until C03 relocates them into the service
+    # blocks, where they stay inside the same allow-set) and the gpu-ai service
+    # file, which is where the cf-144 q27 overlay pin, the C04 strata claim and
+    # the C05 lane claims all live. The cf-143 law this arm actually protected —
+    # no OTHER cluster or chart ever asks for this name — is unchanged and still
+    # the direction that reds.
+    sanctioned = {"services/gpu-ai/prod/values.yaml"}
     other_services = [
         str(p.relative_to(L.REPO_ROOT))
         for p in sorted(L.REPO_ROOT.glob("services/*/*/values.yaml"))
         if p != GPU_AI_SERVICE and _live_claim_lines(p, R9700_CLAIM)
     ]
-    chart_py_hits = [] if not rad.is_dir() else sorted(
+    chart_hits = sorted(
         str(p.relative_to(L.REPO_ROOT))
         for p in (L.REPO_ROOT / "charts").rglob("*.yaml")
         if "tests" not in p.parts and "radiance" not in p.parts and _live_claim_lines(p, R9700_CLAIM)
     )
-    assert not svc_hits and not other_services and not chart_py_hits, (
-        f"C07 AC4 / C02: the R9700 pool name claimed outside charts/radiance — "
-        f"gpu-ai overlay: {svc_hits}, other services: {other_services}, other charts: {chart_py_hits}"
+    assert not other_services and not chart_hits, (
+        f"C04/C05 AC2: the R9700 pool claimed outside its sanctioned homes "
+        f"{sorted(sanctioned | {'charts/radiance/*'})} — "
+        f"other services: {other_services}, other charts: {chart_hits} "
+        "(the gpu cluster's single-naming plugin cannot advertise this name, and a claim on a "
+        "pool it never advertises is a pod that PENDINGs forever)"
+    )
+    # Sharpness (the C01 AC3 idiom): the guard must actually see a claim in the
+    # home it admits, or "no strays" is only silence.
+    assert _live_claim_lines(GPU_AI_SERVICE, R9700_CLAIM), (
+        f"C04/C05 AC2 sharpness: {GPU_AI_SERVICE.relative_to(L.REPO_ROOT)} carries NO live "
+        f"{R9700_CLAIM} claim line — the q27 overlay pin (cf-144), the strata claim (C04/D17) and "
+        "the lane claims (C03/C05) all live in this file, so a sweep that sees none is not a clean sweep"
     )
 
 
