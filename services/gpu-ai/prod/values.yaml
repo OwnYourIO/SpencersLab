@@ -230,8 +230,35 @@ llama-swap:
       # relocated here). Scalars (e.g. a per-model unloadTimeout) may be
       # overridden from the strata data block below — keep the chart pod
       # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
+      # C04/D17 (2026-11-22): strata became a REAL claimant — the container
+      # resources below carry the amd.com/gpu-r9700 claim pair (positive ADD,
+      # the APU idiom on the main container above is the carrier precedent)
+      # while the pod keeps its privileged + hostPath runtime posture, so two
+      # carriers do two jobs (mechanism b1). Scheduler leg: the claim makes
+      # strata an accounted claimant — allocations are exclusive, a free
+      # single-card claim lands on the lowest-KFD-NodeId card, and competing
+      # claim-1 pods stack by admission order, lower card to whoever is
+      # admitted first. Container leg, unchanged: the /dev/dri hostPath sits
+      # outside plugin accounting and inside the pod ROCr still enumerates
+      # host ordinals, so rocrVisibleDevices keeps deciding the chip the
+      # process sees — the claim does not pin which card the container uses,
+      # it pins who else may be scheduled beside it.
+      # Supersession by citation (annotate-never-rewrite): the 2026-10-27
+      # device-access ruling keeps its runtime half and is superseded only at
+      # its no-claim half, by the 2026-11-22 ruling D17 that added this claim.
       strata:
         enabled: true
+        # Parked at 0 in the SAME wave as the claim (OQ-K). The steady-state
+        # claim table for this node — one home, the C06 roster note points
+        # here — is fn 2, q27 1, flash-TP1 1, q27-TP2 2, strata 1 over a pool
+        # of 2: fn alone is the live steady state, strata(1) + fn(2) is 3 > 2,
+        # so the claimed strata never co-boots with fn or with any TP2 lane,
+        # and at most one TP2-class lane is UP. Parked is not deleted: the
+        # gpu-ai-strata provider stays registered and the hop answers 502-loud
+        # like every resting lane. Owner MoE bring-up order (the C06 runbook):
+        # scale fn to 0, wait for the fn pod to be gone, then raise strata to
+        # 1 — and the reverse to restore.
+        replicas: 0
         # cf-86 C02+C06: the strata provisioning set carries two routing
         # keys beyond the flagship — "orca" (orcarouter Uncensored IQ4_XS,
         # the U2 ruling's gated rung on the U9.2 ladder shift) and "q4"
@@ -279,6 +306,21 @@ llama-swap:
                   secretKeyRef:
                     name: hf-token
                     key: token
+        # The claim itself (D17). The requests mirror is what makes an extended
+        # resource accounted, and requests now carry the 110Gi cgroup ceiling
+        # too: a pod that books a whole card stays Guaranteed on the memory it
+        # can pin, so the scheduler stops packing a neighbour into the pressure
+        # this cgroup owns (the chart keeps the 64Gi packing default for
+        # claim-less clusters). Maps only — Helm deep-merges them, so the
+        # chart's limits.memory 110Gi and requests.cpu 8 ride along untouched.
+        containers:
+          strata:
+            resources:
+              requests:
+                memory: 110Gi
+                amd.com/gpu-r9700: 1
+              limits:
+                amd.com/gpu-r9700: 1
     service:
       strata:
         enabled: true

@@ -116,6 +116,23 @@ strata/strix position re-pins ride the owner `rocminfo` receipt (OQ-E).
 The C04 sysfs leg is NOT this run: it rides the DEFERRED follow-up card
 (OQ-D owner ruling). The table above stays as written history.
 
+**[SHIPPED (2026-11-22, this ticket C04/D17) — strata became a claimant,
+and the index law has a UUID twin.]** Annotate, never rewrite, both halves.
+Strata now books the renamed pool — the gpu-ai service overlay carries its
+claim pair on the strata container and parks it at `replicas: 0` in the same
+wave (fn holds both cards; the steady-state table lives in that overlay
+comment and the roster note points there). The claim buys SCHEDULING
+exclusivity only; row 5's env-position law still decides what the process
+enumerates inside the pod, because the hostPath half sits outside plugin
+accounting. And "position is the only handle" is INCOMPLETE: ROCR ≥ 6.3
+renders each KFD node's `unique_id` as a `GPU-<16-hex>` name, so a UUID pin
+can survive re-enumeration where an ordinal cannot — but only where the host
+reports nonzero `unique_id`s (a zero renders `Invalid-UUID`, matches
+nothing, silent truncation). That receipt (OQ-R1, owner-pasted
+`grep unique_id /sys/class/kfd/kfd/topology/nodes/*/properties`) had not
+landed at this wave, so the shipped posture stays ORDINAL and every UUID
+form in this repo remains receipt-pending (RESEARCH R-Q2, R-Q5).
+
 ## 5. APU hiding is not a drive-by — the interdependency
 
 Under the pre-C07 single-strategy world, the card guide's §4.3
