@@ -16,6 +16,13 @@
 # dual-edit service leg stays C04-gated (generation-witness law: it binds at
 # once when the service block lands).
 #
+# 2026-11-feat-radiance-multi-instance C03 carrier move: the lane DATA this
+# suite pins (args, scalars, modelPath, the receipt comment) moved from
+# charts/radiance/values.yaml into the radiance: roster block (OQ-D mechanism-
+# only shell). Every leg now reads the BLOCK carrier — same arithmetic, same
+# set equality, new source path; the block-fed render is what production feeds
+# the pod.
+#
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
 from __future__ import annotations
@@ -36,12 +43,17 @@ c04_wiring = pytest.mark.skipif(
 
 
 def _serve_args():
-    docs, _ = R.render(service=False)
+    """The fn lane's rendered args — per-BLOCK since the C03 carrier move: the
+    chart ships no lane args (mechanism only), so the roster block is the only
+    carrier left that can serve anything. The render path is the appset-merge
+    shape (chart + the extracted radiance: subtree)."""
+    docs, _ = R.render(release="gpu-ai-radiance", service=True)
     args = R.serve_container(R.deployment(docs)).get("args") or []
     assert isinstance(args, list) and args, "C02 AC3: the serve container renders no args"
     return [str(a) for a in args]
 
 
+@c04_wiring
 def test_ac3_args_are_the_full_profile_set():
     """Set equality, order-insensitive, exact — every flag once, every value
     as pinned. The scalars splice at their pinned values."""
@@ -59,20 +71,23 @@ def test_ac3_args_are_the_full_profile_set():
     assert not dupes, f"C02 AC3: duplicated flags {dupes} — the profile ships each exactly once"
 
 
+@c04_wiring
 def test_ac3_scalar_splice_is_single_source():
-    """The sizing scalars in chart values are the ONE home: rendered args AND
+    """The sizing scalars in the fn BLOCK are the ONE home: rendered args AND
     resources both read from them (changing values must not need a second
-    edit anywhere — D15 single-source law). cf-144 C01: hostPoolMib is the
-    TP2 per-rank 12288; guaranteedMemoryGi splices the PAIR at the HELD 110
+    edit anywhere — D15 single-source law, whose carrier moved to the block at
+    C03). cf-144 C01: hostPoolMib is the TP2 per-rank 12288;
+    guaranteedMemoryGi splices the PAIR at the HELD 110
     (P11 — this leg is why a silent 110→48 or one-sided pair bump reddens);
     the tp/recipe constants are carrier-shape-agnostic — if dev ledgered any
     TP2_LEDGER_KEYS scalar, it must equal the rendered arg, so a HALF-MOVE of
     one side cannot stay green either way (C01 splice-guard contract)."""
-    vals = R.chart_values()
-    app = vals.get("app-template") or {}
+    block = R.service_block()
+    assert isinstance(block, dict), "C03: no radiance: block — the scalar home does not exist yet"
+    app = block.get("app-template") or {}
     for key, want in R.SCALARS.items():
         assert app.get(key) == want, (
-            f"cf-144 C01: app-template.{key} is {app.get(key)!r}, want {want} — the scalars are "
+            f"cf-144 C01: radiance-block app-template.{key} is {app.get(key)!r}, want {want} — the scalars are "
             "the single source (args+resources splice; runbook ladders are ONE edit; "
             "guaranteedMemoryGi 110 is the P11 HELD value, the DOWN re-pin is post-boot)"
         )
@@ -87,27 +102,33 @@ def test_ac3_scalar_splice_is_single_source():
                 f"{pairs.get(flag)!r}, profile pins {R.FULL_PROFILE[flag]!r} — a half-move of "
                 "one side does not stay green (carrier-shape-agnostic splice guard)"
             )
-    docs, _ = R.render(service=False)
+    docs, _ = R.render(release="gpu-ai-radiance", service=True)
     res = R.resources(R.serve_container(R.deployment(docs)))
     assert res["limits"]["memory"] == f"{app['guaranteedMemoryGi']}Gi"
     assert res["limits"]["cpu"] == str(app["cpuCores"])
 
 
+@c04_wiring
 def test_ac3_model_path_is_the_anchor():
-    """--model equals the chart's modelPath anchor (the pack ledger: HF
+    """--model equals the block's modelPath (the pack ledger: HF
     StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe, 121,969,901,568 B, lfs
-    0af5e962…, ungated — RESEARCH RQ0)."""
+    0af5e962…, ungated — RESEARCH RQ0). Post-C03 the trap runs in REVERSE at
+    this lane too: the block's args carry the path LITERALLY (app-template
+    renders args verbatim — no splice exists), so modelPath is the ledger the
+    args must agree with, verified at the block-fed render."""
     args = _serve_args()
-    vals = (R.chart_values().get("app-template") or {})
+    block = R.service_block()
+    vals = (block.get("app-template") or {}) if isinstance(block, dict) else {}
     assert vals.get("modelPath") == R.MODEL_PATH, (
-        f"C02 AC3: chart modelPath {vals.get('modelPath')!r}, want {R.MODEL_PATH}"
+        f"C03: block modelPath {vals.get('modelPath')!r}, want {R.MODEL_PATH}"
     )
     assert R.flag_pairs(args)["--model"] == vals["modelPath"], (
-        "C02 AC3: --model does not splice the modelPath anchor (the vllm anchor-trap: anchors "
-        "resolve per-document — the args carry the value, verified at render)"
+        "C03: --model does not equal the block modelPath — args are literal bytes (the app-template "
+        "no-tpl law), so a retarget that edits only one side serves the wrong pack"
     )
 
 
+@c04_wiring
 def test_ac3_absence_needles():
     args = _serve_args()
     joined = " ".join(args)
@@ -130,27 +151,27 @@ def test_ac3_absence_needles():
 
 @c04_wiring
 def test_dual_edit_guard_model_path_matches_service_repin():
-    """C02 Tests bullet 2 (dual-edit guard) + C04 AC5: once the service
-    block lands, `--model` == chart modelPath == service re-pin — the vllm
-    pattern (anchors do not cross documents; without the guard a service
-    retarget silently misses the args)."""
-    vals = (R.chart_values().get("app-template") or {})
+    """C02 Tests bullet 2 (dual-edit guard) + C04 AC5, C03 carrier re-aim: the
+    chart no longer ships a modelPath (mechanism-only shell), so BOTH sides of
+    the dual edit live in the block — the ledger `modelPath` must equal the
+    `--model` the block's own args actually serve. A retarget that moves one
+    side and not the other is how a lane serves the sibling's pack; the guard
+    reddens it whatever the direction."""
     svc = R.service_block()
     sub = svc.get("app-template") or {}
-    assert sub.get("modelPath") == vals.get("modelPath"), (
-        f"C04 AC5: service modelPath {sub.get('modelPath')!r} != chart "
-        f"{vals.get('modelPath')!r} — the retarget is a DUAL edit"
-    )
     docs, _ = R.render(release="gpu-ai-radiance", service=True)
     pairs = R.flag_pairs([str(a) for a in (R.serve_container(R.deployment(docs)).get("args") or [])])
-    assert pairs["--model"] == vals.get("modelPath"), (
-        "C04 AC5: the SERVICE-level render's --model misses the chart anchor — anchors resolve "
-        "per-document (gotcha 7), the splice must carry the chart value into the args"
+    assert sub.get("modelPath") == pairs["--model"], (
+        f"C03: block modelPath {sub.get('modelPath')!r} != served --model {pairs['--model']!r} — "
+        "args are literal bytes (no splice), so ledger and served path are one fact written twice"
     )
 
 
+@c04_wiring
 def test_scalars_commented_with_the_arithmetic():
-    """AC6, era-pinned twice: C08 T-D demanded the D17 per-token derivation
+    """AC6, era-pinned twice (C03 moved the carrier: the arithmetic comment now
+    sits in the fn roster block beside the scalars it prices — same needles,
+    same mandates, region text of the block is the source): C08 T-D demanded the D17 per-token derivation
     (19.3/8.9) and a class-median marking; C12 AC4 (ORIGINAL) replaced that
     basis with the printed-receipt arithmetic at the plan's 96; the C12
     AMENDMENT (owner batched answer "110 GiB (your figure)", D29) re-points
@@ -163,7 +184,7 @@ def test_scalars_commented_with_the_arithmetic():
     shipped comment still carries the 64-era derivation; the value itself
     stays pinned by the scalar-splice leg, so a comment rewrite that drops a
     mandated fact reddens HERE, not silently."""
-    text = R.chart_values_text()
+    text = R.lane_region_text("radiance")
     flat = " ".join(text.split())
     assert "71.04" in flat, (
         "C12 AC1: the receipt anchor 71.04 (the engine's printed 'pinned by this process "

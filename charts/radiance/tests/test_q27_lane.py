@@ -223,23 +223,24 @@ def _c144_q27_sim_render(chart_claim: str, strip_overlay_pin: bool = False):
 
 @helm_skip
 def test_c144_q27_subtree_authors_the_claim_pin_exactly():
-    """cf-144 C01 AC2 (authored-value view, designed-RED today): the pin must
-    be REAL bytes in the subtree — both maps carry the R9700 claim at "1"
-    beside the 24Gi pair and NOTHING else (cpu stays chart-inherited, P05).
-    A render-only pass could still let a future edit drift the pin; this leg
-    pins the authored map itself: requests == limits == {memory 24Gi,
-    claim 1} exactly."""
+    """cf-144 C01 AC2 (authored-value view): the pin must be REAL bytes in the
+    subtree — both maps carry the R9700 claim at "1" beside the 24Gi pair and
+    NOTHING else. A render-only pass could still let a future edit drift the
+    pin; this leg pins the authored map itself. C03 carrier re-aim: the chart
+    ships no resources map any more (mechanism-only shell), so cpu is
+    AUTHORED beside the pair too — the exactness is unchanged, the map grew
+    the one key inheritance used to supply."""
     block = R.q27_service_block()
     assert isinstance(block, dict), (
         "cf-144 C01: no radiance-q27 subtree — designed-red naming C01"
     )
     res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
-    want = {"memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
+    want = {"cpu": R.Q27_CPU, "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
     for m in ("requests", "limits"):
         assert res.get(m) == want, (
             f"cf-144 C01 AC2: q27 subtree {m} is {res.get(m)!r}, want exactly {want!r} — "
-            "the overlay authors the 24Gi pair PLUS the explicit claim-1 pin (P05); cpu "
-            "stays chart-inherited (D26 non-subtractability means it needs no re-authoring)"
+            "the overlay authors the 24Gi pair PLUS the explicit claim-1 pin (P05); cpu joins the "
+            "map because the C03 shell ships none to inherit (the exactness bar stands)"
         )
 
 

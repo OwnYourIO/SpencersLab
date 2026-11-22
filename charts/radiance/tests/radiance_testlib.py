@@ -303,10 +303,13 @@ Q27_ABSENT_FLAGS = (
     "--num-speculative-tokens",
 )
 
-Q27_MEMORY = "24Gi"     # request==limit Guaranteed pair (D54(3)); cpu "8" +
-#                        # the gpu claim arrive chart-INHERITED (map deep-merge
-#                        # adds/updates, never removes — D26) and are asserted
-#                        # in the render legs as exactly that.
+Q27_MEMORY = "24Gi"     # request==limit Guaranteed pair (D54(3)); cpu "8" was
+#                        # chart-INHERITED while the chart shipped a resources
+#                        # map (map deep-merge adds/updates, never removes —
+#                        # D26). C03 moved the chart to a mechanism-only shell:
+#                        # the subtree now AUTHORS cpu beside the pair, so the
+#                        # exactness leg must count it.
+Q27_CPU = "8"           # the subtree's authored cpu pair value (post-C03)
 Q27_REPLICAS = 0        # the shipped resting state (D54(1) pod-swap); the
 #                        # 125.08-110-4.125-1.158 = 9.80 GiB node-free headroom
 #                        # makes co-scheduling arithmetically dead — both-up

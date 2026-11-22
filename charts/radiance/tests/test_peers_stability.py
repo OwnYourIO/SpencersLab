@@ -23,7 +23,10 @@ helm_skip = pytest.mark.skipif(not _ok, reason=_reason)
 
 @helm_skip
 def test_served_model_name_is_the_pinned_id():
-    docs, _ = R.render(service=False)
+    """The id is byte-unchanged by the C03 move — but its CARRIER moved: the
+    serve args are block data now, so the pin reads the fn-block render (the
+    shape production serves), same single authority string."""
+    docs, _ = R.render(release="gpu-ai-radiance", service=True)
     args = [str(a) for a in (R.serve_container(R.deployment(docs)).get("args") or [])]
     pairs = R.flag_pairs(args)
     assert pairs.get("--served-model-name") == R.SERVED_ID, (

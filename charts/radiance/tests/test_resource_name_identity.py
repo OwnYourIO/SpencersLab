@@ -38,13 +38,15 @@ def test_radiance_claim_equals_the_ledger_r9700_pool():
     advertises for the R9700 (7551/C0) per its ledgered expected-names
     comment. cf-144 C01: the TP2 flip moves the COUNT — the pair is exactly
     the ledger pool at 2 in both maps (shape A, one pod two cards;
-    P02/OQ-A owner ruling); the NAME leg (ledger equality) is TP2-inert."""
+    P02/OQ-A owner ruling); the NAME leg (ledger equality) is TP2-inert.
+    C03 carrier re-aim: the chart ships no claim, so the pair is read at the
+    fn-BLOCK render — the same name set and arithmetic, new carrier."""
     ledger = R.amd_gpu_ledger_names()
     assert "7551" in ledger, (
         "C02 AC4: charts/amd-gpu/values.yaml ledger has no 7551 (R9700) row — the expected-"
         "names block is the cross-chart authority (C07 n4), the identity leg has nothing to read"
     )
-    docs, _ = R.render(service=False)
+    docs, _ = R.render(release="gpu-ai-radiance", service=True)
     res = R.resources(R.serve_container(R.deployment(docs)))
     claims = {k for k in (res.get("requests") or {}) | (res.get("limits") or {}) if k.startswith("amd.com/")}
     assert claims == {R.GPU_CLAIM}, (
@@ -187,30 +189,36 @@ def test_claim_line_carries_the_name_and_the_sanitizer_evidence_comment():
     is the PATCHED amdgpu.ids table's sanitizer output for (7551, C0)
     (§R7-Q2's traced derivation + the code-constant prefix/domain), the pool
     holds exactly ONE device so the '-1' carries no scheduling meaning, and
-    a further rename needs an upstream feature ask. NOTES.txt (the rendered
+    a further rename needs an upstream feature ask. C03 carrier re-aim: the
+    pair lives in the fn roster block now, and dev moved the evidence comment
+    (feature-ask sentence included) with it — the leg reads the BLOCK REGION,
+    every requirement intact, nothing dropped. NOTES.txt (the rendered
     surface) carries the same name string."""
-    import yaml
-
-    text = R.chart_values_text()
+    text = R.lane_region_text("radiance")
     lines = text.splitlines()
     claim_lines = [i for i, ln in enumerate(lines)
                    if not ln.lstrip().startswith("#") and f"{R.GPU_CLAIM}:" in ln]
     assert len(claim_lines) >= 2, (
-        f"C08 T-B: radiance values claims the pool constant at {len(claim_lines)} live line(s), "
+        f"C08 T-B: the radiance block claims the pool constant at {len(claim_lines)} live line(s), "
         "want the requests+limits pair (Guaranteed extended pair, equal)"
     )
+    # Window reaches past the requests map: in the block layout the two claim
+    # lines sit ~5 lines apart under one comment paragraph (the chart-era 14
+    # measured a tighter pair; the evidence-in-place law the amendment rules
+    # needs the WHOLE paragraph above each claim).
     for i in claim_lines:
         window = " ".join(ln.strip().lstrip("#").strip()
-                          for ln in lines[max(0, i - 14):i])
+                          for ln in lines[max(0, i - 24):i])
         assert ("amdgpu.ids" in window or "table" in window.lower()) and \
             re.search(r"(?i)sanitiz|patched", window) and \
             re.search(r"(?i)one device|exactly one|-1[^\n]{0,60}(no scheduling|carries no)", window), (
-            f"C08 T-B: the claim at line {i+1} lacks the evidence comment (patched-table sanitizer "
+            f"C08 T-B: the claim at region line {i+1} lacks the evidence comment (patched-table sanitizer "
             "provenance + the one-device '-1' explanation) the owner ruling requires in place"
         )
     assert re.search(r"(?i)upstream", text) and re.search(r"(?i)feature ask", text), (
         "C08 T-B: the 'renaming requires an upstream feature ask' sentence is absent from the "
-        "radiance values (D24 records the recommended-optional filing; the comment stays true either way)"
+        "radiance block (D24 records the recommended-optional filing; the comment stays true either way — "
+        "C03 moved it here with the claim, it may not be dropped)"
     )
     notes = (R.CHART_DIR / "templates" / "NOTES.txt")
     assert notes.is_file(), "C02 scaffold: charts/radiance/templates/NOTES.txt missing"

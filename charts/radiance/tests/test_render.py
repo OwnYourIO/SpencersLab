@@ -10,6 +10,14 @@
 # does not exist (missing chart = loud red naming C02; only a missing helm
 # binary skips, LOUDLY with the PATH-export reason).
 #
+# 2026-11-feat-radiance-multi-instance C03 carrier move: the claim/memory pair
+# and both fetch scripts are lane-block data now — those legs read the
+# block-fed renders (the Guaranteed pair at the fn render; the staging shape,
+# image-identity, grammar, and checksum legs PARAMETERIZED over both live
+# lanes, because D27's law guards each lane's own script). Bare-render legs
+# stay bare: they pin the chart-side mechanism (security, probes, PVC, init
+# image + budget), which did not move.
+#
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
 from __future__ import annotations
@@ -119,6 +127,7 @@ def test_ac2_container_capabilities_and_escalation():
 
 
 @helm_skip
+@c04_wiring
 def test_ac2_guaranteed_pair_with_named_pool():
     """requests == limits EXACTLY on the serve container, extended resource
     included: {cpu 8, memory 110Gi (C12 AC1 amendment: the 64 era died at the
@@ -126,15 +135,17 @@ def test_ac2_guaranteed_pair_with_named_pool():
     "your figure", D29; cf-144 P11: the TP2 wave HELPS 110 — the DOWN re-pin
     awaits the first-boot print, no 48 anywhere), GPU_CLAIM: "2" (cf-144 C01
     shape A: one pod claims BOTH R9700s — the extended resource requires the
-    equal integer pair, Guaranteed law; Q7 + D15 + Q9 named pool)."""
-    docs, _ = R.render(service=False)
+    equal integer pair, Guaranteed law; Q7 + D15 + Q9 named pool). C03 carrier
+    re-aim: the chart ships no resources at all, so the pair is pinned at the
+    fn-BLOCK render — the shape production feeds the pod."""
+    docs, _ = R.render(release="gpu-ai-radiance", service=True)
     ctr = R.serve_container(R.deployment(docs))
     res = R.resources(ctr)
     want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": f"{R.SCALARS['guaranteedMemoryGi']}Gi",
             R.GPU_CLAIM: R.FN_GPU_CLAIM_COUNT}
     assert res.get("requests") == want, (
         f"cf-144 C01 AC1: serve requests {res.get('requests')} != Guaranteed pair {want} "
-        "(single-source scalars splice both sides; claim 2 = the TP2 pair)"
+        "(the fn block authors the pair; claim 2 = the TP2 pair)"
     )
     assert res.get("limits") == want, f"cf-144 C01 AC1: serve limits {res.get('limits')} != {want}"
     assert R.GPU_CLAIM_BARE not in (res.get("requests") or {}) and R.GPU_CLAIM_BARE not in (res.get("limits") or {}), (
@@ -271,34 +282,54 @@ def test_ac2_no_rocr_hip_env():
         assert not leaked, f"C02 AC2: {c['name']} carries {leaked} — named pools make host enumeration illegal here"
 
 
+# --- AC2 + C11: the staging init, PER LANE (the C03 carrier move) -----------------
+# The fetch scripts live in the lane blocks now (each script names its own pack),
+# so every staging-shape/grammar/checksum leg runs against BOTH live renders:
+# D27's law guards both radiance gates, and a parse leg that reads only one
+# render leaves the sibling script unparsed — the fork class gotcha 11 names.
+# The image + digest + applet premise stay chart-side (mechanism), read from
+# whichever render (identical bytes there).
+
+_STAGING_LANES = {
+    # lane id -> (render fn, pack lfs sha, HF repo) for the two LIVE releases;
+    # the resting lanes ride C05's own suite (test_resting_lanes).
+    "fn": (lambda: R.render(release="gpu-ai-radiance", service=True), R.PACK_LFS_SHA, R.PACK_REPO),
+    "q27": (R.render_q27, R.Q27_PACK_LFS_SHA, R.Q27_PACK_REPO),
+}
+
+
 @helm_skip
-def test_ac2_staging_init_shape():
-    """D10 staging contract: the radiance-fetch command stages the ungated HF
-    pack by curl-resume onto the shared claim with the `.staged-<lfs-sha>`
-    marker (vllm setup-init idiom), loud-failing at container start; the
-    init image is the pinned curl staging image OR the engine image — nothing
-    else (a third image smuggles a build story this ticket does not own)."""
-    docs, _ = R.render(service=False)
+@pytest.mark.parametrize("lane", sorted(_STAGING_LANES))
+def test_ac2_staging_init_shape(lane):
+    """D10 staging contract, per live lane (C03 carrier re-aim: the scripts
+    moved into the blocks, so the parse runs per lane render): the
+    radiance-fetch command stages the ungated HF pack by curl-resume onto the
+    shared claim with the `.staged-<lfs-sha>` marker (vllm setup-init idiom),
+    loud-failing at container start; the init image is the pinned curl staging
+    image OR the engine image — nothing else (a third image smuggles a build
+    story this ticket does not own)."""
+    render, lfs_sha, pack_repo = _STAGING_LANES[lane]
+    docs, _ = render()
     init = R.fetch_init(R.deployment(docs))
     command = init.get("command") or []
     assert command and all(isinstance(tok, str) for tok in command), (
-        "C02/D10: the fetch-init renders no command list (exec-form boot guard: loud fail at "
+        f"C02/D10 [{lane}]: the fetch-init renders no command list (exec-form boot guard: loud fail at "
         "start, never a sleeping container with a missing script)"
     )
     body = "\n".join(command)
-    assert ".staged-0af5e962" in body or (
-        ".staged-" in body and R.PACK_LFS_SHA in body
+    assert f".staged-{lfs_sha[:8]}" in body or (
+        ".staged-" in body and lfs_sha in body
     ) or (".staged-" in body and any(ln.count("$") >= 1 for ln in body.splitlines() if ".staged-" in ln)), (
-        "C02/D10: no .staged-<lfs-sha> marker (literal, full-sha, or $-interpolated — the vllm "
+        f"C02/D10 [{lane}]: no .staged-<lfs-sha> marker (literal, full-sha, or $-interpolated — the vllm "
         "marker law) in the staging command"
     )
-    assert R.PACK_LFS_SHA in body or "0af5e962" in body, (
-        "C02/D10: the staging command never names the pack lfs sha 0af5e962… — the marker IS "
+    assert lfs_sha in body or lfs_sha[:8] in body, (
+        f"C02/D10 [{lane}]: the staging command never names the pack lfs sha {lfs_sha[:8]}… — the marker IS "
         "the landed-file provenance (C06 step 4 sha256sums against it)"
     )
-    assert f"{R.PACK_REPO}/resolve" in body or "huggingface.co" in body, (
+    assert f"{pack_repo}/resolve" in body or "huggingface.co" in body, (
         "C02/D10: no HF resolve URL for the ungated pack — staging reads the ledgered repo "
-        f"{R.PACK_REPO}"
+        f"{pack_repo}"
     )
     assert "curl" in body.lower() or "curl" in str(init.get("image", "")).lower(), (
         "C02/D10: curl-resume staging is the ruled mechanism (the resume flag is what survives "
@@ -306,7 +337,7 @@ def test_ac2_staging_init_shape():
     )
     image = str(init.get("image", ""))
     assert image.startswith(("docker.io/curlimages/curl", "curlimages/curl", R.IMAGE_REPO)), (
-        f"C02/D10: init image {image!r} must be the pinned curl staging image or the engine "
+        f"C02/D10 [{lane}]: init image {image!r} must be the pinned curl staging image or the engine "
         "image (the chunk's two sanctioned shapes)"
     )
     if "curlimages" in image:
@@ -319,19 +350,24 @@ def test_ac2_staging_init_shape():
 # --- C11: applet-family + checksum-GRAMMAR legs (D27; §D3b) ---------------------
 
 
-def _staging_script():
-    docs, _ = R.render(service=False)
+def _staging_script(lane):
+    """The [sh -c <script>] parse anchor for one live lane's render — the
+    grammar legs refuse to go vacuous when the shape moves (C11), so the same
+    refusal now covers both blocks (C03 carrier move)."""
+    render, _sha, _repo = _STAGING_LANES[lane]
+    docs, _ = render()
     init = R.fetch_init(R.deployment(docs))
     command = init.get("command") or []
     assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
-        "C11: the fetch-init is no longer [sh -c <script>] — the grammar legs' parse anchor "
+        f"C11 [{lane}]: the fetch-init is no longer [sh -c <script>] — the grammar legs' parse anchor "
         "moved; re-read §D3b and re-pin (not silently vacuous)"
     )
     return init, command[2]
 
 
 @helm_skip
-def test_ac2_staging_image_identity_pinned_and_digest_ledged():
+@pytest.mark.parametrize("lane", sorted(_STAGING_LANES))
+def test_ac2_staging_image_identity_pinned_and_digest_ledged(lane):
     """C11 AC4.1/AC4.3 image-identity gate: the grammar law's premise is the
     init image's applet FAMILY. The repo must stay inside the BusyBox-family
     set AND the family must be PINNED, not inferred from a floating tag — a
@@ -345,11 +381,11 @@ def test_ac2_staging_image_identity_pinned_and_digest_ledged():
     Honest split: the family half is GREEN today (curlimages/curl is in the
     set); the digest-ledger half is DESIGNED-RED until dev adds the one
     comment line (AC4.3)."""
-    init, _script = _staging_script()
+    init, _script = _staging_script(lane)
     image = str(init.get("image", ""))
     repo = image.rsplit(":", 1)[0]
     assert repo in R.BUSYBOX_FAMILY_REPOS, (
-        f"C11 premise-pin: init image repo {repo!r} left the BusyBox-family set {R.BUSYBOX_FAMILY_REPOS} "
+        f"C11 premise-pin [{lane}]: init image repo {repo!r} left the BusyBox-family set {R.BUSYBOX_FAMILY_REPOS} "
         "— the option-grammar law below must be re-ruled against the new family, not pass vacuously"
     )
     lines = R.chart_values_text().splitlines()
@@ -365,8 +401,10 @@ def test_ac2_staging_image_identity_pinned_and_digest_ledged():
 
 
 @helm_skip
-def test_ac2_staging_grammar_matches_the_init_image_applets():
-    """C11 AC4.1 grammar ban — THE red leg today (`--check` at values 346):
+@pytest.mark.parametrize("lane", sorted(_STAGING_LANES))
+def test_ac2_staging_grammar_matches_the_init_image_applets(lane):
+    """C11 AC4.1 grammar ban — per live lane (both scripts are lane-owned now,
+    D27 law is each gate's own):
     inside a BusyBox-family image, GNU LONG options die at option parse
     (getopt32 "^" "scwbt" short-only, md5_sha1_sum.c; live banner v1.37.0
     bracketed by 1_36_1<->master byte-identity) → exit 1 → set -e → marker
@@ -384,11 +422,11 @@ def test_ac2_staging_grammar_matches_the_init_image_applets():
     image family + option grammar — is proven here."""
     import re as _re
 
-    init, script = _staging_script()
+    init, script = _staging_script(lane)
     repo = str(init.get("image", "")).rsplit(":", 1)[0]
     if repo not in R.BUSYBOX_FAMILY_REPOS:
         pytest.fail(
-            f"C11: init repo {repo!r} is off the family set — the identity gate leg owns that "
+            f"C11 [{lane}]: init repo {repo!r} is off the family set — the identity gate leg owns that "
             "swap; the grammar ban refuses to pass vacuously on an unruled premise"
         )
     problems = []
@@ -406,16 +444,17 @@ def test_ac2_staging_grammar_matches_the_init_image_applets():
         if _re.search(r"(?<!\S)-c(?=\s|$)", stripped) and not _re.search(r"-c[ \t]+[^ \t-]", stripped):
             problems.append(("-c without an explicit operand (GNU implicit-stdin asymmetry)", stripped))
     assert not problems, (
-        "C11 AC1/§D3b/D27: checksum-gate grammar vs the pinned BusyBox image family —\n  "
+        f"C11 AC1/§D3b/D27 [{lane}]: checksum-gate grammar vs the pinned BusyBox image family —\n  "
         + "\n  ".join(f"{why}: {line}" for why, line in problems[:6])
         + "\nPortable AC1 shape: compute + shell equality, touch marker AFTER the guard."
     )
 
 
 @helm_skip
-def test_ac2_staging_checksum_gate_is_the_portable_equality():
-    """C11 AC4.1 positive arms — the ONE replacement shape (green only when
-    dev lands AC1 verbatim, red today): the equality gate computes via
+@pytest.mark.parametrize("lane", sorted(_STAGING_LANES))
+def test_ac2_staging_checksum_gate_is_the_portable_equality(lane):
+    """C11 AC4.1 positive arms — the ONE replacement shape, per live lane
+    (green only when the lane's script lands AC1 verbatim): the equality gate computes via
     `sha256sum "$PACK" | cut -d' ' -f1` (the two-space output form both
     families print), tests [ "$actual" != "$LFS_SHA" ], echoes MISMATCH
     naming BOTH expected= and actual=, exits non-zero, and `touch "$MARKER"`
@@ -426,7 +465,7 @@ def test_ac2_staging_checksum_gate_is_the_portable_equality():
     the D27 adjudication. Loud-failure EXECUTION is CI/on-target territory
     (no docker daemon here — stated honestly, not faked); the render-order
     assertions below are the offline share of it."""
-    _init, script = _staging_script()
+    _init, script = _staging_script(lane)
     lines = script.splitlines()
     def _has_all(tokens, line):
         return all(tok in line for tok in tokens)
