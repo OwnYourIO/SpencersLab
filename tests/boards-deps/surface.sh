@@ -49,6 +49,38 @@
 #     over the plan's literal 2-group shape because 'block'/'map' alone
 #     read green at ORIG (24) — the red/green discipline of this suite
 #     demands the swimlane-scope group.]
+# t10[C01 bug-board-preload-lean-consumer AC1 — scoped claim-time default:
+#     preload_board|swimlane_titles|"In Process" in one 1800 window. ABSENT
+#     at base on the quoted literal — designed red until the amendment +
+#     regen land.]
+# t11[C01 AC4 — block-is-walk-map: cards:|walk|slug 1800 window, min span
+#     495 at base (the shipped consumer bullet already satisfies it — GREEN
+#     at hand-back with HOLD duty through the amendment); the '?'-optional
+#     fourth group second whole-board|never a second is allowed, not
+#     mandatory: skipped when absent, in-window when used.]
+# t12[C01 AC3 — claimed-card-only consumption: get_card_details|checklists|
+#     CANDIDATE 1800 window, min span 1915 at base; + the claim-anchored
+#     file-wide negative on the retired candidate-reads-off-preload posture
+#     — a sentence-wide exemption list hides the shipped violation behind
+#     its own "no fan-out"/"not one of the current names" asides, so the
+#     arm exempts only within ±260/120 of the claim — with fabricated
+#     violating + compliant controls (teeth AND scope, t4's shape).]
+# t13[C01 AC5 — far-end settle: far end|get_card|non-gating in one 2600
+#     Card-pickup window, min span 3316 at base; + file-wide grep -qF
+#     negative on the falsified 'carry no titles' clause (present at base).]
+# t14[cf-123 R2 C03 AC1 — the probe-gated lean claim-time ask: (a)
+#     with_checklists + swimlane_titles + tools/list co-located in one 1800
+#     Board-context window (one scoped call, one probe gate — D16's shape:
+#     advertised-arg ⇒ ask false, else today's ask); (b) never-empty pairing
+#     — with_checklists windowed with 'never empt|not empti|omitted, not';
+#     (c) claim-anchored negative (±200, t12's shape): EVERY with_checklists
+#     mention sits inside a conditioning/fallback window — an unconditional-
+#     lean teaching is the D14 hazard (the deployed :v162 answers the unknown
+#     arg with a deterministic ToolError), so the arm is vacuous-until-landed
+#     at base and its teeth live in the fabricated violating/compliant
+#     controls; (d) file-wide positive on BOTH homes (source edited AND
+#     regenerated mirror). DESIGNED RED at base: (a)/(b)/(d) name the absent
+#     amendment; the wording is dev's, these needles are the contract.]
 #
 # Red posture (cf-124): t1/t3/t4 DESIGNED RED until C06 (wave 2) and C08 (wave 3)
 # land their rewrites — t4 stays red through C06's window because the single
@@ -57,8 +89,24 @@
 # shipped law and stay green. The file-wide negatives (no hardcoded ids) are
 # GREEN at base and HOLD.
 #
+# Red posture (2026-11-bug-board-preload-lean-consumer C01): t10/t12/t13
+# DESIGNED RED until the lean-consumer prose + rulesync regen land; t11 is
+# green at base and joins the HOLD set. t2/t6/t9 spans were re-measured at
+# this test round on the shipped passage — minima 55/102/58/69/346/693/19
+# (t2's seven check_pair arms in order), 261 (t6 — equals the C11 note),
+# 26/0/19/163 (t9) — every pinned span clears them with >= 2.6x headroom,
+# so no span value moves at this pass; a review-time red on t2/t6/t9 would
+# mean the amendment scattered a group, and the prose bends, not the
+# strictness (plan Risks).
+#
+# Red posture (cf-123 R2 C03 test wave, 2026-11-22): t14 DESIGNED RED at base
+# — the with_checklists amendment has not landed in either home; t1..t13 are
+# the C01-landed HOLD set and must stay green (dev re-measures t2/t6/t9/t10/
+# t11/t12/t13 min-spans on the amended passage and records "(min span N)"
+# notes; caps move only if headroom demands — C01's minima precedent).
+#
 # Usage:
-#   bash tests/boards-deps/surface.sh            # t1..t8
+#   bash tests/boards-deps/surface.sh            # t1..t14
 #   bash tests/boards-deps/surface.sh t3         # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -73,11 +121,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8 9; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t([1-9]|1[0-2])$ ]] || fail "unknown check id '$a' (expected t1..t12)"
+    [[ "$lc" =~ ^t([1-9]|1[0-4])$ ]] || fail "unknown check id '$a' (expected t1..t14)"
     WANT["$lc"]=1
   done
 fi
@@ -87,7 +135,10 @@ TMP=$(mktemp -d /tmp/opencode/boards-deps-test.XXXXXX) || { echo "harness: mktem
 trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 # Section extractor + OR-group minimum-window checker (needle groups are
-# alternation lists: the window must contain one match of EVERY group).
+# alternation lists: the window must contain one match of EVERY group; a
+# group whose first alternative starts '?' is OPTIONAL — it never fails the
+# arm when the text does not use the phrase, and participates in the
+# coverage when it does; only t11's never-a-second group rides this).
 cat >"$TMP/sec.py" <<'PY'
 import re, sys
 
@@ -98,15 +149,21 @@ def section(path, heading_pat):
 
 def window(hay, groups, span):
     pts = []
+    need = 0
     for gi, alts in enumerate(groups):
+        opt = bool(alts) and alts[0].startswith("?")
+        if opt:
+            alts = [alts[0][1:]] + alts[1:]
         found = False
         for alt in alts:
             for m in re.finditer(re.escape(alt), hay, re.I):
                 pts.append((m.start(), gi)); found = True
         if not found:
+            if opt:
+                continue
             return None, [a for a in alts]
+        need += 1
     pts.sort()
-    need = len(groups)
     cnt, have, best, left = {}, 0, None, 0
     for right, (pos, g) in enumerate(pts):
         if cnt.get(g, 0) == 0:
@@ -430,6 +487,164 @@ if want t9; then
     'get_card_details' 'checklist' \
     || fail "t9[cf-106 C07 AC4]: the skill never names what the block replaces for THIS card (the kickoff checklist consumption and the dependency reads)"
   ok "t9[cf-106 C07 AC4]: the boards skill states the claim-time card block, what it replaces, its degrade family, and the tool-hook-not-prompt-prefetch clause"
+fi
+
+# --- t10: the scoped claim-time read (C01 AC1 — designed red before dev+regen) -----
+# The lean-consumer default: the exactly-ONE claim-time preload_board passes
+# swimlane_titles: ["In Process"] — the walk lists AND the gate's
+# satisfaction lists all live in that swimlane, so the unfiltered whole-board
+# read pays for ~200 cards' checklist trees the run cannot use (the ticket's
+# FRICTION item). The quoted literal is the pin: prose that states a scope
+# without the argument shape has not changed the call.
+if want t10; then
+  check_pair "t10[C01 AC1]" "Board context" 1800 \
+    'preload_board' 'swimlane_titles' '"In Process"' \
+    || fail "t10[C01 AC1]: the claim-time preload passage never passes the scoped default swimlane_titles: [\"In Process\"] in one passage — the consumer doctrine still defaults to the whole-board read (designed red until C01's prose + regen land)"
+  ok "t10[C01 AC1]: scoped claim-time default pinned — preload_board + swimlane_titles + the \"In Process\" literal in one Board-context passage"
+fi
+
+# --- t11: the block's cards: group IS the walk map + slug-check source (C01 AC4) ----
+# Green at base through the shipped consumer bullet (min span 495) — this
+# arm holds that posture THROUGH the amendment, it is not new law. The
+# '?'-optional fourth group is the never-a-second-snapshot idea: allowed,
+# not mandatory (chunk Tests — prose without the phrase stays green; prose
+# that uses it must keep it inside the same window, which is what the
+# block-present bullet's parenthetical does).
+if want t11; then
+  check_pair "t11[C01 AC4]" "Board context" 1800 \
+    'cards:' 'walk' 'slug' '?second whole-board|never a second' \
+    || fail "t11[C01 AC4]: the per-list cards: group is no longer stated as the pickup walk's map / slug-check source in one passage (or the amendment scattered the never-a-second phrasing wide of it) — the launch block stays the walk's starting map, the claim-time read stays ONE scoped read"
+  ok "t11[C01 AC4]: block-is-walk-map pinned — cards: + walk + slug in one window, never-a-second phrasing in-window when used"
+fi
+
+# --- t12: kickoff checklist consumption — claimed card only (C01 AC3) --------------
+# Two legs. Window: the amended passage must co-locate get_card_details,
+# the checklists payload and the CANDIDATE rule (min span 1915 at base —
+# the card-details text still lives after the preload paragraph; red is
+# designed). Negative: no sentence anywhere may still teach the retired
+# posture — that a CANDIDATE's kickoff checklist consumption reads off the
+# claim-time preload (the shipped cf-106 sentence fires at base — red is
+# designed). The negative is claim-anchored, NOT sentence-anchored with
+# t3's bare exemption list: the shipped violation sentence is 693 chars
+# carrying an incidental "title is not one of the current names" several
+# asides AFTER the claim, and a bare "no fan-out" beside it — a
+# sentence-wide "not"/"no" exemption would hide the retired posture behind
+# its own parentheses. So: the claim regex locates each
+# read(s|ing)?-off/from-the-preload (or "preload reads") assertion; only
+# the ±260/120 chars around it must be free of candidate+checklist
+# pairing, or carry a real negation/supersession word (t3's idea plus the
+# retirement vocabulary the amendment needs to cite what it drops).
+# Fabricated violating + compliant copies prove teeth and scope (t4's
+# control shape).
+if want t12; then
+  check_pair "t12[C01 AC3]" "Board context" 1800 \
+    'get_card_details' 'checklists' 'CANDIDATE' \
+    || fail "t12[C01 AC3]: the passage that moves kickoff checklist consumption to the claimed card's get_card_details block never co-locates it with the checklists payload and the candidate rule — consumption law must read as one passage (min span 1915 at base; designed red until C01)"
+  cat >"$TMP/cand-preload.py" <<'PY'
+import re, sys
+CLAIM = re.compile(r"reads?\s+(?:off|from)\s+the\s+preload|reading\s+(?:off|from)\s+the\s+preload|preload\s+reads?\b", re.I)
+EXEMPT = re.compile(r"never|\bnot\b|no longer|irrelevant|retir|supersed|drop|withdraw|obsolete|exclude|\bonly\b|instead", re.I)
+def scan(path):
+    text = open(path).read()
+    for m in CLAIM.finditer(text):
+        w = text[max(0, m.start() - 260): m.end() + 120]
+        if re.search(r"candidat", w, re.I) and re.search(r"checklist", w, re.I) and not EXEMPT.search(w):
+            print(f"{path}: affirmative candidate-checklists-off-preload claim {m.group(0)!r} still taught")
+            return True
+    return False
+sys.exit(1 if any(scan(p) for p in sys.argv[1:]) else 0)
+PY
+  python3 "$TMP/cand-preload.py" "$SRC" "$GEN" \
+    || fail "t12[C01 AC3 negative]: a sentence still teaches that a candidate's kickoff checklist consumption reads off the preload — the retired cf-106 posture survives (fires on the shipped sentence at base; designed red until C01)"
+  cat >"$TMP/t12-violating.md" <<'MD'
+the kickoff checklist consumption and the legacy-vs-Lifecycle checklist detection read off the preload for a CANDIDATE - with no list_checklists fan-out
+MD
+  cat >"$TMP/t12-compliant.md" <<'MD'
+the preload reads no longer teach candidate checklist consumption: kickoff consumption moved to the claimed card's card-details block
+MD
+  python3 "$TMP/cand-preload.py" "$TMP/t12-violating.md" >/dev/null 2>&1 \
+    && fail "t12 control: the fabricated affirmative candidate-preload copy PASSED the negative — the arm is inert"
+  python3 "$TMP/cand-preload.py" "$TMP/t12-compliant.md" >/dev/null 2>&1 \
+    || fail "t12 control: the fabricated supersession copy was REJECTED — the negative is overscoped (the amendment could not say what it retired)"
+  ok "t12[C01 AC3]: claimed-card-only consumption pinned — window co-location + the claim-anchored retired-posture negative, teeth and scope both controlled"
+fi
+
+# --- t13: the gate's far-end settle + titles truth (C01 AC5 — designed red) --------
+# Two legs. Window: the Card-pickup gate must state the far-end settle rule
+# as one passage — a prerequisite card outside the scoped read gets ONE
+# targeted get_card (list membership + archived flag) BEFORE the
+# deleted/moved-away NON-GATING branch may fire (DECISIONS D3; min span
+# 3316 at base because the settle sentence does not exist yet). Negative:
+# the falsified clause "carry no titles" must be gone from both files — the
+# preload's swimlane/list entries DO carry titles beside ids (cf-106 C06
+# shipped it; plan fact 1/D7), and the shipped gate paragraph still says
+# otherwise — that clause is the base red.
+if want t13; then
+  check_pair "t13[C01 AC5]" "Card pickup" 2600 \
+    'far end' 'get_card' 'non-gating' \
+    || fail "t13[C01 AC5]: the gate never states the far-end settle rule in one passage — one targeted get_card resolves a prerequisite outside the scoped swimlanes before the non-gating deleted/moved-away branch may fire (designed red until C01's prose + regen land)"
+  for f in "$SRC" "$GEN"; do
+    grep -qF 'carry no titles' "$f" && fail "t13[C01 AC5 negative]: $f still says the preload's list entries carry no titles — falsified by cf-106 C06 (server.py emits swimlane/list titles; the membership tests read the scoped payload), and the scoped-read doctrine depends on that truth (designed red at base)" || true
+  done
+  ok "t13[C01 AC5]: far-end settle rule + titles-truth negative pinned"
+fi
+
+# --- t14: the probe-gated lean claim-time ask (cf-123 R2 C03 — designed red) ------
+# D16's shape at the doctrine home: the ONE scoped claim-time read also drops
+# the checklist trees IFF the claim-time `tools/list` probe the degrade law
+# ALREADY runs shows the deployed tool advertising `with_checklists` — never
+# an unconditional ask (D14 measured the pre-bump rejection: every claim would
+# burn its one retry into the present-but-failed branch = per-list reads plus
+# the SKIPPED dependency gate). The wording is dev's; these needles are the
+# contract. At base the token is absent from both homes: (a)/(b)/(d) are the
+# designed reds; (c) is vacuous-until-landed and carries its teeth in the
+# fabricated controls (t12's claim-anchored shape, ±200 like the chunk pins).
+if want t14; then
+  # Generator-first (the t2 wave rule): the negative checker and the two
+  # fabricated controls exist on disk BEFORE the live legs, so the teeth are
+  # re-derivable by a direct call even while the legs are designed-red.
+  cat >"$TMP/lean-cond.py" <<'PY'
+import re, sys
+COND = re.compile(r"tools/list|advertis|predates|fallback|when|build", re.I)
+bad = False
+for path in sys.argv[1:]:
+    text = open(path).read()
+    for m in re.finditer(r"with_checklists", text, re.I):
+        w = text[max(0, m.start() - 200): m.end() + 200]
+        if not COND.search(w):
+            print(f"{path}: unconditioned with_checklists teaching at offset {m.start()} ("
+                  f"{text[max(0, m.start() - 40):m.end() + 40].replace(chr(10), ' ')!r}) — every lean ask "
+                  "must sit beside its probe-gate/fallback wording (D16: on a build predating the arg the "
+                  "ask stays exactly today's)")
+            bad = True
+sys.exit(1 if bad else 0)
+PY
+  cat >"$TMP/t14-violating.md" <<'MD'
+the claim-time preload always passes with_checklists: false and the payload never carries checklist trees anywhere — unconditional lean is the posture now.
+MD
+  cat >"$TMP/t14-compliant.md" <<'MD'
+it calls preload_board exactly ONCE with swimlane_titles: ["In Process"] and — when the claim-time tools/list probe the degrade law already requires shows the deployed tool advertising with_checklists — also passes with_checklists: false; on a build predating the arg the ask stays exactly today's.
+MD
+  check_pair "t14[cf-123 R2 C03 AC1]" "Board context" 1800 \
+    'with_checklists' 'swimlane_titles' 'tools/list' \
+    || fail "t14[cf-123 R2 C03]: the passage teaching the scoped claim-time default never co-locates the lean ask with the scope and its tools/list probe gate — D16 (advertised-arg ⇒ with_checklists: false, else today's ask; one scoped call, zero extra round-trips) has not landed as doctrine (designed red until C03 prose + regen)"
+  check_pair "t14[cf-123 R2 C03 never-empty]" "Board context" 1800 \
+    'with_checklists' 'never empt|not empti|omitted, not' \
+    || fail "t14[cf-123 R2 C03]: the lean-answer law lacks its never-empty pairing beside the arg name — a lean answer DROPS the key (an absent key is not a negative answer about checklist state, D11) (designed red until C03)"
+  python3 "$TMP/lean-cond.py" "$SRC" "$GEN" \
+    || fail "t14[cf-123 R2 C03 negative]: the doctrine teaches an UNCONDITIONAL lean ask — the deployed build answers the unknown argument with a deterministic ToolError (D14, measured), so each claim would fire the present-but-failed degrade branch instead of the read. The ask is probe-gated, never blanket"
+  # Teeth AND scope, in the suite's fabricated-copy shape: the unconditional
+  # teaching must redden (c); the probe-gated phrasing must pass it — the
+  # amendment's own voice stays writable.
+  python3 "$TMP/lean-cond.py" "$TMP/t14-violating.md" >/dev/null 2>&1 \
+    && fail "t14 control: the fabricated unconditional-lean copy PASSED the conditioning negative — the arm is inert"
+  python3 "$TMP/lean-cond.py" "$TMP/t14-compliant.md" >/dev/null 2>&1 \
+    || fail "t14 control: the fabricated probe-gated copy was REJECTED — the negative is overscoped (dev could not write the ruled sentence)"
+  for f in "$SRC" "$GEN"; do
+    grep -q 'with_checklists' "$f" \
+      || fail "t14[cf-123 R2 C03]: $f never names with_checklists — the amendment has not landed in this home (source edited AND mirror regenerated in the same wave; designed red until C03)"
+  done
+  ok "t14[cf-123 R2 C03 AC1]: the probe-gated lean claim-time ask pinned — arg + scope + tools/list gate in one passage, never-empty pairing, every lean mention conditioned (unconditional-lean control rejected, probe-gated control accepted), token present in both homes"
 fi
 
 printf 'PASS: boards dependency-gate/preload/sibling/follow-up checks (%d ok)\n' "$checks"

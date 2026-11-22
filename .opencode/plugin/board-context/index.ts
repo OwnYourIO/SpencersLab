@@ -193,7 +193,12 @@ function asArray(value: any): any[] {
 // get_board (labels + the board key, the card_number prefix source) ->
 // swimlane by title -> lists filtered by swimlane id (titles repeat across
 // swimlanes; list_lists items carry swimlane_id) -> custom fields keyed on
-// `name` -> preload_board with the board_id only. The In Process scope is
+// `name` -> preload_board, asked lean ({ board_id, with_checklists: false }
+// — the arg contract's home is the wekan-mcp skill, cited not restated) with
+// exactly ONE build-tolerant board_id-only retry: a deployed pre-bump build
+// answers the unknown lean arg with a deterministic validation error
+// (measured, cf-123 R2 D14), and the block's fence never renders checklist
+// state, so the lean ask only bounds the payload. The In Process scope is
 // applied client-side: a server-side title filter would answer an empty
 // grouping on a renamed swimlane, and every list rendering cards: [] reads as
 // an empty board — the throw here degrades to no block instead. A successful
@@ -216,7 +221,16 @@ export async function resolveBoardContext(deps: any, opts: any): Promise<string>
   const lists = asArray(await callTool("list_lists", { board_id: board.id }));
   const laneLists = lists.filter((l: any) => l?.swimlane_id === swimlane.id);
   const customFields = asArray(await callTool("list_custom_fields", { board_id: board.id }));
-  const preload = await callTool("preload_board", { board_id: board.id });
+  let preload: any;
+  try {
+    preload = await callTool("preload_board", { board_id: board.id, with_checklists: false });
+  } catch {
+    // Exactly ONE build-tolerant retry of an idempotent read; the second
+    // failure propagates — a failed preload rejects the whole resolve (the
+    // outer never-throw budget turns that into an untouched prompt), never
+    // a half-shaped block.
+    preload = await callTool("preload_board", { board_id: board.id });
+  }
 
   const laneGrouping = asArray(preload?.swimlanes).find((s: any) => s?.id === swimlane.id);
   if (!laneGrouping) {
@@ -280,6 +294,17 @@ export function unwrapToolResult(rpcBody: any): any {
   if (rpcBody?.error) throw new Error(`MCP error ${rpcBody.error.code}: ${rpcBody.error.message}`);
   const result = rpcBody?.result;
   if (!result) throw new Error("MCP response carried no result");
+  // A tool-level error result is not a payload: the pre-bump unknown-arg
+  // rejection (measured, cf-123 R2 D14) arrives as an isError text part, and
+  // parsing that text as data is how a failed preload would reach the caller
+  // wearing the every-list cards: [] shape the resolve law above forbids. An
+  // isError answer throws, like the protocol-error arm does.
+  if (result.isError === true) {
+    const firstText = asArray(result.content).find(
+      (part: any) => part?.type === "text" && typeof part.text === "string",
+    );
+    throw new Error(`tool call reported isError: ${firstText?.text ?? "no text part"}`);
+  }
   const structured = result.structuredContent;
   if (structured && typeof structured === "object") {
     return structured.result !== undefined ? structured.result : structured;
