@@ -128,4 +128,39 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   `gpu-ai/qwen3.8-flash-next-radiance` ("use the radiance flash going forward") — verified live in the
   catalog at `.opencode/opencode.jsonc:716` (+ `-urgent :723`, `-low :730`).
   · fixed-by-this-recipe (machinery half OPEN: distinguish nothing-landed from everything-landed costs
-  one porcelain call every time; no surface reports it automatically)
+  one porcelain call every time; no surface reports it automatically
+- 2026-11-22 · test wave · **`TEST_SPEC.md` (radiance era) has no home under `charts/radiance/tests/`** —
+  so the C03/C05 lane law, the `<POOL>` placeholder fold and the ladder arithmetic had nowhere to be
+  recorded. · resolution: the test wave opened `tests/pipeline-models/TEST_SPEC.md` for the routing side;
+  the radiance-chart side stays an acknowledged gap — reviewers must not re-derive it from silence. · open
+- 2026-11-22 · test wave · **needle vacuity, the class the plan predicted, confirmed and fixed**: claims
+  ship QUOTED (`: "2"`), so bare-value needles pass on nothing. n3 (`amd-gpu-naming.sh`) and
+  `_live_claim_lines` (`test_cf143_naming_flip.py`) now match quoted-or-bare with trailing-boundary
+  discipline `(?![0-9-])`, plus planted-straggler and placement teeth — and n1/n2/n4/n5 still PASS after
+  the teeth, proving the sharpening did not blunt the guards. · fixed
+- 2026-11-22 · test wave · **fail-fast suites hide statuses nobody observed**: provider-loops t3 and roster
+  T2–T4 were never directly seen because the suites stop at the first red. · resolution: run legs
+  INDIVIDUALLY before claiming any status; the repair turn must observe t1 and t3 separately before I
+  commit the wave. · fixed-by-this-recipe
+- 2026-11-22 · test wave · **`surface.sh` M6 ran green with zero writes**, contradicting the "M6 is the
+  write arm, never in a read-only session" rule; the author flagged it instead of self-adjudicating.
+  · resolution: repo law keeps treating M6 as write-capable (dev/review exclude it from bare runs) while
+  TEST_SPEC records what THIS suite's M6 actually does. Safer rule retained, documentation corrected. ·
+  fixed-by-ruling
+- 2026-11-22 · coord · **MY OWN two unverified claims, corrected on disk before they hardened**: (a) I told
+  the owner negative priorities already ship (strata `3/-1/-3`) — that came from the ROUTING TABLE, not the
+  catalog: `git grep '"priority"' .opencode/opencode.jsonc` returns six live rows, **0..9, none negative**,
+  and cf-143 already logs `priority-0` semantics as UNVERIFIED (`radiance-q27-peers-expected.yaml:28`,
+  `radiance_testlib.py:317`). So the test author's `-1/-2` ladder was REJECTED for the plan's `7/3/2` +
+  `6/2/1`, treating fn-low-1 / 27b-TP2-low-1 as an accepted CROSS-PEER TIE (no M8 leg demands
+  class-column uniqueness; each lane's floor is its own base row, which is the real coherence law).
+  (b) I reported the first cancelled test session as having "an M8-H edit in flight" when porcelain showed
+  ZERO test files. · resolution: a table column is not a shipped value, and a cancelled round is answered
+  by `git status`, not by memory. · open (self-monitoring: both went to the owner pre-verification; the
+  correction is cheap, the trust cost is not)
+- 2026-11-22 · coord · **a test-authored suite landed syntactically broken** (`provider-loops/surface.sh`:
+  unterminated `if` at :223, `bash -n` fails at :384) — my RESULT-only turn bar said "no edits", so the
+  defect sat. · resolution: mechanical repair routed back to the SAME test session (a faulty validation is
+  never fixed by reviewer or coordinator), authorized narrowly, with `bash -n` + per-leg runs required
+  before the wave is committed. Lesson: when I bar edits, ask for defects to be REPORTED AND REPAIRED in a
+  following authorized turn, not left in the tree. · fixed-by-recipe)
