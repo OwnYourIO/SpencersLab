@@ -2,15 +2,16 @@
 name: pipeline-worker
 schedule: 0 * * * *
 enabled: true
-model: gpu-ai/qwen3.8-flash-next-strata-q4
+model: gpu-ai/qwen3.8-flash-next-radiance
 agent: agent-board-coord
 ---
 
 <!--
 Single scheduled runner (cf-106 C10). The model is the owner-ruled runner
-literal gpu-ai/qwen3.8-flash-next-strata-q4 (owner ruling 2026-11-09,
-confirmed in-session; supersedes cf-106 OQ-14 2026-11-03); the catalog
-churns, so it moves only by a fresh owner ruling.
+literal gpu-ai/qwen3.8-flash-next-radiance (owner ruling 2026-11-22,
+2026-11-feat-radiance-multi-instance D16, confirmed in-session; supersedes
+the Strata-q4 ruling of 2026-11-09, itself superseding cf-106 OQ-14
+2026-11-03); the catalog churns, so it moves only by a fresh owner ruling.
 
 Live state, verified 2026-10-29 against OpenChamber scheduledTasks: this
 file syncs as the "pipeline-worker" task — enabled, cron 0 * * * * UTC,
