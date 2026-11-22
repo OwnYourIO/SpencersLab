@@ -790,6 +790,78 @@
           "limit": { "context": 262144 },
           "body": { "priority": 0 }
         },
+        // cf-radiance C05 (D19 + the coordinator's follow-up ruling, resolved
+        // in tests/pipeline-models/TEST_SPEC.md §3): the tensor-parallel pair
+        // enters the catalog as two full trios beside the live lanes — four
+        // trios under ONE higher-wins polarity (urgent > default > low;
+        // RESEARCH RQ2), lane ladder fn 9/5/1 · q27 8/4/0 · flash-TP1 7/3/2 ·
+        // 27b-TP2 6/2/1. The new urgent/def columns sit strictly below both
+        // live lanes and stay cross-lane unique; the 27b-TP2 low 1 TIES fn's
+        // low 1 by accepted ruling — four engines, four separate queues, each
+        // peer's setParams "priority?" floor is per lane, so the tie never
+        // competes for a slot. No rung is negative: the catalog ships only
+        // non-negative priority (the live six span 0..9 with the CI smoke as
+        // the semantics receipt; a correction re-pins via a DECISIONS line,
+        // never a silent retarget). Shared modelID per trio, only
+        // body.priority differs — the fn/q27 shape cloned. The default-class
+        // floor is server-side in each lane's peers filters.setParams
+        // "priority?" (services/gpu-ai/prod/values.yaml): 3 for flash-TP1, 2
+        // for 27b-TP2, each lane's OWN default row, never a stolen rank; the
+        // set-if-undefined operator never rides a row. Context is 200000 —
+        // what each pod actually serves (--max-model-len in its subtree) —
+        // NOT the six owner rows' 262144 trained figure (D27 protects those
+        // rows as-is; re-pinning any of them is an owner act, and the split
+        // between the two figures is the catalog's own fn-q27 precedent, not
+        // drift). Nothing routes here by default and the runner-model literal
+        // does NOT move: both lanes rest at replicas 0 (git resting state,
+        // flipped only by an owner scale act), so while a lane rests its
+        // peers hop fails with a 502 peer proxy error — the Service has no
+        // endpoints and llama-swap neither health-checks nor hides peers —
+        // loud, never silent. These rows exist for the owner's opt-in only.
+        // The 27b-TP2 lane can NEVER co-boot with flash-TP1 (2+1 > 2 cards):
+        // the claim math lives in the lane subtrees, not here.
+        "qwen3.8-flash-next-radiance-tp1": {
+          "modelID": "qwen3.8-flash-next-radiance-tp1",
+          "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - default priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 3 }
+        },
+        "qwen3.8-flash-next-radiance-tp1-urgent": {
+          "modelID": "qwen3.8-flash-next-radiance-tp1",
+          "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - urgent",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 7 }
+        },
+        "qwen3.8-flash-next-radiance-tp1-low": {
+          "modelID": "qwen3.8-flash-next-radiance-tp1",
+          "name": "Qwen 3.8 Flash Next (Radiance TP1 lane, R9700) - low priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 2 }
+        },
+        "qwen3.8-27b-radiance-tp2": {
+          "modelID": "qwen3.8-27b-radiance-tp2",
+          "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - default priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 2 }
+        },
+        "qwen3.8-27b-radiance-tp2-urgent": {
+          "modelID": "qwen3.8-27b-radiance-tp2",
+          "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - urgent",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 6 }
+        },
+        "qwen3.8-27b-radiance-tp2-low": {
+          "modelID": "qwen3.8-27b-radiance-tp2",
+          "name": "Qwen 3.8 27B (Radiance TP2 lane, R9700) - low priority",
+          "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
+          "limit": { "context": 200000 },
+          "body": { "priority": 1 }
+        },
         "ornith-1.5-122b-strata-q4": {
           "modelID": "ornith-1.5-122b-strata-q4",
           "name": "Ornith 1.5 122B (Strata q36 UD-Q4_K_XL arena, R9700)",

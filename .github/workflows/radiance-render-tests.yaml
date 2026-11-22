@@ -75,3 +75,18 @@ jobs:
         run: |
           python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance-q27') or {}, open('/tmp/radiance-q27-vals.yaml','w'))"
           helm template gpu-ai-radiance-q27 charts/radiance -f /tmp/radiance-q27-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      # cf-radiance C05 (D19/D46): the tensor-parallel pair gets the same
+      # extraction+render legs as its two resting siblings — each lane renders
+      # from the SAME chart dir via the roster chart: override. Same
+      # gotcha-14 hardening: d.get(...) or {} yields {} before a subtree lands
+      # and the overlay after. STEPS only — the trigger paths stay pinned.
+      - name: helm template (flash-tp1 service-level values)
+        run: |
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance-flash-tp1') or {}, open('/tmp/radiance-flash-tp1-vals.yaml','w'))"
+          helm template gpu-ai-radiance-flash-tp1 charts/radiance -f /tmp/radiance-flash-tp1-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      - name: helm template (q27-tp2 service-level values)
+        run: |
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d.get('radiance-q27-tp2') or {}, open('/tmp/radiance-q27-tp2-vals.yaml','w'))"
+          helm template gpu-ai-radiance-q27-tp2 charts/radiance -f /tmp/radiance-q27-tp2-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai

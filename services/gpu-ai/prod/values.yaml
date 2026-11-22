@@ -101,6 +101,21 @@ charts:
     namespace: default
     ServerSideApply: "false"
     chart: radiance
+  # cf-143 C05 (DECISIONS D19/D46): the tensor-parallel pair, same chart and
+  # the same three fields as the two lanes above — everything lane-specific
+  # (TP size, memory claim, parked replicas) lives in the per-app subtrees at
+  # the foot of this file. The base ApplicationSet derives the Application
+  # names gpu-ai-radiance-flash-tp1 and gpu-ai-radiance-q27-tp2 from these
+  # keys; the peers hops below route to those names, so a key drift silently
+  # breaks those routes. Both rest at zero replicas like the q27 lane.
+  radiance-flash-tp1:
+    namespace: default
+    ServerSideApply: "false"
+    chart: radiance
+  radiance-q27-tp2:
+    namespace: default
+    ServerSideApply: "false"
+    chart: radiance
 
 ingress:
   subdomains:
@@ -748,6 +763,49 @@ llama-swap:
         filters:
           setParams:
             "priority?": 4
+      # cf-143 C05 (D18/D19): the tensor-parallel pair joins ADDITIVE beside
+      # the two lanes above — the charts.radiance-flash-tp1 / radiance-q27-tp2
+      # roster entries above render the Services these hops point at. SINGLE
+      # source each: charts/llama-swap/tests/evidence/radiance-flash-tp1-peers-
+      # expected.yaml and radiance-q27-tp2-peers-expected.yaml (D13 per-peer-key
+      # law — the fn/q27 evidence files stay byte-untouched; dev conforms
+      # values to them, never the reverse). Peer laws restated because the
+      # clone does not exempt these hops: NO /v1 suffix — request paths append
+      # verbatim and a suffix would double-prefix every route; models lists
+      # each lane's one --served-model-name id EXPLICITLY (peers is not a
+      # blanket URL proxy, honest-id law); both ids stay OUT of the outer
+      # matrix/models below — peers are invisible to the solver, so card
+      # coexistence stays operator discipline. No apiKey: keyless like fn (D8).
+      # timeouts 1800/30 cloned: flash-TP1 boots the same ~66 GiB working set
+      # (minutes-class first byte), q27-TP2 the same pack as its swap sibling.
+      # Floors are each lane's OWN default class on D19's higher-wins ladder
+      # (fn 9/5/1 · q27 8/4/0 · flash-TP1 7/3/2 · 27b-TP2 6/2/1): fn's 5 and
+      # q27's 4 are NOT reused (the per-lane "ranks are NOT stolen" law); the
+      # 27b-TP2 low rung 1 ties fn's low 1 by accepted ruling — separate
+      # peers, separate queues, never competing. Idle law: both lanes rest at
+      # replicas 0, so while they rest each hop fails with a 502 peer proxy
+      # error (no endpoints; llama-swap neither health-checks nor hides peers)
+      # — loud, never silent. Nothing routes here by default.
+      radiance-flash-tp1:
+        proxy: http://gpu-ai-radiance-flash-tp1.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-flash-next-radiance-tp1
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 3
+      radiance-q27-tp2:
+        proxy: http://gpu-ai-radiance-q27-tp2.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-27b-radiance-tp2
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 2
       # cf-143 C01 (owner Q3 ruling, DECISIONS D6): the peers.vllm hop is
       # disabled commented-out beside its charts.vllm entry — this is the
       # vllm-radiance FORK lane (charts/vllm), not the cf-143 radiance engine.
@@ -1312,7 +1370,8 @@ radiance-q27:
         # pack facts under radianceFetch above.
 
 # ---------------------------------------------------------------------------
-# THE RESTING TWINS (C05): the roster's two lanes that ship at replicas 0 —
+# THE RESTING TWINS (landed C03 round-3; D46 corrects the earlier "(C05)"
+# label): the roster's two lanes that ship at replicas 0 —
 # git resting state, flipped only by an OWNER scale act, never a git default.
 # While a lane rests its Service has no endpoints and its llama-swap peer hop
 # answers a loud 502 (llama-swap neither health-checks nor hides peers), which
