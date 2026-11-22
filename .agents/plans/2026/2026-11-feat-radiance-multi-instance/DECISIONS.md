@@ -322,6 +322,19 @@ rejected, why.
   sets asserted independently, so a chart-side script edit cannot silently re-point one lane at the other's pack.
   Order: `agent-plan` folds the plan + `chunks/C03.md` (my tier edits neither) → test wave re-aims the
   equivalence legs to the diff-budget shape → C03 dev round 2 → C03 review.
+- 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
+  work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
+  introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
+  as an artifact but its appends are not work product: leaving it dirty out of ticket commits is correct, and
+  promoting a line into a feature commit would attribute CLI bookkeeping to a chunk. Turning it into an ignore
+  rule is a human hygiene call, not a mid-ticket edit.
+- 2026-11-22 coord-ruling D37 (**commit scope: a directory path spec silently bundles its tests**). My C03
+  round-2 commit used `git add charts/radiance services/gpu-ai`, which swallowed
+  `charts/radiance/tests/test_c03_generic_shell.py` too — so the impl and its two test repairs landed in ONE
+  commit (`b8c01489e`) instead of two. Rather than split a coherent, unpushed change, I amended the message to
+  disclose the bundling and describe the test repairs in full. Rule going forward: stage implementation paths
+  and `tests/` paths as SEPARATE `git add` arguments when a chunk carries both, and check `git show --stat`
+  before describing a commit as impl-only.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.
