@@ -51,6 +51,12 @@ else
 fi
 want() { [ -n "${WANT[$1]:-}" ]; }
 
+# Subset runs (T2/T3/T4 alone, with the note still unwritten) must land on the
+# C06 designed-red message rather than a cp/traceback/grep crash; T1 owns the
+# canonical absence text in full-suite order. The red itself is unchanged —
+# absent note still exits 1.
+require_note() { [ -f "$NOTE" ] || fail "$1: $NOTE missing — C06 (the roster note) is not implemented"; }
+
 # T2's checker, shared by the live leg and the teeth probe: every claimant row in
 # the note must carry the claim count and replicas the tree actually ships.
 check_rows() {  # $1 = note path; exits non-zero with diagnostics
@@ -135,6 +141,7 @@ fi
 
 # --- T2: the table matches the shipped tree -------------------------------------
 if want t2; then
+  require_note T2
   rc=0
   check_rows "$NOTE" || rc=$?
   case "$rc" in
@@ -145,6 +152,7 @@ fi
 
 # --- T3: the routing and discipline prose ---------------------------------------
 if want t3; then
+  require_note T3
   if ! grep -qF -- "$RUNNER_LITERAL" "$NOTE"; then
     fail "T3: the note never names the runner literal $RUNNER_LITERAL — the routing wave MOVED it (D16) and the note is where a reader learns which literal the loop actually runs"
   fi
@@ -168,6 +176,7 @@ fi
 
 # --- T4: teeth — the row checker must reject a falsified table ------------------
 if want t4; then
+  require_note T4
   probe=$(mktemp)
   cp "$NOTE" "$probe"
   # Falsify the flash-TP1 row: flip its claim count to something the tree does not ship.

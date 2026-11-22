@@ -376,7 +376,9 @@ _NEW_NAME_ALLOW = (
     #                                   tests/**; the stray guard stays sharp for
     #                                   every NON-test path under charts/.
     "services/gpu-ai/prod/values.yaml",  # T-B comment-only carve site
-    ".agents/notes/radiance-",      # the two current docs (T-E sweep)
+    ".agents/notes/radiance-",      # the radiance-* notes, prefix-matched so a
+    #                                   new note (the C06 roster doc included)
+    #                                   needs no edit here (T-E sweep)
     "tests/",                       # bash suite constants + this test file's variables
 )
 
