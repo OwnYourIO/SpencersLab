@@ -72,20 +72,22 @@ def _fold(text: str) -> str:
 
 
 def _rendered_deployment(key: str) -> dict:
-    """The release's render at the shape production feeds it: the chart plus that
-    roster key's block under the derived Application name."""
-    if key == R.Q27_APP_NAME:
-        docs, _raw = R.render_q27()
-    else:
-        docs, _raw = R.render(release=MOVING_LANES[key], service=True)
-    deps = [d for d in docs if d.get("kind") == "Deployment"]
-    assert len(deps) == 1, f"{MOVING_LANES[key]}: expected one Deployment, got {len(deps)}"
+    """The release's render at the shape production feeds it, routed through the
+    sanctioned per-lane renderer: fn/q27 via the service overlay, the resting
+    lanes via their block renders — the same resolver COMPOSITION_LANES uses.
+    The hand-mapped MOVING_LANES body reddened KeyError on the resting lanes as
+    soon as the tp/claim leg went four-wide (2026-11-22 repair: the law spans
+    four releases, a two-entry map cannot be its reader)."""
+    deps = [d for d in R.lane_docs(key) if d.get("kind") == "Deployment"]
+    assert len(deps) == 1, f"{key}: expected one Deployment, got {len(deps)}"
     return deps[0]
 
 
-def _serve_ctr(key: str) -> dict:
-    spec = _rendered_deployment(key)["spec"]["template"]["spec"]
-    return next(c for c in spec["containers"] if c.get("name") == R.SERVE_NAME)
+# _serve_ctr() retired 2026-11-22 (test-repair pass, replaced — never silently
+# deleted): no leg called it after the D43 re-pin — the composition legs read
+# the container through R.lane_composition/R.serve_container and the tp/claim
+# leg through _rendered_deployment. A second container reader with no caller is
+# the day someone uses it instead of the sanctioned one.
 
 
 # --- AC1 (D43): the composed argv IS the ruled profile, per lane ------------------
@@ -346,45 +348,49 @@ def test_c03_carrier_restates_no_lane_data():
     )
 
 
-@pytest.mark.parametrize("key,release", sorted(MOVING_LANES.items()))
+@pytest.mark.parametrize("key", sorted(R.COMPOSITION_LANES))
 @helm_skip
-def test_c03_render_carries_no_literal_argv(key, release):
+def test_c03_render_carries_no_literal_argv(key):
     """D43's render-side half: the serve container carries NO args key (the
     profile left the pod spec), its command is an INVOCATION of the mounted
     wrapper (mirroring the init precedent — ConfigMap files mount 0644, so the
     command is `sh` + the mounted path, never a script body and never a bare
     argv list), and the mounted data key is the one the locator found. The
     entrypoint law (§D1.5) survives INSIDE the wrapper: the probe in the AC1
-    legs proves the engine is exec'd by bare name through PATH."""
-    docs, _ = (R.render_q27() if key == R.Q27_APP_NAME
-               else R.render(release=release, service=True))
+    legs proves the engine is exec'd by bare name through PATH.
+
+    Four-wide since the 2026-11-22 repair pass: D46 accepted the resting blocks
+    as C03 output, so this chart law governs every render it produces — and the
+    leg's old two-way dispatch was the same narrow-reader class as the tp/claim
+    KeyError (a law spanning four releases read by code addressing two)."""
+    docs = R.lane_docs(key)
     ctr = R.serve_container(R.deployment(docs))
     assert "args" not in ctr, (
-        f"C03/D43 [{release}]: the serve container still renders an args key ({str(ctr.get('args'))[:160]}…) "
+        f"C03/D43 [{key}]: the serve container still renders an args key ({str(ctr.get('args'))[:160]}…) "
         "— D43 rules the argv out of the render into the wrapper + env"
     )
     command = ctr.get("command") or []
     assert command and all(isinstance(t, str) for t in command), (
-        f"C03/D43 [{release}]: serve command renders {command!r} — the wrapper invocation must be "
+        f"C03/D43 [{key}]: serve command renders {command!r} — the wrapper invocation must be "
         "a non-empty string list (loud fail at start, never a silent ENTRYPOINT boot)"
     )
     assert not any("\n" in t for t in command), (
-        f"C03/D43 [{release}]: the serve command embeds a script body — the command invokes the "
+        f"C03/D43 [{key}]: the serve command embeds a script body — the command invokes the "
         "mounted wrapper and carries no bytes of the FORM (the D35 init law, serve side)"
     )
     hit = R.serve_script_from_render(docs)
     assert hit is not None, (
-        f"C03/D43 [{release}]: no serve-compose wrapper ConfigMap in the render — designed-red "
+        f"C03/D43 [{key}]: no serve-compose wrapper ConfigMap in the render — designed-red "
         "naming dev round 3"
     )
     _cm, key_name, _script = hit
     assert any(key_name in t for t in command), (
-        f"C03/D43 [{release}]: serve command {[str(t) for t in command]} never references the wrapper "
+        f"C03/D43 [{key}]: serve command {[str(t) for t in command]} never references the wrapper "
         f"key {key_name!r} — the mounted ConfigMap would be decoration"
     )
     mount_paths = [str(m.get("mountPath", "")) for m in ctr.get("volumeMounts") or []]
     assert any(any(seg and seg in str(t) for seg in mount_paths) for t in command), (
-        f"C03/D43 [{release}]: the serve command names no path under a volumeMount "
+        f"C03/D43 [{key}]: the serve command names no path under a volumeMount "
         f"({mount_paths}) — the wrapper must run from its mount, not a baked copy"
     )
 

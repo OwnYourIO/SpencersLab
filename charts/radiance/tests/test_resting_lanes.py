@@ -11,12 +11,17 @@ The legs that stay GREEN now are the drift bars — the transcription sources
 still resolve, the evidence files (test-session single sources) self-validate,
 and the CI extraction idiom works before AND after the blocks land.
 
+State update (D46, 2026-11-22): the two lane BLOCKS landed as C03 round-3
+output and the args channel was retired by D43, so the block/render/composition
+legs above are green; the standing designed reds are C05's own remaining scope
+— the two charts: roster entries, the two peers entries, the two CI extraction
+steps.
+
 Run per-directory: python3 -m pytest charts/radiance/tests -v
 """
 
 from __future__ import annotations
 
-import collections
 import re
 import shutil
 import subprocess
@@ -48,6 +53,34 @@ def _container(name):
     )
 
 
+def _controller(name):
+    """The block's radiance controller map — the sanctioned home of controller-
+    level keys (replicas rides here; app-template consumes the same key from no
+    other place in the tree)."""
+    return (
+        _block(name).get("app-template", {}).get("controllers", {})
+        .get("radiance", {}) or {}
+    )
+
+
+def _replicas_paths(node, path=""):
+    """Every path where the block tree authors a `replicas` key. The resting
+    law is that exactly ONE exists — the sanctioned lever: an inert second key
+    (top-level or container-side) is the gotcha-11 decoy that satisfies a naive
+    reader while the controller keeps scaling whatever it actually reads."""
+    hits = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            here = f"{path}.{k}" if path else str(k)
+            if k == "replicas":
+                hits.append(here)
+            hits += _replicas_paths(v, here)
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            hits += _replicas_paths(v, f"{path}[{i}]")
+    return hits
+
+
 # _args() RETIRED by owner ruling D43 (2026-11-22, replaced — never silently
 # deleted): it read the lane block's serve args array, the carrier D43 rules
 # out of existence (the argv moved into the chart-owned compose wrapper; the
@@ -73,23 +106,10 @@ def _block_env(name):
     return out
 
 
-def _flag_map(args):
-    """args as {flag: value}, repeating flags collected."""
-    out = collections.defaultdict(list)
-    i = 0
-    while i < len(args):
-        tok = args[i]
-        if tok.startswith("--"):
-            if "=" in tok:
-                k, v = tok.split("=", 1)
-                out[k].append(v)
-                i += 1
-                continue
-            out[tok].append(args[i + 1] if i + 1 < len(args) else "")
-            i += 2
-            continue
-        i += 1
-    return out
+# _flag_map() retired 2026-11-22 (test-repair pass, replaced — never silently
+# deleted): its consumers went with the D43 retirement of _args(); the live
+# vector comparisons use R.flag_pairs in the harness, and a second args parser
+# with no caller is exactly the drift the harness's single parser prevents.
 
 
 def _pairs(docs, kind):
@@ -118,12 +138,29 @@ def test_c05_roster_entry_is_the_chart_override(name):
 
 @pytest.mark.parametrize("name", LANE_NAMES)
 def test_c05_lane_rests_at_zero_replicas(name):
-    """C05 AC1/AC5: nothing routes here by default, so nothing may run by default —
-    the shipped replicas value is 0 (an owner scale act, never a git default)."""
+    """C05 AC1/AC5: nothing routes here by default, so nothing may run by default.
+    Three arms, one per truth: the SANCTIONED lever `controllers.radiance.replicas`
+    is authored 0 (the fn/q27 precedent — the only place app-template consumes
+    replicas from); NO other `replicas` key exists anywhere in the block (a second
+    key is a decoy lever that buys this leg's green without moving the Deployment,
+    the gotcha-11 class dev round 3 refused to feed); and the RENDERED
+    spec.replicas is 0, what the cluster actually reconciles.
+
+    Repaired 2026-11-22: the original read inspected the container and the block
+    top level — two places app-template consumes NO replicas from, satisfiable
+    only by an inert key."""
+    block = _block(name)
     spec = R.lane(name)
-    authored = _container(name).get("replicas", _block(name).get("replicas"))
+    lever = "app-template.controllers.radiance.replicas"
+    paths = _replicas_paths(block)
+    assert paths == [lever], (
+        f"C05: {name} authors replicas at {paths}, want EXACTLY [{lever!r}] — the controller "
+        "scales from that one path; any other replicas key is inert decoration whose reader "
+        "boots a resting lane while the real lever still says 0"
+    )
+    authored = _controller(name).get("replicas")
     assert authored == 0, (
-        f"C05: {name} ships replicas {authored!r}, want 0 — a resting lane that boots steals "
+        f"C05: {name} ships {lever} {authored!r}, want 0 — a resting lane that boots steals "
         f"the cards from the live lane and answers 200 where the tables say the lane is opt-in"
     )
     if _ok:

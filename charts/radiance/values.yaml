@@ -14,13 +14,15 @@
 
 #
 # ONE SHELL, SEVERAL RELEASES (2026-11-feat-radiance-multi-instance C03, plan
-# OQ-D + ruling D35): this chart is MECHANISM — the image pin and digest ledger,
+# OQ-D + rulings D35/D43): this chart is MECHANISM — the image pin and digest ledger,
 # the /health probe law, Recreate plus the drain grace, the unprivileged GPU
 # securityContext, the shared models claim and /dev/shm, the Service shape, the
-# staging init's image and hash budget, and the ONE generic fetch-script FORM
-# (a ConfigMap carrier, consumed by that init). LANE DATA — the served pack path
-# and its ledger, the serve recipe, the memory and card claim, and the pack
-# scalars the FORM substitutes (PACK/LFS_SHA/URL/MARKER) — ships in each
+# staging init's image and hash budget, and BOTH generic script FORMs riding
+# one ConfigMap carrier: the fetch shell the init consumes (D35) and the
+# serve-argv compose wrapper the main container invokes (D43). LANE DATA — the
+# served pack path and its ledger, the serve specifics the compose FORM reads
+# from container env, the memory and card claim, and the pack scalars the FORM
+# substitutes (PACK/LFS_SHA/URL/MARKER) — ships in each
 # release's roster block in services/gpu-ai/prod/values.yaml. The lanes and
 # their claim math are in templates/NOTES.txt.
 
@@ -101,7 +103,8 @@ app-template:
   # absence list checked as a named bar, not a style note.
 
 
-  # --- THE FETCH-SCRIPT FORM (C03 round 2, owner ruling D35) --------------------
+  # --- THE SCRIPT-FORM CARRIER (C03 round 2 owner ruling D35; serve half added
+  # by round 3 owner ruling D43) -----------------------------------------------
   # ONE generic staging shell for every release of this shell: resume-download
   # the lane's pack onto the shared claim, verify it against the lane's LFS sha,
   # write the success marker only on a match. It rides a ConfigMap because
@@ -111,6 +114,9 @@ app-template:
   # chart-owned and PACK/LFS_SHA/URL/MARKER stay roster-block data. The cost the
   # owner accepted with the ruling (D35(2)): a release rolls at the sync that
   # lands this carrier (Recreate + changed pod template), watched on its own.
+  # D43 extends the same class to the SERVE side — see serve.sh below: the lane
+  # feeds it through container env instead of values, and the pod spec shows an
+  # invocation instead of the engine's argv.
   radianceFetch:
     # The scalars the FORM substitutes, empty here on purpose: a release that
     # does not author its own pack trips the loud guard at the top of the script
@@ -125,7 +131,9 @@ app-template:
   configMaps:
     radiance-fetch:
       # The name follows the release (app-template derives it from the fullname),
-      # so the two live lanes never fight over one ConfigMap in `default`.
+      # so the two live lanes never fight over one ConfigMap in `default`. ONE
+      # carrier holds BOTH script FORMs (fetch + serve, D43): the pod template
+      # then rolls on a single checksum/configMaps value, not two.
       data:
         fetch.sh: |
           #!/bin/sh
@@ -171,6 +179,66 @@ app-template:
           fi
           touch "$MARKER"
           echo "radiance staging: complete"
+        # THE SERVE-COMPOSE FORM (C03 round 3, owner ruling D43): the same
+        # carrier class on the serve side. The engine's argv is not lane data
+        # except through env — the FORM owns the flag vocabulary and the
+        # fixed flags, the release's RADIANCE_* env carries every per-lane
+        # value (env rides tpl; container args never did, which is exactly
+        # why the per-block arrays went stale on the pool rename), and the
+        # pod spec shows an invocation instead of a vector.
+        serve.sh: |
+          #!/bin/sh
+          # radiance serve compose — chart-owned FORM (D43). Every per-lane
+          # value arrives through RADIANCE_* container env; nothing here names
+          # a pack, an id, or a lane's numbers, and a lane cannot restyle the
+          # FORM by writing one of the fixed flags into its env (the suite
+          # reds that dual channel).
+          #
+          # POSIX-only: the engine image's bin/sh is busybox ash — no bash,
+          # no dash, no arrays, no [[ ]]. The engine execs by BARE name
+          # (§D1.5: the image ENTRYPOINT is ["radiance"] and PATH resolves
+          # /opt/radiance/bin/radiance); re-pathing it here would fork the
+          # engine identity away from the image pin.
+          #
+          # D43(2) visibility note — read this before calling the render a
+          # drift: kubectl describe and the Argo diff now show the wrapper
+          # invocation plus the env, NOT the argv. The startup echo below is
+          # the operator's receipt for the vector the engine actually
+          # received; the suite proves the same bytes compose each lane's
+          # ruled profile exactly.
+
+          # Loud guard (the fetch FORM's -z law, serve side): a required env
+          # absent dies BEFORE composing — a serve without its model, id, tp
+          # or context is not a serve, and a baked default here would
+          # re-smuggle lane data into the chart. The message names the
+          # variable so the pod log alone diagnoses it.
+          : "${RADIANCE_MODEL_PATH:?RADIANCE_MODEL_PATH is required - the lane must author its pack path}"
+          : "${RADIANCE_SERVED_ID:?RADIANCE_SERVED_ID is required - the lane must author its served id}"
+          : "${RADIANCE_TP:?RADIANCE_TP is required - tp must equal the pod card claim}"
+          : "${RADIANCE_MAX_MODEL_LEN:?RADIANCE_MAX_MODEL_LEN is required - the context ceiling is a lane fact}"
+
+          # Fixed flags (FORM-owned, identical for every release): port 8000
+          # (the Service and probes agree), host :: (the cf-143 idiom), 8
+          # sessions, fp8 KV cache. Everything below them is env-fed: absent
+          # env means absent flag, which is how the dense lanes omit the
+          # whole expert family without this FORM knowing which lane it
+          # serves.
+          set -- --model "$RADIANCE_MODEL_PATH" --served-model-name "$RADIANCE_SERVED_ID" \
+            --port 8000 --host :: --max-num-seqs 8 --kv-cache-dtype fp8 \
+            --tp "$RADIANCE_TP" --max-model-len "$RADIANCE_MAX_MODEL_LEN"
+          [ -n "${RADIANCE_TP_WIRE:-}" ] && set -- "$@" --tp-wire "$RADIANCE_TP_WIRE"
+          [ -n "${RADIANCE_HOST_POOL_MIB:-}" ] && set -- "$@" --host-pool-mib "$RADIANCE_HOST_POOL_MIB"
+          [ -n "${RADIANCE_GPU_HEADROOM_MIB:-}" ] && set -- "$@" --gpu-headroom-mib "$RADIANCE_GPU_HEADROOM_MIB"
+          [ -n "${RADIANCE_KV_RESIDENT:-}" ] && set -- "$@" --kv-resident "$RADIANCE_KV_RESIDENT"
+          [ -n "${RADIANCE_PREFIX_CACHE_MIB:-}" ] && set -- "$@" --prefix-cache-mib "$RADIANCE_PREFIX_CACHE_MIB"
+          [ -n "${RADIANCE_PLACEMENT:-}" ] && set -- "$@" --placement "$RADIANCE_PLACEMENT"
+          [ -n "${RADIANCE_NGRAM_PLACEMENT:-}" ] && set -- "$@" --ngram-placement "$RADIANCE_NGRAM_PLACEMENT"
+          [ -n "${RADIANCE_NUM_SPECULATIVE_TOKENS:-}" ] && set -- "$@" --num-speculative-tokens "$RADIANCE_NUM_SPECULATIVE_TOKENS"
+          [ -n "${RADIANCE_MAX_NUM_BATCHED_TOKENS:-}" ] && set -- "$@" --max-num-batched-tokens "$RADIANCE_MAX_NUM_BATCHED_TOKENS"
+          [ -n "${RADIANCE_CHECKPOINT_INTERVAL:-}" ] && set -- "$@" --checkpoint-interval "$RADIANCE_CHECKPOINT_INTERVAL"
+
+          echo "radiance serve: composed engine argv: $*"
+          exec radiance "$@"
 
   global:
     nameOverride: &chartName radiance
@@ -254,14 +322,19 @@ app-template:
             # CAN be rebuilt in place upstream, silently changing bytes under
             # a held pin) — this ledger is the forensic anchor for exactly
             # that case; a digest retarget is a DECISIONS line, not a drive-by.
-          # `args` unset ON PURPOSE (C03): the serve recipe is lane data and
-          # ships complete in each release's block. app-template deep-merges
-          # maps and REPLACES lists, so the key's absence — not an empty list
-          # — is what makes the block's array the whole truth about what the
-          # pod serves. Engine law that is the same for every lane stays here:
-          # the recipe carries no `serve` verb (the engine takes args
+          # INVOCATION ONLY (D43, mirroring the D35 init law): the serve
+          # argv composes in the mounted FORM above, so the container names
+          # the file it runs and `args` stays absent — whatever rendered here
+          # would be a second argv source. `sh` runs the file because
+          # ConfigMap volumes serve 0644 root-owned bytes to this pod's
+          # 65532 — readable, never executable. Engine law the wrapper
+          # upholds for every lane: no `serve` verb (the engine takes args
           # directly; the vllm/Strata idiom double-verbs it) and no api key
           # (D8 keyless).
+
+          command:
+            - sh
+            - /scripts/serve.sh
 
           ports:
             - name: http
@@ -421,16 +494,19 @@ app-template:
               readOnly: true
           radiance-fetch:
             - path: /models
-    # The fetch FORM (D35): mounted into the staging init ONLY — the serve
-    # container executes nothing from here, and an extra mount there would be
-    # a pod-spec move no lane asked for. Whole-ConfigMap directory (no subPath):
-    # a key change then lands as a new file atomically, and the checksum
-    # annotation restarts the pod that has the old one cached.
+    # The script-form carrier (D35 fetch FORM + D43 serve FORM): mounted into
+    # the staging init AND the serve container — each execs its own file from
+    # here, and neither sees a baked copy. Whole-ConfigMap directory (no
+    # subPath): a key change then lands as a new file atomically, and the
+    # checksum annotation restarts the pod that has the old one cached.
     radiance-fetch-script:
       type: configMap
       identifier: radiance-fetch
       advancedMounts:
         radiance:
+          radiance:
+            - path: /scripts
+              readOnly: true
           radiance-fetch:
             - path: /scripts
               readOnly: true
