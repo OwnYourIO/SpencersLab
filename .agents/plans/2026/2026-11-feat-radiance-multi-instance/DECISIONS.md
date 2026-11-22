@@ -244,6 +244,28 @@ rejected, why.
   (class rows `-urgent :723`, `-low :730`). Catalog bytes are the owner's — this ticket's C02/C05
   routing legs touch skills/rules/loop surfaces and the catalog rows for the NEW lanes only, never
   those six context values.
+- 2026-11-22 coord-ruling D28 (**C05 priority ladder: reject the negative rungs; cross-peer tie accepted**),
+  made on the test wave's D-3 escalation. The test author had resolved the fn-low-1 vs 27b-TP2-low-1
+  collision by dropping the parked lanes' low rows to `-1/-2`. Rejected on evidence: the catalog ships only
+  NON-NEGATIVE `body.priority` (`git grep '"priority"' .opencode/opencode.jsonc` → six live rows, 0..9), and
+  cf-143 already records `priority-0` SEMANTICS AS UNVERIFIED with the CI smoke read as the receipt
+  (`charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml:28`,
+  `charts/radiance/tests/radiance_testlib.py:317`) — a first-ever negative value is a strictly bigger
+  unknown than a zero. SHIPPED SHAPE: fn 9/5/1, q27 8/4/0, flash-TP1 7/3/2, 27b-TP2 6/2/1, with each peer's
+  `setParams "priority?"` floor == that lane's OWN base row (floors **3** and **2** — the test author's D-2
+  law, which IS the per-lane coherence law cf-143 established, and it survives this ruling unchanged).
+  fn-low-1 == 27b-TP2-low-1 is recorded as an ACCEPTED CROSS-PEER TIE, not a collision: the two lanes are
+  separate peers with separate floors and no M8 leg demands class-column uniqueness across the family.
+  Rejected alternative (the negatives) is named in TEST_SPEC so Final Review sees the trade, and the
+  smoke-read leg stays the receipt for the numbers actually shipped.
+- 2026-11-22 coord-ruling D29 (**blank `Model(s)` default path, closing the test wave's open question 1**):
+  a card with NO `Model(s)` item checked routes as today's defaults with the radiance move applied to the
+  FLASH size only — blank → `Qwen Flash + Local` → `gpu-ai/qwen3.8-flash-next-radiance`; blank + `10+`
+  (≥100k) → `gpu-ai/qwen3.8-27b-q4` through the outer swap, which NEVER moved (`surface.sh`'s kept
+  `:750-751` requirement is exactly this row). Chosen over moving the big-context default to radiance
+  because that would put it on the PARKED q27 lane: a second silent failure on the same surface, after D16
+  already concentrated every other tier on the single live fn lane. Recorded in
+  `tests/pipeline-models/TEST_SPEC.md` §4 so dev and review read one law instead of a gap.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

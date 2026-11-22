@@ -103,6 +103,13 @@
     "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
     "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round)."
   ],
+  "test_wave": {
+    "session": "ses_dff2b1f06ffeLHvN3gSpxs0ql9",
+    "status": "authored, repair turn running (provider-loops syntax fix + per-leg observation); NOT yet committed",
+    "observed_at_authored": "amd-gpu 3F/33P · radiance 24F/79P (71 pre-existing green) · llama-swap 5F/510P/9S · vllm 36P · naming n3 RED / n1,n2,n4,n5 PASS · notes runbook T3 RED, tp2 T3 RED, q27-boot GREEN · agents-md c11 RED · tsx tick 1 designed fail · surface.sh M1,M2,M5,M8,M9 RED (designed), M3,M4,M7 GREEN · provider-loops t1 RED, t3 UNOBSERVED (fail-fast) then file BROKEN at :223 (now being repaired) · aislop ci --changes 0E/0W over 112 files",
+    "coord_rulings_this_round": ["D28 priority ladder (reject negatives; floors 3/2; cross-peer low tie)", "D29 blank Model(s) default (Flash->radiance, 10+ stays 27b-q4)"],
+    "coordinator_constraint": "I cannot execute suites myself (permissions deny bash/wc/grep-pipe) — every number above is the test author's observation, and per-chunk review re-runs are the gate."
+  },
   "deferred": [
     "DRA adoption — watch-list with revisit triggers (plan Deferred; DECISIONS D11)",
     "fn memory DOWN re-pin from held 110 — cf-144 P11's own post-boot owner-receipt leg, NOT this ticket",
