@@ -4,7 +4,8 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 rejected, why.
 
 ## Conventions
-- D-number namespace: THIS ticket's decisions occupy D1–D25; any citation to another ticket's
+- D-number namespace: THIS ticket's decisions occupy D1–D47 and forward (the namespace grew
+  mid-execution; fold-round records count); any citation to another ticket's
   decision (cf-143/cf-144/cf-86 …) MUST carry its ticket prefix — bare `D21`, `D24`, `D8`, `D13`
   mean THIS file. (cf-143 recycles the same numbers; unqualified reuse is a dev-error generator.)
 - Pool string law: from C01's wave the ONLY live name is `amd.com/gpu-r9700`;
@@ -36,6 +37,13 @@ rejected, why.
 - `export PATH=$HOME/.local/bin:$PATH` before any helm-backed run; pytest per-directory; never run
   the rulesync-WRITING legs (`surface.sh` M6, agents-md c1, gate t14, rulesync-surface c7) in a
   read-only session; evidence YAMLs are test-session property, dev conforms.
+- Dated-entry law (adopted 2026-11-22, plan fold round 4 from the coord's lean on the C05 review's
+  Nit 1): an entry is dated by the OWNER RULING it records — the ruling's own recorded date — never
+  by the authoring agent's wall clock, and an entry recording a work round with no ruling takes the
+  commit-stamp date. Agent TZs disagree mid-work: three C05-round markers read 2026-11-23 against
+  2026-11-22 commit stamps (C06 re-dates them; `.opencode/opencode.jsonc:817` stays — it is
+  ruling-anchored to D47's 2026-11-23). Stated ONCE here; files cite this line, they do not
+  restate the convention. `STATE.json`'s `updated_at` stays workspace-clock (cf-96 OQ4).
 - Git law unchanged: coordinator is sole committer; nothing pushes/merges/advances main; landing
   = owner push/PR/merge/sync (pipeline-push-pr discipline; Deployment is a checked HITL stage).
 
@@ -488,6 +496,40 @@ rejected, why.
   the shape forced by the library."** The library constraint (`no tpl` on args) was true and was
   correctly applied to the fetch carrier — it was the SELECTIVE application that made the serve
   shape wrong twice.
+- 2026-11-22 plan-fold record (agent-plan, fold round 4, coord-requested): D43 superseded the
+  OQ-D/D24 framing (the round-3 record above stands); **D45/D46/D47 corrected STALE CHUNK PROSE —
+  `chunks/C05.md` carried block authorship D46 had already ruled into C03 round 3, peer floors 5/4
+  that D45 corrected to 3/2 (each lane's OWN base row — D28's law; the testlib constants were right
+  while the chunk won an argument it had already lost), and `limit.context: 200000` that D47
+  overruled with the 262144 family convention — each marked SUPERSEDED IN PLACE with date + ruling.
+  The mechanism failure, named so it is not repeated: chunk files were NOT re-folded after each
+  mid-execution ruling, so three successive devs each inherited superseded prescriptions; the fix is
+  that EVERY post-approval ruling naming a chunk triggers a same-round chunk fold — the ruling
+  record and the chunk edit land together ("carried verbatim into the launch brief" is a stopgap,
+  not the home).** D47's canonical text sits in FRICTION.md:401 + STATE `ctx_ruling` — noted here so
+  the DECISIONS namespace stays honest; relocating it is the coord's leg. The dated-marker
+  convention landed in §Conventions (C06 owns the three-marker sweep). Folded the same round:
+  C06's full assigned set completed (roster-suite re-pin via `RADIANCE_SERVED_ID` + convention),
+  the plan's Chunks/Wave re-filed to the git-verified landed chronology (C04 landed+approved per
+  D44 BEFORE C03-r3 and C05 — the fold brief's "C05 → C04" shorthand corrected), fact 17 written,
+  the boot-print-is-the-only-remaining-proof clause in Risks, the M9-A2 ctx-pin residual in
+  Deferred.
+- 2026-11-23 owner-ruling D47 (**`limit.context` on the six C05 radiance rows: 262144 — one family-wide figure
+  wins over per-lane served truth**). CANONICAL HOME: this entry (it was drafted into FRICTION, which is the
+  wrong document for a ruling — corrected here on the planner's fold-round catch). C05 authored its two new trios
+  at `limit.context: 200000`; the owner's own `b3d7fada8` had set the radiance family to **262144** as the
+  TRAINED window the client budgets against, with the SERVED admission (200000, `RADIANCE_MAX_MODEL_LEN`) stated
+  separately in prose. Because `.opencode/opencode.jsonc` is D27 owner-protected, the question was put rather
+  than assumed, and the owner chose convention consistency. **The reviewer's dissent is recorded because it is
+  technically correct in its own frame:** at 200000 there is no truncation class at all — that value equals every
+  lane's served admission — and the risk runs the OTHER way, a catalog above served producing loud 400s. What
+  the ruling buys is a single meaning for the field across twelve rows. Flip cost verified as ZERO test legs
+  (M8-B's window is lines 653-719 with its lone 200000 from untouched fn prose; M8-A pins 262144 on fn/q27 keys;
+  M8-A2 and M9-B compare key SETS; M9-A never reads `limit.context`); applied at `56dd745ee`.
+  Residual now CLOSED by the test round at `2b3e01cb0`: M9-A2 pins `limit.context == 262144` family-wide with a
+  prose half demanding BOTH figures named, both halves self-proving, live plants reddening and restoring
+  byte-exact. The general law this settles: **an unpinned convention is a convention that drifts back** — D27
+  taught it once, D47 confirms it, and a ruling that isn't wired into a leg is not yet finished.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

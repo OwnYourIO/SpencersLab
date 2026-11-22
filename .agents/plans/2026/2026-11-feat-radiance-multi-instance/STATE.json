@@ -88,10 +88,12 @@
       ]
     },
     "C04": {
-      "status": "review-in-flight",
+      "status": "approved",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED by ses_dfc266658ffeSn0vvFDclyIqn3 over 561527ebb + 46f24a6bd; 0 blockers / 0 majors / 3 minors (D44). Prose-honesty ruled clean: every determinism claim scoped to the scheduler leg, container leg preserved as ordinal/hostPath territory. Supersession leg proven passing by 5 out-of-band counterexamples. KEEP-list verified item by item (b1 = ADD not replace). Independent differ confirmed exactly 4 leaves.",
       "commit": "561527ebb impl (services strata region + llama-swap comments + note annotation) and the test-tier commit on top (n3 widening, strata four-leaf budget, post-C04 fixture). NOTE: the test-tier commit message is terse because long -m/--amend forms kept being denied by the shell guard; the full rationale is recorded here and in DECISIONS D40/D41.",
       "handoffs": [
         "dev: 5 designed reds green; projections show claim 1/1 + replicas 0 + KEEP-list intact; no Pending window at 0 replicas (stated plainly, not claimed as an observed restart)",
@@ -119,13 +121,15 @@
       ]
     },
     "C06": {
-      "status": "pending",
-      "wave": 4,
+      "status": "test-legs-in-flight",
+      "wave": 3,
       "depends_on": ["C01", "C02", "C03", "C04", "C05"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "2026-11-22 fold round 4 (plan tier): C06's contract is now the FULL assigned set — roster note (five claimants) + roster-suite re-pin (served-id read via RADIANCE_SERVED_ID env, dead args read at :76-84 replaced, T4 harness follows; test-session leg per D30) + D32 trio + D38(2) grep-derived falsified-law sites + D44 pair (Burstable-not-Guaranteed; one-home table rows) + dated-marker convention (TEST_SPEC:4636 / golden:1 / surface.sh:989 -> 2026-11-22; opencode.jsonc:817 untouched) + D43 prose correction + citation-prefix pass (own namespace now D1-D47). Newest assigned anchor D47; its M9-A2 ctx-pin residual is test-lane work, not this chunk's. Wave 3 per the plan (the wave field above stays coord's re-file leg)."
+      ]
     }
   },
   "blocked": [],
@@ -134,7 +138,8 @@
     "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
     "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round).",
     "2026-11-22 post-approval fold round 2 (D35): plan AC1-law/baselines/write-arm/relocation-law/Transcribed/Landing/Risks + chunks/C03.md rewritten to the intentional-delta shape + chunks/C06.md gained the D32 trio; three review-owed corrections landed (noop baselines 11/11, standing write-arm 'not run, no claim' roster, relocation intermediate-pass law). plan_status STAYS approved; C05 checked — no D35-forced change (pack scalars already DATA; AC1 compares to C03's post-state). NOTE: this entry's 'noop baselines 11/11' was a WRONG measurement — retracted by D39, corrected at the plan in fold round 3.",
-    "2026-11-22 post-approval fold round 3 (D43 GOVERNING): serve FORM joins the chart (wrapper on the configMap/env carrier class); AC1's four-path budget replaced by RUNTIME ARGV EQUALITY (dash sandbox, cheap-fake forbidden, both-direction teeth); roster FORWARD into the restructure (waves collapsed: C05 joins wave 2 after C03-r3 review, C06 tail-compressed to wave 3); plan + C03 (round-3 governing section) + C05 + C06 folded; D44 pair + D38(2) sites assigned to C06; D39 noop retraction landed at the plan (8/9 restored); D42 churn posture folded; DATA-vs-FORM list written. plan_status STAYS approved. STATE wave fields for C05/C06 stay coord's leg to re-file."
+    "2026-11-22 post-approval fold round 3 (D43 GOVERNING): serve FORM joins the chart (wrapper on the configMap/env carrier class); AC1's four-path budget replaced by RUNTIME ARGV EQUALITY (dash sandbox, cheap-fake forbidden, both-direction teeth); roster FORWARD into the restructure (waves collapsed: C05 joins wave 2 after C03-r3 review, C06 tail-compressed to wave 3); plan + C03 (round-3 governing section) + C05 + C06 folded; D44 pair + D38(2) sites assigned to C06; D39 noop retraction landed at the plan (8/9 restored); D42 churn posture folded; DATA-vs-FORM list written. plan_status STAYS approved. STATE wave fields for C05/C06 stay coord's leg to re-file.",
+    "2026-11-22 fold round 4 (coord-requested — chunk prose vs ruling chronology): chunks/C05.md carried three superseded prescriptions and is marked SUPERSEDED IN PLACE x3 (block authorship — D46, landed C03-r3; peer floors 5/4 — D45, truth 3/2, testlib constants were right; limit.context 200000 — D47, truth 262144 family convention, flip at 56dd745ee); chunks/C06.md completed with the roster-suite re-pin (served-id read → RADIANCE_SERVED_ID env; T4 harness) and the dated-marker convention (DECISIONS §Conventions states it once; C06 re-dates the three landing-round markers, jsonc:817 stays); plan re-filed to the git-verified landed chronology — wave 2 LANDED (C04 first per D44, then C03 r1-r3, then C05; the fold brief's 'C05 → C04' shorthand corrected), C06 wave 3 pending; fact 17 written (FORM/DATA landed + the review's unverified residuals); Risks carries the boot-print-is-the-only-remaining-proof clause; Deferred gains the M9-A2 ctx-pin residual. D47's canonical text lives in FRICTION.md:401 + this file's C05.ctx_ruling — relocation into DECISIONS is coord's leg. STATE staleness still coord's: C04 status/last_verdict vs D44 APPROVED; C06 wave 4 -> 3; updated_at. plan_status STAYS approved."
   ],
   "test_wave": {
     "session": "ses_dff2b1f06ffeLHvN3gSpxs0ql9",

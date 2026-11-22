@@ -30,6 +30,14 @@ composition; the literal-array-moved-to-ConfigMap cheap fake is forbidden), and 
 roster comes FORWARD into this restructure (charts/radiance deployed 4×, C05 joins the wave).
 Folded with: C04's review minors into C06 (D44 pair + D38(2) sites), the D39 noop-baseline
 retraction (8/9 stands — my round-2 "correction" was wrong), and the D42 churn-red posture.**
+**Post-approval fold round 4 (2026-11-22, coord-requested — stale chunk prose vs ruling
+chronology): the chunk files had drifted behind the rulings mid-execution — `chunks/C05.md`
+carried three superseded prescriptions (block authorship — D46; peer floors 5/4 — D45, truth 3/2;
+`limit.context: 200000` — D47, truth 262144), all marked SUPERSEDED IN PLACE with date + ruling;
+`chunks/C06.md` gained the roster-suite re-pin (served-id read → `RADIANCE_SERVED_ID` env) and the
+dated-marker convention; fact 17 records the LANDED FORM/DATA split; Wave order re-files to the
+git-verified chronology (C04 landed and was approved per D44 BEFORE C03-r3 and C05 — correcting
+the fold brief's "C05 → C04" shorthand).**
 `plan_status` STAYS `approved` — mid-execution fold on the owner's word, not a re-plan.
 
 ## Goal
@@ -174,6 +182,21 @@ prose claiming otherwise is an error, not a ruling.
     covers the INIT container only. C03-R3 dev verifies from the pinned image's layer
     tar-listing (no-daemon recipe, AGENTS.md) BEFORE writing the wrapper; either fact failing
     ⇒ NEEDS_INFO, never invention.
+17. **The D43 FORM/DATA split is LANDED law, proven by execution (C03-r3 + C05 reviews):** the
+    argv VOCABULARY and the fetch GRAMMAR are FORM — one chart copy, `fetch.sh` + `serve.sh` as
+    two data keys on the tpl'd `radiance-fetch` ConfigMap; the serve FORM carries loud
+    `${VAR:?…}` guards, the FORM-fixed flags (`--port 8000 --host :: --max-num-seqs 8
+    --kv-cache-dtype fp8`), ten optional-env arms, exactly ONE boot echo of the composed argv, and
+    `exec radiance "$@"` by BARE name (the image ENTRYPOINT resolves it; POSIX-only for busybox
+    ash — fact 16's preconditions resolved at dev round 3). The lane's model path
+    (`RADIANCE_MODEL_PATH`), served id (`RADIANCE_SERVED_ID`), tp (+`tp-wire`), context, pool,
+    memory pair, replicas, claim count and pack scalars are DATA — lane env + block scalars.
+    Evidence: all four composed vectors set-equal their ruled profiles (34/18/32/20 items) by
+    EXECUTING the shipped form against rendered env; a 42-DATA-pair ban-string sweep yielded ZERO
+    chart hits; guards rc=2 with no argv; exec proven by PID identity. UNVERIFIED per the C03-r3
+    review: real-engine flag PARSING (the sandbox is a stub), busybox/ash fidelity vs the dash
+    harness (busybox absent locally), cluster-side instantiation (owner parent sync owed) — see
+    Risks.
 
 ## Commands (validation battery — every session exports PATH first)
 `export PATH=$HOME/.local/bin:$PATH` (without it helm-guarded pytest silently mass-skips);
@@ -243,24 +266,28 @@ legitimately print fewer) ·
 |-----|-------|------|------|------------|--------------------|
 | C01 | Pool rename `gpu-r9700-1`→`gpu-r9700`, ONE atomic wave — ids-table row (product field exactly `r9700`, marketing identity in the ledger comment per D21) + all claims + both guard sweeps + notes token sweep + C1 comment fix | L | 1 | [] | the table and every claim must flip together (R-Q5: old name PENDINGs forever; split wave = stranded pods) |
 | C02 | Routing surface → radiance every tier — pipeline-models/kickoff/boards re-author (incl. the D20 Dense+Local move to `qwen3.8-27b-radiance`) + **runner literal MOVES (Leg B mandatory per D16: loop md + overview.md/AGENTS.md + t1/t3 + c11 + tsx tick `:163` + M8-H pairing-leg re-author)** + pre-existing reds cleared + rulesync regenerate | L | 1 | [] | independent of C01 (zero file overlap: `.rulesync`/`.opencode`/`.agents/loops`/`tests/{pipeline-models,provider-loops,agent-board-coord,opencode}`); id-order run keeps the rename's atomic sync story clean |
-| C03 | Generic shell — **round 3 GOVERNS (D43): chart ships the SERVE wrapper (full arg FORM) beside the landed fetch FORM on the configMap carrier; lanes pass specifics-only via env; RUNTIME-ARGV-EQUALITY gate replaces AC1's four-path budget; wrapper echo + loud guard; `:1024`/`:1235`/`:964-966` move out; rounds 1-2 landed history (`b8c01489e`)**; testlib/CI/notes carrier relocation via the dev → test re-pin → review pass | L | 2 | [C01] | the transcribed claim lines must carry the FINAL pool name (data dependency) and the n3/AC4 re-author edits the constants C01 just moved (fixture dependency) |
+| C03 | Generic shell — **round 3 GOVERNS (D43): chart ships the SERVE wrapper (full arg FORM) beside the landed fetch FORM on the configMap carrier; lanes pass specifics-only via env; RUNTIME-ARGV-EQUALITY gate replaces AC1's four-path budget; wrapper echo + loud guard; `:1024`/`:1235`/`:964-966` move out; rounds 1-2 landed history (`b8c01489e`)**; testlib/CI/notes carrier relocation via the dev → test re-pin → review pass — **LANDED + APPROVED (`5cd3c2c42`, D46): PARAMETERIZED not relocated — four composed vectors (34/18/32/20) set-equal by execution, guards loud rc=2, exec by PID identity; the two resting blocks accepted as C03 output** | L | 2 | [C01] | the transcribed claim lines must carry the FINAL pool name (data dependency) and the n3/AC4 re-author edits the constants C01 just moved (fixture dependency) |
 | C04 | **Strata REAL CLAIM (OQ-B(b), owner ruling D17)** — gpu-ai overlay positive-ADD `amd.com/gpu-r9700: 1` (+ requests mirror) on the strata container, hostPath/privileged/rocr posture KEPT (b1), `replicas: 0` in the same commit (OQ-K), corrected determinism prose (scheduler-vs-container legs), updated steady-state claim table incl. strata, OQ-R1 receipt leg + gated UUID arm, DRA revisit record | M | 2 | [C01] | the claim line must carry the FINAL pool name (data dependency); otherwise independent of C03 (different chart, different blocks — same service file, id order when both ready) |
-| C05 | **Four-release fleet (D43: COMES FORWARD into the restructure wave — the 2× deploy was itself a finding): 2 new roster keys + both new blocks in the specifics-only env shape (no inline argv), composed-argv legs for the new lanes; four-key roster render = "deployed 4×" in law; three-surface join with FULL CATALOG TRIOS (D19)** (evidence → peers → 6 catalog rows + M8 frozen-delta widened + M9 fleet legs + M4 extension) + per-lane test files + CI steps | L | 2 (after C03-r3 review, same restructure; lands in the same watched sync set) | [C01, C02, C03, C04] | C01: claim names; **C03-r3: the wrapper + env carrier these blocks feed (interface — blocks in the OLD shape would redden the composition legs);** C02: surface.sh M8 + the pipeline-models tables re-authored once on a stable base (byte-pin conflict); C04: same service file, the overlay-claim wave landed (D25) |
-| C06 | Notes & docs layer — dated annotate-never-rewrite pass: four-lane switch discipline + the strata-parked MoE bring-up runbook (fn→0 → strata→1), supersession pointers for cf-143/cf-144 prose, "one chart-value home" prose reconciliation, **the D32 trio (false `:30` header, citation-prefix pass, optional `32 GB dGPU` tag), the D44 pair (one-home table's two strata rows; llama-swap `:1335` Burstable-not-Guaranteed), the D38(2) falsified-law sites, and the D43 FORM-vs-DATA prose correction incl. the wrapper-echo receipt idiom** | S | 3 (was 4 — the tail compressed when C05 joined the restructure) | [C01, C02, C03, C04, C05] | the annotations quote the SHIPPED shape (markers + needles re-pin in the same commit as the prose they govern — cf-144 C02 precedent); the header truth, citation state, and FORM/DATA prose are only final once the restructure landed |
+| C05 | **Four-release fleet (D43: COMES FORWARD into the restructure wave — the 2× deploy was itself a finding): 2 new roster keys + both new blocks in the specifics-only env shape (no inline argv), composed-argv legs for the new lanes; four-key roster render = "deployed 4×" in law; three-surface join with FULL CATALOG TRIOS (D19)** (evidence → peers → 6 catalog rows + M8 frozen-delta widened + M9 fleet legs + M4 extension) + per-lane test files + CI steps — **LANDED + APPROVED (`8929bfbde`+`c9a3bed01`; D46 scope trim — the resting blocks were C03-r3's authorship; floors 3/2 per D45; D47 ctx flip `56dd745ee`; four-way deploy mechanically proven by the standalone appset render)** | L | 2 (after C03-r3 review, same restructure; lands in the same watched sync set) | [C01, C02, C03, C04] | C01: claim names; **C03-r3: the wrapper + env carrier these blocks feed (interface — blocks in the OLD shape would redden the composition legs);** C02: surface.sh M8 + the pipeline-models tables re-authored once on a stable base (byte-pin conflict); C04: same service file, the overlay-claim wave landed (D25) |
+| C06 | Notes & docs layer — dated annotate-never-rewrite pass: four-lane switch discipline + the strata-parked MoE bring-up runbook (fn→0 → strata→1), supersession pointers for cf-143/cf-144 prose, "one chart-value home" prose reconciliation, **the D32 trio (false `:30` header, citation-prefix pass, optional `32 GB dGPU` tag), the D44 pair (one-home table's two strata rows; llama-swap `:1335` Burstable-not-Guaranteed), the D38(2) falsified-law sites, and the D43 FORM-vs-DATA prose correction incl. the wrapper-echo receipt idiom, plus fold round 4's additions: the roster-suite re-pin (served-id read via `RADIANCE_SERVED_ID`, T4 harness) and the dated-marker convention (C05 review Nit 1) — PENDING** | S | 3 (was 4 — the tail compressed when C05 joined the restructure) | [C01, C02, C03, C04, C05] | the annotations quote the SHIPPED shape (markers + needles re-pin in the same commit as the prose they govern — cf-144 C02 precedent); the header truth, citation state, and FORM/DATA prose are only final once the restructure landed |
 
 ## Wave order
 1. **C01** (rename — the ticket's keystone), **C02** (routing — independent, run in id order).
    LANDED + APPROVED (D32/D38-era rulings; C01 `b577e32fe`, C02 `dcf9526ea`).
-2. **THE RESTRUCTURE WAVE (D43):** **C04** (strata real-claim + receipts — LANDED/APPROVED at
-   `561527ebb`/`46f24a6bd`, D44; the owner's OQ-R1 paste arrived at this chunk's turn), then
-   **C03 round 3** (the wrapper restructure; order per D35's precedent, still governing: plan fold
-   ⇒ TEST RE-PIN of the argv-bound legs ⇒ dev round 3 ⇒ review), then **C05 INSIDE THE SAME WAVE**
-   (the four-release roster is part of the restructure, not a later standalone wave — it executes
-   after C03-r3's review because its blocks are shaped by the wrapper interface, and it lands in
-   the SAME watched sync set). AC ownership: C03-R3 = wrapper FORM + existing-lane conversion +
-   their runtime-argv legs; C05 = 4-key roster render ("deployed 4×") + new-lane blocks/legs +
-   catalog/peers/evidence/M4/M8/M9 + CI steps; C06 = the prose plane.
-3. **C06** (notes layer; was wave 4 — the tail compressed with the forward move).
+2. **THE RESTRUCTURE WAVE — LANDED, ALL THREE CHUNKS APPROVED (D43).** Git-verified chronology:
+   **C04 first** (`561527ebb` impl + `46f24a6bd` tests — APPROVED per D44; the owner's OQ-R1 paste
+   arrived at this chunk's turn), then the D43 redirect split **C03**: plan fold ⇒ TEST RE-PIN of
+   the argv-bound legs (`646447079`, composition harness red-first) ⇒ dev round 3 (`5cd3c2c42`) ⇒
+   review APPROVED (`2f9eefdf6`; D46 accepted the two resting blocks as C03 output and trimmed
+   C05), then **C05** (`8929bfbde` impl + `c9a3bed01` test landing — APPROVED; the D47 owner
+   ruling followed with the ctx flip at `56dd745ee`). The fold brief's "C03-r1..r3 → C05 → C04"
+   ordering predates this re-check: C04's landing AND approval precede C03-r3 and C05 in both hash
+   order and ruling stamps. AC ownership as landed: C03-R3 = wrapper FORM + all four lanes' blocks
+   + their composition legs; C05 = four-key roster render ("deployed 4×") + peers + catalog trios +
+   CI steps + M9; C06 = the prose plane.
+3. **C06 — PENDING, the tail (wave 3):** the FULL assigned set now lives in `chunks/C06.md`
+   (roster note with five claimants, roster-suite re-pin incl. the env served-id read, D32 trio,
+   D38(2) grep-derived sites, D44 pair, dated-marker convention, D43 prose correction).
 Scout hint VALIDATED with reasons (the sibling draft's routing-first ordering was considered and
 set aside — same-file safety wins over cosmetic ordering; both plans agree the fleet wave must
 follow both): rename first because everything downstream quotes the final name and its sync is the
@@ -280,7 +307,7 @@ above is otherwise untouched.
 | fn claim pair `gpu-r9700-1: "2"` / 110Gi | MOVED to the block, name RENAMED (`gpu-r9700`), count/memory HELD (P11 law survives as DATA) |
 | q27 overlay: whole-array args + init `command` script replacement + claim-1 pin | args + ledger fields TRANSCRIBED; the whole-SCRIPT replacement SUPERSEDED by parameterized init (PACK/LFS_SHA/URL/MARKER as per-release scalars; cf-143 D27 grammar + image-identity legs survive). **MECHANISM FIXED by D35:** app-template 5.0.1 renders container `command`/`args` via plain `toYaml` with NO `tpl` (only `_name`/`_env`/`_probes`/`_volumeMounts` + configMap data are tpl'd) — so the chart ships the generic script FORM in a configMap and the blocks ship PACK/LFS_SHA/URL/MARKER as DATA; the init-carrier delta is bounded by AC1's four-path budget, not byte-equivalence. **D43 EXTENDS the same mechanism to the SERVE side:** the argv delta that row bounded is now overtaken — the serve FORM (wrapper) is chart-side too, the block passes env specifics, and runtime-argv equality replaces the four-path budget as the gate |
 | C03-r2 shipped shape: full inline argv in each lane block + sizing-scalar ledger (`:1024`/`:1235`/`:964-966`) | **SUPERSEDED by owner ruling D43 (GOVERNING):** FORM lives in the chart wrapper, specifics ride env; the ledger scalars move out (their VALUES re-home once, into env/FORM); target lane block ≈ 8-12 shipped lines. The ruled argv vectors themselves are UNCHANGED — composition must reproduce them exactly (D43 moves homes, decides nothing) |
-| `modelPath` anchor + dual-edit guard | SUPERSEDED per release: `--model` lives in each block's args; guard re-armed to block-subtree modelPath == block-args `--model`, per lane (the anchor dies with the anchor trap). **D43 re-aim:** the fence is now block `modelPath` == lane env model == COMPOSED `--model` (sandbox harness), still per lane — the cross-lane drift guard survives the move to composition |
+| `modelPath` anchor + dual-edit guard | SUPERSEDED per release. As landed (D43/D46): **no block ships an args array at all** — `--model` is COMPOSED by the chart wrapper from the lane's `RADIANCE_MODEL_PATH` env; the guard reads block-subtree `modelPath` == lane env model == COMPOSED `--model` (sandbox harness), per lane — the anchor trap dies and the cross-lane drift guard survives the move to composition |
 | `TP2_LEDGER_KEYS` scalar carriers, `test_q27_lane` single-file shape | RE-AUTHORED by the test wave: per-lane ledger carriers / parameterized lane suites (clone-the-shape idiom) |
 | NOTES.txt claim-math prose, "one chart-value home" prose | REWRITTEN as shell law + per-lane blocks (dated DECISIONS line records the deliberate change) |
 | flash-TP1 profile | TRANSCRIBE the cf-143 TP1-era array from git history (`git show e7536b2c9^:charts/radiance/values.yaml` — verified this session: `--tp 1`, pool 43000, `--kv-resident 32768`, batched 4096, served fn id) with its own served id (OQ-F — coord-disclosed default, D24) |
@@ -304,6 +331,8 @@ securityContext (drop-ALL + IPC_LOCK + groups) · lifecycle (Recreate, grace 180
 PVC + Service shape, the digest ledger).
 A flag change is ONE chart edit for all four lanes (D43(3)); a lane-specific value is one env line
 in one block. Anything that needs BOTH edited at once is a design smell — stop and escalate.
+**LANDED (C03 r3 + C05, D46): exactly this shape shipped — see Verified fact 17 for the wrapper's
+shipped details and the reviewer-proven evidence.**
 
 ## Landing shape (Deployment is a checked HITL stage — nothing here lands main)
 - Coordinator commits chunks locally on `feat-radiance-multi-instance`; **push, PR, merge, sync
@@ -361,7 +390,11 @@ in one block. Anything that needs BOTH edited at once is a design smell — stop
   composition), silent env absence (fence: the loud env guard + the boot echo), and the cheap fake
   (a literal array restated in the ConfigMap — fence: the FORM carries no per-lane argv literals,
   a grep-visible bar). The `sh`-in-image / binary-path preconditions (fact 16) gate everything:
-  verify BEFORE implementing, NEEDS_INFO if either fails.
+  verify BEFORE implementing, NEEDS_INFO if either fails. **AS LANDED (fold round 4): the gate
+  did replace static argv equality — composition was ruled genuine by the C03-r3 reviewer's own
+  harness — but the SANDBOX IS A STUB: real-engine flag ACCEPTANCE is proven only by the fn boot
+  print at the owner's sync (busybox/ash fidelity unverified locally), so the wrapper-echo +
+  D28(6) receipt pair is the sole remaining evidence leg for the live lane, not ceremony.**
 - **The two TP1 lanes cannot co-boot at transcribed memory** (110+24+5.3 > 125.08): documented
   claim/RAM math in NOTES + block comments; no silent shrink; the P11 post-boot re-pin (outside
   this ticket) is what eventually re-opens it.
@@ -453,5 +486,8 @@ C04 executes K1; if the confirmation round rejects it, C04 STOPS (no invented re
   `wekan-board-provision`, never an in-ticket board write.
 - Grafana per-lane dashboards (cf-143 follow-up card #2); gpu-cluster naming (cf-144 C04 card);
   strata on-target [VERIFY] posture (cf-144 P17 owner leg).
+- The ctx convention's teeth (fold round 4, D47 residual): M9-A2 grows a per-lane
+  `limit.context` pin (test lane) — the flip itself cost zero legs, and an unpinned convention is
+  a convention that drifts back (D27's lesson repeating).
 - Machinery (coordinator's, not this ticket's): the double-launch/cancel-but-complete class — a
   cancelled plan round CAN land a full artifact set; verify-from-disk before relaunching.
