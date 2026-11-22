@@ -205,42 +205,54 @@ def test_application_name_derivation_is_gpu_ai_radiance():
 
 
 def test_service_radiance_block_scalars_only_and_dual_edit():
-    """C04 task 2 + AC5: top-level radiance: block — scalars ONLY (deep-merge
-    REPLACE law, comment 129-134), app-template.modelPath re-pin EQUAL to the
-    chart's modelPath anchor (dual-edit law), NO rocrVisibleDevices key (no
-    env on the named-pool path)."""
+    """C04 task 2 + AC5, C03 carrier re-aim: top-level radiance: block —
+    the deep-merge REPLACE law (gotcha 3) in its POST-C03 form. The block is
+    no longer scalars-only (the lane's mechanism now lives here: args + the
+    staging command), so the law moved from "no lists" to "no list path the
+    chart shell also defines" — a block list colliding with a chart mechanism
+    list would silently REPLACE it. The modelPath anchor moved into the block
+    with the lane, so the dual-edit equality is block-internal: the anchor and
+    the serve --model are equal bytes. NO rocrVisibleDevices key (no env on
+    the named-pool path) — unchanged."""
     block = _svc().get("radiance")
     assert isinstance(block, dict), (
         "cf-143 C04: no top-level radiance: values block — the service half of the "
         "chart-into-appset wiring is missing"
     )
 
-    def walk(node, path="radiance"):
+    def walk(node, path=""):
         if isinstance(node, dict):
             for k, v in node.items():
                 yield from walk(v, f"{path}.{k}")
         elif isinstance(node, list):
             yield path, "list"
 
-    list_paths = sorted(p for p, kind in walk(block) if kind == "list")
-    assert not list_paths, (
-        f"cf-143 C04: radiance service block carries lists at {list_paths} — helm deep-merge "
-        "REPLACES lists wholesale (gotcha 3); the block is scalars-only"
-    )
     sub = block.get("app-template") or {}
+    list_paths = sorted(p for p, kind in walk(sub) if kind == "list")
+    chart_values = L.REPO_ROOT / "charts" / "radiance" / "values.yaml"
+    assert chart_values.is_file(), (
+        "cf-143 C04: charts/radiance/values.yaml missing — C02 must land first (wave 2 dep); "
+        "the merge-collision check has no chart side to compare against"
+    )
+    chart_at = yaml.safe_load(chart_values.read_text()).get("app-template") or {}
+    chart_list_paths = {p for p, kind in walk(chart_at) if kind == "list"}
+    collisions = sorted(set(list_paths) & chart_list_paths)
+    assert not collisions, (
+        f"cf-143 C04/C03: block list paths {collisions} also exist chart-side — helm deep-merge "
+        "REPLACES lists wholesale, so a collision silently drops the chart's mechanism list "
+        "(the block may carry lists only at paths the mechanism-only shell does not define)"
+    )
     assert "rocrVisibleDevices" not in sub, (
         "cf-143 C04: radiance service block re-pins rocrVisibleDevices — the named-pool "
         "path sets no ROCr/HIP env (C02 absence law)"
     )
-    chart_values = L.REPO_ROOT / "charts" / "radiance" / "values.yaml"
-    assert chart_values.is_file(), (
-        "cf-143 C04: charts/radiance/values.yaml missing — C02 must land first (wave 2 dep); "
-        "the dual-edit equality has no chart side to compare against"
-    )
-    chart_model = (yaml.safe_load(chart_values.read_text()).get("app-template") or {}).get("modelPath")
-    assert sub.get("modelPath") == chart_model, (
-        f"cf-143 C04 AC5: service modelPath {sub.get('modelPath')!r} != chart modelPath "
-        f"{chart_model!r} — anchors resolve per document, the retarget is a DUAL edit"
+    ctrl = (sub.get("controllers") or {}).get("radiance") or {}
+    args = [str(a) for a in ((ctrl.get("containers") or {}).get("radiance") or {}).get("args") or []]
+    model = args[args.index("--model") + 1] if "--model" in args else None
+    assert sub.get("modelPath") == model, (
+        f"cf-143 C04 AC5: block modelPath {sub.get('modelPath')!r} != block serve --model "
+        f"{model!r} — the anchor and the serve path are a DUAL edit (per C03 they live in the "
+        "same block, so the equality is block-internal now)"
     )
 
 

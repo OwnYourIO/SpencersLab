@@ -908,7 +908,8 @@ if want m8; then
 // (TEST_SPEC §1): the owner's catalog edit (b3d7fada8, 2026-11-22, protected by
 // DECISIONS D27 — "never those six context values") puts limit.context 262144
 // (the trained window OpenCode budgets against) on every radiance-family row,
-// while the pod SERVES --max-model-len 200000 (charts/radiance/values.yaml).
+// while the pod SERVES --max-model-len 200000 (the radiance roster block in
+// services/gpu-ai/prod/values.yaml — C03 moved lane data out of the chart).
 // The cf-143 equality needle (ctx == the shipped maxModelLen) is therefore
 // RETIRED BY RULING, not dropped: M8-B below pins the served scalar and the
 // documented divergence instead. The wire modelID is SHARED on all three rows
@@ -1013,11 +1014,16 @@ JS
   python3 - <<'PY' || fail "M8: the radiance ctx axis drifted off its ruling (served scalar / catalog figure / the comment that reconciles them)"
 import re, sys, yaml
 try:
-    vals = yaml.safe_load(open("charts/radiance/values.yaml"))
+    svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
 except FileNotFoundError:
-    sys.exit("charts/radiance/values.yaml missing — C02 not landed; the cross-chart ctx needle waits on it")
-mm = (vals.get("app-template") or {}).get("maxModelLen")
-assert mm == 200000, f"charts/radiance maxModelLen is {mm!r}, want 200000 (the pod's served admission ceiling — D17 FULL profile; the engine arg --max-model-len is pinned to the same scalar by the chart suite)"
+    sys.exit("services/gpu-ai/prod/values.yaml missing — the ctx needle's carrier (the radiance roster block) cannot be read")
+block = ((svc.get("radiance") or {}).get("app-template") or {})
+mm = block.get("maxModelLen")
+assert mm == 200000, f"radiance roster block maxModelLen is {mm!r}, want 200000 (the pod's served admission ceiling — D17 FULL profile; C03 moved this scalar with the lane; the --max-model-len arg in the same block is pinned to it by the chart suite)"
+_args = (((block.get("controllers") or {}).get("radiance") or {}).get("containers") or {}).get("radiance") or {}
+_args = [str(a) for a in (_args.get("args") or [])]
+assert "--max-model-len" in _args and _args[_args.index("--max-model-len") + 1] == "200000", \
+    f"the block's --max-model-len arg does not serve 200000 (args={_args[:2]!r}) — served scalar and anchor scalar must agree"
 src = open(".opencode/opencode.jsonc").read()
 low = src.lower()
 gap = low.find("qwen3.8-flash-next-radiance")

@@ -259,4 +259,77 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   (`4c267ca58` carried NI-1/NI-2/C04-re-arm only). A repeated promise that never lands reads as progress in
   the record, which is worse than an honest open row.
   · resolution: batched into the current repair turn with proof demanded (run T4 alone, quote the new message).
-  Standing rule: **an escalation closes on observed output, never on an intention.** · open (until quoted)
+  Standing rule: **an escalation closes on observed output, never on an intention.** · CLOSED 2026-11-22: the fences shipped in `2ee1313a2` (`require_note` guarding T2's python traceback, T3's
+     misleading grep error, T4's `cp: cannot stat`), and C02's review observed the identical clean line per arm
+     with exit 1 — quoted output, as demanded. · fixed
+- 2026-11-22 · review(C02) · **the write-arm family is bigger than M6**: a read-only review tier must decline
+  FOUR legs, not one — `pipeline-models/surface.sh M6`, `agents-md.sh c1`, `rulesync-surface.sh c7`,
+  `gate.sh t14` — while `npx --yes rulesync@37.0.0 generate --check` (exit 0, "All files are up to date") is
+  the legitimate read-only sync evidence. Consequence: "the second generate is a no-op" is UNVERIFIABLE by a
+  read-only reviewer, so that claim belongs to a writer session's transcript, never to a review verdict.
+  · resolution: briefs enumerate all four as "not run, no claim" (generalizes D33(c)). · fixed-by-this-recipe
+- 2026-11-22 · review(C02) · **two reds are OUTSIDE this ticket and have no owner here**: `rulesync-surface`
+  **c19** (cf-85 pinned "exactly one" custom field; cf-124 legitimately grew the roster to slug+Priority,
+  scoped AC2 around it, and left AC3 for a ruling nobody has given) and `gate` **t17** (warm-location
+  permissions drift). Blast radius verified zero: `git diff main...HEAD` touches no roster file and no
+  subagent file. Until ruled, every later gate run carries both BY NAME so they are not re-read as this
+  ticket's regressions.
+  · resolution: cleanest landing is one follow-up card each (owner decision); meanwhile they ride the
+  final-review packet as documented pre-existing. · open (owner: card or rule)
+- 2026-11-22 · review(C02) · **stale ok-count baselines in the plan's `## Commands`**: it recorded
+  `cf106-noop 8 ok · noop-marker 9 ok`; both observed **11 ok** with the suite files byte-identical to scout
+  HEAD (last touched pre-ticket). Scout-era counts, not drift — but a stale expected number turns an honest
+  green into a "finding", so later rounds read 11/11 from this row until the planner folds the plan file.
+  · open (planner fold owed: my tier cannot edit the plan of record OR `chunks/*.md` — both are plan-role
+  surfaces; see the coord row on chunk-scope amendments)
+- 2026-11-22 · coord-ruling D34 · **aislop: do NOT re-wrap the moved YAML comments.** The edit-time plugin runs
+  `aislop scan --changes` (advisory: echoes every diagnostic; `.opencode/plugin/aislop-gate/index.ts:62`), while
+  the gate is `aislop ci --changes`, which fails only below `failBelow: 80` or on ERROR-severity findings
+  (`.aislop/config.yml:23-24`) — warnings never fail it. And on aislop@0.20.0 **YAML is outside the scan scope
+  entirely** (verified with a ruff-bearing PATH: full-repo scan = zero findings in any `values.yaml`; prod-dir
+  scan resolves to 0 files; `ci --changes --json` scores 100 with 0 diagnostics), so dev's ~219-line echo could
+  not be reproduced on the pinned version and never reached the gate. Re-wrapping would churn relocated lane
+  bytes for a class the gate cannot flag — the repo already carries 63 over-length lines in that file.
+  · resolution: moved comments stay wrapped as moved; if the echo recurs, capture the plugin output verbatim
+  (likely a session with different tool availability). · fixed-by-ruling
+- 2026-11-22 · test wave · **C03's mechanism claim VERIFIED independently, and it indicts the plan.** From the
+  tgz extracted to `/tmp/opencode/at501`: `_command.tpl`/`_args.tpl` render via plain `toYaml` with **no `tpl`**,
+  while `_name`/`_env`/`_probes`/`_volumeMounts` ARE tpl'd (lifecycle raw at `container/_spec.tpl:27-28`). The
+  only in-library tpl carriers are configMap data (`classes/_configmap.tpl:37`) and env values — and a
+  configMap-mounted script adds `checksum/configMaps` (`lib/pod/metadata/_annotations.tpl:54,61`) plus a volume
+  and a volumeMount and rewrites the init `command`, so **both equivalence fixtures fail**. Consequence: under
+  the no-byte-move law, per-block literal scripts are the ONLY possible shape, and the plan's
+  "parameterized init" row (plan ~:205) + C03 task-1 wording are a plan-internal contradiction, now surfaced to
+  the owner. · resolution: byte-equivalence kept; the supersession row gets corrected whichever way the ruling
+  goes. · open (owner ruling on the disputed leg + the plan fold)
+- 2026-11-22 · review(C02) · **`boards` SKILL "Default selection: `Qwen Dense`" now reads two ways** — the board
+  RULE's checked item (accurate: OQ13, rule dormant) versus the blank-route default (radiance). NOT fixable
+  inside C02: c11 and M5 pin the sentence verbatim as HOLD, so prose tidying would break two green arms, and
+  the vocabulary itself is a Deferred owner leg.
+  · resolution: belongs to the board-provisioning follow-up as ONE coordinated set — the live rule's default
+  check + this line + the c11/M5 needles (TEST_SPEC §4 anticipates the move). · open (owner leg)
+- 2026-11-22 · dev(C03) · **AC5 as written is UNREACHABLE in a dev session, structurally**: "the radiance suite
+  goes green with the relocated carriers" cannot happen from a dev tier — 19 legs across 12 sites bind the
+  PRE-C03 carriers and dev never edits tests (D30). Three sites were missing from the chunk's own relocation
+  list (`test_renovate_ledger.py:106-112`, `llama-swap/test_coexistence_wiring.py`,
+  `pipeline-models/surface.sh:1016-1020`), so the suite went 24F→37F instead of converging.
+  · resolution: any chunk that MOVES a data home needs an explicit **test pass between dev and review**, and a
+  relocation list must be built by grepping the OLD carrier rather than recalled. Standing recipe for later
+  chunks; never gate a dev round on "suite green" when the green is test-owned. · fixed-by-this-recipe (the
+  plan's Commands should list the intermediate test pass — planner fold owed)
+- 2026-11-22 · dev(C03) · **aislop edit-time noise vs ci-gate silence**: the edit-time plugin echoed
+  "long line" on ~219 PRE-EXISTING lines of `services/gpu-ai/prod/values.yaml` (moved comments land at a deeper
+  indent) while `aislop ci --changes` reported 0 errors / 0 warnings over 112 files. Dev treated it as
+  advisory rather than re-wrapping 219 lines of somebody else's prose — correct restraint.
+  · resolution: scope question sent to the test session against `.aislop/config.yml` (ci scope ≠ edit-time
+  scope?); re-wrap of moved comments only if the gate demands it. · open (verification in flight)
+- 2026-11-22 · coord · **one C03 leg is a design fork, not a defect.**
+  `test_c03_generic_shell.py:154` demands the q27 block DROP its whole init script in favour of scalars; dev
+  shows that cannot coexist with byte-equivalence AC1 if app-template renders `command`/`args` verbatim (no
+  `tpl`). Dev kept AC1+AC2 and left the leg RED instead of bending the equivalence gate — the right call for a
+  chunk whose whole purpose is "relocation, not re-decision". The plan's own supersession row promised
+  "parameterized init", so this is an owner question, not a coord ruling.
+  · resolution: mechanism claim being independently verified (dependency tgz extracted under `/tmp/opencode`,
+  never into the repo) before the owner is asked, so the trade is stated on evidence: keep script bytes in the
+  lane block (equivalence intact) vs move them to a chart-side/env carrier (parameterized, but the rendered
+  pod spec changes and the fixtures must be re-derived). · open (verification + owner ruling)

@@ -173,11 +173,17 @@ if want t2; then
 import re, sys, yaml
 runbook, chart, vals_path = sys.argv[1:4]
 rb = open(runbook).read()
-cv = yaml.safe_load(open(chart))
+# C03 carrier re-aim: the serve recipe and the sizing scalars are roster-block
+# data now (the chart is a mechanism-only shell), so the equality source moved
+# from chart values to the fn block in the service file — same single source,
+# read where it ships.
+cv = yaml.safe_load(open(vals_path))
+block = ((cv.get("radiance") or {}).get("app-template") or {})
+assert block, "services radiance roster block missing in values (C04/C03 not landed?)"
 
-app = cv.get("app-template") or {}
-serve = [str(a) for a in (app.get("serveArgs") or [])]
-assert serve, "charts/radiance serveArgs missing in values (C02 not landed?)"
+serve = [str(a) for a in ((((block.get("controllers") or {}).get("radiance") or {})
+                           .get("containers") or {}).get("radiance") or {}).get("args") or []]
+assert serve, "radiance roster block serve args missing (C02/C03 not landed?)"
 
 def flag_pairs(args):
     out, i = {}, 0
@@ -194,7 +200,7 @@ def flag_pairs(args):
             out[tok] = None; seen.append(tok); i += 1
     return out, seen
 
-chart_flags, chart_seen = flag_pairs(serve)
+block_flags, block_seen = flag_pairs(serve)
 
 # The runbook's shipped-args block: fenced blocks containing the served name.
 blocks = re.findall(r"```[^\n]*\n(.*?)```", rb, re.S)
@@ -205,23 +211,25 @@ if len(shipped) != 1:
 else:
     toks = shipped[0].replace("\\\n", " ").split()
     rb_flags, rb_seen = flag_pairs(toks)
-    if rb_flags != chart_flags:
-        only_rb = {k: rb_flags[k] for k in rb_flags if k not in chart_flags or rb_flags[k] != chart_flags[k]}
-        only_chart = {k: chart_flags[k] for k in chart_flags if k not in rb_flags}
-        errs.append(f"runbook args block != chart serveArgs: runbook-side diff {only_rb}, chart-only {only_chart}")
+    if rb_flags != block_flags:
+        only_rb = {k: rb_flags[k] for k in rb_flags if k not in block_flags or rb_flags[k] != block_flags[k]}
+        only_block = {k: block_flags[k] for k in block_flags if k not in rb_flags}
+        errs.append(f"runbook args block != roster serve args: runbook-side diff {only_rb}, block-only {only_block}")
 
 # Scalars BOTH sides (cf-144 C01 TP2 re-pin: 12288 / 200000 / 8 / tp 2 / 110
 # — the memory scalar is the P11 HELD era, the pool/chunk/tp scalars are the
-# moved era).
-for num in ("12288", "200000"):
+# moved era). C03 carrier re-aim: the block side is read as PARSED scalars
+# (stronger than the old file-text needle: it names the fn block's own keys,
+# so the q27 lane's equal figures cannot false-green it).
+for num, key in (("12288", "hostPoolMib"), ("200000", "maxModelLen")):
     if num not in rb:
         errs.append(f"the runbook never names {num} (TP2 shipped scalar)")
-    if num not in open(chart).read():
-        errs.append(f"the chart values never name {num} (TP2 single-source scalar)")
+    if block.get(key) != int(num):
+        errs.append(f"the radiance roster block {key} is {block.get(key)!r}, want {num} (TP2 single-source scalar)")
 if not re.search(r"max-num-seqs[ \t\"':=-]*8\b|8[ \t-]*sessions|8 concurrent", rb):
     errs.append("the runbook never states the 8-session scalar")
-if chart_flags.get("--tp") != "2":
-    errs.append(f"chart serveArgs --tp is {chart_flags.get('--tp')!r}, want '2' — the TP2 flip "
+if block_flags.get("--tp") != "2":
+    errs.append(f"roster serve args --tp is {block_flags.get('--tp')!r}, want '2' — the TP2 flip "
                 "(doc §7/P04) never landed in the single source")
 if not re.search(r"--tp[ \t\"':=-]*2\b", rb):
     errs.append("the runbook never states tp 2 (BOTH-sides pin, cf-144 C01)")
@@ -242,8 +250,8 @@ if not re.search(r"guaranteedMemoryGi[^\n]{0,20}\b110\b", rb):
     errs.append("the runbook never states the 110 guaranteedMemoryGi scalar (guaranteedMemoryGi-context "
                 "needle — '110Gi' alone would collide with strata's limit line, C12 AC1 amendment; "
                 "cf-144 P11 keeps it 110, NOT the rejected draft 48)")
-if app.get("guaranteedMemoryGi") != 110:
-    errs.append(f"chart guaranteedMemoryGi is {app.get('guaranteedMemoryGi')!r}, want 110 HELD (P11 — "
+if block.get("guaranteedMemoryGi") != 110:
+    errs.append(f"roster block guaranteedMemoryGi is {block.get('guaranteedMemoryGi')!r}, want 110 HELD (P11 — "
                 "the DOWN re-pin awaits the first-boot print; no 48 ships this wave)")
 if re.search(r"guaranteedMemoryGi[^\n]{0,20}\b(48|40)\b", rb):
     errs.append("the runbook carries a 48/40 guaranteedMemoryGi shape — the draft-shipped 48 is "
@@ -272,7 +280,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T2: shipped-flag equality / scalar pins / gate order violated (C06 T2 — diagnostics above)"
   fi
-  ok "T2: the runbook's shipped-args block equals the chart serveArgs flag set (single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
+  ok "T2: the runbook's shipped-args block equals the roster serve-args flag set (single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
 fi
 
 # --- T3: names block + triple-digest ledger + polarity + gates a-e ---------------

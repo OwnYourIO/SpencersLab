@@ -4,7 +4,7 @@
   "plan_status_note": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
   "test_session": "ses_dff2db28effeCuASbCEHa0wIHW",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-11-22T02:40:00+00:00",
   "kickoff": {
     "card": null,
@@ -58,18 +58,24 @@
       "last_verdict": "APPROVED (0 blocker / 0 major / 4 minor-nit)"
     },
     "C02": {
-      "status": "dev-in-flight",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
       "session": "ses_dfeccdc95ffe9xp0lN1eVnl872",
+      "commit": "dcf9526ea (5 sources + 4 generated twins in ONE commit; half-landed regeneration ruled out) + companion 2ee1313a2 (c11 re-pin, roster arm fences, comment)",
+      "review_session": "ses_dfeadae95ffewwMrAiGleckctN",
       "brief_constraints": "jsonc OFF-LIMITS (D27; D20's target id already exists at :772-787, so no catalog row is needed); zero test-file edits (D30); rulesync generate is intended work here and its twins ship with the sources; C03/C04/C05/C06 designed reds must NOT be greened; M6 recorded as 'not run, no claim' per D33(c)",
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "review_rounds": 1,
+      "last_verdict": "APPROVED — 0 blockers / 0 majors / 2 minors + 1 nit. Pairing law re-verified independently (extractors -> one distinct byte -> == radiance, in-memory planted-drift + vacuity bar at surface.sh:1214-1261/:1258); ruling chain confirmed WRITTEN on all carriers; M8 range half green vs 193c12798; provider-loops 10/10 + bare 0 FAIL; agents-md c2-c12 green (c1 not run, no claim); rulesync-surface c1-c25 green except c19 (pre-existing, base+tip); tsx 15/15; generate --check 0; designed reds all confirmed owned (C03 4 / C05 20 / C04 5 / C06 roster T1-T4 fenced clean); boundaries clean (no jsonc, no charts/services, no scheduler-hygiene movement, 27b-q4 only in pipeline-models).",
+      "handoffs": [
+        "review minors folded forward, NOT fixed in C02: (M1) boards 'Default selection: Qwen Dense' now reads two ways — owner-side board-provisioning follow-up must move the live rule's default check + this line + the c11/M5 needles in ONE coordinated set (both legs pin it verbatim as HOLD today); (M2) plan Commands noop baselines are stale (8/9 vs observed 11/11 on byte-identical suites) — re-baselined below; (nit) boards bullet rewrap over-long line",
+        "review confirms for the owner: once landed, the NEXT hourly tick rides gpu-ai/qwen3.8-flash-next-radiance (fn live 1/1; if fn is down the runner 502s — accepted D16 SPOF). OpenChamber enable/cron and any manual re-sync of the deployed task stay human-owned, as do push/PR/merge/sync and Review/Finished triage."
+      ]
     },
     "C03": {
-      "status": "pending",
+      "status": "dev-in-flight",
+      "session": "ses_dfea41ff9ffe2L25Q6166zMdvy",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 0,
