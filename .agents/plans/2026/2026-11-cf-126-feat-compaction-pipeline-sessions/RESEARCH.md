@@ -547,3 +547,130 @@ patch`).
 - `experimental.subagent_depth` (default 1) and the `subagent` permission
   rows together bound the pipeline's launch tree to coord → one subagent layer;
   the shared-session design does not change that bound.
+
+---
+
+## 2026-11-22 C06 follow-up probe — the "OpenChamber compaction prompt" question (D35 revision evidence)
+
+Focused re-ask after the owner's 2026-11-22 direction: the remembered "compaction
+prompt" was checked against OpenChamber's magic-prompts family (standing probe clone
+`/tmp/opencode/cf126-c06-probe/openchamber` @ `cb45f2f`, 2026-11-21), a FRESH OpenCode
+config-schema fetch (https://opencode.ai/config.json, 2026-11-22), and OpenCode source
+`anomalyco/opencode` @ `4c7ef3e12` (dev, 2026-11-21, re-cloned to
+`/tmp/opencode/cf126-probe2/oc`). Read-only; no live-instance probes.
+
+### 1. Magic-prompt enumeration — no compaction entry exists; the /compact leg carries NO text
+
+- `packages/ui/src/lib/magicPrompts.ts` defines **46 prompt ids** (grep `id: '`: 72-933);
+  **none contains "compact"** (27 are `session.*`). The summary pair is
+  `session.summary.visible` (L355-363, template `Summarize this session{{topic_line}}.`)
+  and `session.summary.instructions` (L365-391) — the owner's remembered prompt. Its
+  default opens: "**Produce a non-destructive summary of this conversation. Do NOT
+  compact or mutate session history** — your output is an additional assistant message
+  the user will read and may use to hand off to a new session." — then sections for
+  completed/in-progress work, files, open questions, carry-forward constraints,
+  decisions, formatting rules (this is the do-not-mutate safety line the risk flag
+  below protects).
+- Command dispatch (`packages/ui/src/components/chat/composer/submit/slashCommands.ts`):
+  `/summary` IS a `MAGIC_PROMPT_COMMANDS` entry (L33-40: `visiblePrompt:
+  'session.summary.visible'`, `instructionsPrompt: 'session.summary.instructions'`,
+  `topic_block` variables L19-26); the rendered instructions ride the request as a
+  **synthetic message part** (`useComposerSubmission.ts` L527-528, L537:
+  `{ text: instructionsText, synthetic: true }`). `/compact` is instead a
+  `LOCAL_ACTION_COMMANDS` member (L114-121, `compact` at L119) — an ACTION, no prompt
+  template at all: `runComposerActionCommand.ts` L93-101 calls
+  `sessionActions.compactSession(sessionId, model?, directory?)`, and
+  `packages/ui/src/sync/session-actions.ts` L451-468 optionally switches the model, then
+  calls `opencodeClient.compactSession(sessionId, directory)` — OpenCode's compaction
+  operation. **No magic-prompt text can feed the compaction request via OpenChamber, and
+  nothing from the summary prompts leaks into the /compact leg.**
+- Edited-prompt persistence (`packages/web/server/lib/magic-prompts/DOCUMENTATION.md`,
+  Ownership + Invariants): TWO scopes, both **OpenChamber server storage — never the
+  OpenCode config file**: global overrides in `<data dir>/magic-prompts.json`
+  (`magic-prompts/routes.ts` L51; data dir = `$OPENCHAMBER_DATA_DIR` else
+  `~/.config/openchamber` — `packages/web/server/runtime.ts` L438-441), project
+  overrides in the checkout's `<repo>/.openchamber/project.json` `magicPrompts` key
+  (owned by `../projects`; `projects/DOCUMENTATION.md` L14 personal vs L27-29 shared:
+  "`version: 1`; `setupWorktree`, …, `plansDir`, and `magicPrompts`, which
+  `../magic-prompts` owns"). The DOCUMENTATION states the shared file is "**hand-edited
+  and committed**" — i.e. OpenChamber itself designs for a REPO-COMMITTED override
+  route. API: `GET/PUT/DELETE /api/magic-prompts[/:id]` (`routes.ts` L62-65), scope
+  selected by query (`scope`/`projectId`), project owner resolved by deepest registered
+  project (worktrees: the primary checkout's file wins). Settings UI page:
+  `packages/ui/src/components/sections/magic-prompts/MagicPromptsPage.tsx`.
+
+### 2. OpenCode config schema — no summary/compaction INSTRUCTION text; numbers only
+
+Fresh fetch 2026-11-22. `compaction` object properties, complete: `auto`, `background`
+(new boolean — OpenCode 2.3.1 moved background compaction out of
+`experimental.background_compaction` to `compaction.background`, on by default, per
+`CompactionSettings.tsx` L26; corrects §2's knob list from 2026-11-17), `buffer`, `keep`,
+plus the four DEPRECATED keys (`prune`, `tail_turns`, `preserve_recent_tokens`,
+`reserved`). **No prompt/instructions/summary-text field.** Top-level scan: the only
+text-bearing keys are `instructions` (array — "Additional paths or URLs supplying
+ambient instructions"), `commands.<name>` (`Config.CommandEncoded`: `template` required,
++ `description/agent/model/subagent`), and per-agent `Config.AgentEncoded.system`
+(string). None governs the compaction prompt:
+- `agents.compaction.system` settable in schema, but **NEVER consumed** — the compaction
+  code reads the hidden agent ONLY for `.model`: `yield* agents.get(Agent.ID.make(
+  "compaction"))` then `agent?.model && models.resolve(...)` (
+  `packages/core/src/session/compaction.ts` L278-291 @ 4c7ef3e12).
+- The real compaction instruction is INTERNAL, assembled by `buildPrompt`
+  (`compaction.ts` L211-224: the "Summarize only what the user and the assistant said…"
+  rule + `SUMMARY_TEMPLATE` (L170) + `SUMMARY_RULES` (L203-208, incl. "Do not mention
+  the summary process or that context was compacted")), and appended as a user message
+  AFTER hooks: "Hooks saw the request without the summary prompt, so it is appended
+  here" (L484-485, `Message.user(prompt)` at L489). Only two levers exist: pre-append
+  context into the request the hook sees (the shipped D9 mechanism — the hook can push
+  `event.system` parts / supply `event.result` outright, §2 of the 2026-11-17 round).
+- Command-template mechanics: a config `commands.*` entry's `template` is ordinary PROMPT
+  text sent to the model on invocation — it can never reach the internal SUMMARY prompt
+  of a compaction request; and in OpenChamber the `/compact` slash never hits OpenCode's
+  command registry at all (LOCAL_ACTION above), so a `/compact`-named config command
+  cannot carry instructions into the lab's compaction path even by shadowing.
+- ADJACENT (numeric knobs): OpenChamber's Compaction settings UI (`CompactionSettings.tsx`
+  L39-42 reads, L145 `PUT /api/config/compaction`) does NOT keep values in its own
+  storage — `web/server/lib/opencode/routes.ts` L554 → `websearch-config.ts` L43-50
+  (`setCompactionSettings` → `getJsonWriteTarget(layers, USER)`) → `config-v2.ts`
+  L706-724 writes `compaction.{auto,background,buffer,keep.tokens}` INTO the OpenCode
+  config file itself (user scope `~/.config/opencode/opencode.json(c)`; custom-path wins
+  if set — `config-files.ts` L669-681). So the compaction NUMBERS are
+  opencode.jsonc-settable, and the repo's own `.opencode/opencode.jsonc` can carry them
+  per the UI's own note ("A project whose own OpenCode config sets these keeps its own
+  values" — `compaction-settings.i18n.ts`). The TEXT never is.
+
+### 3. Verdict table — the three candidate landing routes for the artifact line
+
+| Route | Verdict | Evidence |
+|---|---|---|
+| (a) owner pastes the artifact line into the OpenChamber magic-prompt UI field | **SUPPORTED (with scope limit + replace-risk)** — edits `session.summary.instructions`, persisted at global scope to `~/.config/openchamber/magic-prompts.json` (machine-local, human-owned — D35's posture holds for this route). It governs the **/summary leg only**; it can NEVER touch /compact/auto compaction (no prompt leg there, §1) | slashCommands.ts L33-40 + useComposerSubmission.ts L527-537; persistence magic-prompts/DOCUMENTATION.md Ownership + routes.ts L51 + runtime.ts L438-441 |
+| (b) repo sets it via `.opencode/opencode.jsonc` | **NOT-SUPPORTED as stated** — no schema key carries summary/compaction instruction text; `agents.compaction.system` is settable-but-unread (§2); command templates don't reach compaction (§2). **REVISED: a repo-committed route exists via a DIFFERENT file** — `<repo>/.openchamber/project.json` `magicPrompts: { "session.summary.instructions": "<full default + artifact line>" }` — OpenChamber's own team-shared, hand-edited-and-committed project file; the repo does not track `.openchamber/` today (git ls-files: no hits), so this is a new tiny file. It resolves by project ownership incl. worktrees (primary-checkout wins) | absence: config.json 2026-11-22 full key scan; presence: magic-prompts/DOCUMENTATION.md Ownership ("the `magicPrompts` map of a project file is hand-edited and committed") + projects/DOCUMENTATION.md L27-29 |
+| (c) the true governing instruction is OpenCode's internal compaction prompt; hook-injection into the system array (shipped D9) is the only influence lever | **SUPPORTED — and it is the shipped design** — `buildPrompt` internal + appended post-hooks (compaction.ts L211-224, L484-491); the pipeline-locks hook already injects the pointer-summary law + the `instructions.entry` handoff note (plugin L97, L1448-1490, D9 in DECISIONS.md L21). The owner's artifact line is NOT the obey-trigger for compaction — the D9 note already is; the magic prompt only shapes the /summary output | compaction.ts @ 4c7ef3e12; .opencode/plugin/pipeline-locks/index.ts @ the ticket branch; DECISIONS.md D9 |
+
+**RECOMMENDED ROUTE:** keep (a) as the live owner-paste path (USER step 7 stands), with
+(a)+(b′) composed — but any paste/override MUST re-emit the FULL default template with
+the artifact line appended, because resolution is whole-replacement by key presence
+(`resolveMagicPromptTemplate`, magicPrompts.ts L1149-1155: project→global→builtin, first
+hit wins; DOCUMENTATION invariant "An empty string is a value and wins") — a short
+one-line override would **REPLACE the default and LOSE the "Do NOT compact or mutate
+session history" safety line** and the handoff format. That is the flagged composition
+risk. If the owner prefers the repo to carry it, route (b′) is real and cheap (one
+tracked JSON file); its own fragility: one wrong entry makes the whole project scope
+`invalid` (refused wholesale, DOCUMENTATION invariant), so a committed file deserves a
+validation needle (parse + key-presence test) in the same wave.
+
+### 4. Implications for the ticket (D35 / C06 revision)
+
+D35's clause "no repo surface sets it" is **half-refuted**: true for opencode.jsonc
+(schema + source prove no text path), FALSE in general — OpenChamber itself commits to
+`<repo>/.openchamber/project.json` as the hand-edited, version-controlled place for
+exactly this map, so the C06 artifact CAN become a tiny repo leg (add the file with the
+full default text + the one-line append) instead of paste-only — a C06 round-2 option
+for the owner to choose; if the owner keeps it a paste, D35 and USER step 7 stand
+unchanged for route (a). Either way the plan wording must now say precisely what the
+line governs: the **/summary handoff leg**, not compaction (the compaction obey-trigger
+is already the D9 `instructions.entry` note, and the pointer-summary law the D9 hook
+injection — both shipped and unaffected); and C03's §2 knob list should absorb the
+2.3.1 drift (`compaction.background` replaces `experimental.background_compaction`; the
+numbers are UI-writable into the user config, the repo's own config may hold them).
+No changes to the ask-item verdicts §6 (a)-(f) beyond this compaction-text nuance.
