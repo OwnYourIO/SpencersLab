@@ -325,23 +325,24 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     # cf-143 C01+C04 wave law (test-session re-pin, DECISIONS D13 + Q3/Q5):
     # the vllm era peer retired to commented-out (Q3 — disable, reversible),
     # and the radiance peer joined ADDITIVE beside strata (Q5 — strata lives,
-    # not one byte moves). cf-143 C15 RE-PIN (designed-RED until the q27
-    # values block lands): the third sanctioned join lands the FINAL wave
-    # state {strata, radiance, radiance-q27} — the {strata} era and the
-    # two-peer interim are closed history now (C15 dev ships peer + golden +
-    # roster in ONE commit, so no intermediate state survives a commit
-    # boundary; "every intermediate state is EXACT, never a superset
-    # grab-bag" — the cf-86 models_states precedent).
+    # not one byte moves). cf-143 C15 re-pinned to the three-key state.
+    # cf-radiance C05 RE-PIN (2026-11-22, D19): the wave is FIVE — the two
+    # resting lanes' peers (radiance-flash-tp1, radiance-q27-tp2) join the
+    # family, full trios registered deploy-ready. The intermediate eras are
+    # closed history; dev ships peers + golden + roster + catalog in one wave,
+    # so no interim state survives a commit boundary ("every intermediate
+    # state is EXACT, never a superset grab-bag" — the cf-86 models_states
+    # precedent, carried).
     wave = set(peers)
-    assert wave == {"strata", "radiance", "radiance-q27"}, (
-        f"peer entries {sorted(wave)} are not the landed cf-143 wave — DESIGNED-RED until "
-        "C15-dev lands peers.radiance-q27 (the sanctioned shape is the radiance era PLUS the "
-        "q27 join; a live vllm peer or any other third phantom is drift)"
+    assert wave == {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}, (
+        f"peer entries {sorted(wave)} are not the landed C05 wave — the sanctioned shape is "
+        "strata + the FOUR radiance lanes' peers (D19 full trios, resting lanes included); "
+        "a live vllm peer or any other key is drift"
     )
     assert golden_peers == peers, (
         f"peers block {None if golden_peers is None else sorted(golden_peers)} "
-        f"!= fresh {sorted(peers)} — the re-captured golden must mirror all three peers "
-        "(the C15 golden re-capture is dev's paired obligation, TEST_SPEC §12 golden law)"
+        f"!= fresh {sorted(peers)} — the re-captured golden must mirror all five peers "
+        "(the C05 landing-round golden re-capture, TEST_SPEC §12 golden law)"
     )
     p = peers["strata"]
     assert "apiKey" not in p, "inner apiKeys: [] is the quarantine posture — a key here contradicts Q4/Q5"
@@ -396,6 +397,28 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
             "cf-143 C15: a q27 peer apiKey contradicts the keyless ruling (D54(2)) — "
             "the owner's recipe rider was DROPPED, no secret ships on this lane"
         )
+    # cf-radiance C05 (D19): the two resting lanes, each pinned to ITS OWN
+    # evidence file (D13 per-key), floors 3 / 2 — each lane's own default class
+    # (D28/D45), never a stolen rank. Read live: dev conforms values to the
+    # evidence, never the reverse. A resting lane is a peers authority without
+    # an endpoint (replicas 0) — the hop 502s loud while it rests (D20), which
+    # is posture, not a reason to pin the block any looser than the live ones.
+    for lane in L.RESTING_RADIANCE_LANES:
+        if lane in wave:
+            ev_lane = L.radiance_lane_peers_evidence(lane)
+            hop = peers[lane]
+            assert hop == L.expected_radiance_lane_peer(ev_lane, hop.get("models")), (
+                f"C05/D19: peers.{lane} is {hop} — must equal the lane's own evidence-derived "
+                "sanctioned block (no /v1, one-id models wave, timeouts 1800/30, its OWN "
+                "priority? floor, no apiKey: keyless D8)"
+            )
+            assert "/v1" not in hop.get("proxy", ""), (
+                f"C05: {lane} proxy {hop.get('proxy')!r} carries a /v1 suffix — request paths "
+                "append verbatim (every peer's own law, the clone does not exempt it)"
+            )
+            assert "apiKey" not in hop, (
+                f"C05: a {lane} peer apiKey contradicts the keyless lanes (D8)"
+            )
 
 
 # --- criterion 3: consumer-critical surface ----------------------------------

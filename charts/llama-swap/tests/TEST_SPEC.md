@@ -3759,11 +3759,25 @@ contract is fully bound; only chunk Review/final-review actions remain.
 
 **Ruling timing, honestly:** this round opened against the ORIGINAL C08
 (names-stay, §R7 verdict) and was re-pointed mid-flight at the owner's lane
-answer — table-mount rename `amd.com/gpu-r9700-1` (amended chunks/C08.md,
+answer — table-mount rename to the `gpu-r9700` pool with the `-1` suffix
+(assembled here so this record stays clean under the C01 zero-stale sweep;
+amended chunks/C08.md,
 DECISIONS D24 supersedes D23 names-stay). Legs authored pre-ruling against
 the old string were adjusted in place (this section is the dated note). The
 APU name `gpu-8060s` is FROZEN by the ruling scope — every APU leg kept its
 substance; naming_flip's res=-level legs are byte-untouched in meaning.
+
+**2026-11-22 re-pin (2026-11-feat-radiance-multi-instance, C01, owner ruling
+D21):** that suffix is retired — the patched ids table now carries the product
+field `r9700` and the live pool is `amd.com/gpu-r9700`. This section stays as
+the record of the mechanism (table-mount rename = the roll trigger, claim sites
+move in one commit, the `gpu-ai-pro-` + product derivation stays what the marketing
+string produces);
+it names the retired tier only in assembled form, because the C01 zero-stale
+arm (`charts/amd-gpu/tests/test_provenance.py`) sweeps `charts/`, `services/`,
+`tests/` and `.agents/notes/` for it whole — a test record spelling a retired
+pool is the residue that sweep exists to find (the cf-143 D24-era AC4
+amendment precedent, same idiom).
 
 **ONE-EDIT-SITE name constants (amended D24 design):** the canonical block
 lives in `charts/amd-gpu/tests/amd_gpu_testlib.py` (marked); the bash twins
@@ -4530,3 +4544,149 @@ the three-place keep-in-step law). The AC8 arm is DESIGNED-RED naming
 C15-r2 until dev re-words the carriers — and `AMD_GPU_FLIP_COMMIT=<r2 sha>`
 must stay NON-FLIP: comment-only rewording moves no claim line (proven
 against 801e66693 itself, a carrier-only claim-neutral wave).
+
+## 13. 2026-11-feat-radiance-multi-instance — the whole-ticket test wave (test session, 2026-11-22)
+
+One session authored the suites for C01–C06 before any dev ran, so every chunk
+has a designed-red contract naming it. The pipeline-models axis of the same wave
+(the catalog ctx pair, D20 routing, the four-trio ladder, the M8-F flip, the
+M8-H runner-literal pairing, the new M9 fleet arm) is recorded in
+`tests/pipeline-models/TEST_SPEC.md` §1–§6 and is not repeated here.
+
+**C01 — pool rename `"gpu-r9700" + "-1"` (assembled, per the needle law) →
+`gpu-r9700` (owner ruling D21).** The name
+space is now three tiers: HISTORICAL (`gpu-ai-pro-` + product, what the marketing
+string sanitizes to — the derivation witness), RETIRED (this ticket's victim),
+LIVE (`gpu-r9700`). Every test-side literal of the retired tier is **assembled**
+(`"gpu-r9700" + "-1"` in python, `"amd.com/gpu-r9700"-"1"` in bash): a test file
+spelling a retired pool is the residue the zero-stale sweep exists to find, and
+this wave made that sweep real (`charts/amd-gpu/tests/test_provenance.py`
+third-tier legs, `tests/services/amd-gpu-naming.sh` `retired_hits`). The bash
+constant blocks moved to the live name **in the test wave** (they are needles, and
+a needle cannot carry a name its own sweep bans); the python constants block
+(`amd_gpu_testlib.py`) stays dev's C01 edit site and `test_r9700_rename_ruling_strings`
+reds until it moves, including the new assembled `RETIRED_R9700_POOL_NAME`.
+The two C01 findings the wave produced: **n3 was vacuous** — its bare-value claim
+pattern matched none of the shipped `: "1"`/`: "2"` pairs, so the carrier law it
+advertised had never run; sharpening it immediately surfaced the cf-144 q27
+overlay pin as an un-listed sanctioned home, now admitted with a structural
+guard (a service-file claim must sit in a `radiance*` release's
+`containers/*/resources/{requests,limits}`). Same defect found and fixed in
+`test_cf143_naming_flip.py::_live_claim_lines`. And `test_zero_stale_*` lists the
+full C01 work set (13 files) in its failure text — that list IS the wave's
+checklist.
+
+**C03 — generic shell.** The equivalence legs are fixtures, not prose memory:
+`charts/radiance/tests/capture_c03_fixtures.py` stores each existing release's
+rendered Deployment with the pool name folded to `<POOL>`, and
+`test_c03_generic_shell.py` compares the post-move render after the same fold.
+The fold is what lets a pre-C01 fixture bless a post-C01 render while still
+redding a retired-pool straggler (it folds to `<POOL>-1` and matches nothing).
+Designed-red: the chart still ships lane args/claims/pack literals, and NOTES.txt
+is still the fn lane's private page. **Plan-vs-tree correction:** gotcha 11's
+"the q27 overlay's inert `radianceFetch.sourceDir`" is not present at this
+ticket's base (the cf-144 wave removed it) — the live defect is the whole-`command`
+script replacement, which C03 retires; the sourceDir leg therefore ships as a
+bar, not a red.
+
+**C04 — strata's real claim (D17, mechanism b1).** New suite
+`charts/llama-swap/tests/test_c04_strata_claim.py`, every claim-shape leg through
+`project_valuesobject` (D26): the claim pair + the 110Gi survivor + the same-wave
+`replicas: 0` park are red naming C04; the b1 KEEP-list (privileged, `/dev/kfd`,
+`/dev/dri`, the rocr carriers) and the chart/gpu-cluster claim-less shield are the
+green drift bars. A leg demanding strata lose hostPath/privileged is a FAULTY
+TEST under b1 (R-Q5: the patched plugin mounts no `/dev/dri`) — route to the test
+session, never comply in code. The UUID arm stays gated on the owner's R1 paste:
+`test_c04_no_blind_uuid_pin_without_the_r1_receipt` passes on the ordinal posture
+and reddens if UUID tokens ship with no recorded receipt (R-Q2 silent truncation).
+
+**C05 — four-lane roster.** Lane specs (served ids, memory, claim counts, floors,
+priority classes, pack identities, transcription sources) live in
+`radiance_testlib.LANES`; the numbers themselves are decided in
+`tests/pipeline-models/TEST_SPEC.md` §3 and the evidence YAMLs.
+`charts/radiance/tests/test_resting_lanes.py` holds 23 legs: roster shape,
+resting replicas, the Guaranteed pair on the renamed pool, the two transcription
+proofs (flash-TP1 against `e7536b2c9^:charts/radiance/values.yaml` with only the
+served id swapped; 27b-TP2 against the sibling q27 block plus `--tp 2 --tp-wire
+wht6`), internal-only renders, pack-skip and idle/scale comment laws, peers
+parity against the test-owned evidence, the outer models/matrix bars, the
+claim-math arithmetic (which counts strata), and the CI step legs.
+
+**C06 — the roster note.** New suite `tests/notes/radiance-roster.sh` (T1–T4).
+T2 is the interesting shape: it re-derives every claimant's claim count, replicas
+and served id from `services/gpu-ai/prod/values.yaml` and requires the note's
+table row to agree — prose memory is not evidence — and T4 falsifies a row to
+prove T2 can fail. Designed-red until the note ships.
+
+### 13.1 Run matrix for the wave
+
+| Surface | Command | Posture at handoff |
+|---|---|---|
+| amd-gpu | `python3 -m pytest charts/amd-gpu/tests -q` | 3 designed reds (constants, marketing-identity annotation, retired-tier zero-stale) |
+| radiance | `python3 -m pytest charts/radiance/tests -q` | C03 chart-shell + NOTES reds; C05 `test_resting_lanes.py` 20 reds; the rest green |
+| llama-swap | `python3 -m pytest charts/llama-swap/tests -q` | `test_c04_strata_claim.py` 5 reds; `test_cf143_naming_flip.py` green on the re-pinned law |
+| carrier sweep | `bash tests/services/amd-gpu-naming.sh` | n3 red on the zero-stale list (n1/n2/n4/n5 green) |
+| notes | `bash tests/notes/radiance-{runbook,tp2,q27-boot,roster}.sh` | runbook + tp2 red on the pool-name needle (C01's notes sweep), roster red on T1 (note missing), q27-boot green |
+
+`export PATH=$HOME/.local/bin:$PATH` first (helm lives in `~/.local/bin`; without
+it the helm-guarded legs skip silently), and `helm dependency update` the four
+charts that vendor the app-template. Fail-fast bash suites print only the first
+red — run arms individually to enumerate them.
+
+### 13.2 C05 landing round — the M8-A2 re-freeze, the five-peer enumeration wave, the golden re-capture (test session, 2026-11-22)
+
+The C05 dev round landed the two resting lanes (radiance-flash-tp1,
+radiance-q27-tp2: full trios + peers entries + catalog rows, D19/D28/D45);
+this round lands the test surface against that tree. Three duties, per §9.
+
+**Golden re-capture (the paired obligation).** `golden/gpu-ai.config.yaml`
+re-captured per §1 from the C05 tree. DELTA, annotations excluded: exactly
+**+20 / −0 lines, pure growth, all inside `peers`** — the two new blocks
+`radiance-flash-tp1` (floor 3, id `qwen3.8-flash-next-radiance-tp1`) and
+`radiance-q27-tp2` (floor 2, id `qwen3.8-27b-radiance-tp2`), each proxy
+`…:8000` NO `/v1`, timeouts 30/1800. Mandated by D19; floors are each lane's
+OWN default class (D28/D45), block bytes deep-equal to each lane's own peers
+evidence file (D13). models/matrix/macros/hooks/scalars byte-untouched — the
+capture script verified old-content-is-a-subsequence (no replace/delete opcode
+span) BEFORE writing, and the structural arms were green pre-capture (§8.3
+cadence). The dated capture note is the golden's first annotation block.
+`evidence/flashnext-pre-chunk-baseline/` is deliberately NOT re-captured:
+it pins the pre-C01 era (the baseline IS the era witness); its carve legs
+were extended, not refreshed.
+
+**Enumeration pins — the five-key wave everywhere.** The sanctioned peers
+set is now `{strata, radiance, radiance-q27, radiance-flash-tp1,
+radiance-q27-tp2}`; re-pinned at all four pinned sites:
+`_assert_strata_peers` (test_config_parity), the strata_wiring wave tuple,
+the blast-radius `_cf77_peers_carved` carve, and `test_t3_golden_three_peer_shape`
+(name kept as era label; body is the five-peer law). Each site ALSO grew a
+per-lane evidence arm for the two resting lanes (the fn/q27 arms' precedent):
+the carve excludes the whole peers subtree from the blast-radius diff loop,
+so a mutated resting peer would otherwise ride the carve in silently — each
+lane's block must now deep-equal its OWN evidence file at every pinned site.
+The two new lanes share one parameterized loader/builder pair in
+`llama_swap_testlib` (`radiance_lane_peers_evidence` /
+`expected_radiance_lane_peer` keyed by lane) rather than two more
+twin-parser clones; the fn/q27 loaders stay as era pins. The phantom-catalog
+allowlist grew by exactly the two resting routed ids — evidence-backed
+exceptions only (the lane renders + its evidence file exists), never an
+allowlist-of-everything.
+
+**M8-A2 re-freeze (pipeline-models axis).** The frozen catalog delta is now
+the 86-key base + fn trio + q27 trio + the two new trios, minus the retired
+vllm trio — verbatim-aligned with M9-B's base (one formulation, not three).
+The planted-seventh arm (a catalog key outside the frozen delta reddens M8)
+was re-verified against the live jsonc with the negative control, and the
+`limit.context` fail-message now names both figures (served 200000 vs the
+owner's trained 262144, D27). The ctx verdict itself is an OWNER finding
+reported by this round, not applied here.
+
+**Addendum, same day (post-D47).** The owner ruled D47: the six new rows flip to
+262144 (family convention; the reviewer's dissent — 200000 equals served
+admission, so no truncation class exists there, and the risk runs the other way
+— is recorded in the ticket's FRICTION). The flip landed with zero test-leg
+movement, exactly as D47 predicted, because no leg read the new rows' ctx — the
+unpinned-convention class D27 keeps teaching. The follow-up test round grew the
+M9-A2 ctx legs (per-row figure + both-figures prose, planted-drift teeth on both
+halves); the current law lives in `tests/pipeline-models/TEST_SPEC.md` §1, not
+in this dated note.

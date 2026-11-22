@@ -45,6 +45,8 @@ SERVED_ID = "qwen3.8-flash-next-radiance"
 # facts" line is the authority, numbers from RESEARCH "Serving envelope") --------
 MODEL_PATH = "/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad"
 PACK_REPO = "StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe"
+PACK_FILE = MODEL_PATH.rsplit("/", 1)[1]
+PACK_URL = f"https://huggingface.co/{PACK_REPO}/resolve/main/{PACK_FILE}"
 PACK_BYTES = 121_969_901_568
 PACK_LFS_SHA = "0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20"
 SCALARS = {
@@ -85,9 +87,14 @@ SCALARS = {
     # topology). hostPoolMib moves 43000→12288: the TP2 pool is PER RANK
     # (2×12288 MiB ≈ 24 GiB pinned, doc §7/P04).
     "guaranteedMemoryGi": 110,
-    "hostPoolMib": 12288,
-    "maxModelLen": 200000,
-    "maxNumSeqs": 8,
+    # D43 (2026-11-22) retired "maxNumSeqs", "hostPoolMib" and "maxModelLen"
+    # from this map — it keeps only the POD-RESOURCES scalars, which are still
+    # block-authored. The retired three were argv/sizing carriers: --max-num-
+    # seqs is FORM-fixed in the serve wrapper (FORM_FIXED_FLAGS below, so the
+    # lane may not size it at all), and the pool/ctx values are per-lane ENV
+    # now — their authority is the ruled profile (FULL_PROFILE → expected_env),
+    # which the env-authority legs compare against the render. A scalar here
+    # for an env-fed value would be a dead second home.
     "cpuCores": 8,
 }
 # KV_RESIDENT_TOKENS RETIRED at cf-144 C01 (P04): the TP2 recipe drops
@@ -95,9 +102,13 @@ SCALARS = {
 # The 32768 lever was the single-card shape (D3/D17 history above); no fn leg
 # may demand it again. Its polarity replacement lives in ABSENT_FLAGS.
 
-# The serveArgs contract — ORDER-INSENSITIVE set equality (AC3): every pair
+# The serve-profile contract — ORDER-INSENSITIVE set equality (AC3): every pair
 # once; the model path splices the values anchor. `--host ::` (IPv6-any),
-# keyless (no --api-key), ngram on disk, spec 3.
+# keyless (no --api-key), ngram on disk, spec 3. D43 (2026-11-22) re-anchors
+# what this map is EQUAL to: no longer the rendered container args (those
+# bytes leave the render) but the vector the chart-owned serve wrapper COMPOSES
+# at boot from this lane's rendered env — proven by sandbox execution, see the
+# D43 harness at the file's end.
 # cf-144 C01 re-pin (P04/OQ-C "Confirm as specced"): the doc §7 TP2 recipe —
 # `--tp 2`, `--tp-wire wht6` (a PURE ADD, present nowhere in the TP1 set;
 # verified verbatim against flashnext.yaml/HF card per RQ4), per-rank pool
@@ -142,17 +153,15 @@ ABSENT_FLAGS = (
 )
 ABSENT_ENV = ("ROCR_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES")
 
-# Recipe constants dev may ledger as scalars instead of list literals (C01:
-# "dev picks the carrier shape"). The splice guard in test_serve_args reddens
-# any HALF-MOVE: a scalarized key here must equal the rendered arg. A scalar
-# under any other name is an unledgered edit — the set-equality leg alone
-# decides it.
-TP2_LEDGER_KEYS = {
-    "tp": "--tp",
-    "prefixCacheMib": "--prefix-cache-mib",
-    "maxNumBatchedTokens": "--max-num-batched-tokens",
-    "checkpointInterval": "--checkpoint-interval",
-}
+# TP2_LEDGER_KEYS RETIRED by owner ruling D43 (2026-11-22). Its era law — "dev
+# may ledger recipe constants as block scalars instead of list literals, and a
+# ledgered key must equal the rendered arg" — presupposed a rendered ARGS
+# array. D43 moves the serve argv into the chart-owned compose wrapper (the
+# lane supplies ENV, app-template renders env through tpl while args never
+# were), so there is no rendered arg to ledger against and no scalar-vs-list
+# carrier choice left to guard. The single-source law it served is carried by
+# the D43 env contract below (ENV_TO_FLAG: a flag has ONE channel; unmapped
+# RADIANCE_* names and FORM-flag envs both redden).
 
 # The fn GPU claim COUNT (cf-144 C01, shape A ruling OQ-A/P02): one pod
 # claiming BOTH R9700s — the extended-resource equal-integer pair renders
@@ -303,10 +312,13 @@ Q27_ABSENT_FLAGS = (
     "--num-speculative-tokens",
 )
 
-Q27_MEMORY = "24Gi"     # request==limit Guaranteed pair (D54(3)); cpu "8" +
-#                        # the gpu claim arrive chart-INHERITED (map deep-merge
-#                        # adds/updates, never removes — D26) and are asserted
-#                        # in the render legs as exactly that.
+Q27_MEMORY = "24Gi"     # request==limit Guaranteed pair (D54(3)); cpu "8" was
+#                        # chart-INHERITED while the chart shipped a resources
+#                        # map (map deep-merge adds/updates, never removes —
+#                        # D26). C03 moved the chart to a mechanism-only shell:
+#                        # the subtree now AUTHORS cpu beside the pair, so the
+#                        # exactness leg must count it.
+Q27_CPU = "8"           # the subtree's authored cpu pair value (post-C03)
 Q27_REPLICAS = 0        # the shipped resting state (D54(1) pod-swap); the
 #                        # 125.08-110-4.125-1.158 = 9.80 GiB node-free headroom
 #                        # makes co-scheduling arithmetically dead — both-up
@@ -619,3 +631,534 @@ def amd_gpu_ledger_names() -> dict:
             if device in ln and device not in out:
                 out[device] = m.group(2)
     return out
+
+
+# --- 2026-11-feat-radiance-multi-instance C05: the four-lane roster -------------
+# Two RESTING releases join fn + q27 (ask 4's 4x deployment). The values here are
+# the ticket's SPECS, authored in the test session; dev conforms
+# services/gpu-ai/prod/values.yaml to them (the D13 single-source law the evidence
+# YAMLs carry). Priority classes come from
+# tests/pipeline-models/TEST_SPEC.md §3 as resolved by the coordinator's follow-up
+# ruling (urgent/def cross-lane unique and strictly below the live lanes, trios
+# strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie ACCEPTED
+# — separate engines never compete for queue slots); keys are the catalog SUFFIX
+# classes: urgent > default > low under higher-wins, matching surface.sh M9-A's
+# table. Do not "simplify" a row without re-running that proof.
+FLASH_TP1_APP_NAME = "radiance-flash-tp1"
+FLASH_TP1_RELEASE = "gpu-ai-" + FLASH_TP1_APP_NAME
+FLASH_TP1_SERVED_ID = "qwen3.8-flash-next-radiance-tp1"
+FLASH_TP1_MEMORY = "110Gi"          # the fn pair held: same working set, same cgroup price
+FLASH_TP1_CLAIM_COUNT = "1"         # one card, quoted string (the shipped claim shape)
+FLASH_TP1_PEER_FLOOR = 3            # == this lane's own default class, never fn's 5
+FLASH_TP1_CATALOG_PRIOS = {"urgent": 7, "default": 3, "low": 2}
+FLASH_TP1_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+FLASH_TP1_PEER_URL = f"http://{FLASH_TP1_RELEASE}.default.svc.cluster.local:8000"   # NO /v1
+FLASH_TP1_PEERS_EVIDENCE = (
+    REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-flash-tp1-peers-expected.yaml"
+)
+# The transcription source, named by commit: the cf-143 TP1-era array (the file as
+# it stood BEFORE e7536b2c9 flipped the fn lane to TP2). The lane is that array with
+# EXACTLY one value swapped — the served-model-name — so the proof leg is a diff,
+# not a re-derived flag list.
+FLASH_TP1_TRANSCRIPTION = ("e7536b2c9^", "charts/radiance/values.yaml")
+
+Q27_TP2_APP_NAME = "radiance-q27-tp2"
+Q27_TP2_RELEASE = "gpu-ai-" + Q27_TP2_APP_NAME
+Q27_TP2_SERVED_ID = "qwen3.8-27b-radiance-tp2"
+Q27_TP2_MEMORY = "24Gi"             # q27's pair held (D28(6): the boot print adjudicates)
+Q27_TP2_CLAIM_COUNT = "2"           # both cards: the TP2 shape of the same pool
+Q27_TP2_PEER_FLOOR = 2              # == this lane's own default class
+Q27_TP2_CATALOG_PRIOS = {"urgent": 6, "default": 2, "low": 1}
+Q27_TP2_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+Q27_TP2_PEER_URL = f"http://{Q27_TP2_RELEASE}.default.svc.cluster.local:8000"        # NO /v1
+Q27_TP2_PEERS_EVIDENCE = (
+    REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-q27-tp2-peers-expected.yaml"
+)
+Q27_TP2_EXTRA_FLAGS = ("--tp", "2", "--tp-wire", "wht6")   # the ONLY add over the q27 array
+
+# The roster's four releases, in ladder order. `resting` lanes ship replicas 0 and
+# are never a default route; `live` lanes are the ones the tables name today.
+LANES = {
+    FLASH_TP1_APP_NAME: {
+        "release": FLASH_TP1_RELEASE,
+        "served_id": FLASH_TP1_SERVED_ID,
+        "memory": FLASH_TP1_MEMORY,
+        "claim": FLASH_TP1_CLAIM_COUNT,
+        "floor": FLASH_TP1_PEER_FLOOR,
+        "prios": FLASH_TP1_CATALOG_PRIOS,
+        "roster": FLASH_TP1_ROSTER,
+        "peer_url": FLASH_TP1_PEER_URL,
+        "evidence": FLASH_TP1_PEERS_EVIDENCE,
+        "pack": (MODEL_PATH, PACK_REPO, PACK_BYTES, PACK_LFS_SHA),
+        "resting": True,
+    },
+    Q27_TP2_APP_NAME: {
+        "release": Q27_TP2_RELEASE,
+        "served_id": Q27_TP2_SERVED_ID,
+        "memory": Q27_TP2_MEMORY,
+        "claim": Q27_TP2_CLAIM_COUNT,
+        "floor": Q27_TP2_PEER_FLOOR,
+        "prios": Q27_TP2_CATALOG_PRIOS,
+        "roster": Q27_TP2_ROSTER,
+        "peer_url": Q27_TP2_PEER_URL,
+        "evidence": Q27_TP2_PEERS_EVIDENCE,
+        "pack": (Q27_MODEL_PATH, Q27_PACK_REPO, Q27_PACK_BYTES, Q27_PACK_LFS_SHA),
+        "resting": True,
+    },
+}
+NEW_LANE_NAMES = tuple(LANES)
+
+
+def lane(name: str) -> dict:
+    spec = LANES.get(name)
+    assert spec is not None, f"no C05 lane spec named {name!r} (known: {sorted(LANES)})"
+    return spec
+
+
+def lane_block(name: str) -> dict | None:
+    """The top-level <lane>: block of the gpu-ai service values, or None while
+    C05-dev has not landed it — a designed red naming C05, never a skip."""
+    if not SERVICE_VALUES.is_file():
+        return None
+    return yaml.safe_load(SERVICE_VALUES.read_text()).get(name)
+
+
+def lane_region_text(name: str) -> str:
+    """Raw text (comments included) of one lane's top-level subtree — the
+    comment-carried laws (skip paragraph, 502-idle sentence, switch discipline)
+    are only visible here."""
+    lines = SERVICE_VALUES.read_text().splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^" + re.escape(name) + r":", ln)), None)
+    assert start is not None, (
+        f"C05: services/gpu-ai/prod/values.yaml carries no top-level {name}: block — dev's lane "
+        "has not landed (the comment legs are designed-red naming C05 until it does)"
+    )
+    top = start
+    while top > 0:
+        prev = lines[top - 1]
+        if prev.strip() == "" or prev.lstrip().startswith("#"):
+            top -= 1
+            continue
+        break
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"^[^ \t#]", lines[i])), len(lines))
+    return "\n".join(lines[top:end])
+
+
+@functools.lru_cache(maxsize=None)
+def _render_lane_cache(name: str) -> tuple:
+    block = lane_block(name)
+    assert isinstance(block, dict), (
+        f"C05: no {name}: subtree to render — the lane is designed-red until dev lands it"
+    )
+    with tempfile.TemporaryDirectory(prefix=f"radiance-lane-{name}-") as tmp:
+        vals = Path(tmp) / "vals.yaml"
+        with vals.open("w") as fh:
+            yaml.safe_dump(block, fh)
+        out = subprocess.run(
+            ["helm", "template", lane(name)["release"], str(CHART_DIR),
+             "-f", str(vals), "--set", "domain=spencerslab.com", "--set", "clusterName=gpu-ai"],
+            capture_output=True, text=True, timeout=300,
+        )
+        if out.returncode != 0:
+            raise AssertionError(
+                f"C05: helm template failed for the {name} lane ({lane(name)['release']}):\n{out.stderr}"
+            )
+        return tuple(d for d in yaml.safe_load_all(out.stdout) if d), out.stdout
+
+
+def render_lane(name: str):
+    """(docs, raw stdout) for one resting lane's release render."""
+    ok, reason = helm_ready()
+    assert ok, reason
+    return _render_lane_cache(name)
+
+
+def lane_peers_evidence(name: str) -> dict:
+    """Load + self-validate a resting lane's peer evidence (the q27 loader's laws,
+    the D13 per-key scope: each lane owns one file, siblings stay untouched)."""
+    path = lane(name)["evidence"]
+    assert path.is_file(), (
+        f"C05: {path} missing — the resting lanes' peer evidence is test-session-authored "
+        "(the D13 per-key single source dev conforms to)"
+    )
+    data = yaml.safe_load(path.read_text())
+    assert isinstance(data, dict) and isinstance(data.get(name), dict), f"{path.name} must carry a {name}: mapping"
+    ev = data[name]
+    states = ev.get("models_states")
+    assert isinstance(states, list) and states, f"{name} evidence needs models_states (the wave law)"
+    final = ev.get("models_allowed")
+    assert isinstance(final, list) and final and states[-1] == final, \
+        f"{name} evidence: last models_states must equal models_allowed"
+    for i, ids in enumerate(states):
+        assert isinstance(ids, list) and ids and len(set(ids)) == len(ids), \
+            f"{name} models_states[{i}] must be a non-empty duplicate-free list"
+    return ev
+
+
+# --- 2026-11-feat-radiance-multi-instance C03 round 2 (D35) ------------------
+# D35 rules the chart owns the generic init-script FORM (a configMap carrier,
+# consumed by the init container) and the lane blocks supply PACK/LFS_SHA/URL/
+# MARKER as DATA — app-template 5.0.1 renders container command/args via plain
+# toYaml (no tpl), so a chart-side script cannot ride values. These helpers
+# read the carrier WITHOUT pinning dev's naming choices: the script is found by
+# its content, the scalars' block home is dev's choice, and each lane's facts
+# are asserted against that lane's constants only (D35's cross-lane drift law).
+
+
+def configmap_docs(docs) -> list:
+    return [d for d in docs if d.get("kind") == "ConfigMap"]
+
+
+def init_script_from_render(docs):
+    """(configmap_name, data_key, script_text) of the fetch-script ConfigMap in
+    one release render, or None while the D35 carrier has not landed (the legs
+    name C03 — a designed red, never a skip). Content-identified: a data value
+    carrying a hash-applet line AND the $PACK gate variable — the generic FORM,
+    whatever dev names it. Two hits are themselves a red: one shell, one script
+    FORM (the fork class gotcha 11 names)."""
+    hits = []
+    for d in configmap_docs(docs):
+        for k, v in (d.get("data") or {}).items():
+            if isinstance(v, str) and HASH_APPLET_RE.search(v) and "$PACK" in v:
+                hits.append((d["metadata"]["name"], k, v))
+    assert len(hits) <= 1, (
+        f"C03/D35: {len(hits)} ConfigMap entries look like fetch scripts {[(n, k) for n, k, _ in hits]} — "
+        "the shell ships exactly ONE generic script FORM; per-lane script copies are "
+        "the class D35 closed"
+    )
+    return hits[0] if hits else None
+
+
+def fetch_script_and_init(docs) -> tuple:
+    """(init_container, script_text) — the D35 parse anchor pair, refusing to
+    go vacuous when the shape moves (the C11 law carried onto the carrier):
+    (a) the chart-owned script ConfigMap renders; (b) the init command is an
+    INVOCATION, not a body — no multi-line token, and it names the script's
+    data key. Red until round 2 lands the carrier; the interim shape (script
+    literal in the block command) fails (a) loudly."""
+    init = fetch_init(deployment(docs))
+    hit = init_script_from_render(docs)
+    assert hit is not None, (
+        "C03/D35: no chart-owned fetch-script ConfigMap in this render — the generic script FORM "
+        "has not landed (the interim shape carries the script inside the lane block's command, "
+        "which D35 rules out; designed-red naming C03 round 2)"
+    )
+    _name, key, script = hit
+    command = init.get("command") or []
+    assert command and all(isinstance(t, str) for t in command), (
+        f"C03/D35: init command renders {command!r} — the exec-form invocation of the mounted script "
+        "must be a non-empty string list (loud fail at start, never a sleeping container)"
+    )
+    assert not any("\n" in t for t in command), (
+        "C03/D35: the init command still embeds a multi-line script body — under D35 the command "
+        "invokes the mounted script and carries no bytes of the FORM (this is the budget's "
+        "command path)"
+    )
+    assert any(key in t for t in command), (
+        f"C03/D35: init command {[str(t) for t in command]} never references the script key {key!r} — "
+        "the mounted ConfigMap would be decoration; the init must exec the mounted file"
+    )
+    return init, script
+
+
+def chart_carrier_text() -> str:
+    """All chart-owned text — values.yaml plus every templates/ file. After
+    D35 this is where the script FORM must live and where lane pack literals
+    must NEVER appear."""
+    parts = [(CHART_DIR / "values.yaml").read_text()]
+    parts += [p.read_text() for p in sorted((CHART_DIR / "templates").glob("*")) if p.is_file()]
+    return "\n".join(parts)
+
+
+def lane_pack_literals(lane: str) -> tuple:
+    """One lane's pack identity: (lfs sha, model path, url). The drift-guard
+    legs read ONE lane's tuple per arm — a lane is never validated against the
+    sibling's values (D35: scalar sets asserted independently); the sibling's
+    tuple enters only the negative arm."""
+    if lane == "radiance":
+        return (PACK_LFS_SHA, MODEL_PATH, PACK_URL)
+    if lane == Q27_APP_NAME:
+        return (Q27_PACK_LFS_SHA, Q27_MODEL_PATH, Q27_PACK_URL)
+    raise AssertionError(f"no live-lane pack literals for {lane!r} (known: radiance, {Q27_APP_NAME})")
+
+
+# --- 2026-11-feat-radiance-multi-instance C03 round 3 (owner ruling D43) --------
+# D43 extends D35's carrier class to the SERVE side: the CHART owns the serve-argv
+# FORM (a compose wrapper shipped as a second ConfigMap script beside fetch.sh —
+# proposed key "serve.sh") and the lane blocks supply the specifics as container
+# ENV. The ruling's leverage is templating: app-template renders env through tpl,
+# args never (the exact reason per-block args went stale on the pool rename).
+# The rendered serve container therefore carries NO literal argv, and the only
+# proof that the composed vector equals the ruled profile is a RUNTIME one —
+# execute the carrier bytes against the lane's rendered env in a sandbox POSIX
+# shell and diff the vector the engine receives.
+#
+# Image receipts (this wave, registry config blob + layer listing at the pinned
+# digest 6fb0e99b…): Entrypoint ["radiance"] (BARE name, PATH resolution through
+# ENV PATH=/opt/radiance/bin:/usr/bin:/bin), rootfs is busybox-based — bin/sh is
+# busybox ash; NO dash and NO bash exist in the image, and the engine binary is
+# opt/radiance/bin/radiance. The sandbox runs busybox ash when the host has it
+# (exact match), dash otherwise; both are POSIX-class and both REJECT bash
+# arrays/[[ ]], so a wrapper that composes here composes in the pod — and a
+# bash-only wrapper reddens here, which is the point. The fidelity gap
+# (dash-vs-ash on exotic extensions) is disclosed, never silently ignored.
+
+ENV_PREFIX = "RADIANCE_"
+ENV_MODEL_PATH = ENV_PREFIX + "MODEL_PATH"
+ENV_SERVED_ID = ENV_PREFIX + "SERVED_ID"
+ENV_TP = ENV_PREFIX + "TP"
+ENV_MAX_MODEL_LEN = ENV_PREFIX + "MAX_MODEL_LEN"
+# Required: absent env must make the wrapper FAIL LOUD, never silently drop the
+# flag — a serve without --model is not a serve.
+ENV_REQUIRED = {
+    ENV_MODEL_PATH: "--model",
+    ENV_SERVED_ID: "--served-model-name",
+    ENV_TP: "--tp",
+    ENV_MAX_MODEL_LEN: "--max-model-len",
+}
+# Optional: absent env ⇒ absent flag (this is what lets the dense q27 lane omit
+# every expert-family flag without the FORM knowing which lane it serves).
+ENV_OPTIONAL = {
+    ENV_PREFIX + "TP_WIRE": "--tp-wire",
+    ENV_PREFIX + "HOST_POOL_MIB": "--host-pool-mib",
+    ENV_PREFIX + "GPU_HEADROOM_MIB": "--gpu-headroom-mib",
+    ENV_PREFIX + "KV_RESIDENT": "--kv-resident",
+    ENV_PREFIX + "PREFIX_CACHE_MIB": "--prefix-cache-mib",
+    ENV_PREFIX + "PLACEMENT": "--placement",
+    ENV_PREFIX + "NGRAM_PLACEMENT": "--ngram-placement",
+    ENV_PREFIX + "NUM_SPECULATIVE_TOKENS": "--num-speculative-tokens",
+    ENV_PREFIX + "MAX_NUM_BATCHED_TOKENS": "--max-num-batched-tokens",
+    ENV_PREFIX + "CHECKPOINT_INTERVAL": "--checkpoint-interval",
+}
+ENV_TO_FLAG = {**ENV_REQUIRED, **ENV_OPTIONAL}
+# FORM-fixed: shipped by the wrapper itself, identical for every lane; a lane
+# that supplies one of these through env is a dual-channel edit and reddens.
+FORM_FIXED_FLAGS = {
+    "--port": "8000",
+    "--host": "::",
+    "--max-num-seqs": "8",
+    "--kv-cache-dtype": "fp8",
+}
+
+
+def expected_env(profile: dict) -> dict:
+    """Project one ruled profile onto the ruled env contract: every non-FORM
+    flag must have exactly one env name; FORM-fixed flags must carry their
+    FORM value in the profile (a profile that re-prices a FORM flag is a
+    ruling contradiction caught here, not a lane freedom)."""
+    out = {}
+    for flag, value in profile.items():
+        if flag in FORM_FIXED_FLAGS:
+            assert value == FORM_FIXED_FLAGS[flag], (
+                f"D43: profile carries {flag} {value!r} but the FORM fixes it at "
+                f"{FORM_FIXED_FLAGS[flag]!r} — FORM flags are ruled, not lane-sized"
+            )
+            continue
+        names = [n for n, f in ENV_TO_FLAG.items() if f == flag]
+        assert len(names) == 1, (
+            f"D43: profile flag {flag!r} has no single env channel in the contract "
+            f"(hits {names}) — every non-FORM flag of every ruled profile must be env-fed"
+        )
+        out[names[0]] = str(value)
+    return out
+
+
+@functools.lru_cache(maxsize=None)
+def flash_tp1_profile() -> dict:
+    """The flash-TP1 ruled profile, DERIVED never recalled: the cf-143 TP1-era
+    chart array at FLASH_TP1_TRANSCRIPTION, with exactly one value swapped —
+    the served id becomes the lane's own (OQ-F). git absence or a source that
+    does not resolve fails the legs loudly (the transcription has no other
+    authority)."""
+    commit, path = FLASH_TP1_TRANSCRIPTION
+    assert shutil.which("git"), "D43: git binary absent — the transcription source cannot resolve"
+    shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
+                           timeout=120, cwd=str(REPO_ROOT))
+    assert shown.returncode == 0, f"D43: transcription source {commit}:{path} does not resolve ({shown.stderr.strip()})"
+    source = (yaml.safe_load(shown.stdout).get("app-template") or {}).get("serveArgs")
+    assert isinstance(source, list) and source, f"D43: no serveArgs array at {commit}:{path}"
+    want = {source[i]: str(source[i + 1]) for i in range(0, len(source) - 1, 2)}
+    assert "--model" in want, f"D43: the {commit} array is not a serve profile: {sorted(want)}"
+    return {f: (FLASH_TP1_SERVED_ID if f == "--served-model-name" else v) for f, v in want.items()}
+
+
+def q27_tp2_profile() -> dict:
+    """27b-TP2 = the q27 array with the TP pair applied and its own served id
+    (OQ-G) — derived from Q27_PROFILE, never a fourth literal."""
+    return {**Q27_PROFILE, "--tp": "2", "--tp-wire": "wht6",
+            "--served-model-name": Q27_TP2_SERVED_ID}
+
+
+def _docs_radiance_service():
+    return render(release="gpu-ai-radiance", service=True)[0]
+
+
+def _docs_q27():
+    return render_q27()[0]
+
+
+# The four lanes, each with its ruled profile resolver and rendered-docs
+# resolver. Legs parameterize over this map: profiles come from the constants/
+# transcriptions above, vectors come from executing the shipped carrier.
+COMPOSITION_LANES = {
+    "radiance": (lambda: FULL_PROFILE, _docs_radiance_service),
+    Q27_APP_NAME: (lambda: Q27_PROFILE, _docs_q27),
+    FLASH_TP1_APP_NAME: (flash_tp1_profile, lambda: render_lane(FLASH_TP1_APP_NAME)[0]),
+    Q27_TP2_APP_NAME: (q27_tp2_profile, lambda: render_lane(Q27_TP2_APP_NAME)[0]),
+}
+
+
+def lane_profile(name: str) -> dict:
+    return COMPOSITION_LANES[name][0]()
+
+
+def lane_docs(name: str):
+    return COMPOSITION_LANES[name][1]()
+
+
+def serve_script_from_render(docs):
+    """(configmap_name, data_key, script_text) of the serve-compose FORM in one
+    release render, or None while it has not landed (legs name D43 — designed
+    red, never a skip). Content-identified the D35 way: a ConfigMap data value
+    that composes --served-model-name (flag NAMES may live in the FORM; the
+    per-lane VALUES may not — the ban legs own that half) and is not the fetch
+    script. Two hits are themselves a red: one serve FORM per chart."""
+    hits = []
+    for d in configmap_docs(docs):
+        for k, v in (d.get("data") or {}).items():
+            if isinstance(v, str) and "--served-model-name" in v and not (
+                HASH_APPLET_RE.search(v) and "$PACK" in v
+            ):
+                hits.append((d["metadata"]["name"], k, v))
+    assert len(hits) <= 1, (
+        f"C03/D43: {len(hits)} ConfigMap entries look like serve wrappers {[(n, k) for n, k, _ in hits]} — "
+        "the shell ships exactly ONE compose FORM; per-lane argv restatements are the class D43 closed"
+    )
+    return hits[0] if hits else None
+
+
+def container_env(container: dict) -> dict:
+    """Rendered container env as {name: value} (plain values only), with the
+    single-sourcing law charged at the parse point: an env name authored twice
+    is a dual-channel edit before any comparison even runs."""
+    out = {}
+    for e in container.get("env") or []:
+        name = e.get("name")
+        assert name not in out, (
+            f"C03/D43: serve container env {name!r} is authored twice — one authority per value; "
+            "the second write silently wins per runtime and no leg downstream can see which one did"
+        )
+        out[name] = e.get("value")
+    return out
+
+
+def radiance_env(env: dict) -> dict:
+    return {k: v for k, v in env.items() if str(k).startswith(ENV_PREFIX)}
+
+
+def sandbox_shell() -> list:
+    """busybox ash when present (the image's exact shell), dash otherwise — the
+    two POSIX-class shells available to this suite; bash is deliberately NOT a
+    fallback (it would bless wrapper bash-isms the pod's ash refuses)."""
+    bb = shutil.which("busybox")
+    if bb:
+        return [bb, "ash"]
+    dash = shutil.which("dash")
+    if dash:
+        return [dash]
+    raise AssertionError(
+        "C03/D43: no POSIX sandbox shell (busybox or dash) — the compose proof cannot "
+        "run, and skipping it would pass vacuously on the exact bash-ism class it exists for"
+    )
+
+
+def compose_serve_argv(script: str, env: dict) -> dict:
+    """Execute the serve FORM in the sandbox against `env` (plus a PATH that
+    points ONLY at the stub dir — the image-law env is RADIANCE_* + PATH, and a
+    wrapper that needs anything else is a lie the pod would catch at boot).
+
+    Two runs, in order:
+      probe  — stub dir empty: the exec fails with 127 and the shell names the
+               token it could not resolve (the bare-name receipt: the image
+               resolves the engine by PATH through ENTRYPOINT ["radiance"]).
+      compose— the dir carries a stub radiance that dumps each "$@" line to a
+               file: the return value's `argv` is exactly the vector the engine
+               would receive at boot.
+
+    Returns {probe_rc, probe_token, rc, stdout, stderr, argv}; argv is None
+    when the engine never started (loud-guard runs prove THAT shape)."""
+    shell = sandbox_shell()
+    with tempfile.TemporaryDirectory(prefix="radiance-serve-") as tmp:
+        root = Path(tmp)
+        bindir = root / "bin"
+        bindir.mkdir()
+        script_path = root / "serve.sh"
+        script_path.write_text(script)
+        dump = root / "argv.dump"
+        stub = bindir / "radiance"   # created only AFTER the probe run — the probe needs it absent
+
+        def run(with_stub: bool) -> subprocess.CompletedProcess:
+            e = {k: str(v) for k, v in env.items()}
+            e["PATH"] = str(bindir)
+            if with_stub:
+                e["RAD_ARGV_DUMP"] = str(dump)
+            return subprocess.run([*shell, str(script_path)], capture_output=True,
+                                  text=True, env=e, timeout=60, cwd=str(root))
+
+        probe = run(False)
+        token = None
+        m = re.search(r"([^:]+): not found\b", probe.stderr.strip())
+        if m:
+            token = m.group(1).strip()
+        stub.write_text('#!/bin/sh\nfor a in "$@"; do printf "%s\\n" "$a" >> "$RAD_ARGV_DUMP"; done\n')
+        stub.chmod(0o755)
+        composed = run(True)
+        argv = dump.read_text().splitlines() if dump.is_file() else None
+        return {"probe_rc": probe.returncode, "probe_token": token,
+                "rc": composed.returncode, "stdout": composed.stdout,
+                "stderr": composed.stderr, "argv": argv}
+
+
+def lane_composition(name: str) -> dict:
+    """Render lane -> env -> sandbox -> (profile, env, facts). The three-tuple
+    every D43 leg compares; raises loudly at the first missing ingredient,
+    naming the ruling (carrier absent, lane not landed, env not authored)."""
+    docs = lane_docs(name)
+    hit = serve_script_from_render(docs)
+    assert hit is not None, (
+        f"C03/D43 [{name}]: no chart-owned serve-compose wrapper in the render — the lane still "
+        "carries literal argv (or nothing). D43 rules the FORM chart-owned and env-fed; "
+        "designed-red naming dev round 3"
+    )
+    _cm, _key, script = hit
+    env = radiance_env(container_env(serve_container(deployment(docs))))
+    return {"docs": docs, "script": hit, "env": env, "facts": compose_serve_argv(script, env)}
+
+
+def data_pair_bans(profiles: tuple) -> list:
+    """The cheap-fake ban list: for every DATA (flag, value) pair of every
+    ruled profile, the strings `"--flag value"` and `"--flag=value"` must not
+    appear in the serve FORM. Flag NAMES may live in the FORM — a carrier that
+    restates the VALUES does not compose from env, and a restated vector drifts
+    the moment env moves (the exact staleness class D43 exists to kill).
+    FORM-fixed pairs (flag AND value equal to the ruling) are the wrapper's
+    own shipping bytes and stay legal."""
+    out = []
+    for p in profiles:
+        for flag, value in p.items():
+            if flag in FORM_FIXED_FLAGS and str(value) == FORM_FIXED_FLAGS[flag]:
+                continue
+            out += [f"{flag} {value}", f"{flag}={value}"]
+    return sorted(set(out))
+
+
+def all_ruled_profiles() -> tuple:
+    """Every lane's ruled profile — the cheap-fake ban scans the union so a
+    carrier cannot restate a SIBLING's values to fake the compose."""
+    return (FULL_PROFILE, Q27_PROFILE, flash_tp1_profile(), q27_tp2_profile())
+
+
+# Identities no serve-FORM byte (or comment) may carry: the wrapper composes
+# paths and ids from env, so one literal here is a lane pinned into the chart.
+LANE_IDENTITY_LITERALS = (MODEL_PATH, Q27_MODEL_PATH, SERVED_ID, Q27_SERVED_ID,
+                          FLASH_TP1_SERVED_ID, Q27_TP2_SERVED_ID)

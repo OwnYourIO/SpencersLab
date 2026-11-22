@@ -31,7 +31,7 @@ Anything neither source answers is an `OPEN — measure` line, never a guess.
 `.agents/plans/2026/2026-11-cf-144-feat-radiance-tp2-expansion/`) flipped the
 fn lane to tensor-parallel 2 on the second R9700: the card-doc §7 profile
 (tp 2, tp-wire wht6, per-rank pool 12288, prefix tier 4096 IN, kv-resident
-OUT, chunk 2048) and the claim of 2 (`amd.com/gpu-r9700-1: "2"`, shape A).
+OUT, chunk 2048) and the claim of 2 (`amd.com/gpu-r9700: "2"`, shape A).
 The memory scalar is HELD at 110 by the owner's batched ruling "Hold 110,
 re-pin after the print" (cf-144 DECISIONS P11) — the DOWN re-pin to the
 first-boot printed class is a POST-TP2-BOOT owner-receipt leg, and the
@@ -92,7 +92,7 @@ Expected-name derivation — match the reads against the PATCHED table rows
 
 | read `device` | read `revision` | card | materialized pool name |
 |---|---|---|---|
-| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700-1` |
+| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700` |
 | `0x1586` | one of `0xc1`/`0xc3`/`0xc6`/`0xd1` | Radeon 8060S (Strix APU) | `amd.com/gpu-8060s` |
 
 The TP2 expectation (dated 2026-11-21, card 2 landed): the two R9700 BDFs
@@ -114,7 +114,7 @@ same-name card joined the same pool, no table edit was needed):
 kubectl describe node ai-gpu | grep -E "amd\.com"
 ```
 
-Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1`. The bare
+Expect `amd.com/gpu-r9700: 2` AND `amd.com/gpu-8060s: 1`. The bare
 `amd.com/gpu` key reads PRESENT AT COUNT 0 — kubelet retention of the
 pruned single-naming advertisement (§D2.2), not a capacity-absent signal:
 read it as 0, never as "missing". A NONZERO bare capacity means a
@@ -169,7 +169,7 @@ REQUIRES step 3. Record the actual allocatable figure in place.
 
 The TP2 claim side (cf-144 C01 dated addition — the memory terms above are
 UNCHANGED, the scalar is HELD at 110 through the flip, P11): fn now asks
-`amd.com/gpu-r9700-1: 2` — TWO of the node's two cards — so a second
+`amd.com/gpu-r9700: 2` — TWO of the node's two cards — so a second
 radiance pod (the q27 lane) cannot schedule while fn is UP even though the
 pool doubled: blocker (a) moved from pool CAPACITY to claim MATH, and the
 swap law (fn DOWN first) survives as that claim math. Beside-fn stays
@@ -242,7 +242,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Served id (single authority, D7) | `qwen3.8-flash-next-radiance` — plus the wire-siblings `-urgent` / `-low` sharing the modelID (catalog rows, C05) |
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
-| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
+| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
 | Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup; cf-144 P11 2026-11-21, annotate-never-rewrite: the TP2 flip HELD this scalar — the DOWN re-pin to the first-boot printed class is a POST-TP2-BOOT owner-receipt leg and this line re-pins only when that print exists) / `hostPoolMib: 12288` per rank at TP2 (2×12288 MiB ≈ 24 GiB pinned; the single-card era read 43000) / `maxModelLen: 200000` / `maxNumSeqs: 8` / `tp: 2` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung; cf-144 dated annotation 2026-11-21 — that tail is TP1-era scope: the live ladder rungs are pool/ctx/prefix-tier, `tp` is now a ledgered SHAPE constant, not a rung, and `guaranteedMemoryGi` ships HELD at 110 until the post-boot print (P11)) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
@@ -250,6 +250,18 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Pack | `/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad` — 113.60 GiB (121,969,901,568 B), lfs `sha256:0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20`, ungated (RESEARCH RQ0); staged on the shared `llama-swap` 500Gi claim |
 | Peer route constants | `timeouts.responseHeader: 1800` (absorbs the cold-load class), `connect: 30`, set-if-undefined floor `"priority?": 5` (`services/gpu-ai/prod/values.yaml` peers.radiance, C04 evidence file) |
 | Strata (stays live, Q5) | Deployment `gpu-ai-llama-swap-strata` — request 64Gi/8 cpu, limit 110Gi; runner route `gpu-ai/qwen3.8-flash-next-strata-q4` |
+
+> **[2026-11-22 C06 — the Strata row above is landing-era; annotate, never
+> rewrite.]** Three moves since: strata carries a REAL claim (1 of the pool of 2) and
+> parks at `replicas: 0` in the same wave (this ticket's D17 answering OQ-K —
+> the "stays live" half is superseded, the MoE bring-up order takes its place); the
+> gpu-ai overlay mirrors its memory REQUEST to the 110Gi ceiling (the pod classes
+> Burstable — cpu requests 8 with no cpu limit, per the D44 correction of the earlier
+> "Guaranteed" label); and the runner route moved — the hourly-loop literal is
+> `gpu-ai/qwen3.8-flash-next-radiance` since the 2026-11-22 ruling (chain cf-106
+> OQ-14 → 2026-11-09 strata-q4 → 2026-11-22). The five-claimant roster and the
+> combination table live in `.agents/notes/radiance-multi-instance-roster.md` — the
+> single prose authority.
 
 Digest pairing law: each ledger digest above appears 1:1 in its chart
 (`charts/radiance/values.yaml`, `charts/amd-gpu/values.yaml`) beside the
@@ -293,7 +305,7 @@ same wave. Expect, in order:
 
    — expect `Command: /root/k8s-device-plugin`, the four `Args:` (the -v=5
    trio + the strategy flag), State: Running. Consequence while the plugin
-   crashloops: NO node advertises `amd.com/gpu-r9700-1` or
+   crashloops: NO node advertises `amd.com/gpu-r9700` or
    `amd.com/gpu-8060s`, and the radiance + gpu-ai llama-swap pods sit
    Pending on pool starvation (§D1.1) — after this fix, Pending there
    means the plugin is NOT Running, not a name defect (the pool names are
@@ -317,7 +329,9 @@ same wave. Expect, in order:
    (455 bytes as rendered — recompute from `helm template charts/amd-gpu`
    on any table edit) — plus "Reporting 1 devices as amd.com/gpu-…" per pool
    (§R6-Q4's fifth-receipt list, receipt b; cf-144 dated: at TP2 the R9700
-   pool prints "Reporting 2 devices as amd.com/gpu-r9700-1" — the live
+   pool prints "Reporting 2 devices as amd.com/gpu-r9700" [transcription
+   correction 2026-11-22, per the D21 rename wave: token moved in place; the
+   print then carried the retired `-1` suffix on this string] — the live
    witness of card 2 joining the same name, EXPLORE §0 — while the APU pool
    stays at 1). Any other count means the
    overlay did not apply (or the table moved): the stock file is a
@@ -329,7 +343,7 @@ same wave. Expect, in order:
    kubectl describe node ai-gpu | grep -E "amd\.com"
    ```
 
-   Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1` at the TP2
+   Expect `amd.com/gpu-r9700: 2` AND `amd.com/gpu-8060s: 1` at the TP2
    shape (cf-144 dated: the R9700 pool reads 2 since card 2 joined the same
    7551/C0 name — gate (a)'s per-BDF receipts above; the pre-TP2 reading was
    one device per pool), and the bare
@@ -894,6 +908,13 @@ restore against step 3's baseline — that pair of deltas is the acceptance
 file's tail: the owner's "good metrics from Radiance" set is complete only
 with the before/after both sides.
 
+**[2026-11-22 C06 — the runner check above moved; annotate, never rewrite.]** The
+curl above still verifies the RESTORED strata lane after the handshake; what it no
+longer verifies is the hourly runner — the 2026-11-22 ruling (chain cf-106 OQ-14 →
+2026-11-09 strata-q4 → 2026-11-22) moved the runner literal to
+`gpu-ai/qwen3.8-flash-next-radiance`, so a strata-lane 200 and a radiance-lane 200
+are now two separate receipts, and the roster note carries the routing table.
+
 ## Step 11 — Rollback
 
 Three classes, cheapest first — and the command law holds here too: this
@@ -931,6 +952,74 @@ record: `gpu-ai-vllm` sat at 0 replicas out-of-band BEFORE the ticket —
 this repo never added a `replicas: 0` key (owner Q3 ruling) — so whoever
 zeroed it owns that fact (RESEARCH OQ6) and a re-enable sync returns one
 replica with no GitOps archaeology.
+
+## Step 12 — per-lane scale-up acceptance (added by the multi-instance wave, 2026-11-22)
+
+The roster wave parked three more radiance releases (`radiance-q27`,
+`radiance-flash-tp1`, `radiance-q27-tp2`) and turned strata into a claimed lane at 0 —
+the roster table, the claim math and the combination verdicts are in
+`.agents/notes/radiance-multi-instance-roster.md`. Accept any parked lane with this
+shape; it adds no repo-side mutation — reads, curls, and the OWNER-EXECUTED scale acts
+per lane.
+
+**(a) 502-idle receipt first.** While a lane rests at `replicas: 0` its peers hop must
+answer the 502 peer-proxy error (cf-143 D57's loud-refusal law — the idle lane answers
+loudly, never silently). Through the outer chain:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://llama.spencerslab.com/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3.8-27b-radiance","max_tokens":8,"messages":[{"role":"user","content":"ack"}]}'
+```
+
+Expect `502`. A 200 here means the lane is UP out of band (an owner scale act — not a
+repo change), and git-vs-live needs reconciling before anything else is accepted.
+
+**(b) Scale up (OWNER-EXECUTED), then the boot-print capture.** The capture is the leg
+the lane's numbers ride on — the cf-143 D28(6)/D30(2) printed-budget law: read the
+printed tiers, sum them, and pin the held value against the print. The held values are
+OQ-F (110, the fn-class pair flash-TP1 rides) and OQ-G (24Gi, the q27-class pair; the
+q27 lane's own 24Gi is the cf-144 P05 pin); an UP move happens ONLY by a fresh owner
+ruling, never by a console edit or a chart tweak.
+
+```bash
+# OWNER-EXECUTED — operator runs this, never GitOps-ized (Q10; git stays parked):
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=1
+```
+
+Wait out the startupProbe envelope (30-minute class, `/health`), then read the boot:
+
+```bash
+kubectl -n default logs deploy/gpu-ai-radiance-q27 --tail=-1 \
+  | grep -iE 'pinned|budget|argv|wire|P2P'
+```
+
+The wrapper's startup echo is the D43 visibility receipt for the COMPOSED argv —
+`kubectl describe` shows wrapper + env, never the final vector, so this echo (not the
+render) is what the engine actually received. Compare the printed budget terms against
+the lane's held value and record the pair; the git-side twin of the equality is the
+suite's composed-vector law.
+
+**(c) The 502 → 200 flip.** Repeat leg (a)'s curl: expect a 200 completion on the
+lane's own served id. The flip 502 → 200 with no git change IS the acceptance artifact
+for the lane's route; a lane answering 200 while the roster table says 0 is git drift,
+not health.
+
+**(d) Park it back (OWNER-EXECUTED).** Return the lane to its rendered resting value;
+git is authority, so a lane that stays UP past its recorded acceptance is drift:
+
+```bash
+# OWNER-EXECUTED — operator runs this:
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=0
+```
+
+**(e) Strata extra leg — the ROCr receipt before any restore-back.** Before restoring
+strata, re-check the C04 determinism receipt on the CURRENT host state: host `rocminfo`
+first, and remember the claim pins WHO may schedule beside the lane, not WHICH chip the
+container enumerates (the `/dev/dri` hostPath half stays outside plugin accounting; the
+UUID arm only bites where the host reports nonzero `unique_id`s — a zero renders
+`Invalid-UUID` and the ordinal law alone decides). Then the step-10 handshake and the
+roster note's bring-up order (fn's request off the node first) govern.
 
 ## OPEN — measure (nothing above answered it)
 

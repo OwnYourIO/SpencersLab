@@ -287,16 +287,18 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 - **models** — the sole routing input is the checked Model(s) items (D12).
   Default first: if NO item is checked (a card created outside the
   multi-action rule's reach), route from the standard default selection —
-  `Qwen Dense` on the local provider — WITHOUT mutating the card. Then: exactly one checked →
+  `gpu-ai/qwen3.8-flash-next-radiance`, per the `pipeline-models`
+  blank-Model(s) rule — WITHOUT mutating the card. Then: exactly one checked →
   that model for every tier; several checked →
   the largest drives planning (plan / research / final review), the smallest
   drives code (test / dev / chunk review). The combos are routes, not
   options: `Qwen Flash` + `Local` checked together → assume it's Qwen Flash
-  Next, `gpu-ai/qwen3.8-flash-next-strata-q4` (Strata default, q4 per the
-  owner ruling 2026-11-09; other flash-next quants only on explicit
-  request); `Qwen Dense` + `Local` → `gpu-ai/qwen3.8-27b-q4`
-  unless another quant is explicitly requested; only **Local** checked →
-  `gpu-ai/qwen3.8-27b-q4` for every role. Transition alias (temporary): a
+  Next, `gpu-ai/qwen3.8-flash-next-radiance` (the served quality lane, the
+  default since the owner ruling 2026-11-22, D16; other quants only on
+  explicit request, per `pipeline-models`); `Qwen Dense` + `Local` →
+  `gpu-ai/qwen3.8-27b-radiance` unless another quant is explicitly requested
+  (owner ruling 2026-11-22, D20); only **Local** checked →
+  `gpu-ai/qwen3.8-flash-next-radiance` for every role. Transition alias (temporary): a
   live card whose Model(s) checklist still names the dense item `Qwen 27b`
   is consumed as `Qwen Dense`, while a card carrying `Qwen Flash` keeps its
   meaning; the alias exists only until the owner renames the live checklist

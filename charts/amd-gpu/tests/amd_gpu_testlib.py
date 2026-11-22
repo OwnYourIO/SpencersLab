@@ -24,18 +24,27 @@ from pathlib import Path
 import yaml
 
 # ---------------------------------------------------------------------------
-# GPU RESOURCE-NAME CONSTANTS — C08 OWNER LANE RULING LANDED (2026-11-12,
-# mid-test-round amendment; DECISIONS D24 supersedes D23 names-stay). The
-# rename is decided: table-mount lane → the R9700 pool is amd.com/gpu-r9700-1
-# (§R7-Q2: the closest name ANY mechanism produces — the amd.com namespace and
-# the gpu- prefix are CODE constants; the bare "gpu-r9700-1 minus gpu-"
-# string the owner first asked is UNREACHABLE and must never appear as a
-# claim). APU pool UNCHANGED; the overlay/peers/catalog/strata surfaces
-# untouched by the ruling. The pre-C08 pool name is the HISTORICAL value —
-# zero-stale AC4 sweeps it from charts/, services/, tests/ and .agents/notes/;
-# it lives on only in pipeline records (DECISIONS/plan/TEST_SPEC/RESEARCH/git)
-# and in this file ASSEMBLED so the sweep cannot trip on its own needle (the
-# vllm_testlib LEGACY_REF precedent).
+# GPU RESOURCE-NAME CONSTANTS — 2026-11-feat-radiance-multi-instance C01 RE-PIN
+# (owner ruling D21; DECISIONS D24's suffixed pool is SUPERSEDED — the `-1`
+# suffix retires, the pool keeps the product-derived stem). Three name tiers,
+# ONE edit site:
+#   LIVE        gpu-r9700 — derived, never typed from thin air: the ids-table
+#               PRODUCT FIELD is exactly the bare model token, the sanitizer
+#               port prefixes gpu- unconditionally, and the amd.com namespace
+#               is a CODE constant (§R7-Q1). A product carrying the pool name
+#               would derive gpu-gpu-...; the marketing string derives the
+#               HISTORICAL tier instead — the derivation witness below.
+#   RETIRED     the D24 suffixed pool (this ticket's rename victim), held ONLY
+#               ASSEMBLED below. AC4 zero-stale sweeps charts/, services/,
+#               tests/ and .agents/notes/, and the carrier law this suite
+#               states (tests/services/amd-gpu-naming.sh) makes a contiguous
+#               needle itself the residue the sweep hunts — so neither this
+#               header nor any constant may carry the retired string whole;
+#               the history lives in pipeline records and in git instead.
+#   HISTORICAL  the pre-C08 baked name, assembled on the same law (the
+#               vllm_testlib LEGACY_REF precedent).
+# APU pool UNCHANGED; the overlay/peers/catalog/strata surfaces untouched by
+# the ruling.
 # This block + the marked blocks at tests/services/amd-gpu-naming.sh,
 # tests/notes/radiance-runbook.sh and tests/notes/radiance-tp2.sh's tops are
 # the ONLY name needles ticket-wide: any future lane change edits HERE, never
@@ -43,23 +52,26 @@ import yaml
 # charts/llama-swap/tests/test_cf143_naming_flip.py resolve THIS module (the
 # ledger's home chart is the names' single source).
 GPU_RESOURCE_PREFIX = "amd.com/"                       # code constant (§R7-Q1)
-R9700_POOL_NAME = "gpu-r9700-1"                       # THE ruling (D24); patched-table row
-APU_POOL_NAME = "gpu-8060s"                           # frozen by the ruling scope
-BARE_GPU_CLAIM = "amd.com/gpu"                        # gpu-cluster claim; C10/D26: carried by the
+R9700_POOL_NAME = "gpu-r9700"                          # THE ruling (D21); patched-table row
+APU_POOL_NAME = "gpu-8060s"                            # frozen by the ruling scope
+BARE_GPU_CLAIM = "amd.com/gpu"                         # gpu-cluster claim; C10/D26: carried by the
 #                                                        gpu OVERLAY ADD (the chart default
 #                                                        is claim-less — a tree-global claim
 #                                                        cannot be retired through the appset
 #                                                        chain); the NAME never renames
 R9700_CLAIM = GPU_RESOURCE_PREFIX + R9700_POOL_NAME
 APU_CLAIM = GPU_RESOURCE_PREFIX + APU_POOL_NAME
-# Pre-C08 pool name, assembled so no AC4-swept file ever carries it whole:
-HISTORICAL_R9700_POOL_NAME = "gpu-ai-pro-" + "r9700"  # superseded-by-mount (D24)
+# D24's suffixed pool, retired by D21, assembled so no AC4-swept file carries it whole:
+RETIRED_R9700_POOL_NAME = "gpu-r9700" + "-1"           # superseded pool tier (C01 wave)
+# Pre-C08 pool name, assembled on the same law (the derivation witness):
+HISTORICAL_R9700_POOL_NAME = "gpu-ai-pro-" + "r9700"
 # The plugin's const IDsPath the patched table mounts over (§R7-Q2; the
 # Dockerfile COPY law is what makes the ConfigMap overlay effective):
 IDS_PATH = "/usr/share/libdrm/amdgpu.ids"
 IDS_TABLE_KEY = "amdgpu.ids"
-# The sanitizer-traced product string for the 7551/C0 row (D24/§R7-Q2):
-R9700_PRODUCT_STRING = "r9700-1"
+# The ids-table PRODUCT FIELD for the 7551/C0 row (D21): EXACTLY the bare model
+# token — the sanitizer adds gpu-, so this is the product, never the pool:
+R9700_PRODUCT_STRING = "r9700"
 # ---------------------------------------------------------------------------
 
 # The vendored upstream identity (D23: HISTORY only — the conversion ends the

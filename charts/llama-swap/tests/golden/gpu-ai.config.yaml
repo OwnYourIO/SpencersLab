@@ -1,6 +1,18 @@
-apiKeys: []
-globalTTL: 0
-healthCheckTimeout: 3600
+# 2026-11-22 RE-CAPTURE (2026-11-feat-radiance-multi-instance C05 LANDING ROUND, test session;
+# delta note TEST_SPEC §13.2, golden law §12/§9 — re-capture is the landing round's, never a dev
+# edit). Captured from the C05 tree: services/gpu-ai/prod/values.yaml renders under the real
+# appset release name via llama_swap_testlib.render_docs("gpu-ai") (the §1 extract-and-render
+# pattern). DELTA vs the prior (cf-143 C15, three-peer) capture, annotations excluded:
+# exactly +20 lines / -0 lines, all inside the peers subtree —
+#   + peers.radiance-flash-tp1  (floor priority? 3, models [qwen3.8-flash-next-radiance-tp1],
+#     proxy http://gpu-ai-radiance-flash-tp1.default.svc.cluster.local:8000 NO /v1, timeouts 30/1800)
+#   + peers.radiance-q27-tp2    (floor 2, models [qwen3.8-27b-radiance-tp2],
+#     proxy http://gpu-ai-radiance-q27-tp2.default.svc.cluster.local:8000 NO /v1, timeouts 30/1800)
+# Mandated by D19 (resting lanes register deploy-ready: full trios + peers entries), floors per
+# D28/D45 (each lane's OWN default class — 3 and 2, never fn's 5 / q27's 4), block bytes per D13
+# (each lane's own peers evidence file is the single source; the render is byte-equal to the
+# evidence-derived sanctioned shape). models/matrix/macros/hooks/scalars byte-untouched — the
+# growth is PURE (old content verified a subsequence of the fresh render before capture).
 # 2026-10-29 OOM ruling (cf-77 strata): qwen3.8-27b-q8 dropped from preload —
 # llama.cpp lives on unified RAM the strata arena now shares; lazy-load only.
 # 2026-11-02 owner ruling, same law taken to its end: the embedding model left
@@ -9,6 +21,9 @@ healthCheckTimeout: 3600
 # instances, and a strata cold-pin needs 46.84-71.73 GiB of it. Re-pinned here
 # exactly as the q8 drop was; the preload VALUE is policed by
 # llama_swap_testlib.C04_PRELOAD_PINNED, not by this fixture.
+apiKeys: []
+globalTTL: 0
+healthCheckTimeout: 3600
 hooks:
   on_startup:
     preload: []
@@ -1367,6 +1382,16 @@ peers:
     timeouts:
       connect: 30
       responseHeader: 1800
+  radiance-flash-tp1:
+    filters:
+      setParams:
+        priority?: 3
+    models:
+    - qwen3.8-flash-next-radiance-tp1
+    proxy: http://gpu-ai-radiance-flash-tp1.default.svc.cluster.local:8000
+    timeouts:
+      connect: 30
+      responseHeader: 1800
   radiance-q27:
     filters:
       setParams:
@@ -1374,6 +1399,16 @@ peers:
     models:
     - qwen3.8-27b-radiance
     proxy: http://gpu-ai-radiance-q27.default.svc.cluster.local:8000
+    timeouts:
+      connect: 30
+      responseHeader: 1800
+  radiance-q27-tp2:
+    filters:
+      setParams:
+        priority?: 2
+    models:
+    - qwen3.8-27b-radiance-tp2
+    proxy: http://gpu-ai-radiance-q27-tp2.default.svc.cluster.local:8000
     timeouts:
       connect: 30
       responseHeader: 1800

@@ -4,7 +4,7 @@
   "plan_status_note": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
   "test_session": "ses_dff2db28effeCuASbCEHa0wIHW",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-11-22T02:40:00+00:00",
   "kickoff": {
     "card": null,
@@ -35,7 +35,11 @@
       "Deployment"
     ],
     "stages_basis": "Same lifecycle set as cf-144's checked Lifecycle (coordinator-stated at launch). Exploration DONE (EXPLORE.md), Pre Research DONE (RESEARCH.md storm round), Planning DONE + APPROVED 2026-11-22 (plan committed at f6198fdc3 on 'Approve - run all waves' + the OQ-K/K1 confirmation, D26); Test Writing in flight (session ses_dff2b1f06ffeLHvN3gSpxs0ql9 — the first attempt ses_dff2db28effeCuASbCEHa0wIHW was cancelled by the owner mid-catalog-edit and had written nothing); Chunk Development/Chunk Review pending wave order C01+C02 -> C03+C04 -> C05 -> C06; Final Review pending; Deployment checked -> landing shape is owner-gated push/PR/merge/sync per pipeline-push-pr discipline.",
-    "hitl": ["Planning", "Final Review", "Deployment"],
+    "hitl": [
+      "Planning",
+      "Final Review",
+      "Deployment"
+    ],
     "claim": {
       "pipeline": null,
       "note": "No board card and no pipeline lock claimed — owner-directed in-session work; the hourly board-coord gate does not own this run; recorded honestly per the boards convention."
@@ -43,71 +47,133 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "commit": "b577e32fe (impl+notes, 9 files); companions 0c6c58871 test wave, 4c267ca58 NI-1/NI-2 + C04 gate re-arm",
+      "handoffs": [
+        "dev round 1 (ses_dfef47132ffePQg0L6QD3ccyn6): 9 impl+notes files, zero test paths; n1/n2/n4/n5 green, lint/template green, aislop 0E/0W; NEEDS_INFO NI-1 (amd_gpu_testlib.py constants + TEST_SPEC:4556) + NI-2 (test_provenance.py:512 defective needle) routed to the test session per law",
+        "coord ruling D30: test-file edits are NEVER assignable to dev (permissions deny tests/**) — the python needle twin must be pre-flipped by the test wave, exactly like the bash twin",
+        "dev round 2 (same session): restored the cf-143 C08 'upstream feature ask' clause at charts/radiance/values.yaml:349 (its own regression, self-reclassified from 'constants-lag'); full 570-line diff audit found no other required loss; radiance back to the designed 24F/79P (C03 x4 + C05 x20), amd-gpu 0F/36P, naming 5 ok, aislop 0/0",
+        "REVIEW APPROVED (ses_dfed7ef7dffepz4DI7R7c4O7rE): 0 blockers / 0 majors / 4 minors-nits. Per-AC evidence met; atomicity proven by CONTENT audit (n2 is only a file-set guard); renders byte-checked (TAB row, claim pairs, q27 pinned '1', zero OVERRIDE_); every C02/C03/C04/C05/C06 leg confirmed still red; D30 split judged correct; D31 held (no early-green credited to C01; runbook T5 verified a legitimately-shrunk C06 leg, not a broken gate). Minors: citation-prefix collisions (folded into C06 per D32), roster T4 harness (owed to test session), values.yaml:30 orphan prose (D32), _NEW_NAME_ALLOW comment (test nit)."
+      ],
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (0 blocker / 0 major / 4 minor-nit)"
     },
     "C02": {
-      "status": "pending",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "session": "ses_dfeccdc95ffe9xp0lN1eVnl872",
+      "commit": "dcf9526ea (5 sources + 4 generated twins in ONE commit; half-landed regeneration ruled out) + companion 2ee1313a2 (c11 re-pin, roster arm fences, comment)",
+      "review_session": "ses_dfeadae95ffewwMrAiGleckctN",
+      "brief_constraints": "jsonc OFF-LIMITS (D27; D20's target id already exists at :772-787, so no catalog row is needed); zero test-file edits (D30); rulesync generate is intended work here and its twins ship with the sources; C03/C04/C05/C06 designed reds must NOT be greened; M6 recorded as 'not run, no claim' per D33(c)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED — 0 blockers / 0 majors / 2 minors + 1 nit. Pairing law re-verified independently (extractors -> one distinct byte -> == radiance, in-memory planted-drift + vacuity bar at surface.sh:1214-1261/:1258); ruling chain confirmed WRITTEN on all carriers; M8 range half green vs 193c12798; provider-loops 10/10 + bare 0 FAIL; agents-md c2-c12 green (c1 not run, no claim); rulesync-surface c1-c25 green except c19 (pre-existing, base+tip); tsx 15/15; generate --check 0; designed reds all confirmed owned (C03 4 / C05 20 / C04 5 / C06 roster T1-T4 fenced clean); boundaries clean (no jsonc, no charts/services, no scheduler-hygiene movement, 27b-q4 only in pipeline-models).",
+      "handoffs": [
+        "review minors folded forward, NOT fixed in C02: (M1) boards 'Default selection: Qwen Dense' now reads two ways — owner-side board-provisioning follow-up must move the live rule's default check + this line + the c11/M5 needles in ONE coordinated set (both legs pin it verbatim as HOLD today); (M2) plan Commands noop baselines are stale (8/9 vs observed 11/11 on byte-identical suites) — re-baselined below; (nit) boards bullet rewrap over-long line",
+        "review confirms for the owner: once landed, the NEXT hourly tick rides gpu-ai/qwen3.8-flash-next-radiance (fn live 1/1; if fn is down the runner 502s — accepted D16 SPOF). OpenChamber enable/cron and any manual re-sync of the deployed task stay human-owned, as do push/PR/merge/sync and Review/Finished triage."
+      ]
     },
     "C03": {
-      "status": "pending",
+      "status": "review-in-flight",
+      "session": "ses_dfea41ff9ffe2L25Q6166zMdvy",
       "wave": 2,
-      "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 3,
+      "review_rounds": 2,
+      "last_verdict": "rounds 1-2 APPROVED (D38/b8c01489e); round 3 (D43) APPROVED by ses_dfb81053cffe0J33FP9kyGIaa7 over LIVE hash 5cd3c2c42 (the hash originally recorded, 3d412e3d3, was a pre-amend twin orphaned by my own --amend; tree byte-identical, see FRICTION)",
+      "review_notes": "C03 R3 (D43) APPROVED. Central question answered: PARAMETERIZED, not relocated — reviewer's own dash harness composed 34/18/32/20-item vectors matching git-derived profiles, 42 DATA-pair ban strings yielded ZERO chart hits, guards rc=2 with no argv, exec proven by PID identity. Two-wide invariance legs ruled LEGITIMATE (no pre-move fixture exists for a never-shipped lane). Held numbers intact, no unruled change. Not verified: real-engine flag parsing (stub only), busybox/ash fidelity (busybox absent locally), cluster reconciliation. Owner sync: the single boot echo of composed argv is the receipt.",
+      "handoffs": [
+        "2026-11-22 D35 FOLD (plan tier): round 1's fork resolved by owner ruling — chart owns the generic init FORM via a configMap carrier; AC1 replaced by the four-path intentional-delta proof; relocation-pass law (dev → test re-pin → review) written into the contract. Per D35's order, NEXT is a TEST WAVE re-aim of the equivalence legs to the diff-budget shape, THEN dev round 2, THEN review. Contract now in chunks/C03.md; the round-1 designed-red 4 stays within the D31 inventory.",
+        "2026-11-22 D43 FOLD round 3 (plan tier, GOVERNING): rounds 1-2 landed APPROVED (D38) but the owner reversed the serve-side shape — R3 contract now in chunks/C03.md. Order (D35 precedent): TEST RE-PIN of the argv-bound legs FIRST (inventory in the plan fold-round entry + C03 R3 relocation task: the two four-path budget legs + their planted-drift twin, test_serve_args (its _serve_args reads rendered args), test_q27_lane args/absence legs, test_c03_model_path_and_serve_headroom_agree_per_lane, chart-bare mechanism legs, radiance-runbook/tp2 args extractors, fixture re-derivation at the new base), THEN dev round 3 (FIRST act = verify sh + engine binary in radiance:1.17.0 from layer listings — fact 16), THEN review. C04's strata legs are UNAFFECTED (test_c04_strata_claim.py carries zero argv assertions; strata renders from the llama-swap chart)."
+      ]
     },
     "C04": {
-      "status": "pending",
+      "status": "approved",
       "wave": 2,
-      "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED by ses_dfc266658ffeSn0vvFDclyIqn3 over 561527ebb + 46f24a6bd; 0 blockers / 0 majors / 3 minors (D44). Prose-honesty ruled clean: every determinism claim scoped to the scheduler leg, container leg preserved as ordinal/hostPath territory. Supersession leg proven passing by 5 out-of-band counterexamples. KEEP-list verified item by item (b1 = ADD not replace). Independent differ confirmed exactly 4 leaves.",
+      "commit": "561527ebb impl (services strata region + llama-swap comments + note annotation) and the test-tier commit on top (n3 widening, strata four-leaf budget, post-C04 fixture). NOTE: the test-tier commit message is terse because long -m/--amend forms kept being denied by the shell guard; the full rationale is recorded here and in DECISIONS D40/D41.",
+      "handoffs": [
+        "dev: 5 designed reds green; projections show claim 1/1 + replicas 0 + KEEP-list intact; no Pending window at 0 replicas (stated plainly, not claimed as an observed restart)",
+        "escalated 2 test-side defects, fixed by the test wave: n3 radiance-only placement predicate (twin drift vs the widened python leg, both-direction plants proven) and the frozen pre-ticket strata byte-pin (replaced by an enumerated 4-leaf budget + 4 planted-drift teeth + a forward post-C04 pin so the carve is one-time)",
+        "110Gi question CLOSED against me (D41): the value is cf-143 chart truth (limits were already 110Gi; requests mirrored to it -> Guaranteed QoS), and fn+strata RAM>node enforces never-co-exist a second time below the GPU math. No owner round needed.",
+        "battery: llama-swap 517P/9S/0F (zero designed reds left), radiance 20F/93P (C05 only), amd-gpu 36P, vllm 36P, naming 5 ok, notes green except roster (C06), surface m1-m8 green / m9 red (C05), m6 never run",
+        "D40 interim posture applied: .aislop/history.jsonl reverted before scope-guard legs (t14/c8/t6 all clear once clean)"
+      ],
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": null
     },
     "C05": {
-      "status": "pending",
-      "wave": 3,
-      "depends_on": ["C01", "C02", "C03", "C04"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "status": "approved",
+      "wave": 2,
+      "depends_on": [
+        "C01",
+        "C02",
+        "C03",
+        "C04"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED by ses_dfb558832ffeyoV39i2qWqWNbZ over 8929bfbde (impl) + c9a3bed01 (test landing round). 0 blockers / 0 majors / 2 minors / 2 nits.",
+      "review_notes": "Q1 four-way deployment REAL and mechanically proven beyond dev's limitation: the reviewer rendered charts/base/templates/appset-charts.yaml STANDALONE (byte-identical copy, self-contained template) with the real service values + serviceName=gpu-ai → 8 matrix elements, 4 radiance lanes, names derive to gpu-ai-radiance-flash-tp1 / gpu-ai-radiance-q27-tp2. STILL UNPROVEN until the owner syncs the parent gpu-ai base: cluster-side instantiation + live repo/path annotations (not upgraded to verified). Q2 live lanes ZERO drift: exactly 1 deleted line (the D46 relabel); block-granular SHA-256 identical base→HEAD for all four lanes and both live peers sub-blocks. Q3 numbers all ruled values; never-co-boot arithmetic stated in 6 places. Teeth: M8-A2 + M9-B planted-seventh both REDEN and are structurally one formulation (M9-B parses M8-A2's own base keys); phantom leg still BANS (in-process plant reddens). MINOR 1: no leg pins the new rows' limit.context either way — after the owner's 262144 ruling, M9-A2 must grow a per-lane ctx pin (test session). MINOR 2: chunks/C05.md stale prose (block authorship D46, floors 5/4 D45, ctx 200000) — planner fold; review ran on ruling chronology.",
+      "ctx_ruling": "OWNER 2026-11-23: flip the six new rows to limit.context 262144 (family convention; trained window vs served 200000 stated separately). Reviewer's dissent recorded and is informative, not blocking: 200000 equals all four lanes' served admission so there is NO truncation class at 200000; over-budget risk runs the other way (262144 catalog > 200000 served ⇒ loud server 400). Flip cost confirmed ZERO test legs. Applied by dev round ses_dfb421d98ffe4i9SbLPkG9BSst.",
+      "handoffs": [
+        "2026-11-22 D43 fold (plan tier): C05 COMES FORWARD into the restructure wave per D43(4) — plan of record carries it at wave 2 (after C03-r3 review, same watched sync set); the wave/status fields above stay coord's leg to re-file. Its blocks are authored in the D43 specifics-only env shape (zero inline argv); its designed-red 20 legs split: roster/replicas/claims/Guaranteed/sentinel legs stand, args-equality legs re-aim to composed-argv via the sandbox harness.",
+        "2026-11-22 coord re-file (my leg per the fold): wave 3 -> 2 per D43(4). SCOPE TRIM PER D46 — the two resting lane blocks are LANDED as C03 round-3 output (3d412e3d3); C05 must NOT re-author them. C05's remaining scope is exactly: the four roster `charts:` entries, the peers entries, the D19 catalog trios, the CI extraction steps, and surface M9. Its six designed reds (roster x2, peers x2, CI x2) + M9 are the whole front. chunks/C05.md still lists block authorship and floors 5/4: the block lines are superseded by D46 and the floors by D45 (3/2) — PLANNER OWES THAT FOLD, my tier cannot edit chunk files.",
+        "2026-11-22 carried to C05's brief: floors 3/2 (D45), no block re-authoring (D46), served-id/pack identity for resting lanes gated block+env side (C03 file's lane_pack_literals raises for resting lanes by design — D46 note), and D43(2) boot-echo receipt expectation per lane."
+      ]
     },
     "C06": {
-      "status": "pending",
-      "wave": 4,
-      "depends_on": ["C01", "C02", "C03", "C04", "C05"],
+      "status": "review-in-flight",
+      "wave": 3,
+      "depends_on": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "2026-11-22 fold round 4 (plan tier): C06's contract is now the FULL assigned set — roster note (five claimants) + roster-suite re-pin (served-id read via RADIANCE_SERVED_ID env, dead args read at :76-84 replaced, T4 harness follows; test-session leg per D30) + D32 trio + D38(2) grep-derived falsified-law sites + D44 pair (Burstable-not-Guaranteed; one-home table rows) + dated-marker convention (TEST_SPEC:4636 / golden:1 / surface.sh:989 -> 2026-11-22; opencode.jsonc:817 untouched) + D43 prose correction + citation-prefix pass (own namespace now D1-D47). Newest assigned anchor D47; its M9-A2 ctx-pin residual is test-lane work, not this chunk's. Wave 3 per the plan (the wave field above stays coord's re-file leg)."
+      ]
     }
   },
   "blocked": [],
+  "final_review": {
+    "status": "in-flight",
+    "session": "ses_dfae44584ffetHOUru9MO3GP3R",
+    "scope": "whole-plan: the owner's five asks vs the shipped tree; cross-chunk coherence after THREE mid-execution reversals (D35, D43, D45/D46/D47); unruled-change sweep over main..HEAD; adequacy of the runtime-argv evidence chain and the minimum receipt set; and the coordinator-rule list this ticket earned.",
+    "premise_verified": "all six chunks individually APPROVED; repo at ZERO designed reds except the documented out-of-ticket pair c19 (cf-124 boards custom-field count) and t17 (warm-location permissions drift), both reproduced byte-identical at base; held numbers re-derived from the tree by C06's review and matching the roster matrix."
+  },
   "rounds": [
     "2026-11-22 plan round 1 (double-launch collision folded — DECISIONS D13; sibling draft in PARALLEL-DRAFT.md)",
     "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
-    "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round)."
+    "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round).",
+    "2026-11-22 post-approval fold round 2 (D35): plan AC1-law/baselines/write-arm/relocation-law/Transcribed/Landing/Risks + chunks/C03.md rewritten to the intentional-delta shape + chunks/C06.md gained the D32 trio; three review-owed corrections landed (noop baselines 11/11, standing write-arm 'not run, no claim' roster, relocation intermediate-pass law). plan_status STAYS approved; C05 checked — no D35-forced change (pack scalars already DATA; AC1 compares to C03's post-state). NOTE: this entry's 'noop baselines 11/11' was a WRONG measurement — retracted by D39, corrected at the plan in fold round 3.",
+    "2026-11-22 post-approval fold round 3 (D43 GOVERNING): serve FORM joins the chart (wrapper on the configMap/env carrier class); AC1's four-path budget replaced by RUNTIME ARGV EQUALITY (dash sandbox, cheap-fake forbidden, both-direction teeth); roster FORWARD into the restructure (waves collapsed: C05 joins wave 2 after C03-r3 review, C06 tail-compressed to wave 3); plan + C03 (round-3 governing section) + C05 + C06 folded; D44 pair + D38(2) sites assigned to C06; D39 noop retraction landed at the plan (8/9 restored); D42 churn posture folded; DATA-vs-FORM list written. plan_status STAYS approved. STATE wave fields for C05/C06 stay coord's leg to re-file.",
+    "2026-11-22 fold round 4 (coord-requested — chunk prose vs ruling chronology): chunks/C05.md carried three superseded prescriptions and is marked SUPERSEDED IN PLACE x3 (block authorship — D46, landed C03-r3; peer floors 5/4 — D45, truth 3/2, testlib constants were right; limit.context 200000 — D47, truth 262144 family convention, flip at 56dd745ee); chunks/C06.md completed with the roster-suite re-pin (served-id read → RADIANCE_SERVED_ID env; T4 harness) and the dated-marker convention (DECISIONS §Conventions states it once; C06 re-dates the three landing-round markers, jsonc:817 stays); plan re-filed to the git-verified landed chronology — wave 2 LANDED (C04 first per D44, then C03 r1-r3, then C05; the fold brief's 'C05 → C04' shorthand corrected), C06 wave 3 pending; fact 17 written (FORM/DATA landed + the review's unverified residuals); Risks carries the boot-print-is-the-only-remaining-proof clause; Deferred gains the M9-A2 ctx-pin residual. D47's canonical text lives in FRICTION.md:401 + this file's C05.ctx_ruling — relocation into DECISIONS is coord's leg. STATE staleness still coord's: C04 status/last_verdict vs D44 APPROVED; C06 wave 4 -> 3; updated_at. plan_status STAYS approved."
   ],
   "test_wave": {
     "session": "ses_dff2b1f06ffeLHvN3gSpxs0ql9",
-    "status": "authored, repair turn running (provider-loops syntax fix + per-leg observation); NOT yet committed",
+    "status": "COMMITTED at 0c6c58871 (23 paths; aislop 0E/0W over 112 files; provider-loops syntax repair + per-leg observation landed; D28/D29 encoded; D-11 self-reported test defect fixed in-wave)",
     "observed_at_authored": "amd-gpu 3F/33P · radiance 24F/79P (71 pre-existing green) · llama-swap 5F/510P/9S · vllm 36P · naming n3 RED / n1,n2,n4,n5 PASS · notes runbook T3 RED, tp2 T3 RED, q27-boot GREEN · agents-md c11 RED · tsx tick 1 designed fail · surface.sh M1,M2,M5,M8,M9 RED (designed), M3,M4,M7 GREEN · provider-loops t1 RED, t3 UNOBSERVED (fail-fast) then file BROKEN at :223 (now being repaired) · aislop ci --changes 0E/0W over 112 files",
-    "coord_rulings_this_round": ["D28 priority ladder (reject negatives; floors 3/2; cross-peer low tie)", "D29 blank Model(s) default (Flash->radiance, 10+ stays 27b-q4)"],
+    "coord_rulings_this_round": [
+      "D28 priority ladder (reject negatives; floors 3/2; cross-peer low tie)",
+      "D29 blank Model(s) default (Flash->radiance, 10+ stays 27b-q4)"
+    ],
     "coordinator_constraint": "I cannot execute suites myself (permissions deny bash/wc/grep-pipe) — every number above is the test author's observation, and per-chunk review re-runs are the gate."
   },
   "deferred": [

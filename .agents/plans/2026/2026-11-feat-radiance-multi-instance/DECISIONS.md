@@ -4,7 +4,8 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 rejected, why.
 
 ## Conventions
-- D-number namespace: THIS ticket's decisions occupy D1–D25; any citation to another ticket's
+- D-number namespace: THIS ticket's decisions occupy D1–D47 and forward (the namespace grew
+  mid-execution; fold-round records count); any citation to another ticket's
   decision (cf-143/cf-144/cf-86 …) MUST carry its ticket prefix — bare `D21`, `D24`, `D8`, `D13`
   mean THIS file. (cf-143 recycles the same numbers; unqualified reuse is a dev-error generator.)
 - Pool string law: from C01's wave the ONLY live name is `amd.com/gpu-r9700`;
@@ -36,6 +37,13 @@ rejected, why.
 - `export PATH=$HOME/.local/bin:$PATH` before any helm-backed run; pytest per-directory; never run
   the rulesync-WRITING legs (`surface.sh` M6, agents-md c1, gate t14, rulesync-surface c7) in a
   read-only session; evidence YAMLs are test-session property, dev conforms.
+- Dated-entry law (adopted 2026-11-22, plan fold round 4 from the coord's lean on the C05 review's
+  Nit 1): an entry is dated by the OWNER RULING it records — the ruling's own recorded date — never
+  by the authoring agent's wall clock, and an entry recording a work round with no ruling takes the
+  commit-stamp date. Agent TZs disagree mid-work: three C05-round markers read 2026-11-23 against
+  2026-11-22 commit stamps (C06 re-dates them; `.opencode/opencode.jsonc:817` stays — it is
+  ruling-anchored to D47's 2026-11-23). Stated ONCE here; files cite this line, they do not
+  restate the convention. `STATE.json`'s `updated_at` stays workspace-clock (cf-96 OQ4).
 - Git law unchanged: coordinator is sole committer; nothing pushes/merges/advances main; landing
   = owner push/PR/merge/sync (pipeline-push-pr discipline; Deployment is a checked HITL stage).
 
@@ -266,6 +274,326 @@ rejected, why.
   because that would put it on the PARKED q27 lane: a second silent failure on the same surface, after D16
   already concentrated every other tier on the single live fn lane. Recorded in
   `tests/pipeline-models/TEST_SPEC.md` §4 so dev and review read one law instead of a gap.
+- 2026-11-22 coord-ruling D30 (**test-file edits are never assignable to a dev tier** — from C01's NI-1/NI-2).
+  Dev permissions deny `tests/**` by design, so any chunk instruction of the form "dev flips this constant in
+  the testlib" is unsatisfiable and silently transfers work that belongs to the test wave. Binding for
+  C02-C06: every needle home (bash AND python AND `TEST_SPEC` prose) is pre-flipped by the test session; dev
+  changes only implementation, values, notes and generated surfaces; a leg dev believes is wrong is escalated
+  as NEEDS_INFO and repaired by the test session, never by dev, review or me. Corollary proven this round: the
+  python twin at `amd_gpu_testlib.py:46` and the spec heading at `TEST_SPEC.md:4556` had to move in the SAME
+  test-session turn as the bash twins, because n3's zero-stale sweep scans `tests/` too.
+- 2026-11-22 coord-ruling D31 (**gate-integrity rule for early-green legs**): a leg that turns green on an
+  incidental token is a BROKEN gate, not progress. `test_c04_supersession_annotation_on_the_2026_10_27_ruling`
+  went green on dev's `renamed 2026-11-22` date comment rather than on C04's substance; it is re-anchored to
+  the real claim + same-wave `replicas: 0` and must stay a designed red until C04 lands. Reviewers may not
+  credit a chunk for a leg that was already green when the chunk started — the per-chunk designed-red
+  inventory in STATE is the baseline, not the count at review time.
+- 2026-11-22 coord-ruling D32 (**C01 APPROVED at `b577e32fe`, and its orphan prose assigned**): C01's review
+  came back APPROVED with no blockers/majors and surfaced a governance hole my own record had created —
+  FRICTION says `charts/amd-gpu/values.yaml:30` ("one device each on the ai-gpu node") is C06's, but **no
+  chunk file carries that task** (`grep "one device each" chunks/*.md` → 0 hits), so a statement that is
+  false post-TP2 would survive the ticket by nobody's decision. FRICTION ownership is not a work item:
+  **C06's scope is amended** to (i) the `:30` header correction, (ii) the citation-prefix pass from Minor 1,
+  and (iii) optional restore of the `32 GB dGPU` ledger tag the review judged non-required. Recorded in the
+  ruling channel precisely because executable scope belongs to a chunk file, not a friction row.
+- 2026-11-22 coord-ruling D33 (**review-grade evidence rules from C01's review, binding later rounds**):
+  (a) `amd-gpu-naming.sh` **n2 is a file-set guard, not a content guard** (`wave_a()` greps only
+  `git show --stat` for three paths), so rename-wave atomicity must be audited CONTENT-side by the reviewer —
+  a green n2 alone never proves the claims moved. (b) A raw `grep -rn` for the retired literal shows
+  gitignored `__pycache__/*.pyc` in any worktree that has run pytest (CPython constant-folds the assembled
+  name); the needles exclude it, a human must add `--binary-files=without-match`. (c) A reviewer must not be
+  handed an expected-status list that includes the write arm (`surface.sh` M6) — repo law bars read-only
+  sessions from it, so my C01 brief was wrong to list M6 as expected-green and the reviewer correctly claimed
+  nothing. Later briefs record M6 as "not run, no claim".
+- 2026-11-22 owner-ruling D35 (**C03 fork RESOLVED: the CHART owns the generic init script; byte-equivalence is
+  RELAXED for that one carrier**). PATH ANNOTATION (correction, not a change of ruling): the four budget paths
+  are stated in the suite's Deployment-rooted grammar as
+  `$.spec.template.metadata.annotations["checksum/configMaps"]`, `$.spec.template.spec.volumes`,
+  `$.spec.template.spec.initContainers[0].command`. My original shorthand "`spec.volumes`" meant the POD-SPEC
+  volumes; a Deployment has no `spec.volumes`, so the
+  test needle written from my shorthand named a nonexistent path and made both arms of the delta leg fail for
+  ANY carrier. The ruling's intent is unchanged; the exact path is now recorded so no later round re-derives it
+  from the shorthand. Asked with the mechanism verified (app-template 5.0.1 renders `command`/
+  `args` via plain `toYaml`, no `tpl`; only configMap data and env are tpl'd), the owner chose the parameterized
+  shape over keeping the pre-move fixtures green, accepting that the LIVE fn lane's pod spec changes. Binding
+  consequences, recorded as rulings not notes: (1) **AC1 is replaced, never deleted** — the equivalence legs
+  become an INTENTIONAL-DELTA proof: exactly four paths may change
+  (`metadata.annotations."checksum/configMaps"`, `spec.volumes`, the init container's `volumes`+`volumeMounts`,
+  its `command`) and NOTHING ELSE (serve args, claim pair, memory, replicas, probes, securityContext,
+  image@digest all byte-equal); a leg asserting only "the script is in the chart" would admit unrelated drift,
+  so the diff-budget IS the new gate. (2) **The fn lane rolls** — `restartPolicy: Recreate` + changed template
+  means the default route for every tier (D16) restarts at the owner's sync of `gpu-ai-radiance`, a 502 window
+  of ~grace 180s + model load; so C03's rework lands as its OWN watched sync set, never bundled with the rename
+  or fleet wave, with the cf-143 D28(6) first-boot print as receipt. (3) **Per-lane scalars survive as DATA**
+  (`PACK`/`LFS_SHA`/`URL`/`MARKER` in each block) and the chart ships the script FORM, which makes the plan's
+  "parameterized init" supersession row true as written. (4) **Cross-lane drift guard stays**: fn and q27 scalar
+  sets asserted independently, so a chart-side script edit cannot silently re-point one lane at the other's pack.
+  Order: `agent-plan` folds the plan + `chunks/C03.md` (my tier edits neither) → test wave re-aims the
+  equivalence legs to the diff-budget shape → C03 dev round 2 → C03 review.
+- 2026-11-22 coord-ruling D38 (**C03 APPROVED at `b8c01489e`; two of its minors become named work**). C03's
+  review wrote its OWN independent differ rather than trusting the suite's, and confirmed: exactly four delta
+  paths on both lanes, zero unauthorized; script semantics equal (OLD-only statements: NONE; NEW-only: the
+  `-z` empty-scalar guard); all six behavioural arms proven under `dash`; fixture baseline re-validated, not
+  laundered; ledger drift caught doubly; and the fetch/serve coupling asserted at every hop
+  (`FORM PACK = modelPath`, `modelPath == rendered --model` per lane, rendered `PACK=` literal == lane
+  modelPath) — so no lane can fetch one pack and serve another. It also corrected MY overstatement: the
+  empty-scalar guard is behaviourally proven but **no leg asserts the guard token exists**. Work now named:
+  (1) TEST wave — append a guard-token assertion to
+  `test_c03_chart_ships_the_script_form` (`charts/radiance/tests/test_c03_generic_shell.py:253-274`) so a future
+  FORM edit cannot silently drop the guard; dispatched immediately, before C05.
+  (2) C06 wave — annotate three stale law sites in `services/gpu-ai/prod/values.yaml` falsified by C01/D35:
+  `:1103-1108` ("Decorative ledger ONLY … moves NOTHING that renders" — the FORM renders from it now, and it
+  contradicts the `radianceFetch` comment 9 lines below), and the claim-count prose at `:1098-1100` +
+  `:1213-1222` ("the chart pair moved to 2", "OVERLAY-PINS", "inheritance would render the chart's 2" — the
+  chart has shipped no claim since C01). Use the `:1056` annotate idiom. CI cannot catch these (its
+  pair-form regexes miss the 6-space-quoted block), which is precisely why prose needs a named owner.
+  Recorded here because `chunks/*.md` are not editable by my tier (D30-adjacent) — C06's launch brief carries
+  both items verbatim.
+- 2026-11-22 coord-ruling D39 (**my C02-review noop re-baseline was WRONG; the scout-era 8/9 stands**). The
+  test session swept every committed revision of both scripts: `cf106-noop/surface.sh` has only ever carried
+  7 or 8 `ok` calls, `noop-marker/surface.sh` only 5/5/5/6/9/9. Eleven exists in no revision, and invocation
+  mode cannot inflate the count because arms are `want`-gated one-`ok`-each, so a full-suite run is already
+  the maximum. Authoritative baseline for all later rounds: **8 ok / 9 ok, both rc 0, full-suite invocation**;
+  per-arm runs legitimately print fewer. I retract the "scout baseline was stale" claim I folded into the plan
+  at `:152-153` (planner fold owed — my tier cannot edit the plan of record). Standing lesson, written where I
+  will meet it again: **one review measurement is not a baseline** — before overwriting a recorded expectation,
+  reproduce it or read the source of truth (here, `grep -c '^\s*ok '` across revisions). I did neither, and
+  "corrected" a number that was right.
+- 2026-11-22 coord-ruling D40 (**D36 is OVERTURNED on consequences: `.aislop/history.jsonl` churn causes FALSE
+  gate reds; interim posture = revert before gate runs**). C04 found `gate t14`, `rulesync-surface c8` and
+  `provider-loops t6` (which wraps the gate suite) all red on a correct tree, and the test session proved sole
+  causation: with only that file dirty, t14 and c8 rc=1 naming it verbatim; after `git checkout --
+  .aislop/history.jsonl`, **t14 rc=0, c8 rc=0, t6 rc=0**. Mechanism: t14 and c8 are SCOPE guards — every
+  changed/untracked path must sit in the ticket's admitted Files list — so a tracked file that every scan
+  dirties is structurally guaranteed to trip them. My D36 posture ("leave it dirty, it is machine churn") is
+  therefore NOT neutral: it makes three gates lie on every round, including the hourly loop. Interim rule for
+  all remaining rounds and briefs: revert the file before any scope-guard leg. Permanent fix is a
+  human-owned hygiene call and I have not made it: `git rm --cached .aislop/history.jsonl` + a `.gitignore`
+  line (it is machine-local score-trend telemetry, cf. `aislop trend`; exactly one commit ever touched it and
+  `.gitignore` does not mention it). The alternatives are worse — committing the append is a treadmill,
+  `skip-worktree` is invisible to other clones and breaks on fresh worktrees.
+- 2026-11-22 coord-ruling D41 (**the 110Gi question I raised is CLOSED — and closed AGAINST me**). I flagged
+  strata's `requests.memory: 110Gi` as possibly a test-invented production number and said I'd put it to the
+  owner. Evidence resolves it without an owner round: the frozen cf-143 baseline's own `limits.memory` was
+  ALREADY `110Gi` (requests were `64Gi`), so C04 mirrored requests TO the pre-existing ceiling and the pod is
+  now Guaranteed-QoS (`req == lim == 110Gi`) — which is what a pod booking a whole GPU should be; the value
+  traces to `strata_testlib.py:431` / cf-143 D26 chart truth, NOT to `test_c04_strata_claim.py:100` (which
+  asserts the named constant rather than authoring a number); and fn(110)+strata(110) > 125.08 GiB node RAM
+  enforces the never-co-exist law a SECOND time below the GPU claim's 1+2>2, matching the plan's own pattern
+  for lanes that "fit the pool but NOT RAM … stated, not a defect". The only lawful bring-up still fits:
+  strata 110 + the always-on main pod's 4.125Gi ≈ 114.1 < 125.08. The number's home is cf-143, not this
+  ticket. Recorded because my instinct to escalate was right as a reflex and wrong on the facts — asking for
+  evidence before escalating is what distinguished the two.
+- 2026-11-22 owner-ruling D42 (**churn false reds are ACCEPTED and DOCUMENTED — supersedes D40's
+  revert-before-gate posture**). Asked with the three options and their costs, the owner chose to leave
+  `.aislop/history.jsonl` exactly as it is: tracked, dirtied by every scan, never staged. Consequence that is
+  now policy rather than drift: `gate t14`, `rulesync-surface c8` and `provider-loops t6` (which wraps the gate
+  suite) will show **red with the file named verbatim** whenever the tree carries the churn, and that reading is
+  CORRECT — a scope guard doing its job on a known-dirty path. Every review and dev brief from here states the
+  three leg names as "expected red iff `.aislop/history.jsonl` is dirty; confirm the FAIL line names ONLY that
+  file and move on", so no round burns time reverting, re-running or re-litigating it. Two rules I keep from
+  D40 because they are what made this provable and stay true under D42: (a) the file is NEVER staged into a work
+  commit (D36 stands on that half), and (b) when one of these three legs is red, the first question is whether
+  the FAIL names only the churn file — if it names anything else, that IS a finding. The distinction D42 draws
+  is that a documented known-red is cheaper than a per-session ritual that races the next scan.
+- 2026-11-22 owner-ruling D43 (**GOVERNING REDIRECT — the arg FORM moves back into the chart as a chart-owned
+  serve wrapper; gpu-ai passes ONLY the model + arg specifics; the roster builds all FOUR releases in this same
+  restructure**). Asked after I showed the damage: `services/gpu-ai/prod/values.yaml` at 1277 lines carrying BOTH
+  lanes' full inline args arrays (`:1024` fn, `:1235` q27) plus the sizing scalars (`:964-966`), while
+  `charts/radiance/values.yaml` (452 lines) held none of the form. Owner's words: too much in the service file
+  belongs in the chart, the chart is not deployed 4× in the appset, and pass the model and arg specifics only
+  from gpu-ai. Chosen mechanism: the pattern already ruled for the fetch script in D35 — the chart ships a
+  **serve wrapper** holding the full arg form (the ~34-item set: kv-cache-dtype, num-gpu-layers, flash-attn,
+  ngram, mmap …) and each lane passes only its specifics — model, served id, tp, context, pool, memory — through
+  **env**, which IS `tpl`-rendered and merges per-key. Consequences, accepted knowingly:
+  (1) **Pod-spec delta grows past C03's four paths.** The rendered container no longer carries literal argv; the
+  serve command becomes the wrapper and argv is composed at runtime. The honest replacement gate is **runtime
+  argv equality**: execute the wrapper in a sandbox with the lane's env and assert the composed vector equals
+  the ruled set per lane (fn-TP2 = cf-144 §7; q27-TP1 = the cf-143 array; the two new lanes = their transcribed
+  profiles). A static YAML args array is no longer the evidence and must NOT be faked by moving the array into a
+  ConfigMap verbatim. (2) **Operational visibility changes**: `kubectl describe` / the Argo diff show wrapper +
+  env, not the full command line — so the wrapper echoes the composed argv once at startup and the boot print
+  stays the receipt. (3) **A flag change becomes ONE chart edit for all four lanes** instead of four block edits
+  — the drift class this ticket keeps paying for, designed out. (4) **The four-deployment roster comes forward**
+  out of C05 into this restructure: `charts/radiance` deployed 4× (flash-TP2, flash-TP1, 27b-TP2, 27b-TP1) with
+  `replicas: 1` ONLY on flash-TP2; C05 then carries catalog/peers/evidence + per-lane test legs.
+  SUPERSEDED: my OQ-D/D24 framing of "all lane data in blocks, chart a shell" (form was wrongly swept in with
+  data), and the C03-era position that per-block literal argv was the only lawful shape. D35's precedent — form
+  in the chart, data per lane — now applies consistently to BOTH carriers.
+- 2026-11-22 coord-ruling D44 (**C04 APPROVED at `561527ebb`/`46f24a6bd`; three minors, one correcting my D41
+  again**). 0 blockers / 0 majors. All 8 C04 legs green individually; KEEP-list verified item by item (b1 = ADD,
+  not replace); the supersession leg passes for the RIGHT reason — five out-of-band counterexamples (dates-only,
+  no-dates, unbound-with-dates, both chart-window variants) all fail while the landed region satisfies supersed +
+  both dates + claim binding; the bounded delta verified by the reviewer's OWN differ at exactly four leaves;
+  prose-honesty ruled clean — every determinism claim scoped to the scheduler/allocation leg with the container
+  leg explicitly preserved as ordinal/hostPath territory, the exact error class the owner's ask targeted.
+  Minors: (1) `charts/llama-swap/values.yaml:1335` calls strata "Guaranteed-class while it books a card" — with
+  `requests.cpu: 8` and NO `limits.cpu`, kubelet classes it **Burstable**; memory is Guaranteed, cpu is not. This
+  amends **my D41** parenthetical "(req == lim == 110Gi)": true for memory only. The ruling (mirror requests to
+  the existing ceiling) stands; the QoS label I leaned on does not. (2) the overlay "one home" table omits two
+  strata combination rows (under-description; all prohibitions complete) → C06. (3) **coord debt, mine**: C04's
+  "DRA watch-list: DECISIONS line only" leg had no landed home because dev cannot write DECISIONS — recorded
+  here: **the D17 claim does not change the D11/R-Q3 DRA verdict** (still watch-list, revisit triggers
+  unchanged), which satisfies that leg. Brief defect also mine: the C04 review brief predated D42 and mandated a
+  churn revert + stop-at-t17/c19, pushing full-suite runs that exercised write arms `gate t14` and
+  `rulesync-surface c7` (content no-op, tree byte-clean, self-disclosed). Later briefs: per-arm invocation, and
+  no churn-revert mandate.
+- 2026-11-22 coord-ruling D45 (**peer floors for the two new lanes are 3 / 2, and the `5/4` text in
+  `chunks/C05.md` is STALE — closing the test wave's only NEEDS_INFO against myself, not against the owner**).
+  The D43 re-pin found `chunks/C05.md:42-43/:61/:96` asserting floors 5/4 (inherited cf-143 D56(5) per-lane
+  fn-class wording) while `radiance_testlib.py` carries `FLASH_TP1_PEER_FLOOR = 3` / `Q27_TP2_PEER_FLOOR = 2`.
+  **D28 already ruled this**: each peer's `setParams "priority?"` floor equals that lane's OWN base row, which is
+  the real per-lane coherence law cf-143 established and which D28 said explicitly survives unchanged — so 3/2
+  is correct and the chunk text predates it (the D43 fold rewrote C05's roster scope but not this line). The
+  test constants STAND; no leg is re-aimed back. `chunks/C05.md` is not editable by my tier, so the correction is
+  recorded here, carried verbatim into C05's launch brief, and named for the planner's next fold. Lesson:
+  when a chunk file and a test constant disagree, check the RULING CHRONOLOGY before deciding which is stale —
+  here the older prose won an argument it had already lost.
+- 2026-11-22 coord-ruling D46 (**C03 round 3 landed the D43 shape; the two resting-lane blocks are ACCEPTED as
+  C03 output and C05's scope is reduced accordingly — overlap resolved by ruling, not by silence**). Round 3
+  shipped: the serve FORM as a second `serve.sh` key on the existing tpl'd `radiance-fetch` carrier, with
+  `${VAR:?… is required}` loud guards, FORM-fixed flags (`--port 8000 --host :: --max-num-seqs 8
+  --kv-cache-dtype fp8`), ten optional-env arms, exactly ONE boot echo of the composed argv, and `exec radiance
+  "$@"` by **bare name** (the image's ENTRYPOINT resolves it; POSIX-only for busybox ash). Lanes converted
+  args→env with held numbers byte-exact; NOTES re-aimed. Suite moved **65F → 10F/135P**, and all four composed
+  vectors are set-equal to their ruled profiles (34 / 18 / 32 / 20 items) — proven by EXECUTING the shipped form
+  against rendered env, not by static assertion.
+  Overlap: my dispatch brief said "author lane DATA shapes only, the four Applications are C05's", and round 3
+  also authored the two resting blocks (`radiance-flash-tp1`, `radiance-q27-tp2`) at EOF, which the folded
+  `chunks/C05.md` lists as C05's. **Ruling: the blocks stay landed** — re-home-ing green work to redo it is
+  churn, and D31's baseline moves by ruling, not by quiet reassignment. C05's remaining scope is therefore the
+  four roster `charts:` entries, the peers entries, the catalog trios (D19), the CI extraction steps and M9 (the
+  8 designed reds left), and its dev brief MUST NOT re-author the blocks — I carry this verbatim into that brief,
+  and the planner owes `chunks/C05.md` the same scope trim (my tier cannot edit chunk files).
+  Separately: round 3 refused to satisfy a test by adding an inert `replicas` key, naming it a gotcha-11 decoy
+  authority. That is the right call and is the third time this ticket has caught a green being purchasable with a
+  fake lever; the repair demand I sent the test session includes asserting the ABSENCE of such keys, so the
+  temptation is gated and not merely declined.
+- 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
+  work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
+  introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
+  as an artifact but its appends are not work product: leaving it dirty out of ticket commits is correct, and
+  promoting a line into a feature commit would attribute CLI bookkeeping to a chunk. Turning it into an ignore
+  rule is a human hygiene call, not a mid-ticket edit.
+- 2026-11-22 coord-ruling D37 (**commit scope: a directory path spec silently bundles its tests**). My C03
+  round-2 commit used `git add charts/radiance services/gpu-ai`, which swallowed
+  `charts/radiance/tests/test_c03_generic_shell.py` too — so the impl and its two test repairs landed in ONE
+  commit (`b8c01489e`) instead of two. Rather than split a coherent, unpushed change, I amended the message to
+  disclose the bundling and describe the test repairs in full. Rule going forward: stage implementation paths
+  and `tests/` paths as SEPARATE `git add` arguments when a chunk carries both, and check `git show --stat`
+  before describing a commit as impl-only.
+- 2026-11-22 plan-fold record (agent-plan, D43 fold round): D43 folded as GOVERNING across the plan
+  of record + `chunks/C03.md` (round 3 governs; rounds 1-2 kept as landed history) + `chunks/C05.md`
+  (roster FORWARD into the restructure wave) + `chunks/C06.md` (D44 pair, D38(2) sites, D43 prose
+  correction). Supersession chain explicit: **D43 supersedes the OQ-D/D24 "all lane data in blocks,
+  chart a shell" framing, and D35's form/data precedent now governs BOTH carriers** (fetch script
+  AND serve args) — a carrier class ruled once, applied twice. Folded the same round: D39's
+  retraction landed (noop baselines restored 8 ok/9 ok — the plan's "11 ok" was a bad measurement,
+  corrected at the source), D42's churn-red posture written into the standing write-arm rule, and
+  the plan gained the canonical DATA-vs-FORM list nobody may re-litigate. **Lesson, in the owner's
+  words (recorded where future ruling-rounds will meet it): "when a ruling establishes a mechanism
+  pattern for one carrier, audit every other carrier in scope for the same split before declaring
+  the shape forced by the library."** The library constraint (`no tpl` on args) was true and was
+  correctly applied to the fetch carrier — it was the SELECTIVE application that made the serve
+  shape wrong twice.
+- 2026-11-22 plan-fold record (agent-plan, fold round 4, coord-requested): D43 superseded the
+  OQ-D/D24 framing (the round-3 record above stands); **D45/D46/D47 corrected STALE CHUNK PROSE —
+  `chunks/C05.md` carried block authorship D46 had already ruled into C03 round 3, peer floors 5/4
+  that D45 corrected to 3/2 (each lane's OWN base row — D28's law; the testlib constants were right
+  while the chunk won an argument it had already lost), and `limit.context: 200000` that D47
+  overruled with the 262144 family convention — each marked SUPERSEDED IN PLACE with date + ruling.
+  The mechanism failure, named so it is not repeated: chunk files were NOT re-folded after each
+  mid-execution ruling, so three successive devs each inherited superseded prescriptions; the fix is
+  that EVERY post-approval ruling naming a chunk triggers a same-round chunk fold — the ruling
+  record and the chunk edit land together ("carried verbatim into the launch brief" is a stopgap,
+  not the home).** D47's canonical text sits in FRICTION.md:401 + STATE `ctx_ruling` — noted here so
+  the DECISIONS namespace stays honest; relocating it is the coord's leg. The dated-marker
+  convention landed in §Conventions (C06 owns the three-marker sweep). Folded the same round:
+  C06's full assigned set completed (roster-suite re-pin via `RADIANCE_SERVED_ID` + convention),
+  the plan's Chunks/Wave re-filed to the git-verified landed chronology (C04 landed+approved per
+  D44 BEFORE C03-r3 and C05 — the fold brief's "C05 → C04" shorthand corrected), fact 17 written,
+  the boot-print-is-the-only-remaining-proof clause in Risks, the M9-A2 ctx-pin residual in
+  Deferred.
+- 2026-11-23 owner-ruling D47 (**`limit.context` on the six C05 radiance rows: 262144 — one family-wide figure
+  wins over per-lane served truth**). CANONICAL HOME: this entry (it was drafted into FRICTION, which is the
+  wrong document for a ruling — corrected here on the planner's fold-round catch). C05 authored its two new trios
+  at `limit.context: 200000`; the owner's own `b3d7fada8` had set the radiance family to **262144** as the
+  TRAINED window the client budgets against, with the SERVED admission (200000, `RADIANCE_MAX_MODEL_LEN`) stated
+  separately in prose. Because `.opencode/opencode.jsonc` is D27 owner-protected, the question was put rather
+  than assumed, and the owner chose convention consistency. **The reviewer's dissent is recorded because it is
+  technically correct in its own frame:** at 200000 there is no truncation class at all — that value equals every
+  lane's served admission — and the risk runs the OTHER way, a catalog above served producing loud 400s. What
+  the ruling buys is a single meaning for the field across twelve rows. Flip cost verified as ZERO test legs
+  (M8-B's window is lines 653-719 with its lone 200000 from untouched fn prose; M8-A pins 262144 on fn/q27 keys;
+  M8-A2 and M9-B compare key SETS; M9-A never reads `limit.context`); applied at `56dd745ee`.
+  Residual now CLOSED by the test round at `2b3e01cb0`: M9-A2 pins `limit.context == 262144` family-wide with a
+  prose half demanding BOTH figures named, both halves self-proving, live plants reddening and restoring
+  byte-exact. The general law this settles: **an unpinned convention is a convention that drifts back** — D27
+  taught it once, D47 confirms it, and a ruling that isn't wired into a leg is not yet finished.
+- 2026-11-23 coord-ruling D48 (**a MOVED historical line keeps its ORIGINAL citation form — moving is not
+  authoring**). C06's test lane found `services/gpu-ai/prod/values.yaml:1391`'s bare `(D26: ADD/UPDATE yes,
+  REMOVE no)` — a cf-143 law on pre-ticket text (`e7536b2c9`) that C03 RELOCATED without rewording — and asked
+  whether C06's citation-prefix pass owes prefixed rewrites of moved historical lines. **Ruling: no.** The pass
+  targets cites the WAVE INTRODUCED, because the hazard is a new reader mistaking a fresh ambiguous cite; a
+  relocated line carries its provenance with it, and rewriting it would silently modernise history — the same
+  reason we annotate rather than rewrite elsewhere in this ticket. Ambiguity on such a line is resolved by the
+  surrounding dated annotation, not by editing quoted past. Recorded so no later pass "fixes" it, and so the next
+  citation sweep scopes on **added lines** (what the wave's scanner already did) rather than any line sitting in a
+  touched file.
+- 2026-11-23 coord-ruling D49 (**the wrong-reason-red class, named — it hid for four rounds**). Roster T4 was
+  GREEN throughout while reddening for the wrong reason: its falsification regex hit the key token `tp1` instead
+  of the claim cell, so the checker failed because the table row VANISHED, not because a claim moved. Because an
+  upstream arm was red, the pair looked exercised — and that performance masked T2's genuine vacuity: a stale args
+  read returned `""` for every lane, so all four served-id assertions were silently skipped. Three further latent
+  defects surfaced only once the arms were honestly exercised: strata bound to flash-TP1's row via its cost prose
+  (one lane's numbers checked against another's), a row-wide bare-digit claim search satisfied by the `tp1` token
+  or a URL digit, and unbounded served matching letting a suffixed sibling id stand in.
+  · Rule for every plant-based teeth leg from here: **the leg must assert the DIAGNOSTIC NAMES THE REASON**, not
+  merely that the run reddened — encoded in T4 at `7afbec470`. Corollary for me: a suite where one arm can pass on
+  another's failure is not a gate, and **un-masking fail-stop chains is a review duty, not an optimization** —
+  every "N ok" I accepted from a fail-fast suite this ticket was a count, not a per-arm verdict.
+- 2026-11-23 coord-ruling D50 (**my own commit message `263696e91` states two falsehoods; corrected here, not
+  amended; and review notes belong in the chunk file — my briefs were over-restrictive**).
+  (a) C06's reviewer found the message I wrote claims "**fn + q27-TP2 is the only co-booting pair**" and quotes a
+  "**122.5 GiB against 110**" figure. Neither exists in the tree. The roster matrix says the opposite of the
+  first: fn claims 2 of 2 cards, so **fn co-boots with NOTHING** — 2+2 was never possible on a 2-card pool — and
+  the second number appears nowhere. The tree is right; the message is wrong, because I paraphrased a dev handoff
+  instead of opening the file I was committing. **Not amended:** the hash is already cited in D49 and in review
+  records, and amending would orphan them — the exact hazard I recorded earlier today. Standing rule for me: a
+  commit message's factual claims get verified against the working tree before the commit, not against the
+  handoff that inspired them. Handoffs are testimony; the tree is evidence.
+  (b) **Review notes belong in `chunks/Cxx.md`** — the role's default step. My read-only briefs told four
+  reviewers not to write, and they complied, so C01-C05's verdicts live only in `STATE.json` while C06's sit with
+  the contract the next dev of that chunk will read. The inconsistency was mine and the role default was right.
+  For this ticket the split is already made (C01-C05 stay in STATE as a compensating choice, recorded here);
+  future chunk reviews let the notes land in the chunk.
+- 2026-11-23 coord-note D51 (**two verification idioms this ticket relied on are VACUOUS — recorded so they stop
+  being cited as proof**). (a) **AC7's `git diff -G'^[^#[:space:]]'` comment-only probe is blind to indented
+  comments inside YAML block scalars** — C06's review proved a control with a real data change fires EMPTY. I ran
+  that probe myself this round and reported its result as proof; the fact (comment-only) is true, but it's true
+  because of the strict strip-indent probe and the byte-identical renders, not because of the `-G` idiom. Use
+  `helm template` base-vs-HEAD equality as the load-bearing check for "no rendered change"; `-G` is a hint.
+  (b) **The plan's `## Commands` baselines drift mid-branch and were cited at me.** Scout-era "provider-loops RED
+  t1" and "agents-md c11 RED" are now GREEN (both re-pinned in C02), and llama-swap reads 517P where the plan says
+  507P from C05/C06 test growth. Not failures — stale expectations. A round that trusts them either chases ghosts
+  or mistakes growth for drift; read the baseline from the current tree, and the planner owes the fold.
+- 2026-11-23 coord-ruling D50 (**my own commit message `263696e91` states two falsehoods; corrected here, not
+  amended; and review notes belong in the chunk file — my briefs were over-restrictive**).
+  (a) C06's reviewer found that the message I wrote claims "**fn + q27-TP2 is the only co-booting pair**" and
+  quotes a "**122.5 GiB against 110**" figure. Neither is in the tree. The roster matrix says the opposite of the
+  first: fn claims 2 of 2 cards, so **fn co-boots with NOTHING** — 2+2 was never arithmetically possible on a
+  2-card pool — and the second number appears nowhere. The tree is correct; the message is wrong, and it was
+  wrong because I paraphrased a dev handoff instead of opening the file I was committing. **Not amended**: that
+  hash is already cited in D49 and in review records, and amending would orphan them — the exact hazard I
+  recorded earlier this ticket. Correction lives here, where anyone reading the message lands next.
+  Standing rule for me: a commit message's factual claims get verified against the working tree before the
+  commit, not against the handoff that inspired them. Handoffs are testimony; the tree is evidence.
+  (b) **Review notes go in the chunk file** (`chunks/Cxx.md`), which is the role's default step. My
+  read-only briefs told four reviewers not to write, and they complied — so C01-C05's verdicts live only in
+  `STATE.json` while C06's sit with its contract. The inconsistency was mine and the role default was right:
+  notes belong where the next dev of that chunk will read them. For this ticket the split is already made, so
+  C01-C05 stay in STATE (a compensating choice, recorded) and every future chunk review lets the notes land in
+  the chunk.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

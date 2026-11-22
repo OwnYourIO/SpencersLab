@@ -21,7 +21,6 @@ from __future__ import annotations
 import collections
 import re
 import subprocess
-from pathlib import Path
 
 import pytest
 import yaml
@@ -104,20 +103,28 @@ def test_c15_q27_pod_rests_at_zero_replicas():
 
 
 @helm_skip
-def test_c15_q27_args_are_the_profile_set_equality():
-    """C15 AC2: the rendered q27 args EQUAL the Q27_PROFILE constant as a
-    set (extra flag as red as a missing one — the fn AC3 idiom), each flag
-    once. --model is compared against the ARGS literal (the anchor trap runs
-    in reverse: a cosmetic modelPath re-pin in the subtree does NOT move the
-    args and must not be used as the spliced source — §D54-A/B)."""
-    args = [str(a) for a in (R.serve_container(R.deployment(_q27_docs())).get("args") or [])]
-    assert args, "cf-143 C15: the q27 serve container renders no args"
+def test_c15_q27_composed_vector_is_the_profile_set_equality():
+    """C15 AC2, re-anchored by owner ruling D43 (2026-11-22): what equals the
+    Q27_PROFILE constant as a set is no longer the RENDERED ARGS but the vector
+    the chart-owned serve wrapper COMPOSES when it boots on this lane's
+    rendered env (extra flag as red as a missing one — the fn AC3 idiom), each
+    flag once. --model is compared at the composed vector AND the env AND the
+    subtree ledger (the three-place anchor — the era's "ARGS literal" was the
+    reverse-trap wording; the trap shape moved with the carrier). Designed-red
+    until dev round 3 lands the wrapper and the lane env."""
+    comp = R.lane_composition(R.Q27_APP_NAME)
+    facts = comp["facts"]
+    assert facts["rc"] == 0, (
+        f"C15/D43: the q27 compose died on the lane env (rc {facts['rc']}, stderr {facts['stderr'][:200]!r})"
+    )
+    args = facts["argv"]
+    assert args, "C15/D43: the q27 engine stub never ran — no composed vector"
     pairs = R.flag_pairs(args)
-    want = dict(R.Q27_PROFILE)
+    want = {f: str(v) for f, v in R.Q27_PROFILE.items()}
     missing = {f: v for f, v in want.items() if pairs.get(f) != v}
     extra = {f: v for f, v in pairs.items() if f not in want}
     assert not missing and not extra, (
-        "cf-143 C15: q27 serve args diverge from the D54-ratified profile\n"
+        "cf-143 C15 AC2/D43: q27 composed vector diverges from the D54-ratified profile\n"
         f"  missing/incorrect: {missing}\n  extra: {extra}"
     )
     seen = collections.Counter(a for a in args if a.startswith("--"))
@@ -127,17 +134,20 @@ def test_c15_q27_args_are_the_profile_set_equality():
 
 @helm_skip
 def test_c15_q27_absence_set():
-    """C15 AC2 / D56(7): the q27 profile omits eight fn/expert flags, each a
-    named bar — see the Q27_ABSENT_FLAGS reasons in the testlib (dense model:
-    no streaming mirror, no n-gram/PLE layer, no experts, drafter in-pack;
-    keyless per D8/D54). Set-equality reddens extras anyway; this leg names
-    WHICH refusal each survivor would resurrect."""
-    args = [str(a) for a in (R.serve_container(R.deployment(_q27_docs())).get("args") or [])]
-    joined = " ".join(args)
+    """C15 AC2 / D56(7), re-anchored by D43 (2026-11-22): the q27 profile omits
+    eight fn/expert flags, each a named bar — see the Q27_ABSENT_FLAGS reasons
+    in the testlib (dense model: no streaming mirror, no n-gram/PLE layer, no
+    experts, drafter in-pack; keyless per D8/D54). Under the env-fed compose
+    model absence is TWO laws: the composed vector must not carry the flag, AND
+    the lane env must not author the env name that would emit it (a dense lane
+    feeding RADIANCE_PLACEMENT is a lane lying about its family)."""
+    comp = R.lane_composition(R.Q27_APP_NAME)
+    args = comp["facts"]["argv"]
+    assert args, "C15/D43: no composed vector (see the profile-set leg)"
     pairs = R.flag_pairs(args)
     for flag in R.Q27_ABSENT_FLAGS:
-        assert flag not in pairs and flag not in joined, (
-            f"cf-143 C15: {flag} shipped in the q27 args — "
+        assert flag not in pairs, (
+            f"cf-143 C15: {flag} composed in the q27 vector — "
             + (
                 "keyless ruling D8/D54(2) (the owner's api-key rider is DROPPED)"
                 if "api-key" in flag
@@ -152,8 +162,14 @@ def test_c15_q27_absence_set():
                 else "the DFlash2 drafter is IN-PACK; 'the flag simply doesn't own the drafter' (§R19-Q5)"
             )
         )
+        env_names = [n for n, f in R.ENV_TO_FLAG.items() if f == flag]
+        for env_name in env_names:
+            assert env_name not in comp["env"], (
+                f"C15/D43: q27 authors env {env_name} for the barred flag {flag} — env-absent is "
+                "the absence mechanism; a dense lane must not carry the expert-family channel"
+            )
     assert "serve" not in args, (
-        "cf-143 C15: a `serve` VERB token in the q27 args — the engine takes args "
+        "cf-143 C15: a `serve` VERB token in the q27 vector — the engine takes args "
         "directly (the fn RQ0 law is engine-wide, not per-release)"
     )
 
@@ -162,13 +178,15 @@ def test_c15_q27_absence_set():
 def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
     """D54(3)/AC2 pair truth, re-pinned by cf-144 C01 (P05): memory 24Gi
     request==limit stays overlay-authored; cpu "8" stays chart-INHERITED;
-    the amd.com/gpu-r9700-1 claim arrives OVERLAY-PINNED at "1" — under the
+    the R9700 pool claim (GPU_CLAIM, from the amd-gpu constants) arrives
+    OVERLAY-PINNED at "1" — under the
     TP2 chart pair (2) plain inheritance would render 2 and strand q27
     Pending beside a live fn, so the subtree must author the claim itself
     (D26: overlays ADD/UPDATE, never REMOVE — an UPDATE is the lawful
     mechanism). The rendered pair equals exactly {cpu 8, memory 24Gi, claim
-    1} in BOTH requests and limits; the independence proof (chart 2 + pin →
-    still 1) is the test_c144_ pair of legs below."""
+    1} in BOTH requests and limits; the independence proof re-pinned under
+    C03/D35 (the chart ships no claim to track) is the test_c144_ pair of
+    legs below."""
     res = R.resources(R.serve_container(R.deployment(_q27_docs())))
     want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
     assert res.get("requests") == want, (
@@ -179,91 +197,51 @@ def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
     assert res.get("limits") == want, f"cf-144 C01 AC2: q27 limits {res.get('limits')} != {want}"
 
 
-def _c144_q27_sim_render(chart_claim: str, strip_overlay_pin: bool = False):
-    """Render the q27 release with a SIMULATED chart-level claim count
-    layered chart-defaults < sim-file < overlay-file — the exact -f
-    precedence the appset merge produces (per-app values = the subtree over
-    the chart's own). strip_overlay_pin removes the subtree's claim lines
-    from the copy, simulating dev forgetting (or later deleting) the pin.
-    Returns the serve container's resources map."""
-    import copy
-    import tempfile
-
-    block = copy.deepcopy(R.q27_service_block())
-    assert isinstance(block, dict), (
-        "cf-144 C01: no radiance-q27 subtree — designed-red naming C01 (the overlay pin has "
-        "no host; the pin legs and the subtree land in ONE wave)"
-    )
-    if strip_overlay_pin:
-        res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
-        for m in ("requests", "limits"):
-            res.get(m, {}).pop(R.GPU_CLAIM, None)
-    sim = {"app-template": {"controllers": {"radiance": {"containers": {"radiance": {"resources": {
-        "requests": {R.GPU_CLAIM: chart_claim},
-        "limits": {R.GPU_CLAIM: chart_claim},
-    }}}}}}}
-    with tempfile.TemporaryDirectory(prefix="radiance-c144-sim-") as tmp:
-        simf, ovl = Path(tmp) / "sim.yaml", Path(tmp) / "overlay.yaml"
-        with simf.open("w") as fh:
-            yaml.safe_dump(sim, fh)
-        with ovl.open("w") as fh:
-            yaml.safe_dump(block, fh)
-        out = subprocess.run(
-            ["helm", "template", R.Q27_RELEASE, str(R.CHART_DIR),
-             "-f", str(simf), "-f", str(ovl),
-             "--set", "domain=spencerslab.com", "--set", "clusterName=gpu-ai"],
-            capture_output=True, text=True, timeout=300,
-        )
-        if out.returncode != 0:
-            raise AssertionError(f"cf-144 C01: sim render failed:\n{out.stderr}")
-        docs = tuple(d for d in yaml.safe_load_all(out.stdout) if d)
-    return R.resources(R.serve_container(R.deployment(docs)))
-
-
 @helm_skip
 def test_c144_q27_subtree_authors_the_claim_pin_exactly():
-    """cf-144 C01 AC2 (authored-value view, designed-RED today): the pin must
-    be REAL bytes in the subtree — both maps carry amd.com/gpu-r9700-1: "1"
-    beside the 24Gi pair and NOTHING else (cpu stays chart-inherited, P05).
-    A render-only pass could still let a future edit drift the pin; this leg
-    pins the authored map itself: requests == limits == {memory 24Gi,
-    claim 1} exactly."""
+    """cf-144 C01 AC2 (authored-value view): the pin must be REAL bytes in the
+    subtree — both maps carry the R9700 claim at "1" beside the 24Gi pair and
+    NOTHING else. A render-only pass could still let a future edit drift the
+    pin; this leg pins the authored map itself. C03 carrier re-aim: the chart
+    ships no resources map any more (mechanism-only shell), so cpu is
+    AUTHORED beside the pair too — the exactness is unchanged, the map grew
+    the one key inheritance used to supply."""
     block = R.q27_service_block()
     assert isinstance(block, dict), (
         "cf-144 C01: no radiance-q27 subtree — designed-red naming C01"
     )
     res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
-    want = {"memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
+    want = {"cpu": R.Q27_CPU, "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
     for m in ("requests", "limits"):
         assert res.get(m) == want, (
             f"cf-144 C01 AC2: q27 subtree {m} is {res.get(m)!r}, want exactly {want!r} — "
-            "the overlay authors the 24Gi pair PLUS the explicit claim-1 pin (P05); cpu "
-            "stays chart-inherited (D26 non-subtractability means it needs no re-authoring)"
+            "the overlay authors the 24Gi pair PLUS the explicit claim-1 pin (P05); cpu joins the "
+            "map because the C03 shell ships none to inherit (the exactness bar stands)"
         )
 
 
 @helm_skip
 def test_c144_q27_claim_does_not_track_the_chart_count():
-    """cf-144 C01 AC2 (independence proof): with the chart pair SIMULATED at
-    2 — today's tree or the post-flip one — the q27 render still carries the
-    claim "1" iff the overlay pin exists. Designed-RED today (the subtree has
-    no pin, so the simulated 2 propagates). The teeth arm proves the
-    mechanism is not vacuous: strip the pin from the copy and the same sim
-    renders 2 — 'remove the pin → red' as an executable shape (review
-    re-proves the flip against the real chart)."""
-    res = _c144_q27_sim_render("2")
+    """cf-144 C01 AC2 (independence proof), re-pinned by C03/D35: the sim
+    render it ran is dead because there is no chart-level count to track any
+    more — the mechanism-only chart ships NO claim, so overlay inheritance
+    cannot propagate one (the old teeth arm, "strip the pin → chart value
+    propagates", has no chart value to propagate; the authored-exactness leg
+    above guards the pin's bytes). The executable shape today: zero live GPU
+    claim lines in the bare chart render, and the q27 release still renders
+    exactly 1/1 — its claim has exactly one author, the subtree."""
+    _docs, raw = R.render(service=False)
+    live = [ln.strip() for ln in raw.splitlines()
+            if R.GPU_CLAIM in ln and not ln.lstrip().startswith("#")]
+    assert not live, (
+        f"C03 AC2: the bare chart render carries live claim lines {live} — a shell claim is the "
+        "count every lane would track, which is exactly the coupling cf-144 C01 retired"
+    )
+    res = R.resources(R.serve_container(R.deployment(_q27_docs())))
     got = {m: (res.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
     assert got == {"requests": "1", "limits": "1"}, (
-        f"cf-144 C01: overlay-pinned q27 claim under a simulated chart-2 renders {got}, want "
-        "1/1 — the subtree must author amd.com/gpu-r9700-1: '1' in BOTH maps (P05); today "
-        "there is no pin, so this leg is designed-red naming C01"
-    )
-    res_np = _c144_q27_sim_render("2", strip_overlay_pin=True)
-    got_np = {m: (res_np.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
-    assert got_np == {"requests": "2", "limits": "2"}, (
-        f"cf-144 C01 teeth arm: pin-stripped render gave {got_np}, want 2/2 — if this fails, "
-        "the sim layering is broken and the independence leg above is passing vacuously "
-        "(half-tripwire class, §12.14)"
+        f"cf-144 C01: q27 renders claim {got} with the chart shipping none — the subtree pin is "
+        "the claim's only author (1/1 expected)"
     )
 
 
@@ -318,18 +296,20 @@ def test_c15_q27_render_sentinel_free():
     )
 
 
-# --- AC3: the init grammar guards BOTH call sites ---------------------------------
+# --- AC3: the init grammar guards BOTH renders ------------------------------------
 
 
 @helm_skip
 def test_c15_q27_init_carries_the_four_pack_literals():
-    """C15 AC3: the q27 init script (overlay command replacement) pins the
-    pack ledger as runnable literals — LFS_SHA a4908940…, PACK the q27
-    .rad, MARKER the .staged-<sha> success artifact, URL the HF resolve
-    path (the marker accepts the $-interpolated fn idiom or the expanded
-    form, same three shapes the fn marker law accepted)."""
-    init = R.fetch_init(R.deployment(_q27_docs()))
-    body = "\n".join(str(t) for t in (init.get("command") or []))
+    """C15 AC3, re-anchored by D35: the q27 lane's RENDERED script — the
+    chart-owned FORM with this lane's scalars substituted (the configMap
+    carrier; the anchor pair helper refuses the interim command shape and a
+    missing carrier, both naming C03 round 2) — pins the pack ledger as
+    runnable values — LFS_SHA a4908940…, PACK the q27 .rad, MARKER the
+    .staged-<sha> success artifact, URL the HF resolve path (the marker
+    accepts the $-interpolated fn idiom or the expanded form, same three
+    shapes the fn marker law accepted)."""
+    _init, body = R.fetch_script_and_init(_q27_docs())
     assert f"LFS_SHA={R.Q27_PACK_LFS_SHA}" in body, (
         "cf-143 C15: the q27 init does not assign the ledgered lfs sha in full — "
         "the marker/gate provenance chain starts here"
@@ -348,20 +328,17 @@ def test_c15_q27_init_carries_the_four_pack_literals():
 
 @helm_skip
 def test_c15_q27_init_grammar_is_the_portable_equality():
-    """C15 AC3 / D27 class law at the NEW call site: the overlay script must
-    use the BusyBox-portable compute+compare equality gate (the C11 shape),
-    carry the rejected GNU forms (--check/--status/-cs/-c -s) as ABSENT from
-    its hash-applet lines, keep curl --continue-at - with the rc-0/33
-    tolerance, and touch the marker only AFTER the guard (exit-1 precedes
-    touch). The chart's own script is byte-untouched — its identical legs
-    live in test_render.py; D27's law guards BOTH copies."""
-    init = R.fetch_init(R.deployment(_q27_docs()))
-    command = init.get("command") or []
-    assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
-        "cf-143 C15: the q27 init is no longer [sh -c <script>] — the grammar legs' "
-        "parse anchor moved; re-read §D3b and re-pin (not silently vacuous)"
-    )
-    script = command[2]
+    """C15 AC3 / D27 class law at the q27 render, parse anchor moved by D35 to
+    the rendered configMap script (chart FORM with the lane's scalars
+    substituted — the anchor-pair helper rejects the interim command body and
+    a missing carrier loudly, naming C03 round 2): the script must use the
+    BusyBox-portable compute+compare equality gate (the C11 shape), carry the
+    rejected GNU forms (--check/--status/-cs/-c -s) as ABSENT from its
+    hash-applet lines, keep curl --continue-at - with the rc-0/33 tolerance,
+    and touch the marker only AFTER the guard (exit-1 precedes touch). Under
+    D35 there is ONE FORM and two rendered substitutions; D27's law guards
+    both renders — the fn-side twin lives in test_render.py."""
+    _init, script = R.fetch_script_and_init(_q27_docs())
     lines = script.splitlines()
 
     def _has_all(tokens, line):
@@ -412,10 +389,12 @@ def test_c15_q27_init_grammar_is_the_portable_equality():
 
 @helm_skip
 def test_c15_q27_init_image_stays_busybox_family():
-    """The overlay replaces the COMMAND only; the init IMAGE stays
-    chart-baked (the pinned curlimages/curl — BusyBox family, §D3b premise).
-    A q27 swap to another family silently un-rules the grammar law (the C11
-    identity-gate lesson, re-armed at the second call site)."""
+    """Under D35 the lane block authors neither command nor image — the init
+    IMAGE is chart-baked (the pinned curlimages/curl — BusyBox family, §D3b
+    premise) and rides the container while the FORM rides the configMap.
+    This leg guards that no later edit swaps the family per lane: a q27 swap
+    silently un-rules the grammar law (the C11 identity-gate lesson, re-armed
+    at the second render)."""
     init = R.fetch_init(R.deployment(_q27_docs()))
     repo = str(init.get("image", "")).rsplit(":", 1)[0]
     assert repo in R.BUSYBOX_FAMILY_REPOS, (
@@ -561,17 +540,17 @@ def test_c15_q27_headroom_arithmetic_commented():
     )
 
 
-def test_c15_q27_subtree_model_path_matches_the_args():
-    """C15-r2 enforcement parity (the review's open question): fn's decorative
-    app-template.modelPath copies are armed (test_serve_args.py's dual-edit
-    leg, test_coexistence_wiring's scalars leg) while q27's copy had ZERO
-    consumers — the line is render-inert (reviewer-proven: the overlay args
-    carry the pack path literally; the fn anchor cannot splice across
-    documents), so a retarget that edits only that line would pass CI
-    silently. This leg exists so it cannot silently disagree: subtree
-    modelPath == the Q27_PROFILE --model literal. The law is three-place —
-    modelPath here, the args --model, the init PACK — keep them in step on
-    any retarget, exactly as the subtree's own comment says."""
+def test_c15_q27_subtree_model_path_matches_the_composed_model():
+    """C15-r2 enforcement parity (the review's open question), re-anchored by
+    owner ruling D43 (2026-11-22): the law stayed three-place, the places
+    moved. Era: modelPath here / the ARGS --model / the init PACK. D43:
+    subtree modelPath == rendered env RADIANCE_MODEL_PATH == the --model the
+    compose wrapper emits at boot — and the env value must equal the profile
+    literal. The line still renders nothing by itself; what changed is that
+    the served path is no longer a literal in the pod spec, so the silent
+    one-sided retarget this leg exists to catch now breaks the env/compose
+    equality instead of an args needle. Designed-red until dev round 3 lands
+    the wrapper + lane env (naming it, not skipping)."""
     block = R.q27_service_block()
     assert isinstance(block, dict), (
         "cf-143 C15: no radiance-q27 subtree (dev D2) — designed-red naming C15"
@@ -579,9 +558,20 @@ def test_c15_q27_subtree_model_path_matches_the_args():
     sub = (block.get("app-template") or {})
     assert sub.get("modelPath") == R.Q27_PROFILE["--model"], (
         f"cf-143 C15-r2: the q27 subtree re-pins app-template.modelPath {sub.get('modelPath')!r}, "
-        f"want {R.Q27_PROFILE['--model']!r} — the value the ARGS carry. The line renders nothing "
-        "but is part of the three-place pack truth (modelPath / --model / init PACK): a retarget "
+        f"want {R.Q27_PROFILE['--model']!r} — the value the profile carries. The line renders nothing "
+        "but is part of the three-place pack truth (modelPath / env / composed --model): a retarget "
         "moves all three together (the fn dual-edit law's second-release twin)"
+    )
+    comp = R.lane_composition(R.Q27_APP_NAME)
+    env_model = comp["env"].get(R.ENV_MODEL_PATH)
+    assert env_model == R.Q27_PROFILE["--model"], (
+        f"C15/D43: q27 rendered env {R.ENV_MODEL_PATH}={env_model!r}, want the profile pack path"
+    )
+    argv = comp["facts"]["argv"]
+    assert argv and R.flag_pairs(argv)["--model"] == sub.get("modelPath"), (
+        "C15/D43: the composed --model broke the three-place anchor "
+        f"(ledger {sub.get('modelPath')!r} / env {env_model!r} / composed "
+        f"{R.flag_pairs(argv)['--model'] if argv else None!r})"
     )
 
 

@@ -14,6 +14,17 @@
 > this note is the boot print: the receipt decides, never the rate
 > (§R8/D28(6) class law; §R19 Verdict).
 >
+> **[2026-11-22 C06 — the runner literal moved; annotate, never rewrite.]** cf-143
+> D54(4)'s "the pipeline runner-model literal does NOT move" is SUPERSEDED by this
+> ticket's owner ruling D16 (2026-11-22): the hourly runner now rides
+> `gpu-ai/qwen3.8-flash-next-radiance` — the FN lane, not this one (chain cf-106
+> OQ-14 → 2026-11-09 strata-q4 → 2026-11-22, table in
+> `.agents/notes/radiance-multi-instance-roster.md`). And per D20 an explicit
+> `Qwen Dense + Local` board card now routes to `qwen3.8-27b-radiance` — THIS lane —
+> so an explicit ask meets exactly the 502 refusal documented at Step 0 until an
+> owner scale act lands. What stands untouched: this lane is never a default, and
+> the boot print still decides every number.
+>
 > **OWNER-EXECUTED** marks every write-shaped line below; everything else
 > is a read. The cluster's only input is git — ArgoCD applies everything and
 > no step here applies manifests repo-side. No tier grants pod exec: the
@@ -101,7 +112,7 @@ fn DOWN first, then q27 UP. Not etiquette — arithmetic. Both-up lands
 **Pending, not OOM**, because three INDEPENDENT blockers exist and any one
 of them is fatal (§R19-Q1/Q3, D54(1)):
 
-1. The scheduler: `amd.com/gpu-r9700-1` is a capacity-1 pool and the
+1. The scheduler: `amd.com/gpu-r9700` is a capacity-1 pool and the
    chart-baked claim is non-subtractable (D26: overlays ADD, never REMOVE)
    — a second radiance pod Pends against the pool forever.
 2. The card: fn TP1 holds ~28–30 of the ~31.86 GiB usable, while q27 wants
@@ -115,7 +126,7 @@ of them is fatal (§R19-Q1/Q3, D54(1)):
 Annotate, never rewrite: the three blockers above were the single-card
 ship-time truth and stay as written history. Blocker (1)'s capacity-1 pool
 was the pre-TP2 shape — card 2 landed 2026-11-21 and the
-`amd.com/gpu-r9700-1` pool is 2 now, while fn is TP2 claim-2 in git:
+`amd.com/gpu-r9700` pool is 2 now, while fn is TP2 claim-2 in git:
 shape A (OQ-A owner ruling, "A — fn TP2, claim both cards") has one pod
 holding BOTH cards while it is UP. The swap discipline is therefore
 CLAIM-MATH: fn UP holds both cards ⇒ q27 can only schedule with fn DOWN.
@@ -125,6 +136,16 @@ git resting pair stays fn 1 / q27 0 — TP2 decides new git values, not
 live scale. Parked-window truth (the plan's Landing shape): the first
 TP2 sync with q27 UP lands fn Pending until q27 goes DOWN — fn TP2 needs
 2 of 2 cards — loud, designed; sync timing stays the owner's call.
+
+**[2026-11-22 C06 — the swap is now claim-math over the full roster; annotate,
+never rewrite.]** This lane is 1 of 4 roster releases on the pool of 2 (fn 2, q27 1,
+flash-TP1 1, q27-TP2 2, claimed strata 1 — the combination table in
+`.agents/notes/radiance-multi-instance-roster.md` is the prose authority). "fn DOWN
+first, then q27 UP" stands verbatim, generalized: fn(2) + q27(1) = 3 over a pool of 2
+is the same wall, and every other co-boot candidate fails on its own terms — flash-TP1
+stacks claim-wise (2 of 2) but the held RAM (110 + 24 + ~5.3 > 125.08) blocks the
+co-boot; claimed strata is the same pool-YES/RAM-NO shape; q27-TP2 (2) beside this
+lane (1) is 3 again. Boot legs and the console order are unchanged.
 
 Down:
 
@@ -246,7 +267,7 @@ Read, in order:
    pool nor resident in VRAM" — so it does not shrink the ~335–409K
    aggregate; the first-boot receipt above stays the witness.
 6. **The pool reads.** The node must still advertise
-   `amd.com/gpu-r9700-1: 1` with the q27 pod holding it, and
+   `amd.com/gpu-r9700: 1` with the q27 pod holding it, and
    `amd.com/gpu-8060s` untouched — the router never moved:
 
    ```bash
@@ -255,7 +276,7 @@ Read, in order:
      -o jsonpath='{.spec.template.spec.containers[?(@.name=="radiance")].resources}'
    ```
 
-   Expect the claim `amd.com/gpu-r9700-1: 1` and the 24Gi request==limit
+   Expect the claim `amd.com/gpu-r9700: 1` and the 24Gi request==limit
    pair (cpu and the claim are chart-inherited — D26, the overlay cannot
    remove them).
 7. **The `link` line.** The engine's own `link` row is the authoritative

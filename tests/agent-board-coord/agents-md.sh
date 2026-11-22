@@ -604,8 +604,14 @@ if want c11; then
   # claim must be present on each so a one-sided edit reddens).
   for f in "$RULES_SRC" AGENTS.md; do
     [ -f "$f" ] || fail "c11[cf-106 C10 AC4]: $f missing (harness fault)"
-    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'gpu-ai/qwen3.8-27b-q4' \
-      || fail "c11[cf-106 C10 AC4]: $f does not pair the loop/worker paragraph with the owner-ruled runner model gpu-ai/qwen3.8-27b-q4 (OQ-14, 2026-11-03) — red until C10 edits the rules source and regenerates"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'gpu-ai/qwen3.8-flash-next-radiance' \
+      || fail "c11[cf-106 C10 AC4, re-pinned 2026-11-22]: $f does not pair the loop/worker paragraph with the owner-ruled runner model gpu-ai/qwen3.8-flash-next-radiance — the runner literal moved cf-106 OQ-14 2026-11-03 (27b-q4) -> owner ruling 2026-11-09 (strata-q4) -> owner ruling 2026-11-22 (radiance, 2026-11-feat-radiance-multi-instance D16); red until C02 edits the rules source and regenerates"
+    # The paragraph must cite the chain, not just the newest date: the
+    # supersession is by citation, never by deletion (D23).
+    python3 "$TMP/negwin.py" --ci "$f" 1200 'gpu-ai/qwen3.8-flash-next-radiance' '2026-11-22' \
+      || fail "c11[cf-106 C10 AC4, re-pinned 2026-11-22]: $f names the radiance runner literal without the dated ruling behind it (2026-11-22) in the same paragraph"
+    python3 "$TMP/negwin.py" --ci "$f" 1200 'runner model' 'cf-106 OQ-14' \
+      || fail "c11[cf-106 C10 AC4, re-pinned 2026-11-22]: $f's runner-model sentence lost the chain origin (cf-106 OQ-14) — the 2026-11-22 ruling supersedes 2026-11-09, which superseded OQ-14; the paragraph keeps the chain"
     python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'one' 'pipeline-worker.md' \
       || fail "c11[cf-106 C10 AC4]: $f still describes the loop surface as a pair — the paragraph must name the single pipeline-worker.md runner"
     # Shell-level alternation: negwin.py's needles are literal (str.find),
@@ -659,7 +665,7 @@ PY
     cat "$TMP/noroute.out" >&2
     fail "c11 control: the deleted copy failed the arm without a missing-needle naming one of the three alternatives — the failure is not the arm's"
   fi
-  ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, a fabricated pair sentence is rejected, and deleting the routing sentence reddens the routing arm"
+  ok "c11[cf-106 C10 AC4, re-pinned 2026-11-22]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-flash-next-radiance model with its dated ruling chain, and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, a fabricated pair sentence is rejected, and deleting the routing sentence reddens the routing arm"
 fi
 
 # --- c12: cf-124 C05 — the feature-branch hard rule gains the gated-mint clause --

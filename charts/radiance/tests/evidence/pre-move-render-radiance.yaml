@@ -1,0 +1,200 @@
+# C03 delta fixture — the rendered Deployment of one radiance release at the PRE-MOVE
+# base commit 8f3d5bbad902995600cc5f0cc529f2cbe42ebd9c, re-derived by capture_c03_fixtures.py from `git archive`
+# of that commit (never the working tree; the payload guard refuses a write on any
+# difference, so this file's bytes ARE the pinned render, folded).
+#
+# DO NOT EDIT. This is the baseline side of the INTENTIONAL-DELTA proof in
+# test_c03_generic_shell.py under owner ruling D35: the block-fed render may now
+# differ on EXACTLY four ruled paths (the pod-template checksum/configMaps
+# annotation, spec.volumes, the init volumeMounts, the init command) and on
+# NOTHING ELSE. Pool names are folded to <POOL> here and in the leg (the C01
+# rename is the one difference C03 may inherit; a retired-pool spelling folds to
+# <POOL>-1 and fails). Re-validate by running the capture script — never
+# hand-edit, never re-point the commit, never delete this fixture.
+# Release: gpu-ai-radiance (the derived Application name).
+captured_at: '2026-11-22'
+captured_from_commit: 8f3d5bbad902995600cc5f0cc529f2cbe42ebd9c
+deployment:
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/controller: radiance
+      app.kubernetes.io/instance: gpu-ai-radiance
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: radiance
+      helm.sh/chart: app-template-5.0.1
+    name: gpu-ai-radiance
+    namespace: default
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 3
+    selector:
+      matchLabels:
+        app.kubernetes.io/controller: radiance
+        app.kubernetes.io/instance: gpu-ai-radiance
+        app.kubernetes.io/name: radiance
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/controller: radiance
+          app.kubernetes.io/instance: gpu-ai-radiance
+          app.kubernetes.io/name: radiance
+      spec:
+        automountServiceAccountToken: false
+        containers:
+        - args:
+          - --model
+          - /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+          - --port
+          - '8000'
+          - --host
+          - '::'
+          - --tp
+          - '2'
+          - --tp-wire
+          - wht6
+          - --max-model-len
+          - '200000'
+          - --max-num-seqs
+          - '8'
+          - --placement
+          - expert_tiered
+          - --host-pool-mib
+          - '12288'
+          - --gpu-headroom-mib
+          - '96'
+          - --kv-cache-dtype
+          - fp8
+          - --prefix-cache-mib
+          - '4096'
+          - --num-speculative-tokens
+          - '3'
+          - --max-num-batched-tokens
+          - '2048'
+          - --checkpoint-interval
+          - '4096'
+          - --ngram-placement
+          - disk
+          - --served-model-name
+          - qwen3.8-flash-next-radiance
+          image: docker.io/stilldeadcode/radiance:1.17.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+          name: radiance
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+          resources:
+            limits:
+              <POOL>: '2'
+              cpu: '8'
+              memory: 110Gi
+            requests:
+              <POOL>: '2'
+              cpu: '8'
+              memory: 110Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+              - IPC_LOCK
+              drop:
+              - ALL
+          startupProbe:
+            failureThreshold: 180
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+          volumeMounts:
+          - mountPath: /models
+            name: models
+            readOnly: true
+          - mountPath: /dev/shm
+            name: shm
+        dnsPolicy: ClusterFirst
+        enableServiceLinks: false
+        hostIPC: false
+        hostNetwork: false
+        hostPID: false
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - "set -e\nLFS_SHA=0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20\n\
+            PACK=/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad\nMARKER=/models/radiance/.staged-$LFS_SHA\n\
+            URL=https://huggingface.co/StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe/resolve/main/qwen3.8-next-flash-fp8-iq4r-moe.rad\n\
+            mkdir -p /models/radiance\nif [ -f \"$MARKER\" ] && [ -f \"$PACK\" ];\
+            \ then\n  echo \"radiance staging: marker + pack present \u2014 skipping\"\
+            \n  exit 0\nfi\necho \"radiance staging: fetch $PACK (curl-resume, 113.6\
+            \ GiB class)\"\n# rc 33 = \"the file is already completely retrieved\"\
+            \ under\n# --continue-at - : a pack that finished without ever having\n\
+            # written its marker (kill between bytes and touch) is DONE,\n# not a\
+            \ failure \u2014 set -e would otherwise boot-loop on it.\nrc=0\ncurl --fail\
+            \ --location --retry 5 --retry-delay 10 --continue-at - --output \"$PACK\"\
+            \ \"$URL\" || rc=$?\nif [ \"$rc\" -ne 0 ] && [ \"$rc\" -ne 33 ]; then\n\
+            \  echo \"radiance staging: curl failed rc=$rc\"\n  exit \"$rc\"\nfi\n\
+            # The marker is only written after the sha256 PASSES \u2014 the\n# marker\
+            \ IS the landed-file provenance (C06 step-4 receipts\n# sha256sum against\
+            \ this same ledgered value). BusyBox grammar only:\n# the curl image is\
+            \ Alpine \u2014 sha256sum there implements short -c[sw]\n# and NO GNU\
+            \ long options; GNU in turn has no short -s. Equality on\n# the two-space\
+            \ compute form (printf(\"%s  %s\") upstream) is the only\n# shape both\
+            \ applet families pass, loudly, with the digests on one\n# line (\xA7\
+            D3b, D27 \u2014 the --check here crashlooped the pod).\nactual=$(sha256sum\
+            \ \"$PACK\" | cut -d' ' -f1)\nif [ \"$actual\" != \"$LFS_SHA\" ]; then\n\
+            \  echo \"radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual\"\
+            \n  exit 1\nfi\ntouch \"$MARKER\"\necho \"radiance staging: complete\""
+          image: docker.io/curlimages/curl:8.23.0
+          imagePullPolicy: IfNotPresent
+          name: radiance-fetch
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          volumeMounts:
+          - mountPath: /models
+            name: models
+          - mountPath: /dev/shm
+            name: shm
+        securityContext:
+          fsGroup: 65532
+          fsGroupChangePolicy: OnRootMismatch
+          runAsGroup: 65532
+          runAsUser: 65532
+          seccompProfile:
+            type: Unconfined
+          supplementalGroups:
+          - 486
+        serviceAccountName: default
+        terminationGracePeriodSeconds: 180
+        volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-swap
+        - emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+          name: shm
+pool_token: <POOL>
+release: gpu-ai-radiance
+revalidated_at: '2026-11-22'

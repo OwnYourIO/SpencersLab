@@ -1,4 +1,5 @@
-# Radiance (cf-143 C02): the Flash-Next engine pod on the gpu-ai R9700.
+# Radiance (cf-143 C02; genericised into the per-instance shell by C03): the
+# chart every radiance lane on the gpu-ai R9700s releases from.
 # "Radiance" here is the StillDeadcode ENGINE (docker.io/stilldeadcode/radiance
 # — the C++/HIP one, RESEARCH RQ0). Two name-collisions must not be read into
 # this chart: charts/vllm's image vllm-radiance-mxfp4 is the magiccodingman
@@ -11,107 +12,32 @@
 # no ExternalSecret leg, no custom-values entry: the trio law's documented
 # skip). domain/clusterName references are absent on purpose.
 
-app-template:
-  # The served model FILE, spliced as the --model value: the flash-next pack
-  # on the shared 500Gi llama-swap claim. PACK LEDGER (RESEARCH RQ0, the
-  # staging init's + C06's verification authority): HF
-  # StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe, file
-  # qwen3.8-next-flash-fp8-iq4r-moe.rad, 121,969,901,568 bytes (113.60 GiB),
-  # lfs sha256
-  # 0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20, ungated
-  # (gated:False verified against the HF API). Anchors resolve per-document,
-  # so the C04 service block's modelPath re-pin does NOT reach this render:
-  # a retarget is the dual edit the suite's modelPath-equality leg guards
-  # (the vllm values anchor-trap law).
-  modelPath: &modelPath /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+#
+# ONE SHELL, SEVERAL RELEASES (2026-11-feat-radiance-multi-instance C03, plan
+# OQ-D + rulings D35/D43): this chart is MECHANISM — the image pin and digest ledger,
+# the /health probe law, Recreate plus the drain grace, the unprivileged GPU
+# securityContext, the shared models claim and /dev/shm, the Service shape, the
+# staging init's image and hash budget, and BOTH generic script FORMs riding
+# one ConfigMap carrier: the fetch shell the init consumes (D35) and the
+# serve-argv compose wrapper the main container invokes (D43). LANE DATA — the
+# served pack path and its ledger, the serve specifics the compose FORM reads
+# from container env, the memory and card claim, and the pack scalars the FORM
+# substitutes (PACK/LFS_SHA/URL/MARKER) — ships in each
+# release's roster block in services/gpu-ai/prod/values.yaml. The lanes and
+# their claim math are in templates/NOTES.txt.
 
-  # --- the sizing scalars (D15/D17): the arithmetic + ladder home the C06
-  # runbook moves (pool -> ctx -> last-resort prefix-tier swap with owner
-  # sign-off). app-template's values schema pins args entries to STRINGS and
-  # YAML offers no anchor mechanism turning int 110 into "110Gi" or a schema-
-  # valid string, so the args/resources carriers below hold the string FORM
-  # of each number and these ints are the ledger: test_ac3_scalar_splice
-  # renders the args AND resources and reds any half-move of one side — the
-  # equality against these scalars is what makes the carriers one source.
-  #
-  # guaranteedMemoryGi = 110 — the OWNER RULING (D29; batched answer verbatim
-  # "110 GiB (your figure)" to "which value should charts/radiance ship for
-  # gpu-ai?"), superseding D28's documented 96 ceiling as THE VALUE ONLY.
-  # Why no plan figure survived: the engine prints its own budget — report 2
-  # printed `pinned by this process 71.04 GiB` against a 64.00 cgroup → live
-  # OOM at the first boot that ever hashed. The tier words (pool 42.70, the
-  # --kv-resident host mirror ~32, activation/arena 2.00, placement-flag
-  # 1.18, staging) OVERLAP: the printed parts sum to 77.88 against the
-  # printed whole 71.04 — 71.04 is the figure to price against, a BOUNDED
-  # residual, never a decomposition to re-add (D30(2)); and the disk n-gram
-  # tier is O_DIRECT — its table never enters page cache (host footprint is
-  # the ~85 MiB io_uring row cache), so "raise the limit starves the cache"
-  # stands REFUTED (D30(3)). D17's per-token derivation reserved the mirror
-  # at ~19.3 GiB
-  # (RQ1's ~12 KiB/token rate) while shipped 1.17.0 books ~20 KiB/token
-  # (~32 GiB at 8×200K) — the class law (D28): READ the printed tiers, SUM
-  # them, compare to the limit; a limit below the printed budget is a defect,
-  # not a ladder step. 110 is honestly sourced (§D6.1): it is NOT a radiance
-  # plan figure anywhere — it is STRATA's own proven envelope on this node
-  # (the owner's "container must die BEFORE the node" ruling,
-  # charts/llama-swap/values.yaml:1319-1325); the ruling extends that node
-  # law to radiance. Sums at 110 (allocatable 125.08, §D6.2): strata DOWN
-  # 110 + router 4.125 + system floor 1.158 = 115.28 ≤ 125.08 → fits with
-  # 9.80 GiB free; strata UP 110 + 64 + 6.3 = 180.3 > 125.08 → radiance
-  # sits Pending with "Insufficient memory" — the DESIGNED handshake of the
-  # owner's scale-down protocol restated at 110 (runbook steps 3/10; the
-  # handshake INVERTS: at 110 strata's restore-back can never co-reside a
-  # scheduled radiance — the cutover is now a real either/or). Engine rule:
-  # 110 − 71.04 = 38.96 ≥ 4 ✓ with margin — the ladder-UP plan (64→…→96) is
-  # CLOSED by this value; the ladder DOWN still runs through hostPoolMib/ctx
-  # steps, never this scalar below printed-budget + 4. The RAM-ngram tier is
-  # DEAD at 110 too (71.04 + 47.68 = 118.72 > 110): 110 buys prefill-burst
-  # slack, not a tier. The live hand-bump (limit 94 over request 64 →
-  # Burstable) exists nowhere in git — this PAIR lands on the next sync and
-  # restores Guaranteed.
-  #
-  # cf-144 C01 TP2 annotation (2026-11-21, append-only — the D29 ruling above
-  # stands as written history): the TP2 flip does NOT move this scalar. The
-  # owner's batched ruling P11 ("Hold 110, re-pin after the print") REJECTED
-  # the draft-shipped 48 (P11 supersedes P03): 110 ships as the SINGLE-CARD
-  # SUPERSET HELD at ship — the first-boot PRINT is the budget authority
-  # (D30(2) applied to the TP2 topology), so the DOWN re-pin to the printed
-  # class (~30–35 GiB at the TP2 pin set: 2×12288 per-rank pool + 4 tier +
-  # slots + tables, §R8-Q5) is a POST-TP2-BOOT OWNER-RECEIPT leg, never a
-  # shipped value. The llmkube production witness (req 40 / lim 48 at
-  # 262144 ctx) stays the RECORDED BRACKET for that re-pin; the +4-slack law
-  # above is the re-pin target's WHY, not a ship rule. Either/or restated at
-  # the held 110: fn ALONE 110 + router 4.125 + system 1.158 = 115.3 ≤
-  # 125.08 FITS (the §D6.2 strata-DOWN terms hold unchanged); strata
-  # CO-EXISTENCE 110 + 64 + 6.3 = 180.3 > 125.08 stays CLOSED at ship — the
-  # ≈118.3 re-open materializes only if/when the post-boot DOWN re-pin lands
-  # (card doc §12), and that decision rides the CUTOVER ticket: pointer only,
-  # no behavior here.
-  guaranteedMemoryGi: 110
-  hostPoolMib: 12288
-  maxModelLen: 200000
-  maxNumSeqs: 8
-  # cf-144 C01 (shape A, OQ-A owner ruling): TP2 tensor width, ledgered here
-  # because doc §11.5 names "tp 1→2" among the single-source scalars — not a
-  # ladder rung, a SHAPE constant. test_serve_args's splice guard reds any
-  # half-move between this int and the args carrier (the carrier shape C01
-  # rules open: prefix-cache-mib / max-num-batched-tokens /
-  # checkpoint-interval stay list-literals).
-  tp: 2
-  # The idle-session lever the owner's 8-session goal runs on — cf-144 C01
-  # polarity flip (P04): the prefix-cache HOST TIER ships at 4096 MiB
-  # (args-carried — recipe constant, not a ladder rung): finished
-  # conversations demote to RAM and restore instead of re-prefilling against
-  # the Gen4-x4 link wall (~450-600 tok/s @55k measured class, the honest
-  # envelope). The TP1-era --kv-resident 32768 mirror is OUT — tier and
-  # mirror are mutually exclusive (while a group streams, the tier is off):
-  # one lever or the other, never both (doc §7). Tier caveat carried from
-  # RQ1: demotions land as PINNED bursts (the Wilde OOM class) — the
-  # acceptance run keeps ≥ 15 GiB genuinely free and --prefix-cache-mib 0 is
-  # the escape hatch. hostPoolMib is now the PER-RANK pool: two ranks pin
-  # 2×12288 MiB ≈ 24 GiB of host RAM (the single-card era read 43000 as the
-  # one envelope's pool number).
-  cpuCores: 8
+app-template:
+  # Nothing lane-specific survives at this level (C03/OQ-D). The pack path and
+  # its ledger, the serve recipe, the sizing scalars and the memory/card claim
+  # pair are roster-block data; so are the four scalars the fetch FORM below
+  # substitutes — the FORM is generic, the numbers are not. What proves the
+  # relocation shipped nothing unintended is the intentional-delta proof in
+  # charts/radiance/tests/ (the evidence/pre-move-render-*.yaml fixtures and
+  # the four-path budget leg D35 rules). Any key added here is a fact EVERY
+  # release of this shell inherits — a second release booting with the first
+  # lane's pack and the first lane's card count is the exact failure the
+  # relocation closed.
+
 
   # --- priority / preemption (Q2 ruling, RESEARCH RQ2): radiance honors the
   # OpenAI body `priority` field with HIGHER-WINS ranking (urgent 9 / default
@@ -129,10 +55,11 @@ app-template:
   # the device plugin at -resource_naming_strategy=product, which buckets
   # devices per SANITIZED MARKETING NAME, and since D24 the names come from
   # the PATCHED amdgpu.ids ConfigMap that chart mounts over the image's
-  # baked table — the sanitizer maps the 7551/C0 row's "r9700-1" product
-  # string to gpu-r9700-1 (the amd.com namespace and the gpu- prefix are
+  # baked table — the sanitizer maps the 7551/C0 row's "r9700" product
+  # string to gpu-r9700 (renamed 2026-11-22 per D21; the amd.com namespace and the gpu- prefix are
   # plugin CODE constants, §R7-Q1/Q2). This node advertises exactly
-  # amd.com/gpu-r9700-1 (the R9700, PCI 7551 revision C0) and
+  # amd.com/gpu-r9700 (the R9700s, PCI 7551 revision C0 — a pool of TWO
+  # devices since the TP2 wave) and
   # amd.com/gpu-8060s (the Strix APU, 1586, carried rows — unchanged) — a
   # pod requesting the R9700 pool can ONLY ever receive the R9700
   # (scheduler determinism replaces the
@@ -154,8 +81,13 @@ app-template:
   # ROCR/HIP env (the charts/vllm 307/310 idiom is obsolete here — that lane
   # uses hostPath devices, which Q7 rules out below). "No occupancy check in
   # Allocate()" stays TRUE upstream (open PRs #243/#247 — watch, don't wait)
-  # and is MOOT here: each pool holds one device, so within-bucket choice
-  # cannot exist. The fallback trap (a card whose sysfs (device,revision)
+  # and the pre-TP2 "each pool holds one device" reading is RETIRED with the
+  # second card (RESEARCH C1, 2026-11-22): the R9700 pool holds TWO devices,
+  # so within-bucket choice DOES exist, settled at the SCHEDULER — a free
+  # single-card claim takes the pool's lowest-KFD-NodeId card (advisory at
+  # the API, source-pinned at v1.31.0.12), concurrent claims take distinct
+  # cards by occupancy, and a TP2 claim gets both; pinning a lane to one
+  # specific card is NOT expressible through the plugin. The fallback trap (a card whose sysfs (device,revision)
   # pair is absent from the patched table reverts to the bare amd.com/gpu
   # name) is closed by the C06 step-0 gate (a) BEFORE first boot, not
   # by runtime logic. STRATA LAW (Q11): strata's privileged hostPath pod sits
@@ -163,45 +95,150 @@ app-template:
   # choice, never VRAM arbitration; the radiance-vs-strata contention stays
   # the owner's observe-only ruling, the manual scale-down protocol governs.
 
-  # The shipped serve recipe — the doc §7 TP2 profile (cf-144 P04, owner
-  # batched answer "Confirm as specced"), the FULL RESEARCH serving envelope
-  # per the Q10 ruling (the round-2 shadow profile is VOID). Order-insensitive
-  # contract (set equality; test_serve_args pins it). ABSENCE LAW, each a
-  # boot-refusal or a different-memory story avoided (RESEARCH Guide
-  # corrections): NO `serve` verb (the engine takes args directly — the
-  # guide's `radiance serve` double-verbs it, the Strata/vLLM idiom leaking);
-  # no --expert-vs-cache-ratio (stale guide flag — v1.17.0 has no such flag;
-  # the weights/cache split is engine-derived and the startup receipt prints
-  # every term); NO --kv-resident (cf-144 P04 POLARITY FLIP: the TP2 recipe
-  # ships the prefix tier and the mirror is mutually exclusive with it — the
-  # 32768 lever was the single-card shape, retired with its marker in
-  # radiance_testlib); --prefix-cache-mib LEAVES the absence list and SHIPS
-  # at 4096 (the tier the second card's VRAM makes affordable again); no
-  # --api-key (keyless D8); --tp-wire wht6 is a PURE ADD verified verbatim
-  # against flashnext.yaml and the fn HF card (RQ4); --checkpoint-interval
-  # 4096 is the v1.17.0 recipe's session-checkpoint cadence (checkpoints ride
-  # the ~8.9 GiB checkpoint-slot line of the sizing arithmetic — ~113.5 MiB
-  # per Flash-Next slot, RESEARCH RQ1); --num-speculative-tokens 3 is the
-  # pack's native MTP depth (RESEARCH RQ0: the fn pack carries an MTP-3
-  # drafter).
-  serveArgs: &serveArgs
-    ["--model", *modelPath,
-     "--port", "8000",
-     "--host", "::",
-     "--tp", "2",
-     "--tp-wire", "wht6",
-     "--max-model-len", "200000",
-     "--max-num-seqs", "8",
-     "--placement", "expert_tiered",
-     "--host-pool-mib", "12288",
-     "--gpu-headroom-mib", "96",
-     "--kv-cache-dtype", "fp8",
-     "--prefix-cache-mib", "4096",
-     "--num-speculative-tokens", "3",
-     "--max-num-batched-tokens", "2048",
-     "--checkpoint-interval", "4096",
-     "--ngram-placement", "disk",
-     "--served-model-name", "qwen3.8-flash-next-radiance"]
+  # No serve recipe here (C03): the args are lane data and ship complete in
+  # each release's block, every time. The profile law is per block and
+  # suite-pinned there — each flag exactly once, an extra flag as fatal as a
+  # missing one (every stale-guide survivor shipped is a boot-time refusal or
+  # a silently different memory story, RESEARCH "Guide corrections"), and the
+  # absence list checked as a named bar, not a style note.
+
+
+  # --- THE SCRIPT-FORM CARRIER (C03 round 2 owner ruling D35; serve half added
+  # by round 3 owner ruling D43) -----------------------------------------------
+  # ONE generic staging shell for every release of this shell: resume-download
+  # the lane's pack onto the shared claim, verify it against the lane's LFS sha,
+  # write the success marker only on a match. It rides a ConfigMap because
+  # app-template 5.0.1 renders container command/args through plain toYaml (no
+  # tpl), so a chart-side script could never read per-release values from the
+  # container — while configMap DATA is tpl'd, which is what lets the FORM stay
+  # chart-owned and PACK/LFS_SHA/URL/MARKER stay roster-block data. The cost the
+  # owner accepted with the ruling (D35(2)): a release rolls at the sync that
+  # lands this carrier (Recreate + changed pod template), watched on its own.
+  # D43 extends the same class to the SERVE side — see serve.sh below: the lane
+  # feeds it through container env instead of values, and the pod spec shows an
+  # invocation instead of the engine's argv.
+  radianceFetch:
+    # The scalars the FORM substitutes, empty here on purpose: a release that
+    # does not author its own pack trips the loud guard at the top of the script
+    # instead of quietly fetching a sibling lane's bytes. PACK is deliberately
+    # NOT one of them — PACK is the block's modelPath, the same key the
+    # dual-edit legs compare against the model path the lane serves, so the
+    # fetched pack and the served pack cannot drift apart on a retarget.
+    lfsSha: ""
+    url: ""
+    marker: ""
+
+  configMaps:
+    radiance-fetch:
+      # The name follows the release (app-template derives it from the fullname),
+      # so the two live lanes never fight over one ConfigMap in `default`. ONE
+      # carrier holds BOTH script FORMs (fetch + serve, D43): the pod template
+      # then rolls on a single checksum/configMaps value, not two.
+      data:
+        fetch.sh: |
+          #!/bin/sh
+          # radiance pack staging — chart-owned FORM (D35). The assignments
+          # below are the ONLY lane-specific bytes in this file; the sequence
+          # around them is law for every release of this shell.
+          set -e
+          PACK={{ .Values.modelPath }}
+          LFS_SHA={{ .Values.radianceFetch.lfsSha }}
+          URL={{ .Values.radianceFetch.url }}
+          MARKER={{ .Values.radianceFetch.marker }}
+          if [ -z "$PACK" ] || [ -z "$LFS_SHA" ] || [ -z "$URL" ] || [ -z "$MARKER" ]; then
+            echo "radiance staging: missing pack scalars — the release block must author modelPath plus radianceFetch lfsSha/url/marker"
+            exit 1
+          fi
+          mkdir -p "$(dirname "$PACK")"
+          if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
+            echo "radiance staging: marker + pack present — skipping"
+            exit 0
+          fi
+          echo "radiance staging: fetch $PACK (curl-resume)"
+          # rc 33 = "the file is already completely retrieved" under
+          # --continue-at - : a pack that finished without ever having written
+          # its marker (a kill between bytes and touch) is DONE, not a failure
+          # — set -e would otherwise boot-loop on it.
+          rc=0
+          curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
+            echo "radiance staging: curl failed rc=$rc"
+            exit "$rc"
+          fi
+          # The marker is written only after the checksum passes: the marker IS
+          # the landed-file provenance the C06 receipts re-check against this
+          # same ledgered value. BusyBox grammar only — the pinned curl image is
+          # Alpine, where the hash applets take short options and refuse GNU
+          # long ones, while GNU has no short quiet flag. Plain shell equality
+          # on the two-space compute output, both digests on one echo line, is
+          # the only gate both families run unchanged (cf-143 D27/§D3b).
+          actual=$(sha256sum "$PACK" | cut -d' ' -f1)
+          if [ "$actual" != "$LFS_SHA" ]; then
+            echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
+            exit 1
+          fi
+          touch "$MARKER"
+          echo "radiance staging: complete"
+        # THE SERVE-COMPOSE FORM (C03 round 3, owner ruling D43): the same
+        # carrier class on the serve side. The engine's argv is not lane data
+        # except through env — the FORM owns the flag vocabulary and the
+        # fixed flags, the release's RADIANCE_* env carries every per-lane
+        # value (env rides tpl; container args never did, which is exactly
+        # why the per-block arrays went stale on the pool rename), and the
+        # pod spec shows an invocation instead of a vector.
+        serve.sh: |
+          #!/bin/sh
+          # radiance serve compose — chart-owned FORM (D43). Every per-lane
+          # value arrives through RADIANCE_* container env; nothing here names
+          # a pack, an id, or a lane's numbers, and a lane cannot restyle the
+          # FORM by writing one of the fixed flags into its env (the suite
+          # reds that dual channel).
+          #
+          # POSIX-only: the engine image's bin/sh is busybox ash — no bash,
+          # no dash, no arrays, no [[ ]]. The engine execs by BARE name
+          # (§D1.5: the image ENTRYPOINT is ["radiance"] and PATH resolves
+          # /opt/radiance/bin/radiance); re-pathing it here would fork the
+          # engine identity away from the image pin.
+          #
+          # D43(2) visibility note — read this before calling the render a
+          # drift: kubectl describe and the Argo diff now show the wrapper
+          # invocation plus the env, NOT the argv. The startup echo below is
+          # the operator's receipt for the vector the engine actually
+          # received; the suite proves the same bytes compose each lane's
+          # ruled profile exactly.
+
+          # Loud guard (the fetch FORM's -z law, serve side): a required env
+          # absent dies BEFORE composing — a serve without its model, id, tp
+          # or context is not a serve, and a baked default here would
+          # re-smuggle lane data into the chart. The message names the
+          # variable so the pod log alone diagnoses it.
+          : "${RADIANCE_MODEL_PATH:?RADIANCE_MODEL_PATH is required - the lane must author its pack path}"
+          : "${RADIANCE_SERVED_ID:?RADIANCE_SERVED_ID is required - the lane must author its served id}"
+          : "${RADIANCE_TP:?RADIANCE_TP is required - tp must equal the pod card claim}"
+          : "${RADIANCE_MAX_MODEL_LEN:?RADIANCE_MAX_MODEL_LEN is required - the context ceiling is a lane fact}"
+
+          # Fixed flags (FORM-owned, identical for every release): port 8000
+          # (the Service and probes agree), host :: (the cf-143 idiom), 8
+          # sessions, fp8 KV cache. Everything below them is env-fed: absent
+          # env means absent flag, which is how the dense lanes omit the
+          # whole expert family without this FORM knowing which lane it
+          # serves.
+          set -- --model "$RADIANCE_MODEL_PATH" --served-model-name "$RADIANCE_SERVED_ID" \
+            --port 8000 --host :: --max-num-seqs 8 --kv-cache-dtype fp8 \
+            --tp "$RADIANCE_TP" --max-model-len "$RADIANCE_MAX_MODEL_LEN"
+          [ -n "${RADIANCE_TP_WIRE:-}" ] && set -- "$@" --tp-wire "$RADIANCE_TP_WIRE"
+          [ -n "${RADIANCE_HOST_POOL_MIB:-}" ] && set -- "$@" --host-pool-mib "$RADIANCE_HOST_POOL_MIB"
+          [ -n "${RADIANCE_GPU_HEADROOM_MIB:-}" ] && set -- "$@" --gpu-headroom-mib "$RADIANCE_GPU_HEADROOM_MIB"
+          [ -n "${RADIANCE_KV_RESIDENT:-}" ] && set -- "$@" --kv-resident "$RADIANCE_KV_RESIDENT"
+          [ -n "${RADIANCE_PREFIX_CACHE_MIB:-}" ] && set -- "$@" --prefix-cache-mib "$RADIANCE_PREFIX_CACHE_MIB"
+          [ -n "${RADIANCE_PLACEMENT:-}" ] && set -- "$@" --placement "$RADIANCE_PLACEMENT"
+          [ -n "${RADIANCE_NGRAM_PLACEMENT:-}" ] && set -- "$@" --ngram-placement "$RADIANCE_NGRAM_PLACEMENT"
+          [ -n "${RADIANCE_NUM_SPECULATIVE_TOKENS:-}" ] && set -- "$@" --num-speculative-tokens "$RADIANCE_NUM_SPECULATIVE_TOKENS"
+          [ -n "${RADIANCE_MAX_NUM_BATCHED_TOKENS:-}" ] && set -- "$@" --max-num-batched-tokens "$RADIANCE_MAX_NUM_BATCHED_TOKENS"
+          [ -n "${RADIANCE_CHECKPOINT_INTERVAL:-}" ] && set -- "$@" --checkpoint-interval "$RADIANCE_CHECKPOINT_INTERVAL"
+
+          echo "radiance serve: composed engine argv: $*"
+          exec radiance "$@"
 
   # cf-145 D-8 (owner batched ruling: annotation autodiscovery over a raw
   # ServiceMonitor) — the charts/vllm D8 idiom: the gate for the
@@ -285,12 +322,11 @@ app-template:
       # overlap — a second pod would double-pin the node (the strata #2257
       # class the repo lived). Same-node single-tenant.
       strategy: Recreate
-      # No reloader.stakater.com/auto annotation ON PURPOSE: the repo
-      # standard exists to restart pods when mounted ConfigMaps/Secrets
-      # change — this pod mounts neither (keyless D8, no config surface),
-      # so the annotation would be inert drift. This absence scopes the
-      # reloader key only: the cf-145 D-8 k8s.grafana.com/* scrape pair is a
-      # different concern and rides in defaultPodOptions.
+      # No reloader.stakater.com/auto annotation ON PURPOSE: the restart the
+      # one mounted ConfigMap needs (the fetch FORM, D35) is already driven by
+      # app-template's checksum/configMaps pod-template annotation, which is
+      # deterministic and needs no extra operator; there is no Secret surface at
+      # all (keyless cf-143 D8), so the reloader would only add a second restart path.
       containers:
         radiance:
           image:
@@ -312,7 +348,20 @@ app-template:
             # CAN be rebuilt in place upstream, silently changing bytes under
             # a held pin) — this ledger is the forensic anchor for exactly
             # that case; a digest retarget is a DECISIONS line, not a drive-by.
-          args: *serveArgs
+          # INVOCATION ONLY (D43, mirroring the D35 init law): the serve
+          # argv composes in the mounted FORM above, so the container names
+          # the file it runs and `args` stays absent — whatever rendered here
+          # would be a second argv source. `sh` runs the file because
+          # ConfigMap volumes serve 0644 root-owned bytes to this pod's
+          # 65532 — readable, never executable. Engine law the wrapper
+          # upholds for every lane: no `serve` verb (the engine takes args
+          # directly; the vllm/Strata idiom double-verbs it) and no api key
+          # (cf-143 D8 keyless).
+
+          command:
+            - sh
+            - /scripts/serve.sh
+
           ports:
             - name: http
               containerPort: 8000
@@ -331,7 +380,7 @@ app-template:
                   path: /health
                   port: 8000
                 # 180x10s = 30-min ceiling: the cold-load class is minutes
-                # (113.6 GiB read + graph build), the llmkube probe law; a
+                # (the pack's GiB-class read + graph build), the llmkube law; a
                 # mis-sized boot fails LOUD at startup rather than thrashing.
                 periodSeconds: 10
                 failureThreshold: 180
@@ -349,36 +398,15 @@ app-template:
                 httpGet:
                   path: /health
                   port: 8000
-          resources:
-            # GUARANTEED QoS (Q7 + D15): requests == limits, extended
-            # resource included (extended resources REQUIRE an equal
-            # integer pair — the kubelet rejects requests != limits for
-            # them). cpu/memory are the k8s-string forms of the
-            # cpuCores/guaranteedMemoryGi scalars above (single-source
-            # note; the memory pair TRACKS the HELD 110 — P11 — the claim
-            # COUNT is this wave's TP2 move). cf-144 C01 SHAPE A (OQ-A
-            # owner ruling): the pool is 2 since card 2 landed — the SAME
-            # 7551/C0 pair so it joined the same name (EXPLORE §0) — and
-            # this pod now CLAIMS BOTH devices while fn is UP (the q27
-            # release overlay-pins its claim back to 1, D26 ADD/UPDATE).
-            # The GPU name stays the PATCHED-TABLE provenance
-            # (D24/§R7-Q2): charts/amd-gpu ships an amdgpu.ids ConfigMap
-            # whose 7551/C0 product string "r9700-1" the plugin's
-            # sanitizer maps to gpu-r9700-1 — the pool string's "-1"
-            # carries no scheduling meaning; a further rename needs the
-            # upstream feature ask (optional per D24). The patched
-            # amdgpu.ids table stays this name's only source; the bare
-            # amd.com/gpu key survives on the node at COUNT 0 (EXPLORE
-            # gotcha 8 — present-at-zero, not capacity-absent), so a
-            # stray bare claim sits Pending-forever.
-            requests:
-              cpu: "8"
-              memory: "110Gi"
-              amd.com/gpu-r9700-1: "2"
-            limits:
-              cpu: "8"
-              memory: "110Gi"
-              amd.com/gpu-r9700-1: "2"
+          # No resources here (C03): the VALUES of the pair are lane data and
+          # ship in each block. The POD-CLASS LAW is chart-side because it is
+          # not lane data (cf-143 D15): Guaranteed is a POD property — any container
+          # without an equal requests==limits pair silently downgrades the
+          # WHOLE pod to Burstable — and an extended resource REQUIRES the
+          # equal integer pair, the kubelet rejects requests != limits for it.
+          # Four lanes price their working sets differently; one lane's number
+          # is another lane's Pending pod or OOMKill.
+
           securityContext:
             # The repo drop-ALL standard plus the engine's one carry:
             # IPC_LOCK for locked-buffer / io_uring registration (Q7).
@@ -416,46 +444,19 @@ app-template:
             # banner), which is what the checksum-grammar law in the script
             # below guards. Swapping the image family means re-ruling that
             # premise — the identity leg refuses to pass vacuously.
+          # INVOCATION ONLY (D35): the bytes of the fetch script are the
+          # chart-owned ConfigMap above, mounted at /scripts; the command names
+          # the file it execs. sh runs the file rather than relying on its exec
+          # bit because a ConfigMap volume serves mode-0644 root-owned files to
+          # this pod's 65532 — readable, never executable. What stays law for
+          # every lane here: the pinned curl image (the BusyBox-applet premise
+          # the gate's grammar is written against — the identity leg refuses to
+          # pass vacuously), the single-core hash budget, and the non-root
+          # stage posture.
           command:
             - sh
-            - -c
-            - |-
-              set -e
-              LFS_SHA=0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20
-              PACK=/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
-              MARKER=/models/radiance/.staged-$LFS_SHA
-              URL=https://huggingface.co/StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe/resolve/main/qwen3.8-next-flash-fp8-iq4r-moe.rad
-              mkdir -p /models/radiance
-              if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
-                echo "radiance staging: marker + pack present — skipping"
-                exit 0
-              fi
-              echo "radiance staging: fetch $PACK (curl-resume, 113.6 GiB class)"
-              # rc 33 = "the file is already completely retrieved" under
-              # --continue-at - : a pack that finished without ever having
-              # written its marker (kill between bytes and touch) is DONE,
-              # not a failure — set -e would otherwise boot-loop on it.
-              rc=0
-              curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
-              if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
-                echo "radiance staging: curl failed rc=$rc"
-                exit "$rc"
-              fi
-              # The marker is only written after the sha256 PASSES — the
-              # marker IS the landed-file provenance (C06 step-4 receipts
-              # sha256sum against this same ledgered value). BusyBox grammar only:
-              # the curl image is Alpine — sha256sum there implements short -c[sw]
-              # and NO GNU long options; GNU in turn has no short -s. Equality on
-              # the two-space compute form (printf("%s  %s") upstream) is the only
-              # shape both applet families pass, loudly, with the digests on one
-              # line (§D3b, D27 — the --check here crashlooped the pod).
-              actual=$(sha256sum "$PACK" | cut -d' ' -f1)
-              if [ "$actual" != "$LFS_SHA" ]; then
-                echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
-                exit 1
-              fi
-              touch "$MARKER"
-              echo "radiance staging: complete"
+            - /scripts/fetch.sh
+
           resources:
             # THE POD-CLASS LAW, commented where it renders (D15): Guaranteed
             # is a POD property — ANY container without an equal
@@ -519,6 +520,22 @@ app-template:
               readOnly: true
           radiance-fetch:
             - path: /models
+    # The script-form carrier (D35 fetch FORM + D43 serve FORM): mounted into
+    # the staging init AND the serve container — each execs its own file from
+    # here, and neither sees a baked copy. Whole-ConfigMap directory (no
+    # subPath): a key change then lands as a new file atomically, and the
+    # checksum annotation restarts the pod that has the old one cached.
+    radiance-fetch-script:
+      type: configMap
+      identifier: radiance-fetch
+      advancedMounts:
+        radiance:
+          radiance:
+            - path: /scripts
+              readOnly: true
+          radiance-fetch:
+            - path: /scripts
+              readOnly: true
     # Engine shared memory (HIP/IPC surfaces): emptyDir medium Memory,
     # capped 2Gi (the single-GPU-TP1 worker's working set; the node's tmpfs
     # accounting keeps the cap honest). cf-144 C01/OQ-G dated annotation

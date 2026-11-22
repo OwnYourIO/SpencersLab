@@ -47,10 +47,13 @@
 # coord-inwork ticket — all of c1..c17 are green before C01 and must HOLD
 # after it; the new contract is asserted by tests/coord-inwork/surface.sh.
 # cf-83 posture: C01 re-pins two needles of this gate — c11's Flash+Local
-# routing-clause window now demands flash-next-strata (red before the dev's
-# source edit + regenerate; the new contract's full text lives in
-# tests/pipeline-models/surface.sh), and c8 admits this ticket's plan folder
-# (D6 landing-widening). Every other arm stays green and holds.
+# routing-clause window, and c8 admits this ticket's plan folder (D6
+# landing-widening). The routing needles rode the model of their era and are
+# re-pinned again by 2026-11-feat-radiance-multi-instance: c11's windows now
+# demand the radiance family (owner rulings 2026-11-22 D16/D20 — the cf-83
+# strata route is retired doctrine, single-authoritied in
+# tests/pipeline-models/surface.sh; the new contract's full text lives there).
+# Every other arm stays green and holds.
 # cf-85 posture (2026-10-29): c19 is the DESIGNED RED — it pins the one-field
 # write-back the flip introduces, so it is red against the pre-flip sources
 # and green at the flip commit (tests + sources + mirrors in one commit,
@@ -778,10 +781,11 @@ fi
 # Deployment + Single Session stay the two-member OPT-IN sentence), and
 # Services = derived folders ∪ a FIXED six (D22) with an exactness negative.
 # C06: the Model(s) four-option line stays UNCHANGED while the routing
-# paragraph grows the two combination clauses. The Model(s)/HITL pins hold
-# exactly as before. cf-83 C01 RE-PIN: the Flash+Local combination clause
-# demands flash-next-strata — the route moves, the option set and Q6 veto
-# guards stay byte-identical.
+# paragraph carries the two combination clauses. The Model(s)/HITL pins hold
+# exactly as before. Re-pin history: cf-83 moved Flash+Local q3 -> strata;
+# 2026-11-feat-radiance-multi-instance (owner rulings 2026-11-22 D16/D20)
+# moved both clauses to the radiance family — the routes move, the option
+# set and Q6 veto guards stay byte-identical.
 if want c11; then
   python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
     || fail "c11[C05]: Services/Type/Model(s)/Lifecycle/Human in the Loop do not read as one checklist-definition passage (red before C05 — the Research checklist has not been replaced by Lifecycle)"
@@ -876,13 +880,19 @@ fi
     || fail "c11[C07]: the Human in the Loop checklist does not state its default item (Final Review - the C07 blank-HITL default)"
   # C06: the routing paragraph's two combination clauses (source of truth is
   # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
-  # cf-83 C01 re-pin: the Flash+Local needle moved q3 -> strata — this window
-  # is red until the dev's source edit plus regenerate lands the new mirror.
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-strata' 'assume' \
-    || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
-    || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services = regenerated ls services/ folders ∪ the fixed six exactly (unlisted tokens rejected); Lifecycle's thirteen items (cf-124 C01) + nine-stage nothing-checked default + the untouched two-member OPT-IN sentence; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the thirteen + Final Review default; combination clauses present with the cf-83 strata re-pin"
+  # 2026-11-feat-radiance-multi-instance re-pin (ruling chain cf-106 OQ-14
+  # 2026-11-03 -> owner ruling 2026-11-09 strata-q4 -> owner ruling 2026-11-22
+  # radiance D16/D20): the Strata era is documented in pipeline-models ONLY
+  # (the single-authority law — tests/pipeline-models/surface.sh M5 bars any
+  # strata token in the boards pair, so the pre-C02 'flash-next-strata' needle
+  # here contradicted the suite it rode beside and could only be satisfied by
+  # needle-hacking). C02 landed the move (dcf9526ea); both windows now pin the
+  # shipped radiance routes.
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'qwen3.8-flash-next-radiance' 'assume' \
+    || fail "c11[C06, re-pinned 2026-11-22 radiance ruling]: the routing paragraph lacks the Flash+Local → qwen3.8-flash-next-radiance assume clause (the runner-literal chain cf-106 OQ-14 2026-11-03 -> 2026-11-09 strata-q4 -> 2026-11-22 radiance moved this needle; D16)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'local' 'qwen3.8-27b-radiance' 'unless' \
+    || fail "c11[C06, re-pinned 2026-11-22]: the routing paragraph lacks the Qwen Dense+Local → qwen3.8-27b-radiance unless-another-quant clause — owner ruling D20 (2026-11-22) moved this row out of qwen3.8-27b-q4; the 10+/background leg lives in pipeline-models alone and must NOT leak into this window (the M7 law)"
+  ok "c11: five checklist titles with full item sets — Services = regenerated ls services/ folders ∪ the fixed six exactly (unlisted tokens rejected); Lifecycle's thirteen items (cf-124 C01) + nine-stage nothing-checked default + the untouched two-member OPT-IN sentence; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the thirteen + Final Review default; combination clauses present on the 2026-11-22 radiance routes (D16/D20 re-pin)"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --

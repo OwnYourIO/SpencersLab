@@ -1,0 +1,60 @@
+# Pinned expectation for the ADDITIVE radiance-flash-tp1 peer on the gpu-ai
+# outer llama-swap render (2026/2026-11-feat-radiance-multi-instance, C05;
+# DECISIONS D18 names the key, D13's per-peer-key law keeps every sibling file
+# valid and UNEDITED beside it). Authored in this ticket's test session; dev
+# must not edit this file — dev conforms services/gpu-ai/prod/values.yaml to it,
+# never the reverse (the law radiance-peers-expected.yaml carries).
+#
+# SINGLE source for the radiance-flash-tp1 peer shape. Consumers read it live
+# (tests/pipeline-models/surface.sh M9-C, the peers<->evidence parity arms and
+# the charts/radiance lane suite), so a test-session re-author re-aligns them.
+#
+# Shape = a clone of peers.radiance: proxy is the gpu-ai-radiance-flash-tp1
+# release's cluster DNS on 8000 with NO /v1 suffix (request paths append
+# verbatim — every peer's own law); the models list is explicit (a peer is not a
+# blanket proxy) and carries exactly the lane's one --served-model-name id; the
+# timeouts copy the fn peer (the cold-load first-byte knob — this lane boots the
+# same ~66 GiB working set, so the first byte after a manual scale-up is
+# minutes-class). Keyless per cf-143 D8: no apiKey, no secret on the lane.
+#
+# filters.setParams "priority?" = 3 is the set-if-undefined floor equal to THIS
+# lane's default class (owner ruling D19's ladder as resolved by the
+# coordinator's follow-up ruling, TEST_SPEC.md §3: fn 9/5/1 · q27 8/4/0 ·
+# flash-TP1 7/3/2 · 27b-TP2 6/2/1 — urgent/def columns cross-lane unique and
+# strictly below the live lanes; the fn-low/27b-TP2-low tie at 1 is ACCEPTED,
+# separate peers with separate queues). The floor is the lane's OWN default row,
+# never fn's 5: the cf-143 M8 coherence law is per lane, and chunks/C05.md's
+# "floor 5 for the flash lane" pre-dates D19's trio shape (whose base slot is 3)
+# — recorded as a test deviation.
+#
+# Receipt law for the rungs: the low value 2 sits inside the non-negative range
+# the catalog has always shipped (cf-143's six live rows span 0..9 and already
+# record priority-semantics verification as a smoke-read duty); these arms pin
+# the AUTHORED values, not a claimed behaviour, and the on-target smoke read is
+# the receipt. A correction re-pins through a DECISIONS line, never a silent
+# retarget.
+#
+# Idle law: the lane rests at replicas 0, so while it rests the hop fails with a
+# 502 peer proxy error (the Service has no endpoints; llama-swap neither
+# health-checks nor hides peers) — loud, never silent. Nothing routes here by
+# default: the class table and the runner literal stay on fn.
+#
+# models_states is APPEND-ONLY history; the seeded state is the one-id list the
+# honest-id law rules (peer models exactly [qwen3.8-flash-next-radiance-tp1],
+# the --served-model-name of the transcribed TP1 array). A second TP1 arena
+# would be the next appended state — waves route through the test session.
+radiance-flash-tp1:
+  proxy: http://gpu-ai-radiance-flash-tp1.default.svc.cluster.local:8000
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  filters:
+    setParams:
+      "priority?": 3
+  models_must_include:
+    - qwen3.8-flash-next-radiance-tp1
+  models_allowed:
+    - qwen3.8-flash-next-radiance-tp1
+  models_states:
+    # this ticket's C05 seeded state (the one-id first state):
+    - [qwen3.8-flash-next-radiance-tp1]

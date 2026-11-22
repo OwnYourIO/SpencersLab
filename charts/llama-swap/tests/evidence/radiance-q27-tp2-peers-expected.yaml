@@ -1,0 +1,65 @@
+# Pinned expectation for the ADDITIVE radiance-q27-tp2 peer on the gpu-ai outer
+# llama-swap render (2026/2026-11-feat-radiance-multi-instance, C05; DECISIONS
+# D18 names the key, D13's per-peer-key law keeps every sibling file valid and
+# UNEDITED beside it). Authored in this ticket's test session; dev must not edit
+# this file — dev conforms services/gpu-ai/prod/values.yaml to it, never the
+# reverse (the law radiance-q27-peers-expected.yaml carries).
+#
+# SINGLE source for the radiance-q27-tp2 peer shape. Consumers read it live
+# (tests/pipeline-models/surface.sh M9-C, the peers<->evidence parity arms and
+# the charts/radiance lane suite), so a test-session re-author re-aligns them.
+#
+# Shape = a clone of peers.radiance-q27: proxy is the gpu-ai-radiance-q27-tp2
+# release's cluster DNS on 8000, NO /v1 suffix (request paths append verbatim);
+# the models list carries exactly the lane's one --served-model-name id; the
+# timeouts copy the q27 peer (the same pack, the same boot class). Keyless per
+# cf-143 D8.
+#
+# This lane is the TP2 sibling of the q27 swap lane — TWO DENSE q27 ENGINES on
+# the two-card pool. The scheduling arithmetic is claim math, not policy: this
+# lane claims 2 cards, so while it is up nothing else on the pool schedules, and
+# it can NEVER co-boot with the flash-TP1 lane (2 + 1 > 2 cards). It rests at
+# replicas 0 for exactly that reason; the boot flip is an owner scale act.
+#
+# filters.setParams "priority?" = 2 is the set-if-undefined floor equal to THIS
+# lane's default class (owner ruling D19's ladder as resolved by the
+# coordinator's follow-up ruling, tests/pipeline-models/TEST_SPEC.md §3: fn
+# 9/5/1 · q27 8/4/0 · flash-TP1 7/3/2 · 27b-TP2 6/2/1). The floor is the lane's
+# OWN default row: fn's 5 and q27's 4 are NOT reused (the cf-143 D54 "ranks are
+# NOT stolen" law, applied per lane), and chunks/C05.md's "floor 4 for the 27b
+# lane" pre-dates D19's trio shape (whose base slot is 2) — recorded as a test
+# deviation. This lane's low rung 1 TIES fn's low 1 by design and that is the
+# ACCEPTED cross-peer tie of the ruling: two dense q27/27b engines with separate
+# peers and separate floors never compete for queue slots.
+#
+# Receipt law for the rungs: 1 is the value fn's -low row has shipped since
+# cf-143 — the rungs stay inside the non-negative, smoke-read-verified class
+# (cf-143 records priority-semantics verification as a CI-smoke duty at
+# charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml:28); these
+# arms pin the AUTHORED values, not a claimed behaviour; the smoke read is the
+# receipt, a correction re-pins through a DECISIONS line.
+#
+# Idle law: while the lane rests at replicas 0 the hop fails with a 502 peer
+# proxy error (no endpoints; llama-swap neither health-checks nor hides peers) —
+# loud, never silent. Nothing routes here by default.
+#
+# models_states is APPEND-ONLY history; the seeded state is the one-id list the
+# honest-id law rules (peer models exactly [qwen3.8-27b-radiance-tp2], the
+# --served-model-name of the q27 array plus --tp 2 --tp-wire wht6). A second
+# TP2 arena would be the next appended state — waves route through the test
+# session.
+radiance-q27-tp2:
+  proxy: http://gpu-ai-radiance-q27-tp2.default.svc.cluster.local:8000
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  filters:
+    setParams:
+      "priority?": 2
+  models_must_include:
+    - qwen3.8-27b-radiance-tp2
+  models_allowed:
+    - qwen3.8-27b-radiance-tp2
+  models_states:
+    # this ticket's C05 seeded state (the one-id first state):
+    - [qwen3.8-27b-radiance-tp2]

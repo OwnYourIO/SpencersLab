@@ -164,3 +164,255 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   never fixed by reviewer or coordinator), authorized narrowly, with `bash -n` + per-leg runs required
   before the wave is committed. Lesson: when I bar edits, ask for defects to be REPORTED AND REPAIRED in a
   following authorized turn, not left in the tree. · fixed-by-recipe)
+- 2026-11-22 · dev(C01) · **needle homes assigned to a tier that cannot write them + one plan premise flat
+  wrong + one defective needle.** (a) The test wave called `amd_gpu_testlib.py`'s python constants "dev's C01
+  edit site", but dev's permissions deny `tests/**` — its probe edit returned `Permission denied: edit`, and
+  `git status` proves ZERO test paths in its 9-file set. (b) The plan says C01 flips pool-name legs INSIDE
+  `charts/radiance/tests`: false. Radiance carries no pool-name constants; it reddens through the `AMDNAMES`
+  import chain, so C01 took it 24F→33F (9 constants-lag legs, one root cause) before NI-1 could fix them.
+  (c) `test_provenance.py:512` asserts `R9700_PRODUCT_STRING == "gpu-r9700"`, contradicting :326/:330 in the
+  same file AND the sanitizer law (`sanitize('gpu-r9700') == 'gpu-gpu-r9700'`) — unsatisfiable by ANY legal
+  implementation, and not constants-lag. (d) `TEST_SPEC.md:4556`: the test wave's own C01 heading carries the
+  retired literal whole, so the suite flags its own record.
+  · resolution: NI-1/NI-2 routed to the test session (repo law: a faulty validation is never fixed by
+  reviewer or coordinator), with the assembled-constant law restated so the retired literal is never
+  contiguous. General rule for later chunks: **never assign a test-file edit to dev** — needles are
+  test-owned by permission design; the bash twin pre-flip was right, the python twin should have been too.
+  · fixed-by-routing (class OPEN: audit every remaining chunk for "test-file edit assigned to a tier that
+  cannot write it")
+- 2026-11-22 · dev(C01) · **two legs flipped green EARLY — gate integrity, not progress.** (a)
+  `test_c04_supersession_annotation_on_the_2026_10_27_ruling` went green on dev's incidental
+  `renamed 2026-11-22` comment at `charts/llama-swap/values.yaml:1352`: a date token satisfied it, not the
+  supersession. (b) runbook **T5** flipped green during C01 though the plan booked it for C06 (stash-proven:
+  its baseline-red cause was exactly the new-name gate-(a) needle).
+  · resolution: (a) re-anchored to the substance of C04 (real claim + same-wave `replicas: 0`) and kept a
+  DESIGNED RED; (b) recorded — C06's leg set is one smaller, and no reviewer may read an early-green leg as
+  its chunk's work being done. · fixed-by-repair / recorded
+- 2026-11-22 · dev(C01) · **the two zero-stale sweeps scan different tokens**: bash n3 greps the PREFIXED
+  `amd.com/gpu-r9700-1`, the pytest AC4 leg greps pool-only `gpu-r9700-1`, so their file lists legitimately
+  differ — treating one as proof of the other reads as "the sweep is broken" when it is not.
+  · resolution: always name which sweep produced which list. · fixed-by-this-recipe
+- 2026-11-22 · dev(C01) · **stale prose deliberately left behind, per chunk law**: `charts/amd-gpu/values.yaml`
+  header "(one device each on the ai-gpu node)" survives C01 (C06 owns it); the in-comment lever cite
+  `appset-charts.yaml:83` was stale and was corrected to `:67-70` inside C01's sweep.
+  · resolution: C06 carries the header prose; the cite correction rides C01's commit. · open (C06)
+- 2026-11-22 · dev(C01) · **roster T4's harness faults before the leg executes** (`cp: cannot stat
+  radiance-multi-instance-roster.md`) where it should SKIP with a designed-red message; sibling arms T1-T3
+  fail correctly for the same missing-note cause.
+  · resolution: handed to the test session to harden the arm harness; the red itself is right (the roster doc
+  is C06's to author). · open (repair in flight)
+- 2026-11-22 · dev(C01) · **pipe caveat + self-report drift, both settled by disk**: pytest behind a pipe loses
+  `$?` (counts then come from pytest's own summary line), and dev's interim "12 files changed" was actually 9
+  per `git status`.
+  · resolution: capture rc un-piped whenever a status is being CLAIMED; settle scope from disk, never from a
+  mid-run self-report. · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **`amd-gpu-naming.sh` n2 is a FILE-SET guard, not a content guard** — `wave_a()`
+  (:204-208) only greps `git show --stat` for the three paths, so a green n2 proves the wave is CO-LOCATED,
+  never that the claim lines actually moved. The reviewer audited content itself (hand-ran n3's quoted-or-bare
+  pattern → the 4 live claim lines; the old bare-only pattern → 0), and THAT is what proved atomicity.
+  · resolution: every later rename/carrier-wave review pairs the file-set guard with a content audit; never
+  cite n2 alone as "the wave is atomic". Separately: `test_provenance.py`'s `_NEW_NAME_ALLOW` comment still
+  says "the two current docs" where four now carry the name (comment-only staleness; prefix matching works).
+  · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **raw `grep -rn` for the retired literal reports gitignored `__pycache__/*.pyc`**
+  in any worktree that has run pytest — CPython constant-folds `"gpu-r9700" + "-1"`, so the retired bytes are
+  real in the .pyc. The needles filter `__pycache__|\.pyc` (naming.sh:318); a human re-running the sweep does
+  not know that. · resolution: add `--binary-files=without-match` for manual sweeps; three matching .pyc files
+  are NOT a leak (`.gitignore:14`, absent from porcelain). · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **NOTES.txt cannot be rendered cluster-free**: `helm template --show-only
+  templates/NOTES.txt` fails (helm excludes NOTES) and `helm install --dry-run=client` fails on a forbidden
+  API read for the workspace SA. · resolution: rely on `helm lint` (parses all templates) + the executed NOTES
+  legs; the reviewer reported render-through-install as UNVERIFIED instead of crediting it. Do not burn a round
+  trying to observe it. · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **the roster T4 harness repair was reported "in flight" and did NOT land** —
+  `4c267ca58` carried NI-1/NI-2/C04-re-arm only, so `radiance-roster.sh:172` still `cp`-faults before its
+  designed-red message prints (polarity right, message wrong).
+  · resolution: re-issued to the test session with the comment staleness; the earlier "in flight" is corrected
+  here so nobody reads it as done. · open (test session, batched)
+- 2026-11-22 · coord · **`chunks/*.md` are not editable by my tier** (the edit surfaced as a denied `ask`),
+  which collides with a real need: C01's review found scope no chunk file carried — FRICTION merely NAMED C06
+  as owner of the `charts/amd-gpu/values.yaml:30` "one device each" prose, and `grep "one device each"
+  chunks/*.md` → 0 hits, so a false post-TP2 statement would have survived the ticket by nobody's decision.
+  · resolution: amendments travel as DECISIONS rulings (D32) + the chunk's LAUNCH BRIEF, and the planner folds
+  the chunk file at the next plan touch. Lesson: **a FRICTION ownership note is not a work item** — prose that
+  must change belongs in the chunk contract or the brief that hands it over. · fixed-by-recipe (machinery half
+  OPEN: a coord-legal way to amend chunk scope without a full plan round)
+- 2026-11-22 · review(C01) · **a review brief must not list the write arm as expected-green**: my C01 launch
+  said "M6 green", yet repo law bars read-only sessions from running it — the correct behavior was to run
+  nothing and claim nothing, which is what happened. · resolution: later briefs say "M6: not run, no claim"
+  (DECISIONS D33(c)). · fixed-by-this-recipe
+- 2026-11-22 · dev(C02) · **the D30 re-pin sweep MISSED a suite: `tests/agent-board-coord/rulesync-surface.sh`
+  arm c11 still demanded the cf-83-era routing** (`'flash' 'local' 'flash-next-strata' 'assume'` inside 600
+  chars of the boards mirror), which the re-pinned authority itself forbids (`pipeline-models/surface.sh:668`
+  bars strata text from boards; `:662` requires radiance in the same window). Green at baseline, red after
+  C02, and unsatisfiable without needle-hacking (a bare `-strata` token would pass the stale leg while
+  violating the intent at `:664-667`). Its header still read "red before C01 dev".
+  · resolution: re-pin routed to the test session with the dated ruling chain in the leg message. Lesson:
+  **a routing-authority re-pin must enumerate every suite that byte-pins routing prose**, not only the suites
+  the plan named — the test wave's list came from EXPLORE §1 and this file was not in it. · open (in flight)
+- 2026-11-22 · dev(C02) · **two reds proved PRE-EXISTING by building a scratch detached worktree at HEAD**
+  (`rulesync-surface` c19, `gate` t17) — the right way to separate "my change broke it" from "it was already
+  broken", at the cost of one throwaway worktree.
+  · resolution: per-arm characterization demanded from the test session — stale test encoding / later chunk of
+  this ticket / outside-the-ticket drift — none absorbed silently. · open (classification owed)
+- 2026-11-22 · coord · **the roster T4 harness fix was reported "in flight" twice and shipped neither time**
+  (`4c267ca58` carried NI-1/NI-2/C04-re-arm only). A repeated promise that never lands reads as progress in
+  the record, which is worse than an honest open row.
+  · resolution: batched into the current repair turn with proof demanded (run T4 alone, quote the new message).
+  Standing rule: **an escalation closes on observed output, never on an intention.** · CLOSED 2026-11-22: the fences shipped in `2ee1313a2` (`require_note` guarding T2's python traceback, T3's
+     misleading grep error, T4's `cp: cannot stat`), and C02's review observed the identical clean line per arm
+     with exit 1 — quoted output, as demanded. · fixed
+- 2026-11-22 · review(C02) · **the write-arm family is bigger than M6**: a read-only review tier must decline
+  FOUR legs, not one — `pipeline-models/surface.sh M6`, `agents-md.sh c1`, `rulesync-surface.sh c7`,
+  `gate.sh t14` — while `npx --yes rulesync@37.0.0 generate --check` (exit 0, "All files are up to date") is
+  the legitimate read-only sync evidence. Consequence: "the second generate is a no-op" is UNVERIFIABLE by a
+  read-only reviewer, so that claim belongs to a writer session's transcript, never to a review verdict.
+  · resolution: briefs enumerate all four as "not run, no claim" (generalizes D33(c)). · fixed-by-this-recipe
+- 2026-11-22 · review(C02) · **two reds are OUTSIDE this ticket and have no owner here**: `rulesync-surface`
+  **c19** (cf-85 pinned "exactly one" custom field; cf-124 legitimately grew the roster to slug+Priority,
+  scoped AC2 around it, and left AC3 for a ruling nobody has given) and `gate` **t17** (warm-location
+  permissions drift). Blast radius verified zero: `git diff main...HEAD` touches no roster file and no
+  subagent file. Until ruled, every later gate run carries both BY NAME so they are not re-read as this
+  ticket's regressions.
+  · resolution: cleanest landing is one follow-up card each (owner decision); meanwhile they ride the
+  final-review packet as documented pre-existing. · open (owner: card or rule)
+- 2026-11-22 · review(C02) · **stale ok-count baselines in the plan's `## Commands`**: it recorded
+  `cf106-noop 8 ok · noop-marker 9 ok`; both observed **11 ok** with the suite files byte-identical to scout
+  HEAD (last touched pre-ticket). Scout-era counts, not drift — but a stale expected number turns an honest
+  green into a "finding", so later rounds read 11/11 from this row until the planner folds the plan file.
+  · open (planner fold owed: my tier cannot edit the plan of record OR `chunks/*.md` — both are plan-role
+  surfaces; see the coord row on chunk-scope amendments)
+  · **THIS ROW WAS WRONG — CORRECTED 2026-11-22 by the test session's git-history sweep.** The "11 ok"
+  measurement (taken at C03's review and folded into the plan of record by me) is impossible on this repo's
+  history: every committed revision of `cf106-noop/surface.sh` has carried only 7 or 8 `ok` calls
+  (`67b029cb9`, `7bebb3505`) and `noop-marker/surface.sh` only 5/5/5/6/9/9 across six revisions
+  (`197598170`→`7790414fe`). Neither file ever had eleven. Invocation mode cannot inflate the count either —
+  arms are `want`-gated, one `ok` each, so a full-suite run is the maximum. **The scout-era 8/9 was right all
+  along, and my "the scout baseline was stale" re-baseline inverted the truth.** Authoritative statement for
+  the plan: `bash tests/cf106-noop/surface.sh` → 8 ok (rc 0) · `bash tests/noop-marker/surface.sh` → 9 ok
+  (rc 0), full-suite invocation; per-arm runs print fewer `ok` lines BY DESIGN and are not a count mismatch.
+  Lesson, and it is mine: **a single review measurement is not a baseline.** Before overwriting a recorded
+  expectation I must reproduce it twice or read the source of truth (here: `grep -c '^\s*ok '` across
+  revisions), because I did the opposite — trusted one observation and "corrected" a number that was right. ·
+  fixed-by-evidence (planner still owes the plan `:152-153` fold; `chunks/*.md` and the plan file are not
+  editable by my tier)
+- 2026-11-22 · coord-ruling D34 · **aislop: do NOT re-wrap the moved YAML comments.** The edit-time plugin runs
+  `aislop scan --changes` (advisory: echoes every diagnostic; `.opencode/plugin/aislop-gate/index.ts:62`), while
+  the gate is `aislop ci --changes`, which fails only below `failBelow: 80` or on ERROR-severity findings
+  (`.aislop/config.yml:23-24`) — warnings never fail it. And on aislop@0.20.0 **YAML is outside the scan scope
+  entirely** (verified with a ruff-bearing PATH: full-repo scan = zero findings in any `values.yaml`; prod-dir
+  scan resolves to 0 files; `ci --changes --json` scores 100 with 0 diagnostics), so dev's ~219-line echo could
+  not be reproduced on the pinned version and never reached the gate. Re-wrapping would churn relocated lane
+  bytes for a class the gate cannot flag — the repo already carries 63 over-length lines in that file.
+  · resolution: moved comments stay wrapped as moved; if the echo recurs, capture the plugin output verbatim
+  (likely a session with different tool availability). · fixed-by-ruling
+- 2026-11-22 · test wave · **C03's mechanism claim VERIFIED independently, and it indicts the plan.** From the
+  tgz extracted to `/tmp/opencode/at501`: `_command.tpl`/`_args.tpl` render via plain `toYaml` with **no `tpl`**,
+  while `_name`/`_env`/`_probes`/`_volumeMounts` ARE tpl'd (lifecycle raw at `container/_spec.tpl:27-28`). The
+  only in-library tpl carriers are configMap data (`classes/_configmap.tpl:37`) and env values — and a
+  configMap-mounted script adds `checksum/configMaps` (`lib/pod/metadata/_annotations.tpl:54,61`) plus a volume
+  and a volumeMount and rewrites the init `command`, so **both equivalence fixtures fail**. Consequence: under
+  the no-byte-move law, per-block literal scripts are the ONLY possible shape, and the plan's
+  "parameterized init" row (plan ~:205) + C03 task-1 wording are a plan-internal contradiction, now surfaced to
+  the owner. · resolution: byte-equivalence kept; the supersession row gets corrected whichever way the ruling
+  goes. · SUPERSEDED by D35 (owner, 2026-11-22): byte-equivalence is RELAXED for this one carrier — the chart owns the script and AC1 becomes an intentional-delta proof over exactly four paths. The contradiction this row surfaced was real and is now ruled, not worked around. · closed-by-ruling
+- 2026-11-22 · dev(C03 r2) · **two authoring defects shipped inside the delta-budget suite.** (a) My D35
+  shorthand "`spec.volumes`" was transcribed literally into `DELTA_BUDGET` as `$.spec.volumes`, but the suite's
+  diff grammar is DEPLOYMENT-rooted and a Deployment has no `spec.volumes` — so BOTH arms of the delta leg
+  failed for any carrier (the real pod-volume path fell outside the budget, and the budgeted entry can never
+  exist). (b) `_assert_block_shape()` takes 3 parameters while both call sites pass 4 → `TypeError`, so two
+  legs asserted nothing at all.
+  · resolution: path annotation added to DECISIONS D35 (intent unchanged; never widen a budget to fit a bad
+  needle), repairs routed to the test session with a demand to re-confirm the planted-drift teeth AFTER the
+  path fix and to plant one NEW unauthorized drift the old needle would have missed. Rule for every path-list
+  gate: state paths in the grammar the comparing code actually uses, and re-derive a quoted path from the
+  object being diffed rather than from ruling prose. · open (repair in flight)
+- 2026-11-22 · dev(C03 r2) · **the correct shape of a test-blocked handoff**: dev proved its delta out-of-band
+  (replaying the 3-arg body in a scratch script; replaying the diff under correct grammar), reported
+  NEEDS_INFO, and left the legs red with the fixtures byte-untouched — no fixture laundering, no test edit, no
+  "temporary relaxation". It also caught my stale brief baseline (llama-swap 510P, not 509P) and re-measured
+  with its own files reverted to show the suite was unmoved.
+  · resolution: treat out-of-band proof + honestly red legs as a PASSING handoff shape; a green obtained by
+  editing the gate is not. Applied to C04-C06 briefs. · fixed-by-this-recipe
+- 2026-11-22 · dev(C03 r2) · **`.aislop/history.jsonl` gains a line whenever the aislop CLI runs** — it is
+  machine churn, not a work artifact, and it keeps showing up in porcelain output mid-round.
+  · resolution: disposition requested from the test session via `git log -- .aislop/history.jsonl`; until then
+  I neither stage nor read meaning into it. · open (history.jsonl disposition)
+- 2026-11-22 · coord · **churn disposition RULED (D42): accept and document.** The owner chose to leave the file
+  tracked and dirty rather than untrack it, so `gate t14` / `rulesync-surface c8` / `provider-loops t6` show
+  **red naming that file alone** as a correct scope-guard reading, not a regression. Two effects on my own
+  briefs: the C04 review brief's step-1 "revert before scope-guard legs" is RETIRED for all later rounds
+  (harmless if the reviewer still does it — it never touches history), and every brief from C05 on states the
+  three leg names plus the one-line test: *red is expected iff the FAIL names ONLY `.aislop/history.jsonl`; if
+  it names anything else, that is a finding*. D36's other half — never stage it — still holds.
+  · fixed-by-ruling
+- 2026-11-22 · review(C02) · **`boards` SKILL "Default selection: `Qwen Dense`" now reads two ways** — the board
+  RULE's checked item (accurate: OQ13, rule dormant) versus the blank-route default (radiance). NOT fixable
+  inside C02: c11 and M5 pin the sentence verbatim as HOLD, so prose tidying would break two green arms, and
+  the vocabulary itself is a Deferred owner leg.
+  · resolution: belongs to the board-provisioning follow-up as ONE coordinated set — the live rule's default
+  check + this line + the c11/M5 needles (TEST_SPEC §4 anticipates the move). · open (owner leg)
+- 2026-11-22 · dev(C03) · **AC5 as written is UNREACHABLE in a dev session, structurally**: "the radiance suite
+  goes green with the relocated carriers" cannot happen from a dev tier — 19 legs across 12 sites bind the
+  PRE-C03 carriers and dev never edits tests (D30). Three sites were missing from the chunk's own relocation
+  list (`test_renovate_ledger.py:106-112`, `llama-swap/test_coexistence_wiring.py`,
+  `pipeline-models/surface.sh:1016-1020`), so the suite went 24F→37F instead of converging.
+  · resolution: any chunk that MOVES a data home needs an explicit **test pass between dev and review**, and a
+  relocation list must be built by grepping the OLD carrier rather than recalled. Standing recipe for later
+  chunks; never gate a dev round on "suite green" when the green is test-owned. · fixed-by-this-recipe (the
+  plan's Commands should list the intermediate test pass — planner fold owed)
+- 2026-11-22 · dev(C03) · **aislop edit-time noise vs ci-gate silence**: the edit-time plugin echoed
+  "long line" on ~219 PRE-EXISTING lines of `services/gpu-ai/prod/values.yaml` (moved comments land at a deeper
+  indent) while `aislop ci --changes` reported 0 errors / 0 warnings over 112 files. Dev treated it as
+  advisory rather than re-wrapping 219 lines of somebody else's prose — correct restraint.
+  · resolution: scope question sent to the test session against `.aislop/config.yml` (ci scope ≠ edit-time
+  scope?); re-wrap of moved comments only if the gate demands it. · open (verification in flight)
+- 2026-11-22 · coord · **one C03 leg is a design fork, not a defect.**
+  `test_c03_generic_shell.py:154` demands the q27 block DROP its whole init script in favour of scalars; dev
+  shows that cannot coexist with byte-equivalence AC1 if app-template renders `command`/`args` verbatim (no
+  `tpl`). Dev kept AC1+AC2 and left the leg RED instead of bending the equivalence gate — the right call for a
+  chunk whose whole purpose is "relocation, not re-decision". The plan's own supersession row promised
+  "parameterized init", so this is an owner question, not a coord ruling.
+  · resolution: mechanism claim being independently verified (dependency tgz extracted under `/tmp/opencode`,
+  never into the repo) before the owner is asked, so the trade is stated on evidence: keep script bytes in the
+  lane block (equivalence intact) vs move them to a chart-side/env carrier (parameterized, but the rendered
+  pod spec changes and the fixtures must be re-derived). · open (verification + owner ruling)
+- 2026-11-22 · coord · **my `--amend` orphaned a commit hash already written into the permanent record.** I
+  committed round 3 as `3d412e3d3`, recorded that hash in STATE, then amended the message to disclose the
+  bundled test repairs — which rewrote the commit to `5cd3c2c42` and left the recorded hash pointing at a
+  dangling object reachable from no ref. **The reviewer caught it**, verified the trees byte-identical, and asked
+  for a re-point. A future session grepping that hash finds nothing and either loses the evidence trail or
+  "repairs" it wrongly.
+  · resolution: STATE re-pointed to the live hash with the orphan named. Standing rule: **never amend after
+  writing a hash into a record — append a follow-up commit instead; if an amend is unavoidable, immediately
+  `git grep -n <old-hash>` across the plan folder and re-point.** Note the root cause: the D37 staging mistake
+  (directory path swept `tests/` in) is what created the amend in the first place — staging explicitly would
+  have avoided both errors. · fixed-by-this-recipe (machinery half OPEN: nothing verifies that hashes recorded
+  in plan folders still resolve; a `git cat-file -e` sweep would be a cheap gate)
+- 2026-11-23 · review(C05) · **reusable technique: render ONE self-contained base template standalone when
+  `charts/base` won't template.** `charts/base` can't be `helm template`d in an agent session (vendored CRD deps
+  absent, no network), which makes ApplicationSet derivation look unprovable. It isn't:
+  `charts/base/templates/appset-charts.yaml` is self-contained (no helpers, no subchart refs), so copying it
+  BYTE-IDENTICAL into a scratch chart (`cmp`-verified) and rendering with the real
+  `services/gpu-ai/prod/values.yaml` + `serviceName=gpu-ai` (the exact value the parent `appset.yaml:17`
+  injects) mechanically proves the element count and the derived Application names.
+  · resolution: recorded so later rounds don't settle for "indirect proof by content" when a direct render is one
+  scratch chart away; cluster-side instantiation still stays disclosed as unverified. · fixed-by-this-recipe
+- 2026-11-23 owner-ruling D47 (**`limit.context` on the six C05 catalog rows: 262144, family convention wins**).
+  Asked because C05 authored 200000 while the owner's `b3d7fada8` set the radiance family to 262144, and the file
+  is D27 owner-protected. The owner chose convention consistency. The reviewer's dissent is recorded rather than
+  buried, because it is technically correct in its own frame: 200000 equals the served admission of all four
+  lanes, so **no truncation class exists at 200000**, and the risk runs the other way (catalog above served ⇒
+  over-budgeted requests meet a loud server 400). What the owner bought is a single family-wide meaning for the
+  field — trained window the client budgets against, served admission stated separately in prose — which the M8
+  header already asserts for every radiance row. Flip cost verified as ZERO test legs. Residual: no leg pins the
+  new rows' ctx either way, so M9-A2 must grow a per-lane pin — D27's lesson repeating, an unpinned convention
+  is a convention that drifts back.
+- 2026-11-22 · review(C03 r3) · **two stale-comment minors, both assigned, neither a code defect.** (a)
+  `tests/notes/radiance-roster.sh:76-79` still claims "today the blocks still author args" — false at HEAD since
+  round 3 removed them; it is a TEST file, so it belongs to the test session and is fixed when C06 re-pins that
+  suite (already assigned). (b) `services/gpu-ai/prod/values.yaml:1315` labels the resting-twins header "(C05)"
+  though D46 landed them as C03 round-3 output — an implementation comment, so C05's dev brief carries it as a
+  one-line ownership relabel.
+  · resolution: both carried verbatim into their owning briefs; behaviour unaffected, neither blocks. · open
+  (C05/C06 briefs)

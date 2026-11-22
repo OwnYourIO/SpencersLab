@@ -105,9 +105,11 @@ def test_both_digests_ledgered_and_labeled():
 
 def test_pack_ledger_comment():
     """The model-path comment carries the pack ledger (C02 task): HF repo,
-    exact bytes, lfs sha, ungated — RESEARCH RQ0's pack table, the staging
-    init's verification authority."""
-    text = _values_text()
+    exact bytes, lfs sha, ungated — RESEARCH RQ0's pack ledger, the staging
+    init's verification authority. C03 carrier re-aim: the ledger is lane data
+    and sits in the fn roster block now (the image ledger above stays
+    chart-side); same needles, region text of the block is the source."""
+    text = R.lane_region_text("radiance")
     flat = " ".join(text.split())
     assert R.PACK_REPO in text, f"C02: the pack ledger omits the HF repo {R.PACK_REPO}"
     assert re.search(r"121[,_]?969[,_]?901[,_]?568", flat), (

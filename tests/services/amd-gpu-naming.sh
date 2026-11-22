@@ -70,7 +70,25 @@ BARE_CLAIM="amd.com/gpu"                       # gpu-cluster claim; C10: the CAR
 #                                                carrier). The NAME never renames.
 GPU_VALS="services/gpu/prod/values.yaml"
 APU_CLAIM="amd.com/gpu-8060s"                  # frozen by the D24 ruling scope
-R9700_CLAIM="amd.com/gpu-r9700-1"              # D24: patched-table sanitizer output
+R9700_CLAIM="amd.com/gpu-r9700"                # D21 (2026-11-22): patched ids-table product `r9700`
+#   2026-11-22 rename (this ticket, owner ruling D21): the patched ids-table product
+#   field becomes `r9700`, so this constant becomes "amd.com/gpu-r9700" in the C01
+#   atomic wave — the python canonical home (amd_gpu_testlib.py) moves in the same
+#   commit. Nothing below spells the pool whole outside these two lines.
+# The tier being RETIRED by that wave. It is SPLIT so this file stays a clean
+# subject for its own zero-stale arm and for the python AC4 sweep: a needle that
+# carries the string whole is the residue the sweep exists to find (the
+# vllm_testlib LEGACY_REF idiom). Split with a shell concatenation, never a
+# variable that the value could round-trip through.
+RETIRED_R9700_CLAIM="amd.com/gpu-r9700"-"1"
+# `gpu-r9700` is a PREFIX of the retired name, so every prose-level needle built
+# from a pool name carries a trailing boundary; without one a straggler reading
+# the retired name false-greens a live-name search.
+claim_rx() {  # $1 = literal to search -> ERE with dots escaped + trailing boundary
+  printf '%s([^0-9-]|$)' "$(printf '%s' "$1" | sed 's/\./\\./g')"
+}
+# AC4's four scopes; `.agents/plans/` is history and stays outside by design.
+AC4_SCOPES=(charts services tests .agents/notes)
 # ---------------------------------------------------------------------------
 
 checks=0
@@ -281,11 +299,24 @@ if want n3; then
   #                           no other file carries it claim-shaped; comment/
   #                           ledger/doc placement is AC4's python-leg scope.
   claim_grep() {  # $1=resource name -> "file:line: text" hits, non-comment, yaml-ish
+    # The value class is QUOTED-OR-BARE. The bare-only pattern was VACUOUS on the
+    # shipped tree: radiance/q27 author their claim pairs as strings (`: "2"`), so
+    # the sweep saw zero live lines and every stray-guard underneath it passed by
+    # silence (C01 AC3 — plan-session probe).
     grep -rn --include='*.yaml' --include='*.yml' --include='*.tpl' \
-      -E "^[[:space:]]*$(printf '%s' "$1" | sed 's/\./\\./g'):[[:space:]]*[0-9]+[[:space:]]*$" \
+      -E "^[[:space:]]*$(printf '%s' "$1" | sed 's/\./\\./g'):[[:space:]]*[\"']?[0-9]+[\"']?[[:space:]]*$" \
       charts/ services/ 2>/dev/null \
       | grep -vE ':[0-9]+:[[:space:]]*#' \
       | grep -vE '^charts/[^/]+/tests/|^services/[^/]+/tests/' || true
+  }
+  retired_hits() {  # $1=root -> files under AC4's scopes naming the RETIRED pool whole
+    local scope
+    for scope in "${AC4_SCOPES[@]}"; do
+      [ -d "$1/$scope" ] || continue
+      grep -rl --binary-files=without-match -- "$RETIRED_R9700_CLAIM" "$1/$scope" 2>/dev/null \
+        | sed "s|^$1/||" \
+        | grep -vE '__pycache__|\.(tgz|pyc|png|ico)$' || true
+    done
   }
   # C10/D26: the bare CLAIM now lives ONLY in the gpu overlay (the chart default
   # is claim-less; gpu-ai's node has the name at capacity 0 — a stray there is
@@ -302,18 +333,157 @@ $bad"
     fail "n3 (AC4 stray-guard): live APU-name claims outside the gpu-ai overlay — the gpu cluster's 1.31.0.9 plugin cannot advertise it (B1):
 $bad"
   fi
-  bad=$(claim_grep "$R9700_CLAIM" | grep -vE '^charts/radiance/' || true)
+  # Sanctioned R9700 claim homes: charts/radiance (the chart default pair) AND the
+  # gpu-ai service file. The second is NOT new law — it is the cf-144 D54(3) q27
+  # overlay pin, which the vacuous bare-value grep never showed, so the old
+  # "only charts/radiance/" law was never actually enforced. C03 moves the lane
+  # claims into this same file's radiance blocks, so the admission holds on both
+  # sides of that wave; the python leg below keeps it honest by requiring the
+  # claims to sit INSIDE a radiance lane's container resources, not anywhere in
+  # the file. Placement WIDENED by C04/D17 (2026-11-22 owner ruling): strata is
+  # a REAL claimant — the llama-swap release's strata controller (overlay
+  # positive-ADD, D26 carrier law) is the one non-radiance admitted home; the
+  # python twin in charts/llama-swap/tests/test_cf143_naming_flip.py moved in
+  # the same wave (that widening is the twin-drift bug this edit closes).
+  bad=$(claim_grep "$R9700_CLAIM" | grep -vE '^charts/radiance/|^services/gpu-ai/prod/values\.yaml:' || true)
   if [ -n "$bad" ]; then
-    fail "n3 (AC4): live claims of the renamed pool outside charts/radiance (the D24 claim site) —
+    fail "n3 (AC4): live claims of the renamed pool outside the sanctioned homes (charts/radiance + the gpu-ai service file's radiance lanes and strata controller) —
 $bad"
   fi
+  python3 - "$VALS" "$R9700_CLAIM" <<'PY' || fail "n3: a service-file R9700 claim sits outside an admitted lane's container resources (see diagnostics)"
+import sys, yaml
+path, claim = sys.argv[1], sys.argv[2]
+doc = yaml.safe_load(open(path)) or {}
+def admitted(keys):
+    # keys = path down to the requests/limits map (claim key not included —
+    # the diagnostic identity the same-wave python twin also walks).
+    # D30 twin-drift law: this predicate is the bash twin of the python stray
+    # guard in charts/llama-swap/tests/test_cf143_naming_flip.py — move HERE and
+    # there together, never one alone.
+    lane = keys[0] if keys else ""
+    shape = len(keys) >= 6 and keys[1:3] == ["app-template", "controllers"] \
+        and keys[-1] in ("requests", "limits") and keys[-2] == "resources"
+    radiance = str(lane).startswith("radiance")
+    # C04/D17: the strata claimant — llama-swap release, strata controller,
+    # strata container. Pinned controller-AND-container-named: a claim planted
+    # on the MAIN llama-swap container (which carries only the APU claim) is
+    # drift, not a strata claim that moved house.
+    strata = lane == "llama-swap" and keys[3:6] == ["strata", "containers", "strata"]
+    return shape and (radiance or strata)
+def law_errs(doc):
+    found = []
+    def walk(node, keys):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if str(k) == claim:
+                    if not admitted(keys):
+                        found.append(f"{keys + [str(k)]} -> {v!r} (want a radiance* release or the llama-swap strata controller, .../containers/<name>/resources/{{requests,limits}})")
+                    else:
+                        lane = keys[0] if keys else ""
+                        if lane == "llama-swap" and str(v) != "1":
+                            found.append(f"{keys + [str(k)]} -> {v!r}: D17 rules strata's claim at count 1 in BOTH maps")
+                        elif lane != "llama-swap" and not isinstance(v, str):
+                            found.append(f"{keys + [str(k)]} -> {v!r}: radiance lanes ship the QUOTED string form — the C01 AC3 sharpness law, moved here from the bash sweep (which cannot see structure): an int claim in a radiance block is drift, not a form the sweep sanctions")
+                walk(v, keys + [str(k)])
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, keys + [f"[{i}]"])
+    walk(doc, [])
+    return found
+errs = law_errs(doc)
+# Teeth of the admission+form law itself (the always-pass class): plant claims on
+# admitted homes (must stay quiet) and on UNadmitted/unformed shapes (must each
+# error). An allow-list nobody probes is a blanket carve with extra syntax.
+def plant(keys, val="1"):
+    d, cur = {}, None
+    for k in keys[:-1]:
+        nxt = {}
+        if cur is None:
+            d = cur = {k: nxt}
+        else:
+            cur[k] = nxt
+        cur = nxt
+    cur[keys[-1]] = val
+    return d
+L = ["app-template", "controllers"]
+C = ["containers"]
+RAD = ("radiance", *L, "radiance", *C, "radiance", "resources")
+STR = ("llama-swap", *L, "strata", *C, "strata", "resources")
+teeth = [
+    ((*RAD, "requests"), "1", False),
+    ((*RAD, "limits"), "2", False),
+    # int 1 on strata is the C07/C10 APU-claim idiom D17 cites as the shape
+    # precedent (amd.com/gpu-8060s: 1 at services/gpu-ai/prod/values.yaml:205) —
+    # admitted, not a form drift.
+    ((*STR, "requests"), 1, False),
+    ((*STR, "limits"), "1", False),
+    ((*RAD, "requests"), 1, True),
+    ((*STR, "limits"), "2", True),
+    (("llama-swap", *L, "llama-swap", *C, "llama-swap", "resources", "requests"), "1", True),
+    (("gpu", *L, "strata", *C, "strata", "resources", "requests"), "1", True),
+    ((*STR[:-1], "claims"), "1", True),
+]
+for keys, val, want_err in teeth:
+    got = bool(law_errs(plant(list(keys) + [claim], val)))
+    if got != want_err:
+        errs.append(f"TEETH: planted {val!r} at {keys} {'passed the law' if not got else 'was rejected'} — want {'rejection' if want_err else 'admission'}; the admission+form law is losing its teeth")
+if errs:
+    print("; ".join(errs), file=sys.stderr); sys.exit(1)
+PY
   extra_gpu=$(claim_grep "$BARE_CLAIM" | grep -c "^$GPU_VALS:" || true)
   [ "$extra_gpu" = "1" ] || [ "$extra_gpu" = "0" ] \
     || fail "n3 (C10): services/gpu carries $extra_gpu bare-claim lines — exactly one is the carrier (double claims would demand capacity 2 the node lacks)"
   if claim_grep "$APU_CLAIM" | grep -q "^$GPU_VALS:"; then
     fail "n3: the gpu overlay claims ${APU_CLAIM} — that name exists only on the gpu-ai node (single-naming 1.31.0.9 plugin, D21 intent)"
   fi
-  ok "n3: carrier-law sweep clean — bare claims ONLY in services/gpu/prod/values.yaml (the gpu overlay ADD — the chart default is claim-less since C10/D26), the APU name ONLY in the gpu-ai overlay, the renamed R9700 pool ONLY in charts/radiance (D24 sweep), the chart claim-free — exactly one live site per claim name (comments/fixtures exempt per the pattern)"
+  # --- C01 AC1 zero-stale, bash twin of the python AC4 leg. Absolute, not cosmetic:
+  # R-Q5 — after the roll the retired name advertises capacity 0 PERMANENTLY, so one
+  # surviving claim line is a pod that PENDINGs forever with no fallback under it
+  # (bare amd.com/gpu sits at 0 as well).
+  stale=$(retired_hits . | sort -u || true)
+  if [ -n "$stale" ]; then
+    fail "n3 (C01 AC1 zero-stale): $(printf '%s\n' "$stale" | wc -l) file(s) in the AC4 scopes (${AC4_SCOPES[*]}) still name the retired pool — the rename is ONE atomic wave; history belongs in the plan folder and in git, both outside these scopes:
+$(printf '%s\n' "$stale" | head -24)"
+  fi
+  # --- Teeth: the live name is a PREFIX of the retired one, which is exactly where a
+  # false-green hides, so the probe tree carries both spellings and the scan must
+  # flag only the straggler.
+  probe=$(mktemp -d)
+  mkdir -p "$probe/charts/x" "$probe/tests/y"
+  printf 'claims:\n  %s: "1"\n' "$R9700_CLAIM" > "$probe/charts/x/live.yaml"
+  printf 'claims:\n  %s: "1"\n' "$RETIRED_R9700_CLAIM" > "$probe/charts/x/straggler.yaml"
+  printf 'the old pool %s stayed in this note\n' "$RETIRED_R9700_CLAIM" > "$probe/tests/y/note.md"
+  hits=$(retired_hits "$probe" | sort -u || true)
+  [ -n "$hits" ] || { rm -rf "$probe"; fail "n3 (C01 teeth): a planted straggler tree read as clean — the assembled constant or the scope list has become an always-pass"; }
+  printf '%s\n' "$hits" | grep -q 'straggler.yaml' \
+    || { rm -rf "$probe"; fail "n3 (C01 teeth): the planted claim straggler was not flagged:\n$hits"; }
+  printf '%s\n' "$hits" | grep -q 'live.yaml' \
+    && { rm -rf "$probe"; fail "n3 (C01 teeth): the scan flagged the LIVE claim file — a needle that matches the live name cannot tell a clean tree from a straggler tree"; }
+  # Placement teeth (C03 Tests): the same probe tree carries a claim in a path the
+  # carrier law does NOT admit, and the sweep must call it out. Without this half the
+  # allow-list could quietly widen to "everything" and the law would read as clean.
+  mkdir -p "$probe/services/gpu/prod"
+  printf 'resources:\n  limits:\n    %s: "1"\n' "$R9700_CLAIM" > "$probe/services/gpu/prod/values.yaml"
+  stray=$(cd "$probe" && claim_grep "$R9700_CLAIM" | grep -vE '^charts/radiance/|^services/gpu-ai/prod/values\.yaml:' || true)
+  printf '%s\n' "$stray" | grep -q 'services/gpu/prod/values.yaml' \
+    || { rm -rf "$probe"; fail "n3 (C03 placement teeth): a claim planted in services/gpu/ (a cluster whose plugin cannot advertise the name) passed the carrier law — the allow-list has become an always-pass:\n$stray"; }
+  rm -rf "$probe"
+  # --- C01 AC3 sharpness: the sweep must actually SEE the shipped claim lines. A
+  # stray-guard that matches nothing is indistinguishable from a clean tree, and the
+  # quoted claim pairs are exactly what the old bare-value pattern hid.
+  shipped=$(claim_grep "$R9700_CLAIM" || true)
+  [ -n "$shipped" ] \
+    || fail "n3 (C01 AC3 sharpness): the R9700 sweep matches NO live claim line in charts/ or services/ — charts/radiance ships the pair as a QUOTED string ($R9700_CLAIM: \"2\"), so a sweep that misses it turns every stray-guard in this block vacuous"
+  # The per-line FORM check this arm used to run ("every shipped claim QUOTED")
+  # was a shape assumption that died with C04/D17: the strata claim rides the
+  # C07/C10 APU idiom, an unquoted int (amd.com/gpu-8060s: 1 is the precedent
+  # D17 cites verbatim). A grep cannot tell "unquoted strata idiom" from
+  # "unquoted drift inside a radiance block", so the form law moved UP into the
+  # structural python leg above (radiance ⇒ quoted string, strata ⇒ count 1,
+  # either type), teeth-probed there. Dropping the blanket check does not drop
+  # the sharpness: the non-empty arm above still pins that the sweep SEES the
+  # quoted pair, and every shipped line is structurally adjudicated below.
+  ok "n3: carrier-law sweep clean AND SHARP — quoted and bare claim values both matched (the shipped pair form is SEEN, not skipped), bare claims only on the bare-carrier file and the strata idiom lines, the APU name ONLY in the gpu-ai overlay, the R9700 pool ONLY in charts/radiance + the gpu-ai file, the retired tier absent from all four AC4 scopes, and the planted-straggler probe proves both sweeps fire (C01 AC1/AC3 on top of the C10/D26 carrier law)"
 fi
 
 # --- n4: the vendored chart's expected-names ledger (the C02 authority) ---------

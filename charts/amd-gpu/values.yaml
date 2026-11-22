@@ -29,9 +29,11 @@
 # the plugin's const IDsPath below — the D24 lane ruling), per sanitized
 # marketing name, one kubelet pool per name (one device each on the ai-gpu
 # node):
-#   7551, C0 -> gpu-r9700-1  (Radeon AI PRO R9700, 32 GB dGPU — patched-table row)
+#   7551, C0 -> gpu-r9700  (marketing identity AMD Radeon AI PRO R9700 — the
+#   product field is exactly r9700: renamed 2026-11-22 per D21; the marketing
+#   string sanitizes to the HISTORICAL pool, never to this name)
 #   1586, C1|C3|C6|D1 -> gpu-8060s  (Radeon 8060S Graphics, Strix APU — carried rows)
-# The node advertises amd.com/gpu-r9700-1 + amd.com/gpu-8060s and bare
+# The node advertises amd.com/gpu-r9700 + amd.com/gpu-8060s and bare
 # amd.com/gpu disappears - a stray bare claim schedules Pending by design
 # (loud). Claimants: radiance the R9700 pool (C02), llama-swap the APU pool
 # (C07 same-wave flip). The 7551/C0 baked-table marketing row is
@@ -40,11 +42,23 @@
 # ConfigMap rows below. Fallback trap: an unknown sysfs (device,revision)
 # pair lands its card under bare amd.com/gpu; the on-target receipts and the
 # remedy decision tree live in the cf-143 C06 runbook step-0 gates.
+# [2026-11-22 C06 — annotate, never rewrite] "one device each on the ai-gpu
+# node" and the two-claimant "Claimants" line above are cf-143 landing-era
+# truth. Shipped since: the node carries TWO R9700s (card 2 landed
+# 2026-11-21), so gpu-r9700 is a pool of COUNT 2, and its claimants are FIVE —
+# the four radiance releases (fn 2, q27 1, flash-TP1 1, q27-TP2 2) plus the
+# claimed, parked strata lane (1; this ticket's D17) — while the llama-swap
+# router itself stays on the APU pool. Concurrent claim-1 holders get distinct
+# cards (plugin allocation is exclusive; a claim-1 pod lands the
+# lowest-KFD-NodeId card free at admission). Single prose authority for the
+# claim math and combination verdicts:
+# .agents/notes/radiance-multi-instance-roster.md.
 # WATCH: if a future plugin image ever moves its IDs lookup path (the
 # Dockerfile COPY law that makes this mount apply), the mount silently stops
 # applying and the node falls back to advertising the BAKED-table name ->
 # radiance's claim goes Pending-forever; the runbook step-0 receipts (a)-(c)
-# catch it (the expected name in that gate prose is gpu-r9700-1 post-C08).
+# catch it (the expected name in that gate prose is gpu-r9700 post-C08;
+# renamed 2026-11-22 per D21 — see the ledger row above).
 
 app-template:
   global:
@@ -183,10 +197,14 @@ app-template:
       # v1.31.0.12 baked table (dropping any 1586 row would silently fall
       # the APU to bare amd.com/gpu and strand the LIVE gpu-ai overlay
       # consumer, D21/B1 — the APU-rows-must-carry law) + the single
-      # 7551/C0 row with its product string set EXACTLY "r9700-1": the
+      # 7551/C0 row with its product string set EXACTLY "r9700" (renamed
+      # 2026-11-22 per D21, from the earlier "r9700-1"; the row's MARKETING
+      # IDENTITY — AMD Radeon AI PRO R9700 — is recorded in the header ledger
+      # above, never in this field: the sanitizer derives the HISTORICAL
+      # pool from that string, not the live name): the
       # sanitizer keeps that token (lowercase, [a-z0-9.-] only, not a
-      # filler word), so the node advertises gpu- + r9700-1 =
-      # amd.com/gpu-r9700-1; the amd.com namespace and the gpu- prefix are
+      # filler word), so the node advertises gpu- + r9700 =
+      # amd.com/gpu-r9700; the amd.com namespace and the gpu- prefix are
       # code constants, so no table content can produce the owner's first
       # literal — that rejected string is impossible by construction
       # (§R7-Q1) and appears nowhere claim-shaped anywhere.
@@ -222,4 +240,4 @@ app-template:
           1586,	D2,	AMD Radeon 8050S Graphics
           1586,	D4,	AMD Radeon 8050S Graphics
           1586,	D5,	AMD Radeon 8040S Graphics
-          7551,	C0,	r9700-1
+          7551,	C0,	r9700

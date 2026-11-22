@@ -176,14 +176,17 @@ if want t1; then
     fail "t1[cf-106 C10 AC1]: $LOCAL still exists — C10 collapses the hourly pair to ONE scheduled runner (git rm the file; the live OpenChamber task's retirement stays the owner's step)"
   fi
   # The model literal follows the loop-file bytes — the single authority
-  # (OpenChamber syncs from the main checkout); owner ruling OQ-14 of this
-  # ticket (2026-11-03) moved the runner to the Dense/local default,
-  # superseding cf-86's 652ba904c flash-next-strata pin.
+  # (OpenChamber syncs from the main checkout). Ruling chain, carried because
+  # the pin is only as honest as its citation: cf-106 OQ-14 (2026-11-03,
+  # Dense/local, superseding cf-86 652ba904c's flash-next-strata) -> owner
+  # ruling 2026-11-09 (Strata q4) -> owner ruling 2026-11-22 (radiance,
+  # 2026-11-feat-radiance-multi-instance D16, superseding 2026-11-09 under that
+  # ruling's own "moves only by a fresh owner ruling" clause).
   fm_check "$API" \
     "name=pipeline-worker" "schedule=0 * * * *" "enabled=true" \
-    "model=gpu-ai/qwen3.8-27b-q4" "agent=agent-board-coord" \
-    || fail "t1[cf-106 C10 AC1]: $API frontmatter is not the single-runner shape — one schedule, enabled true, agent agent-board-coord, model gpu-ai/qwen3.8-27b-q4 (red until C10 flips the literal)"
-  ok "t1[cf-106 C10 AC1]: one loop file, exactly the recognized keys once each, agent agent-board-coord, model gpu-ai/qwen3.8-27b-q4"
+    "model=gpu-ai/qwen3.8-flash-next-radiance" "agent=agent-board-coord" \
+    || fail "t1[cf-106 C10 AC1, re-pinned 2026-11-22]: $API frontmatter is not the single-runner shape — one schedule, enabled true, agent agent-board-coord, model gpu-ai/qwen3.8-flash-next-radiance (the runner literal moved cf-106 OQ-14 2026-11-03 -> 2026-11-09 strata-q4 -> 2026-11-22 radiance; red until C02 lands the move)"
+  ok "t1[cf-106 C10 AC1, re-pinned 2026-11-22]: one loop file, exactly the recognized keys once each, agent agent-board-coord, model gpu-ai/qwen3.8-flash-next-radiance"
 fi
 
 # --- t2: the single body carries the C10 contract (AC2) ------------------------
@@ -215,16 +218,22 @@ fi
 
 # --- t3: the model line, pinned exactly, convention comment intact (AC6) -------
 # The catalog churns, so this pin moves ONLY by a fresh user ruling; that
-# convention comment is part of the contract — C10's re-pin cites the cf-106
-# OQ-14 ruling as its authority, so a silent literal change reddens here.
+# convention comment is part of the contract — each re-pin cites the authority
+# behind the literal it pins, so a silent literal change reddens here. Chain to
+# date: cf-106 OQ-14 2026-11-03 -> owner ruling 2026-11-09 (strata-q4) -> owner
+# ruling 2026-11-22 (radiance, 2026-11-feat-radiance-multi-instance D16).
 if want t3; then
-  grep -qE '^model: gpu-ai/qwen3\.8-27b-q4$' "$API" \
-    || fail "t3[cf-106 C10 AC6]: the runner's model line is not exactly gpu-ai/qwen3.8-27b-q4 — owner ruling OQ-14 (2026-11-03) sets the Dense/local default for the scheduled runner; the catalog churns, so the pin moves only by a fresh user ruling"
+  grep -qE '^model: gpu-ai/qwen3\.8-flash-next-radiance$' "$API" \
+    || fail "t3[cf-106 C10 AC6, re-pinned 2026-11-22]: the runner's model line is not exactly gpu-ai/qwen3.8-flash-next-radiance — owner ruling 2026-11-22 (D16) moves the runner off the 2026-11-09 strata-q4 route (that ruling's own 'moves only by a fresh user ruling' clause is what makes this one authoritative); the catalog churns, so the pin moves only by a fresh user ruling"
   grep -E '^[[:space:]]*#' "$0" | grep -qiE 'catalog churns, so (this|the) pin moves only by a fresh user ruling' \
     || fail "t3[cf-106 C10 AC6]: this suite's convention comment is gone — the re-pin must carry the authority for the literal it pins (owner ruling + no silent flips)"
-  grep -qiE 'OQ-14|cf-106' "$API" \
-    || fail "t3[cf-106 C10 AC6]: the loop file's comment block does not cite the ruling behind its model literal (C10 task: the comment block carries the live facts, not the history)"
-  ok "t3[cf-106 C10 AC6]: model line pinned to gpu-ai/qwen3.8-27b-q4 with the fresh-ruling convention comment on both sides"
+  # The loop file's comment block must carry the whole chain, not just the
+  # newest date: D23 supersedes by citation, never by deletion.
+  for cite in 'cf-106 OQ-14' '2026-11-09' '2026-11-22'; do
+    grep -qF "$cite" "$API" \
+      || fail "t3[cf-106 C10 AC6, re-pinned 2026-11-22]: the loop file's comment block does not cite $cite — the runner-literal ruling chain (cf-106 OQ-14 2026-11-03 -> 2026-11-09 strata-q4 -> 2026-11-22 radiance) must read intact in the file that carries the literal"
+  done
+  ok "t3[cf-106 C10 AC6, re-pinned 2026-11-22]: model line pinned to gpu-ai/qwen3.8-flash-next-radiance with the fresh-ruling convention comment here and the dated ruling chain in the loop file"
 fi
 
 # --- t4: one task — the retired pair and its stagger may not come back (AC1) ---

@@ -2,35 +2,70 @@
 contains the chart name (gpu-ai-radiance), so fullname dedups to it and the
 primary Service is named after the release. */ -}}
 {{- $svc := .Release.Name -}}
-Radiance (qwen3.8-flash-next profile) is CLUSTER-INTERNAL — no ingress, no
-public host (the internal-only ruling; the strata Q4 / vllm D7 precedent).
-The one client route is the llama-swap peers.radiance hop on the existing
-llama host, whose proxy target is this release's Service. The peer URL
-carries no "/v1" suffix (request paths append verbatim) and is the exact
-string the C04 peers entry consumes:
+Radiance (2026-11-feat-radiance-multi-instance C03) is ONE ENGINE SHELL with
+several releases, not one pod. The chart ships the MECHANISM — the pinned
+engine image, the /health probe law, Recreate plus the drain grace, the
+unprivileged GPU securityContext, the shared models claim and /dev/shm, the
+Service shape, the staging init's image and hash budget, and the script FORMs
+on one ConfigMap carrier (owner ruling D43): the generic fetch FORM the init
+mounts and execs, and the serve compose FORM the serve container execs. Each
+release's roster block in services/gpu-ai/prod/values.yaml ships the LANE DATA
+it runs on: the pack, the serving specifics as env entries the compose FORM
+turns into the boot argv, the memory and card claim, and the four scalars
+(PACK/LFS_SHA/URL/MARKER) that the fetch FORM substitutes. Nothing in this
+chart is a lane's default any more, so read the lane you installed:
+
+  radiance           flash-next TP2 — UP in git (replicas 1)
+  radiance-q27       27B dense TP1 — rests at replicas 0, the swap lane
+  radiance-flash-tp1 flash-next TP1 — rests at 0, the single-card twin
+  radiance-q27-tp2   27B dense TP2 — rests at 0, the two-card twin
+
+CLAIM MATH — read it before any scale-up. A TP2 lane claims BOTH cards (claim
+2 of the named pool amd.com/gpu-r9700, which holds exactly the two R9700s), so
+at most one TP2 lane can be UP at a time: 2 + 2 is more than the pool has and
+the second pod sits Pending, never co-resident. A TP1 lane claims 1 and the
+scheduler gives it the pool's lowest-KFD-NodeId free card. The swap order
+survives the shape change: the live lane scales DOWN before the other scales
+UP, and every sync re-applies git over a hand-scale — OutOfSync through a
+switch window is the parked swap, not a defect to chase.
+
+MEMORY MATH — the pool fits the two TP1 lanes side by side, the node's RAM
+does not: at the transcribed numbers, fn's 110 GiB pair beside q27's 24 GiB,
+plus the router's 4.125 and the system floor's 1.158, is 139.3 against the
+node's 125.08 GiB allocatable. So a Pending pod with "Insufficient memory" is
+arithmetic, not a bug, and the fix is the scale-down protocol in the runbook —
+never a quiet shrink of a block's memory pair (the numbers are owner rulings
+with printed receipts behind them). The same handshake runs against strata on
+this node: 110 + 64 + 6.3 = 180.3 > 125.08, and the owner's manual strata
+scale-down is the protocol (the cutover is a real either/or at 110).
+
+The name, said once because three projects share the vocabulary: THIS chart is
+the StillDeadcode/radiance ENGINE; charts/vllm's vllm-radiance image is the
+magiccodingman vLLM FORK; Strata (Niko1221) is an unrelated engine.
+
+Every lane is CLUSTER-INTERNAL (Q1=A): no ingress, no public host, no secret
+surface (cf-143 D8 keyless). The one client route is the llama-swap peers hop on the
+existing llama host, whose proxy target is this release's Service — and while
+a lane rests at replicas 0 the Service has no endpoints, so its peer hop
+answers a 502 proxy error: loud and refused, never silently routed to a dead
+id (llama-swap neither health-checks nor hides peers). The peer URL carries no
+"/v1" suffix (request paths append verbatim) and is the exact string the peers
+entry consumes:
 
   http://{{ $svc }}.default.svc.cluster.local:8000
 
-Served id (the single authority, DECISIONS D7): qwen3.8-flash-next-radiance.
-Disambiguation, because three projects share this vocabulary: THIS chart is
-the StillDeadcode/radiance ENGINE; charts/vllm's vllm-radiance image is the
-magiccodingman vLLM FORK; Strata (Niko1221) is an unrelated engine and
-stays live beside this pod (owner Q5 coexistence ruling).
+The serve argv is never stored in git: the compose FORM builds it at boot from
+the block's env entries and echoes it exactly once before exec-ing the engine —
+that print is the D43(2) boot receipt for what the engine actually received,
+and it is the bytes an operator compares against the lane's profile. The served
+id is the block's RADIANCE_SERVED_ID — composed into the engine's
+served-model-name flag, the id peers and the catalog rows route by — and it is
+the release's own data, never the chart's.
 
 Debug access from outside the cluster (kubectl only — not a client path):
 
   kubectl -n default port-forward svc/{{ $svc }} 8000:8000
   curl -s http://127.0.0.1:8000/health
-
-GPU: the pod claims the R9700's named product pool, amd.com/gpu-r9700-1
-(the amd-gpu chart's patched amdgpu.ids ConfigMap + product naming make
-the name exist — D24/§R7-Q2) — the scheduler can land it on
-exactly one device. If the pod sits Pending with "Insufficient memory",
-that is the designed coexistence handshake, not a bug: radiance's
-Guaranteed 110 pair plus strata's 64Gi request (with the router + system
-floor) sums to 110 + 64 + 6.3 = 180.3 > the node's 125.08 GiB, and the
-owner's manual strata scale-down is the protocol (the runbook owns
-down/restore-back — do not "fix" it by shrinking the chart's scalars).
 
 Next step — the on-target acceptance + host-prep runbook
 (.agents/notes/radiance-on-target-acceptance.md, cf-143 C06): the naming
