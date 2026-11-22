@@ -253,10 +253,10 @@
       "status": "done",
       "wave": 6,
       "depends_on": ["C05"],
-      "dev_rounds": 1,
+      "dev_rounds": 3,
       "dev_session": "ses_dffa7ac7fffeA9KLJsuaiMd04d",
-      "review_rounds": 0,
-      "last_verdict": "dev DONE (round 1, ses_dffa7ac7fffeA9KLJsuaiMd04d, 2026-11-22): 25 sources appended (script-validated append-only + twin law), 25 mirrors regenerated (run-2 no-op, --check clean), all 50 N1-N5 legs flipped green with N6/N7/N8 + controls HELD; regression nine surfaces + broad sibling sweep byte-equal across trees (zero casualties); aislop 100/0/0 over 108 files. PROBE OUTCOME: governs-unverified (designed degrade) — upstream main's compaction settings govern KNOBS ONLY (CompactionSettings.tsx:26,37-42; config-v2.ts:683-688 strict schema 400s any prompt field; session-lead/runtime.ts:165 POSTs compact with empty body); the only summary-instruction surface is the /summary magic-prompt block (magicPrompts.ts:365-390, non-destructive handoff path, default says do-not-compact). So the owner's 'compaction prompt' field is fork-side or IS the /summary block — USER step 7's empirical fire doubles as identification; artifact's pure-obedience wording is the safe composition either way (RESEARCH L241 ordering). No repo change follows either way per D35. Review round 1 next.",
+      "review_rounds": 2,
+      "last_verdict": "AMENDMENT REVIEW APPROVED (round 2, ses_dff21fc6cffeF3TH7a5XkwEXSi retry 1 — attempt 0 died pre-work on the provider-stream class 3rd occurrence, owner ruled D39 keep-flash+retry-on-death): P-suite rc=0 x2 BYTE-IDENTICAL end-to-end post-landing (the commit-proves-P1-TRACKED moment, pre: UNTRACKED stop); eleven-surface battery A==B with EMPTY diff vs round-2 ledger (admit reds transient by design, every line returned); admits gate t14/c8/c7/A9 x2 green (wekan-t14->c7 naming correction confirmed); agents-md ok=13, c13/c26, narratives rc=0 ok=8, S7 pass; rulesync zero-writes+check; aislop 100/0/0. Content review: reviewer reproduced the fidelity proof INDEPENDENTLY of the suite's checkers (clone==value-default byte-exact; fixture==clone+nl; block==fixture; tail==L177==POINTER); version:1 has REAL consumer law verified (project-setup.ts:195/198/238 whole-file invalidation) — the flag-if-unverified question closes with evidence; D38 line truthful (resolveMagicPromptTemplate L1149-1155 match), 423B, source==generated. Findings: minor-1 c8 trail-comment contradiction (test-side wording repair -> deferred list); minor-2 app-generated .openchamber siblings will redden admits on first use (owner gitignore-vs-admit call, reported not loosened); minor-3 first app Settings write reddens P2's tight key-set BY DESIGN (attribution note); 424/423B nit record-only. C06 DONE: narratives + polish + project.json route + admits + D38 line all approved at their rounds.",
       "handoffs": [
         {
           "role": "plan",
@@ -319,6 +319,13 @@
           "agent": "agent-dev-pr (continuation)",
           "round": "addendum-d38",
           "result": "DONE | C06 addendum: ONE line added to .rulesync/rules/overview.md (byte 5903, line 95, single physical line 424B, 'Where things live' last bullet after .agents/notes) + regenerated AGENTS.md line 97 (rulesync run-1 wrote AGENTS.md only, run-2 no-op, --check rc=0); pure-addition proven both files zero-deletions, prefix-frozen through byte 5902, inverse-exact removal restore. Window discipline: 21 window pairs pre-simulated before writing — all min-spans unchanged, max 586 vs 700 min window, zero problems (negwin is minimum-span, uniform shift; bullet lands only the 'default' pair-token, provably inert). Arms x2 byte-identical: agents-md c1-c10/c12-c14 rc=0 ok=13; c13/c26 hold; narratives bare rc=0 ok=8; aislop 100; P7/P8 spot rc=0. P-suite landing intel: content legs end-to-end proven on real files; ONLY P1's TRACKED gate awaits the commit — full suite expected rc=0 post-landing, nothing else changes at commit time. Reported-not-fixed: observed parallel admit edits mid-run (already effective in my runs; coordinator re-runs subsets at commit time); STATE brace repair noted in-flight (coord surface); c11 stays pre-existing. No tests/* writes, no commits (posture held)."
+        },
+        {
+          "role": "review",
+          "agent": "agent-review (RETRY 1 — attempt 0 died pre-work, provider-stream 3rd occurrence; D39 keep-flash+retry ruled)",
+          "round": "amendment",
+          "result": "APPROVED (a54e6957e): P-suite rc=0 x2 byte-identical end-to-end — TRACKED flip PROVEN (pre: UNTRACKED stop); eleven-surface battery EMPTY diff vs round-2 ledger, A==B; admits + A9 x2 green (naming correction confirmed); fidelity reproduced independently of the suite (clone==value byte-exact, fixture==clone+nl, block==fixture, tail==POINTER); version:1 consumer law VERIFIED (project-setup.ts:195/198/238 whole-file invalidation); D38 line truthful, source==generated; STATE parse ok. Findings: minor-1 c8 trail-comment self-contradiction -> test wording repair deferred; minor-2 app-generated .openchamber siblings will redden admits on first use -> owner gitignore-vs-admit call (reported, nothing loosened); minor-3 first Settings write reddens P2 tight key-set by design -> attribution note. Notes in chunks/C06.md amendment-review-notes slot (pure append).",
+          "files_changed": [".agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/chunks/C06.md (amendment-review-notes)"]
         }
       ]
     }
