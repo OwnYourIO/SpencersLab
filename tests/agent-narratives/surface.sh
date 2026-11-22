@@ -18,11 +18,14 @@
 # N6[AC3 frontmatter immobility + append-only prefix + twin discipline]
 # N7[AC5 OUT-roster freeze] N8[the artifact-line record pin].
 #
-# Red posture: N1–N5 (and the twin legs of N6) are DESIGNED RED until C06 dev
-# appends the sections + regenerates — each stop names its file. N6's prefix
-# legs, N7 and N8 are HOLD-green guards (red only on an append-only/roster/
-# wording violation). Fabricated-drift controls (strip, restate, template-swap,
-# bare-line) run against mutants and prove every pin non-vacuous.
+# Red posture: ROUND-2 STATUS (D37) — C06 dev round 1 + the review polish have
+# landed: N1–N5 and the twin legs are GREEN on the settled base; the whole suite
+# runs rc=0 bare (the polish round's CHUNK_BASE-set proof is now the default).
+# N6's prefix legs, N7 and N8 stay HOLD-green guards (red only on an
+# append-only/roster/wording violation). Fabricated-drift controls (strip,
+# restate, template-swap, bare-line, moving-base) run against mutants and prove
+# every pin non-vacuous. The round-2 app surface (.openchamber/project.json +
+# its fixture) is validated in tests/openchamber-project/, not here.
 #
 # Usage:
 #   bash tests/agent-narratives/surface.sh            # N1..N8
@@ -30,7 +33,17 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-BASE="${CHUNK_BASE:-HEAD}"
+# cf-126 C06 round-2 (D37 AA3, adopted from the polish round's deviation 2):
+# SETTLED chunk-base, not a floating HEAD. The tree against which the narrative
+# appends + the round-2 fold-ins are legitimate is the C06 test-wave commit —
+# c372d0276 (verified: 25 bodies carry no section there; the dev append 5dfb8736b
+# and polish fold-ins 010aa3ca6 are pure appends/inside-section edits above it;
+# the OUT roster is byte-identical vs it). HEAD-as-default reddens every future
+# SANCTIONED fold-in the moment the base moves (a fold-in edits bytes a moved
+# base still carries) — the prefix-freeze law is "immovable vs the CHUNK base".
+# Per-recorded-hash pinning follows the settled-constants precedent (C02 review's
+# promotion item); the CHUNK_BASE override env stays honored.
+BASE="${CHUNK_BASE:-c372d02760adc67e80f8ed66e5030af43307e163}"
 PLAN=".agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/2026-11-17-feat-compaction-pipeline-sessions.md"
 
 PIPE16=(agent-coord agent-coord-local agent-coord-pr agent-board-coord agent-board-coord-local
@@ -255,6 +268,18 @@ old = "a\nb\n"
 new = "a\nX\n"
 if new.startswith(old):
     print("prefix self-test broken (harness fault)"); sys.exit(1)
+# cf-126 C06 round-2 (D37 AA3) MOVING-BASE drift proof: with BASE floated to
+# HEAD, the commit that landed the sections becomes the base, and the NEXT
+# sanctioned fold-in (an inside-section edit — legitimate against the settled
+# chunk-base) reddens for the prefix reason. Both directions must hold; this is
+# the fixture the amendment demands — the drift is caught by THIS arm, for the
+# recorded reason, and the settled hash above is what keeps it green.
+base_moved = "body\n\n## Compaction & fresh-start\nline1\nline2\n"
+fold_in = "body\n\n## Compaction & fresh-start\nline1 folded\nline2\n"
+if fold_in.startswith(base_moved):
+    print("moving-base self-test broken (harness fault)"); sys.exit(1)
+if not (fold_in.startswith("body\n") and fold_in[len("body\n"):].lstrip("\n").startswith("## Compaction & fresh-start")):
+    print("settled-base self-test broken (harness fault)"); sys.exit(1)
 print("ok")
 PY
   # Twin discipline: byte-identical sections for the alias pairs (post-append;
