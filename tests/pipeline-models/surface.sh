@@ -1018,12 +1018,20 @@ try:
 except FileNotFoundError:
     sys.exit("services/gpu-ai/prod/values.yaml missing — the ctx needle's carrier (the radiance roster block) cannot be read")
 block = ((svc.get("radiance") or {}).get("app-template") or {})
-mm = block.get("maxModelLen")
-assert mm == 200000, f"radiance roster block maxModelLen is {mm!r}, want 200000 (the pod's served admission ceiling — D17 FULL profile; C03 moved this scalar with the lane; the --max-model-len arg in the same block is pinned to it by the chart suite)"
-_args = (((block.get("controllers") or {}).get("radiance") or {}).get("containers") or {}).get("radiance") or {}
-_args = [str(a) for a in (_args.get("args") or [])]
-assert "--max-model-len" in _args and _args[_args.index("--max-model-len") + 1] == "200000", \
-    f"the block's --max-model-len arg does not serve 200000 (args={_args[:2]!r}) — served scalar and anchor scalar must agree"
+# D43 (2026-11-22) re-anchor: the pod's served admission ceiling reaches the
+# engine as the RADIANCE_MAX_MODEL_LEN env the compose wrapper feeds to
+# --max-model-len; the era's block scalar + inline arg pair retired with the
+# rendered argv (the composed-vector equality runs in the chart suite — this
+# arm anchors the AUTHORING site). Designed-red naming dev round 3 while the
+# lane env has not landed.
+lanectr = (((block.get("controllers") or {}).get("radiance") or {}).get("containers") or {}).get("radiance") or {}
+env = {e.get("name"): e.get("value") for e in lanectr.get("env") or []}
+mm = env.get("RADIANCE_MAX_MODEL_LEN")
+assert mm is not None and str(mm) == "200000", (
+    f"the radiance block env RADIANCE_MAX_MODEL_LEN is {mm!r}, want 200000 — the pod's served "
+    "admission ceiling (D17 FULL profile); env is the lane's sizing channel since D43 and the "
+    "chart suite pins the composed --max-model-len to it"
+)
 src = open(".opencode/opencode.jsonc").read()
 low = src.lower()
 gap = low.find("qwen3.8-flash-next-radiance")

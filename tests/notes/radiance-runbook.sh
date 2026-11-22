@@ -25,7 +25,10 @@
 # T2 shipped-flag equality: the runbook carries its DRY_RUN expectation as a
 # fenced args block containing `--served-model-name qwen3.8-flash-next-
 # radiance` — EXACTLY ONE such block; its flag/value multiset must equal the
-# chart's serveArgs (read live from charts/radiance/values.yaml, C02), the
+# COMPOSED vector — the chart-owned serve wrapper executed against the fn
+# lane's rendered env through the radiance testlib harness (D43, 2026-11-22;
+# the earlier eras read the chart serveArgs, then the block args — replaced in
+# place, never silently), the
 # scalars needle-pinned on BOTH sides. cf-144 C01 TP2 re-pin (P04/P11):
 # 12288 / 200000 / 8 / tp-2 move to the TP2 era; the guaranteedMemoryGi
 # needle STAYS at 110 — owner ruling "Hold 110, re-pin after the print"
@@ -173,17 +176,23 @@ if want t2; then
 import re, sys, yaml
 runbook, chart, vals_path = sys.argv[1:4]
 rb = open(runbook).read()
-# C03 carrier re-aim: the serve recipe and the sizing scalars are roster-block
-# data now (the chart is a mechanism-only shell), so the equality source moved
-# from chart values to the fn block in the service file — same single source,
-# read where it ships.
-cv = yaml.safe_load(open(vals_path))
-block = ((cv.get("radiance") or {}).get("app-template") or {})
-assert block, "services radiance roster block missing in values (C04/C03 not landed?)"
+# D43 (2026-11-22) carrier re-aim, era law intact: the equality source moved
+# once more — the roster block's args array (the C03 shape) retired with the
+# rendered argv, and the witness is now the vector the CHART-OWNED compose
+# wrapper produces when executed against the fn lane's rendered env. Same
+# single source, read where the pod actually gets it: the testlib harness
+# renders, extracts env, and runs the shipped carrier in a sandbox POSIX shell.
+sys.path.insert(0, "charts/radiance/tests")
+import radiance_testlib as R
+ok, reason = R.helm_ready()
+assert ok, f"T2 needs the render toolchain: {reason}"
 
-serve = [str(a) for a in ((((block.get("controllers") or {}).get("radiance") or {})
-                           .get("containers") or {}).get("radiance") or {}).get("args") or []]
-assert serve, "radiance roster block serve args missing (C02/C03 not landed?)"
+comp = R.lane_composition("radiance")
+facts = comp["facts"]
+assert facts["rc"] == 0 and facts["argv"], (
+    f"the serve wrapper did not compose on the fn env (rc {facts['rc']}, stderr {facts['stderr'][:160]!r})"
+)
+serve = list(facts["argv"])
 
 def flag_pairs(args):
     out, i = {}, 0
@@ -218,19 +227,26 @@ else:
 
 # Scalars BOTH sides (cf-144 C01 TP2 re-pin: 12288 / 200000 / 8 / tp 2 / 110
 # — the memory scalar is the P11 HELD era, the pool/chunk/tp scalars are the
-# moved era). C03 carrier re-aim: the block side is read as PARSED scalars
-# (stronger than the old file-text needle: it names the fn block's own keys,
-# so the q27 lane's equal figures cannot false-green it).
-for num, key in (("12288", "hostPoolMib"), ("200000", "maxModelLen")):
+# moved era). D43 re-aim: the lane-side arm reads the COMPOSED vector (the
+# numbers the engine actually boots with — stronger than the old parsed block
+# scalars, and the only shape left once the lane's channel is env); the
+# guaranteedMemoryGi arm stays on the BLOCK scalar, because memory is pod
+# resources, not argv, and the block is still its one home.
+cv = yaml.safe_load(open(vals_path))
+block = ((cv.get("radiance") or {}).get("app-template") or {})
+assert block, "services radiance roster block missing in values (C04/C03 not landed?)"
+for num, flag, what in (("12288", "--host-pool-mib", "hostPoolMib (per-rank pool)"),
+                        ("200000", "--max-model-len", "maxModelLen")):
     if num not in rb:
         errs.append(f"the runbook never names {num} (TP2 shipped scalar)")
-    if block.get(key) != int(num):
-        errs.append(f"the radiance roster block {key} is {block.get(key)!r}, want {num} (TP2 single-source scalar)")
+    if block_flags.get(flag) != num:
+        errs.append(f"the composed vector {flag} is {block_flags.get(flag)!r}, want {num} — {what} "
+                    "single-source value reached the engine wrong (D43: env -> compose -> argv)")
 if not re.search(r"max-num-seqs[ \t\"':=-]*8\b|8[ \t-]*sessions|8 concurrent", rb):
     errs.append("the runbook never states the 8-session scalar")
 if block_flags.get("--tp") != "2":
-    errs.append(f"roster serve args --tp is {block_flags.get('--tp')!r}, want '2' — the TP2 flip "
-                "(doc §7/P04) never landed in the single source")
+    errs.append(f"composed vector --tp is {block_flags.get('--tp')!r}, want '2' — the TP2 flip "
+                "(doc §7/P04) never reached the engine (D43: env -> compose -> argv)")
 if not re.search(r"--tp[ \t\"':=-]*2\b", rb):
     errs.append("the runbook never states tp 2 (BOTH-sides pin, cf-144 C01)")
 # C12 AC4 (amendment) re-pin + cf-144 P11 HOLD: the shipped scalar needle
@@ -280,7 +296,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T2: shipped-flag equality / scalar pins / gate order violated (C06 T2 — diagnostics above)"
   fi
-  ok "T2: the runbook's shipped-args block equals the roster serve-args flag set (single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
+  ok "T2: the runbook's shipped-args block equals the COMPOSED vector (wrapper booted on the fn lane env, single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
 fi
 
 # --- T3: names block + triple-digest ledger + polarity + gates a-e ---------------

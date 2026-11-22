@@ -23,14 +23,22 @@ helm_skip = pytest.mark.skipif(not _ok, reason=_reason)
 
 @helm_skip
 def test_served_model_name_is_the_pinned_id():
-    """The id is byte-unchanged by the C03 move — but its CARRIER moved: the
-    serve args are block data now, so the pin reads the fn-block render (the
-    shape production serves), same single authority string."""
-    docs, _ = R.render(release="gpu-ai-radiance", service=True)
-    args = [str(a) for a in (R.serve_container(R.deployment(docs)).get("args") or [])]
-    pairs = R.flag_pairs(args)
+    """The id is byte-unchanged by the C03 move — and D43 (2026-11-22) moved
+    its CARRIER a second time: the serve id reaches the engine through the
+    lane's RADIANCE_SERVED_ID env and the chart-owned wrapper's composed
+    vector, so the single authority is now proven at BOTH: the rendered env
+    names it exactly, and executing the shipped wrapper yields it. Designed-red
+    until dev round 3 lands the wrapper + lane env."""
+    comp = R.lane_composition("radiance")
+    assert comp["env"].get(R.ENV_SERVED_ID) == R.SERVED_ID, (
+        f"C03/D43: rendered env {R.ENV_SERVED_ID} is {comp['env'].get(R.ENV_SERVED_ID)!r}, want "
+        f"{R.SERVED_ID!r} — env is the lane's id channel"
+    )
+    argv = comp["facts"]["argv"]
+    assert argv, "C03/D43: no composed vector to read the served id from"
+    pairs = R.flag_pairs(argv)
     assert pairs.get("--served-model-name") == R.SERVED_ID, (
-        f"C02: --served-model-name is {pairs.get('--served-model-name')!r}, want "
+        f"C02: the COMPOSED --served-model-name is {pairs.get('--served-model-name')!r}, want "
         f"{R.SERVED_ID!r} — the single id authority for C04/C05/C06 (D7)"
     )
 
@@ -79,10 +87,18 @@ def test_q27_served_id_matches_the_q27_peer_evidence_single_source():
         f"cf-143 C15: q27 evidence proxy {ev['proxy']!r} != {R.Q27_PEER_URL!r} "
         "(gpu-ai + appName radiance-q27, the peers hop's host)"
     )
-    docs, _raw = R.render_q27()
-    pairs = R.flag_pairs([str(a) for a in (R.serve_container(R.deployment(docs)).get("args") or [])])
+    R.render_q27()  # fail fast (naming C15) if the subtree never landed
+    comp = R.lane_composition(R.Q27_APP_NAME)
+    env_id = comp["env"].get(R.ENV_SERVED_ID)
+    assert env_id == ev["models_allowed"][0], (
+        f"C15/D43: q27 rendered env {R.ENV_SERVED_ID}={env_id!r}, want the evidence id — env is "
+        "the lane's id channel"
+    )
+    argv = comp["facts"]["argv"]
+    assert argv, "C15/D43: no q27 composed vector"
+    pairs = R.flag_pairs(argv)
     assert pairs.get("--served-model-name") == ev["models_allowed"][0], (
-        f"cf-143 C15: q27 render serves {pairs.get('--served-model-name')!r}, want the "
+        f"cf-143 C15: q27 compose serves {pairs.get('--served-model-name')!r}, want the "
         "evidence id — the q27 lane gets ONE served-id authority (the fn D7 pattern)"
     )
     for retired in ("strata", "vllm"):

@@ -1,9 +1,14 @@
 """Re-derive and guard the C03 delta fixtures (test-session machinery, not a test).
 
-C03's proof changed shape with owner ruling D35: the render now MOVES on four
-ruled paths (the delta budget in test_c03_generic_shell.py), and the fixture is
-the BASELINE side of that bounded-diff comparison — the render of the last
-revision the old byte-equality law blessed.
+C03's proof changed shape twice since this fixture was minted. D35 made the
+render MOVING on four ruled paths (the delta-budget era, rounds 1-2). D43
+(2026-11-22, owner ruling) retired the budget's argv side: the render may
+again move ONLY on env, command, args, volumes/mounts and the checksum
+annotation, and the fixture is now the baseline of the PER-PROPERTY
+INVARIANCE legs in test_c03_generic_shell.py (image@digest, probes,
+securityContext, claim pair, memory, cpu, replicas, grace — byte-equal, pool
+name folded). The fixture's duty is unchanged by all of it: it is the BASELINE
+side, and the law below is what keeps it honest.
 
 The fixture's authority is the pinned commit it records (captured_from_commit),
 NOT the working tree: this script renders the chart and the service-roster

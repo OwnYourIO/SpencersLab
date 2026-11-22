@@ -48,13 +48,29 @@ def _container(name):
     )
 
 
-def _args(name):
-    args = _container(name).get("args")
-    assert isinstance(args, list) and args, (
-        f"C05: the {name} block carries no args array — the lane's whole-list replacement "
-        "is the entire serving profile (D56/C03 shape); designed-red naming C05"
+# _args() RETIRED by owner ruling D43 (2026-11-22, replaced — never silently
+# deleted): it read the lane block's serve args array, the carrier D43 rules
+# out of existence (the argv moved into the chart-owned compose wrapper; the
+# block's channel is env). The block-side reader below is its env twin; the
+# RUNTIME proof of the vector lives in the harness (radiance_testlib) and the
+# C03 composition legs.
+def _block_env(name):
+    """The lane block's authored env as {name: value} — the D43 block-side
+    channel for profile values. The rendered-env twin (what the pod actually
+    gets) is proven in the C03 suite; this reader is for authoring-shape
+    needles that must bind before the render exists."""
+    env = _container(name).get("env")
+    assert isinstance(env, list) and env, (
+        f"C05/D43: the {name} block carries no env list — env is the lane's whole serving-"
+        "specifics channel since D43 (args are ruled out of the render); designed-red naming C05"
     )
-    return [str(a) for a in args]
+    out = {}
+    for e in env:
+        assert e.get("name") not in out, (
+            f"C05/D43: {name} authors env {e.get('name')!r} twice — one authority per value"
+        )
+        out[e["name"]] = e.get("value")
+    return out
 
 
 def _flag_map(args):
@@ -154,59 +170,107 @@ def test_c05_lane_pair_is_guaranteed_on_the_renamed_pool(name):
 # --- AC1 transcription proofs: the args come from a named source, not invention --
 
 
-@pytest.mark.skipif(shutil.which("git") is None, reason="git binary unavailable — the transcription source cannot resolve")
-def test_c05_flash_tp1_args_are_the_cf143_tp1_array_verbatim():
-    """C05 AC1 (OQ-F): the flash-TP1 lane is the cf-143 TP1-era chart array with
-    EXACTLY one value swapped — its own served id. Anything else means the lane was
-    re-derived by hand, and the TP1 profile (pool 43000, --kv-resident 32768,
+# --- AC1 transcription proofs: the profile comes from a named source -------------
+#
+# D43 (2026-11-22) split each era proof leg in two, keeping both halves of its
+# duty: the TRANSCRIPTION proof is a pure git-constant law (provable today,
+# render-independent — what the lane's RULED profile is), the CARRIAGE proof is
+# the sandbox/env equality (designed-red until dev round 3 lands the wrapper
+# and the lane envs — what the lane actually serves).
+
+def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_verbatim_except_the_id():
+    """C05 AC1 (OQ-F) transcription half: the flash-TP1 ruled profile IS the
+    cf-143 TP1-era chart array at the pinned commit, with EXACTLY one value
+    swapped — its own served id. Anything else means the profile was
+    re-derived by hand, and the TP1 recipe (pool 43000, --kv-resident 32768,
     expert_tiered, speculative 3) is exactly what a hand-copy gets wrong."""
     commit, path = R.FLASH_TP1_TRANSCRIPTION
-    shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True, timeout=120)
+    assert shutil.which("git"), "C05: git binary absent — the transcription source cannot resolve"
+    shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
+                           timeout=120, cwd=str(R.REPO_ROOT))
     assert shown.returncode == 0, (
         f"C05: the transcription source {commit}:{path} does not resolve — the proof has no "
-        "authority, so the leg fails rather than passing vacuously (env note: needs git)"
+        "authority, so the leg fails rather than passing vacuously"
     )
     source = (yaml.safe_load(shown.stdout).get("app-template") or {}).get("serveArgs")
     assert isinstance(source, list) and source, f"C05: no serveArgs at {commit}:{path}"
-    want = [str(a) for a in source]
-    want = [R.lane(R.FLASH_TP1_APP_NAME)["served_id"] if a == R.SERVED_ID else a for a in want]
-    got = _args(R.FLASH_TP1_APP_NAME)
+    want = {str(source[i]): str(source[i + 1]) for i in range(0, len(source) - 1, 2)}
+    assert want.get("--served-model-name") == R.SERVED_ID, (
+        f"C05: the {commit} array does not serve the fn-era id — the transcription pin "
+        "names the wrong revision or the array moved"
+    )
+    want["--served-model-name"] = R.lane(R.FLASH_TP1_APP_NAME)["served_id"]
+    got = {f: str(v) for f, v in R.lane_profile(R.FLASH_TP1_APP_NAME).items()}
     assert got == want, (
-        f"C05: the flash-TP1 args are not the {commit} TP1 array verbatim except the served id — "
-        f"first difference at {next((i for i, (a, b) in enumerate(zip(got, want)) if a != b), min(len(got), len(want)))}"
-        f"\n got  : {got}\n want : {want}"
+        "C05: the flash-TP1 ruled profile is NOT the TP1 array with exactly the id swapped — "
+        f"differing flags: {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
     )
 
 
-def test_c05_q27_tp2_args_are_the_q27_array_plus_the_tp_pair():
-    """C05 AC1 (OQ-G): 27b-TP2 is the EXISTING q27 array plus `--tp 2 --tp-wire wht6`
-    with its own served id — the source is the sibling block in the same file, so the
-    proof is a set difference, not a copy."""
-    base = _args(R.Q27_APP_NAME)
-    want = [R.lane(R.Q27_TP2_APP_NAME)["served_id"] if a == R.Q27_SERVED_ID else a for a in base]
-    want = want + list(R.Q27_TP2_EXTRA_FLAGS)
-    got = _args(R.Q27_TP2_APP_NAME)
-    flags = _flag_map(got)
-    assert flags["--tp"] == ["2"], f"C05: 27b-TP2 --tp is {flags.get('--tp')}, want ['2']"
-    assert flags["--tp-wire"] == ["wht6"], f"C05: 27b-TP2 --tp-wire is {flags.get('--tp-wire')}, want ['wht6']"
-    extra = [a for a in got if a not in want]
-    missing = [a for a in want if a not in got]
-    assert not extra and not missing, (
-        f"C05: 27b-TP2 args drift from (q27 array + --tp 2 --tp-wire wht6 + its own served id): "
-        f"extra={extra} missing={missing}"
+def test_c05_q27_tp2_profile_is_the_q27_array_plus_the_tp_pair():
+    """C05 AC1 (OQ-G) transcription half: 27b-TP2's ruled profile is the
+    EXISTING q27 profile plus the TP pair (`--tp` moved to 2, `--tp-wire
+    wht6` added) with its own served id — derived from the sibling constant,
+    so the proof is arithmetic on the map, never a copy."""
+    want = dict(R.Q27_PROFILE)
+    want["--tp"] = "2"
+    want["--tp-wire"] = "wht6"
+    want["--served-model-name"] = R.lane(R.Q27_TP2_APP_NAME)["served_id"]
+    got = {f: str(v) for f, v in R.lane_profile(R.Q27_TP2_APP_NAME).items()}
+    assert got == want, (
+        "C05: the 27b-TP2 ruled profile drifted from (q27 array + tp pair + own id): "
+        f"differing flags {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
+    )
+    assert list(R.Q27_TP2_EXTRA_FLAGS) == ["--tp", "2", "--tp-wire", "wht6"], (
+        "C05: the EXTRA_FLAGS constant no longer matches the ruling — the OQ-G add is fixed text"
+    )
+
+
+@pytest.mark.parametrize("name", R.NEW_LANE_NAMES)
+@helm_skip
+def test_c05_lane_composes_its_transcribed_profile(name):
+    """The CARRIAGE half of the transcription proofs (D43): the lane's rendered
+    env must equal its ruled profile's contract projection, and executing the
+    shipped serve wrapper on that env must compose the profile EXACTLY.
+    Designed-red twice over today: the lane blocks have not landed (C05) and
+    the wrapper has not landed (dev round 3)."""
+    comp = R.lane_composition(name)
+    want_env = R.expected_env(R.lane_profile(name))
+    got_env = comp["env"]
+    missing = {k: v for k, v in want_env.items() if got_env.get(k) != v}
+    extra = {k: v for k, v in got_env.items() if k not in want_env}
+    assert not missing and not extra, (
+        f"C05/D43 [{name}]: rendered RADIANCE_* env diverges from the ruled profile\n"
+        f"  missing/incorrect: {missing}\n  extra: {extra}"
+    )
+    facts = comp["facts"]
+    assert facts["rc"] == 0 and facts["argv"], (
+        f"C05/D43 [{name}]: compose failed or composed nothing (rc {facts['rc']}, "
+        f"stderr {facts['stderr'][:180]!r})"
+    )
+    pairs = R.flag_pairs(facts["argv"])
+    want = {f: str(v) for f, v in R.lane_profile(name).items()}
+    assert pairs == want, (
+        f"C05 AC1/D43 [{name}]: composed vector diverges from the transcribed profile\n"
+        f"  missing/incorrect: { {f: v for f, v in want.items() if pairs.get(f) != v} }\n"
+        f"  extra: { {f: v for f, v in pairs.items() if f not in want} }"
     )
 
 
 @pytest.mark.parametrize("name", LANE_NAMES)
 def test_c05_lane_serves_its_own_id_exactly_once(name):
-    """Honest-id law: each lane advertises exactly one id, its own, and no two lanes
-    collide — a duplicate --served-model-name makes the peer models list ambiguous
-    and the solver's model routing non-deterministic."""
+    """Honest-id law (D43-anchored 2026-11-22): each lane ADVERTISES exactly
+    one id, its own — the id's block-side channel is now the authored
+    RADIANCE_SERVED_ID env (args are ruled out of the render), and no two
+    lanes collide: a duplicate served id makes the peer models list ambiguous
+    and the solver's model routing non-deterministic. The composed-vector half
+    of this law (the id appearing exactly once in the engine's argv) runs in
+    the C03 profile-equality legs."""
     spec = R.lane(name)
-    flags = _flag_map(_args(name))
-    assert flags["--served-model-name"] == [spec["served_id"]], (
-        f"C05: {name} --served-model-name is {flags.get('--served-model-name')}, "
-        f"want exactly [{spec['served_id']!r}]"
+    env = _block_env(name)
+    assert env.get(R.ENV_SERVED_ID) == spec["served_id"], (
+        f"C05/D43: {name} authors {R.ENV_SERVED_ID}={env.get(R.ENV_SERVED_ID)!r}, "
+        f"want exactly {spec['served_id']!r}"
     )
     others = {n: R.lane(n)["served_id"] for n in R.LANES if n != name}
     others["radiance"] = R.SERVED_ID
@@ -245,8 +309,10 @@ def test_c05_lane_pack_is_the_named_pack_with_the_skip_law(name):
     27b lane re-uses the q27 pack. The skip paragraph must exist in the block's comments:
     it is the reader's only warning that a scale-up does not re-download."""
     path, repo, size, sha = R.lane(name)["pack"]
-    flags = _flag_map(_args(name))
-    assert flags["--model"] == [path], f"C05: {name} --model is {flags.get('--model')}, want [{path!r}]"
+    assert _block_env(name).get(R.ENV_MODEL_PATH) == path, (
+        f"C05/D43: {name} authors {R.ENV_MODEL_PATH}={_block_env(name).get(R.ENV_MODEL_PATH)!r}, "
+        f"want [{path!r}] — the pack path reaches the engine through env now"
+    )
     region = R.lane_region_text(name)
     for needle, what in (
         (repo, "the pack repo"),

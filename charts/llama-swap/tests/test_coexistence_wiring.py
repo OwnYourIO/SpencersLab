@@ -445,12 +445,25 @@ def test_service_radiance_block_scalars_only_and_dual_edit():
         "path sets no ROCr/HIP env (C02 absence law)"
     )
     ctrl = (sub.get("controllers") or {}).get("radiance") or {}
-    args = [str(a) for a in ((ctrl.get("containers") or {}).get("radiance") or {}).get("args") or []]
-    model = args[args.index("--model") + 1] if "--model" in args else None
-    assert sub.get("modelPath") == model, (
-        f"cf-143 C04 AC5: block modelPath {sub.get('modelPath')!r} != block serve --model "
-        f"{model!r} — the anchor and the serve path are a DUAL edit (per C03 they live in the "
-        "same block, so the equality is block-internal now)"
+    serve_ctr = (ctrl.get("containers") or {}).get("radiance") or {}
+    # D43 (2026-11-22) re-aim of the AC5 dual-edit arm, era law intact: the
+    # block's --model literal retired with the rendered argv — the serve path
+    # now reaches the engine as the RADIANCE_MODEL_PATH env, and the
+    # composed-vector side of the anchor lives in the radiance suite
+    # (sandbox harness). Here the block-internal equality is anchor == env,
+    # plus the D43 bar that the block authors NO serve args array at all.
+    assert "args" not in serve_ctr, (
+        "C04 AC5/D43: the radiance block still authors a serve args array — the argv moved "
+        "into the chart-owned compose wrapper; the block's channel for the served pack is env "
+        "(designed-red naming dev round 3)"
+    )
+    benv = {e.get("name"): e.get("value") for e in serve_ctr.get("env") or []}
+    model = benv.get("RADIANCE_MODEL_PATH")
+    assert model is not None and sub.get("modelPath") == model, (
+        f"cf-143 C04 AC5 / D43: block modelPath {sub.get('modelPath')!r} != block env "
+        f"RADIANCE_MODEL_PATH {model!r} — the anchor and the serve path are a DUAL edit; env "
+        "is the serve path's block-side home since D43 (designed-red naming dev round 3 while "
+        "the lane env has not landed)"
     )
 
 

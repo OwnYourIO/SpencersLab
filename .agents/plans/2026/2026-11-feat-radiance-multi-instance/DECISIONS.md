@@ -443,6 +443,20 @@ rejected, why.
   disclose the bundling and describe the test repairs in full. Rule going forward: stage implementation paths
   and `tests/` paths as SEPARATE `git add` arguments when a chunk carries both, and check `git show --stat`
   before describing a commit as impl-only.
+- 2026-11-22 plan-fold record (agent-plan, D43 fold round): D43 folded as GOVERNING across the plan
+  of record + `chunks/C03.md` (round 3 governs; rounds 1-2 kept as landed history) + `chunks/C05.md`
+  (roster FORWARD into the restructure wave) + `chunks/C06.md` (D44 pair, D38(2) sites, D43 prose
+  correction). Supersession chain explicit: **D43 supersedes the OQ-D/D24 "all lane data in blocks,
+  chart a shell" framing, and D35's form/data precedent now governs BOTH carriers** (fetch script
+  AND serve args) — a carrier class ruled once, applied twice. Folded the same round: D39's
+  retraction landed (noop baselines restored 8 ok/9 ok — the plan's "11 ok" was a bad measurement,
+  corrected at the source), D42's churn-red posture written into the standing write-arm rule, and
+  the plan gained the canonical DATA-vs-FORM list nobody may re-litigate. **Lesson, in the owner's
+  words (recorded where future ruling-rounds will meet it): "when a ruling establishes a mechanism
+  pattern for one carrier, audit every other carrier in scope for the same split before declaring
+  the shape forced by the library."** The library constraint (`no tpl` on args) was true and was
+  correctly applied to the fetch carrier — it was the SELECTIVE application that made the serve
+  shape wrong twice.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

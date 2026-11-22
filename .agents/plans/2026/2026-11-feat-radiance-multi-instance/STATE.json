@@ -82,7 +82,8 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
-        "2026-11-22 D35 FOLD (plan tier): round 1's fork resolved by owner ruling — chart owns the generic init FORM via a configMap carrier; AC1 replaced by the four-path intentional-delta proof; relocation-pass law (dev → test re-pin → review) written into the contract. Per D35's order, NEXT is a TEST WAVE re-aim of the equivalence legs to the diff-budget shape, THEN dev round 2, THEN review. Contract now in chunks/C03.md; the round-1 designed-red 4 stays within the D31 inventory."
+        "2026-11-22 D35 FOLD (plan tier): round 1's fork resolved by owner ruling — chart owns the generic init FORM via a configMap carrier; AC1 replaced by the four-path intentional-delta proof; relocation-pass law (dev → test re-pin → review) written into the contract. Per D35's order, NEXT is a TEST WAVE re-aim of the equivalence legs to the diff-budget shape, THEN dev round 2, THEN review. Contract now in chunks/C03.md; the round-1 designed-red 4 stays within the D31 inventory.",
+        "2026-11-22 D43 FOLD round 3 (plan tier, GOVERNING): rounds 1-2 landed APPROVED (D38) but the owner reversed the serve-side shape — R3 contract now in chunks/C03.md. Order (D35 precedent): TEST RE-PIN of the argv-bound legs FIRST (inventory in the plan fold-round entry + C03 R3 relocation task: the two four-path budget legs + their planted-drift twin, test_serve_args (its _serve_args reads rendered args), test_q27_lane args/absence legs, test_c03_model_path_and_serve_headroom_agree_per_lane, chart-bare mechanism legs, radiance-runbook/tp2 args extractors, fixture re-derivation at the new base), THEN dev round 3 (FIRST act = verify sh + engine binary in radiance:1.17.0 from layer listings — fact 16), THEN review. C04's strata legs are UNAFFECTED (test_c04_strata_claim.py carries zero argv assertions; strata renders from the llama-swap chart)."
       ]
     },
     "C04": {
@@ -108,7 +109,9 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "2026-11-22 D43 fold (plan tier): C05 COMES FORWARD into the restructure wave per D43(4) — plan of record carries it at wave 2 (after C03-r3 review, same watched sync set); the wave/status fields above stay coord's leg to re-file. Its blocks are authored in the D43 specifics-only env shape (zero inline argv); its designed-red 20 legs split: roster/replicas/claims/Guaranteed/sentinel legs stand, args-equality legs re-aim to composed-argv via the sandbox harness."
+      ]
     },
     "C06": {
       "status": "pending",
@@ -125,7 +128,8 @@
     "2026-11-22 plan round 1 (double-launch collision folded — DECISIONS D13; sibling draft in PARALLEL-DRAFT.md)",
     "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
     "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round).",
-    "2026-11-22 post-approval fold round 2 (D35): plan AC1-law/baselines/write-arm/relocation-law/Transcribed/Landing/Risks + chunks/C03.md rewritten to the intentional-delta shape + chunks/C06.md gained the D32 trio; three review-owed corrections landed (noop baselines 11/11, standing write-arm 'not run, no claim' roster, relocation intermediate-pass law). plan_status STAYS approved; C05 checked — no D35-forced change (pack scalars already DATA; AC1 compares to C03's post-state)."
+    "2026-11-22 post-approval fold round 2 (D35): plan AC1-law/baselines/write-arm/relocation-law/Transcribed/Landing/Risks + chunks/C03.md rewritten to the intentional-delta shape + chunks/C06.md gained the D32 trio; three review-owed corrections landed (noop baselines 11/11, standing write-arm 'not run, no claim' roster, relocation intermediate-pass law). plan_status STAYS approved; C05 checked — no D35-forced change (pack scalars already DATA; AC1 compares to C03's post-state). NOTE: this entry's 'noop baselines 11/11' was a WRONG measurement — retracted by D39, corrected at the plan in fold round 3.",
+    "2026-11-22 post-approval fold round 3 (D43 GOVERNING): serve FORM joins the chart (wrapper on the configMap/env carrier class); AC1's four-path budget replaced by RUNTIME ARGV EQUALITY (dash sandbox, cheap-fake forbidden, both-direction teeth); roster FORWARD into the restructure (waves collapsed: C05 joins wave 2 after C03-r3 review, C06 tail-compressed to wave 3); plan + C03 (round-3 governing section) + C05 + C06 folded; D44 pair + D38(2) sites assigned to C06; D39 noop retraction landed at the plan (8/9 restored); D42 churn posture folded; DATA-vs-FORM list written. plan_status STAYS approved. STATE wave fields for C05/C06 stay coord's leg to re-file."
   ],
   "test_wave": {
     "session": "ses_dff2b1f06ffeLHvN3gSpxs0ql9",

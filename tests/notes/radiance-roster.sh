@@ -73,6 +73,10 @@ def lane(key):
     ctrl = ((doc.get(key) or {}).get("app-template") or {}).get("controllers", {}).get("radiance", {})
     res = cont.get("resources") or {}
     served = None
+    # D43 (2026-11-22) heads-up for C06: the served id's carrier moves to the
+    # lane env (RADIANCE_SERVED_ID) when the serve-argv leaves the blocks —
+    # re-aim this read THEN (the roster legs are C06's to re-pin; today the
+    # blocks still author args and this stays true).
     args = [str(a) for a in (cont.get("args") or [])]
     if "--served-model-name" in args:
         served = args[args.index("--served-model-name") + 1]

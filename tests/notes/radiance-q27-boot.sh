@@ -10,8 +10,9 @@
 # DESIGN-RED at handoff (names C16): the note does not exist yet — dev D1
 # writes it after this round, exactly the C06 runbook shape (§12 "the test
 # session authors it against the step names before dev writes the doc").
-# Its T2 equality ALSO names C15: the args law compares the note's one
-# fenced block against the LANDED radiance-q27 overlay subtree — the C16
+# Its T2 equality ALSO names C15: since D43 (2026-11-22) the args law compares
+# the note's one fenced block against the COMPOSED q27 vector (the chart-owned
+# wrapper booted on the landed lane env) — the C16
 # dependency on C15 is real, not cosmetic (chunk "Why its own chunk").
 #
 # LAW CARRIED FROM THE fn SUITES (not re-argued): one-block law (§D54-F —
@@ -235,22 +236,33 @@ PY
   ok "T1: the boot note exists ($lines lines), carries steps 0-7 in order, states the D1 posture up top, obeys the OWNER-EXECUTED command law, and every §R19/R19-Q/R19-S/receipt citation resolves"
 fi
 
-# --- T2: the ONE fenced args block == the landed q27 subtree ---------------------
+# --- T2: the ONE fenced args block == the composed q27 vector (D43 re-aim) ------
 if want t2; then
   for f in "$NOTE" "$VALS"; do
-    [ -f "$f" ] || fail "T2: $f missing — the args equality needs the C16 note AND the landed C15 subtree (the real dependency, chunks/C16.md)"
+    [ -f "$f" ] || fail "T2: $f missing — the equality needs the C16 note AND the compose carrier + q27 lane env (dev round 3; the real dependency, chunks/C16.md)"
   done
   rc=0
   python3 - "$NOTE" "$VALS" <<'PY' || rc=$?
 import re, sys, yaml, collections
 note_path, vals_path = sys.argv[1:3]
 note = open(note_path).read()
-svc = yaml.safe_load(open(vals_path))
-sub = (svc.get("radiance-q27") or {})
-try:
-    landed = [str(a) for a in sub["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["args"]]
-except (KeyError, TypeError):
-    sys.exit("cf-143 C15/C16: the radiance-q27 overlay subtree carries no controllers.radiance.containers.radiance.args list — dev D2 has not landed it (the note's equality compares against the LANDED subtree, never a re-typed copy)")
+# D43 (2026-11-22) equality-source re-aim, one-block law untouched: the note's
+# fenced vector compared against the landed subtree ARGS; the args left the
+# render (chart-owned compose wrapper + lane env), so the witness is now the
+# vector the shipped wrapper composes on the q27 lane's rendered env — read via
+# the test-suite harness (renders the overlay, extracts env, executes the
+# carrier in a sandbox POSIX shell). Designed-red naming dev round 3 while the
+# wrapper or the lane env has not landed; loud either way, never a skip.
+sys.path.insert(0, "charts/radiance/tests")
+import radiance_testlib as R
+ok, reason = R.helm_ready()
+assert ok, f"T2 needs the render toolchain: {reason}"
+comp = R.lane_composition(R.Q27_APP_NAME)
+facts = comp["facts"]
+assert facts["rc"] == 0 and facts["argv"], (
+    f"the q27 compose did not produce a vector (rc {facts['rc']}, stderr {facts['stderr'][:160]!r})"
+)
+landed = list(facts["argv"])
 
 def flag_multiset(tokens):
     out, i = collections.Counter(), 0
@@ -282,14 +294,14 @@ else:
     if note_ms != landed_ms:
         only_note = {f"{k[0]} {k[1]}": v for k, v in (note_ms - landed_ms).items()}
         only_landed = {f"{k[0]} {k[1]}": v for k, v in (landed_ms - note_ms).items()}
-        errs.append(f"note args block != the landed radiance-q27 subtree: note-side {only_note}, subtree-side {only_landed}")
+        errs.append(f"note args block != the q27 COMPOSED vector: note-side {only_note}, composed-side {only_landed}")
 if errs:
     print("; ".join(errs), file=sys.stderr); sys.exit(1)
 PY
   if [ "$rc" -ne 0 ]; then
-    fail "T2: the one-block law or the subtree equality is violated (C16 T2 / C06 idiom — diagnostics above)"
+    fail "T2: the one-block law or the composed-vector equality is violated (C16 T2 / C06 idiom, D43-anchored — diagnostics above)"
   fi
-  ok "T2: exactly one fenced q27 args block, and its flag/value multiset EQUALS the landed radiance-q27 overlay subtree"
+  ok "T2: exactly one fenced q27 args block, and its flag/value multiset EQUALS the vector the compose wrapper produces from the q27 lane env"
 fi
 
 # --- T3: OWNER-EXECUTED marker law on scale/sync/df + the DOWN-first order --------

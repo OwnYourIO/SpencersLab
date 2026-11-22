@@ -539,20 +539,31 @@ def test_reloader_annotation_absent():
 
 
 @helm_skip
-def test_main_container_stays_command_absent_entrypoint_witnessed():
-    """C09 AC5 optional hardening (test-session discretion): the C09 command
-    requirement is CONTAINER-SPECIFIC, and the radiance main container is the
-    opposite half of the §D1.6 law — its image DOES carry
+def test_main_container_now_invokes_the_wrapper_and_carries_no_args():
+    """C09 AC5's witness, INVERTED by owner ruling D43 (2026-11-22), history
+    intact: the era leg banned a command key because the image's own
     Entrypoint ["radiance"] (EXPLORE §D1.5, registry-verified at the pinned
-    digest 6fb0e99b…), so the args-only shape is SAFE and CORRECT here.
-    Copying the command key across "for consistency" would be a regression
-    (command replaces the ENTRYPOINT, and the image's own exec resolution is
-    what makes the current form work). Green today; it exists to catch a
-    future copy-paste of the fix."""
+    digest 6fb0e99b…) made args-only safe. D43 removes the args the entrypoint
+    consumed — the serve container must now INVOKE the chart-owned compose
+    wrapper, exactly like the init container invokes fetch.sh (ConfigMap files
+    mount 0644: the command is a shell + the mounted path, never a body). The
+    §D1.5 law survives INSIDE the wrapper: the bare-name exec receipt is proved
+    by the sandbox probe (test_c03_generic_shell), which fails if the wrapper
+    ever re-paths the engine. Designed-red naming dev round 3 until the chart
+    command lands."""
     docs, _ = R.render(service=False)
     ctr = R.serve_container(R.deployment(docs))
-    assert "command" not in ctr, (
-        "C09 §D1.6: the radiance serve container gained a command key — its image HAS an "
-        "ENTRYPOINT ([radiance], §D1.5 registry receipt), args-only is the ruled shape; "
-        "removing this leg requires new Entrypoint-absence evidence of its own"
+    command = ctr.get("command") or []
+    assert command and all(isinstance(t, str) for t in command), (
+        f"D43 §D1.6-inverted: the radiance serve container carries no wrapper invocation "
+        f"(command={command!r}) — with the args ruled out of the render, a command-less "
+        "container boots the ENTRYPOINT with an EMPTY argv; designed-red naming dev round 3"
+    )
+    assert not any("\n" in t for t in command), (
+        "D43: the serve command embeds a script body — invocation only, the FORM is the "
+        "mounted carrier (the D35 init law, serve side)"
+    )
+    assert "args" not in ctr, (
+        "D43: the serve container still renders an args key — the vector moved into the "
+        "wrapper's composition; whatever remains here is a second argv source"
     )
