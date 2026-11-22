@@ -7,10 +7,13 @@
 # bring-up order, and the convention reconciliation ask 4 needed.
 #
 # Its table rows are NEEDLES bound to the shipped values, not prose memory: T2
-# re-derives every claim count and replicas value from
-# services/gpu-ai/prod/values.yaml and requires the note to agree. A note that
-# drifts from the tree is the failure class this suite exists for, so T4 plants a
-# falsified row and proves the checker catches it.
+# re-derives every claim count, replicas value and served id from
+# services/gpu-ai/prod/values.yaml and requires the note to agree (the served id
+# rides the RADIANCE_SERVED_ID env — the D43 carrier law: the compose FORM turns
+# that env entry into --served-model-name at runtime, the rendered container
+# carries no args to read). A note that drifts from the tree is the failure
+# class this suite exists for, so T4 plants falsified cells and proves the
+# checker catches them, for the named reason.
 #
 # Designed-RED at test-write: the note does not exist yet (T1 names C06).
 #
@@ -33,6 +36,9 @@ RETIRED_R9700_CLAIM="amd.com/gpu-r9700"-"1"
 BARE_CLAIM="amd.com/gpu"
 RUNNER_LITERAL="gpu-ai/qwen3.8-flash-next-radiance"
 STRATA_CLAIMANT="strata"
+# D43 (2026-11-22): the env entry is the served id's only carrier — every lane
+# reads through it, the checkers and the plants alike.
+SERVED_ID_ENV="RADIANCE_SERVED_ID"
 
 checks=0
 
@@ -58,14 +64,17 @@ want() { [ -n "${WANT[$1]:-}" ]; }
 require_note() { [ -f "$NOTE" ] || fail "$1: $NOTE missing — C06 (the roster note) is not implemented"; }
 
 # T2's checker, shared by the live leg and the teeth probe: every claimant row in
-# the note must carry the claim count and replicas the tree actually ships.
+# the note must carry the claim count, replicas and served id the tree actually
+# ships (radiance lanes: served from the env; strata serves through llama-swap,
+# so its row legitimately names no radiance serve id).
 check_rows() {  # $1 = note path; exits non-zero with diagnostics
-  NOTE_PATH="$1" VALS_PATH="$VALS" POOL="$R9700_CLAIM" python3 - <<'PY'
+  NOTE_PATH="$1" VALS_PATH="$VALS" POOL="$R9700_CLAIM" SERVED_ENV="$SERVED_ID_ENV" python3 - <<'PY'
 import os, re, sys, yaml
 
 note = open(os.environ["NOTE_PATH"]).read()
 doc = yaml.safe_load(open(os.environ["VALS_PATH"]))
 pool = os.environ["POOL"]
+served_env = os.environ["SERVED_ENV"]
 
 def lane(key):
     cont = ((doc.get(key) or {}).get("app-template") or {}).get("controllers", {}) \
@@ -73,19 +82,18 @@ def lane(key):
     ctrl = ((doc.get(key) or {}).get("app-template") or {}).get("controllers", {}).get("radiance", {})
     res = cont.get("resources") or {}
     served = None
-    # STALE READ, C06's to re-aim: D43 (2026-11-22) landed with C05 — the
-    # served id's carrier IS the lane env (RADIANCE_SERVED_ID) now; the
-    # blocks no longer author --served-model-name args, so this args read
-    # returns "" for every radiance lane. The roster suite is red-for-C06
-    # (the note itself is missing); the re-aim and the legs are C06's to
-    # land together — fixing the read without the note would green nothing.
-    args = [str(a) for a in (cont.get("args") or [])]
-    if "--served-model-name" in args:
-        served = args[args.index("--served-model-name") + 1]
+    # The env IS the served-id authority (D43): the blocks author zero args, the
+    # chart's compose FORM turns RADIANCE_SERVED_ID into --served-model-name at
+    # runtime. An env-less radiance lane is drift, not absence — the loop below
+    # treats it as an error rather than skipping the row check vacuously.
+    for entry in cont.get("env") or []:
+        if entry.get("name") == served_env:
+            served = str(entry.get("value", ""))
     return {
         "claim": str(res.get("requests", {}).get(pool) or res.get("limits", {}).get(pool) or ""),
         "replicas": str(ctrl.get("replicas", cont.get("replicas", ""))),
         "served": served or "",
+        "radiance": True,
     }
 
 rows = {}
@@ -99,23 +107,43 @@ rows["strata"] = {
     "claim": str(sres.get("requests", {}).get(pool) or sres.get("limits", {}).get(pool) or ""),
     "replicas": str(strata.get("replicas", "")),
     "served": "",
+    "radiance": False,
 }
 
 errs = []
 for key, want in rows.items():
-    # One table row per claimant: the row is the line that names the key.
-    row = next((ln for ln in note.splitlines()
-                if ln.strip().startswith("|") and re.search(rf"(?<![a-z0-9-]){re.escape(key)}(?![a-z0-9-])", ln)), None)
+    # One table row per claimant: the row whose FIRST (claimant) cell is the key.
+    # Matching any cell would bind strata to the flash-TP1 row — its cost prose
+    # names strata ("can stack with claimed strata"), so the strata numbers were
+    # being checked against another lane's row.
+    row = None
+    for ln in note.splitlines():
+        if not ln.strip().startswith("|"):
+            continue
+        first = ln.strip().strip("|").split("|")[0].strip().strip("`")
+        if first == key:
+            row = ln
+            break
     if row is None:
         errs.append(f"no roster table row names {key!r}")
         continue
     cells = [c.strip().strip("`") for c in row.strip().strip("|").split("|")]
-    if want["claim"] and not re.search(rf"(?<![\d\"]){re.escape(want['claim'])}(?![\d\"])", " ".join(cells[1:])):
+    # Claim/replicas match a CELL exactly, not the bare digit anywhere in the
+    # row: the row's own ids and URLs carry digits (the lane key ends "tp1"),
+    # so a row-wide digit search absorbed a falsified claim cell — the plant
+    # could not redden it (gate-integrity law, cf. D31).
+    if want["claim"] and want["claim"] not in cells[1:]:
         errs.append(f"{key}: row {cells} does not carry the shipped claim count {want['claim']!r}")
-    if want["replicas"] and not re.search(rf"(?<![\d\"]){re.escape(want['replicas'])}(?![\d\"])", " ".join(cells[1:])):
+    if want["replicas"] and want["replicas"] not in cells[1:]:
         errs.append(f"{key}: row {cells} does not carry the shipped replicas {want['replicas']!r}")
-    if want["served"] and want["served"] not in row:
-        errs.append(f"{key}: row does not name its served id {want['served']!r}")
+    if want["radiance"]:
+        if not want["served"]:
+            errs.append(f"{key}: the lane env carries no {served_env} — the env is the served-id authority (D43), so this row cannot be machine-checked")
+        elif not re.search(rf"(?<![A-Za-z0-9._-]){re.escape(want['served'])}(?![A-Za-z0-9._-])", row):
+            # Bounded, not substring: a sibling's suffixed id contains the
+            # shorter lane's id, so "qwen3.8-flash-next-radiance-tp1" must NOT
+            # stand in for fn's own id in fn's row.
+            errs.append(f"{key}: row does not name its served id {want['served']!r} (a suffixed sibling id does not count)")
 
 if errs:
     print("; ".join(errs), file=sys.stderr)
@@ -184,25 +212,47 @@ fi
 if want t4; then
   require_note T4
   probe=$(mktemp)
-  cp "$NOTE" "$probe"
-  # Falsify the flash-TP1 row: flip its claim count to something the tree does not ship.
-  python3 - "$probe" <<'PY'
-import re, sys
-path = sys.argv[1]
+  # plant_redden <claimant-key> <claim|served> <diagnostic-pattern>
+  # Falsifies one CELL of the keyed row (the claim column, or the served-id
+  # column replaced by a SIBLING lane's suffixed id), then demands that
+  # check_rows redden AND name the reason. The reason check is the arm's own
+  # teeth: the original plant substituted the first bare "1" on the line, hit
+  # the key token "tp1" instead of the claim cell, and the checker reddened
+  # because the row VANISHED — a wrong-reason red that hid the vacuous served
+  # read for a whole round.
+  plant_redden() {
+    cp "$NOTE" "$probe"
+    NOTE_PATH="$probe" PLANT_KEY="$1" PLANT_MODE="$2" PLANT_TO="$( [ "$2" = claim ] && printf '9' || printf 'qwen3.8-flash-next-radiance-tp1' )" python3 - <<'PY' || fail "T4: the $2 plant found no $1 row/cell to falsify — the probe table shape moved and the teeth silently vanished with it"
+import os, sys
+
+path = os.environ["NOTE_PATH"]
+key, mode, to = os.environ["PLANT_KEY"], os.environ["PLANT_MODE"], os.environ["PLANT_TO"]
 lines = open(path).read().splitlines()
 for i, ln in enumerate(lines):
-    if ln.strip().startswith("|") and re.search(r"(?<![a-z0-9-])radiance-flash-tp1(?![a-z0-9-])", ln):
-        lines[i] = re.sub(r'(?<![\d"])1(?![\d"])', "9", ln, count=1)
-        break
+    if ln.strip().startswith("|"):
+        stripped = ln.strip().strip("|")
+        if stripped.split("|")[0].strip().strip("`") == key:
+            cells = stripped.split("|")
+            col = 1 if mode == "claim" else 3   # Claim column / Served id column
+            if len(cells) <= col:
+                raise SystemExit(f"probe: {key} row has no {mode} column")
+            cells[col] = f" {to} "
+            lines[i] = "|" + "|".join(cells) + "|"
+            break
 else:
-    raise SystemExit("probe: no radiance-flash-tp1 row to falsify")
+    raise SystemExit(f"probe: no roster table row keyed {key!r} to falsify")
 open(path, "w").write("\n".join(lines) + "\n")
 PY
-  rc=0
-  check_rows "$probe" || rc=$?
+    rc=0
+    diag=$(check_rows "$probe" 2>&1) || rc=$?
+    [ "$rc" -ne 0 ] || fail "T4: a $1 row falsified in its $2 column passed the checker — T2 is an always-pass and cannot bless the table"
+    printf '%s' "$diag" | grep -qE "$3" \
+      || fail "T4: the $1/$2 plant reddened for the WRONG reason — diagnostic must match '$3', said: $diag"
+  }
+  plant_redden radiance-flash-tp1 claim 'radiance-flash-tp1: row .* does not carry the shipped claim count'
+  plant_redden radiance served 'radiance: row does not name its served id'
   rm -f "$probe"
-  [ "$rc" -ne 0 ] || fail "T4: a roster row falsified to a claim count the tree does not ship passed the checker — T2 is an always-pass and cannot bless the table"
-  ok "T4: the row checker reddens on a planted claim-count mismatch (T2 has teeth)"
+  ok "T4: the row checker reddens, naming the reason, on a planted claim-count mismatch and on a planted sibling served id (T2 has teeth on both machine-checked channels)"
 fi
 
 printf 'PASS: radiance roster-note contract checks (%s ok)\n' "$checks"

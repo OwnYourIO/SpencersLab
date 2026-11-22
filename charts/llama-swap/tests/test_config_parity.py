@@ -326,7 +326,7 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     # the vllm era peer retired to commented-out (Q3 — disable, reversible),
     # and the radiance peer joined ADDITIVE beside strata (Q5 — strata lives,
     # not one byte moves). cf-143 C15 re-pinned to the three-key state.
-    # cf-radiance C05 RE-PIN (2026-11-23, D19): the wave is FIVE — the two
+    # cf-radiance C05 RE-PIN (2026-11-22, D19): the wave is FIVE — the two
     # resting lanes' peers (radiance-flash-tp1, radiance-q27-tp2) join the
     # family, full trios registered deploy-ready. The intermediate eras are
     # closed history; dev ships peers + golden + roster + catalog in one wave,

@@ -988,7 +988,7 @@ for (const [k, prio] of [['qwen3.8-27b-radiance', 4],
 // The 86-key snapshot stays as the historical base; later bases are derived
 // from it, never re-captured from the live catalog (a live-capture base
 // would freeze unrelated future growth).
-// D19/C05 RE-FREEZE — 2026-11-23 (test landing round), same precedent, one
+// D19/C05 RE-FREEZE — 2026-11-22 (test landing round), same precedent, one
 // step up: the C15 delta (the q27 trio) has become history, so the base
 // gains the LANDED q27 trio too (D19_BASE_KEYS = C15 base + q27 trio) and
 // the live delta is exactly D19's SIX new trio rows — flash-TP1's and

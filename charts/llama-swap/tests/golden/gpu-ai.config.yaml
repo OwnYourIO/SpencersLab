@@ -1,4 +1,4 @@
-# 2026-11-23 RE-CAPTURE (2026-11-feat-radiance-multi-instance C05 LANDING ROUND, test session;
+# 2026-11-22 RE-CAPTURE (2026-11-feat-radiance-multi-instance C05 LANDING ROUND, test session;
 # delta note TEST_SPEC §13.2, golden law §12/§9 — re-capture is the landing round's, never a dev
 # edit). Captured from the C05 tree: services/gpu-ai/prod/values.yaml renders under the real
 # appset release name via llama_swap_testlib.render_docs("gpu-ai") (the §1 extract-and-render

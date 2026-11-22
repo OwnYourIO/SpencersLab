@@ -4633,7 +4633,7 @@ it the helm-guarded legs skip silently), and `helm dependency update` the four
 charts that vendor the app-template. Fail-fast bash suites print only the first
 red — run arms individually to enumerate them.
 
-### 13.2 C05 landing round — the M8-A2 re-freeze, the five-peer enumeration wave, the golden re-capture (test session, 2026-11-23)
+### 13.2 C05 landing round — the M8-A2 re-freeze, the five-peer enumeration wave, the golden re-capture (test session, 2026-11-22)
 
 The C05 dev round landed the two resting lanes (radiance-flash-tp1,
 radiance-q27-tp2: full trios + peers entries + catalog rows, D19/D28/D45);
