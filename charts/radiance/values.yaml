@@ -14,23 +14,27 @@
 
 #
 # ONE SHELL, SEVERAL RELEASES (2026-11-feat-radiance-multi-instance C03, plan
-# OQ-D): this chart is MECHANISM — the image pin and digest ledger, the
-# /health probe law, Recreate plus the drain grace, the unprivileged GPU
-# securityContext, the shared models claim and /dev/shm, the Service shape,
-# and the staging init's image and hash budget. LANE DATA — the served pack
-# path and its ledger, the serve recipe, the memory and card claim, and the
-# fetch script that verifies one pack — ships in each release's roster block
-# in services/gpu-ai/prod/values.yaml. The lanes and their claim math are in
-# templates/NOTES.txt.
+# OQ-D + ruling D35): this chart is MECHANISM — the image pin and digest ledger,
+# the /health probe law, Recreate plus the drain grace, the unprivileged GPU
+# securityContext, the shared models claim and /dev/shm, the Service shape, the
+# staging init's image and hash budget, and the ONE generic fetch-script FORM
+# (a ConfigMap carrier, consumed by that init). LANE DATA — the served pack path
+# and its ledger, the serve recipe, the memory and card claim, and the pack
+# scalars the FORM substitutes (PACK/LFS_SHA/URL/MARKER) — ships in each
+# release's roster block in services/gpu-ai/prod/values.yaml. The lanes and
+# their claim math are in templates/NOTES.txt.
 
 app-template:
   # Nothing lane-specific survives at this level (C03/OQ-D). The pack path and
-  # its ledger, the serve recipe, the sizing scalars, the memory/card claim
-  # pair and the fetch script are roster-block data; the byte proof that the
-  # relocation moved nothing that ships is charts/radiance/tests/evidence/
-  # pre-move-render-*.yaml. Any key added here is a fact EVERY release of this
-  # shell inherits — a second release booting with the first lane's pack and
-  # the first lane's card count is the exact failure the relocation closed.
+  # its ledger, the serve recipe, the sizing scalars and the memory/card claim
+  # pair are roster-block data; so are the four scalars the fetch FORM below
+  # substitutes — the FORM is generic, the numbers are not. What proves the
+  # relocation shipped nothing unintended is the intentional-delta proof in
+  # charts/radiance/tests/ (the evidence/pre-move-render-*.yaml fixtures and
+  # the four-path budget leg D35 rules). Any key added here is a fact EVERY
+  # release of this shell inherits — a second release booting with the first
+  # lane's pack and the first lane's card count is the exact failure the
+  # relocation closed.
 
 
   # --- priority / preemption (Q2 ruling, RESEARCH RQ2): radiance honors the
@@ -97,6 +101,77 @@ app-template:
   # absence list checked as a named bar, not a style note.
 
 
+  # --- THE FETCH-SCRIPT FORM (C03 round 2, owner ruling D35) --------------------
+  # ONE generic staging shell for every release of this shell: resume-download
+  # the lane's pack onto the shared claim, verify it against the lane's LFS sha,
+  # write the success marker only on a match. It rides a ConfigMap because
+  # app-template 5.0.1 renders container command/args through plain toYaml (no
+  # tpl), so a chart-side script could never read per-release values from the
+  # container — while configMap DATA is tpl'd, which is what lets the FORM stay
+  # chart-owned and PACK/LFS_SHA/URL/MARKER stay roster-block data. The cost the
+  # owner accepted with the ruling (D35(2)): a release rolls at the sync that
+  # lands this carrier (Recreate + changed pod template), watched on its own.
+  radianceFetch:
+    # The scalars the FORM substitutes, empty here on purpose: a release that
+    # does not author its own pack trips the loud guard at the top of the script
+    # instead of quietly fetching a sibling lane's bytes. PACK is deliberately
+    # NOT one of them — PACK is the block's modelPath, the same key the
+    # dual-edit legs compare against the model path the lane serves, so the
+    # fetched pack and the served pack cannot drift apart on a retarget.
+    lfsSha: ""
+    url: ""
+    marker: ""
+
+  configMaps:
+    radiance-fetch:
+      # The name follows the release (app-template derives it from the fullname),
+      # so the two live lanes never fight over one ConfigMap in `default`.
+      data:
+        fetch.sh: |
+          #!/bin/sh
+          # radiance pack staging — chart-owned FORM (D35). The assignments
+          # below are the ONLY lane-specific bytes in this file; the sequence
+          # around them is law for every release of this shell.
+          set -e
+          PACK={{ .Values.modelPath }}
+          LFS_SHA={{ .Values.radianceFetch.lfsSha }}
+          URL={{ .Values.radianceFetch.url }}
+          MARKER={{ .Values.radianceFetch.marker }}
+          if [ -z "$PACK" ] || [ -z "$LFS_SHA" ] || [ -z "$URL" ] || [ -z "$MARKER" ]; then
+            echo "radiance staging: missing pack scalars — the release block must author modelPath plus radianceFetch lfsSha/url/marker"
+            exit 1
+          fi
+          mkdir -p "$(dirname "$PACK")"
+          if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
+            echo "radiance staging: marker + pack present — skipping"
+            exit 0
+          fi
+          echo "radiance staging: fetch $PACK (curl-resume)"
+          # rc 33 = "the file is already completely retrieved" under
+          # --continue-at - : a pack that finished without ever having written
+          # its marker (a kill between bytes and touch) is DONE, not a failure
+          # — set -e would otherwise boot-loop on it.
+          rc=0
+          curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
+            echo "radiance staging: curl failed rc=$rc"
+            exit "$rc"
+          fi
+          # The marker is written only after the checksum passes: the marker IS
+          # the landed-file provenance the C06 receipts re-check against this
+          # same ledgered value. BusyBox grammar only — the pinned curl image is
+          # Alpine, where the hash applets take short options and refuse GNU
+          # long ones, while GNU has no short quiet flag. Plain shell equality
+          # on the two-space compute output, both digests on one echo line, is
+          # the only gate both families run unchanged (D27/§D3b).
+          actual=$(sha256sum "$PACK" | cut -d' ' -f1)
+          if [ "$actual" != "$LFS_SHA" ]; then
+            echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
+            exit 1
+          fi
+          touch "$MARKER"
+          echo "radiance staging: complete"
+
   global:
     nameOverride: &chartName radiance
     # The engine pod never calls the K8S API, so no ServiceAccount object is
@@ -153,10 +228,11 @@ app-template:
       # overlap — a second pod would double-pin the node (the strata #2257
       # class the repo lived). Same-node single-tenant.
       strategy: Recreate
-      # No reloader.stakater.com/auto annotation ON PURPOSE: the repo
-      # standard exists to restart pods when mounted ConfigMaps/Secrets
-      # change — this pod mounts neither (keyless D8, no config surface),
-      # so the annotation would be inert drift.
+      # No reloader.stakater.com/auto annotation ON PURPOSE: the restart the
+      # one mounted ConfigMap needs (the fetch FORM, D35) is already driven by
+      # app-template's checksum/configMaps pod-template annotation, which is
+      # deterministic and needs no extra operator; there is no Secret surface at
+      # all (keyless D8), so the reloader would only add a second restart path.
       containers:
         radiance:
           image:
@@ -269,17 +345,18 @@ app-template:
             # banner), which is what the checksum-grammar law in the script
             # below guards. Swapping the image family means re-ruling that
             # premise — the identity leg refuses to pass vacuously.
-          # No `command` here (C03): the fetch script names one lane's pack
-          # path, LFS sha and URL, so it ships in the release's block beside
-          # the pack ledger it verifies. What stays here is law for every lane:
-          # the pinned curl image (the BusyBox-applet premise the script's
-          # checksum gate is written against — the identity leg refuses to
+          # INVOCATION ONLY (D35): the bytes of the fetch script are the
+          # chart-owned ConfigMap above, mounted at /scripts; the command names
+          # the file it execs. sh runs the file rather than relying on its exec
+          # bit because a ConfigMap volume serves mode-0644 root-owned files to
+          # this pod's 65532 — readable, never executable. What stays law for
+          # every lane here: the pinned curl image (the BusyBox-applet premise
+          # the gate's grammar is written against — the identity leg refuses to
           # pass vacuously), the single-core hash budget, and the non-root
-          # stage posture. Why not a chart template with per-release scalars:
-          # app-template 5.0.1 copies container command/args verbatim (its
-          # common-lib container field applies no tpl), so a chart-side script
-          # could only hold the literals itself — one lane's pack as law for
-          # the rest, the failure this chunk removes.
+          # stage posture.
+          command:
+            - sh
+            - /scripts/fetch.sh
 
           resources:
             # THE POD-CLASS LAW, commented where it renders (D15): Guaranteed
@@ -344,6 +421,19 @@ app-template:
               readOnly: true
           radiance-fetch:
             - path: /models
+    # The fetch FORM (D35): mounted into the staging init ONLY — the serve
+    # container executes nothing from here, and an extra mount there would be
+    # a pod-spec move no lane asked for. Whole-ConfigMap directory (no subPath):
+    # a key change then lands as a new file atomically, and the checksum
+    # annotation restarts the pod that has the old one cached.
+    radiance-fetch-script:
+      type: configMap
+      identifier: radiance-fetch
+      advancedMounts:
+        radiance:
+          radiance-fetch:
+            - path: /scripts
+              readOnly: true
     # Engine shared memory (HIP/IPC surfaces): emptyDir medium Memory,
     # capped 2Gi (the single-GPU-TP1 worker's working set; the node's tmpfs
     # accounting keeps the cap honest). cf-144 C01/OQ-G dated annotation

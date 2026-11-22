@@ -834,13 +834,29 @@ radiance:
     # 0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20, ungated
     # (gated:False verified against the HF API).
     #
-    # This is the served path's ledger home: the args and the fetch
-    # script below carry it LITERALLY (YAML anchors resolve per document and
-    # the chart holds none), so a pack retarget moves this key, the
-    # served path and the init's PACK/URL/MARKER together. The per-lane
-    # dual-edit leg reds a half-move: charts/radiance/tests/
+    # This is the served path's ledger home AND the fetch FORM's PACK: the args
+    # below carry the path LITERALLY (app-template renders args with no tpl),
+    # and the chart's FORM substitutes this key into PACK, so a pack retarget
+    # moves the ledger, the served path and the fetched file together. The
+    # per-lane dual-edit leg reds a half-move: charts/radiance/tests/
     # test_c03_generic_shell.py compares this key with the rendered served path.
     modelPath: /models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
+    # THE FETCH SCALARS (C03 round 2, owner ruling D35): the chart ships the
+    # staging FORM (charts/radiance/values.yaml, configMaps.radiance-fetch) and
+    # this block answers the lane values it substitutes — PACK is the modelPath
+    # just above (the same key the dual-edit legs compare with the served
+    # --model, so the fetched pack and the served pack cannot drift apart on a
+    # retarget), and the three below are its verification envelope: the lfs sha
+    # the gate compares, the resolve URL the fetch resumes from, and the marker
+    # it touches only on a match. The mapping deep-merges over the chart's empty
+    # defaults, and a scalar left empty trips the FORM's loud guard at container
+    # start instead of fetching quietly. MARKER interpolates $LFS_SHA at boot
+    # (the vllm/fn marker law): the .staged-<sha> file stays one fact written
+    # once, and it is the landed-pack provenance the C06 receipts re-check.
+    radianceFetch:
+      lfsSha: 0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20
+      url: https://huggingface.co/StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe/resolve/main/qwen3.8-next-flash-fp8-iq4r-moe.rad
+      marker: /models/radiance/.staged-$LFS_SHA
     # --- the sizing scalars (D15/D17): the arithmetic + ladder home the C06
     # runbook moves (pool -> ctx -> last-resort prefix-tier swap with owner
     # sign-off). app-template's values schema pins args entries to STRINGS and
@@ -1010,54 +1026,13 @@ radiance:
                 cpu: "8"
                 memory: "110Gi"
                 amd.com/gpu-r9700: "2"
-        initContainers:
-          radiance-fetch:
-            # The fn pack's fetch gate, relocated with the pack (C03): the
-            # script names THIS pack's path, LFS sha and URL, so it cannot live
-            # in a shell three other releases share. The BusyBox-portable
-            # equality gate is D27/§D3b law (no GNU long options on the hash
-            # applet — the --check form crashlooped the pod); the pinned curl
-            # image and its applet premise stay chart-side with the hash budget.
-            command:
-              - sh
-              - -c
-              - |-
-                set -e
-                LFS_SHA=0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20
-                PACK=/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad
-                MARKER=/models/radiance/.staged-$LFS_SHA
-                URL=https://huggingface.co/StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe/resolve/main/qwen3.8-next-flash-fp8-iq4r-moe.rad
-                mkdir -p /models/radiance
-                if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
-                  echo "radiance staging: marker + pack present — skipping"
-                  exit 0
-                fi
-                echo "radiance staging: fetch $PACK (curl-resume, 113.6 GiB class)"
-                # rc 33 = "the file is already completely retrieved" under
-                # --continue-at - : a pack that finished without ever having
-                # written its marker (kill between bytes and touch) is DONE,
-                # not a failure — set -e would otherwise boot-loop on it.
-                rc=0
-                curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
-                if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
-                  echo "radiance staging: curl failed rc=$rc"
-                  exit "$rc"
-                fi
-                # The marker is only written after the sha256 PASSES — the
-                # marker IS the landed-file provenance (C06 step-4 receipts
-                # sha256sum against this same ledgered value). BusyBox grammar only:
-                # the curl image is Alpine — sha256sum there implements short -c[sw]
-                # and NO GNU long options; GNU in turn has no short -s. Equality on
-                # the two-space compute form (printf("%s  %s") upstream) is the only
-                # shape both applet families pass, loudly, with the digests on one
-                # line (§D3b, D27 — the --check here crashlooped the pod).
-                actual=$(sha256sum "$PACK" | cut -d' ' -f1)
-                if [ "$actual" != "$LFS_SHA" ]; then
-                  echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
-                  exit 1
-                fi
-                touch "$MARKER"
-                echo "radiance staging: complete"
+        # No initContainers here (D35): the staging init is chart mechanism —
+        # the pinned curl image, the hash budget, the stage posture and the
+        # fetch FORM it runs, shared byte-for-byte by every release of this
+        # shell. The lane's part is the pack facts under radianceFetch above.
+        # A per-lane copy of the script was the shape D35 closed: nothing in
+        # this file can hold the BusyBox option grammar to the pinned image's
+        # applets the way one chart-owned FORM does.
 
 # cf-143 C15 (DECISIONS D54 owner rulings + D56 topology; §R19; §D54): the
 # q27 POD-SWAP lane — a second radiance release (charts.radiance-q27 with the
@@ -1066,11 +1041,12 @@ radiance:
 # merge partner for that release: per-app values = merge $extraValues
 # (index $.Values "radiance-q27") (charts/base/templates/appset-charts.yaml),
 # so the whole q27 pod truth ships HERE, not in charts/radiance. The split is
-# the same for both radiance lanes (C03): the chart is the mechanism shell
-# (image pin, probes, securityContext, PVC, Service, the init's image and hash
-# budget) and every lane fact — pack ledger, serve recipe, claim pair, fetch
-# script — is a block fact (D56(1) was already this lane's rule; the fn lane
-# obeys it too).
+# the same for both radiance lanes (C03 + ruling D35): the chart is the
+# mechanism shell (image pin, probes, securityContext, PVC, Service, the init's
+# image and hash budget, and the ONE generic fetch-script FORM), and every lane
+# fact — pack ledger, serve recipe, claim pair, and the
+# PACK/LFS_SHA/URL/MARKER scalars that FORM substitutes — is a block fact
+# (D56(1) was already this lane's rule; the fn lane obeys it too).
 # THE SWITCH DISCIPLINE (D54(1)) — the law this lane lives by:
 #  * Scale ORDER: fn DOWN first, then q27 UP. fn replicas 0 must land before
 #    q27 scales to 1. A both-up lands PENDING, not OOM — three INDEPENDENT
@@ -1131,6 +1107,37 @@ radiance-q27:
     # (§D54-A/B). The rendered --model and the init PACK are the served
     # truth; keep the three in step on any retarget anyway.
     modelPath: /models/radiance/qwen3.8-27b-mxfp4.rad
+    # THE FETCH SCALARS (C03 round 2, owner ruling D35): the chart ships the
+    # staging FORM (charts/radiance/values.yaml, configMaps.radiance-fetch) and
+    # this block answers the lane values it substitutes — PACK is the modelPath
+    # just above (the three-place pack truth: modelPath / the args' --model /
+    # the init's PACK, moved together on any retarget), and the three below are
+    # its verification envelope. The mapping deep-merges over the chart's empty
+    # defaults; a scalar left empty trips the FORM's loud guard at container
+    # start instead of fetching quietly. MARKER interpolates $LFS_SHA at boot
+    # (the fn marker law at the second call site), so the .staged-<sha> file
+    # stays one fact written once.
+    #
+    # Q27 PACK LEDGER (RESEARCH §R19-S1, the fetch gate's verification
+    # authority, the fn ledger's shape at its new home): HF
+    # StillDeadcode/qwen3.8-27b-mxfp4, file qwen3.8-27b-mxfp4.rad,
+    # 19,377,119,232 bytes (18.05 GiB), lfs sha256
+    # a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8, ungated
+    # (gated:False verified against the HF API). The drafter is IN-PACK: the
+    # z-lab DFlash2 head ships inside the .rad (needs radiance >= 1.2.3; this
+    # image is 1.17.0), and the vision tower too — the catalog's [text,image]
+    # claim rides this receipt, retired by C16's smoke leg on failure. Staging
+    # math: 18.05 GiB onto the SHARED llama-swap claim (fn's 113.6 GiB already
+    # there; claim 500Gi — C16's note has the owner df-check it on-target).
+    # First boot downloads + hashes ONCE: the equality gate at 1000m
+    # single-threaded puts the hash in the ~1-2 min class (§D4's 113.6-GiB
+    # bound ~5.8-13.6 min SCALES with size — DERIVED; the boot prints the truth),
+    # marker-skip after. Sub-minute-class engine load vs fn's minutes-class
+    # boot: the asymmetry that makes q27 the nice swap citizen (§R19 VERDICT).
+    radianceFetch:
+      lfsSha: a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8
+      url: https://huggingface.co/StillDeadcode/qwen3.8-27b-mxfp4/resolve/main/qwen3.8-27b-mxfp4.rad
+      marker: /models/radiance/.staged-$LFS_SHA
     controllers:
       radiance:
         # The pod-swap resting state (D54(1)): git renders 0 and the owner
@@ -1221,72 +1228,8 @@ radiance-q27:
                 cpu: "8"
                 memory: "24Gi"
                 amd.com/gpu-r9700: "1"
-        initContainers:
-          radiance-fetch:
-            # Q27 PACK LEDGER (RESEARCH §R19-S1, the init script's own
-            # verification authority, the fn ledger's shape at its new
-            # home): HF StillDeadcode/qwen3.8-27b-mxfp4, file
-            # qwen3.8-27b-mxfp4.rad, 19,377,119,232 bytes (18.05 GiB), lfs
-            # sha256
-            # a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8,
-            # ungated (gated:False verified against the HF API). The
-            # drafter is IN-PACK: the z-lab DFlash2 head ships inside the
-            # .rad (needs radiance >= 1.2.3; this image is 1.17.0), and the
-            # vision tower too — the catalog's [text,image] claim rides
-            # this receipt, retired by C16's smoke leg on failure.
-            # Staging math: 18.05 GiB onto the SHARED llama-swap claim
-            # (fn's 113.6 GiB already there; claim 500Gi — C16's note has
-            # the owner df-check it on-target). First boot downloads +
-            # hashes ONCE: the equality gate at 1000m single-threaded puts
-            # the hash in the ~1-2 min class (§D4's 113.6-GiB bound
-            # ~5.8-13.6 min SCALES with size — DERIVED; the boot prints the
-            # truth), marker-skip after. Sub-minute-class engine load vs
-            # fn's minutes-class boot: the asymmetry that makes q27 the
-            # nice swap citizen (§R19 VERDICT).
-            # This release's OWN fetch gate (C03): one pack, one sha, one
-            # marker, one URL per release, and the script NAMES them — so it
-            # lives beside this lane's pack ledger, not in a shell the other
-            # three releases share. The IMAGE stays chart-baked (the
-            # BusyBox-family premise is the chart's pin, C11's identity law).
-            # D27's grammar law guards both radiance gates: identical portable
-            # shape, each lane's literals its own.
-            command:
-              - sh
-              - -c
-              - |-
-                set -e
-                LFS_SHA=a4908940c568f5f9dd24e88f46aefe9ac2ae07dfec023a2eaa1d14dcaa3df4f8
-                PACK=/models/radiance/qwen3.8-27b-mxfp4.rad
-                MARKER=/models/radiance/.staged-$LFS_SHA
-                URL=https://huggingface.co/StillDeadcode/qwen3.8-27b-mxfp4/resolve/main/qwen3.8-27b-mxfp4.rad
-                mkdir -p /models/radiance
-                if [ -f "$MARKER" ] && [ -f "$PACK" ]; then
-                  echo "radiance-q27 staging: marker + pack present — skipping"
-                  exit 0
-                fi
-                echo "radiance-q27 staging: fetch $PACK (curl-resume, 18.05 GiB class)"
-                # rc 33 = "the file is already completely retrieved" under
-                # --continue-at - : a pack that finished without ever having
-                # written its marker (kill between bytes and touch) is DONE,
-                # not a failure — set -e would otherwise boot-loop on it.
-                rc=0
-                curl --fail --location --retry 5 --retry-delay 10 --continue-at - --output "$PACK" "$URL" || rc=$?
-                if [ "$rc" -ne 0 ] && [ "$rc" -ne 33 ]; then
-                  echo "radiance-q27 staging: curl failed rc=$rc"
-                  exit "$rc"
-                fi
-                # The marker is written only after the checksum PASSES — the
-                # marker IS the landed-file provenance (C06 step-4 receipt
-                # class, restated for the second pack). BusyBox grammar only,
-                # the D27/§D3b portable equality gate cloned: the hash
-                # applets in this image family know no GNU long options;
-                # equality on the two-space compute form is the only shape
-                # both applet families pass, loudly, with the digests on one
-                # line.
-                actual=$(sha256sum "$PACK" | cut -d' ' -f1)
-                if [ "$actual" != "$LFS_SHA" ]; then
-                  echo "radiance-q27 staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
-                  exit 1
-                fi
-                touch "$MARKER"
-                echo "radiance-q27 staging: complete"
+        # No initContainers here (D35): the staging init is chart mechanism —
+        # the pinned curl image, the hash budget, the stage posture and the
+        # fetch FORM it runs, identical bytes to the fn lane's by construction
+        # (D27's grammar law guards one FORM, not two clones), with this lane's
+        # pack facts under radianceFetch above.

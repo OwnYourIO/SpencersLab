@@ -12,12 +12,10 @@ capture_c03_fixtures.py), the render may differ on EXACTLY the four ruled paths
 and on NOTHING ELSE. "The script is in the chart" is not the gate — the bounded
 diff is, and the budget leg carries planted-drift teeth of its own.
 
-Red state at handoff (designed, C03 round 2 turns them green): the two
-delta-budget legs (the ruled carrier has not landed — today's per-block script
-literals are the INTERIM shape D35 rules out), the chart-ships-the-form leg,
-and the two block-drops-the-command legs. The teeth legs and the lane-local
-pack-identity legs are green NOW (they gate the comparison engine and the
-cross-lane drift law, not the not-yet-landed shape).
+Red state: with the C03 round-2 carrier LANDED (configMap FORM + scalar
+blocks) every leg here is green; the budget's teeth legs and the lane-local
+pack-identity legs keep the comparison engine and the cross-lane drift law
+gated permanently, not just for the wave.
 
 Run per-directory: python3 -m pytest charts/radiance/tests -v
 """
@@ -49,9 +47,12 @@ MOVING_LANES = {"radiance": "gpu-ai-radiance", R.Q27_APP_NAME: R.Q27_RELEASE}
 # list law (_diff_paths) keeps every budget path nameable: length-changed and
 # scalar lists report their own path; same-length dict lists descend, so an
 # init-IMAGE swap beside the ruled volumeMounts/command stays visible drift.
+# The ruling spells the volumes leg "spec.volumes" in shorthand — the intent
+# is the POD-SPEC volumes, which in this Deployment-rooted grammar is
+# spec.template.spec.volumes (a Deployment has no spec.volumes at all).
 DELTA_BUDGET = frozenset({
     '$.spec.template.metadata.annotations["checksum/configMaps"]',
-    "$.spec.volumes",
+    "$.spec.template.spec.volumes",
     "$.spec.template.spec.initContainers[0].volumeMounts",
     "$.spec.template.spec.initContainers[0].command",
 })
@@ -163,7 +164,8 @@ def test_c03_render_moves_only_on_the_four_ruled_paths(key, release):
     """C03 AC1 as RULED BY D35 (replaces whole-render byte-equality — replaced,
     never deleted: the diff budget IS the new gate). The block-fed render may
     differ from the pre-move fixture on EXACTLY the four ruled paths — the
-    pod-template checksum/configMaps annotation, spec.volumes, the init's
+    pod-template checksum/configMaps annotation, the pod-spec volumes
+    (spec.template.spec.volumes — D35's shorthand "spec.volumes"), the init's
     volumeMounts, its command — and on NOTHING ELSE: serve args, the claim
     pair, memory, cpu, replicas, probes, Recreate/grace, securityContext and
     the image@digest all stay byte-equal inside this comparison (a relocation
@@ -202,11 +204,15 @@ def test_c03_render_moves_only_on_the_four_ruled_paths(key, release):
 @helm_skip
 def test_c03_delta_budget_catches_planted_drift(key, release):
     """Teeth of the budget leg (D35's own requirement — the vacuity class this
-    ticket has already caught three times): plant TWO unauthorized moves in a
-    synthetic copy of the release render — a serve-arg flip and both halves of
-    the claim pair flipped — and the same comparison must flag exactly those
-    paths as unauthorized. Green now and after round 2: this leg proves the
-    gate is live, it is not itself the gate."""
+    ticket has already caught three times): plant THREE unauthorized moves in
+    a synthetic copy of the release render — a serve-arg flip, both halves of
+    the claim pair flipped, and an init-adjacent IMAGE swap — and the same
+    comparison must flag exactly those paths as unauthorized. The image plant
+    is the one the broken needle era could hide: it lives INSIDE a
+    same-length dict list, so only the descending list law can name it; a
+    budget that swallowed the whole containers list would pass it as
+    authorized. Green now and always: this leg proves the gate is live, it is
+    not itself the gate."""
     want = _fixture(key)["deployment"]
     # deepcopy: the render helpers are lru_cached and return SHARED objects —
     # planting on the cached dict would leak the plant into every later leg
@@ -223,15 +229,19 @@ def test_c03_delta_budget_catches_planted_drift(key, release):
         claims = serve.setdefault("resources", {}).setdefault(m, {})
         assert R.GPU_CLAIM in claims, f"{release}: no live claim in {m} to plant on"
         claims[R.GPU_CLAIM] = "7"
+    image = str(serve.get("image", ""))
+    assert ":" in image, f"{release}: serve image {image!r} carries no tag to plant on"
+    serve["image"] = image.rsplit(":", 1)[0] + ":planted-tag"
     got = json.loads(_fold(json.dumps(planted, sort_keys=True)))
     flagged = _diff_paths(want, got) - DELTA_BUDGET
     expected = {
         f"$.spec.template.spec.containers[{ci}].args",
         f'$.spec.template.spec.containers[{ci}].resources.requests["<POOL>"]',
         f'$.spec.template.spec.containers[{ci}].resources.limits["<POOL>"]',
+        f"$.spec.template.spec.containers[{ci}].image",
     }
     assert expected <= flagged, (
-        f"C03/D35 teeth: planted serve-arg + claim drift NOT flagged on {release} — "
+        f"C03/D35 teeth: planted serve-arg + claim + image drift NOT flagged on {release} — "
         f"flagged {sorted(flagged)}, want {sorted(expected)} inside; the budget leg would be "
         "passing vacuously on real drift (half-tripwire class)"
     )
@@ -361,7 +371,7 @@ def test_c03_q27_drops_the_whole_script_for_scalars():
     composed-script arms live in the q27 lane suite (grammar + substituted
     scalars read the rendered configMap)."""
     _assert_block_shape(R.Q27_APP_NAME, R.lane_pack_literals(R.Q27_APP_NAME),
-                        R.lane_pack_literals("radiance"), "/models/radiance")
+                        R.lane_pack_literals("radiance"))
 
 
 @pytest.mark.skipif(not _ok, reason="render env")
@@ -370,7 +380,7 @@ def test_c03_fn_block_drops_the_whole_script_for_scalars():
     BOTH live lanes, and asserting only q27 would let the fn lane keep the
     interim script fork (the class the whole chunk closes)."""
     _assert_block_shape("radiance", R.lane_pack_literals("radiance"),
-                        R.lane_pack_literals(R.Q27_APP_NAME), "/models/radiance")
+                        R.lane_pack_literals(R.Q27_APP_NAME))
 
 
 @pytest.mark.parametrize("key", sorted(MOVING_LANES))

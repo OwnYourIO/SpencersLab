@@ -6,11 +6,12 @@ Radiance (2026-11-feat-radiance-multi-instance C03) is ONE ENGINE SHELL with
 several releases, not one pod. The chart ships the MECHANISM — the pinned
 engine image, the /health probe law, Recreate plus the drain grace, the
 unprivileged GPU securityContext, the shared models claim and /dev/shm, the
-Service shape, and the staging init's image and hash budget. Each release's
+Service shape, the staging init's image and hash budget, and the ONE generic
+fetch-script FORM (a ConfigMap the init mounts and execs). Each release's
 roster block in services/gpu-ai/prod/values.yaml ships the LANE DATA it runs
-on: the pack, the serve recipe, the memory and card claim, and the fetch
-script that verifies that pack. Nothing in this chart is a lane's default any
-more, so read the lane you installed:
+on: the pack, the serve recipe, the memory and card claim, and the four scalars
+(PACK/LFS_SHA/URL/MARKER) that FORM substitutes. Nothing in this chart is a
+lane's default any more, so read the lane you installed:
 
   radiance           flash-next TP2 — UP in git (replicas 1)
   radiance-q27       27B dense TP1 — rests at replicas 0, the swap lane
