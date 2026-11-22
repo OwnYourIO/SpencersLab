@@ -717,21 +717,21 @@
           "modelID": "qwen3.8-flash-next-radiance",
           "name": "Qwen 3.8 Flash Next (Radiance, R9700) - default priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 5 }
         },
         "qwen3.8-flash-next-radiance-urgent": {
           "modelID": "qwen3.8-flash-next-radiance",
           "name": "Qwen 3.8 Flash Next (Radiance, R9700) - urgent",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 9 }
         },
         "qwen3.8-flash-next-radiance-low": {
           "modelID": "qwen3.8-flash-next-radiance",
           "name": "Qwen 3.8 Flash Next (Radiance, R9700) - low priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 1 }
         },
         // cf-143 C15 q27 class rows (D54/D56(5), the fn trio's shape cloned
@@ -773,21 +773,21 @@
           "modelID": "qwen3.8-27b-radiance",
           "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - default priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 4 }
         },
         "qwen3.8-27b-radiance-urgent": {
           "modelID": "qwen3.8-27b-radiance",
           "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - urgent",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 8 }
         },
         "qwen3.8-27b-radiance-low": {
           "modelID": "qwen3.8-27b-radiance",
           "name": "Qwen 3.8 27B (Radiance, R9700 swap lane) - low priority",
           "capabilities": { "input": ["text", "image"], "output": ["text"], "tools": true },
-          "limit": { "context": 200000 },
+          "limit": { "context": 262144 },
           "body": { "priority": 0 }
         },
         "ornith-1.5-122b-strata-q4": {
