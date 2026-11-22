@@ -552,6 +552,48 @@ rejected, why.
   merely that the run reddened — encoded in T4 at `7afbec470`. Corollary for me: a suite where one arm can pass on
   another's failure is not a gate, and **un-masking fail-stop chains is a review duty, not an optimization** —
   every "N ok" I accepted from a fail-fast suite this ticket was a count, not a per-arm verdict.
+- 2026-11-23 coord-ruling D50 (**my own commit message `263696e91` states two falsehoods; corrected here, not
+  amended; and review notes belong in the chunk file — my briefs were over-restrictive**).
+  (a) C06's reviewer found the message I wrote claims "**fn + q27-TP2 is the only co-booting pair**" and quotes a
+  "**122.5 GiB against 110**" figure. Neither exists in the tree. The roster matrix says the opposite of the
+  first: fn claims 2 of 2 cards, so **fn co-boots with NOTHING** — 2+2 was never possible on a 2-card pool — and
+  the second number appears nowhere. The tree is right; the message is wrong, because I paraphrased a dev handoff
+  instead of opening the file I was committing. **Not amended:** the hash is already cited in D49 and in review
+  records, and amending would orphan them — the exact hazard I recorded earlier today. Standing rule for me: a
+  commit message's factual claims get verified against the working tree before the commit, not against the
+  handoff that inspired them. Handoffs are testimony; the tree is evidence.
+  (b) **Review notes belong in `chunks/Cxx.md`** — the role's default step. My read-only briefs told four
+  reviewers not to write, and they complied, so C01-C05's verdicts live only in `STATE.json` while C06's sit with
+  the contract the next dev of that chunk will read. The inconsistency was mine and the role default was right.
+  For this ticket the split is already made (C01-C05 stay in STATE as a compensating choice, recorded here);
+  future chunk reviews let the notes land in the chunk.
+- 2026-11-23 coord-note D51 (**two verification idioms this ticket relied on are VACUOUS — recorded so they stop
+  being cited as proof**). (a) **AC7's `git diff -G'^[^#[:space:]]'` comment-only probe is blind to indented
+  comments inside YAML block scalars** — C06's review proved a control with a real data change fires EMPTY. I ran
+  that probe myself this round and reported its result as proof; the fact (comment-only) is true, but it's true
+  because of the strict strip-indent probe and the byte-identical renders, not because of the `-G` idiom. Use
+  `helm template` base-vs-HEAD equality as the load-bearing check for "no rendered change"; `-G` is a hint.
+  (b) **The plan's `## Commands` baselines drift mid-branch and were cited at me.** Scout-era "provider-loops RED
+  t1" and "agents-md c11 RED" are now GREEN (both re-pinned in C02), and llama-swap reads 517P where the plan says
+  507P from C05/C06 test growth. Not failures — stale expectations. A round that trusts them either chases ghosts
+  or mistakes growth for drift; read the baseline from the current tree, and the planner owes the fold.
+- 2026-11-23 coord-ruling D50 (**my own commit message `263696e91` states two falsehoods; corrected here, not
+  amended; and review notes belong in the chunk file — my briefs were over-restrictive**).
+  (a) C06's reviewer found that the message I wrote claims "**fn + q27-TP2 is the only co-booting pair**" and
+  quotes a "**122.5 GiB against 110**" figure. Neither is in the tree. The roster matrix says the opposite of the
+  first: fn claims 2 of 2 cards, so **fn co-boots with NOTHING** — 2+2 was never arithmetically possible on a
+  2-card pool — and the second number appears nowhere. The tree is correct; the message is wrong, and it was
+  wrong because I paraphrased a dev handoff instead of opening the file I was committing. **Not amended**: that
+  hash is already cited in D49 and in review records, and amending would orphan them — the exact hazard I
+  recorded earlier this ticket. Correction lives here, where anyone reading the message lands next.
+  Standing rule for me: a commit message's factual claims get verified against the working tree before the
+  commit, not against the handoff that inspired them. Handoffs are testimony; the tree is evidence.
+  (b) **Review notes go in the chunk file** (`chunks/Cxx.md`), which is the role's default step. My
+  read-only briefs told four reviewers not to write, and they complied — so C01-C05's verdicts live only in
+  `STATE.json` while C06's sit with its contract. The inconsistency was mine and the role default was right:
+  notes belong where the next dev of that chunk will read them. For this ticket the split is already made, so
+  C01-C05 stay in STATE (a compensating choice, recorded) and every future chunk review lets the notes land in
+  the chunk.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.
