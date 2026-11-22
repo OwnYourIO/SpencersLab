@@ -1,10 +1,11 @@
 {
   "feature": "2026/2026-11-feat-radiance-multi-instance",
-  "plan_status": "approved",
-  "plan_status_note": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
+  "plan_status": "complete",
+  "plan_status_note": "COMPLETE 2026-11-23: all six chunks landed and individually APPROVED, and the final whole-plan review returned APPROVED_WITH_CONDITIONS with every condition being a coordinator RECORD defect (closed in D52) and no fault found in the tree. Agent-side work is finished; the 47 commits are LOCAL on branch feat-radiance-multi-instance. What remains is OWNER-ONLY and deliberately unexecuted: push / PR / merge (never main from a session), the three ordered sync sets (rename wave as ONE set; then the restructure set with parent gpu-ai FIRST, where the fn lane ROLLS once and the composed-argv boot echo plus the D28(6) budget print are the receipts; then routing), the MoE bring-up scale acts, the OQ-R1 unique_id paste gating only C04's UUID arm, and follow-up cards for the two pre-existing out-of-ticket reds (c19, t17).",
+  "intake_provenance": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
   "test_session": "ses_dff2db28effeCuASbCEHa0wIHW",
-  "current_wave": 2,
+  "current_wave": 3,
   "updated_at": "2026-11-22T02:40:00+00:00",
   "kickoff": {
     "card": null,
@@ -78,7 +79,7 @@
       ]
     },
     "C03": {
-      "status": "review-in-flight",
+      "status": "approved",
       "session": "ses_dfea41ff9ffe2L25Q6166zMdvy",
       "wave": 2,
       "depends_on": [
@@ -109,9 +110,7 @@
         "110Gi question CLOSED against me (D41): the value is cf-143 chart truth (limits were already 110Gi; requests mirrored to it -> Guaranteed QoS), and fn+strata RAM>node enforces never-co-exist a second time below the GPU math. No owner round needed.",
         "battery: llama-swap 517P/9S/0F (zero designed reds left), radiance 20F/93P (C05 only), amd-gpu 36P, vllm 36P, naming 5 ok, notes green except roster (C06), surface m1-m8 green / m9 red (C05), m6 never run",
         "D40 interim posture applied: .aislop/history.jsonl reverted before scope-guard legs (t14/c8/t6 all clear once clean)"
-      ],
-      "review_rounds": 0,
-      "last_verdict": null
+      ]
     },
     "C05": {
       "status": "approved",
@@ -134,18 +133,12 @@
       ]
     },
     "C06": {
-      "status": "review-in-flight",
+      "status": "approved",
       "wave": 3,
-      "depends_on": [
-        "C01",
-        "C02",
-        "C03",
-        "C04",
-        "C05"
-      ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "depends_on": ["C01", "C02", "C03", "C04", "C05"],
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED by ses_dfafe2c18ffezohcF0BuFii9Qv over 263696e91 + 7afbec470 (0 blockers / 0 majors / 3 minors + 4 nits); minors closed by f7d867e0c (OQ-K prefix x4, dGPU drop recorded) and 9e3630b3f (claim/replicas required reads + row-binding regression plant). Review notes landed in chunks/C06.md per D50(b).",
       "handoffs": [
         "2026-11-22 fold round 4 (plan tier): C06's contract is now the FULL assigned set — roster note (five claimants) + roster-suite re-pin (served-id read via RADIANCE_SERVED_ID env, dead args read at :76-84 replaced, T4 harness follows; test-session leg per D30) + D32 trio + D38(2) grep-derived falsified-law sites + D44 pair (Burstable-not-Guaranteed; one-home table rows) + dated-marker convention (TEST_SPEC:4636 / golden:1 / surface.sh:989 -> 2026-11-22; opencode.jsonc:817 untouched) + D43 prose correction + citation-prefix pass (own namespace now D1-D47). Newest assigned anchor D47; its M9-A2 ctx-pin residual is test-lane work, not this chunk's. Wave 3 per the plan (the wave field above stays coord's re-file leg)."
       ]
@@ -153,10 +146,12 @@
   },
   "blocked": [],
   "final_review": {
-    "status": "in-flight",
+    "status": "completed",
     "session": "ses_dfae44584ffetHOUru9MO3GP3R",
+    "verdict": "APPROVED_WITH_CONDITIONS — the shipped tree delivers; all five conditions were coordinator RECORD defects (duplicate JSON keys in STATE C04, stale C06 status, a mislabelled t17 signature, a duplicated D50 entry, and the D34/D36/D37 numbering gaps) and every one is closed this commit. The review found NO unruled change in the 74-file diff and faulted nothing in the tree.",
     "scope": "whole-plan: the owner's five asks vs the shipped tree; cross-chunk coherence after THREE mid-execution reversals (D35, D43, D45/D46/D47); unruled-change sweep over main..HEAD; adequacy of the runtime-argv evidence chain and the minimum receipt set; and the coordinator-rule list this ticket earned.",
-    "premise_verified": "all six chunks individually APPROVED; repo at ZERO designed reds except the documented out-of-ticket pair c19 (cf-124 boards custom-field count) and t17 (warm-location permissions drift), both reproduced byte-identical at base; held numbers re-derived from the tree by C06's review and matching the roster matrix."
+    "ask3_qualification": "PARTIALLY MET by design, stated plainly: the shipped shape gives scheduling-level exclusivity + NodeId-order preference + the strata park. It is NOT in-pod card pinning, which RESEARCH R-Q1/R-Q4 prove is structurally inexpressible through the device-plugin path. The notes say so in those words, so nobody later mistakes the claim for a device-index selector.",
+    "premise_verified": "all six chunks individually APPROVED; repo at ZERO designed reds except the documented out-of-ticket pair c19 (cf-124 boards custom-field count) and t17 (the coord-family permissions contract on .rulesync/subagents/agent-coord.md, caused by pre-merge-base 40d4eaf15 -- NOT warm-location drift, which was my earlier mislabel; C06.md:191 had it right), both re-proved byte-identical by the final review at the MERGE-BASE 193c12798 in a scratch worktree, a stronger proof than C06's base-f9107f346 one; held numbers re-derived from the tree by C06's review and matching the roster matrix."
   },
   "rounds": [
     "2026-11-22 plan round 1 (double-launch collision folded — DECISIONS D13; sibling draft in PARALLEL-DRAFT.md)",
