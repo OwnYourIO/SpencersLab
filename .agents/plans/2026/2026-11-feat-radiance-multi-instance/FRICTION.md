@@ -338,6 +338,14 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   machine churn, not a work artifact, and it keeps showing up in porcelain output mid-round.
   · resolution: disposition requested from the test session via `git log -- .aislop/history.jsonl`; until then
   I neither stage nor read meaning into it. · open (history.jsonl disposition)
+- 2026-11-22 · coord · **churn disposition RULED (D42): accept and document.** The owner chose to leave the file
+  tracked and dirty rather than untrack it, so `gate t14` / `rulesync-surface c8` / `provider-loops t6` show
+  **red naming that file alone** as a correct scope-guard reading, not a regression. Two effects on my own
+  briefs: the C04 review brief's step-1 "revert before scope-guard legs" is RETIRED for all later rounds
+  (harmless if the reviewer still does it — it never touches history), and every brief from C05 on states the
+  three leg names plus the one-line test: *red is expected iff the FAIL names ONLY `.aislop/history.jsonl`; if
+  it names anything else, that is a finding*. D36's other half — never stage it — still holds.
+  · fixed-by-ruling
 - 2026-11-22 · review(C02) · **`boards` SKILL "Default selection: `Qwen Dense`" now reads two ways** — the board
   RULE's checked item (accurate: OQ13, rule dormant) versus the blank-route default (radiance). NOT fixable
   inside C02: c11 and M5 pin the sentence verbatim as HOLD, so prose tidying would break two green arms, and

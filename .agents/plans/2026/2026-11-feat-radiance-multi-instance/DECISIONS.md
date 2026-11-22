@@ -376,6 +376,18 @@ rejected, why.
   strata 110 + the always-on main pod's 4.125Gi ≈ 114.1 < 125.08. The number's home is cf-143, not this
   ticket. Recorded because my instinct to escalate was right as a reflex and wrong on the facts — asking for
   evidence before escalating is what distinguished the two.
+- 2026-11-22 owner-ruling D42 (**churn false reds are ACCEPTED and DOCUMENTED — supersedes D40's
+  revert-before-gate posture**). Asked with the three options and their costs, the owner chose to leave
+  `.aislop/history.jsonl` exactly as it is: tracked, dirtied by every scan, never staged. Consequence that is
+  now policy rather than drift: `gate t14`, `rulesync-surface c8` and `provider-loops t6` (which wraps the gate
+  suite) will show **red with the file named verbatim** whenever the tree carries the churn, and that reading is
+  CORRECT — a scope guard doing its job on a known-dirty path. Every review and dev brief from here states the
+  three leg names as "expected red iff `.aislop/history.jsonl` is dirty; confirm the FAIL line names ONLY that
+  file and move on", so no round burns time reverting, re-running or re-litigating it. Two rules I keep from
+  D40 because they are what made this provable and stay true under D42: (a) the file is NEVER staged into a work
+  commit (D36 stands on that half), and (b) when one of these three legs is red, the first question is whether
+  the FAIL names only the churn file — if it names anything else, that IS a finding. The distinction D42 draws
+  is that a documented known-red is cheaper than a per-session ritual that races the next scan.
 - 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
   work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
   introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
