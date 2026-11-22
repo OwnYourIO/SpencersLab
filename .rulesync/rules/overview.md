@@ -506,6 +506,11 @@ change.
   `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual
   fallback (its automatic trigger blocks are kept commented); reference
   `:main` (+ `pullPolicy: Always`) or a `:yy.mm.N` pin.
+  `.forgejo/workflows/builder-bootstrap.yaml` is the dispatch-driven
+  recovery lane for the same calendar tags: on a `prod`-role instance it
+  (re)mints any named container to `ghcr.io/ownyourio/<image>` and that
+  instance's own registry, riding the public act-22.04 job image so it can
+  run when the baked lab image is itself what needs (re)publishing.
   The lab's Forgejo job image is `containers/forgejo-runner` (act-24.04
   base, helm + cr baked in): the `.forgejo` workflows install no tools at
   run time, and no Renovate lane reads that image's label pin in
@@ -516,12 +521,14 @@ change.
   over the vocabulary `{dev, prod}` (e.g. `dev,prod`); job `if:` guards test
   membership with `contains()` — `on:` itself cannot be conditioned, so the
   role/event split lives in the job guards. Unset defaults per file,
-  deliberate in all four `.forgejo` workflows: `containers-build.yaml`
+  deliberate in all five `.forgejo` workflows: `containers-build.yaml`
   widens on unset (a null clause ahead of the membership tests — the
   single-server case publishes everything), while `main-sync.yaml`,
-  `renovate.yaml` and `release.yaml` stay narrow on unset (bare membership
-  tests, fail-safe: neither the fan-out nor the daily Renovate pass may
-  fire unconfigured, and a bump/publish pipeline even less so).
+  `renovate.yaml`, `release.yaml` and `builder-bootstrap.yaml` stay narrow
+  on unset (bare membership tests, fail-safe: neither the fan-out nor the
+  daily Renovate pass may fire unconfigured, and a bump/publish pipeline
+  even less so — the bootstrap lane mints calendar tags, so an unset ROLE
+  must never let an unset-role instance mint them).
   One shared shape, deliberate per-file polarity. Membership is not
   purely a shape change: a `dev,prod` instance runs the daily Renovate
   pass, which exact equality withheld. Substring caveat:

@@ -4,8 +4,9 @@
 # forgejo-release.sh proves the moved builder's internals from the .forgejo
 # side; this suite pins the inventory from both sides and sweeps every live
 # surface for stale claims the rebuild must have erased:
-#   - .forgejo/workflows/ holds EXACTLY the four-workflow family (cf-6's
-#     main-sync/renovate/containers-build + this ticket's release.yaml);
+#   - .forgejo/workflows/ holds EXACTLY the five-workflow family (cf-6's
+#     main-sync/renovate/containers-build + this ticket's release.yaml + the
+#     cf-6 builder-bootstrap dispatch recovery lane);
 #   - .github/workflows/ keeps the seven gate workflows AND docker-build.yaml
 #     — the workflow_dispatch-only manual-fallback builder cf-6 deliberately
 #     kept — and NOT release.yaml (the chart half moved, the container half
@@ -58,8 +59,12 @@ import os, sys
 FJ = '.forgejo/workflows'
 GH = '.github/workflows'
 # cf-6 shipped main-sync (predates), renovate and containers-build; cf-55
-# contributes the chart half ONLY (its container twin was superseded).
-FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'release.yaml'}
+# contributes the chart half ONLY (its container twin was superseded);
+# builder-bootstrap is cf-6's public-image dispatch recovery lane — the
+# fence moved to five before the file landed (red-first doctrine), so a
+# fourth-file-only tree is a designed RED here, not a stale pin.
+FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'release.yaml',
+          'builder-bootstrap.yaml'}
 # Ruling R1's five gates + the render-test growth (amd-gpu, radiance) that
 # landed on main since, PLUS the docker-build manual fallback cf-6 kept.
 GH_SET = {'aislop.yaml', 'rulesync.yaml', 'vllm-render-tests.yaml',
@@ -77,9 +82,9 @@ def names(d):
 
 fj = names(FJ)
 if fj != FJ_SET:
-    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the four-workflow forge family — release.yaml is this ticket\'s, nothing else may appear)', file=sys.stderr)
+    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the five-workflow forge family — release.yaml is this ticket\'s, builder-bootstrap.yaml is the cf-6 recovery lane, nothing else may appear)', file=sys.stderr)
     sys.exit(1)
-print('ok: t1: the Forgejo inventory is exactly the four-workflow family (cf-6 trio + the moved chart builder)')
+print('ok: t1: the Forgejo inventory is exactly the five-workflow family (cf-6 trio + the moved chart builder + the bootstrap recovery lane)')
 
 gh = names(GH)
 if gh != GH_SET:

@@ -4,8 +4,10 @@ The act job image behind the four act-24.04-family Forgejo runner labels
 (`ubuntu-latest`, `ubuntu-24.04`, `docker`, `node22` in
 `charts/forgejo-runner/values.yaml`) — every Forgejo CI job that requests
 one of them runs in this image. `ubuntu-22.04` deliberately stays on the
-plain upstream `act-22.04` (no job requests it and a 24.04-content image
-behind a 22.04 label would lie about its OS).
+plain upstream `act-22.04`: the only lane requesting it is the
+builder-bootstrap recovery lane below, which must not depend on this
+image because it exists to (re)mint it (and a 24.04-content image behind
+a 22.04 label would lie about its OS anyway).
 
 Why it exists: the release pipeline's first fire on Forgejo died inside a
 job's `Set up helm` step on a read `ECONNRESET` from get.helm.sh (owner
@@ -18,9 +20,14 @@ jobs install nothing at run time.
 `FROM ghcr.io/catthehacker/ubuntu:act-24.04@sha256:<digest>` — a
 derivative, not a rebuild. The act image's inventory (git/git-lfs, jq,
 python3, node with tool caches, yq, docker CLI + buildx + compose, apt)
-is what all four `.forgejo/workflows/` already assume; rebuilding it on a
-slim base was rejected because a too-thin image silently breaks the other
-pipelines sharing the runner. The upstream tag is rolling, so the digest
+is what the `.forgejo/workflows/` family already assumes — five files
+since 2026-11-22 (cf-6-feat-builder-bootstrap), the newest being
+`builder-bootstrap.yaml`, the dispatch recovery lane; it deliberately
+rides the public act-22.04 image rather than this one, because it is what
+mints this image when the baked reference is missing, so it must never
+depend on it. Rebuilding the baked image on a slim base was rejected
+because a too-thin image silently breaks the other pipelines sharing the
+runner. The upstream tag is rolling, so the digest
 is the authority and the tag is the human label; refreshing it is a
 deliberate, upstream-verified edit (re-check the live manifest digest
 before pinning). Job containers run as the base's root user on purpose —

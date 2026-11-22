@@ -110,6 +110,18 @@ write packages — and `GHCR_PUSH_PAT` for ghcr. The instance-registry host
 is derived from the instance's own server URL inside the workflow; no URL
 literals live in the file.
 
+**Bootstrap lane (recovery).** `.forgejo/workflows/builder-bootstrap.yaml`
+(re)mints any container's calendar tags on demand when the automatic lane
+cannot run — including the lab's own job image, which the automatic lanes
+must already have to build it. Its jobs therefore ride the PUBLIC
+act-22.04 label instead of the baked image (that inversion is the whole
+point: it is the bootstrap paradox the lane exists to break), fire only on
+`workflow_dispatch` (name the containers, or `all`; an empty list builds
+nothing), stay confined to `prod`-role instances by a narrow ROLE guard,
+and publish the same three tags to ghcr and the building instance's own
+registry under the calendar law above. A recovery lane, not a second
+automatic publisher.
+
 `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual
 rebuild fallback on the GitHub side — its automatic trigger blocks are kept
 commented in the file, so it fires on no push and no PR.
