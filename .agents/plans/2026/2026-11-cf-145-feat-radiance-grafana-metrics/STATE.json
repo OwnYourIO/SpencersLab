@@ -155,7 +155,8 @@
     "at": "2026-11-22",
     "directive": "owner: pull main (major radiance refactor landed), adapt, then owner deploys",
     "rebase": "8/8 cf-145 commits skipped as already-applied (merged via feat-radiance-multi-instance) — branch AT main@54cc84188",
-    "verify": { "session": "ses_dfac817a7ffej697d6BQ4pxoBZ", "verdict": "ADAPT", "holds": "unified job radiance across 4 lanes (no per-lane nameOverride), tag chain 1.17.0 closed, filing + R8 intact, lints + tests/notes + tests/renovate green (k2 pre-existing family aside)", "adaptations": "A1 3 exact-map test legs vs checksum/configMaps (test session) · A2 runbook 2-lane prose (dev, DONE) · A3 plan OE legs (plan, DONE) · A4 radiance-2.x renovate branch pre-refactor, regen-and-move-all-legs when taken · A5 kubernetes-mcp-version-floor k2 (10 vs 8) awaits owner word" }
+    "verify": { "session": "ses_dfac817a7ffej697d6BQ4pxoBZ", "verdict": "ADAPT", "holds": "unified job radiance across 4 lanes (no per-lane nameOverride), tag chain 1.17.0 closed, filing + R8 intact, lints + tests/notes + tests/renovate green (k2 pre-existing family aside)", "adaptations": "A1 3 exact-map test legs vs checksum/configMaps (test session) · A2 runbook 2-lane prose (dev, DONE) · A3 plan OE legs (plan, DONE) · A4 radiance-2.x renovate branch pre-refactor, regen-and-move-all-legs when taken · A5 kubernetes-mcp-version-floor k2 (10 vs 8) awaits owner word" },
+    "adapt_review": { "session": "ses_dfabf4296ffeOEnowlgxCkZFQB", "rounds": "1) CHANGES_REQUESTED — A3 major invented 'sync ONCE/one Application' claim (appset renders one Application per charts: entry; live-proven fn OutOfSync vs Healthy umbrella; would mis-fire R5a) + minors T5-docstring-stale/T1-msg-unreachable + nits. 2) closeout APPROVED — all fixed, assertion multisets provably unchanged, suite 172P/1S/0F, aislop 100; FRICTION heading slip restored by coord. Landed: b95330ae8" }
   },
   "final_review": {
     "at": "2026-11-21",
