@@ -282,6 +282,20 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   green into a "finding", so later rounds read 11/11 from this row until the planner folds the plan file.
   · open (planner fold owed: my tier cannot edit the plan of record OR `chunks/*.md` — both are plan-role
   surfaces; see the coord row on chunk-scope amendments)
+  · **THIS ROW WAS WRONG — CORRECTED 2026-11-22 by the test session's git-history sweep.** The "11 ok"
+  measurement (taken at C03's review and folded into the plan of record by me) is impossible on this repo's
+  history: every committed revision of `cf106-noop/surface.sh` has carried only 7 or 8 `ok` calls
+  (`67b029cb9`, `7bebb3505`) and `noop-marker/surface.sh` only 5/5/5/6/9/9 across six revisions
+  (`197598170`→`7790414fe`). Neither file ever had eleven. Invocation mode cannot inflate the count either —
+  arms are `want`-gated, one `ok` each, so a full-suite run is the maximum. **The scout-era 8/9 was right all
+  along, and my "the scout baseline was stale" re-baseline inverted the truth.** Authoritative statement for
+  the plan: `bash tests/cf106-noop/surface.sh` → 8 ok (rc 0) · `bash tests/noop-marker/surface.sh` → 9 ok
+  (rc 0), full-suite invocation; per-arm runs print fewer `ok` lines BY DESIGN and are not a count mismatch.
+  Lesson, and it is mine: **a single review measurement is not a baseline.** Before overwriting a recorded
+  expectation I must reproduce it twice or read the source of truth (here: `grep -c '^\s*ok '` across
+  revisions), because I did the opposite — trusted one observation and "corrected" a number that was right. ·
+  fixed-by-evidence (planner still owes the plan `:152-153` fold; `chunks/*.md` and the plan file are not
+  editable by my tier)
 - 2026-11-22 · coord-ruling D34 · **aislop: do NOT re-wrap the moved YAML comments.** The edit-time plugin runs
   `aislop scan --changes` (advisory: echoes every diagnostic; `.opencode/plugin/aislop-gate/index.ts:62`), while
   the gate is `aislop ci --changes`, which fails only below `failBelow: 80` or on ERROR-severity findings

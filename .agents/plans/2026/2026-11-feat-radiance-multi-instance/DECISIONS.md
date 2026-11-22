@@ -341,6 +341,41 @@ rejected, why.
   pair-form regexes miss the 6-space-quoted block), which is precisely why prose needs a named owner.
   Recorded here because `chunks/*.md` are not editable by my tier (D30-adjacent) — C06's launch brief carries
   both items verbatim.
+- 2026-11-22 coord-ruling D39 (**my C02-review noop re-baseline was WRONG; the scout-era 8/9 stands**). The
+  test session swept every committed revision of both scripts: `cf106-noop/surface.sh` has only ever carried
+  7 or 8 `ok` calls, `noop-marker/surface.sh` only 5/5/5/6/9/9. Eleven exists in no revision, and invocation
+  mode cannot inflate the count because arms are `want`-gated one-`ok`-each, so a full-suite run is already
+  the maximum. Authoritative baseline for all later rounds: **8 ok / 9 ok, both rc 0, full-suite invocation**;
+  per-arm runs legitimately print fewer. I retract the "scout baseline was stale" claim I folded into the plan
+  at `:152-153` (planner fold owed — my tier cannot edit the plan of record). Standing lesson, written where I
+  will meet it again: **one review measurement is not a baseline** — before overwriting a recorded expectation,
+  reproduce it or read the source of truth (here, `grep -c '^\s*ok '` across revisions). I did neither, and
+  "corrected" a number that was right.
+- 2026-11-22 coord-ruling D40 (**D36 is OVERTURNED on consequences: `.aislop/history.jsonl` churn causes FALSE
+  gate reds; interim posture = revert before gate runs**). C04 found `gate t14`, `rulesync-surface c8` and
+  `provider-loops t6` (which wraps the gate suite) all red on a correct tree, and the test session proved sole
+  causation: with only that file dirty, t14 and c8 rc=1 naming it verbatim; after `git checkout --
+  .aislop/history.jsonl`, **t14 rc=0, c8 rc=0, t6 rc=0**. Mechanism: t14 and c8 are SCOPE guards — every
+  changed/untracked path must sit in the ticket's admitted Files list — so a tracked file that every scan
+  dirties is structurally guaranteed to trip them. My D36 posture ("leave it dirty, it is machine churn") is
+  therefore NOT neutral: it makes three gates lie on every round, including the hourly loop. Interim rule for
+  all remaining rounds and briefs: revert the file before any scope-guard leg. Permanent fix is a
+  human-owned hygiene call and I have not made it: `git rm --cached .aislop/history.jsonl` + a `.gitignore`
+  line (it is machine-local score-trend telemetry, cf. `aislop trend`; exactly one commit ever touched it and
+  `.gitignore` does not mention it). The alternatives are worse — committing the append is a treadmill,
+  `skip-worktree` is invisible to other clones and breaks on fresh worktrees.
+- 2026-11-22 coord-ruling D41 (**the 110Gi question I raised is CLOSED — and closed AGAINST me**). I flagged
+  strata's `requests.memory: 110Gi` as possibly a test-invented production number and said I'd put it to the
+  owner. Evidence resolves it without an owner round: the frozen cf-143 baseline's own `limits.memory` was
+  ALREADY `110Gi` (requests were `64Gi`), so C04 mirrored requests TO the pre-existing ceiling and the pod is
+  now Guaranteed-QoS (`req == lim == 110Gi`) — which is what a pod booking a whole GPU should be; the value
+  traces to `strata_testlib.py:431` / cf-143 D26 chart truth, NOT to `test_c04_strata_claim.py:100` (which
+  asserts the named constant rather than authoring a number); and fn(110)+strata(110) > 125.08 GiB node RAM
+  enforces the never-co-exist law a SECOND time below the GPU claim's 1+2>2, matching the plan's own pattern
+  for lanes that "fit the pool but NOT RAM … stated, not a defect". The only lawful bring-up still fits:
+  strata 110 + the always-on main pod's 4.125Gi ≈ 114.1 < 125.08. The number's home is cf-143, not this
+  ticket. Recorded because my instinct to escalate was right as a reflex and wrong on the facts — asking for
+  evidence before escalating is what distinguished the two.
 - 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
   work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
   introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked

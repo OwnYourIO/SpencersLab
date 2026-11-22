@@ -86,13 +86,20 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "review-in-flight",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "commit": "561527ebb impl (services strata region + llama-swap comments + note annotation) and the test-tier commit on top (n3 widening, strata four-leaf budget, post-C04 fixture). NOTE: the test-tier commit message is terse because long -m/--amend forms kept being denied by the shell guard; the full rationale is recorded here and in DECISIONS D40/D41.",
+      "handoffs": [
+        "dev: 5 designed reds green; projections show claim 1/1 + replicas 0 + KEEP-list intact; no Pending window at 0 replicas (stated plainly, not claimed as an observed restart)",
+        "escalated 2 test-side defects, fixed by the test wave: n3 radiance-only placement predicate (twin drift vs the widened python leg, both-direction plants proven) and the frozen pre-ticket strata byte-pin (replaced by an enumerated 4-leaf budget + 4 planted-drift teeth + a forward post-C04 pin so the carve is one-time)",
+        "110Gi question CLOSED against me (D41): the value is cf-143 chart truth (limits were already 110Gi; requests mirrored to it -> Guaranteed QoS), and fn+strata RAM>node enforces never-co-exist a second time below the GPU math. No owner round needed.",
+        "battery: llama-swap 517P/9S/0F (zero designed reds left), radiance 20F/93P (C05 only), amd-gpu 36P, vllm 36P, naming 5 ok, notes green except roster (C06), surface m1-m8 green / m9 red (C05), m6 never run",
+        "D40 interim posture applied: .aislop/history.jsonl reverted before scope-guard legs (t14/c8/t6 all clear once clean)"
+      ],
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": null
     },
     "C05": {
       "status": "pending",
