@@ -423,14 +423,19 @@ def runs_of(job):
                      if isinstance(s, dict) and 'run' in s)
 
 
-ghcr, forge = hits(raw, 'GHCR_PUSH_PAT'), hits(raw, 'FORGE_PUSH_TOKEN')
+ghcr, forge = hits(raw, 'PUSH_TOKEN_GH'), hits(raw, 'FORGE_PUSH_TOKEN')
 need(ghcr == 1,
-     f'secrets.GHCR_PUSH_PAT occurs {ghcr} times file-wide, expected exactly once (AC4: the release job alone logs in to ghcr)')
+     f'secrets.PUSH_TOKEN_GH occurs {ghcr} times file-wide, expected exactly once (AC4: the release job alone logs in to ghcr)')
+# R-A (2026-11-22) retired this name fleet-wide: the instance carries no
+# GHCR_PUSH_PAT, so a mention anywhere — the credential prose included —
+# would have the file teaching a secret that does not exist.
+need(raw.count('GHCR_PUSH_PAT') == 0,
+     f'GHCR_PUSH_PAT occurs {raw.count("GHCR_PUSH_PAT")} time(s) file-wide, comments included, expected zero (the aligned ghcr login is secrets.PUSH_TOKEN_GH — the established GitHub-side PAT main-sync and release already push with)')
 need(forge == 2,
      f'secrets.FORGE_PUSH_TOKEN occurs {forge} times file-wide, expected twice — exactly one login per login-bearing job (build-release, build-pr), the dual-registry push credential (AC4)')
 rel_text, pr_text = runs_of('build-release'), runs_of('build-pr')
-need(hits(rel_text, 'GHCR_PUSH_PAT') == 1,
-     'the single GHCR_PUSH_PAT reference is not inside build-release run steps')
+need(hits(rel_text, 'PUSH_TOKEN_GH') == 1,
+     'the single PUSH_TOKEN_GH reference is not inside build-release run steps')
 need(hits(rel_text, 'FORGE_PUSH_TOKEN') == 1,
      f'build-release carries {hits(rel_text, "FORGE_PUSH_TOKEN")} forge-PAT references, expected exactly one login')
 need(hits(pr_text, 'FORGE_PUSH_TOKEN') == 1,
@@ -439,7 +444,7 @@ outside = sum(hits(runs_of(j), 'FORGE_PUSH_TOKEN') for j in jobs if j not in ('b
 need(outside == 0, f'{outside} FORGE_PUSH_TOKEN reference(s) under jobs other than build-release/build-pr')
 # Each PAT sits in a docker login statement; YAML block scalars keep run lines
 # verbatim, so a line-level scan of the raw file is exact here.
-for key in ('GHCR_PUSH_PAT', 'FORGE_PUSH_TOKEN'):
+for key in ('PUSH_TOKEN_GH', 'FORGE_PUSH_TOKEN'):
     for m in re.finditer(re.escape('secrets.' + key) + r'(?![0-9A-Za-z_])', raw):
         line_end = raw.find('\n', m.start())
         stmt = raw[raw.rfind('\n', 0, m.start()) + 1:len(raw) if line_end == -1 else line_end]
@@ -452,7 +457,7 @@ PY
   then
     return 1
   fi
-  ok "t7: GHCR_PUSH_PAT once in the build-release login; FORGE_PUSH_TOKEN once per login job and only in docker login steps; automatic tokens absent [C02 AC4]"
+  ok "t7: PUSH_TOKEN_GH once in the build-release login, retired GHCR_PUSH_PAT nowhere in the file; FORGE_PUSH_TOKEN once per login job and only in docker login steps; automatic tokens absent [C02 AC4]"
 }
 
 leg_t8() {

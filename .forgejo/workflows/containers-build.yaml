@@ -34,8 +34,9 @@
 # an account with write on the curatedforest namespace; docker login reads
 # the identity from the token in the password field, so -u is cosmetic. The
 # same PAT reads tags/list and manifests, so an org-visibility flip cannot
-# degrade the derivation to "no tags, no walk". GHCR_PUSH_PAT stays the ghcr
-# credential. Retention is owner-side: forge Cleanup Rules scoped strictly
+# degrade the derivation to "no tags, no walk". PUSH_TOKEN_GH, the instance's shared GitHub-side PAT (the same secret
+# main-sync pushes with and release publishes with; owner ruling 2026-11-22), stays
+# the ghcr credential. Retention is owner-side: forge Cleanup Rules scoped strictly
 # to pr-.* — latest is code-protected, but main and the calendar line survive
 # only while that pattern stays narrow.
 #
@@ -179,7 +180,7 @@ jobs:
         # this PAT (write:packages) is the only credential that can.
         run: |
           set -euo pipefail
-          printf '%s' '${{ secrets.GHCR_PUSH_PAT }}' | docker login ghcr.io -u OwnYourIO --password-stdin
+          printf '%s' '${{ secrets.PUSH_TOKEN_GH }}' | docker login ghcr.io -u OwnYourIO --password-stdin
 
       - name: log in to the forge registry and derive its calendar N
         env:

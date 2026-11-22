@@ -106,7 +106,8 @@ plus `workflow_dispatch`.
 
 Pushing takes human-minted PATs: `FORGE_PUSH_TOKEN` (non-admin,
 `write:package`) for the instance registry — the Actions job token cannot
-write packages — and `GHCR_PUSH_PAT` for ghcr. The instance-registry host
+write packages — and `PUSH_TOKEN_GH` for ghcr (the instance's established GitHub-side secret — the
+same name the chart-release and main-sync legs carry). The instance-registry host
 is derived from the instance's own server URL inside the workflow; no URL
 literals live in the file.
 

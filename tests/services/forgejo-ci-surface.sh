@@ -20,9 +20,10 @@
 #     sweep card per D29's deferral, reported not pinned);
 #   - the prose states the REBUILT laws: calendar yy.mm.N tags (the old
 #     v-date scheme died with superseded C02), the FORGE_PUSH_TOKEN /
-#     PUSH_TOKEN_GH per-direction pair (FJ_PACKAGE_USER/PUSH_TOKEN_FJ
-#     retired), and contains()-membership ROLE guards with the narrow/widen
-#     polarity per file and the substring caveat.
+#     PUSH_TOKEN_GH pair — one credential name per registry side, so both
+#     GitHub-side lanes share PUSH_TOKEN_GH (retired spellings ride t5's
+#     ban lists) — and contains()-membership ROLE guards with the
+#     narrow/widen polarity per file and the substring caveat.
 #
 # The historical record under .agents/ (plans, notes) is deliberately NOT a
 # live surface: append-only, it keeps citing pre-move paths honestly.
@@ -167,32 +168,33 @@ def need(cond, msg):
 
 
 # The credential law as LANDED: AGENTS names the shared instance PAT + the
-# lowercase namespace; the per-pipeline GitHub-side secret names (chart
-# releases: PUSH_TOKEN_GH; container pushes: GHCR_PUSH_PAT) are workflow
-# law pinned by forgejo-release.sh t8 and cf-6's containers-build suite —
-# the rules file deliberately stays at the shared identity + the job-token
-# prohibition.
+# lowercase namespace; the GitHub-side secret name is workflow law pinned
+# per file — chart releases by forgejo-release.sh t8, container pushes by
+# cf-6's containers-build suite t7 — and ONE name serves both lanes since
+# R-A (2026-11-22): PUSH_TOKEN_GH. The rules file deliberately stays at the
+# shared identity + the job-token prohibition.
 for tok in ('FORGE_PUSH_TOKEN', 'curatedforest'):
     need(tok in agents, f'AGENTS.md does not name {tok} — the instance credential and the lowercase namespace are hard-rule material post-reconcile')
 # The ROLE-membership law + its two caveats.
 for tok in ('contains(', 'Substring caveat', 'yy.mm.N'):
     need(tok in agents, f'AGENTS.md lost {tok!r} — membership guards / the substring caveat / the calendar tag are the landed laws')
 # Dead worlds must not survive as law anywhere.
-DEAD = ('PUSH_TOKEN_FJ', 'FJ_PACKAGE_USER', '10000', 'type=gha',
+DEAD = ('PUSH_TOKEN_FJ', 'FJ_PACKAGE_USER', 'GHCR_PUSH_PAT', '10000', 'type=gha',
         'UTC-YYYYMMDD', 'HHMM-base10', 'v<run_number>` (immutable)')
 for tok in DEAD:
     need(tok not in agents, f'AGENTS.md still carries {tok!r} — a retired scheme re-becomes law the moment it re-enters the rules file')
 # The container skill (cf-6-rewritten): the live builder, the calendar tag,
-# the forge PAT — and none of the retired spellings.
-for tok in ('containers-build.yaml', 'yy.mm.N', 'FORGE_PUSH_TOKEN', 'GHCR_PUSH_PAT'):
+# the forge PAT + the one GitHub-side PAT — and none of the retired
+# spellings.
+for tok in ('containers-build.yaml', 'yy.mm.N', 'FORGE_PUSH_TOKEN', 'PUSH_TOKEN_GH'):
     need(tok in skill, f'container-creation SKILL.md lost {tok!r} — it must describe the builder that actually runs')
-for tok in ('10000', 'type=gha', '%Y%m%d', 'HHMM', 'PUSH_TOKEN_FJ', 'FJ_PACKAGE_USER', 'github.actor', 'secrets.GITHUB_TOKEN'):
+for tok in ('10000', 'type=gha', '%Y%m%d', 'HHMM', 'PUSH_TOKEN_FJ', 'FJ_PACKAGE_USER', 'GHCR_PUSH_PAT', 'github.actor', 'secrets.GITHUB_TOKEN'):
     need(tok not in skill, f'container-creation SKILL.md carries {tok!r} — retired scheme/credential prose (the auto-token push and the v-date/offset schemes are dead; docs must not re-teach them)')
 PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; GitHub-side secret names ride the workflow suites) with every retired scheme absent"
+ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; one GitHub-side name — PUSH_TOKEN_GH — for both lanes, pinned per file by forgejo-release.sh t8 and the containers-build suite) with every retired scheme absent"
 
 # --- t6: ROLE guard membership is consistent across the .forgejo family ---------------
 if ! python3 - <<'PY'
