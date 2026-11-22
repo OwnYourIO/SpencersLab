@@ -388,6 +388,48 @@ rejected, why.
   commit (D36 stands on that half), and (b) when one of these three legs is red, the first question is whether
   the FAIL names only the churn file — if it names anything else, that IS a finding. The distinction D42 draws
   is that a documented known-red is cheaper than a per-session ritual that races the next scan.
+- 2026-11-22 owner-ruling D43 (**GOVERNING REDIRECT — the arg FORM moves back into the chart as a chart-owned
+  serve wrapper; gpu-ai passes ONLY the model + arg specifics; the roster builds all FOUR releases in this same
+  restructure**). Asked after I showed the damage: `services/gpu-ai/prod/values.yaml` at 1277 lines carrying BOTH
+  lanes' full inline args arrays (`:1024` fn, `:1235` q27) plus the sizing scalars (`:964-966`), while
+  `charts/radiance/values.yaml` (452 lines) held none of the form. Owner's words: too much in the service file
+  belongs in the chart, the chart is not deployed 4× in the appset, and pass the model and arg specifics only
+  from gpu-ai. Chosen mechanism: the pattern already ruled for the fetch script in D35 — the chart ships a
+  **serve wrapper** holding the full arg form (the ~34-item set: kv-cache-dtype, num-gpu-layers, flash-attn,
+  ngram, mmap …) and each lane passes only its specifics — model, served id, tp, context, pool, memory — through
+  **env**, which IS `tpl`-rendered and merges per-key. Consequences, accepted knowingly:
+  (1) **Pod-spec delta grows past C03's four paths.** The rendered container no longer carries literal argv; the
+  serve command becomes the wrapper and argv is composed at runtime. The honest replacement gate is **runtime
+  argv equality**: execute the wrapper in a sandbox with the lane's env and assert the composed vector equals
+  the ruled set per lane (fn-TP2 = cf-144 §7; q27-TP1 = the cf-143 array; the two new lanes = their transcribed
+  profiles). A static YAML args array is no longer the evidence and must NOT be faked by moving the array into a
+  ConfigMap verbatim. (2) **Operational visibility changes**: `kubectl describe` / the Argo diff show wrapper +
+  env, not the full command line — so the wrapper echoes the composed argv once at startup and the boot print
+  stays the receipt. (3) **A flag change becomes ONE chart edit for all four lanes** instead of four block edits
+  — the drift class this ticket keeps paying for, designed out. (4) **The four-deployment roster comes forward**
+  out of C05 into this restructure: `charts/radiance` deployed 4× (flash-TP2, flash-TP1, 27b-TP2, 27b-TP1) with
+  `replicas: 1` ONLY on flash-TP2; C05 then carries catalog/peers/evidence + per-lane test legs.
+  SUPERSEDED: my OQ-D/D24 framing of "all lane data in blocks, chart a shell" (form was wrongly swept in with
+  data), and the C03-era position that per-block literal argv was the only lawful shape. D35's precedent — form
+  in the chart, data per lane — now applies consistently to BOTH carriers.
+- 2026-11-22 coord-ruling D44 (**C04 APPROVED at `561527ebb`/`46f24a6bd`; three minors, one correcting my D41
+  again**). 0 blockers / 0 majors. All 8 C04 legs green individually; KEEP-list verified item by item (b1 = ADD,
+  not replace); the supersession leg passes for the RIGHT reason — five out-of-band counterexamples (dates-only,
+  no-dates, unbound-with-dates, both chart-window variants) all fail while the landed region satisfies supersed +
+  both dates + claim binding; the bounded delta verified by the reviewer's OWN differ at exactly four leaves;
+  prose-honesty ruled clean — every determinism claim scoped to the scheduler/allocation leg with the container
+  leg explicitly preserved as ordinal/hostPath territory, the exact error class the owner's ask targeted.
+  Minors: (1) `charts/llama-swap/values.yaml:1335` calls strata "Guaranteed-class while it books a card" — with
+  `requests.cpu: 8` and NO `limits.cpu`, kubelet classes it **Burstable**; memory is Guaranteed, cpu is not. This
+  amends **my D41** parenthetical "(req == lim == 110Gi)": true for memory only. The ruling (mirror requests to
+  the existing ceiling) stands; the QoS label I leaned on does not. (2) the overlay "one home" table omits two
+  strata combination rows (under-description; all prohibitions complete) → C06. (3) **coord debt, mine**: C04's
+  "DRA watch-list: DECISIONS line only" leg had no landed home because dev cannot write DECISIONS — recorded
+  here: **the D17 claim does not change the D11/R-Q3 DRA verdict** (still watch-list, revisit triggers
+  unchanged), which satisfies that leg. Brief defect also mine: the C04 review brief predated D42 and mandated a
+  churn revert + stop-at-t17/c19, pushing full-suite runs that exercised write arms `gate t14` and
+  `rulesync-surface c7` (content no-op, tree byte-clean, self-disclosed). Later briefs: per-arm invocation, and
+  no churn-revert mandate.
 - 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
   work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
   introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
