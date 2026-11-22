@@ -235,6 +235,15 @@ rejected, why.
   MoE bring-up is the owner's scale act (fn→0 first) per the C06 runbook. Rejected alternatives
   recorded: K2 (keep 1, accept Pending) and K3 (park fn — contradicts D16/D18's approved fn-live
   default lane) and K4 (revert to (a) — would un-rule D17).
+- 2026-11-22 owner-ruling D27 (**model routing re-confirmed for the EXECUTION half of the ticket**):
+  "use the radiance flash going forward" — every subagent launch of this ticket (test, dev, review,
+  final review) passes `gpu-ai/qwen3.8-flash-next-radiance` explicitly. Not a plan change: it matches
+  D16/D4's already-ruled-everything-tiers-radiance posture; the moment of the word was the owner's own
+  catalog edit (the 6 radiance `limit.context` rows, isolated at `b3d7fada8`), which is why the first
+  test launch was cancelled mid-flight. Verified the id is live: `.opencode/opencode.jsonc:716`
+  (class rows `-urgent :723`, `-low :730`). Catalog bytes are the owner's — this ticket's C02/C05
+  routing legs touch skills/rules/loop surfaces and the catalog rows for the NEW lanes only, never
+  those six context values.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.
