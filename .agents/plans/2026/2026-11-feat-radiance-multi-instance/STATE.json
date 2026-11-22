@@ -1,0 +1,112 @@
+{
+  "feature": "2026/2026-11-feat-radiance-multi-instance",
+  "plan_status": "approved",
+  "plan_status_note": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
+  "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-22T02:40:00+00:00",
+  "kickoff": {
+    "card": null,
+    "origin": "owner-in-session (no WeKan card; five-piece ask stated verbatim in the coordinator session; EXPLORE/RESEARCH rounds already ran)",
+    "slug": "feat-radiance-multi-instance",
+    "slug_basis": "coordinator-supplied slug (folder/worktree/branch name); run-tag-free, cf-90 idiom",
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "feat-radiance-multi-instance",
+    "branch": "feat-radiance-multi-instance",
+    "base": "main @ 193c12798 (contains cf-144 TP2 landed)",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-radiance",
+      "code": "gpu-ai/qwen3.8-flash-next-radiance"
+    },
+    "models_basis": "Owner word 'make the coord agent context use the radiance/qwen3.8-flash-next-radiance model for everything' — every tier radiance (the two STATE slots carry the same value; final whole-review/fallback tiers ride it too), AND this ticket's own subject rule; this run itself launched every subagent on gpu-ai/qwen3.8-flash-next-radiance. The fn lane is live 1/1 (EXPLORE §1) so the route works today; q27 stays NEVER-default (502-while-idle, measurement-conditional). Rework round: the round's rulings extend 'everything' to the hourly RUNNER literal (D16) and to the explicit Dense+Local row (D20 → the parked q27 lane, 502 accepted) — run models themselves unchanged.",
+    "local": false,
+    "stages": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review",
+      "Deployment"
+    ],
+    "stages_basis": "Same lifecycle set as cf-144's checked Lifecycle (coordinator-stated at launch). Exploration DONE (EXPLORE.md), Pre Research DONE (RESEARCH.md storm round), Planning in flight (this folder — rework round folded, awaiting the coordinator's flip); Deployment checked -> landing shape is owner-gated push/PR/merge/sync per pipeline-push-pr discipline.",
+    "hitl": ["Planning", "Final Review", "Deployment"],
+    "claim": {
+      "pipeline": null,
+      "note": "No board card and no pipeline lock claimed — owner-directed in-session work; the hourly board-coord gate does not own this run; recorded honestly per the boards convention."
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C01", "C02", "C03", "C04"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C01", "C02", "C03", "C04", "C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "rounds": [
+    "2026-11-22 plan round 1 (double-launch collision folded — DECISIONS D13; sibling draft in PARALLEL-DRAFT.md)",
+    "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
+    "plan_status flip: coordinator's leg on the owner's word (owner already ruled 'Approve — run all waves' at the round)."
+  ],
+  "deferred": [
+    "DRA adoption — watch-list with revisit triggers (plan Deferred; DECISIONS D11)",
+    "fn memory DOWN re-pin from held 110 — cf-144 P11's own post-boot owner-receipt leg, NOT this ticket",
+    "MoE bring-up scale acts (fn->0 then strata->1) — runbook prose ships in C06; the acts are owner legs forever",
+    "Grafana per-lane dashboards (cf-143 follow-up card #2); gpu-cluster product naming (cf-144 C04 card)"
+  ]
+}

@@ -1,0 +1,248 @@
+# Decisions
+
+Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decision, alternatives
+rejected, why.
+
+## Conventions
+- D-number namespace: THIS ticket's decisions occupy D1–D25; any citation to another ticket's
+  decision (cf-143/cf-144/cf-86 …) MUST carry its ticket prefix — bare `D21`, `D24`, `D8`, `D13`
+  mean THIS file. (cf-143 recycles the same numbers; unqualified reuse is a dev-error generator.)
+- Pool string law: from C01's wave the ONLY live name is `amd.com/gpu-r9700`;
+  `amd.com/gpu-r9700-1` joins `gpu-ai-pro-r9700` as a historical name that may survive ONLY
+  outside AC4's scan scopes (plan folders, git) and as bracketed transcription-correction notes.
+  The new HISTORICAL constant stays ASSEMBLED (`"gpu-r9700" + "-1"`) — the substring relationship
+  (new name is a prefix of old) means any literal leaks the sweep trips itself. `amd.com/r9700` /
+  `amd.com/r9700-1` stay impossible-by-construction (§R7-Q1 code constants) and barred.
+- Constants-site law (cf-143 D24 carry-over): name needles are `charts/amd-gpu/tests/amd_gpu_testlib.py`
+  (python canonical) + the marked bash blocks (`tests/services/amd-gpu-naming.sh`,
+  `tests/notes/radiance-{runbook,tp2}.sh`) — one edit site per language, never needle archaeology.
+- Sizing laws this ticket TRANSCRIBES and never re-decides: fn memory HELD 110 (cf-144 P11 — the
+  post-boot DOWN re-pin is cf-144's deferred owner leg, not here); q27 24Gi + claim-1 overlay pin
+  (P05); every new number is boot-print-adjudicated (cf-143 D28(6)/D30(2)); `--expert-vs-cache-ratio`
+  never ships.
+- Carrier law (cf-143 D26): extended-resource claims cross the appset→Application chain as POSITIVE
+  ADD/UPDATE only (nulls die, 0 illegal). From C03 the radiance lanes' claim carrier is the
+  per-release service block (n3 relocated); the chart ships NO claim (OQ-D posture).
+- Keyless-cf-143-D8 survives: no bitwardenIds / no ExternalSecret / NO `custom-values/` leg for any
+  radiance lane. "Generic shell + exact settings per instance" = the service roster blocks (the
+  appset `index $.Values $appName` channel). `OVERRIDE_VIA_CUSTOM_VALUES` keeps its repo meaning:
+  secrets-only carrier. (Ask 4's convention reconciliation; the cf-143/cf-144 "one chart-value
+  home" (D15) single-source law is DELIBERATELY superseded for charts/radiance — per-instance
+  DATA home is the block, chart = mechanism.)
+- Doc-edit law: annotate, never rewrite (dated markers, T1/T2-resolvable citations); the ONLY
+  exception class is the cf-143 D24-precedent NAME-TOKEN sweep inside AC4-scanned surfaces (C01) and the
+  bracketed transcription-correction idiom for factual mis-quotes — both move tokens, neither
+  rewrites narrative.
+- `export PATH=$HOME/.local/bin:$PATH` before any helm-backed run; pytest per-directory; never run
+  the rulesync-WRITING legs (`surface.sh` M6, agents-md c1, gate t14, rulesync-surface c7) in a
+  read-only session; evidence YAMLs are test-session property, dev conforms.
+- Git law unchanged: coordinator is sole committer; nothing pushes/merges/advances main; landing
+  = owner push/PR/merge/sync (pipeline-push-pr discipline; Deployment is a checked HITL stage).
+
+## Decisions
+- 2026-11-22 plan D1 (**base = main @ 193c12798, cf-144 is the BASE not a prerequisite**): the
+  launch brief's "cf-144 unpushed / in Review" is stale (EXPLORE §0 deviation, re-verified by
+  plan-session git reads); the TP2 chart-arg literals this ticket relocates are the SHIPPED ones.
+  Alternatives rejected: rebasing on the cf-144 branch (content-identical, verified empty diff).
+- 2026-11-22 plan D2 (**rename is ONE atomic wave (C01), ids-table + every claim + every sweep
+  needle + the two stale-prose fixes in one commit**): R-Q5's mechanism law — old name → capacity 0
+  permanently, old-name pods Pending-forever with no bare fallback (bare sits at 0), table read
+  once at startup; any two-step ordering orphans a pod class in the gap. The stale "each pool holds
+  one device" comment (RESEARCH C1) and NOTES.txt:25 ride the same commit (they describe the very
+  mechanism being renamed). Rejected: separate docs wave (the prose IS the claim's law text).
+- 2026-11-22 plan D3 (**notes name-token sweep in place, cf-143 D24 precedent; history stays in
+  plan-folders/git**): AC4 scans `.agents/notes/`, so the old token cannot survive there; the
+  alternative (AC4 carve-out for receipt quotes) was rejected — it dulls the ticket's own
+  completeness sweep on the exact class of residue it must catch, and cf-143 C14-r1 already owns
+  the in-place-with-bracketed-note idiom for quoted text.
+- 2026-11-22 plan D4 (**routing wave (C02) ships radiance as BOTH tiers' default; Dense+Local and
+  the 10+-background legs keep their `27b-q4` routes; q27 stays never-default**): matches the
+  owner's "for everything" + how this run itself launched; fn is the only hot lane (live 1/1,
+  boots-once, no lazy-load penalty — EXPLORE §1) and the 502-loud law covers fn-down. Runner-
+  literal scope is OQ-A (recommended: MOVE it too — the strata lane is 0/0 today, making the
+  current runner literal an idle hop, and the loop is literally the board-coord's context; scout
+  guessed defaults-only, the owner's verbatim wins the recommendation). Pre-existing reds
+  (provider-loops t1/t3, agents-md c11) are dispositioned in-wave either way — never carried
+  silently.
+- 2026-11-22 plan D5 (**ask 3's honest shape: pool arithmetic + receipts, NOT per-card pins**):
+  R-Q1/R-Q4/R-Q6 verdicts — the pinned plugin injects no env and has no visibility strategy
+  (per-lane specific-card pinning is structurally impossible in the plugin path); one-card-under-
+  two-names is a double-booking trap. Shipped determinism statement (acceptance criteria phrase
+  it EXACTLY so): (a) a free single-card claim takes the lowest-KFD-NodeId card (advisory-at-API,
+  source-pinned-at-v1.31.0.12), (b) concurrent claims take distinct cards by occupancy, (c) a TP2
+  claim gets both, (d) "lane X pinned to c3/c7" is NOT expressible here. OQ-B presents the owner
+  ruling; the recommended leg is (a)-values+receipts; strata keeps hostPath per the standing
+  2026-10-27 ruling.
+- 2026-11-22 plan D6 (**OQ-R1/OQ-R2 become OWNER-RECEIPT legs inside C04, never blind pins**): no
+  agent tier has pod exec; the UUID form is opt-in strictly after a landed nonzero-unique_id
+  receipt (silent-truncation failure class); the NodeId→BDF map is recorded, not assumed (best
+  guess c3). cf-144 P15's paste-collection pattern at the chunk's turn is the mechanism.
+- 2026-11-22 plan D7 (**generic shell: chart = mechanism, per-release service blocks = data;
+  fn-TP2 + q27-TP1 transcribe with render BYTE-EQUIVALENCE proof (C03), then two new resting
+  lanes (C05)**): the q27 pod-swap and roster `chart:` lever already prove both halves live
+  (EXPLORE §4a). Alternatives rejected: sibling chart dirs (cf-143 D56(1) law — pin/ledger/grammar drift
+  duplication); per-cluster template discrimination (repo law); custom-values channel
+  (secrets-only). The inert `radianceFetch.sourceDir` trap (gotcha 11) dies by parameterizing the
+  init script (PACK/LFS_SHA/URL/MARKER scalars) while D27's BusyBox-portable equality gate +
+  image-identity legs survive in the template.
+- 2026-11-22 plan D8 (**lane naming (OQ-C best guess): keep `radiance` (flash-TP2) +
+  `radiance-q27` (27b-TP1) keys/Applications byte-stable; add `radiance-flash-tp1` +
+  `radiance-q27-tp2`**): renaming the live keys would prune+recreate the running fn Application
+  and rewrite peers/evidence pins for symmetry alone. Rejected: symmetric 4-rename (a second live
+  churn wave).
+- 2026-11-22 plan D9 (**new served ids = suffixed base ids, ONE catalog row each (no priority
+  siblings yet); three-surface join in law order evidence→peers→catalog; peers floors 5/4 per
+  lane class**): honest-id law (D7-cf143) bars reusing existing ids across lanes; two peers
+  declaring one id is ambiguity. Trios join only when a lane becomes a routed tier (owner's
+  priority policy then).
+- 2026-11-22 plan D10 (**lane profiles: flash-TP1 = git-history transcription of the cf-143 TP1
+  array (110Gi held, claim 1, replicas 0); 27b-TP2 = q27 array + `--tp 2 --tp-wire wht6` (24Gi
+  held, claim 2, replicas 0)**): transcriptions with a shipped precedent beat inventions; every
+  number stays boot-print-adjudicated. Claim-math documented: one TP2 class UP at a time;
+  flash-TP1+27b-TP1 fit the pool but NOT RAM at held values (110+24+~5.3 > 125.08) — stated, not
+  silently mitigated (the P11 re-pin outside this ticket is what re-opens it).
+- 2026-11-22 plan D11 (**DRA: zero chart work; revisit triggers recorded — a release carrying
+  `extendedResourceName` AND issue #75 closed; then CEL on `pciBusID` ONLY (productName empty on
+  R9700, DRM-minor names reboot-unstable)**): R-Q3 verdict; adopting now trades one proven
+  weakness for three live ones.
+- 2026-11-22 plan D12 (**chunk/wave shape: C01+C02 wave 1 (independent, id order) → C03+C04 wave 2
+  (independent of each other) → C05 wave 3 → C06 wave 4**): validates the scout's landing-order
+  hint with mechanisms — rename first (atomic sync set, every later string quotes the final name),
+  routing next (zero GPU-file overlap, clears pre-existing reds early), restructure last (depends
+  on final pool name + relocated carrier + a settled surface.sh base); C05→C02 edge is a byte-pin
+  conflict (both touch surface.sh/M8 + the favorited table), C05→C03 is interface (the shell must
+  exist before the new blocks feed it), C06 last (annotations quote the shipped shape).
+- 2026-11-22 plan D13 (**FOLD PROVENANCE — this is the re-launched planning session's folded set;
+  the superseded sibling 4-chunk draft (routing-first: C01 routing / C02 rename / C03 shell /
+  C04 fleet) is preserved VERBATIM in `PARALLEL-DRAFT.md`**): planning launched twice in parallel
+  (coordinator FRICTION rows 2026-11-22), both hand-backs reported cancelled, the coordinator
+  ruled the re-launch owns the fold. The two drafts AGREED on: rename atomicity + mechanism,
+  routing-site inventory, never-default/502-idle laws, owner-receipt shaping of OQ-R1/R2, the
+  three-surface id join, landing shape, board-vocabulary staying out-of-ticket. Differences folded
+  toward this set: rename-first wave 1 (the atomic-sync story is cleaner when the rename leads and
+  no routing commit can ever be mistaken for part of its set); a 6-chunk split (the sibling's C04
+  merged ask-3 receipts + the lane add + docs into one L chunk — split per the role's reviewability
+  rule: the receipts leg is owner-gated and must close as an honest no-op WITHOUT holding the lane
+  add, and the docs wave must trail both). OQ set extended (the sibling's Dense-row OQ-K kept as
+  OQ-J; its trio-priority proposal kept as OQ-E's alternative; its `radiance-27b-tp2` key variant
+  noted under OQ-C). Absorbed verbatim: the sanitizer-port reachability proof, the
+  `r9700([^0-9-]|$)` word-boundary pattern, the TEST_SPEC.md:3762 history-site, the
+  "provider-loops exits 0 despite RED t1" tail-behavior (C02 AC3 now asserts the FAIL-line count),
+  the "tests/ sibling dir fires NO workflow" CI note. Nothing in the sibling draft was deleted —
+  the record is the product (cf-143 law).
+- 2026-11-22 plan D14 (**marketing-string reading (OQ-I) resolved to mechanism, kept open for
+  the round**): the launch cites "ids-table row `7551 C0` marketing → `AI PRO R9700`" beside a
+  target pool `amd.com/gpu-r9700`; the suite's sanitizer port PROVES the marketing string derives
+  `gpu-ai-pro-r9700` (fillers drop, `pro` kept) — mechanically incompatible with the stated target.
+  Best guess: product field becomes exactly `r9700`; `AMD Radeon AI PRO R9700` is recorded as the
+  row's marketing IDENTITY in the ledger comment. If the owner truly wants the pool re-named to
+  the marketing derivation, that flips the ticket's target — C01's notes stop the dev there.
+- 2026-11-22 rework D15 (**BATCHED ROUND ANSWERED — letter map + fold provenance**): the owner's
+  answers arrived numbered against the SIBLING draft's lettering (PARALLEL-DRAFT.md); mapped onto
+  THIS plan's authoritative letters: owner-1 → **OQ-A** (sibling OQ-4), owner-2 → **OQ-B** (ask-3
+  mechanism; no sibling letter), owner-3 → **OQ-C**, owner-4 → **OQ-E** (sibling OQ-5/I-adjacent),
+  owner-5 → **OQ-J** (sibling kept this as adopted-D, no letter), owner-6 → **OQ-I** (sibling OQ-2),
+  owner-7 → **OQ-H + OQ-R2/OQ-R3**. Owner verdict: "Approve — run all waves" — the coordinator flips
+  `plan_status`; this write leaves it draft (plan-agent law). Pitfall recorded in FRICTION: rework
+  rounds must cite the folded plan's letters as authoritative.
+- 2026-11-22 owner-ruling D16 (**RUNNER LITERAL MOVES TO RADIANCE (OQ-A answer) — fresh owner
+  ruling dated 2026-11-22, superseding the 2026-11-09 strata-q4 runner ruling**): the 2026-11-09
+  ruling's own clause says the literal "moves only by a fresh user ruling" — this is that ruling.
+  Full Leg B becomes mandatory (no longer conditional): `.agents/loops/pipeline-worker.md:5` + its
+  ruling comment, `.rulesync/rules/overview.md:304` (+ AGENTS.md regeneration), provider-loops
+  t1/t3 + agents-md c11 + the tsx tick `pipeline-locks-tick.test.ts:163` byte-pin all re-pin to
+  `gpu-ai/qwen3.8-flash-next-radiance`, and M8-H's diff-inventory touch-bar is re-authored into a
+  PAIRING leg (all six surfaces must carry the same literal; touching one without moving the others
+  fails). Consequence accepted at ruling time: the strata lane is 0/0 today (EXPLORE), so the
+  old literal was routing the hourly runner to an idle-502 hop; the fn lane is the runner's model —
+  fn-down now also stalls the scheduled runner (same SPOF the coord defaults already carry).
+- 2026-11-22 owner-ruling D17 (**OQ-B lands on (b): llama-swap/strata gets a REAL claim on the
+  renamed `amd.com/gpu-r9700` pool — OVERTURNS the standing 2026-10-27 device-access ruling's
+  no-claim posture**): D5's shipped-shape ("strata keeps hostPath, zero claims") is SUPERSEDED in
+  that half; the D5 determinism LAWS (R-Q1 lowest-NodeId, R-Q4 exclusivity, no specific-card
+  expressibility) survive and become the documentation authority. Mechanism chosen (b1): claim
+  POSITIVE-ADDED on the gpu-ai SERVICE OVERLAY (D26 carrier law — nulls die in the appset→valuesObject
+  chain; the cf-143 C07/C10 APU-claim idiom at `services/gpu-ai/prod/values.yaml:188-205` is the
+  shape precedent), count 1 + requests mirror; **hostPath `/dev/kfd`+`/dev/dri`, privileged and the
+  rocrVisibleDevices carriers STAY byte-kept** (b1, not b2): RESEARCH R-Q5 shows the patched plugin
+  mounts `/dev/kfd`+`/dev/vdi` only — llama.cpp needs the `/dev/dri` render nodes — and
+  `charts/llama-swap/values.yaml:1352-1360` already legislated the b1 shape in anticipation ("Strata
+  keeps this privileged hostPath shape either way: per-name pools settle cross-card choice, never
+  VRAM arbitration, and hostPath sits outside plugin accounting entirely"). Honest scope of the
+  claim: SCHEDULING exclusivity + NodeId-order card allocation at the scheduler; in-container device
+  visibility remains ordinal/hostPath territory, so the R1/R2 receipt discipline still governs —
+  the claim does NOT make card selection inside the pod deterministic. Scheduling consequence
+  (the round's material discovery): strata renders `replicas: 1` today
+  (evidence `charts/llama-swap/tests/evidence/cf143-pre-ticket-strata/gpu-ai.strata-docs.yaml:44`);
+  with claim 1 against the 2-card pool and the approved fn lane at claim 2 replicas 1, strata would
+  Pending-forever — so the git steady state MUST park strata at `replicas: 0` in the same commit
+  (parking-in-the-same-wave also prevents any apply-time Pending). That parking is not in the
+  owner-approved lane table (computed without strata) ⇒ surfaced as OQ-K with recommendation
+  (park = the only resolution consistent with fn-live-approved); NO invented resolution.
+- 2026-11-22 owner-ruling D18 (**OQ-C SETTLED as proposed (D8 stands as ruling)**): keep live keys
+  `radiance` + `radiance-q27`; ADD `radiance-flash-tp1` + `radiance-q27-tp2`.
+- 2026-11-22 owner-ruling D19 (**OQ-E: FULL TRIOS REGISTERED NOW (deploy-ready), D9's base-row-only
+  default SUPERSEDED**): each new lane gets its complete catalog trio with strictly-below-live
+  priority classes — sibling proposal adopted as the starting shape (flash-tp1 7/3/2, 27b-tp2
+  6/2/1 in the fn 9/5/1 / q27 8/4/0 urgent/base/low grammar), class-column uniqueness across the
+  radiance family resolved by the TEST AUTHOR (note the shipped collision: proposed 27b-tp2 low=1
+  duplicates fn's low=1); M8 frozen-delta widens to +6 added rows. The "-urgent/-low siblings join
+  later" deferral (plan Deferred / STATE deferred) is WITHDRAWN.
+- 2026-11-22 owner-ruling D20 (**OQ-J: explicit `Qwen Dense + Local` routes to
+  `gpu-ai/qwen3.8-27b-radiance` (the parked q27 lane) — D4's kept-27b-q4 row SUPERSEDED**): the
+  owner chose the literal "everything → radiance[-family]" over the 502-trap recommendation.
+  ACCEPTED CONSEQUENCE, recorded so nobody refiles it as a bug: an explicit Dense+Local card now
+  routes to a lane at `replicas: 0` and answers 502-loud until a manual scale-up. Moves:
+  pipeline-models `:35` row + kickoff/boards tables + M1/M5 needles (M5 `:579` 27b+Local window).
+  The `10+` background leg stays `gpu-ai/qwen3.8-27b-q4` (llama.cpp outer-swap leg, surface.sh
+  `:750-751` REQUIRES it — not part of this row).
+- 2026-11-22 owner-ruling D21 (**OQ-I SETTLED BY the rename answer (D14's best guess ratified)**):
+  the 7551/C0 ids-row PRODUCT FIELD becomes exactly `r9700` (the sanitizer port proves
+  `AI PRO R9700` derives the historical `gpu-ai-pro-r9700`, not the target pool); `AMD Radeon AI
+  PRO R9700` is recorded as the row's marketing identity in the ledger comment. C01's stop-condition
+  for the alternative derivation is retired.
+- 2026-11-22 owner-ruling D22 (**OQ-H/OQ-R2/OQ-R3 answered**): in-ticket atomic wave stays (D2
+  intact). OQ-R1: the owner WILL paste the `unique_id` receipt at C04's turn — the UUID-upgrade arm
+  stays LIVE, gated strictly on that paste (never blind). OQ-R2: the owner elects to RE-USE
+  cf-144's recorded ordinals (P15: agents 0/1 = the two R9700s, 2 = the APU) as WORKING EVIDENCE
+  cited as RECEIPT-PENDING — not host-proven; prose and tests phrase it that way.
+- 2026-11-22 owner-ruling D23 (**pre-existing reds re-pin to the RADIANCE literal**): consequence of
+  D16 — provider-loops t1/t3 + agents-md c11 (today pinning the stale `27b-q4` runner string) clear
+  to radiance in C02, with the ruling-chain comment (cf-106 OQ-14 → 2026-11-09 strata-q4 →
+  2026-11-22 radiance) carried in each leg's message; never carried silently.
+- 2026-11-22 coord-disclosed defaults D24 (**NOT ASKED, ADOPTED AS RECOMMENDED — owner may still
+  change at Final Review**): OQ-D chart = mechanism-only shell (D7 stands); OQ-F flash-TP1 profile =
+  transcribed cf-143 TP1-era array (source commit `git show e7536b2c9^:charts/radiance/values.yaml`,
+  verified) + memory 110 held + claim 1 + replicas 0 (D10 stands); OQ-G 27b-TP2 profile = q27 array
+  + `--tp 2 --tp-wire wht6`, 24Gi held, claim 2, replicas 0 (D10 stands). These are the
+  coordinator's disclosed defaults folded from the plan's recommendations, not owner verdicts.
+- 2026-11-22 rework D25 (**wave/depends reconciliation after (b)**): C04's claim now rides
+  `services/gpu-ai/prod/values.yaml` (llama-swap overlay block) — the SAME FILE C05 edits (radiance
+  blocks/peers/roster). C05's depends_on gains **C04** (both plans' tables previously read
+  [C01,C02,C03]; STATE's C02 row also mis-stated wave 2/deps [C01] against the plan table's wave
+  1/[] — folded to the plan table: C02 wave 1). Waves unchanged: 1 {C01,C02} → 2 {C03,C04} → 3
+  {C05} → 4 {C06}; same-file safety is served by wave ordering plus the added depends edge.
+- 2026-11-22 owner-ruling D26 (**OQ-K: K1 — strata parks at `replicas: 0`**, confirmation round):
+  D17's conflict resolved by parking, not by moving fn. C04's STOP condition is therefore DISARMED —
+  it executes as specced. Live grounding verified post-fold: `Deployment/gpu-ai-llama-swap-strata` is
+  ALREADY `0/0` on ai-gpu (EXPLORE §1 live table), and no `replicas` override exists in
+  `charts/llama-swap/values.yaml` or the strata blocks of `services/gpu-ai/prod/values.yaml` (the
+  controller renders app-template's default 1) — so git-desired-1 vs live-0 IS the pre-existing
+  `OutOfSync/Healthy` delta on `gpu-ai-llama-swap` (EXPLORE gotcha 17). K1 thus makes git match the
+  running reality and NETS OUT that drift instead of resuming it; a sync that left strata at 1 would
+  have produced a permanently-Pending pod (`Insufficient amd.com/gpu-r9700`). Provider stays
+  registered (MoE route answers loud 502 while parked, same law as the resting radiance lanes);
+  MoE bring-up is the owner's scale act (fn→0 first) per the C06 runbook. Rejected alternatives
+  recorded: K2 (keep 1, accept Pending) and K3 (park fn — contradicts D16/D18's approved fn-live
+  default lane) and K4 (revert to (a) — would un-rule D17).
+
+## Deferred
+- DRA lane (triggers in D11) — recorded, no action.
+- fn memory DOWN re-pin (cf-144 P11's owner leg) and the §12 co-existence re-open it unlocks.
+- ~~`-urgent`/`-low` siblings for resting lanes~~ WITHDRAWN by D19 (full trios ship in C05).
+  Strata on-target [VERIFY] posture (cf-144 P17, owner leg); Grafana per-lane dashboards
+  (cf-143 card #2); gpu-cluster naming (cf-144 C04 card).
+- MoE bring-up runbook (fn→0 then strata→1 scale act) — prose ships in C06 (roster note); the
+  scale acts themselves are owner legs forever.
+- Upstream feature ask (per-card selection in the plugin — cf-143 §R7's RECOMMENDED ask) stays
+  unfiled, owner's call.
