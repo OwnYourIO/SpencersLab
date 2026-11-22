@@ -148,7 +148,15 @@
     "evidence": "fresh full range 7219bf5..8a84ea293: 93P/0F/1S suite; 67P baseline; all lints/renders pass; own sentinel 30/30; vllm byte-identical precedent; D-11 zero-diff on forbidden surfaces; aislop 100/100; eight owner rulings honored in the whole",
     "minor_coord_owned": "plan OE-2 PromQL bracket-form -> label-selector fix: routed to plan session (edit denied to coord by design = firewall correct), APPLIED + grep-verified by ses_dfff64cc4ffeEPtJRzMpi1DgN2",
     "deferred_nits": ["test assert message f-prefix", "provenance line numbers", "46-green name"],
-    "handoff_statement": "R2 vllm-resurrection + R5a re-rule framing carried into the card summary comment"
+    "handoff_statement": "R2 vllm-resurrection + R5a re-rule framing carried into the card summary comment",
+    "post_rebase": {
+      "at": "2026-11-22",
+      "reason": "owner directive: pull in main, adapt to incoming",
+      "main_was": "193c12798 (carries merged cf-144 TP2 run + cf-135 renovate/locks + cf-55 runner/release)",
+      "rebase": "conflict-free, 4/4 commits replayed byte-identical per-patch (new: c2958fdaa/641505fb4/66650ca80/0aab458a2)",
+      "verification": "fresh full gauntlet (ses_dff550e06fferUpjtom7z7L1E3): VERDICT GREEN — charts/radiance suite 96P/0F/1S (my 26 green; baseline now 70P/1S from cf-144's +3 legs); tag chain closed testlib==pin==url at 1.17.0 (no re-pin); R5b job label radiance on both releases post-serveArgs-flip, zero annotation collision; runbook window coherent with cf-144's insert-only notes (grep-clean of scrape/dashboards terms); all four tests/notes + chart-lock guards pass; sentinels + R8 clean; git diff main...HEAD = 14 files +1886/-6 identical to pre-rebase; aislop 100/100",
+      "known_stale_citations": "C01 review's values.yaml:193-194 (now 237-238) and plan Commands 67P baseline (now 70P) — historical, tests position-agnostic, no action"
+    }
   },
   "chunks": {
     "C01": {
