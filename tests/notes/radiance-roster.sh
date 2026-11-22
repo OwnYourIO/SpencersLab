@@ -132,9 +132,17 @@ for key, want in rows.items():
     # row: the row's own ids and URLs carry digits (the lane key ends "tp1"),
     # so a row-wide digit search absorbed a falsified claim cell — the plant
     # could not redden it (gate-integrity law, cf. D31).
-    if want["claim"] and want["claim"] not in cells[1:]:
+    # claim/replicas are REQUIRED reads (C06-review NIT A: the same vacuity
+    # family D49 cured on the served channel — an empty tree-side value used to
+    # SKIP the cell check, so a future read-break would bless any row). Empty is
+    # a broken reader, never an absence: every claimant ships both figures.
+    if not want["claim"]:
+        errs.append(f"{key}: the tree read yielded no {pool!r} claim for this claimant — the claim is REQUIRED and an empty read is a broken reader, not an absence (same law as the served env); this row cannot be machine-checked")
+    elif want["claim"] not in cells[1:]:
         errs.append(f"{key}: row {cells} does not carry the shipped claim count {want['claim']!r}")
-    if want["replicas"] and want["replicas"] not in cells[1:]:
+    if not want["replicas"]:
+        errs.append(f"{key}: the tree read yielded no replicas for this claimant — REQUIRED; an empty read is a broken reader, not an absence (same law as the claim); this row cannot be machine-checked")
+    elif want["replicas"] not in cells[1:]:
         errs.append(f"{key}: row {cells} does not carry the shipped replicas {want['replicas']!r}")
     if want["radiance"]:
         if not want["served"]:
@@ -212,17 +220,17 @@ fi
 if want t4; then
   require_note T4
   probe=$(mktemp)
-  # plant_redden <claimant-key> <claim|served> <diagnostic-pattern>
-  # Falsifies one CELL of the keyed row (the claim column, or the served-id
-  # column replaced by a SIBLING lane's suffixed id), then demands that
-  # check_rows redden AND name the reason. The reason check is the arm's own
-  # teeth: the original plant substituted the first bare "1" on the line, hit
-  # the key token "tp1" instead of the claim cell, and the checker reddened
-  # because the row VANISHED — a wrong-reason red that hid the vacuous served
-  # read for a whole round.
+  # plant_redden <claimant-key> <claim|served|bind> <diagnostic-pattern>
+  # Falsifies one CELL of the keyed row (the claim column; the served-id column
+  # replaced by a SIBLING lane's suffixed id; or the CLAIMANT cell itself,
+  # renamed to another lane), then demands that check_rows redden AND name the
+  # reason. The reason check is the arm's own teeth (D49): the original plant
+  # substituted the first bare "1" on the line, hit the key token "tp1" instead
+  # of the claim cell, and the checker reddened because the row VANISHED — a
+  # wrong-reason red that hid the vacuous served read for a whole round.
   plant_redden() {
     cp "$NOTE" "$probe"
-    NOTE_PATH="$probe" PLANT_KEY="$1" PLANT_MODE="$2" PLANT_TO="$( [ "$2" = claim ] && printf '9' || printf 'qwen3.8-flash-next-radiance-tp1' )" python3 - <<'PY' || fail "T4: the $2 plant found no $1 row/cell to falsify — the probe table shape moved and the teeth silently vanished with it"
+    NOTE_PATH="$probe" PLANT_KEY="$1" PLANT_MODE="$2" PLANT_TO="$( case "$2" in claim) printf '9' ;; bind) printf 'radiance-flash-tp1' ;; *) printf 'qwen3.8-flash-next-radiance-tp1' ;; esac )" python3 - <<'PY' || fail "T4: the $2 plant found no $1 row/cell to falsify — the probe table shape moved and the teeth silently vanished with it"
 import os, sys
 
 path = os.environ["NOTE_PATH"]
@@ -233,10 +241,10 @@ for i, ln in enumerate(lines):
         stripped = ln.strip().strip("|")
         if stripped.split("|")[0].strip().strip("`") == key:
             cells = stripped.split("|")
-            col = 1 if mode == "claim" else 3   # Claim column / Served id column
+            col = {"claim": 1, "served": 3, "bind": 0}[mode]   # claimant cell / claim column / served id column
             if len(cells) <= col:
                 raise SystemExit(f"probe: {key} row has no {mode} column")
-            cells[col] = f" {to} "
+            cells[col] = f" `{to} `" if mode == "bind" else f" {to} "
             lines[i] = "|" + "|".join(cells) + "|"
             break
 else:
@@ -251,8 +259,16 @@ PY
   }
   plant_redden radiance-flash-tp1 claim 'radiance-flash-tp1: row .* does not carry the shipped claim count'
   plant_redden radiance served 'radiance: row does not name its served id'
+  # The binding law itself (C06-review NIT B): rename STRATA's claimant cell to
+  # flash-TP1's key. Rows bind on the first cell, so strata keys nothing and
+  # reddens BY NAME — while an any-cell fallback would bind strata to the real
+  # flash-TP1 row (its cost prose names strata, and 1/0 equals strata's own
+  # figures with served unchecked for strata) and pass VACUOUSLY. Today's
+  # numbers make that confusion invisible to every other leg; this plant pins
+  # the law that refuses it.
+  plant_redden "$STRATA_CLAIMANT" bind "no roster table row names .strata"
   rm -f "$probe"
-  ok "T4: the row checker reddens, naming the reason, on a planted claim-count mismatch and on a planted sibling served id (T2 has teeth on both machine-checked channels)"
+  ok "T4: the row checker reddens, naming the reason, on a planted claim-count mismatch, a planted sibling served id, and a planted claimant-cell rename (teeth on both channels AND on the row-binding law)"
 fi
 
 printf 'PASS: radiance roster-note contract checks (%s ok)\n' "$checks"
