@@ -906,6 +906,12 @@ fi
 # ticket's surfaces all ride existing lines (subagents/mirrors, loops,
 # scripts/*, the three plugins, the skills pair trees, rules source +
 # AGENTS.md, opencode.jsonc, tests/*); only the folder joins.
+# cf-126 C06 ROUND 3 (D37 route b′, validation_at_fault admit): the committed
+# .openchamber/project.json artifact + its canonical fixture join the admit
+# union. The fixture sits under the tests/* line already, but is listed
+# explicitly as the ruling's artifact pair — the trail beats terseness here
+# (one wrong entry voids the whole project scope; the paths must be readable
+# as sanctioned at a glance).
 # cf-143 (2026-11-12, agent-test round, chunks/C01..C07 files-in-scope): the
 # serving-model ticket for the radiance engine — own plan folder on the D9
 # rule, plus the serving surfaces its chunks declare, exact-file style per
@@ -997,6 +1003,8 @@ if want t14; then
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
+      .openchamber/project.json|\
+      tests/openchamber-project/default-summary-instructions.txt|\
       .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml|\
       .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
       charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\

@@ -92,6 +92,7 @@ container images (`containers/`). **ArgoCD applies everything — never
   hand-written OpenCode plugin (never rulesync-generated). Both enforce the
   "Comments and code quality" rule above.
 - `.agents/notes/` — free-form repo notes (SpencersLab-specific extra).
+- `.openchamber/project.json` — the hand-edited, committed OpenChamber project overrides: the `session.summary.instructions` entry carries the full non-destructive "Do NOT compact or mutate session history" safety default plus the appended compaction pointer line, and whole-replacement resolution by key presence means an incomplete override voids that safety clause — validation lives in `tests/openchamber-project/`.
 
 ## Agents
 

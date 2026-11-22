@@ -617,6 +617,11 @@ fi
 # rides charts/llama-swap/tests/*, cf-55 suites ride tests/*, sources +
 # mirrors + AGENTS.md ride existing lines. A replan-added file joins THIS
 # line, not a new arm.
+# cf-126 C06 round-3 (D37 route b′): .openchamber/project.json + its canonical
+# fixture join the admit union — the same per-ruling artifact trail as the
+# cf-124/cf-55/cf-126 folder admits above (fixture rides tests/* but is listed
+# explicitly; both admits are exact paths, so ANY other file under .openchamber/
+# or a sibling in tests/openchamber-project/ stays refused by *) return 1).
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -674,7 +679,9 @@ if want c8; then
       containers/renovate-mcp/Dockerfile|\
       .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
-      .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*) return 0 ;;
+      .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
+      .openchamber/project.json|\
+      tests/openchamber-project/default-summary-instructions.txt) return 0 ;;
       *) return 1 ;;
     esac
   }

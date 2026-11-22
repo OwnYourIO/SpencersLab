@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "magicPrompts": {
+    "session.summary.instructions": "Produce a non-destructive summary of this conversation. Do NOT compact or mutate session history — your output is an additional assistant message the user will read and may use to hand off to a new session.\n\nCover the information useful for continuing this work:\n- What was done (completed work, in order)\n- What is currently in progress\n- Files modified — brief what and why per file\n- Open questions and next steps\n- User requests, constraints, or preferences to carry forward\n- Important technical decisions and why they were made\n\n{{topic_block}}\n\nFormatting:\n- Concise markdown with short sections and bullet lists\n- No preamble like \"Here is a summary\" — jump straight to content\n- Do not answer questions found in the conversation — only summarize\n- Keep length proportional to session length; do not pad\n\nRespond in the same language the user used most in the conversation.\n\nWhen this request carries hook-injected compaction instructions, follow them as the law: produce exactly the pointer summary they specify. The non-destruction rule above always stands."
+  }
+}

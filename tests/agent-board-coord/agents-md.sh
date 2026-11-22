@@ -389,6 +389,11 @@ fi
 # charts/llama-swap/tests/*; the cf-55 contract suites ride tests/*; the
 # rules/skill sources + mirrors + AGENTS.md ride existing lines. A
 # replan-added file joins THIS line, not a new arm.
+# cf-126 C06 round-3 (D37 route b′): the committed .openchamber/project.json
+# artifact + its canonical fixture join the admit union — the fixture rides
+# tests/* already but is listed explicitly as the ruling's artifact pair (the
+# void-whole-map invariant makes the trail worth two lines; same admit class
+# as every per-ticket entry above).
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -439,6 +444,8 @@ if want c7; then
       .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
+      .openchamber/project.json|\
+      tests/openchamber-project/default-summary-instructions.txt|\
       .agents/plans/2026/2026-11-cf-143-feat-radiance-replaces-strata/*|\
       charts/radiance/*|charts/amd-gpu/*|charts/vllm/tests/*|\
       .github/workflows/vllm-render-tests.yaml|.github/workflows/radiance-render-tests.yaml|\
