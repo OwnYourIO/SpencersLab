@@ -13,7 +13,8 @@
 #   docker — the pod below: privileged DinD sidecar + runner container, the
 #            5-label baked job-image set (four act-24.04-family labels on
 #            ghcr.io/ownyourio/forgejo-runner, ubuntu-22.04 plain act),
-#            DOCKER_HOST at the in-pod socket.
+#            DOCKER_HOST at the in-pod socket, shared into job containers
+#            via config container.docker_host (cf-6, 2026-11-21).
 #   host   — jobs run directly in the runner container (the toolchain image,
 #            ghcr.io/ownyourio/forgejo-host-runner). Helm parses values.yaml
 #            as plain YAML, so the toggle cannot gate this file's structure;
@@ -162,7 +163,9 @@ app-template:
         # k3s 1.36.5). Without `restartPolicy: Always` the pod dies when
         # dockerd exits. Privileged on purpose — the only deliberately
         # privileged container in the pod; jobs stay sandboxed
-        # (container.privileged: false in the runner config).
+        # (container.privileged: false in the runner config) but hold the
+        # pod-local daemon through the shared socket — unprivileged is not
+        # the same as unreachable (cf-6; the cf-97 trust boundary).
         #
         # No storage-driver env: the node root-fs type is unverified —
         # dockerd ships overlay2 and degrades on its own; forcing vfs is a

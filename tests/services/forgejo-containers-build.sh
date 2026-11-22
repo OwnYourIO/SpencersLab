@@ -380,9 +380,9 @@ def need(cond, msg):
 uses = {s['uses'] for job in jobs.values() for s in (job or {}).get('steps', [])
         if isinstance(s, dict) and 'uses' in s}
 # Mirror-independence (D8/RESEARCH C): data.forgejo.org's action set beyond
-# checkout is unproven, so checkout@v6 is the only action this workflow may
+# checkout is unproven, so checkout@v7 is the only action this workflow may
 # ask the mirror to resolve.
-need(uses == {'actions/checkout@v6'}, f'uses set is {sorted(uses)}, expected exactly actions/checkout@v6')
+need(uses == {'actions/checkout@v7'}, f'uses set is {sorted(uses)}, expected exactly actions/checkout@v7')
 for s in ('type=gha', 'build-push-action', 'setup-buildx-action', 'metadata-action', 'login-action'):
     need(raw.count(s) == 0, f'{s!r} occurs {raw.count(s)} time(s), expected zero (plain docker build/push only, D8)')
 runs = '\n'.join(str(st.get('run', '')) for job in jobs.values()
@@ -393,7 +393,7 @@ PY
   then
     return 1
   fi
-  ok "t6: uses is checkout@v6 only; no docker/* actions or gha-cache strings; plain docker build+push present [C01 AC8]"
+  ok "t6: uses is checkout@v7 only; no docker/* actions or gha-cache strings; plain docker build+push present [C01 AC8]"
 }
 
 leg_t7() {
@@ -817,7 +817,7 @@ def need(cond, msg):
 
 def checkouts(job):
     return [s for s in ((jobs.get(job) or {}).get('steps') or [])
-            if isinstance(s, dict) and s.get('uses') == 'actions/checkout@v6']
+            if isinstance(s, dict) and s.get('uses') == 'actions/checkout@v7']
 
 
 # t6 pins uses: but never reads with:, and deleting the depth block survived
@@ -2078,15 +2078,21 @@ PY
 }
 
 leg_x4() {
+  # release.yaml left this fence on 2026-11-21 (cf-6 absorption of cf-55's
+  # 1ada03a50, which deleted the GitHub release twin when the chart
+  # releases moved to .forgejo/workflows/release.yaml). The fence guards the
+  # .github sibling fleet at cutover, not release continuity across fleets —
+  # the moved file and its deleted twin are pinned by forgejo-ci-surface.sh
+  # t1/t2 and the agent-board-coord twin-path bans.
   local missing=() f
-  for f in aislop.yaml gpt-researcher-render-tests.yaml llama-swap-tools-tests.yaml release.yaml rulesync.yaml vllm-render-tests.yaml; do
+  for f in aislop.yaml gpt-researcher-render-tests.yaml llama-swap-tools-tests.yaml rulesync.yaml vllm-render-tests.yaml; do
     [ -f ".github/workflows/$f" ] || missing+=("$f")
   done
   if [ "${#missing[@]}" -gt 0 ]; then
-    printf 'FAIL: x4: .github/workflows/%s is gone — C02 narrows docker-build.yaml only; every other workflow stays (C02 AC1 scope fence)\n' "${missing[0]}" >&2
+    printf 'FAIL: x4: .github/workflows/%s is gone — C02 narrows docker-build.yaml only; every other cutover sibling stays (C02 AC1 scope fence)\n' "${missing[0]}" >&2
     return 1
   fi
-  ok "x4: the six sibling .github/workflows files are untouched (cutover scope fence) [C02 AC1]"
+  ok "x4: the five cutover sibling .github/workflows files are untouched (scope fence) [C02 AC1]"
 }
 
 leg_x5() {

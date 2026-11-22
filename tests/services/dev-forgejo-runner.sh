@@ -17,8 +17,10 @@
 # Supersession (2026-10-25 user decision, ticket 2026-10-feat-forgejo-auth-
 # support): dev deploys forgejo-runner-dev ONLY — the forgejo-runner-infra
 # alias, its top-level slice and its custom-values slot are un-wired from the
-# deployed surface (infra runner relocation pending). The chart keeps the
-# multi-instance capability, so the chart-level legs (t1-t4, t5's chart-
+# deployed surface; the relocation that decision anticipated completed on
+# 2026-11-05 (cf-104 e824542f8) as the gpu-cluster release
+# forgejo-runner-gpu, dialing the infra instance over HTTPS. The chart keeps
+# the multi-instance capability, so the chart-level legs (t1-t4, t5's chart-
 # sentinel leg) are unchanged; the dev-deployed-slice legs (t5/t7-t10) assert
 # the single aliased app.
 #
@@ -625,9 +627,10 @@ fi
 # resolve to, helm+cr as IN-image facts, the manual calendar-pin bump, and —
 # only on the act-22.04 limb — the installer-pin caveat; the no-digest rule
 # and the git-lfs↔labels binding survive. The labels map itself stays t2's
-# (ACT_LABELS), and the dev trio-exemption comment window stays t5's
-# (widening that window is the false-positive class this suite already
-# carries), so neither is re-checked here.
+# (ACT_LABELS), and the dev trio-exemption comment window stays t5's (since
+# the cf-6 OQ-A narrowing the capture ends before the next entry's leading
+# comment — the false-positive class this suite carried), so neither is
+# re-checked here.
 if python3 - "$RUNNER/templates/secret-runner.yaml" "$WORK/t14-count" <<'PY'
 import re, sys
 
@@ -736,6 +739,123 @@ then
 else
   exit 1
 fi
+# --- t15: docker-backend config.container is the complete socket contract (red-first) -
+# Runner v13.2.0 defaults container.docker_host to "-" — do NOT share the
+# daemon socket with job containers — so the chart's docker branch must opt
+# in explicitly: without the key the job container has no
+# /var/run/docker.sock and docker build dies in the dial (the failed forge
+# container-build runs, EXPLORE §2/§4). Exact key-set equality: an added or
+# replaced key silently changes what jobs can reach. DESIGNED RED until the
+# line lands in templates/secret-runner.yaml's docker branch; without a pin
+# here a future revert rides green.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t15: docker-backend container pin not run (dependency update unavailable)"
+else
+  if python3 - "$runner_out_dev" "$runner_out_infra" "$RELEASE_DEV" "$RELEASE_INFRA" "$WORK/container-count" <<'PY'
+import sys, yaml
+
+(render_dev, render_infra, rel_dev, rel_infra, count_file) = sys.argv[1:6]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+EXPECTED = {'privileged': False, 'docker_host': 'unix:///var/run/docker.sock'}
+
+try:
+    for render_file, release in ((render_dev, rel_dev), (render_infra, rel_infra)):
+        docs = [d for d in yaml.safe_load_all(open(render_file)) if d]
+        es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+        if len(es) != 1:
+            bad(f't15: {release} — the render has {len(es)} ExternalSecret(s), expected exactly one')
+        data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+        cfg = yaml.safe_load(data.get('config.yaml') or '')
+        container = (cfg or {}).get('container')
+        if container != EXPECTED:
+            bad(f't15: {release} — the docker-backend config.container is {container!r}, expected exactly {EXPECTED!r} — jobs must reach the in-pod dind socket at /var/run/docker.sock (the runner default "-" shares nothing; cf-6)')
+    ok(f't15: both docker-backend releases render config.container exactly as privileged false + docker_host unix:///var/run/docker.sock (complete job→dind socket contract, cf-6)')
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't15: the container-block checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/container-count")))
+  else
+    exit 1
+  fi
+fi
+
+# --- t16: host-backend config keeps the container block OFF (green-first) --
+# The cf-6 fix belongs to the docker branch of the template gate ONLY; host
+# releases execute jobs in the runner container itself, where a container:
+# block is docker-mode syntax (card #88 shape, EXPLORE §7). Green before and
+# after the fix — its job is to turn a future wrong-branch fix red. The
+# null-outs mirror the release-slice contract; the template's C03 gate
+# refuses to render host mode while docker-only structures survive, so a
+# surviving dind/DOCKER_HOST/socket fails this leg loudly at render time.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t16: host-backend companion not run (dependency update unavailable)"
+else
+  host_out="$WORK/runner-render-host.yaml"
+  if ! "$helm_bin" template host-probe "$runner_copy" \
+      --set "bitwardenIds.runner-token=$TEST_UUID_DEV" \
+      --set runner.backend=host \
+      --set 'app-template.controllers.runner.initContainers.dind=null' \
+      --set 'app-template.controllers.runner.containers.runner.env.DOCKER_HOST=null' \
+      --set 'app-template.persistence.socket=null' \
+    >"$host_out" 2>"$WORK/runner-render-host.err"; then
+    tail -n 30 "$WORK/runner-render-host.err" >&2
+    fail "t16: helm template of $RUNNER (runner.backend=host with the three slice null-outs) failed (log kept at $WORK/runner-render-host.err)"
+  fi
+  if python3 - "$host_out" "$WORK/host-count" <<'PY'
+import sys, yaml
+
+host_out, count_file = sys.argv[1:3]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    docs = [d for d in yaml.safe_load_all(open(host_out)) if d]
+    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+    if len(es) != 1:
+        bad(f't16: the host render has {len(es)} ExternalSecret(s), expected exactly one')
+    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+    cfg = yaml.safe_load(data.get('config.yaml') or '')
+    if set(cfg) != {'cache', 'host', 'runner', 'server'}:
+        bad(f't16: the host-backend config keys are {sorted(cfg)}, expected exactly [cache, host, runner, server]')
+    if 'container' in (cfg or {}):
+        bad(f't16: the host-backend config gained a container block ({cfg["container"]!r}) — the socket-share fix is docker-branch-only; host mode executes jobs in the runner container')
+    ok('t16: the host-backend render keeps config keys exactly [cache, host, runner, server] with no container block (branch separation intact)')
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't16: the host-render checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/host-count")))
+  else
+    exit 1
+  fi
+fi
 # --- t5: chart sentinel + aliased charts entries + top-level slices --------
 if python3 - "$RUNNER/values.yaml" "$DEV_VALUES" "$WORK/t5-count" <<'PY'
 import re, sys, yaml
@@ -787,7 +907,7 @@ try:
     if 'forgejo-runner' in charts:
         bad(f't5: {dev_vals} still has a charts.forgejo-runner entry (the aliased entry replaces it — the old app would not be pruned)')
     if UNWIRED_KEY in charts:
-        bad(f't5: {dev_vals} has charts.{UNWIRED_KEY} again — dev deploys the dev runner only (user decision 2026-10-25; infra relocation pending)')
+        bad(f't5: {dev_vals} has charts.{UNWIRED_KEY} again — dev deploys the dev runner only (user decision 2026-10-25; the infra dial-out rides the gpu-cluster release since cf-104 e824542f8)')
     for key in APP_KEYS:
         e = charts.get(key)
         if not isinstance(e, dict):
@@ -840,29 +960,47 @@ try:
     hi = max(entry_idx.values())
     hi_indent = len(lines[hi]) - len(lines[hi].lstrip())
     i = hi + 1
+    at_sibling = False
     while i < len(lines):
         l = lines[i]
         s = l.strip()
         if s and not s.startswith('#'):
             if (len(l) - len(l.lstrip())) <= hi_indent:
+                at_sibling = True
                 break
         i += 1
+    if at_sibling:
+        # cf-6 OQ-A: the contiguous comment run immediately above the next
+        # sibling key documents THAT entry, not this one — reading it into
+        # this block is how cf-93's "appName == chart name for both" pair
+        # comment turned into this leg's false positive. Step back over it.
+        k = i - 1
+        while k > hi and lines[k].lstrip().startswith('#'):
+            k -= 1
+        i = k + 1
     region = lines[j + 1:i]
     comments = [l for l in region if l.strip().startswith('#')]
     block_text = '\n'.join(comments)
+    # The rationale wraps across comment lines, so the phrase checks run on
+    # the whitespace-collapsed text (t14's precedent), never on raw lines.
+    flat = ' '.join(block_text.split())
     if not any(re.search(r'ingress|proxy', c, re.IGNORECASE) for c in comments):
         bad(f't5: the aliased charts entry has no comment explaining the deliberately missing ingress/proxy leg (client-only service)')
-    # Single client-only runner since 2026-10-25 (user decision): the old
-    # wording claiming BOTH dial out must fail, the deployed one must be
-    # named, and the un-wired infra instance must read as relocation-pending
-    # so its absence is never re-filed as an oversight.
-    if re.search(r'\bboth\b', block_text, re.IGNORECASE):
-        bad('t5: the trio-exemption comment still claims BOTH runners dial out — dev deploys forgejo-runner-dev only since 2026-10-25')
-    if not re.search(r'forgejo-runner-dev', block_text):
+    # Single client-only runner since 2026-10-25 (user decision); the infra
+    # instance's registration relocation COMPLETED 2026-11-05 (cf-104
+    # e824542f8) as the gpu-cluster release. Pins: the corrected comment
+    # names the deployed runner, keeps the infra + relocat* vocabulary, and
+    # drops the BOTH claim (dead since 2026-10-25); the relocation-pending
+    # claim is dead since cf-104 and must not return.
+    if re.search(r'\bboth\b', flat, re.IGNORECASE):
+        bad('t5: the trio-exemption comment claims BOTH runners dial out — dev deploys forgejo-runner-dev only since 2026-10-25')
+    if not re.search(r'forgejo-runner-dev', flat):
         bad('t5: the trio-exemption comment does not name the single deployed runner (forgejo-runner-dev)')
-    if not (re.search(r'infra', block_text, re.IGNORECASE) and re.search(r'relocat|pending', block_text, re.IGNORECASE)):
-        bad('t5: the trio-exemption comment does not record the infra runner as un-wired with relocation pending (user decision 2026-10-25)')
-    ok('t5: the aliased entry carries the client-only comment for the single runner (infra relocation pending noted; still no ingress entry)')
+    if not (re.search(r'infra', flat, re.IGNORECASE) and re.search(r'relocat\w*', flat, re.IGNORECASE)):
+        bad('t5: the trio-exemption comment no longer records the infra-instance relocation vocabulary (infra + relocat*)')
+    if re.search(r'relocat\w*\b.{0,60}\bpending\b|pending\b.{0,60}relocat', flat, re.IGNORECASE):
+        bad('t5: the trio-exemption comment claims the infra relocation is still pending — cf-104 (e824542f8, 2026-11-05) completed it')
+    ok('t5: the aliased entry carries the client-only comment for the single runner (infra relocation recorded as done; no BOTH/pending claims; still no ingress entry)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -953,7 +1091,7 @@ try:
         else:
             ok(f't7: {dev_cv} carries the {key}.bitwardenIds.runner-token slot')
     if UNWIRED_KEY in cv:
-        bad(f't7: {dev_cv} still wires {UNWIRED_KEY} ({(cv[UNWIRED_KEY] or {}).get("bitwardenIds")}) — dev no longer deploys the infra runner (user decision 2026-10-25: relocation pending); the vault item stays, the dev slot must not')
+        bad(f't7: {dev_cv} still wires {UNWIRED_KEY} ({(cv[UNWIRED_KEY] or {}).get("bitwardenIds")}) — dev no longer deploys the infra runner (user decision 2026-10-25; the relocated infra dial-out rides the gpu-cluster release since cf-104 e824542f8); the vault item stays, the dev slot must not')
     if 'forgejo-runner' in cv:
         bad(f't7: {dev_cv} still has the old top-level forgejo-runner: block (the per-app blocks replace it — it would keep riding the values of the app the appset prunes)')
     ok(f't7: {dev_cv} no longer carries the old top-level forgejo-runner: block or the un-wired {UNWIRED_KEY}: block')
@@ -1019,7 +1157,7 @@ try:
             bad(f't8: {dev_cv} {key}.runner-token still carries the service sentinel {SENTINEL} — parity requires a real UUID or OVERRIDE_NEEDED')
         elif not (v == 'OVERRIDE_NEEDED' or (isinstance(v, str) and UUID_RE.match(v))):
             bad(f't8: {dev_cv} {key}.runner-token is {v!r} — not a UUID and not the documented OVERRIDE_NEEDED placeholder')
-    ok('t8: sentinel parity 1<->1 — the single chart sentinel matches exactly the one deployed custom-values slot (UUID or OVERRIDE_NEEDED, never the service sentinel); the infra app stays un-wired pending relocation')
+    ok('t8: sentinel parity 1<->1 — the single chart sentinel matches exactly the one deployed custom-values slot (UUID or OVERRIDE_NEEDED, never the service sentinel); the infra app stays un-wired (its runner rode cf-104\'s 2026-11-05 relocation to the gpu cluster)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -1132,16 +1270,21 @@ try:
     # approved plan adds the searxng LAN host. The load-bearing claims remain:
     # the original four hosts stay, the runners stay client-only (NO ingress
     # entry), and nothing beyond the approved additions appears.
+    # The addition list moved 2026-11-21 (cf-6-debug-forge-runner-docker,
+    # coord OQ-E ruling): cf-93/C10 (2026-11-01) landed the dev HA sandbox,
+    # and this pin never re-pinned for it — the leg has been red ever since,
+    # masked behind t5's fail-stop. The rule itself is unchanged: anything
+    # beyond the sanctioned hosts is still unapproved.
     base4 = {'coder', 'git', 'research', 'cluster'}
     if not base4 <= set(subs):
         bad(f't9: dev ingress.subdomains lost {sorted(base4 - set(subs))} — expected at least coder/git/research/cluster')
     runners = sorted(set(subs) & {'forgejo-runner-dev', 'forgejo-runner-infra'})
     if runners:
         bad(f't9: dev ingress.subdomains carries runner entries {runners} — the runners are client-only, so they get NO ingress entry')
-    unapproved = sorted(set(subs) - (base4 | {'searxng'}))
+    unapproved = sorted(set(subs) - (base4 | {'searxng', 'home-assistant'}))
     if unapproved:
-        bad(f't9: dev ingress.subdomains carries unapproved entries {unapproved} — only coder/git/research/cluster plus the dev-mcp-fleet C01 searxng host are sanctioned')
-    ok('t9: dev ingress.subdomains within the approved set (original four + searxng; no runner entry, no unapproved addition)')
+        bad(f't9: dev ingress.subdomains carries unapproved entries {unapproved} — only coder/git/research/cluster plus the dev-mcp-fleet C01 searxng host and the cf-93/C10 home-assistant host are sanctioned')
+    ok('t9: dev ingress.subdomains within the approved set (original four + searxng + cf-93 home-assistant; no runner entry, no unapproved addition)')
 
     # Sentinels may remain only inside the appset-generator resource (the
     # values blob, where per-app placeholders ride to the base chart). The
@@ -1152,16 +1295,68 @@ try:
     # github-mcp allowance was retired the same way by the DECISIONS
     # 2026-10-24 post-approval ruling (the real items exist — dev-github
     # LOGIN 522b1cc4 reused for github-mcp, searxng LOGIN f90806ff).
+    # This leg's own amendment is the 2026-11-21 cf-6-debug-forge-runner-docker
+    # coord OQ-E ruling below: ONE dated, permissive-anchored exemption for
+    # the three home-assistant bitwardenIds placeholders the OWNER's C10
+    # delta comment in custom-values/dev/prod-values.yaml (2026-11-01)
+    # sanctions verbatim — "Until the owner pastes the id, dev's
+    # home-assistant ExternalSecrets fail to resolve (NotReady — visibly
+    # broken by design; one id fills all three)". The exemption is a
+    # tolerance, never a demand: once the ids are pasted these paths stop
+    # holding the sentinel, it matches nothing, and the leg stays green —
+    # no edit owed here; the block then retires with the close-out-sweep
+    # card. Any OTHER occurrence — a fourth home-assistant key, another
+    # slice, another app, another custom-values file's sentinel — reddens
+    # here, on the render side (A) and at the source (B).
     raw = open(render).read()
-    if 'OVERRIDE_VIA_CUSTOM_VALUES' in raw:
-        bad('t9: the rendered dev umbrella still carries the OVERRIDE_VIA_CUSTOM_VALUES service sentinel (the -f file did not resolve it)')
+    SENT = 'OVERRIDE_VIA_CUSTOM_VALUES'
+    HA_INTERIM_IDS = {'home-assistant-pg', 'mcp-pg-grow-assistant',
+                      'mcp-pg-grow-assistant-sensors'}
+    ha_bw = ((vals.get('home-assistant') or {}).get('bitwardenIds') or {})
+    tolerated = {k for k, v in ha_bw.items() if v == SENT}
+    if not tolerated <= HA_INTERIM_IDS:
+        bad(f't9: the home-assistant slice carries {SENT} on {sorted(tolerated - HA_INTERIM_IDS)} beyond the C10 interim trio — the exemption covers exactly the three ids the owner comment sanctions (cf-6 OQ-E)')
+    if raw.count(SENT) > len(tolerated):
+        bad(f't9: {raw.count(SENT) - len(tolerated)} {SENT} occurrence(s) beyond the C10 home-assistant interim trio — the -f file must resolve every other sentinel it flows (cf-6 OQ-E)')
+    # (B) Source side: the exemption is anchored to one FILE and three
+    # KEYS — walk the PARSED values of every custom-values file (a
+    # sentinel named in owner prose is a comment, not a placeholder). No
+    # file outside dev's may carry it; dev's may carry it only on the trio
+    # paths. A sentinel elsewhere is unresolved drift regardless of what
+    # the dev render happens to show.
+    ALLOWED_SRC = {'home-assistant.bitwardenIds.' + k for k in HA_INTERIM_IDS}
+    def sent_paths(node, path, acc):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                sent_paths(v, path + [str(k)], acc)
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                sent_paths(v, path + [str(i)], acc)
+        elif node == SENT:
+            acc.append('.'.join(path))
+    import glob as _glob
+    offenders = []
+    for cf in sorted(_glob.glob('custom-values/*/prod-values.yaml')):
+        acc = []
+        try:
+            data = cv if cf == dev_cv else load(cf)
+        except Exception as ex:
+            offenders.append(f'{cf} unparsable ({type(ex).__name__})')
+            continue
+        sent_paths(data, [], acc)
+        if cf == dev_cv:
+            offenders += [f'{cf}:{p}' for p in acc if p not in ALLOWED_SRC]
+        else:
+            offenders += [f'{cf}:{p}' for p in acc]
+    if offenders:
+        bad(f't9: service sentinel outside the C10 home-assistant interim trio at its source: {offenders[:4]} — the exemption is permissive-anchored to custom-values/dev + those three keys; anything else must carry a resolved id, never the placeholder (cf-6 OQ-E)')
     for d in docs:
         if d.get('kind') == 'ApplicationSet':
             continue
         t = yaml.safe_dump(d)
         if 'OVERRIDE_' in t:
             bad(f"t9: non-appset document {((d.get('metadata') or {}).get('name'))!r} carries an OVERRIDE_* string — deploy-time sentinels may ride only in the appset-generator values blob, and the canonical must-fill slot was retired with its wiring")
-    ok('t9: no OVERRIDE_* strings outside the appset-generator resource (canonical slot retired 2026-10-26)')
+    ok('t9: OVERRIDE_* strings stay confined to the appset values blob, and the service sentinel rides only the C10 home-assistant interim trio — render side and custom-values source side both anchored (canonical slot retired 2026-10-26; cf-6 OQ-E exemption)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
