@@ -15,7 +15,7 @@ suite pins both ends instead of forcing one number:
 
 | Surface | Figure | Whose ruling |
 |---|---|---|
-| `.opencode/opencode.jsonc`, all six radiance-family rows | `limit.context: 262144` | the owner's catalog edit `b3d7fada8` (2026-11-22), protected by DECISIONS D27 ("never those six context values") — it is the window the CLIENT budgets against |
+| `.opencode/opencode.jsonc`, all twelve radiance-family rows (fn trio, q27 trio, flash-TP1 trio, 27b-TP2 trio) | `limit.context: 262144` | the owner's catalog edit `b3d7fada8` (2026-11-22) set the six then-live rows, protected by DECISIONS D27 ("never those six context values"); owner ruling D47 (2026-11-23) moved the six C05 rows to the same figure — it is the trained window the CLIENT budgets against, on every row |
 | `charts/radiance/values.yaml` → `app-template.maxModelLen`, and the `--max-model-len` the chart renders | `200000` | D17 FULL profile — what the engine ADMITS per request |
 
 The cf-143 needle asserted the two were EQUAL (`ctx == maxModelLen`, the
@@ -31,11 +31,18 @@ Rejected alternative, recorded so nobody re-files it: re-pinning the six rows to
 until the owner moves them), and M3/M8 would then be editing owner catalog
 policy rather than testing it.
 
-**Consequence for new lanes (M9):** the rows C05 authors carry `200000`, matching
-their own lane's `--max-model-len`, per chunks/C05.md. That leaves the family
-visibly split (six rows at 262144, six at 200000) with different provenance on
-each side. The suite pins each side to its own provenance and says so out loud;
-unifying them is an owner act on the six protected rows, not a ticket act.
+**Consequence for new lanes (M9) — rewritten by owner ruling D47 (2026-11-23).**
+The family is UNIFORM: the six rows C05 authored at `200000` were flipped to the
+family figure `262144` by D47, and the served `200000` survives as a separate,
+named figure in the commentary governing those rows — the M9-A2 ctx leg pins both
+halves (per-row `limit.context == 262144`, AND both figures named in the
+governing prose, with planted-drift teeth on each half). The dissent D47 records
+rather than buries, in one line: 200000 was defensible because it EQUALS the
+served admission of all four lanes (no truncation class exists there; the risk
+runs the other way — a catalog above served means over-budgeted requests meet a
+loud server refusal); the owner chose one family-wide meaning for the field, a
+convention decision, not a bug fix. The split this paragraph used to describe
+(six at 262144, six at 200000) is closed history.
 
 ## 2. The 2026-11-22 routing move (D4/D16/D20) and the flipped M8-F
 
@@ -78,7 +85,8 @@ plan's starting shape stands:
 
 **Why the negatives were rejected** (the coordinator's citation, kept because a
 resolution is only as honest as its evidence): the catalog has ONLY ever shipped
-non-negative `body.priority` — the six live rows span 0..9 — and cf-143 already
+non-negative `body.priority` — the six live rows at ruling time span 0..9 (the
+family is twelve rows since C05; the class is unchanged) — and cf-143 already
 records `priority-0` SEMANTICS as UNVERIFIED with the CI smoke as the receipt
 (`charts/llama-swap/tests/evidence/radiance-q27-peers-expected.yaml:28`,
 `charts/radiance/tests/radiance_testlib.py:317`). An authoring session does not

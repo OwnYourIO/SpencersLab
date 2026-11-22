@@ -888,7 +888,9 @@ fi
 # M8` alongside the bare M1..M7 set at C05 review and the final review; NOT in
 # the default set, so every earlier bare run stays honest (suite header, cf-143
 # posture). Contract: chunks/C05.md "## Tests" — M-leg radiance re-pins (rows
-# 9/5/1 higher-wins, ctx 200000 == the shipped maxModelLen, input [text,image]),
+# 9/5/1 higher-wins, ctx 200000 == the shipped maxModelLen — SUPERSEDED by the
+# owner's 2026-11-22 catalog edit (M8-A/M8-B headers; TEST_SPEC §1) and made
+# family-wide by D47, input [text,image]),
 # the strata-KEEP needles (Q5 made executable), the negative peer-id bar, the
 # four-surface priority coherence (catalog rows / peer floor 5 / class table +
 # per-engine polarity / chart polarity comment — AC4's "one needle set... as a
@@ -1341,6 +1343,17 @@ fi
 # served 1 since cf-143; the ladder keeps 0 for q27). The on-target smoke read
 # stays the receipt for the values as shipped; a correction re-pins here through
 # a DECISIONS line, never a silent retarget.
+#
+# The ctx half (owner ruling D47, 2026-11-23, added by the C05 landing round's
+# follow-up): every radiance-family row carries limit.context 262144 — the
+# trained window the CLIENT budgets against — and the commentary governing the
+# six NEW rows must name BOTH figures (trained 262144 / served 200000), the same
+# pairing law M8-B enforces at the fn rows. D47 flipped the six rows the C05 dev
+# authored at 200000 to the family figure; the reviewer's dissent (200000 equals
+# served admission, so no truncation class exists at 200000; the risk runs the
+# other way — over-budgeted requests meet a loud server refusal) is recorded in
+# FRICTION, not here. Before this leg NO leg read the new rows' ctx in either
+# direction — D27's recurring lesson: an unpinned convention drifts.
 if want m9; then
   [ -f "$CAT" ] || fail "M9: $CAT missing"
   cat >"$TMP/fleet.js" <<'JS'
@@ -1356,6 +1369,48 @@ const LANES = [
   { base: 'qwen3.8-flash-next-radiance-tp1',  urgent: 7, def: 3, low: 2, floor: 3 },
   { base: 'qwen3.8-27b-radiance-tp2',         urgent: 6, def: 2, low: 1, floor: 2 },
 ];
+// D47 ctx law, value half: the trained-window figure every radiance row must
+// carry. Stated for ALL four lanes (the family-wide law); the six NEW rows are
+// the drift class D47 was asked about — fn/q27 duplication of M8-A's pin is
+// deliberate defence in depth, one law two places, not a second formulation.
+const CTX_FIGURE = 262144;
+const SERVED_FIGURE = 200000;
+function ctxValueErr(key, e) {
+  if (!e.limit || e.limit.context !== CTX_FIGURE)
+    return `${key}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want ${CTX_FIGURE} — the D47 family figure (the trained window the client budgets against); the served ${SERVED_FIGURE} belongs in the commentary, never in the row`;
+  return null;
+}
+// D47 ctx law, prose half: the commentary GOVERNING the six new rows must name
+// BOTH figures. Boundaries derive from the row keys' own file order (live-lane
+// rows bound the slice backward, each new row forward) — no literal comment text
+// is pinned, so a re-worded block stays green while it names both numbers; the
+// comma spelling (262,144) is normalised. M8-B owns the fn/q27 commentary; this
+// covers the new family only.
+function ctxProseErrors(raw, modelsObj) {
+  const bad = [];
+  const occ = {};
+  for (const k of Object.keys(modelsObj)) {
+    const i = raw.indexOf(`"${k}": {`);
+    if (i >= 0) occ[k] = i;
+  }
+  const isLive = (base) => base === 'qwen3.8-flash-next-radiance' || base === 'qwen3.8-27b-radiance';
+  const laneKeys = (l) => [l.base, l.base + '-urgent', l.base + '-low'];
+  const liveKeys = LANES.filter(l => isLive(l.base)).flatMap(laneKeys);
+  const restKeys = LANES.filter(l => !isLive(l.base)).flatMap(laneKeys);
+  const missing = restKeys.filter(k => occ[k] === undefined);
+  if (missing.length)
+    return [`ctx prose: new-family row key(s) ${missing.join(', ')} not found — the governing commentary cannot be located (the rows must exist for D47 to govern them)`];
+  const firstNew = Math.min(...restKeys.map(k => occ[k]));
+  const liveOccs = liveKeys.map(k => occ[k]).filter(i => i !== undefined && i < firstNew);
+  const famStart = liveOccs.length ? Math.max(...liveOccs) : 0;
+  for (const k of restKeys) {
+    const slice = raw.slice(famStart, occ[k]);
+    const prose = slice.split('\n').filter(l => /^\s*\/\//.test(l)).join(' ').replace(/,/g, '');
+    if (!prose.includes(String(CTX_FIGURE)) || !prose.includes(String(SERVED_FIGURE)))
+      bad.push(`${k}: the commentary governing this new-family row does not name BOTH figures (trained ${CTX_FIGURE} / served ${SERVED_FIGURE}) — D47 keeps the client/served pair stated wherever the rows sit (mirrors M8-B's fn-side pairing law; the numbers may differ, the prose may not go silent)`);
+  }
+  return bad;
+}
 const errs = [];
 const rows = {};
 for (const lane of LANES) {
@@ -1378,6 +1433,8 @@ for (const lane of LANES) {
     if (!Array.isArray(caps.input) || !caps.input.includes('text'))
       errs.push(`${key}: capabilities.input ${JSON.stringify(caps.input)} does not serve text`);
     if (caps.tools !== true) errs.push(`${key}: capabilities.tools is ${JSON.stringify(caps.tools)}, want true`);
+    const ctxErr = ctxValueErr(key, e);
+    if (ctxErr) errs.push(ctxErr);
   }
 }
 // M9-A2: the class-column law, per the coordinator's follow-up ruling on D-3
@@ -1433,10 +1490,29 @@ errs.push(...lowTieErrors(LANES));
   const planted = LANES.map(l => ({ ...l, low: l.base === 'qwen3.8-flash-next-radiance-tp1' ? 0 : l.low }));
   if (!lowTieErrors(planted).length) { console.log('M9-A2 is vacuous: the planted second low collision (flash-tp1 low 0 vs q27 low 0) went unreported'); process.exit(1); }
 }
+// The ctx law, live read + self-proving teeth (same philosophy as the tie
+// teeth: a check that cannot fail cannot pass). Prose errors join the live
+// verdict; the plants run in memory so the leg cannot rot into a rubber stamp.
+{
+  const rawSrc = fs.readFileSync(process.argv[2], 'utf8');
+  errs.push(...ctxProseErrors(rawSrc, models));
+  const victim = 'qwen3.8-flash-next-radiance-tp1';
+  if (!models[victim]) {
+    errs.push(`ctx teeth cannot run: ${victim} row is absent — the D47 ctx law is unexercised until the row lands`);
+  } else if (!ctxValueErr(victim, { ...models[victim], limit: { ...models[victim].limit, context: 200000 } })) {
+    console.log(`M9-A2 ctx teeth vacuous: a planted limit.context 200000 on ${victim} went unreported`);
+    process.exit(1);
+  }
+  const stripped = rawSrc.split('\n').map(l => /^\s*\/\//.test(l) ? '' : l).join('\n');
+  if (!ctxProseErrors(stripped, models).length) {
+    console.log('M9-A2 ctx teeth vacuous: a catalog with every commentary line stripped went unreported (the JSON bodies still spell 262144 — only the prose carries the served figure)');
+    process.exit(1);
+  }
+}
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/fleet.js" "$CAT" \
-    || fail "M9[C05]: the four-lane radiance fleet contract is violated (four trios under one higher-wins ladder, TEST_SPEC §3) — designed-red naming C05 until D19's six rows land"
+    || fail "M9[C05]: the four-lane radiance fleet contract is violated (four trios under one higher-wins ladder, TEST_SPEC §3; plus the D47 ctx law — every radiance row at limit.context 262144 and BOTH figures named in the new-family commentary) — designed-red naming C05 until D19's six rows land"
   # M9-B: the frozen-delta law, re-frozen at the pre-ticket catalog (the cf-143
   # C15 precedent): base := the C15 base + the q27 trio, so the delta is exactly
   # the SIX new trio rows and nothing else. A seventh row can only arrive as a
@@ -1545,7 +1621,7 @@ PY
     python3 "$TMP/win.py" --ci "$f" 900 'qwen3.8-27b-radiance-tp2' '502' \
       || fail "M9[C05]: $f names the 27b-TP2 lane without the 502-while-idle law (the resting lane refuses loudly — same sentence q27's row carries)"
   done
-  ok "M9[C05]: four-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie accepted per TEST_SPEC §3, floors 5/4/3/2 == each lane's own default row) + frozen delta == exactly the six new rows + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05"
+  ok "M9[C05]: four-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie accepted per TEST_SPEC §3, floors 5/4/3/2 == each lane's own default row; D47 ctx: every row at limit.context 262144 with the served 200000 named in the governing commentary, both ctx teeth self-proven) + frozen delta == exactly the six new rows + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

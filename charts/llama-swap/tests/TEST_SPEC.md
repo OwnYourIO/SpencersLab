@@ -4680,3 +4680,13 @@ was re-verified against the live jsonc with the negative control, and the
 `limit.context` fail-message now names both figures (served 200000 vs the
 owner's trained 262144, D27). The ctx verdict itself is an OWNER finding
 reported by this round, not applied here.
+
+**Addendum, same day (post-D47).** The owner ruled D47: the six new rows flip to
+262144 (family convention; the reviewer's dissent — 200000 equals served
+admission, so no truncation class exists there, and the risk runs the other way
+— is recorded in the ticket's FRICTION). The flip landed with zero test-leg
+movement, exactly as D47 predicted, because no leg read the new rows' ctx — the
+unpinned-convention class D27 keeps teaching. The follow-up test round grew the
+M9-A2 ctx legs (per-row figure + both-figures prose, planted-drift teeth on both
+halves); the current law lives in `tests/pipeline-models/TEST_SPEC.md` §1, not
+in this dated note.
