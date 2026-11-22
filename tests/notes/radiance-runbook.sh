@@ -26,11 +26,15 @@
 # fenced args block containing `--served-model-name qwen3.8-flash-next-
 # radiance` — EXACTLY ONE such block; its flag/value multiset must equal the
 # chart's serveArgs (read live from charts/radiance/values.yaml, C02), the
-# four scalars needle-pinned on BOTH sides (43000 / 200000 / 8 / 110 — C12
-# AC1 amendment moved guaranteedMemoryGi 64→110: the printed 71.04-GiB
-# receipt + the owner ruling "110 GiB (your figure)" (D29), which also makes
-# the naive "110Gi" needle COLLIDE with strata's own limit line — the T2
-# regex is scope-aware (guaranteedMemoryGi context) for exactly that.
+# scalars needle-pinned on BOTH sides. cf-144 C01 TP2 re-pin (P04/P11):
+# 12288 / 200000 / 8 / tp-2 move to the TP2 era; the guaranteedMemoryGi
+# needle STAYS at 110 — owner ruling "Hold 110, re-pin after the print"
+# (P11, 2026-11-21) makes the draft-shipped 48 a REJECTED value, so this
+# script also BANS a 48 memory shape on both sides; the DOWN re-pin rides a
+# post-TP2-boot owner-receipt leg and its day will re-pin these needles in
+# ONE wave with the scalars (annotate-never-rewrite era law). C12 AC1's
+# naive "110Gi" collision with strata's limit line keeps the needle
+# scope-aware (guaranteedMemoryGi context).
 #
 # T4 citation resolver: the vllm T4 regex shape extended to THIS folder's
 # RESEARCH.md incl. the §R6 block (forms: RQ<n>, R6-Q<n>, R6-Q4-<row>,
@@ -205,25 +209,44 @@ else:
         only_chart = {k: chart_flags[k] for k in chart_flags if k not in rb_flags}
         errs.append(f"runbook args block != chart serveArgs: runbook-side diff {only_rb}, chart-only {only_chart}")
 
-# Scalars BOTH sides (chunk T2 + C12 AC1 amendment re-pin: 43000 / 200000 / 8 / 110).
-for num in ("43000", "200000"):
+# Scalars BOTH sides (cf-144 C01 TP2 re-pin: 12288 / 200000 / 8 / tp 2 / 110
+# — the memory scalar is the P11 HELD era, the pool/chunk/tp scalars are the
+# moved era).
+for num in ("12288", "200000"):
     if num not in rb:
-        errs.append(f"the runbook never names {num} (shipped scalar)")
+        errs.append(f"the runbook never names {num} (TP2 shipped scalar)")
     if num not in open(chart).read():
-        errs.append(f"the chart values never name {num} (single-source scalar)")
+        errs.append(f"the chart values never name {num} (TP2 single-source scalar)")
 if not re.search(r"max-num-seqs[ \t\"':=-]*8\b|8[ \t-]*sessions|8 concurrent", rb):
     errs.append("the runbook never states the 8-session scalar")
-# C12 AC4 (amendment) re-pin: the shipped scalar needle moves 64→110 (the
-# 64-era reading died at the live OOM: the engine printed 71.04 GiB pinned
-# against a 64.00 cgroup; the owner then ruled 110 over D28's 96, D29).
-# SCOPE-AWARE by necessity: unlike 96, "110Gi" ALONE is ambiguous — strata's
-# OWN limit reads "110Gi" (doc :117/:195 and charts/llama-swap/values.yaml:
-# 1319-1325) — so the needle requires the guaranteedMemoryGi context, line-
-# local. A bare mention of 110 anywhere cannot satisfy it; a rewrite that
-# states the scalar as "Guaranteed pair 110" inside the scalars line does.
+if chart_flags.get("--tp") != "2":
+    errs.append(f"chart serveArgs --tp is {chart_flags.get('--tp')!r}, want '2' — the TP2 flip "
+                "(doc §7/P04) never landed in the single source")
+if not re.search(r"--tp[ \t\"':=-]*2\b", rb):
+    errs.append("the runbook never states tp 2 (BOTH-sides pin, cf-144 C01)")
+# C12 AC4 (amendment) re-pin + cf-144 P11 HOLD: the shipped scalar needle
+# STAYS 110 — the 64-era reading died at the live OOM (the engine printed
+# 71.04 GiB pinned against a 64.00 cgroup; the owner ruled 110 over D28's 96,
+# D29) and the TP2 wave does NOT move it ("Hold 110, re-pin after the print",
+# owner ruling 2026-11-21, DECISIONS P11 — the draft-shipped 48 is
+# REJECTED): the DOWN re-pin to the printed class is a POST-TP2-BOOT
+# OWNER-RECEIPT leg, so no 48/40 memory shape may enter either carrier until
+# that print exists. SCOPE-AWARE by necessity: unlike 96, "110Gi" ALONE is
+# ambiguous — strata's OWN limit reads "110Gi" (doc :117/:195 and
+# charts/llama-swap/values.yaml:1319-1325) — so the needle requires the
+# guaranteedMemoryGi context, line-local. A bare mention of 110 anywhere
+# cannot satisfy it; a rewrite that states the scalar as "Guaranteed pair
+# 110" inside the scalars line does.
 if not re.search(r"guaranteedMemoryGi[^\n]{0,20}\b110\b", rb):
     errs.append("the runbook never states the 110 guaranteedMemoryGi scalar (guaranteedMemoryGi-context "
-                "needle — '110Gi' alone would collide with strata's limit line, C12 AC1 amendment)")
+                "needle — '110Gi' alone would collide with strata's limit line, C12 AC1 amendment; "
+                "cf-144 P11 keeps it 110, NOT the rejected draft 48)")
+if app.get("guaranteedMemoryGi") != 110:
+    errs.append(f"chart guaranteedMemoryGi is {app.get('guaranteedMemoryGi')!r}, want 110 HELD (P11 — "
+                "the DOWN re-pin awaits the first-boot print; no 48 ships this wave)")
+if re.search(r"guaranteedMemoryGi[^\n]{0,20}\b(48|40)\b", rb):
+    errs.append("the runbook carries a 48/40 guaranteedMemoryGi shape — the draft-shipped 48 is "
+                "REJECTED (P11); the memory era flips only by the post-TP2-boot owner-receipt leg")
 
 # Gate order: step-0 gates precede any boot text; scale-down precedes start.
 m0 = re.search(r"(?m)^#{1,6}\s*(Step\s+)?0(?=[.: \t—–-]|$)", rb)
@@ -248,7 +271,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T2: shipped-flag equality / scalar pins / gate order violated (C06 T2 — diagnostics above)"
   fi
-  ok "T2: the runbook's shipped-args block equals the chart serveArgs flag set (single DRY_RUN block), the 43000/200000/8/110 scalars are pinned BOTH sides (scope-aware), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
+  ok "T2: the runbook's shipped-args block equals the chart serveArgs flag set (single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
 fi
 
 # --- T3: names block + triple-digest ledger + polarity + gates a-e ---------------
@@ -505,7 +528,12 @@ need(r"(?is)pending[^\n]{0,200}(scale.?down|by design|handshake)|(scale.?down|by
 # The 8-session gate at FULL sizing (RESEARCH OQ3 closes here):
 need(r"(?i)(8.concurrent|8.session|eight.session)[^\n]{0,120}(gate|hold|start|concurrent)|(gate[^\n]{0,60}8 concurrent)",
      "the 8-session gate at full sizing")
-need(r"(?i)kv.resident[^\n]{0,120}32768|32768", "the kv-resident 32768 lever the gate exercises")
+# cf-144 C01 era re-pin: the gate's cache LEVER moved with the profile — the
+# kv-resident 32768 mirror (the single-card shape) is retired and the
+# prefix-cache tier ships at 4096 (P04 "tier back, mirror gone"). The
+# [^.]-window is wrap-safe across the doc's line breaks.
+need(r"(?is)prefix[ \t-]cache[^.]{0,220}4096|4096[^.]{0,220}prefix[ \t-]cache",
+     "the TP2 cache lever the 8-session gate exercises (prefix tier at 4096; the kv-resident 32768 era retired at cf-144 P04)")
 # The polarity live-check (Q2) — metric names make it falsifiable:
 need_lit("radiance:num_requests_preempted", "the preemption metric (higher-wins proof, step 8)")
 need(r"(?i)429[^\n]{0,60}retry.?after|retry.?after[^\n]{0,60}429", "the 429 + Retry-After at --max-queued-requests depth")
@@ -575,6 +603,42 @@ need(r"(?i)30\s*[–—-]\s*70 ?(min|minutes)",
 need(r"(?i)5\.8\s*[–—-]\s*13\.6 ?(min|minutes)?",
      "the C13-corrected 1000m envelope half (~5.8–13.6 min = 30–70 ÷ 5, D30(6) — '8–23' was the un-quoted counterfactual, not a cap-bound figure)")
 
+# cf-144 C01 — the TP2 receipt needles (chunk T5 list + the block-scope
+# bars). Designed-RED against the TP1 tree, green when the C01 doc re-pin
+# lands. The shipped block re-derivation is T2's equality; the bars here are
+# the TP2 FORMS of step-0/step-7 receipts the owner runs after the flip.
+blocks144 = re.findall(r"```[^\n]*\n(.*?)```", rb, re.S)
+shipped144 = [b for b in blocks144 if "--served-model-name qwen3.8-flash-next-radiance" in b]
+if len(shipped144) == 1:
+    block = shipped144[0]
+    if "--tp-wire" not in block or "wht6" not in block:
+        errs.append("the shipped args block carries no `--tp-wire wht6` — the TP2 recipe's pure-add "
+                    "flag (P04; a block missing it is not the §7 profile)")
+    if "--kv-resident" in block:
+        errs.append("--kv-resident survived IN the shipped args block — TP2 polarity: tier back, "
+                    "mirror gone (P04/ABSENT_FLAGS); prose may NAME the retired lever, the block may not ship it")
+else:
+    errs.append("TP2 bars need EXACTLY ONE shipped-args block (see T2)")
+flat144 = " ".join(rb.split())
+def need144(pattern, where):
+    if not re.search(pattern, flat144):
+        errs.append(f"TP2 receipt needle missing in {where}: {pattern!r}")
+need144(r"(?i)ReBAR[^\n]{0,160}size\s*=\s*32G[^\n]{0,120}(both|per)[ \t-]?cards?",
+        "gate-(e)/step-0 TP2 form: the ReBAR receipt stated as `size=32G` on BOTH cards (doc §10 item 1 — P2P-critical)")
+need144(r"(?i)(7551/C0|0x7551)[^\n]{0,160}(× ?2|x ?2|both|two|second)",
+        "gate-(a) TP2 form: the (device,revision) receipt runs on BOTH R9700s (7551/C0 x2 expected — EXPLORE §0: card2 is the same pair)")
+need144(r"amd\.com/gpu-r9700-1[\"']?[ \t]*:[ \t]*[\"']?2\b",
+        "the node-status assert `amd.com/gpu-r9700-1: 2` (pool live at 2; gate-(a) TP2 form)")
+need144(r"amd\.com/gpu-8060s[\"']?[ \t]*:[ \t]*[\"']?1\b",
+        "the node-status assert `amd.com/gpu-8060s: 1` beside the pool-2 line")
+need144(r"(?is)(startup[ \t-]report|STARTUP REPORT|boot report)[^.]{0,400}(p2p|tp[ \t-]wire|wire lines)[^.]{0,400}under[ \t-]load|(under[ \t-]load|sample under load)[^.]{0,400}(p2p|tp[ \t-]wire|wire lines)",
+        "the startup-report P2P/tp-wire lines captured UNDER LOAD (idle links park at Gen1 — the cold read misreports, doc §8)")
+need144(r"(?is)power[ \t-]cap[^.]{0,200}OPEN|OPEN[^.]{0,200}power[ \t-]cap",
+        "the ~120 W power-cap OPEN item (doc §3 OPEN — measured in the TP2 acceptance run, expectation not claim)")
+need144(r"(?is)pinned[^.\n]{0,40}burst[^.]{0,360}(≥ ?15|>= ?15|\b15) ?GiB|(≥ ?15|>= ?15|\b15) ?GiB[^.]{0,360}pinned[^.\n]{0,40}burst",
+        "the prefix-tier pinned-burst watch (>=15 GiB genuinely free — the Wilde OOM class now that the tier SHIPS, P04/doc §7)")
+need144(r"(?is)(/dev/shm|shm|shared-memory)[^.]{0,260}(two[ \t-]ranks?|TP2)[^.]{0,260}(receipt|first[ \t-]boot)|(first[ \t-]boot|receipt)[^.]{0,260}(/dev/shm|shm|shared-memory)[^.]{0,260}(two[ \t-]ranks?|TP2)",
+        "the shm 2Gi two-rank envelope receipt item (OQ-G ruling 'Accept 2 GiB + receipt': the value stays, the boot confirms it)")
 # C13 AC4 (§D7/D31, live-object law): step 3's "suspend selfHeal / resume
 # auto-sync" machinery is MOOT-AND-WRONG — 0/7 gpu-ai Applications carry
 # `automated` (LIVE Application reads, NOT the template: D31's class law) and
@@ -656,7 +720,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T5: the step content is incomplete (C06 T5 marker set — diagnostics above)"
   fi
-  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the C12 110-based sums (180.3/115.28/9.80) + the C13 two-half envelope (30–70 / 5.8–13.6) + the §D7 don't-sync guard (suspend machinery barred, OutOfSync-expected, restore ordering) + the AC5 step-6 capture keys, the ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
+  ok "T5: markers present (66 GiB-class first load, 450-600 @55k, 120.6 pin cap, the C12 110-based sums (180.3/115.28/9.80) + the cf-144 TP2 receipt set (tp-wire in / kv-resident out of the block, ReBAR size=32G both cards, gate-(a) x2, pool-2 + 8060s-1 asserts, under-load P2P/wire capture, power-cap OPEN, pinned-burst 15 GiB watch, shm two-rank receipt) + the C13 two-half envelope (30–70 / 5.8–13.6) + the §D7 don't-sync guard (suspend machinery barred, OutOfSync-expected, restore ordering) + the AC5 step-6 capture keys, the ladder rungs marked documented-option with the prefix-tier last-resort owner-sign-off, /health startup with the /v1/models probe bar, no serve verb / no stale flag at all, Pending-by-design handshake, the 8-session gate, the preempted-metric + 429/Retry-After polarity proof, the image smoke leg with its retire-on-failure clause, an honest-envelope line, the restore-back step naming the runner route, the lockstep-revert rollback, the owner scale command + RSS receipts, the staging sha256 receipt)"
 fi
 
 printf 'PASS: radiance runbook contract checks (%d ok)\n' "$checks"

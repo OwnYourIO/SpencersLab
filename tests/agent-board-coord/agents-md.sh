@@ -394,6 +394,17 @@ fi
 # tests/* already but is listed explicitly as the ruling's artifact pair (the
 # void-whole-map invariant makes the trail worth two lines; same admit class
 # as every per-ticket entry above).
+# cf-55 FIX ROUND (2026-11-21 fix-wave test round; DECISIONS D41/D42,
+# chunks/C05-C07): the fix round lands its own trees — the baked act job
+# image containers/forgejo-runner/* (C05) and the runner chart the label
+# re-point edits, charts/forgejo-runner/* (C06) — as directory admits per
+# the cf-143 new-chart-trees precedent; the release.yaml install retirement
+# (C07) rides the arm above, the fix-round suites tests/*, the prose law
+# the rules/mirrors/AGENTS.md lines.
+# bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
+# joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
+# files already ride tests/*, .rulesync/skills/* and .opencode/skills/*; the
+# amendment is skill-side only (plan D8), so nothing else joins.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -456,11 +467,13 @@ if want c7; then
       .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
+      charts/forgejo-runner/*|containers/forgejo-runner/*|\
+      .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-124 plan-folder + cf-143 radiance + cf-55 chart-half admits in the union)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-124 plan-folder admit + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-124 plan-folder admit + cf-126 own-folder + D37 artifact admits (.openchamber/project.json + canonical fixture) + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + cf-123 own-folder admit (bug-board-preload-lean-consumer) + 2026-11-07 fan-out-dedup standalone root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

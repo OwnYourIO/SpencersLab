@@ -1,0 +1,239 @@
+{
+  "feature": "2026/2026-11-cf-144-feat-radiance-tp2-expansion",
+  "plan_status": "complete",
+  "plan_status_note": "FOLD-ONLY 2026-11-21: batched question round RAN, owner ANSWERED, draft artifacts rewritten to encode the rulings (fold subagent; no re-planning, no new question round). OQ-A CONFIRMED (shape A, fn TP2 claim both); OQ-B OVERRIDE — charts/radiance guaranteedMemoryGi HELD at 110, the draft-shipped 48 REJECTED, DOWN re-pin is a post-TP2-boot owner-receipt leg (P11); OQ-C/E/F/G STAND (C03 stays rocminfo-receipt-gated, coordinator collects the paste at its turn); OQ-D OVERRIDE — C04 deferred out of this run to a follow-up card (P13; no one creates that card in-run — owner's leg). Owner word 'Approve — run all waves' recorded (P12); plan_status approved by coordinator 2026-11-21 after owner word P12; post-plan write-back done: slug stack line set, 34 unchecked items deleted, approved comment 6KY45H7MM65dCrPtp]. Provenance unchanged: NO agent-research round (P01); remaining receipts are owner-side commands (rocminfo/sysfs/boot reports), not web research. COMPLETE 2026-11-21T22:58Z: final whole-plan review APPROVED (fresh planning-tier session ses_dffb22106ffe1No8JLCoUh32ys — 0 blockers/0 majors/0 minors, 2 nits [STATE stamp — closed here; launch-text commit miscount — records agree], full battery re-derived, all seven cross-chunk sweeps coherent, M-3 hole self-proved closed, rebase conflict-free); flipped to complete by the coordinator at close (owner's HITL Final Review checkout pending in-session).",
+  "final_review": {
+    "at": "2026-11-21T22:58:01Z",
+    "session": "ses_dffb22106ffe1No8JLCoUh32ys",
+    "tier": "planning (openrouter/qwen/qwen3.8-2.4t-a95b — the planning-tier launch the pipeline-models default gives the final whole-plan review; chunk rounds ran the run's routed code model qwen3.8-flash)",
+    "verdict": "APPROVED — 0 blocker / 0 major / 0 minor; 2 nits (N-F1 STATE updated_at stamp — closed by this write; N-F2 launch-prose '6 commits' vs 5 — records match, no artifact impact)",
+    "posture": "battery fresh green (radiance 71/0, llama-swap 507/0/9-skip directory-wide incl. the 2 new M-3 legs, amd-gpu 29, runbook 5/tp2 3/q27-boot 6/host-tuning 4/surface 9, lint x3, renders AC1/AC2/C03 facts exact both layers, 48-sweep comment-context-only, stale-name 0 live, notes insert-only +52/0 +15/0, oracle byte-untouched, M-3 scratch mutation => exactly 2 reds + carve-leg green-under-pin, test-weakening sweep clean, aislop 100/0/0 109 files); drift: origin/main 21 ahead, intersection with the branch's 28-file set EMPTY — owner's rebase expects zero conflicts.",
+    "second_sighting_note": "the reviewer independently classified the heartbeat-attribution flap (pipeline_heartbeat no_claim while pipeline_status shows the same setId LIVE ~7 s old) as a machinery follow-up candidate — recorded here as the second documented sighting; also captured in STATE kickoff.claim.history (third banner)."
+  },
+  "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
+  "test_session": "ses_e004c659affeGMUL0VAk40tm3F",
+  "current_wave": 3,
+  "updated_at": "2026-11-21T22:58:01Z",
+  "kickoff": {
+    "card": "Cnf563PDBmBoDLSaS",
+    "card_number": 144,
+    "card_title": "Radiance second-GPU (TP2) expansion",
+    "slug": "cf-144-feat-radiance-tp2-expansion",
+    "slug_basis": "slug custom-field unset -> derived cf-<cardNumber>-<type>-<desc>, auto-accepted (never a batched-round item)",
+    "type": "feat",
+    "run_tag": null,
+    "worktree": "cf-144-feat-radiance-tp2-expansion",
+    "branch": "cf-144-feat-radiance-tp2-expansion",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "models_basis": "Model(s) checklist exactly one checked (Qwen Flash) -> that model every tier; card label Provider: API -> hosted openrouter routing; Priority field unset -> class default.",
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
+    "local": false,
+    "stages": [
+      "Exploration",
+      "Agent Decides Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review",
+      "Deployment"
+    ],
+    "stages_basis": "card's checked Lifecycle items; Pre/Post Research + Single Session unchecked; the card's vocabulary carries no Session Rename/Worktree Creation items and both legs ran from the blank-default posture (FRICTION row); Exploration DONE by the scout (EXPLORE.md); Agent Decides Research resolved NO research round (P01); Deployment checked -> landing shape follows pipeline-push-pr (branch push + PR are owner-gated legs)",
+    "hitl": [
+      "Planning",
+      "Final Review",
+      "Deployment"
+    ],
+    "checklist_answers": {
+      "services": [
+        "gpu-ai"
+      ],
+      "type": [
+        "feat"
+      ],
+      "models_checked": [
+        "Qwen Flash"
+      ],
+      "lifecycle_checked": [
+        "Exploration",
+        "Agent Decides Research",
+        "Planning",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review",
+        "Deployment"
+      ],
+      "human_in_loop_checked": [
+        "Planning",
+        "Final Review",
+        "Deployment"
+      ]
+    },
+    "claim": {
+      "cardId": "Cnf563PDBmBoDLSaS",
+      "key": "card-id",
+      "setId": "af04989e-ee9b-429c-93c9-05eb1a49caeb",
+      "history": [
+        {
+          "kind": "initial",
+          "pipeline": "AI",
+          "claim_id": "8c6e1e0c",
+          "outcome": "REAPED at 2026-11-21T18:13:03.491Z (stale, no heartbeat)"
+        },
+        {
+          "kind": "takeover",
+          "posture": "PIPELINE LOCK LOST -> exactly one sanctioned question -> owner YES -> re-claim under the card-id key with a fresh claim after_reap; takeover recorded (comments 5Fvt3dBmBpLuzWYm7 claim, Dkj54ceQaCsyfJoKM takeover)",
+          "outcome": "held, setId af04989e-ee9b-429c-93c9-05eb1a49caeb"
+        },
+        {
+          "kind": "spurious-flap",
+          "posture": "second PIPELINE LOCK LOST banner fired 2026-11-21 at the C03 test-repair launch; pipeline_status answered the SAME setId af04989e state live held by this session (age ~14 s) and lastReap (18:49:04Z) named only unrelated card Y3vPeX4nhtDbsdwCg; heartbeat ok:true — no new claim exists and none is needed; the claim was never actually lost (cf-105 T2 / cf-144 earlier-flap class, second sighting). No new question raised (no re-claim door exists to gate); commits continued only after this engine evidence.",
+          "outcome": "held, unchanged setId af04989e-ee9b-429c-93c9-05eb1a49caeb"
+        },
+        {
+          "kind": "spurious-flap",
+          "posture": "third banner 2026-11-21 (~23:2xZ, at the C03 minors launch): pipeline_heartbeat answered ok:false reason:no_claim, but the very next pipeline_status showed setId af04989e state LIVE held by this session at age 6628 ms and lastReap unchanged (18:49:04Z, card Y3vPeX4nhtDbsdwCg only) — the lock was never lost and never reaped; the no_claim came from the heartbeat path's own attribution, not the lock store. No re-claim attempted (it would answer already_held); no question raised (no reap to answer). Commits resumed only on this engine evidence.",
+          "outcome": "held, unchanged setId af04989e-ee9b-429c-93c9-05eb1a49caeb"
+        }
+      ],
+      "claim_comment": "5Fvt3dBmBpLuzWYm7",
+      "takeover_comment": "Dkj54ceQaCsyfJoKM"
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "card_id": "Cnf563PDBmBoDLSaS",
+      "card_number": 144,
+      "note": "lean record (board structure owned by the boards skill preload); AI-Dev board, Repo label default (SpencersLab), Pipeline labels -> AI; card comments carry nothing beyond the lock-takeover YES",
+      "provenance": "follow-up to AD-143 / cf-143-feat-radiance-replaces-strata (its RESEARCH RQ4/§R6/§R7/§R8-Q5 + DECISIONS D21/D24/D29/D30/D54/D56/D57/D58 are this plan's research authority)"
+    },
+    "preload": {
+      "at": null,
+      "at_note": "tick-start preload; exact stamp lives in the coord's launch block",
+      "tool": "preload_board",
+      "cards": 83,
+      "degraded": false
+    },
+    "card_details": {
+      "tool": "get_card_details",
+      "degraded": false
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh session ses_e000b0f1dffe5E0nCxximQAwTI; two non-blocking nits folded into C02's pass)",
+      "dev_session": "ses_e0024db70fferjxAcAwUS7XwKi",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-21T20:4xZ", "session": "ses_e0024db70fferjxAcAwUS7XwKi", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C01 files_changed: [charts/radiance/values.yaml, services/gpu-ai/prod/values.yaml, .agents/notes/radiance-on-target-acceptance.md] commands_run: [PATH export + helm dependency update x3 => pass; pytest radiance baseline 7F/64P designed-reds confirmed; radiance-runbook.sh baseline FAIL T2 designed; tp2.sh T3 / q27-boot.sh T6 baseline FAIL C02-owned; pytest charts/radiance/tests -q => pass 71/71 x3 determinism 0 skips; runbook 5 ok x2; host-tuning 4 ok untouched; surface 9 ok untouched; llama-swap 505/9-skip/0-fail diff-touches-none; amd-gpu 29; helm lint 0 failed; helm template radiance + AC1 facts pair {cpu 8, 110Gi, gpu-r9700-1: 2} both maps, TP2 multiset, kv-resident/expert-vs-cache-ratio/api-key absent, tp-wire present; q27 workflow-route extraction+render + AC2 facts {cpu 8, 24Gi, gpu-r9700-1: 1} both maps replicas 0, fn-overlay claim 2, OVERRIDE_ sweep clean; AC6 git grep => 72 pre-existing plan-history hits, 0 new, 11 canonical added; AC7 => exactly 3 in-scope files; aislop 0/0 109 files (shell posture honest); tp2/q27-boot re-run still red demanding ONLY C02's note files] deviations: (1) tp:2 ledgered as scalar, prefix/chunk/checkpoint stay list-literals (splice guard green). (2) chart :111-113 DISAPPEARS sentence rewritten to dated present-at-count-0 (gotcha 8; not enumerated in Tasks). (3) chart shm comment dated OQ-G annotation, value unchanged 2Gi. (4) runbook gate-(a) receipt loop moved to per-BDF wildcard driver-dir form (positions shifted under TP2; pair-count pinned over BDF-pair), step-2/1/6/7 era flips with dated annotate-never-rewrite markers, TP1 text retained as history where enumerated, Wilde-class MOOT->LIVE. (5) No 48/40 memory shape entered the runbook (P11 ban); rejected-48 named only where the chunk mandated. friction: (1) non-breaking-space edit miss (cf-143 class) -> cat -A + re-issue. (2) tp2 T3 / q27-boot T6 stay red at hand-off = designed, C02-owned, recorded so nobody re-diagnoses. open_questions: none next_suggested: review C01 (teeth: flip tp back -> red; strip overlay pin -> q27 renders 2; reintroduce --kv-resident -> red), then commit + launch C02 (note annotations = the only remaining designed-red carriers).",
+          "coord_note": "full verbatim hand-back in the coordinator session transcript; this is the faithful compression (cf-58 coord-compressed-handoff precedent). Deviation (2)'s site was enumerated in the launch's own instruction (absence-law/count-0 prose), so adjudication belongs to the review."
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-21T21:0xZ", "session": "ses_e000b0f1dffe5E0nCxximQAwTI", "status": "DONE", "verdict": "APPROVED",
+          "result": "RESULT status: DONE chunk: C01 verdict: APPROVED files_changed: [chunks/C01.md Review notes only] commands_run: [radiance pytest 71/0/0-skip x3 deterministic incl scratch; runbook 5-ok (T2 byte-equality + HOLD-110 printed); host-tuning 4-ok + surface 9-ok byte-untouched; llama-swap 505/9-skip/0-fail ZERO diff touches (P09 inert proven); amd-gpu 29; helm lint clean; AC1/AC2 own renders via workflow extraction exact (pair {8,110Gi,gpu-r9700-1 2} both maps, §7 multiset exact, kv-resident/expert-vs-cache-ratio/api-key absent, tp-wire present; q27 {8,24Gi,claim 1} both maps replicas 0); no 48-shipped anywhere; OVERRIDE_ 0; deterministic; teeth ALL SIX bit (tp carrier flip 2-red, tp scalar-only splice-red, overlay-pin-strip renders 2 4-legs-red incl independence, kv-resident reintroduced 2-red, one-side memory/claim red, T2 equality bites both directions), restored; tp2 T3 + q27-boot T6 red naming ONLY C02 files; stale-name grep 0 new; diff set == 3 declared; Chart.yaml/peers/evidence/golden/catalog untouched; 502 sentence untouched; aislop 0/0 109 files] deviations: none by reviewer; dev's five all ACCEPTED — deviation 2 ruled IN SCOPE under the gotcha-8 law the chunk invokes at its own notes task (chart prose was the last contradicted carrier; annotate-never-rewrite honored; no needle pinned the old token); gate-(a) wildcard loop = robust superset under the enumeration-shift gotcha friction: none (priming recipe held; full-copy scratch teeth clean) open_questions: none next_suggested: commit the approved C01 tree; launch C02 (T3/T6 needles are its completion proof); fold the two nits (notes sizing-row 'the ladder moves these' tail vs chart scalar-carrier contradiction; switch-discipline header missing comma) into C02's note pass. [coord-compressed faithfully; verbatim in the session transcript]"
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh session ses_dfff7042effekmZ8HsABi3aL67; riders N1/N2 ruled lawful in-wave)",
+      "dev_session": "ses_e0001d509ffeo5iKlxklHBrO82",
+      "handoffs": [
+        {
+          "role": "dev", "round": 1, "at": "2026-11-21T21:3xZ", "session": "ses_e0001d509ffeo5iKlxklHBrO82", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C02 files_changed: [.agents/notes/radiance-second-gpu-tp2.md, .agents/notes/radiance-q27-boot.md, .agents/notes/radiance-on-target-acceptance.md (RIDER N1), services/gpu-ai/prod/values.yaml (RIDER N2)] commands_run: [baselines designed-red confirmed (tp2 T3 / q27-boot T6 on the cf-144 arms); tp2.sh => 3 ok deterministic (AC1 completion proof); q27-boot.sh => 6 ok incl T6 (AC2); pytest radiance => 71/0 x2 (rider moved no needle); runbook 5 ok x2 witness (T2 byte-equality + HOLD-110 + 48-ban green with rider tail); AC3 insert-only: numstat +15/0 and +52/0, zero deleted content lines, 28.07/54.7 + rank example + 502-idle sentence byte-untouched; AC4 per-token equality vs git show 810b5a121 (tp 2 :100/:191; hostPoolMib 12288 :91/:196; prefix-cache 4096 :199; chunk 2048 :201; kv-resident 0 carrier hits; claim 2 x2; memory 110 x1 + 110Gi x2; 48-shipped 0; q27 claim 1 x2) => every annotated number matches; AC5 stale-name 0 hits diff+grep; aislop 0/0 109 files] deviations: (1) riders per coord direction = review r1's two nits — N1 dated qualifier appended INSIDE the acceptance-note sizing-row closing paren (original words byte-identical; dev honestly flags the 'the ladder moves these' tail lives in the ACCEPTANCE note, as review N1 names it, not the chart); N2 missing comma restored at services/gpu-ai/prod/values.yaml:883 (comment-only). (2) Tasks 3-4 (test re-pins) executed as ZERO edits — 981f5e83a already carried the cf-144 arms; annotations landed inside them, no needle moved, no validation_at_fault. (3) STATE.json in the diff is coordinator-owned pre-existing change; not touched. No commits. friction: none open_questions: none next_suggested: review, then commit (2 notes + 2 rider files); final whole-plan review; C03 waits the owner rocminfo paste; C04 stays deferred. [coord-compressed; verbatim in the session transcript]"
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-21T21:5xZ", "session": "ses_dfff7042effekmZ8HsABi3aL67", "status": "DONE", "verdict": "APPROVED",
+          "result": "RESULT status: DONE chunk: C02 verdict: APPROVED files_changed: [chunks/C02.md Review notes only] commands_run: [tp2.sh x2 => 3 ok deterministic; q27-boot.sh x2 => 6 ok incl T6 deterministic; radiance pytest 71/0; runbook 5-ok (HOLD-110 + no-48 printed); host-tuning 4-ok + surface 9-ok + llama-swap 505/9-skip/0-fail + amd-gpu 29 witnesses; numstat/deletion-census +52/0 +15/0 riders 1±1, diff set == declared; byte-identity checks 28.07/54.7 + rank example + 502 line => pass; AC4 per-token fact-check vs git show 810b5a121 => pass; 48-shipped/503/gpu-ai-pro-r9700 scans 0 hits; TEETH: marker-strip reddens tp2 T3, claim-math-strip reddens q27 T6 both arms, standalone co-exist-lie reddens T3 via the absence bar — all bit, scratch /tmp only, tree re-verified green; N1 byte-preservation prefix proof 933/934 lines untouched; aislop 0/0 109 files] deviations: none by reviewer; dev's three ACCEPTED (riders lawful in-wave per coordinator direction matching review r1's own fold suggestion; Tasks 3-4 zero-edit correct; STATE exempt) friction: future-reviewer note — the co-exist absence bar sentence-scopes exemptions, a lie fixture must be a standalone sentence to bite; bar works as designed open_questions: none next_suggested: commit C02 tree; record DECISIONS rider line (coordinator); final whole-plan review; C03 receipt-gated; C04 deferred. [coord-compressed]"
+        }
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "receipt_gated": "owner rocminfo receipt (OQ-E) — RECEIPT LANDED 2026-11-21 (owner paste, verbatim in the C03 question answer): GPU-agent ordinals 0=R9700 node1 (Chip ID 0x7551, Rev 1, Uuid GPU-f14f913b0a98ad15, BDFID 49920), 1=R9700 node2 (0x7551, Rev 1, Uuid GPU-d34663795f09a76f, BDFID 50944), 2=APU gfx1151 8060S (0x1586, Rev 0, BDFID 51200, Memory Properties APU). VERDICT MOVED for the strix leg: primary \"0\" still names an R9700 (intent kept, no move); strix lane \"1\" now names the SECOND R9700, not the APU — APU slid to ordinal 2. Mechanical re-pin route engaged (testlib ROCr constants = one site, then values pair in one wave).",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, fresh session ses_dffc62d87ffeIcUj4TtsFrlan3; 3 minor findings test-lane-owned — folded in one micro-round before the wave commit; M-3 = new coverage leg)",
+      "handoffs": [
+        {
+          "role": "test-repair", "round": 1, "at": "2026-11-21T22:1xZ", "session": "ses_e004c659affeGMUL0VAk40tm3F (continued)", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C03-mechanical-constants-repin files_changed: [charts/llama-swap/tests/strata_testlib.py] commands_run: [pytest charts/llama-swap/tests -q => 2 failed / 503 passed / 9 skipped — designed ledger EXACTLY: test_c03_values_match_the_constants_site_pairwise (values ('0','1') != constants ('0','2'), one-wave guard) + test_c03_rendered_inner_config_carries_the_pinned_indices (strix renders ROCR_VISIBLE_DEVICES=1, want 2; primary leg passes), all other legs green; scenario proofs scratch-only (pre-C03 provenance leg dormant-pass; moved-WITH-provenance 42/0 across three files; moved-WITHOUT-provenance ONLY the provenance leg red); witnesses radiance 71, amd-gpu 29, runbook 5-ok, tp2 3-ok, q27-boot 6-ok, surface 9-ok, helm lint llama-swap ok; aislop 0/0/0 109 files (pure-Python diff, fully analyzed)] deviations: none — ROCR_STRIX '1'->'2' is the sole value move; ROCR_PRIMARY '0', ROCR_HOST_GPU_COUNT 3, ROCR_PRE_CARD2_PAIR ('0','1') re-examined against the receipt, found STILL-TRUE, kept byte-equal with dated comments (era marker); zero needle-logic changes; other three test files untouched friction: none new open_questions: none next_suggested (VERBATIM for dev): charts/llama-swap/values.yaml strix lane '1'->'2' (primary '0' untouched — honest no-op leg); the values comment beside the keys MUST carry the dated rocminfo-provenance sentence (tokens rocminfo + receipt + yyyy-mm-dd) and drop the verbatim 'dGPU first, chip second' story; template untouched (Values-keys-only law); golden untouched (no ROCR lines reach golden renders). Suite target at dev green: 505/0-fail/9-skip. [coord-compressed; verbatim in the session transcript]"
+        },
+        {
+          "role": "dev", "round": 1, "at": "2026-11-21T22:3xZ", "session": "ses_dffdee6a5ffeJ5llCQ9GbYVCwS", "status": "BLOCKED (validation conflict — one unplanned oracle leg; implementation complete)",
+          "result": "RESULT status: BLOCKED chunk: C03 files_changed: [charts/llama-swap/values.yaml] commands_run: [priming helm dep update => pass; PRE-edit baseline pytest llama-swap => EXACTLY the 2 designed reds (guard confirmed); overlay probe: strata keys == [rocrVisibleDevices] '0', NO byModel pin => zero edits there (legs green, proven); scratch value-only-move oracle diff => strata-config ConfigMap differs by EXACTLY one env-injection line (-ROCR_VISIBLE_DEVICES=1 / +…=2, strix model), profile/Deployment/Service EQUAL — divergence inherent to the sanctioned move; POST-edit pytest llama-swap => 504 pass / 1 FAIL / 9 skip x3 deterministic — the two designed reds GREEN, new red test_coexistence_wiring::test_strata_render_byte_equal_to_pre_ticket_baseline (cf-143 pre-ticket oracle byte-pin, header says ORACLE never re-pin — dev could not touch it: tests read-only, no env override; pinning strix back in the overlay would ship the exact mis-bind C03 removes); test_strata_enumeration -v => 5 passed; provenance self-check scratch: stale-story restoration reddens the provenance arm, missing 'receipt' token reddens the receipt clause; stale-value scratch: index back to 1 reddens the render leg (teeth intact); runbook 5 / tp2 3 / q27-boot 6 / surface 9 / host-tuning 4; radiance 71; amd-gpu 29; helm lint 0 failed; renders strix=2 primary/orca/q4/ornith=0, OVERRIDE_ 0 both shapes; git scope => values.yaml only (+testlib/STATE pre-existing others); stale-name 0 new; aislop 0/0/0 109 files] deviations: (1) suite target 504/1/9 — mutually unsatisfiable oracle leg, dev correctly did NOT re-pin evidence, narrow a leg, or ship the mis-bind; (2) services/gpu-ai zero edits (no strix pin — proven); (3) notes zero edits (task-3 condition unmet: no needle binds index cells); (4) aislop-gate advisories ruled false-positive-by-design (provenance tokens mandated by the suite; '2' is host silicon position) and not 'fixed'; CLI gate 0/0/0; (5) no commits, no records touched friction: (1) scratch pytest REPO_ROOT artifact — read the failure reason before scoring a scratch red; (2) THE KEY LESSON: the designed-red set cannot reach an era-oracle leg — three-file simulation is not a suite-level green proof, whole-directory run is mandatory; (3) cat -A byte-exactness held open_questions: (1) which repair the test lane owns (strip the ROCr line from the oracle comparison / dated cf-144-era capture / sanctioned divergence annotation) (2) notes stale-index annotation (radiance-second-gpu-tp2.md:99-100, strata-host-prep-gpu-ai.md:174-175) — repo-invisible, no needle (3) does the receipt retire the strata runbook [VERIFY] posture next_suggested: route the one leg to test session for mechanical oracle re-scope, re-run to 505/0/9, fresh review. [coord-compressed; verbatim in the session transcript]",
+          "coord_adjudications": "OQ1: repair shape is the author's call — directive issued: preserve the leg's INTENT (strata docs byte-equality to the pre-ticket oracle EXCEPT the receipt-driven strix ROCr line), zero softening elsewhere; a dated cf-144-sanctioned-divergence annotation is the expected shape per the chunk's own 'golden ONLY if the render moves' clause + the proven single-line diff. OQ2: test lane audits binders; if truly unbound, the dated-index-cell annotations fold into C02's shipped notes layer only where a needle can pin them — no unbound prose churn demanded of anyone; the card already carries §4/§6 TP2-SHIPPED annotations. OQ3: NO — the rocminfo receipt settles host enumeration only; the runbook's on-target [VERIFY] posture (live pod-visible re-check after syncs) is a separate leg and stays open per P15's 'formal gates remain' line."
+        },
+        {
+          "role": "test-repair-2", "round": 1, "at": "2026-11-21T22:5xZ", "session": "ses_e004c659affeGMUL0VAk40tm3F (continued)", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C03-oracle-re-scope (P16 silent route) files_changed: [charts/llama-swap/tests/test_coexistence_wiring.py] commands_run: [whole-directory pytest charts/llama-swap/tests -q => 505 passed / 0 failed / 9 skipped deterministic x2; radiance 71; amd-gpu 29; runbook 5-ok; tp2 3-ok; q27-boot 6-ok; host-tuning 4-ok; surface 9-ok; TEETH scratch (cleaned, reasons read): M1 profile edit => RED names ConfigMap/strata-profile; M2 Deployment edit => RED names Deployment/gpu-ai-llama-swap-strata; M3 UNAUTHORIZED second ROCr move at the OVERLAY (chart-key shape was MASKED — see friction) => RED names ConfigMap/strata-config; M4 strix-block non-ROCr env item => RED; shipped tree 11 passed; git diff --quiet evidence/cf143-pre-ticket-strata/ => ORACLE-BYTE-UNTOUCHED; P17 audit: no needle can bind the stale index cells in either note (the only 'dGPU first, chip second' binder targets the chart-values comment — already reworded by dev); aislop 0/0/0 109 files] deviations: assert-message wording gained the carve explanation; helper sentinel re-indents at the line's own block indent so a reflowed render layout FAILS LOUDLY instead of silently no-op'ing — no assertion widened elsewhere (other three docs raw; strata-config raw except the single sentinelled line) friction: first M3 mutation was masked by the service overlay's rocrVisibleDevices re-pin — mutate what RENDERS, and read the failure reason before scoring a red (carried for the review's re-proof) open_questions: none next_suggested: fresh C03 review (whole-directory 505/0/9 proof, not three-file sim; spot-re-prove any one teeth mutation); on APPROVED coord commits the C03 wave (values + strata_testlib + coexistence leg). [coord-compressed]"
+        },
+        {
+          "role": "review", "round": 1, "at": "2026-11-21T23:1xZ", "session": "ses_dffc62d87ffeIcUj4TtsFrlan3", "status": "DONE", "verdict": "APPROVED",
+          "result": "RESULT status: DONE (verdict: APPROVED) chunk: C03 files_changed: [chunks/C03.md Review notes only] commands_run: [priming; whole-directory pytest charts/llama-swap/tests -q -rs => 505P/0F/9S deterministic + post-teeth 3rd run; radiance 71 / amd-gpu 29 / runbook 5 / tp2 3 / q27-boot 6 / host-tuning 4 / surface 9; helm lint; chart+overlay renders strix=2 inherit=0 OVERRIDE_ 0/1-legit; provenance window-token + stale-story scan => P15 discharged; TEETH: (a) strix revert => exactly the 2 designed guard reds; (b1) overlay primary move => coexistence + one-fact red (carve does not swallow); (c1) profile edit => red names strata-profile; (c2) replicas edit => red names Deployment; helper degeneracy scratch proofs (0x/2x raise loudly, extra strix item un-normalized); tree cmp-EXACT restored, suite re-green; git diff --quiet evidence => ORACLE BYTE-UNTOUCHED throughout; scope = 3 declared files (+exempt records); stale pool name 0 new; aislop 0/0/0 109 files; (b2) EXTRA probe: overlay-added byModel strix pin passes green => filed M-3] deviations: one extra teeth class beyond brief (b2/M-3); self-recorded two inert no-op probe shapes per the mutate-WHAT-RENDERS lesson; no assertion touched friction: none new (first chained pytest killed by a short background wrapper timeout; re-run at 25 min, no evidence affected) open_questions: none blocking — M-1/M-2 stale future-tense comment clauses in strata_testlib.py + M-3 coverage leg (overlay byModel strix pin exempt-region gap; one-line merge fix suggested; nothing shipped with the gap) all routed to test session ses_e004c659affeGMUL0VAk40tm3F; coord may fold M-1/M-2 into the wave commit per P14 precedent next_suggested: commit the C03 wave (3 files + riders); C04 stays deferred (P13); proceed to final whole-plan review. [coord-compressed]"
+        },
+        {
+          "role": "test-micro-round", "round": 1, "at": "2026-11-21T23:4xZ", "session": "ses_e004c659affeGMUL0VAk40tm3F (continued)", "status": "DONE",
+          "result": "RESULT status: DONE chunk: C03-review-minors (M-1/M-2/M-3, author lane) files_changed: [charts/llama-swap/tests/strata_testlib.py (comments only), charts/llama-swap/tests/test_strata_enumeration.py (+2 legs)] commands_run: [whole-directory pytest charts/llama-swap/tests -q => 507 passed / 0 failed / 9 skipped deterministic x2 (505 + the 2 new M-3 legs); TEETH scratch: injected overlay byModel strix '1' pin => EXACTLY 2 failed / 505 passed, both reds = test_c03_overlay_merged_bymodel_resolution_equals_the_site + test_c03_merged_service_overlay_render_strix_env_equals_the_site, layer-attributing reasons verbatim, and the P16 carve leg STAYED GREEN under the pin — the reviewer's silent-pass hole proven real, now closed; pin removed => 507/0; grep audit ROCR_* constant VALUES byte-identical (comment-only proof); witnesses radiance 71 / amd-gpu 29 / runbook 5 / tp2 3 / q27-boot 6 / host-tuning 4 / surface 9; aislop 0/0/0 109 files] deviations: M-3 as TWO legs (static always-armed merged-resolution mirroring the appset index map-merge + sprig-default template precedence, plus a @helm merged-render twin comparing the carve-exempt strix env line RAW) instead of one — count delta +2, per the launch's 'or your leg's count delta'; empty-bymodel treated as inherit-primary per sprig default semantics (deliberately reddens on gpu-ai; message states the one-wave fix) friction: none new open_questions: none next_suggested: coord commits the C03 wave (values.yaml + strata_testlib.py + test_strata_enumeration.py + test_coexistence_wiring.py + C03.md notes); then final whole-plan review. [coord-compressed]"
+        }
+      ]
+    },
+    "C04": {
+      "status": "deferred",
+      "deferred_note": "OQ-D owner ruling 2026-11-21 ('Defer C04 to a follow-up card', fold round, DECISIONS P13): does NOT execute in this run; spec + sysfs (device,revision) receipt prerequisite preserved in chunks/C04.md; no one creates the follow-up card in-run (card does not check 'Follow-up cards created') — owner's leg via plan Deferred section + final summary comment",
+      "wave": 1,
+      "depends_on": [],
+      "receipt_gated": "owner sysfs (device,revision) receipt for the gpu-box card — prerequisite of the deferred follow-up card (OQ-D)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "test_wave": {
+    "at": "2026-11-21T20:05:00Z",
+    "session": "ses_e004c659affeGMUL0VAk40tm3F",
+    "model": "openrouter/qwen/qwen3.8-flash",
+    "status": "DONE (RESULT received in the coordinator session; the full files-table + ledger ride that hand-back — committed with this records commit)",
+    "summary": "Red-first contracts for C01+C02+C03 (C04 untouched per P13): radiance suite 7 designed-red / 64 pass (sim C01 tree 71/71 green); runbook T2+T5 red; tp2.sh T3 red; q27-boot T6 red; C03 green-BY-DESIGN receipt-gated (moved-world sim: synced 42 pass / half-move 2 red / unprovenanced move provenance-red); inert witnesses green (amd-gpu 29, llama-swap 505/9-skip, host-tuning 4-ok, surface 9-ok); aislop 0/0 over 109 files.",
+    "files": ["charts/radiance/tests/radiance_testlib.py", "charts/radiance/tests/test_serve_args.py", "charts/radiance/tests/test_render.py", "charts/radiance/tests/test_resource_name_identity.py", "charts/radiance/tests/test_q27_lane.py", "tests/notes/radiance-runbook.sh", "tests/notes/radiance-tp2.sh", "tests/notes/radiance-q27-boot.sh", "charts/llama-swap/tests/strata_testlib.py", "charts/llama-swap/tests/test_strata_enumeration.py", "charts/llama-swap/tests/test_strata_wiring.py", "charts/llama-swap/tests/test_strata_config_schema.py"],
+    "test_defects_repaired_by_author": ["orphaned '# meaning\").' fragment in test_resource_name_identity.py", "co-exist absence bar authored negation-exempt + green-both-ways self-proven"],
+    "routing_note_for_C03": "If the owner rocminfo receipt lands MOVED, the values-only edit reddens test_c03_values_match_the_constants_site_pairwise; the ROCr constants block in charts/llama-swap/tests/strata_testlib.py is the ONE re-pin site — that re-pin is test-session property (route back to ses_e004c659…), never a dev edit.",
+    "coord_priming_recommended": "export PATH=$HOME/.local/bin:$PATH && helm dependency update (charts/radiance + charts/llama-swap) before ANY suite run in a fresh worktree — the gitignored app-template tgz otherwise mass-reddens (41-red first pytest; test session's friction line adopted as standing priming)."
+  },
+  "blocked": [],
+  "coordinator_records": [
+    "P14-RIDER (2026-11-21, C02 round): the two C01 review-r1 nits were folded into C02's note pass as coordinator-directed riders (N1 acceptance-note sizing-row dated qualifier; N2 services/gpu-ai comma) — the reviewer ruled them LAWFUL IN-WAVE (executed form matches C01 r1's own next_suggestion verbatim; byte-preservation proven 933/934). Audit trail per review r2's recommendation.",
+    "P15-C03-RECEIPT (2026-11-21, owner rocminfo paste): GPU-agent ordinals 0=R9700 (f14f913b…/BDFID 49920), 1=R9700 (d3466379…/50944), 2=APU gfx1151 (0x1586/51200, Memory Properties APU). Verdict MOVED for the strix leg only — strix \"1\" now names the second discrete card, APU slid to 2; primary \"0\" stays correct (names an R9700; hide-the-APU intent kept). Mechanical route engaged: testlib ROCr constants (one site) + values pair in ONE wave, per the receipt law + P11 discipline (values file untouched until both halves land)."
+  ],
+  "deferred": [
+    "shape B (fn TP1 + q27 beside-fn co-residency) — lives only if OQ-A answers B; then C01 is re-planned",
+    "strata restore-back co-existence re-opening at the TP2 memory class — CONDITIONAL on the post-TP2-boot receipt DOWN re-pin (P11 HOLD-110 override; the ~118.3 arithmetic was drafted against the rejected 48 and stays recorded in §12/draft context only) — CUTOVER ticket decision, recorded §12",
+    "q27 TP2 lane (§envelope row) — not on this card",
+    "shm 2Gi two-rank envelope — first-boot receipt item (OQ-G)",
+    "C03/C04 close as recorded DEFERRED (not red) if their owner receipts do not land in-run"
+  ]
+}

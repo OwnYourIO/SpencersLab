@@ -11,6 +11,13 @@
 > Status: **expansion instructions, not shipped config.** Once cf-143 lands
 > the repo runs Flash-Next tensor-parallel 1 on one R9700; this doc is what
 > changes when a second R9700 lands. The TP2 ticket re-derives the plan.
+> **[SHIPPED (cf-144 C01, 2026-11-21) — the repo half.]** Annotate, never
+> rewrite: the TP2 ticket (cf-144, this folder) has now re-derived the plan
+> from this card body and SHIPPED the repo half — the fn lane's TP2 flip
+> (§7 profile, the `amd.com/gpu-r9700-1: "2"` claim pair, the memory scalar
+> HELD at 110 per the P11 owner ruling) is in git on `charts/radiance`;
+> the on-target half (per-BDF sysfs, `rocminfo`, first-boot prints) stays
+> owner-executed receipt law.
 > Operator law: the cluster's only input is git (ArgoCD applies everything);
 > every command below is read-only (`cat`, `rocminfo`, `lspci`, `kubectl get`)
 > or owner-executed prose — no step here is a repo-side cluster mutation.
@@ -101,6 +108,14 @@ the repo-wide index law above is why the checklist exists: the other engines
 still name cards by position, and position is exactly what the third GPU
 changes.
 
+**[SHIPPED (cf-144 C01, 2026-11-21) — §4 sweep due TODAY.]** Annotate,
+never rewrite: card 2 landed 2026-11-21 — the sweep row applies TODAY
+(C03), rocminfo-gated: the host already enumerates three GPUs
+(c3/c7 R9700s + the APU), so "when GPU #3 lands" is the present, and the
+strata/strix position re-pins ride the owner `rocminfo` receipt (OQ-E).
+The C04 sysfs leg is NOT this run: it rides the DEFERRED follow-up card
+(OQ-D owner ruling). The table above stays as written history.
+
 ## 5. APU hiding is not a drive-by — the interdependency
 
 Under the pre-C07 single-strategy world, the card guide's §4.3
@@ -165,6 +180,18 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
   row). If the owner ever prefers claims over named pools for TP2, that is
   the documented path; this run's Option-1 ruling stands until they say
   otherwise.
+
+**[SHIPPED (cf-144 C01, 2026-11-21) — gate-(a) LIVE-WITNESSED 2026-11-21.]**
+Annotate, never rewrite: the pool arithmetic above was witnessed live the
+day card 2 landed — the device-plugin map showed `0000:c3:00.0` and
+`0000:c7:00.0` both at 7551/C0 and printed "Reporting 2 devices as
+gpu-r9700-1", and the node advertises `amd.com/gpu-r9700-1: 2`. The new
+card is the same (device, revision) pair, so the patched-table row already
+carries and ai-gpu needed NO table edit — the RE-VERIFICATION LAW's first
+shape above, fired exactly as written. The owner receipts remain the
+formal gates: the per-BDF sysfs pair read and the `rocminfo` sweep — the
+C03 rocminfo leg is in-run (receipt-gated), the C04 sysfs leg rides the
+deferred follow-up card (OQ-D ruling).
 
 ## 7. Engine recipe — fn TP2 (corrected)
 
@@ -317,6 +344,19 @@ values change that reaches the cluster through ArgoCD alone:
      law). Guaranteed memory recomputes at the TP2 pin set (~24 GiB pool +
      tier + slots + tables) — receipt-gated, same ladder discipline as C06
      step-6, never a pre-emptive softening.
+     **[SHIPPED (cf-144 C01, 2026-11-21) — shape A shipped.]** Annotate,
+     never rewrite: this bullet is the shape that shipped (OQ-A owner
+     ruling "A — fn TP2, claim both cards"). The concrete result at C01's
+     shipped bytes: fn TP2 as ONE pod with the `amd.com/gpu-r9700-1: "2"`
+     claim pair (request==limit kept, Guaranteed law), `tp: 2` ledgered as
+     a chart scalar, `hostPoolMib: 12288` per rank, `--kv-resident` OUT /
+     `--prefix-cache-mib 4096` IN, chunk 4096→2048. The ONE §11.5 scalar
+     NOT moved this wave is the Guaranteed memory: `guaranteedMemoryGi`
+     HELD at 110 — the P11 owner ruling ("Hold 110, re-pin after the
+     print") keeps the recompute above receipt-gated: the first-boot print
+     is the budget authority, so the DOWN re-pin to the printed class
+     awaits that print as a post-TP2-boot owner-receipt leg — never a
+     shipped estimate.
    - *Second lane (q27 pod beside fn):* a second release of the same chart.
      SKETCH — the TP2 ticket resolves the exact appset plumbing (how one
      internal chart yields two Applications, the sibling service-values
@@ -397,6 +437,18 @@ co-existence may arithmetically RE-OPEN (~35 + 64 + 4.1 + 1.2 ≈ 104 ≤
 125.08): a decision that rides the CUTOVER ticket, recorded here so nobody
 rediscovers it. Pointer and sums only — TP2's recipe re-derivation is that
 ticket's job (cite D29/D30(5)).
+
+**[SHIPPED (cf-144 C01, 2026-11-21) — shipped-110 restatement.]**
+Annotate, never rewrite: the flip landed with `guaranteedMemoryGi` HELD
+at 110 (P11 owner ruling "Hold 110, re-pin after the print"), so the
+either/or above is not superseded — it is the shipped truth: at the held
+110, strata co-existence stays CLOSED (110 + 64 + 6.3 = 180.3 > 125.08
+exactly as written above). The ≈118.3 class re-opens the co-existence
+arithmetic only if/when the post-TP2-boot DOWN re-pin lands as an owner
+receipt — the first-boot print is the budget authority, never a
+pre-emptive softening. The decision still rides the CUTOVER ticket —
+pointer only, nothing was decided or actioned on this ticket; the
+card-side contention relief above stands unchanged.
 
 ## 13. Three-way naming law — what this doc's engine is
 

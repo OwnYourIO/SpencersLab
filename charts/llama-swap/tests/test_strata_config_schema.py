@@ -165,7 +165,11 @@ def test_c01_ac4_env_contract_keyless():
         assert entry in env, f"PR #3636 one-at-a-time arm env switch missing: {entry}"
     assert "STRATA_PREFILL_CPU_SHARE=auto" in env
     rocr = [e for e in env if e.startswith("ROCR_VISIBLE_DEVICES=")]
-    assert rocr == ["ROCR_VISIBLE_DEVICES=0"], f"default device pin (on-target rocminfo retargets via strata.rocrVisibleDevices): {rocr}"
+    assert rocr == [f"ROCR_VISIBLE_DEVICES={S.ROCR_PRIMARY}"], (
+        f"default device pin — cf-144 C03: resolves through the ROCr constants block (single "
+        f"re-pin site); an on-target rocminfo receipt retargets via strata.rocrVisibleDevices "
+        f"AND that block in one wave, got {rocr}"
+    )
     # C-A: the ${env.STRATA_API_KEY} passthrough is DELETED, not guarded —
     # its run-1 absence would now be a config-load landmine instead of a gate.
     assert not any("STRATA_API_KEY" in e for e in env), (

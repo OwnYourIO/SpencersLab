@@ -1,0 +1,164 @@
+{
+  "feature": "2026/2026-11-bug-board-preload-lean-consumer",
+  "plan_status": "complete",
+  "plan_status_note": "COMPLETE 2026-11-22T04:05Z — round-2 final whole-plan review APPROVED (ses_dfc8c7f57ffezKhtpzpnDyId3n); C01+C02+C03 all done/APPROVED; plan_status_note history below stands. (Original re-open: RE-OPENED 2026-11-22 (from complete): owner directive promotes the Deferred tool-side leg into THIS run (DECISIONS 2026-11-22 coord record — verbatim: 'If a tool change is what's needed, that's what YOU need to do here'). C01 stays done/APPROVED exactly as recorded (final review APPROVED 2026-11-21, ses_dff8c1d90ffedCAXoohkjq6xf7, skill-side scope — never re-opened, per the step-11 bound). Plan round 2 (tool/plugin/docs delta) launched 2026-11-22 on hosted flash; the owner's directive doubles as the delta approval per the cf-6 run-0 precedent. Landing posture unchanged: uncommitted working diff in the main checkout, zero commits by the run (D28). Original complete record (history): single chunk done, dev DONE + review APPROVED r1, final whole-plan review APPROVED; landing posture owner's. | ROUND 2 PLANNED 2026-11-22: plan round 2 appended (DECISIONS D11–D21; unknown-arg truth MEASURED as deterministic FastMCP error, not silent ignore — D14; claim-time-lean RULED YES, probe-gated — D16). New pending chunks C02 (wave 2: tool arg + doc homes + dependencies.sh t2) and C03 (wave 3, depends C02: plugin sixth leg + boards doctrine lean sentence + boards-deps t14 + mirror regen). approved-with-delta posture stands; C01's records byte-intact.",
+  "approval": {
+    "by": "owner, in-session question (the plan-approval pause)",
+    "at": "2026-11-21T19:24:25Z",
+    "verdict": "Approve — run all waves",
+    "rulings_vetoable_unchanged": "D2 (claim-time scope = [\"In Process\"] alone) and D3 (far-end settle via one targeted get_card) accepted as planned",
+    "companion_owner_answers_same_round": "held card #144's foreign live claim (ses_e012e8e56ffe…, AI set): 'Just keep going.' — no force-release; if a #144 run is real it resumes its own card, and this session never touches #144 again except the bookkeeping comment"
+  },
+  "coord_session": null,
+  "coord_session_reason": "session-rename-skipped",
+  "model_override": "2026-11-21T19:39Z owner in-session directive (verbatim: 'can you cancel that subagent and restart it and all following subagents with the openrouter flash model'): from this point ALL launches of this run route to openrouter/qwen/qwen3.8-flash — Test Writing (relaunched; the gpu-ai flash session ses_e006cba14ffeZYulD5YVHC7QuC was STOPPED mid-task under this directive), C01 dev, chunk review, final whole-plan review included. Supersedes kickoff.models (gpu-ai/qwen3.8-27b-q4, planning + code tiers); the planner + the stopped test session already worked on the superseded route — their on-disk artifacts stand, nothing re-run for the change. Hosted flash is the explicit-choice provider per pipeline-models posture; the planning tier stays a routing decision, not a new model family. The stopped session's honest partial-state report rides its RESULT (see test_session_note).",
+  "test_session": "ses_dff491109ffeUo7RkoJVWITRxS",
+  "test_session_round2": "Round-2 test wave (C02+C03 arms, red-first, ONE session, launched 2026-11-22 on openrouter flash per the standing owner override; the round-1 session ses_dffc300c… authored C01's legs). NOTE corrected: the coord first wrote a GUESSED id into this field before the launch returned — caught and reverted per the C11 invented-id law; the value here is the launch's real sessionID.",
+  "test_session_note": "the ONE Test Writing session for C01, relaunched on openrouter/qwen/qwen3.8-flash per the owner model-override (see model_override key); writes only under tests/**; designed-red posture t10/t12/t13 expected, t1..t9 green at hand-back; every later test fix routes here. SUPERSEDED: ses_e006cba14ffeZYulD5YVHC7QuC (gpu-ai flash) — STOPPED on the owner's directive with an honest zero-write report (read-only phase only; the relaunch prompt orders its own disk verification rather than trusting this note). Earlier same-day id ses_e013081dcffem1OzHx7K3AHhA4 was the ex-duplicate plan session used only for the clean-hand-off stop.",
+  "updated_at": "2026-11-22T00:45:00Z",
+  "current_wave": 2,
+  "kickoff": {
+    "card": null,
+    "card_note": "No WeKan card — owner-directed friction follow-up. This ticket HOLDS card #144 (Radiance second-GPU (TP2) expansion): owner ruled #144 released (claim abandoned, release comment 4FvyyEFj7TfH3dfwd posted) and NOT re-picked until this fix lands.",
+    "released_card": {
+      "number": 144,
+      "id": "Cnf563PDBmBoDLSaS",
+      "release_comment": "4FvyyEFj7TfH3dfwd",
+      "ruling": "not re-picked until this fix lands; its intake facts ride its own comment"
+    },
+    "slug": "bug-board-preload-lean-consumer",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": null,
+    "worktree_reason": "worktree-creation-skipped",
+    "branch": "main",
+    "branch_observation": "observed by agent-plan in its own grants: git rev-parse --abbrev-ref HEAD = main at /home/coder/SpencersLab, HEAD 7886e20b4, tree clean at planning time (the coordinator's grants could not observe it and passed no value)",
+    "branch_source": "launch-checkout (uncommitted-in-place, D28 posture)",
+    "commits": "none",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": null,
+    "session_origin_note": "claim-once slot is a board-run claim-comment leg; this ticket has no card and this planning session issued no claim. The coordinator's run records it live per the boards two-leg resolution if/when a claim leg happens (it will not for this ticket).",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-q4",
+      "code": "gpu-ai/qwen3.8-27b-q4"
+    },
+    "models_basis": "coordinator-supplied kickoff answers; local: true",
+    "local": true,
+    "priority": null,
+    "priority_note": "no card — the Priority field leg does not apply",
+    "stages": [
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "coordinator-supplied run shape for the follow-on fix run (the kickoff brief names Test Writing as a checked stage and chunk/final reviews reading the working diff); Session Rename + Worktree Creation unchecked (the recorded null/none reasons above)",
+    "preload": null,
+    "preload_note": "no claim-time preload was taken for this ticket (no card, no claim); the {preload:{at,tool,cards,degraded}} stamp leg belongs to future runs and is what this ticket's amendment governs",
+    "board_context": null
+  },
+  "plan_rounds": 2,
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "dev_session": "ses_dffa89df0ffeeiHEliD7wMUbKG",
+      "review_rounds": 1,
+      "review_session": "ses_dff9d7ad1ffeo9lfOoFObCFRkI",
+      "last_verdict": "APPROVED (round 1 — fresh session, per-arm; all ACs; no blockers/majors; dev+test deviations ruled ACCEPTED)",
+      "handoffs": [
+        {
+          "at": "2026-11-21T19:58Z",
+          "role": "test",
+          "session": "ses_dffc300c7ffewnuwfHqJyonscg",
+          "result": "RESULT status: DONE chunk: C01 (tests side only — prose/regen legs untouched) files_changed: [tests/boards-deps/surface.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, tests/agent-board-coord/gate.sh] commands_run: [git log --oneline -1 => pass (6c16aad4a pre-run+hand-back, zero commits; 7886e20b4 verified ancestor — AC9 pre-run-head clause), git status --porcelain => pass (my delta = exactly the 4 files, unstaged; foreign dirty set byte-unchanged), bash tests/boards-deps/surface.sh t1..t9 => pass (9/9 GREEN, re-run after window() refactor), t10 => fail (designed: quoted \"In Process\" literal absent), t11 => pass (GREEN at base: min span 495, optional group skipped — anticipated), t12 => fail (designed: window min span 1915; negative leg standalone: ships 1 violating claim/file, violating control rejected, compliant control accepted), t13 => fail (designed: window min span 3316; 'carry no titles' present both files), rulesync-surface => fail at c8 on FOREIGN path — identical to pre-run baseline; c1..c7 green incl generate no-op; agents-md => fail at c7 on foreign path, baseline-identical; gate => fail at t14 on foreign path, baseline-identical; admit-extraction-probes ×3 => pass (11/11 in-scope paths admitted by c8/c7/t14 case lists; foreign unadmitted rejected; catch-all probes untouched), dependencies.sh => pass 11 ok HOLD, board-preload-probe => pass 6 ok HOLD, rulesync generate --check => pass, bash -n ×4 => pass, npx aislop@0.20.0 ci --changes => pass (0/0, 108 files)] deviations: (1) t12's sentence negative is CLAIM-ANCHORED (±260/120 around the read-off-the-preload claim) — the shipped 693-char violation sentence hides behind a sentence-wide t3-style exemption list, so exemption vocab leads with \\bnot\\b/\\bonly\\b + supersession verbs; both mandated controls prove teeth+scope. (2) '?'-optional-group convention added to shared sec.py window() for t11's allowed-not-mandatory group; no other arm rides it. (3) t11 GREEN at hand-back (shipped bullet already satisfies its window) — now carries HOLD duty. (4) The plan's 'green with plan folder untracked + six files dirty' is UNATTAINABLE for c7/c8/t14 on this shared checkout — three foreign waves hold it dirty (offender .agents/plans/2026-11-21-bug-coder-external-token-encryption-removal.md), their arms baseline-identical; review MUST run per-arm, not only fail-fast. friction: plan/STATE tree baseline stale at launch (HEAD 6c16aad4a +20 commits from 7886e20b4, ~43 foreign dirty paths) — resolved verify-disk-first + per-suite pre-run baselines; aislop ci --changes is the operative gate shape; fail-fast hides admit teeth — extraction probes. open_questions: none. Hand-off facts for dev: t10 requires the QUOTED literal swimlane_titles: [\"In Process\"]; t13 requires 'carry no titles' gone from BOTH files and 'far end'+get_card+non-gating inside one 2600-card-pickup window; t12 exempts supersession phrasings but fires on any unqualified affirmative candidate-checklists-preload sentence. next_suggested: coordinator launches agent-dev for C01's prose + regen against t10/t12/t13, then review re-runs per-arm."
+        },
+        {
+          "at": "2026-11-21T20:25Z",
+          "role": "dev-local",
+          "session": "ses_dffa89df0ffeeiHEliD7wMUbKG",
+          "result": "RESULT status: DONE chunk: C01 (dev side — tests side landed pre-run; untouched by me) files_changed: [.rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md (rulesync-generated mirror only)] commands_run: [disk-first verify (git log/status, admits grep) => pass, pre-edit per-arm baseline t1..t13 => pass (t10/t12/t13 designed-red with hand-off messages, rest green), source-side window emulation (15 Board-context + 10 Card-pickup groups + hook ±900 + sole-gating/blocks negatives) => pass, rulesync generate ×2 + porcelain diff => pass (boards mirror only; stable), rulesync generate --check => pass, bash tests/boards-deps/surface.sh t1..t13 per-arm => 13/13 GREEN (t10/t12/t13 flipped; t1..t9/t11 HOLD), full suite => pass 13 ok, rulesync-surface c1..c25 per-arm => green except c8-foreign + c19-baseline-peculiar, agents-md c1..c9 per-arm => green except c7-foreign, gate t1..t20 per-arm => green except t14-foreign + t17-baseline-peculiar, admit-extraction-probes ×3 => pass (6 in-scope + 5 own-folder admitted; 32-33 rejects all foreign), dependencies.sh => pass 11 ok HOLD, board-preload-probe/surface.sh => pass 6 ok HOLD, npx aislop@0.20.0 ci --changes => pass (0/0, 108 files; markdown not scored), bash -n skipped (no .sh), final posture git diff HEAD --stat => 2 files 4+/4-, boards source byte-identical at 6c16aad4a..HEAD, zero add/commit => pass] deviations: (1) AC9's literal head 6c16aad4a broken FOREIGNLY mid-run — the cf-144 wave committed 6 times onto the shared main checkout (head now 193c12798); zero commits/adds by this session, slice = the 2-file working diff, source identical at both heads — zero form honoured by absence, not by the head value. (2) Preload passage grew 3417→4849 chars (+1432 net after retirement of the candidate sentence/schema tuple/heuristic ~800 and two compression passes): five mandated doctrine facts + Timeout contingency + Priority clause; no length pin exists, all windows hold ≥2.9× headroom (max 619 vs 1800) — FLAGGED for review's length judgment. (3) Two MORE baseline-peculiar reds found behind fail-fast: rulesync-surface c19 (cf-85 roster designed red on baseline content) + gate t17 (coord-family frontmatter contract, files byte-identical to baseline) — neither attributable to C01. (4) aislop-gate echoed a code-comment finding on every markdown edit — false positive recorded. friction: landing HEAD + foreign changed set moved mid-run (45→79 paths; new unadmitted offender .agents/notes/radiance-q27-boot.md; the 3 scope files in foreign-owned staged MM state) — resolved verify-disk-first + file-identity diffs + per-arm re-runs; first extraction probes misfired on suite variables in case lists ($BOARDS_SRC) — define header vars in probe. open_questions: none. next_suggested: coordinator launches fresh agent-review per-arm."
+        },
+        {
+          "at": "2026-11-21T20:55Z",
+          "role": "review",
+          "session": "ses_dff9d7ad1ffeo9lfOoFObCFRkI",
+          "result": "RESULT status: DONE chunk: C01 verdict: APPROVED files_changed: [chunks/C01.md Review notes only] commands_run: [boards-deps t1..t13 per-arm => 13/13 GREEN + full 13 ok; rulesync generate ×2 no-op + --check 0; rulesync-surface c1..c25 per-arm GREEN except c8-foreign + c19-ledger; agents-md c1..c12 per-arm GREEN except c7-foreign + c11 NEWLY-SURFACED baseline red (cf-106-era family: needle gpu-ai/qwen3.8-27b-q4 absent at HEAD+worktree — the 2026-11-09 owner runner-model ruling moved the literal; content-identity PROVEN foreign, coord FRICTION addendum owed — landed same hour by coord); gate t1..t22 per-arm GREEN except t14-foreign + t17-ledger; admit probes ×3 vars-expanded => 11/11 admitted + foreign control REJECTED; dependencies.sh 11 ok HOLD (its t11 = the home of the every-swimlane TOOL default — AC1 cite-shape holds); board-preload-probe 6 ok HOLD; aislop ci/scan --changes 0/0 score 100 108 files; AC9 git/reflog => zero commits by the run (all post-6c16aad4a moves are cf-144/cf-55 cherry-picks by Spencer's Bot, none touching chunk paths; slice entirely unstaged; review left tree sha-identical); teeth reproductions ×5 in /tmp sandbox => pass incl. t12's negative firing on the REAL 694-char retired cf-106 sentence with the window leg still green (executed, not decoration)] deviations: none review-side. Deviation rulings: (2) +1432-char growth ACCEPTED — every added sentence maps to an enumerated mandate, ~800 banked from the retirement, the leanness thesis targets PAYLOAD not paragraph; the chunk's 'should not grow much' note UNDERCOUNTED its own six mandates → plan-expectation nit (Deferred). (3) c19 + t17 confirmed foreign by content identity (c19's whole Board-facts section diffs EMPTY despite naming a touched file). (4) nothing bent for the aislop false positive. Minors recorded in chunk notes (non-gating, folded to Deferred): double label_names/field_names enumeration in adjacent sentences; 'Review the release hand' wording; pre-existing step-3-vs-carve-out tension. open_questions: none. next_suggested: final whole-plan review (single-chunk plan) — carry the c11 ledger addendum (done), the minors, and the AC9/aislop/length plan-text nits into its posture ledger."
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "dev_session": "ses_dff182693ffe3eMNr4HNILIHnK",
+      "review_rounds": 1,
+      "review_session": "ses_dff0e1957ffeN6IMJdM9jfIXdS",
+      "last_verdict": "APPROVED (r1, fresh session, per-arm): independent AST proofs (1 literal/8 keys/guarded pop/0 empties/1 get/fields= byte-identical) + exec'd HEAD-vs-worktree function over a synthetic export (default 1485 B byte-identical INCLUDING key order; lean = same payload, key absent every map, grouping/tail/deps/maps invariant); doc-honesty audit clean incl. the N-2 fold achieving its purpose (boards citation now lands on text that says it); deviations 1 (wrapped signature — 16/40 file convention, one-line would be 116 cols) + 2 (size WARNs pre-existing 198≫88/1778≫441, +20 mandated by legs (b)/(d)/D12, helper-extraction forbidden by the in-function pins) ACCEPTED; nits non-gating (BEFORE-number quote; docstring cross-ref pointer); posture: 4 files, zero commits, foreign branch-checkout transient mid-review re-hashed byte-identical, reviewer left tree byte-identical.",
+      "dev_result": "DONE: 4 files (server.py + README + SKILL.md + call-shapes.md); signature trailing with_checklists=True (wrapped rendering — file's own set_card_labels convention, AST pins wrap-agnostic); docstring lean contract (default = today's bytes; false OMITS the key, never empties; an absent key is not an answer about checklist state); pop-after-build on the single 8-key literal with D11/D12 why-comment; export call/fields=_trim/_slim_card/registry byte-untouched (AC3 AST+grep: ONE card-map literal, ONE get call, no []-emptying); docs five homes same wave (SKILL prose 8-default/7-lean + arg-never-moves-count law + D21 filter-survival clause; call-shapes row both-cells + stamp extended source-only 2026-11 with the deployed-lacks-arg honesty; README row in the row's voice). Gate per-arm: dependencies.sh 11 ok post-tool (t2 a–d + 3 controls green; name-keyed t11 not regressed); tools.sh 10 ok (18/21/39 unchanged); probe 6 ok; skill-surface t3 byte-identical foreign red (not chased); py_compile ×2; teeth: /tmp pop-removed copy reddens leg (b) ALONE (one own-goal fixed: line-exact splice after an index-cut broke the copy's syntax — recorded); aislop ci --changes 0 errors / 99 Healthy (2 WARN = pre-existing sizes now measured in-scope — deviation 2, ledger-candidate open_question); rulesync not run (no .rulesync in diff, verified); posture: HEAD d34c8419a unchanged by the run, zero add/commit, slice = exactly the 4 files unstaged, staged∩paths=0, foreign untouched. open_questions (ledger, non-gating): preload_board/server.py size warnings → owner's next container-refactor routing family.",
+      "handoffs": [
+        {
+          "at": "2026-11-22T07:40Z",
+          "role": "test",
+          "session": "ses_dff491109ffeUo7RkoJVWITRxS",
+          "result": "TEST WAVE (C02+C03, one session, compressed faithfully from the full RESULT): files = tests/wekan-mcp/dependencies.sh (t2 argn re-pin + lean legs (a) guard+pop / (b) pop-presence / (c) emptying-absent-default-True / (d); 4-control isolation proven: compliant green, no-pop reddens (b) only, empties reddens (c) only, decoy-literal reddens the UNCHANGED ALL-quantifier only; full-file WEKAN_SERVER conforming-copy sim => PASS 11 ok incl HOLD legs; t11 LOAD-BEARING FIX — positional defaults[-1] read would have pinned C02's trailing True as swimlane_titles' default and reddened t11 on the landing tree — re-pinned name-keyed, same law, mispin measured, designated test-session route), tests/opencode/board-context.test.ts (designed-red set = exactly 4: :560 lean-args, 7-call fallback, double-fail, S8 isError-THROW; 48/52 green; conforming-copy /tmp sim 52/52), tests/boards-deps/surface.sh (t14 probe-gated-lean doctrine arm designed-red naming C03 with violating-rejected/compliant-accepted controls proven directly; t1..t13 HOLD green; prose sim PASS 14 ok; amended-passage min-spans all caps >=2.6x headroom, no cap moves). HOLD duties: tools.sh 10 ok (registry 18/21/39 literals — the arg moved nothing), probe 6 ok, skill-surface t3 + bc-t6 = baseline-FOREIGN reds (worktree SKILL copies / nested gate t14 fail-fast on radiance-q27-boot.md) byte-identical, do-not-chase; trio red-set {rs-c8,rs-c19,am-c7,am-c11,gt-t14,gt-t17} unchanged. Posture: HEAD moved foreign (193c12798→d34c8419a, cf-145/cf-6 bot commits, none touching scope files); zero adds/commits by the run; delta = exactly the 3 test files unstaged; aislop ci --changes 0/0. open_questions none."
+        }
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 1,
+      "dev_session": "ses_dfefefb87ffeho61Uck11y9B4s",
+      "dev_result": "DONE (compressed faithfully): 3 files (plugin, boards source, rulesync mirror). Plugin: isError-THROW with first-text carried (D15 — misleading-empty path dead); sixth leg lean-first {board_id, with_checklists:false} + EXACTLY ONE build-tolerant board_id-only retry, retry-failure propagates into the shipped never-throw admission posture (untouched prompt + one stderr line); success six RPCs / degraded seven; leg comment truth-rewritten, DEFAULT_ENABLED/formatBlock/citations byte-untouched (diff-proven). Doctrine: four specced insertions (probe-gated lean sentence, hook-clause extension as an in-sentence em-dash to keep t2's ±900 co-location, scoped furniture + never-empty law, stamp-pin sentence); preserve-list verified programmatically (ABSENT-branch byte-identical, furniture tail, stamp count, banned tokens 0). Windows re-measured both homes: tightest ~2.6x headroom (t2#2), no cap moved. Teeth (/tmp, line-exact + TS-parse-before-run law): lean-ask revert reddens EXACTLY the two retry-named arms; throw-disable reddens EXACTLY S8; double-fail arm's teeth ride the suite's seven-leg call-count assertion. Gate: TS 52/52 x2; boards-deps 14/14 + full 14 ok incl t14 live controls (unconditional-lean rejected, probe-gated accepted, (c) now load-bearing); rulesync x3 => only the mirror, --check 0; dependencies 11 ok / tools 10 ok / probe 6 ok (wave specced NO arg needles there — honest); extra belt card-details.test.ts 32/32 for the shared raw-layer change; aislop 0 errors (3 pre-existing size WARNs). DEVIATIONS: (1) am-c8 newly-surfaced FOREIGN red — cf-145 wave commit 98cb711d9 gutted the AGENTS.md References section (-36/+4; neither AGENTS.md nor overview.md is a C03 file; content identity proven) — ledger append owed (landed by coord same hour); (2) first teeth own-goal used a bindingless bare `throw;` — runtime TS stripper rejected (ERR_INVALID_TYPESCRIPT_SYNTAX) after --check passed it: --check ≠ runtime-strip validation, recorded; (3) em-dash in-sentence insertion counts as the specced sentence; (4) zero out-of-scope touches. Posture: HEAD moved foreign (d34c8419a→31044d0b6, cf-145); staged∩scope=0; foreign commits touched zero scope paths; slice proven by content diff, head never.",
+      "review_rounds": 1,
+      "review_session": "ses_dfee283d5ffeeNWih4oHXgo6GX",
+      "last_verdict": "APPROVED (r1, fresh session): 52/52 + 14/14 + 32/32 own-run; reviewer's OWN t14 controls rejected the unconditional / accepted the probe-gated on BOTH homes; never-throw escape traced at source (contained: no-loop catch → withinBudget settled rethrow → outer unconditional catch → one stderr + untouched prompt); ABSENT branch 701 chars byte-equal HEAD↔worktree↔mirror; ±900 measured 687 as shipped; all three dev deviations ACCEPTED (am-c8 foreign — with precision: the −36/+4 is cf-145's STAGED revert leg (md5==98cb711d9~1), 98cb711d9 itself GREW References); minors N1 (isError multi-line into degrade logs — follow oneLine() at plugin owners' next touch) + N2 (test header 'green at base' half-true, historical) non-gating. Red set exactly the ledger {rs-c8,rs-c19,am-c7,am-c8,am-c11,gt-t14,gt-t17}; AC9 zero commits proven by scope-path log + staged∩scope=0; reviewer left tree byte-identical outside Review notes.",
+      "handoffs": [
+        {
+          "at": "2026-11-22T07:40Z",
+          "role": "test",
+          "session": "ses_dff491109ffeUo7RkoJVWITRxS",
+          "result": "TEST WAVE shared with C02 (full compressed record in chunks.C02.handoffs[0]): for C03 specifically — board-context.test.ts designed-red set EXACTLY { :560 lean-args re-pin, 7-call fallback, double-fail both-attempts, S8 isError-THROW }, HOLD list enumerated untouched (:581/:593/:608/:618/:627/:642, :662 loop, S1, S3–S7, S9, S10, C09), conforming-copy sim 52/52; boards-deps t14 designed-red naming C03 (arms a/b/d on absent token; c vacuous-green at base with teeth by controls), prose sim 14 ok, caps unchanged."
+        },
+        {
+          "at": "2026-11-22T04:05Z",
+          "role": "final-review-round2",
+          "session": "ses_dfc8c7f57ffezKhtpzpnDyId3n",
+          "result": "RESULT status: DONE chunk: final-review-round2 verdict: APPROVED (whole plan, both rounds as one story). files_changed: [plan file — '## Final whole-plan review — round 2 (tool-side delta)' appended at :191; round-1 section byte-intact :73-147; the only write]. battery: entry gate verified at source (all three last_verdict APPROVED); boards-deps 14 ok; node suites {board-context 52, card-details 32, pipeline-locks core 38/engine 42/reap 32/tick 15, question-notify 65, permission-ask 48, aislop-pin 5} all 0-fail; dependencies 11/tools 10/probe 6; rulesync x2 no-op + --check 0; aislop 0 errors/3 accepted size WARNs; trio per-arm rc-captured => reds EXACTLY the ledger {rs-c8,rs-c19,am-c7,am-c8,am-c11,gt-t14,gt-t17} + skill-surface t3 + bc-t6; gt-t22 phantom re-witnessed PASS(0 ok); AC9 scope-path log => 1 foreign commit 9ada0dd56, ZERO by the run; HEAD 31044d0b6 + porcelain 114->114 unchanged by the review. LIVE-FIRE DRIFT BRANCH (recorded, not fabricated): deployed :v162 ANSWERED the scoped+lean call with today's UN-LEAN bytes (114,862 B, 83 cards, 8-key+trees, byte-stable since round 1) — NO ToolError, because the harness MCP client strips un-advertised args (session tools/list: arg absent — the probe gate reads correctly); pin verified unmoved incl the staged leg; posture re-derived: both error-world (raw path, D14) and strip-world (client path) are SAFE by construction; F-2 nit: plugin comment should carry the 4.2.4 raw-path qualification (next plugin touch). final arithmetic: today ~114.9 KB/claim (88% furniture until the bump); post owner merge->CI->bump->roll ~13-14 KB (~96-97% off the retired 410.6 KB), six RPCs, collector un-leaned per D18. Rulings audit: D1-D21 gap-audited, every cite-triangle closes; FIFTH-defect hunt found F-1 (minor, safe direction): skills/wekan-mcp/SKILL.md:22-24 'NEVER live-probed (no bearer in a pipeline session)' is falsified in present tense by this ticket's OWN two live-fires — exact rider for the bump-receipt wave; FIX-NOW: none. All prior minors re-homed. LANDING: recommend ONE 13-file commit by explicit pathspec (shared boards paragraph makes per-chunk splitting physically impossible and would fossilize a falsified intermediate) — cf-11 warning spelled out: the trio files' STAGED sides are foreign, land those separately first, NEVER -a. Residual re-statused: tool-side pending THE BUMP, not a ticket. deviations: brief-count drift F-3 (65/48/13-file truths; tree governs). friction: none new — known families, shipped workarounds held. open_questions: none for the gate; riders carried F-1/F-2/N-1/N1/N2/size-family + coord bookkeeping (done). next_suggested: coordinator records complete + HITL Final Review hand-off — DONE by coord same hour."
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "final_review": {
+    "at": "2026-11-21T21:25Z",
+    "session": "ses_dff8c1d90ffedCAXoohkjq6xf7",
+    "model": "openrouter/qwen/qwen3.8-flash (owner model-override honored for the final gate too)",
+    "verdict": "APPROVED (whole plan; single chunk + cross-section coherence; zero findings needing a fix round)",
+    "essentials": "GOAL MET AND MEASURED: live-fire of the shipped scoped call = 114.9 KB vs 410.6 KB unfiltered on today's board (72% / ~296 KB saved per claim; the board grew ~3.5x since the 117 KB incident); all eight live walk/satisfaction lists carried; dependencies byte-identical; label_names/field_names populated; every server.py survival claim verified at source lines + empirically; degrade law byte-identical at 701 chars; D2/D3/D7 landed verbatim (a live stray edge already shows D3's guarded shape). Battery: boards-deps 13/13 + full; rulesync no-op x2 + --check; scope arms per-arm green with the foreign fail-fasts and ledger reds (c8/c7/t14 foreign, c19/c11/t17 baseline) re-confirmed by content identity; admits 33/33 + foreign rejected; both HOLDs; aislop 0/0. Growth ACCEPTED at final word (~350 tokens/run-start for ~296 KB/claim). Honest residual quantified: 88% of the scoped payload is the checklist-tree furniture — exactly the Deferred tool-side with_checklists leg, correctly routed outside the owner's skill-side ruling. New ledger items: gate.sh phantom t22 id pre-existing (N-1, Deferred to gate owners); schema-home attribution imprecision D8 forced; live drift (Resume Later list, lingering session field) absorbed by the never-a-freeze posture. Plan file carries the full '## Final whole-plan review' section (the reviewer's only write). AC9: zero commits by the run — reflog-authority proof, foreign 9ada0dd56 the only chunk-path-touching commit and not ours."
+  },
+  "final_review_round2": {
+    "at": "2026-11-22",
+    "session": "ses_dfc8c7f57ffezKhtpzpnDyId3n (RELAUNCH — entry gate now satisfied: all three chunks carry recorded last_verdict APPROVED; the prior instance ses_dfee1f1e7ffeU68Uq6jjAQLrvX hard-stopped correctly and prescribed this relaunch)",
+    "model": "openrouter/qwen/qwen3.8-flash (owner override)",
+    "posture_note": "launched while the C03 chunk review (ses_dfee283d5ffeeNWih4oHXgo6GX) was still running — ORDERING ERROR by the coord (the final gate consumes chunk verdicts; concurrent launch means it reads a possibly-stale last_verdict). Mitigated by design: the final HARD-STOPPED at its entry gate (BLOCKED, zero writes, zero battery — its evidence chain: STATE last_verdict absent, chunk-file mtime pre-dates the review, a single sanctioned session-API read shows the review LIVE not lost); recovery chain per its hand-back: record C03's verdict → relaunch the identical brief fresh → HITL only after APPROVED. Lesson now GENUINELY ledgered (FRICTION 2026-11-22 coord(Planning, round-2) entry; the earlier 'Lesson ledgered' claim preceded the append by minutes — corrected-here-not-overwritten, which is itself the never-claim-before-verify law this ticket keeps relearning).",
+    "verdict": "APPROVED (relaunched instance ses_dfc8c7f57ffezKhtpzpnDyId3n completed the gate; full section at plan-file :191, round-1 section byte-intact). History: the first instance (ses_dfee1f1e7ffeU68Uq6jjAQLrvX) HARD-STOPPED at its entry gate — correct behavior, not a failure: zero writes, zero battery; evidence chain in its hand-back (STATE last_verdict absent, chunk mtimes, live session-API read)."
+  },
+  "deferred": [
+    "Tool-side with_checklists-style opt-in on preload_board — optional future leg per the owner ruling (DECISIONS Deferred), never this ticket's contract — PROMOTED 2026-11-22 by the owner directive into THIS ticket's contract: plan round 2, chunks C02 (tool arg + doc homes + dependencies.sh t2) / C03 (plugin sixth leg + boards doctrine lean sentence + suites + mirror); design decisions D11–D21 with the measured unknown-arg error truth (D14) and the probe-gated claim-time-lean ruling (D16)"
+  ],
+  "posture": {
+    "shape": "uncommitted-in-place (D28 zero form)",
+    "committer": "none — the coordinator makes ZERO commits on this run; reviews read the working diff",
+    "landing": "main checkout /home/coder/SpencersLab on main; advancing main by any route stays forbidden — the posture is honoured by the absence of commits, never by refusing to work",
+    "validation_base": "suites run at default BASE=HEAD against the dirty tree (the shape their headers document)"
+  }
+}

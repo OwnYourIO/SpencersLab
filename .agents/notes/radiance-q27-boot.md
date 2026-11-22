@@ -111,6 +111,21 @@ of them is fatal (§R19-Q1/Q3, D54(1)):
    9.80 GiB` free — below this lane's own `limit − printed-pinned ≥ 4`
    slack law at any defensible number.
 
+**[SHIPPED (cf-144 C01, 2026-11-21) — TP2 re-frame of blocker (1).]**
+Annotate, never rewrite: the three blockers above were the single-card
+ship-time truth and stay as written history. Blocker (1)'s capacity-1 pool
+was the pre-TP2 shape — card 2 landed 2026-11-21 and the
+`amd.com/gpu-r9700-1` pool is 2 now, while fn is TP2 claim-2 in git:
+shape A (OQ-A owner ruling, "A — fn TP2, claim both cards") has one pod
+holding BOTH cards while it is UP. The swap discipline is therefore
+CLAIM-MATH: fn UP holds both cards ⇒ q27 can only schedule with fn DOWN.
+"fn DOWN first, then q27 UP" (D54(1)) stands verbatim for a new reason;
+the console steps and the don't-sync law around them are unchanged. The
+git resting pair stays fn 1 / q27 0 — TP2 decides new git values, not
+live scale. Parked-window truth (the plan's Landing shape): the first
+TP2 sync with q27 UP lands fn Pending until q27 goes DOWN — fn TP2 needs
+2 of 2 cards — loud, designed; sync timing stays the owner's call.
+
 Down:
 
 ```bash

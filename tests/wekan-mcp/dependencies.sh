@@ -22,7 +22,12 @@
 #
 # AC trace: t1[C01 AC2 — dep signatures, 7-type client gate, upsert doc,
 # DESTRUCTIVE mark, registration kinds] t2[AC2 — preload reshape contract
-# incl. archived-flagged-not-dropped + no title/description] t3[AC2 —
+# incl. archived-flagged-not-dropped + no title/description, + cf-123 R2 —
+# the with_checklists lean contract (argn re-pin, default-True, guarded
+# pop-after-build beside the UNWEAKENED ALL-quantifier, never-empty negative,
+# docstring pairing) + cf-106 C06 N1 — swimlane_titles default read by NAME
+# (the trailing-with_checklists era would misread the positional arm)] t3[AC2 —
+# set_card_labels bulk shape + ≤500 cap + board-label validation] t4[AC2 —
 # set_card_labels bulk shape + ≤500 cap + board-label validation] t4[AC2 —
 # _slim_card passthroughs + list_cards_in_list stays strip-accurate] t5[AC2 —
 # create_card two-step, non-rollback, OQ1 negative: no auto-edge] t6[AC4 —
@@ -78,6 +83,24 @@
 # source, no server, no network. The live round-trip is the C10 runbook's
 # user probe.
 #
+# cf-123 R2 test round (2026-11-22, agent-test; plan round 2 chunk C02) — the
+# t2 lean re-pin: argn gains the third name, legs (a) default-True, (b) the
+# D12 guarded pop/del of "checklists", (c) the never-empty negative and (d)
+# the docstring pairing land IN t2 (no new arm id; the loop/regex stay
+# 1..t11). Red at base: argn (then (a)/(b)/(d) behind it). Leg (c) is a
+# GREEN-AT-BASE negative — the shipped body's "checklists" value is a
+# .get() call, never an emptied literal — its teeth live in the emptying
+# control copy, not in the file state. Teeth controls (the suite's
+# fabricated-copy shape, anchors asserted unique): the pop-less copy reddens
+# leg (b) alone, the emptying copy reddens leg (c) alone (c runs before b),
+# the second-7-key-literal decoy reddens the UNCHANGED ALL-quantifier leg
+# (D12: the pop keeps the 8-key literal pin honest — weakening it would hide
+# the decoy). Out-of-suite proof: WEKAN_SERVER=<real server.py carrying the
+# landed arg> bash tests/wekan-mcp/dependencies.sh → PASS (11 ok), the HOLD
+# legs (t9/t10/t11 filter mode included) ride the growth — t11's default read
+# became name-keyed so the trailing with_checklists default cannot masquerade
+# as swimlane_titles'.
+#
 # Usage:
 #   bash tests/wekan-mcp/dependencies.sh            # t1..t11
 #   bash tests/wekan-mcp/dependencies.sh t2 t5      # subset
@@ -96,6 +119,9 @@ SHAPES="skills/wekan-mcp/references/call-shapes.md"
 SKILL_API="skills/wekan-api/SKILL.md"
 PIN_BASE="${CF96_BASE:-$(git merge-base main HEAD)}"
 PARITY="tests/wekan-mcp/registry-parity.py"
+# Hoisted above t2 (cf-123 R2): the t2 checker runs over fabricated copies here,
+# the t9..t11 checker and fixtures below share the same scratch dir.
+TMP="${TMP:-$(mktemp -d /tmp/opencode/wekan-deps-test.XXXXXX)}"
 
 checks=0
 FAILED=0
@@ -224,8 +250,13 @@ PY
 fi
 
 # --- t2: preload_board — the one-call export reshape (C01 T2) --------------------
+# cf-123 R2: the checker moved from the inline stdin heredoc to $TMP/t2check.py
+# VERBATIM (the ALL-quantifier leg and every original leg are unchanged in
+# wording and strength) so the SAME arms re-run over the fabricated lean
+# copies — C02's "teeth controls in the suite's fabricated-copy shape". The
+# live run is over $SERVER, so the WEKAN_SERVER override route still works.
 if want t2; then
-  if ! python3 - "$SERVER" <<'PY'
+  cat >"$TMP/t2check.py" <<'PYEOF'
 import ast, sys
 
 src = open(sys.argv[1]).read()
@@ -239,8 +270,17 @@ for d in fn.decorator_list:
     if isinstance(d, ast.Name) and d.id == "_write_tool":
         print("t2: preload_board is a READ (bare @mcp.tool) — registered via _write_tool it would vanish from the readonly tier"); sys.exit(1)
 argn = [a.arg for a in fn.args.args]
-if argn != ["board_id", "swimlane_titles"]:
-    print(f"t2: preload_board args {argn}, want (board_id, swimlane_titles) - cf-106 C06 adds the optional swimlane filter (red before C06 dev)"); sys.exit(1)
+if argn != ["board_id", "swimlane_titles", "with_checklists"]:
+    print(f"t2: preload_board args {argn}, want (board_id, swimlane_titles, with_checklists) - cf-123 R2 adds the optional lean opt-out as the trailing parameter (designed red before C02 dev)"); sys.exit(1)
+# cf-123 R2 leg (a): the trailing default literal is exactly True — the
+# no-argument call keeps answering today's bytes (D11: false is the opt-IN).
+# (Legs (c) and (b) run LATE, after the unchanged quantifier/export legs: the
+# fabricated decoy reddens the quantifier, the fabricated emptying reddens
+# (c) — leg order IS control isolation, (c) before (b) keeps both isolated
+# even when the emptying shape also removes the pop.)
+defaults = [ast.unparse(d) for d in fn.args.defaults]
+if defaults[-1:] != ["True"]:
+    print(f"t2: with_checklists must default to the literal True so today's bytes hold for callers that pass nothing (D11), defaults seen {defaults} — designed red before C02 dev"); sys.exit(1)
 b = ast.get_source_segment(src, fn)
 
 if "/api/boards/{board_id}/export" not in b:
@@ -298,10 +338,178 @@ if "slug" not in d or ("[" not in d and "link" not in d.lower()):
     print("t2: preload_board docstring must document the combined [<slug>](<link>) value parsing (bracketed text; bare value passes through)"); sys.exit(1)
 if "linked" not in d.lower():
     print("t2: preload_board docstring must state that linked cards are excluded by the exporter itself (S11 — documented, not filtered here)"); sys.exit(1)
-print("ok: t2 — preload_board: one export call, attachments=false + fields trim, every card map the exact 8-key set, no title/description, flag-not-drop archived, grouped map + dependencies + name maps")
+
+# cf-123 R2 leg (c): the never-empty negative — NO "checklists": []-style
+# emptying shape anywhere in the function (D11/D12: an absent key is not an
+# answer about checklist state). GREEN AT BASE on the shipped body (the 8-key
+# literal's value is a .get() CALL, not an emptied literal); its teeth live in
+# the emptying control copy below, not in the file state.
+def _is_empty_literal(v):
+    if isinstance(v, (ast.List, ast.Set, ast.Tuple)):
+        return not v.elts
+    return isinstance(v, ast.Call) and isinstance(v.func, ast.Name) and v.func.id in ("list", "set", "tuple") and not v.args
+empties = False
+for n in ast.walk(fn):
+    if isinstance(n, ast.Dict):
+        for k, v in zip(n.keys, n.values):
+            if isinstance(k, ast.Constant) and k.value == "checklists" and _is_empty_literal(v):
+                empties = True
+    if isinstance(n, ast.Assign):
+        for t in n.targets:
+            if isinstance(t, ast.Subscript) and isinstance(t.slice, ast.Constant) and t.slice.value == "checklists" \
+               and _is_empty_literal(n.value):
+                empties = True
+if empties:
+    print('t2: lean leg (c): a "checklists" key is emptied to [] inside preload_board — the lean path DROPS the key, never empties it (D11: a consumer must not read an emptied payload as "this card carries no checklists")'); sys.exit(1)
+
+# cf-123 R2 leg (b): pop-after-build (D12) — a branch keyed on
+# with_checklists removes the key (pop/del naming "checklists"). The
+# EXACTLY-8-key ALL-quantifier (above, UNCHANGED) stays true of the single
+# literal: the second-conditional-literal shape it forbids is exactly what
+# the pop replaces — the decoy control reddens that leg, the pop-less copy
+# reddens this one.
+lean_guard = False
+for n in ast.walk(fn):
+    if isinstance(n, ast.If) and "with_checklists" in ast.unparse(n.test):
+        for m in ast.walk(n):
+            if isinstance(m, ast.Call) and isinstance(m.func, ast.Attribute) and m.func.attr == "pop" \
+               and any(isinstance(a, ast.Constant) and a.value == "checklists" for a in m.args):
+                lean_guard = True
+            if isinstance(m, ast.Delete):
+                for tgt in m.targets:
+                    if isinstance(tgt, ast.Subscript) and isinstance(tgt.slice, ast.Constant) and tgt.slice.value == "checklists":
+                        lean_guard = True
+if not lean_guard:
+    print('t2: lean leg (b): no pop/del of the "checklists" key inside a branch keyed on with_checklists — the D12 pop-after-build mechanism has not landed — designed red before C02 dev'); sys.exit(1)
+
+# cf-123 R2 leg (d): the docstring contract — the eight-fields paragraph must
+# name with_checklists AND pair it with omission wording AND a never-empty
+# phrase (the law readable at the tool).
+dl = " ".join(d.lower().split())  # wrap-collapsed: the needles pair the law, not its line breaks
+if "with_checklists" not in d:
+    print("t2: lean leg (d): the preload_board docstring never names with_checklists — C02 T2.3 extends the EXACTLY-eight-fields paragraph with the lean contract"); sys.exit(1)
+if not any(w in dl for w in ("omit", "drop")):
+    print("t2: lean leg (d): the docstring names with_checklists without omission wording (false omits/drops the key entirely)"); sys.exit(1)
+if not any(w in dl for w in ("never empt", "not empt", "never an empty", "never []", "never `[]`")):
+    print("t2: lean leg (d): the docstring names with_checklists without the never-empty phrase (omitted, never emptied — D11)"); sys.exit(1)
+print("ok: t2 — preload_board: one export call, attachments=false + fields trim, every card map the exact 8-key set, no title/description, flag-not-drop archived, grouped map + dependencies + name maps, AND the cf-123 R2 lean contract (default-True, guarded pop-after-build, no emptying, docstring pairing)")
+PYEOF
+
+  # The C02-conformant preload_board as ONE synthetic source (the suite's
+  # fabricated-copy shape): legs argn/(a)/(b)/(c)/(d) + every unchanged leg
+  # must go green on this copy — the out-of-band satisfiability proof beside
+  # the WEKAN_SERVER full-file sim.
+  cat >"$TMP/t2-lean-compliant.py" <<'PYEOF'
+from typing import Optional
+
+
+def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None, with_checklists: bool = True) -> dict:
+    """
+    One-call whole-board preload. Each card carries EXACTLY eight fields:
+    id, card_number, label_ids, slug, archived, sort, parent_id, checklists;
+    the slug comes from the card's customFields entry through the combined
+    [<slug>](<link>) parse, and linked cards are excluded by the exporter
+    itself. swimlane_titles bounds the grouping, every swimlane by default.
+    with_checklists: bool = True — the default keeps today's shape; with
+    false each card omits the checklists key entirely (omitted, never
+    emptied — an absent key is not an answer about checklist state).
+    """
+    doc = client.get(f"/api/boards/{board_id}/export"
+                     "?attachments=false"
+                     "&fields=board-header,labels,custom-fields,dependencies,sort,checklists")
+    if not isinstance(doc, dict) or not doc:
+        raise ValueError("the export answer is not a board document")
+    label_names: dict = {}
+    field_names: dict = {}
+    checklists_by_card: dict = {}
+    cards_by_list: dict = {}
+    dependencies: list = []
+    for card in doc.get("cards", []):
+        entry = {
+            "id": card.get("_id"),
+            "card_number": card.get("cardNumber"),
+            "label_ids": card.get("labelIds", []),
+            "slug": slug_of(card.get("customFields")),
+            "archived": card.get("archived", False),
+            "sort": card.get("sort"),
+            "parent_id": card.get("parentId"),
+            "checklists": checklists_by_card.get(card.get("_id"), []),
+        }
+        if not with_checklists:
+            entry.pop("checklists")
+        cards_by_list.setdefault(card.get("listId"), []).append(entry)
+    for edge in doc.get("cardDependencies", []):
+        dependencies.append({"from_id": edge.get("from"), "to_id": edge.get("to"),
+                             "type": edge.get("type"), "color": None, "icon": None})
+    lists_out: list = []
+    for l in doc.get("lists", []):
+        cards = sorted(cards_by_list.get(l.get("_id"), []), key=lambda c: c.get("sort") or 0)
+        if cards:
+            lists_out.append({"id": l.get("_id"), "title": l.get("title"), "cards": cards})
+    swimlanes: list = []
+    for s in sorted(doc.get("swimlanes", []), key=lambda x: x.get("sort") or 0):
+        lane_lists = [l for l in lists_out if l.get("id") in {x.get("_id") for x in s.get("lists", [])}]
+        if swimlane_titles is not None and s.get("title") not in swimlane_titles:
+            continue
+        if lane_lists:
+            swimlanes.append({"id": s.get("_id"), "title": s.get("title"), "lists": lane_lists})
+    return {"board_id": board_id, "swimlanes": swimlanes, "dependencies": dependencies,
+            "label_names": label_names, "field_names": field_names}
+PYEOF
+
+  python3 - "$TMP/t2-lean-compliant.py" "$TMP" <<'PY' || { echo "t2: the fixture fabricator itself failed (fixture fault — a broken fixture edit reads as a contract red)" >&2; exit 1; }
+import sys
+text = open(sys.argv[1]).read()
+tmp = sys.argv[2]
+
+# One degradation per fabricated copy, each reddening exactly one t2 leg (the
+# t9..t11 fabricator rule: every anchor is asserted UNIQUE — a silently
+# non-matching replace would build a copy identical to the compliant source
+# and the control would pass for the wrong reason).
+def sub(name, old, new):
+    if text.count(old) != 1:
+        sys.exit(f"fixture fault: {name} anchor found {text.count(old)} times (want 1)")
+    open(f"{tmp}/t2-{name}.py", "w").write(text.replace(old, new))
+
+LEAN_GUARD = ('        if not with_checklists:\n'
+              '            entry.pop("checklists")\n')
+
+# leg (b) without the removal: the guard vanishes with the pop, the single
+# 8-key literal stays — ONLY leg (b) reddens.
+sub("no-pop", LEAN_GUARD, "")
+# emptied instead of dropped (D11's forbidden shape): leg (c) runs BEFORE
+# leg (b), so this copy reddens (c) alone despite the missing pop.
+sub("empties", 'entry.pop("checklists")', 'entry["checklists"] = []')
+# the decoy second 7-key conditional literal D12 rejects: the UNCHANGED
+# ALL-quantifier leg (which runs before every lean leg) reddens it.
+sub("decoy", LEAN_GUARD,
+    '        if not with_checklists:\n'
+    '            entry = {"id": card.get("_id"), "card_number": card.get("cardNumber"),\n'
+    '                       "label_ids": [], "slug": None, "archived": False,\n'
+    '                       "sort": None, "parent_id": None}\n')
 PY
-  then fail "t2[C01 AC2]: the preload_board reshape contract is not satisfied (reason above)"; fi
-  ok "t2[C01 AC2 + cf-106 C06]: preload_board one-call export reshape contract satisfied (the trim carries checklists, the card map is the 8-key set, the signature carries the swimlane filter)"
+
+  python3 "$TMP/t2check.py" "$SERVER" \
+    || fail "t2[C01 AC2 + cf-123 R2]: the preload_board reshape + lean-arg contract is not satisfied (reason above; the argn re-pin and lean legs (a)/(b)/(d) are designed red until C02 dev lands the with_checklists arg — cf-123 R2)"
+  python3 "$TMP/t2check.py" "$TMP/t2-lean-compliant.py" >/dev/null \
+    || fail "t2[cf-123 R2]: NEGATIVE CONTROL FAILED — the checker rejects a compliant pop-after-build preload (the lean legs are unsatisfiable as written)"
+  out=""
+  if out=$(python3 "$TMP/t2check.py" "$TMP/t2-no-pop.py" 2>&1); then
+    fail "t2[cf-123 R2]: NEGATIVE CONTROL FAILED — a preload whose lean branch never removes the key still passes: leg (b) is decoration"
+  fi
+  grep -q 'lean leg (b)' <<<"$out" \
+    || fail "t2[cf-123 R2]: the pop-less copy reddened, but not leg (b) ($out) — leg isolation broken"
+  if out=$(python3 "$TMP/t2check.py" "$TMP/t2-empties.py" 2>&1); then
+    fail 't2[cf-123 R2]: NEGATIVE CONTROL FAILED — an emptying "checklists": [] copy still passes: the never-empty negative (leg c, green at base by design) is decoration'
+  fi
+  grep -q 'lean leg (c)' <<<"$out" \
+    || fail "t2[cf-123 R2]: the emptying copy reddened, but not leg (c) ($out) — leg isolation broken"
+  if out=$(python3 "$TMP/t2check.py" "$TMP/t2-decoy.py" 2>&1); then
+    fail "t2[cf-123 R2]: NEGATIVE CONTROL FAILED — a copy adding a second 7-key card map still passes: the UNWEAKENED ALL-quantifier no longer sees the decoy (D12's mechanism constraint is decoration)"
+  fi
+  grep -q 'want EVERY card map EXACTLY' <<<"$out" \
+    || fail "t2[cf-123 R2]: the decoy copy reddened, but not the unchanged ALL-quantifier leg ($out) — leg isolation broken"
+  ok "t2[C01 AC2 + cf-106 C06 + cf-123 R2]: preload_board one-call export reshape + lean contract satisfied (swimlane filter AND with_checklists: default True answers today's bytes; false pops the key after the single 8-key literal — the ALL-quantifier stays true of the full shape; no emptying anywhere; docstring pairs omission with never-empty; the three fabricated controls each reddened their own leg)"
 fi
 
 # --- t3: set_card_labels — the bulk route wrapper (C01 T3, AD-74) -----------------
@@ -647,10 +855,21 @@ elif mode == "filter":
     if argn[:2] != ["board_id", "swimlane_titles"]:
         bad.append(f"signature is {argn}, want (board_id, swimlane_titles) — C06's payload-bound filter")
     defaults = fn.args.defaults
-    if not defaults:
+    param_names = [a.arg for a in fn.args.args]
+    if "swimlane_titles" not in param_names or not defaults:
         bad.append("swimlane_titles has no default — the documented default is every swimlane")
-    elif ast.unparse(defaults[-1]) not in ("None", "[]", "list()", "tuple()"):
-        bad.append(f"swimlane_titles defaults to {ast.unparse(defaults[-1])}, want None (all swimlanes)")
+    else:
+        # cf-123 R2 alignment fix (mechanical, strictness UNCHANGED): defaults
+        # position at the TRAILING parameters, and C02 appends a trailing
+        # with_checklists default — the old positional defaults[-1] read would
+        # start pinning with_checklists's True the moment the third parameter
+        # lands. Read the swimlane_titles default BY NAME so this arm keeps
+        # its subject across the signature growth.
+        idx = param_names.index("swimlane_titles") - (len(param_names) - len(defaults))
+        if idx < 0:
+            bad.append("swimlane_titles is NOT optional — every caller would have to pass it, contradicting the documented default (every swimlane)")
+        elif ast.unparse(defaults[idx]) not in ("None", "[]", "list()", "tuple()"):
+            bad.append(f"swimlane_titles defaults to {ast.unparse(defaults[idx])}, want None (all swimlanes)")
     if len([n for n in ast.walk(fn) if isinstance(n, ast.Name) and n.id == "swimlane_titles"]) < 2:
         bad.append("swimlane_titles is never used in the body — the filter argument is decorative")
     if_statements = [n for n in ast.walk(fn) if isinstance(n, ast.If)]

@@ -1,10 +1,35 @@
 {
   "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
-  "test_session": "lost-in-restart (2026-11-16 re-anchor round — handback arrived as 'Tool result missing'; the re-anchored suites were verified from disk instead, FRICTION 2026-11-16; a fresh agent-test session routes any later validation_at_fault)",
-  "current_wave": 2,
-  "updated_at": "2026-11-16T22:32:09+00:00",
+  "test_session": "ses_e006a6794ffeHqXl8O0Lx4sLoQ (fix-round test wave, 2026-11-21 — current for validation_at_fault routing; the rebuild-round session was lost-in-restart, its suites were disk-verified)",
+  "current_wave": 3,
+  "updated_at": "2026-11-21T19:16:28+00:00",
+  "fix_round": {
+    "at": "2026-11-21",
+    "trigger": "release.yaml FIRST FIRE on main failed at the runner's Set up helm step — read ECONNRESET downloading helm-v3.16.4-linux-amd64.tar.gz from get.helm.sh (3 retries, exitcode 1)",
+    "authority": "D33 (owner continuation directive: still cf-55 work, pull main in, same naming; fix approach owner-confirmed = custom act-runner image with helm baked in, setup-helm steps retired) + D34 (shared CICD lease with #135) + D35 (openrouter flash all tiers going forward)",
+    "branch_state": "reset --hard origin/main b80fae102 (36f6f542d squash-merged — content-identity per-path verified: ticket folder, strata tests, workflows, suites, custom-values all identical on main; only agents-md.sh/gate.sh/rulesync-surface.sh/AGENTS.md evolved by LATER tickets, our surfaces intact inside them); remote feature-branch divergence is owner-gated, this run pushes nothing unasked",
+    "lease": { "setId": "627dcc2c-8fce-405b-853e-d01934273472", "pipelines": ["CICD"], "shared": true, "coTenant": "grj3HFxsi3WzM5y96 ses_e39eb7bc4ffectkAy9nSpDDzuF (Move Renovate to git.spencerslab.com)", "takeover_note_2026-11-21": "PIPELINE LOCK LOST hook fired once for this setId while pipeline_status showed the holder LIVE (age 5.7s) — transient hook/engine read mismatch; owner answered the one sanctioned question 'Yes, continue on current claim'; forced heartbeat returned ok:true beating CICD — claim remains the shared CICD set, no card-id re-claim", "final_release_2026-11-21": "card reached Review; first pipeline_release answered ok:true released:[] (claim BOOKKEEPING lost across a mid-round engine restart while the disk holder row survived — orphan). Recovery cycle per FRICTION: shared re-claim (set 06e457ea) + immediate release -> released:[CICD], CICD.json removed, pipeline_status shows no CICD group and no reaped record; #55 stays in Review untouched" },
+    "conventions_shift": "run now lands under main's 13-item Lifecycle era; Session Rename + Worktree Creation are no-ops (folder/worktree/branch/session all pre-exist); guard-trio suites on disk are main's newer versions — the fix round's re-anchor must bind against those, not the 2026-11-16 admits",
+    "plan_of_record": "replan adds C05+ (runner image + workflow de-helm + runner wiring); agent-explore first for the runner-image/config grounding",
+    "explore_handoff": "ses_e0143ea41ffeWFFnYDBFfhBYuk DONE 2026-11-21 — EXPLORE.md Fix-round scout appended (291 insert/0 delete, ported history intact). Ground facts: 3 setup-helm steps + 2 cr downloads + 1 index curl, ALL in release.yaml (the fragility surface is release.yaml-only among the four workflows); act-runner deployed via charts/forgejo-runner (values.yaml + templates/secret-runner.yaml, gpu/dev slices; STSes on runner 13.2.0 + docker 29.9.2 dind sidecar, live since 2026-11-05); containers/coder-workspace Dockerfile :49-50 + :142-149 = existing helm-bake precedent; scripts/forgejo-container-detect.sh is path-based — a new containers/forgejo-runner needs NO registration list; test deltas scheduled for planning: forgejo-release t5/t19 (setup-helm pins), dev/gpu-forgejo-runner ACT_LABELS legs, gpu g7 2-docker-line diff cap. Open unknowns: job-level container: never proven green on lab runners (cf-135 UA5); anonymous /v2/ pulls from git.spencerslab.com to dind never proven runner-side (ghcr.io/ownyourio dual-publish is the safe-pull candidate); exact first-fire survivor steps readable only in the instance run log (owner-side)",
+    "plan_handoff": "ses_e013aa729ffeMQ7qUFSQWCjDWL DONE 2026-11-21 — plan file +210/0 (Fix round section), DECISIONS D36-D41 (+110/0), chunks C05/C06/C07 written; waves C05(M, image+tests/containers/forgejo-runner.sh) -> C06(M, four act-24.04-family labels -> ghcr.io/ownyourio/forgejo-runner:26.11.1) -> C07(M, retire 3x setup-helm + 2x cr, t5/t19 flip + t20, guard-trio admits). Proven-by-evidence during planning: ghcr anonymous pull 200/200 on ownyourio (public-pull path real), act-24.04 base digest-pinned sha256:7bf3a8af.... Seven open questions routed to the batched owner round",
+    "owner_batch_round": "2026-11-21T19:16Z — plan APPROVED to run C05->C06->C07; D37/D38/D39/D40 confirmed unchanged (cr baked, helm v3.22.1, ghcr pull, 22.04 label unmoved); D42 landing = SINGLE PR with designed benign red + owner re-run as the clean first fire, UA-8 amend contingency, UA-7 split retired; D43 the three Verify toolchain steps RETIRED (t5/t19 survive minus presence assertions; t20 index-curl --retry stands)",
+    "test_wave": {
+      "at": "2026-11-21", "session": "ses_e006a6794ffeHqXl8O0Lx4sLoQ", "status": "DONE",
+      "files": ["tests/containers/forgejo-runner.sh (NEW 220L, 8 legs: t1-t7 red-for-C05, t8 docker-build CI-deferred designed-GREEN)", "tests/services/forgejo-release.sh (20 legs: t5/t19/t20 red-for-C07, 17 legs byte-unchanged)", "tests/services/dev-forgejo-runner.sh (t2/t14 red-for-C06)", "tests/services/gpu-forgejo-runner.sh (g2 red-for-C06; g7 re-armed bounded, vacuous-green with scratch-mutation teeth)", "tests/agent-board-coord/{agents-md c7, gate t14, rulesync-surface c8} admits landed GREEN at branch scope, unadmitted-sibling rejects proven"],
+      "adjudications": "coord rulings on test handback: (1) FOUR ADDITIONAL PRE-EXISTING REDS admitted message-identical against fresh baseline, owned by OTHER tickets — dev t5 (cf-93 sandbox-pair \\bboth\\b comment services/dev/prod/values.yaml:118), dev t9 (cf-93 dev-home-assistant ingress.subdomains), dev t10 (Chart.yaml argo-cd 10.18.2 vs Chart.lock 10.11.6 renovate drift 80c503f72 — implementation-side, NOT a test defect), ci-surface t4 (seaweedfs-debug mcp-server-spec docker-build mentions f548360d5) — NOT fixed here (one branch one concern); they join the close-time follow-up-card candidates. Gate posture for C05-C07 rounds: designed-leg green + zero NEW reds, not full-suite green. (2) t14 sub-leg retirement ACCEPTED — it is the approved C06/D41 enumeration verbatim (three teeth kept, two added, installer-limb rewritten), the only planned reduction. (3) deviation 7 (exact-bytes script replaces vs edit tool, whitespace-wall class) accepted for test files. (4) renovate note CARRIED to C05 dev handoff: suite pins exact literals (v3.22.1/1.10.1/digest) — any future bump must re-pin suite legs in the same commit",
+      "ghcr_fact": "ownyourio/forgejo-runner tags/list => 403 resource-denied (repo absent = registry provably empty); control probe proved the recipe works; shipped pin 26.11.1 stands as the walk-predicted literal (UA-8 contingency armed)"
+    },
+    "test_session_fix_round": "ses_e006a6794ffeHqXl8O0Lx4sLoQ",
+    "final_review_fix_round": {
+      "at": "2026-11-21", "session": "ses_dffede315ffe4BSjmicj7KZThL", "tier": "planning (flash per D35)",
+      "verdict": "APPROVED — 8/8 seams (S1 image->labels tag-chain proven end-to-end incl live empty-registry re-probe; S2 labels->workflows: all 11 runs-on ride the baked image, base-inheritance carries lfs/docker/node/jq/python for the other three workflows; S3 zero NEW reds anywhere, no suite expects deleted surfaces; S4 prose parity rulesync-clean + 13-manager regex replay proves the hand-bump claim; S5 landing matches D42 verbatim, zero split-merge residue; S6 records complete; S7 fresh gate table all-green/admitted; S8 6 commits, 0 merges, nothing pushed, exactly 22 sanctioned files)",
+      "carried": "3 minors in chunk notes (Dockerfile:41 wording, header one-download over-claim, values:112 undercount); nit: stale /tmp/opencode/restore-review worktree registration from the 2026-11-16 dead session — owner-side removal; observation: containers-build t6/t12 v6-vs-v7 pins stay admitted-red until their owner ticket re-anchors"
+    },
+    "c05_dev_round": "ses_e003e2462ffehXoDhUqDkZvZTn DONE 2026-11-21 — containers/forgejo-runner/{Dockerfile,README.md} only; 8/8 image suite GREEN (real hadolint 2.15.1 at error threshold); digest + arch-child + helm sidecar + cr checksums live-verified; renovate customManagers[8] regex replay extracts both pins, CR_SHA256 provably unclaimed; regressions baseline-diffed byte-identical (release 17G+3 designed-red, host-runner 11/11, containers-build 38+3 ALL pre-existing, ci-surface t4 pre-existing); deviations adjudicated ACCEPT (suite-as-contract, no-SHELL at repo bar, provenance-comment truth fix, added offline verification); aislop vacuous for Dockerfile/MD recorded honest (FRICTION). NOTE: unplanned bookkeeping commit dca02bb94 found mid-round and KEPT after content verification (FRICTION)"
+  },
   "rebuild": {
     "at": "2026-11-16",
     "authority": "D31 (owner rebase directive: 'rebase this work onto main in this branch or another, but move this session too'; scope answer 'New branch, keep old') + D32 (reconciled contract grounded on cf-6's landed conventions) — plan file '## Rebuild onto main (2026-11-16)' section",
@@ -86,10 +111,10 @@
     "origin_dir": "/home/coder/SpencersLab",
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "models": {
-      "plan": "gpu-ai/qwen3.8-27b-radiance (2026-11-16 user local-model ruling; originally openrouter/qwen/qwen3.8-flash per the Qwen Flash checklist check)",
-      "code": "gpu-ai/qwen3.8-27b-radiance (2026-11-16 user local-model ruling; originally openrouter/qwen/qwen3.8-flash)"
+      "plan": "openrouter/qwen/qwen3.8-flash (2026-11-21 owner ruling D35 'use openrouter flash going forward' — supersedes the 2026-11-16 local-model ruling for all remaining rounds)",
+      "code": "openrouter/qwen/qwen3.8-flash (2026-11-21 owner ruling D35)"
     },
-    "local": true,
+    "local": false,
     "priority": { "raw": null, "class": "default" },
     "stages": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
     "hitl": ["Final Review"],
@@ -208,6 +233,63 @@
         }
       ],
       "rebuild": { "at": "2026-11-16", "status": "re-derived (rebuild dev round, verified from disk; review gate = final_review_rebuild)", "note": "D32: surface prose re-derived to the chart half — AGENTS.md four-workflow ROLE law (release.yaml narrow-on-unset), role skills + rulesync sources + mirrors, chart-templates, renovate-mcp Dockerfile, wekan-mcp pyproject; ci-surface suite re-pointed at containers-build.yaml" }
+    },
+    "C05": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e002c6a5cffej2pRdkWvNPGYG3)",
+      "dev_session": "ses_e003e2462ffehXoDhUqDkZvZTn",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C05", "session": "ses_e003e2462ffehXoDhUqDkZvZTn", "at": "2026-11-21",
+          "summary": "containers/forgejo-runner/{Dockerfile,README.md}; 8/8 suite green incl real hadolint; digest/arch/sidecar/checksums live-verified; renovate regex replay extracts both pins, CR_SHA256 unclaimed; regressions byte-identical baselines; docker build no-daemon CI-deferred"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C05", "session": "ses_e002c6a5cffej2pRdkWvNPGYG3", "at": "2026-11-21",
+          "verdict": "APPROVED — contract 8/8; every live truth claim independently re-measured and EQUAL (act-24.04 head digest, CR_SHA256 vs checksums.txt, helm sidecar live); regressions exact admitted baselines (containers-build only t6/t12/x4, release only t5/t19/t20, ci-surface only t4, trio only c11/t17/c19); all four dev deviations ACCEPT (suite-as-contract, no-SHELL at error-bar precedent, citation-accurate provenance, AC3 re-verification); sidecar-fetched recipe ruled the correct reading of suite+AC (coder-workspace shape, D38). MINOR non-blocking: CR_SHA256 bump-law comment over-widens to HELM_VERSION bumps — teeth already correct, recorded in chunks/C05.md Review notes for a future touch."
+        }
+      ]
+    },
+    "C06": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C05"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_e0008e661ffeafnPTyILReMWop)",
+      "dev_session": "ses_e0024b064ffeXL0Kyed18aEwoP",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C06", "session": "ses_e0024b064ffeXL0Kyed18aEwoP", "at": "2026-11-21",
+          "summary": "charts/forgejo-runner values.yaml (four act-24.04-family labels -> ghcr.io/ownyourio/forgejo-runner:26.11.1, 22.04 byte-stable) + secret-runner.yaml record rewrite (baked truth, no sha256 literal); pin via walk-predicted empty-registry branch (controls disambiguate 403-absence); dev t2/t14 green, gpu 18/18 exit 0 g7 non-vacuous"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C06", "session": "ses_e0008e661ffeafnPTyILReMWop", "at": "2026-11-21",
+          "verdict": "APPROVED — legs validated independently (driver tables, gpu full-run, trio DIRECT per FRICTION posture); render proof: Secret carries exactly 5 prescribed labels, record verbatim, zero sha256/URL/sentinels; record claims true vs C05 Dockerfile on disk (lfs inheritance, /usr/local/bin helm+cr, executable verify commands); calendar-pin-vs-:main deviation PROPERLY JUSTIFIED (law serves pullPolicy services; labels have none; never-re-pull law, D39/D42); g7 teeth proven via 6-mutation live worktree probe, tree byte-identical after; deviations (a)(b)(c) all ACCEPT; 2 nits non-blocking (one-values-line undercount phrasing; immutable-tags wording) recorded in chunk Review notes; UA-8 discoverability acceptable via C05 README:62 + plan landing"
+        }
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C06"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, ses_dfff4fc4cffeaYXxubux929UxM)",
+      "dev_session": "ses_dfffd022dffecIkW3JbPQ5D7SH",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C07", "session": "ses_dfffd022dffecIkW3JbPQ5D7SH", "at": "2026-11-21",
+          "summary": "release.yaml: 3 setup-helm + 2 cr installs + top-level env block deleted, vacated slots EMPTY (D43), index fetch +--retry (t20), header/toolchain comments re-truthed; all rebuild laws byte-untouched; rulesync source + AGENTS.md regenerated together. forgejo-release 20/20 green; teeth mutants on t5/t19/t20; full admitted-baseline regression table"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C07", "session": "ses_dfff4fc4cffeaYXxubux929UxM", "at": "2026-11-21",
+          "verdict": "APPROVED — THE proof re-run 20/20 direct; law-by-law fresh-eyes verify (5 contains() guards, FF loop, index pairing, credential topology, zero deleted-env stragglers, bash -n x13); all 4 AC4 mutants independently re-reddened; prose truth-checked (13-manager renovate.json audit: no lane reads the label pin — claim TRUE; 4-workflow install grep clean); trio strengthened to full-leg HEAD-vs-live byte-identical red sets (beyond direct posture, because fail() aborts early); deviations 1-4 ACCEPT; 2 non-blocking nits (header 'one runtime download' over-claim literal; t19 generic-renamed-installer depth) recorded in chunk notes, no routing. aislop ci 108 files (wide-span posture unchanged) score 100."
+        }
+      ]
     }
   },
   "blocked": [],

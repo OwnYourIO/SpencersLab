@@ -11,7 +11,10 @@
 # Two backends via `runner.backend` (C03, ticket 2026-10-cf-11-feat-immich-
 # hugo-pipeline; docker is the default and the shape this file ships):
 #   docker — the pod below: privileged DinD sidecar + runner container, the
-#            5-label act image set, DOCKER_HOST at the in-pod socket.
+#            5-label baked job-image set (four act-24.04-family labels on
+#            ghcr.io/ownyourio/forgejo-runner, ubuntu-22.04 plain act),
+#            DOCKER_HOST at the in-pod socket, shared into job containers
+#            via config container.docker_host (cf-6, 2026-11-21).
 #   host   — jobs run directly in the runner container (the toolchain image,
 #            ghcr.io/ownyourio/forgejo-host-runner). Helm parses values.yaml
 #            as plain YAML, so the toggle cannot gate this file's structure;
@@ -99,17 +102,27 @@ runner:
   # unchanged.
   backend: docker
   # Advertised runner labels, rendered verbatim into config.yaml's
-  # server.connections.default.labels. The docker default is the
-  # GitHub-parity act-image set (ruling 3 of the per-instance ticket —
-  # only LTS-based act tags exist); host releases override with their own
-  # (labels are how jobs route, so a host runner must never carry act
-  # labels it cannot execute).
+  # server.connections.default.labels. The docker default is the cf-55
+  # baked set (D39/D40): the four act-24.04-family labels (ubuntu-latest,
+  # ubuntu-24.04, docker, node22) name the repo-built job image
+  # ghcr.io/ownyourio/forgejo-runner — helm and cr baked over the
+  # act-24.04 base, containers/forgejo-runner — while ubuntu-22.04 stays
+  # a plain act tag (no job requests it, and a 24.04-content image behind
+  # a 22.04 label would lie about its OS). The pins are immutable calendar
+  # tags and no renovate manager reads these lines, so a bump is manual:
+  # one values line plus the ArgoCD sync. Rolling refs are forbidden here
+  # (":main"/":latest" included) — these runners never re-pull a tag they
+  # have cached, so a floating pin would freeze silently at first-pull
+  # content, while a wrong calendar pin fails loudly as a pull error.
+  # Host releases override with their own labels (labels are how jobs
+  # route, so a host runner must never carry act labels it cannot
+  # execute).
   labels:
-    - ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04
-    - ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04
+    - ubuntu-latest:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
+    - ubuntu-24.04:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
     - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
-    - docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04
-    - node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04
+    - docker:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
+    - node22:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1
 
 app-template:
   controllers:
@@ -150,7 +163,9 @@ app-template:
         # k3s 1.36.5). Without `restartPolicy: Always` the pod dies when
         # dockerd exits. Privileged on purpose — the only deliberately
         # privileged container in the pod; jobs stay sandboxed
-        # (container.privileged: false in the runner config).
+        # (container.privileged: false in the runner config) but hold the
+        # pod-local daemon through the shared socket — unprivileged is not
+        # the same as unreachable (cf-6; the cf-97 trust boundary).
         #
         # No storage-driver env: the node root-fs type is unverified —
         # dockerd ships overlay2 and degrades on its own; forcing vfs is a

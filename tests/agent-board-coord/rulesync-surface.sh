@@ -622,6 +622,17 @@ fi
 # cf-124/cf-55/cf-126 folder admits above (fixture rides tests/* but is listed
 # explicitly; both admits are exact paths, so ANY other file under .openchamber/
 # or a sibling in tests/openchamber-project/ stays refused by *) return 1).
+# cf-55 FIX ROUND (2026-11-21 fix-wave test round; DECISIONS D41/D42,
+# chunks/C05-C07): charts/forgejo-runner/* (the C06 label re-point) and
+# containers/forgejo-runner/* (the C05 baked act job image) join as
+# directory admits — the cf-143 new-chart-trees precedent. The admits stay
+# tree-exact: the act-base sibling image and the Forgejo-instance chart
+# beside them join the probe list below.
+# bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
+# joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
+# files already ride tests/*, .rulesync/skills/* and .opencode/skills/* here;
+# the amendment is skill-side only (plan D8: no tool, plugin, collector or
+# rules surface), so nothing else joins.
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -677,9 +688,11 @@ if want c8; then
       .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
-      .agents/plans/2026/2026-11-cf-123-bug-tweak-init/*|\
+      charts/forgejo-runner/*|containers/forgejo-runner/*|\
+      .agents/plans/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
+      .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .openchamber/project.json|\
       tests/openchamber-project/default-summary-instructions.txt) return 0 ;;
       *) return 1 ;;
@@ -709,6 +722,9 @@ if want c8; then
   # keeps that expensive.
   # .agents/notes/* and charts/llama-swap/* as wholes are NOT admitted
   # (next loop proves the neighbours stay out).
+  # cf-55 fix round (2026-11-21): the two new directory admits stay
+  # tree-exact — the act-base sibling container and the Forgejo-instance
+  # chart beside the runner chart join the probes below.
   for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
            containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
            charts/llama-swap/templates/deployment.yaml \
@@ -716,12 +732,13 @@ if want c8; then
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md \
            charts/vllm/values.yaml services/gpu/prod/values.yaml \
            .forgejo/workflows/main-sync.yaml custom-values/gpu/prod-values.yaml \
-           containers/renovate-mcp/README.md; do
+           containers/renovate-mcp/README.md \
+           containers/forgejo-host-runner/Dockerfile charts/forgejo/values.yaml; do
     if c8_admits "$p"; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits, the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs) and the cf-55 chart-half admits (own folder, Forgejo release builder + composed deleted GitHub twin, C04 infra values file, helm-chart-creation skill, renovate-mcp Dockerfile) — charts/vllm/values.yaml, services/gpu, the cf-6 main-sync workflow, sibling custom-values and unadmitted container files stay probed OUT; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits, the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs) and the cf-55 chart-half admits (own folder, Forgejo release builder + composed deleted GitHub twin, C04 infra values file, helm-chart-creation skill, renovate-mcp Dockerfile) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) — charts/vllm/values.yaml, services/gpu, the cf-6 main-sync workflow, sibling custom-values, the act-base sibling container and the Forgejo-instance chart, and unadmitted container files stay probed OUT; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

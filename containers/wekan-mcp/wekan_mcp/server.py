@@ -1505,7 +1505,11 @@ def remove_card_dependency(
 
 
 @mcp.tool
-def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) -> dict:
+def preload_board(
+    board_id: str,
+    swimlane_titles: Optional[list[str]] = None,
+    with_checklists: bool = True,
+) -> dict:
     """
     One-call whole-board preload for pickup planning: the swimlane -> list ->
     cards grouping with swimlane and list TITLES beside their ids, each card's
@@ -1531,6 +1535,13 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
     recognised by its item count when its title is not one of the current
     names. Any other checklist a card happens to carry stays out.
 
+    with_checklists: bool = True is the second payload bound — the default
+    answers today's exact bytes; with false each card omits the checklists
+    key entirely. It is DROPPED, never emptied: an absent key is not an
+    answer about checklist state, and a [] would read as a card that carries
+    no checklists, which the kickoff vocabulary never legitimately spells on
+    a real card.
+
     slug comes from the card's customFields entry for the board's slug field,
     reduced by _slug_from_combined_value — the single parse authority: the
     field is an append-only stack of combined [<slug>](<session link>) lines
@@ -1550,7 +1561,9 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
     degrade around a read that actually failed. The unresolved-parent tail
     (see below) rides only the unfiltered read: a group with no declared
     swimlane has no title to match, so a filtered answer is exactly the named
-    swimlanes.
+    swimlanes. The second bound is with_checklists, which trims the per-card
+    payload instead of the grouping — its contract is the eight-fields
+    paragraph above — and the two bounds combine freely.
 
     Archived cards are FLAGGED (archived: true), never silently dropped — the
     exporter includes them (imports need them) and pickup-side filtering
@@ -1638,7 +1651,7 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
             if isinstance(entry, dict) and entry.get("_id") in slug_field_ids:
                 slug = _slug_from_combined_value(entry.get("value"))
                 break
-        cards_by_list.setdefault(card.get("listId"), []).append({
+        card_map = {
             "id": card.get("_id"),
             "card_number": card.get("cardNumber"),
             "label_ids": card.get("labelIds", []),
@@ -1647,7 +1660,14 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
             "sort": card.get("sort"),
             "parent_id": card.get("parentId"),
             "checklists": checklists_by_card.get(card.get("_id"), []),
-        })
+        }
+        if not with_checklists:
+            # Pop-after-build, not a second lean literal: the per-card shape is
+            # pinned to EXACTLY this eight-key map (cf-123 R2 / D12), and the
+            # lean answer DROPS the key — an emptied [] would read as a card
+            # that genuinely carries no checklists (D11).
+            card_map.pop("checklists")
+        cards_by_list.setdefault(card.get("listId"), []).append(card_map)
 
     # Walk order is the board's own sort, everywhere. Lists with no cards are
     # not emitted (a preload is about cards); anything whose parent row the

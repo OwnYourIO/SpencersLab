@@ -9,6 +9,8 @@
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
   "semanticCommits": "disabled",
+  "constraints": {"helm": "3.22.1"},
+  "gitIgnoredAuthors": ["bot-and-reviewed@spencerslab.com"],
   "customManagers": [
     {
       "customType": "regex",

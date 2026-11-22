@@ -107,7 +107,7 @@ const mgr9 = managers.find(
     && matchStringsOf(m).some((s) => s.includes('changelog|sourceUrl')),
 );
 const MARIADB = ociCharts.find((p) => p.endsWith('charts/mariadb-operator/Chart.yaml'));
-const EXPECTED_WEKAN = { depName: 'wekan', registryUrl: 'https://wekan.github.io/charts/', currentValue: '12.65.0', sourceUrl: 'https://github.com/wekan/wekan' };
+const EXPECTED_WEKAN = { depName: 'wekan', registryUrl: 'https://wekan.github.io/charts/', currentValue: '12.99.0', sourceUrl: 'https://github.com/wekan/wekan' };
 const key = (d) => `${d.depName || ''}|${d.registryUrl || ''}|${d.currentValue || ''}|${d.sourceUrl || ''}`;
 
 function runPatterns(pats, text) {
@@ -239,14 +239,19 @@ if (!mgr9) {
 
 // --- k10 [AC3 / D10]: permanent dead-annotation enumeration gate -----------
 // Supported datasource tokens = what the Dockerfile-facing legs can capture:
-// the git-pin group, the containers/*/Dockerfile manager's group, and the
-// two git-refs legs' datasourceTemplate. Hardcoded per chunk AC3's verbatim
-// set — derivation from the config would admit manager #1's
-// datasourceTemplate=docker, which belongs to chart/service templates and
-// must stay OUT of this gate (that is exactly how the coder-workspace
-// `datasource=docker` FROM annotation died silently: a token no
-// Dockerfile-facing leg can ever match).
-const SUPPORTED = ['github-tags', 'github-releases', 'git-refs', 'node-version', 'golang-version', 'forgejo-releases', 'npm'];
+// the git-pin group, the containers/*/Dockerfile manager's group, the two
+// git-refs legs' datasourceTemplate, and `docker` for FROM-line pins — the
+// BUILT-IN dockerfile manager (config:recommended leaves it enabled) tracks
+// FROM images under the docker datasource (owner ruling 2026-11-22; live
+// witnesses: Renovate's own bumps of data.forgejo.org/forgejo/runner
+// 75e7f9083 and of debian:13-slim 966e8ac4f). A datasource=docker
+// annotation above an ARG line is still wired by nothing — that stays the
+// D10 case. Hardcoded per chunk AC3's verbatim set — derivation from the
+// config would admit manager #1's datasourceTemplate=docker, which belongs
+// to chart/service templates, not to the Dockerfile-facing capture this
+// gate enumerates (how the coder-workspace `datasource=docker` FROM
+// annotation was judged dead-in-the-annotation and removed at D10).
+const SUPPORTED = ['github-tags', 'github-releases', 'git-refs', 'node-version', 'golang-version', 'forgejo-releases', 'npm', 'docker'];
 {
   const dead = [];
   let counted = 0;

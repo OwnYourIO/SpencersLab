@@ -450,8 +450,19 @@ change.
 
 ## References (read on demand, not upfront)
 
-- `renovate.json` — dependency update rules; keep renovate annotations in
-  values files and Dockerfiles intact.
+- `renovate.json` — dependency update rules; keep renovate annotations intact
+  where a manager consumes them: appset.yaml `baseChartVersion` lines (with
+  their `appName` pair), Dockerfile pins, and the grafana.com dashboard
+  annotations in services values files — the `# renovate: depName="…"` line
+  above each entry's `gnetId:`/`revision:` pair is consumed by the
+  grafana-dashboards manager (any-YAML fileMatch) and must stay: what
+  separates those from the inert chart-pin comments below is which manager
+  parses an annotation, not the file it sits in. Inline `# renovate:`
+  comments on chart pins in services values files are inert-or-harmful: only
+  the appset manager parses that syntax, and a trailing comment on a
+  `version:` line breaks the bare `version:`/`repository:` pair the
+  key-as-chart-name manager extracts — that bare pair is the tracked shape
+  there.
 - `skills/helm-chart-creation/references/` — chart templates, ApplicationSet
   patterns, storage/secrets deep-dives.
 
@@ -495,6 +506,11 @@ change.
   `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only manual
   fallback (its automatic trigger blocks are kept commented); reference
   `:main` (+ `pullPolicy: Always`) or a `:yy.mm.N` pin.
+  The lab's Forgejo job image is `containers/forgejo-runner` (act-24.04
+  base, helm + cr baked in): the `.forgejo` workflows install no tools at
+  run time, and no Renovate lane reads that image's label pin in
+  `charts/forgejo-runner/values.yaml` — it is bumped by hand to the newest
+  published calendar tag.
 - **Forge Actions guards are ROLE membership, never instance URLs.** `ROLE`
   is a repo-scoped Actions variable typed as a comma list without spaces
   over the vocabulary `{dev, prod}` (e.g. `dev,prod`); job `if:` guards test

@@ -123,19 +123,20 @@ def test_ac2_guaranteed_pair_with_named_pool():
     """requests == limits EXACTLY on the serve container, extended resource
     included: {cpu 8, memory 110Gi (C12 AC1 amendment: the 64 era died at the
     live OOM — the engine printed a 71.04 GiB budget — and the owner ruled 110
-    "your figure", D29), GPU_CLAIM: 1} — extended
-    resources require equal integer pairs and Guaranteed is the ruling's pod
-    class (Q7 + D15 + Q9 named pool)."""
+    "your figure", D29; cf-144 P11: the TP2 wave HELPS 110 — the DOWN re-pin
+    awaits the first-boot print, no 48 anywhere), GPU_CLAIM: "2" (cf-144 C01
+    shape A: one pod claims BOTH R9700s — the extended resource requires the
+    equal integer pair, Guaranteed law; Q7 + D15 + Q9 named pool)."""
     docs, _ = R.render(service=False)
     ctr = R.serve_container(R.deployment(docs))
     res = R.resources(ctr)
     want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": f"{R.SCALARS['guaranteedMemoryGi']}Gi",
-            R.GPU_CLAIM: "1"}
+            R.GPU_CLAIM: R.FN_GPU_CLAIM_COUNT}
     assert res.get("requests") == want, (
-        f"C02 AC2: serve requests {res.get('requests')} != Guaranteed pair {want} "
-        "(single-source scalars splice both sides)"
+        f"cf-144 C01 AC1: serve requests {res.get('requests')} != Guaranteed pair {want} "
+        "(single-source scalars splice both sides; claim 2 = the TP2 pair)"
     )
-    assert res.get("limits") == want, f"C02 AC2: serve limits {res.get('limits')} != {want}"
+    assert res.get("limits") == want, f"cf-144 C01 AC1: serve limits {res.get('limits')} != {want}"
     assert R.GPU_CLAIM_BARE not in (res.get("requests") or {}) and R.GPU_CLAIM_BARE not in (res.get("limits") or {}), (
         "C02 AC2: a bare amd.com/gpu claim — after C07's flip the name does not exist on the "
         f"node; the claim is {R.GPU_CLAIM}, the product pool (Q9 naming, D24-renamed)"

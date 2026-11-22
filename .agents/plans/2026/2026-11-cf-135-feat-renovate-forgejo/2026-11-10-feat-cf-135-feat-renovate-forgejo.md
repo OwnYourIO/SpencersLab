@@ -244,3 +244,331 @@ grep -c '❌' /tmp/opencode/renovate-dry.log        # and: grep -E "ERROR|failed
    not a chunk here.
    → RULING: **stands** (no answer needed beyond the best guess) — kept; CI parity is a
    later ticket if ever.
+
+
+---
+
+## Rework round 2 (2026-11-21) — live-outcome delta on the landed feature
+
+Owner reviewed the RUNNING feature on canonical (`git.spencerslab.com`) and raised three
+asks: (1) "PRs with merge conflicts… most of them are doing it. Can you configure it to
+address these when it runs?"; (2) "checking the boxes in issues & prs doesn't seem to do
+anything… enable that in forgejo?"; (3) "on github it'd update the Chart.lock files? Can
+you see if Forgejo will do that too?". RESEARCH.md §R2/§R3 are the authority for this
+section; DECISIONS Round-3 (D17–D20) records the rulings. Round-1 sections above are the
+completed record and are not rewritten.
+
+**Ground truth at this pass (verified 2026-11-21 against `origin/main` = `b80fae102` after
+`git fetch`; our worktree head `215ce4c03` is NOT an ancestor — cf-135 landed REBASED and
+main has moved: a REBASE-ONTO-MAIN is a precondition for the test/dev waves, and baseline
+fingerprints re-measure post-rebase):**
+- `renovate.json@main`: round-1 zeros in place; 10 packageRules (cf-6 added the
+  calendar-ownership rule), 13 customManagers, 11 top-level keys;
+  `gitIgnoredAuthors`/`constraints`/`gitAuthor`/`rebaseWhen`/`ignorePrAuthor` ABSENT.
+- `.forgejo/workflows/renovate.yaml@main`: owner/cf-6 re-land rewrote it to the
+  `contains(vars.ROLE, 'dev')` guard variant + expanded header (documents the D12/D13
+  rulings itself); structure (cron, env keys, 2 steps, image pin 44.181.5, digest comment)
+  otherwise ours. main-sync/release migrated to `contains(vars.ROLE, 'prod')` likewise.
+  Canonical ROLE provably contains `dev` (the job RAN: ~96 PRs 11-19, Edited/Blocked batch
+  11-20 06:20Z) — canonical is today's Renovate home (U8; Q-R2-4).
+- The three contract suites were ALREADY re-pinned on the main side by cf-6 run −2
+  (GUARD strings → `contains(...)`, counts → 10/13) — the delta test wave does NOT
+  re-do that; its only obligations are below.
+- R2 fleet state: 97 open renovate PRs, 85 `mergeable:false`, ONE checkbox ticked (#90,
+  2026-11-21 15:02:25Z). Root cause: the 2026-11-19 15:41–15:51Z main REBUILD orphaned
+  foreign-author commits onto every branch; `isBranchModified` scans ALL commits in
+  `base..branch` (author ∪ committer emails — live census on `node-26.x`: 12× tms +
+  4× `bot-and-reviewed@spencerslab.com` + 1 mixed) and the edited-guard locks each out of
+  auto-rebase. The PRs' heads ARE Renovate-authored-as-`tms@spencerslab.com` (RENOVATE_TOKEN
+  = owner-account PAT; discovery makes gitAuthor = that email → self-consistent).
+- R3 lock state: built-in `helmv3` PM owns Chart.lock regeneration; the default image ships
+  NO helm (binarySource=install resolves the tool via github-releases helm/helm →
+  anonymous api.github.com → "No tool releases found." on ALL 22 helm PRs); three merged
+  yaml-only during the rebuild batch ⇒ drifted on main exactly at `charts/base`
+  (argo-cd yaml 10.18.2 vs lock 10.11.6) and `services/home/prod` (wekan yaml 12.99.0 ×2
+  vs lock 12.77.0 ×2); 77/80 pairs otherwise consistent. Daily passes do NOT re-run
+  artifacts on untouched branches — the drift never self-heals.
+
+**Delta answers to the three asks:**
+1. #1 → `gitIgnoredAuthors: ["bot-and-reviewed@spencerslab.com"]` (the documented guard
+   escape; repo-scoped) PLUS the owner's Q1 OVERRIDE "Also pin a git author": a
+   `RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"` job-env line on the canonical
+   workflow. Value ground-ruled at D21: the email MUST be the running PAT account's
+   commit email — the stuck ranges' PR-HEAD commits are tms-authored, so stamping
+   bot-and-reviewed (the launch-recommended convergence shape) would DEMOTE tms from the
+   guard's accepted set and leave all 85 locked (verified arithmetically against the live
+   census 2026-11-21); the name "Renovate" is guard-cosmetic and provenance-legible.
+   Accepted set after the delta = {tms (stamped), bot-and-reviewed (ignored)} = exactly
+   the two live email classes. Next pass after it lands: all 85 rebase automatically
+   (`rebaseWhen auto→conflicted` already resolves to the wanted policy — do NOT set it;
+   `ignorePrAuthor` — wrong lever, global discovery filter [R2 §B] — NOT added).
+2. #2 → NOTHING to enable: the checkbox machinery is intact on Forgejo 15.0.10 (raw
+   ` - [x] <!-- rebase-check -->` byte-exact in #90's stored body; the list API carries
+   bodies; the pinned dist has the #46200 onboarding fix). Once-daily CLI runs consume the
+   tick on the NEXT pass — by construction no immediacy, no webhook needed for correctness.
+   Verifiable prediction U7: at/after ~06:2xZ 2026-11-22 #90 rebases from fresh main, its
+   Edited/Blocked comment disappears, the box resets — independently of this delta.
+3. #3 → `"constraints": {"helm": "3.22.1"}` in `renovate.json` (exact single version
+   SHORT-CIRCUITS the api.github.com tool-resolution hop [R3 §C/§D; containerbase.js:303];
+   honors the repo helm-v3 law; matches the coder-workspace Dockerfile ARG — a new suite
+   leg pins the pair) + ONE manual repair: `helm dependency update charts/base
+   services/home/prod` (workspace helm v3.16.4 verified in-session; argo-helm 10.18.2 and
+   wekan 12.99.0 present in their indexes — verified by probe 2026-11-21). The repair
+   should NOT be expected to be small on home/prod: helm rewrites the non-canonical
+   duplicate-heavy lock into tool-canonical shape (R3 §R3.0/3).
+   Sequencing law (R3 §D.4): config delta AND repair land before the gitIgnoredAuthors
+   recovery pass — otherwise every recreated helm branch re-lands yaml-only; with
+   constraints in, recovery-pass re-cuts carry yaml+lock pairs.
+
+**Delta chunks:**
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C03 | renovate.json two keys + workflow `RENOVATE_GIT_AUTHOR` stamp (+ suites learn, value pins) | S | 1 | [] | |
+| C04 | Chart.lock repair: `charts/base` + `services/home/prod` | S | 1 | [] | none — disjoint files from C03; id order keeps the shared config suite red-first gate simple |
+
+Test-Writing stage for the round (agent-test, BEFORE C03 dev, red-first): extend
+`tests/renovate/forgejo-move-config.sh` — m5's exact top-level KEYSET learns
+`constraints` + `gitIgnoredAuthors` (red before C03 lands, green after); new m7 pins both
+values byte-exact; new m8 pins the `constraints.helm` ↔ `containers/coder-workspace/
+Dockerfile` `HELM_VERSION` ARG pair (strips `v`) — the drift-knob R3 §D.1 warns about
+(k09 PRs bump the ARG; m8 reddens that review so the pair moves together). PLUS one
+re-pin in `tests/services/forgejo-renovate.sh`: t5's exact env-KEYSET map grows SIX
+keys → SEVEN — add `'RENOVATE_GIT_AUTHOR': 'Renovate <tms@spencerslab.com>'` (red-first,
+same posture as m5/m7/m8; the secret once-count semantics are UNAFFECTED — the stamp is
+a literal value, not a `secrets.` ref; reserved-prefix regex still clean — it scans
+`secrets.`/`vars.` refs only). t3/t8 already canonical-accurate via cf-6 run −2 — no
+further work there; t8 absence-pins stay TRUE after C03 (keys and env are not rules).
+
+**Rebase note:** the coord rebases this branch onto current main before launching the test
+wave (house rule); post-rebase the suites run green-on-main-shape except the deliberately
+red-first m5/m7/m8 + t5(7) until C03 lands. Re-fingerprint the Commands §4 baselines
+after the rebase (k2 grows to 10≠8, same single failure; k5/k10 same class; the three
+contract suites arrive ALREADY GUARD-migrated + count-re-pinned by cf-6 run −2 — read
+their main blobs before specifying anything as "stale").
+
+## Commands — rework round 2 additions (post-rebase, agent-session-runnable)
+
+```bash
+# R2a. Both touched suites + the re-pin battery (agent-test red-first, C03 dev+review green):
+bash tests/renovate/forgejo-move-config.sh     # m5 keyset learns the 2 keys; m7/m8 new pins
+bash tests/services/forgejo-renovate.sh        # t5 seven-key env pin (6→7, red-first); other legs unmoved; t9 designed skip
+# R2a'. Workflow shape after the stamp line (probe-proven 2026-11-21 on a scratch copy of
+#       the canonical main blob: YAML-valid, seven env keys, value round-trips):
+python3 -c 'import yaml; e=yaml.safe_load(open(".forgejo/workflows/renovate.yaml"))["jobs"]["renovate"]["env"]; assert len(e)==7 and e["RENOVATE_GIT_AUTHOR"]=="Renovate <tms@spencerslab.com>"; print("env7 ok")'
+
+# R2b. Config gate over the delta (schema-validity of both keys PROVEN 2026-11-21 by a
+#      probe copy carrying exactly {"constraints":{"helm":"3.22.1"},"gitIgnoredAuthors":
+#      ["bot-and-reviewed@spencerslab.com"]} -> validator exit 0):
+npx -y -p renovate@44.181.5 renovate-config-validator renovate.json
+
+# R2c. Resolved-config + helmv3 presence check (offline dry-run, cf-95 shape): the log's
+#      resolved dumps must show both new keys and a helmv3 section in packageFiles:
+LOG_LEVEL=debug npx -y renovate@44.181.5 --platform=local --dry-run=lookup > /tmp/opencode/renovate-dry-rr2.log 2>&1
+grep -c '"gitIgnoredAuthors": \["bot-and-reviewed@spencerslab.com"\]' /tmp/opencode/renovate-dry-rr2.log
+grep -c '"constraints": {"helm": "3.22.1"}' /tmp/opencode/renovate-dry-rr2.log
+grep -c '"helmv3"' /tmp/opencode/renovate-dry-rr2.log            # >0 = PM active (it always was; locks failed BELOW extraction, at tool install)
+grep -E "ERROR|failed to look up" /tmp/opencode/renovate-dry-rr2.log | grep -v 'github-token-required\|no-result' # ERROR fingerprint unchanged
+
+# R2d. Repair verification (C04): R3 §R3.0/3 consistency scan over the whole tree — every
+#      Chart.yaml dependencies[] (name OR alias) version must equal its Chart.lock entry:
+python3 <inline scan per chunks/C04.md — expect 0 mismatches; was 3 rows/2 charts at main>
+helm lint charts/base && helm lint services/home/prod
+git diff --name-only -- '*/Chart.lock' '*/Chart.yaml'            # exactly the TWO lock files; Chart.yaml untouched (version-ownership law)
+```
+
+## User actions — rework round 2 additions (instance-side, owner-owned)
+- UA7 · verify `RENOVATE_GITHUB_COM_TOKEN` is provisioned on CANONICAL (U13: #90's 11-19
+  "no github.com credentials" banner proved it empty then; today's PRs are banner-free —
+  suggestive, not proof). The constraints pin makes helm TOOL-RESOLUTION token-independent,
+  but changelogs and the tool ASSET download (U14) still ride it.
+- UA8 · create the `dependencies` label on the canonical repo (#90 `labels: []` despite
+  the config — the gitea createPr path silently drops unknown labels).
+- UA9 · confirm canonical-vs-dev posture (U8): canonical's ROLE contains `dev` and the bot
+  demonstrably runs there with the tms PAT — accept as the live home (Q-R2-4), or flip
+  the guard/value back per UA6. Also: keep `ROLE` values exact — under contains(),
+  a literal like `dev,prod` on one instance fires BOTH the sync and renovate jobs there.
+- UA10 · observation recipe (post-merge): tick #52's checkbox ("Update Helm release
+  app-template to v5.3.0") — at the next 06:17Z pass its branch must re-cut from current
+  main with PAIRED hunks (Chart.yaml + Chart.lock per ~55 charts) and the ⚠️ Artifact
+  update problem comment AUTO-REMOVED [R3 §D verification]. If it re-lands yaml-only +
+  fresh comment: rerun once `LOG_LEVEL=debug` and grep `Failed to update Helm lock file`
+  — the asset download (U14) is the suspect, not the pin. Separately verify U7 on #90 at
+  ~06:2xZ 2026-11-22 (head replaced, comment gone, box reset) regardless of this delta.
+- UA11 · the main-rebuild law (human-owned merge flow): rebuilding/force-resetting `main`
+  while `renovate/*` branches are open re-poisons the fleet (every rebuild wave needs its
+  orphaned commits' emails added to `gitIgnoredAuthors` or reopens this ticket). Recorded
+  in DECISIONS Round-3; pair such events with the recovery pass.
+
+**Superseded by the Q4 canonical-home ruling (marked honestly, not deleted):** round-1
+**UA4** (dev-runner repair) and **UA5** (dev-instance first-fire) LOSE THEIR FIRST-FIRE
+RELEVANCE — the first fire happened, on canonical, repeatedly (11-19 → 11-21). Runner
+repair stays valid infra housekeeping, decoupled from cf-135. Round-1 **R1/R6/R7**
+(dev-execution prerequisite, dev merge→deploy path, dev job-container egress) are
+likewise superseded-by-reality: canonical executes with proven egress (96-PR fleet;
+11-21 passes banner-free). Round-1 UA1/UA2 keep historical accuracy (they were minted
+against tms's own account on canonical, not a fresh bot user — the F3 card migrates
+that). The dev mirror (round-1 UA6) survives only as the flipped OPTION it always was.
+Rework UA7–UA11 above are the live instance-side list, in canonical words.
+
+## Risks / assumptions — rework round 2
+- R9 recovery pass = ~85 force-pushes in ONE run inside the 30-min ceiling (creation burst
+  did ~96 in ~2.5 min — R2 U9 proxy; unmeasured for rebases) AND fires ~85 synchronize
+  events → `pr …` build storm behind a capacity:1 runner whose PR jobs currently fail at
+  ~6 s each (cf-6 surface, F2 follow-up — does NOT block rebase/automerge: `ignoreTests`
+  blinds status entirely, R2 §D).
+- R10 the ⚠️ Edited/Blocked comments already posted are NOT auto-removed on recovery
+  (U11 cosmetic residue).
+- R11 #19/#53/#63 were merged during the rebuild batch by an unknown actor (U16 —
+  owner-side history, no in-repo action; their yaml-only merges are what C04 repairs).
+- R12 the per-package `lockFileMaintenance:{enabled:true}` blocks (packageRules 3/4) are
+  inert while global LFM is off (U15) — left as-is this round; separate cleanup decision.
+- R13 with the exact-version constraints pin, helm-4 lock-shape drift (U17) is moot;
+  re-establishing token-free determinism depends on containerbase's asset download
+  succeeding anonymously (U14, UA10 recipe catches it).
+- R14 Forgejo's async `mergeable` recompute may lag a just-rebased head enough that the
+  NEXT pass still sees `mergeable:false` (U12) — self-correcting at daily cadence; watch
+  the recovery pass count, don't chase a one-day ghost.
+- Assumption: canonical keeps running the tms-account PAT until the bot-account migration
+  follow-up (R2 structural note; revival of R1 §2b — deferred, Q-R2-2).
+
+## Open questions — batched round 2: ALL RESOLVED (owner rulings 2026-11-21)
+Approval: owner answered "Approve — run the delta" — the answers below ARE the fold;
+plan_status flip + C03/C04 STATE stubs are coordinator-owned (DECISIONS D22 records the
+verbatim rulings; nothing re-opened from round-1 decisions).
+
+1. **gitIgnoredAuthors value vs RENOVATE_GIT_AUTHOR (Q-R2-1).** (Round-2 best guess was
+   the single key with no stamp.) → RULING: **OWNER OVERRIDE — "Also pin a git author."**
+   Folded as D21: stamp `RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"` on the
+   canonical workflow + one header why-line; the launch-recommended
+   `Renovate <bot-and-reviewed@…>` convergence was ground-tested and REJECTED — it
+   demotes the tms PR-head author from the guard's accepted set and leaves all 85 stuck
+   branches locked (verified arithmetic on the live census); if the owner later insists
+   on the bot-and-reviewed address, the PAIRING LAW applies — tms@spencerslab.com must
+   join `gitIgnoredAuthors` in the same edit or recovery stalls (C03 AC8 re-checks).
+2. **Bot-account migration now or deferred (Q-R2-2).** Best guess DEFER.
+   → RULING: **deferral stands** — minted as follow-up **F3** (dedicated renovate bot
+   account + PAT handover incl. one-time `RENOVATE_IGNORE_PR_AUTHOR=true` env pass);
+   after F3 lands, D21's stamp must be re-ruled to the new unique identity (closing the
+   docs' non-unique-identity danger noted at R13).
+3. **contains()-guard variant (Q-R2-3).** Best guess LEAVE. → RULING: **LEAVE** — owner
+   live edit accepted; guard line byte-untouched by C03 (AC2); suites already migrated
+   (cf-6 run −2). An equality-flip would be its own ticket.
+4. **Renovate home: canonical vs dev (Q-R2-4/U8/UA9).** Best guess ACCEPT canonical.
+   → RULING: **ACCEPTED** — canonical is the Renovate home; UA4/UA5/R1/R6/R7
+   supersession block recorded; U8's literal ROLE string stays an instance-side
+   curiosity only (behaviour-proven, guard value `contains(...,'dev')` accepted).
+5. **Repair commit shape (Q-R2-5).** Best guess separate chunk C04. → RULING: **stands**.
+6. **constraints.helm = 3.22.1 exactly (Q-R2-6).** Best guess exact pin + m8 parity.
+   → RULING: **confirmed** (v3 law + deterministic + ARG-paired).
+7. **Pass-timing consequence (Q-R2-7).** Best guess accept the cron cadence. → RULING:
+   **accepted** — no manual-dispatch obligation; the option stays recorded at UA10
+   (owner may dispatch after merge for immediate recovery; #90's existing tick heals it
+   at the 11-22 pass regardless — U7 check).
+8. **F1/F2 follow-up cards (Q-R2-8).** → RULING: **mint all THREE at run end**
+   (F1 ignoreTests-vs-CI-parity posture note, F2 the 6-s `pr …` build failures, F3 per
+   Q-R2-2) — coordinator leg.
+
+## Rework round 2 — execution notes for the wave (folded rulings baked)
+- Wave: agent-test (red-first m5-keyset/m7/m8 + t5-seven-key) → C03 dev+review → C04
+  dev+review (id order; both wave 1, independent files) → final whole-delta review.
+  Coordinator: rebase onto origin/main first; flip plan_status; add STATE stubs; mint
+  F1/F2/F3 at run end; owner merges C03+C04 together before the next 06:17Z pass so the
+  recovery re-cuts carry paired yaml+lock (R3 §D.4).
+- Post-merge observation chain (owner, UA10): [tonight] U7 — #90 rebases from fresh main,
+  Edited/Blocked comment gone, box reset (tick-only proof); [first pass after C03+C04]
+  85-branch recovery pass fires; [then] tick #52 → paired Chart.yaml+Chart.lock hunks
+  across ~55 charts and the ⚠️ artifact comment AUTO-REMOVED — the combined proof that
+  D21 restored rebase and D18 restored locks. Stale Edited/Blocked comments on recovered
+  PRs are EXPECTED cosmetic residue (U11/R10) — not a bug.
+
+---
+
+## Round 3 (2026-11-21, owner line-note) — stamp-to-variable micro-delta (C05)
+
+Owner line-noted `.forgejo/workflows/renovate.yaml:67` (the C03 stamp, landed
+`ade147f4b`): the literal `RENOVATE_GIT_AUTHOR: "Renovate <tms@spencerslab.com>"`
+*"should be a variable/secret set in Forgejo"*. DECISIONS D23 records the fold; rounds
+1–2 sections above stand as delivered record (C03/C04 remain done — this is the ONE
+follow-up line, not a revert).
+
+**Design — VARIABLE, not secret** (D23): the git identity is public in every commit
+header (R2 §R2.0/6 — the census itself is a public-API read); Forgejo secrets exist for
+credentials and mask values; non-secret instance-side config of record is Actions
+variables (`ROLE`, `PUSH_URL_*` — cf-119 lineage). Shape:
+`RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}`. This also aligns with the repo
+law now recorded in AGENTS.md Forgejo conventions (ROLE-membership guards, comma-list
+repo-scoped variables "never the instance-global Actions scope", no instance values in
+workflows) — and restores the file's instance-neutrality the literal broke (round-1
+"identical-safe on both instances" law).
+
+**Unset-behavior verdict (dist-verified, D23)** — what happens when the variable is
+ABSENT and `${{ vars.X }}` renders to empty string:
+- `workers/global/config/parse/env.js:114` — `if (!envVal) continue;`: empty string is
+  JS-falsy ⇒ the env key is SKIPPED entirely; `config.gitAuthor` stays undefined (the
+  option carries NO static default — `config/options/index.js` `gitAuthor` entry).
+- `modules/platform/index.js:36–43` — `if (config?.gitAuthor)` false ⇒ falls to
+  `platformInfo.gitAuthor`: gitea/forgejo `/user` DISCOVERY returns
+  `Spencer H <tms@spencerslab.com>` ⇒ `setGitAuthor(discovered)`.
+⇒ **unset ≠ re-lock, ≠ crash**: the guard's accepted email = tms@ (discovered) ∪
+{bot-and-reviewed@ (ignored)} — exactly the set that unlocks the 85 in the first place.
+The silent fallback is the pre-stamp D17 regime: recovery holds, but D21's determinism
+law (account-metadata drift can't silently move the accepted identity) is VOID — the
+feature becomes a no-op without any signal. Hence **UA12 below is ordering-mandatory:
+set the variable BEFORE merging C05**, and the header paragraph (line-note target) must
+state this fallback honestly (comment-accuracy law — the current "pinned literal,
+identical on every instance" text becomes false at merge time otherwise).
+
+**Delta:**
+
+| id  | title | size | wave | depends_on | why |
+|-----|-------|------|------|------------|-----|
+| C05 | workflow stamp literal → `${{ vars.RENOVATE_GIT_AUTHOR }}` (+ header why-paragraph correction) | S | 1 | [] | single line + comment; suites' t5 flips red-first in the same round |
+
+- Test obligation (agent-test, red-first BEFORE dev): `tests/services/forgejo-renovate.sh`
+  t5 EXPECTED entry flips `'Renovate <tms@spencerslab.com>'` →
+  `'"${{ vars.RENOVATE_GIT_AUTHOR }}"'`-shaped value pin `'${{ vars.RENOVATE_GIT_AUTHOR }}'`
+  (exact string — literal-reintroduction reddens via value mismatch, vars-name typos
+  redden via the same exact equality); extend the boundary-anchored once-count to the
+  new `vars.RENOVATE_GIT_AUTHOR` reference (max-count 1 file-wide; t5's reserved-prefix
+  regex already scans `vars.` refs and `RENOVATE_` is not a banned prefix — verified).
+  Header-comment line 21 (the "pinned literal" prose) rewritten with the pin.
+  **Verified unaffected**: t9's needles read the dry-run PAYLOAD
+  (`"packageFile"`/`"depType"` — never env values; local platform ignores job env);
+  m6/m7/m8 read renovate.json + Dockerfile ARG; chart-lock suite disjoint. Baselines at
+  this pass: forgejo-renovate 8 ok + t9 designed-skip, forgejo-move-config 8 ok,
+  chart-lock-consistency 3 ok, validator green (all re-run 2026-11-21).
+- C05 dev: ONE env line (`:67`) + the header stamp paragraph (`:34–39`) rewritten to
+  name: instance-minted repo-scoped Actions variable `RENOVATE_GIT_AUTHOR`, value per
+  D21 pairing law (`Renovate <tms@spencerslab.com>` — the running PAT account's commit
+  email), the dist-verified unset fallback (discovery in effect → D21 determinism lost,
+  recovery itself unaffected), and the UA12-before-merge ordering. No other repo file.
+- Commands (round 3):
+  - R3a: `bash tests/services/forgejo-renovate.sh` — the re-pinned battery; t9 stays
+    default-OFF (probe needles are payload-shape, env-agnostic — re-pin NOT needed there).
+  - R3b: `npx -y -p renovate@44.181.5 renovate-config-validator renovate.json` — config
+    untouched by C05: green is a REGRESSION assertion, not a change gate.
+  - Regression exact-fingerprints: `forgejo-move-config.sh` 8 ok / `chart-lock-consistency.sh`
+    3 ok / `forgejo-main-sync.sh` unchanged / §4 pre-existing reds unmoved; aislop clean.
+- User actions (round 3):
+  - UA12 · BEFORE merging C05: create repo-scoped Actions variable `RENOVATE_GIT_AUTHOR`
+    on the **canonical** repo (`CuratedForest/SpencersLab` @ git.spencerslab.com), value
+    `Renovate <tms@spencerslab.com>` exactly. Ordering matters for the D21 law, not for
+    the 85 (unset degrades silently to discovery — verdict above). Mirror to the dev
+    forge only if/when Renovate runs there (UA6/round-2 Q4 posture).
+  - UA13 · post-merge observation (next pass): PR-head commits flip author NAME from
+    `Spencer H` to `Renovate` (email stays tms@ — the visible proof the variable is
+    live, the only anonymous tell); guard recovery continues (dirty→clean rebases).
+- F3 note (card already minted to Inbox — NOT rewritten here; coordinator may post the
+  card the location update): with the stamp instance-side, the bot-account migration
+  flips ONE instance variable (`RENOVATE_GIT_AUTHOR` → new unique identity) + rotates the
+  PAT + adds the OLD tms@ email to gitIgnoredAuthors for legacy branch heads; D21's
+  pairing law now names that variable location.
+
+## Open questions — round 3
+None outstanding: the variable-vs-secret choice is grounded (public identity + ROLE
+precedent + AGENTS.md convention), the unset semantics are dist-verified (env.js:114 +
+platform/index.js:36–43), and the exact value is unchanged from D21's owner-folded
+ruling. Best-guesses baked inline: once-count extension for the vars ref (symmetry with
+the secrets pins; cheap negative control), and the author-name-flip observation as the
+variable's liveness proof.

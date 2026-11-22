@@ -27,9 +27,11 @@
 # mismatch (EXPLORE R3) — so the alias is banned, not merely disfavoured. An
 # in-cluster URL is dead on gpu: no forgejo service exists there.
 #
-# Red-first by design: g2-g6 stop the run until C05 lands (g2 also waits on
-# C04, since the labels map must be the LFS-capable act set). g7 is a
-# green-at-base regression gate.
+# Red-first by design: g2 now stops on the cf-55 fix round — its ACT_LABELS
+# wait on C06 re-pointing charts/forgejo-runner (g2-g6 waited on cf-104's
+# C04/C05 before that; same stop, new content). g7 is the blast-radius gate:
+# green while the chart diff stays inside its bounded contract, red on a
+# re-point wider than the sanctioned one (re-armed for the fix round by D41).
 #
 # Harness per tests/services/infra-forgejo.sh:1-30 (helm from HELM_BIN/PATH/
 # ~/.local/bin//tmp/opencode, else v3.21.4 downloaded there; renders on
@@ -216,16 +218,17 @@ def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
 
-# GitHub-parity act set as of C04: node22 moved to the act family, which is
-# the only set whose images carry git-lfs (EXPLORE R2b). Asserted here as well
-# as in dev-forgejo-runner.sh t2 so a gpu release can never ride an
-# LFS-incapable label map.
+# The baked-runner label set (cf-55 fix round, D39/D40) — the SAME literal as
+# dev-forgejo-runner.sh's ACT_LABELS: both releases deploy one chart default
+# (the slices override only url/identity), so a gpu release can never
+# register an installer-less label map while dev rides the baked image.
+# DESIGNED RED until C06 re-points charts/forgejo-runner/values.yaml.
 ACT_LABELS = {
-    'ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
+    'ubuntu-latest:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'ubuntu-24.04:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-    'docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
+    'docker:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
+    'node22:docker://ghcr.io/ownyourio/forgejo-runner:26.11.1',
 }
 
 try:
@@ -267,8 +270,8 @@ try:
         bad(f'g2: config connections are {sorted(conns)}, expected exactly [default]')
     conn = conns['default']
     if set(conn.get('labels') or []) != ACT_LABELS:
-        bad(f'g2: default.labels are {sorted(conn.get("labels") or [])}, expected the post-C04 5-label act set {sorted(ACT_LABELS)} (a gpu release must not register with an LFS-incapable node22)')
-    ok('g2: config.yaml labels map equals the post-C04 act set (every label LFS-capable)')
+        bad(f'g2: default.labels are {sorted(conn.get("labels") or [])}, expected the baked 5-label set {sorted(ACT_LABELS)} — helm-bearing jobs must resolve to ghcr.io/ownyourio/forgejo-runner (cf-55 D39/D40; a gpu release on an installer-less map is the first-fire failure D33 fixed)')
+    ok('g2: config.yaml labels map equals the baked act set (helm+cr behind the 24.04-family labels, plain act-22.04 kept)')
 
     with open(cv_file) as f:
         cv = yaml.safe_load(f) or {}
@@ -630,11 +633,26 @@ PY
   fi
 fi
 
-# --- g7: blast radius (C05 AC6) --------------------------------------------
+# --- g7: blast radius (C05 AC6; re-armed for the cf-55 fix round, D41, and -
+#     for the cf-6 landing, OQ-C) --------------------------------------------
 # The gpu instance must not disturb the dev runner trio (dev-wiring.sh cites
 # its exemption comment), must not stand up a Forgejo or a SeaweedFS on gpu,
-# and must not fork the shared runner chart — C04 owns that chart and its only
-# edit is the one labels line, which shows as exactly two docker:// lines.
+# and must not fork the shared runner chart. The C04-era cap (values.yaml
+# byte-untouched, at most 2 docker:// lines) fenced cf-104's single-line swap
+# and would fence out the cf-55 re-point — D41 replaces it with BOUNDED
+# SEMANTIC teeth: at most 8 changed docker:// lines (4 labels in + 4 out),
+# every added line a ghcr.io/ownyourio/forgejo-runner calendar ref, every
+# removed line the act-24.04 out-shape, the ubuntu-22.04 line byte-stable
+# (D40), and outside the labels list + comments nothing moves in the chart
+# (the dind/runner pins and the app-template subtree are renovate- and
+# chart-owned). The cf-6 re-arm (OQ-C) widens exactly two sanctioned edit
+# classes — the chart leg additionally allows ONE added value-exact
+# docker_host socket-share line in the config template, and the dev leg
+# tolerates a dated comment-only forgejo-runner hunk in services/dev (the
+# cf-104 relocation-truth correction) while still rejecting any moved
+# content line — the original hazards (a shared-chart fork, gpu-attributed
+# wiring landing in dev files) stay red; anything wider than the two
+# classes stays red too.
 if [ -z "$DIFF_BASE" ]; then
   skip "g7: no main/origin/main ref to diff against; the blast-radius leg was not run (set GPU_RUNNER_DIFF_BASE)"
 else
@@ -657,18 +675,77 @@ def git(*args):
     return subprocess.run(('git',) + args, capture_output=True, text=True).stdout
 
 try:
-    touched = re.findall(r'^[+-].*forgejo-runner', git('diff', base, '--', 'services/dev', 'custom-values/dev'), re.M)
-    if touched:
-        bad(f'g7: the dev runner surface changed: {touched[:4]} — dev keeps its own runner and its trio-exemption comment (dev-wiring.sh cites it); C05 is gpu-only')
-    ok('g7: services/dev and custom-values/dev gained no forgejo-runner line (dev trio + comments byte-untouched)')
+    cv = re.findall(r'^[+-].*forgejo-runner', git('diff', base, '--', 'custom-values/dev'), re.M)
+    if cv:
+        bad(f'g7: the dev runner surface changed: {cv[:4]} — dev keeps its own runner and its trio-exemption comment (dev-wiring.sh cites it); C05 is gpu-only')
+    dev_diff_text = git('diff', base, '--', 'services/dev')
+    dev_lines = [l for l in dev_diff_text.splitlines()
+                 if l[:1] in '+-' and not l.startswith(('+++', '---'))
+                 and 'forgejo-runner' in l]
+    # cf-6 re-arm (OQ-C): on services/dev only a DATED comment hunk is
+    # sanctioned (the cf-104 relocation-truth correction); content lines
+    # stay forbidden — a forgejo-runner-gpu entry or a dev-slice edit
+    # landing in dev files is the C05 hazard this leg was written for.
+    content = [l for l in dev_lines if not l[1:].lstrip().startswith('#')]
+    if content:
+        bad(f'g7: services/dev runner lines MOVED, not just documented: {content[:4]} — the dev trio and its top-level slice stay byte-untouched; only the dated relocation comment may change (cf-6 OQ-C)')
+    if dev_lines:
+        # The date stamp and the runner name can land on different physical
+        # comment lines of one wrapped hunk — require the hunk (added lines
+        # mentioning the runner or the relocation) to be dated somewhere.
+        hunk = [l for l in dev_diff_text.splitlines()
+                if l.startswith('+') and not l.startswith('+++')
+                and ('forgejo-runner' in l or re.search(r'relocat', l, re.I))]
+        if not any(re.search(r'\d{4}-\d{2}-\d{2}', l) for l in hunk):
+            bad(f'g7: the services/dev forgejo-runner comment hunk is undated — the sanctioned dev-surface edit is the dated cf-104 relocation truth (cf-6 OQ-C): {hunk[:4]}')
+    ok('g7: services/dev gained only dated forgejo-runner comment lines and custom-values/dev gained none (dev trio + slice byte-untouched; cf-6 re-arm)')
 
-    moved = git('diff', '--name-only', base, '--', 'charts/forgejo-runner/values.yaml').split()
-    if moved:
-        bad(f'g7: {moved} changed — the runner chart values are renovate-tracked pins and stay untouched')
-    imgs = re.findall(r'^[+-].*docker://', git('diff', base, '--', 'charts/forgejo-runner'), re.M)
-    if len(imgs) > 2:
-        bad(f'g7: {len(imgs)} docker:// lines changed under charts/forgejo-runner ({imgs[:6]}) — C04 owns that chart and its change is one labels line in and one out; a gpu-specific fork of the shared chart is the rejected shape')
-    ok(f'g7: charts/forgejo-runner diff carries {len(imgs)} docker:// lines at most 2 (only C04 labels swap), and no values.yaml change')
+    diff_text = git('diff', base, '--', 'charts/forgejo-runner')
+    changed = [l for l in diff_text.splitlines()
+               if l[:1] in '+-' and not l.startswith(('+++', '---'))]
+    imgs = [l for l in changed if 'docker://' in l and not l[1:].lstrip().startswith('#')]
+    if len(imgs) > 8:
+        bad(f'g7: {len(imgs)} docker:// lines changed under charts/forgejo-runner ({imgs[:6]}) — the C06 re-point is four labels in + four out, at most 8 lines; more is a fork of the shared chart (the rejected shape)')
+    for l in imgs:
+        if 'ubuntu-22.04:' in l:
+            bad(f'g7: the ubuntu-22.04 label line moved ({l.strip()}) — D40 keeps it plain act-22.04: no job requests it and a 24.04-content image behind the label would lie about its OS')
+        if l.startswith('-'):
+            if 'catthehacker/ubuntu:act-24.04' not in l:
+                bad(f'g7: removed docker:// line is not the act-24.04 out-shape: {l.strip()}')
+        elif not re.search(r'ownyourio/forgejo-runner:[0-9]{2}\.[0-9]{2}\.[0-9]+', l):
+            bad(f'g7: added docker:// line is not a ghcr.io/ownyourio/forgejo-runner calendar ref: {l.strip()} — the four 24.04-family labels ride the baked image at an immutable yy.mm.N pin (D39)')
+    nonlab = [l for l in changed
+              if l[1:].strip() and not l[1:].lstrip().startswith('#')
+              and 'docker://' not in l]
+    # cf-6 re-arm (OQ-C): exactly one added value-exact socket-share line
+    # in the config template is sanctioned — the job→dind contract fix. A
+    # second copy, a different value, a different file, or any other
+    # non-comment line stays red. The sanction is add-side and value-exact;
+    # the base has no docker_host line at all, so the post-landing revert
+    # shape belongs to the render pin (dev-forgejo-runner.sh t15), not to
+    # this diff fence. The walk counts EVERY socket-line addition and the
+    # exemption below may only drop the template-scoped sanctioned ones —
+    # a text-equality-only exemption silently passed the review-r1 compound
+    # shape (sanctioned line + an identical one in values.yaml).
+    SOCKET_LINE = 'docker_host: unix:///var/run/docker.sock'
+    sanctioned, stray, cur = [], [], None
+    for l in diff_text.splitlines():
+        if l.startswith('+++ b/'):
+            cur = l[6:]
+        elif l.startswith('+') and l[1:].strip() == SOCKET_LINE:
+            if cur and cur.endswith('templates/secret-runner.yaml'):
+                sanctioned.append(l)
+            else:
+                stray.append(f'{cur}: {l.strip()}')
+    if len(sanctioned) > 1:
+        bad(f'g7: {len(sanctioned)} added docker_host lines under charts/forgejo-runner — the cf-6 sanctioned socket edit is exactly one line')
+    if stray:
+        bad(f'g7: docker_host socket-share line added outside the config template: {stray[:2]} — the cf-6 sanction is the ONE line in templates/secret-runner.yaml; an identical addition in any other chart file is unsanctioned content (the review-r1 compound shape)')
+    if sanctioned:
+        nonlab = [l for l in nonlab if not (l.startswith('+') and l[1:].strip() == SOCKET_LINE)]
+    if nonlab:
+        bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines: {nonlab[:4]} — only the labels list, its comments, and the one sanctioned docker_host line may change; the values dind/runner pins and the app-template subtree stay byte-untouched (renovate law)')
+    ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8, calendar refs in / act-24.04 out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, nothing else moved)')
 
     import yaml as _yaml
     lines = []

@@ -474,3 +474,237 @@ User actions changed:
 - UA-6 merge ordering is now: this branch merges alone — the container builders already
   live; only the release builder's first fire rides this merge (UA-1's classic-PAT
   re-mint still precedes it).
+
+---
+
+## Fix round (2026-11-21) — bake the toolchain into a custom runner job image
+
+Authority: D33 (owner continuation directive after the release pipeline's FIRST
+FIRE failed at the runner's "Set up helm" step — read ECONNRESET downloading
+`helm-v3.16.4-linux-amd64.tar.gz` from get.helm.sh, 3 retries, exitcode 1;
+owner-confirmed fix: a custom act-runner image with helm BAKED IN, built by our
+own containers-build pipeline, setup-helm steps retired) + D34 (shared CICD
+lease) + D35 (openrouter flash, no plan surface). Ground truth: EXPLORE.md
+§F0–§F6. This section and chunks C05–C07 supersede nothing already merged;
+they fix what the first fire revealed. D33's "still cf-55 work" ruling keeps
+there is no second plan file. REWORK 2026-11-21 (post-batched-round,
+D42/D43): all seven fix-round questions ANSWERED — D37 cr-bake, D38 helm
+v3.22.1, D39 ghcr pull, D40 22.04-unmoved CONFIRMED as adopted; landing =
+SINGLE PR (D42: the recommended UA-7 split is RETIRED, UA-7's slot restated
+as the single-merge observation leg; UA-8 month-crossing amend stands); the
+three `Verify toolchain` steps are RETIRED (D43 — t19 loses its step-presence
+limbs, t5 flip unchanged, t20's `--retry` STANDS). Plan APPROVED to run
+C05 → C06 → C07.
+
+### First-fire truth (§F1)
+
+The fragility surface is **release.yaml ONLY** among the four `.forgejo`
+workflows: three `azure/setup-helm@v4` steps (jobs `test-build` :101, `release`
+:289, `forgejo-publish` :377) and two cr tarball installs (:294, :382) — the cr
+downloads share the exact same egress-fragility class and land in the two
+never-reached jobs. The bump leg's published-index fetch (:188,
+`ownyourio.github.io`) is a same-class egress but is DATA, not a tool install —
+it cannot be baked; it gets `--retry` hardening instead. The other three
+workflows install nothing at run time (`main-sync` git-only, `renovate` runs
+inside its job-level container image, `containers-build`'s curls are registry
+API reads). The agent-side get.helm.sh fallbacks in many `tests/services/*.sh`
+(§F1 last bullet) are a different class (Coder-workspace egress, skip-on-failure)
+— a de-helm sweep must NOT touch them.
+
+### Fix-round chunks
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C05 | `containers/forgejo-runner` — the baked act job image + its contract suite | M | 1 | [] | — (new files only; detection is path-based, NO registration list — verified: `scripts/forgejo-container-detect.sh` gates on `containers/**` diff + DNS-safe name + Dockerfile existence, §F3) |
+| C06 | Re-point the runner label map to the baked image (chart + dev/gpu suites + g7/t14 amendments) | M | 2 | [C05] | the label lines name C05's image ref and its first calendar tag; the template record comments assert facts C05's Dockerfile creates; the suites pin the merged posture |
+| C07 | Retire setup-helm + cr downloads in `release.yaml`; flip `forgejo-release.sh` t5/t19 to the baked posture; prose bullet | M | 3 | [C06] | the workflow may not drop its runtime installs until every `ubuntu-24.04`-family label provably names a helm+cr-bearing image (merge-order law, D40); C07 alone is not mergeable against today's live runners |
+
+### Central design (D36–D41 as APPROVED — landing amended by D42, presence steps retired by D43; full text in DECISIONS.md)
+
+- **Image**: `containers/forgejo-runner/` → publishes
+  `ghcr.io/ownyourio/forgejo-runner` (+ instance-registry twin, automatic).
+  `FROM ghcr.io/catthehacker/ubuntu:act-24.04@sha256:7bf3a8afc2bbfe7fdaf4b9d2716cb2f3634fd21e4f38e26aa17a12cfda80d721`
+  (digest verified live 2026-11-21 via the anonymous ghcr pull-token recipe) —
+  the digest-pin satisfies the no-regression law by construction: the RESEARCH
+  C1 inventory (git/git-lfs/jq/python3.12/node 20+24 tool-cache/yq/docker CLI
+  +buildx+compose/sudo-apt) is what all four workflows' steps assume TODAY, and
+  the derivative is that exact set plus two static binaries.
+- **Baked tools**: helm `v3.22.1` (D38 — coder-workspace precedent :49-50,
+  :142-149 and the GitHub-hosted preinstall equivalent; supersedes the
+  first-fire v3.16.4 by adoption, one ARG revert if the owner rules otherwise)
+  via the get.helm.sh tarball + fetched `.sha256sum` + version assert; cr
+  `1.10.1` (D37 — the workflow-verified version + sha256 pair migrates to a
+  Dockerfile ARG, manual-pin sha precedent HUGO/GO/FJ) + binary-only extract +
+  assert. Both ARGs carry `# renovate: datasource=github-releases` pins
+  (helm/helm, helm/chart-releaser) claimed by the existing Dockerfile ARG
+  manager (renovate.json :112-121). No `COPY`/`USER`/`ENTRYPOINT` in the
+  Dockerfile — a job shell keeps the base's root user (documented deviation
+  from the service-container law, D36).
+- **Pull source + tag law (D39)**: labels name
+  `docker://ghcr.io/ownyourio/forgejo-runner:26.11.1` — the runner-side
+  anonymous **ghcr** pull is the proven path (every lab job pulls ghcr today;
+  ownyourio ghcr repos serve anonymous manifest/tags, verified live 2026-11-21);
+  the instance-registry `/v2/` anonymous pull is NOT proven runner-side (§F4/F0)
+  → routed as owner UA-10, never assumed. `:main`/`:latest` are banned here by
+  the measured "runners never re-pull a cached tag" law (RESEARCH C2 remedy-3,
+  renovate.yaml header :21-23) — an immutable calendar pin makes staleness loud
+  (pull fail / pod restart) instead of silent. The first calendar tag of a
+  brand-new image is DETERMINISTIC: both registry walks see no tags → N=1 →
+  `yy.mm.1` of the MERGE month (walk code, `next_n` + the 404-tolerance
+  posture). Under D42's single merge the registry list is provably EMPTY at
+  C06 dev time, so the walk prediction IS the shipped literal and this merge's
+  own containers-build fire makes it true (a non-empty probe — C05 pre-built
+  out-of-band despite the retired split — would pin the highest observed
+  calendar tag instead); a merge crossing the month boundary is owner UA-8
+  (one-line amend).
+- **Label scope (D40)**: the four act-24.04-family entries (`ubuntu-latest`,
+  `ubuntu-24.04`, `docker`, `node22`) move to the baked image — uniform
+  toolchain behind every label jobs actually request. `ubuntu-22.04` stays
+  `docker://ghcr.io/catthehacker/ubuntu:act-22.04` (no job uses it; a
+  24.04-content image behind a 22.04 label would lie; helm-bearing jobs must
+  request the 24.04 family — the law t4's whitelist already permits).
+- **Test-contract deltas (scheduled here, per explore_handoff)**:
+  `forgejo-release.sh` t5 (allow-list shrinks to `actions/checkout@`;
+  `azure/setup-helm` joins the file-wide banned list) and t19 (flips from the
+  runtime cr-download contract to the BAKED posture: no `get.helm.sh` /
+  cr-tarball string / `CR_VERSION`/`CR_SHA256`/`RELEASES_HOST` env anywhere,
+  no installer-shaped or presence-check step in the vacated slots (D43 — the
+  real invocations ARE the check), while the actual
+  `cr package/upload/index` and `helm dependency/lint/package` call sites stay
+  pinned positively; t20 new pins the bump-leg index curl's `--retry`).
+  `dev-forgejo-runner.sh` ACT_LABELS constant + t14 record
+  (rewritten truth: baked derivative, calendar-pin manual bumps, no digest in
+  the record). `gpu-forgejo-runner.sh` ACT_LABELS + g2 equality; **g7 must be
+  amended** — its current legs forbid ANY `charts/forgejo-runner/values.yaml`
+  change and cap the chart diff at 2 `docker://` lines, so the re-point reddens
+  it by design (§F6); the replacement pins semantics (only label lines move,
+  every `+` docker:// line names the baked image), dev-surface invariance kept.
+  `forgejo-ci-surface.sh` needs NO edit (four-file inventory and ROLE-guard
+  legs are untouched; the prose bullet must dodge its banned-token list —
+  stated in C07). New suite `tests/containers/forgejo-runner.sh` (D41 — the
+  `tests/containers/forgejo-host-runner.sh` pattern: static Dockerfile
+  contract + hadolint-with-skip + `docker build => no-daemon, CI-deferred`
+  designed shape; `containers/<img>/tests/` python dirs are for shipped
+  tooling only, and none ships here).
+
+### Commands (fix-round additions; agent-shell law `export PATH=$HOME/.local/bin:$PATH` first)
+
+- `bash tests/containers/forgejo-runner.sh` (new, C05)
+- `bash tests/services/dev-forgejo-runner.sh` · `GPU_RUNNER_DIFF_BASE=origin/main bash tests/services/gpu-forgejo-runner.sh` (C06)
+- `bash tests/services/forgejo-release.sh` (C07, 20 legs)
+- `bash tests/services/forgejo-ci-surface.sh` · `bash tests/services/forgejo-main-sync.sh` · `bash tests/services/forgejo-packages.sh` (regression)
+- `helm lint charts/forgejo-runner` + `helm template charts/forgejo-runner` (C06)
+- pin truth: `TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p'); curl -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/ownyourio/forgejo-runner/tags/list`
+- base digest truth: `curl -sI -H "Authorization: Bearer <catthehacker/ubuntu pull token>" https://ghcr.io/v2/catthehacker/ubuntu/manifests/act-24.04 -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json' | grep -i docker-content-digest`
+- prose drift (C07): `npx --yes rulesync@37.0.0 generate --check`
+- `npx --yes aislop@0.20.0 ci --changes --base origin/main --human` (every chunk)
+- `docker build => no-daemon, CI-deferred` is the designed passing shape for the
+  image legs (cf-77 ruling) — the containers-build fire on the merged branch is
+  the authoritative build test.
+
+### Landing order / owner first-fire observation (UA-7..UA-10)
+
+D42 ruling: **SINGLE PR**. C05+C06+C07 merge together and the bootstrap red is
+DESIGNED, not an accident. The runner flip does NOT wait on the release
+pipeline (no circular dependency): `forgejo-runner` deploys straight from the
+git path of GitHub main (EXPLORE §5 — internal charts with no `version:` pin
+need no chart publish to roll their config; the label map rides the rendered
+Secret + reloader), so main-sync + ArgoCD + the pod restart carry the flip on
+the merge itself. Order of operations, all effects riding the ONE push to
+Forgejo main:
+
+1. `containers-build` fires (paths `containers/**`) and builds
+   `forgejo-runner` — its job schedules within seconds, almost certainly still
+   on the OLD act image (the pods flip only at step 3) — and publishes
+   `26.11.1` + `:main` + `:latest` to ghcr and the instance registry. The
+   published tag is readable in that run log (or the tags/list recipe).
+2. `main-sync` fans Forgejo main to GitHub main, and `release` fires (paths
+   `charts/**`). The first release run reddens early in one of the DESIGNED
+   shapes: `helm: command not found` in `test-build`'s first helm-invoking
+   step (old image, pre-restart), or a container-creation pull error on a
+   not-yet-published pin (restarted, pre-build). The bump never ran — no
+   chart-bump commit, no publishes. This is the expected bootstrap cost of
+   the single merge, not a regression; the owner does NOT retry-fix anything.
+3. ArgoCD syncs both runner releases from GitHub main, the ExternalSecret-
+   rendered `config.yaml` re-renders with the new label map, and the reloader
+   restarts `gpu-forgejo-runner-gpu-0` + `dev-forgejo-runner-dev-0`. The next
+   job scheduled on a 24.04-family label pulls the baked image.
+4. **UA-7 — the single-merge observation leg** (this slot formerly carried
+   the recommended split-merge option; retired by D42, the observation duty
+   takes its name). Once step 1 published the tag and step 3 restarted the
+   runners, the owner RE-RUNS the failed release run — the re-run reads the
+   same post-C07 workflow SHA against the flipped runner config. That re-run
+   is the clean first fire.
+
+How to read the re-run's log — what proves the bake now that D43 retired the
+presence steps:
+
+1. `test-build`'s plain-helm steps simply SUCCEED: "Add repositories" runs
+   `helm dependency list` and "Lint and package smoke" runs `helm lint` /
+   `helm package` — the binary they invoke IS the baked one, and the job list
+   shows NO "Set up helm" and NO "Install cr" step (the D32-twin shape is
+   gone; t5/t19 pin exactly that). `release` / `forgejo-publish` reaching
+   `cr package` / `cr upload` / `cr index` success is the baked-cr proof. A
+   mis-baked image fails LOUDLY at the first plain `helm`/`cr` call with
+   `command not found` — the designed absence-of-installer check.
+2. The fire's chart list will include `forgejo-runner` itself (C06 edits
+   charts/) — expect ONE benign patch bump commit on main + its dual publish
+   (same class as the original run's predicted llama-swap bump, N-1).
+3. If a job dies at container creation with a pull error on
+   `ownyourio/forgejo-runner:26.11.1`, the pin predates the merge month (the
+   real first tag is e.g. `26.12.1`) or the build lagged — verify with the
+   tags/list recipe, amend the one label-pin line in
+   `charts/forgejo-runner/values.yaml` (UA-8), let ArgoCD re-sync, re-run.
+4. Watch the first pull against the 10Gi `docker-data` PVC (the act base is
+   multi-GB and the new digest may not share layers with the cached copy): if
+   the pull fails on no-space, prune inside the runner pod
+   (`kubectl exec -n default <runner-pod> -c dind -- docker image prune -a -f`
+   — owner-run command, agents have no pod exec per AGENTS MCP law). Owner
+   confirmation that both runners (gpu `gpu-forgejo-runner-gpu-0`, dev
+   `dev-forgejo-runner-dev-0`) restarted and re-registered is the rollout
+   gate (UA-9).
+5. Follow-up, optional (UA-10): prove the instance-registry anonymous `/v2/`
+   pull runner-side (cf-6 proved org visibility only, §F4); if proven, a future
+   LAN-pull ruling may move the label refs to
+   `git.spencerslab.com/curatedforest/forgejo-runner:<pin>`. Nothing in this
+   fix round assumes it.
+
+### Open questions — fix round — ANSWERED (batched round 2026-11-21; rulings
+D42/D43 + confirmations, verbatim in DECISIONS.md. Original best-guess
+answers were: 1 bake, 2 adopt-3.22.1, 3 ghcr, 4 unmoved, 5 split-merge,
+6 keep-verify, 7 predict+UA-8 — items 1–4 CONFIRMED, items 5–6 OVERRIDDEN,
+item 7 settled by the override's shape.)
+
+1. cr: baked vs vendored vs download-with-retry → **CONFIRMED (D37 stands)**:
+   baked, 1.10.1 + verified sha migrated to the Dockerfile ARG; vendoring and
+   retry-only stay rejected.
+2. helm v3.22.1 vs v3.16.4 → **CONFIRMED (D38 stands)**: v3.22.1 adopted
+   (coder-workspace pin + GitHub-hosted preinstall equivalence,
+   renovate-tracked); no 3.16.4 revert.
+3. Pull registry: ghcr vs instance → **CONFIRMED (D39 stands)**: ghcr, the
+   proven anonymous runner-side path; the LAN-pull upgrade stays the
+   owner-verified UA-10.
+4. `ubuntu-22.04` label stays plain act-22.04 → **CONFIRMED (D40 stands)**:
+   unmoved.
+5. Landing: split merges vs single PR → **D42 OVERRIDE**: owner chose the
+   SINGLE PR — C05+C06+C07 merge together, the bootstrap red is designed, the
+   owner's re-run after publish + sync + restart is the clean first fire;
+   UA-8 carries the month-crossing one-line amend. The landing section above
+   is the written order of operations.
+6. `Verify toolchain` steps → **D43 OVERRIDE (against the planner's keep)**:
+   the three steps are RETIRED. t19 pins absence-of-installs +
+   presence-of-WORK with no step-presence limbs; the t5 flip is unchanged;
+   t20's index-curl `--retry` (resilience, not a presence assertion) STANDS.
+7. Pin prediction vs blocking on a live tag → **settled by D42's shape**: the
+   single merge makes the dev-time registry provably empty, so the walk-rule
+   `<yy.mm>.1` prediction is the shipped literal; the merge's own
+   containers-build fire verifies it and UA-8 is the one-line contingency.
+
+### Out of scope (fix round)
+
+The five `.github` gate workflows (GitHub-hosted runners preinstall helm,
+RESEARCH C1); consumer migration to instance registries (pre-existing
+follow-up card); the agent-side get.helm.sh fallbacks in tests (different
+class, §F1); `charts/forgejo-runner` daemon/dind pins (untouched, renovate-
+tracked); host-backend `forgejo-host-runner` toolset (its jobs need no helm);
+`[packages]`/registry enablement (already merged, C04).

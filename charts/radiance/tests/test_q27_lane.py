@@ -21,6 +21,7 @@ from __future__ import annotations
 import collections
 import re
 import subprocess
+from pathlib import Path
 
 import pytest
 import yaml
@@ -158,20 +159,112 @@ def test_c15_q27_absence_set():
 
 
 @helm_skip
-def test_c15_q27_guaranteed_pair_with_inherited_claims():
-    """D54(3)/AC2: memory 24Gi request==limit (Guaranteed pair; §R19-Q3 band
-    + the lane's `limit − printed-pinned ≥ 4` law). cpu "8" and the
-    amd.com/gpu-r9700-1 claim are INHERITED from the chart's baked pair — the
-    overlay map deep-merge ADDS/UPDATES, never removes (D26), the §D54 probe
-    witnessed the inheritance — so this leg asserts the RENDERED pair equals
-    exactly {cpu 8, memory 24Gi, claim 1} in BOTH requests and limits."""
+def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
+    """D54(3)/AC2 pair truth, re-pinned by cf-144 C01 (P05): memory 24Gi
+    request==limit stays overlay-authored; cpu "8" stays chart-INHERITED;
+    the amd.com/gpu-r9700-1 claim arrives OVERLAY-PINNED at "1" — under the
+    TP2 chart pair (2) plain inheritance would render 2 and strand q27
+    Pending beside a live fn, so the subtree must author the claim itself
+    (D26: overlays ADD/UPDATE, never REMOVE — an UPDATE is the lawful
+    mechanism). The rendered pair equals exactly {cpu 8, memory 24Gi, claim
+    1} in BOTH requests and limits; the independence proof (chart 2 + pin →
+    still 1) is the test_c144_ pair of legs below."""
     res = R.resources(R.serve_container(R.deployment(_q27_docs())))
     want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
     assert res.get("requests") == want, (
-        f"cf-143 C15: q27 requests {res.get('requests')} != {want} — the 24Gi pair authored "
-        "at the overlay, cpu/claim chart-INHERITED (non-subtractable, D26)"
+        f"cf-144 C01 AC2: q27 requests {res.get('requests')} != {want} — the 24Gi pair authored "
+        "at the overlay, cpu chart-INHERITED (non-subtractable, D26), the claim OVERLAY-PINNED "
+        "at 1 (post-flip inheritance renders the chart's 2 — wrong)"
     )
-    assert res.get("limits") == want, f"cf-143 C15: q27 limits {res.get('limits')} != {want}"
+    assert res.get("limits") == want, f"cf-144 C01 AC2: q27 limits {res.get('limits')} != {want}"
+
+
+def _c144_q27_sim_render(chart_claim: str, strip_overlay_pin: bool = False):
+    """Render the q27 release with a SIMULATED chart-level claim count
+    layered chart-defaults < sim-file < overlay-file — the exact -f
+    precedence the appset merge produces (per-app values = the subtree over
+    the chart's own). strip_overlay_pin removes the subtree's claim lines
+    from the copy, simulating dev forgetting (or later deleting) the pin.
+    Returns the serve container's resources map."""
+    import copy
+    import tempfile
+
+    block = copy.deepcopy(R.q27_service_block())
+    assert isinstance(block, dict), (
+        "cf-144 C01: no radiance-q27 subtree — designed-red naming C01 (the overlay pin has "
+        "no host; the pin legs and the subtree land in ONE wave)"
+    )
+    if strip_overlay_pin:
+        res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
+        for m in ("requests", "limits"):
+            res.get(m, {}).pop(R.GPU_CLAIM, None)
+    sim = {"app-template": {"controllers": {"radiance": {"containers": {"radiance": {"resources": {
+        "requests": {R.GPU_CLAIM: chart_claim},
+        "limits": {R.GPU_CLAIM: chart_claim},
+    }}}}}}}
+    with tempfile.TemporaryDirectory(prefix="radiance-c144-sim-") as tmp:
+        simf, ovl = Path(tmp) / "sim.yaml", Path(tmp) / "overlay.yaml"
+        with simf.open("w") as fh:
+            yaml.safe_dump(sim, fh)
+        with ovl.open("w") as fh:
+            yaml.safe_dump(block, fh)
+        out = subprocess.run(
+            ["helm", "template", R.Q27_RELEASE, str(R.CHART_DIR),
+             "-f", str(simf), "-f", str(ovl),
+             "--set", "domain=spencerslab.com", "--set", "clusterName=gpu-ai"],
+            capture_output=True, text=True, timeout=300,
+        )
+        if out.returncode != 0:
+            raise AssertionError(f"cf-144 C01: sim render failed:\n{out.stderr}")
+        docs = tuple(d for d in yaml.safe_load_all(out.stdout) if d)
+    return R.resources(R.serve_container(R.deployment(docs)))
+
+
+@helm_skip
+def test_c144_q27_subtree_authors_the_claim_pin_exactly():
+    """cf-144 C01 AC2 (authored-value view, designed-RED today): the pin must
+    be REAL bytes in the subtree — both maps carry amd.com/gpu-r9700-1: "1"
+    beside the 24Gi pair and NOTHING else (cpu stays chart-inherited, P05).
+    A render-only pass could still let a future edit drift the pin; this leg
+    pins the authored map itself: requests == limits == {memory 24Gi,
+    claim 1} exactly."""
+    block = R.q27_service_block()
+    assert isinstance(block, dict), (
+        "cf-144 C01: no radiance-q27 subtree — designed-red naming C01"
+    )
+    res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
+    want = {"memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
+    for m in ("requests", "limits"):
+        assert res.get(m) == want, (
+            f"cf-144 C01 AC2: q27 subtree {m} is {res.get(m)!r}, want exactly {want!r} — "
+            "the overlay authors the 24Gi pair PLUS the explicit claim-1 pin (P05); cpu "
+            "stays chart-inherited (D26 non-subtractability means it needs no re-authoring)"
+        )
+
+
+@helm_skip
+def test_c144_q27_claim_does_not_track_the_chart_count():
+    """cf-144 C01 AC2 (independence proof): with the chart pair SIMULATED at
+    2 — today's tree or the post-flip one — the q27 render still carries the
+    claim "1" iff the overlay pin exists. Designed-RED today (the subtree has
+    no pin, so the simulated 2 propagates). The teeth arm proves the
+    mechanism is not vacuous: strip the pin from the copy and the same sim
+    renders 2 — 'remove the pin → red' as an executable shape (review
+    re-proves the flip against the real chart)."""
+    res = _c144_q27_sim_render("2")
+    got = {m: (res.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
+    assert got == {"requests": "1", "limits": "1"}, (
+        f"cf-144 C01: overlay-pinned q27 claim under a simulated chart-2 renders {got}, want "
+        "1/1 — the subtree must author amd.com/gpu-r9700-1: '1' in BOTH maps (P05); today "
+        "there is no pin, so this leg is designed-red naming C01"
+    )
+    res_np = _c144_q27_sim_render("2", strip_overlay_pin=True)
+    got_np = {m: (res_np.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
+    assert got_np == {"requests": "2", "limits": "2"}, (
+        f"cf-144 C01 teeth arm: pin-stripped render gave {got_np}, want 2/2 — if this fails, "
+        "the sim layering is broken and the independence leg above is passing vacuously "
+        "(half-tripwire class, §12.14)"
+    )
 
 
 @helm_skip

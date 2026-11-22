@@ -44,6 +44,9 @@ the C10 bump — probe `tools/list` before trusting any of it): reads
 swimlane→list→cards, each group carrying its `title` beside its `id`, +
 dependency lines + label/field name maps, per-card exactly
 `{id, card_number, label_ids, slug, archived, sort, parent_id, checklists}` —
+seven of these when the caller passes `with_checklists: false`, which DROPS
+the per-card `checklists` key (omitted, never emptied — an absent key is not
+an answer about checklist state) while the default keeps the full eight —
 checklists being `[{id, title, items: [{title, finished}]}]` filtered to the
 kickoff vocabulary (Services, Type, Model(s), Lifecycle, Human in the Loop,
 plus the legacy `Research` and 8-item Lifecycle spellings) and riding the same
@@ -53,7 +56,13 @@ authority to the newest entry of the field's append-only combined-value stack;
 the optional `swimlane_titles` argument bounds the grouping to the named
 swimlanes, default every swimlane, an unknown title answering `swimlanes: []`
 while a malformed or bodyless export answer raises instead — the empty grouping
-means an empty board, never an outage);
+means an empty board, never an outage; `with_checklists: bool = True` is the
+second, per-card bound — an argument, not a second tool, so the registry count
+never moves — and under either bound the filter is grouping-only: the
+`dependencies` lines are computed board-wide before the swimlane filter, the
+`label_names`/`field_names` maps are built from the export root, so both
+survive `swimlane_titles` unchanged, while the id-less unresolved-parent tail
+rides only the unfiltered read);
 writes
 `add_card_dependency` (UPSERT — a repeat add updates the edge, never duplicates
 it; the 7 types gate client-side like `create_label`'s colors),

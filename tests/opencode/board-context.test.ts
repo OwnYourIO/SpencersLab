@@ -28,6 +28,19 @@
 // never the by-list projection). Never weaken an inverted arm back to its
 // old shape — the old shape pins the pre-C01 block.
 //
+// cf-123 R2 test wave (2026-11-22, agent-test; plan round 2 chunk C03) — the
+// sixth leg moves from { board_id } ONLY to LEAN-FIRST ({ board_id,
+// with_checklists: false }) with exactly ONE build-tolerant board_id-only
+// retry (D15), and the raw layer gains the isError THROW (without it a
+// pre-bump build's deterministic unknown-arg validation error — D14, measured
+// on fastmcp 4.2.4 — would parse as a string payload and render the
+// misleading every-list `cards: []` block the leg comment forbids). Designed
+// red at this wave: the :560 arg pin, the fallback arm and the throw arm name
+// C03; the double-failure arm is green at base by construction (today the
+// single throw already propagates) and becomes load-bearing the moment the
+// retry lands — it is the proof the fallback does not swallow the degrade
+// family. Everything else on the C03 HOLD list is UNEDITED.
+//
 // SEAM CONTRACT (what dev must export from .opencode/plugin/board-context/index.ts):
 //   formatBlock(fields) -> string                       fields = { collectedAt,
 //     serverId, boardId, swimlaneId, boardKey, lists, customFields, labels };
@@ -41,8 +54,15 @@
 //     args), log? }; opts = { boardTitle, swimlaneTitle, serverId,
 //     collectedAt }; runs list_boards -> get_board -> list_swimlanes ->
 //     list_lists -> list_custom_fields -> preload_board, the preload leg
-//     called with { board_id } ONLY (client-side In Process scoping from the
-//     own list_swimlanes/list_lists legs); the board key rides the existing
+//     ASKED LEAN with { board_id, with_checklists: false } and, on ANY
+//     preload error, EXACTLY ONE build-tolerant retry with { board_id }
+//     only — the cf-123 R2 posture (DECISIONS D14 measured the pre-bump
+//     unknown-arg answer as a deterministic FastMCP validation error, so
+//     the lean ask needs the fallback, and D15 fixes the raw layer to
+//     THROW on isError so the fallback fires instead of parsing the error
+//     text as the misleading every-list empty payload). The In Process
+//     scoping stays client-side from the own list_swimlanes/list_lists
+//     legs; the board key rides the existing
 //     get_board leg; cards join by list id from the preload's swimlane
 //     grouping, sort ascending, archived skipped, label ids resolved through
 //     the preload's label_names with an unknown id emitted raw; a list the
@@ -64,7 +84,9 @@
 //   isBoardCoordAgent(agent) -> boolean; BOARD_COORD_AGENTS: string[].
 //   resolveMcpUrl(deps) -> Promise<string|null>         deps = { mcpList(),
 //     readConfig() }; named-server match, no credentials.
-//   unwrapToolResult(rpcBody) -> any; parseSseData(text) -> any|null.
+//   unwrapToolResult(rpcBody) -> any; throws on a tool-level result.isError
+//     (cf-123 R2) carrying the first text part in the message;
+//     parseSseData(text) -> any|null.
 //   FETCH_TIMEOUT_MS: number (the admission-latency budget); DEFAULT_ENABLED:
 //   boolean; default export { id, setup } matching the two shipped plugins'
 //   working shape (plain object with async setup(ctx), NOT the docs'
@@ -378,6 +400,19 @@ function fakeCallTool(opts: any = {}) {
           { id: "zZw4PwMoLeodJy3eT", name: "session", type: "text" },
         ];
       case "preload_board":
+        // preloadRejectsLean models the deployed pre-bump build measured in
+        // this ticket's DECISIONS D14 (fastmcp 4.2.4 validates the signature
+        // BEFORE the body runs — an unknown argument is a deterministic
+        // ToolError, never a silent ignore; the text below is that measured
+        // error shape). It throws iff the args carry with_checklists, so a
+        // lean-first caller falls into its board_id-only fallback while the
+        // every-era board_id-only call answers normally. Every call rides
+        // `calls` regardless (the arms count attempts).
+        if (opts.preloadRejectsLean && args && "with_checklists" in args) {
+          throw new Error(
+            "1 validation error for call[preload_board]\nwith_checklists\n  Unexpected keyword argument [unexpected_keyword_argument]",
+          );
+        }
         if (opts.preload !== undefined) return opts.preload;
         return PRELOAD_PROJECTION;
       default:
@@ -557,7 +592,7 @@ describe("S1 formatBlock — one formatter, byte-exact strict-YAML fence (C01 AC
 });
 
 describe("S2 resolveBoardContext — six-leg sequence and per-list card assembly (C01 AC 2-5)", () => {
-  it("runs the six calls in order, the preload leg with { board_id } ONLY, and formats the re-pinned block", async () => {
+  it("runs the six calls in order, the preload leg ASKED LEAN, and formats the re-pinned block", async () => {
     const { callTool, calls } = fakeCallTool();
     const block = await seam("resolveBoardContext")(
       { callTool },
@@ -567,14 +602,14 @@ describe("S2 resolveBoardContext — six-leg sequence and per-list card assembly
     assert.deepEqual(
       calls.map((c) => c.name),
       ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields", "preload_board"],
-      "the collector sequence is the C01 skill's resolution order — the sixth (preload) leg is serial, after list_custom_fields",
+      "the collector sequence is the C01 skill's resolution order — the sixth (preload) leg is serial, after list_custom_fields (success path stays exactly six RPCs on the lean ask — cf-123 R2; designed red until C03 dev lands it)",
     );
     const preload = calls.find((c) => c.name === "preload_board");
     assert.ok(preload, "the preload leg was never called");
     assert.deepEqual(
       preload.args,
-      { board_id: "TNQJ2BrXenZovngTS" },
-      "the preload leg passes { board_id } ONLY — client-side In Process scoping, build-tolerant and drift-safe (the swimlane_titles filter would render an empty board on a renamed swimlane)",
+      { board_id: "TNQJ2BrXenZovngTS", with_checklists: false },
+      "the first preload ask is lean — with_checklists: false drops the checklist trees the block never renders (cf-123 R2), and the scoping stays client-side In Process: build-tolerant and drift-safe, the swimlane_titles filter would render an empty board on a renamed swimlane",
     );
   });
 
@@ -659,6 +694,22 @@ describe("S2 resolveBoardContext — six-leg sequence and per-list card assembly
     }
   });
 
+  it("tolerates a pre-bump build: after the lean ask is rejected, exactly ONE board_id-only retry ships the SAME block (cf-123 R2, D14/D15 — designed red until C03 dev lands the fallback)", async () => {
+    const { callTool, calls } = fakeCallTool({ preloadRejectsLean: true });
+    const block = await seam("resolveBoardContext")(
+      { callTool },
+      { boardTitle: "AI-Dev", swimlaneTitle: "In Process", serverId: SERVER_ID, collectedAt: COLLECTED_AT },
+    );
+    assert.equal(block, EXPECTED_BLOCK, "old-build tolerance is byte-exact — the fallback answer is the answer the grouping reads, never a degraded shape");
+    assert.deepEqual(
+      calls.map((c) => c.name),
+      ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields", "preload_board", "preload_board"],
+      "the fallback path is exactly SEVEN legs with the preload leg twice CONSECUTIVELY and no other leg repeated — the retry is one call, idempotent, bounded (the success path stays six, pinned above)",
+    );
+    assert.deepEqual(calls[5].args, { board_id: "TNQJ2BrXenZovngTS", with_checklists: false }, "the first attempt still asked lean");
+    assert.deepEqual(calls[6].args, { board_id: "TNQJ2BrXenZovngTS" }, "the retry passes { board_id } ONLY — today's exact ask, the build-tolerant shape");
+  });
+
   it("propagates a mid-sequence tool failure so the caller degrades — the preload leg included (S6 family, C01 AC 5)", async () => {
     for (const leg of ["list_swimlanes", "preload_board"]) {
       const { callTool } = fakeCallTool({ throwOn: leg });
@@ -670,6 +721,23 @@ describe("S2 resolveBoardContext — six-leg sequence and per-list card assembly
         `a failed ${leg} leg must reject the whole resolve — no half-shaped block ships`,
       );
     }
+  });
+
+  it("rejects when BOTH preload variants fail — the one-shot fallback does not swallow the degrade family (cf-123 R2: a second failure propagates; pairs with the unedited loop above)", async () => {
+    const { callTool, calls } = fakeCallTool({ throwOn: "preload_board" });
+    await assert.rejects(
+      seam("resolveBoardContext")(
+        { callTool },
+        { boardTitle: "AI-Dev", swimlaneTitle: "In Process", serverId: SERVER_ID, collectedAt: COLLECTED_AT },
+      ),
+      /preload_board/,
+      "lean ask and board_id retry both failing must reject the whole resolve — the outer never-throw admission budget turns that into an untouched prompt (S6 law), never a half-shaped block",
+    );
+    assert.deepEqual(
+      calls.map((c) => c.name),
+      ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields", "preload_board", "preload_board"],
+      "both variants were attempted (the preload leg twice, seven legs total) and the SECOND failure propagated — designed red until C03 dev lands the retry (today the single throw aborts at six legs)",
+    );
   });
 });
 
@@ -956,6 +1024,17 @@ describe("S8 result unwrap — structuredContent vs text double-parse (AC 2)", (
     const doubleParsed = unwrap({ result: { content: [{ type: "text", text: JSON.stringify(PAYLOAD) }] } });
     assert.deepEqual(structured, PAYLOAD);
     assert.deepEqual(doubleParsed, PAYLOAD);
+  });
+
+  it("throws on an isError tool result carrying the tool's own text (cf-123 R2 D15 — designed red until the throw lands: today the error text passes through as a payload and the every-list cards: [] block renders from it)", () => {
+    const unwrap = seam("unwrapToolResult");
+    const toolText = "1 validation error for call[preload_board]\nwith_checklists\n  Unexpected keyword argument [unexpected_keyword_argument]";
+    assert.throws(
+      () => unwrap({ result: { content: [{ type: "text", text: toolText }], isError: true } }),
+      (err: any) => String(err?.message ?? "").includes("1 validation error for call[preload_board]")
+        && String(err?.message ?? "").includes("with_checklists"),
+      "the throw message carries the tool's first text part — the D14-measured pre-bump answer must reach the caller as a FAILURE (the suite already treats a failed call as a throw, the :713 loop), not as a parseable payload",
+    );
   });
 });
 

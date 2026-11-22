@@ -6,7 +6,7 @@ clusterName: OVERRIDE_VIA_APPSET
 
 charts: 
   external-secrets-bitwarden:
-    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    version: 1.0.10
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
@@ -23,12 +23,12 @@ charts:
     ServerSideApply: "false"
     serviceName: base
   grafana:
-    version: 10.1.0 # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts/
+    version: 10.1.0
     repository: https://grafana.github.io/helm-charts/
     namespace: default
     ServerSideApply: "true"
   exporter-mikrotik:
-    version: 1.0.24 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    version: 1.0.24
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     #ServerSideApply: "true"
@@ -38,7 +38,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   kube-prometheus-stack:
-    version: 78.1.0 # renovate: datasource=helm registryUrl=https://prometheus-community.github.io/helm-charts
+    version: 78.1.0
     repository: https://prometheus-community.github.io/helm-charts
     namespace: default
     ServerSideApply: "true"
@@ -264,6 +264,14 @@ grafana:
           allowUiUpdates: true
           options:
             path: /var/lib/grafana/dashboards/logs
+        - name: inference
+          orgId: 1
+          folder: Inference
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/inference
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -673,6 +681,13 @@ grafana:
         datasource:
           - name: DS_PROMETHEUS
             value: Prometheus
+    inference:
+      radiance:
+        # Pinned to the radiance TAG v1.17.0 — the same release the
+        # charts/radiance image pin holds (cf-143 C02 ledger).
+        # renovate can't track a raw URL: bump this WITH the image pin.
+        url: https://codeberg.org/StillDeadcode/radiance/raw/tag/v1.17.0/deploy/grafana/radiance.json
+        datasource: Prometheus
   sidecar:
     dashboards:
       enabled: true

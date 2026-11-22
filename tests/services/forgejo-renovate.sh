@@ -17,7 +17,12 @@
 #    container image line (dist extract.js, probe of record 2026-11-10); an
 #    annotation plus the broad YAML legs would double-match (DECISIONS D13).
 #  - t5: credentials and instance identity come ONLY from contexts and secret
-#    refs, so the file is identical-safe on both forges (cf-119 convention).
+#    refs (cf-119 convention); the author stamp joins them as a
+#    vars.RENOVATE_GIT_AUTHOR reference — D23: variable-not-secret (the
+#    identity is public in every commit header), value minted instance-side.
+#    An unset variable renders empty and degrades SILENTLY to platform /user
+#    discovery, so the owner creates it before merge (UA12); the suites pin
+#    the reference shape, never the value.
 #  - t6/t7: zero uses: steps — the actions mirror's inventory beyond
 #    actions/checkout is unproven and Renovate self-clones with its token
 #    (DECISIONS D8); t7 doubles as the accepted-churn tripwire: merge a
@@ -179,7 +184,7 @@ then
 fi
 ok "t4: container image is an immutable full-patch tag and the file carries no renovate annotation"
 
-# --- t5 [AC4]: env wiring exact, secrets once, no host literals -------------------
+# --- t5 [AC4 + C05 AC1/AC2]: env wiring exact, secret/vars refs once, no host literals -
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
@@ -194,6 +199,14 @@ EXPECTED = {
     'RENOVATE_REPOSITORIES': '${{ github.repository }}',
     'RENOVATE_TOKEN': '${{ secrets.RENOVATE_TOKEN }}',
     'RENOVATE_GITHUB_COM_TOKEN': '${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}',
+    # D23: the stamp arrives as a repo-scoped Actions VARIABLE reference, never
+    # a repo literal (public commit-header identity; ROLE/PUSH_URL_* lineage)
+    # and never a secret. The instance-side value of record stays D21's
+    # pairing-law address — Renovate <tms@spencerslab.com>, the running PAT
+    # account's commit email; stamping bot-and-reviewed@ instead would DEMOTE
+    # tms@ from the guard's accepted set and leave the stuck ranges locked
+    # (census arithmetic, DECISIONS D21).
+    'RENOVATE_GIT_AUTHOR': '${{ vars.RENOVATE_GIT_AUTHOR }}',
 }
 
 
@@ -209,9 +222,12 @@ need(set(env) == set(EXPECTED),
      f'env keys are {sorted(env)}, expected exactly {sorted(EXPECTED)}')
 for key, value in EXPECTED.items():
     need(env.get(key) == value, f'env.{key} is {env.get(key)!r}, expected {value!r}')
-for key in ('secrets.RENOVATE_TOKEN', 'secrets.RENOVATE_GITHUB_COM_TOKEN'):
+for key in ('secrets.RENOVATE_TOKEN', 'secrets.RENOVATE_GITHUB_COM_TOKEN',
+            'vars.RENOVATE_GIT_AUTHOR'):
     # Boundary-anchored like forgejo-main-sync.sh t5: an extended key name
-    # (…TOKENX) must not count as an occurrence of the original.
+    # (…TOKENX) must not count as an occurrence of the original. D23 extends
+    # the same once-file-wide law to the stamp's vars ref: the shape appears
+    # at exactly one binding site.
     n = len(re.findall(re.escape(key) + r'(?![0-9A-Za-z_])', raw))
     need(n == 1, f'{key} occurs {n} times file-wide, expected exactly once')
 reserved = re.findall(r'(?:secrets|vars)\.((?:GITHUB|FORGEJO)[A-Za-z0-9_]*)', raw)
@@ -228,7 +244,7 @@ PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: six exact env keys, each secret ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
+ok "t5: seven exact env keys, each secret/vars ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
 
 # --- t6 [AC5]: two run-only steps, fail-fast, PATH proof -------------------------
 if ! python3 - "$WF" <<'PY'

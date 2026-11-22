@@ -93,6 +93,38 @@ STRIX_ID = "qwen3.8-flash-next-strata-strix"
 PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
+# --- ROCr HOST-INDEX CONSTANTS — cf-144 C03 SINGLE RE-PIN SITE -----------------
+# These name HOST ENUMERATION POSITION, not silicon. The owner rocminfo
+# receipt LANDED 2026-11-21 (DECISIONS P15 — VERDICT MOVED, strix leg): GPU-
+# agent ordinals on ai-gpu today are 0=R9700 (0x7551 Rev 1, Uuid
+# GPU-f14f913b0a98ad15, BDFID 49920), 1=R9700 (0x7551 Rev 1, Uuid
+# GPU-d34663795f09a76f, BDFID 50944), 2=APU gfx1151 8060S (0x1586 Rev 0,
+# BDFID 51200, Memory Properties APU). The second discrete card inserted
+# AHEAD of the chip, so the pre-card2 story (dGPU first, chip second — the
+# pair recorded in ROCR_PRE_CARD2_PAIR) is history. When a receipt re-pins:
+# the values keys charts/llama-swap/values.yaml strata.rocrVisibleDevices /
+# rocrVisibleDevicesByModel AND THESE constants move in ONE wave — legs read
+# through here, never through scattered needles (the D24 GPU-name canonical
+# block is the idiom copied). The suite still cannot substitute the receipt:
+# a pair that silently matches a stale story is repo-invisible BY DESIGN —
+# that half of the gate is owner-side (test_strata_enumeration.py header
+# states the posture; its one-way arm demands the dated rocminfo-provenance
+# sentence in the values comment once the pair moves).
+ROCR_PRIMARY = "0"     # strata.rocrVisibleDevices — RECEIPT-VERIFIED UNCHANGED 2026-11-21
+#                        (P15): ordinal 0 is an R9700, so the hide-the-APU intent (PR #3636)
+#                        holds — C03's honest no-op leg, no values move for this key
+ROCR_STRIX = "2"       # rocrVisibleDevicesByModel strix lane — must name the OTHER silicon.
+#                        cf-144 C03 MECHANICAL RE-PIN 2026-11-21 per the rocminfo GPU-agent
+#                        enumeration (0/1 = R9700s, 2 = APU gfx1151 — DECISIONS P15): the
+#                        former shipped "1" named the SECOND discrete card, ordinal 2 is
+#                        the APU. The C03 wave (P15/P16, review APPROVED r1) landed the
+#                        values pair "1"->"2" beside this site in the same commit
+ROCR_HOST_GPU_COUNT = 3   # card1 + card2 + APU — receipt CONFIRMS three GPU agents (0/1/2);
+#                        the enumeration domain is unchanged, the fact now receipt-backed
+ROCR_PRE_CARD2_PAIR = ("0", "1")  # the pre-receipt shipped story, retained as the era marker
+#                        the provenance arm keys off — the C03 wave (2026-11-21, P15/P16)
+#                        moved the values pair off it, arming the dated-sentence demand
+
 # T0 (owner ruling 2026-11-01, DECISIONS U13): the engine's per-request
 # accounting line — `request prompt P cached C output O prompt_read R ms total
 # S ms prefill X tok/s decode Y tok/s`. The serve progress chatter counts a

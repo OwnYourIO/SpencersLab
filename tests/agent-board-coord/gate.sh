@@ -941,6 +941,17 @@ fi
 # admits; this branch touches neither file. The strata re-point rides
 # charts/llama-swap/tests/*; the cf-55 suites ride tests/*; sources, mirrors
 # and AGENTS.md ride existing lines.
+# cf-55 FIX ROUND (2026-11-21 fix-wave test round; DECISIONS D41/D42,
+# chunks/C05-C07): charts/forgejo-runner/* (the C06 label re-point) and
+# containers/forgejo-runner/* (the C05 baked act job image) join as
+# directory admits — the cf-143 new-chart-trees precedent; the fix-round
+# release.yaml edits, suites and prose ride the cf-55 arm above plus the
+# tests/*, rules/mirror and AGENTS.md wildcards already here.
+# bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
+# joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
+# files already ride tests/* and the explicit "$BOARDS_SRC"/*+"$BOARDS_GEN"/*
+# pair; the amendment is skill-side only (plan D8: gate and command surfaces
+# stay byte-untouched, the t12/t15/t16 freezes included), so nothing else joins.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -1016,11 +1027,13 @@ if want t14; then
       .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
+      charts/forgejo-runner/*|containers/forgejo-runner/*|\
+      .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-124 own-folder admit, the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) (whole-ticket scope union; base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-124 own-folder admit, the cf-126 own-folder + C06-round-3 artifact admits (.openchamber/project.json + the canonical fixture, D37), the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

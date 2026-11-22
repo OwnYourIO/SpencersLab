@@ -873,6 +873,28 @@ radiance:
 #    it is DROPPED — the lane is keyless like fn (D8). No such secret exists
 #    repo-wide, and keying it would be a DECISIONS change plus a fourth
 #    custom-values leg, not a values edit here.
+# THE SWITCH DISCIPLINE AT TP2 (cf-144 C01 dated annotation, 2026-11-21 —
+# append-only: the five bullets above stay as the single-card history):
+#  * Blocker (a) MOVED NATURE, the ORDER survives: the amd.com/gpu-r9700-1
+#    pool is capacity-2 since card 2 landed (both cards the same 7551/C0
+#    pair — EXPLORE §0), so pool COUNT no longer blocks a second radiance
+#    pod; but fn's chart claim moved to 2 (shape A, OQ-A owner ruling — one
+#    pod holds BOTH cards while it is UP), so the swap is now CLAIM-MATH:
+#    with fn scheduled, zero cards remain and a q27 pod Pends forever. "fn
+#    DOWN first, then q27 UP" (D54(1)) stands verbatim, for a new reason.
+#  * Blocker (b) VRAM: as written; fn TP2 spreads across BOTH cards, so
+#    beside-fn never reaches the one-card claimable ceiling — moot under
+#    shape A's claim math, unchanged for any future co-residency ruling.
+#  * Blocker (c) host RAM restated at the HELD 110 (P11 "Hold 110, re-pin
+#    after the print"): fn 110 + q27 24 + router 4.125 + system 1.158 =
+#    139.3 > 125.08 — beside-fn does NOT fit RAM-side at the held value
+#    either; shape A blocks it by CLAIMS first and it stays RAM-blocked
+#    until the post-TP2-boot DOWN re-pin lands. The draft's 77.28-fit
+#    arithmetic priced the REJECTED 48 class (P11 supersedes P03) —
+#    recorded as history here, never rewritten into a shipped claim.
+#  * The claim pin: because the chart pair moved to 2, this release
+#    OVERLAY-PINS amd.com/gpu-r9700-1 "1" in both maps (see the resources
+#    block) — inheritance would render the chart's 2.
 radiance-q27:
   app-template:
     # Decorative ledger ONLY, said plainly because the anchor trap runs in
@@ -953,19 +975,24 @@ radiance-q27:
               # with the engine's 4 GiB slack (24 >= 20 + 4). The pinned
               # leg — the ~8.5 GiB Wilde measured at --placement all_vram
               # feeds the limit-minus-printed-pinned >= 4 law
-              # (24 - 8.5 = 15.5 >= 4). cpu "8" and the
-              # amd.com/gpu-r9700-1 claim
-              # are NOT re-authored here because they CANNOT be: the map
-              # deep-merge adds/updates keys and NEVER removes (D26), so
-              # they arrive chart-inherited — non-subtractable, and the
-              # rendered pair is asserted exactly that way. The boot
-              # receipt may correct the number; the repair is this overlay
-              # one-edit ADD/UPDATE ruled forward (D28(6)), never a chart
-              # parameterisation.
+              # (24 - 8.5 = 15.5 >= 4). cpu "8" stays chart-INHERITED: the
+              # map deep-merge adds/updates keys and NEVER removes (D26),
+              # so cpu needs no re-authoring. The amd.com/gpu-r9700-1
+              # claim is now OVERLAY-PINNED at 1 in BOTH maps (cf-144
+              # C01/P05): the chart pair moved to 2 with the fn TP2 flip
+              # (shape A — one pod holding both cards while UP), and plain
+              # inheritance would strand this release at claim 2, Pending
+              # forever beside a live fn. An overlay UPDATE of the same key
+              # is the lawful mechanism (D26: ADD/UPDATE yes, REMOVE no).
+              # The boot receipt may correct the number; the repair is this
+              # overlay one-edit ADD/UPDATE ruled forward (D28(6)), never a
+              # chart parameterisation.
               requests:
                 memory: "24Gi"
+                amd.com/gpu-r9700-1: "1"
               limits:
                 memory: "24Gi"
+                amd.com/gpu-r9700-1: "1"
         initContainers:
           radiance-fetch:
             # Q27 PACK LEDGER (RESEARCH §R19-S1, the init script's own

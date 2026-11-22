@@ -96,7 +96,7 @@ jobs:
     outputs:
       changed-containers: ${{ steps.detect.outputs.changed-containers }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # Full history is what keeps a multi-commit push's non-tip changes
           # visible: detection diffs the whole before..sha range, and at the
@@ -158,7 +158,7 @@ jobs:
       matrix:
         container: ${{ fromJSON(needs.detect-changes.outputs.changed-containers) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: diag
         run: |
@@ -365,7 +365,7 @@ jobs:
       matrix:
         container: ${{ fromJSON(needs.detect-changes.outputs.changed-containers) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: diag
         run: |

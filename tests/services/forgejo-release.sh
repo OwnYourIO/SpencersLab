@@ -36,6 +36,14 @@
 # t14 POST-vs-GET upload method came from the fix rounds and survive the
 # rebuild unchanged, as do the index VALUE-semantics carrier legs t15).
 #
+# Fix round (2026-11-21, chunks/C07.md; D41/D42/D43): 20 legs. t5 flipped to
+# the checkout-only allow-list with azure/setup-helm on the file-wide bans;
+# t19 re-turned from the runtime-cr contract to the BAKED-toolchain contract
+# (absence-of-installs + presence-of-work, and per D43 deliberately NO
+# presence-step legs — the vacated slots must stay empty); t20 newly pins
+# the bump leg's --retry-hardened published-index fetch. Every other leg is
+# byte-unchanged from the rebuild.
+#
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-release.sh
 set -euo pipefail
@@ -184,7 +192,7 @@ import sys, yaml
 
 raw = open(sys.argv[1]).read()
 jobs = (yaml.safe_load(raw) or {}).get('jobs') or {}
-ALLOWED = ('actions/checkout@', 'azure/setup-helm@')
+ALLOWED = ('actions/checkout@',)
 
 
 def need(cond, msg):
@@ -200,21 +208,21 @@ for jn, s in steps:
     if not u:
         continue
     need(u.startswith(ALLOWED),
-         f'{jn}: uses {u!r} — only mirror-confirmed actions/checkout and azure/setup-helm may be used (D3)')
+         f'{jn}: uses {u!r} — only the mirror-confirmed actions/checkout may be used; the baked job image (C05/C06) means no workflow step installs anything (D33)')
     need('github.com' not in u and 'http' not in u,
          f'{jn}: absolute-URL uses {u!r} (unproven runner egress for clones)')
-    if 'azure/setup-helm' in u:
-        ver = (s.get('with') or {}).get('version')
-        need(bool(ver), f'{jn}: azure/setup-helm step carries no pinned version: input (AC4)')
-# The four wrapper actions the move replaces inline — retired names may not
-# re-enter the file anywhere, runs, comments or uses included.
-for banned in ('dorny/paths-filter', 'EMAsphere', 'EndBug', 'chart-releaser-action'):
-    need(banned not in raw, f'{banned} appears in the file (the inline replacements are mandatory: git-diff detect, stdlib patch bump, raw git, cr CLI)')
+# The four wrapper actions the move replaced inline stay retired, and the fix
+# round joins them with azure/setup-helm: that action downloads helm from
+# get.helm.sh INSIDE the job — the read ECONNRESET that killed the release
+# pipeline's first fire — and the tool it installed is now baked into the
+# image, so the name may not survive anywhere, uses, runs or comments.
+for banned in ('dorny/paths-filter', 'EMAsphere', 'EndBug', 'chart-releaser-action', 'azure/setup-helm'):
+    need(banned not in raw, f'{banned} appears in the file (retired-action / retired-installer law: the inline replacements and the baked toolchain are mandatory)')
 PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: every uses is actions/checkout or version-pinned azure/setup-helm; the four retired actions appear nowhere"
+ok "t5: every uses is actions/checkout and nothing else; azure/setup-helm and the four retired actions appear nowhere in the file"
 
 # --- t6: hardened repo-add loop in every dependency-resolving leg (AC5) --------
 if ! python3 - "$WF" <<'PY'
@@ -981,16 +989,19 @@ then
 fi
 ok "t18: empty-before AND all-zero-before both route to the HEAD^ fallback; a real range still diffs EVENT_BEFORE..EVENT_SHA"
 
-# --- t19: cr is one pinned, checksum-verified install shared by both cr legs -------
-# The wrapper action's mirror absence forced the direct CLI (D3); the pin +
-# sha256 pair is what the review verified against the upstream checksums.txt,
-# and the download URL composes its host from RELEASES_HOST so the
-# no-URL-literal law (t8) holds. A leg installing an unpinned or unhashed cr
-# reopens the supply-chain question the pin closed.
+# --- t19: the toolchain rides the baked job image — nothing installs, and the vacated slots stay empty ---
+# Fix-round flip of the runtime-cr contract (C07, D37/D38/D43): the pin pair
+# migrated to the C05 Dockerfile ARGs and the workflow env block died with it.
+# D43 retired the replacement presence-check steps too, so what is pinned
+# here is absence-of-installs plus presence-of-WORK: the real cr/helm
+# invocations ARE the toolchain check (a mis-baked image dies on them with
+# command-not-found — loud, early), and the literal bans are what keep a
+# download from creeping back into any lane.
 if ! python3 - "$WF" <<'PY'
-import sys, yaml
+import re, sys, yaml
 
-doc = yaml.safe_load(open(sys.argv[1]))
+raw = open(sys.argv[1]).read()
+doc = yaml.safe_load(raw) or {}
 jobs = doc.get('jobs') or {}
 env = doc.get('env') or {}
 
@@ -1001,24 +1012,78 @@ def need(cond, msg):
         sys.exit(1)
 
 
-need(str(env.get('CR_VERSION')) == '1.10.1',
-     f'workflow env CR_VERSION is {env.get("CR_VERSION")!r}, expected the review-verified 1.10.1 pin')
-need(str(env.get('CR_SHA256')) == 'ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b',
-     'workflow env CR_SHA256 does not match the linux_amd64 checksum the review verified against the release checksums.txt')
-need(str(env.get('RELEASES_HOST')) == 'github.com',
-     'RELEASES_HOST missing/wrong — the asset host rides the composed variable precisely so no scheme-qualified URL literal enters the file (t8 law)')
-for jn in ('release', 'forgejo-publish'):
-    blob = '\n'.join(str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
-                     if isinstance(s, dict) and 'run' in s)
-    need('${RELEASES_HOST}' in blob and 'helm/chart-releaser' in blob,
-         f'{jn}: no cr install via the composed ${ "{RELEASES_HOST}" } asset URL')
-    need('sha256sum -c' in blob and '${CR_SHA256}' in blob,
-         f'{jn}: the cr archive is not sha256-verified against the pinned ${ "{CR_SHA256}" }')
-    need('${CR_VERSION}' in blob, f'{jn}: the cr download does not ride the single shared CR_VERSION pin')
+for key in ('CR_VERSION', 'CR_SHA256', 'RELEASES_HOST'):
+    need(key not in env,
+         f'the top-level env still carries {key} — the cr pin pair lives in the containers/forgejo-runner Dockerfile ARGs now (D37/D38)')
+# File-wide, comments included: every literal that described a run-time
+# download. chart-releaser_ is the underscore asset-naming form precisely so
+# prose may still name the helm/chart-releaser depName.
+for lit in ('CR_VERSION', 'CR_SHA256', 'RELEASES_HOST', '1.10.1',
+            'ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b',
+            'get.helm.sh', 'chart-releaser_', 'cr.tar.gz', '.cr-bin'):
+    need(lit not in raw,
+         f'{lit!r} appears in the file — the bake retired every run-time install fact; a survivor re-arms the egress class that killed the first fire (D33)')
+for jn, job in jobs.items():
+    steps = [s for s in ((job or {}).get('steps') or []) if isinstance(s, dict)]
+    for s in steps:
+        name = str(s.get('name', ''))
+        need(not re.search(r'set up helm|install cr|verify toolchain|toolchain (check|presence)', name, re.I),
+             f'{jn}: step {name!r} is an installer or presence-check step — D43 rules the vacated slots EMPTY')
+    blob = '\n'.join(str(s.get('run', '')) for s in steps)
+    need('helm version' not in blob and 'cr --version' not in blob,
+         f'{jn}: a run block gates on helm version / cr --version — presence assertions retired with the Verify steps (D43)')
+
+
+def runs(jn):
+    return '\n'.join(str(s.get('run', '')) for s in ((jobs.get(jn) or {}).get('steps') or [])
+                     if isinstance(s, dict))
+
+
+tb, rel, fj = runs('test-build'), runs('release'), runs('forgejo-publish')
+for cmd in ('helm dependency list', 'helm repo add', 'helm dependency build',
+            'helm lint', 'helm package'):
+    need(cmd in tb,
+         f'test-build no longer runs {cmd!r} — the flip cannot be satisfied by deleting the work the baked helm serves')
+for cmd in ('helm dependency list', 'helm repo add', 'cr package', 'cr upload', 'cr index'):
+    need(cmd in rel, f'release no longer runs {cmd!r} — the invocation sites are the de-facto toolchain check (D43)')
+for cmd in ('helm dependency list', 'cr package'):
+    need(cmd in fj, f'forgejo-publish no longer runs {cmd!r} — same law on the instance leg')
 PY
 then
   fail "t19: see the t19 detail above"
 fi
-ok "t19: cr v1.10.1 + its verified sha256 ride one shared workflow env pair; both cr legs install through the composed host and verify the hash"
+ok "t19: no cr env pair, no install/pin literals, no installer or presence-check steps anywhere; every baked helm/cr invocation site of the shipped contract still runs"
+
+# --- t20: the bump leg's published-index fetch is retry-hardened (D37) -------
+# The one egress the bake cannot retire: the bump loop reads the PUBLISHED
+# INDEX — data, not a tool — so it rides bounded hardening instead of the
+# bare fetch that would let a transient Pages failure empty the bump.
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+blob = '\n'.join(str(s.get('run', '')) for s in ((jobs.get('bump') or {}).get('steps') or [])
+                 if isinstance(s, dict))
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t20: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+flat = re.sub(r'\\\n[ \t]*', ' ', blob)
+fetch = [l for l in flat.splitlines() if 'curl' in l and 'PUBLISHED_INDEX' in l]
+need(fetch,
+     'the bump leg no longer curls $PUBLISHED_INDEX — the published-index data read is part of the shipped bump contract (the t7 loop and the t15 parser depend on it)')
+for l in fetch:
+    need('--retry' in l,
+         f'the published-index fetch lacks --retry: {l.strip()[:120]!r}')
+PY
+then
+  fail "t20: see the t20 detail above"
+fi
+ok "t20: the bump leg's published-index curl carries --retry (the un-bakeable data egress gets bounded hardening, D37)"
 
 printf 'PASS: forgejo-release checks (%d ok)\n' "$checks"
