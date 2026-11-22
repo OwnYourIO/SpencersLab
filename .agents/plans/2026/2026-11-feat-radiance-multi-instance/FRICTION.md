@@ -114,3 +114,18 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
    or the service strata blocks, so git-desired-1 vs live-0 IS the pre-existing
    `gpu-ai-llama-swap` OutOfSync (EXPLORE gotcha 17): K1 nets that drift out rather than resuming it.
    · fixed-by-ruling
+- 2026-11-22 · coord(test wave) · **first Test Writing launch cancelled mid-flight; verify-from-disk
+  said ZERO landed.** `ses_dff2db28effeCuASbCEHa0wIHW` was cut by the owner (they were editing the
+  model's catalog config, not rejecting the brief) and `git status --porcelain --untracked-files=all`
+  afterwards showed ONLY the coordinator's own `STATE.json` record edit — no test file touched, no
+  fixture written. Contrast the planning double-launch, where the cut session HAD landed the full
+  artifact set: the notice alone never tells you which case you are in.
+  · resolution: relaunched as ONE fresh writer (`ses_dff2b1f06ffeLHvN3gSpxs0ql9`) with the brief
+  restated and an explicit "no partial artifacts exist — do not go looking for them", so it cannot
+  half-merge into an invisible predecessor. Standing recipe: a cancelled round is a DISK question, not
+  a log question; check porcelain status before choosing relaunch-vs-fold, and never let two writers
+  into the same suite. Owner ruling at the same moment: every launch of this ticket rides
+  `gpu-ai/qwen3.8-flash-next-radiance` ("use the radiance flash going forward") — verified live in the
+  catalog at `.opencode/opencode.jsonc:716` (+ `-urgent :723`, `-low :730`).
+  · fixed-by-this-recipe (machinery half OPEN: distinguish nothing-landed from everything-landed costs
+  one porcelain call every time; no surface reports it automatically)

@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "plan_status_note": "APPROVED 2026-11-22 by the coordinator on the owner's two words: 'Approve — run all waves' (batched round) + the OQ-K confirmation 'K1: park strata at replicas 0' (DECISIONS D26). Lineage: drafted by agent-plan (folded shape; superseded sibling 4-chunk draft preserved verbatim in PARALLEL-DRAFT.md, fold provenance D13, collision rows in FRICTION); rework round folded every batched answer into plan + chunks C02/C04/C05/C06 (rulings D16-D25; coord-disclosed defaults D24; OQ-K raised, then answered K1). Steady state as approved: fn-TP2 replicas 1 claim 2; flash-TP1 0 claim 1; q27-TP2 0 claim 2; q27/TP1 0 claim 1; strata claim 1 replicas 0 (D26). OQ-R1 unique_id receipt owed by the owner at C04's turn. No card, no board write-back: owner-directed in-session.",
   "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
-  "test_session": null,
+  "test_session": "ses_dff2db28effeCuASbCEHa0wIHW",
   "current_wave": 1,
   "updated_at": "2026-11-22T02:40:00+00:00",
   "kickoff": {
@@ -22,7 +22,7 @@
       "plan": "gpu-ai/qwen3.8-flash-next-radiance",
       "code": "gpu-ai/qwen3.8-flash-next-radiance"
     },
-    "models_basis": "Owner word 'make the coord agent context use the radiance/qwen3.8-flash-next-radiance model for everything' — every tier radiance (the two STATE slots carry the same value; final whole-review/fallback tiers ride it too), AND this ticket's own subject rule; this run itself launched every subagent on gpu-ai/qwen3.8-flash-next-radiance. The fn lane is live 1/1 (EXPLORE §1) so the route works today; q27 stays NEVER-default (502-while-idle, measurement-conditional). Rework round: the round's rulings extend 'everything' to the hourly RUNNER literal (D16) and to the explicit Dense+Local row (D20 → the parked q27 lane, 502 accepted) — run models themselves unchanged.",
+    "models_basis": "Owner word 'make the coord agent context use the radiance/qwen3.8-flash-next-radiance model for everything' — every tier radiance (the two STATE slots carry the same value; final whole-review/fallback tiers ride it too), AND this ticket's own subject rule; this run itself launched every subagent on gpu-ai/qwen3.8-flash-next-radiance. The fn lane is live 1/1 (EXPLORE §1) so the route works today; q27 stays NEVER-default (502-while-idle, measurement-conditional). Rework round: the round's rulings extend 'everything' to the hourly RUNNER literal (D16) and to the explicit Dense+Local row (D20 → the parked q27 lane, 502 accepted) — run models themselves unchanged. RE-CONFIRMED 2026-11-22 at the Test Writing launch: owner word 'You should use the radiance flash going forward' — the first test session was cancelled because the owner was editing the model's catalog config, not because of the routing; every launch of this ticket (test/dev/review/final) passes gpu-ai/qwen3.8-flash-next-radiance explicitly. Id verified live in the catalog at .opencode/opencode.jsonc:716 (+ -urgent :723, -low :730); the 6 radiance rows' limit.context 200000->262144 is the owner's edit, committed standalone at b3d7fada8.",
     "local": false,
     "stages": [
       "Exploration",
@@ -34,7 +34,7 @@
       "Final Review",
       "Deployment"
     ],
-    "stages_basis": "Same lifecycle set as cf-144's checked Lifecycle (coordinator-stated at launch). Exploration DONE (EXPLORE.md), Pre Research DONE (RESEARCH.md storm round), Planning in flight (this folder — rework round folded, awaiting the coordinator's flip); Deployment checked -> landing shape is owner-gated push/PR/merge/sync per pipeline-push-pr discipline.",
+    "stages_basis": "Same lifecycle set as cf-144's checked Lifecycle (coordinator-stated at launch). Exploration DONE (EXPLORE.md), Pre Research DONE (RESEARCH.md storm round), Planning DONE + APPROVED 2026-11-22 (plan committed at f6198fdc3 on 'Approve - run all waves' + the OQ-K/K1 confirmation, D26); Test Writing in flight (session ses_dff2b1f06ffeLHvN3gSpxs0ql9 — the first attempt ses_dff2db28effeCuASbCEHa0wIHW was cancelled by the owner mid-catalog-edit and had written nothing); Chunk Development/Chunk Review pending wave order C01+C02 -> C03+C04 -> C05 -> C06; Final Review pending; Deployment checked -> landing shape is owner-gated push/PR/merge/sync per pipeline-push-pr discipline.",
     "hitl": ["Planning", "Final Review", "Deployment"],
     "claim": {
       "pipeline": null,
