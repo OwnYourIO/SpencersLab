@@ -301,7 +301,7 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   the no-byte-move law, per-block literal scripts are the ONLY possible shape, and the plan's
   "parameterized init" row (plan ~:205) + C03 task-1 wording are a plan-internal contradiction, now surfaced to
   the owner. · resolution: byte-equivalence kept; the supersession row gets corrected whichever way the ruling
-  goes. · open (owner ruling on the disputed leg + the plan fold)
+  goes. · SUPERSEDED by D35 (owner, 2026-11-22): byte-equivalence is RELAXED for this one carrier — the chart owns the script and AC1 becomes an intentional-delta proof over exactly four paths. The contradiction this row surfaced was real and is now ruled, not worked around. · closed-by-ruling
 - 2026-11-22 · review(C02) · **`boards` SKILL "Default selection: `Qwen Dense`" now reads two ways** — the board
   RULE's checked item (accurate: OQ13, rule dormant) versus the blank-route default (radiance). NOT fixable
   inside C02: c11 and M5 pin the sentence verbatim as HOLD, so prose tidying would break two green arms, and

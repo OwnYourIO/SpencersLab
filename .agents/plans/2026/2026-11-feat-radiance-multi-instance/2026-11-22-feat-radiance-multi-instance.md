@@ -10,13 +10,18 @@ contradiction map C1–C7), plus the cf-143 DECISIONS (D7/D8/D15/D17/D21/D24/D26
 B1-shield + carrier laws) and the cf-144 DECISIONS (P02/P05/P11/P15 laws this ticket TRANSCRIBES,
 never re-decides). Base: branch `feat-radiance-multi-instance` at main `193c12798` — **cf-144 is
 already landed and is the BASE, not a prerequisite** (EXPLORE §0; the launch brief's "unpushed"
-framing is stale — FRICTION row). `plan_status: draft` — the coordinator flips only on the owner's
-word. **Rework round 2026-11-22: the batched question round RAN and every answer is folded here**
+framing is stale — FRICTION row). **`plan_status: approved`** — the owner ruled "Approve — run all
+waves" at the batched round and the coordinator flipped it; mid-execution folds keep it approved.
+**Rework round 2026-11-22: the batched question round RAN and every answer is folded here**
 (the answers were delivered against the sibling draft's lettering — the authoritative letter map is
-DECISIONS D15; letters below are THIS plan's, now recorded as ANSWERED verdicts). The owner's round
-verdict was "Approve — run all waves"; the flip is the coordinator's leg. One genuinely-new gap
-the answers created remains open: **OQ-K** (strata's new claim vs the approved fn lane — §Open
-questions, with recommendation).
+DECISIONS D15; letters below are THIS plan's, now recorded as ANSWERED verdicts).
+**Post-approval fold round 2 (2026-11-22): owner ruling D35 resolves the C03 fork — the CHART owns
+the generic init-script FORM via a configMap/env carrier, AC1's byte-equivalence is REPLACED by the
+four-path intentional-delta proof, and C03's rework becomes its OWN watched sync set — folded
+together with three review-owed corrections (noop baselines, the write-arm "not run, no claim"
+line, the relocation intermediate-pass law, and C06's D32 scope).** OQ-K stands as C04's embedded
+STOP-condition contract (the re-anchored same-wave `replicas: 0` designed-red leg per D31 is the
+executable shape of K1).
 
 ## Goal
 Route every coord/subagent model surface to `gpu-ai/qwen3.8-flash-next-radiance`, rename the GPU
@@ -142,18 +147,24 @@ prose claiming otherwise is an error, not a ruling.
 ## Commands (validation battery — every session exports PATH first)
 `export PATH=$HOME/.local/bin:$PATH` (without it helm-guarded pytest silently mass-skips);
 `helm dependency build/update` FIRST in any fresh worktree (the gitignored `.tgz` trap — FRICTION).
-Baseline measured by the scout at HEAD (EXPLORE §6): radiance 70P/1S · amd-gpu 29P ·
-llama-swap 507P/9S · vllm 36P · naming.sh PASS · surface M1–M5,M7,M8 PASS (9 ok) · notes suites
-5/3/6 PASS · cf106-noop 8 ok · noop-marker 9 ok · **provider-loops RED t1 (pre-existing)** ·
-**agents-md c11 RED (pre-existing)** · tsx tick 15 pass.
+Baseline measured by the scout at HEAD (EXPLORE §6), corrected post-C01/C02 where re-measured:
+radiance 70P/1S · amd-gpu 29P · llama-swap 507P/9S · vllm 36P · naming.sh PASS · surface
+M1–M5,M7,M8 PASS (9 ok) · notes suites 5/3/6 PASS · **cf106-noop 11 ok · noop-marker 11 ok** (both
+measure 11 ok on suite files byte-identical to scout HEAD — the scout-era 8/9 expectations were
+stale; a stale expected number turns an honest green into a false finding) ·
+**provider-loops RED t1 (pre-existing)** · **agents-md c11 RED (pre-existing)** · tsx tick 15 pass.
 - chart suites per-directory (basenames duplicate): `python3 -m pytest charts/{radiance,amd-gpu,llama-swap,vllm}/tests -q`
 - contracts: `bash tests/services/amd-gpu-naming.sh` (review sets `AMD_GPU_FLIP_COMMIT` for n2) ·
-  `bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M7 M8` (**M6 WRITES — never in a
-  read-only session**; M8 named explicitly; final review also runs M8 with `CF143_BASE_SHA` = the
-  merge-base) · `bash tests/notes/radiance-{runbook,tp2,q27-boot,host-tuning}.sh` ·
+  `bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M7 M8` (M8 named explicitly; final review
+  also runs M8 with `CF143_BASE_SHA` = the merge-base) ·
+  `bash tests/notes/radiance-{runbook,tp2,q27-boot,host-tuning}.sh` ·
   `bash tests/{cf106-noop,noop-marker}/surface.sh` · `bash tests/provider-loops/surface.sh` ·
   `bash tests/agent-board-coord/agents-md.sh c11` ·
   `npx --yes tsx --test tests/opencode/pipeline-locks-tick.test.ts`
+- **Standing WRITE-arm rule (D33(c), D34-scope):** the WRITE arms — `pipeline-models M6`,
+  `agents-md c1`, `rulesync-surface c7`, `gate t14` — are **not run, no claim** in any read-only
+  session; they belong to writer sessions and no expected-status list handed to a reviewer or test
+  session may list them as expected-green.
 - regenerate (writer sessions only, C02/C05): `npx --yes rulesync@37.0.0 generate` then
   `generate --check`; run twice — the second generate must be a no-op; sources + generated twins
   commit together.
@@ -167,9 +178,24 @@ llama-swap 507P/9S · vllm 36P · naming.sh PASS · surface M1–M5,M7,M8 PASS (
   → ZERO after C01 (plans folder exempt by design); new-name placement via
   `grep -rnE 'amd\.com/gpu-r9700([^-]|$)'`; impossible-string bars: `amd.com/r9700` /
   `amd.com/r9700-1` appear nowhere claim-shaped (tests assemble them).
-- equivalence proofs: C03 pre/post render diff EMPTY per existing lane (fixture-based, test wave);
+- equivalence proofs: **C03 INTENTIONAL-DELTA proof (D35 — replaces the old EMPTY-diff law, which
+  the owner ruled relaxed for this one carrier):** per existing lane, the post-move rendered
+  Deployment may differ from the pre-move fixture on EXACTLY four paths —
+  `metadata.annotations."checksum/configMaps"`, `spec.volumes`, the init container's
+  `volumes`+`volumeMounts`, and its `command` — and NOTHING ELSE (serve args, claim pair, memory,
+  replicas, probes, securityContext, image@digest stay byte-equal). The fixtures remain the
+  comparison baseline and `charts/radiance/tests/capture_c03_fixtures.py` remains the
+  re-derivation tool; the budget leg needs teeth (a planted unauthorized-path diff must redden
+  it). "The script is in the chart" is NOT the gate — the bounded diff IS.
   C05 four-lane render battery (args equality per lane, claims {fn:"2", q27:"1", flash-tp1:"1",
   q27-tp2:"2"}, replicas {1,0,0,0}, served-model-name uniqueness across the four).
+- **Relocation-chunk law (D30 corollary, review-owed):** any chunk that MOVES a data home (C03)
+  runs its wave order **dev → TEST RE-PIN PASS → review** — a dev tier never edits `tests/**`
+  (D30), and the relocated-carrier legs are structurally red for dev until the test session
+  re-pins them (measured on C03 round 1: 19 legs across 12 sites bound the old carriers). The
+  relocation list must be DERIVED by grepping the OLD carrier homes (chart values serveArgs /
+  modelPath / pack literals, the q27 overlay `command:`, carrier constants, extractor anchors,
+  CI extraction steps), never recalled.
 - quality: `npx --yes aislop@0.20.0 ci --changes` must clear the gate on every chunk.
 
 ## Chunks
@@ -177,10 +203,10 @@ llama-swap 507P/9S · vllm 36P · naming.sh PASS · surface M1–M5,M7,M8 PASS (
 |-----|-------|------|------|------------|--------------------|
 | C01 | Pool rename `gpu-r9700-1`→`gpu-r9700`, ONE atomic wave — ids-table row (product field exactly `r9700`, marketing identity in the ledger comment per D21) + all claims + both guard sweeps + notes token sweep + C1 comment fix | L | 1 | [] | the table and every claim must flip together (R-Q5: old name PENDINGs forever; split wave = stranded pods) |
 | C02 | Routing surface → radiance every tier — pipeline-models/kickoff/boards re-author (incl. the D20 Dense+Local move to `qwen3.8-27b-radiance`) + **runner literal MOVES (Leg B mandatory per D16: loop md + overview.md/AGENTS.md + t1/t3 + c11 + tsx tick `:163` + M8-H pairing-leg re-author)** + pre-existing reds cleared + rulesync regenerate | L | 1 | [] | independent of C01 (zero file overlap: `.rulesync`/`.opencode`/`.agents/loops`/`tests/{pipeline-models,provider-loops,agent-board-coord,opencode}`); id-order run keeps the rename's atomic sync story clean |
-| C03 | Generic shell — charts/radiance becomes mechanism-only; fn-TP2 + q27-TP1 lane data transcribed into per-release service blocks; render byte-equivalence proof; testlib/CI/n3 carrier relocation | L | 2 | [C01] | the transcribed claim lines must carry the FINAL pool name (data dependency) and the n3/AC4 re-author edits the constants C01 just moved (fixture dependency) |
+| C03 | Generic shell — charts/radiance becomes mechanism-only; fn-TP2 + q27-TP1 lane data transcribed into per-release service blocks; chart owns the generic init-script FORM via a configMap/env carrier (D35); **INTENTIONAL-DELTA proof (four-path budget) replacing AC1 byte-equivalence**; testlib/CI/n3 carrier relocation via the dev → test re-pin → review pass | L | 2 | [C01] | the transcribed claim lines must carry the FINAL pool name (data dependency) and the n3/AC4 re-author edits the constants C01 just moved (fixture dependency) |
 | C04 | **Strata REAL CLAIM (OQ-B(b), owner ruling D17)** — gpu-ai overlay positive-ADD `amd.com/gpu-r9700: 1` (+ requests mirror) on the strata container, hostPath/privileged/rocr posture KEPT (b1), `replicas: 0` in the same commit (OQ-K), corrected determinism prose (scheduler-vs-container legs), updated steady-state claim table incl. strata, OQ-R1 receipt leg + gated UUID arm, DRA revisit record | M | 2 | [C01] | the claim line must carry the FINAL pool name (data dependency); otherwise independent of C03 (different chart, different blocks — same service file, id order when both ready) |
 | C05 | Four-lane roster — add resting `radiance-flash-tp1` + `radiance-q27-tp2` releases: per-lane served ids + three-surface join with **FULL CATALOG TRIOS now (D19)** (evidence → peers → 6 catalog rows + M8 frozen-delta widened) + lane profiles + per-lane test files + CI steps | L | 3 | [C01, C02, C03, C04] | C01: claim names; C03: the shell + relocated carriers these blocks feed (interface); C02: surface.sh M8 + the pipeline-models tables are re-authored once on a stable base (byte-pin conflict); **C04: same service file, the overlay-claim wave lands first (D25)** |
-| C06 | Notes & docs layer — dated annotate-never-rewrite pass: four-lane switch discipline + the strata-parked MoE bring-up runbook (fn→0 → strata→1), supersession pointers for cf-143/cf-144 prose, "one chart-value home" prose reconciliation | S | 4 | [C01, C02, C03, C04, C05] | the annotations quote the SHIPPED shape (markers + needles re-pin in the same commit as the prose they govern — cf-144 C02 precedent) |
+| C06 | Notes & docs layer — dated annotate-never-rewrite pass: four-lane switch discipline + the strata-parked MoE bring-up runbook (fn→0 → strata→1), supersession pointers for cf-143/cf-144 prose, "one chart-value home" prose reconciliation, **the D32 trio: the false `charts/amd-gpu/values.yaml:30` "one device each" header correction, the cf-143-vs-cf-radiance `D21`/`D24` citation-prefix pass, the optional `32 GB dGPU` ledger tag** | S | 4 | [C01, C02, C03, C04, C05] | the annotations quote the SHIPPED shape (markers + needles re-pin in the same commit as the prose they govern — cf-144 C02 precedent); the D32 trio rides last because the header truth and the citation state are only final once the waves landed |
 
 ## Wave order
 1. **C01** (rename — the ticket's keystone), **C02** (routing — independent, run in id order).
@@ -202,7 +228,7 @@ subject is the runner literal — same semantic surface; both plans agree).
 |---|---|
 | `charts/radiance/values.yaml` serveArgs anchor = the 34-item TP2 array | TRANSCRIBED verbatim into the `radiance:` (flash-TP2) service block; the chart ships NO lane args (OQ-D) |
 | fn claim pair `gpu-r9700-1: "2"` / 110Gi | MOVED to the block, name RENAMED (`gpu-r9700`), count/memory HELD (P11 law survives as DATA) |
-| q27 overlay: whole-array args + init `command` script replacement + claim-1 pin | args + ledger fields TRANSCRIBED; the whole-SCRIPT replacement SUPERSEDED by parameterized init (PACK/LFS_SHA/URL/MARKER as per-release scalars; cf-143 D27 grammar + image-identity legs survive) |
+| q27 overlay: whole-array args + init `command` script replacement + claim-1 pin | args + ledger fields TRANSCRIBED; the whole-SCRIPT replacement SUPERSEDED by parameterized init (PACK/LFS_SHA/URL/MARKER as per-release scalars; cf-143 D27 grammar + image-identity legs survive). **MECHANISM FIXED by D35:** app-template 5.0.1 renders container `command`/`args` via plain `toYaml` with NO `tpl` (only `_name`/`_env`/`_probes`/`_volumeMounts` + configMap data are tpl'd) — so the chart ships the generic script FORM in a configMap and the blocks ship PACK/LFS_SHA/URL/MARKER as DATA; the init-carrier delta is bounded by AC1's four-path budget, not byte-equivalence |
 | `modelPath` anchor + dual-edit guard | SUPERSEDED per release: `--model` lives in each block's args; guard re-armed to block-subtree modelPath == block-args `--model`, per lane (the anchor dies with the anchor trap) |
 | `TP2_LEDGER_KEYS` scalar carriers, `test_q27_lane` single-file shape | RE-AUTHORED by the test wave: per-lane ledger carriers / parameterized lane suites (clone-the-shape idiom) |
 | NOTES.txt claim-math prose, "one chart-value home" prose | REWRITTEN as shell law + per-lane blocks (dated DECISIONS line records the deliberate change) |
@@ -222,13 +248,19 @@ subject is the runner literal — same semantic surface; both plans agree).
      Running fn pod keeps its injected devices (R-Q5); the straggler window is loud-Pending and
      self-heals at rollout completion; failure is attributable
      (`Insufficient amd.com/gpu-r9700-1`) and the revert is the same wave rolled back.
-  2. restructure waves: owner syncs parent `gpu-ai` (base) FIRST to materialize the two new
-     Applications, then the children. New lanes render replicas 0 ⇒ zero scheduling impact;
-     the fn render is equivalence-proven (C03 AC) ⇒ sync of `gpu-ai-radiance` changes bytes only.
+  2. **C03 restructure — its OWN watched sync set (D35):** never bundled with the rename wave or
+     the later fleet wave. The generic init carrier changes `checksum/configMaps` on the live fn
+     lane ⇒ the pod RECREATES (Recreate strategy): expected outage ≈ terminationGracePeriodSeconds
+     (180 s) + fn model load, during which the default route 502s. Watch it to Healthy; receipt is
+     the cf-143 D28(6) first-boot print of the live fn lane. If the print shows wrong pack/args,
+     the revert is this sync set rolled back — nothing else moved with it.
+  3. fleet wave: owner syncs parent `gpu-ai` (base) FIRST to materialize the two new
+     Applications, then the children. New lanes render replicas 0 ⇒ zero scheduling impact; the
+     serve-side render is delta-budget-proven (C03 AC) ⇒ no args/claims/memory change rides in.
      The C04 wave parks strata (`replicas: 1→0`) in the SAME commit that adds its claim — syncing
      it can never leave a Pending strata pod; bringing MoE up later is the owner runbook act
      (fn→0, then strata→1 — C06 prose).
-  3. routing wave: repo-side surfaces take effect on landing; the hourly loop's model field is
+  4. routing wave: repo-side surfaces take effect on landing; the hourly loop's model field is
      consumed by OpenChamber from the repo file — per D16 the loop's next scheduled run rides
      `gpu-ai/qwen3.8-flash-next-radiance` (scheduler hygiene stays human-owned per AGENTS.md; if
      the live OpenChamber task needs a manual re-sync, that is an owner leg C02 flags).
@@ -251,10 +283,14 @@ subject is the runner literal — same semantic surface; both plans agree).
   the approved live lane runs. The plan's answer is git-parking strata at 0 in C04's commit; if the
   owner instead wants strata live, the ONLY alternatives are parking fn (contradicts the approved
   table) or dropping the claim (contradicts D17) — NOT invented in-plan, escalated as OQ-K.
-- **C03 touches the live lane's values home**: the render byte-equivalence proof (AC) is the gate;
-  any non-equivalence stops the chunk — this is a relocation, not a re-decision. The anchor trap
+- **C03 touches the live lane's values home**: the INTENTIONAL-DELTA proof (AC1 per D35 — four
+  allowed paths, serve-side byte-equal) is the gate; any diff outside the budget stops the chunk —
+  this is a relocation plus one ruled carrier change, not a re-decision. The delta carries a real
+  fn ROLL (Recreate + `checksum/configMaps` ⇒ ≈180 s grace + model load of 502s) — hence C03's own
+  watched sync set in the landing shape. The anchor trap
   runs in REVERSE during genericization (a half-moved literal could ship fn args carrying a q27
-  path) — per-lane modelPath==args equality legs are the fence.
+  path) — per-lane modelPath==args equality legs are the fence, asserted independently per lane
+  (cross-lane drift guard, D35).
 - **The two TP1 lanes cannot co-boot at transcribed memory** (110+24+5.3 > 125.08): documented
   claim/RAM math in NOTES + block comments; no silent shrink; the P11 post-boot re-pin (outside
   this ticket) is what eventually re-opens it.

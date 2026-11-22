@@ -297,6 +297,24 @@ rejected, why.
   handed an expected-status list that includes the write arm (`surface.sh` M6) — repo law bars read-only
   sessions from it, so my C01 brief was wrong to list M6 as expected-green and the reviewer correctly claimed
   nothing. Later briefs record M6 as "not run, no claim".
+- 2026-11-22 owner-ruling D35 (**C03 fork RESOLVED: the CHART owns the generic init script; byte-equivalence is
+  RELAXED for that one carrier**). Asked with the mechanism verified (app-template 5.0.1 renders `command`/
+  `args` via plain `toYaml`, no `tpl`; only configMap data and env are tpl'd), the owner chose the parameterized
+  shape over keeping the pre-move fixtures green, accepting that the LIVE fn lane's pod spec changes. Binding
+  consequences, recorded as rulings not notes: (1) **AC1 is replaced, never deleted** — the equivalence legs
+  become an INTENTIONAL-DELTA proof: exactly four paths may change
+  (`metadata.annotations."checksum/configMaps"`, `spec.volumes`, the init container's `volumes`+`volumeMounts`,
+  its `command`) and NOTHING ELSE (serve args, claim pair, memory, replicas, probes, securityContext,
+  image@digest all byte-equal); a leg asserting only "the script is in the chart" would admit unrelated drift,
+  so the diff-budget IS the new gate. (2) **The fn lane rolls** — `restartPolicy: Recreate` + changed template
+  means the default route for every tier (D16) restarts at the owner's sync of `gpu-ai-radiance`, a 502 window
+  of ~grace 180s + model load; so C03's rework lands as its OWN watched sync set, never bundled with the rename
+  or fleet wave, with the cf-143 D28(6) first-boot print as receipt. (3) **Per-lane scalars survive as DATA**
+  (`PACK`/`LFS_SHA`/`URL`/`MARKER` in each block) and the chart ships the script FORM, which makes the plan's
+  "parameterized init" supersession row true as written. (4) **Cross-lane drift guard stays**: fn and q27 scalar
+  sets asserted independently, so a chart-side script edit cannot silently re-point one lane at the other's pack.
+  Order: `agent-plan` folds the plan + `chunks/C03.md` (my tier edits neither) → test wave re-aims the
+  equivalence legs to the diff-budget shape → C03 dev round 2 → C03 review.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.
