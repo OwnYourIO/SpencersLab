@@ -206,3 +206,38 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   per `git status`.
   · resolution: capture rc un-piped whenever a status is being CLAIMED; settle scope from disk, never from a
   mid-run self-report. · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **`amd-gpu-naming.sh` n2 is a FILE-SET guard, not a content guard** — `wave_a()`
+  (:204-208) only greps `git show --stat` for the three paths, so a green n2 proves the wave is CO-LOCATED,
+  never that the claim lines actually moved. The reviewer audited content itself (hand-ran n3's quoted-or-bare
+  pattern → the 4 live claim lines; the old bare-only pattern → 0), and THAT is what proved atomicity.
+  · resolution: every later rename/carrier-wave review pairs the file-set guard with a content audit; never
+  cite n2 alone as "the wave is atomic". Separately: `test_provenance.py`'s `_NEW_NAME_ALLOW` comment still
+  says "the two current docs" where four now carry the name (comment-only staleness; prefix matching works).
+  · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **raw `grep -rn` for the retired literal reports gitignored `__pycache__/*.pyc`**
+  in any worktree that has run pytest — CPython constant-folds `"gpu-r9700" + "-1"`, so the retired bytes are
+  real in the .pyc. The needles filter `__pycache__|\.pyc` (naming.sh:318); a human re-running the sweep does
+  not know that. · resolution: add `--binary-files=without-match` for manual sweeps; three matching .pyc files
+  are NOT a leak (`.gitignore:14`, absent from porcelain). · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **NOTES.txt cannot be rendered cluster-free**: `helm template --show-only
+  templates/NOTES.txt` fails (helm excludes NOTES) and `helm install --dry-run=client` fails on a forbidden
+  API read for the workspace SA. · resolution: rely on `helm lint` (parses all templates) + the executed NOTES
+  legs; the reviewer reported render-through-install as UNVERIFIED instead of crediting it. Do not burn a round
+  trying to observe it. · fixed-by-this-recipe
+- 2026-11-22 · review(C01) · **the roster T4 harness repair was reported "in flight" and did NOT land** —
+  `4c267ca58` carried NI-1/NI-2/C04-re-arm only, so `radiance-roster.sh:172` still `cp`-faults before its
+  designed-red message prints (polarity right, message wrong).
+  · resolution: re-issued to the test session with the comment staleness; the earlier "in flight" is corrected
+  here so nobody reads it as done. · open (test session, batched)
+- 2026-11-22 · coord · **`chunks/*.md` are not editable by my tier** (the edit surfaced as a denied `ask`),
+  which collides with a real need: C01's review found scope no chunk file carried — FRICTION merely NAMED C06
+  as owner of the `charts/amd-gpu/values.yaml:30` "one device each" prose, and `grep "one device each"
+  chunks/*.md` → 0 hits, so a false post-TP2 statement would have survived the ticket by nobody's decision.
+  · resolution: amendments travel as DECISIONS rulings (D32) + the chunk's LAUNCH BRIEF, and the planner folds
+  the chunk file at the next plan touch. Lesson: **a FRICTION ownership note is not a work item** — prose that
+  must change belongs in the chunk contract or the brief that hands it over. · fixed-by-recipe (machinery half
+  OPEN: a coord-legal way to amend chunk scope without a full plan round)
+- 2026-11-22 · review(C01) · **a review brief must not list the write arm as expected-green**: my C01 launch
+  said "M6 green", yet repo law bars read-only sessions from running it — the correct behavior was to run
+  nothing and claim nothing, which is what happened. · resolution: later briefs say "M6: not run, no claim"
+  (DECISIONS D33(c)). · fixed-by-this-recipe

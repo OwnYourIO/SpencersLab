@@ -280,6 +280,23 @@ rejected, why.
   the real claim + same-wave `replicas: 0` and must stay a designed red until C04 lands. Reviewers may not
   credit a chunk for a leg that was already green when the chunk started — the per-chunk designed-red
   inventory in STATE is the baseline, not the count at review time.
+- 2026-11-22 coord-ruling D32 (**C01 APPROVED at `b577e32fe`, and its orphan prose assigned**): C01's review
+  came back APPROVED with no blockers/majors and surfaced a governance hole my own record had created —
+  FRICTION says `charts/amd-gpu/values.yaml:30` ("one device each on the ai-gpu node") is C06's, but **no
+  chunk file carries that task** (`grep "one device each" chunks/*.md` → 0 hits), so a statement that is
+  false post-TP2 would survive the ticket by nobody's decision. FRICTION ownership is not a work item:
+  **C06's scope is amended** to (i) the `:30` header correction, (ii) the citation-prefix pass from Minor 1,
+  and (iii) optional restore of the `32 GB dGPU` ledger tag the review judged non-required. Recorded in the
+  ruling channel precisely because executable scope belongs to a chunk file, not a friction row.
+- 2026-11-22 coord-ruling D33 (**review-grade evidence rules from C01's review, binding later rounds**):
+  (a) `amd-gpu-naming.sh` **n2 is a file-set guard, not a content guard** (`wave_a()` greps only
+  `git show --stat` for three paths), so rename-wave atomicity must be audited CONTENT-side by the reviewer —
+  a green n2 alone never proves the claims moved. (b) A raw `grep -rn` for the retired literal shows
+  gitignored `__pycache__/*.pyc` in any worktree that has run pytest (CPython constant-folds the assembled
+  name); the needles exclude it, a human must add `--binary-files=without-match`. (c) A reviewer must not be
+  handed an expected-status list that includes the write arm (`surface.sh` M6) — repo law bars read-only
+  sessions from it, so my C01 brief was wrong to list M6 as expected-green and the reviewer correctly claimed
+  nothing. Later briefs record M6 as "not run, no claim".
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

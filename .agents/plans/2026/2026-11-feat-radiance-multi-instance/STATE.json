@@ -43,7 +43,7 @@
   },
   "chunks": {
     "C01": {
-      "status": "review-in-flight",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 2,
@@ -52,16 +52,18 @@
         "dev round 1 (ses_dfef47132ffePQg0L6QD3ccyn6): 9 impl+notes files, zero test paths; n1/n2/n4/n5 green, lint/template green, aislop 0E/0W; NEEDS_INFO NI-1 (amd_gpu_testlib.py constants + TEST_SPEC:4556) + NI-2 (test_provenance.py:512 defective needle) routed to the test session per law",
         "coord ruling D30: test-file edits are NEVER assignable to dev (permissions deny tests/**) — the python needle twin must be pre-flipped by the test wave, exactly like the bash twin",
         "dev round 2 (same session): restored the cf-143 C08 'upstream feature ask' clause at charts/radiance/values.yaml:349 (its own regression, self-reclassified from 'constants-lag'); full 570-line diff audit found no other required loss; radiance back to the designed 24F/79P (C03 x4 + C05 x20), amd-gpu 0F/36P, naming 5 ok, aislop 0/0",
-        "review (ses_dfed7ef7dffepz4DI7R7c4O7rE) in flight: baseline = designed-red inventory (D31), n2 to run with AMD_GPU_FLIP_COMMIT=b577e32fe, C02 red-set must stay red"
+        "REVIEW APPROVED (ses_dfed7ef7dffepz4DI7R7c4O7rE): 0 blockers / 0 majors / 4 minors-nits. Per-AC evidence met; atomicity proven by CONTENT audit (n2 is only a file-set guard); renders byte-checked (TAB row, claim pairs, q27 pinned '1', zero OVERRIDE_); every C02/C03/C04/C05/C06 leg confirmed still red; D30 split judged correct; D31 held (no early-green credited to C01; runbook T5 verified a legitimately-shrunk C06 leg, not a broken gate). Minors: citation-prefix collisions (folded into C06 per D32), roster T4 harness (owed to test session), values.yaml:30 orphan prose (D32), _NEW_NAME_ALLOW comment (test nit)."
       ],
-      "review_rounds": 0,
-      "last_verdict": null
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (0 blocker / 0 major / 4 minor-nit)"
     },
     "C02": {
-      "status": "pending",
+      "status": "dev-in-flight",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "session": "ses_dfeccdc95ffe9xp0lN1eVnl872",
+      "brief_constraints": "jsonc OFF-LIMITS (D27; D20's target id already exists at :772-787, so no catalog row is needed); zero test-file edits (D30); rulesync generate is intended work here and its twins ship with the sources; C03/C04/C05/C06 designed reds must NOT be greened; M6 recorded as 'not run, no claim' per D33(c)",
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": []
