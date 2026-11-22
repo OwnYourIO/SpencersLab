@@ -389,6 +389,25 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   (directory path swept `tests/` in) is what created the amend in the first place — staging explicitly would
   have avoided both errors. · fixed-by-this-recipe (machinery half OPEN: nothing verifies that hashes recorded
   in plan folders still resolve; a `git cat-file -e` sweep would be a cheap gate)
+- 2026-11-23 · review(C05) · **reusable technique: render ONE self-contained base template standalone when
+  `charts/base` won't template.** `charts/base` can't be `helm template`d in an agent session (vendored CRD deps
+  absent, no network), which makes ApplicationSet derivation look unprovable. It isn't:
+  `charts/base/templates/appset-charts.yaml` is self-contained (no helpers, no subchart refs), so copying it
+  BYTE-IDENTICAL into a scratch chart (`cmp`-verified) and rendering with the real
+  `services/gpu-ai/prod/values.yaml` + `serviceName=gpu-ai` (the exact value the parent `appset.yaml:17`
+  injects) mechanically proves the element count and the derived Application names.
+  · resolution: recorded so later rounds don't settle for "indirect proof by content" when a direct render is one
+  scratch chart away; cluster-side instantiation still stays disclosed as unverified. · fixed-by-this-recipe
+- 2026-11-23 owner-ruling D47 (**`limit.context` on the six C05 catalog rows: 262144, family convention wins**).
+  Asked because C05 authored 200000 while the owner's `b3d7fada8` set the radiance family to 262144, and the file
+  is D27 owner-protected. The owner chose convention consistency. The reviewer's dissent is recorded rather than
+  buried, because it is technically correct in its own frame: 200000 equals the served admission of all four
+  lanes, so **no truncation class exists at 200000**, and the risk runs the other way (catalog above served ⇒
+  over-budgeted requests meet a loud server 400). What the owner bought is a single family-wide meaning for the
+  field — trained window the client budgets against, served admission stated separately in prose — which the M8
+  header already asserts for every radiance row. Flip cost verified as ZERO test legs. Residual: no leg pins the
+  new rows' ctx either way, so M9-A2 must grow a per-lane pin — D27's lesson repeating, an unpinned convention
+  is a convention that drifts back.
 - 2026-11-22 · review(C03 r3) · **two stale-comment minors, both assigned, neither a code defect.** (a)
   `tests/notes/radiance-roster.sh:76-79` still claims "today the blocks still author args" — false at HEAD since
   round 3 removed them; it is a TEST file, so it belongs to the test session and is fixed when C06 re-pins that
