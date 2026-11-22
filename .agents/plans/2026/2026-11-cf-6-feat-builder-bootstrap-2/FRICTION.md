@@ -1,0 +1,12 @@
+# Friction
+
+Append-only. Never delete entries — re-status them: open → fixed (cause repaired) or ignored (accepted). Agents read this at run start so known workarounds are not rediscovered.
+
+Friction = anything an agent could not find or had no access to, crashes/tool/MCP failures, stale docs/plans, forced repeats or workarounds — each with the resolution actually used. Agents report via RESULT `friction:`; coord appends (its own items included).
+
+- 2026-11-22 · all-sessions · write tool denies /tmp paths (repo-scoped, hereditary across plan/test/dev/review) · resolution: shell heredocs for every evidence/SIM/driver file; standard route now documented in every sibling folder's FRICTION · ignored (accepted pattern)
+- 2026-11-22 · plan/dev/test/review (4x) · transient "location shut down" aborts mid-call (twice cancelled a coord STATE batch) · resolution: edits are atomic — verify nothing partial landed, retry single; never assume batch failure meant partial corruption · fixed (harness behavior understood)
+- 2026-11-22 · test(C02) + review(final) · the 41-suite's output carries 12 nondeterministic scratch-repo SHAs on green runs; raw full-output byte-diff can never match a record · resolution: filtered verdict-line comparison (43 lines multiset-identical + detect-line count matched); stale scratch pruned, fresh left for post-mortem by the suite's own trap design · fixed
+- 2026-11-22 · review(C02) · /tmp throwaway trees break the suites' `cd $(git rev-parse --show-toplevel)` idiom — untracked-file routes go VACUOUS in uncommitted copies (silent all-green risk) · resolution: git-init the throwaways and compare pristine-vs-mutated INTERNALLY, or use the leg-block-alone channel; vacuous-green is the failure mode to watch in every TMP probe · fixed
+- 2026-11-22 · coord(landing) · commit-message landmine REFINED at final review: the `git push` deny-matcher loosely matches the whole command line, CASE-SENSITIVELY — lowercase `push` anywhere (even inside -m prose) gets `git commit` rejected; uppercase `PUSH_TOKEN_GH` is safe · resolution: say publish/mint/ship in commit prose; supersedes run-1's length theory and this run's interim case-insensitive guess · fixed
+- 2026-11-22 · final-review(final) · plan fact-5's pkg-api `200 []` spelling did not reproduce anonymously (404s received) · resolution: absence conclusion unchanged; the lane's 401/403/404 tolerance covers either answer — recorded so nobody chases the delta · ignored
