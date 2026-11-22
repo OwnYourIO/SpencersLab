@@ -74,13 +74,13 @@
       ]
     },
     "C03": {
-      "status": "dev-in-flight",
+      "status": "review-in-flight",
       "session": "ses_dfea41ff9ffe2L25Q6166zMdvy",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 3,
+      "review_rounds": 2,
+      "last_verdict": "rounds 1-2 APPROVED (D38/b8c01489e); round 3 (D43) under review at ses_dfb81053cffe0J33FP9kyGIaa7 over 3d412e3d3",
       "handoffs": [
         "2026-11-22 D35 FOLD (plan tier): round 1's fork resolved by owner ruling — chart owns the generic init FORM via a configMap carrier; AC1 replaced by the four-path intentional-delta proof; relocation-pass law (dev → test re-pin → review) written into the contract. Per D35's order, NEXT is a TEST WAVE re-aim of the equivalence legs to the diff-budget shape, THEN dev round 2, THEN review. Contract now in chunks/C03.md; the round-1 designed-red 4 stays within the D31 inventory.",
         "2026-11-22 D43 FOLD round 3 (plan tier, GOVERNING): rounds 1-2 landed APPROVED (D38) but the owner reversed the serve-side shape — R3 contract now in chunks/C03.md. Order (D35 precedent): TEST RE-PIN of the argv-bound legs FIRST (inventory in the plan fold-round entry + C03 R3 relocation task: the two four-path budget legs + their planted-drift twin, test_serve_args (its _serve_args reads rendered args), test_q27_lane args/absence legs, test_c03_model_path_and_serve_headroom_agree_per_lane, chart-bare mechanism legs, radiance-runbook/tp2 args extractors, fixture re-derivation at the new base), THEN dev round 3 (FIRST act = verify sh + engine binary in radiance:1.17.0 from layer listings — fact 16), THEN review. C04's strata legs are UNAFFECTED (test_c04_strata_claim.py carries zero argv assertions; strata renders from the llama-swap chart)."
@@ -104,13 +104,15 @@
     },
     "C05": {
       "status": "pending",
-      "wave": 3,
+      "wave": 2,
       "depends_on": ["C01", "C02", "C03", "C04"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
-        "2026-11-22 D43 fold (plan tier): C05 COMES FORWARD into the restructure wave per D43(4) — plan of record carries it at wave 2 (after C03-r3 review, same watched sync set); the wave/status fields above stay coord's leg to re-file. Its blocks are authored in the D43 specifics-only env shape (zero inline argv); its designed-red 20 legs split: roster/replicas/claims/Guaranteed/sentinel legs stand, args-equality legs re-aim to composed-argv via the sandbox harness."
+        "2026-11-22 D43 fold (plan tier): C05 COMES FORWARD into the restructure wave per D43(4) — plan of record carries it at wave 2 (after C03-r3 review, same watched sync set); the wave/status fields above stay coord's leg to re-file. Its blocks are authored in the D43 specifics-only env shape (zero inline argv); its designed-red 20 legs split: roster/replicas/claims/Guaranteed/sentinel legs stand, args-equality legs re-aim to composed-argv via the sandbox harness.",
+        "2026-11-22 coord re-file (my leg per the fold): wave 3 -> 2 per D43(4). SCOPE TRIM PER D46 — the two resting lane blocks are LANDED as C03 round-3 output (3d412e3d3); C05 must NOT re-author them. C05's remaining scope is exactly: the four roster `charts:` entries, the peers entries, the D19 catalog trios, the CI extraction steps, and surface M9. Its six designed reds (roster x2, peers x2, CI x2) + M9 are the whole front. chunks/C05.md still lists block authorship and floors 5/4: the block lines are superseded by D46 and the floors by D45 (3/2) — PLANNER OWES THAT FOLD, my tier cannot edit chunk files.",
+        "2026-11-22 carried to C05's brief: floors 3/2 (D45), no block re-authoring (D46), served-id/pack identity for resting lanes gated block+env side (C03 file's lane_pack_literals raises for resting lanes by design — D46 note), and D43(2) boot-echo receipt expectation per lane."
       ]
     },
     "C06": {
