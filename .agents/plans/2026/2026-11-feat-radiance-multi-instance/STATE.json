@@ -133,6 +133,12 @@
     }
   },
   "blocked": [],
+  "final_review": {
+    "status": "in-flight",
+    "session": "ses_dfae44584ffetHOUru9MO3GP3R",
+    "scope": "whole-plan: the owner's five asks vs the shipped tree; cross-chunk coherence after THREE mid-execution reversals (D35, D43, D45/D46/D47); unruled-change sweep over main..HEAD; adequacy of the runtime-argv evidence chain and the minimum receipt set; and the coordinator-rule list this ticket earned.",
+    "premise_verified": "all six chunks individually APPROVED; repo at ZERO designed reds except the documented out-of-ticket pair c19 (cf-124 boards custom-field count) and t17 (warm-location permissions drift), both reproduced byte-identical at base; held numbers re-derived from the tree by C06's review and matching the roster matrix."
+  },
   "rounds": [
     "2026-11-22 plan round 1 (double-launch collision folded — DECISIONS D13; sibling draft in PARALLEL-DRAFT.md)",
     "2026-11-22 rework round (batched answers folded per owner verdict 'Approve — run all waves'): OQ-A MOVE runner (D16 — fresh ruling superseding 2026-11-09 strata-q4), OQ-B (b) strata REAL CLAIM b1-shape w/ hostPath kept + replicas 0 (D17), OQ-C as proposed (D18), OQ-E full trios now (D19), OQ-J Dense+Local -> qwen3.8-27b-radiance w/ accepted 502 (D20), OQ-I product field exactly r9700 + marketing identity in ledger comment (D21), OQ-H/R2/R3: in-ticket wave + owner will paste OQ-R1 at C04 + cf-144 P15 ordinals as receipt-pending (D22), reds re-pin to radiance (D23), OQ-D/F/G coord-disclosed defaults (D24), wave reconciliation C05+=C04 & C02-wave fix (D25). NEW open: OQ-K (strata parking vs approved steady state — recommendation park; C04 stop-condition).",
