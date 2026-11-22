@@ -22,10 +22,12 @@ Debug access from outside the cluster (kubectl only — not a client path):
   kubectl -n default port-forward svc/{{ $svc }} 8000:8000
   curl -s http://127.0.0.1:8000/health
 
-GPU: the pod claims the R9700's named product pool, amd.com/gpu-r9700-1
+GPU: the pod claims the R9700s' named product pool, amd.com/gpu-r9700
 (the amd-gpu chart's patched amdgpu.ids ConfigMap + product naming make
-the name exist — D24/§R7-Q2) — the scheduler can land it on
-exactly one device. If the pod sits Pending with "Insufficient memory",
+the name exist — D21's 2026-11-22 rename over the D24/§R7-Q2 mechanism) —
+and claims 2 of it, so while UP the pod lands on BOTH devices of the
+pool (the pool holds exactly the two R9700s; a single-card claim would
+take the pool's lowest-KFD-NodeId card). If the pod sits Pending with "Insufficient memory",
 that is the designed coexistence handshake, not a bug: radiance's
 Guaranteed 110 pair plus strata's 64Gi request (with the router + system
 floor) sums to 110 + 64 + 6.3 = 180.3 > the node's 125.08 GiB, and the

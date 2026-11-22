@@ -685,7 +685,7 @@ otherwise — it booted). ECC-off: `mem_info_vram_total` 34208743424 B with
 `ras_enable` 0. Kernel: 7.3.0-1-default (the 7.3.3 `mem_info_vram_vis_total`
 regression caution stays UNRESOLVED and only bites a snapshot upgrade).
 HIP/ROCm userland: report line HIP 7.16.26385. Product naming: the pod
-claims `amd.com/gpu-r9700-1` from the patched-table pool and Scheduled
+claims `amd.com/gpu-r9700` from the patched-table pool and Scheduled
 (D24/D26 surfaces) — the naming wave is live-good. The pack: hash-complete
 (C11's repaired gate ran the first real `sha256sum` pass; §D4/§D6).
 
@@ -718,7 +718,7 @@ and swap (§5).
 
 The engine enumerates the APU (gfx1151 in the startup device list; the
 8060S card exists on PCI `c5:00.0`) yet radiance serves ONLY the R9700 —
-correct by design: the pod claims the product-named `amd.com/gpu-r9700-1`
+correct by design: the pod claims the product-named `amd.com/gpu-r9700`
 pool (D24), and `rocrVisibleDevices`/ROCR env is ABSENT in this lane (the
 plugin's Allocate injects the device nodes; C02 absence law, RESEARCH
 RQ3). The APU is the llama-swap ROUTER's engine (the 8060S pool, D21/D26

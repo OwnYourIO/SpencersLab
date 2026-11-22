@@ -47,7 +47,7 @@ charts:
   # app-template 5.0.1 chart running the plugin at
   # -resource_naming_strategy=product and shipping the patched
   # amdgpu.ids ConfigMap (D24): the gpu-ai node advertises per-device
-  # pools amd.com/gpu-r9700-1 + amd.com/gpu-8060s and bare amd.com/gpu
+  # pools amd.com/gpu-r9700 + amd.com/gpu-8060s and bare amd.com/gpu
   # disappears THERE (per-cluster shield, D21: llama-swap's gpu-8060s flip is
   # the overlay below in this same file, same commit — the gpu cluster keeps
   # the external single-naming entry and the chart default's bare claim).
@@ -82,8 +82,10 @@ charts:
   # cf-143 C15 (DECISIONS D54/D56, owner "add support for 27b in radiance"):
   # the q27 pod-swap lane — a SECOND RELEASE of the SAME chart dir. The
   # `chart:` key renders this release from the existing charts/radiance
-  # (the base appset's hasKey-"chart" path branch, charts/base/templates/
-  # appset-charts.yaml:83; precedents chart: zigbee2mqtt / actualbudget) —
+  # (the base appset's hasKey-"chart" path branch — the chart:-key branch of
+  # charts/base/templates/appset-charts.yaml, :67-70 at 2026-11-22 (C01 fixed
+  # this cite; it drifted from :83 — cite by content, line numbers move);
+  # precedents chart: zigbee2mqtt / actualbudget) —
   # one chart, two releases (D56(1)); a sibling chart dir was REJECTED for
   # duplicating the image pin, the digest/pack ledgers and the BusyBox
   # hash-gate grammar, the drift class this ticket keeps paying for. The
@@ -849,7 +851,7 @@ radiance:
 #  * Scale ORDER: fn DOWN first, then q27 UP. fn replicas 0 must land before
 #    q27 scales to 1. A both-up lands PENDING, not OOM — three INDEPENDENT
 #    blockers, any one fatal (the §R19/§D54-H arithmetic, cited not
-#    re-derived): the amd.com/gpu-r9700-1 pool is capacity-1 and the
+#    re-derived): the amd.com/gpu-r9700 pool is capacity-1 and the
 #    chart-baked claim is non-subtractable (D26: overlays ADD, never remove),
 #    so a second radiance pod Pends against the pool forever; fn TP1 holds
 #    ~28-30 of the ~31.86 GiB usable card while q27 wants 18.07 weights +
@@ -875,7 +877,7 @@ radiance:
 #    custom-values leg, not a values edit here.
 # THE SWITCH DISCIPLINE AT TP2 (cf-144 C01 dated annotation, 2026-11-21 —
 # append-only: the five bullets above stay as the single-card history):
-#  * Blocker (a) MOVED NATURE, the ORDER survives: the amd.com/gpu-r9700-1
+#  * Blocker (a) MOVED NATURE, the ORDER survives: the amd.com/gpu-r9700
 #    pool is capacity-2 since card 2 landed (both cards the same 7551/C0
 #    pair — EXPLORE §0), so pool COUNT no longer blocks a second radiance
 #    pod; but fn's chart claim moved to 2 (shape A, OQ-A owner ruling — one
@@ -893,7 +895,7 @@ radiance:
 #    arithmetic priced the REJECTED 48 class (P11 supersedes P03) —
 #    recorded as history here, never rewritten into a shipped claim.
 #  * The claim pin: because the chart pair moved to 2, this release
-#    OVERLAY-PINS amd.com/gpu-r9700-1 "1" in both maps (see the resources
+#    OVERLAY-PINS amd.com/gpu-r9700 "1" in both maps (see the resources
 #    block) — inheritance would render the chart's 2.
 radiance-q27:
   app-template:
@@ -977,7 +979,7 @@ radiance-q27:
               # feeds the limit-minus-printed-pinned >= 4 law
               # (24 - 8.5 = 15.5 >= 4). cpu "8" stays chart-INHERITED: the
               # map deep-merge adds/updates keys and NEVER removes (D26),
-              # so cpu needs no re-authoring. The amd.com/gpu-r9700-1
+              # so cpu needs no re-authoring. The amd.com/gpu-r9700
               # claim is now OVERLAY-PINNED at 1 in BOTH maps (cf-144
               # C01/P05): the chart pair moved to 2 with the fn TP2 flip
               # (shape A — one pod holding both cards while UP), and plain
@@ -989,10 +991,10 @@ radiance-q27:
               # chart parameterisation.
               requests:
                 memory: "24Gi"
-                amd.com/gpu-r9700-1: "1"
+                amd.com/gpu-r9700: "1"
               limits:
                 memory: "24Gi"
-                amd.com/gpu-r9700-1: "1"
+                amd.com/gpu-r9700: "1"
         initContainers:
           radiance-fetch:
             # Q27 PACK LEDGER (RESEARCH §R19-S1, the init script's own

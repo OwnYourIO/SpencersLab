@@ -31,7 +31,7 @@ Anything neither source answers is an `OPEN — measure` line, never a guess.
 `.agents/plans/2026/2026-11-cf-144-feat-radiance-tp2-expansion/`) flipped the
 fn lane to tensor-parallel 2 on the second R9700: the card-doc §7 profile
 (tp 2, tp-wire wht6, per-rank pool 12288, prefix tier 4096 IN, kv-resident
-OUT, chunk 2048) and the claim of 2 (`amd.com/gpu-r9700-1: "2"`, shape A).
+OUT, chunk 2048) and the claim of 2 (`amd.com/gpu-r9700: "2"`, shape A).
 The memory scalar is HELD at 110 by the owner's batched ruling "Hold 110,
 re-pin after the print" (cf-144 DECISIONS P11) — the DOWN re-pin to the
 first-boot printed class is a POST-TP2-BOOT owner-receipt leg, and the
@@ -92,7 +92,7 @@ Expected-name derivation — match the reads against the PATCHED table rows
 
 | read `device` | read `revision` | card | materialized pool name |
 |---|---|---|---|
-| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700-1` |
+| `0x7551` | `0xc0` | Radeon AI PRO R9700 | `amd.com/gpu-r9700` |
 | `0x1586` | one of `0xc1`/`0xc3`/`0xc6`/`0xd1` | Radeon 8060S (Strix APU) | `amd.com/gpu-8060s` |
 
 The TP2 expectation (dated 2026-11-21, card 2 landed): the two R9700 BDFs
@@ -114,7 +114,7 @@ same-name card joined the same pool, no table edit was needed):
 kubectl describe node ai-gpu | grep -E "amd\.com"
 ```
 
-Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1`. The bare
+Expect `amd.com/gpu-r9700: 2` AND `amd.com/gpu-8060s: 1`. The bare
 `amd.com/gpu` key reads PRESENT AT COUNT 0 — kubelet retention of the
 pruned single-naming advertisement (§D2.2), not a capacity-absent signal:
 read it as 0, never as "missing". A NONZERO bare capacity means a
@@ -169,7 +169,7 @@ REQUIRES step 3. Record the actual allocatable figure in place.
 
 The TP2 claim side (cf-144 C01 dated addition — the memory terms above are
 UNCHANGED, the scalar is HELD at 110 through the flip, P11): fn now asks
-`amd.com/gpu-r9700-1: 2` — TWO of the node's two cards — so a second
+`amd.com/gpu-r9700: 2` — TWO of the node's two cards — so a second
 radiance pod (the q27 lane) cannot schedule while fn is UP even though the
 pool doubled: blocker (a) moved from pool CAPACITY to claim MATH, and the
 swap law (fn DOWN first) survives as that claim math. Beside-fn stays
@@ -242,7 +242,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Served id (single authority, D7) | `qwen3.8-flash-next-radiance` — plus the wire-siblings `-urgent` / `-low` sharing the modelID (catalog rows, C05) |
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
-| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700-1` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
+| GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
 | Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup; cf-144 P11 2026-11-21, annotate-never-rewrite: the TP2 flip HELD this scalar — the DOWN re-pin to the first-boot printed class is a POST-TP2-BOOT owner-receipt leg and this line re-pins only when that print exists) / `hostPoolMib: 12288` per rank at TP2 (2×12288 MiB ≈ 24 GiB pinned; the single-card era read 43000) / `maxModelLen: 200000` / `maxNumSeqs: 8` / `tp: 2` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung; cf-144 dated annotation 2026-11-21 — that tail is TP1-era scope: the live ladder rungs are pool/ctx/prefix-tier, `tp` is now a ledgered SHAPE constant, not a rung, and `guaranteedMemoryGi` ships HELD at 110 until the post-boot print (P11)) |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
@@ -293,7 +293,7 @@ same wave. Expect, in order:
 
    — expect `Command: /root/k8s-device-plugin`, the four `Args:` (the -v=5
    trio + the strategy flag), State: Running. Consequence while the plugin
-   crashloops: NO node advertises `amd.com/gpu-r9700-1` or
+   crashloops: NO node advertises `amd.com/gpu-r9700` or
    `amd.com/gpu-8060s`, and the radiance + gpu-ai llama-swap pods sit
    Pending on pool starvation (§D1.1) — after this fix, Pending there
    means the plugin is NOT Running, not a name defect (the pool names are
@@ -317,7 +317,9 @@ same wave. Expect, in order:
    (455 bytes as rendered — recompute from `helm template charts/amd-gpu`
    on any table edit) — plus "Reporting 1 devices as amd.com/gpu-…" per pool
    (§R6-Q4's fifth-receipt list, receipt b; cf-144 dated: at TP2 the R9700
-   pool prints "Reporting 2 devices as amd.com/gpu-r9700-1" — the live
+   pool prints "Reporting 2 devices as amd.com/gpu-r9700" [transcription
+   correction 2026-11-22, per the D21 rename wave: token moved in place; the
+   print then carried the retired `-1` suffix on this string] — the live
    witness of card 2 joining the same name, EXPLORE §0 — while the APU pool
    stays at 1). Any other count means the
    overlay did not apply (or the table moved): the stock file is a
@@ -329,7 +331,7 @@ same wave. Expect, in order:
    kubectl describe node ai-gpu | grep -E "amd\.com"
    ```
 
-   Expect `amd.com/gpu-r9700-1: 2` AND `amd.com/gpu-8060s: 1` at the TP2
+   Expect `amd.com/gpu-r9700: 2` AND `amd.com/gpu-8060s: 1` at the TP2
    shape (cf-144 dated: the R9700 pool reads 2 since card 2 joined the same
    7551/C0 name — gate (a)'s per-BDF receipts above; the pre-TP2 reading was
    one device per pool), and the bare

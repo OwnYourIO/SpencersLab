@@ -1349,8 +1349,9 @@ app-template:
             # REALIZED — but PER-CLUSTER (cf-143 C07, DECISIONS D18/D21): the
             # amd-gpu chart runs the plugin at
             # -resource_naming_strategy=product on gpu-ai ONLY, where the
-            # node advertises per-device pools (amd.com/gpu-r9700-1 for
-            # radiance, C02/D24's patched-table name; amd.com/gpu-8060s
+            # node advertises per-device pools (amd.com/gpu-r9700 for
+            # radiance, the patched-table name — D24's, renamed 2026-11-22
+            # per D21; amd.com/gpu-8060s
             # claimed by the gpu-ai service
             # overlay's null-flip on llama-swap, retiring the nodeId-order
             # APU accident as a named guarantee). The gpu cluster keeps the

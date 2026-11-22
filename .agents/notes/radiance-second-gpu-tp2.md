@@ -14,7 +14,7 @@
 > **[SHIPPED (cf-144 C01, 2026-11-21) — the repo half.]** Annotate, never
 > rewrite: the TP2 ticket (cf-144, this folder) has now re-derived the plan
 > from this card body and SHIPPED the repo half — the fn lane's TP2 flip
-> (§7 profile, the `amd.com/gpu-r9700-1: "2"` claim pair, the memory scalar
+> (§7 profile, the `amd.com/gpu-r9700: "2"` claim pair, the memory scalar
 > HELD at 110 per the P11 owner ruling) is in git on `charts/radiance`;
 > the on-target half (per-BDF sysfs, `rocminfo`, first-boot prints) stays
 > owner-executed receipt law.
@@ -141,9 +141,9 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
 
 - A second card with the **same (device, revision) pair** — `7551/C0`, an
   R9700 (not an R9700S) — resolves to the same product name and **joins the
-  same pool**: the node advertises `amd.com/gpu-r9700-1: 2`. Extended
+  same pool**: the node advertises `amd.com/gpu-r9700: 2`. Extended
   resources are integer counts with no overcommit, so one TP2 radiance pod
-  simply raises its claim to `amd.com/gpu-r9700-1: 2` and the scheduler
+  simply raises its claim to `amd.com/gpu-r9700: 2` and the scheduler
   hands it both R9700s — same-name pooling is the product of the strategy;
   the per-name pools keep the llama-swap APU assignment untouched.
 - A **different revision is out of the shipped table by construction**: the
@@ -151,7 +151,7 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
   renamed row plus the nine carried 1586 rows), so an R9700S (`7551/C1`) or
   any other (device, revision) pair is absent and the card falls back to
   bare `amd.com/gpu` (the trap §R6-Q4 row 5 gates repo-side) — it would NOT
-  count toward the `gpu-r9700-1` pool the TP2 claim needs.
+  count toward the `gpu-r9700` pool the TP2 claim needs.
 - **THE TP2 RE-VERIFICATION LAW (D24 era):** before trusting TP2
   scheduling with a second/third card, VERIFY its (device, revision) pair
   carries in the chart's patched `amdgpu.ids` — and if it does not, ADD
@@ -165,11 +165,11 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
   `/sys/module/amdgpu/drivers/pci:amdgpu/` and match the patched-table
   rows (`7551 C0` expected), exactly C06 step-0 gate (a) — the same receipt
   that gates the naming wave (R6 OQ1). Then assert node status:
-  `amd.com/gpu-r9700-1: 2`, `amd.com/gpu-8060s: 1`, and `amd.com/gpu`
+  `amd.com/gpu-r9700: 2`, `amd.com/gpu-8060s: 1`, and `amd.com/gpu`
   still ABSENT (present = a fallback fired — the gate-(a) decision tree,
   not improvisation).
 - Strata needs no naming change: its privileged hostPath pod never held a
-  plugin claim (`amd.com/gpu`, `amd.com/gpu-8060s` or `gpu-r9700-1`) —
+  plugin claim (`amd.com/gpu`, `amd.com/gpu-8060s` or `gpu-r9700`) —
   R6-Q4 row 3. It keeps hitting cards by host enumeration, which is §4's
   checklist, not §6's pool arithmetic.
 - **Alternative lane, recorded not planned:** R6 ranked the ROCm DRA driver
@@ -185,7 +185,10 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
 Annotate, never rewrite: the pool arithmetic above was witnessed live the
 day card 2 landed — the device-plugin map showed `0000:c3:00.0` and
 `0000:c7:00.0` both at 7551/C0 and printed "Reporting 2 devices as
-gpu-r9700-1", and the node advertises `amd.com/gpu-r9700-1: 2`. The new
+gpu-r9700" [transcription correction 2026-11-22, per the D21 rename wave:
+the token moves in place; the line actually printed the then-live spelling —
+this pool string plus the then-carried `-1` suffix], and the node advertises
+`amd.com/gpu-r9700: 2`. The new
 card is the same (device, revision) pair, so the patched-table row already
 carries and ai-gpu needed NO table edit — the RE-VERIFICATION LAW's first
 shape above, fired exactly as written. The owner receipts remain the
@@ -264,7 +267,7 @@ because fn TP1 alone consumes ~28–30 GiB of the ~31.86 GiB usable card and
 **two peer pods on one GPU is NOT feasible for fn+q27** — capacity-ruled,
 "do not plan it" (RQ5, Structural options D). That single-card ruling lifts
 with a second card: two peer pods, one card each, each claiming 1 from the
-same `gpu-r9700-1` pool. The concrete unlock: the retired vLLM 27B lane
+same `gpu-r9700` pool. The concrete unlock: the retired vLLM 27B lane
 (C01's commented disable) can return as **radiance q27** on the second
 card — pack `qwen3.8-27b-mxfp4.rad`, 18.05 GiB (19,377,119,232 B), lfs
 `a4908940…`, ungated, with the z-lab DFlash2 drafter merged in-pack (no
@@ -334,20 +337,20 @@ values change that reaches the cluster through ArgoCD alone:
    (device,revision) pair must carry in `charts/amd-gpu`'s minimal
    `amdgpu.ids` ConfigMap or be ADDED before trusting TP2 scheduling), then
    node status shows
-   `amd.com/gpu-r9700-1: 2`; a mismatch is the fallback-trap decision
+   `amd.com/gpu-r9700: 2`; a mismatch is the fallback-trap decision
    tree, not improvisation.
 5. **Chart change, same chart — two shapes:**
    - *fn goes TP2 (one pod, two cards):* move the C02 single-source scalars
      — tp 1→2, `hostPoolMib` 43000→12288 (per rank), `--kv-resident` out /
      `--prefix-cache-mib 4096` in, chunk 4096→2048 — and the claim count
-     `amd.com/gpu-r9700-1` 1→2 (request==limit pair kept, Guaranteed
+     `amd.com/gpu-r9700` 1→2 (request==limit pair kept, Guaranteed
      law). Guaranteed memory recomputes at the TP2 pin set (~24 GiB pool +
      tier + slots + tables) — receipt-gated, same ladder discipline as C06
      step-6, never a pre-emptive softening.
      **[SHIPPED (cf-144 C01, 2026-11-21) — shape A shipped.]** Annotate,
      never rewrite: this bullet is the shape that shipped (OQ-A owner
      ruling "A — fn TP2, claim both cards"). The concrete result at C01's
-     shipped bytes: fn TP2 as ONE pod with the `amd.com/gpu-r9700-1: "2"`
+     shipped bytes: fn TP2 as ONE pod with the `amd.com/gpu-r9700: "2"`
      claim pair (request==limit kept, Guaranteed law), `tp: 2` ledgered as
      a chart scalar, `hostPoolMib: 12288` per rank, `--kv-resident` OUT /
      `--prefix-cache-mib 4096` IN, chunk 4096→2048. The ONE §11.5 scalar
@@ -414,7 +417,7 @@ values change that reaches the cluster through ArgoCD alone:
 
 During coexistence the shipped world has radiance and strata sharing ONE
 physical R9700: strata's privileged hostPath arenas sit inside the same
-card the `gpu-r9700-1` pool books exclusively for the radiance pod
+card the `gpu-r9700` pool books exclusively for the radiance pod
 (naming is scheduler bookkeeping, not VRAM arbitration — the plan's Q11
 one-engine-per-card contention, ruled "observe, no auto-mitigate", plus the
 owner's Q10 manual scale-down handshake). A second R9700 lets radiance hold

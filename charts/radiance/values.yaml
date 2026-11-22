@@ -129,10 +129,11 @@ app-template:
   # the device plugin at -resource_naming_strategy=product, which buckets
   # devices per SANITIZED MARKETING NAME, and since D24 the names come from
   # the PATCHED amdgpu.ids ConfigMap that chart mounts over the image's
-  # baked table — the sanitizer maps the 7551/C0 row's "r9700-1" product
-  # string to gpu-r9700-1 (the amd.com namespace and the gpu- prefix are
+  # baked table — the sanitizer maps the 7551/C0 row's "r9700" product
+  # string to gpu-r9700 (renamed 2026-11-22 per D21; the amd.com namespace and the gpu- prefix are
   # plugin CODE constants, §R7-Q1/Q2). This node advertises exactly
-  # amd.com/gpu-r9700-1 (the R9700, PCI 7551 revision C0) and
+  # amd.com/gpu-r9700 (the R9700s, PCI 7551 revision C0 — a pool of TWO
+  # devices since the TP2 wave) and
   # amd.com/gpu-8060s (the Strix APU, 1586, carried rows — unchanged) — a
   # pod requesting the R9700 pool can ONLY ever receive the R9700
   # (scheduler determinism replaces the
@@ -154,8 +155,13 @@ app-template:
   # ROCR/HIP env (the charts/vllm 307/310 idiom is obsolete here — that lane
   # uses hostPath devices, which Q7 rules out below). "No occupancy check in
   # Allocate()" stays TRUE upstream (open PRs #243/#247 — watch, don't wait)
-  # and is MOOT here: each pool holds one device, so within-bucket choice
-  # cannot exist. The fallback trap (a card whose sysfs (device,revision)
+  # and the pre-TP2 "each pool holds one device" reading is RETIRED with the
+  # second card (RESEARCH C1, 2026-11-22): the R9700 pool holds TWO devices,
+  # so within-bucket choice DOES exist, settled at the SCHEDULER — a free
+  # single-card claim takes the pool's lowest-KFD-NodeId card (advisory at
+  # the API, source-pinned at v1.31.0.12), concurrent claims take distinct
+  # cards by occupancy, and a TP2 claim gets both; pinning a lane to one
+  # specific card is NOT expressible through the plugin. The fallback trap (a card whose sysfs (device,revision)
   # pair is absent from the patched table reverts to the bare amd.com/gpu
   # name) is closed by the C06 step-0 gate (a) BEFORE first boot, not
   # by runtime logic. STRATA LAW (Q11): strata's privileged hostPath pod sits
@@ -335,10 +341,12 @@ app-template:
             # release overlay-pins its claim back to 1, D26 ADD/UPDATE).
             # The GPU name stays the PATCHED-TABLE provenance
             # (D24/§R7-Q2): charts/amd-gpu ships an amdgpu.ids ConfigMap
-            # whose 7551/C0 product string "r9700-1" the plugin's
-            # sanitizer maps to gpu-r9700-1 — the pool string's "-1"
-            # carries no scheduling meaning; a further rename needs the
-            # upstream feature ask (optional per D24). The patched
+            # whose 7551/C0 product string "r9700" the plugin's
+            # sanitizer maps to gpu-r9700 (renamed 2026-11-22 per D21 — the
+            # product field is the name's only source; the previously carried
+            # "-1" suffix held no scheduling meaning and is RETIRED with the
+            # wave, the table row now the sole naming lever). A further rename
+            # needs the upstream feature ask (optional per D24). The patched
             # amdgpu.ids table stays this name's only source; the bare
             # amd.com/gpu key survives on the node at COUNT 0 (EXPLORE
             # gotcha 8 — present-at-zero, not capacity-absent), so a
@@ -346,11 +354,11 @@ app-template:
             requests:
               cpu: "8"
               memory: "110Gi"
-              amd.com/gpu-r9700-1: "2"
+              amd.com/gpu-r9700: "2"
             limits:
               cpu: "8"
               memory: "110Gi"
-              amd.com/gpu-r9700-1: "2"
+              amd.com/gpu-r9700: "2"
           securityContext:
             # The repo drop-ALL standard plus the engine's one carry:
             # IPC_LOCK for locked-buffer / io_uring registration (Q7).
