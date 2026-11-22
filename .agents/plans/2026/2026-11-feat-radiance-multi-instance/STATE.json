@@ -121,7 +121,7 @@
       ]
     },
     "C06": {
-      "status": "test-legs-in-flight",
+      "status": "review-in-flight",
       "wave": 3,
       "depends_on": ["C01", "C02", "C03", "C04", "C05"],
       "dev_rounds": 0,

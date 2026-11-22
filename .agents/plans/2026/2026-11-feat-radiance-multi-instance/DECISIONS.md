@@ -530,6 +530,28 @@ rejected, why.
   prose half demanding BOTH figures named, both halves self-proving, live plants reddening and restoring
   byte-exact. The general law this settles: **an unpinned convention is a convention that drifts back** — D27
   taught it once, D47 confirms it, and a ruling that isn't wired into a leg is not yet finished.
+- 2026-11-23 coord-ruling D48 (**a MOVED historical line keeps its ORIGINAL citation form — moving is not
+  authoring**). C06's test lane found `services/gpu-ai/prod/values.yaml:1391`'s bare `(D26: ADD/UPDATE yes,
+  REMOVE no)` — a cf-143 law on pre-ticket text (`e7536b2c9`) that C03 RELOCATED without rewording — and asked
+  whether C06's citation-prefix pass owes prefixed rewrites of moved historical lines. **Ruling: no.** The pass
+  targets cites the WAVE INTRODUCED, because the hazard is a new reader mistaking a fresh ambiguous cite; a
+  relocated line carries its provenance with it, and rewriting it would silently modernise history — the same
+  reason we annotate rather than rewrite elsewhere in this ticket. Ambiguity on such a line is resolved by the
+  surrounding dated annotation, not by editing quoted past. Recorded so no later pass "fixes" it, and so the next
+  citation sweep scopes on **added lines** (what the wave's scanner already did) rather than any line sitting in a
+  touched file.
+- 2026-11-23 coord-ruling D49 (**the wrong-reason-red class, named — it hid for four rounds**). Roster T4 was
+  GREEN throughout while reddening for the wrong reason: its falsification regex hit the key token `tp1` instead
+  of the claim cell, so the checker failed because the table row VANISHED, not because a claim moved. Because an
+  upstream arm was red, the pair looked exercised — and that performance masked T2's genuine vacuity: a stale args
+  read returned `""` for every lane, so all four served-id assertions were silently skipped. Three further latent
+  defects surfaced only once the arms were honestly exercised: strata bound to flash-TP1's row via its cost prose
+  (one lane's numbers checked against another's), a row-wide bare-digit claim search satisfied by the `tp1` token
+  or a URL digit, and unbounded served matching letting a suffixed sibling id stand in.
+  · Rule for every plant-based teeth leg from here: **the leg must assert the DIAGNOSTIC NAMES THE REASON**, not
+  merely that the run reddened — encoded in T4 at `7afbec470`. Corollary for me: a suite where one arm can pass on
+  another's failure is not a gate, and **un-masking fail-stop chains is a review duty, not an optimization** —
+  every "N ok" I accepted from a fail-fast suite this ticket was a count, not a per-arm verdict.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.
