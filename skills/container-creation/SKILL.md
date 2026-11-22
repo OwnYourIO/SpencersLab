@@ -111,14 +111,15 @@ is derived from the instance's own server URL inside the workflow; no URL
 literals live in the file.
 
 **Bootstrap lane (recovery).** `.forgejo/workflows/builder-bootstrap.yaml`
-(re)mints any container's calendar tags on demand when the automatic lane
-cannot run — including the lab's own job image, which the automatic lanes
-must already have to build it. Its jobs therefore ride the PUBLIC
-act-22.04 label instead of the baked image (that inversion is the whole
-point: it is the bootstrap paradox the lane exists to break), fire only on
-`workflow_dispatch` (name the containers, or `all`; an empty list builds
-nothing), stay confined to `prod`-role instances by a narrow ROLE guard,
-and publish the same three tags to ghcr and the building instance's own
+(rem)mints the lab's build image — `containers/forgejo-runner` — the
+baked job image every other lane schedules on, which is exactly what is
+missing when the automatic lanes cannot run. Its job therefore rides the
+PUBLIC act-22.04 label instead of the baked image (that inversion is the
+whole point: it is the bootstrap paradox the lane exists to break), fires
+only on `workflow_dispatch` with no input at all (owner ruling
+2026-11-22: the dispatch is the button; it mints exactly this one image),
+stays confined to `prod`-role instances by a narrow ROLE guard, and
+publishes the same three tags to ghcr and the building instance's own
 registry under the calendar law above. A recovery lane, not a second
 automatic publisher.
 

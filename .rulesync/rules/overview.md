@@ -508,9 +508,11 @@ change.
   `:main` (+ `pullPolicy: Always`) or a `:yy.mm.N` pin.
   `.forgejo/workflows/builder-bootstrap.yaml` is the dispatch-driven
   recovery lane for the same calendar tags: on a `prod`-role instance it
-  (re)mints any named container to `ghcr.io/ownyourio/<image>` and that
-  instance's own registry, riding the public act-22.04 job image so it can
-  run when the baked lab image is itself what needs (re)publishing.
+  (re)mints the lab's build image `containers/forgejo-runner` to
+  `ghcr.io/ownyourio/forgejo-runner` and that instance's own registry —
+  a dispatch takes no input, the button is the whole ask — riding the
+  public act-22.04 job image so it can run when the baked lab image is
+  itself what needs (re)publishing.
   The lab's Forgejo job image is `containers/forgejo-runner` (act-24.04
   base, helm + cr baked in): the `.forgejo` workflows install no tools at
   run time, and no Renovate lane reads that image's label pin in

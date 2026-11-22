@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
 # Offline contract suite for .forgejo/workflows/builder-bootstrap.yaml — the
-# dispatch-only, public-image recovery lane that (re)mints any container's
-# calendar tags on a prod-role instance to ghcr + the building instance's own
-# registry (ticket 2026/2026-11-cf-6-feat-builder-bootstrap, C01 v2).
+# SINGLE-PURPOSE recovery lane: on a prod-role instance a bare
+# workflow_dispatch (no input at all) (re)mints THE lab build image,
+# containers/forgejo-runner, to ghcr + the building instance's own registry
+# under the surviving calendar law (ticket 2026/2026-11-cf-6-feat-builder-bootstrap-1, C01).
 #
-# AC trace (C01.md Acceptance criteria): b1[AC1] b2[AC2 — the PARADOX GUARD]
-# b3[AC3] b4[AC1/AC3 flow shape] b5[AC4 calendar law] b6[AC4 P4' NO-PEER
-# closed set] b7[AC5 detector reuse] b8[AC6 behavioral detect shapes] b9[AC8
-# law pair + docs] b10[AC9 syntax] bt1..bt10[AC9 battery].
+# AC trace (C01.md Acceptance criteria): b1[AC1 no-input trigger — THE
+# ANTI-TRAP LEG] b2[AC2 paradox guard on the scheduling surface] b3[AC3
+# bare-membership clause pin] b4[AC3/AC1 single-job flow] b5[AC5 calendar
+# law + F1 push-unconditional] b6[AC6 closed credential surface] b7[AC7
+# detector law, flipped halves] b8[AC4 fixed target] b9[AC9 docs law pair,
+# single-purpose truth] b10[AC10 syntax] bt1..bt10[AC8 battery].
 #
-# Red posture (authored BEFORE the workflow exists): every b-leg plus every
-# bt-probe is RED until DEV lands .forgejo/workflows/builder-bootstrap.yaml
-# (b1..b8, b10, bt1..bt10: file existence; b9: the doc surfaces still carry
-# the four-workflow enumeration). b9's peer-claim clauses and the x3 per-line
-# clause inside it are prohibitions that already hold today and must keep
-# holding; the enumeration clauses are the red-until-DEV ones. On the full
-# green run the suite answers 20 ok.
+# Red posture (authored against the STILL-GENERAL shipped file): RED at
+# b1 (inputs mapping + accessors live), b3 (publish carries the '!= []'
+# skip clause the single job may not keep), b4 (detect job + matrix
+# present), b7 (detect-mode call present), b8 (matrix-templated build
+# context, no forgejo-runner refs, name carriers live), b9 (lane surfaces
+# still say any-container service), bt7 (its anchor bytes — the fixed
+# context — do not exist yet). GREEN at b2/b5/b6/b10 because the reduction
+# preserves the scheduling surface, the calendar law, the closed credential
+# surface and the run-block syntax — legs aimed at not-yet-shipped shapes
+# are honest about which half of the contract already holds. All 20 ok
+# after DEV lands the reduced lane.
 #
 # Subset discipline (41-suite idiom, groups as separate argv words):
 #   bash tests/services/forgejo-builder-bootstrap.sh            # all 20
@@ -24,53 +31,85 @@
 #   bash tests/services/forgejo-builder-bootstrap.sh b2 bt1     # per-leg
 #
 # The battery mutates TMP COPIES of the workflow — the repo is never written.
-# Probes anchor on the shipped-mirror bytes (the ghcr_/forge_ per-side tokens,
-# the `for tag in $ghcr_tags` loop headers, `ghcr_manifest_code()`): C01 Tasks
-# require those blocks to mirror containers-build.yaml, so a probe anchor that
-# cannot be applied is itself a FAIL the dev surface must answer — a battery
-# leg never passes vacuously. Probe redness is exact: the mutation must redden
-# its named leg(s) and nothing else that was green (documented collateral for
-# bt7's inline-filter twin and bt10's URL-bearing ref aside).
+# Probes anchor on the TARGET bytes (the fixed build context, the mirrored
+# walk blocks, the `for tag in $ghcr_tags` chains): a probe whose anchor
+# cannot bite the landed file is itself a FAIL the dev surface must answer —
+# a battery leg never passes vacuously. Probe redness is exact: the mutation
+# must redden its named leg(s) and nothing else that was green (documented
+# collateral: bt7 tolerates b4 — the restored matrix context re-enters the
+# matrix-flow ban; bt10 tolerates b3+b6 — the URL-bearing ref trips the
+# host greps; bt4 is a compound probe whose two mutations BOTH land on b5).
 #
 # Pins and their why:
-#   - b2 is the lane's reason to exist: its jobs run on the PUBLIC act image
-#     through the ubuntu-22.04 label, so the lane can mint the baked runner
-#     image that every OTHER workflow needs. Any other runs-on (especially a
-#     calendar/baked ref or a docker:// literal) re-arms the paradox — the
-#     suite reddens it before CI can silently schedule nothing.
-#   - b6 implements owner ruling P4' (2026-11-22, NO PEER) as an executable
-#     closed set: every secrets.* reference is in {GHCR_PUSH_PAT,
-#     FORGE_PUSH_TOKEN} and every vars.* reference in {ROLE}. A future
-#     cross-host arm must redden this leg and force a fresh ruling, not sneak
-#     in as a variable.
-#   - the ROLE guard is NARROW here (calendar-minting lane = the fail-safe
-#     class): b3 pins the ABSENCE of the null-widen clause that
-#     containers-build deliberately carries, so the widen cannot drift in
-#     through copy-paste. ci-surface t6 is the family-level twin of this pin;
-#     b3 keeps the law inside the lane's own suite.
-#   - b5 follows the 41-suite's proven methods: t11's per-side tolerance
-#     branches, r2's all-reads-before-any-push ordering, r3's chain
-#     attribution for the ghcr-then-own push order (an unattributable push
-#     fails), t8's transitive chain walk (a tag no chain reaches is never
-#     pushed). Re-stating them per-side is the mirror contract.
-#   - b8 is behavioral because text pins cannot see a silently reverted
-#     dispatch contract (the 41-suite's t14 lesson): the shipped detect run
-#     body is extracted and EXECUTED against a copy of the SHIPPED detector
-#     (byte-untouched — P6) in a scratch tree; five faithful input shapes
-#     answer exact JSON arrays, and the empty dispatch stays the silent no-op
-#     the family law pins.
-#   - pyyaml resolves the bare `on:` key to boolean True (YAML 1.1): trigger
-#     legs read doc.get(True) or doc.get('on') — the 41-suite/main-sync
-#     idiom; asserting the string key alone would redden a correct file.
-#   - x1 rigor here runs INVERTED: containers-build blesses commented-out
-#     triggers as a re-enable affordance; this lane's AC1 forbids any
-#     push/PR/schedule text (live or commented) inside on: — dispatch-only is
-#     the ruling (P1), and a commented arm is the uncomment one bad review
-#     away from re-arming the double-publish.
+#   - b1 is THE ANTI-TRAP LEG (plan R1): the owner hit the blank-dispatch
+#     silent-empty no-op on the general lane and ruled it away. The reduced
+#     shape is pinned three ways — parsed on-keys exactly {workflow_dispatch},
+#     a whole-document walk rejecting any `inputs` mapping ANYWHERE, and raw
+#     accessor greps (forgejo.event.inputs / inputs. / MANUAL_CONTAINERS)
+#     EMPTY. bt9 re-arms the trap (restores the input) and must redden b1 by
+#     construction. A defaulted input was rejected in ruling: the trap's
+#     door left ajar.
+#   - b2 is the PARADOX GUARD, and R4 MOVED it to the scheduling surface:
+#     the single-purpose file MUST name forgejo-runner as its payload (b8),
+#     so the old raw ban on the image name lifted; what may never happen is
+#     the lane SCHEDULING on its own output — every runs-on is the public
+#     ubuntu-22.04 label, none carries forgejo-runner or a baked-family
+#     label, and zero docker:// literals exist to pin an image.
+#   - b3 pins the bare membership as the ONLY if-clause of the single job
+#     and bans the '!= []' matrix-skip clause outright: with no matrix it
+#     is a dangling reference (R2), and its return is the general lane.
+#   - b4 pins the single job and the absence of every flow carrier (strategy/
+#     matrix/needs/outputs keys, fromJSON, the matrix. accessor).
+#   - b5 keeps the shipped calendar methods (t11 tolerance posture, r2
+#     all-reads-before-any-push, r3 chain attribution, t8 transitive chain
+#     walk) AND absorbs the base review's F1: every docker push sits
+#     UNCONDITIONALLY in its attributed for-chain — a semantic
+#     manifest-inspect skip written without the banned lexicon would pass
+#     the old lexical ban but fails this structural one, and bt4's wrapper
+#     mutation proves it.
+#   - b6 is the P4' closed set, byte-stable through the reduction: secrets
+#     exactly {GHCR_PUSH_PAT, FORGE_PUSH_TOKEN}, vars exactly {ROLE}, two
+#     logins, two push sides, zero second-instance names.
+#   - b7 flipped its halves per R3: next-n REQUIRED exactly twice (the
+#     walks' month math rides the shared script — P6 reuse), the detect-mode
+#     call FORBIDDEN (bt7 restores it to prove the return of the general
+#     lane reddens here), no all-expansion, no sanitize/pr- shape, no
+#     writes under scripts/.
+#   - b8 is the FIXED TARGET (its behavioral detect-shape subject died with
+#     the input): exactly one docker build, final context
+#     containers/forgejo-runner, both registry refs naming forgejo-runner,
+#     and ZERO name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./
+#     containers/* glob/container= variables) anywhere — a lane that could
+#     name another container is not this lane.
+#   - b9 rewrites the doc pins for the new truth: the five-workflow
+#     enumeration + narrow-class law pair SURVIVES unchanged (ci-surface
+#     t1's five-set is R8's byte-frozen neighbor), while the lane-wording
+#     surfaces must say single-purpose. The residue ban is scoped to the
+#     five live lane surfaces of the b9 RESIDUE tuple exactly — the
+#     workflow file, .rulesync/rules, skills/container-creation,
+#     AGENTS.md, containers/ — NOT repo-wide —
+#     by the two grounded R9 exemptions: containers-build.yaml's own
+#     dispatch description says what is true OF IT (that file is FORBIDDEN
+#     anyway), and this suite carries the banned phrases inside b9's
+#     prohibition tuples as teeth, not residue (tests/ is outside the
+#     sweep paths by design).
+#   - b10 floors at 2 extracted run blocks (unchanged) and PRINTS the
+#     count: the reduced lane is 5 blocks (was 7); the count is a
+#     bar-reading fact for review, not a hard pin, because step-splitting
+#     (merging the ghcr login into diag) is DEV's honest latitude under
+#     the chunk's b6-two-logins condition.
+#   - pyyaml resolves the bare `on:` key to boolean True (YAML 1.1): the
+#     trigger read takes doc.get(True) or doc.get('on'); a scalar
+#     `on: workflow_dispatch` and a null-value mapping are the same legal
+#     trigger surface, so both parse shapes are accepted.
+#   - x1 rigor stays inverted: a commented push/PR/schedule arm is banned
+#     inside on: — dispatch-only is the ruling (P1), and a commented arm is
+#     the uncomment one bad review away from re-arming the double-publish.
 #
 # Constraints: no network, no docker daemon (the lane's live proof is owner
-# OL2; AC11-shape `docker build => no-daemon, CI-deferred` stands); needs
-# python3+pyyaml and bash. Self-mutating legs use /tmp/opencode scratch only.
+# OL2; `docker build => no-daemon, CI-deferred` is the designed passing
+# line). Needs python3+pyyaml and bash. Battery and scratch legs use
+# /tmp/opencode only; the repo is never mutated by a probe.
 #
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-builder-bootstrap.sh
@@ -79,8 +118,6 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 BB=".forgejo/workflows/builder-bootstrap.yaml"
-HELP="scripts/forgejo-container-detect.sh"
-HELP_ABS="$PWD/$HELP"
 
 checks=0
 FAILED=0
@@ -114,7 +151,7 @@ run_leg() {
   if ! "$fn"; then FAILED=$((FAILED + 1)); fi
 }
 
-# --- b1: existence, parse, trigger surface, input shape, concurrency ---------
+# --- b1: THE ANTI-TRAP LEG — existence, parse, no-input trigger -------------
 # Takes the workflow path as $1 so the battery can probe mutated copies.
 leg_b1() {
   local f="${1:-$BB}"
@@ -126,7 +163,7 @@ path = sys.argv[1]
 raw = open(path).read()
 try:
     doc = yaml.safe_load(raw)
-except yaml.YAMLLError as exc:
+except yaml.YAMLError as exc:
     print(f'FAIL: b1: {path} does not parse: {exc}', file=sys.stderr)
     sys.exit(1)
 
@@ -136,14 +173,34 @@ def need(cond, msg):
         sys.exit(1)
 
 trig = doc.get(True) or doc.get('on')
-need(isinstance(trig, dict), 'no top-level on: mapping')
-# P1: dispatch-only. The parsed key-set is the authoritative inertness pin.
-need(set(trig) == {'workflow_dispatch'},
-     f'on: keys are {sorted(map(str, trig))}, expected exactly [workflow_dispatch] — a live push/PR/schedule arm double-publishes against containers-build (P1)')
+# The reduced trigger surface: workflow_dispatch and nothing else. Both the
+# scalar (`on: workflow_dispatch`) and the mapping with a null/{}/value are
+# the same legal shape — a scalar physically cannot carry inputs.
+if isinstance(trig, dict):
+    need(set(trig) == {'workflow_dispatch'},
+         f'on: keys are {sorted(map(str, trig))}, expected exactly [workflow_dispatch] — a live push/PR/schedule arm double-publishes against containers-build (P1/AC1)')
+else:
+    need(trig == 'workflow_dispatch',
+         f'trigger surface is {trig!r}, expected workflow_dispatch only (P1/AC1)')
 
-# x1 rigor, inverted per the header pin: no commented-out trigger text in the
-# on: block either — this lane's ruling is dispatch-only with no re-enable
-# affordance (AC1).
+# R1 walk: NO `inputs` mapping anywhere in the document. The owner's
+# silent-empty trap was the INPUT, not the dispatch; pinning the keyset
+# alone would let `workflow_dispatch: {inputs: {...}}` pass, so the whole
+# tree is walked. A defaulted input was rejected by ruling — the trap's
+# door left ajar.
+def walk(node, where):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            need(str(k) != 'inputs',
+                 f'an `inputs:` mapping exists at {where} — the reduced lane takes NO dispatch input (R1: a dispatch is the button, there is nothing to name)')
+            walk(v, f'{where}.{k}')
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            walk(v, f'{where}[{i}]')
+walk(doc, 'doc')
+
+# x1 rigor, inverted: no commented-out trigger text in the on: block either
+# — dispatch-only with no re-enable affordance (AC1).
 in_on = False
 region = []
 for i, line in enumerate(raw.splitlines(), 1):
@@ -159,38 +216,35 @@ for i, line in region:
     need(not m, f'on: block line {i} carries a {m.group(1) if m else "?"} arm'
                 f'{" (commented)" if line.lstrip().startswith("#") else ""}: {line.strip()!r} — dispatch-only means no commented arm either (AC1/x1 rigor)')
 
-wd = trig['workflow_dispatch'] or {}
-inp = (wd.get('inputs') or {}).get('containers')
-need(isinstance(inp, dict), 'the containers dispatch input is missing — P2 names it')
-need(inp.get('type') == 'string', f'input type is {inp.get("type")!r}, expected string (P2)')
-need(inp.get('default') == '', f'input default is {inp.get("default")!r}, expected "" (P2 silent-empty)')
-need(inp.get('required', False) is False, f'input required is {inp.get("required")!r}, expected false/absent')
-desc = str(inp.get('description') or '')
-need(re.search(r'(?i)comma', desc) and re.search(r'(?i)space', desc),
-     f'input description {desc!r} does not name the comma/space list (C01 Tasks)')
-need(re.search(r'(?i)(^|[^a-z])all([^a-z]|$)', desc),
-     f'input description {desc!r} does not name the all keyword (P2)')
-# P2's silent-empty law stated in the file's own wording: a lane whose empty
-# list was fatal would answer differently than containers-build's dispatch.
-need(re.search(r'(?i)empty[^\n]{0,60}(nothing|no-op|no op)', raw),
-     'the file never states the empty-list-is-a-no-op law near "empty" — P2 mirrors the family silent-empty law and the wording must travel with the input')
+# raw accessor greps (empty): the dispatch input's whole consumption chain.
+for pat, why in ((r'forgejo\.event\.inputs', 'reads the dispatch event payload'),
+                 (r'inputs\.', 'interpolates an inputs value'),
+                 ('MANUAL_CONTAINERS', 'carries the old dispatch-list env var')):
+    hits = re.findall(pat, raw) if pat != 'MANUAL_CONTAINERS' else raw.count(pat)
+    n = len(hits) if isinstance(hits, list) else hits
+    need(n == 0,
+         f'{pat!r} occurs {n} time(s) in raw text — {why}; with no input there is nothing to read, and the token returning is the general lane re-entering (R1)')
+
+# no all-expansion shape: the `all` keyword existed only for the input list.
+need(re.search(r'["\x27]all["\x27]', raw) is None,
+     'a quoted-all expansion shape appears — the all keyword died with the dispatch input (R1/R3); restoring it is the general lane')
 
 conc = doc.get('concurrency')
 need(isinstance(conc, dict) and conc.get('cancel-in-progress') is False,
-     f'concurrency is {conc!r}, expected a mapping with cancel-in-progress: false (fact 10 family law)')
+     f'concurrency is {conc!r}, expected a mapping with cancel-in-progress: false (queue stays: capacity-1 serializes, P1 rationale)')
 PY
   then
     return 1
   fi
-  ok "b1: $BB exists, parses, triggers on workflow_dispatch ONLY (no live or commented push/PR/schedule arm), input containers is a string default '' naming the list/all/empty-no-op law, concurrency queues (cancel-in-progress false) [C01 AC1]"
+  ok "b1: ANTI-TRAP — parses; on-keys exactly {workflow_dispatch} (scalar or null-mapping shape); NO inputs mapping anywhere in the document; no live/commented push/PR/schedule arm; accessor greps (forgejo.event.inputs / inputs. / MANUAL_CONTAINERS) and the quoted-all expansion EMPTY; concurrency queues (cancel-in-progress false) [C01 AC1, R1]"
 }
 
-# --- b2: the PARADOX GUARD -----------------------------------------------------
+# --- b2: the PARADOX GUARD, scheduling-surface form (R4) ---------------------
 leg_b2() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b2: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
   if ! python3 - "$f" <<'PY'
-import re, sys, yaml
+import sys, yaml
 
 path = sys.argv[1]
 raw = open(path).read()
@@ -206,21 +260,20 @@ for name, job in jobs.items():
     label = (job or {}).get('runs-on')
     need(label == 'ubuntu-22.04',
          f'{name}.runs-on is {label!r}, expected the public ubuntu-22.04 label exactly — this lane exists to mint the image the baked labels point at; any other label can schedule onto the image that is not yet published (the paradox re-entry the suite is named for)')
-    need(label not in BAKED, f'{name}.runs-on {label!r} is a baked-family label (the paradox, stated twice for the red line)')
+    s = str(label)
+    need('forgejo-runner' not in s,
+         f'{name}.runs-on {label!r} schedules ON the image this lane produces — the payload naming is legitimate (b8 pins it), the SCHEDULER naming it is the paradox (R4: the ban moved to the scheduling surface)')
+    need(s not in BAKED, f'{name}.runs-on {label!r} is a baked-family label (the paradox, stated for the red line)')
 need(raw.count('docker://') == 0,
-     f'docker:// occurs {raw.count("docker://")} time(s), expected zero — a docker:// runs-on literal pins an IMAGE, and this file may pin only the public LABEL (P8)')
-for tok in ('ownyourio/forgejo-runner',):
-    need(raw.count(tok) == 0, f'{tok!r} occurs {raw.count(tok)} time(s), expected zero (the lane may not name the image it mints as its own runner)')
-need(re.search(r'forgejo-runner\s*:', raw) is None,
-     'a forgejo-runner: label-mapping/image-tag shape appears — the lane runs on the public act image, never on its own output')
+     f'docker:// occurs {raw.count("docker://")} time(s), expected zero — a docker:// literal pins an IMAGE for the scheduler, and this file may pin only the public LABEL (P8)')
 PY
   then
     return 1
   fi
-  ok "b2: PARADOX GUARD — every runs-on is the public ubuntu-22.04 label only; zero docker://, zero baked-family label, zero forgejo-runner ref or mapping shapes (mutation-probed by bt1/bt10) [C01 AC2, P8]"
+  ok "b2: PARADOX GUARD on the scheduling surface (R4) — every runs-on is the public ubuntu-22.04 label exactly; no runs-on names forgejo-runner or a baked-family label; zero docker:// literals. The lifted raw ban is b8's job: the image may be the PAYLOAD, never the scheduler (mutation-probed by bt1/bt10) [C01 AC2]"
 }
 
-# --- b3: narrow ROLE guards + the g1 law re-pinned for this file ---------------
+# --- b3: the bare membership as the ONLY guard clause -------------------------
 leg_b3() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b3: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -238,17 +291,18 @@ def need(cond, msg):
         sys.exit(1)
 
 MEMBER = "contains(vars.ROLE, 'prod')"
-SKIP = "needs.detect.outputs.containers != '[]'"
 
 def clauses(expr):
     return [c.strip() for c in str(expr).split('&&')]
 
-det = str((jobs.get('detect') or {}).get('if') or '')
-pub = str((jobs.get('publish') or {}).get('if') or '')
-need(clauses(det) == [MEMBER],
-     f'detect.if is {det!r}, expected exactly the bare prod membership {MEMBER!r} — narrow on unset (P3: a calendar-minting lane belongs to the fail-safe class; the widen clause is containers-build\'s alone)')
-need(clauses(pub) == [MEMBER, SKIP],
-     f'publish.if is {pub!r}, expected exactly {MEMBER!r} && {SKIP!r} (bare membership + the matrix skip clause)')
+# The clause-list pin (chunk b3): for EVERY job, the guard is exactly the
+# bare membership — nothing before it (null-widen), nothing after it. A
+# second job or a compound guard is the general lane's detect/publish pair.
+for name, job in jobs.items():
+    expr = (job or {}).get('if')
+    need(expr is not None, f'{name} carries no if: guard — the narrow prod membership must decide the single job')
+    need(clauses(expr) == [MEMBER],
+         f'{name}.if is {expr!r}, expected exactly [{MEMBER!r}] — narrow on unset (P3 fail-safe class), and with one job there is no matrix and nothing to skip (R2)')
 
 all_exprs = [str(j.get('if') or '') for j in jobs.values() if isinstance(j, dict)]
 all_exprs += [str(s.get('if') or '') for j in jobs.values() if isinstance(j, dict)
@@ -258,11 +312,14 @@ for e in all_exprs:
          f'a guard carries the null-widen clause ({e!r}) — widen-on-unset would let an unset-ROLE dev instance mint calendar tags (P3 rejected)')
     need(not re.search(r"vars\.ROLE\s*[=!]=\s*['\"]", e),
          f'a guard compares ROLE to a string ({e!r}) — equality polarity is retired (AGENTS hard rule)')
-    need('dev' not in e.replace(MEMBER, '').replace(SKIP, '').lower() or 'dev' in SKIP,
-         f'a guard references the dev role ({e!r}) — this lane is prod-membership only (P3)')
     need('forgejo.server_url' not in e, f'a guard reads forgejo.server_url ({e!r}) — instance decisions are ROLE-only (g1 law, re-pinned here)')
-    need('fromjson' not in e.lower(), f'a guard uses fromJSON ({e!r}) — a guard error fails the job; only the matrix may parse the detector output (OQ-2 law)')
+    need('fromjson' not in e.lower(), f'a guard uses fromJSON ({e!r}) — a guard error fails the job; nothing is parsed here anymore (R2)')
     need('startsWith' not in e, f'a guard uses startsWith ({e!r}) — the URL guard is retired repo-wide')
+
+# The matrix-skip clause is BANNED outright (R2): a dangling needs/matrix
+# reference with no matrix behind it.
+need(re.search(r"!=\s*['\"]\[\]['\"]", raw) is None,
+     "a '!= []' skip clause appears — it referenced the detect output; with no detect job and no matrix it is a dangling reference, and its return is the general lane (R2)")
 
 for pat in ('git.spencerslab.com', 'git.scifi.farm', 'github.com/', '@github.com', 'startsWith(forgejo.server_url'):
     need(raw.count(pat) == 0, f'{pat!r} occurs {raw.count(pat)} time(s) in raw text (comments included), expected zero — g1\'s no-URL law re-pinned with this file\'s own suite, not by g1\'s grace alone')
@@ -270,10 +327,10 @@ PY
   then
     return 1
   fi
-  ok "b3: both job guards are exactly the bare contains(vars.ROLE, 'prod') membership (+ publish's matrix skip clause); no widen/equality/server_url/fromJSON/startsWith in any if; g1's four URL substrings absent from raw text [C01 AC3, P3]"
+  ok "b3: guard law — every job's if is exactly the bare contains(vars.ROLE, 'prod') membership; no widen/equality/server_url/fromJSON/startsWith in any if; the '!= []' matrix-skip clause is banned (dangling with no matrix); g1's URL substrings absent from raw text [C01 AC3, P3, R2]"
 }
 
-# --- b4: job set, matrix flow, uses surface ------------------------------------
+# --- b4: the single job and the absence of every flow carrier ------------------
 leg_b4() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b4: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -288,22 +345,20 @@ def need(cond, msg):
         print(f'FAIL: b4: {msg}', file=sys.stderr)
         sys.exit(1)
 
-need(set(jobs) == {'detect', 'publish'},
-     f'jobs keys are {sorted(jobs)}, expected exactly detect + publish (C01 Tasks job pair)')
+need(set(jobs) == {'publish'},
+     f'jobs keys are {sorted(jobs)}, expected exactly [publish] — the detect job died with the dispatch input; ONE job remains (R2; the name stays because b5/b6/b10 anchor on it)')
 
-det = jobs['detect'] or {}
-pub = jobs['publish'] or {}
-out = (det.get('outputs') or {}).get('containers')
-need(isinstance(out, str) and re.search(r'steps\.[\w-]+\.outputs\.[\w-]+', out),
-     f'detect.outputs.containers is {out!r}, expected a steps.<id>.outputs.<key> carrier (the detector emits via the step-output file)')
-needs = pub.get('needs')
-need(needs == 'detect' or (isinstance(needs, list) and needs == ['detect']),
-     f'publish.needs is {needs!r}, expected detect')
-strat = pub.get('strategy') or {}
-mat = (strat.get('matrix') or {}).get('container')
-need(mat == '${{ fromJSON(needs.detect.outputs.containers) }}',
-     f'matrix.container is {mat!r}, expected the byte form from C01 Tasks (the only sanctioned fromJSON parses the detector\'s own output)')
-need(strat.get('fail-fast') is False, f'strategy.fail-fast is {strat.get("fail-fast")!r}, expected boolean false (siblings keep publishing)')
+BAN_KEYS = ('strategy', 'matrix', 'needs', 'outputs', 'timeout-minutes', 'container', 'services')
+def sweep(node, where):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            need(str(k) not in BAN_KEYS,
+                 f'{where} carries a {k}: key — no fan-out, no inter-job wiring, no outputs carrier, no job container/services, no per-file timeout in the single-purpose lane (R2, P8, fact 10)')
+            sweep(v, f'{where}.{k}')
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            sweep(v, f'{where}[{i}]')
+sweep(doc, 'doc')
 
 carriers = []
 def collect(node, where):
@@ -317,17 +372,13 @@ def collect(node, where):
         for i, v in enumerate(node):
             collect(v, f'{where}[{i}]')
 collect(doc, 'doc')
-for where, s in carriers:
-    need('needs.detect.outputs' in s and 'vars.' not in s,
-         f'fromJSON carrier {where} is {s!r} — fromJSON may only read the detect step output, never a vars.* value (OQ-2)')
+need(not carriers,
+     f'{len(carriers)} fromJSON carrier(s) {carriers[:2]!r} — nothing parses a runtime list here anymore (R2); the count is zero, not restricted')
 
-for name, job in jobs.items():
-    need('timeout-minutes' not in (job or {}), f'{name} restates timeout-minutes — the runner\'s 30m ceiling is the law, per-file restatement is not (fact 10)')
-    need('container' not in (job or {}) and 'services' not in (job or {}),
-         f'{name} carries container:/services: — the act image IS the environment; a job container changes the mount model for zero need (P8)')
-    for s in (job or {}).get('steps', []):
-        if isinstance(s, dict):
-            need('services' not in s, f'{name} has a step with services:')
+raw = open(sys.argv[1]).read()
+n = raw.count('matrix.')
+need(n == 0,
+     f'the matrix. accessor occurs {n} time(s), expected zero — a templated matrix value is the general lane re-entering (AC1 accessor law; bt7 trips here as documented collateral)')
 
 uses = {s['uses'] for job in jobs.values() for s in (job or {}).get('steps', [])
         if isinstance(s, dict) and 'uses' in s}
@@ -337,15 +388,15 @@ for job in jobs.values():
         if isinstance(s, dict) and 'uses' in s:
             w = s.get('with') or {}
             need('fetch-depth' not in w,
-                 f'a checkout carries with: fetch-depth — no diff range exists here (dispatch names its own set), so the depth-0 cost containers-build pays must not be copied (C01 Tasks: shallow)')
+                 f'a checkout carries with: fetch-depth — no diff range exists here (dispatch names nothing), so the depth-0 cost containers-build pays must not be copied (C01 Tasks: shallow only)')
 PY
   then
     return 1
   fi
-  ok "b4: jobs are detect+publish; matrix is the byte-pinned fromJSON over the detect output with fail-fast false; no timeout-minutes, no container:/services:, uses is checkout@v7 only and shallow [C01 AC1/AC3 flow]"
+  ok 'b4: single job `publish` — jobs exactly {publish}; zero strategy/matrix/needs/outputs/timeout-minutes/container:/services: keys anywhere; zero fromJSON carriers; the matrix. accessor absent; uses is checkout@v7 only and shallow [C01 AC1/AC3, R2]'
 }
 
-# --- b5: calendar law mirror ----------------------------------------------------
+# --- b5: calendar law mirror + the F1 semantic push pin -------------------------
 leg_b5() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b5: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -409,7 +460,7 @@ joined = '\n'.join(steps_txt)
 defaults = re.findall(r'(?m)^[ \t]*(n_ghcr|n_forge)=1[ \t]*(#.*)?$', joined)
 need(len(defaults) >= 2, f'{len(defaults)} per-side n=1 default line(s), expected one per side (tolerated absence falls through to the month first release, RD8 mirrored)')
 nncalls = [s for s in statements if 'next-n' in s]
-need(len(nncalls) >= 2, f'{len(nncalls)} next-n call(s), expected two (the union max walks BOTH registries, fact 10)')
+need(len(nncalls) >= 2, f'{len(nncalls)} next-n call(s), expected two (the union max walks BOTH registries, fact 10; b7 pins the exact count)')
 for c in nncalls:
     need('YYMM=' in c, f'next-n call {c.strip()!r} does not pass YYMM — the month arrives via env exactly as containers-build does')
 
@@ -494,7 +545,7 @@ for token, lines_t in (('ghcr', push_lines['ghcr']), ('forge', push_lines['forge
     blob = '\n'.join(chain)
     need(PREFIX[token] in blob, f'the {token} push chain builds no image-qualified reference ({PREFIX[token]}<image>) (t8 chain discipline)')
     need('latest' in blob and re.search(r'\bmain\b', blob) and has_cal(blob),
-         f'the {token} push chain does not reach all three tags (calendar + latest + main, the trio both targets carry, AC4)')
+         f'the {token} push chain does not reach all three tags (calendar + latest + main, the trio both targets carry, AC5)')
 
 # no skip-if-exists logic in any runnable line (the lane's own comments may
 # state the law by name — the ban reads code, not prose); the N+1 law travels
@@ -502,6 +553,32 @@ for token, lines_t in (('ghcr', push_lines['ghcr']), ('forge', push_lines['forge
 code_only = '\n'.join(ln for ln in raw.splitlines() if not ln.strip().startswith('#'))
 need(not re.search(r'(?i)skip[- _]?if[- _]?exists|already (pushed|published)|tag exists', code_only),
      'a skip-if-exists shape appears in code — every successful publish mints a fresh N; skipping would freeze the line (P5)')
+
+# F1 (base review, closed HERE per R7): the LEXICAL ban above only sees the
+# skip vocabulary. The semantic skip — an `if docker manifest inspect ...;
+# then continue; fi` around a push — would pass the vocabulary check while
+# freezing latest/main against the calendar law. Structural teeth: every
+# docker push sits DIRECTLY in its attributed for-chain body, inside no
+# if/while/case wrapper. bt4's wrapper mutation proves the leg bites.
+for text in steps_txt:
+    ctrl = []
+    for ln in text.splitlines():
+        st = ln.strip()
+        if not st or st.startswith('#'):
+            continue
+        if re.match(r'^for\b', st):
+            ctrl.append('for')
+        elif re.match(r'^(while|until)\b', st):
+            ctrl.append('loop')
+        elif re.match(r'^(if|case)\b', st):
+            ctrl.append('branch')
+        elif re.match(r'^(done|fi|esac)\b', st):
+            if ctrl:
+                ctrl.pop()
+        if 'docker push' in st:
+            need(ctrl and ctrl[-1] == 'for',
+                 f'docker push {st[:90]!r} is not directly inside a for-chain body (control stack {ctrl}) — every push must be UNCONDITIONAL; a conditional wrapper is a semantic skip-if-exists (F1/R7)')
+
 need(re.search(r'(?i)(n\s*\+\s*1|advance until|gaps?[ ,;]?[^.\n]*never[^.\n]*clobber)', raw),
      'the file never states the registry-max-walk / gaps-never-clobbers law (launch pin: re-dispatch mints N+1 — the law text travels with the lane)')
 
@@ -515,10 +592,10 @@ PY
   then
     return 1
   fi
-  ok "b5: calendar law mirrored — per-side ghcr_/forge_ walks with tolerance posture and the token-200/empty-token guards, all walks before the first push, union max + one fixed month + calendar.env, three-tag trio per side, ghcr-then-own chains, no skip-if-exists, N+1 law text present [C01 AC4, P5, fact 10]"
+  ok "b5: calendar law mirrored + F1 closed — per-side ghcr_/forge_ walks with tolerance posture and the token-200/empty-token guards, all walks before the first push, union max + one fixed month + calendar.env, three-tag trio per side, ghcr-then-own chains, NO skip-if-exists lexically AND every docker push unconditionally in its for-chain, N+1 law text present [C01 AC5, P5, R7]"
 }
 
-# --- b6: the P4' NO-PEER closed set ---------------------------------------------
+# --- b6: the P4' NO-PEER closed set (byte-stable through the reduction) ---------
 leg_b6() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b6: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -549,7 +626,7 @@ for tok in ('FORGE_DEV_REGISTRY', 'FORGE_PUSH_TOKEN_DEV', 'PUSH_URL_DEV', 'PUSH_
          f'{tok!r} occurs {raw.count(tok)} time(s), expected zero — any second-instance name, minted or literal, is the peer arm the ruling rejected (fact 13)')
 
 logins = [ln.strip() for ln in raw.splitlines() if 'docker login' in ln and not ln.strip().startswith('#')]
-need(len(logins) == 2, f'{len(logins)} docker login lines, expected exactly 2 (ghcr + the building instance — two targets, full stop, AC4)')
+need(len(logins) == 2, f'{len(logins)} docker login lines, expected exactly 2 (ghcr + the building instance — two targets, full stop, AC6)')
 need(any('ghcr.io' in l for l in logins), 'no login reaches ghcr.io')
 need(any(re.search(r'\$\{?forge_registry', l) for l in logins), 'no login reaches the derived $forge_registry host')
 
@@ -592,10 +669,10 @@ PY
   then
     return 1
   fi
-  ok "b6: NO-PEER pin — secrets.* is exactly {GHCR_PUSH_PAT, FORGE_PUSH_TOKEN}, vars.* exactly {ROLE}, zero second-instance names anywhere, exactly two logins (ghcr.io + the derived forge host) and two push chains (ghcr, forge) — a future cross-host arm reddens HERE (owner ruling 2026-11-22, P4')"
+  ok "b6: NO-PEER pin, byte-stable — secrets.* exactly {GHCR_PUSH_PAT, FORGE_PUSH_TOKEN}, vars.* exactly {ROLE}, zero second-instance names anywhere, exactly two logins (ghcr.io + the derived forge host) and two push chains (ghcr, forge) — a future cross-host arm reddens HERE (owner ruling 2026-11-22, P4'; R6) [C01 AC6]"
 }
 
-# --- b7: detector reuse, env contract, expansion order --------------------------
+# --- b7: detector law, halves flipped per R3 -------------------------------------
 leg_b7() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b7: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
@@ -606,44 +683,41 @@ path = sys.argv[1]
 raw = open(path).read()
 doc = yaml.safe_load(raw)
 jobs = (doc or {}).get('jobs') or {}
-det_steps = (jobs.get('detect') or {}).get('steps') or []
 
 def need(cond, msg):
     if not cond:
         print(f'FAIL: b7: {msg}', file=sys.stderr)
         sys.exit(1)
 
-step = next((s for s in det_steps if isinstance(s, dict) and 'bash scripts/forgejo-container-detect.sh detect' in str(s.get('run', ''))), None)
-need(step, 'the detect job never calls the SHIPPED detector\'s detect mode — P6 reuses it unchanged, it is not re-implemented')
-body = str(step.get('run', ''))
-env = step.get('env')
-need(isinstance(env, dict) and set(env) == {'EVENT_NAME', 'MANUAL_CONTAINERS'},
-     f'detect step env keys are {sorted(env) if isinstance(env, dict) else env!r}, expected exactly EVENT_NAME + MANUAL_CONTAINERS (the dispatch path reads only these; extra accessors invite a routed event into a lane that has none)')
-need(env.get('EVENT_NAME') == 'workflow_dispatch',
-     f'EVENT_NAME is {env.get("EVENT_NAME")!r}, expected the static workflow_dispatch literal — the lane IS dispatch-only; a live accessor would route a foreign event into the dispatch arm')
-need(env.get('MANUAL_CONTAINERS') == '${{ forgejo.event.inputs.containers }}',
-     f'MANUAL_CONTAINERS is {env.get("MANUAL_CONTAINERS")!r}, expected the byte accessor (t13 discipline: the accessor string is the contract)')
+code_all = []
+for job in jobs.values():
+    for s in (job or {}).get('steps', []):
+        if isinstance(s, dict) and 'run' in s:
+            for ln in str(s.get('run', '')).splitlines():
+                st = ln.strip()
+                if st and not st.startswith('#'):
+                    code_all.append(st)
+code_joined = '\n'.join(code_all)
 
-call_i = next(i for i, ln in enumerate(body.splitlines()) if 'forgejo-container-detect.sh detect' in ln)
-pre = '\n'.join(body.splitlines()[:call_i])
-need(re.search(r'(?i)\ball\b', pre), 'the all-keyword expansion is not BEFORE the detector call (P2: the expansion lives in the step, the gate stays in the shipped script)')
-need('Dockerfile' in pre, 'the all-expansion does not enumerate Dockerfile-bearing dirs (P2 scope of "all")')
+# REQUIRED half: the two walks keep calling the shared script's month math
+# (P6 reuse — re-inlining the arithmetic would fork it away from
+# containers-build's proven single source; ruling OQ-1 best-guess).
+nncalls = [s for s in code_all if 'next-n' in s]
+need(len(nncalls) == 2,
+     f'{len(nncalls)} next-n call(s), expected exactly 2 — the two registry walks ride the shared detector for the month math (R3: the surviving calendar-law mirror)')
+for c in nncalls:
+    need('YYMM=' in c, f'next-n call {c!r} does not pass YYMM — the month arrives via env exactly as containers-build does')
 
-m = re.search(r'(?m)^[ \t]*([A-Za-z_][A-Za-z0-9_]*)=[ \t]*\$\(bash scripts/forgejo-container-detect\.sh[ \t]+detect[^\n]*\)[ \t]*$', body)
-need(m, 'the detector output is not a standalone assignment (pattern var=$(bash ... detect)) — assign before emitting or a failed detect writes an empty matrix (t10 major-1 law, mirrored)')
-var = m.group(1)
-emits = [ln for ln in body.splitlines() if re.search(r'>> "\$\{GITHUB_OUTPUT:-\$FORGEJO_OUTPUT\}"', ln)]
-need(emits, 'no emit appends via "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}" (the family output-file contract)')
-for ln in emits:
-    need('$(' not in ln and re.search(r'\$\{?' + re.escape(var) + r'\b', ln),
-         f'the emit line {ln.strip()!r} must interpolate the assigned {var}, never re-inline the substitution (t10)')
-need(body.count('$(bash scripts/forgejo-container-detect.sh') == 1,
-     'a second detect command substitution appeared — exactly the assignment may invoke it')
+# FORBIDDEN half: the detect-mode call. It gated the dispatch list; with no
+# input there is nothing to gate, and its return is the general-lane
+# sneak-in (bt7-probed). Checked on code lines — comments may recount the
+# lane's history.
+need(re.search(r'forgejo-container-detect\.sh[ \t]+detect', code_joined) is None,
+     'a detect-mode call appears — the detection step died with the dispatch input; a returned call means the general any-container lane is re-entering (R3)')
+need('containers/*/' not in code_joined and not re.search(r'=\s*["\x27]all["\x27]', code_joined),
+     "an all-expansion shape appears in code — the keyword expansion died with the input (R3)")
 
-pub_runs = '\n'.join(str(s.get('run', '')) for s in ((jobs.get('publish') or {}).get('steps') or [])
-                     if isinstance(s, dict) and 'run' in s)
-need('next-n' in pub_runs, 'publish never calls next-n — the walks are the shared script\'s month math, not restated arithmetic (P6)')
-need(raw.count('sanitize') == 0, 'sanitize appears — this lane never mints PR tags (b7: the PR arm is containers-build alone)')
+need(raw.count('sanitize') == 0, 'sanitize appears — this lane never mints PR tags (the PR arm is containers-build alone)')
 need(re.search(r'(?<![A-Za-z0-9._-])pr-', raw) is None, 'a pr- tag shape appears — the bootstrap lane must never produce one (P4\x27 family posture)')
 
 for text in (str(s.get('run', '')) for job in jobs.values() for s in (job or {}).get('steps', [])
@@ -660,144 +734,176 @@ PY
   then
     return 1
   fi
-  ok "b7: detector REUSE, zero edits — the detect step calls the shipped script with the exact two-key env contract, all-expansion precedes the call, assign-then-emit honors the output-file law, next-n drives the walks, no sanitize/pr- anywhere, no run body writes under scripts/ [C01 AC5, P6]"
+  ok "b7: detector law, flipped halves — next-n REQUIRED exactly twice (YYMM env, the surviving calendar-law mirror), the detect-mode call and the all-expansion FORBIDDEN, no sanitize/pr- shape, no run body writes under scripts/ (bt7 restores the detect call and reddens this leg) [C01 AC7, R3]"
 }
 
-# --- b8: behavioral detect shapes (t14 pattern) ----------------------------------
+# --- b8: the fixed target (repurposed — no input to exercise behaviorally) --------
 leg_b8() {
   local f="${1:-$BB}"
   [ -f "$f" ] || { printf 'FAIL: b8: %s does not exist (C01 lands it)\n' "$f" >&2; return 1; }
-  local sdir="$TMP/b8-${RANDOM}"
-  mkdir -p "$sdir/fix/containers/alpha" "$sdir/fix/containers/beta" \
-           "$sdir/fix/containers/Not_a_Name" "$sdir/fix/containers/no-dockerfile" "$sdir/fix/scripts" || { printf 'FAIL: b8: harness could not build the scratch tree\n' >&2; return 1; }
-  printf 'FROM scratch\n' | tee "$sdir/fix/containers/alpha/Dockerfile" "$sdir/fix/containers/beta/Dockerfile" "$sdir/fix/containers/Not_a_Name/Dockerfile" >/dev/null
-  echo readme > "$sdir/fix/containers/no-dockerfile/README.md"
-  cp "$HELP_ABS" "$sdir/fix/scripts/forgejo-container-detect.sh" || { printf 'FAIL: b8: harness could not copy the shipped detector\n' >&2; return 1; }
-  if ! python3 - "$f" "$sdir" <<'PY'
-import os, re, shlex, sys, yaml
+  if ! python3 - "$f" <<'PY'
+import re, shlex, sys, yaml
 
-path, sdir = sys.argv[1], sys.argv[2]
-doc = yaml.safe_load(open(path))
+path = sys.argv[1]
+raw = open(path).read()
+doc = yaml.safe_load(raw)
 jobs = (doc or {}).get('jobs') or {}
 
-def bail(msg):
-    print(f'FAIL: b8: {msg}', file=sys.stderr)
-    sys.exit(1)
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: b8: {msg}', file=sys.stderr)
+        sys.exit(1)
 
-pub = jobs.get('publish') or {}
-mat = str(((pub.get('strategy') or {}).get('matrix') or {}).get('container') or '')
-m = re.search(r'fromJSON\(needs\.([\w-]+)\.outputs\.([\w-]+)\)', mat)
-if not m:
-    bail('the matrix reference does not name needs.<job>.outputs.<key> — the output chain is unpinnable')
-dj, okey = m.groups()
-outref = str(((jobs.get(dj) or {}).get('outputs') or {}).get(okey) or '')
-m2 = re.search(r'steps\.([\w-]+)\.outputs\.([\w-]+)', outref)
-if not m2:
-    bail(f'{dj}.outputs.{okey} does not resolve to a steps.<id>.outputs.<key> carrier ({outref!r})')
-sid, skey = m2.groups()
-step = next((s for s in ((jobs.get(dj) or {}).get('steps') or []) if isinstance(s, dict) and s.get('id') == sid), None)
-if not step or 'run' not in step:
-    bail(f'no step with id {sid!r} and a run body under the {dj} job')
-open(os.path.join(sdir, 'body.sh'), 'w').write(str(step['run']))
-env = step.get('env') or {}
-with open(os.path.join(sdir, 'env.inc'), 'w') as fh:
-    for k, v in env.items():
-        if k == 'MANUAL_CONTAINERS':
-            continue
-        fh.write(f'export {k}={shlex.quote(str(v))}\n')
-open(os.path.join(sdir, 'chain_key'), 'w').write(skey + '\n')
+statements = []
+for job in jobs.values():
+    for s in (job or {}).get('steps', []):
+        if isinstance(s, dict) and 'run' in s:
+            buf = ''
+            for ln in str(s.get('run', '')).splitlines():
+                st = ln.strip()
+                if st.endswith('\\'):
+                    buf = (buf + ' ' + st[:-1].strip()).strip()
+                    continue
+                if st or buf:
+                    statements.append((buf + ' ' + st).strip())
+                buf = ''
+
+builds = [s for s in statements if re.match(r'^docker build ', s)]
+need(len(builds) == 1,
+     f'{len(builds)} docker build command lines, expected exactly 1 — the single-purpose lane mints ONE image (R4; buildx lines are excluded by the command anchor)')
+if builds:
+    try:
+        toks = shlex.split(builds[0])
+    except ValueError:
+        toks = builds[0].split()
+    need(toks[-1] == 'containers/forgejo-runner',
+         f'the build context is {toks[-1]!r}, expected exactly containers/forgejo-runner — the fixed target IS the ruling (a templated or variable context is the general lane)')
+
+n_ghcr = raw.count('ownyourio/forgejo-runner')
+n_own = raw.count('curatedforest/forgejo-runner')
+need(n_ghcr >= 1 and n_own >= 1,
+     f'image refs: ownyourio/forgejo-runner x{n_ghcr}, curatedforest/forgejo-runner x{n_own}, expected at least one each — both push targets must name the build image (the R4 payload naming b2 released)')
+
+for tok in ('picked', 'MANUAL_CONTAINERS', 'matrix.', 'containers/*'):
+    need(raw.count(tok) == 0,
+         f'{tok!r} occurs {raw.count(tok)} time(s), expected zero — every name-carrier shape (variable, matrix, glob loop) died with the input; any of them returning means a lane that could name ANOTHER container (R4)')
+code_lines = [ln for ln in raw.splitlines() if ln.strip() and not ln.strip().startswith('#')]
+carrier = [ln.strip() for ln in code_lines if re.search(r'(?i)[a-z0-9_]*container[a-z0-9_]*\s*=\s*["\x27$]', ln)]
+need(not carrier,
+     f'a container-name variable assignment appears in code: {carrier[:2]!r} — the target is fixed by the ruling, not carried by a variable')
 PY
   then
     return 1
   fi
-  local KEY
-  KEY=$(cat "$sdir/chain_key")
-
-  b8_shape() { # label manual_containers expected_json expect_silent(yes|no|skip-silence-check)
-    local label="$1" input="$2" expect="$3" silent="$4"
-    local of="$sdir/out" bodyout errf="$sdir/err" rc
-    rm -f "$of"; : > "$of"
-    if bodyout=$( cd "$sdir/fix" && . "$sdir/env.inc" && MANUAL_CONTAINERS="$input" GITHUB_OUTPUT="$of" bash "$sdir/body.sh" 2>"$errf" ); then
-      rc=0
-    else
-      rc=$?
-    fi
-    [ "$rc" -eq 0 ] || { printf 'FAIL: b8: the %s shape exited %d — the dispatch run body must stay offline-executable (the shipped detector answers, never dies, on these inputs)\n' "$label" "$rc" >&2; return 1; }
-    local got
-    got=$(grep -m1 "^${KEY}=" "$of" 2>/dev/null | sed "s/^${KEY}=//" || true)
-    got="${got//[[:space:]]/}"
-    [ "$got" = "$expect" ] || { printf 'FAIL: b8: the %s shape answered %s, expected %s (container-dir + name gates and dedup/sort are the shipped detector contract; %s)\n' "$label" "${got:-<empty>}" "$expect" "$input" >&2; return 1; }
-    if [ "$silent" = yes ]; then
-      case "$bodyout$(cat "$errf")" in
-        *'::warning::'*) printf 'FAIL: b8: the empty dispatch list warned — a dispatch names its own build set and the empty one is the documented no-op intent (family silent-empty law)\n' >&2; return 1 ;;
-      esac
-    fi
-    return 0
-  }
-  if ! b8_shape 'empty list'          ''                    '[]'                      yes \
-    || ! b8_shape 'all expansion'     'all'                 '["alpha","beta"]'        skip \
-    || ! b8_shape 'bogus + ghost'     'alpha ghost'         '["alpha"]'               skip \
-    || ! b8_shape 'dupe + unordered'  'beta,alpha alpha'    '["alpha","beta"]'        skip \
-    || ! b8_shape 'no-Dockerfile dir' 'no-dockerfile'       '[]'                      skip ; then
-    return 1
-  fi
-  ok "b8: executing the shipped detect run body against the shipped detector answers the five dispatch shapes exactly — empty=[] silent (the family no-op), all=every Dockerfile dir (Not_a_Name and no-dockerfile excluded), bogus/unbuilt names filtered, dupes collapsed and sorted [C01 AC6]"
+  ok "b8: FIXED TARGET — exactly one docker build with final context containers/forgejo-runner; both registry refs (ghcr ownyourio + curatedforest) name forgejo-runner; zero name-carrier shapes (picked/MANUAL_CONTAINERS/matrix./containers-glob/container= variable) anywhere [C01 AC4, R4]"
 }
 
-# --- b9: the law pair + the doc surfaces (red until the DEV doc moves) ----------
+# --- b9: the doc law pair, rewritten to the single-purpose truth -----------------
 leg_b9() {
   if ! python3 - <<'PY'
-import re, sys
+import os, re, sys
 
+BB = '.forgejo/workflows/builder-bootstrap.yaml'
 DOCS = ('AGENTS.md', '.rulesync/rules/overview.md',
         'skills/container-creation/SKILL.md', 'containers/forgejo-runner/README.md')
 PAIR = ('AGENTS.md', '.rulesync/rules/overview.md')
 LANE = 'skills/container-creation/SKILL.md'
 README = 'containers/forgejo-runner/README.md'
+# The five live lane-wording surfaces (plan fact 6 / R9): the residue pin
+# greps EXACTLY these — containers-build.yaml's own dispatch description is
+# exempt (true about itself, file FORBIDDEN) and tests/ is exempt (this
+# suite carries the phrases inside b9's prohibition tuples: teeth, not
+# residue). History folders are dated record, not lies.
+RESIDUE = (BB, '.rulesync/rules', 'skills/container-creation', 'AGENTS.md', 'containers')
+BANNED = ('any named container', "any container's", 'name the containers')
+EMPTY_LIST = re.compile(r'(?i)\bempty list\b')
+NOINPUT = re.compile(r'(?i)(no input|takes nothing|without any input|inputless|no dispatch input)')
 
 def blocks(text):
-    return [b.lower() for b in re.split(r'\n\s*\n', text)]
+    return [' '.join(b.lower().split()) for b in re.split(r'\n\s*\n', text)]
 
 errs = []
 texts = {}
-for f in DOCS:
+for f in DOCS + (BB,):
     try:
         texts[f] = open(f).read()
     except OSError as exc:
         errs.append(f'cannot read {f}: {exc}')
 
+# 1. The residue sweep (the Commands-bar grep, encoded): the three
+#    general-lane phrases and the empty-list clause are gone from EVERY
+#    live lane surface.
 if not errs:
-    # The five-workflow law pair: source + generated twin carry it together
-    # (rulesync discipline), each naming builder-bootstrap in the narrow class.
+    for path in RESIDUE:
+        files = []
+        if os.path.isfile(path):
+            files.append(path)
+        else:
+            for dirpath, _dn, filenames in os.walk(path):
+                for name in filenames:
+                    files.append(os.path.join(dirpath, name))
+        for fp in sorted(files):
+            try:
+                body = open(fp).read()
+            except (UnicodeDecodeError, OSError):
+                continue  # binary or unreadable: not prose, cannot lie
+            for phrase in BANNED:
+                if phrase in body:
+                    errs.append(f'{fp}: still claims the general lane ({phrase!r}) — no live surface may describe any-container service after the reduction (fact 6)')
+            if EMPTY_LIST.search(body):
+                errs.append(f'{fp}: still carries an empty-list law clause — the empty-list law died with the dispatch input (R9)')
+
+if not errs:
+    # 2. The five-workflow law pair: source + generated twin carry it
+    #    together (rulesync discipline), each naming builder-bootstrap in
+    #    the narrow class. R8: the enumeration is UNCHANGED — the file
+    #    persists, the family stays five.
     for f in PAIR:
         if not any(('five' in b and '.forgejo' in b and 'builder-bootstrap' in b and 'narrow' in b)
                    for b in blocks(texts[f])):
-            errs.append(f'{f}: no single block states the FIVE-workflow enumeration with builder-bootstrap in the narrow class (P7\x27 — the ROLE-law paragraph must name the lane where the class is decided)')
-    # SKILL.md names the lane and its real surface: dispatch, ghcr, own
-    # registry (fact 7g: the doc moves must not drift the target list).
-    if not any('builder-bootstrap' in b and 'dispatch' in b and 'ghcr' in b
-               and ('own registry' in b or 'building instance' in b)
-               for b in blocks(texts[LANE])):
-        errs.append(f'{LANE}: no block names the builder-bootstrap lane with its dispatch trigger and ghcr + own-registry targets')
-    # README: the four-workflow assumption corrected with the dated public-image
-    # pointer. The ban pattern is 'four' within a line-span of the workflow
-    # directory — 'four of the five' phrasings are deliberately covered too:
-    # the only true claims left are five-count ones.
+            errs.append(f'{f}: no single block states the FIVE-workflow enumeration with builder-bootstrap in the narrow class (P7′ — unchanged by the reduction; ci-surface t1 is the byte-frozen five-set neighbor)')
+    # 3. The PAIR lane block must name the build image (single purpose):
+    #    the block carrying the lane with its recovery/dispatch wording
+    #    pairs it with forgejo-runner.
+    for f in PAIR:
+        lane_blocks = [b for b in blocks(texts[f])
+                       if 'builder-bootstrap' in b and ('recovery lane' in b or 'dispatch-driven' in b or '(re)mints' in b)]
+        if not lane_blocks:
+            errs.append(f'{f}: no lane block identifies builder-bootstrap as the recovery lane — the law sentence moved somewhere the pair pin cannot read')
+        for b in lane_blocks:
+            if 'forgejo-runner' not in b and 'build image' not in b:
+                errs.append(f'{f}: the builder-bootstrap lane block does not name the build image (containers/forgejo-runner) it (re)mints — single purpose is the ruling (R9)')
+    # 4. SKILL names the lane with its REAL surface: no-input dispatch,
+    #    ghcr + the building instance, the build image (fact 7g discipline:
+    #    the doc moves must not drift the target list).
+    skill_lane = [b for b in blocks(texts[LANE]) if 'builder-bootstrap' in b]
+    if not skill_lane:
+        errs.append(f'{LANE}: no block names the builder-bootstrap lane anymore')
+    for b in skill_lane:
+        ok_pos = ('dispatch' in b and 'ghcr' in b
+                  and ('own registry' in b or 'building instance' in b)
+                  and NOINPUT.search(b) and ('forgejo-runner' in b or 'build image' in b))
+        if not ok_pos:
+            errs.append(f'{LANE}: the lane block does not pair builder-bootstrap with the no-input dispatch, ghcr + the building instance, and the build image it mints (R9: single-purpose truth)')
+    # 5. README byte-kept: the base deviation-2 fix ALREADY wrote it
+    #    single-purpose-true, so its claims pin here while the file stays
+    #    untouched (the bar's git-diff proof is the byte half).
     for f in DOCS:
         m = re.search(r'(?i)\bfour\b[^.\n]{0,60}`?\.forgejo', texts[f])
         if m:
             errs.append(f'{f}: still claims a four-workflow .forgejo family ({m.group(0)!r}) — the sentence goes false the moment the lane file exists (fact 8)')
     if not any('builder-bootstrap' in b and '22.04' in b for b in blocks(texts[README])):
         errs.append(f'{README}: the correction does not pair the builder-bootstrap lane with the public act-22.04 image it rides (C01 Tasks: the dated pointer)')
-    # x3 per-line rule, local mirror on the three gated prose carriers.
+    if not any('builder-bootstrap' in b and 'mints this image' in b for b in blocks(texts[README])):
+        errs.append(f'{README}: the single-purpose truth (the lane is what mints THIS image when the baked reference is missing) moved — the byte-keep proof means this claim stays exactly as the base run landed it')
+    # 6. x3 per-line rule, local mirror on the three gated prose carriers.
     for f in PAIR + (LANE,):
         for i, ln in enumerate(texts[f].splitlines(), 1):
             if 'docker-build.yaml' in ln and 'workflow_dispatch' not in ln:
                 errs.append(f'{f}:{i} names docker-build.yaml without workflow_dispatch — x3 line rule re-asserted here')
-    # The NO-PEER ruling travels with the docs: the coined peer names never
-    # enter any doc surface, and no block naming the lane may claim a
-    # second-instance target (today vacuously green — the ruling was never
-    # doc-true and must not become doc-false).
+    # 7. The NO-PEER ruling travels with the docs (survives unchanged): the
+    #    coined peer names never enter any doc surface, and no block
+    #    naming the lane may claim a second-instance target.
     for f in DOCS:
         for tok in ('FORGE_DEV_REGISTRY', 'FORGE_PUSH_TOKEN_DEV', 'PUSH_URL_DEV', 'PUSH_TOKEN_DEV'):
             if tok in texts[f]:
@@ -814,7 +920,7 @@ PY
   then
     return 1
   fi
-  ok "b9: law pair green — overview.md + AGENTS.md state the five-workflow enumeration with builder-bootstrap narrow-on-unset, SKILL.md names the lane (ghcr+own), README carries the dated act-22.04 correction, no stale four-claim, x3 per-line rule holds, and no doc surface ever claims a peer target [C01 AC8, P7']"
+  ok "b9: doc law pair at the SINGLE-PURPOSE truth — residue grep (any named container / any container's / name the containers / empty-list clause) EMPTY over exactly the five live lane surfaces (R9's two grounded exemptions encoded by the scoped path list); overview+AGENTS keep the five-workflow narrow-class enumeration AND name the build image in the lane block; SKILL pairs the lane with the no-input dispatch + ghcr + own; README byte-keeps its single-purpose claims; four-workflow ban, x3 rule and peer-claim bans unchanged [C01 AC9, R8/R9]"
 }
 
 # --- b10: embedded run syntax ----------------------------------------------------
@@ -837,12 +943,12 @@ for jname, job in ((doc or {}).get('jobs') or {}).items():
 print(n)
 PY
 )
-  [ "$n" -ge 2 ] || { printf 'FAIL: b10: extracted %s run block(s), expected at least the detect + publish pair\n' "$n" >&2; return 1; }
+  [ "$n" -ge 2 ] || { printf 'FAIL: b10: extracted %s run block(s), expected at least the walk+push pair (floor unchanged; the reduced lane reads 5, was 7 — the count below is the bar fact)\n' "$n" >&2; return 1; }
   local b
   for b in "$dir"/*.sh; do
     bash -n "$b" || { printf 'FAIL: b10: the embedded run block %s is not bash -n clean\n' "$(basename "$b")" >&2; return 1; }
   done
-  ok "b10: all $n embedded run blocks parse under bash -n (every run step is plain shell, the family steps law)"
+  ok "b10: all $n embedded run blocks parse under bash -n (every run step is plain shell, the family steps law; reduced-lane expectation is 5, floor is >= 2)"
 }
 
 # --- battery: mutation probes on TMP copies (the repo is never written) ----------
@@ -868,7 +974,7 @@ probe() { # id  mutation-fn  named-legs  allowed-collateral  description
   local copy="$TMP/$id.yaml"
   cp "$BB" "$copy"
   if ! "$mut" "$copy"; then
-    printf 'FAIL: %s: the mutation anchor did not match the landed file (%s) — a probe that cannot bite proves nothing; the shipped-mirror bytes the battery anchors on are C01 Tasks contract\n' "$id" "$desc" >&2
+    printf 'FAIL: %s: the mutation anchor did not match the landed file (%s) — a probe that cannot bite proves nothing; the target bytes the battery anchors on are C01 Tasks contract\n' "$id" "$desc" >&2
     return 1
   fi
   local reds="" l
@@ -917,19 +1023,29 @@ new = t[:m.start()] + own + t[m.end():m2.start()] + ghcr + t[m2.end():]
 open(p, 'w').write(new)
 PY
 }
-mut_bt4() { python3 - "$1" <<'PY'
-import re, sys
+mut_bt4() { # compound: (1) delete the ghcr existence-walk block; (2) wrap the
+# ghcr push chain in a condition — both mutations must land ONLY on b5
+# (the walk guard and the F1 semantic push pin, same named leg).
+python3 - "$1" <<'PY'
+import sys
 p = sys.argv[1]
 lines = open(p).read().splitlines(keepends=True)
-idx = next((i for i, l in enumerate(lines) if 'ghcr_manifest_code()' in l), None)
-assert idx is not None, 'no ghcr existence-walk step to delete'
-start = idx
-while not re.match(r'^\s*- ', lines[start]):
-    start -= 1
-end = idx + 1
-while end < len(lines) and not re.match(r'^\s*- ', lines[end]):
+idx = next((i for i, l in enumerate(lines) if 'ghcr_code=$(ghcr_manifest_code' in l and 'while' not in l), None)
+assert idx is not None, 'no ghcr existence-walk start to delete'
+ind = lines[idx][:len(lines[idx]) - len(lines[idx].lstrip())]
+end = idx
+while not (lines[end].rstrip() == ind + 'done'):
     end += 1
-open(p, 'w').write(''.join(lines[:start] + lines[end:]))
+    assert end < len(lines) + 100, 'unbalanced walk block'
+lines = lines[:idx] + lines[end + 1:]
+t = ''.join(lines)
+import re
+m = re.search(r'(?m)^([ \t]*)for tag in \$ghcr_tags; do\n([ \t]*)docker push "\$tag"\n\1done\n', t)
+assert m, 'no unconditional ghcr push loop to wrap'
+g1, g2 = m.group(1), m.group(2)
+wrapped = (g1 + 'for tag in $ghcr_tags; do\n' + g2 + 'if true; then\n' + g2 + '  docker push "$tag"\n'
+           + g2 + 'fi\n' + g1 + 'done\n')
+open(p, 'w').write(t[:m.start()] + wrapped + t[m.end():])
 PY
 }
 mut_bt5() { python3 - "$1" <<'PY'
@@ -965,17 +1081,19 @@ t = t[:end] + push + t[end:]
 open(p, 'w').write(t)
 PY
 }
-mut_bt7() { python3 - "$1" <<'PY'
+mut_bt7() { # the general-lane sneak-in: restore the detect call and the
+# matrix-templated build context ⇒ b7 (detect mode) + b8 (fixed target);
+# b4 tolerated (the matrix. accessor re-enters through the same string).
+python3 - "$1" <<'PY'
 import re, sys
 p = sys.argv[1]
 t = open(p).read()
-mark = '$(bash scripts/forgejo-container-detect.sh detect)'
-assert mark in t, 'no detector call to replace'
-inline = ('$(printf \'%s\\n\' $MANUAL_CONTAINERS | tr \', \' \'\\n\\n\' '
-          '| { grep -E \'^[a-z0-9]+(-[a-z0-9]+)*$\' || true; } '
-          '| while IFS= read -r n; do { [ -f "containers/$n/Dockerfile" ] && printf \'%s\\n\' "$n"; } || true; done '
-          '| sort -u | awk \'BEGIN{printf "["} NR>1{printf ","} {printf "\\"%s\\"", $0} END{printf "]\\n"}\')')
-open(p, 'w').write(t.replace(mark, inline, 1))
+assert '"containers/forgejo-runner"' in t, 'no fixed build context to loosen (the general lane is already loose — probe targets the reduced file)'
+t = t.replace('"containers/forgejo-runner"', '"containers/${{ matrix.container }}"', 1)
+m = re.search(r'(- name: build and push\n(?:.*\n)*?[ \t]*)set -euo pipefail\n', t)
+assert m, 'no build-and-push step body to restore the detect call into'
+t = t[:m.end()] + '          picked=$(bash scripts/forgejo-container-detect.sh detect)\n' + t[m.end():]
+open(p, 'w').write(t)
 PY
 }
 mut_bt8() { python3 - "$1" <<'PY'
@@ -983,26 +1101,39 @@ import re, sys
 p = sys.argv[1]
 t = open(p).read()
 m = re.search(r'(?m)^on:\s*$', t) or re.search(r'(?m)^true:\s*$', t)
-assert m, 'no on: mapping line to arm'
-ins = m.end() + 1
-open(p, 'w').write(t[:ins] + '  push:\n    branches: [main]\n' + t[ins:])
+if m:
+    ins = m.end() + 1
+    open(p, 'w').write(t[:ins] + '  push:\n    branches: [main]\n' + t[ins:])
+else:
+    m2 = re.search(r'(?m)^on:[ \t]+workflow_dispatch[ \t]*$', t)
+    assert m2, 'no on: surface (mapping or scalar) to arm a live push trigger on'
+    open(p, 'w').write(t[:m2.start()] + 'on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n' + t[m2.end():])
 PY
 }
-mut_bt9() { python3 - "$1" <<'PY'
+mut_bt9() { # THE TRAP PROBE: restore the dispatch input the owner ruled
+# away ⇒ b1 red by construction — the silent-empty failure mode re-armed.
+python3 - "$1" <<'PY'
 import re, sys
 p = sys.argv[1]
 t = open(p).read()
-guard = """          if [ -z "${MANUAL_CONTAINERS//[[:space:]]/}" ]; then
-            echo 'empty dispatch list is rejected' >&2
-            exit 1
-          fi
-"""
-m = re.search(r'(?m)^([ \t]*)[A-Za-z_][A-Za-z0-9_]*=\$\(bash scripts/forgejo-container-detect\.sh detect\)\s*$', t)
-assert m, 'no standalone detect assignment to guard'
-t = t[:m.start()] + guard + t[m.start():]
-t2, n = re.subn(r'(?i)(empty[^\n]{0,60}?)(nothing|no-op|no op)', r'\1rejected', t)
-assert n >= 1, 'no empty-no-op law wording to flip'
-open(p, 'w').write(t2)
+m = re.search(r'(?m)^([ \t]*)workflow_dispatch\s*:?\s*(\{[ \t]*\})?\s*$', t)
+if m:
+    ind = m.group(1)
+    block = (ind + 'workflow_dispatch:\n'
+             + ind + '  inputs:\n'
+             + ind + '    containers:\n'
+             + ind + "      description: 'names to mint'\n"
+             + ind + '      required: false\n'
+             + ind + "      default: ''\n"
+             + ind + '      type: string\n')
+    t = t[:m.start()] + block + t[m.end():]
+else:
+    m2 = re.search(r'(?m)^on:[ \t]+workflow_dispatch[ \t]*$', t)
+    assert m2, 'no workflow_dispatch surface (mapping or scalar) to restore the input on'
+    block = ('on:\n  workflow_dispatch:\n    inputs:\n      containers:\n'
+             "        description: 'names to mint'\n        required: false\n        default: ''\n        type: string\n")
+    t = t[:m2.start()] + block + t[m2.end():]
+open(p, 'w').write(t)
 PY
 }
 mut_bt10() { python3 - "$1" <<'PY'
@@ -1015,16 +1146,16 @@ open(p, 'w').write(t.replace('runs-on: ubuntu-22.04',
 PY
 }
 
-leg_bt1()  { probe bt1  mut_bt1  b2   ''        'runs-on flipped to the baked ubuntu-24.04 (the paradox via a schedulable-but-unpublished label)'; }
-leg_bt2()  { probe bt2  mut_bt2  b3   ''        'the null-widen clause added to every job guard (the dev-mints-calendar hazard P3 rejected)'; }
+leg_bt1()  { probe bt1  mut_bt1  b2   ''        'runs-on flipped to the baked ubuntu-24.04 (the paradox via a schedulable-but-unpublished label; g1 also reddens in the real tree — cross-suite tooth)'; }
+leg_bt2()  { probe bt2  mut_bt2  b3   ''        'the null-widen clause added to the guard (the dev-mints-calendar hazard P3 rejected)'; }
 leg_bt3()  { probe bt3  mut_bt3  b5   ''        'the ghcr/own push chains swapped (the gap would land on the pinned side)'; }
-leg_bt4()  { probe bt4  mut_bt4  b5   ''        'the ghcr-side walk block deleted (N published over a taken ghcr tag)'; }
+leg_bt4()  { probe bt4  mut_bt4  b5   ''        'the ghcr existence-walk deleted AND the ghcr push wrapped in a condition (walk gone; the F1 semantic skip-if-exists the lexical ban could not see)'; }
 leg_bt5()  { probe bt5  mut_bt5  'b3 b6' ''     'the instance host literal inserted in a comment (g1 counts comments; the b3/b6 re-pin must too)'; }
-leg_bt6()  { probe bt6  mut_bt6  b6   ''        'a peer push arm with vars.FORGE_PUSH_TOKEN_DEV-era credentials added (the NO-PEER ruling own teeth)'; }
-leg_bt7()  { probe bt7  mut_bt7  b7   b8        'the shipped detector call replaced by an inline name filter (P6 reuse broken; b8 tolerated as the behavior twin)'; }
+leg_bt6()  { probe bt6  mut_bt6  b6   ''        'a peer push arm with vars.FORGE_DEV_REGISTRY + secrets.FORGE_PUSH_TOKEN_DEV added (the NO-PEER ruling own teeth)'; }
+leg_bt7()  { probe bt7  mut_bt7  'b7 b8' 'b4'   'the general lane sneak-in: detect call restored + the fixed build context loosened to the matrix (b4 tolerated — the matrix. accessor re-enters through the same string)'; }
 leg_bt8()  { probe bt8  mut_bt8  b1   ''        'a live push: trigger armed inside on: (the double-publish P1 rejected)'; }
-leg_bt9()  { probe bt9  mut_bt9  'b1 b8' ''     'the empty dispatch list made fatal and the law wording flipped (b8 shape + b1 wording pin, per C01)'; }
-leg_bt10() { probe bt10 mut_bt10 b2   'b3 b6'   'runs-on pointed at the instance calendar ref (the exact paradox re-entry: an image this lane has not yet minted)'; }
+leg_bt9()  { probe bt9  mut_bt9  b1   ''        'THE TRAP PROBE — the dispatch input re-armed (the owner-hit silent-empty shape returns; b1 reddens by construction, R1)'; }
+leg_bt10() { probe bt10 mut_bt10 b2   'b3 b6'   'runs-on pointed at the instance calendar ref (the exact paradox re-entry: an image this lane has not yet minted; the URL-bearing ref trips b3+b6 as documented collateral)'; }
 
 run_leg b1  leg_b1
 run_leg b2  leg_b2

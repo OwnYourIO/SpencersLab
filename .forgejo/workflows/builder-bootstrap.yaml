@@ -1,51 +1,63 @@
-# Dispatch-only recovery lane that (re)mints any container's calendar tags.
+# Single-purpose recovery lane: a bare dispatch (re)mints the lab's build
+# image, containers/forgejo-runner — the baked job image every other
+# workflow in this family schedules on.
+#
 # It exists because of a bootstrap paradox, dated 2026-11-22
-# (cf-6-feat-builder-bootstrap): every other workflow in this family runs on
-# the baked job image this very pipeline publishes, so the moment that image
-# is missing or stale the normal lanes cannot start and cannot heal
-# themselves. This lane breaks the circle by running on the PUBLIC act image
-# (the ubuntu-22.04 label, which maps outside this repo to an upstream
-# act-22.04 that is schedulable without anything from here having been
-# published first) and using the live in-pod dind socket, exactly like the
-# baked lanes do.
+# (cf-6-feat-builder-bootstrap): every other workflow runs on the baked
+# job image this very pipeline publishes, so the moment that image is
+# missing or stale the normal lanes cannot start and cannot heal
+# themselves. This lane breaks the circle by running on the PUBLIC act
+# image (the ubuntu-22.04 label, which maps outside this repo to an
+# upstream act-22.04 that is schedulable without anything from here
+# having been published first) and using the live in-pod dind socket,
+# exactly like the baked lanes do.
+#
+# Scope ruling (owner, 2026-11-22, cf-6-feat-builder-bootstrap-1): the
+# lane is responsible ONLY for the build image. The earlier general shape
+# — a dispatch naming containers for a rebuild — was superseded after the
+# owner hit its blank-field silent-empty no-op. A dispatch takes no input:
+# this lane exists to mint exactly one image, so the button IS the whole
+# answer and the trap is structurally gone.
 #
 # Trigger: workflow_dispatch ONLY, by ruling (P1). A second auto-push arm
-# would double-publish against containers-build on every bump merge once the
-# paradox is healed, and it would need a per-run existence check to avoid
-# clobbering legitimate baked-lane builds. Collision with containers-build
-# cannot race a publish anyway: this lane fires only on human dispatch and
-# the lab runner has capacity 1, so every job of every workflow serializes
-# through one pod; the queue-waiting concurrency block below keeps even two
-# dispatches honest. containers-build stays the automatic lane.
+# would double-publish against containers-build on every bump merge once
+# the paradox is healed, and it would need a per-run existence check to
+# avoid clobbering legitimate baked-lane builds. Collision with
+# containers-build cannot race a publish anyway: this lane fires only on
+# human dispatch and the lab runner has capacity 1, so every job of every
+# workflow serializes through one pod; the queue-waiting concurrency
+# block below keeps even two dispatches honest. containers-build stays
+# the automatic lane.
 #
-# ROLE guard is NARROW on unset: this lane MINTS calendar tags, so it belongs
-# to the fail-safe class with main-sync/renovate/release, not to
+# ROLE guard is NARROW on unset: this lane MINTS calendar tags, so it
+# belongs to the fail-safe class with main-sync/renovate/release, not to
 # containers-build's builder-class widen. A widen here would let an
 # unset-ROLE dev-role instance mint calendar releases — the role-law
 # violation the design pre-rejected. A dispatch on a dev-role instance is
 # therefore inert by guard, not by accident: the recovery story is
-# prod-role-only; the dev instance's own lane stays the automatic build path.
+# prod-role-only.
 #
-# Targets (owner ruling 2026-11-22, P4'): ghcr.io/ownyourio AND the building
-# instance's own registry, the same three tags on both — NO third target of
-# any shape, no extra credential or variable (the credential surface is
-# closed by contract suite b6; a future cross-host arm must earn a fresh
-# owner ruling first).
+# Targets (owner ruling 2026-11-22, P4'): ghcr.io/ownyourio AND the
+# building instance's own registry, the same three tags on both — NO
+# third target of any shape, no extra credential or variable (the
+# credential surface is closed by contract suite b6; a future cross-host
+# arm must earn a fresh owner ruling first).
 #
-# Calendar law, mirrored from containers-build exactly: N is one past the
-# highest yy.mm.* tag across BOTH registries, each side advanced past any
-# manifest it already holds, every walk finished before the first push; one
-# fixed month per job; push order ghcr then own so a half-failed run gaps
-# the side the fleet has not pinned. There is NO skip-if-exists mode: every
-# successful publish mints a fresh N, and a re-dispatch of unchanged content
-# mints N+1 too — gaps, never clobbers. Expect the first cold mint of a
-# ~10GB-class image to run near the 30-minute runner ceiling; a timeout red
-# is retry-safe under this law and each retry resumes warm.
+# Calendar law, mirrored from containers-build exactly: N is one past
+# the highest yy.mm.* tag across BOTH registries, each side advanced
+# past any manifest it already holds, every walk finished before the
+# first push; one fixed month per job; push order ghcr then own so a
+# half-failed run gaps the side the fleet has not pinned. There is NO
+# skip-if-exists mode: every successful publish mints a fresh N, and a
+# re-dispatch of unchanged content mints N+1 too — gaps, never clobbers.
+# Expect the first cold mint of the ~10GB-class build image to run near
+# the 30-minute runner ceiling; a timeout red is retry-safe under this
+# law and each retry resumes warm.
 #
-# Renovate churn warning: every runs-on line below is the paradox guard. The
-# built-in runs-on manager proposes repo-wide bumps; one auto-PR flipping
-# this file to a baked label re-arms the paradox — the suite reddens it, and
-# label-bump PRs stay human-merged.
+# Renovate churn warning: the runs-on line below is the paradox guard.
+# The built-in runs-on manager proposes repo-wide bumps; one auto-PR
+# flipping this file to a baked label re-arms the paradox — the suite
+# reddens it, and label-bump PRs stay human-merged.
 #
 # Steps are plain shell; the instance registry host is derived from the
 # server URL inside steps, never a literal; the Actions job token cannot
@@ -53,73 +65,14 @@
 
 on:
   workflow_dispatch:
-    inputs:
-      containers:
-        description: 'Container names to (re)mint (comma/space separated), or the literal all for every containers/<name> dir carrying a Dockerfile. An empty list builds nothing.'
-        required: false
-        default: ''
-        type: string
 
 concurrency:
   cancel-in-progress: false
 
 jobs:
-  detect:
+  publish:
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-22.04
-    outputs:
-      containers: ${{ steps.pick.outputs.containers }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: diag
-        run: |
-          set -euo pipefail
-          echo "ROLE=[${{ vars.ROLE }}]"
-          echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
-
-      - name: resolve the dispatch list
-        id: pick
-        env:
-          EVENT_NAME: workflow_dispatch
-          MANUAL_CONTAINERS: ${{ forgejo.event.inputs.containers }}
-        run: |
-          set -euo pipefail
-          # The all keyword expands HERE, before the call: the shipped
-          # detector gates names and stays byte-untouched (P6). Enumerating
-          # the Dockerfile-bearing dirs only feeds the detector's own gates;
-          # it is not a second name filter.
-          if [ "$MANUAL_CONTAINERS" = "all" ]; then
-            MANUAL_CONTAINERS=$(for d in containers/*/; do
-              n=${d#containers/}
-              if [ -f "containers/${n%/}/Dockerfile" ]; then printf '%s\n' "${n%/}"; fi
-            done | sort -u | tr '\n' ' ')
-          fi
-          # Assign before emitting: a substitution inside echo's argument
-          # reports echo's exit status, so a failed detection would write an
-          # empty output (and the publish matrix would be built from an
-          # empty list) instead of failing this job on the detector's exit.
-          picked=$(bash scripts/forgejo-container-detect.sh detect)
-          # The verdict and the raw input go to the job log: a green run that
-          # published nothing must read differently from one whose list
-          # silently resolved to nothing. An empty dispatch list is the
-          # documented no-op intent (family silent-empty law), so unlike a
-          # push or PR it earns no warning here.
-          echo "dispatch containers: $picked (input [$MANUAL_CONTAINERS])"
-          # Forgejo exports the GITHUB_* compatibility family; the FORGEJO_*
-          # name is the fallback per the v15.0 reference.
-          echo "containers=$picked" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
-
-  publish:
-    if: contains(vars.ROLE, 'prod') && needs.detect.outputs.containers != '[]'
-    needs: detect
-    runs-on: ubuntu-22.04
-    name: bootstrap ${{ matrix.container }}
-    strategy:
-      # One container's failure must not cancel its siblings'.
-      fail-fast: false
-      matrix:
-        container: ${{ fromJSON(needs.detect.outputs.containers) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -159,7 +112,7 @@ jobs:
           forge_registry=${FORGE_SERVER_URL#https://}
           forge_registry=${forge_registry%/}
           forge_pat='${{ secrets.FORGE_PUSH_TOKEN }}' && printf '%s' "$forge_pat" | docker login "$forge_registry" -u forge-push --password-stdin
-          forge_api="https://$forge_registry/v2/curatedforest/${{ matrix.container }}"
+          forge_api="https://$forge_registry/v2/curatedforest/forgejo-runner"
           month=$(date +%y.%m)
           n_forge=1
           # Mirrored tolerance posture: absence must arrive as an HTTP
@@ -211,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           . ./calendar.env
-          ghcr_api="https://ghcr.io/v2/ownyourio/${{ matrix.container }}"
+          ghcr_api="https://ghcr.io/v2/ownyourio/forgejo-runner"
           n_ghcr=1
           # The anonymous pull-scoped token is enough to read a published
           # image's tag list and manifests. Neither read may fail on status:
@@ -224,7 +177,7 @@ jobs:
           # read-authenticated check. Any other code is a registry
           # malfunction, not an absence, and stays fatal; transport errors,
           # as everywhere here, are fatal via curl's exit code.
-          ghcr_token_resp=$(curl -sS -w '\n%{http_code}' "https://ghcr.io/token?scope=repository:ownyourio/${{ matrix.container }}:pull")
+          ghcr_token_resp=$(curl -sS -w '\n%{http_code}' "https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull")
           ghcr_token_code=${ghcr_token_resp##*$'\n'}
           if [ "$ghcr_token_code" = 200 ]; then
             ghcr_token=$(printf '%s' "${ghcr_token_resp%$'\n'*}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
@@ -298,8 +251,8 @@ jobs:
           # N the other side has already taken.
           n=$n_ghcr
           if [ "$n_forge" -gt "$n" ]; then n=$n_forge; fi
-          ghcr_image="ghcr.io/ownyourio/${{ matrix.container }}"
-          forge_image="$forge_registry/curatedforest/${{ matrix.container }}"
+          ghcr_image="ghcr.io/ownyourio/forgejo-runner"
+          forge_image="$forge_registry/curatedforest/forgejo-runner"
           ghcr_tags="$ghcr_image:$month.$n $ghcr_image:latest $ghcr_image:main"
           forge_tags="$forge_image:$month.$n $forge_image:latest $forge_image:main"
           build_args=()
@@ -311,7 +264,7 @@ jobs:
           # classic-store build. This lane pulls its (large) base once onto
           # that volume and every later dispatch resumes warm, which is what
           # keeps the 30-minute ceiling survivable on a cold mint.
-          docker build "${build_args[@]}" "containers/${{ matrix.container }}"
+          docker build "${build_args[@]}" "containers/forgejo-runner"
           # ghcr first: a half-failed run leaves the gap on the forge side,
           # the newer line the fleet's pins have not adopted.
           for tag in $ghcr_tags; do
