@@ -175,6 +175,14 @@
       "known_stale_citations": "C01 review's values.yaml:193-194 (now 237-238) and plan Commands 67P baseline (now 70P) — historical, tests position-agnostic, no action"
     }
   },
+  "research_followup": {
+    "at": "2026-11-22",
+    "directive": "owner: research round — systematic fix for churning-target blank rate panels + narrow-range viewing",
+    "session": "ses_dfa6a7f8fffecA9K6RyBr1xFRf",
+    "deliverable": "RESEARCH.md (33.7KB, 35+ sources, vendored-chart-source grounding)",
+    "coord_resolution": "O-1 RESOLVED POSITIVE by coord's live Prometheus reads this session (radiance:decode_tokens_per_second=283.4, prefill gauge present in job radiance catalog) — dashboard JSON omits them, engine ships them",
+    "owner_decisions_open": ["O-2 third annotation ruling (k8s.grafana.com/instance templated Release.Name) vs wrapper extraDiscoveryRules fallback — O-2 contradicts the cf-145 exactly-two ruling by design", "O-3 overlay shape: inline json: (uncontested, rollout-gated) vs sidecar ConfigMap (live, chart-comment contested)", "upstream ask list (Q5): TPS gauges in JSON panels, instance-free grouping, radiance:info"]
+  },
   "chunks": {
     "C01": {
       "status": "done",
