@@ -266,6 +266,20 @@ rejected, why.
   because that would put it on the PARKED q27 lane: a second silent failure on the same surface, after D16
   already concentrated every other tier on the single live fn lane. Recorded in
   `tests/pipeline-models/TEST_SPEC.md` §4 so dev and review read one law instead of a gap.
+- 2026-11-22 coord-ruling D30 (**test-file edits are never assignable to a dev tier** — from C01's NI-1/NI-2).
+  Dev permissions deny `tests/**` by design, so any chunk instruction of the form "dev flips this constant in
+  the testlib" is unsatisfiable and silently transfers work that belongs to the test wave. Binding for
+  C02-C06: every needle home (bash AND python AND `TEST_SPEC` prose) is pre-flipped by the test session; dev
+  changes only implementation, values, notes and generated surfaces; a leg dev believes is wrong is escalated
+  as NEEDS_INFO and repaired by the test session, never by dev, review or me. Corollary proven this round: the
+  python twin at `amd_gpu_testlib.py:46` and the spec heading at `TEST_SPEC.md:4556` had to move in the SAME
+  test-session turn as the bash twins, because n3's zero-stale sweep scans `tests/` too.
+- 2026-11-22 coord-ruling D31 (**gate-integrity rule for early-green legs**): a leg that turns green on an
+  incidental token is a BROKEN gate, not progress. `test_c04_supersession_annotation_on_the_2026_10_27_ruling`
+  went green on dev's `renamed 2026-11-22` date comment rather than on C04's substance; it is re-anchored to
+  the real claim + same-wave `replicas: 0` and must stay a designed red until C04 lands. Reviewers may not
+  credit a chunk for a leg that was already green when the chunk started — the per-chunk designed-red
+  inventory in STATE is the baseline, not the count at review time.
 
 ## Deferred
 - DRA lane (triggers in D11) — recorded, no action.

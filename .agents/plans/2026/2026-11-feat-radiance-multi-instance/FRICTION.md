@@ -164,3 +164,45 @@ Carried in from the upstream tickets this one builds on (verified at base `193c1
   never fixed by reviewer or coordinator), authorized narrowly, with `bash -n` + per-leg runs required
   before the wave is committed. Lesson: when I bar edits, ask for defects to be REPORTED AND REPAIRED in a
   following authorized turn, not left in the tree. · fixed-by-recipe)
+- 2026-11-22 · dev(C01) · **needle homes assigned to a tier that cannot write them + one plan premise flat
+  wrong + one defective needle.** (a) The test wave called `amd_gpu_testlib.py`'s python constants "dev's C01
+  edit site", but dev's permissions deny `tests/**` — its probe edit returned `Permission denied: edit`, and
+  `git status` proves ZERO test paths in its 9-file set. (b) The plan says C01 flips pool-name legs INSIDE
+  `charts/radiance/tests`: false. Radiance carries no pool-name constants; it reddens through the `AMDNAMES`
+  import chain, so C01 took it 24F→33F (9 constants-lag legs, one root cause) before NI-1 could fix them.
+  (c) `test_provenance.py:512` asserts `R9700_PRODUCT_STRING == "gpu-r9700"`, contradicting :326/:330 in the
+  same file AND the sanitizer law (`sanitize('gpu-r9700') == 'gpu-gpu-r9700'`) — unsatisfiable by ANY legal
+  implementation, and not constants-lag. (d) `TEST_SPEC.md:4556`: the test wave's own C01 heading carries the
+  retired literal whole, so the suite flags its own record.
+  · resolution: NI-1/NI-2 routed to the test session (repo law: a faulty validation is never fixed by
+  reviewer or coordinator), with the assembled-constant law restated so the retired literal is never
+  contiguous. General rule for later chunks: **never assign a test-file edit to dev** — needles are
+  test-owned by permission design; the bash twin pre-flip was right, the python twin should have been too.
+  · fixed-by-routing (class OPEN: audit every remaining chunk for "test-file edit assigned to a tier that
+  cannot write it")
+- 2026-11-22 · dev(C01) · **two legs flipped green EARLY — gate integrity, not progress.** (a)
+  `test_c04_supersession_annotation_on_the_2026_10_27_ruling` went green on dev's incidental
+  `renamed 2026-11-22` comment at `charts/llama-swap/values.yaml:1352`: a date token satisfied it, not the
+  supersession. (b) runbook **T5** flipped green during C01 though the plan booked it for C06 (stash-proven:
+  its baseline-red cause was exactly the new-name gate-(a) needle).
+  · resolution: (a) re-anchored to the substance of C04 (real claim + same-wave `replicas: 0`) and kept a
+  DESIGNED RED; (b) recorded — C06's leg set is one smaller, and no reviewer may read an early-green leg as
+  its chunk's work being done. · fixed-by-repair / recorded
+- 2026-11-22 · dev(C01) · **the two zero-stale sweeps scan different tokens**: bash n3 greps the PREFIXED
+  `amd.com/gpu-r9700-1`, the pytest AC4 leg greps pool-only `gpu-r9700-1`, so their file lists legitimately
+  differ — treating one as proof of the other reads as "the sweep is broken" when it is not.
+  · resolution: always name which sweep produced which list. · fixed-by-this-recipe
+- 2026-11-22 · dev(C01) · **stale prose deliberately left behind, per chunk law**: `charts/amd-gpu/values.yaml`
+  header "(one device each on the ai-gpu node)" survives C01 (C06 owns it); the in-comment lever cite
+  `appset-charts.yaml:83` was stale and was corrected to `:67-70` inside C01's sweep.
+  · resolution: C06 carries the header prose; the cite correction rides C01's commit. · open (C06)
+- 2026-11-22 · dev(C01) · **roster T4's harness faults before the leg executes** (`cp: cannot stat
+  radiance-multi-instance-roster.md`) where it should SKIP with a designed-red message; sibling arms T1-T3
+  fail correctly for the same missing-note cause.
+  · resolution: handed to the test session to harden the arm harness; the red itself is right (the roster doc
+  is C06's to author). · open (repair in flight)
+- 2026-11-22 · dev(C01) · **pipe caveat + self-report drift, both settled by disk**: pytest behind a pipe loses
+  `$?` (counts then come from pytest's own summary line), and dev's interim "12 files changed" was actually 9
+  per `git status`.
+  · resolution: capture rc un-piped whenever a status is being CLAIMED; settle scope from disk, never from a
+  mid-run self-report. · fixed-by-this-recipe

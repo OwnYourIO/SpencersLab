@@ -43,13 +43,19 @@
   },
   "chunks": {
     "C01": {
-      "status": "dev-in-flight",
+      "status": "review-in-flight",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 1,
+      "dev_rounds": 2,
+      "commit": "b577e32fe (impl+notes, 9 files); companions 0c6c58871 test wave, 4c267ca58 NI-1/NI-2 + C04 gate re-arm",
+      "handoffs": [
+        "dev round 1 (ses_dfef47132ffePQg0L6QD3ccyn6): 9 impl+notes files, zero test paths; n1/n2/n4/n5 green, lint/template green, aislop 0E/0W; NEEDS_INFO NI-1 (amd_gpu_testlib.py constants + TEST_SPEC:4556) + NI-2 (test_provenance.py:512 defective needle) routed to the test session per law",
+        "coord ruling D30: test-file edits are NEVER assignable to dev (permissions deny tests/**) — the python needle twin must be pre-flipped by the test wave, exactly like the bash twin",
+        "dev round 2 (same session): restored the cf-143 C08 'upstream feature ask' clause at charts/radiance/values.yaml:349 (its own regression, self-reclassified from 'constants-lag'); full 570-line diff audit found no other required loss; radiance back to the designed 24F/79P (C03 x4 + C05 x20), amd-gpu 0F/36P, naming 5 ok, aislop 0/0",
+        "review (ses_dfed7ef7dffepz4DI7R7c4O7rE) in flight: baseline = designed-red inventory (D31), n2 to run with AMD_GPU_FLIP_COMMIT=b577e32fe, C02 red-set must stay red"
+      ],
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": null
     },
     "C02": {
       "status": "pending",
