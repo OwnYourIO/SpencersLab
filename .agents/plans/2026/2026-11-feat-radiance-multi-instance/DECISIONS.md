@@ -301,8 +301,8 @@ rejected, why.
   RELAXED for that one carrier**). PATH ANNOTATION (correction, not a change of ruling): the four budget paths
   are stated in the suite's Deployment-rooted grammar as
   `$.spec.template.metadata.annotations["checksum/configMaps"]`, `$.spec.template.spec.volumes`,
-  `$.spec.template.spec.initContainers[0].volumes`+`volumeMounts`, `$.spec.template.spec.initContainers[0].command`.
-  My original shorthand "`spec.volumes`" meant the POD-SPEC volumes; a Deployment has no `spec.volumes`, so the
+  `$.spec.template.spec.initContainers[0].command`. My original shorthand "`spec.volumes`" meant the POD-SPEC
+  volumes; a Deployment has no `spec.volumes`, so the
   test needle written from my shorthand named a nonexistent path and made both arms of the delta leg fail for
   ANY carrier. The ruling's intent is unchanged; the exact path is now recorded so no later round re-derives it
   from the shorthand. Asked with the mechanism verified (app-template 5.0.1 renders `command`/
@@ -322,6 +322,25 @@ rejected, why.
   sets asserted independently, so a chart-side script edit cannot silently re-point one lane at the other's pack.
   Order: `agent-plan` folds the plan + `chunks/C03.md` (my tier edits neither) → test wave re-aims the
   equivalence legs to the diff-budget shape → C03 dev round 2 → C03 review.
+- 2026-11-22 coord-ruling D38 (**C03 APPROVED at `b8c01489e`; two of its minors become named work**). C03's
+  review wrote its OWN independent differ rather than trusting the suite's, and confirmed: exactly four delta
+  paths on both lanes, zero unauthorized; script semantics equal (OLD-only statements: NONE; NEW-only: the
+  `-z` empty-scalar guard); all six behavioural arms proven under `dash`; fixture baseline re-validated, not
+  laundered; ledger drift caught doubly; and the fetch/serve coupling asserted at every hop
+  (`FORM PACK = modelPath`, `modelPath == rendered --model` per lane, rendered `PACK=` literal == lane
+  modelPath) — so no lane can fetch one pack and serve another. It also corrected MY overstatement: the
+  empty-scalar guard is behaviourally proven but **no leg asserts the guard token exists**. Work now named:
+  (1) TEST wave — append a guard-token assertion to
+  `test_c03_chart_ships_the_script_form` (`charts/radiance/tests/test_c03_generic_shell.py:253-274`) so a future
+  FORM edit cannot silently drop the guard; dispatched immediately, before C05.
+  (2) C06 wave — annotate three stale law sites in `services/gpu-ai/prod/values.yaml` falsified by C01/D35:
+  `:1103-1108` ("Decorative ledger ONLY … moves NOTHING that renders" — the FORM renders from it now, and it
+  contradicts the `radianceFetch` comment 9 lines below), and the claim-count prose at `:1098-1100` +
+  `:1213-1222` ("the chart pair moved to 2", "OVERLAY-PINS", "inheritance would render the chart's 2" — the
+  chart has shipped no claim since C01). Use the `:1056` annotate idiom. CI cannot catch these (its
+  pair-form regexes miss the 6-space-quoted block), which is precisely why prose needs a named owner.
+  Recorded here because `chunks/*.md` are not editable by my tier (D30-adjacent) — C06's launch brief carries
+  both items verbatim.
 - 2026-11-22 coord-ruling D36 (**`.aislop/history.jsonl` per-run appends are machine churn — never staged into
   work commits**). Evidence: the file has exactly ONE commit in history (`6230e1297`, its cf-6-era
   introduction); every gate run since has left it dirty and no wave commit has ever staged it. So it is tracked
