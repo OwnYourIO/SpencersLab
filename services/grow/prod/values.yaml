@@ -37,7 +37,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   external-secrets-bitwarden:
-    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    version: 1.0.10
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
