@@ -1,12 +1,16 @@
-# C03 equivalence fixture — the rendered Deployment of one radiance release,
-# captured from the tree at 8f3d5bbad902995600cc5f0cc529f2cbe42ebd9c by capture_c03_fixtures.py.
+# C03 delta fixture — the rendered Deployment of one radiance release at the PRE-MOVE
+# base commit 8f3d5bbad902995600cc5f0cc529f2cbe42ebd9c, re-derived by capture_c03_fixtures.py from `git archive`
+# of that commit (never the working tree; the payload guard refuses a write on any
+# difference, so this file's bytes ARE the pinned render, folded).
 #
-# DO NOT EDIT. This is the pre-move side of the byte-equivalence proof in
-# test_c03_generic_shell.py: C03 relocates lane data from the chart into the
-# service block, so the render may not move. The only permitted difference is
-# the pool NAME, folded to <POOL> here and in the leg (the C01 rename rides the
-# same branch); a render that still spells the retired pool folds to <POOL>-1
-# and fails. Re-derive by running the capture script — never hand-edit.
+# DO NOT EDIT. This is the baseline side of the INTENTIONAL-DELTA proof in
+# test_c03_generic_shell.py under owner ruling D35: the block-fed render may now
+# differ on EXACTLY four ruled paths (the pod-template checksum/configMaps
+# annotation, spec.volumes, the init volumeMounts, the init command) and on
+# NOTHING ELSE. Pool names are folded to <POOL> here and in the leg (the C01
+# rename is the one difference C03 may inherit; a retired-pool spelling folds to
+# <POOL>-1 and fails). Re-validate by running the capture script — never
+# hand-edit, never re-point the commit, never delete this fixture.
 # Release: gpu-ai-radiance-q27 (the derived Application name).
 captured_at: '2026-11-22'
 captured_from_commit: 8f3d5bbad902995600cc5f0cc529f2cbe42ebd9c
@@ -176,3 +180,4 @@ deployment:
           name: shm
 pool_token: <POOL>
 release: gpu-ai-radiance-q27
+revalidated_at: '2026-11-22'

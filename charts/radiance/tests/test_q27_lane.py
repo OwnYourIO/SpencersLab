@@ -21,7 +21,6 @@ from __future__ import annotations
 import collections
 import re
 import subprocess
-from pathlib import Path
 
 import pytest
 import yaml
@@ -168,8 +167,9 @@ def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
     Pending beside a live fn, so the subtree must author the claim itself
     (D26: overlays ADD/UPDATE, never REMOVE — an UPDATE is the lawful
     mechanism). The rendered pair equals exactly {cpu 8, memory 24Gi, claim
-    1} in BOTH requests and limits; the independence proof (chart 2 + pin →
-    still 1) is the test_c144_ pair of legs below."""
+    1} in BOTH requests and limits; the independence proof re-pinned under
+    C03/D35 (the chart ships no claim to track) is the test_c144_ pair of
+    legs below."""
     res = R.resources(R.serve_container(R.deployment(_q27_docs())))
     want = {"cpu": str(R.SCALARS["cpuCores"]), "memory": R.Q27_MEMORY, R.GPU_CLAIM: "1"}
     assert res.get("requests") == want, (
@@ -178,47 +178,6 @@ def test_c144_q27_guaranteed_pair_with_overlay_pinned_claim():
         "at 1 (post-flip inheritance renders the chart's 2 — wrong)"
     )
     assert res.get("limits") == want, f"cf-144 C01 AC2: q27 limits {res.get('limits')} != {want}"
-
-
-def _c144_q27_sim_render(chart_claim: str, strip_overlay_pin: bool = False):
-    """Render the q27 release with a SIMULATED chart-level claim count
-    layered chart-defaults < sim-file < overlay-file — the exact -f
-    precedence the appset merge produces (per-app values = the subtree over
-    the chart's own). strip_overlay_pin removes the subtree's claim lines
-    from the copy, simulating dev forgetting (or later deleting) the pin.
-    Returns the serve container's resources map."""
-    import copy
-    import tempfile
-
-    block = copy.deepcopy(R.q27_service_block())
-    assert isinstance(block, dict), (
-        "cf-144 C01: no radiance-q27 subtree — designed-red naming C01 (the overlay pin has "
-        "no host; the pin legs and the subtree land in ONE wave)"
-    )
-    if strip_overlay_pin:
-        res = block["app-template"]["controllers"]["radiance"]["containers"]["radiance"]["resources"]
-        for m in ("requests", "limits"):
-            res.get(m, {}).pop(R.GPU_CLAIM, None)
-    sim = {"app-template": {"controllers": {"radiance": {"containers": {"radiance": {"resources": {
-        "requests": {R.GPU_CLAIM: chart_claim},
-        "limits": {R.GPU_CLAIM: chart_claim},
-    }}}}}}}
-    with tempfile.TemporaryDirectory(prefix="radiance-c144-sim-") as tmp:
-        simf, ovl = Path(tmp) / "sim.yaml", Path(tmp) / "overlay.yaml"
-        with simf.open("w") as fh:
-            yaml.safe_dump(sim, fh)
-        with ovl.open("w") as fh:
-            yaml.safe_dump(block, fh)
-        out = subprocess.run(
-            ["helm", "template", R.Q27_RELEASE, str(R.CHART_DIR),
-             "-f", str(simf), "-f", str(ovl),
-             "--set", "domain=spencerslab.com", "--set", "clusterName=gpu-ai"],
-            capture_output=True, text=True, timeout=300,
-        )
-        if out.returncode != 0:
-            raise AssertionError(f"cf-144 C01: sim render failed:\n{out.stderr}")
-        docs = tuple(d for d in yaml.safe_load_all(out.stdout) if d)
-    return R.resources(R.serve_container(R.deployment(docs)))
 
 
 @helm_skip
@@ -246,26 +205,26 @@ def test_c144_q27_subtree_authors_the_claim_pin_exactly():
 
 @helm_skip
 def test_c144_q27_claim_does_not_track_the_chart_count():
-    """cf-144 C01 AC2 (independence proof): with the chart pair SIMULATED at
-    2 — today's tree or the post-flip one — the q27 render still carries the
-    claim "1" iff the overlay pin exists. Designed-RED today (the subtree has
-    no pin, so the simulated 2 propagates). The teeth arm proves the
-    mechanism is not vacuous: strip the pin from the copy and the same sim
-    renders 2 — 'remove the pin → red' as an executable shape (review
-    re-proves the flip against the real chart)."""
-    res = _c144_q27_sim_render("2")
+    """cf-144 C01 AC2 (independence proof), re-pinned by C03/D35: the sim
+    render it ran is dead because there is no chart-level count to track any
+    more — the mechanism-only chart ships NO claim, so overlay inheritance
+    cannot propagate one (the old teeth arm, "strip the pin → chart value
+    propagates", has no chart value to propagate; the authored-exactness leg
+    above guards the pin's bytes). The executable shape today: zero live GPU
+    claim lines in the bare chart render, and the q27 release still renders
+    exactly 1/1 — its claim has exactly one author, the subtree."""
+    _docs, raw = R.render(service=False)
+    live = [ln.strip() for ln in raw.splitlines()
+            if R.GPU_CLAIM in ln and not ln.lstrip().startswith("#")]
+    assert not live, (
+        f"C03 AC2: the bare chart render carries live claim lines {live} — a shell claim is the "
+        "count every lane would track, which is exactly the coupling cf-144 C01 retired"
+    )
+    res = R.resources(R.serve_container(R.deployment(_q27_docs())))
     got = {m: (res.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
     assert got == {"requests": "1", "limits": "1"}, (
-        f"cf-144 C01: overlay-pinned q27 claim under a simulated chart-2 renders {got}, want "
-        f"1/1 — the subtree must author {R.GPU_CLAIM}: '1' in BOTH maps (P05); today "
-        "there is no pin, so this leg is designed-red naming C01"
-    )
-    res_np = _c144_q27_sim_render("2", strip_overlay_pin=True)
-    got_np = {m: (res_np.get(m) or {}).get(R.GPU_CLAIM) for m in ("requests", "limits")}
-    assert got_np == {"requests": "2", "limits": "2"}, (
-        f"cf-144 C01 teeth arm: pin-stripped render gave {got_np}, want 2/2 — if this fails, "
-        "the sim layering is broken and the independence leg above is passing vacuously "
-        "(half-tripwire class, §12.14)"
+        f"cf-144 C01: q27 renders claim {got} with the chart shipping none — the subtree pin is "
+        "the claim's only author (1/1 expected)"
     )
 
 
@@ -320,18 +279,20 @@ def test_c15_q27_render_sentinel_free():
     )
 
 
-# --- AC3: the init grammar guards BOTH call sites ---------------------------------
+# --- AC3: the init grammar guards BOTH renders ------------------------------------
 
 
 @helm_skip
 def test_c15_q27_init_carries_the_four_pack_literals():
-    """C15 AC3: the q27 init script (overlay command replacement) pins the
-    pack ledger as runnable literals — LFS_SHA a4908940…, PACK the q27
-    .rad, MARKER the .staged-<sha> success artifact, URL the HF resolve
-    path (the marker accepts the $-interpolated fn idiom or the expanded
-    form, same three shapes the fn marker law accepted)."""
-    init = R.fetch_init(R.deployment(_q27_docs()))
-    body = "\n".join(str(t) for t in (init.get("command") or []))
+    """C15 AC3, re-anchored by D35: the q27 lane's RENDERED script — the
+    chart-owned FORM with this lane's scalars substituted (the configMap
+    carrier; the anchor pair helper refuses the interim command shape and a
+    missing carrier, both naming C03 round 2) — pins the pack ledger as
+    runnable values — LFS_SHA a4908940…, PACK the q27 .rad, MARKER the
+    .staged-<sha> success artifact, URL the HF resolve path (the marker
+    accepts the $-interpolated fn idiom or the expanded form, same three
+    shapes the fn marker law accepted)."""
+    _init, body = R.fetch_script_and_init(_q27_docs())
     assert f"LFS_SHA={R.Q27_PACK_LFS_SHA}" in body, (
         "cf-143 C15: the q27 init does not assign the ledgered lfs sha in full — "
         "the marker/gate provenance chain starts here"
@@ -350,20 +311,17 @@ def test_c15_q27_init_carries_the_four_pack_literals():
 
 @helm_skip
 def test_c15_q27_init_grammar_is_the_portable_equality():
-    """C15 AC3 / D27 class law at the NEW call site: the overlay script must
-    use the BusyBox-portable compute+compare equality gate (the C11 shape),
-    carry the rejected GNU forms (--check/--status/-cs/-c -s) as ABSENT from
-    its hash-applet lines, keep curl --continue-at - with the rc-0/33
-    tolerance, and touch the marker only AFTER the guard (exit-1 precedes
-    touch). The chart's own script is byte-untouched — its identical legs
-    live in test_render.py; D27's law guards BOTH copies."""
-    init = R.fetch_init(R.deployment(_q27_docs()))
-    command = init.get("command") or []
-    assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
-        "cf-143 C15: the q27 init is no longer [sh -c <script>] — the grammar legs' "
-        "parse anchor moved; re-read §D3b and re-pin (not silently vacuous)"
-    )
-    script = command[2]
+    """C15 AC3 / D27 class law at the q27 render, parse anchor moved by D35 to
+    the rendered configMap script (chart FORM with the lane's scalars
+    substituted — the anchor-pair helper rejects the interim command body and
+    a missing carrier loudly, naming C03 round 2): the script must use the
+    BusyBox-portable compute+compare equality gate (the C11 shape), carry the
+    rejected GNU forms (--check/--status/-cs/-c -s) as ABSENT from its
+    hash-applet lines, keep curl --continue-at - with the rc-0/33 tolerance,
+    and touch the marker only AFTER the guard (exit-1 precedes touch). Under
+    D35 there is ONE FORM and two rendered substitutions; D27's law guards
+    both renders — the fn-side twin lives in test_render.py."""
+    _init, script = R.fetch_script_and_init(_q27_docs())
     lines = script.splitlines()
 
     def _has_all(tokens, line):
@@ -414,10 +372,12 @@ def test_c15_q27_init_grammar_is_the_portable_equality():
 
 @helm_skip
 def test_c15_q27_init_image_stays_busybox_family():
-    """The overlay replaces the COMMAND only; the init IMAGE stays
-    chart-baked (the pinned curlimages/curl — BusyBox family, §D3b premise).
-    A q27 swap to another family silently un-rules the grammar law (the C11
-    identity-gate lesson, re-armed at the second call site)."""
+    """Under D35 the lane block authors neither command nor image — the init
+    IMAGE is chart-baked (the pinned curlimages/curl — BusyBox family, §D3b
+    premise) and rides the container while the FORM rides the configMap.
+    This leg guards that no later edit swaps the family per lane: a q27 swap
+    silently un-rules the grammar law (the C11 identity-gate lesson, re-armed
+    at the second render)."""
     init = R.fetch_init(R.deployment(_q27_docs()))
     repo = str(init.get("image", "")).rsplit(":", 1)[0]
     assert repo in R.BUSYBOX_FAMILY_REPOS, (

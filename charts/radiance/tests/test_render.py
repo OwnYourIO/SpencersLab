@@ -16,7 +16,10 @@
 # image-identity, grammar, and checksum legs PARAMETERIZED over both live
 # lanes, because D27's law guards each lane's own script). Bare-render legs
 # stay bare: they pin the chart-side mechanism (security, probes, PVC, init
-# image + budget), which did not move.
+# image + budget), which did not move. D35 moves the SCRIPT BODY again — to
+# the chart-owned configMap carrier — so the staging parse anchor is the
+# rendered ConfigMap script and the init command is only its invocation; the
+# image-identity premise stays on the container and the chart values.
 #
 # Run per-directory: python3 -m pytest charts/radiance/tests -v
 
@@ -301,30 +304,26 @@ _STAGING_LANES = {
 @helm_skip
 @pytest.mark.parametrize("lane", sorted(_STAGING_LANES))
 def test_ac2_staging_init_shape(lane):
-    """D10 staging contract, per live lane (C03 carrier re-aim: the scripts
-    moved into the blocks, so the parse runs per lane render): the
-    radiance-fetch command stages the ungated HF pack by curl-resume onto the
-    shared claim with the `.staged-<lfs-sha>` marker (vllm setup-init idiom),
-    loud-failing at container start; the init image is the pinned curl staging
-    image OR the engine image — nothing else (a third image smuggles a build
-    story this ticket does not own)."""
+    """D10 staging contract, per live lane (D35 carrier move: the script FORM
+    rides the chart-owned configMap now, so the parse runs on the rendered
+    script — which carries THIS lane's substituted scalars): the radiance-fetch
+    init stages the ungated HF pack by curl-resume onto the shared claim with
+    the `.staged-<lfs-sha>` marker (vllm setup-init idiom), loud-failing at
+    container start; the init image is the pinned curl staging image OR the
+    engine image — nothing else (a third image smuggles a build story this
+    ticket does not own)."""
     render, lfs_sha, pack_repo = _STAGING_LANES[lane]
     docs, _ = render()
-    init = R.fetch_init(R.deployment(docs))
-    command = init.get("command") or []
-    assert command and all(isinstance(tok, str) for tok in command), (
-        f"C02/D10 [{lane}]: the fetch-init renders no command list (exec-form boot guard: loud fail at "
-        "start, never a sleeping container with a missing script)"
-    )
-    body = "\n".join(command)
+    init, body = _staging_script(lane)
+    assert body, f"C02/D10 [{lane}]: the rendered fetch script is empty"
     assert f".staged-{lfs_sha[:8]}" in body or (
         ".staged-" in body and lfs_sha in body
     ) or (".staged-" in body and any(ln.count("$") >= 1 for ln in body.splitlines() if ".staged-" in ln)), (
         f"C02/D10 [{lane}]: no .staged-<lfs-sha> marker (literal, full-sha, or $-interpolated — the vllm "
-        "marker law) in the staging command"
+        "marker law) in the staging script"
     )
     assert lfs_sha in body or lfs_sha[:8] in body, (
-        f"C02/D10 [{lane}]: the staging command never names the pack lfs sha {lfs_sha[:8]}… — the marker IS "
+        f"C02/D10 [{lane}]: the staging script never names the pack lfs sha {lfs_sha[:8]}… — the marker IS "
         "the landed-file provenance (C06 step 4 sha256sums against it)"
     )
     assert f"{pack_repo}/resolve" in body or "huggingface.co" in body, (
@@ -351,18 +350,15 @@ def test_ac2_staging_init_shape(lane):
 
 
 def _staging_script(lane):
-    """The [sh -c <script>] parse anchor for one live lane's render — the
-    grammar legs refuse to go vacuous when the shape moves (C11), so the same
-    refusal now covers both blocks (C03 carrier move)."""
+    """(init_container, script_text) — one live lane's parse anchor. D35 moved
+    the script body out of the init command into the chart-owned configMap, so
+    the anchor is the rendered ConfigMap script (with the lane's scalars
+    substituted); the command must be the invocation of that script. The legs
+    refuse to go vacuous when the shape moves (C11 law) — a missing carrier or
+    an inline body fails loudly here, naming C03 round 2."""
     render, _sha, _repo = _STAGING_LANES[lane]
     docs, _ = render()
-    init = R.fetch_init(R.deployment(docs))
-    command = init.get("command") or []
-    assert len(command) >= 3 and command[0] == "sh" and command[1] == "-c", (
-        f"C11 [{lane}]: the fetch-init is no longer [sh -c <script>] — the grammar legs' parse anchor "
-        "moved; re-read §D3b and re-pin (not silently vacuous)"
-    )
-    return init, command[2]
+    return R.fetch_script_and_init(docs)
 
 
 @helm_skip
@@ -380,8 +376,13 @@ def test_ac2_staging_image_identity_pinned_and_digest_ledged(lane):
 
     Honest split: the family half is GREEN today (curlimages/curl is in the
     set); the digest-ledger half is DESIGNED-RED until dev adds the one
-    comment line (AC4.3)."""
-    init, _script = _staging_script(lane)
+    comment line (AC4.3). The leg reads the init CONTAINER and the chart
+    values only — under D35 the image premise rides the container while the
+    script FORM rides the configMap, and a carrier absence must not hide a
+    family swap."""
+    render, _sha, _repo = _STAGING_LANES[lane]
+    docs, _ = render()
+    init = R.fetch_init(R.deployment(docs))
     image = str(init.get("image", ""))
     repo = image.rsplit(":", 1)[0]
     assert repo in R.BUSYBOX_FAMILY_REPOS, (
@@ -526,9 +527,12 @@ def test_ac6_service_level_render_is_sentinel_free():
 
 @helm_skip
 def test_reloader_annotation_absent():
-    """C02: reloader annotation OFF — the chart ships NO ConfigMaps, there is
-    nothing to reload (the why is the plan's note; a stale reloader:auto on a
-    configless pod is drift)."""
+    """C02: reloader annotation OFF, and it stays off under D35. C02 shipped
+    configless; C03 round 2 mounts the init script via ConfigMap, and the
+    designed roll path for that carrier is the checksum/configMaps annotation
+    moving the template under the Recreate strategy — the serve container
+    consumes no ConfigMap, so a stakater reloader here would reload nothing
+    and its presence would be drift either way."""
     docs, _ = R.render(service=False)
     ann = (R.deployment(docs)["spec"]["template"].get("metadata") or {}).get("annotations") or {}
     assert not [k for k in ann if "reloader.stakater.com" in k], f"C02: reloader annotations present: {ann}"

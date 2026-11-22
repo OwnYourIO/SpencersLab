@@ -45,6 +45,8 @@ SERVED_ID = "qwen3.8-flash-next-radiance"
 # facts" line is the authority, numbers from RESEARCH "Serving envelope") --------
 MODEL_PATH = "/models/radiance/qwen3.8-next-flash-fp8-iq4r-moe.rad"
 PACK_REPO = "StillDeadcode/qwen3.8-next-flash-fp8-iq4r-moe"
+PACK_FILE = MODEL_PATH.rsplit("/", 1)[1]
+PACK_URL = f"https://huggingface.co/{PACK_REPO}/resolve/main/{PACK_FILE}"
 PACK_BYTES = 121_969_901_568
 PACK_LFS_SHA = "0af5e96244e80c21ac8edca1719dae49b8a201b94a2f3994c3e24026ceaa4d20"
 SCALARS = {
@@ -784,3 +786,90 @@ def lane_peers_evidence(name: str) -> dict:
         assert isinstance(ids, list) and ids and len(set(ids)) == len(ids), \
             f"{name} models_states[{i}] must be a non-empty duplicate-free list"
     return ev
+
+
+# --- 2026-11-feat-radiance-multi-instance C03 round 2 (D35) ------------------
+# D35 rules the chart owns the generic init-script FORM (a configMap carrier,
+# consumed by the init container) and the lane blocks supply PACK/LFS_SHA/URL/
+# MARKER as DATA — app-template 5.0.1 renders container command/args via plain
+# toYaml (no tpl), so a chart-side script cannot ride values. These helpers
+# read the carrier WITHOUT pinning dev's naming choices: the script is found by
+# its content, the scalars' block home is dev's choice, and each lane's facts
+# are asserted against that lane's constants only (D35's cross-lane drift law).
+
+
+def configmap_docs(docs) -> list:
+    return [d for d in docs if d.get("kind") == "ConfigMap"]
+
+
+def init_script_from_render(docs):
+    """(configmap_name, data_key, script_text) of the fetch-script ConfigMap in
+    one release render, or None while the D35 carrier has not landed (the legs
+    name C03 — a designed red, never a skip). Content-identified: a data value
+    carrying a hash-applet line AND the $PACK gate variable — the generic FORM,
+    whatever dev names it. Two hits are themselves a red: one shell, one script
+    FORM (the fork class gotcha 11 names)."""
+    hits = []
+    for d in configmap_docs(docs):
+        for k, v in (d.get("data") or {}).items():
+            if isinstance(v, str) and HASH_APPLET_RE.search(v) and "$PACK" in v:
+                hits.append((d["metadata"]["name"], k, v))
+    assert len(hits) <= 1, (
+        f"C03/D35: {len(hits)} ConfigMap entries look like fetch scripts {[(n, k) for n, k, _ in hits]} — "
+        "the shell ships exactly ONE generic script FORM; per-lane script copies are "
+        "the class D35 closed"
+    )
+    return hits[0] if hits else None
+
+
+def fetch_script_and_init(docs) -> tuple:
+    """(init_container, script_text) — the D35 parse anchor pair, refusing to
+    go vacuous when the shape moves (the C11 law carried onto the carrier):
+    (a) the chart-owned script ConfigMap renders; (b) the init command is an
+    INVOCATION, not a body — no multi-line token, and it names the script's
+    data key. Red until round 2 lands the carrier; the interim shape (script
+    literal in the block command) fails (a) loudly."""
+    init = fetch_init(deployment(docs))
+    hit = init_script_from_render(docs)
+    assert hit is not None, (
+        "C03/D35: no chart-owned fetch-script ConfigMap in this render — the generic script FORM "
+        "has not landed (the interim shape carries the script inside the lane block's command, "
+        "which D35 rules out; designed-red naming C03 round 2)"
+    )
+    _name, key, script = hit
+    command = init.get("command") or []
+    assert command and all(isinstance(t, str) for t in command), (
+        f"C03/D35: init command renders {command!r} — the exec-form invocation of the mounted script "
+        "must be a non-empty string list (loud fail at start, never a sleeping container)"
+    )
+    assert not any("\n" in t for t in command), (
+        "C03/D35: the init command still embeds a multi-line script body — under D35 the command "
+        "invokes the mounted script and carries no bytes of the FORM (this is the budget's "
+        "command path)"
+    )
+    assert any(key in t for t in command), (
+        f"C03/D35: init command {[str(t) for t in command]} never references the script key {key!r} — "
+        "the mounted ConfigMap would be decoration; the init must exec the mounted file"
+    )
+    return init, script
+
+
+def chart_carrier_text() -> str:
+    """All chart-owned text — values.yaml plus every templates/ file. After
+    D35 this is where the script FORM must live and where lane pack literals
+    must NEVER appear."""
+    parts = [(CHART_DIR / "values.yaml").read_text()]
+    parts += [p.read_text() for p in sorted((CHART_DIR / "templates").glob("*")) if p.is_file()]
+    return "\n".join(parts)
+
+
+def lane_pack_literals(lane: str) -> tuple:
+    """One lane's pack identity: (lfs sha, model path, url). The drift-guard
+    legs read ONE lane's tuple per arm — a lane is never validated against the
+    sibling's values (D35: scalar sets asserted independently); the sibling's
+    tuple enters only the negative arm."""
+    if lane == "radiance":
+        return (PACK_LFS_SHA, MODEL_PATH, PACK_URL)
+    if lane == Q27_APP_NAME:
+        return (Q27_PACK_LFS_SHA, Q27_MODEL_PATH, Q27_PACK_URL)
+    raise AssertionError(f"no live-lane pack literals for {lane!r} (known: radiance, {Q27_APP_NAME})")
