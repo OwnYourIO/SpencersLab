@@ -14,6 +14,17 @@
 > this note is the boot print: the receipt decides, never the rate
 > (§R8/D28(6) class law; §R19 Verdict).
 >
+> **[2026-11-22 C06 — the runner literal moved; annotate, never rewrite.]** cf-143
+> D54(4)'s "the pipeline runner-model literal does NOT move" is SUPERSEDED by this
+> ticket's owner ruling D16 (2026-11-22): the hourly runner now rides
+> `gpu-ai/qwen3.8-flash-next-radiance` — the FN lane, not this one (chain cf-106
+> OQ-14 → 2026-11-09 strata-q4 → 2026-11-22, table in
+> `.agents/notes/radiance-multi-instance-roster.md`). And per D20 an explicit
+> `Qwen Dense + Local` board card now routes to `qwen3.8-27b-radiance` — THIS lane —
+> so an explicit ask meets exactly the 502 refusal documented at Step 0 until an
+> owner scale act lands. What stands untouched: this lane is never a default, and
+> the boot print still decides every number.
+>
 > **OWNER-EXECUTED** marks every write-shaped line below; everything else
 > is a read. The cluster's only input is git — ArgoCD applies everything and
 > no step here applies manifests repo-side. No tier grants pod exec: the
@@ -125,6 +136,16 @@ git resting pair stays fn 1 / q27 0 — TP2 decides new git values, not
 live scale. Parked-window truth (the plan's Landing shape): the first
 TP2 sync with q27 UP lands fn Pending until q27 goes DOWN — fn TP2 needs
 2 of 2 cards — loud, designed; sync timing stays the owner's call.
+
+**[2026-11-22 C06 — the swap is now claim-math over the full roster; annotate,
+never rewrite.]** This lane is 1 of 4 roster releases on the pool of 2 (fn 2, q27 1,
+flash-TP1 1, q27-TP2 2, claimed strata 1 — the combination table in
+`.agents/notes/radiance-multi-instance-roster.md` is the prose authority). "fn DOWN
+first, then q27 UP" stands verbatim, generalized: fn(2) + q27(1) = 3 over a pool of 2
+is the same wall, and every other co-boot candidate fails on its own terms — flash-TP1
+stacks claim-wise (2 of 2) but the held RAM (110 + 24 + ~5.3 > 125.08) blocks the
+co-boot; claimed strata is the same pool-YES/RAM-NO shape; q27-TP2 (2) beside this
+lane (1) is 3 again. Boot legs and the console order are unchanged.
 
 Down:
 

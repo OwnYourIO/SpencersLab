@@ -171,7 +171,7 @@ app-template:
           # Alpine, where the hash applets take short options and refuse GNU
           # long ones, while GNU has no short quiet flag. Plain shell equality
           # on the two-space compute output, both digests on one echo line, is
-          # the only gate both families run unchanged (D27/§D3b).
+          # the only gate both families run unchanged (cf-143 D27/§D3b).
           actual=$(sha256sum "$PACK" | cut -d' ' -f1)
           if [ "$actual" != "$LFS_SHA" ]; then
             echo "radiance staging: sha256 MISMATCH expected=$LFS_SHA actual=$actual"
@@ -300,7 +300,7 @@ app-template:
       # one mounted ConfigMap needs (the fetch FORM, D35) is already driven by
       # app-template's checksum/configMaps pod-template annotation, which is
       # deterministic and needs no extra operator; there is no Secret surface at
-      # all (keyless D8), so the reloader would only add a second restart path.
+      # all (keyless cf-143 D8), so the reloader would only add a second restart path.
       containers:
         radiance:
           image:
@@ -330,7 +330,7 @@ app-template:
           # 65532 — readable, never executable. Engine law the wrapper
           # upholds for every lane: no `serve` verb (the engine takes args
           # directly; the vllm/Strata idiom double-verbs it) and no api key
-          # (D8 keyless).
+          # (cf-143 D8 keyless).
 
           command:
             - sh
@@ -374,7 +374,7 @@ app-template:
                   port: 8000
           # No resources here (C03): the VALUES of the pair are lane data and
           # ship in each block. The POD-CLASS LAW is chart-side because it is
-          # not lane data (D15): Guaranteed is a POD property — any container
+          # not lane data (cf-143 D15): Guaranteed is a POD property — any container
           # without an equal requests==limits pair silently downgrades the
           # WHOLE pod to Burstable — and an extended resource REQUIRES the
           # equal integer pair, the kubelet rejects requests != limits for it.

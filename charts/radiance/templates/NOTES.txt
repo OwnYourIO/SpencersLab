@@ -44,7 +44,7 @@ the StillDeadcode/radiance ENGINE; charts/vllm's vllm-radiance image is the
 magiccodingman vLLM FORK; Strata (Niko1221) is an unrelated engine.
 
 Every lane is CLUSTER-INTERNAL (Q1=A): no ingress, no public host, no secret
-surface (D8 keyless). The one client route is the llama-swap peers hop on the
+surface (cf-143 D8 keyless). The one client route is the llama-swap peers hop on the
 existing llama host, whose proxy target is this release's Service — and while
 a lane rests at replicas 0 the Service has no endpoints, so its peer hop
 answers a 502 proxy error: loud and refused, never silently routed to a dead

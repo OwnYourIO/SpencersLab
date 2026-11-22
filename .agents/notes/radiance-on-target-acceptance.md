@@ -251,6 +251,18 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Peer route constants | `timeouts.responseHeader: 1800` (absorbs the cold-load class), `connect: 30`, set-if-undefined floor `"priority?": 5` (`services/gpu-ai/prod/values.yaml` peers.radiance, C04 evidence file) |
 | Strata (stays live, Q5) | Deployment `gpu-ai-llama-swap-strata` — request 64Gi/8 cpu, limit 110Gi; runner route `gpu-ai/qwen3.8-flash-next-strata-q4` |
 
+> **[2026-11-22 C06 — the Strata row above is landing-era; annotate, never
+> rewrite.]** Three moves since: strata carries a REAL claim (1 of the pool of 2) and
+> parks at `replicas: 0` in the same wave (this ticket's D17 answering cf-143 OQ-K —
+> the "stays live" half is superseded, the MoE bring-up order takes its place); the
+> gpu-ai overlay mirrors its memory REQUEST to the 110Gi ceiling (the pod classes
+> Burstable — cpu requests 8 with no cpu limit, per the D44 correction of the earlier
+> "Guaranteed" label); and the runner route moved — the hourly-loop literal is
+> `gpu-ai/qwen3.8-flash-next-radiance` since the 2026-11-22 ruling (chain cf-106
+> OQ-14 → 2026-11-09 strata-q4 → 2026-11-22). The five-claimant roster and the
+> combination table live in `.agents/notes/radiance-multi-instance-roster.md` — the
+> single prose authority.
+
 Digest pairing law: each ledger digest above appears 1:1 in its chart
 (`charts/radiance/values.yaml`, `charts/amd-gpu/values.yaml`) beside the
 `# renovate: datasource=docker` pin comment, or — for the patched-table
@@ -870,6 +882,13 @@ restore against step 3's baseline — that pair of deltas is the acceptance
 file's tail: the owner's "good metrics from Radiance" set is complete only
 with the before/after both sides.
 
+**[2026-11-22 C06 — the runner check above moved; annotate, never rewrite.]** The
+curl above still verifies the RESTORED strata lane after the handshake; what it no
+longer verifies is the hourly runner — the 2026-11-22 ruling (chain cf-106 OQ-14 →
+2026-11-09 strata-q4 → 2026-11-22) moved the runner literal to
+`gpu-ai/qwen3.8-flash-next-radiance`, so a strata-lane 200 and a radiance-lane 200
+are now two separate receipts, and the roster note carries the routing table.
+
 ## Step 11 — Rollback
 
 Three classes, cheapest first — and the command law holds here too: this
@@ -907,6 +926,74 @@ record: `gpu-ai-vllm` sat at 0 replicas out-of-band BEFORE the ticket —
 this repo never added a `replicas: 0` key (owner Q3 ruling) — so whoever
 zeroed it owns that fact (RESEARCH OQ6) and a re-enable sync returns one
 replica with no GitOps archaeology.
+
+## Step 12 — per-lane scale-up acceptance (added by the multi-instance wave, 2026-11-22)
+
+The roster wave parked three more radiance releases (`radiance-q27`,
+`radiance-flash-tp1`, `radiance-q27-tp2`) and turned strata into a claimed lane at 0 —
+the roster table, the claim math and the combination verdicts are in
+`.agents/notes/radiance-multi-instance-roster.md`. Accept any parked lane with this
+shape; it adds no repo-side mutation — reads, curls, and the OWNER-EXECUTED scale acts
+per lane.
+
+**(a) 502-idle receipt first.** While a lane rests at `replicas: 0` its peers hop must
+answer the 502 peer-proxy error (cf-143 D57's loud-refusal law — the idle lane answers
+loudly, never silently). Through the outer chain:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://llama.spencerslab.com/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3.8-27b-radiance","max_tokens":8,"messages":[{"role":"user","content":"ack"}]}'
+```
+
+Expect `502`. A 200 here means the lane is UP out of band (an owner scale act — not a
+repo change), and git-vs-live needs reconciling before anything else is accepted.
+
+**(b) Scale up (OWNER-EXECUTED), then the boot-print capture.** The capture is the leg
+the lane's numbers ride on — the cf-143 D28(6)/D30(2) printed-budget law: read the
+printed tiers, sum them, and pin the held value against the print. The held values are
+OQ-F (110, the fn-class pair flash-TP1 rides) and OQ-G (24Gi, the q27-class pair; the
+q27 lane's own 24Gi is the cf-144 P05 pin); an UP move happens ONLY by a fresh owner
+ruling, never by a console edit or a chart tweak.
+
+```bash
+# OWNER-EXECUTED — operator runs this, never GitOps-ized (Q10; git stays parked):
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=1
+```
+
+Wait out the startupProbe envelope (30-minute class, `/health`), then read the boot:
+
+```bash
+kubectl -n default logs deploy/gpu-ai-radiance-q27 --tail=-1 \
+  | grep -iE 'pinned|budget|argv|wire|P2P'
+```
+
+The wrapper's startup echo is the D43 visibility receipt for the COMPOSED argv —
+`kubectl describe` shows wrapper + env, never the final vector, so this echo (not the
+render) is what the engine actually received. Compare the printed budget terms against
+the lane's held value and record the pair; the git-side twin of the equality is the
+suite's composed-vector law.
+
+**(c) The 502 → 200 flip.** Repeat leg (a)'s curl: expect a 200 completion on the
+lane's own served id. The flip 502 → 200 with no git change IS the acceptance artifact
+for the lane's route; a lane answering 200 while the roster table says 0 is git drift,
+not health.
+
+**(d) Park it back (OWNER-EXECUTED).** Return the lane to its rendered resting value;
+git is authority, so a lane that stays UP past its recorded acceptance is drift:
+
+```bash
+# OWNER-EXECUTED — operator runs this:
+kubectl -n default scale deploy/gpu-ai-radiance-q27 --replicas=0
+```
+
+**(e) Strata extra leg — the ROCr receipt before any restore-back.** Before restoring
+strata, re-check the C04 determinism receipt on the CURRENT host state: host `rocminfo`
+first, and remember the claim pins WHO may schedule beside the lane, not WHICH chip the
+container enumerates (the `/dev/dri` hostPath half stays outside plugin accounting; the
+UUID arm only bites where the host reports nonzero `unique_id`s — a zero renders
+`Invalid-UUID` and the ordinal law alone decides). Then the step-10 handshake and the
+roster note's bring-up order (fn's request off the node first) govern.
 
 ## OPEN — measure (nothing above answered it)
 

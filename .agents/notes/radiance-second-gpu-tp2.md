@@ -18,6 +18,17 @@
 > HELD at 110 per the P11 owner ruling) is in git on `charts/radiance`;
 > the on-target half (per-BDF sysfs, `rocminfo`, first-boot prints) stays
 > owner-executed receipt law.
+> **[SHIPPED (2026-11-22, this ticket C03/C06) — the carrier moved.]** Annotate,
+> never rewrite: the shipped half above has since changed HOME, not content — §7's
+> profile now lives as per-release DATA (the fn-TP2 block's env specifics in
+> `services/gpu-ai/prod/values.yaml`, composed by the chart-owned serve FORM per D43;
+> the suite equality pins the composed vector to §7 byte-for-byte), and the claim
+> pair likewise rides the per-release blocks — `charts/radiance` ships NO claim
+> (claim-split OQ-D posture; cf-143 D26's ADD/UPDATE law makes each block's
+> resources map the whole claim fact). Pool references in this doc already read the
+> D21 rename result `amd.com/gpu-r9700` (the retired `-1`-suffixed name stays
+> assembled per DECISIONS §Conventions). The five-claimant steady state lives in
+> `.agents/notes/radiance-multi-instance-roster.md`.
 > Operator law: the cluster's only input is git (ArgoCD applies everything);
 > every command below is read-only (`cat`, `rocminfo`, `lspci`, `kubectl get`)
 > or owner-executed prose — no step here is a repo-side cluster mutation.
@@ -189,6 +200,13 @@ name. Consequences for a second R9700 (the shape the TP2 ticket inherits):
   plugin claim (`amd.com/gpu`, `amd.com/gpu-8060s` or `gpu-r9700`) —
   R6-Q4 row 3. It keeps hitting cards by host enumeration, which is §4's
   checklist, not §6's pool arithmetic.
+  **[2026-11-22 C06 — the no-claim half is superseded; annotate, never rewrite.]**
+  C04/D17 gave the strata block a real claim pair (`amd.com/gpu-r9700: 1`, parked at
+  `replicas: 0` per cf-143 OQ-K), so "never held a plugin claim" is pre-C04 history;
+  C04's UUID-capability annotation in §4 covers the enumeration side. The
+  host-enumeration half stands: a claim pins WHO may be scheduled beside
+  the lane, never WHICH chip the container enumerates (the `/dev/dri` hostPath half
+  stays outside plugin accounting).
 - **Alternative lane, recorded not planned:** R6 ranked the ROCm DRA driver
   (`k8s-gpu-dra-driver` v1.0.1) #2 — claim-based selection with zero
   llama-swap churn, and its production witness already ships the TP2 shape:
@@ -214,6 +232,14 @@ C03 rocminfo leg is in-run (receipt-gated), the C04 sysfs leg rides the
 deferred follow-up card (OQ-D ruling).
 
 ## 7. Engine recipe — fn TP2 (corrected)
+
+**[SHIPPED (2026-11-22, this ticket C03/C06) — this profile is DATA now.]**
+Annotate, never rewrite: the recipe below shipped byte-for-byte as the fn lane's
+serve SPECIFICS — env entries on the `radiance` block of
+`services/gpu-ai/prod/values.yaml`, composed into the argv by the chart-owned serve
+FORM (D43: the flag vocabulary is FORM, these numbers are per-release DATA, the
+wrapper's boot echo is the receipt). The suite equality makes an extra or missing
+entry, or a drifted value, red against this profile.
 
 The fn HF-card TP2 compose flags, corrected against v1.17.0 (RQ1's recipe
 table, RQ4's verbatim check; and the invocation law from RQ0 — the binary

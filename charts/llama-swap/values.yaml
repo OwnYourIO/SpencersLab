@@ -1340,6 +1340,13 @@ app-template:
             # big llama.cpp rungs off a warm arena, not this number. Observed
             # worst steady set stays the 99.2 GiB of the 288 GB provisioning
             # boot (then inside the 108Gi cap).
+            # [2026-11-22 C06, D44 minor 1 — annotate, never rewrite] the
+            # "Guaranteed-class" label above is corrected: kubelet classes by the
+            # union of dimensions, and the claimed strata pod has requests.cpu 8
+            # with NO limits.cpu — so the pod is BURSTABLE; memory alone is
+            # Guaranteed (requests == limits == 110Gi after the mirror). This
+            # amends the "(req == lim == 110Gi)" parenthetical the D41 ruling
+            # leaned on to MEMORY ONLY; the mirroring ruling itself stands.
             limits:
               memory: 110Gi
           securityContext:
@@ -1358,7 +1365,7 @@ app-template:
             # amd-gpu chart runs the plugin at
             # -resource_naming_strategy=product on gpu-ai ONLY, where the
             # node advertises per-device pools (amd.com/gpu-r9700 for
-            # radiance, the patched-table name — D24's, renamed 2026-11-22
+            # radiance, the patched-table name — cf-143 D24's, renamed 2026-11-22
             # per D21; amd.com/gpu-8060s
             # claimed by the gpu-ai service
             # overlay's null-flip on llama-swap, retiring the nodeId-order

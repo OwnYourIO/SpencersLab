@@ -42,6 +42,17 @@
 # ConfigMap rows below. Fallback trap: an unknown sysfs (device,revision)
 # pair lands its card under bare amd.com/gpu; the on-target receipts and the
 # remedy decision tree live in the cf-143 C06 runbook step-0 gates.
+# [2026-11-22 C06 — annotate, never rewrite] "one device each on the ai-gpu
+# node" and the two-claimant "Claimants" line above are cf-143 landing-era
+# truth. Shipped since: the node carries TWO R9700s (card 2 landed
+# 2026-11-21), so gpu-r9700 is a pool of COUNT 2, and its claimants are FIVE —
+# the four radiance releases (fn 2, q27 1, flash-TP1 1, q27-TP2 2) plus the
+# claimed, parked strata lane (1; this ticket's D17) — while the llama-swap
+# router itself stays on the APU pool. Concurrent claim-1 holders get distinct
+# cards (plugin allocation is exclusive; a claim-1 pod lands the
+# lowest-KFD-NodeId card free at admission). Single prose authority for the
+# claim math and combination verdicts:
+# .agents/notes/radiance-multi-instance-roster.md.
 # WATCH: if a future plugin image ever moves its IDs lookup path (the
 # Dockerfile COPY law that makes this mount apply), the mount silently stops
 # applying and the node falls back to advertising the BAKED-table name ->
