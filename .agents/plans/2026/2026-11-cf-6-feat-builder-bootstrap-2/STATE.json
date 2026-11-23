@@ -12,6 +12,19 @@
   },
   "current_wave": 1,
   "updated_at": "2026-11-22T21:52:00+00:00",
+  "post_close": {
+    "at": "2026-11-22T22:31:00+00:00 (coord, same session — compaction handoff step)",
+    "human_report": "deployed the builder and ran it, but it failed on the build: [error text TRUNCATED — arrived empty after the colon]. 'Deployed' means run -2 (e8c31644d/44086389a/0c18e21c8) was merged and the lane dispatch executed — successor must VERIFY (origin/main moved? Actions runs? registry state?).",
+    "intake": "new run-3 of the bootstrap ticket seeded: `2026/2026-11-cf-6-feat-builder-bootstrap-3` — direct user task, scout-first (instance is observable; the paste is not required).",
+    "candidate_roots_to_ground_NOT_assume": [
+      "docker build in the lane job failing pulling FROM ghcr.io/catthehacker/ubuntu:act-24.04 (~9-10GB) onto the 10 Gi docker-data PVC — the known first-multi-GB-pull caveat (no space left on device?)",
+      "lane 30m job timeout vs cold build (the 5m runner grace) — run-duration shape",
+      "the lane job container itself (act-22.04 anonymous pull — if THAT died it's the pre-lane failure class again: check which step failed, diag/login/walk vs build)",
+      "docker daemon-side failure inside dind vs workflow logic",
+      "secret scope (FORGE_PUSH_TOKEN) — would show at LOGIN not BUILD"
+    ],
+    "lock_note": "no board lock held (direct-task session, never claimed) — pipeline_release(handoff) not applicable; successor starts unclaimed."
+  },
   "final_review": {
     "session": "ses_dfade7487ffec3GGWy2Xcfdtre",
     "status": "APPROVED",
