@@ -218,6 +218,28 @@ rejected, why.
   **PROVISIONAL is OPEN on all four lanes and no agent can close it.** `plan_status: complete` describes the
   AGENT-side work only, and that distinction is written into the note itself, because "complete" and
    "evidenced" are different claims and these values merged on the strength of the first.
+- 2026-11-23 owner-ruling D17 (**the SCHEDULED runner is radiance; cf-126's dispatcher loop must be re-pointed;
+  implemented in a SEPARATE follow-up ticket, NOT here**). Surfaced while making this branch mergeable: `main`
+  carries TWO enabled hourly loop files with different runner models — `.agents/loops/pipeline-worker.md`
+  (`gpu-ai/qwen3.8-flash-next-radiance`, landed by parent-ticket D16 via merge `54cc84188`) and cf-126's
+  `.agents/loops/pipeline-dispatch.md` (`gpu-ai/qwen3.8-flash-next-strata-q4`, 2026-11-09 ruling), both
+  `schedule: 0 * * * *` + `enabled: true`. `main`'s `AGENTS.md` further asserts the worker file "stays
+  BYTE-UNTOUCHED beside it," which is now false on its face because D16 edited it — so the contradiction is
+  **pre-existing in `main`, not introduced by this branch**, and this branch touches neither loop file
+  (verified: the 18-commit diff contains no `.agents/loops/**` path).
+  Owner's ruling: the dispatcher row becomes `gpu-ai/qwen3.8-flash-next-radiance`, honoring D16's "everything
+  including the runner," and the old worker file's status gets resolved as part of that same change so the
+  repo says ONE thing about the scheduled path. Recorded here rather than in a commit message, because the
+  runner literal's own rule is that it moves only by a fresh owner ruling — and this is that ruling, dated.
+  **Operational warning that survives the ruling:** at the moment of this decision BOTH candidate runner lanes
+  are at `replicas: 0` — fn because the owner scaled it down for the 27b-TP2 lane, strata because D26 parked it
+  permanently. So whichever row the dispatcher carries, the hourly board pipeline cannot serve until a lane is
+  scaled up, and radiance's next bring-up is also the roll that carries this ticket's raised context. The
+  follow-up ticket should not be considered done when the literal changes; it is done when a scheduled tick
+  completes against a live lane.
+  Also recorded here: the stale `fix-radiance-context` branch (2026-11-17 attempt at this same raise, two lanes,
+  catalog rows still asserting 200000 — superseded by `b3d7fada8` and by this ticket) was deleted at the owner's
+  word along with its worktree; tip was `e8fa061fe`, recoverable from the reflog.
 - 2026-11-23 coord-ruling **D16 (the receipt gate's fit hole is closed as a gate change; its residual limits are
   recorded as limits, not defects)**. Final review's F2 filed the overstatement as a MINOR with a reword;
   substance required a fix — see D15. Landed at `97d284787`: per-lane `M >= read-configured
