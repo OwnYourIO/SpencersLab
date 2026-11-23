@@ -541,3 +541,47 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    flips survive without presence assertions per the planner's own note. The t20
    index-curl --retry hardening (resilience, not a presence assertion) and the
    D41 test-surface schedule otherwise stand as planned.
+ - 2026-11-23 coord D44 (post-merge adaptation — owner: "merge in main, it had
+   some work done touching on your stuff"): the fix round was already fully
+   merged to main; the branch fast-forwarded cleanly to 8227e8f29 (origin/main
+   ..HEAD empty, nothing of cf-55 lost or ahead). cf-6's builder-bootstrap wave
+   then LEGITIMATELY REWORKED the exact surfaces C05-C07 shipped, and a fresh
+   validation session (ses_df5e131d2ffeiSOiOHk72GHC6n) ruled the merged tree
+   CONSISTENT: five contract suites green — forgejo-runner 8/8, forgejo-release
+   20/20 (de-helm posture survives, release.yaml byte-unchanged from C07),
+   gpu-forgejo-runner 19/19, dev-forgejo-runner 58/58, containers-build 41/41
+   (the three admitted reds t6/t12/x4 are now FIXED by cf-6, as is dev t9 and
+   agents-md c11). SUPERSESSIONS cf-6 landed on cf-55's decisions: 3303b711d
+   bakes helm+cr from digest-pinned OCI STAGES not get.helm.sh (my C05 sidecar-
+   at-build-time mechanism retired — get.helm.sh survives only as a permitted
+   history comment); f236be07f + owner ruling R-B 2026-11-22 re-point the four
+   labels to PER-INSTANCE-REGISTRY refs (git.spencerslab.com/curatedforest/
+   forgejo-runner:26.11.1 base + git.scifi.farm dev-slice override), which
+   SUPERSEDES D39's "ghcr pull source" ruling on the labels surface and LANDS
+   UA-10 (instance-registry pull) via a path other than the deferred proof;
+   3a9f760fe fixes the containers-build ghcr login (PUSH_TOKEN_GH -u OwnYourIO —
+   the publish-failure cause my scout flagged); new .forgejo/workflows/
+   builder-bootstrap.yaml is the FIFTH workflow (bare dispatch, prod-role narrow
+   guard, mints forgejo-runner to the instance registry ONLY — no ghcr arm,
+   rides public act-22.04). UA-8 (calendar-pin amend) stays LIVE but its shape
+   WIDENS to TWO pin sites (chart base x4 + services/dev slice x4); today
+   26.11.1 is month-correct, 26.12.1 only if a mint crosses into December.
+   UA-7's duty stands (framing now names instance-registry pull refs, not ghcr).
+   cf-55's own shipped prose tells no lie post-rework (AGENTS.md "no Renovate
+   lane reads that image's label pin ... bumped by hand" stays true — renovate's
+   only forgejo-runner lane holds the Dockerfile's alpine/helm v3 stage, reads
+   no label lines). TWO PROSE FLAGS belong to cf-6 (report-only, not ours to
+   edit): README "amends the one label-pin line" now has two pin sites since
+   f236be07f; AGENTS.md "the newest published calendar tag" should be
+   registry-qualified since the per-registry walks can diverge (OQ-1=B).
+   FINDINGS F1/F2 (stale generated AGENTS.md on HEAD; radiance's overview.md
+   rewrite dropped the scripts/agent-board-coord-gate.sh line + wake/delegated
+   pair, reddening agents-md c13 and gate t16) are RADIENCE-owned, already
+   booked as their rulesync-twin follow-up (c56cbd48c D17); cf-55 does NOT land
+   that regeneration — the validation session's `rulesync generate --check`
+   side-wrote the incomplete AGENTS.md in this worktree and coord discarded it
+   (git restore) to keep one-branch-one-concern. Remaining admitted-elsewhere
+   reds persist unchanged: ci-surface t4, gate t17, rulesync-surface c19. The
+   release re-run is contract-green and can go green subject to the owner-side
+   registry truth (image 26.11.1 present in each instance registry, else a
+   builder-bootstrap dispatch mints it).
