@@ -1,0 +1,117 @@
+{
+  "feature": "2026/2026-11-feat-radiance-fp8v4-yarn",
+  "plan_file": "2026-11-23-feat-radiance-fp8v4-lane.md",
+  "plan_status": "draft",
+  "plan_status_note": "agent-plan 2026-11-23; REVISED same day by the owner scope-change round (DECISIONS D-15..D-18): R1 fp8_v4 CONFIRMED INFORMED (corrected matrix surfaced; k6_v4 dominance declined), R2 --max-num-seqs PER-LANE 5/5/5/5/8 (the first draft's uniform-8 scope reduction D-7 is VOID; receipt gate re-cut is first-class work), R5 fn no-oversell + baseline-receipt ORDER GATE. Approval is the owner's; nothing executed on plan authority yet.",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-23T22:35:00Z",
+  "kickoff": {
+    "slug": "feat-radiance-fp8v4-lane",
+    "type": "feat",
+    "card": null,
+    "card_note": "owner-directed in-session; no board card, nothing to claim (no pipeline_claim surface for this run)",
+    "origin": "Owner-directed in-session 2026-11-23, grounded by this folder's RESEARCH.md (G1-G6); scope-change round the same day (owner R1/R2/R3 via the coordinator)",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/feat-radiance-multi-instance",
+    "branch": "feat-radiance-multi-instance",
+    "base": "branch HEAD at each chunk start — verify with git rev-parse HEAD; NO sha recorded here by design (one was orphaned by an amend on 2026-11-23 after recording)",
+    "models": "inherited session default — no model override on this launch (an earlier attempt naming a specific openrouter model was registry-rejected and dropped; do not invent model ids in artifacts)",
+    "local": true,
+    "run_tag": null
+  },
+  "stages": {
+    "pre_research": "DONE (RESEARCH.md, grounding round 2026-11-23, agent-research; seqs inventory = its §4.1-§4.3, used as-is + re-verified)",
+    "planning": "DONE (revised by the scope-change round: plan of record + chunks C01-C06, DECISIONS D-1..D-18, FRICTION, STATE)",
+    "test_writing": "PENDING (C01 — red-first test-authority wave INCLUDING the receipt_gate per-lane re-cut + its tests; MUST precede any charts/** or services/** edit)",
+    "chunk_development": "PENDING (waves 2-6: C02 chart FORM two channels; C03 new-lane service wave; C04 resting-lane seqs 5 x3 + q27-note pair; C05 fn seqs wave + runbook pair [ORDER-GATED]; C06 roster docs)",
+    "chunk_review": "PENDING (per-chunk; C05 gets its OWN review — live default route, §4.3 evidence set; final whole-plan review after C06)",
+    "deployment": "PENDING — OWNER-GATED (branch never pushed/merged by agents; owner legs in order: baseline receipts FIRST (current-shape D8 block, D-17 order gate), PR/merge, scale acts + boot prints, per-lane-bar gate run, jsonc trio rows AFTER receipts, ReBAR + Gen3x4 receipts collected separately; all receipts under the D-14 LAW: owner-paste or Loki-quoted print only, never a derived prediction)"
+  },
+  "order_constraints": [
+    "C05 (fn seqs wave) may NOT start until the current-shape baseline receipts are recorded under the receipt LAW or the owner dates a waiver into DECISIONS (RESEARCH §4.1 / DECISIONS D-17) — context-window's C04 is owner-triggered-not-run with NO receipt on record (its 2026-11-23 NEAR-MISS FABRICATED RECEIPT FRICTION entry); this ticket records that, never closes it",
+    "jsonc catalog rows (owner) follow the new lane's boot receipts, never precede them (D27 timing law)",
+    "test authority (C01) lands before any charts/** or services/** edit (parent-D30)"
+  ],
+  "owner_rulings_2026_11_23": [
+    "R1 (informed, final): dtype fp8_v4 — the owner was shown the corrected matrix (fp8_v4 84.7%/6.77 vs k6_v4 95.7%/7.65 at 262144x8) AND that k6_v4 dominates the pin table, and kept fp8_v4 (DECISIONS D-15); k6_v4 figures appear in NO success criterion; no rope scaling; context native 262144; v1.17.0-line pin recorded as risk R-9",
+    "R2 (scope change, supersedes the first draft's uniform-seqs ruling): --max-num-seqs PER-LANE — 5 on the four existing lanes, 8 on the new fp8_v4 lane (DECISIONS D-16); the receipt_gate single-distinct rule now fires by design: per-lane re-cut (chart fallback + lane env) is load-bearing C01 work; fn's eight-admitted smoke becomes five-admitted",
+    "R3: catalog rows authorized, owner-landed (D27); existing rows' limit.context byte-untouched; M9-A2 equality trained==served==262144 unchanged",
+    "R4: ReBAR = owner-side per-card receipt ONLY (lspci Region 0 size=32G; cf-143 PROVEN-DONE + P2P observed on both TP2 pods) — NOT BIOS-change authorization, and SEPARATE from the rank-1 Gen3x4 link-width defect (slot/link training, own owner lane)",
+    "R5: fn leg never oversold — M~4.1 MEASURED refutes the 5 bar; '5 fixes funding' is FALSE; fn = own chunk + own review + order-gated baseline receipts (DECISIONS D-17)"
+  ],
+  "open_questions_batch": [
+    "OQ-1 CLOSED by R1 (2026-11-23 scope-change round; DECISIONS D-15) — kept numbered for traceability",
+    "OQ-2 fifth-trio ladder 5/1/0 + second NAMED low tie in ACCEPTED_LOW_TIES (surface.sh:1499) — no collision-free shape under M9-A2",
+    "OQ-3 new-lane deficit at 8: expected print M~6.77 < 8 → gate refuses — accept explicitly (recorded with the receipt) or pre-authorize an alternative",
+    "OQ-4 spelling: fp8v4 compact identifiers, literal fp8_v4 only as the dtype value (RFC1123)",
+    "OQ-5 baseline timing: when at the next scale act does the current-shape D8 block run (it gates C05's start) — best guess: block-first in the window, seqs sync after",
+    "OQ-6 one tool-calling accuracy A/B on the new lane's first boot before any routing opt-in (v-int4 never scored on agent transcripts), or explicit decline",
+    "OQ-7 fn's standing refutation at 5 (M~4.1): accept deficit-with-honest-bar now (best guess; fn dtype = separate follow-up ruling/ticket) or rule the fn dtype move before C05 syncs"
+  ],
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 5,
+      "depends_on": ["C01", "C02"],
+      "order_gate": "baseline receipts recorded under the D-14 LAW, or dated owner waiver in DECISIONS (D-17)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 6,
+      "depends_on": ["C03", "C04", "C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "Fractional YaRN / 1.5x window (withdrawn by owner ruling; only factor 2 is engine-validated — revisit needs a fresh validation pass + owner ruling + its own boot receipts)",
+    "k6_v4 on the fp8v4 lane (DECLINED INFORMED at the 2026-11-23 scope-change round — DECISIONS D-15; nobody swaps it 'helpfully')",
+    "fn (or q27-TP2-in-place) dtype move to a narrow layout (§C6 — the only lever that funds fn past the 5 bar; changes the live route's output bits; OQ-7 follow-up ruling)",
+    "1.17.0 -> 2.x engine move (2.x refuses v4 dtypes and our MXFP4 packs; issue #457 — owner decision, from-scratch ruling)",
+    "Rank-1 Gen3x4 link retrain/reseat + ReBAR BIOS posture — owner hardware lanes; receipts only"
+  ]
+}
