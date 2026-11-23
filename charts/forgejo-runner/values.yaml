@@ -77,8 +77,12 @@
 # suspect forgejo/runner#1779 (runner >= 12.5 intermittently fails action
 # clones on k3s — git-binary cloning, suspected overlay/MTU interaction).
 # The failure class applies in host mode too (the clone is still git-binary).
-# Mitigations: dind `--mtu 1450` dockerd flag or per-job `network: host`;
-# full research in RESEARCH-dind-supplement.md.
+# Mitigations: the dind `--mtu=1450` dockerd flag is APPLIED since
+# 2026-11-23 (run -3, ticket cf-6-feat-builder-bootstrap-3) in the dind
+# args below, after lane dispatch #215's build-time curl TLS exit 35
+# recurred the class on this host; per-job `network: host` stays the
+# alternative it is for host-mode jobs (no dind daemon to cap there).
+# Full research in RESEARCH-dind-supplement.md.
 
 bitwardenIds:
   # The Bitwarden item holding this release's (uuid, token) identity
@@ -191,6 +195,15 @@ app-template:
         # dockerd ships overlay2 and degrades on its own; forcing vfs is a
         # replan, not a default.
         dind:
+          # D33 egress hardening (2026-11-23, run -3): lane dispatch #215
+          # died building through this daemon with curl TLS exit 35 to
+          # get.helm.sh — the overlay/MTU class of the header note above.
+          # The cap is a dockerd flag, not a container command: the dind
+          # image entrypoint ships no Cmd, so args here are dockerd's and
+          # the socket/probe contract stays byte-untouched. Owner ruling
+          # lands it on both releases (they share this chart).
+          args:
+            - --mtu=1450
           image:
             repository: docker
             # Renovate's built-in helm-values manager tracks this pin

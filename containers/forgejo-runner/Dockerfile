@@ -45,8 +45,18 @@ ARG CR_SHA256=ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b
 # The coder-workspace bake recipe (containers/coder-workspace/Dockerfile
 # :142-148) verbatim in shape, so the version assert catches a mis-baked
 # helm at THIS build instead of at the next release fire.
-RUN curl -fsSL -o "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
- && curl -fsSL -o "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" \
+#
+# Retry budget (ticket cf-6-feat-builder-bootstrap-3, 2026-11-23): the D33
+# egress class recurred at build time — lane dispatch #215 died inside this
+# pair with curl TLS exit 35 to get.helm.sh, and the daemon log names the
+# RUN without telling which of the two fetches dropped, so both arms carry
+# the budget: a half-retried pair still dies the build. Plain --retry does
+# not retry code 35 deterministically; --retry-all-errors (curl >= 7.54,
+# the act base ships 8.5) does. --retry-delay 2 because handshake drops
+# are not instantly-resolved refusals — a zero-delay hammer walks the same
+# drop.
+RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -o "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+ && curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -o "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" \
  && (cd /tmp && sha256sum -c "helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum") \
  && tar -xzf "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" -C /tmp linux-amd64/helm \
  && install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm \
@@ -57,7 +67,10 @@ RUN curl -fsSL -o "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" "https://get.he
 # fire, promoted from run time to build time (D37). The digest check is
 # mandatory — a bare fetch reopens the supply-chain question the sha pin
 # closed. Binary-only extract; the tarball also ships README and LICENSE.
-RUN curl -fSL -o /tmp/cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz" \
+# Same D33 retry budget as the helm bake above: this arm never got a turn
+# in run #215 only because the helm arm died first — the job-NAT path
+# kills every fetch through it alike.
+RUN curl -fSL --retry 5 --retry-all-errors --retry-delay 2 -o /tmp/cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v${CR_VERSION}/chart-releaser_${CR_VERSION}_linux_amd64.tar.gz" \
  && printf '%s  %s\n' "${CR_SHA256}" /tmp/cr.tar.gz | sha256sum -c - \
  && tar -xzf /tmp/cr.tar.gz -C /usr/local/bin cr \
  && chmod 0755 /usr/local/bin/cr \

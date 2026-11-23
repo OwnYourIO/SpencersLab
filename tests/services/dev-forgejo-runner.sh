@@ -338,7 +338,15 @@ try:
                 bad(f't2: {release} — dind has no {probe} (the socket probe keeps the pod observable)')
             if (p.get('exec') or {}).get('command') != ['test', '-S', '/var/run/docker.sock']:
                 bad(f't2: {release} — dind {probe} exec command is {(p.get("exec") or {}).get("command")!r}, expected [test, -S, /var/run/docker.sock]')
-        ok(f't2: {release} — dind sidecar — docker:29.9.2-dind, restartPolicy Always, privileged, socket startup+liveness probes')
+        # Run-3 family (c) render proof (owner ruling 2026-11-23): the D33
+        # TLS-35 egress class recurring at lane dispatch #215 makes the
+        # documented --mtu=1450 cap live on the dind daemon of BOTH
+        # runner releases — and only on dind: the same pair on the runner
+        # container would render validly yet cap nothing. Placement is what
+        # this pin holds; the pair itself is g7's diff fence.
+        if dind.get('args') != ['--mtu=1450']:
+            bad(f't2: {release} — dind args is {dind.get("args")!r}, expected exactly ["--mtu=1450"] — the run -3 egress ruling lands the documented MTU mitigation on every dind daemon; args are dockerd-prefixed by the image entrypoint (verified: docker:29.9.2-dind declares no Cmd)')
+        ok(f't2: {release} — dind sidecar — docker:29.9.2-dind, restartPolicy Always, privileged, socket startup+liveness probes, args [--mtu=1450]')
 
         cons = pod.get('containers') or []
         runner = next((c for c in cons if (c or {}).get('name') == 'runner'), None)

@@ -23,6 +23,13 @@
 # hadolint at the error threshold, honest skip] t8[AC2 designed CI-deferred
 # build shape].
 #
+# Run -3 C01 owner family (a) (2026-11-23): t3 and t4 additionally pin a
+# deterministic retry budget on the three bake fetches — lane dispatch #215
+# died on the D33 egress class (curl TLS exit 35 mid-handshake) at exactly
+# these operands, and plain --retry does not guarantee retrying the
+# TLS-connect class (--retry-all-errors does). Authored RED against the
+# shipped, budget-less Dockerfile; GREEN only once the flags land.
+#
 # Red-first: the image arrives with C05; a missing Dockerfile is the chunk-
 # not-yet-implemented state, not a skip.
 #
@@ -129,6 +136,17 @@ if want t3; then
     fail "t3: no get.helm.sh tarball URL expanding HELM_VERSION — the bake moves the download from every job to this one audited build lane (D33/D38)"
   printf '%s' "$flat" | grep -qE 'helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz\.sha256sum' ||
     fail "t3: the .sha256sum sidecar is not fetched — coder-workspace:142-149 recipe shape (D38)"
+  # Retry-budget pins (run -3 C01 family (a)). Each anchor lives INSIDE one
+  # curl operand span — [^&|] stops at the arm's && so the tarball pin can
+  # never be satisfied by the sidecar curl's flags (or vice versa) — and the
+  # quoted URL boundary tells the two helm fetches apart, so a budget missing
+  # on any single fetch reddens exactly its own leg by name. The class:
+  # lane dispatch #215 died here with TLS exit 35 to get.helm.sh (D33);
+  # --retry-all-errors is what makes curl retry that code deterministically.
+  printf '%s' "$flat" | grep -qE 'curl -fsSL --retry [0-9]+ --retry-all-errors[^&|]*get\.helm\.sh/helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz"' ||
+    fail "t3: the get.helm.sh tarball fetch carries no retry budget (curl -fsSL --retry N --retry-all-errors before the operand) — the D33 egress class killed lane dispatch #215 mid-handshake with exit 35 on one of this pair's two fetches (the step log at O-0 Q4 names which); plain --retry does not retry TLS-connect deterministically (--retry-all-errors does, curl >= 7.54, the base ships 8.5)"
+  printf '%s' "$flat" | grep -qE 'curl -fsSL --retry [0-9]+ --retry-all-errors[^&|]*get\.helm\.sh/helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz\.sha256sum"' ||
+    fail "t3: the .sha256sum sidecar fetch carries no retry budget — the same D33 TLS-35 class (run #215) kills either arm of the verify pair, and a half-retried pair still dies the build"
   printf '%s' "$flat" | grep -qE 'sha256sum -c' ||
     fail "t3: the helm tarball is not sha256sum -c verified"
   printf '%s' "$flat" | grep -qE 'install -m 0755[^&|;]*/usr/local/bin/helm($|[^A-Za-z0-9_-])' ||
@@ -149,6 +167,11 @@ if want t4; then
     fail "t4: no binary-only extract (tar -xzf ... -C /usr/local/bin cr)"
   printf '%s' "$flat" | grep -qE 'chmod 0755[[:space:]]+/usr/local/bin/cr($|[^A-Za-z0-9_-])' ||
     fail "t4: no chmod 0755 /usr/local/bin/cr"
+  # The cr fetch is the third bake download of the same installer-egress
+  # class — it never got a turn in run #215 only because the helm arm died
+  # first (EXPLORE §4.1); the same budget must cover it.
+  printf '%s' "$flat" | grep -qE 'curl -fSL --retry [0-9]+ --retry-all-errors' ||
+    fail "t4: the chart-releaser fetch carries no retry budget (curl -fSL --retry N --retry-all-errors) — same D33 egress class as the helm arm that TLS-35'd lane dispatch #215; -fsSL on the helm arms cannot satisfy this anchor, the pin is cr's own operand"
   printf '%s' "$flat" | grep -qE 'cr --version' ||
     fail "t4: no build-time 'cr --version' assert"
   ok "t4: cr 1.10.1 bakes through the verified pin pair, binary-only, asserted"

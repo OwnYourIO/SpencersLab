@@ -682,10 +682,17 @@ fi
 # plus its labels: key), and by a dated comment — the scaffold lines that
 # carry no forgejo-runner substring (the key, the act-22.04 re-declaration)
 # are bounded by that cap plus dev-forgejo-runner.sh t17's exact five-set,
-# not by silence. The original hazards (a shared-chart fork, a cross-
-# instance or rolling ref, gpu-attributed wiring landing in dev files, any
-# custom-values/dev move) stay red; anything wider than the three classes
-# stays red too.
+# not by silence. The run-3 re-arm (D33 egress family (c), owner ruling
+# 2026-11-23) adds the FOURTH class: the value-exact dind MTU pair (the two
+# block-list lines args: and - --mtu=1450) added under
+# charts/forgejo-runner/values.yaml alone — permission not requirement
+# (absence against a base without it stays green), add-side only (a revert
+# belongs to the dev-forgejo-runner.sh t2 args render pin, the docker_host
+# precedent), and anything short of the exact pair — half, wrong value, flow
+# style, a third copy, another file — stays red. The original hazards (a
+# shared-chart fork, a cross-instance or rolling ref, gpu-attributed wiring
+# landing in dev files, any custom-values/dev move) stay red; anything wider
+# than the sanctioned classes stays red too.
 if [ -z "$DIFF_BASE" ]; then
   skip "g7: no main/origin/main ref to diff against; the blast-radius leg was not run (set GPU_RUNNER_DIFF_BASE)"
 else
@@ -856,6 +863,32 @@ try:
         bad(f'g7: docker_host socket-share line added outside the config template: {stray[:2]} — the cf-6 sanction is the ONE line in templates/secret-runner.yaml; an identical addition in any other chart file is unsanctioned content (the review-r1 compound shape)')
     if sanctioned:
         nonlab = [l for l in nonlab if not (l.startswith('+') and l[1:].strip() == SOCKET_LINE)]
+    # run-3 D33 re-arm (owner ruling 2026-11-23, family (c)): the FOURTH
+    # sanctioned class — the dind MTU pair that keeps the documented TLS-35
+    # egress class (lane dispatch #215's death) from recurring fleet-wide.
+    # Value-exact two-line block list, charts/forgejo-runner/values.yaml
+    # only, add-side only; absence is a permission not a requirement, so a
+    # clean diff never bad()s here. A partial or wrong-shaped pair is simply
+    # NOT exempted and the nonlab fence below reddens it by name.
+    MTU_LINES = {'args:', '- --mtu=1450'}
+    mtu_added, mtu_removed, mtu_stray, cur = [], [], [], None
+    for l in diff_text.splitlines():
+        if l.startswith('+++ b/'):
+            cur = l[6:]
+        elif l[:1] in '+-' and l[1:].strip() in MTU_LINES:
+            if l.startswith('-'):
+                mtu_removed.append(f'{cur}: {l.strip()}')
+            elif cur == 'charts/forgejo-runner/values.yaml':
+                mtu_added.append(l)
+            else:
+                mtu_stray.append(f'{cur}: {l.strip()}')
+    if mtu_removed:
+        bad(f'g7: charts/forgejo-runner diff REMOVES sanctioned MTU-pair lines: {mtu_removed[:4]} — the run-3 fourth class is add-side only, exactly like docker_host: a revert of the dind --mtu=1450 mitigation belongs to the render-pin amendment (dev-forgejo-runner.sh t2), not to a silent values.yaml hunk')
+    if mtu_stray:
+        bad(f'g7: MTU-class lines added outside charts/forgejo-runner/values.yaml: {mtu_stray[:2]} — the fourth-class sanction is the pair in the chart values alone; the same text in a template or any other chart file is unsanctioned content (the review-r1 compound-shape lesson)')
+    if len(mtu_added) == 2:
+        nonlab = [l for l in nonlab if not (l.startswith('+') and l[1:].strip() in MTU_LINES)]
+        ok('g7: fourth class (run-3 D33 re-arm 2026-11-23) — the exact args:/--mtu=1450 pair added under charts/forgejo-runner/values.yaml alone, nothing else (dind bridge MTU capped for the fleet)')
     if nonlab:
         bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines: {nonlab[:4]} — only the labels list, its comments, and the one sanctioned docker_host line may change; the values dind/runner pins and the app-template subtree stay byte-untouched (renovate law)')
     ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, nothing else moved)')
