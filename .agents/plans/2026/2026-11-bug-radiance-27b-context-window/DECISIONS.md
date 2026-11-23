@@ -146,7 +146,28 @@ rejected, why.
   (d) fn-TP2 has **no transcription leg** — only the `FULL_PROFILE` constant moves — so its test-authority
   change is a constant re-pin, while flash-TP1's is the deviation-with-ruling re-pin (D5/F5) and must be
   authored BEFORE the dev edit per parent-D30.
-- 2026-11-23 coord-note D10 (**no memory change anywhere in this ticket**). F2's arithmetic closed the last
+- 2026-11-23 coord-ruling **D12 (the two red notes legs belong to C02's closure, not to a later chunk —
+  assigned by name because "C03/C04 territory" is how the parent ticket lost an orphan)**. C02 merged with
+  `radiance-runbook.sh` T2 and `radiance-q27-boot.sh` T2 red, both comparing note-side figures against the
+  composed vector. Dev's hand-back said "doc + test re-pin wave (C03/C04 territory)" — but C03 is the
+  conditional revert leg and C04 is the receipts close, so **no chunk owned them**, which is precisely the
+  parent ticket's D32 failure (FRICTION named an owner, no chunk file carried the task, and a false statement
+  nearly survived the ticket by nobody's decision). Assignment: the **doc half** is a C02 follow-up dev round
+  (dispatched, `radiance-on-target-acceptance.md` + `radiance-q27-boot.md`), the **test half** is the test
+  session's re-pin, and **C02 review does not start until both legs are green.** Consequence I am owning: I
+  committed C02 with two known red legs. Defensible as a checkpoint (the config move is atomic and verified
+  by 162 green radiance assertions), but it is only defensible if the reds are closed by name on a named
+  owner — otherwise HEAD is simply green-debt, and the ticket's own D31 rule is that a red nobody owns is a
+  red that will be explained away at review.
+- 2026-11-23 coord-note **D13 (capture-tool attestation churn is expected, and running the capture casually is
+  not)**. C02's dev ran `capture_c03_fixtures.py` as a baseline sanity check and it refreshed `revalidated_at`
+  (2026-11-22 → 2026-11-23) in both committed `pre-move-render-*.yaml` fixtures, payload byte-identical;
+  it correctly reverted both rather than commit tool churn. The tool is a **manual re-derivation instrument,
+  not a suite-invoked check**, so its only safe uses are: review's step-0 guard, or a deliberate re-derivation
+  after a ruling. Rule recorded instead of banning the tool: a fixture's attestation line changing is not a
+  payload change — check `git diff -- <fixture>` for the payload before treating attestation churn as drift,
+  and never stage it as though evidence moved.
+- 2026-11-23 coord-note **D10 (no memory change anywhere in this ticket)** — F2's arithmetic closed the last
   open question about sizing: flash-TP1 at 262144 fits the held 110Gi at BOTH candidate cost rates
   (≈69–89 GiB used; engine rule `110 − 87 = 23 ≥ 4`), fn-TP2's worst-case pool goes 18.3 → **24.0 GiB** trunk
   against 2 × 31.86 GiB usable with the per-sequence recurrent state and checkpoint slots essentially
