@@ -345,8 +345,10 @@ need(not bot_hits,
      f'customManagers legs {bot_hits} mention renovatebot — two managers claiming the image '
      'line is the double-match the owner ruling rejected (DECISIONS D13)')
 # 9 was the cf-135 count; cf-6's calendar packageRule (landed on this
-# branch by run -0) is the 10th — re-pinned by cf-6 run -2's C02 ruling.
-need(len(rules) == 10, f'packageRules has {len(rules)} entries, expected 10 (9 since cf-135 plus the calendar rule cf-6 carries on this branch — no net addition beyond that)')
+# branch by run -0) is the 10th — re-pinned by cf-6 run -2's C02 ruling —
+# and run -4's alpine/helm v3 hold (C01 AC6) is the 11th: the count
+# re-pin lands in the same commit as the rule (pair-whole law).
+need(len(rules) == 11, f'packageRules has {len(rules)} entries, expected 11 (9 since cf-135, the calendar rule cf-6 carries on this branch, and the run -4 alpine/helm hold)')
 need(len(legs) == 13, f'customManagers has {len(legs)} legs, expected 13 (no-net-additions invariant)')
 PY
 then

@@ -192,9 +192,11 @@ def need(cond, msg):
 need(set(cfg) == KEYS,
      f'top-level keys are {sorted(map(str, cfg))}, expected exactly {sorted(KEYS)}')
 # cf-135's D14 "no rule lands" holds at its own 9; cf-6's calendar
-# packageRule (landed on this branch by run -0) is the 10th, and cf-6 run
-# -2's C02 ruling re-pins this count to it.
-need(len(rules) == 10, f'packageRules has {len(rules)} entries, expected 10 (cf-135 D14 stays true at 9 — cf-6\'s calendar rule on this branch is the 10th)')
+# packageRule (landed on this branch by run -0) is the 10th, re-pinned by
+# cf-6 run -2's C02 ruling, and run -4's alpine/helm v3 hold (C01 AC6) is
+# the 11th — the count re-pin lands in the same commit as the rule
+# (pair-whole law).
+need(len(rules) == 11, f'packageRules has {len(rules)} entries, expected 11 (cf-135 D14 stays true at 9 — cf-6\'s calendar rule on this branch is the 10th and the run -4 alpine/helm hold is the 11th)')
 need(len(legs) == 13, f'customManagers has {len(legs)} legs, expected 13 (D14: no leg lands)')
 need(cfg.get('$schema') == 'https://docs.renovatebot.com/renovate-schema.json',
      f'$schema is {cfg.get("$schema")!r}')
@@ -210,7 +212,7 @@ PY
 then
   fail "m5: see the m5 detail above"
 fi
-ok "m5: 10 packageRules / 13 customManager legs and the pinned 13-key top-level keyset with every immutable value intact"
+ok "m5: 11 packageRules / 13 customManager legs and the pinned 13-key top-level keyset with every immutable value intact"
 
 # --- m6: workflow image line native shape (order-tolerant) ----------------------
 if [ ! -f "$WF" ]; then

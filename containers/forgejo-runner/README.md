@@ -37,14 +37,32 @@ apt-getting, system-path-writing jobs that run today (D36).
 
 ## Baked tools
 
-| Tool | Pin | Tracked by |
-|---|---|---|
-| helm | `v3.22.1` (`ARG HELM_VERSION`) | renovate `github-releases` annotation → `helm/helm` |
-| cr (chart-releaser) | `1.10.1` + sha256 (`ARG CR_VERSION`/`CR_SHA256`) | annotation → `helm/chart-releaser`; the digest line is a manual pin that must bump with the version |
+Both tools arrive by `COPY --from` of a digest-pinned tool image, not by a
+download. Run -4 (2026-11-23, `cf-6-feat-builder-bootstrap-4`) made that
+change after three lane dispatches died identically on a filtered
+`get.helm.sh` fetch; the retry hardening of run -3 changed nothing because
+the path was never the fault — the host was.
 
-Both install to `/usr/local/bin` at build time with a `sha256sum -c`
-verification and a version assert, so a mis-baked tool fails the image
-build, not the next release fire. `tests/containers/forgejo-runner.sh`
+| Tool | Version pin | Arrives from | Anchored by |
+|---|---|---|---|
+| helm | `v3.22.1` (`ARG HELM_VERSION`) | `docker.io/alpine/helm:3.22.1` stage (`AS helmtool`) | `ARG HELM_BIN_SHA256`, a manual pin that bumps with the version |
+| cr (chart-releaser) | `1.10.1` (`ARG CR_VERSION`) | `ghcr.io/helm/chart-releaser:v1.10.1-amd64` stage (`AS crtool`) | `ARG CR_BIN_SHA256`, a manual pin that bumps with the version |
+
+The version ARGs carry the renovate `github-releases` annotations
+(`helm/helm`, `helm/chart-releaser`); the stage `FROM` lines need none,
+because renovate's built-in dockerfile manager tracks them. The anchors are
+deliberately unannotated: each is the sha256 of the **extracted binary**,
+measured 2026-11-23 byte-identical to the binary inside the official
+release tarball (helm `46aeab5e…`, cr `ca45e76c…`) — the archive hashes the
+retired `CR_SHA256` pin carried are different numbers, because a tarball and
+the file inside it never hash alike. A hash that auto-bumped with the
+version would remove the human step that makes the build the supply-chain
+gate. `alpine/helm` is a community image that rehosts the official binary
+rather than rebuilding it; the official helm-org image publishes cr.
+
+Each build hashes the copied binaries against those anchors and asserts the
+version each tool reports, so a mis-baked tool fails the image build, not
+the next release fire. `tests/containers/forgejo-runner.sh`
 is the static contract for this Dockerfile (pins included — a renovate
 version bump must re-pin the suite's literals in the same commit); the
 release-workflow suite contract (`tests/services/forgejo-release.sh`)

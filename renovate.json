@@ -271,6 +271,16 @@
       "allowedVersions": "/^v3\\./"
     },
     {
+      "description": "Hold docker.io/alpine/helm — the forgejo-runner bake's helm tool stage (containers/forgejo-runner/Dockerfile) — on the v3 line: the docker-datasource twin of the helm/helm hold above, whose law it mirrors because ArgoCD renders this repo's charts with helm v3 (D38). Slash-wrapped: docker tags carry no v prefix, so a bare ^3. is not a valid range.",
+      "matchPackageNames": [
+        "docker.io/alpine/helm"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "allowedVersions": "/^3\\./"
+    },
+    {
       "description": "Hold kubectl to the lab cluster minor (k3s v1.36.x per charts/base/templates/k3s-version.yaml); a cluster minor upgrade must bump this pattern together with the Dockerfile pin. The pattern is slash-wrapped: a bare ^v1.36. is not a valid semver range, so renovate would error this dep at lookup with no updates.",
       "matchPackageNames": [
         "kubernetes/kubernetes"

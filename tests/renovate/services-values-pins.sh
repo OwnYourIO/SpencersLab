@@ -14,8 +14,11 @@
 #    change what Renovate extracts from the 16 lines the v5-v7 pins count.
 #  - v3 pins the calendar packageRule (identified by its ghcr.io/ownyourio/*
 #    scope, not by index — the .agents/** disable rule sits behind it)
-#    byte-identical: C02 touches a customManager, never a packageRule, and
-#    m5 (forgejo-move-config) pins only the count (10), not the rule body.
+#    byte-identical, and since run -4 also the alpine/helm hold rule: its
+#    fields and its slot directly after the helm/helm hold whose law it
+#    mirrors. The count literal moves only in the commit that lands a rule
+#    — 10 arrived with cf-6 run -2's calendar rule, 11 arrives with this
+#    run -4 hold (pair-whole law; forgejo-move-config pins the same count).
 #  - v6/v7 pin the extracted line SETS (multisets: the dev and gpu
 #    renovate-mcp:v84 pairs are identical (file, image) rows) — after owner
 #    leg B moves the pins onto the calendar form, v6 reddens by design; the
@@ -29,8 +32,9 @@
 #    (?<name>) form; python re needs (?P<name> — converted at run time, never
 #    duplicated here (FRICTION 2026-11-16 plan-rework, 10th-rule gotcha).
 #
-# AC trace: v1[AC1-json] v2[AC1-patterns] v3[AC1-rules] v4[AC2-files]
-# v5[AC2-16-lines] v6[AC2-ownyourio-pins] v7[AC2-other-org] v8[AC3-behavior].
+# AC trace: v1[AC1-json] v2[AC1-patterns] v3[AC1-rules + run-4 C01 AC6 hold]
+# v4[AC2-files] v5[AC2-16-lines] v6[AC2-ownyourio-pins] v7[AC2-other-org]
+# v8[AC3-behavior].
 #
 # Purely static — no network, no live registry. Usage (from anywhere in the
 # worktree):
@@ -119,7 +123,7 @@ then
 fi
 ok "v2: plain-image customManager has exactly 3 managerFilePatterns (two pre-existing byte-identical + the top-level values pattern) and no other field moved"
 
-# --- v3 [AC1]: 10 packageRules, the calendar rule byte-identical --------------
+# --- v3 [AC1 + C01 AC6]: 11 packageRules, the hold at index 5 ---------------
 if ! python3 - "$RENOVATE" <<'PY'
 import json, sys
 
@@ -133,10 +137,26 @@ def need(cond, msg):
         sys.exit(1)
 
 
-need(len(rules) == 10,
-     f'packageRules has {len(rules)} entries, expected 10 (C02 touches a customManager, not packageRules; the m5 pin stays at 10)')
+need(len(rules) == 11,
+     f"packageRules has {len(rules)} entries, expected 11 (run -4's docker.io/alpine/helm v3 hold is the 11th, C01 AC6; this re-pin and the rule land in the same commit — pair-whole law)")
+# C01 AC6 position + field pin: exactly one rule scopes the bake's helm
+# stage image, sitting directly after the helm/helm hold whose law it
+# mirrors so the two v3-line holds read as one decision. The description is
+# free prose, but it must name the parent hold.
+holds = [i for i, r in enumerate(rules) if r.get('matchPackageNames') == ['docker.io/alpine/helm']]
+need(len(holds) == 1,
+     f'slots {holds} scope docker.io/alpine/helm, expected exactly one (C01 AC6: one hold rule — the stage FROM line itself is tracked by the built-in dockerfile manager and carries no annotation)')
+need(holds[0] == 5,
+     f'the docker.io/alpine/helm hold sits at index {holds[0]}, expected 5 — directly after the helm/helm hold (C01 AC6 position law)')
+hold = rules[5]
+need(hold.get('matchDatasources') == ['docker'],
+     f'index-5 hold matchDatasources is {hold.get("matchDatasources")!r}, expected ["docker"] — the docker datasource names the stage image where the github-releases hold above names the release line')
+need(hold.get('allowedVersions') == '/^3\\./',
+     f'index-5 hold allowedVersions is {hold.get("allowedVersions")!r}, expected the slash-wrapped /^3\\./ — docker tags carry no v prefix, and a bare ^3. is not a valid semver range (the lookup-error lesson the parent rule documents)')
+need('helm/helm' in (hold.get('description') or ''),
+     'the index-5 hold does not name the helm/helm hold as its parent law in its description (C01 AC6)')
 # Identified by scope, not index: the .agents/** disable rule sits behind the
-# calendar rule in the file, so the 10th-by-count slot is not the calendar rule.
+# calendar rule in the file, so the last-by-count slot is not the calendar rule.
 cal = [r for r in rules if r.get('matchPackageNames') == ['ghcr.io/ownyourio/*']]
 need(len(cal) == 1,
      f'expected exactly one packageRule scoping ghcr.io/ownyourio/*, found {len(cal)}')
@@ -160,7 +180,7 @@ PY
 then
   fail "v3: see the v3 detail above"
 fi
-ok "v3: 10 packageRules and the ghcr.io/ownyourio/* calendar rule byte-identical"
+ok "v3: 11 packageRules — the docker.io/alpine/helm hold exact at index 5 — and the ghcr.io/ownyourio/* calendar rule byte-identical"
 
 # --- v4 [AC2]: the 13 top-level values files, matched by the new pattern only -
 if ! python3 - "$RENOVATE" <<'PY'

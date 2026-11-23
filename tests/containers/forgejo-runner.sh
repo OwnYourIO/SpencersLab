@@ -14,24 +14,40 @@
 # diff + a DNS-safe name + Dockerfile presence), so nothing registers this
 # image anywhere (D36/§F3).
 #
-# AC trace (chunks/C05.md): t1[AC3 single FROM, digest-pinned act-24.04]
-# t2[AC4 ARG pins, directly-above renovate annotations, the cr pin pair]
-# t3[AC5 helm baked at build time, coder-workspace :142-149 recipe shape]
-# t4[AC5 cr baked, sha256-pair verified, D37] t5[the C07/D43 call surface:
-# both tools on the default PATH] t6[AC5+D36 base-preserving: no COPY/USER/
-# ENTRYPOINT/CMD/ADD, no apt, the root-job-shell deviation comment] t7[AC2
-# hadolint at the error threshold, honest skip] t8[AC2 designed CI-deferred
-# build shape].
+# AC trace (run -4 chunks/C01.md; the C05 single-stage AC numbering is
+# superseded by the source change): t1[AC1 exactly three FROM lines —
+# helmtool + crtool stages with their full digests, act-24.04 final]
+# t2[AC2/AC3 HELM_VERSION/CR_VERSION annotation adjacency kept verbatim, the
+# HELM_BIN_SHA256/CR_BIN_SHA256 manual-pin pair, CR_SHA256 banned] t3[AC1/
+# AC3/AC4 helm stage FROM, COPY --from transport, binary anchor, version
+# assert, no get.helm.sh RUN operand] t4[AC4 cr stage FROM, COPY --from
+# transport, binary anchor, 'cr version' assert with the --version ban, no
+# releases/download RUN operand] t5[the C07/D43 call surface: both tools on
+# the default PATH] t6[AC4/AC5+D36 base-preserving: the COPY ban carves out
+# COPY --from, bare COPY/ADD/USER/ENTRYPOINT/CMD/apt bans stand, the root-
+# job-shell deviation comment] t7[AC2 hadolint at the error threshold,
+# honest skip] t8[AC2 designed CI-deferred build shape].
 #
-# Run -3 C01 owner family (a) (2026-11-23): t3 and t4 additionally pin a
-# deterministic retry budget on the three bake fetches — lane dispatch #215
-# died on the D33 egress class (curl TLS exit 35 mid-handshake) at exactly
-# these operands, and plain --retry does not guarantee retrying the
-# TLS-connect class (--retry-all-errors does). Authored RED against the
-# shipped, budget-less Dockerfile; GREEN only once the flags land.
+# Retirement note (the run -3 retry pins, 2026-11-23): t3/t4 pinned a
+# deterministic curl retry budget on the three bake fetches after lane
+# dispatch #215 died of the D33 egress class (curl TLS exit 35 mid-
+# handshake; --retry-all-errors is what makes curl retry that class).
+# Three dispatches on the budgeted path died identically while ghcr pulls,
+# the Forgejo API and the GitHub API worked from the same egress: upstream
+# policy filtering of get.helm.sh against this address, not a path fault.
+# Run -4 therefore changed the source, not the path — helm and cr arrive by
+# COPY --from from digest-pinned tool images — and the fetch-shape pin
+# texts retire here. The pair law for the moved literals: every pin and the
+# Dockerfile shape it describes land in the same commit.
 #
-# Red-first: the image arrives with C05; a missing Dockerfile is the chunk-
-# not-yet-implemented state, not a skip.
+# Authored-RED (run -4 posture, inverted vs run -3, plan F1/F6): t1, the t2
+# BIN arms, t3, t4 and t6 pin the family-A multi-stage form and measure RED
+# against BASE bc4b2a3fa (the curl-form Dockerfile) by design; GREEN only
+# against the Dockerfile DEV lands in the same commit. t5/t7/t8 are green
+# against both forms — t5's destination-path pins match the COPY targets and
+# its .cr-bin/GITHUB_PATH ban stays clean because the stages are named
+# helmtool/crtool. A missing Dockerfile is still the chunk-not-yet-
+# implemented state, not a skip.
 #
 # Run from the repo root:
 #   bash tests/containers/forgejo-runner.sh          # t1..t8
@@ -76,23 +92,29 @@ if want t1 || want t2 || want t3 || want t4 || want t5 || want t6 || want t7; th
   [ -f "$DF" ] || fail "$DF does not exist (the C05 image contract has nothing to check)"
 fi
 
-# --- t1: one FROM, digest-pinned act-24.04 base (AC3) ------------------------
+# --- t1: exactly three FROM lines — two tool stages + the act base (AC1) --
 if want t1; then
   n_from=$(grep -cE '^FROM ' "$DF" || true)
-  [ "$n_from" -eq 1 ] ||
-    fail "t1: expected exactly one FROM line, found $n_from — D36 ships a single-stage derivative whose output IS the job image"
-  img=$(grep -E '^FROM ' "$DF" | awk '{print $2}')
-  case "$img" in
-    ghcr.io/catthehacker/ubuntu:act-24.04@sha256:*) : ;;
-    *) fail "t1: FROM '$img' is not ghcr.io/catthehacker/ubuntu:act-24.04 carrying an @sha256: digest — the RESEARCH C1 inventory rides the current act-24.04 content (the no-regression law), and dev pins the digest the live head shows at dev time, not the plan-time one (C05)" ;;
+  [ "$n_from" -eq 3 ] ||
+    fail "t1: expected exactly three FROM lines (helm stage, cr stage, act-24.04 base), found $n_from — since run -4 the bake is multi-stage: the digest-pinned tool images replaced the get.helm.sh/github.com fetches, and on every stage line the digest is the authority while the tag is the human label"
+  from1=$(grep -E '^FROM ' "$DF" | sed -n 1p)
+  from2=$(grep -E '^FROM ' "$DF" | sed -n 2p)
+  from3=$(grep -E '^FROM ' "$DF" | sed -n 3p)
+  printf '%s\n' "$from1" | grep -qE '^FROM docker\.io/alpine/helm:3\.22\.1@sha256:8191701ad1f82ee3695c87211fcbfe6d7b1bb7df92ac1c8de9ccdb0995a6a2c1 AS helmtool$' ||
+    fail "t1: the first FROM line is '$from1', expected the helm tool stage — alpine/helm:3.22.1 carrying the multi-arch INDEX digest that tag serves (plan F2; the amd64 manifest 83dd7afc... would be the wrong anchor class), named AS helmtool. The digest, not the rolling tag, is the authority"
+  printf '%s\n' "$from2" | grep -qE '^FROM ghcr\.io/helm/chart-releaser:v1\.10\.1-amd64@sha256:f04f886affa5ba55b004788591b56f35bfd79abca9f85f0cb2f61c2f90bbe84c AS crtool$' ||
+    fail "t1: the second FROM line is '$from2', expected the official cr image stage — ghcr.io/helm/chart-releaser:v1.10.1-amd64 carrying the MANIFEST digest that per-arch tag serves (plan F3: pin what the tag serves — the v1.10.1 index 51758f90... would be the wrong anchor class), named AS crtool"
+  case "$from3" in
+    'FROM ghcr.io/catthehacker/ubuntu:act-24.04@sha256:'*) : ;;
+    *) fail "t1: the third FROM line is '$from3', not an @sha256-pinned act-24.04 base — the final stage is the job image: D36's inherited-toolchain inventory rides the current act-24.04 content (the no-regression law), dev pins the digest the live head shows at dev time rather than the plan-time one, and the digest stays the authority over the rolling tag" ;;
   esac
-  hex=${img##*@sha256:}
+  hex=${from3##*@sha256:}
   printf '%s' "$hex" | grep -qE '^[0-9a-f]{64}$' ||
-    fail "t1: FROM digest '$hex' is not 64 hex characters"
-  ok "t1: single FROM, ghcr.io/catthehacker/ubuntu:act-24.04 with a 64-hex digest pin (tag kept for humans, digest the authority)"
+    fail "t1: the act-24.04 FROM digest '$hex' is not 64 hex characters"
+  ok "t1: three FROM lines in order — helmtool + crtool stages with their full measured digests, act-24.04 final with a 64-hex digest pin"
 fi
 
-# --- t2: ARG pins + directly-adjacent renovate annotations (AC4) -------------
+# --- t2: ARG pins kept verbatim, binary anchors added, CR_SHA256 retired ---
 if want t2; then
   # renovate's Dockerfile ARG manager binds an annotation to the line
   # DIRECTLY below it (renovate.json:117) — placement one line off is an inert
@@ -115,66 +137,83 @@ if want t2; then
     'D38 adopts the v3.22.1 line (the coder-workspace baked pin + the GitHub-hosted preinstall equivalent), not the first-fire v3.16.4'
   check_pin CR_VERSION '1.10.1' '# renovate: datasource=github-releases depName=helm/chart-releaser' \
     'D37 migrates the workflow-verified cr version pin into the Dockerfile'
-  ln=$(argln CR_SHA256); [ -n "$ln" ] || fail "t2: no ARG CR_SHA256 line — the verified archive digest must ride with the version pin"
-  val=$(sed -n "${ln}p" "$DF" | cut -d= -f2-)
-  [ "$val" = 'ce46baf9975d10193b7070b2b7406750c3f664181e36df3f3bbb4a00be40dc1b' ] ||
-    fail "t2: ARG CR_SHA256 is '$val', expected the sha the C01 review verified against the chart-releaser 1.10.1 checksums.txt (D37)"
-  window=$(sed -n "$((ln > 4 ? ln - 4 : 1)),$((ln - 1))p" "$DF")
-  printf '%s' "$window" | grep -q '# manual-pin:' ||
-    fail "t2: ARG CR_SHA256 carries no '# manual-pin:' why-comment above it — the digest rides OUTSIDE renovate deliberately (HUGO/GO/FJ precedent): it must bump with CR_VERSION by hand, and a stale digest has to fail the build loudly"
-  printf '%s' "$window" | grep -qiE 'bump|version' ||
-    fail "t2: the CR_SHA256 manual-pin comment must state the bump-with-version law"
-  ok "t2: helm v3.22.1 + cr 1.10.1 pins with directly-adjacent renovate annotations; CR_SHA256 exact with its manual-pin why-comment"
+  # The binary anchors (AC3) replace the CR_SHA256 archive arm: a tarball
+  # hash is never the hash of the binary inside it (gzip+tar wrapper), and
+  # the build now verifies the COPIED binaries — plan F4 measured both byte-
+  # identical to the official release chain's extracted binaries.
+  bin_pin() { # $1 ARG name, $2 measured anchor value, $3 provenance label
+    local ln val prev prev_line window
+    ln=$(argln "$1")
+    [ -n "$ln" ] || fail "t2: no ARG $1 line — $3"
+    val=$(sed -n "${ln}p" "$DF" | cut -d= -f2-)
+    [ "$val" = "$2" ] ||
+      fail "t2: ARG $1 is '$val', expected the measured binary anchor $2 ($3)"
+    prev=$((ln - 1))
+    prev_line=$(sed -n "${prev}p" "$DF" | sed 's/[[:space:]]*$//')
+    case "$prev_line" in
+      '# renovate:'*)
+        fail "t2: ARG $1 sits directly under a renovate annotation ('$prev_line') — the binary anchors are manual by design (AC3): an annotation-tracked hash would auto-bump past the human re-anchor that makes the build's sha256sum -c the supply-chain gate" ;;
+    esac
+    window=$(sed -n "$((ln > 4 ? ln - 4 : 1)),$((ln - 1))p" "$DF")
+    printf '%s' "$window" | grep -q '# manual-pin:' ||
+      fail "t2: ARG $1 carries no '# manual-pin:' why-comment within 4 lines above it — the anchor rides OUTSIDE renovate deliberately (the retired CR_SHA256 precedent): it must bump with the version by hand, and a stale anchor has to fail the build loudly"
+    printf '%s' "$window" | grep -qiE 'bump|version' ||
+      fail "t2: the $1 manual-pin comment must state the bump-with-version law"
+  }
+  bin_pin HELM_BIN_SHA256 '46aeab5e043f62d01f7c168823b392cabc1cea3807b67906296290483791be43' \
+    'sha256 of the extracted linux-amd64 helm binary of the official v3.22.1 release, measured byte-identical to alpine/helm:3.22.1 (plan F4)'
+  bin_pin CR_BIN_SHA256 'ca45e76c0aa7a159425cd5b4b63269b8cb5ee481a2667c9f8ffcf092a33402fc' \
+    'sha256 of the extracted linux_amd64 cr binary of the official v1.10.1 release, measured byte-identical to the official ghcr image (plan F4)'
+  if grep -qE '^ARG CR_SHA256=' "$DF"; then
+    fail "t2: ARG CR_SHA256 still present — the archive digest anchored the fetch shape run -4 removed, and it can never equal the extracted binary hash (plan F4); the BIN anchors above replace it, the archive values surviving only as provenance in Dockerfile comments"
+  fi
+  ok "t2: helm v3.22.1 + cr 1.10.1 pins with directly-adjacent renovate annotations; both binary anchors exact under their manual-pin why-comments; CR_SHA256 retired"
 fi
 
-# --- t3: helm bakes at BUILD time via the coder-workspace recipe (AC5) -------
+# --- t3: helm arrives by stage transport, anchored and asserted ----------
 if want t3; then
   # RUN lines wrap with trailing backslashes in the pinned shape; join them so
   # each logical command reads as one line (t5 idiom, forgejo-host-runner).
   flat=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\\\n[[:space:]]*/ /g' "$DF")
-  printf '%s' "$flat" | grep -qE 'https://get\.helm\.sh/helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz' ||
-    fail "t3: no get.helm.sh tarball URL expanding HELM_VERSION — the bake moves the download from every job to this one audited build lane (D33/D38)"
-  printf '%s' "$flat" | grep -qE 'helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz\.sha256sum' ||
-    fail "t3: the .sha256sum sidecar is not fetched — coder-workspace:142-149 recipe shape (D38)"
-  # Retry-budget pins (run -3 C01 family (a)). Each anchor lives INSIDE one
-  # curl operand span — [^&|] stops at the arm's && so the tarball pin can
-  # never be satisfied by the sidecar curl's flags (or vice versa) — and the
-  # quoted URL boundary tells the two helm fetches apart, so a budget missing
-  # on any single fetch reddens exactly its own leg by name. The class:
-  # lane dispatch #215 died here with TLS exit 35 to get.helm.sh (D33);
-  # --retry-all-errors is what makes curl retry that code deterministically.
-  printf '%s' "$flat" | grep -qE 'curl -fsSL --retry [0-9]+ --retry-all-errors[^&|]*get\.helm\.sh/helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz"' ||
-    fail "t3: the get.helm.sh tarball fetch carries no retry budget (curl -fsSL --retry N --retry-all-errors before the operand) — the D33 egress class killed lane dispatch #215 mid-handshake with exit 35 on one of this pair's two fetches (the step log at O-0 Q4 names which); plain --retry does not retry TLS-connect deterministically (--retry-all-errors does, curl >= 7.54, the base ships 8.5)"
-  printf '%s' "$flat" | grep -qE 'curl -fsSL --retry [0-9]+ --retry-all-errors[^&|]*get\.helm\.sh/helm-\$\{?HELM_VERSION\}?-linux-amd64\.tar\.gz\.sha256sum"' ||
-    fail "t3: the .sha256sum sidecar fetch carries no retry budget — the same D33 TLS-35 class (run #215) kills either arm of the verify pair, and a half-retried pair still dies the build"
-  printf '%s' "$flat" | grep -qE 'sha256sum -c' ||
-    fail "t3: the helm tarball is not sha256sum -c verified"
-  printf '%s' "$flat" | grep -qE 'install -m 0755[^&|;]*/usr/local/bin/helm($|[^A-Za-z0-9_-])' ||
-    fail "t3: no install -m 0755 of the extracted binary to /usr/local/bin/helm"
+  runs=$(printf '%s\n' "$flat" | grep -E '^RUN' || true)
+  grep -qE '^FROM docker\.io/alpine/helm:3\.22\.1@sha256:8191701ad1f82ee3695c87211fcbfe6d7b1bb7df92ac1c8de9ccdb0995a6a2c1 AS helmtool$' "$DF" ||
+    fail "t3: the helm tool stage (alpine/helm:3.22.1 at its served index digest, plan F2, named AS helmtool) is not in the file — it is the bake's helm source now; t1 pins the same line as part of the three-FROM order law"
+  grep -qE '^COPY --from=helmtool /usr/bin/helm /usr/local/bin/helm$' "$DF" ||
+    fail "t3: no COPY --from=helmtool transport of the stage's own /usr/bin/helm (the path alpine/helm ships, plan F2) to /usr/local/bin/helm — the default-PATH name plain workflow invocations resolve (t5)"
+  printf '%s' "$flat" | grep -qE 'HELM_BIN_SHA256[^;]*sha256sum -c' ||
+    fail "t3: the copied helm binary is not sha256sum -c verified against HELM_BIN_SHA256 — the binary anchor is the supply-chain gate that replaced the get.helm.sh sidecar: a stage digest serving bytes off the official release chain must die THIS build (plan F4)"
   printf '%s' "$flat" | grep -qE 'helm version[^;]*HELM_VERSION' ||
-    fail "t3: no build-time helm version assert against HELM_VERSION — a mis-baked tool must fail the BUILD, not the next release fire"
-  ok "t3: helm bakes at build time from get.helm.sh, sidecar-verified, asserted"
+    fail "t3: no build-time helm version assert against HELM_VERSION — a mis-baked tool must fail the BUILD, not the next release fire; the coder-workspace assert shape survives the transport change"
+  if printf '%s' "$runs" | grep -qE 'get\.helm\.sh'; then
+    fail "t3: a RUN line still names get.helm.sh — three lane dispatches died on that fetch class (curl TLS 35, STATE intake) and run -4 removed the source instead of hardening the path; only comments may name get.helm.sh as history"
+  fi
+  ok "t3: helm arrives by COPY --from from the digest-pinned stage, binary-anchored and version-asserted; no get.helm.sh RUN operand"
 fi
 
-# --- t4: cr bakes sha-verified from the release asset (AC5, D37) --------------
+# --- t4: cr arrives by stage transport, anchored and asserted (AC4) --------
 if want t4; then
   flat=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\\\n[[:space:]]*/ /g' "$DF")
-  printf '%s' "$flat" | grep -qE 'https://github\.com/helm/chart-releaser/releases/download/v\$\{?CR_VERSION\}?/chart-releaser_\$\{?CR_VERSION\}?_linux_amd64\.tar\.gz' ||
-    fail "t4: no chart-releaser release-asset URL expanding CR_VERSION — the release.yaml :294-308 install promotes to build time (D37)"
-  printf '%s' "$flat" | grep -qE 'CR_SHA256[^;&]*sha256sum -c|sha256sum -c[^;&]*CR_SHA256' ||
-    fail "t4: the cr archive is not sha256-verified against \${CR_SHA256} on its own install line — the bare fetch reopens the supply-chain question the pin closed"
-  printf '%s' "$flat" | grep -qE 'tar [^&|;]*-C[[:space:]]+/usr/local/bin[[:space:]]+cr($|[^A-Za-z0-9_-])' ||
-    fail "t4: no binary-only extract (tar -xzf ... -C /usr/local/bin cr)"
-  printf '%s' "$flat" | grep -qE 'chmod 0755[[:space:]]+/usr/local/bin/cr($|[^A-Za-z0-9_-])' ||
-    fail "t4: no chmod 0755 /usr/local/bin/cr"
-  # The cr fetch is the third bake download of the same installer-egress
-  # class — it never got a turn in run #215 only because the helm arm died
-  # first (EXPLORE §4.1); the same budget must cover it.
-  printf '%s' "$flat" | grep -qE 'curl -fSL --retry [0-9]+ --retry-all-errors' ||
-    fail "t4: the chart-releaser fetch carries no retry budget (curl -fSL --retry N --retry-all-errors) — same D33 egress class as the helm arm that TLS-35'd lane dispatch #215; -fsSL on the helm arms cannot satisfy this anchor, the pin is cr's own operand"
-  printf '%s' "$flat" | grep -qE 'cr --version' ||
-    fail "t4: no build-time 'cr --version' assert"
-  ok "t4: cr 1.10.1 bakes through the verified pin pair, binary-only, asserted"
+  runs=$(printf '%s\n' "$flat" | grep -E '^RUN' || true)
+  grep -qE '^FROM ghcr\.io/helm/chart-releaser:v1\.10\.1-amd64@sha256:f04f886affa5ba55b004788591b56f35bfd79abca9f85f0cb2f61c2f90bbe84c AS crtool$' "$DF" ||
+    fail "t4: the cr tool stage (ghcr.io/helm/chart-releaser:v1.10.1-amd64 at its served manifest digest, plan F3, named AS crtool) is not in the file — the official helm-org image is the bake's cr source now; t1 pins the same line as part of the three-FROM order law"
+  grep -qE '^COPY --from=crtool /usr/local/bin/cr /usr/local/bin/cr$' "$DF" ||
+    fail "t4: no COPY --from=crtool transport of the stage's own /usr/local/bin/cr (the path the official image ships, plan F3) to /usr/local/bin/cr — the default-PATH name plain workflow invocations resolve (t5)"
+  printf '%s' "$flat" | grep -qE 'CR_BIN_SHA256[^;]*sha256sum -c' ||
+    fail "t4: the copied cr binary is not sha256sum -c verified against CR_BIN_SHA256 — a bare COPY would reopen the supply-chain question the old archive pin closed; the anchor ties the bytes to the official checksum chain (plan F4)"
+  # The FLAG form is a measured build-killer: plan F5 ran the exact binary —
+  # cr 1.10.1 answers --version with 'unknown flag' and a non-zero exit, so
+  # an image built on it dies at this RUN. It never surfaced only because
+  # the fetch in front of it always died first; a first green build must not
+  # inherit it by habit.
+  if printf '%s' "$runs" | grep -qE 'cr --version'; then
+    fail "t4: a RUN line asserts with 'cr --version' — chart-releaser 1.10.1 rejects the flag (measured: unknown flag, non-zero rc; plan F5), the working shape is the version SUBCOMMAND ('cr version' answers GitVersion: v1.10.1, rc 0) asserted below. Keeping the flag form re-plants that latent build-killer on the first build whose transport works"
+  fi
+  printf '%s' "$flat" | grep -qE 'cr version[^;]*CR_VERSION' ||
+    fail "t4: no build-time 'cr version | grep' assert against CR_VERSION — the subcommand form is the measured-working shape (plan F5); the --version flag form is banned by the leg above"
+  if printf '%s' "$runs" | grep -qE 'releases/download'; then
+    fail "t4: a RUN line still fetches a github.com release asset — the cr tarball fetch moved to the official-image transport with the source change (run -4); dispatch #215 never even executed that arm and it gets no revival, only comments may name the history"
+  fi
+  ok "t4: cr arrives by COPY --from from the official digest-pinned stage, binary-anchored and 'cr version'-asserted; no releases/download RUN operand"
 fi
 
 # --- t5: default-PATH binaries — the C07 call surface -------------------------
@@ -190,20 +229,29 @@ if want t5; then
   ok "t5: both tools land at the default-PATH names plain workflow invocations resolve"
 fi
 
-# --- t6: base-preserving derivative (AC5, D36) --------------------------------
+# --- t6: base superset, COPY ban carving out the stage transports ----------
 if want t6; then
-  for instr in USER ENTRYPOINT CMD COPY ADD; do
+  for instr in USER ENTRYPOINT CMD ADD; do
     if grep -qE "^$instr[[:space:]]" "$DF"; then
-      fail "t6: a $instr line enters the Dockerfile — the image is the act base plus two static binaries and NOTHING else (C05 AC5: no COPY/USER/ENTRYPOINT/CMD; D36 keeps the base's job shell)"
+      fail "t6: a $instr line enters the Dockerfile — the image is the act base plus two static binaries and NOTHING else (D36 keeps the base's job shell and the inherited tool inventory; run -4 adds exactly one new instruction class, COPY --from)"
     fi
   done
+  # The COPY law inverts with the source change: context copies stay banned,
+  # the two stage transports are now REQUIRED — pinning their count keeps
+  # this ban from passing vacuously on a file that dropped the transports.
+  bare=$(grep -E '^COPY' "$DF" | grep -vE '^COPY --from=' || true)
+  [ -z "$bare" ] ||
+    fail "t6: a context COPY line ('$bare') enters the image — the carve-out covers stage transports only (COPY --from=helmtool / COPY --from=crtool, pinned exactly by t3/t4); build-context files have never belonged in this image and still do not"
+  n_copy=$(grep -cE '^COPY --from=' "$DF" || true)
+  [ "$n_copy" -eq 2 ] ||
+    fail "t6: found $n_copy COPY --from= lines, expected exactly 2 — the plan bar greps the same count as a change fingerprint: since run -4 the stage transport IS the shape, so the carve-out must bind on real COPY lines"
   if grep -qE 'apt(-get)?[[:space:]]+(install|update)' "$DF"; then
     fail "t6: apt work in the Dockerfile — the RESEARCH C1 inventory (git/git-lfs/jq/python3/node/yq/docker CLI+buildx+compose) is inherited, not rebuilt; adding packages risks regressing it"
   fi
   if ! grep -E '^#' "$DF" | grep -qiE 'root' || ! grep -E '^#' "$DF" | grep -qiE 'job|USER'; then
     fail "t6: no deviation comment on the root job shell — the container-creation non-root law serves SERVICE containers; a job image deliberately keeps the base's root user because today's jobs apt-get and write system paths, and a USER line would regress them (D36). The Dockerfile records the why."
   fi
-  ok "t6: pure base superset — no COPY/USER/ENTRYPOINT/CMD/ADD/apt lines, root-job-shell deviation documented"
+  ok "t6: pure base superset — exactly the two stage COPY --from transports, no context COPY, no USER/ENTRYPOINT/CMD/ADD/apt lines, root-job-shell deviation documented"
 fi
 
 # --- t7: hadolint (AC2, error threshold per the repo bar) ---------------------

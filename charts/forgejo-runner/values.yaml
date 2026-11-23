@@ -79,9 +79,13 @@
 # The failure class applies in host mode too (the clone is still git-binary).
 # Mitigations: the dind `--mtu=1450` dockerd flag is APPLIED since
 # 2026-11-23 (run -3, ticket cf-6-feat-builder-bootstrap-3) in the dind
-# args below, after lane dispatch #215's build-time curl TLS exit 35
+# args below, where lane dispatch #215's build-time curl TLS exit 35 had
 # recurred the class on this host; per-job `network: host` stays the
 # alternative it is for host-mode jobs (no dind daemon to cap there).
+# Run -4 (2026-11-23, cf-6-feat-builder-bootstrap-4) moved the bake's tool
+# acquisition off get.helm.sh — the fetch this cap was re-armed to survive —
+# so the flag stays applied as the clone-path hardening described above, and
+# no image build depends on it.
 # Full research in RESEARCH-dind-supplement.md.
 
 bitwardenIds:
@@ -195,13 +199,18 @@ app-template:
         # dockerd ships overlay2 and degrades on its own; forcing vfs is a
         # replan, not a default.
         dind:
-          # D33 egress hardening (2026-11-23, run -3): lane dispatch #215
-          # died building through this daemon with curl TLS exit 35 to
-          # get.helm.sh — the overlay/MTU class of the header note above.
-          # The cap is a dockerd flag, not a container command: the dind
-          # image entrypoint ships no Cmd, so args here are dockerd's and
-          # the socket/probe contract stays byte-untouched. Owner ruling
-          # lands it on both releases (they share this chart).
+          # D33 egress hardening (2026-11-23, run -3, ticket
+          # cf-6-feat-builder-bootstrap-3): lane dispatch #215 died building
+          # through this daemon with curl TLS exit 35 to get.helm.sh, and the
+          # overlay/MTU class of the header note above was the candidate
+          # fault. Run -4 (2026-11-23, cf-6-feat-builder-bootstrap-4) removed
+          # that fetch — the bake's tools now arrive by digest-pinned COPY
+          # --from — so this cap guards the job paths that still cross the
+          # daemon, not an image build. The cap is a dockerd flag, not a
+          # container command: the dind image entrypoint ships no Cmd, so
+          # args here are dockerd's and the socket/probe contract stays
+          # byte-untouched. Owner ruling lands it on both releases (they
+          # share this chart).
           args:
             - --mtu=1450
           image:
