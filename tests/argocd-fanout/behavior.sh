@@ -18,7 +18,16 @@
 # t6[AC5 prune pinning] t7[AC5 409-as-success-continues] t8[AC6 isolation
 # incl. the RULED OQ9 warn-and-skip honest-failed posture] t9[AC7 ref gate]
 # t10[AC9 dry-run GET-only] t11[AC10 all-skipped warning] t12[AC8 secret
-# hygiene sweep + no-positional/unknown-flag usage posture]
+# hygiene sweep + no-positional/unknown-flag usage posture].
+# Review round 1 (CHANGES_REQUESTED) arms, folded into those legs —
+# t4: M1 reversed `token:cat` record (pinned reversed-message + LEAK grep:
+# the token value must be ABSENT) and the cat[:64] echo bound; m2 empty
+# allowed_refs; m3 unknown top-level roster keys named; nits finiteness
+# (Infinity/NaN without importing math) and whole-number workers.
+# t8: M2 redirect containment on BOTH legs (list 302 / sync 301) against a
+# separate-origin target stub whose access log witnesses bearer egress, and
+# a 3xx page that can never earn result=ok. t11: m1 column-0 anchored,
+# exactly-one ::warning:: on a two-target all-skipped run.
 #
 # OQ8 ruled 2026-11-23: newline `cat:token` records are the vault form; the
 # [,\s]+ split is paste-accident defense, so comma/space/mixed/CRLF inputs
@@ -203,10 +212,14 @@ class StubArgo:
     get_code   — non-200 kills the whole list call (401 dead-auth arm)
     get_delay  — stall the list call (timeout arm)
     get_raw    — respond 200 with non-JSON (garbage arm)
+    get_redirect/post_redirect/redirect_to — 3xx door arms (review M2):
+                 the redirect TARGET stub records separately, so bearer
+                 egress off the rostered origin is observable, not inferred.
     """
 
     def __init__(self, name, records, apps=None, sync_codes=None,
-                 get_code=200, get_delay=0.0, get_raw=None):
+                 get_code=200, get_delay=0.0, get_raw=None,
+                 get_redirect=None, post_redirect=None, redirect_to=None):
         self.name = name
         self.records = records
         self.apps = apps or []
@@ -214,6 +227,9 @@ class StubArgo:
         self.get_code = get_code
         self.get_delay = get_delay
         self.get_raw = get_raw
+        self.get_redirect = get_redirect
+        self.post_redirect = post_redirect
+        self.redirect_to = redirect_to
         outer = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -228,15 +244,31 @@ class StubArgo:
                 self.end_headers()
                 self.wfile.write(payload)
 
+            def _redirect(self, code):
+                body = b"moved"
+                self.send_response(code)
+                self.send_header("Location", outer.redirect_to or "/")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
             def do_GET(self):
                 path = self.path.split("?", 1)[0].rstrip("/")
                 rec = {"stub": outer.name, "method": "GET", "path": self.path,
                        "auth": self.headers.get("Authorization")}
                 if path.endswith("/api/v1/applications"):
                     record(outer.records, dict(rec, kind="list"))
-                    if outer.get_delay:
+                    if outer.get_redirect:
+                        self._redirect(outer.get_redirect)
+                    elif outer.get_delay:
                         time.sleep(outer.get_delay)
-                    if outer.get_raw is not None:
+                        if outer.get_raw is not None:
+                            self._send(200, outer.get_raw.encode(), "application/json")
+                        else:
+                            self._send(outer.get_code, {"items": list(outer.apps)}
+                                       if outer.get_code == 200 else
+                                       {"error": {"message": "mock list failure"}})
+                    elif outer.get_raw is not None:
                         self._send(200, outer.get_raw.encode(), "application/json")
                     elif outer.get_code != 200:
                         self._send(outer.get_code, {"error": {"message": "mock list failure"}})
@@ -260,6 +292,9 @@ class StubArgo:
                 if path.endswith("/sync"):
                     name = path.split("/")[-2]
                     record(outer.records, dict(rec, kind="sync", app=name))
+                    if outer.post_redirect:
+                        self._redirect(outer.post_redirect)
+                        return
                     code = outer.sync_codes.get(name, 200)
                     if code == 200:
                         self._send(200, {"status": {"operationState": {"phase": "Succeeded"}}})
@@ -553,9 +588,17 @@ try:
     # extra no-echo value). LIVE mode (no --check): the exact invocation the
     # C06 job runs — config errors must exit 1 there (the ruled red), and
     # they must be caught BEFORE any network (zero stub dials).
+    # Review-round-1 arms added: M1 reversed `token:cat` paste (the first
+    # field is JWT-shaped -> the reversed message, NEVER the value) and the
+    # cat[:64] echo bound (probed separately below the loop); m2 empty
+    # allowed_refs (a legal-but-silently-dead roster goes RED); m3 unknown
+    # top-level keys (relay-era leftovers cannot linger green); the
+    # nit-arms keep the finiteness/whole-number reds in the same family.
     arms = [
         ("unknown-category", good_vault + "\nnotacat:" + h.token_for("notacat"), None,
          r'argocd-fanout config: record for unknown category "notacat"'),
+        ("reversed", h.token_for("dev") + ":dev", None,
+         r'argocd-fanout config: vault record looks reversed \(token before category\)'),
         ("missing-token", h.vault(["dev"]), None,
          r'argocd-fanout config: roster target "grow" has no token'),
         ("non-jwt", "dev:%s\ngrow:plain-secret-not-a-jwt" % h.token_for("dev"), None,
@@ -570,6 +613,16 @@ try:
         ("short-ref", good_vault, None, r'argocd-fanout config:'),
         ("dup-name", good_vault, None, r'argocd-fanout config:'),
         ("bad-scheme", good_vault, None, r'argocd-fanout config:'),
+        ("empty-refs", good_vault, None,
+         r'argocd-fanout config:.*allowed_refs'),                          # m2: [] must go RED, not silently gate every push off
+        ("extra-keys", good_vault, None,
+         r'argocd-fanout config:.*clusterHosts'),                          # m3: unknown top-level key named in the message
+        ("inf-settle", good_vault, None,
+         r'argocd-fanout config:.*settle_seconds'),                        # nit: Infinity/NaN rejected without importing math
+        ("nan-timeout", good_vault, None,
+         r'argocd-fanout config:.*target_timeout_seconds'),
+        ("frac-workers", good_vault, None,
+         r'argocd-fanout config:.*parallel_workers'),                      # nit: 4.5 truncating silently is a config typo class
     ]
 
     def check(tag, rc, out, err, pat, no_echo=()):
@@ -600,11 +653,40 @@ try:
             cfg = roster_copy(lambda c: c["targets"].append({"name": "dev", "url": stub.url, "root_app": "dev"}), "dup")
         elif tag == "bad-scheme":
             cfg = roster_copy(lambda c: c["targets"][0].update(url="cluster.dev.lan"), "scheme")
+        elif tag == "empty-refs":
+            cfg = roster_copy(lambda c: c.update(allowed_refs=[]), "emptyrefs")
+        elif tag == "extra-keys":
+            cfg = roster_copy(lambda c: c.update(clusterHosts={"dev": "x"}, tokenKey="legacy"), "extrakeys")
+        elif tag == "inf-settle":
+            cfg = roster_copy(lambda c: c.update(settle_seconds=float("inf")), "infsettle")
+        elif tag == "nan-timeout":
+            cfg = roster_copy(lambda c: c.update(target_timeout_seconds=float("nan")), "nantimeout")
+        elif tag == "frac-workers":
+            cfg = roster_copy(lambda c: c.update(parallel_workers=4.5), "fracworkers")
         elif tag == "non-jwt":
             extra_no = ("plain-secret-not-a-jwt",)
+        elif tag == "reversed":
+            extra_no = (h.token_for("dev"),)
         rc, out, err = h.run("t4-%s" % tag, "--ref", "refs/heads/main",
                              vault_value=vval, unset=bool(unset), config=cfg)
         check(tag, rc, out, err, pat, extra_no)
+
+    # M1's echo BOUND: a long non-JWT first field is an informative typo,
+    # and its echo is allowed only up to 64 chars (review: cat[:64]) — an
+    # unbounded field echoed into the job log is a log-spam surface even
+    # when it is not a token. The bound is proven by the 65-char prefix
+    # being ABSENT; whether fewer chars print is the implementation's call.
+    longcat = "ZQ" * 150
+    rc, out, err = h.run("t4-echo-bound", "--ref", "refs/heads/main",
+                         vault_value=good_vault + "\n" + longcat + ":" + h.token_for("dev"),
+                         config=good_roster)
+    blob = out + err
+    if rc != 1:
+        h.bad("t4[echo-bound]: a 300-char unknown category exited %s, expected 1" % rc)
+    if longcat[:65] in blob:
+        h.bad("t4[echo-bound]: MORE than 64 chars of the offending field echoed (cat[:64] bound, review M1 optional half) — the leak-guard must also cap non-JWT field dumps")
+    if h.STEM in blob:
+        h.bad("t4[echo-bound]: the bound-arm record echoed token material (AC8)")
 
     if recs:
         h.bad("t4: %d stub requests landed despite every arm being a config error — validation must fail closed BEFORE the network (a dialed-anyway arm can half-sync)" % len(recs))
@@ -619,7 +701,7 @@ try:
 finally:
     stub.stop()
 
-print("ok: t4: ten config-error classes each exit 1 with the pinned `argocd-fanout config:` stderr shape (three with their exact pinned messages), none echoes any token or offending value, none dials the network, and --check enforces the same vocabulary (AC4, AC8, ruled red-posture)")
+print("ok: t4: every config-error class exits 1 with the pinned `argocd-fanout config:` stderr shape (the four byte-pinned messages plus the field-naming m1/m2/m3/nit arms), none echoes any token or offending value, the M1 echo stays within the cat[:64] bound, none dials the network, and --check enforces the same vocabulary (AC4, AC8, ruled red-posture, review-round arms M1/m2/m3/nits)")
 PY
   then
     fail "t4: the config-error contract is violated (reason printed above)"
@@ -857,11 +939,76 @@ try:
     child = [r for r in dev.syncs() if r["app"] == "dev-app1"]
     if len(child) != 1:
         h.bad("t8: the healthy target's child sweep was disturbed by its neighbors (dev-app1 POSTs: %d)" % len(child))
+
+    # ---- M2 phase: 3xx containment, both legs, against a separate-origin
+    # redirect target whose access log is the token-egress witness. The live
+    # trigger is real: cluster.proxy-local answers 307 to the SSO edge even
+    # with a bearer present (review round 1). The pinned posture: a door 3xx
+    # surfaces in the FAILED audit lane with the shipped HTTP-code wording,
+    # the bearer never leaves the rostered origin, and a 3xx-turned-GET can
+    # never earn result=ok.
+    x1, x2 = [], []
+    cross1 = h.StubArgo("cross1", x1, apps=[h.app("gpu", h.REPO, "main", "OutOfSync")])
+    cross2 = h.StubArgo("cross2", x2, apps=[h.app("media", h.REPO, "main", "OutOfSync")])
+    front_list = h.StubArgo("front-list", recs, get_redirect=302,
+                            redirect_to=cross1.url + "/login")
+    front_sync = h.StubArgo("front-sync", recs,
+                            apps=[h.app("media", h.REPO, "main", "OutOfSync")],
+                            post_redirect=301, redirect_to=cross2.url + "/api/v1/applications")
+    for s in (cross1, cross2, front_list, front_sync):
+        s.start()
+    try:
+        roster2 = h.make_roster(os.path.join(sys.argv[1], "t8-3xx"), [
+            {"name": "gpu", "url": front_list.url},
+            {"name": "media", "url": front_sync.url},
+        ], settle_seconds=0.0)
+        rc2, out2, err2 = h.run("t8-3xx", "--ref", "refs/heads/main",
+                                vault_value=h.vault(["gpu", "media"]), config=roster2)
+        blob2 = out2 + err2
+        if rc2 != 0:
+            h.bad("t8-3xx: a redirecting cluster is a RUNTIME failure — soft lane, exit 0 (got %s)\n%s" % (rc2, blob2[:400]))
+        a2 = {x["name"]: x for x in h.audits(blob2)}
+        if set(a2) != {"gpu", "media"}:
+            h.bad("t8-3xx: audits %s, expected both redirect targets" % sorted(a2))
+        if a2.get("gpu", {}).get("result") != "failed" or "applications list HTTP 302" not in a2.get("gpu", {}).get("detail", ""):
+            h.bad("t8-3xx: the 302 list door must audit failed with the shipped `applications list HTTP 302` wording (no silent follow), got %r" % a2.get("gpu"))
+        if a2.get("media", {}).get("result") != "failed" or "sync HTTP 301" not in a2.get("media", {}).get("detail", ""):
+            h.bad("t8-3xx: the 301 sync door must audit failed with `sync HTTP 301` — and MUST NOT audit ok: the default opener turns POST into GET, lands an HTML page, and would fake a green sweep (review M2 false-green)", )
+        if "result=ok" in blob2:
+            h.bad("t8-3xx: result=ok appeared with zero real syncs performed — the operator-grepped success channel was earned by a redirect page (M2)")
+        for label, xlog in (("cross1", x1), ("cross2", x2)):
+            if xlog:
+                leaks = [r for r in xlog if r.get("auth")]
+                h.bad("t8-3xx: %d request(s) landed on the redirect TARGET %s (%d carrying Authorization!) — the bearer left the rostered origin; api_request must refuse redirects" % (len(xlog), label, len(leaks)))
+        # the rostered origins were dialed exactly once list-each (+ the
+        # front-sync POST attempt): containment happens at the door, not by
+        # skipping the target.
+        gl = [r for r in recs if r["stub"] == "front-list"]
+        gs = [r for r in recs if r["stub"] == "front-sync"]
+        if not any(r["method"] == "GET" for r in gl) or not any(r["method"] == "GET" for r in gs):
+            h.bad("t8-3xx: the redirecting targets were not dialed (doors must be PROVEN unreachable, not bypassed)")
+        if not any(r["method"] == "POST" for r in gs):
+            h.bad("t8-3xx: front-sync never received the POST attempt — eligibility said sync, so the sync leg must fire into the door")
+        if h.summary(blob2) != ("2", "0", "0", "2"):
+            h.bad("t8-3xx: summary %r, expected targets=2 ok=0 skipped=0 failed=2" % (h.summary(blob2),))
+        # token stem never rides any line — cross logs stayed empty, and the
+        # Bearer header that WAS sent went only to the rostered origin.
+        if h.STEM in blob2:
+            h.bad("t8-3xx: token material echoed in the 3xx legs' output (AC8)")
+        # egress check on the wire itself: the front stubs saw the bearer
+        # (their origin, correct); assert the auth headers on door requests
+        # reference the dev/media tokens, not a stray target.
+        for r in gl + gs:
+            if r["auth"] and not r["auth"].startswith("Bearer " + h.SEG1):
+                h.bad("t8-3xx: door request carried an unexpected Authorization shape: %r" % r["auth"][:30])
+    finally:
+        for s in (cross1, cross2, front_list, front_sync):
+            s.stop()
 finally:
     for s in (dev, gpu, grow, media):
         s.stop()
 
-print("ok: t8: 401/garbage/timeout/refused neighbors fail in isolation — each audits a reason, the healthy target completes, the summary reconciles, exit stays 0; the closed-port arm is the OQ9 honest-failed posture (AC6)")
+print("ok: t8: 401/garbage/timeout/refused neighbors fail in isolation — each audits a reason, the healthy target completes, the summary reconciles, exit stays 0; the closed-port arm is the OQ9 honest-failed posture; the 3xx phase proves redirect containment on BOTH legs (M2): door 3xx audits `applications list HTTP 302` / `sync HTTP 301`, no result=ok, zero requests on the redirect target and its bearer (AC6)")
 PY
   then
     fail "t8: the isolation posture is violated (reason printed above)"
@@ -965,25 +1112,38 @@ stub.start()
 try:
     # The trackedRepo-mismatch trap [P §3]: a fan-out that skipped 100% of
     # targets is almost certainly a drifted tracked_repo, not an empty fleet.
+    # Two targets: the m1 "exactly once" pin cannot bite on a one-target run
+    # (per-target emission would still count 1).
     roster = h.make_roster(os.path.join(sys.argv[1], "t11"),
-                           [{"name": "dev", "url": stub.url}],
+                           [{"name": "dev", "url": stub.url},
+                            {"name": "grow", "url": stub.url}],
                            tracked_repo="https://github.com/OwnYourIO/NeverDeployed.git")
     rc, out, err = h.run("t11", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["dev"]), config=roster)
+                         vault_value=h.vault(["dev", "grow"]), config=roster)
     blob = out + err
     a = h.audits(blob)
     if rc != 0:
         h.bad("t11: all-skipped exits %s, expected 0 (a runtime-shape miss stays soft; only SETUP errors go red)" % rc)
-    if not a or any(x["result"] != "skipped" for x in a):
-        h.bad("t11: audits %r — every target must audit skipped" % [dict(x) for x in a])
+    if not a or any(x["result"] != "skipped" for x in a) or len(a) != 2:
+        h.bad("t11: audits %r, expected both targets skipped" % [dict(x) for x in a])
     if "::warning::" not in blob:
-        h.bad("t11: all-skipped run lacks the pinned `::warning::` annotation (plan: the trackedRepo-mismatch trap must announce in the job log, not pass silently)")
-    if h.summary(blob) != ("1", "0", "1", "0"):
-        h.bad("t11: summary %r, expected targets=1 ok=0 skipped=1 failed=0" % (h.summary(blob),))
+        h.bad("t11: all-skipped run lacks the pinned `::warning::` line (plan: the trackedRepo-mismatch trap [P §3] must announce)")
+    # Review m1: the annotation grammar is LINE-ANCHORED (act lineage
+    # commandPatternGA ^::cmd::, runner issue #4692's framing) — a warning
+    # behind log()'s timestamp is readable but never becomes an annotation,
+    # and a per-target trap line would spam the job. Pin: exactly one, at
+    # column 0.
+    wlines = [ln for ln in blob.splitlines() if "::warning::" in ln]
+    if len(wlines) != 1:
+        h.bad("t11: %d lines carry ::warning:: — the trap annotation appears EXACTLY once per run" % len(wlines))
+    if any(not ln.startswith("::warning::") for ln in wlines):
+        h.bad("t11: the all-skipped ::warning:: is not at column 0 (m1: mid-line the runner grammar ignores it — print the annotation directly, not through log())")
+    if h.summary(blob) != ("2", "0", "2", "0"):
+        h.bad("t11: summary %r, expected targets=2 ok=0 skipped=2 failed=0" % (h.summary(blob),))
 finally:
     stub.stop()
 
-print("ok: t11: all-skipped audits skipped, warns ::warning::, summarizes, exits 0 (AC10)")
+print("ok: t11: all-skipped audits skipped, warns ONE column-0 ::warning:: (m1), summarizes, exits 0 (AC10)")
 PY
   then
     fail "t11: the all-skipped posture is violated (reason printed above)"

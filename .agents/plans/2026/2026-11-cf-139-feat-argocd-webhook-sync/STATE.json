@@ -131,14 +131,16 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 7,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
       "note": "fan-out engine: scripts/argocd-fanout.py + scripts/argocd-fanout.json (11 literal [P2] URLs) + tests/argocd-fanout/behavior.sh; stdlib-only; vault env contract; exit posture 0/1/2",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-23T22:40+00:00", "event": "dev DONE (12/12) + review R1 CHANGES_REQUESTED (M1 reversed-paste JWT echo, M2 bearer-forwarding redirects + POST-3xx false ok, 3 minors ruled in, 2 nits) + fix round applied all + test round 12 mutation-proven arms + review R2 APPROVED (majors independently re-probed; 307-vs-401 hub finding -> owner smoke leg; rulings in DECISIONS 2026-11-23 C05 block)" }
+      ]
     },
     "C06": {
       "status": "pending",

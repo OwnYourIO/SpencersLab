@@ -393,3 +393,26 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   "pending owner" markers survive), C05/C07 unchanged (delimiter-independent; no scope
   surface). No open questions remain; the unverified facts left are owner smoke legs
   (multi-line paste UI, [26] spot-check, proxy-backup vantage, dind DNS acceptance).
+
+## C05 review rounds 2026-11-23 (round 1 CHANGES_REQUESTED -> round 2 APPROVED; coord rulings)
+- 2026-11-23 ruling (coord, M2): the no-follow opener (`_NoRedirect`, both GET-list and
+  POST-sync legs) DEVIATES the plan's "api_request ports 1:1" pin, and security +
+  truthful-audit override fidelity: urllib would re-send the cluster bearer to any 3xx
+  target (proved off-origin egress; live trigger = hub Keycloak 307) and a POST answering
+  301/302/303 audited `result=ok` with nothing synced. 3xx now surfaces in the existing
+  failed lanes (`applications list HTTP 30x` / `sync HTTP 30x`). The hole was INHERITED
+  from main.py — the vault-direct vantage (SSO-fronted routes) is what made it live.
+- 2026-11-23 ruling (coord, M1): reversed `token:cat` vault records raise a FOURTH
+  value-free config error (`vault record looks reversed (token before category)`); a
+  JWT-shaped first field is never echoed; other echoes bounded `cat[:64]`. The pinned
+  three config-error messages stay byte-unchanged.
+- 2026-11-23 ruling (coord, minors in): all-skipped `::warning::` at column 0 (job-log
+  annotation grammar — mid-line it never annotates); `allowed_refs: []` -> ConfigError
+  (silent disable contradicts the config-red posture); unknown top-level roster keys ->
+  ConfigError (symmetry with per-target extras); tunable finiteness/whole-number guards.
+- 2026-11-23 review: OWNER-LEG finding strengthened — `cluster.proxy-local` answers 307
+  (Keycloak `userAuth`, `UseAuthHeader: "false"`) where gpu/dev answer 401: the hub's own
+  target may STRUCTURALLY refuse the bearer regardless of mint. Post-fix it reads as an
+  honest failed line meanwhile; the mint+dispatch smoke answers definitively, likely
+  remedy = the crowdsec-only `git`/`forms` route exception precedent (separate owner call,
+  out of this ticket if needed). C08 preflight row carries the 307-vs-401 reading.
