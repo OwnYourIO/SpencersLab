@@ -85,6 +85,26 @@
     }
   },
   "blocked": [],
+  "final_review": {
+    "status": "recorded",
+    "session": "ses_dfae44584ffetHOUru9MO3GP3R",
+    "scope": "whole-plan: the owner's four-lane ask (27b-TP1, 27b-TP2, flash-TP1, fn-TP2) vs the shipped tree; the D5/D9/D10 scope re-file over the 2026-11-22 two-lane draft; cross-chunk coherence of the red-first test wave (C01) and the config move (C02); the unruled-change sweep over the ticket's commits; adequacy of the pre-authored D8 receipt contract (nine-item set per lane + the eight-admitted-sessions smoke for fn, D9(b)) as the only remaining proof.",
+    "premise_verified": "C01 (the test wave — four lanes, THREE authority kinds + the D8 receipt block) and C02 (config move + prose + test re-pins) are LANDED and APPROVED — commits 01b6c2ff1, c877edf8e, e37af0bca, e0856a1b2, efb5d15bf. C01's red-first discipline verified (the C01-only tree at 01b6c2ff1 was extracted and measured: 13F/148P = exactly the designed red set, no stray greens, red-first ordering proven to precede the config commit). C02's non-comment delta proven to be exactly the four env value lines. C03 armed-not-triggered and C04 owner-triggered-not-run — both post-merge legs, never run. Battery at completion: radiance 162P, llama-swap 517P/9S, amd-gpu 36P, vllm 36P, surface M1-M9 green (M6 never run, no claim), five notes suites green, aislop 0/0, receipt gate correctly REFUSING for want of logs.",
+    "verdict": "APPROVED_WITH_CONDITIONS — condition 1 (MY OWN stale record fields: plan_status_note still read 'approval pending this fold' while plan_status said 'approved', and C01/C02 still read pending/0/0/null with current_wave 1 — a resume scan would have re-run approved waves) closed by this edit; no fault found in the tree. The ticket's own prose (plan_status_note + the chunk records) already carries the substance; this object makes it machine-readable.",
+    "provisional_warning": "PROVISIONAL is STILL OPEN on all four lanes: this ticket is complete as WORK and INCOMPLETE as EVIDENCE. C03 is ARMED-NOT-TRIGGERED (fires only on a refuting per-lane print); C04 is OWNER-TRIGGERED and NOT YET RUN — it closes PROVISIONAL and it cannot be closed by an agent. Closing C04 without `receipt_gate.py --gate` passing on real four-lane logs is close-on-absence, which AC1 makes a review blocker (parent-D49). Canonical prose: this file's plan_status_note (first paragraph) + C03.last_verdict + C04.last_verdict — this field is the machine-readable pointer, not a third copy.",
+    "merge_gate": {
+      "session": "ses_df9a99c9cffeFd5PkMLX87eOxX",
+      "note": "Ran AFTER the final whole-plan review (the post-rebase merge gate); its outcome lived in the session transcript + commit messages only until this edit.",
+      "rebase": "Branch rebased onto main — 18/18 applied, single conflict in the PARENT ticket's STATE.json resolved toward this branch's accurate C06 record.",
+      "first_pass": "BLOCKED — invalid JSON in THIS file (Extra data: line 87 column 4; C02 closed twice by my own D15 edit).",
+      "cleared_by": "604a0e987",
+      "re_verification": "Both tickets' STATE.json re-verified parse-clean with zero duplicate keys at any nesting level.",
+      "battery": "Post-rebase battery green: radiance 194P, llama-swap 517P+9S, amd-gpu 36P, vllm 36P, notes suites green, tsx 15/15, per-arm stop-points gate only t17 and rulesync-surface c19 — both out-of-ticket.",
+      "renders": "Four-lane renders confirmed 262144/8/110-24-110-24/2-1-1-2/1-0-0-0 after the rebase.",
+      "rulesync": "rulesync generate --check FAILS ON MAIN (AGENTS.md out of sync with sources on the runner paragraph) — pre-existing, assigned to the D17 follow-up, NOT this branch."
+    },
+    "post_rebase_drift": "main advanced twice after the rebase (8ef4545fe, 0eeee59c3, cf-6 work) with ZERO file overlap with this branch's 23-file delta — no re-rebase required for a clean merge."
+  },
   "deferred": [
     "1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is validated on this model). Revisit trigger: a fresh YaRN validation pass + an owner ruling.",
     "The stale jsonc commentary restatement — the owner's prose leg at C04 (parent-D27: catalog bytes are the owner's); the legs stay green meanwhile (the needles name both figures).",
