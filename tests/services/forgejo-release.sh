@@ -44,6 +44,16 @@
 # the bump leg's --retry-hardened published-index fetch. Every other leg is
 # byte-unchanged from the rebuild.
 #
+# Fix round 2 (2026-11-23, chunks/C08.md; D45): 21 legs. t21 added — the
+# repo-add loop COMPLETENESS replay: each carrier, extracted per job, must
+# emit EVERY URL-shaped dependency row through the shipped `tail +2 | head
+# -n -1` arithmetic over live-measured fixture shapes, and the derived repo
+# set must cover every http(s) Chart.lock URL of the four victim charts (the
+# shipped program-`exit` registered only each chart's first row and the
+# owner's release re-run died in cr package naming the unregistered repos).
+# t6's comment is re-truthed to the per-row contract; t1-t20 are
+# byte-unchanged.
+#
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-release.sh
 set -euo pipefail
@@ -230,10 +240,14 @@ import sys, yaml
 
 jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
 
-# Legs that run helm against chart dependencies. The cf-77-hardened awk scan
-# (first URL-shaped field) plus the oci:// skip are copied VERBATIM from the
-# proven loop; a leg that runs `helm dependency list` without it re-breaks on
-# any empty-REPOSITORY subchart row.
+# Legs that run helm against chart dependencies. The hardened loop's contract
+# is the first URL-shaped field OF EACH dependency row, every row emitting:
+# a carrier that ends its print block with a program terminator registers
+# only each chart's FIRST row and cr package's lock-driven Build dies on the
+# rest (cf-77 r2's exit-vs-next defect, D45). This leg pins the loop's TOKENS
+# per job; the all-rows completeness replay is t21. A leg that runs `helm
+# dependency list` without the field guard re-breaks on any empty-REPOSITORY
+# subchart row.
 for jn in ('test-build', 'release', 'forgejo-publish'):
     blob = '\n'.join(str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
                      if isinstance(s, dict) and 'run' in s)
@@ -1085,5 +1099,149 @@ then
   fail "t20: see the t20 detail above"
 fi
 ok "t20: the bump leg's published-index curl carries --retry (the un-bakeable data egress gets bounded hardening, D37)"
+
+# --- t21: repo-add loop COMPLETENESS — every URL-shaped row registers (fix round 2, D45) ---
+# The owner's release re-run proved t6's token pins are not completeness: the
+# Add-repositories step ran green while registering only the FIRST URL-shaped
+# dependency row of each chart — cf-77 r2's awk ends its print block with
+# program-`exit`, which terminates the whole program where `next` would move
+# to the next record — and cr package died with `no repository definition for
+# https://charts.jetstack.io, https://charts.christianhuth.de` (scout TEST D
+# reproduced the owner's error verbatim from the shipped loop's state; TEST F
+# proved the exit->next shape end-to-end). This leg extracts each of the
+# three carriers and replays it OFFLINE through the shipped `tail +2 | head
+# -n -1` arithmetic over dependency-list-shaped fixtures, then over the four
+# victim charts' real Chart.lock rows — the lockfiles are the fixture source,
+# so a future multi-row chart is covered by derivation, not enumeration.
+if ! python3 - "$WF" <<'PY'
+import re, subprocess, sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+JOBS = ('test-build', 'release', 'forgejo-publish')
+VICTIMS = ('base', 'k8s-monitoring', 'postiz', 'traefik')
+HDR = 'NAME\tVERSION\tREPOSITORY\tSTATUS'
+
+# Fixtures: live-measured `helm dependency list` column shapes (workspace helm
+# 3.16.4, 2026-11-23). Display padding is stripped — awk splits on every run
+# of tabs/spaces, so the fields the carrier scans are the real output's; scout
+# TEST B' verified helm 3.22.1 (the baked runner version) keeps the rows +
+# trailing blank that the `tail +2 | head -n -1` arithmetic eats. The zero-dep
+# fixture is the one shape without a header: helm puts the WARNING line on
+# STDOUT (the step's `2> /dev/null` does not silence it) and `tail +2` drops
+# that single line — which is exactly what makes the step a no-op there.
+def fixture(rows):
+    return HDR + '\n' + ''.join(r + '\n' for r in rows) + '\n'
+
+# charts/base — the owner-fire chart: rows 2 and 3 are the exact URLs the
+# dead fire named. An exit-shaped carrier emits 1 of these 3 pairs.
+BASE = fixture(['argo-cd\t10.18.2\thttps://argoproj.github.io/argo-helm\tmissing',
+                'cert-manager\tv1.21.3\thttps://charts.jetstack.io\tmissing',
+                'gateway-api-crds\t1.2.5\thttps://charts.christianhuth.de\tmissing'])
+BASE_PAIRS = [('argo-cd', 'https://argoproj.github.io/argo-helm'),
+              ('cert-manager', 'https://charts.jetstack.io'),
+              ('gateway-api-crds', 'https://charts.christianhuth.de')]
+# The six charts that packaged on the dead fire (loki/seaweedfs shape): the
+# completeness fix must not regress them — exactly one pair.
+SINGLE = fixture(['loki\t7.5.0\thttps://grafana.github.io/helm-charts\tmissing'])
+SINGLE_PAIRS = [('loki', 'https://grafana.github.io/helm-charts')]
+# cf-77 r2's class: an empty REPOSITORY column shifts the STATUS word into
+# $3, so the per-row field guard must skip the row instead of emitting a
+# name + status pair that `helm repo add` swallows and bash -e kills the
+# step over. Orthogonal to completeness: the exit-shape carrier PASSES this
+# fixture; it is the twin-era print-$1-$3 mutant that reddens here.
+EMPTY_REPO = fixture(['bjw-common\t9.9.9\thttps://bjw-s-labs.github.io/helm-charts/\tmissing',
+                      'local-sub\t1.0.0\t\tmissing'])
+EMPTY_REPO_PAIRS = [('bjw-common', 'https://bjw-s-labs.github.io/helm-charts/')]
+# hivetools: both rows oci://. The awk emission duty covers them too;
+# keeping them out of helm repo add is the step's ^oci:// skip (t6's token).
+OCI_BOTH = fixture(['toolhive-operator-crds\t0.56.0\toci://ghcr.io/stacklok/toolhive\tmissing',
+                    'toolhive-operator\t0.56.0\toci://ghcr.io/stacklok/toolhive\tmissing'])
+OCI_BOTH_PAIRS = [('toolhive-operator-crds', 'oci://ghcr.io/stacklok/toolhive'),
+                  ('toolhive-operator', 'oci://ghcr.io/stacklok/toolhive')]
+ZERO_DEP = 'WARNING: no dependencies at charts/zerochart/charts\n'
+
+
+def carrier(jn):
+    # t6's blob idiom per job; the repo-add program is the single-quoted awk
+    # body riding the helm dependency list line. None = no scan carrier left.
+    blob = '\n'.join(str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
+                     if isinstance(s, dict) and 'run' in s)
+    for line in blob.splitlines():
+        if 'helm dependency list' in line and 'awk' in line:
+            m = re.search(r"awk '([^']*)'", line)
+            if m:
+                return m.group(1)
+    return None
+
+
+def replay(prog, text):
+    # The shipped pipeline arithmetic verbatim, then the landed carrier as-is.
+    t = subprocess.run(['tail', '+2'], input=text, capture_output=True, text=True)
+    h = subprocess.run(['head', '-n', '-1'], input=t.stdout, capture_output=True, text=True)
+    a = subprocess.run(['awk', prog], input=h.stdout, capture_output=True, text=True)
+    if a.returncode != 0:
+        return None, a.stderr.strip()
+    return [tuple(l.split(' ', 1)) for l in a.stdout.splitlines() if l.strip()], ''
+
+
+def fmt(pairs):
+    return ', '.join(' '.join(p) for p in pairs) or 'nothing'
+
+
+problems = []
+
+
+def check(jn, what, pairs, expected):
+    missing = [p for p in expected if p not in pairs]
+    extra = [p for p in pairs if p not in expected]
+    if missing or extra:
+        problems.append(f'{jn}: {what} emitted [{fmt(pairs)}]'
+                        + (f' — MISSING [{fmt(missing)}]' if missing else '')
+                        + (f' — unexpected [{fmt(extra)}]' if extra else ''))
+
+
+for jn in JOBS:
+    prog = carrier(jn)
+    if prog is None:
+        problems.append(f'{jn}: no repo-add awk carrier on the helm dependency list line')
+        continue
+    pairs, err = replay(prog, BASE)
+    if pairs is None:
+        problems.append(f"{jn}: carrier replay errored ({err!r}) — the awk program does not run")
+        continue
+    check(jn, 'base-shape 3-URL-row fixture', pairs, BASE_PAIRS)
+    check(jn, 'single-URL-row fixture', replay(prog, SINGLE)[0], SINGLE_PAIRS)
+    check(jn, 'empty-REPOSITORY fixture', replay(prog, EMPTY_REPO)[0], EMPTY_REPO_PAIRS)
+    check(jn, 'oci-both fixture', replay(prog, OCI_BOTH)[0], OCI_BOTH_PAIRS)
+    check(jn, 'zero-dependency fixture', replay(prog, ZERO_DEP)[0], [])
+    # AC2 derivation: the repo set the loop derives must cover every http(s)
+    # URL of the chart's Chart.lock — cr's lock-driven Build resolves each
+    # one against the repositories file (D45; victim set per scout §A2).
+    for chart in VICTIMS:
+        deps = yaml.safe_load(open('charts/' + chart + '/Chart.lock'))['dependencies']
+        rows = [d['name'] + '\t' + str(d['version']) + '\t' + d['repository'] + '\tmissing'
+                for d in deps]
+        emitted = {u for _, u in replay(prog, fixture(rows))[0]}
+        lock_http = {d['repository'] for d in deps
+                     if d['repository'].startswith(('http://', 'https://'))}
+        gap = sorted(lock_http - emitted)
+        if gap:
+            problems.append(f'{jn}: {chart} Chart.lock URLs never registered: '
+                            + ', '.join(gap))
+
+if problems:
+    print('FAIL: t21: the repo-add loop is INCOMPLETE — a carrier that ends its print '
+          'block with a program terminator (cf-77 r2 wrote exit where the all-rows loop '
+          'needs next) registers only each chart\'s FIRST URL-shaped dependency row, so '
+          'cr package dies on the unregistered repos (no repository definition for ..., '
+          'the owner release fire). Offenders:', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t21: see the t21 detail above"
+fi
+ok "t21: all three repo-add carriers emit every URL-shaped dependency row (base 3-of-3, loki-shape 1, oci-both 2, empty-REPOSITORY row silent, zero-dep silent) and the derived repo set covers every http(s) Chart.lock URL of the four victim charts"
 
 printf 'PASS: forgejo-release checks (%d ok)\n' "$checks"
