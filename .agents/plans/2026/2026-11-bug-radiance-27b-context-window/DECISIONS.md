@@ -91,6 +91,37 @@ rejected, why.
   per-lane served column. The jsonc COMMENTARY is owner-protected (parent-D27: the catalog
   bytes are the owner's) — its stale half is restated by the OWNER's prose leg at C04,
   recorded in C04, not executed by this ticket's dev scope.
+- 2026-11-23 human, ruling **D5 (RULING 4 — the raise is EXTENDED to the flash lanes: fn-TP2 AND
+  flash-TP1)**, answered at the batched round against the coordinator's recommendation to leave both at
+  200000. Recorded dissent (three grounds, so it stays visible and is not re-litigated silently): (i) the
+  whole evidence base for 262144 is **27b-specific** (S1-S3 pack card/config.json; S8 upstream's 27b compose
+  profile) and **no flash-pack ceiling had been established**; (ii) fn-TP2 is the LIVE default route for
+  every tier plus the hourly runner (parent-D16), so this is a second pod roll on the pipeline's own
+  critical path; (iii) flash-TP1's profile is a **verbatim cf-143 TP1-era transcription proof** — moving it
+  converts a proof into a deviation-with-ruling, and the parent ticket's whole OQ-F value was transcription
+  fidelity. **Consequence I acted on rather than executed:** the plan as approved (C01/C02 scoped to two 27b
+  env values) no longer describes the work, so `plan_status` stays `draft` and execution is paused pending
+  (a) a flash-lane research round (F1-F5: the flash pack's real ceiling, KV bytes/token for the MoE
+  architecture, whether fn's 200000 was MEASURED by a boot print rather than transcribed, worst-case pool at
+  262144 x `--max-num-seqs 8`, and what upstream recommends for the flash pack), and (b) a plan fold re-scoping
+  C01/C02 to four lanes. **The decisive unknown is whether fn's 200000 is measured**: the 27b's was
+  transcribed, so extending was guesswork there too — but fn has actually booted repeatedly, so unlike the
+  parked 27b lanes a receipt may exist, and overturning a measurement is a materially different act from
+  overriding an assumption.
+- 2026-11-23 human, ruling **D6**: `max-num-seqs` **stays 8**. It is FORM-fixed (parent-D46
+  `FORM_FIXED_FLAGS`), so changing it is one chart edit moving the worst-case pool sizing for ALL FOUR lanes
+  at once — which would invalidate the very receipt this ticket exists to capture. Upstream's 32 for the 27b
+  pack is recorded as a legitimate future ruling with its own print, not absorbed here.
+- 2026-11-23 human, ruling **D7**: held memory (**24Gi** on the 27b lanes, **110Gi** on fn per
+  parent-P11's standing hold) moves **only on a contradicting print**, never pre-emptively. Parent D28(6)
+  stands: prints price numbers, estimates do not.
+- 2026-11-23 human, ruling **D8 (PROVISIONAL closure mechanism)**: the receipt is a **pre-authored single
+  command block** that the owner runs once at the scale act; C04 closes PROVISIONAL **only if every item is
+  present** and refuses to close on a partial print — the anti-drift half of parent-ruling D49's lesson that a
+  gate which can pass on absence is not a gate. (Chosen over my recommendation of owner-captures/C04-records,
+  which leaves closure dependent on a human remembering to come back.) The nine-item receipt set comes from
+  RESEARCH implication (e); the block is authored in the C01 test wave so the closing gate and the script are
+  one artifact, and any lane-count change from D5 lands in that block too.
 
 ## Deferred
 - The 1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is
