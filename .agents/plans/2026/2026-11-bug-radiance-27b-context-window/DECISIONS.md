@@ -217,7 +217,25 @@ rejected, why.
   **Ticket state.** C01/C02 landed and approved; C03 armed-not-triggered; C04 owner-triggered and NOT run —
   **PROVISIONAL is OPEN on all four lanes and no agent can close it.** `plan_status: complete` describes the
   AGENT-side work only, and that distinction is written into the note itself, because "complete" and
-  "evidenced" are different claims and these values merged on the strength of the first.
+   "evidenced" are different claims and these values merged on the strength of the first.
+- 2026-11-23 coord-ruling **D16 (the receipt gate's fit hole is closed as a gate change; its residual limits are
+  recorded as limits, not defects)**. Final review's F2 filed the overstatement as a MINOR with a reword;
+  substance required a fix — see D15. Landed at `97d284787`: per-lane `M >= read-configured
+  --max-num-seqs` (read from the chart FORM, never defaulted), refusal on absent/unparseable `M`, `N% < 100` as
+  a surfaced **owner-read warning** on every lane, fn's D9(a)/D9(b) bars byte-identical, block untouched,
+  168 passed with the pre-fix fool pattern reproduced as a genuine PASS first.
+  **The three limits I want binding on how this is read.** (1) **`M` is self-reported** — the gate parses the
+  grepped line from the boot tail, so a PASS certifies *the print says* the lane is funded, not that the engine
+  agrees; a stale line from an earlier boot would parse clean. The first owner run calibrates the greps, and
+  until that calibration exists the gate's evidence is one step removed from the hardware. (2) **`N%` has no
+  machine bar by design** — a pool backing 1% of the worst case passes if nobody acts on the warning, because
+  inventing a funding threshold here would be pricing capacity by estimate, which is the exact thing D28(6)
+  forbids. So the warning line in the C04 record *is* the judgment artifact: closing C04 without quoting the
+  N% values would be closing on the weaker half. (3) **The eight-session runtime smoke is fn-only by ruling**
+  (D9(b) scoped it to the live default route), so the three parked lanes have no independent loud check for
+  silent under-funding — their only cover is a boot line the lane cannot produce until someone scales it.
+  Net: the gate is now worth trusting for what it checks and must not be read beyond that, and C04's close is
+  the owner's act for reasons that are structural, not procedural.
 - 2026-11-23 coord-note **D10 (no memory change anywhere in this ticket)** — F2's arithmetic closed the last
   open question about sizing: flash-TP1 at 262144 fits the held 110Gi at BOTH candidate cost rates
   (≈69–89 GiB used; engine rule `110 − 87 = 23 ≥ 4`), fn-TP2's worst-case pool goes 18.3 → **24.0 GiB** trunk
