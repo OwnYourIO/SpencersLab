@@ -334,12 +334,12 @@
     },
     "C07": {
       "title": "Compaction-doctrine swap: in-session re-grounding for the coord six + dispatcher (hook note text, boards Context-handoff section, agent narratives, two permissions.md rationale clauses) — text-only, engine untouched",
-      "status": "in_progress",
+      "status": "done",
       "wave": 7,
       "depends_on": ["C06"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": "APPROVED via round4_approval basis (owner D41 ruling = the approval; question widget twice aborted by server instability; six flagged calls stand as inside-ruling scope, vetoable pre-landing). Test re-pin wave DONE (774c04dee, relaunched on TP2 after attempt 0 died pre-write): X2 re-ground pins + 5-phrase absence; H1/H5; N3 coord+dispatcher windows; H2/N6 green guards hold both sides; arithmetic 12/12; call-5 verified-unpinned. ATTRIBUTION CORRECTIONS from the wave, NOT ours to fix: H9 = stale 200000 comment vs 262144 rows in opencode.jsonc (one-paragraph source repair, owner leg); A6/M6 generated-surface split BORN at the radiance merge 54cc84188/bc4b2a3fa — corrects the earlier a3e8428af-only t5 story (the merge added a second split; squash-at-landing still covers both). Dev sweep launching on TP2 lane per D42. (Hash note: pre-takeover records cited 68e7c611e/1fe16f0c6 for the planning amendment — same content, rewritten by the branch take-over; post-takeover tip lineage verified.)",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review round 1, 724e3d8ec, two-tree control): text-only doctrine sweep boundary-proven at blob level, doctrine consistent across four surfaces, both stale-comment non-folds ruled comments-not-minors-in-instruction, project.json pointer adjudicated TRUE, H4 margin 245 recorded for the next text wave. C07 DONE per step 7 (dev DONE + review APPROVED + all designed flips green x2). Delta re-check #3 on the C07 scope now; fourth Review hand-off follows.",
       "handoffs": [
         {
           "role": "plan",
@@ -355,6 +355,27 @@
           "result": "status: DONE | chunk: test-c07 | 3 files: engine X2 x7 legs re-pinned (note-text + pointer-law to RE-GROUND vocabulary; new 5-phrase absence leg — spawn-successor/handoff-release/end tokens banned in the full-leg note; old-text mutant reddens); handoff H1 (failure routes to re-grounding; 'handoff protocol' pinned absent) + H5 (line (e) 're-grounds' + Dispatcher-cite re-pin; retired spawn-end tokens absent); narratives N3 coord+dispatcher windows (re-ground vocabulary in, close-protocol phrases out, role discrimination kept). GREEN guards hold both sides of landing: H2 (convention-content survival — all four tokens already in current (b) line), N6 (named-line exception inert pre-landing; four controls bite on the shipped checker; settled base c372d0276 verified alive post-take-over, NOT moved). Arithmetic re-sim 12/12 post-landing under shipped semantics — caught+fixed two own-draft pin flaws (broad 're-ground' needle hit reworded intro first, span 1961>1800; blanket 'successor' negative collided with (f)'s retained 'successor-bootstrap' scope vocabulary). Non-vacuity: every negative leg proven to bite on current text. Call-5 VERIFIED-UNPINNED (no arm needles the two permissions.md rationale clauses; A-series re-run confirms row shapes hold — no new pin added). ATTRIBUTIONS NOT FIXED (tests-only scope, reported): H9 red = 262144 rows vs stale 200000 comment in opencode.jsonc; A6/M6 reds = generated-surface split BORN AT THE RADIANCE MERGE 54cc84188/bc4b2a3fa — wave corrected the earlier a3e8428af-only story via commit-state walk; both owner-side one-paragraph repairs. Determinism x2 all arms; bash -n/node load clean.",
           "session": "ses_e0af1fb97ffecU0dbqN6qLeH3z",
           "commit": "774c04dee"
+        },
+        {
+          "role": "dev",
+          "agent": "agent-dev-local (fresh — cross-location continuation denied by the firewall after the restart; roster re-read now grants the local family, D22-adjacent note: the alias-class dev variant for THIS coord is agent-dev-local)",
+          "round": 1,
+          "result": "DONE (implementation) | chunk C07 | all four loci landed text-only (plugin note body + pointer law; boards (a)/(b)/(e)/intro-failure-half/Dispatcher-cite; 7 bodies + 7 mirrors with twin byte-identity 1146B/987B + the dispatcher NAMED pre-window bullet line-119 as the ONLY non-append prefix diff; permissions 2 clauses) + rulesync 2-mirror + verify-exclusions (no logic lines, zero frontmatter/permission-row diffs). Battery: engine 77/77 (X2 7 flips), H1-H8, N1-N5 (N3 flipped) all green; aislop 100. Reported NOT-FIXED correctly: N6 shipped check_prefix requires whole-file line-count equality so it cannot admit bullet-reword+section-append together (the combination C07 mandates) — validation_at_fault, routed silently to the test session with a concrete fix spec (proven via the checker's own logic: bullet-only passes, combined fails, diff-lines=[119] keyed to base text). Out-of-band AGENTS.md writes x2 mid-run observed; the sanctioned generate then produced the byte-identical result (merge-born staleness materialization; attribution kept with the A6/M6 class). Live compaction hook FIRED in the dev session (generic-leg note arrived verbatim) — first production-shaped evidence the generic leg survives rewording intact. NOTE: this result's status was recorded BLOCKED at hand-back (open_q 1: the N6 repair gate); with 724e3d8ec landed the block is cleared — the implementation needed no change, confirming the arm-defect attribution end-to-end.",
+          "commit": "58b9ec295"
+        },
+        {
+          "role": "test-repair",
+          "agent": "agent-test (continuation)",
+          "round": "n6",
+          "result": "DONE | test-repair-n6 | check_prefix allow_bullet repaired per spec: line-list neutralization (base ends \\n -> trailing '' artifact — the subtlety the raw spec would miscount), first-len(ol) lines vs base, tail must open with the section header when present, line-loss the only failing count direction; 4 existing controls byte-unchanged + 3 combined-case controls (reword+append admits / reword+append+other-moved reddens / header-in-prefix reddens) — 7-fixture probe against the SHIPPED checker all bite both directions; real dispatcher source diff=[119] + mirror diff=[109] admitted, one keyed line each. Full narratives bare x2 rc=0 byte-identical (N1-N8); holds: S10, t14/c8/c7, W2 48/48, engine 77/77, --check clean.",
+          "commit": "724e3d8ec"
+        },
+        {
+          "role": "review",
+          "agent": "agent-review (continuation)",
+          "round": 1,
+          "result": "APPROVED (724e3d8ec, two-tree @774c04dee removed after): full battery x2 pair byte-identical (node-only env noise normalized); red set exactly the owner-leg/pre-existing/merge-born classes (H9/t17/c13/c19/A15/N8 — each proven byte-identical in the PRE tree per-arm); designed flips green with controls firing (X2 7, H1/H5, N3, N6 both-sides, N7 frozen, P-suite). A6/M6 CLASS ROOT-CAUSED: split present in the committed 774c state, arms self-heal via their own generate before --check, durably repaired by 58b9ec295; pre provider-loops rc=128 = harness artifact (clone lacked main ref — created, then 10/10 arms green, only nested t16 stale-class flip). 3 expected-reds green both trees by re-pins/owner-gating (c11, provloops t1/t3, M flip-set) — two-tree evidence supersedes the list. BOUNDARY: text-only proven (5 plugin string lines; generic leg + note key + entry.put seam byte-stable at three refs; 5 boards lines; 2 permissions clauses; 7 bodies: frontmatter 0-diff, named-line keyed, twins 1146/987B, alias==local, -pr push lines only delta; exclusion sweep 37 paths rc=0). DOCTRINE: one law across four surfaces; failure-half routed without re-prompt; retired-protocol greps hit ONLY generic leg/engine comments/Exit bullet/new negatives; the two acknowledged non-folds ruled COMMENTS not instructions (minor, for the record); engine vocab stands (W2 48/48, RELEASE_OUTCOMES intact); project.json pointer paragraph adjudicated TRUE under the new note body. H4 1555/1800 re-verified worst-span, margin 245 >= 200 accepted (recorded for the next text wave). Adjudications: AGENTS.md byproduct ACCEPT (blob 469c55a9 == sanctioned generate output); twins verified; N6 scope verified (4 old controls byte-unchanged + 3 new, non-allow path untouched); out-of-band writes CONFIRMED generate-materialization, no action. open_questions none.",
+          "files_changed": [".agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/chunks/C07.md (Review notes)"]
         }
       ]
     }
