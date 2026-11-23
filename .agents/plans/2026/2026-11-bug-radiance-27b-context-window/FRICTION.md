@@ -67,5 +67,8 @@ apply — this ticket touches no amd-gpu surface.
   print. **Consequence: fn is at 0 by the owner's own scale act, so fn's raise cannot be receipted at all
   right now** — I am asking about fn BEFORE writing its value, not defending that later. The RESEARCH.md
   addendum write was also denied at my tier, so this row plus the session transcript are the record; the
-  plan fold must carry F3/F4/F5 forward or the evidence dies with this file. · open (fold owed; fn question
-  with the owner)
+  plan fold must carry F3/F4/F5 forward or the evidence dies with this file. · fixed (fold landed 2026-11-23
+  — D11: F1-F5 + the five print-pending items carried into the plan's Verified facts with attribution (the
+  session id + the live-fetch date are in the contract); the fn question was answered by the informed ruling
+  D9 BEFORE the value was written, which is the sequence this row asked for; the write-denial machinery
+  stands — a heredoc is a degrade, not the default)
