@@ -267,6 +267,24 @@ rejected, why.
   STATE are a **time series, not a contradiction** — 162P was the pre-rebase count at completion, 194P is the
   post-rebase count on main's newer base, and the delta is entirely main's own added test files (6 mine +
   26 cf-145's), attributed commit-by-commit rather than left as a discrepancy.
+- 2026-11-23 owner-action note **D19 (THE BRANCH IS MERGED — `bc4b2a3fa`, owner-executed during the server
+  restart; this raises the stakes on PROVISIONAL rather than closing them)**. Verified after the restart, not
+  assumed: `git branch -a --contains cbd77c82e` lists `main`, `origin/main` and `upstream/main`;
+  `git merge-base HEAD origin/main` returns my own tip, so `origin/main` contains the whole branch plus 25
+  further commits; `bc4b2a3fa` is the only merge in `HEAD..origin/main`, which makes it the landing commit
+  unambiguously. The `never merge to main` boundary held on my side — the owner landed it.
+  **What landing changes:** the four `262144` values were branch-local risk before and are `main` risk now,
+  because `main` is what ArgoCD syncs. C03 and C04 were always post-merge legs, so the plan does not change —
+  but the ORDERING now matters in a way it did not on a branch: **a sync that happens before the receipt block
+  is run puts an unproven ceiling into service on the lane every tier and the hourly runner route through.**
+  Branch work is complete; the evidence is still owed, in a fixed order — scale act, run
+  `receipt_gate.py --commands` once, read `M` against each lane's configured 8, then C04 closes.
+  Also checked so nobody re-does it: those 25 post-merge commits are entirely `cf-6` builder-bootstrap work
+  (`charts/forgejo-runner`, the runner Dockerfile, runner test scripts, plan folders) with **zero overlap** with
+  this branch's 23-file delta, which is why the post-rebase gate evidence still applies and is not re-run.
+  Still open and unaddressed: the D17 follow-up (dispatcher runner row → radiance, `AGENTS.md` regeneration so
+  `rulesync --check` passes, `M8`/`c11`/`c13`, plus the carried `c19`/`t17`) has no card, and the OQ-R1
+  `unique_id` paste has not arrived.
 - 2026-11-23 coord-ruling **D16 (the receipt gate's fit hole is closed as a gate change; its residual limits are
   recorded as limits, not defects)**. Final review's F2 filed the overstatement as a MINOR with a reword;
   substance required a fix — see D15. Landed at `97d284787`: per-lane `M >= read-configured
