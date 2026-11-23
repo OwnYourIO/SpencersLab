@@ -1,6 +1,6 @@
 # RESEARCH.md — AD-140 consolidated research bus (merge of rounds R1–R5)
 
-Ticket AD-140 (`cf-140-feat-agent-card-reconcile`) · merged 2026-11-24 · **this merge pass
+Ticket AD-140 (`cf-140-feat-agent-card-reconcile`) · merged 2026-11-23 · **this merge pass
 added no new research** — every fact below was established by one of the five per-topic
 rounds (each ran in its own parallel session per the card) or by the pre-plan review. The
 five sibling `RESEARCH-r*-*.md` files are the cited deep sources and stay untouched: this
@@ -203,7 +203,7 @@ first-class question and read every server, or use only process-agnostic surface
 - **The durable per-card run registry** (replaces pipeline leases as "which session runs
   which card"): restart-surviving via a setup scan rebuild, visible to both server
   processes, consulted before ANY spawn and by the re-keyed zombie firewall; carries the
-  one-card-per-session (`already_held`) posture. RV blocker B3. The DECISIONS 2026-11-24
+  one-card-per-session (`already_held`) posture. RV blocker B3. The DECISIONS 2026-11-23
   ruling repeats: the `card-runner` state store is filesystem-backed, never `ctx.storage`.
 - **Session-record metadata** is a legitimate state home (durable, compaction-surviving,
   readable via `/api/session/:id`) with two hard rules: **PATCH replaces metadata whole ⇒
@@ -481,7 +481,7 @@ Rule is owner-gated (O6/O2 below) because it also changes a MUST-load contract
   (`metadata.openchamber.kind="scheduled"`) then prompts the loop body. **The repo ships
   the file; enabling + first approval is a one-time owner UI act** — the plan's final task
   is "create the loop file + hand over the approval step", never "enable the schedule".
-  **[oc-src-2.8]** (R3 Extra-2; DECISIONS 2026-11-24)
+  **[oc-src-2.8]** (R3 Extra-2; DECISIONS 2026-11-23)
 
 ### 5.3 The TypeScript validation gap — and its cheap fix
 

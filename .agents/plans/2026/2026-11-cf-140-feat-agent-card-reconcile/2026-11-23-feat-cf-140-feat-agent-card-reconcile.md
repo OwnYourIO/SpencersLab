@@ -24,14 +24,17 @@ four `EXPLORE-*.md` scouts. Evidence classes and round cites carry through the c
 - Webhooks on BOTH platforms (RESEARCH §6.1); the `format: yaml` wekan-mcp argument (§6.2 —
   `get_card_details` is already structured); LLM-judged "objective completed" (§6.3 — explicit
   signals only); per-card forge LABELS and any new WeKan custom field (§6.6, X6); any forge
-  WRITE (O4 owner-gated); authoring a plugin-writing skill inside this ticket (§6.5).
+  WRITE — O4 RULED 2026-11-23: no PAT is minted for this ticket, every forge leg is read-only
+  and credential-free, any future writer waits for its own mint + scope ruling; authoring a
+  plugin-writing skill inside this ticket (§6.5).
 - Board-structure mutations beyond the provision engine's dry-run + owner-confirmed apply:
   list creation, the AD-73 field deletion, checklist/rule edits, label creation and all
   OpenChamber scheduler-task acts (create/enable/fingerprint-approve/retire) are owner-owned.
-- `question-notify`'s plugin file: stays owner-disabled and untouched (O2 records the posture;
-  card-runner owns question DETECTION regardless, via the durable Form read — the research law).
-- Follow-up cards (`Follow-up cards created` unchecked): deferred asks ride the Open questions
-  section and the final summary — never new board cards.
+- `question-notify`'s plugin file: stays owner-disabled and BYTE-UNTOUCHED (O2 = ABSORB ruled
+  2026-11-23; card-runner owns question DETECTION via the durable Form read + the C08 hook
+  record — no cross-plugin dedupe work, no re-enable-tied re-points).
+- Follow-up cards (`Follow-up cards created` unchecked): deferred asks ride the Owner answers
+  section's ledger and the final summary — never new board cards.
 
 ## Commands
 
@@ -40,8 +43,17 @@ surface in this ticket). Baselines measured 2026-11-23 on this worktree.
 
 - drift: `npx --yes rulesync@37.0.0 generate --check` — RED at HEAD (AGENTS.md stale; C01
   repairs). Green from C01 on, after every chunk that touches `.rulesync/` sources.
-  Idempotence: run `npx --yes rulesync@37.0.0 generate` twice; second run no-op
-  (`git status --porcelain` empty).
+  **Bare-generate constraint (planning-session incident 2026-11-23, DECISIONS-recorded —
+  HARD RULE):** the mutating `npx --yes rulesync@37.0.0 generate` is BANNED in this worktree
+  until C01's `overview.md` repair is STAGED — a pre-repair generate commits the drift in the
+  wrong direction (it clobbered ~35 lines of live cf-126 doctrine from the normative file
+  every agent reads; twice during planning, both restored + verified). Planning sessions and
+  pre-C01 work use `--check` ONLY; output inspection goes through a TEMP COPY (the
+  agents-md.sh artifacts pattern), never the worktree. Post-C01: a per-chunk dev runs bare
+  `generate` ONLY when its chunk file directs a `.rulesync/` source→mirror regeneration in
+  that chunk's own commit (the house law); the double-run idempotence check (run `generate`
+  twice, second a no-op, `git status --porcelain` empty) is a coordinator/review action —
+  OWNER/coord-post-C01-only, never a planning action.
 - runtime tests: `node --test tests/opencode/*.test.ts` — baseline **393 pass / 0 fail**
   (measured). The count may move only with a recorded per-chunk rationale: a chunk that renames
   or replaces a plugin migrates coverage, it never silently drops it (retired test names get a
@@ -67,10 +79,36 @@ surface in this ticket). Baselines measured 2026-11-23 on this worktree.
 - container (C11 only): `docker build => no-daemon, CI-deferred` recorded honestly in
   `commands_run`; with `Deployment` unchecked the Forgejo `containers-build.yaml` proof defers
   to the owner's push/PR — the chunk says so, it never claims a build it cannot run.
-- typecheck — CONDITIONAL, only if O1 rules yes and C20 ran:
-  `npx --yes --package=typescript@<C20 pin> -- tsc --noEmit -p <C20 tsconfig>` (never bare
-  `npx tsc` — the deprecated 2.0.4 stub trap, R1). The plan works either way: without it, type
-  errors surface at runtime (today's status quo) and the 393-test runtime suite is the floor.
+- typecheck (O1 = ADOPT, ruled 2026-11-23; active from C20 on — C20 runs before C03, so every
+  TS chunk develops under it): `npx --yes --package=typescript@<pin> --package=@types/node@<pin>
+  -- tsc --noEmit -p tsconfig.opencode.json` — the `<pin>` literals freeze when C20's R-11
+  probe records them (coord flips this line then); NEVER bare `npx tsc` (the deprecated 2.0.4
+  stub-package trap). If the probe forces the package.json fallback shape, this line re-states
+  it from C20's record. Plan-Commands-only — CI addition is a deferred ask.
+- **Measured baseline red ledger (2026-11-23T21:2xZ, clean HEAD — MEASURED, never inferred):**
+  (1) `rulesync generate --check` RED — AGENTS.md stale (C01 repairs). The clobber is not
+  theoretical: it fired TWICE during this planning session (once from the planning session's
+  own bare-generate drift inspection, once concurrently with the coord answer-sweep); both
+  were restored via `git checkout HEAD -- AGENTS.md` and verified (porcelain clean on
+  AGENTS.md + `.rulesync/` + `.opencode/`, cf-126 tokens re-counted 3/2). Mechanism finding
+  (measured): the contract suites run their generate ladders in TEMP COPIES ("artifacts kept
+  at /tmp/…"), NOT the worktree — suite runs are clobber-safe; bare worktree generates are
+  the only hazard, hence the constraint above. (2)
+  `tests/agent-board-coord/agents-md.sh` c13 RED — overview.md lacks the cf-126 wake+delegated
+  pairing (C01 repairs). (3) `tests/agent-board-coord/agents-md.sh` c7 + `tests/provider-loops/
+  surface.sh` t14/t6 RED — this ticket's own plan-folder paths are outside the scope-admit
+  unions (the house pattern: every ticket admits its plan folder in its first chunk — C01
+  adds the cf-140 admit lines). (4) `tests/noop-marker/surface.sh` N8 negative arm RED — it
+  still expects `pipeline-worker.md` model = strata-q4 while the 2026-11-22 radiance ruling
+  flipped the file to radiance and re-pinned the six pairing carriers but MISSED this arm (the
+  tick-test assertion sanctions the re-pin: "a re-flip re-pins it, never deletes the
+  assertion") — C01 re-pins it to the radiance literal. (5) ALLOWED RED, NOT OURS:
+  `tests/pipeline-models/surface.sh` M8[C05] — the pipeline-models SKILL class-table re-pin is
+  the radiance-multi-instance ticket's own pending C05; cf-140 must not touch it (one branch,
+  one concern) — every suite AC in this plan means "green except the ledgered allowed reds".
+  GREEN at HEAD: `node --test tests/opencode/*.test.ts` 393/393, noop-marker N1–N7, N4,
+  dispatcher surface, agent-perms, session-origin b0–b6, wekan-mcp families, gate.sh t1–t20
+  (its scope legs excepted as the runs show).
 
 ## Chunks
 
@@ -80,31 +118,47 @@ mirror in the SAME commit.
 
 | id  | title | size | wave | depends_on | why the dependency |
 |-----|-------|------|------|------------|--------------------|
-| C01 | AGENTS.md / overview.md drift repair (FIRST commit) | S | 1 | [] | gates every later `rulesync generate` — regen currently clobbers the cf-126 dispatcher paragraph |
+| C01 | AGENTS.md / overview.md drift repair + Q-A dispatch model-row flip + admit/N8 re-pins (FIRST commit) | S | 1 | [] | gates every later `rulesync generate` — regen currently clobbers the cf-126 dispatcher paragraph (it DID clobber mid-session; restored); also inherits the measured red ledger (admit lines, agents-md c13, N8 stale worker-literal arm) |
 | C02 | AD-73 sibling sweep: retire the legacy `session` field from live contract docs | S | 1 | [] | independent doc sweep (sibling `_id` `qMMB5XRQpX9JXdbxZ`); sequence after C01 only if a `.rulesync/` source edit becomes necessary |
-| C03 | card-runner skeleton: plugin scaffold, cross-process once-mark, localIso re-home | M | 1 | [C01] | needs green regen before any source-adjacent work; once-mark + localIso are the surfaces C04 consumes |
+| C20 | tsc gate + vendored typescript-strict + plugin-lanes TS skill (O1 = ADOPT, scheduled) | S | 1 | [C01] | the type gate must exist BEFORE the first new TS code (C03) so every TS chunk develops under it; R-11 probe freezes the Commands pins |
+| C03 | card-runner skeleton: plugin scaffold, cross-process once-mark, localIso re-home | M | 1 | [C01, C20] | needs green regen + the live tsc gate; once-mark + localIso are the surfaces C04 consumes |
 | C04 | Absorb board-context into card-runner; fix symptom (a); delete board-context | L | 1 | [C03] | migrates onto C03's scaffold/once-mark/localIso; the injection fix is the wave's payload |
 | C05 | CARD.yaml contract: schema home, coord writer step, plan-file map, three-home rule | M | 1 | [C04] | replaces the retired claim-time card-details block as the card's context home |
-| C06 | agent-card-reconcile: agent + loop file + wake re-target + gate liveness set | L | 2 | [C01] | the reconciler is the wave-2 spine; wake/gate/N4/N8 re-pins land with it |
+| C06 | agent-card-reconcile: agent + loop file + wake re-target + gate liveness set | L | 2 | [C01] | the reconciler is the wave-2 spine; wake/gate/N4/N8 re-pins land with it; loop model row = the Q-A radiance literal |
 | C07 | boards skill Reconcile doctrine: tick loop, decision matrix, spawn contract | M | 2 | [C06] | doctrine cites the agent/loop C06 ships; B1/M2 matrix rows are pinned here |
-| C08 | card-runner question hook: durable pending-question record | M | 2 | [C03] | plugin-side leg on C03's scaffold; consume-once + call-id tolerance live here |
-| C09 | Awaiting Answers provisioning: skill spec bullet + engine ensure + fixtures | M | 2 | [C01] | provision-engine pair (skill + `scripts/provision-board.py`); apply stays owner-run |
+| C08 | card-runner question hook: durable pending-question record | M | 2 | [C03] | plugin-side leg on C03's scaffold; consume-once + call-id tolerance live here; O2 = ABSORB ruled |
+| C09 | Awaiting Answers + Timeout provisioning: skill spec bullets + engine ensures + fixtures | M | 2 | [C01] | provision-engine pair (skill + `scripts/provision-board.py`); O3 = BOTH ruled; apply stays owner-run at the Final Review stop |
 | C10 | Question-flow wiring: breach + resume procedures, B1 decision-order guarantee | M | 2 | [C07, C08, C09] | joins doctrine (C07), the record (C08) and the list (C09) into the flow the card asks for |
-| C11 | wekan-mcp additive reads: `list_card_activities` + `whoami` (container, CI-deferred) | M | 3 | [] | independent container chain; C12 consumes it capability-gated (degrade = snapshot-diff-only) |
-| C12 | Card-change detection + bounded forwarding (`.pipeline/cards/` store, M6 bounds) | L | 3 | [C05, C07, C10] | forwards rewrite CARD.yaml (C05) and ride the run-state matrix + resume doctrine (C07/C10) |
-| C13 | Forgejo awareness: branch→PR lookup, `Card:` trailer doctrine, forge record slot | M | 3 | [C12] | forge deltas forward through C12's bounded-forward machinery; record slot rides its store |
+| C11 | wekan-mcp additive reads: `list_card_activities` + `whoami` (container, CI-deferred) | M | 3 | [] | independent container chain; C12 consumes it capability-gated (degrade = snapshot-diff-only); evidence source-only until O6 probes |
+| C12 | Card-change detection + bounded forwarding (`.pipeline/cards/` store, M6 bounds) | L | 3 | [C05, C07, C10] | forwards rewrite CARD.yaml (C05) and ride the run-state matrix + resume doctrine (C07/C10); classifier source-only until O6 probes |
+| C13 | Forgejo awareness: branch→PR lookup (O5 canonical = Forgejo prod), `Card:` trailer doctrine, forge record slot | M | 3 | [C12] | forge deltas forward through C12's bounded-forward machinery; record slot rides its store; read-only per O4 |
 | C14 | Run registry + zombie firewall + registration-verb tools (B2/B3) | L | 4 | [C06, C08, C12] | registry joins session↔card for firewall + reconcile; question records and card records feed rows |
-| C15 | Retire pipeline-locks: compaction re-home, commands, no-op predicate, T15 | L | 4 | [C14] | the registry must exist before the leases die (firewall + restart-resume replace them) |
+| C15 | Retire pipeline-locks: compaction re-home, commands, no-op predicate, T15 untouched | L | 4 | [C14] | the registry must exist before the leases die (firewall + restart-resume replace them); T15 needs NO re-point (verified: it reads only question-notify's source) |
 | C16 | Re-pin sweep I: 25 subagent Compaction paragraphs + permission rows + mirrors | L | 4 | [C15] | rewords only after the implementation home moved, so pins name the true owner |
-| C17 | Re-pin sweep II: boards skill lock doctrine, overview.md, dispatch retirement, N4/N8 | L | 4 | [C15] | same; carries the M7 owner-enforced single-scheduler statement (Q-B gated deletion) |
+| C17 | Re-pin sweep II: boards skill lock doctrine, overview.md, dispatch retirement (Q-B = RETIRE ruled), N4/N8 | L | 4 | [C15] | same; carries the M7 owner-enforced single-scheduler statement; deletes the file whose model row C01 flipped (Q-A×Q-B interaction, ruled) |
 | C18 | Coord intake rewrite: no card-fetch expectation, four intake paths, MCP propose | M | 4 | [C14, C17] | intake wording references registration semantics (C14) and the rewritten doctrine (C17) |
-| C19 | Owner handoff: board catch-up dry-run, loop-approval runbook, O6 probes, full sweep | S | 5 | [C18] | the card's final task; every owner leg in one runbook, schedule never claimed live |
-| C20 | CONDITIONAL (O1=yes): tsc gate + vendored typescript-strict + plugin-lanes TS skill | S | 1* | [C01] | *runs early wave 1 when adopted (before C03) so every TS chunk is type-gated; skipped when O1=no |
+| C19 | Owner handoff: board catch-up dry-run, loop-approval + task-retirement runbook, O6 probes, full sweep | S | 5 | [C18] | the card's final task; every owner leg in one runbook, schedule never claimed live |
 
 ## Wave order
 
-1. **Wave 1 — context hygiene** (ships value alone: drift green, symptom (a) dead, CARD.yaml
-   contract live): C01 → {C02, C03 (C20 if adopted)} → C04 → C05.
+**Precondition P-T2 (named, gates the whole implementation phase — owner-ruled lane, measured
+counter-evidence):** the code tier (`agent-test` + `agent-dev-local`, ~19 chunks) runs on
+`gpu-ai/qwen3.8-27b-radiance-tp2` (the owner's 2026-11-23 override). That lane is documented
+parked at `replicas 0` (loud 502, never a silent fallback) and its seam refused a connection
+on this host minutes before the ruling (`dial tcp 10.43.64.103:8000: connection refused` —
+recorded in DECISIONS). BEFORE launching the Test Writing session, the coord MUST prove the
+lane reachable — a live check, either: (a) `readonly-gpu-kubernetes` read of the q27-tp2
+serving deployment (replicas > 0 + a ready pod), or (b) a minimal one-token completion against
+the gpu-ai provider endpoint (the same seam that refused). Loud 502/refusal/timeout ⇒ STOP and
+ask the owner (ONE question, two sanctioned answers: boot the pod, or re-rule the code tier
+back to API flash) — never quietly re-route, never launch into a dead lane. No chunk assumes
+the lane is up; a mid-run lane death is reported the same way. Honest scale: a dead code tier
+stalls the ENTIRE implementation phase, not one session — chunk review, coord and final review
+stay on API tiers and keep working, but nothing gets implemented or test-written.
+
+1. **Wave 1 — context hygiene + the type gate** (ships value alone: drift green, symptom (a)
+   dead, CARD.yaml contract live, TS gate live): C01 → {C02, C20} → C03 → C04 → C05
+   (C20 before C03 — O1 adopted; C02 independent).
 2. **Wave 2 — reconcile + question flow**: C06 → C07; C08, C09 (parallel with C06/C07); C10.
 3. **Wave 3 — reconciler capabilities**: C11 (anytime), C12 → C13.
 4. **Wave 4 — lock retirement + re-pins** (largest blast radius; deliberately last among code
@@ -124,20 +178,21 @@ schedule is enabled.
 
 ## Risks / assumptions
 
-- **Model routing (owner correction 2026-11-24 — STATE.json `kickoff.models` + DECISIONS.md are
-  the authority, not the launch brief):** API tiers unchanged (coord/test/dev/chunk-review =
-  `openrouter/qwen/qwen3.8-flash`; plan/final-review = `openrouter/qwen/qwen3.8-2.4t-a95b`);
-  LOCAL tiers (explore/research) are back on `gpu-ai/qwen3.8-27b-radiance-tp2` — the card
-  body's original ask — for all remaining local-tier work, i.e. the checked `Post Research`
-  stage. This plan expects NO post-approval research round (RESEARCH.md §1–10 is comprehensive;
-  the residual unknowns are owner gates O1–O6, ruled plan decisions, and shipping-build
-  re-proofs R-1..R-12, which are chunk ACs, not research). If a batched-round answer opens a
-  genuine research need, coord launches it on the tp2 lane with the recorded caveat:
-  `pipeline-models` documents tp2 as parked at `replicas 0` — routing answers a LOUD 502,
-  never a silent fallback; a 502 on a local-tier launch is reported to the owner, never
-  quietly re-routed. **No chunk in this plan requires the tp2 lane as an unverified
-  assumption**; everything post-approval (test writing, dev, reviews, handoff) runs on the
-  proven API tiers.
+- **Model routing (owner rulings 2026-11-23 — STATE.json `kickoff.models` + DECISIONS.md are
+  the authority):** coord/chunk-review = `openrouter/qwen/qwen3.8-flash`; plan/final-review =
+  `openrouter/qwen/qwen3.8-2.4t-a95b`; explore/research AND the code tier (agent-test +
+  agent-dev-local, ~19 chunks) = `gpu-ai/qwen3.8-27b-radiance-tp2` (the dev/test OVERRIDE —
+  not re-argued). The tp2 lane carries the P-T2 precondition (Wave order): parked-at-replicas-0
+  documentation + a connection refusal measured minutes before the ruling ⇒ the coord proves
+  the lane reachable BEFORE Test Writing and on any lane failure; degraded path = owner boots
+  the pod or re-rules the code tier back to API flash; a 502/refusal is REPORTED, never
+  quietly re-routed; a dead code tier stalls the whole implementation phase (stated honestly).
+  Loop-runner literals are a separate vocabulary: `pipeline-worker.md` (frozen) and the flipped
+  `pipeline-dispatch.md` (C01, Q-A) and the new `card-reconcile.md` (C06) all carry
+  `gpu-ai/qwen3.8-flash-next-radiance` — moved only by fresh owner ruling. This plan's own
+  Post-Research stage expects NO further round (RESEARCH.md §1–10 is comprehensive; residuals
+  are owner gates now RULED, plan decisions ruled, and shipping-build re-proofs mapped to
+  chunk ACs); if one is commissioned anyway it rides the tp2 lane under P-T2.
 
 - **B1 (blocker, pinned):** the question-paused branch precedes the dead-run branch in the
   reconcile decision order — a paused session stays busy forever (R3) and must never read as
@@ -177,68 +232,87 @@ detected human changes; every agent on a board run reads it BEFORE the chunk fil
 read-order line lands in `pipeline-conventions` in C05). C05 dogfoods it: this ticket's own
 `CARD.yaml` + the sibling's `CARD-AD-73.yaml` land in this folder as the live example.
 
-## Open questions (the batched round — best-guess answer FIRST, then impact)
+## Owner answers — rulings and consequences (batched round, measured 2026-11-23T21:17Z; authority = DECISIONS.md "Batched question round — owner answers")
 
-Owner-gated (RESEARCH §8 O1–O6 + two new). Plan decisions P1–P10 are RULED in `DECISIONS.md`
-and are NOT part of this round (veto there if you disagree).
+All ten answers are folded into the plan of record; `open_questions` is EMPTY (no new gaps).
+Eight landed as recommended; the two overrides (Q-A, dev/test lane) are the load-bearing ones.
 
-1. **O1 — npm dev surface (tsc gate).** Best guess: **ADOPT** — run C20: pinned
-   `npx --package=typescript@7 -- tsc --noEmit` + hand-written Node-shaped tsconfig +
-   `@types/node` + `.gitignore` `node_modules/` (the repo's FIRST npm dev surface), vendor
-   `microsoft/typescript-strict` (MIT, SHA-pinned, VENDORED.md pattern) + a small repo-local
-   plugin-lanes TS skill; R-11's 10-second bare-tsc probe runs before Commands freeze; tsc
-   stays plan-Commands-only (CI addition rides the final summary as a deferred ask).
-   Impact if NO: C20 drops, type errors in card-runner surface at runtime (status quo); the
-   393-test runtime suite stays the only floor.
-2. **O2 — question-notify: re-enable vs absorb.** Best guess: **ABSORB detection into
-   card-runner; leave question-notify disabled and untouched; breach/dead-run alerts push via
-   the admin-HA tier** (the same channel the still-live reap alert uses), config-gated
-   `haNotify`. Impact if re-enable instead: C08/C15 must add cross-plugin consume-once dedupe
-   (double-push class) and the T15/no-op reader pins re-point; the phone channel state stays
-   the owner's toggle either way. The research law stands regardless: card-runner owns
-   question detection via the durable Form read.
-3. **O3 — provision `Awaiting Answers` + `Timeout` lists, or accept the jsonl degrade as
-   permanent.** Best guess: **PROVISION both** — C09 adds the engine spec bullet(s), C19 runs
-   the dry-run and the owner applies at the Final Review stop (lists are human-owned). Impact
-   if declined: both flows keep the designed jsonl-degrade + card-comment shape forever (the
-   Timeout leg has run degraded for 5 weeks — proven survivable, weaker triage).
-4. **O4 — Forgejo PAT minting.** Best guess: **DO NOT mint for this ticket** — every forge leg
-   here is read-only and reads are credential-free (public repo). Impact: no forge writes
-   anywhere; a later label/comment writer needs a mint + scope ruling first
-   (`read:repository`+`read:issue` floor; on a public repo a wrongly-scoped token FAILS where
-   no token succeeds).
-5. **O5 — canonical PR home.** Best guess: **Forgejo prod (`git.spencerslab.com`)** is the
-   card-link canonical surface (branches, CI and `origin` live there); GitHub stays the
-   main-mirror; C13 ships `forge.baseUrl` config-defaulted to Forgejo prod so a flip is
-   config-only. Impact: the split-brain trap (RESEARCH §4.4 — `pipeline-push-pr` pushes
-   Forgejo but opens the PR on GitHub) means until this is ruled the forge leg's answers for
-   GitHub-side PRs read `none`; if GitHub is ruled canonical, the config flips and the
-   `pipeline-push-pr` PR leg stays unchanged.
-6. **O6 — owner live-fire probe legs.** Best guess: **owner runs them at C19** (runbook
-   handed over): WeKan (a REST card edit does NOT bump `modifiedAt` on the deployed pod;
-   `?fields=activities&cardId=` answers scoped; the `disableExportAvatars`/disable-all-exports/
-   `disableActivities` admin flags), Forgejo (public read + `/pulls/{base}/{head}` lookup +
-   the label probe on a throwaway PR). Impact until run: C11/C12/C13 ship behind capability
-   gates + degrade laws; each probe retires an assumed-not-verified cell (R-12).
-7. **Q-A — the pipeline-dispatch model-literal conflict (C01).** The stale `overview.md`
-   source carries the NEWER 2026-11-22 radiance ruling but the pre-cf-126 worker framing; the
-   checked-in AGENTS.md carries the cf-126 dispatch framing with the OLDER strata-q4 literal;
-   the shipped loop files say dispatch=strata-q4, worker=radiance. Best guess: **the merged
-   doc mirrors the shipped loop files** (dispatch keeps `gpu-ai/qwen3.8-flash-next-strata-q4`;
-   the 2026-11-22 radiance ruling applied to the worker; a dispatch flip stays gated on
-   cf-126 C04 owner facts — model literals move only by fresh owner ruling). Impact if the
-   ruling extends to dispatch: `pipeline-dispatch.md`'s model row flips too, rotating its
-   fingerprint (owner re-approval) — C01 stays doc-only either way and records the choice.
-8. **Q-B — retire `agent-board-dispatch` + `.agents/loops/pipeline-dispatch.md` in C17, or
-   keep them frozen beside the reconciler (the pipeline-worker pattern)?** Best guess:
-   **RETIRE both** (the reconciler supersedes; all four OpenChamber tasks are currently
-   `enabled:false` so nothing live breaks; the owner's task-retirement leg rides the C19
-   runbook; N4/N8 re-pin to TWO loop files: frozen worker + card-reconcile). Impact if kept:
-   the wake-tracking list stays two-name, N4/N8 pin three loop files, and the M7
-   double-scheduler surface is larger (an owner could enable dispatch AND reconcile).
+1. **O1 = ADOPT** — the pinned tsc gate ships. **C20 is SCHEDULED** (no longer conditional):
+   early wave 1, after C01, BEFORE C03, so every TS chunk develops under the gate. Files C20
+   creates: `tsconfig.opencode.json` (repo root, Node-shaped per R1 F5), `.gitignore` gains the
+   `node_modules/` line, `.rulesync/skills/typescript-strict/` (vendored, MIT, SHA-pinned +
+   `VENDORED.md`, the comment-slop/aislop pattern) and `.rulesync/skills/plugin-lanes-ts/`
+   (repo-local) + generated mirrors; a root `package.json` ONLY if the R-11 probe proves the
+   npx-flag shape cannot resolve `@types/node` (probe-forced fallback, recorded). Command shape
+   stays `npx --yes --package=typescript@<pin> -- tsc --noEmit -p tsconfig.opencode.json` —
+   never bare `npx tsc` (the 2.0.4 stub trap); R-11's 10-second bare-tsc probe runs before the
+   pin freezes (C20 records the literal; coord flips this Commands line's `<pin>` placeholder).
+   tsc stays plan-Commands-only — CI addition remains a deferred ask.
+2. **O2 = ABSORB** — card-runner owns question detection via the durable Form read;
+   `question-notify` stays owner-disabled and BYTE-UNTOUCHED (verified compatible: T15 reads
+   only question-notify's own source, so C15's retirement needs NO T15 re-point — the
+   single-owner compaction scan lands as a NEW card-runner-suite arm). No cross-plugin dedupe
+   work exists anywhere in this plan. Breach/dead-run alerts ride the admin-HA `haNotify`-gated
+   channel; transport home is card-runner from C15 — before C15 the interim alert shape is the
+   card comment + jsonl row (sequencing recorded in C10, channel now ruled).
+3. **O3 = PROVISION BOTH** — C09 carries BOTH spec bullets + engine ensure legs + fixtures
+   (`Awaiting Answers`, In Process; `Timeout`); the jsonl paths stay documented as a DEGRADE,
+   never permanent design. Owner applies the dry-run at the Final Review stop (lists are
+   human-owned — never an agent apply; C19 sequences the presentation into that stop).
+4. **O4 = DO NOT MINT** — no Forgejo PAT for this ticket; every forge leg is read-only and
+   credential-free (Out of scope updated). Any future writer waits for its own mint + scope
+   ruling; no chunk task assumes a token or a delivery location.
+5. **O5 = FORGEJO PROD canonical** — `git.spencerslab.com` is the card-link surface; C13's
+   `forge.baseUrl` defaults there (a flip is config-only); GitHub stays the main-mirror. The
+   split-brain trap is stated in C13's AC: the reconciler's "did it land?" answer is
+   trustworthy ONLY against the canonical surface, and `pipeline-push-pr` opening PRs on GitHub
+   while pushing to Forgejo is the KNOWN divergence — documented, not fixed by C13.
+6. **O6 = owner runs the probes at C19** — C11/C12/C13 ship capability-gated and their
+   evidence stamps stay `source-only 2026-11` until the probes run: NO AC or doc line may
+   present the WeKan `modifiedAt`-no-bump, the scoped `?fields=activities&cardId=` export, the
+   admin export flags, or the Forgejo read/lookup/label facts as pod-proved (R-12; C19's
+   runbook lists them as the owner legs that retire the assumed-not-verified cells).
+7. **Q-A = OVERRIDDEN: radiance extends to dispatch** — C01 flips
+   `.agents/loops/pipeline-dispatch.md`'s model row to the radiance lane and repairs the docs
+   to the ruled value; C17 then deletes the file (Q-B). **Interaction ruling (deliberate,
+   recorded in DECISIONS):** C01 DOES flip the row that C17 later deletes — justification:
+   (a) DECISIONS' answer entry frames it exactly so ("C01 repairs the doc to the ruled value
+   and C17 then removes it"); (b) the doc-truth law — between C01 and C17 no doc may cite a
+   runner literal the owner has superseded; (c) the flip is the executable satisfaction of
+   `tests/noop-marker/surface.sh` N8's designed-red C04-state model arm ("the expected literal
+   is the gated radiance value… flips only when C04's gate facts land" — Q-A IS that gate
+   fact, the owner fact cf-126 C04 waited on, now ruled rather than pending); (d) the
+   fingerprint rotation costs NO owner work: the re-approval leg is SUPERSEDED by retirement —
+   C19's runbook says never re-approve the rotated `pipeline-dispatch` fingerprint, just
+   retire the task. The two chunks do not contradict: C01's AC = the file carries the radiance
+   literal; C17's AC = the file is deleted; `pipeline-worker.md` stays BYTE-FROZEN throughout
+   (do not touch it). The surviving scheduled surface inherits the ruling: `card-reconcile.md`
+   (C06) ships the same radiance runner literal.
+8. **Q-B = RETIRE both at C17** — `agent-board-dispatch` + `.agents/loops/pipeline-dispatch.md`
+   deleted; wake tracking collapses to ONE name (`agent-card-reconcile`); N4/N8 re-pin to TWO
+   loop files (frozen `pipeline-worker.md` + `card-reconcile.md`); the gate liveness set drops
+   to FOUR names (three board-coords + reconciler); the OpenChamber task retirement is an
+   explicit owner leg in C19's runbook.
+9. **dev/test lane = OVERRIDDEN to `gpu-ai/qwen3.8-27b-radiance-tp2`** — `agent-test` and
+   `agent-dev-local` (~19 chunks) run on the local tp2 lane; chunk review, coord and final
+   review stay on their API tiers (`openrouter/qwen/qwen3.8-flash`; final review 2.4t). Not
+   re-argued. **Operational gate P-T2 (named precondition, see Wave order):** the lane is
+   documented parked at `replicas 0` (loud 502, never a silent fallback) AND the radiance seam
+   refused a connection on this host at the moment of the ruling (`dial tcp 10.43.64.103:8000:
+   connect: connection refused`, recorded in DECISIONS) — so Test Writing MUST NOT launch until
+   the coord proves the lane reachable; degraded path = owner boots the pod OR owner re-rules
+   the code tier back to API flash. Honest consequence, stated in the plan: a dead code tier
+   stalls the ENTIRE implementation phase (the one test session + every dev chunk), not one
+   session. A 502/refusal is reported to the owner, never quietly re-routed.
+10. **Clock law** — measured stamps only: the coordinator's assumed `2026-11-24` stamps were
+    swept to measured `2026-11-23` (`date -u`); every record this plan adds is measured at
+    write time. Inventing timestamps is the exact failure class this ticket removes.
 
 Deferred asks riding the final summary (follow-up cards unchecked; NOT board cards): aislop
 pin drift 0.20.0→0.22.3 (R1); the b6 parity-ladder gap for `pipeline-boards-pr.md`
 (EXPLORE-agents §8.2); a vendored `opencode-plugin-v2` reference skill for the SECOND ticket
-that touches plugin code (R2); tsc-in-CI (if O1 adopts); AD-73's board-level field deletion +
-every O3/O4/O5/Q-B owner leg (C19 runbook).
+that touches plugin code (R2); tsc-in-CI (O1 adopted, CI leg deferred per P9); AD-73's
+board-level field deletion; the O6 probe legs + O3 applies + Q-B task retirements (C19
+runbook); the wekan-mcp README fastmcp-pin staleness (C11 noted); `pipeline-models` SKILL
+class-table re-pin = the radiance ticket's own pending C05 (measured red ledger below — NOT
+this ticket's work).

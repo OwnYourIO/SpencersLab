@@ -4,7 +4,7 @@
   "coord_session": "ses_df6746e69ffe3r6oWe58jKqW2N",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-23T21:04:53Z",
+  "updated_at": "2026-11-23T21:28:16Z",
   "kickoff": {
     "slug": "cf-140-feat-agent-card-reconcile",
     "card": "zKf2GkiwPgeDmfpu2",
@@ -51,7 +51,7 @@
       "dev": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "explore": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "research": "gpu-ai/qwen3.8-27b-radiance-tp2",
-      "lane_health_gate": "OWNER RULING 2026-11-23T21:17Z moved test+dev onto the local tp2 lane. PRECONDITION before Test Writing: that lane must be proved reachable. Evidence against: the radiance seam refused a connection at 21:1xZ (peer proxy error, dial tcp 10.43.64.103:8000 connection refused) and pipeline-models documents q27-tp2 parked at replicas 0 (loud 502, never a silent fallback). A retry probe is in flight; a dead code tier stalls the whole implementation phase, so it is reported to the owner, never quietly re-routed.",
+      "lane_health_gate": "OWNER RULING 2026-11-23T21:17Z moved test+dev onto the local tp2 lane. GATE RESOLVED 2026-11-23T21:25Z: the retry launched explicitly on gpu-ai/qwen3.8-27b-radiance-tp2 SUCCEEDED (the RESEARCH.md stamp sweep, ses_df5dcd2e5ffe2uz2wxInOO6S13), so the tp2-27b lane is reachable on this host TODAY and pipeline-models' parked-at-replicas-0 note is stale for it — consistent with the cf-144 tp2 expansion. The earlier 'connection refused 10.43.64.103:8000' was a TRANSIENT refusal on the flash-next-radiance peer, a different lane, not on tp2. Recorded honestly: I raised this as a stall risk for 19 chunks and the evidence then cleared it. No standing precondition remains on Test Writing; a mid-run 502 on the code tier is still reported to the owner, never quietly re-routed.",
       "note": "API tiers are the card's own per-step assignment and are UNCHANGED: coord/chunk-review/test/dev = openrouter/qwen/qwen3.8-flash, plan/final-review = openrouter/qwen/qwen3.8-2.4t-a95b. Local tiers (explore/research) follow the owner's LATER ruling back to gpu-ai/qwen3.8-27b-radiance-tp2 — the card body's original ask — superseding the EARLIER same-day detour (both 2026-11-23; the reversal arrived between commit f08a5347f and 6730240b0). CAUTION on record: pipeline-models documents the tp2 lane as parked at replicas 0, where routing answers a loud 502 rather than falling back silently; a 502 on a local-tier launch is therefore reported to the owner, never quietly re-routed."
     },
     "stages": [
@@ -316,7 +316,7 @@
   ],
   "chunks": {
     "C01": {
-      "title": "AGENTS.md / overview.md drift repair (FIRST commit)",
+      "title": "AGENTS.md / overview.md drift repair + Q-A dispatch model-row flip + admit/N8 re-pins (FIRST commit; bare-generate ban until its source repair is staged)",
       "size": "S",
       "wave": 1,
       "depends_on": [],
@@ -335,7 +335,8 @@
       "size": "M",
       "wave": 1,
       "depends_on": [
-        "C01"
+        "C01",
+        "C20"
       ],
       "status": "pending"
     },
@@ -358,7 +359,7 @@
       "status": "pending"
     },
     "C06": {
-      "title": "agent-card-reconcile: agent + loop file + wake re-target + gate liveness set",
+      "title": "agent-card-reconcile: agent + loop file (radiance runner literal per Q-A) + wake re-target + gate liveness set",
       "size": "L",
       "wave": 2,
       "depends_on": [
@@ -385,7 +386,7 @@
       "status": "pending"
     },
     "C09": {
-      "title": "Awaiting Answers provisioning: skill spec bullet + engine ensure + fixtures",
+      "title": "Awaiting Answers + Timeout provisioning: skill spec bullets + engine ensures + fixtures (O3 = BOTH ruled)",
       "size": "M",
       "wave": 2,
       "depends_on": [
@@ -423,7 +424,7 @@
       "status": "pending"
     },
     "C13": {
-      "title": "Forgejo awareness: branch->PR lookup, Card: trailer doctrine, forge record slot",
+      "title": "Forgejo awareness: branch->PR lookup (O5 canonical = Forgejo prod, ruled), Card: trailer doctrine, forge record slot (O4: read-only, no PAT)",
       "size": "M",
       "wave": 3,
       "depends_on": [
@@ -443,7 +444,7 @@
       "status": "pending"
     },
     "C15": {
-      "title": "Retire pipeline-locks: compaction re-home, commands, no-op predicate, T15",
+      "title": "Retire pipeline-locks: compaction re-home, commands, no-op predicate (T15 verified untouched)",
       "size": "L",
       "wave": 4,
       "depends_on": [
@@ -468,7 +469,7 @@
         "C15"
       ],
       "status": "pending",
-      "gated": "Q-B: dispatch+pipeline-dispatch.md retirement legs run only on a 'retire' answer"
+      "ruled": "Q-B = RETIRE (owner 2026-11-23T21:17Z): both dispatch surfaces deleted here; Q-A interaction handled — C01 flipped the row, C17 removes it"
     },
     "C18": {
       "title": "Coord intake rewrite: no card-fetch expectation, four intake paths, MCP propose",
@@ -490,17 +491,22 @@
       "status": "pending"
     },
     "C20": {
-      "title": "CONDITIONAL (O1=yes): tsc gate + vendored typescript-strict + plugin-lanes TS skill",
+      "title": "tsc gate + vendored typescript-strict + plugin-lanes TS skill (O1 = ADOPT, scheduled)",
       "size": "S",
       "wave": 1,
       "depends_on": [
         "C01"
       ],
       "status": "pending",
-      "conditional": "O1=yes only; runs early wave 1 after C01 and before C03; skipped on O1=no"
+      "ruled": "O1 = ADOPT (owner 2026-11-23T21:17Z): scheduled — runs after C01 and BEFORE C03 so every TS chunk develops under the tsc gate; R-11 probe freezes the Commands pins"
     }
   },
   "blocked": [],
   "deferred": [],
-  "plan_file": "2026-11-23-feat-cf-140-feat-agent-card-reconcile.md"
+  "plan_file": "2026-11-23-feat-cf-140-feat-agent-card-reconcile.md",
+  "plan_notes": {
+    "batched_round": "all ten answers folded 2026-11-23 (DECISIONS 'Batched question round' = authority): O1 adopt / O2 absorb / O3 both / O4 no-mint / O5 Forgejo-prod / O6 owner-probes-at-C19 / Q-A radiance-extends-to-dispatch (OVERRIDDEN) / Q-B retire / dev+test tier = gpu-ai/qwen3.8-27b-radiance-tp2 (OVERRIDDEN, P-T2 precondition gates Test Writing) / measured-stamps-only clock law",
+    "precondition_PT2": "before the Test Writing launch the coord MUST prove gpu-ai/qwen3.8-27b-radiance-tp2 reachable (k8s replicas/readiness read or a one-token completion); on 502/refusal: ONE owner question — boot the pod or re-rule the code tier back to API flash; never quietly re-route; a dead code tier stalls the whole implementation phase",
+    "bare_generate_ban": "bare `rulesync generate` is BANNED in this worktree until C01's overview.md repair is staged (two planning-session clobbers, both restored+verified; suites generate in temp copies — they are safe); pre-C01 use `generate --check` only"
+  }
 }
