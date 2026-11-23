@@ -708,3 +708,111 @@ follow-up card); the agent-side get.helm.sh fallbacks in tests (different
 class, §F1); `charts/forgejo-runner` daemon/dind pins (untouched, renovate-
 tracked); host-backend `forgejo-host-runner` toolset (its jobs need no helm);
 `[packages]`/registry enablement (already merged, C04).
+
+## Fix round 2 (2026-11-23) — repo-add loop completeness: `exit` → `next`
+
+**Goal:** make the "Add repositories" loop complete — every URL-shaped
+dependency row of every chart is `helm repo add`-ed on every fire in all three
+jobs — so `cr package`'s lock-driven dependency Build resolves every chart's
+Chart.lock and the release leg goes green through the four victim charts.
+
+Authority: owner re-run evidence (the merged fix-round-1 release re-run packed
+389ds/actualbudget/amd-gpu/archon/audiobookrequest/audiomuse-ai — the bake
+worked, the 127/ECONNRESET classes are closed — then died at `Publish GitHub
+Releases and the Pages index`: `cr package` → `Error: no repository definition
+for https://charts.jetstack.io, https://charts.christianhuth.de`, exitcode 1)
++ EXPLORE.md "Fix-round-2 scout (2026-11-23)" §A0–§A7 (THE ground truth:
+root cause reproduced end-to-end, TEST D = the owner's error verbatim, TEST F =
+the fix shape proven green) + D45 (this round's ruling). Lease: shared CICD set
+8ebe5219 with #139 on the owner's explicit word.
+
+### Root cause (one paragraph, scout §A0/§A1/§A4)
+
+The release pipeline is not missing the hardened repo-add loop — it carries it
+three times (`release.yaml` :117-130/:300-313/:360-373) and the step RAN GREEN.
+The loop itself is the defect: cf-77 r2's awk ends `{ print $1, $i; exit }` at
+:125/:308/:368. Program-`exit` TERMINATES the awk after the first emitted row;
+`next` would skip to the next record. So each chart registers only its FIRST
+URL-shaped dependency row. `cr package` v1.10.1 `Build()`s unconditionally per
+chart before packaging (source-verified: packager.go CreatePackages, explicit
+downloadManager.Build + DependencyUpdate=true) and Build resolves EVERY lock
+URL against the repositories file — undefined ones surface exactly the owner's
+error. Victims = the four multi-URL charts {base, k8s-monitoring, postiz,
+traefik} (scout §A2 full-74-chart simulation; the six that packaged are
+single-row charts). Lineage (scout §A3): the twin-era loop printed EVERY row and
+was green; `c4d74dfc4` (cf-77 r2) fixed the empty-REPOSITORY-column break while
+introducing this completeness regression, was an ancestor of the twin deletion,
+and was ported VERBATIM into all three Forgejo jobs at rebuild — the bug was
+born unfired and this owner fire was its first-ever victim. **The defect lives
+in cf-55's shipped surface; no other ticket owns it** (D45 supersession fact).
+
+### Fix-round-2 chunk
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C08 | `exit`→`next` at the three awk sites + t6 comment re-truth + new t21 completeness leg | S | 1 | [] | — standalone bug fix on the shipped file: wave 1 is the test→dev→review round on release.yaml's three byte-identical carriers; all three must flip in one commit (an unchanged copy stays a time bomb — scout §A6); no interface from any prior chunk is in flight (C05–C07 are merged and untouched) |
+
+### Central design (D45)
+
+- **(a) minimal-mechanical ACCEPTED**: one-word swap `exit` → `next` at
+  :125/:308/:368 only. Keeps cf-77's per-row URL-shaped field guard (empty
+  REPOSITORY column still yields no pair) while restoring all-rows iteration —
+  exactly TEST B'/F. Blast radius: 3 words + test prose.
+- **(b) static complete URL list REJECTED with evidence**: deletes
+  `helm dependency list` from the blobs → reddens t6 (:240) and t19
+  (:1043-1050) re-pinning both, kills the cf-77 empty-column narrative, and
+  zero resilience — the next chart with a NEW repo reproduces this class
+  silently (the same staleness that let this bug survive 4 weeks unfired).
+- **(c) vendoring committed tgz REJECTED with evidence**: blocked by
+  `.gitignore:3` law first; rots at the next renovate bump (stale tgz vs fresh
+  lock sends Build back through repo resolution — the TEST-C path), and only
+  moves the failure unless repo-add ALSO stays complete ⇒ (a) required
+  underneath anyway.
+- **Test-wave delta — RULING: include the completeness leg.** t6 has zero
+  completeness teeth (nothing reddened while the loop under-added); the new
+  t21 leg replays each of the three landed awk carriers against a base-shaped
+  3-row fixture demanding ALL THREE pairs emit (TEST-D-shaped teeth), plus
+  single-row / oci-only / empty-REPOSITORY / zero-dep fixtures (AC3 class) —
+  the t15 carrier-replay pattern, offline, no network.
+- **Comment truth**: the t6 suite comment (:233-236, "first URL-shaped field"
+  scan copied VERBATIM from the proven loop) currently blesses the bug and is
+  re-truthed with the fix; the three cf-77 workflow step comments narrate
+  per-ROW rationale, stay TRUE, and do NOT move (AC5).
+
+### Out of scope (fix round 2)
+
+- **The URL list is dynamically derived — there is no static list to extend**
+  (the derivation stays: `helm dependency list` per chart + per-row field
+  scan); option (b) rejected, see D45.
+- The two-registry walk, the bump loop, the FF-only/single-writer laws, the
+  index-curl `--retry`, the oci:// skip, the five-workflow posture, D42's
+  landing shape — all UNCHANGED (scout §A1: the bump job runs NO helm; the
+  launch-brief premise that it did is false by evidence).
+- **UA-11 — runner egress to the five newly-registered hosts** (jetstack,
+  christianhuth, prometheus-community, go.temporal, crowdsecurity): the fixed
+  loop will `helm repo add` (index fetch at add time) hosts the runners never
+  fetched. Workspace-proven only (TEST F); NOT proven from the instance
+  runners. Recorded as the OWNER first-fire watch item (D37-class like the
+  bump index fetch) — a landing contingency, NOT code.
+- docker/CI-deferred posture unchanged; no container or chart surface moves.
+
+### Landing (fix round 2)
+
+C08 is one micro-commit on the ticket branch (test wave first: t21 red-for-
+right-reason naming all three jobs; dev greens it; review re-runs). Owner
+path: merge → the NEXT release fire (or a re-run) walks repo-add completely —
+expect `cr package` to green through base/k8s-monitoring/postiz/traefik; if a
+victim chart dies at the add step on a fetch error to one of the five new
+hosts, that is UA-11 materializing (owner-side egress observation, benign
+re-run posture as D42 established).
+
+### Commands (fix-round-2 additions; agent-shell law `export PATH=$HOME/.local/bin:$PATH` first)
+
+- `bash tests/services/forgejo-release.sh` (21 legs after the t21 delta)
+- regression, byte-unchanged baselines: `bash tests/services/forgejo-ci-surface.sh` ·
+  `bash tests/services/forgejo-packages.sh` · `bash tests/services/forgejo-main-sync.sh`
+- scratch replay harness allowed (`/tmp` only — carrier extraction + mutation
+  teeth; live paths never targeted by comparison writes)
+- `npx --yes aislop@0.20.0 ci --changes --base origin/main --human` (vacuous
+  for yaml/shell — record honestly, standing FRICTION posture)
+- `docker build => no-daemon, CI-deferred` unchanged (nothing built this round)

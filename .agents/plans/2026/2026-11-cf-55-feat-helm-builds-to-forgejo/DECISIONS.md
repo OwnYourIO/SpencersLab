@@ -585,3 +585,66 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    release re-run is contract-green and can go green subject to the owner-side
    registry truth (image 26.11.1 present in each instance registry, else a
    builder-bootstrap dispatch mints it).
+
+## Decisions — fix round 2: repo-add loop completeness (2026-11-23)
+
+- 2026-11-23 plan D45 (owner re-run evidence + scout root cause + fix-shape
+  ruling): the merged fix-round-1 re-run proved the bake (six charts packaged;
+  the 127/ECONNRESET classes closed) and died at `cr package` with `Error: no
+  repository definition for https://charts.jetstack.io,
+  https://charts.christianhuth.de` (exitcode 1). EXPLORE.md Fix-round-2 scout
+  §A0–§A7 grounded and reproduced the root cause end-to-end: cf-77 r2's
+  hardened repo-add awk uses program-`exit` instead of `next` at
+  release.yaml :125/:308/:368, so each per-chart loop TERMINATES after the
+  first emitted row and only the FIRST URL-shaped dependency row of each chart
+  is repo-added; victims = the four multi-URL charts {base, k8s-monitoring,
+  postiz, traefik}; TEST D reproduced the owner's error verbatim from the
+  shipped loop's state (only argo added); TEST F proved `exit`→`next`
+  registers all rows → `helm dependency build` green → `cr package` exit 0.
+  cr v1.10.1 unconditionally calls `downloader.Manager.Build()` per chart
+  (source-verified packager.go CreatePackages, DependencyUpdate=true) and
+  Build is LOCK-DRIVEN: every Chart.lock `repository:` URL must be defined in
+  the repositories file — the per-URL, per-lock-entry completeness contract.
+  RULING: option (a) minimal-mechanical ACCEPTED — `exit`→`next` at the three
+  sites + t6-comment re-truth, keeping cf-77's per-row URL-shaped field guard
+  (empty-REPOSITORY column still yields no pair) while restoring all-rows
+  iteration (TEST B'/F shape). REJECTED (b) static URL list — kills
+  `helm dependency list` from the blobs (reddens t6+t19, both must re-pin),
+  zero resilience, the next new-repo chart reproduces this class silently —
+  the same staleness that let the bug live 4 weeks unfired; REJECTED (c)
+  vendoring committed tgz — blocked by `.gitignore:3` law first, and rots at
+  the next renovate bump (stale tgz vs fresh lock re-enters the TEST-C repo-
+  resolution path), so it only moves the failure unless (a) stays underneath.
+- 2026-11-23 plan D45 (test-surface delta — RULING: include the completeness
+  leg): t6's three token-pins survive the swap byte-unchanged (green as-is),
+  but t6 has NO completeness teeth — nothing reddened while the loop
+  under-added, which is why the regression shipped. The new t21 leg in
+  tests/services/forgejo-release.sh replays EACH of the three landed awk
+  carriers (t15 carrier-replay pattern) against a base-shaped 3-URL-row
+  fixture demanding ALL THREE pairs emit (TEST-D-shaped teeth), plus
+  single-row, oci-only, empty-REPOSITORY and zero-dependency fixtures (no
+  regression on the six packaged charts, cf-77 guard survives, oci:// skip
+  stays theirs-to-enforce); red-for-right-reason at base naming all three
+  jobs, mutation-proven individually per site. t6's comment (:233-236, "first
+  URL-shaped field" VERBATIM from the proven loop) currently blesses the bug —
+  re-truthed with the fix; the three cf-77 workflow step comments stay TRUE
+  untouched (they narrate per-ROW rationale — scout §A5). AC5 keeps the blast
+  radius to exactly three one-word hunks in release.yaml.
+- 2026-11-23 plan D45 (supersession/ownership fact): this is a defect IN
+  cf-55's shipped surface — the hardened loop is C01-era, born unfired in
+  cf-77 r2's c4d74dfc4 (an ancestor of the twin deletion a6e493b78 — the
+  GitHub twin was already broken when deleted; the published-index staleness
+  corroborates no green fire in between), and ported VERBATIM into all three
+  Forgejo jobs at the rebuild (0dfefeb33/1ada03a50). NO OTHER TICKET OWNS IT;
+  cf-55 fixes it in C08. cf-77's own empty-REPOSITORY fix is PRESERVED, not
+  reverted — the field scan and guard stay verbatim.
+- 2026-11-23 plan D45 (landing contingency UA-11 — owner first-fire watch):
+  the fixed loop will `helm repo add` five hosts the runners have NEVER
+  fetched (charts.jetstack.io, charts.christianhuth.de,
+  prometheus-community.github.io, go.temporal.io, crowdsecurity.github.io —
+  index fetch at add time). Reachability is PROVEN FROM THE WORKSPACE SEAT
+  ONLY (TEST F); instance-runner egress is not verifiable from here (scout
+  §A7). Recorded as UA-11: if the next fire dies at the Add-repositories step
+  on a fetch error to a new host, that is runner egress, not the loop —
+  owner-side observation, benign re-run posture as D42 established. Not code,
+  not a chunk.

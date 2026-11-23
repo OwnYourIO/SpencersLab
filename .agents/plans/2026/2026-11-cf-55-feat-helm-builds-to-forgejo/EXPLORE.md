@@ -679,3 +679,271 @@ is NOT provable from here.
 - What `ghcr.io/catthehacker/ubuntu:act-24.04` carries TODAY at the rolling tag
   (RESEARCH C1 is upstream-source proof, and no renovate manager reads the
   label lines — values.yaml:127-129 records "a bump is manual").
+
+## Fix-round-2 scout (2026-11-23)
+
+Written by `agent-explore` for fix round 2 (worktree `119687225` = main `8227e8f29`
++ plans commit). Trigger: on the owner's instance, the release job's
+`Publish GitHub Releases and the Pages index` step packed 389ds/actualbudget/
+amd-gpu/archon/audiobookrequest/audiomuse-ai, then died —
+`Error: no repository definition for https://charts.jetstack.io,
+https://charts.christianhuth.de` (exitcode 1). The baked image works (cf-55
+fix round 1 achieved its goal); this round grounds the NEXT failure.
+
+**ROOT CAUSE (grounded + reproduced end-to-end, §A0/A4).** The release job does
+NOT lack an `Add repositories` step — it carries the hardened loop three times
+(`release.yaml:117-130`, `:300-313`, `:360-373`), and the step RAN GREEN in the
+failed fire. The hardened loop itself is the defect: cf-77 r2's
+`awk '{ ...; print $1, $i; exit } }'` (`:125`/`:308`/`:368`) uses awk program
+`exit`, which TERMINATES the awk program after the first emitted row instead of
+`next`, which skips to the next row. The step therefore registers ONLY the
+FIRST URL-shaped dependency row of every chart. `cr package` (v1.10.1) runs
+`downloader.Manager.Build()` per chart before packaging
+(`pkg/packager/packager.go` CreatePackages at tag v1.10.1: explicit
+`downloadManager.Build()` + `action.NewPackage()` with
+`DependencyUpdate = true`), and Build resolves every Chart.lock
+`repository:` URL against the repositories file — undefined ones surface as
+exactly the owner's error, with the already-defined repos NOT listed. For
+`charts/base` (deps order argo-cd → cert-manager → gateway-api-crds) only the
+argo URL is added, and cr dies naming the other two. Alphabetically `base` is
+the 7th chart under `charts/*/` and the first multi-row-dependency chart — the
+six that packaged fine are single-row charts whose sole row is row 1.
+
+### A0. Reproduction battery (all local, /tmp only; helm 3.16.4 workspace CLI + freshly downloaded 3.22.1)
+
+| Test | Command shape | Result |
+|---|---|---|
+| A | `helm package charts/base-copy` (fresh HOME, zero repos) | `Error: found in Chart.yaml, but missing in charts/ directory: argo-cd, cert-manager, gateway-api-crds` — exit 1. Plain `helm package` never says "no repository definition": that string is the DOWNLOADER's (Manager.Build), i.e. cr's call. |
+| B | `helm dependency list charts/base/` through the SHIPPED awk (`exit`) | emits ONE pair (`argo-cd https://argoproj.github.io/argo-helm`) out of 3 rows — the incompleteness proven |
+| B' | same rows through `next` instead of `exit` | all 3 pairs emitted; helm 3.22.1 identical (list output keeps the trailing blank row at 3 deps: `wc -l` 5, header+3+blank — `tail +2 \| head -n -1` arithmetic is CORRECT in both versions; only `exit` is wrong) |
+| C | `helm dependency build` base-copy (fresh HOME, zero repos) | `Error: no repository definition for https://argoproj.github.io/argo-helm, https://charts.jetstack.io, https://charts.christianhuth.de. Please add the missing repos via 'helm repo add'` — exit 1 (cr's exact code path, CLI wording; 3.22.1 CLI wording identical) |
+| D | same with ONLY argo added (= shipped loop's state) | `Error: no repository definition for https://charts.jetstack.io, https://charts.christianhuth.de` — **the owner's error reproduced verbatim** (URL set, joiner, order) |
+| E | `helm package --dependency-update` (fresh HOME, zero repos) | SUCCESS — the full-UPDATE path resolves URLs ad hoc; so the failure is specifically cr's explicit lock-driven `Build()`, which REQUIRES the repositories file to define every lock URL (cr 1.10.1's go.mod links `helm.sh/helm/v3 v3.22.1` — the message carrier is cr's OWN library, not the runner's helm CLI) |
+| F | FIXED loop (`next`) adds 3 repos → `helm dependency build` → | all 3 indexes updated, all 3 tgz downloaded (argo-cd-10.18.2, cert-manager-v1.21.3, gateway-api-crds-1.2.5), exit 0 — fix shape end-to-end PROVEN reachable from this seat for all 5 newly-added hosts |
+
+### A1. Current release.yaml anatomy (`.forgejo/workflows/release.yaml`, 429 lines)
+
+- `changes` (:36-80): checkout fetch-depth 0 (:43-49); pure-git range detection
+  (:50-80) → `CHARTS` JSON + `HAS_CHANGES`. No helm.
+- `test-build` (:82-141): matrix over CHANGED charts (:90-91); checkout
+  fetch-depth 0 (:93-99); local patch-bump (:100-116); **Add repositories
+  (:117-130) — hardened loop copy #1, buggy `exit` at :125**; Lint and package
+  smoke (:131-141): `helm dependency build charts/<chart>` (:139) + lint (:140)
+  + package (:141) — per CHANGED chart only.
+- `bump` (:143-260): checkout fetch-depth 0 (:153-158); the single-writer
+  FF-only loop (:159-260): fetch/reset to origin/main, `curl --retry 3` the
+  published index (:182), python version-pair rewrites (:183-244),
+  add/commit/push up to 5 attempts (:249-258). **Runs NO helm at all** — the
+  launch brief's premise ("bump ran helm operations across all charts") is
+  false by evidence: bump has no helm step to succeed or fail.
+- `release` (:262-337): env CR_TOKEN=PUSH_TOKEN_GH / PUSH_URL=PUSH_URL_GH
+  (:266-273); checkout fetch-depth 0 (:275-282); Configure Git (:283-289);
+  Pick up bump commits + `git fetch --tags` (:290-299); **Add repositories
+  (:300-313) — copy #2, `exit` at :308**; Publish step (:314-337,
+  `if has_changes == 'true'`): `cr package charts/*/` (:325 — iterates ALL 74
+  charts via glob, NOT the changed set), `cr upload --owner OwnYourIO
+  --git-repo SpencersLab --package-path .cr-release-packages --skip-existing`
+  (:326), `git remote add publish` + `git fetch publish .../gh-pages`
+  (:334-336), `cr index ... --push --remote publish` (:337). THE OWNER'S
+  DEATH SITE: :325.
+- `forgejo-publish` (:339-429): checkout (:344-350); pickup+tags (:351-359);
+  **Add repositories (:360-373) — copy #3, `exit` at :368**; Package charts
+  (:374-380): `cr package charts/*/` (:380) — would die identically (own fresh
+  job container, own empty repositories file); curl POST upload loop
+  (:381-429).
+- URL-list DERIVATION: dynamic in all three copies — `helm dependency list
+  <dir>` per `charts/*/` (reads Chart.yaml dependency rows), awk picks the
+  first URL-shaped field per printed record; NO static list, NO Chart.yaml
+  grep; and after the exit bug, at most one record per chart. The oci://
+  rows are skipped by `[[ ! "$url" =~ ^oci:// ]]` (:126/:309/:369). Cross-job
+  persistence law: fresh job container ⇒ fresh repositories file, hence the
+  three copies (each job that resolves deps re-adds in-job) — that topology
+  is correct; only the per-chart completeness is broken.
+
+### A2. Dependency-repo INVENTORY (20 unique http(s) URLs + 3 oci, from all charts/*/Chart.lock — every lock committed, none missing; NO chart vendors committed tgz — `.gitignore:3 charts/**/charts` (services/**/charts too); working-tree tgz exist only under charts/llama-swap + charts/vllm (untracked agent residue, invisible to a checkout). So EVERY chart's deps resolve from repos at cr Build time; a repo is registered iff it appears as the FIRST URL row of some chart.)
+
+| URL | declaring chart(s) (row position) | registered by shipped loop? | fate |
+|---|---|---|---|
+| https://bjw-s-labs.github.io/helm-charts/ | 55 charts (row 1 `app-template` everywhere) | YES | ok |
+| https://argoproj.github.io/argo-helm | base (row 1) | YES | ok |
+| https://charts.jetstack.io | base (row 2, cert-manager v1.21.3) | NO | **VICTIM — owner's error** |
+| https://charts.christianhuth.de | base (row 3, gateway-api-crds 1.2.5, condition) | NO | **VICTIM — owner's error** |
+| https://traefik.github.io/charts | traefik, traefik-zerotrust (row 1) | YES | ok |
+| https://crowdsecurity.github.io/helm-charts | traefik (row 2) | NO | **VICTIM next** |
+| https://grafana.github.io/helm-charts | loki + k8s-monitoring (row 1) | YES | ok |
+| https://prometheus-community.github.io/helm-charts | k8s-monitoring (row 2) | NO | **VICTIM next** |
+| https://go.temporal.io/helm-charts | postiz (row 2) | NO | **VICTIM next** |
+| https://helm.coder.com/v2 | coder (row 1) | YES | ok |
+| https://helm.erpnext.com | erp-next (row 1) | YES | ok |
+| https://lumepart.github.io/Explo | explo (row 1) | YES | ok |
+| https://charts.external-secrets.io | external-secrets-bitwarden (row 1) | YES | ok |
+| https://immich-app.github.io/immich-charts | immich (row 1) | YES | ok |
+| https://codecentric.github.io/helm-charts | keycloakx (row 1) | YES | ok |
+| https://privatebin.github.io/helm-chart/ | privatebin (row 1) | YES | ok |
+| https://seaweedfs.github.io/seaweedfs/helm | seaweedfs (row 1) | YES | ok |
+| https://seaweedfs.github.io/seaweedfs-csi-driver/helm | seaweedfs-csi-driver (row 1) | YES | ok |
+| https://bokysan.github.io/docker-postfix/ | smtp-relay (row 1, name `mail`) | YES | ok |
+| https://NeptuneHub.github.io/AudioMuse-AI-helm | audiomuse-ai (row 1) | YES | ok |
+| oci://code.forgejo.org/forgejo-helm | forgejo | skipped by design | ok (registry path) |
+| oci://ghcr.io/mariadb-operator/charts | mariadb-operator | skipped by design | ok |
+| oci://ghcr.io/stacklok/toolhive ×2 | hivetools (rows 1–2) | row 1 emitted+skipped; row 2 never even emitted (exit) | ok today — BOTH rows oci |
+
+Victim set under the shipped loop = {base, k8s-monitoring, postiz, traefik} —
+the four charts with ≥1 URL at row ≥2 (harness: full simulation over all 74
+charts, `helm dependency list` buggy-vs-fixed pipelines diffed against each
+lock's URL set). Alphabetically after `base`: betanin…ok, …, k8s-monitoring
+✝, …, postiz ✝, …, traefik ✝. Shape hazard the fix must not re-acquire: a
+future chart with an OCI row FIRST and an http row SECOND is a silent victim
+under any "first emitted row" scheme even if that scheme exits cleanly —
+per-ROW field scan + `next` per row is the correct semantics (TEST B').
+
+### A3. Historical parity — the GitHub twin (deleted at rebuild; read via `git show`)
+
+- `git show a6e493b78:.github/workflows/release.yaml`: BOTH test-build and the
+  release job ran an in-job `Add repositories` step followed by
+  `helm/chart-releaser-action` (release job: `@v1.7.0`, `skip_existing: true`;
+  test-build: SHA `3e001cb8…`, `skip_existing + skip_upload: true`). No
+  `--check-dependencies`, no `--dependency-update`, no skip-package anywhere —
+  the twin relied entirely on the loop + cr's internal Build.
+- The twin-era loop (parent of the hardening, `git show c4d74dfc4^:...`) was
+  `awk '{ print $1, $3 }'` — it printed EVERY dependency row ⇒ all repos were
+  registered ⇒ cr's Manager.Build resolved all lock URLs ⇒ green fires. The
+  twin-era cr (action v1.7.0 default line) ALREADY called Build():
+  `pkg/packager/packager.go` at tag v1.6.0 is the same CreatePackages with the
+  explicit `downloadManager.Build()` — so parity was on the LOOP side, not the
+  cr side.
+- `c4d74dfc4` (2026-10-28 23:02Z, "fix(ci): repo-add step takes only
+  URL-shaped dependency fields" — cf-77 r2) replaced the all-rows print with
+  the field-scan + `exit`, fixing cf-77's empty-REPOSITORY-column breakage
+  while introducing the completeness regression. It IS an ancestor of
+  `a6e493b78` (`git merge-base --is-ancestor` verified) — the twin was ALREADY
+  broken at twin deletion. Corroborating freshness: the published index at the
+  2026-11-10 first scout still topped out at actualbudget 1.0.4 dated
+  2026-10-25 (§5, lines 207-213 above) ⇒ no green twin fire between the
+  hardening and the move — the bug was born unfired, ported verbatim into all
+  three Forgejo jobs (rebuild commits 0dfefeb33/1ada03a50), and this owner
+  fire was the first-ever cr-package to feel it. The gateway-api-crds row
+  itself predates everything (e3ca402ca, 2026-10-24, "swap vendored tcproutes
+  CRD template for pinned gateway-api-crds 1.2.5 dependency") — base has been
+  a 3-row chart since then; row 3 came last (its comment :13-19 explains the
+  traefik-3.7 tcproutes rationale).
+- $HOME law: the twin's loop sat IN the same job as cr (fresh job = fresh
+  repositories file — same caveat this scout was asked about) — the rebuild
+  kept that topology correctly (:117/:300/:360 all precede their consumers).
+
+### A4. cr package semantics (authoritative sources for this round)
+
+RESEARCH.md's cr sections (:178-200 identity/env + wrapper pitfalls,
+:810-820 post-plan cr→direct replacement + shallow-tag law, sources :555-560)
+ground the API/identity side but do NOT cover dependency resolution — this
+round's authority is the upstream source + the reproduction:
+
+- `cr package` v1.10.1 `cr/cmd/package.go`: "If you wish to use advanced
+  packaging options such as … updating chart dependencies please use helm
+  package instead" — while `pkg/packager/packager.go` CreatePackages does the
+  OPPOSITE internally: per chart it calls `downloader.Manager.Build()`
+  UNCONDITIONALLY before `helmClient.Run` (with `DependencyUpdate = true` set
+  on the action). Build with a Chart.lock present resolves EVERY lock
+  `repository:` URL against the repositories file; any URL not defined there
+  is collected and the call fails as `no repository definition for <joined
+  URLs>. Please add the missing repos via 'helm repo add'` BEFORE any network
+  use for that chart — exactly TESTS C/D. (cr 1.10.1 go.mod pins helm library
+  v3.22.1; local 3.16.4 CLI and downloaded 3.22.1 CLI both emit "missing
+  repos"; the owner's log wording is the same error class from the instance's
+  binary.)
+- Consequence: repo definitions must be COMPLETE over every chart's lock before
+  `cr package charts/*/` runs — a per-URL, per-lock-entry contract. The
+  shipped dynamic loop is the right shape (mirrors bump-free test-build's
+  `helm dependency build` at :139, which needs the same completeness for
+  changed multi-row charts); it just emits one row per chart.
+- Does per-chart `helm dep build` between repo-add and cr package fix it? The
+  build itself needs the SAME repo completeness (TEST C), so an added dep-build
+  leg alone changes nothing; with the loop fixed, cr's own Build does the work
+  (TEST F) — an explicit pre-build would only be belt-and-suspenders. Vendored
+  tgz + matching lock is what would make Build repo-free (loader satisfies by
+  name-version), but vendoring is gitignored out of existence (:3 .gitignore).
+
+### A5. Test surfaces (`tests/services/forgejo-release.sh`, 20 legs, header :39-45)
+
+- **t6 (:227-251) is THE repo-add leg.** Pins per job (`test-build`, `release`,
+  `forgejo-publish`) that the run-blob contains the three tokens `'helm
+  dependency list'`, `'^(https?|oci|file)'`, `'^oci://'` (:240-242). It does
+  NOT pin `exit` vs `next`, the `tail +2 | head -n -1` arithmetic, step names,
+  or any URL list ⇒ an exit→next fix keeps t6 GREEN as-is. BUT t6's comment
+  (:233-236) narrates the contract as the "first URL-shaped field" scan —
+  prose that must be re-truthed with the fix (it currently blesses the bug),
+  and t6 has no completeness TEETH: nothing reddened if the loop under-adds —
+  the class of leg the plan will want extended (a fixture-driven awk replay
+  demanding all 3 base pairs, like t15's carrier-replay pattern).
+- **t19 (:992-1055)** pins the baked-toolchain law: per-job command presence —
+  test-build must run `helm dependency list`/`helm repo add`/`helm dependency
+  build`/`helm lint`/`helm package` (:1043-1046), release must run
+  `helm dependency list`/`helm repo add`/`cr package`/`cr upload`/`cr index`
+  (:1047-1048), forgejo-publish `helm dependency list`/`cr package`
+  (:1049-1050). Any fix option that REPLACES the dynamic loop with a static
+  list deletes `helm dependency list` from those blobs and reddens BOTH legs.
+- t12 (:510-556): tag-fetch-before-cr ordering (V-6-2) — unaffected.
+- No leg anywhere pins the URL list statically. Static URL literals in tests
+  exist only as (a) t15's dep-block FIXTURE (:718 crowdsecurity — fixture
+  data, not a contract) and (b) `tests/services/forgejo-ssh-gateway.sh` t2
+  (:431, :501-503) — another ticket's suite pinning base's
+  gateway-api-crds 1.2.5 Chart.yaml + Chart.lock ENTRY shape (breaks only if
+  the dep itself changes shape, not under a loop fix).
+- The loop text lives ONLY in release.yaml (repo-wide grep for the hardened
+  `for (i = 2` form returns the workflow alone) — no skill/reference prose to
+  re-truth beyond t6's comment and the three identical step comments
+  (:121-124, :304-307, :364-367) which cite "cf-77 r2 finding" and describe
+  the per-ROW field-scan rationale (still true); none claims one-row-per-
+  chart.
+
+### A6. Fix-shape options (evidence, no decision)
+
+- **(a) exit→next in the three loop copies (:125, :308, :368)** + t6 comment
+  re-truth (+ optional t6 completeness teeth). Why "the release job lacks it"
+  is the wrong frame: it HAS the hardened loop in all three jobs already —
+  cf-77 r2 broke its completeness at :125's lineage. Minimal correct form
+  keeps the cf-77 URL-shaped guard (per-row first URL field — a row with an
+  empty REPOSITORY column still yields no pair) while restoring all-rows
+  iteration — exactly TEST B'/F. Blast radius: 3 one-word edits in release.yaml
+  (+ test comment/chunk prose); the bump job has NO helm at all, so the
+  FF-only/single-writer laws and the curl-index retry (t20) are untouched;
+  t5/t6/t12/t19 stay green byte-unchanged. Resilience: automatic — any future
+  chart/dependency row is registered by derivation. New runner-side egress
+  surface: the loop will now `helm repo add` (index-fetch at add time) five
+  hosts never added before (jetstack, christianhuth, prometheus-community,
+  go.temporal, crowdsecurity) — reachable from this seat (TEST F), NOT proven
+  from the instance runners (owner-log watch, D37-class like the bump index
+  fetch). Note the same 3 copies must ALL change or the unchanged-set paths
+  stay a time bomb: a future renovate PR touching base/traefik/k8s-monitoring/
+  postiz reddens `test-build` (:139 dep build) through the same missing repo.
+- **(b) static complete URL list in the release/forgejo-publish/test-build
+  steps.** Kills `helm dependency list` from those blobs ⇒ REDDENS t6 (:240)
+  and t19 (:1043-1050) — both legs must be re-pinned, and the cf-77 empty-
+  column guard narrative dies with the scan. Zero resilience: the next chart
+  adding a NEW repo reproduces this exact class silently (add-loop passes,
+  cr dies mid-glob) — the same staleness that made this bug survive 4 weeks
+  unfired. Blast radius larger (2 legs rewritten + 3 step blocks), benefit
+  none over (a).
+- **(c) vendoring / committed Chart.lock+charts/*.tgz for the four victims.**
+  Blocked by repo law first: `.gitignore:3 charts/**/charts` (and :4 for
+  services) — committed tgz would need a gitignore inversion, breaking the
+  "lockfiles committed, vendor files not" convention main's f418cc01c
+  ("regenerate drifted Chart.locks via helm dependency update", 2026-11-21)
+  just re-established. Even vendored, the discipline rots: renovate bumps
+  Chart.yaml dep versions + regenerates locks (helm-values managers), and a
+  stale tgz against a fresh lock sends cr's Build back through repo resolution
+  (the TEST-C path) — so vendoring only moves the failure to the next renovate
+  bump unless repo-add ALSO stays complete ⇒ (a) is still required underneath.
+  t6/t19 would still demand the loop's tokens (`helm dependency list`/`helm
+  repo add` presence), and ssh-gateway's t2 shape-pins keep base's entry
+  honest regardless.
+
+### A7. Not verifiable from this seat
+
+- Instance-runner egress to the five newly-registered hosts (TEST F proves
+  workspace-side only) — owner-side first-fire observation.
+- The full owner run log (which changed set fed test-build; assumed not to
+  contain base/traefik/k8s-monitoring/postiz since test-build passed).
+- Whether any GitHub-side twin fire actually FAILED red between 2026-10-28 and
+  the move (GH logs unreachable here — the index-staleness corroboration is
+  repo-side only).
