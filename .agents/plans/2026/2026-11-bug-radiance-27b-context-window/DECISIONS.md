@@ -167,6 +167,24 @@ rejected, why.
   after a ruling. Rule recorded instead of banning the tool: a fixture's attestation line changing is not a
   payload change — check `git diff -- <fixture>` for the payload before treating attestation churn as drift,
   and never stage it as though evidence moved.
+- 2026-11-23 coord-ruling **D14 (C02 APPROVED at review `ses_df9f95f5fffeKbbVKbVuxe3Wm8`; the stale
+  `surface.sh:963` message string is assigned its OWN repair round, not folded into C04)**. Two evidentiary
+  wins worth preserving, plus one routing decision that follows D12's lesson rather than repeating it.
+  **Evidence:** (a) the green came from the tree, not from a moved gate — `git diff 01b6c2ff1..HEAD --
+  tests/pipeline-models/surface.sh` is **empty**, while the M8 needle already demanded 262144 against an env
+  of 200000 at base; it flipped only when the config moved. That is the difference between a gate passing
+  and a gate being shifted out of the way, and unlike most assurances it is *checkable*. (b) D12's debt is
+  repaid by name: runbook T2 closed via the test half, and **q27-boot T2 closed with NO test-file change** —
+  the doc re-pin alone sufficed, which independently confirms the "stale residue vs real break" diagnosis
+  that motivated chain-izing the arm. (c) The reviewer prevented a wrong "fix" of mine: fn's annotation cites
+  the **flash** pack ceiling (F1) though the lane is named `radiance` — correct, because fn serves
+  `qwen3.8-next-flash-fp8-iq4r-moe.rad` at TP2; the 27b lanes properly cite S1/S3. I had read that as sloppy
+  provenance. Lesson: verify which artifact a lane actually serves before annotating its provenance as wrong.
+  **Decision:** `surface.sh:963`'s error-message text still describes q27's served ceiling as 200000 in the
+  present tense. It is inert (visible only when the leg fails), it is in a TEST file (so neither C02's dev
+  scope nor my own), and **C04's restatement leg does not cover it** — that leg names the owner-protected
+  jsonc commentary. "Someone will catch it in the close-out leg" is precisely how D12's near-orphan happened,
+  so it gets its own named repair round now rather than a sympathetic home later.
 - 2026-11-23 coord-note **D10 (no memory change anywhere in this ticket)** — F2's arithmetic closed the last
   open question about sizing: flash-TP1 at 262144 fits the held 110Gi at BOTH candidate cost rates
   (≈69–89 GiB used; engine rule `110 − 87 = 23 ≥ 4`), fn-TP2's worst-case pool goes 18.3 → **24.0 GiB** trunk
