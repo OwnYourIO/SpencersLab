@@ -138,10 +138,10 @@
     "board_context": "2026-11-21 launch block (dev-boards, collected 2026-11-21T14:59:12Z) recorded at the resume",
     "services": ["agent context"],
     "models": {
-      "plan": "openrouter/qwen/qwen3.8-flash",
-      "code": "openrouter/qwen/qwen3.8-flash",
-      "local": false,
-      "note": "owner ruling 2026-11-19 (resume): openrouter flash for every remaining role — supersedes the 2026-11-17 radiance both-tiers ruling for the run's remainder (three #59110 deaths on radiance); the completed explore/research/plan hand-offs stay recorded on radiance"
+      "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "code": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "local": true,
+      "note": "owner ruling D42 2026-11-23: ALL subagent work moves to gpu-ai/qwen3.8-27b-radiance-tp2 (the TP2 27b radiance lane — trio in catalog rows 859-874, limit.context 262144 re-pinned by the owner's same-day ruling; priority ladder 6/2/1, per-lane floor 2; lane rests at replicas 0 in git — a rested lane answers 502 LOUD, so a lane-reachability probe precedes the wave; supersedes the D39-era openrouter-flash ruling for the run's remainder; the coord session itself stays where it runs)"
     },
     "priority": {
       "raw": null,
