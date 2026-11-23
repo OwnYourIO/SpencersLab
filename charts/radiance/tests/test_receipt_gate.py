@@ -1,14 +1,27 @@
-"""D8 receipt-gate proof legs — bug-radiance-27b-context-window (2026-11-23).
+"""D8 receipt-gate proof legs — bug-radiance-27b-context-window (2026-11-23;
+gate-fix round: the per-lane fit adjudication).
 
 The gate is the anti-drift half of parent-ruling D49 (a gate which can pass
 on absence is not a gate). These legs prove the gate's three-state law with
 SYNTHETIC prints — the real print is PRINT-PENDING (plan OQ 1-5) and arrives
 at the owner's scale act: a complete print passes; a partial one refuses and
-NAMES the missing item; a block-detected FAIL/MISMATCH marker refuses with the
-block's reason; a missing log file refuses with the missing lane named. The
-shape independence is the point: the gate does not parse print prose, it
-requires the OK marker with embedded evidence, so the first owner run calibrates
-the block's greps without the gate's law moving.
+NAMES the missing item; a block-detected FAIL/MISMATCH marker refuses with
+the block's reason; a missing log file refuses with the missing lane named.
+The shape independence is the point: the gate does not parse print prose, it
+requires the OK marker with embedded evidence, so the first owner run
+calibrates the block's greps without the gate's law moving.
+
+The gate-fix round (the final-review defect): the pre-fix gate certified
+item 3 by the PRESENCE of the pool-backs line and parsed the M figure for
+fn only — a non-fn lane's POOL_OK at 4 full-length sessions (75% of the
+worst case) passed, which is exactly the unobserved-value completeness gate
+the D49 lesson exists to catch. The legs below prove the fix both
+directions: the machine bar (per-lane M >= the chart's FORM-fixed
+--max-num-seqs, READ not hardcoded, D6) refuses on a short or unparseable
+M on ANY lane and on an unreadable/ambiguous bar; N% < 100 (or the N%
+figure absent) is surfaced as an owner-read warning — visible, attributable,
+never a refusal; the fn loud checks (D9(a) M bar, D9(b) eight-session smoke)
+stay intact.
 """
 
 from __future__ import annotations
@@ -25,7 +38,7 @@ import radiance_testlib as R
 HELD_GIB = {"radiance": "110", "radiance-q27": "24", "radiance-flash-tp1": "110", "radiance-q27-tp2": "24"}
 
 
-def _lane_print(lane: str, *, pool_m: str | None = "8", smoke: int = 8) -> str:
+def _lane_print(lane: str, *, pool_m: str | None = "8", pool_pct: str = "41", smoke: int = 8) -> str:
     held = HELD_GIB[lane]
     lines = [f"=== lane {lane} (held {held} GiB) @ synthetic ==="]
     lines.append("ITEM1: DIAG_OK max-model-len 262144")
@@ -33,9 +46,9 @@ def _lane_print(lane: str, *, pool_m: str | None = "8", smoke: int = 8) -> str:
     if pool_m is None:
         lines.append("ITEM3: POOL_MISSING no 'pool backs' line in the boot log")
     elif pool_m == "":
-        lines.append("ITEM3: POOL_OK kv: the pool backs 41% of the worst case (no session figure)")
+        lines.append(f"ITEM3: POOL_OK kv: the pool backs {pool_pct}% of the worst case (no session figure)")
     else:
-        lines.append(f"ITEM3: POOL_OK kv: the pool backs 41% of the worst case ... {pool_m} full-length sessions")
+        lines.append(f"ITEM3: POOL_OK kv: the pool backs {pool_pct}% of the worst case ... {pool_m} full-length sessions")
     lines.append(f"ITEM4: PIN_OK pinned=71.04GiB held={held}GiB diff={float(held) - 71.04 if held == '110' else float(held) - 9.2}")
     lines.append("ITEM5: SLOTS_OK checkpoint slots 9 per 200K-class session (log-scaled)")
     lines.append("ITEM6: WARN_OK prefix cache tier (4 GiB) is smaller than one full conversation (16.0 GiB)")
@@ -69,10 +82,57 @@ def _complete_prints() -> dict[str, str]:
 
 
 def test_receipt_gate_passes_on_a_complete_synthetic_print(tmp_path):
-    """The positive control: every item present on all four lanes (fn M=8,
-    eight admitted) — the gate closes, i.e. returns an empty diagnostic list."""
+    """The positive control + the M>=8/N%<100 plant: every item present on
+    all four lanes (M=8 at 41% on every lane, eight admitted on fn) — the
+    gate closes (no refusals) AND every lane's 41% figure surfaces as an
+    owner-read warning: N% < 100 is recorded and surfaced (visible,
+    attributable), not silently accepted and not a close bar."""
     _write_logs(tmp_path, _complete_prints())
-    assert G.gate(tmp_path) == []
+    diags, warnings = G.gate(tmp_path)
+    assert diags == []
+    assert len(warnings) == len(G.LANES), f"every lane's 41% figure must be surfaced: {warnings}"
+    for lane in G.LANES:
+        assert any(lane in w and "41%" in w for w in warnings), f"{lane}'s 41% figure must be NAMED: {warnings}"
+
+
+def test_receipt_gate_passes_clean_with_a_fully_funded_pool(tmp_path):
+    """The no-false-alarm control: M at the bar and N% = 100 on every lane —
+    the gate closes with ZERO warnings (a fully-funded pool is not an
+    owner-read concern to surface; a warning here would be noise the owner
+    learns to ignore)."""
+    _write_logs(tmp_path, {lane: _lane_print(lane, pool_pct="100") for lane in G.LANES})
+    diags, warnings = G.gate(tmp_path)
+    assert diags == []
+    assert warnings == []
+
+
+def test_receipt_gate_refuses_a_non_fn_lane_with_an_underfunded_pool(tmp_path):
+    """The gate-fix plant (the final-review defect, both directions): the
+    pre-fix gate certified item 3 by PRESENCE, so a non-fn lane's POOL_OK
+    at 4 full-length sessions (75% of the worst case) passed — the lane the
+    evidence PREDICTS will not fit (V3/S10). The machine bar is now
+    per-lane: the refusal NAMES the lane, the parsed M, and the required
+    bar."""
+    prints = _complete_prints()
+    prints["radiance-q27"] = _lane_print("radiance-q27", pool_m="4", pool_pct="75")
+    _write_logs(tmp_path, prints)
+    diags, _ = G.gate(tmp_path)
+    assert diags, "an under-funded NON-FN lane must REFUSE (presence is not a pass)"
+    assert any("radiance-q27" in d and "M=4" in d and "M >= 8" in d for d in diags), f"the lane, the parsed M and the bar must all be NAMED: {diags}"
+    # the other three lanes' items are complete and their M=8 holds — only the
+    # under-funded lane is refused
+    assert not any(d.startswith("radiance:") or d.startswith("radiance-flash-tp1") or d.startswith("radiance-q27-tp2") for d in diags), f"the funded lanes must not be named: {diags}"
+
+
+def test_receipt_gate_refuses_a_non_fn_lane_whose_pool_line_lacks_an_m_figure(tmp_path):
+    """The D49 class, non-fn side: the POOL_OK line is present but carries
+    no M figure on a NON-FN lane — pre-fix a presence pass; the bar cannot
+    be evaluated, so it cannot pass (absence is not a pass)."""
+    prints = _complete_prints()
+    prints["radiance-flash-tp1"] = _lane_print("radiance-flash-tp1", pool_m="")
+    _write_logs(tmp_path, prints)
+    diags, _ = G.gate(tmp_path)
+    assert any("radiance-flash-tp1" in d and "cannot be evaluated" in d for d in diags), diags
 
 
 def test_receipt_gate_refuses_a_planted_partial_print_and_names_the_items(tmp_path):
@@ -85,7 +145,7 @@ def test_receipt_gate_refuses_a_planted_partial_print_and_names_the_items(tmp_pa
     prints["radiance-flash-tp1"] = "\n".join(flash) + "\n"
     prints["radiance"] = _lane_print("radiance", pool_m="7")
     _write_logs(tmp_path, prints)
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert diags, "a partial print must refuse"
     assert any("radiance-flash-tp1: item 3" in d for d in diags), f"the missing item must be NAMED: {diags}"
     assert any("D9(a)" in d and "M=7" in d for d in diags), f"the fn M bar miss must be NAMED: {diags}"
@@ -99,7 +159,7 @@ def test_receipt_gate_names_a_missing_log_file(tmp_path):
     whole log is a refusal, never a pass."""
     prints = _complete_prints()
     _write_logs(tmp_path, {k: v for k, v in prints.items() if k != "radiance-q27"})
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert diags
     assert any("radiance-q27" in d and "no log file" in d for d in diags), diags
 
@@ -111,7 +171,7 @@ def test_receipt_gate_names_a_seven_of_eight_admitted_smoke(tmp_path):
     prints = _complete_prints()
     prints["radiance"] = _lane_print("radiance", smoke=7)
     _write_logs(tmp_path, prints)
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert diags
     assert any("D9(b)" in d and "7/8" in d and "missing: ['8']" in d for d in diags), diags
 
@@ -124,7 +184,7 @@ def test_receipt_gate_names_a_non_2xx_admission(tmp_path):
     lines[-4] = "SMOKE: ADMITTED 5 503"
     prints["radiance"] = "\n".join(lines) + "\n"
     _write_logs(tmp_path, prints)
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert any("D9(b)" in d and "503" in d for d in diags), diags
 
 
@@ -137,20 +197,54 @@ def test_receipt_gate_names_a_block_detected_fail_marker(tmp_path):
     lines.append("ITEM7: MEM_FAIL peak=<none> oom=oom_kill=2")
     prints["radiance-q27"] = "\n".join(lines) + "\n"
     _write_logs(tmp_path, prints)
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert any("radiance-q27: item 7" in d and "MEM_FAIL" in d for d in diags), diags
 
 
 def test_receipt_gate_refuses_when_the_pool_line_lacks_an_m_figure(tmp_path):
-    """D9(a) parse arm: the pool-backs line is present but carries no
-    'M full-length sessions' figure — the bar cannot be evaluated, so it
-    cannot pass (a gate that cannot evaluate is a gate that can pass on
-    absence — the D49 class)."""
+    """D9(a) parse arm (fn side, kept intact): the pool-backs line is
+    present but carries no 'M full-length sessions' figure — the bar cannot
+    be evaluated, so it cannot pass (a gate that cannot evaluate is a gate
+    that can pass on absence — the D49 class)."""
     prints = _complete_prints()
     prints["radiance"] = _lane_print("radiance", pool_m="")
     _write_logs(tmp_path, prints)
-    diags = G.gate(tmp_path)
+    diags, _ = G.gate(tmp_path)
     assert any("D9(a)" in d and "cannot be evaluated" in d for d in diags), diags
+
+
+def test_receipt_gate_refuses_when_the_configured_seqs_cannot_be_read(tmp_path):
+    """The D49 no-fallback law: the bar is READ from the chart's FORM (D6),
+    and when it cannot be read the gate refuses with the read failure
+    NAMED — it never falls back to a hardcoded 8, because an unverified bar
+    is the pass-on-absence class (the M=8 print would pass a fallback bar;
+    it must still refuse)."""
+    _write_logs(tmp_path, _complete_prints())
+    diags, _ = G.gate(tmp_path, values_path=tmp_path / "no-such-values.yaml")
+    assert diags, "an unreadable bar must REFUSE (never a fallback to a hardcoded 8)"
+    assert any("--max-num-seqs" in d and "cannot be evaluated" in d for d in diags), f"the read failure must be NAMED: {diags}"
+
+
+def test_gate_reads_the_form_fixed_bar_from_the_chart():
+    """The bar follows the FORM (D6: --max-num-seqs is FORM-fixed, parent-
+    D46): it is READ from the chart's compose line, not hardcoded — today's
+    FORM ships 8, so a future FORM ruling surfaces as a named update here
+    and the gate's bar moves with it (a hardcoded 8 would silently
+    invalidate)."""
+    bar, err = G.read_configured_max_num_seqs(G.chart_values_path())
+    assert err is None, err
+    assert bar == 8, f"the FORM-fixed byte today is 8 (parent-D46 FORM_FIXED_FLAGS); got {bar}"
+
+
+def test_gate_refuses_an_ambiguous_configured_seqs(tmp_path):
+    """Two distinct --max-num-seqs values in the FORM = an ambiguous bar —
+    the gate cannot decide the bar, so it refuses (an unverified bar is not
+    a bar; picking one of two would be the silent-invalidation the read
+    exists to prevent)."""
+    (tmp_path / "values.yaml").write_text("form-a: --max-num-seqs 8\nform-b: --max-num-seqs 32\n")
+    bar, err = G.read_configured_max_num_seqs(tmp_path / "values.yaml")
+    assert bar is None
+    assert err is not None and "--max-num-seqs" in err, f"the ambiguity must be NAMED: {err}"
 
 
 def test_receipt_gate_lanes_are_exactly_the_four_ruled_lanes():
