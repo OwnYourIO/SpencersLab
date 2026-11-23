@@ -1,11 +1,12 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
   "current_wave": 6,
   "updated_at": "2026-11-22T00:20:00+00:00",
   "reopen": { "at": "2026-11-21T20:05:00+00:00", "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub", "lock": { "reaped_setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z", "tag": "after_reap" } },
+  "reopen2": { "at": "2026-11-23T20:45:00+00:00", "reason": "owner instruction in-session: secrets belong in the Forgejo Actions vault (delimited input), fan-out direct to clusters, not via proxy-local relay hop; research round ordered; branch rebased onto advanced main (22 commits replay clean)", "lock": { "previous_setId": "369d6f36-a30a-4146-b214-41d92bf1851d", "released_at": "2026-11-22 (card to Review)", "now": { "pipelines": ["CICD"], "setId": "5e190923-b4b3-446d-b5e8-b3a67cf48a7f" } }, "card": "back to Executing (comment wumm5gtwvzqHneAAh)" },
   "kickoff": {
     "slug": "cf-139-feat-argocd-webhook-sync",
     "card": "Y3vPeX4nhtDbsdwCg",
