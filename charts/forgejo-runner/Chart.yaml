@@ -4,7 +4,7 @@ description: Forgejo Actions runner — one 1-replica StatefulSet per release (p
   DinD sidecar, declarative registration), deployed once per target Forgejo instance
   (the dev ApplicationSet installs it twice)
 type: application
-version: 1.0.2
+version: 1.0.3
 appVersion: 13.2.0
 dependencies:
 - name: app-template
