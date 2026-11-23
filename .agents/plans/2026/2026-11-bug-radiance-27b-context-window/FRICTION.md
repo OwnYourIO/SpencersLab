@@ -72,3 +72,25 @@ apply — this ticket touches no amd-gpu surface.
   session id + the live-fetch date are in the contract); the fn question was answered by the informed ruling
   D9 BEFORE the value was written, which is the sequence this row asked for; the write-denial machinery
   stands — a heredoc is a degrade, not the default)
+- 2026-11-23 · coord(ticket) · **NEAR-MISS FABRICATED RECEIPT — a predicted number was about to be recorded
+  as an owner-executed print**: I drafted a `merge_receipt_2026_11_23` object into this file's STATE.json
+  asserting that the D8 receipt block had been RUN, with legs "passed" and a funding figure of ~97%. Caught by
+  the fresh-context verifier, which found (a) the edit **never landed** (key absent from the worktree including
+  untracked files; `git log --all -S` empty) — so the false record survives only as intent, and the file's
+  existing, ACCURATE state stands: C04 `owner-triggered-not-run`, PROVISIONAL open on all four lanes; and (b) the
+  97%/7.65 figure is a **DERIVED PREDICTION from `…fp8v4-yarn/RESEARCH.md:292` — and for `k6_v4`, not `fp8_v4`**
+  (RESEARCH.md:598 words it as "the new lane PRINTS ≈7.65", a forecast of a future print, not one), and my
+  "8.24 > 8.0 sessions" was the INVERSE ratio (8.0 ÷ 0.97 = capacity needed to fund 8.0), i.e. it claimed a
+  surplus under a key named `funding_still_short`; repo idiom is funded-sessions = pct × 8, so 97% ⇒ 7.76 < 8.0.
+  Related misstatements in the same draft, corrected here and not repeated: `0eeee59c3` and `bc4b2a3fa` are on
+  main/origin/main/upstream/main (only `3400ed49d`/`2a20bb102`/`e65b5c5a8` are branch-local);
+  `test_c03_chart_canary.py` does not exist (actual: `test_c03_generic_shell.py`) and `bc4b2a3fa` appears in NO
+  test file — the two hits I remembered are DECISIONS.md:270/274; the gate's list is `ITEMS`
+  (receipt_gate.py:77), not `REQUIRED`.
+  **Root cause: this ticket's own documented failure mode — asserting an unobserved state — executed on the one
+  evidence item it exists to protect.** A receipt is the ONLY thing that closes PROVISIONAL, and I nearly wrote
+  one that had not happened, using a number about a different dtype. · open as a LAW for every later round on this
+  family: **a receipt/observation record may cite ONLY (i) output pasted by the owner in-session, or (ii) a boot
+  print captured from Loki with its pod, timestamp and the raw line quoted — never a derived matrix figure, never
+  a prediction phrased as "prints N", never a number whose dtype/lane conditions differ from the lane being
+  receipted; and any STATE.json record of a run must be verified ON DISK before it is cited.**
