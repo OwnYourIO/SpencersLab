@@ -4,7 +4,7 @@
   "coord_session": "ses_df6746e69ffe3r6oWe58jKqW2N",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-23T18:51:09Z",
+  "updated_at": "2026-11-24T09:30:00Z",
   "kickoff": {
     "slug": "cf-140-feat-agent-card-reconcile",
     "card": "zKf2GkiwPgeDmfpu2",
@@ -23,7 +23,7 @@
     "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-140-feat-agent-card-reconcile",
     "branch": "cf-140-feat-agent-card-reconcile",
     "branch_source": "kickoff-mint-branch.sh on detached worktree",
-    "commits": "pending",
+    "commits": "87d4566c2 (pre-planning records)",
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "priority": { "raw": null, "class": "default" },
     "run_tag": null,
@@ -32,7 +32,7 @@
       "pipelines": ["Context"],
       "shared": false,
       "takeover": "none",
-      "note": "PIPELINE LOCK LOST notice fired 2026-11-23; pipeline_status re-read shows this session still holding the claim live, no new reap (lastReap 2026-11-23T16:34:57.826Z predates the claim). Owner answered the one sanctioned question: continue under the live claim."
+      "note": "PIPELINE LOCK LOST notice fired 2026-11-23; pipeline_status re-read shows this session still holding the claim live, no new reap (lastReap 2026-11-23T16:34:57.826Z predates the claim). Owner answered the one sanctioned question: continue under the live claim. R4 later proved why the notice fired: the host runs TWO opencode server processes, so a single-process view under-reports holders."
     },
     "models": {
       "coord": "openrouter/qwen/qwen3.8-flash",
@@ -69,6 +69,20 @@
         "Priority": "fp5vnD5YrA7oAxPiK"
       }
     },
+    "checklist_verify": {
+      "at": "2026-11-24T09:20:00Z",
+      "how": "list_checklists + get_checklist per checklist (ids: Model(s) TeMtwFLQ4QE4xejYS, Services KAb8NceTHwurJMRZX, Type CurzX3d5755uYzpWf, Lifecycle 2jirHkLiHtdTjc5aj, HITL 838XDxALvqcuW4Qod)",
+      "why": "the post-plan write-back deletes every UNCHECKED item, so the tick state was re-read live before that step rather than trusted from the claim-time block",
+      "checked": {
+        "Model(s)": ["Qwen Flash"],
+        "Services": ["home", "agent context"],
+        "Type": ["feat"],
+        "Lifecycle": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+        "Human in the Loop": ["Planning", "Final Review"]
+      },
+      "lifecycle_absent": ["Session Rename", "Worktree Creation", "Follow-up cards created", "Human in the Loop (item)"],
+      "shape": "legacy 11-item Lifecycle; Session Rename + Worktree Creation ran per the blank default (DECISIONS)"
+    },
     "preload": { "at": "2026-11-23T18:05:00Z", "tool": "preload_board", "cards": 116, "degraded": "with_checklists arg not advertised by the deployed tool; checklist trees rode the payload unconsumed" },
     "card_details": { "at": "2026-11-23T18:00:00Z", "tool": "get_card_details", "degraded": "no block on the claim answer; coord called get_card_details once for the claimed card" }
   },
@@ -100,13 +114,108 @@
   ],
   "research_queue": {
     "running": [
-      { "id": "R1", "topic": "typescript-authoring skills", "session": "ses_df63f3b3dffeZ34gl5D9KBj7Wq" },
-      { "id": "R2", "topic": "opencode-plugin authoring skills", "session": "ses_df63f3b39ffe7Q28McvAm3TF6m" },
-      { "id": "R3", "topic": "session awareness + session creation", "session": "ses_df63f3b36ffeqFexjHjloW7itl" },
-      { "id": "R4", "topic": "card change detection", "session": "ses_df63f3b27ffeYtbWh0ri5F8Vgn" }
+      { "id": "R5", "topic": "forgejo issues/PR access + card-id tagging best practice", "session": "ses_df614e651ffeTuj2u1jDvRTF0M" }
     ],
-    "queued": [{ "id": "R5", "topic": "forgejo issues/PR access + card-id tagging best practice", "launch_when": "first research slot frees (card caps concurrency at 4)" }]
+    "done": [
+      {
+        "id": "R4",
+        "topic": "card change detection",
+        "session": "ses_df63f3b27ffeYtbWh0ri5F8Vgn",
+        "file": "RESEARCH-r4-card-change-detection.md",
+        "status": "DONE (harness suppressed the text hand-back; the 620-line on-disk RESULT block is complete)",
+        "headline": "Detection design: snapshot-diff the card document + a scoped-activity classifier; forward changes as a bounded, idempotent synthetic/queue item.",
+        "facts": [
+          "per-card activity reads ARE possible on WeKan v12.99 via a SCOPED export (cardId is a first-class export scope key) — corrects EXPLORE-wekan-mcp's full-board-cost read, which measured the non-streaming build() path; still no per-card activities REST route",
+          "every REST card write goes through .direct.updateAsync and bypasses the activity hooks, so the activity log records HUMAN/UI edits only — the agent-vs-human discriminator comes free, and it confirms modifiedAt/dateLastActivity never bump on API writes",
+          "the card document has no updatedAt field at all",
+          "GET /api/session/active is live and populated on v2.3.2 but PROCESS-LOCAL: this host runs two opencode servers, so a single-port read silently under-reports (R3 agrees)",
+          "the v2 hand-off primitive exists and is undocumented in-repo: session inbox + session.synthetic + delivery steer|queue (specs/v2/session.md, packages/schema/src/session-inbox.ts, live /openapi.json); archived is a list FILTER only, not readable on the record",
+          "directional practice adopted: kubernetes controller idempotent-reconcile (a clean pass must write nothing) and webhook-as-hint / poll-as-truth funnelling through ONE apply function"
+        ],
+        "open_questions": [
+          "OQ-R4a (owner, credential leg): live-probe that a REST card edit does not bump modifiedAt on the deployed pod, and that ?fields=activities&cardId= answers scoped",
+          "OQ-R4b (owner): read the disableExportAvatars / disable-all-exports / disableActivities admin flags — they gate the scoped activity export's cost",
+          "OQ-R4c (plan): who writes CARD.yaml — the plugin (needs slug->folder resolution outside the run) or the run itself",
+          "OQ-R4d (plan): the per-card forward cap value and its exhaustion behaviour (the only real M6 tuning knob)",
+          "OQ-R4e (R3 boundary): adopt R3's pending-question Form read as the 'blocked on a human?' test"
+        ]
+      },
+      {
+        "id": "R3",
+        "topic": "session awareness + session creation",
+        "session": "ses_df63f3b36ffeqFexjHjloW7itl",
+        "file": "RESEARCH-r3-session-awareness.md",
+        "status": "DONE",
+        "headline": "All five escalated unknowns settled against the LIVE build (opencode v2.3.2 + OpenChamber 2.8.0), not docs pinned to v2.1.4.",
+        "facts": [
+          "an awaiting question IS durable data: the question tool creates a Form (metadata.kind===\"question\"), readable at GET /api/session/:id/form with state.status===\"pending\"; form.created/replied/cancelled fire, but events are volatile-by-contract so the durable form read is the truth",
+          "the 15-minute clock keys off the form's created stamp; a pending question keeps the session busy/active forever and never self-times-out (exactly the ticket's premise, and the answer to review risk B1)",
+          "GET /api/session/active WORKS on v2.3.2 (refutes cf-50 and this run's own EXPLORE-session-api finding) — but is process-local per R4",
+          "turn-end signal = session.execution.succeeded/failed/interrupted + leaving the active map + terminal outcome + time.idle; session.idle/session.status exist but did NOT fire viewer-less, so do not depend on them",
+          "POST /api/session {agent, model:{providerID,id,variant?}, location:{directory}, metadata, title} -> {data:{id}}, metadata survives; POST /api/session/:id/prompt runs unattended (proven to completion)",
+          "session.updated is decomposed into session.metadata.updated / renamed / archived / unarchived / viewed; archive state is time.archived (epoch-ms), not a top-level boolean, and needs ?archived=true to read back",
+          "objective-met is NOT a session field: authoritative signal is the card sitting in Review/Finished; opt-in corroborators are openchamber.goal.status===\"complete\" and work.state===\"done\"",
+          "a new .agents/loops/*.md task lands DISABLED until the owner approves its sha256 loopFingerprint once"
+        ],
+        "open_questions": [
+          "OQ-A: goal-mode on spawns vs board-only objective detection",
+          "OQ-B: cancel the pending Form when the 15-min bound is breached (research recommends yes)",
+          "OQ-C: unanswered-question push path while question-notify stays owner-disabled",
+          "runtime re-verify: terraform.tfvars pins v2.0.22/2.1.0 while the host runs v2.3.2/2.8.0"
+        ]
+      },
+      {
+        "id": "R2",
+        "topic": "opencode-plugin authoring skills",
+        "session": "ses_df63f3b39ffe7Q28McvAm3TF6m",
+        "file": "RESEARCH-r2-opencode-plugin-skills.md",
+        "status": "DONE",
+        "headline": "No usable V2 plugin-authoring skill exists to adopt; AD-140 should NOT author one inside the ticket.",
+        "facts": [
+          "the /opencode skill is official and embedded in the @opencode/cli v2.3.2 binary (not a repo file); its Plugins section is an index of three doc URLs, nothing more",
+          "published plugin-authoring skills exist but all teach the V1 API that does not run in V2; exactly one V2-targeted skill found and it is thin + pinned to 2.0.20",
+          "version gap resolved by npm tarball type-diff: 2.1.4 -> 2.3.2 added +5 events, removed 0; per-tool codemode option and ctx.experimental.automation are 2.4.x-only, so D29 (Code-Mode-only plugin tools) holds on the live build",
+          "every failure mode this repo recorded has a matching upstream issue: #56290 (open, setup() runs per location/connection -> N× event fan-out), #65742 (closed, nested Code-Mode hooks fire; call IDs per-call since 2.3.1 so dedup keys must tolerate both), #65842 (open, plugin tools missing from catalogs since 2.3.2 — contradicted by this run's own working claim, so card-runner's tool legs need re-proving on the shipping build)"
+        ],
+        "open_questions": [
+          "OQ-R2-2 singular vs plural plugin directory (one-line ruling)",
+          "OQ-R2-3 session.idle/status emission on the OpenChamber host (probe)",
+          "OQ-R2-4 ctx.storage project-scope probe — settles the D26 vs question-notify contradiction",
+          "OQ-R2-5 re-prove card-runner tool legs against #65842 on the shipping build"
+        ]
+      },
+      {
+        "id": "R1",
+        "topic": "typescript-authoring skills",
+        "session": "ses_df63f3b3dffeZ34gl5D9KBj7Wq",
+        "file": "RESEARCH-r1-typescript-skills.md",
+        "status": "DONE",
+        "headline": "No mature TS-skill ecosystem; the load-bearing gap is that a type error in card-runner is invisible until runtime.",
+        "facts": [
+          "only vendorable candidate is microsoft/typescript-skills (MIT, typescript-strict = a type-error repair loop), but it is niche (124 installs) and assumes package.json projects",
+          "OpenCode lsp + formatter are live V2 schema keys but set nowhere here, and both are dependency-gated on project deps this repo does not have; OpenCode's own docs recommend the CLI-loop-instead-of-LSP posture for agents",
+          "Node v26 type-strips with ZERO type-checking, aislop is static, the 393-test suite pins runtime -> fix shape is pinned `npx --package=typescript@7 -- tsc --noEmit` with a hand-written Node-shaped tsconfig; the `npx tsc` stub trap (deprecated 2.0.4 package) is real"
+        ],
+        "open_questions": [
+          "owner ruling: the tsc gate makes @types/node the repo's FIRST npm dev surface vs keeping the zero-dep posture",
+          "vendoring home: .rulesync/skills + VENDORED.md pattern vs .agents/skills + skills-lock.json",
+          "tsc in CI, or plan-Commands only",
+          "aislop pin drift 0.20.0 -> 0.22.3 (follow-up card; Lifecycle leaves follow-up cards unchecked, so it rides the final summary)"
+        ]
+      }
+    ],
+    "queued": []
   },
+  "open_question_pool_for_batched_round": [
+    "npm dev surface: adopt the pinned tsc --noEmit gate (+ @types/node, tsconfig) as card-runner's type check, or stay zero-dep and let type errors surface at runtime",
+    "question-notify: re-enable it (owner-disabled 2026-11-21) or absorb its three detection legs into card-runner — the Awaiting-Answers alert path assumes a phone channel that is currently off",
+    "Awaiting Answers + Timeout lists: provision them via the board-provision engine now, or accept the jsonl degrade as permanent design",
+    "card-runner plugin id: keep `local.pipeline-locks` (zero kv migration) or rename and migrate rows at setup",
+    "objective-complete detection: board-list membership only, or also opt-in goal/work mode on spawned sessions",
+    "when the 15-minute question bound is breached: cancel the pending Form, or leave it pending and only move the card",
+    "CARD.yaml writer: the plugin (needs slug->folder resolution outside the run) or the coordinator itself",
+    "scope realism: the card's 'review the existing plugin code' + 5 research topics + a 3-plugin rewrite + agent-definition rewrite + board provisioning is a very large plan — confirm the wave split (hygiene -> question flow -> lock retirement) the review proposed, or cut further"
+  ],
   "chunks": {},
   "blocked": [],
   "deferred": []
