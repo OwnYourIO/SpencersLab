@@ -1,12 +1,13 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
   "plan_status": "approved",
+  "plan_status_note": "reopen2 re-cut APPROVED 2026-11-23 in the batched owner round: OQ8 newline records (taken), OQ9 list+warn-and-skip+preflight row (taken), OQ10 indefinite+delete-token revoke+vault-overwrite rotation (taken), vault scope ruled ORG-LEVEL — the single deviation from the pinned best guess (secrets.ARGOCD_SYNC_TOKENS is an org Actions secret on the prod instance, inherited; ${{ secrets.* }} reference unchanged under repo>org>user resolution [21][27]; DECISIONS 2026-11-23). History: this re-cut was drafted 2026-11-23 gated on that batched round (reopen2.approval_gate, now answered verbatim); the pre-reopen2 plan was approved 2026-11-17 and re-cut-approved 2026-11-21 (reopen1, R1–R4).",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
-  "current_wave": 6,
-  "updated_at": "2026-11-22T00:20:00+00:00",
+  "current_wave": 7,
+  "updated_at": "2026-11-23T21:35:00Z",
   "reopen": { "at": "2026-11-21T20:05:00+00:00", "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub", "lock": { "reaped_setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z", "tag": "after_reap" } },
-  "reopen2": { "at": "2026-11-23T20:45:00+00:00", "reason": "owner instruction in-session: secrets belong in the Forgejo Actions vault (delimited input), fan-out direct to clusters, not via proxy-local relay hop; research round ordered; branch rebased onto advanced main (22 commits replay clean)", "lock": { "previous_setId": "369d6f36-a30a-4146-b214-41d92bf1851d", "released_at": "2026-11-22 (card to Review)", "now": { "pipelines": ["CICD"], "setId": "5e190923-b4b3-446d-b5e8-b3a67cf48a7f" } }, "card": "back to Executing (comment wumm5gtwvzqHneAAh)" },
+  "reopen2": { "at": "2026-11-23T20:45:00+00:00", "reason": "owner instruction in-session: secrets belong in the Forgejo Actions vault (delimited input), fan-out direct to clusters, not via proxy-local relay hop; research round ordered; branch rebased onto advanced main (22 commits replay clean)", "lock": { "previous_setId": "369d6f36-a30a-4146-b214-41d92bf1851d", "released_at": "2026-11-22 (card to Review)", "now": { "pipelines": ["CICD"], "setId": "5e190923-b4b3-446d-b5e8-b3a67cf48a7f" } }, "card": "back to Executing (comment wumm5gtwvzqHneAAh)", "plan_recut_at": "2026-11-23T21:05:00Z", "approval_gate": ["OQ8 delimiter (newline recommended)", "OQ9 proxy-backup posture (listed+warn-skip+preflight row pinned pending)", "OQ10 token TTL (indefinite+revoke pinned pending)"], "approval": { "at": "2026-11-23T21:35:00Z", "oq8": "ANSWERED — newline-delimited cat:token records (recommendation taken)", "oq9": "ANSWERED — listed + warn-and-skip + preflight row (recommendation taken)", "oq10": "ANSWERED — indefinite mints + delete-token revoke + rotation-by-vault-overwrite (recommendation taken)", "vault_scope": "RULED — ORG-level Actions secret on the prod instance, inherited by the repo; the ONE deviation from the plan's pinned best guess; job reference unchanged (repo>org>user resolution [21][27])", "outcome": "plan_status -> approved; execution may start (test session first)" } },
   "kickoff": {
     "slug": "cf-139-feat-argocd-webhook-sync",
     "card": "Y3vPeX4nhtDbsdwCg",
@@ -25,19 +26,21 @@
     "preload": { "at": "2026-11-12T03:50+00:00", "tool": "preload_board", "degraded": false },
     "card_details": { "at": "2026-11-12T03:50+00:00", "tool": "get_card_details", "degraded": false },
     "claim": {
-      "pipelines": ["Y3vPeX4nhtDbsdwCg"],
-      "setId": "369d6f36-a30a-4146-b214-41d92bf1851d",
+      "pipelines": ["CICD"],
+      "setId": "5e190923-b4b3-446d-b5e8-b3a67cf48a7f",
       "takeover": {
         "at": "2026-11-21T20:05:00+00:00",
         "previous": { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z" },
         "now": { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "369d6f36-a30a-4146-b214-41d92bf1851d" },
         "reason": "after_reap fresh claim at owner's sanctioned Forgejo rework ruling; card comment LbpZKuD3fMQTF62Jr names the takeover"
-      }
+      },
+      "reopen2_claim": { "at": "2026-11-22 (STATE reopen2.lock.now)", "pipelines": ["CICD"], "setId": "5e190923-b4b3-446d-b5e8-b3a67cf48a7f", "note": "previous card-id claim released when the card moved to Review; reopen2 claims the CICD pipeline lock" }
     },
     "claim_history": [
       { "pipelines": ["CICD"], "setId": "a0ea2b6b-94a6-4278-8b02-7ad15a00b89d", "reaped_at": "2026-11-12T08:36:13Z" },
       { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "e3b643a8-5cd0-46b1-975b-b399f44f2265", "note": "beat-survived 11-17 reap notice" },
-      { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z" }
+      { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "4e58067e-39f3-4aac-823d-eeb37033b12d", "reaped_at": "2026-11-21T18:49:04Z" },
+      { "pipelines": ["Y3vPeX4nhtDbsdwCg"], "setId": "369d6f36-a30a-4146-b214-41d92bf1851d", "released_at": "2026-11-22 (card to Review, reopen1 completion)" }
     ]
   },
   "chunks": {
@@ -48,6 +51,7 @@
       "dev_rounds": 2,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — the dual-dialect/`hook-secret` relay contract it landed is disposed by C07 (done-at-review commits kept as history; main.py is C05's port source until then)",
       "handoffs": [
         { "at": "2026-11-21T21:40+00:00", "event": "dev DONE (dual-dialect R3 + hook-secret R4; harness 7/7, py_compile, aislop 0-error) + review CHANGES_REQUESTED (1 major: argparse --help stale GitHub framing, AC6 — text-only; security walk 15/15 probes clean, parity satisfiable) + fix round applied the reviewer's verbatim replacement line (suite 7/7, --help verified) — reviewer's stated fast-clear path, no round 2" }
       ]
@@ -59,6 +63,7 @@
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — relay container disposed by C07 after C05 ports its fan-out semantics (10/11 of them survive as the script's contract)",
       "handoffs": [
         { "at": "2026-11-17T04:00+00:00", "event": "dev DONE (harness 7/7) + review APPROVED; committed as feat(cf-139) 2026-11-19, rebased onto origin/main as dae5bc5f4 (2026-11-21)" }
       ]
@@ -70,6 +75,7 @@
       "dev_rounds": 3,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — chart + proxy-local trio + custom-values block disposed by C07; its live-verified clusterHosts exceptions transfer into scripts/argocd-fanout.json as literal roster URLs ([P2] re-measured 2026-11-23, dev/home rows byte-identical)",
       "handoffs": [
         { "at": "2026-11-21T16:30+00:00", "event": "dev DONE (harness t1-t6 green) + review CHANGES_REQUESTED (runbook pointer path) + fix round dev DONE (t1-t6 green again); committed 0cf6e5338 without full re-review per reviewer note" },
         { "at": "2026-11-21T19:45+00:00", "event": "final-review Major 1 fix round: test repair 43e69f0b9 + clusterHosts 19cc8f504, wiring green; re-review APPROVED (hosts live-verified again in-session)" }
@@ -82,6 +88,7 @@
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — runbook rewritten #3 (C08, incl. git mv to the honest name); preflight table rows + token-mint appendix transfer [P2-verified]",
       "handoffs": [
         { "at": "2026-11-21T17:10+00:00", "event": "dev DONE (harness 6/6 + live readonly probes) + review APPROVED with 1 minor + 3 nits deferred to final review; committed a3c2c2f15" },
         { "at": "2026-11-21T19:30+00:00", "event": "final-review fix round DONE (runbook host claims, §5(c) async-failure wording, 3 nits; all suites green)" }
@@ -94,6 +101,7 @@
       "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — the ES key-rename ripple lands on a chart that C07 deletes",
       "handoffs": [
         { "at": "2026-11-21T22:20+00:00", "event": "dev DONE (wiring 8/8, render proves ES byte-identical except renamed key, retired literal 0 tree-wide); committed 2dfabee80 via reviewer fast-path class (same as C02 pointer fix); final re-review owns chain re-verify" }
       ]
@@ -105,6 +113,7 @@
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — the hook-relay job is rewritten to sync-fanout by C06 (needs-push-gh race resolution, ROLE guard, warn-not-break and instance-side-key doctrines SURVIVE; the HMAC/curl transport does not); its t9–t13 suite legs are replaced",
       "handoffs": [
         { "at": "2026-11-21T22:50+00:00", "event": "dev DONE (harness 13/13 + offline verify cross-check) + review APPROVED round 1 (run block executed, 11-scenario posture sweep; workflow bytes verified against shipped verify_signature; 1 validation_at_fault: relay t6 stale wave-5 allow-list -> test session repair)" }
       ]
@@ -116,9 +125,50 @@
       "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": "APPROVED",
+      "reopen2_status": "superseded at reopen2 — (c)-reality runbook text re-rewritten by C08 to the vault-direct shape",
       "handoffs": [
         { "at": "2026-11-21T23:40+00:00", "event": "dev DONE: runbook rewritten to (c) reality; ALL FOUR suites green together for the first time (runbook 6/6, relay 7/7, wiring 8/8, main-sync 13/13); forbidden-literal sweeps 0; final re-review owns the chain verdict" }
       ]
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 7,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "fan-out engine: scripts/argocd-fanout.py + scripts/argocd-fanout.json (11 literal [P2] URLs) + tests/argocd-fanout/behavior.sh; stdlib-only; vault env contract; exit posture 0/1/2",
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 8,
+      "depends_on": ["C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "main-sync.yaml hook-relay → sync-fanout (checkout + python invocation, one ORG-level vault secret secrets.ARGOCD_SYNC_TOKENS referenced via scope inheritance [ruled 2026-11-23: header org-scope sentence + pinned org-worded unset warning + no-var-twin leg], HMAC/curl dropped) + forgejo-main-sync.sh t3/t5/t9–t13 replacement",
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 8,
+      "depends_on": ["C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "disposals (branch-local git rm, [P2]-verified never-deployed): charts/argocd-hook, containers/argocd-hook, proxy-local trio hunk, custom-values block, relay suites (test session deletes; dev verifies) + disposal.sh absence/pins; parallel-safe with C06 (disjoint surfaces)",
+      "handoffs": []
+    },
+    "C08": {
+      "status": "pending",
+      "wave": 9,
+      "depends_on": ["C06", "C07"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "runbook rewrite #3 + git mv to .agents/notes/2026-11-17-argocd-sync-fanout.md + suite rename/re-pin (tests/notes/argocd-fanout-runbook.sh); human legs collapse to 11 mints + ONE org-level vault paste (owner ORG Settings → Actions — ruled 2026-11-23) + moot-key deletes; zero Bitwarden; rollback unset leg moves to org scope; all ruled postures stated as answers (newline records, warn-and-skip preflight row, indefinite TTL + revoke)",
+      "handoffs": []
     }
   },
   "blocked": [],

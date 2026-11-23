@@ -244,3 +244,152 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   repinned to the live-verified host set (commit 43e69f0b9); its
   spencerslab.com ban leg strips exactly the two sanctioned hosts, so a third
   baked domain still trips it.
+
+## Owner reopen 2026-11-23 — reopen2 (STATE `reopen2`): VAULT-DIRECT ruling (R5/R6);
+## plan re-cut around RESEARCH round 2 ("vault-direct fan-out"); approval gated on the
+## OQ8–OQ10 batched round
+- 2026-11-23 human (in-session instruction, STATE `reopen2.reason`): secrets belong in
+  the Forgejo Actions vault (delimited input); fan-out goes DIRECT to the clusters —
+  the proxy-local relay hop is removed. Recorded as R5.
+- 2026-11-23 human: **R5 — vault-direct.** No Bitwarden, no ExternalSecrets, no relay
+  hop: the main-sync job itself drives each cluster's ArgoCD REST API with per-cluster
+  `mcp-bot` bearer tokens from ONE Actions vault secret. Runner-vantage reachability is
+  the enabling measurement [P2 §1: 10/11 hosts TLS-verified from the gpu runner's
+  network — the very network main-sync jobs execute in; proxy-backup silent].
+  proxy-backup shipped per the RESEARCH best-guess posture (listed + warn-and-skip +
+  preflight row) PENDING owner OQ9. Rejected (again, with the premise fixed): the old
+  shape-B objection died on GitHub-hosted PUBLIC runners + NXDOMAIN mesh hosts;
+  self-hosted lab runners change the premise — not a reversal [RESEARCH §Contradictions].
+- 2026-11-23 human: **R6 — branch-local disposal.** The relay layer (chart, container,
+  proxy-local trio entries incl. the R2 crowdsec-only door, custom-values block, HMAC
+  vault pair, both relay suites) is `git rm`'d — [P2] verified NONE of it was ever
+  deployed (no Deployment/Ingress on proxy-local, sentinels unfilled), so rollback =
+  revert the PR, no cluster-side leg, ever. Fan-out logic lands at
+  `scripts/argocd-fanout.py` (stdlib-only, python3 proven on the runner image family),
+  invoked via a new `actions/checkout@v7` step — precedent containers-build's
+  `scripts/forgejo-container-detect.sh` [RESEARCH §4b]. Rejected logic homes: (a)
+  inline 150-line heredoc (bash -n can't lint the python), (c) image-as-job-container
+  (daemon never re-pulls a cached tag — manual bump law to keep an image lane only a
+  relay would need; `jobs.<id>.container` IS supported [23][24], declined anyway), (d)
+  argocd CLI + 11 kubeconfigs (breaks "workflows install no tools at run time", worse
+  masking shape, stronger creds).
+- 2026-11-23 human (R5 corollary, RESEARCH §3 ruled in the brief): the R2 public door
+  DISPOSES WITH the relay — a door serving no backend for a caller that no longer
+  exists. A future real webhook would need some in-cluster inbound component (i.e.
+  re-incepting a relay); that's a separate ruling, out of this ticket.
+- 2026-11-23 plan(reopen2): Vault input contract pinned (OQ8-code-independent): ONE
+  secret `secrets.ARGOCD_SYNC_TOKENS` (repo-scoped — best guess pinned, single
+  consumer; org scope widens the read surface), records `cat:token`, parser
+  DELIMITER-TOLERANT (`[,\s]+` split then first-colon split) so the owner's delimiter
+  ruling changes vault style + runbook + masking strength, never code. Newline records
+  RECOMMENDED [26: forgejo-runner masks each line of a multi-line secret
+  independently; comma/space = one blob, split-token echoes leak] — caveat: [26] read
+  via search index (source Anubis-gated), the dispatch smoke's log-cleanliness leg
+  verifies it live. Set-equality roster↔tokens enforced BOTH directions, loud
+  ConfigError naming categories never values; JWT-shape validation per record (ArgoCD
+  tokens are JWTs, no comma/space/newline [30][31]). Rejected: 11 separate vault
+  secrets (per-value masking strongest but `${{ secrets[matrix] }}` selection is
+  unsupported [21][25] + 11 rows per fleet change), JSON-blob secret ([28] doctrine +
+  parser-failure class for zero gain given [26]).
+- 2026-11-23 plan(reopen2): Roster = repo-side `scripts/argocd-fanout.json` riding the
+  checkout, chart values folded in (`allowed_refs`, `tracked_repo` GitHub byte-exact —
+  R1(c) truth, [P §1/§3] skipped×11 trap note and lockstep-flip rule transfer verbatim,
+  `settle_seconds` 10, `target_timeout_seconds` 60, `parallel_workers` 4, 11 targets).
+  **Full literal URLs from [P2 §1], NOT the derived-host + `clusterHosts`-exception
+  indirection**: the script runs outside helm where the injection never happens, and
+  the indirection is exactly what produced reopen1's two wrong hosts — the final
+  review's route-truth doctrine ("live-verified or nothing") transfers with a suite leg
+  pinning all 11 hosts against the [P2] table. `backups`/`personal` stay absent (no
+  root app).
+- 2026-11-23 plan(reopen2): Exit-posture doctrine REFINED vs the shipped all-warn
+  rule (was t12 "no exit 1 anywhere"): unset secret ⇒ warn+exit 0 (not-yet-filled vault
+  is a designed state); per-target RUNTIME failure ⇒ audit line + job green (R1
+  self-heal); SET-UP error (roster/token mismatch, non-JWT token, malformed roster) ⇒
+  script exit 1, job RED — RESEARCH Implications 4 names the typo'd-category
+  silent-losing-a-cluster class as the fan-out's one new silent failure; hiding it in
+  the warn-and-green lane recreates the skipped×11 trap. A red fan-out job cannot
+  break the mirror: push-gh/push-dev already completed and jobs are independent.
+  All-skipped run additionally warns (`::warning::`) and exits 0. Reversible one-liner
+  if the owner overrules; recorded as a pinned micro-call.
+- 2026-11-23 plan(reopen2): Semantics ported 1:1 from the shipped `main.py` (the file's
+  final use before C07 deletes it): root-first → settle → re-list → children sweep;
+  live `spec.targetRevision` == ref-tail + byte-compare `repoURL == tracked_repo`
+  (OQ7 layer 2); `prune=false` in query AND body, never force (OQ6); 409/"already in
+  progress" = success; per-target isolation + per-request 60 s timeout; audit-line
+  grammar preserved verbatim (operators grep it); `ref_tail`/full-ref asymmetry kept.
+  Dropped: HTTP server, HMAC dual-dialect verify, event gate, header family, `local:`
+  self-last ordering (the relay no longer restarts itself mid-fan-out — ordering
+  cosmetic), targets.json ConfigMap, `--check`'s HMAC round-trip (replaced: `--check`
+  offline config parse + `--dry-run` live GETs only, zero POSTs — the smoke +
+  proxy-backup preflight legs). NEW: `ThreadPoolExecutor(4)` (RESEARCH Implications 6:
+  serial 11 × list/settle against the 30-min job ceiling; timeouts stay 60 s —
+  shipped-verified — parallelism is the lever, a 20 s tightening rejected).
+- 2026-11-23 plan(reopen2): Job pinned as rename `hook-relay` → `sync-fanout`
+  (`needs: [push-gh]` byte-true — R1(c) race resolution SURVIVES untouched; exact
+  `contains(vars.ROLE, 'prod')` bytes; `set -euo pipefail` heads; lab labels; diag
+  step; one bare `actions/checkout@v7` — no history needed; the python call UN-guarded
+  so the exit posture above is real; REF fallback chain `EVT_REF→GH_REF→refs/heads/main`
+  per the release.yaml:54 dispatch-precedent). Header-comment block reworded:
+  transport sentence flips to direct-per-cluster-API; zero secret VALUES in the file
+  stays true (roster hosts are non-secret route truth reviewed in PRs).
+- 2026-11-23 plan(reopen2): Known accepted risks (documented, not asked): (1) the
+  runner lives on the GPU cluster — a gpu root sync that changes runner-pod manifests
+  can truncate the running job (rare, bounded ≈1–3 min by parallelism, next push
+  self-heals); (2) dind DNS inheritance is inferred — the dispatch smoke is THE
+  acceptance leg; (3) vault multi-line paste behavior in the instance UI unverified
+  (owner leg, rides OQ8).
+- 2026-11-23 plan(reopen2): Chunks re-cut as reopen2 waves 7–9 (numbering continues —
+  reopen1's waves 1–6 stay untouched as done-at-review history, their artifacts now
+  explicitly port-source-then-disposal-target): C05 fan-out engine + roster + behavior
+  suite (interface-first); C06 job rework + forgejo-main-sync t3/t5/t9–t13 replacement;
+  C07 disposals (file-disjoint with C06 → parallel wave 8; gated on C05 landing so the
+  port completes before the port source goes); C08 runbook rewrite #3 + `git mv` of the
+  runbook to `.agents/notes/2026-11-17-argocd-sync-fanout.md` + suite rename/re-pin
+  (`argocd-hook-runbook.sh` → `argocd-fanout-runbook.sh`). Validation law shifts: the
+  helm-trio checks are N/A for the disposed chart — replaced by the disposal.sh absence
+  asserts + a structural render of `services/proxy-local/prod` without the entry;
+  `.forgejo` sweep stays C06's suite duty (chunk separation under the parallel wave).
+  Test session owns ALL test-file changes including the two relay-suite deletions and
+  the runbook-suite rename (designed-red carriers, kickoff-script.sh precedent).
+  `plan_status` → draft: approval of the re-cut waits on ONE batched owner round —
+  OQ8 delimiter (newline recommended), OQ9 proxy-backup posture, OQ10 token TTL
+  (indefinite + delete-token revoke recommended; mcp-bot is apiKey-only, cannot
+  self-mint [R], an expiry treadmill would need admin creds in the same vault — strictly
+  worse). None of the three reshapes the chunk table.
+
+## Batched owner round 2026-11-23 — reopen2 re-cut APPROVED (OQ8/OQ9/OQ10 taken;
+## vault scope ruled ORG-level — the single deviation from the plan's pinned best guess)
+- 2026-11-23 human (batched round, four answers): **OQ8 — delimiter: NEWLINE-delimited
+  `cat:token` records** (recommendation taken; per-line masking granularity [26]). The
+  tolerant parser stays exactly as pinned (`[,\s]+`) — the ruling lands on vault record
+  style + runbook wording only, zero code change; comma/space still parse as
+  paste-accident defense, not an advertised style. The [26] live-verification leg
+  (smoke-time log-cleanliness spot-check) stays scripted as designed.
+- 2026-11-23 human: **OQ9 — proxy-backup: listed + warn-and-skip + preflight row taken**
+  (recommendation adopted verbatim). The owner reachability check from a capable vantage
+  remains a runbook leg; if the box is truly dead, the fix is follow-up, out of this
+  ticket. Per-target isolation contains the honest `failed` audit line meanwhile.
+- 2026-11-23 human: **OQ10 — token TTL: indefinite mints + `argocd account delete-token`
+  revoke + rotation-by-vault-overwrite taken** (recommendation adopted; expiry without
+  an automated rotator converts leak-posture into outage-posture — silent 401s behind
+  the warn-and-green lane — and mcp-bot is apiKey-only, cannot self-mint).
+- 2026-11-23 human: **Vault scope — ORG-LEVEL — the one deviation from the plan's
+  pinned best guess.** `secrets.ARGOCD_SYNC_TOKENS` is created as an ORG Actions secret
+  on the prod instance (owner runs org-scoped key hygiene; CuratedForest org at
+  git.spencerslab.com), inherited by this repo. The job reference is UNCHANGED —
+  `${{ secrets.ARGOCD_SYNC_TOKENS }}` resolves through scope inheritance
+  (repo→org→user, repo winning [21][27]) — so the file cannot distinguish scopes;
+  the repo must NOT define a key of that name and the workflow header sentence +
+  runbook §2/§7 carry the org-placement fact (C06/C08 updated same day). Accepted
+  trade-off: every repo job in the org can surface the value [21][22] (fork-PR jobs
+  excluded), under the owner's org governance with this repo the sole consumer — the
+  store already holds the main-push token, the crown-jewel argument is unchanged.
+- 2026-11-23 plan (batched-round follow-up): re-cut finalized in place — plan header +
+  Open-questions section flipped to RESOLVED-BY-RULING, `STATE.plan_status → approved`
+  (gate note kept as history), C06 pins the org-scope header leg + the exact
+  unset-warning wording (`sync-fanout not configured (org-level Actions secret
+  ARGOCD_SYNC_TOKENS absent) — fan-out skipped, …`) + the no-var-twin leg, C08 moves the
+  create + unset legs to ORG scope and states all three answers as rulings (no
+  "pending owner" markers survive), C05/C07 unchanged (delimiter-independent; no scope
+  surface). No open questions remain; the unverified facts left are owner smoke legs
+  (multi-line paste UI, [26] spot-check, proxy-backup vantage, dind DNS acceptance).
