@@ -299,6 +299,16 @@ a silent retarget of a shipped number.
 
 ## Step 4 — The honest envelope (what to tell anyone who asks "how much context")
 
+> **[2026-11-23 C02 — pre-ruling history, annotate-never-rewrite.]** The
+> 200000 figure below is the PRE-C02 shipped ceiling (the cf-143 D54(1)
+> recipe's number — under the D47 pairing it was the "served 200000 stated
+> separately in prose" half). Post-C02 the q27 env ships 262144
+> PROVISIONAL (rulings D1/D2; this lane is the PREDICTED-NOT-TO-FIT leg —
+> V3/S10 price one card at ~199k and the engine warns rather than
+> refuses, so the boot print adjudicates both paths, D2). Step 3's
+> pool-backs print is the authority on the served ceiling; the 200000
+> figure stays as history, not deleted.
+
 - Per-session ceiling: 200000 — `--max-model-len` is a ceiling, and per
   the docs it "reserves nothing per request; it is the worst case the pool
   is sized against" (R19-S2). One near-200K session plus short ones is the

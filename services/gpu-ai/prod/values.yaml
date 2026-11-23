@@ -1071,7 +1071,20 @@ radiance:
             # §7 TP2 profile byte-for-byte as the retired args array shipped
             # (owner batched answer "Confirm as specced", the FULL RESEARCH
             # serving envelope per the Q10 ruling — the round-2 shadow
-            # profile stays VOID). Order is inert (the set-equality law
+            # profile stays VOID).
+            # [2026-11-23 C02, D9 — the "byte-for-byte as the retired args
+            # array shipped" claim above is SUPERSEDED BY RULING D9 for one
+            # entry, the first TP2 print pending (cf-144 P11, owed — fn at
+            # live replicas 0): RADIANCE_MAX_MODEL_LEN moved 200000 ->
+            # 262144 UNOBSERVED. The MEASUREMENT provenance is PRESERVED, not
+            # erased: fn's 200000 was the ticket's one measured value — the
+            # cf-143 D28(1)/D30(1) boot print `out of memory` at cgroup
+            # 64.00 GiB vs 71.04 GiB observed pinned, "8.0 sessions at
+            # 200000" — the print the 110Gi hold still rides (D7). D9's
+            # risk is precisely that a measurement existed and is being
+            # overridden by ruling; the print that adjudicates is the lane
+            # env entry's PROVISIONAL annotation's named receipt.
+            # Order is inert (the set-equality law
             # survives in the runtime legs: the suite executes the shipped
             # FORM against THIS rendered env and requires the composed vector
             # to equal that profile — an extra or missing entry is as red as a
@@ -1118,8 +1131,31 @@ radiance:
                 value: "2"
               - name: RADIANCE_TP_WIRE
                 value: wht6
+              # [2026-11-23 C02, PROVISIONAL — rulings D5/D9]: 200000 -> 262144
+              # (the flash pack's trained ceiling — F1: max_position_embeddings
+              # 262144, rope_type default, no rope_scaling). UNOBSERVED: fn
+              # rests at live replicas 0 by the owner's scale act, so no print
+              # exists for this value yet; the next bring-up/re-sync rolls the
+              # fn pod (grace window + model-load 502 window) and THAT boot is
+              # the first TP2 print (cf-144 P11, still owed) — the adjudicator.
+              # fn's 200000 was the one MEASURED value in the ticket (cf-143
+              # D28(1)/D30(1) boot print: `out of memory` at cgroup 64.00 GiB
+              # vs 71.04 GiB observed pinned, "8.0 sessions at 200000"); the
+              # 110Gi hold still rides that print (D7), and D9 supersedes the
+              # measurement by informed ruling (risk accepted, not resolved).
+              # Failure mode is SILENT (Radiance warns, never refuses): an
+              # under-funded pool serves fewer than 8 concurrent sessions
+              # without crashing. Adjudicator: the `kv: pool backs N% ... M
+              # full-length sessions` line — M >= 8 is the pass bar (D9(a));
+              # M < 8 is the refutation and the revert is the pre-agreed C03
+              # forward fix (test re-pin first, then the one env edit; the
+              # refuting print quoted as the receipt), never a revert of the
+              # merge. Loud check: the eight-admitted-sessions smoke (D9(b))
+              # sits in the D8 pre-authored receipt block. Closes: C04, by
+              # dated annotation naming the leg, only if every receipt item is
+              # present (D8/D49: a partial print is a refusal, not a pass).
               - name: RADIANCE_MAX_MODEL_LEN
-                value: "200000"
+                value: "262144"
               - name: RADIANCE_HOST_POOL_MIB
                 value: "12288"
               - name: RADIANCE_GPU_HEADROOM_MIB
@@ -1357,6 +1393,24 @@ radiance-q27:
             # VRAM-split receipt that confirms or corrects (C16 note hands
             # it up; limit.context moves only by a DECISIONS line then,
             # never by silent retarget).
+            # [2026-11-23 C02 — annotate, never rewrite]: the ~32 KiB/token
+            # figure above is SUPERSEDED for sizing by V3's ~64 KiB
+            # effective per-token cost — at the ~64 KiB cost the 262144
+            # pool is 16.0 GiB (262144 x ~64 KiB), and the ~335-409K
+            # aggregate band was computed at the ~32 KiB cost (12.48 GiB /
+            # 32 KiB). The 32-vs-64 KiB question (RESEARCH open q1/q3) is
+            # unresolved and rides on the boot print's VRAM-split +
+            # pool-backs lines (receipt items 2-3), never on this estimate.
+            # Flash/fn framing (F2/F3): flash-TP1 at 262144 fits the held
+            # 110Gi at BOTH candidate cost rates (≈69-89 GiB used; the
+            # engine rule 110 - 87 = 23 >= 4 — an estimate, not a print);
+            # fn's 200000 was MEASURED (the cf-143 D28(1)/D30(1) boot
+            # print), unlike the 27b lanes' transcribed 200000 (V4) — so
+            # the post-C02 262144 here is a ruling for the 27b lanes
+            # (D1/D2) and an informed override of a measurement for fn and
+            # flash-TP1 (D5/D9); every lane's value is PROVISIONAL until
+            # its print, and C04 closes that by dated annotation only if
+            # every D8 receipt item is present.
             env:
               - name: RADIANCE_MODEL_PATH
                 value: /models/radiance/qwen3.8-27b-mxfp4.rad
@@ -1364,8 +1418,28 @@ radiance-q27:
                 value: qwen3.8-27b-radiance
               - name: RADIANCE_TP
                 value: "1"
+              # [2026-11-23 C02, PROVISIONAL — rulings D1/D2]: 200000 -> 262144
+              # (the 27b pack's trained ceiling — S1 "262,144 tokens trained",
+              # S3 max_position_embeddings 262144 with no rope_scaling).
+              # 200000 was TRANSCRIBED (cf-143 D54(1) owner recipe verbatim;
+              # upstream compose S8), never measured on this node (V4) — the
+              # move is a ruling, not a correction (D1). PREDICTED NOT TO FIT:
+              # V3/S10 price one 32 GB card at ~199k (18.07 GiB weights + the
+              # 16.0 GiB pool) and the engine warns rather than refuses
+              # (V2/S6/S7 fit-to-available, the 263k probe), so a non-fit TP1
+              # will likely boot and serve a TRUNCATED pool — the D2 hazard,
+              # accepted by the ruling. The boot print adjudicates both paths
+              # (D2): the `kv: pool backs N% ... M full-length sessions` line
+              # funding a full 262144 session -> keep the raise, confirmation
+              # recorded in C04; OOM / refusal / truncation (the under-funded
+              # pool line, the ~199k cap line, or a truncated serve) -> C03
+              # reverts TP1 to 200000 via the pre-authored contract (test
+              # re-pin wave first, then the one env edit), the refuting print
+              # quoted as the receipt. Closes: C04, by dated annotation, only
+              # if every receipt item is present (D8). Memory untouched
+              # (D7/D10): the 24Gi pair stays print-gated.
               - name: RADIANCE_MAX_MODEL_LEN
-                value: "200000"
+                value: "262144"
               - name: RADIANCE_PREFIX_CACHE_MIB
                 value: "4096"
             resources:
@@ -1492,8 +1566,32 @@ radiance-flash-tp1:
                 value: qwen3.8-flash-next-radiance-tp1
               - name: RADIANCE_TP
                 value: "1"
+              # [2026-11-23 C02, PROVISIONAL — ruling D5]: 200000 -> 262144.
+              # The flash pack's trained ceiling is 262144 (F1:
+              # max_position_embeddings 262144, rope_type default, no
+              # rope_scaling); the pack card says "262,144 tokens trained;
+              # served at 200K" — a serving CHOICE, not an empirical bound
+              # (the 27b card says "200K tested"). This lane's profile was
+              # the verbatim cf-143 TP1-era transcription proof; the move
+              # converts it into a deviation-with-ruling (D5: the fidelity
+              # claim is now bounded by the ruling — the source commit is
+              # immutable, so this leg is never again described as verbatim).
+              # PREDICTED to fit: F2 prices 262144 against the held 110Gi at
+              # both candidate cost rates (~69-89 GiB used; the engine rule
+              # 110 - 87 = 23 >= 4) — an estimate, not a print (D28(6):
+              # prints price numbers, estimates do not); the boot print
+              # adjudicates. Failure mode is LOUD, unlike 27b-TP1's silence:
+              # an under-funded flash lane REFUSES to start (the guide's
+              # :1092-1093 refusal class) rather than serving truncated — the
+              # refused boot is the print. A refuting print is the pre-agreed
+              # C03 forward fix (the testlib drops the context override back
+              # to the single-swap derivation; the transcription leg re-pins
+              # to "one value swapped"), the print quoted as the receipt.
+              # Closes: C04, by dated annotation, only if every receipt item
+              # is present (D8). Memory untouched (D7/D10): the 110Gi pair
+              # stays print-gated.
               - name: RADIANCE_MAX_MODEL_LEN
-                value: "200000"
+                value: "262144"
               - name: RADIANCE_PLACEMENT
                 value: expert_tiered
               - name: RADIANCE_HOST_POOL_MIB
@@ -1567,8 +1665,18 @@ radiance-q27-tp2:
             # absence kept absent (the dense-arch bars of the q27 lane's
             # comment apply here unchanged: no kv-resident, no placement, no
             # host pool, no ngram, no speculative token count, no headroom —
-            # the pair adds tensor-split wiring, not a memory story). The
-            # FORM fixes host/port/sessions/kv-dtype; the suite composes THIS
+            # the pair adds tensor-split wiring, not a memory story).
+            # [2026-11-23 C02, RESEARCH V5/S10 — the "not a memory story"
+            # claim above is corrected in the card-VRAM sense, never erased]:
+            # the "zero extra usable VRAM" reading is TRUE for the host-RAM
+            # pin (7.89 GiB pinned in BOTH the TP1 and TP2 rows — TP
+            # collectives stage through pinned host memory; the node fit is
+            # unchanged) and FALSE for card VRAM: the pool grows ~3x, 12.48
+            # GiB (one card) -> 40.08 GiB (both cards), ~199k -> ~663,600
+            # tokens at the ~64 KiB effective cost. The second card buys KV
+            # headroom and speed at a wiring overhead (TP2 204/438 vs TP1
+            # 122/280 t/s — 1.67x, ~16% short of 2x), not a host-RAM story.
+            # The FORM fixes host/port/sessions/kv-dtype; the suite composes THIS
             # env through the shipped wrapper and requires the profile
             # exactly, and the D43(2) boot echo is the receipt.
             # RADIANCE_TP "2" EQUALS this pod's claim pin (both cards) and
@@ -1585,8 +1693,26 @@ radiance-q27-tp2:
                 value: "2"
               - name: RADIANCE_TP_WIRE
                 value: wht6
+              # [2026-11-23 C02, PROVISIONAL — ruling D1]: 200000 -> 262144.
+              # The fit here is MEASURED, not predicted (S10: 9.68 GiB/card
+              # weights; Wilde measured 20.04 GiB KV/card fit-to-available —
+              # "Full 262144 fits with ~100 MiB of headroom per card"; the
+              # 16.0 GiB pool at the ~64 KiB effective per-token cost, V3).
+              # Under D2's both-path design this lane stays 262144 either way
+              # (the TP2 fit is the measured leg). Pending receipt: the
+              # `kv: pool backs N% ... M full-length sessions` line (the V3
+              # fit is the basis; the print confirms or corrects) and the
+              # eight full 262144 sessions (the eight-admitted-sessions smoke
+              # class, D9(b), in the D8 block). A contradicting print is the
+              # pre-agreed C03 forward fix (test re-pin first — the Q27
+              # constants split: Q27_PROFILE keeps 200000 for TP1,
+              # q27_tp2_profile() gains the explicit override — then the one
+              # env edit), the refuting print quoted as the receipt. Closes:
+              # C04, by dated annotation, only if every receipt item is
+              # present (D8). Memory untouched (D7/D10): the 24Gi pair stays
+              # print-gated.
               - name: RADIANCE_MAX_MODEL_LEN
-                value: "200000"
+                value: "262144"
               - name: RADIANCE_PREFIX_CACHE_MIB
                 value: "4096"
             resources:
