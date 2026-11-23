@@ -439,7 +439,7 @@ The board flow lives entirely in the `boards` skill; this section only points at
 
 ## Compaction & fresh-start
 
-Compaction in this repo is a shaped event, not a generic loss: the repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. When your context thins or a compaction fails, run the handoff protocol at the next step boundary: make the card's plan-folder state current first, spawn the successor coordinator through the session-creation rows (your agent, model, location and metadata) with the launch brief, then release with outcome `handoff` and end — the successor picks the card up where you left it.
+Compaction in this repo is a shaped event, not a generic loss: the repo-wide `pipeline-locks` hook re-writes your summary into a compact pointer and lands a keyed instructions note at the next step — that note is the law of the summary, obey it. When your context thins or a compaction fails, you re-ground IN THIS session at the next step boundary: make the card's plan-folder state current first, then run the resume convention for a fresh start — your card and its lock stay put: no successor spawn, no handoff release, no end.
 
 A fresh start is the resume convention: re-read the ticket folder in the pipeline read order, load your MUST-load skills, and continue on the card's checked stages. Out-of-context children report in-band and are relaunched FRESH on the full brief — files are the bus.
 

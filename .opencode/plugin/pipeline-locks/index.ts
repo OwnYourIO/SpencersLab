@@ -1471,7 +1471,7 @@ const OPEN_QUERIES = "ques" + "tions";
 const HANDOFF_FULL_HEAD = "PIPELINE COMPACTION — summarize as a compact HANDOFF POINTER, not a recap: ";
 const HANDOFF_POINTER_BODY =
   `the plan-folder path, the open ${OPEN_QUERIES}, and the current chunk id + state. `
-  + "Omit what has been done and the next step — the successor re-reads the plan folder; files are the bus. "
+  + "Omit what has been done and the next step — you re-read the plan folder when you re-ground; files are the bus. "
   + "Keep this summary small.";
 const HANDOFF_FULL_SUMMARY = HANDOFF_FULL_HEAD + HANDOFF_POINTER_BODY;
 const HANDOFF_GENERIC_SUMMARY =
@@ -1480,10 +1480,10 @@ const HANDOFF_GENERIC_SUMMARY =
   + "Omit what has been done and the next step — a successor session re-reads the context files; files are the bus. "
   + "Keep this summary small.";
 const HANDOFF_FULL_NOTE =
-  "compaction just fired — at your next step run the pipeline handoff protocol: first make the plan-folder state current (STATE.json), "
-  + "then spawn the successor session (same agent and model as this session, this run's location, metadata carrying the card, the slug, and parent = this session id) "
-  + "and send it the /pipeline-resume-style bootstrap: read the plan folder in the read order, then load the MUST-load skills. "
-  + "A coord then releases its lock with outcome handoff and closes; the dispatcher instead spawns a fresh dispatcher carrying the running facts and ends.";
+  "compaction just fired — at your next step re-ground IN THIS session: first make the plan-folder state current (STATE.json), "
+  + "then re-read the plan folder in the read order, re-load the MUST-load skills, and continue at the step boundary. "
+  + "A coord keeps its lock and its card; no successor spawn, no handoff release, no end. "
+  + "The dispatcher re-grounds in place: no fresh-dispatcher spawn, no end.";
 const HANDOFF_GENERIC_NOTE =
   "compaction just fired — no pipeline protocol runs in this session: if a successor continues this work, it bootstraps from the context files "
   + "(read them in order, then load the MUST-load skills).";
