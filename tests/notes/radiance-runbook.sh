@@ -29,8 +29,10 @@
 # lane's rendered env through the radiance testlib harness (D43, 2026-11-22;
 # the earlier eras read the chart serveArgs, then the block args — replaced in
 # place, never silently), the
-# scalars needle-pinned on BOTH sides. cf-144 C01 TP2 re-pin (P04/P11):
-# 12288 / 200000 / 8 / tp-2 move to the TP2 era; the guaranteedMemoryGi
+# env-fed scalars (hostPoolMib/maxModelLen) checked as an equality CHAIN from
+# the single source (D43/D12 2026-11-23 — no literals, a ceiling ruling cannot
+# stale them); 8 (FORM-fixed) + tp-2 (topology) stay constants. The
+# guaranteedMemoryGi
 # needle STAYS at 110 — owner ruling "Hold 110, re-pin after the print"
 # (P11, 2026-11-21) makes the draft-shipped 48 a REJECTED value, so this
 # script also BANS a 48 memory shape on both sides; the DOWN re-pin rides a
@@ -189,6 +191,7 @@ assert ok, f"T2 needs the render toolchain: {reason}"
 
 comp = R.lane_composition("radiance")
 facts = comp["facts"]
+env = comp["env"]  # the single source: the fn lane's rendered env (D43 sizing channel)
 assert facts["rc"] == 0 and facts["argv"], (
     f"the serve wrapper did not compose on the fn env (rc {facts['rc']}, stderr {facts['stderr'][:160]!r})"
 )
@@ -225,23 +228,53 @@ else:
         only_block = {k: block_flags[k] for k in block_flags if k not in rb_flags}
         errs.append(f"runbook args block != roster serve args: runbook-side diff {only_rb}, block-only {only_block}")
 
-# Scalars BOTH sides (cf-144 C01 TP2 re-pin: 12288 / 200000 / 8 / tp 2 / 110
-# — the memory scalar is the P11 HELD era, the pool/chunk/tp scalars are the
-# moved era). D43 re-aim: the lane-side arm reads the COMPOSED vector (the
-# numbers the engine actually boots with — stronger than the old parsed block
-# scalars, and the only shape left once the lane's channel is env); the
-# guaranteedMemoryGi arm stays on the BLOCK scalar, because memory is pod
-# resources, not argv, and the block is still its one home.
+# Scalars BOTH sides, as an EQUALITY CHAIN (re-pin 2026-11-23,
+# bug-radiance-27b-context-window D12 — the constant shape retired). The two
+# env-fed scalars (hostPoolMib, maxModelLen) flow from ONE source — the fn
+# lane's rendered env, D43's sizing channel — through the chart-owned wrapper
+# to the composed argv; the runbook ledger must name that same value. NO
+# literals here: a ceiling/sizing ruling moves the source and this arm follows
+# (the chart suite pins the expected VALUE — the testlib constants re-pinned at
+# C01; this arm pins the CHAIN'S INTEGRITY). The 8 is FORM-fixed (the
+# wrapper's own shipping byte, not env-fed) and the tp 2 is the topology flip
+# — both stable, so they stay constants. The guaranteedMemoryGi arm stays on
+# the BLOCK scalar (110 HELD, P11 print-gated): memory is pod resources, not
+# argv, and the block is still its one home.
 cv = yaml.safe_load(open(vals_path))
 block = ((cv.get("radiance") or {}).get("app-template") or {})
 assert block, "services radiance roster block missing in values (C04/C03 not landed?)"
-for num, flag, what in (("12288", "--host-pool-mib", "hostPoolMib (per-rank pool)"),
-                        ("200000", "--max-model-len", "maxModelLen")):
-    if num not in rb:
-        errs.append(f"the runbook never names {num} (TP2 shipped scalar)")
-    if block_flags.get(flag) != num:
-        errs.append(f"the composed vector {flag} is {block_flags.get(flag)!r}, want {num} — {what} "
-                    "single-source value reached the engine wrong (D43: env -> compose -> argv)")
+ENV_SCALARS = {
+    "RADIANCE_HOST_POOL_MIB": ("--host-pool-mib", "hostPoolMib (per-rank pool)"),
+    "RADIANCE_MAX_MODEL_LEN": ("--max-model-len", "maxModelLen"),
+}
+def scalar_chain(envname, flag, what, envmap, flags, rbtext):
+    out = []
+    src = envmap.get(envname)
+    if src is None:
+        out.append(f"{what}: the fn lane env carries no {envname} — the single source is "
+                   "absent (D43: env is the lane's sizing channel)")
+        return out
+    src = str(src)
+    if src not in rbtext:
+        out.append(f"the runbook never names {src} ({what} — the single-source value the env ships)")
+    got = flags.get(flag)
+    if got != src:
+        out.append(f"the composed vector {flag} is {got!r}, want the env's {src!r} — {what} "
+                   "single-source value reached the engine wrong (D43: env -> compose -> argv)")
+    return out
+for _envname, (_flag, _what) in ENV_SCALARS.items():
+    errs.extend(scalar_chain(_envname, _flag, _what, env, block_flags, rb))
+# Planted-drift teeth (D49): a gate that cannot fail is worse than one that
+# fails. Exercise the SAME check against synthetic disagreeing inputs and
+# assert it reports the drift — proving the arm is not a tautology.
+assert any("reached the engine wrong" in e for e in scalar_chain(
+    "RADIANCE_MAX_MODEL_LEN", "--max-model-len", "maxModelLen",
+    {"RADIANCE_MAX_MODEL_LEN": "999999"}, {"--max-model-len": "262144"}, "999999")), \
+    "planted-drift: the scalar chain check failed to detect an env/argv disagreement (D49 tautology)"
+assert any("never names 888888" in e for e in scalar_chain(
+    "RADIANCE_MAX_MODEL_LEN", "--max-model-len", "maxModelLen",
+    {"RADIANCE_MAX_MODEL_LEN": "888888"}, {"--max-model-len": "888888"}, "the runbook ledger text here")), \
+    "planted-drift: the scalar chain check failed to detect a runbook that does not record the single source (D49 tautology)"
 if not re.search(r"max-num-seqs[ \t\"':=-]*8\b|8[ \t-]*sessions|8 concurrent", rb):
     errs.append("the runbook never states the 8-session scalar")
 if block_flags.get("--tp") != "2":
@@ -296,7 +329,7 @@ PY
   if [ "$rc" -ne 0 ]; then
     fail "T2: shipped-flag equality / scalar pins / gate order violated (C06 T2 — diagnostics above)"
   fi
-  ok "T2: the runbook's shipped-args block equals the COMPOSED vector (wrapper booted on the fn lane env, single DRY_RUN block), the 12288/200000/8/tp-2 scalars are pinned BOTH sides with guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
+  ok "T2: the runbook's shipped-args block equals the COMPOSED vector (wrapper booted on the fn lane env, single DRY_RUN block), the env-fed scalars (hostPoolMib/maxModelLen) chain from the single source (rendered env -> composed argv -> runbook ledger, no literals — a ceiling ruling cannot stale them; planted-drift self-check proves the arm can fail, D49) with 8 FORM-fixed and tp-2 the topology flip, guaranteedMemoryGi HELD at 110 (P11: no 48 shape accepted), and the gate order holds (step-0 before boot text; scale-down before radiance start)"
 fi
 
 # --- T3: names block + triple-digest ledger + polarity + gates a-e ---------------
