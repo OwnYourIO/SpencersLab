@@ -126,3 +126,411 @@ All under the `argo-cd:` subchart key (centralized in `charts/base/values.yaml`)
 Plus repo/live evidence **[E]**: EXPLORE.md; live DoH DNS probes + workspace resolver output (2026-11-12); `skills/helm-chart-creation/references/proxying.md`; `charts/base/values.yaml` (ignoreDifferences incident comment, mcp-bot); `.github/workflows/*` runner labels.
 
 Storm audit trail: /tmp/opencode/storm-cf-139/storm-runs/argocd-webhook-auto-sync-on-push-to-main-for-a-multi-cluster/ (perspectives.md, raw/*.notes.md, contradictions.md, outline.md, report.md incl. reliability notes, sources.md).
+
+---
+
+# RESEARCH round 2 — vault-direct fan-out (remove the relay hop)
+
+Appended 2026-11-23 (reopen2, STATE `reopen2.reason`: "secrets belong in the Forgejo
+Actions vault (delimited input), fan-out direct to clusters, not via proxy-local relay
+hop"). Citations `[n]` ≥ 21 resolve in the new Sources block at the bottom; `[P2]` =
+live read-only probes run this round; `[R]` = repo reads this round. Prior-round claims
+relied on are marked [E]/[P] per the sections above. Nothing implemented; the shipped
+branch code is the comparison baseline throughout.
+
+## TLDR (recommended shape + owner calls)
+
+1. **Endpoint: direct `https://cluster.<cat>.<domain>/api/v1/...` from the runner job.**
+   Measured [P2] from the gpu cluster's own pod network — which IS the runner's network
+   (main-sync jobs execute in the dind of the `gpu-forgejo-runner-gpu` pod, live-verified
+   1/1 Ready): **10 of 11 targets answer TLS-verified (LE chain OK, no `-k` needed) and
+   API-shaped (401 unauth / redirect-then-UI); proxy-backup (10.0.77.5) is SILENT from
+   this vantage** (TCP 443/80 timeout, no ping — dead host or filtered, unknown, no
+   readonly MCP). Mesh DNS reaches pods transparently (k3s CoreDNS `forward . /etc/resolv.conf`
+   → LAN split-horizon resolver) [P2].
+2. **Vault shape: ONE secret `ARGOCD_SYNC_TOKENS`, NEWLINE-delimited `cat:token` lines** —
+   not the owner's floated comma/space. Evidence: forgejo-runner's masker splits
+   multi-line secret values on newline boundaries and registers EVERY LINE as an
+   independently masked string [26]; a comma/space single-line blob masks only as a whole
+   string, so an accidental single-token echo (traceback, debug line) leaks unmasked —
+   the exact "structured data as a secret" hazard GitHub's docs name [28]. JWT tokens
+   contain no commas/spaces/newlines, so any delimiter parses safely [30][31]; the
+   per-record newline form keeps per-record masking granularity. Roster (cat → URL) is
+   NOT secret: repo-side config file riding the checkout (or a `vars.ARGOCD_ROSTER`
+   var), so fleet additions stay PR-reviewable.
+3. **Logic home: option (b) — `scripts/argocd-fanout.py` (stdlib-only python3) + a
+   checkout step in the hook job.** Precedent: `scripts/forgejo-container-detect.sh` run
+   by containers-build from its checkout [R]; the act image has python3/curl/openssl
+   proven by five shipped workflows using them on this exact runner family [R][35].
+   150 lines inline (a) is ugly and bash `-n` can't lint it; the image-as-job-container
+   shape (c) IS supported by Forgejo (`jobs.<id>.container.image` [23]) but pins a
+   never-re-pulled image + manual bump law [23][24] to keep an image lane that only a
+   future relay would need; argocd-CLI+kubeconfigs (d) breaks the repo's
+   "workflows install no tools at run time" law and adds 11 kubeconfig blobs (worse
+   masking shape).
+4. **Disposition: the relay layer disappears branch-local — it was NEVER DEPLOYED**
+   ([P2]: no `proxy-local-argocd-hook` Deployment/Ingress on proxy-local; custom-values
+   still `OVERRIDE_NEEDED`). Clean delete: `charts/argocd-hook/`,
+   `containers/argocd-hook/`, both proxy-local trio entries (charts + `argocd-hook`
+   subdomain = the R2 public door — with no relay to serve it, the door is moot), the
+   custom-values block, the HMAC vault pair (`vars.ARGOCD_HOOK_URL`/
+   `secrets.ARGOCD_HOOK_SECRET`), the relay + wiring test suites, and the runbook's
+   Step-0 Bitwarden legs (items: none; token mints: 11, now pasted into the forge vault).
+   No cluster-side teardown, no revert choreography: rollback = revert the PR.
+5. **Needs owner input (3):** (A) delimiter ruling — newline vs the floated comma/space
+   (best guess: newline, per §2 evidence); (B) proxy-backup — skip-and-warn today + a
+   human reachability check, or fix its route first (best guess: warn-and-skip posture,
+   the fan-out already isolates per-target); (C) token lifetime — keep indefinite
+   mints (revocable via `argocd account delete-token` [33]) + rotation-by-vault-edit, or
+   mandate `--expires-in` + a rotation treadmill that NEEDS a human admin leg (mcp-bot is
+   apiKey-only and cannot self-mint [R]) (best guess: keep indefinite, document revoke).
+
+## 1. Runner reachability & identity [P2]
+
+**Where jobs run.** The prod forge instance (git.spencerslab.com, infra) hands main-sync
+jobs to the **gpu cluster's** runner: registration relocated there 2026-11-05 per the
+chart's own history [R `charts/forgejo-runner/values.yaml:1-14`], wired by
+`services/gpu/prod/values.yaml` top-level slice (`runner.url: https://git.spencerslab.com`,
+no labels override ⇒ the chart's five act labels) [R]. Live pod state: StatefulSet
+`gpu-forgejo-runner-gpu` 1/1 Ready, containers `runner` (data.forgejo.org/forgejo/runner:13.2.0)
++ restartable initContainer `dind` (docker:29.9.2-dind, `--mtu=1450`) [P2] — the docker
+backend, jobs = containers spawned by that in-pod daemon, i.e. **inside the gpu cluster's
+network namespace chain** (pod net → dind bridge NAT → node SNAT → LAN). The dev
+instance's jobs (git.scifi.farm) run on the dev cluster's own runner — irrelevant here
+(main-sync guards `contains(vars.ROLE,'prod')`).
+
+**DNS.** gpu's k3s CoreDNS is stock: `hosts` file carries only the node itself;
+`forward . /etc/resolv.conf` sends everything else to the node's upstream = the LAN
+split-horizon resolver [P2 configmap read]. That resolver answers all 11 `cluster.*`
+forms from the lab vantage (this session runs in a gpu-cluster Coder workspace —
+gpu in-cluster names resolve here, dev/infra's do not [P2], so the workspace vantage =
+the runner vantage). A dind job container inherits the pod's resolv.conf by docker's
+standard behaviour (inference, not measured — the dispatch smoke is the proof leg).
+
+**Per-target matrix (measured 2026-11-23 from a gpu pod):**
+
+| target host (roster form) | DNS | TLS (verified, no -k) | API answer | note |
+|---|---|---|---|---|
+| cluster.dev.scifi.farm | 10.0.77.12 | ok | 401 | the chart `clusterHosts` exception, unchanged |
+| cluster.home-lab.spencerslab.com | 10.0.3.78 | ok | 401 | the other exception, unchanged |
+| cluster.gpu.spencerslab.com | 10.0.22.205 | ok | 401 | |
+| cluster.gpu-ai.spencerslab.com | 10.0.99.151 | ok | 401 | |
+| cluster.grow.spencerslab.com | 10.0.3.5 | ok | 401 | |
+| cluster.infra.spencerslab.com | 10.0.77.59 | ok | 401 | |
+| cluster.media.spencerslab.com | 10.0.77.9 | ok | 401 | |
+| cluster.monitoring.spencerslab.com | 10.0.99.129 | ok | 401 | |
+| cluster.proxy-local.spencerslab.com | 10.0.77.54 | ok | 307→200 | redirect lands on the login UI page (unauth); API needs the bearer either way |
+| cluster.proxy-backup.spencerslab.com | 10.0.77.5 | — | **timeout** | TCP 443+80 filtered, ping dead — NEW finding, see below |
+| cluster.proxy-remote.spencerslab.com | 5.78.101.168 | ok | 401 | the public edge serves its argocd route |
+
+Consequences: (a) **TLS trust is a non-issue** — per-cluster LE wildcard certs validate
+against a normal ca-certificates store (curl verified without `-k` on every live host)
+and the act-24.04-family image is full Ubuntu [35]; (b) the "mesh-only DNS" prior-round
+claim survives and *helps*: no public exposure is needed by anyone — the relay hop
+existed to fan out from proxy-local, but the runner sits on the same LAN-reachable
+vantage; (c) **proxy-backup is the one reachability risk of dropping the hop**: the
+relay's own vantage (proxy-local hub, same 10.0.77.x subnet) could reach it, the gpu
+runner cannot (today, reason unknown — no readonly MCP for that cluster; EXPLORE §5
+manual row). Design must keep per-target isolation (already shipped behaviour: one dead
+target ⇒ `failed` audit line, others proceed [R main.py `drive_target`/`fan_out`]) and
+the runbook needs an owner leg to check the box or its route. (d) The prior round's
+rejected "shape B" (GitHub-hosted Actions → clusters) died on PUBLIC reachability
+[NXDOMAIN, §Agenda-2 above]; that objection does NOT apply to self-hosted Forgejo
+runners inside the lab network — this round's measurements are the answer.
+
+**Runner tool inventory** (fan-out script shape): the act image family carries
+git/git-lfs, jq, **python3**, node, yq, docker CLI, apt [R `containers/forgejo-runner/README.md`, 35]
+(that upstream tag set is now declared unmaintained by Gitea, which moved its own runner
+images to buildpack-deps bases — irrelevant to this ticket's digest-pinned fork, but the
+successor fact belongs on the fleet's renovate-class radar [36]);
+curl is proven across `release.yaml` (5 sites) and `containers-build` (7) on this runner
+family; **openssl** by the shipped `hook-relay` signing line [R main-sync:128 — note
+that job's own live proof is the still-owner-owned dispatch smoke, C03-fix §5(a)]. The fan-out therefore
+needs NOTHING baked beyond what the runner already has IF written stdlib-only (the
+current `main.py` is: json/urllib/hashlib/threading only [R]) — no pyyaml, no pip,
+honouring the "install nothing at run time" law [R AGENTS.md + forgejo-runner README].
+
+## 2. Delimited vault-input patterns
+
+**Forgejo mechanics.** Secrets: repo/org/user key-value stores, encrypted in the DB,
+surfaced as `${{ secrets.KEY }}`; once added, the value can't be viewed and is replaced
+by overwriting [21]. Secrets are omitted for fork-PR jobs; the instance auto-provides a
+same-repo-only token [21][22]. Injection shape: `${{ secrets.X }}` in a `run:` body is
+interpolated into the step script the runner writes — safe-ish (masked in logs) but the
+literal lands in the job container's script file; the universally recommended shape is
+an `env:` mapping consumed as `$X` [27][29][38]. `jobs.<id>.container.env` also
+exists if the job container shape were chosen [23].
+
+**Masking (the decisive difference vs GitHub)**: forgejo-runner's reporter masks every
+log row through `mask.go` — single-line secrets via a cached `strings.Replacer`; a
+multi-line secret value is **split on newlines and each line registered as its own
+masked string, plus the whole-blob matched across log rows** (buffered lookahead);
+candidates are sorted longest-first so a line never partially redacts ahead of the
+blob [26 file:line detail]. Practical read: **newline-delimited = 11 independently
+masked `cat:token` strings** — an accidental echo of one token is `***`. Comma/space-
+delimited single-line = ONE masked string; echoing a split-off token is a leak. The
+shared caveats still apply and are shape-independent: only exact matches are masked
+(base64/upper-cased/derived copies leak [28][29]), `set -x` prints expansions before
+masking sees them in some lanes [29] — but the runner masks every row it forwards [26],
+and the repo's `set -euo pipefail` head (no `-x`) is suite-pinned [R t6]. `::add-mask::`
+is supported across the runner family for run-time-derived values [39] — not needed
+here (nothing derives), noted for completeness. GitHub's own guidance generalises:
+"Never use structured data as a secret … create individual secrets for each sensitive
+value" [28] — a newline-lines form is the middle road the owner asked for that keeps
+per-record masking.
+
+**Charset safety**: ArgoCD local-account tokens are JWTs — base64url + dots, no
+whitespace/comma/[=] in practice [30][31 pattern]; category names are `[a-z0-9-]`; URLs
+carry `:`/`/` but no comma/space. Any of `,` / ` ` / `\n` / `;` parses cleanly; pick on
+MASKING grounds (→ newline), not on charset. Parsing recipe robust to both ruling
+shapes: read the env var in python and `re.split(r'[,\s]+', ...)` if the owner insists
+on comma/space, but **recommend** newline records with an explicit
+`cat=token` (or `cat:token`) pair form; reject any line whose token doesn't look like a
+JWT (loud config error, the relay's `ConfigError` doctrine ported [R]).
+
+**Alternative shapes judged**: 11 separate secrets (`ARGOCD_TOKEN_DEV`, …) = per-value
+masking (strongest), GitHub-best-practice [28], but 11 vault rows to hand-edit per
+fleet change and an expression-context wall: `${{ secrets[matrix] }}`-style selection is
+NOT supported [21][25] — a single script reading a map is fine (env each), a per-matrix-
+job lookup is not. JSON/YAML blob secret = explicitly warned against by [28]; forgejo's
+line masker saves the per-line pieces (JSON lines would even mask), but a pretty-printed
+blob masks worse and adds a parser failure class. **Verdict: one secret, newline records.**
+
+## 3. Security trade-off vs shipped shape
+
+| axis | shipped (relay + Bitwarden ES) | vault-direct |
+|---|---|---|
+| token resting place | k8s Secret on proxy-local (projected mount) + Bitwarden item, static until rotation [R] | encrypted at rest in the forge DB, materialised only in the running job container (minutes) [21] |
+| token in-flight | relay pod env-less file read at startup | server→runner task payload (FetchTask delivers secrets to the runner process; legacy shape held ALL repo secrets in runner memory, the expansion shape trims [23-discussion]) |
+| exposure classes | anyone/anything with proxy-local Secret-read or pod-exec; the mounted file lives for the pod's life | job-container env/`/proc`, the step script if interpolated instead of env-mapped, run logs (masked [26]); forge vault read access |
+| HMAC layer | needed: an internet-reachable POST endpoint (R2 door) must authenticate callers | **dead weight**: no inbound surface exists; auth = per-cluster bearer tokens, which are STRONGER identity (per-target, individually revocable) |
+| blast radius if forge repo/Actions compromised | relay trigger keys only (sync still needs the cluster-side tokens — NOT in the vault) | 11 sync tokens + `PUSH_TOKEN_GH` + `PUSH_TOKEN_DEV` land in one crown-jewel store — BUT: that store already grants main-push, and with children/roots tracking GitHub-manifests a main-write is already near-sync-equivalent power in this design; the marginal gain (skipping the human sync step) is small. The Bitwarden vault (the alternative "safe place") itself holds every cluster's secrets, so total lab blast radius is unchanged; only WHICH store breaks changes [R AGENTS.md + EXPLORE] |
+| token TTL | same tokens under both: `argocd account generate-token` default `--expires-in 0s` = **never expires**; JWT carries iat/no exp [30][33] | same; vault posture adds the OPTION of short-lived mints, but rotation needs an admin leg (mcp-bot is apiKey-only, cannot self-mint; admin session JWTs die in 24h [31]) — automation would need admin creds in the vault too, a strictly worse store |
+| revocation | re-mint on cluster → Bitwarden field → ES 1h refresh → reloader restart | re-mint on cluster → `argocd account delete-token` (or update the account's token list) kills the old JWT server-side [31][33] → overwrite the vault row → **next run uses the new one immediately** (no 1h refresh window, no pod restart) |
+| rotation story | two vaults must agree for the HMAC (the runbook's must-agree pair + 401 diagnosability [R runbook §2]) | one store; nothing to keep in sync |
+
+Net: vault-direct is *equal or better* on every axis except "which store is the crown
+jewel" (already true today: the vault holds the GitHub main-push token — the design's
+weakest accepted link [R]). The relay's `local:`-last ordering loses its rationale (the
+relay process no longer lives on proxy-local and cannot restart itself mid-fan-out) [R];
+ordering becomes cosmetic. The R2 public door and the dual-dialect HMAC verifier exist
+only to serve an external caller — with the caller IS the workflow, both go (unless the
+owner separately wants to keep the relay alive purely as the door's backend — then this
+whole ticket stays as shipped; flagged as call C-adjacent, best guess: the owner's
+direction kills it).
+
+## 4. Where the fan-out logic lands (this repo's conventions)
+
+(a) **Inline `python3 - <<'PY'` heredoc, no checkout.** Precedent: the shipped payload
+builder is a 1-line `python3 -c` [R main-sync:123]. Cost: ~120–150 lines of relay logic
+(list→match→sync→settle→sweep, 409-tolerance, timeouts, audit lines — port from
+`main.py` minus HTTP/HMAC/event-gate) wedged into a YAML run block; t13's `bash -n`
+syntax-checks the block but nothing lints the python; roster has to come from
+vars/secret anyway. Verdict: workable, degrades maintainability badly at this length.
+
+(b) **`scripts/argocd-fanout.py` + `actions/checkout@v7` in the job** (RECOMMENDED).
+Precedent: containers-build runs `scripts/forgejo-container-detect.sh` from its checkout
+[24-rules R: `.forgejo/workflows/containers-build.yaml`, `scripts/forgejo-container-detect.sh`];
+main-sync's own push jobs already prove checkout works on this runner (t8 pins a checkout
+step on push-dev [R]). Cost: one added step (default shallow clone — push jobs need
+`fetch-depth: 0` for push negotiation, the fan-out job does NOT need history at all)
+[re-read]; suite amendment: t9's "no uses: steps" leg flips to "exactly the pinned
+checkout"; python-compile leg (`python3 -m py_compile scripts/argocd-fanout.py`) joins
+the static suite naturally [R plan Commands style]. Roster: `scripts/argocd-fanout.json`
+(or `.yaml` — but runner pyyaml is NOT guaranteed; JSON, stdlib-parsed, wins) — the
+chart `clusterHosts` + `targetCategories` + `trackedRepo` + `allowedRefs` values fold
+into this one repo-side file; fleet additions = one PR (same review surface as today's
+chart values, minus Bitwarden).
+
+(c) **Image-as-job-container (`container: image: …argocd-hook:<calendar-tag>`).**
+VERIFIED supported in Forgejo — `jobs.<id>.container.{image,entrypoint,env,credentials,
+volumes,options}`, with sharp edges: the daemon never re-pulls a tag it has cached
+(manual bump law again, like the runner labels [23][24][R forgejo-runner bump law]);
+`volumes` restricted to an operator allow-list, `options` restricted to a small set;
+custom images without node break `uses:` steps — fine if the job skips checkout and
+carries the roster in-image or via env. Keeps `containers/argocd-hook` as the logic
+home (add a `--fanout` mode: read roster+tokens from env, sync, exit) and keeps its CI
+build lane alive for a door the owner is dropping. Verdict: viable, but it buys nothing
+over (b) at the cost of the image lifecycle — only choose it if the owner wants the
+relay IMAGE kept warm for the R2 door's possible future.
+
+(d) **argocd CLI + kubeconfig-per-cluster.** Rejected on repo law: workflows install no
+tools at run time [R AGENTS.md, containers README — the very reason the forgejo-runner
+image exists]; CLI download-at-run breaks the digest-pinned supply posture; and 11
+kubeconfigs are opaque multi-line YAML blobs (worse masking shape than `cat:token`) plus
+a secret axis (cluster-admin-ish creds) strictly stronger than the get+sync tokens the
+design has deliberately kept narrow.
+
+**Suite contract deltas** (all shapes share these, (b) adds the checkout legs):
+`tests/services/forgejo-main-sync.sh` t3 job set keeps 3 jobs (the hook job may rename);
+t5's key matrix swaps `vars.ARGOCD_HOOK_URL`+`secrets.ARGOCD_HOOK_SECRET` for the token
+secret (+optional roster var) exactly-once pair; t9's no-`uses:` leg flips under (b);
+t10's `sha256=`/`X-Hub-Signature-256` ban stays trivially satisfiable (no HMAC at all —
+consider extending the ban to `X-Forgejo-Signature`); t11 contract tokens fully re-pinned
+(heredoc/env shape, timeouts, per-target audit line form); t12 warn-and-exit-0 posture
+carries over verbatim (unset ⇒ skip; per-target failures logged, job green — the R1
+"never break the mirror" doctrine [R]); t13 keeps `bash -n`, adds `python3 -m
+py_compile` of the fanout script (b) or the heredoc extract (a).
+`tests/containers/argocd-hook-relay.sh` (1173 L) and `tests/services/argocd-hook-wiring.sh`
+retire under (a)/(b)/(d); (b)'s new offline suite `tests/services/forgejo-argocd-fanout.sh`
+inherits the relay suite's behaviour tests minus the HTTP handler (app_matches byte-compare,
+targetRevision sweep, 409-as-success, settle semantics all port as pure-function tests —
+the harness already binds a fake server, the same trick ports to a fake transport).
+
+## 5. Dispositions if the relay dies (clean-removal checklist)
+
+Branch-local only — **[P2] confirmed nothing from C01–C04 was ever deployed** (no
+`proxy-local-argocd-hook` Deployment, no `argocd-hook` Ingress on proxy-local, sentinels
+unfilled). Rollback for a future release = revert the PR; there is no cluster-side
+cleanup leg, ever.
+
+1. `git rm -r charts/argocd-hook containers/argocd-hook`.
+2. `services/proxy-local/prod/values.yaml`: delete the `argocd-hook:` charts: entry
+   (lines ~60–64) AND the `proxy.subdomains.argocd-hook:` crowdsec-only entry
+   (~144–151) — the R2 door dies with its backend (owner call).
+3. `custom-values/proxy-local/prod-values.yaml`: delete the `argocd-hook:` bitwardenIds
+   block (~46–55).
+4. Tests: delete `tests/containers/argocd-hook-relay.sh`,
+   `tests/services/argocd-hook-wiring.sh`; add the fanout suite (§4); re-pin
+   `tests/services/forgejo-main-sync.sh` (§4); re-pin `tests/notes/argocd-hook-runbook.sh`.
+5. `.forgejo/workflows/main-sync.yaml`: rewrite the `hook-relay` job body to the
+   vault-direct fan-out (header comment block reworded: origin unchanged, transport now
+   per-cluster API, instance key names).
+6. Logic port from `containers/argocd-hook/main.py`: KEEP root-first-then-children,
+   settle-delay (10s default), `app_matches` byte-compare vs `trackedRepo`, per-app live
+   `targetRevision` match (OQ7 layer 2), 409/"already in progress" as success, per-target
+   timeout + isolation, prune=false in query AND body, audit-line format. DROP: HTTP
+   server, HMAC verify, event/ref-header gates (the job knows its own ref), `local:`
+   self-last ordering, `--check` mode (replace with a `--dry-run`/`--list` that the smoke
+   step can run), `targets.json` ConfigMap.
+7. CI lane: deletion is self-safe — containers-build detection filters changed names by
+   `[ -f containers/$n/Dockerfile ]` at HEAD, a deleted dir never enters the build list
+   [R forgejo-container-detect.sh]. Any `pr-*` tags already minted on the dev instance
+   registry for argocd-host dies with normal registry hygiene (owner, note in runbook).
+8. Instance-side vault keys (owner legs, shrinking): DELETE `ARGOCD_HOOK_URL` var +
+   `ARGOCD_HOOK_SECRET` secret (or rename both — kill-switch semantics move to the
+   tokens secret's presence); ADD the tokens secret; Bitwarden: NEVER-created items
+   `argocd-hook` + `argocd-hook-tokens` stay uncreated — the runbook's Step-0 collapses
+   from "2 Bitwarden items + 11 fields + HMAC + 2 vault keys + UUID fill + crash-loop
+   explanation" to "1 vault secret + 11 token pastes". Token mints (human, unchanged
+   shape): `argocd account generate-token --account mcp-bot` per cluster, now against
+   the cluster's OWN route host (the same hosts the job will call, §1 — the appendix
+   table moves verbatim).
+9. **Roster fate (the "still 11 URLs somewhere" answer)**: `targetCategories`,
+   `clusterHosts` (dev/home exceptions), `trackedRepo`, `allowedRefs` move from chart
+   values to the repo-side fanout config (§4b) — where they keep PR reviewability and
+   test pinning; the final-review live-verification ruling ("route truth — correct them
+   against live Ingresses, never guess" [R values comment]) transfers with them.
+
+## 6. Community precedent
+
+No published "Forgejo Actions job fans out to N ArgoCD API servers" precedent found
+(searched this round). The nearest published shapes, all corroborating the direct-API
+leg: (i) ArgoCD's own CI-automation docs: loop `argocd app sync` / REST `POST
+/api/v1/applications/<app>/sync` with a local-account apiKey or project-role token, CLI
+downloadable from the API server itself [32][33]; (ii) GHA marketplace actions of exactly
+the shape "address + token + app → sync" (omegion/argocd-application-sync-action,
+cheelim1/argocd-sync-actions, iamops-team/argocd-api — comma-separated app lists) [37] — all
+SINGLE-server per invocation; multi-server at fleet scale is normally solved by ONE
+central ArgoCD (rejected here, prior Agenda-2 shape D — the fleet's every-cluster-runs-its-
+own-ArgoCD topology stands [E]) or a CI matrix over servers; (iii) blogs (oneuptime CI
+sync guide, devopscube) use a bash loop over a per-cluster server/token list — the vault
+`cat:token` shape is the same idea with stronger masking. The plan can cite these as
+"CI-side sync fan-out is mainstream; our in-mesh endpoint choice is what the prior round
+proved possible; the runner-vantage measurement (§1) is the new proof this round."
+
+## Contradictions (this round) & how to weigh
+
+- **Owner's floated comma/space vs per-record masking evidence [26]**: newline wins on
+  security grounds; comma/space still work functionally. Weigh: recommend newline,
+  present comma as the fallback if the vault UI workflow hates multi-line pasting (not
+  verified against the live instance UI — owner leg).
+- **Prior round rejected "CI syncs clusters" (shape B)** — this round's design IS that,
+  minus the fatal premise: shape B died because GitHub-hosted runners can't reach
+  mesh-only hosts (§Agenda-2 [E] measurement). Self-hosted lab runners can (§1 [P2]).
+  Not a reversal, a premise change — the plan should say so explicitly.
+- **"Best practice: always expire tokens" [34] vs this fleet's rotation mechanics**
+  (§3 TTL row): expiry without an automated rotator converts a leak-posture into an
+  outage-posture (the fan-out silently 401s after expiry, warn-and-green hides it until
+  noticed). Weigh: indefinite + vault-overwrite rotation + revoke command documented.
+- **Single-secret (owner) vs one-secret-per-value ([28] GitHub doctrine)**: forgejo's
+  line-splitting masker [26] neutralises most of the structured-blob hazard — the
+  contradiction is platform-specific, resolve in favour of owner's single delimited
+  secret.
+- **Blind spot this round**: dind container DNS inheritance is inferred (standard docker
+  behaviour), not measured; the dispatch smoke must be the acceptance leg for §1
+  reachability, same role it played for the relay URL hop.
+
+## Implications for the plan (what the re-cut should look like)
+
+1. R1's race resolution SURVIVES untouched: still the main-sync job after `needs:
+   push-gh` [P §3]; only the transport changes (no POST-to-relay — direct per-cluster
+   API). trackedRepo stays the GitHub URL; the skipped×11 trap note [P §3] stands.
+2. Wave re-cut: the four fix-round chunks (C01-fix/C02-fix/C03-fix/C04) become
+   SUPERSEDED — the shipped relay contract they pin dies. New chunks ≈ one (container
+   deletion + fanout script + config), one (workflow job rewrite + suite re-pin), one
+   (runbook rewrite); chart/service/custom-values deletions ride the first. C01–C03
+   commits stay DONE-at-review history (same as the 2026-11-21 reopen treated them).
+3. Human-owned list shrinks (per §5.8) and the must-agree-two-vaults problem vanishes.
+4. The plan must pin the token-line grammar and an explicit
+   `cat not in roster ⇒ loud line-level error` posture (a typo'd category silently losing
+   a cluster is the fan-out's only new silent-failure class vs today).
+5. Keep the OQ7 ref model: the script only runs for refs in its config list; with
+   `on: push.branches:[main]` + dispatch that already holds [R t2], but the per-app
+   `targetRevision` match is what protects a future widened roster — port unchanged.
+6. Add per-target parallelism or tightened timeouts: worst-case serial today ≈ 11 ×
+   (list 60s + settle 10s + list 60s + children) against the runner's 30m ceiling [R
+   renovate.yaml comment, 25]; 4-thread fan-out (stdlib) or 20s timeouts keep it minutes.
+
+## Open questions (this round — accumulated, no questions asked)
+
+1. **Delimiter ruling**: newline records (evidence-preferred, §2) vs the floated comma/
+   space (single masked blob, split-token echoes leak unmasked). Best guess: newline.
+2. **proxy-backup**: dead box, or route/filtered — owner to verify from a vantage that
+   can; meanwhile ship it in the roster with warn-and-skip (per-target isolation already
+   logs it). Best guess: keep listed, add a runbook preflight row (the §6 table moves).
+3. **R2 door**: confirmed-dead with the relay, or does the owner want a relay-less
+   public hook path (which would need SOME in-cluster inbound component → contradicts
+   the reopen's premise)? Best guess: door goes.
+4. **Token expiry posture** (§3, call C): indefinite + revoke (best guess) vs
+   `--expires-in` with a scheduled human/CI rotation leg (would need admin creds in the
+   vault — worse).
+5. Does the tokens secret stay repo-scoped or org-scoped on the prod instance [21]?
+   Best guess: repo-scoped (single consumer repo; org scope widens read surface).
+6. Instance-side key hygiene leg: owner deletes the now-moot `ARGOCD_HOOK_URL`/
+   `ARGOCD_HOOK_SECRET` pair (or the plan keeps the URL var name for something else).
+7. The chart's `clusterHosts` doctrine ("correct against live Ingresses, never guess")
+   — does the fanout config file inherit the final-review's harness leg that greps the
+   host set against a live-verified list? (readonly MCP, smoke-time, best guess: yes.)
+
+## Sources (round 2, numbered continuing from round 1)
+
+21. https://forgejo.org/docs/latest/user/actions/basic-concepts — secrets: repo/user/org scopes, `${{ secrets.KEY }}`, encrypted in DB, value immutable-in-place after add; automatic token aliases. Read 2026-11-23.
+22. https://forgejo.org/docs/latest/user/actions/security — runner redacts secrets from logs; do-not-print caveat; fork-PR secret omission; container vs host runner trust. Read 2026-11-23.
+23. https://forgejo.org/docs/latest/user/actions/reference — jobs.<job_id>.container.image/entrypoint/env/credentials/volumes/options (+services); "once downloaded never updated" caution; volumes allow-list; entrypoint override mechanics; node requirement for `uses:` steps. Read 2026-11-23.
+24. https://forgejo.org/docs/latest/admin/actions/configuration — label syntax `<name>:docker://image`, multi-label runs-on, label image overridable by jobs.<id>.container. Read 2026-11-23.
+25. https://forgejo.org/docs/latest/user/actions/github-actions — familiarity-not-compatibility; known differences (default env, missing github-context keys, some job subkeys ignored — `permissions`, `continue-on-error`). Read 2026-11-23.
+26. https://deepwiki.com/project-mirrors/forgejo-runner/2.3-task-reporting-logs-and-secret-masking — mask.go architecture: newline-split registration of multi-line secrets, longest-first ordering, whole-blob cross-row matching, cached single-line replacer (file:line cites internal/pkg/report/mask.go 14–149). Read via search-index body 2026-11-23 (direct fetch rate-limited; source tree itself Anubis-gated — flag for smoke-time if the claim is load-bearing).
+27. https://docs.gitea.com/usage/actions/secrets + https://hoop.dev/blog/gitea-actions-secrets — sibling platform: exact-match masking confirmed; transformed/encoded copies leak; repo>org precedence. Read 2026-11-23.
+28. https://docs.github.com/en/actions/reference/security/secure-use — "Never use structured data as a secret"; register derived values; masking is a log filter, not a boundary; short values poorly protected. Read 2026-11-23.
+29. https://builder.aws.com/content/3M3cZHtghA7BymHTyfBJ7s5yaO8/secrets-in-git-hub-actions-logs-find-and-prevent-leaks — set -x leak class, ACTIONS_STEP_DEBUG, retention. Read 2026-11-23.
+30. https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_account_generate-token — `--expires-in` default "0s" = no expiration; `--id` token labeling. Read 2026-11-23.
+31. https://argo-cd.readthedocs.io/en/stable/operator-manual/security — JWT-only auth; admin session tokens 24h; project-token revocation by jti; password update revokes session tokens. Read 2026-11-23.
+32. https://argo-cd.readthedocs.io/en/latest/user-guide/ci_automation — CI authentication menu (project role token / local apiKey account / Dex exchange / --core); CLI served from the API server. Read 2026-11-23.
+33. https://argo-cd.readthedocs.io/en/stable/user-guide/user-management + https://oneuptime.com/blog/post/2026-02-26-argocd-account-commands — generate-token/delete-token lifecycle; non-expiring-token warning ("without --expires-in the token never expires"). Read 2026-11-23.
+34. https://oneuptime.com/blog/post/2026-02-26-argocd-api-tokens-service-accounts — rotation-schedule table, least-privilege account posture. Read 2026-11-23.
+35. https://github.com/catthehacker/docker_images — act-* image description (the base of the repo's job image); tool-completeness vs full image. Read 2026-11-23.
+36. https://blog.gitea.com/runner-images-ubuntu-26.04 — catthehacker/ubuntu declared unmaintained upstream; successor images buildpack-deps-derived (context for the job image's future, not its present inventory). Read 2026-11-23.
+37. https://github.com/marketplace/actions/argocd-application-sync-action · https://github.com/marketplace/actions/argocd-sync-actions · https://github.com/iamops-team/argocd-api — single-server address+token sync actions, comma-separated app-list precedent. Read 2026-11-23.
+38. https://oneuptime.com/blog/post/2026-02-26-argocd-trigger-sync-ci-pipeline — CLI vs REST vs webhook trade-off table for CI sync; curl sync-body shape. Read 2026-11-23.
+39. https://gitea.com/gitea/runner (secret-masking section) + job-hooks docs — family behaviour: `::add-mask::`, masking on every log path (local job.log, summaries, container names). Read 2026-11-23.
+
+Plus repo/live evidence **[P2]**: per-target DNS/TLS/HTTP matrix + gpu-pod vantage
+confirmation + coredns Corefile + `gpu-forgejo-runner-gpu` pod spec (all 2026-11-23,
+readonly MCP + workspace shell, no admin used); **[R]**: `.forgejo/workflows/main-sync.yaml`,
+`charts/forgejo-runner/values.yaml`, `services/{dev,gpu}/prod/values.yaml`,
+`containers/forgejo-runner/README.md`, `containers/argocd-hook/{Dockerfile,main.py}`,
+`charts/argocd-hook/{values.yaml,templates/*}`, `services/proxy-local/prod/values.yaml`,
+`custom-values/proxy-local/prod-values.yaml`, `scripts/forgejo-container-detect.sh`,
+`tests/services/forgejo-main-sync.sh` (t1–t13), `tests/services/argocd-hook-wiring.sh`
+(header), runbook + ticket-folder docs, STATE.json reopen2.
