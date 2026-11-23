@@ -103,10 +103,15 @@
 //     the FULL leg: the summary gains the compact-pointer law (card id when
 //     a claim exists, plan-folder path, open questions, current chunk id +
 //     state) INCLUDING the explicit "omit what has been done and the next
-//     step — the successor re-reads" + "files are the bus" wording, and one
+//     step — you re-read the plan folder when you re-ground" + "files are
+//     the bus" wording (C07: the one-spot successor reference in the law
+//     TEXT follows the doctrine; the omission rationale survives), and one
 //     entry.put lands whose text starts from "compaction just fired" and
-//     names the successor spawn, the STATE.json currency and the handoff
-//     release. EVERY other agent takes the generic leg: the same
+//     names the IN-SESSION re-grounding (C07: STATE.json currency kept,
+//     re-read in read order, MUST-load skills, step boundary, lock and
+//     card stay put; no successor spawn, no handoff release, no end — the
+//     retired close-protocol phrases are pinned ABSENT). EVERY other agent
+//     takes the generic leg: the same
 //     pointer-shape summary law generalized to the context files and a
 //     generic successor-bootstrap entry — the generic pair carries NO lock
 //     or card vocabulary. A missing/unshaped event (null, no sessionID) and
@@ -1092,7 +1097,7 @@ describe("X1 dispatcher tracking through the event stream (C01 AC5 seam, D6)", (
   });
 });
 
-describe("X2 the compaction hook — FULL leg for the coord variants and the dispatcher (C03 AC1, D8/D9/OQ3)", () => {
+describe("X2 the compaction hook — FULL leg for the coord variants and the dispatcher (C03 AC1, D8/D9/OQ3; C07 re-pin: in-session re-grounding)", () => {
   const FULL = ["agent-coord", "agent-coord-local", "agent-coord-pr", "agent-board-coord", "agent-board-coord-local", "agent-board-coord-pr", "agent-board-dispatch"];
 
   function compEnv(opts: any = {}) {
@@ -1112,20 +1117,44 @@ describe("X2 the compaction hook — FULL leg for the coord variants and the dis
   }
 
   for (const agent of FULL) {
-    it(`${agent}: pointer-shape summary injection + the handoff entry`, async () => {
+    it(`${agent}: pointer-shape summary injection + the re-grounding entry (C07)`, async () => {
       const { env, puts } = compEnv();
       const request: any = { text: "", system: "" };
       await seam("handleCompaction")(env, { sessionID: "ses_x", agent, request });
       const sum = `${request.text ?? ""} ${request.system ?? ""}`;
-      assert.match(sum, /omit what has been done/i, "the pointer law is explicit: what's-done/what's-next stays OUT — the successor re-reads the plan folder (D9 dodges the #59110 class)");
+      assert.match(sum, /omit what has been done/i, "the pointer law is explicit: what's-done/what's-next stays OUT — the omission rationale survives the C07 reword (D9 dodges the #59110 class)");
+      assert.match(sum, /you re-read the plan folder when you re-ground/i, "C07: the one-spot successor reference in the pointer law rewords to the self re-read phrasing");
       assert.match(sum, /files are the bus/i, "the summary names the shared-memory law it points at");
       assert.match(sum, /open questions/i, "the pointer carries the open questions");
       assert.match(sum, /chunk/i, "and the current chunk id + state");
       assert.equal(puts.length, 1, "exactly one instructions.entry per compaction");
       assert.match(puts[0].text ?? "", /compaction just fired/i, "the note opens as the event it answers");
-      assert.match(puts[0].text ?? "", /successor/i, "spawn the successor");
-      assert.match(puts[0].text ?? "", /STATE\.json/, "make the plan-folder state current FIRST");
-      assert.match(puts[0].text ?? "", /handoff/, "release with outcome handoff (coord) / end after the fresh spawn (dispatcher)");
+      assert.match(puts[0].text ?? "", /re-ground/i, "C07: the full-leg note is the IN-SESSION re-grounding protocol");
+      assert.match(puts[0].text ?? "", /STATE\.json/, "make the plan-folder state current FIRST (the STATE-current clause survives the reword)");
+      assert.match(puts[0].text ?? "", /read order/i, "re-read the plan folder in the read order");
+      assert.match(puts[0].text ?? "", /MUST-load skills/i, "re-load the MUST-load skills");
+      assert.match(puts[0].text ?? "", /step boundary/i, "continue at the step boundary");
+      assert.match(puts[0].text ?? "", /keeps its lock/i, "the coord keeps its lock and its card");
+      assert.match(puts[0].text ?? "", /no successor spawn/i, "the spawn-successor protocol is retired");
+      assert.match(puts[0].text ?? "", /no handoff release/i, "the handoff token stays in the engine (W2 vocabulary) but leaves the compaction close path");
+      assert.match(puts[0].text ?? "", /no fresh-dispatcher spawn/i, "the dispatcher sentence rewords identically-in-shape: no fresh-dispatcher spawn, no end");
+      assert.match(puts[0].text ?? "", /no end/i, "and no end");
+      // C07 absent-phrase negative: the retired close protocol must be ABSENT
+      // from the full-leg strings — a fabricated drift restoring the old note
+      // body or the old pointer law reddens on these.
+      for (const retired of [
+        "spawn the successor",
+        "outcome handoff and closes",
+        "run the pipeline handoff protocol",
+        "spawns a fresh dispatcher",
+        "the successor re-reads the plan folder",
+      ]) {
+        assert.doesNotMatch(
+          `${sum} ${puts[0].text ?? ""}`,
+          new RegExp(retired, "i"),
+          `retired close-protocol phrase present in the full leg: ${retired}`,
+        );
+      }
     });
   }
 

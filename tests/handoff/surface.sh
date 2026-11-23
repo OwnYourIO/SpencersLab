@@ -6,12 +6,17 @@
 # pipeline-role-coord step-8b cross-reference, and the `.opencode/opencode.jsonc`
 # pins C03 Tests names "agents-md.sh-style" (the suite stays self-contained;
 # the staged agents-md.sh carries only its own plan-folder admit). AC trace:
-#   H1[line a: failed compaction is the PRIMARY signal]
-#   H2[line b: successor bootstrap = the /pipeline-resume convention]
+#   H1[line a: failed compaction is the PRIMARY signal; C07: the failure
+#       routes to the re-grounding — the handoff-protocol routing is pinned
+#       absent]
+#   H2[line b: C07: the bootstrap runs IN-SESSION — the /pipeline-resume
+#       convention content (read order, MUST-load skills, checked stages)]
 #   H3[line c: no-per-turn-manual-compaction law]
 #   H4[line d: subagent relaunch-FRESH doctrine + the upstream failure ids;
 #       re-pinned under C05/D32 to the pipeline-locks record wording]
-#   H5[line e: the dispatcher's fresh-start reset]
+#   H5[line e: C07: the dispatcher re-grounds in place (loop body + marker
+#       + board reads re-consumed at the boundary) + the reworded
+#       Dispatcher-section reset cite; retired spawn-end tokens absent]
 #   H6[line f: repo-wide scope note, cite-only (the OQ3 ruling)]
 #   H7[8b cross-reference in pipeline-role-coord cites the Stage map]
 #   H8[C03 AC5: JSONC parses + compaction.keep.tokens with its convention
@@ -20,11 +25,16 @@
 #       catalog rows' limit.context (the verify-only leg's invariant; a dated
 #       exact-value retarget belongs to the gate receipt)]
 #
-# Red posture: H1..H7 designed-red until C03 dev edits the skills and
-# regenerates; H8 designed-red until the `compaction` block lands; H9 is green
-# now and must HOLD green (it pins the invariant, not a state — reddening at a
-# gate merge with a stale comment is the point). Fabricated-drift controls ride
-# H1..H4, H7, H8 (the siblings' non-vacuity discipline).
+# Red posture (C07 re-pin wave): H1/H5 designed-red until C07 dev rewords the
+# intro/(a)/(e) lines + the Dispatcher-section cite (the re-grounding wording in;
+# the retired close-protocol tokens pinned absent); H2 holds GREEN pre- and
+# post-landing (the convention-content guard — D10's content must survive the
+# route's supersession); H3/H4/H6-H9 hold at the ledger values. H9's red on the
+# D42 262144 merge re-pin is merge churn (the rows moved, the comment stayed —
+# opencode.jsonc is outside this wave's tests-only scope; the arm's own
+# verify-only law: reddening at a merge with a stale comment is the point).
+# Fabricated-drift controls ride H1..H4, H7, H8 (the siblings'
+# non-vacuity discipline).
 #
 # Usage:
 #   bash tests/handoff/surface.sh           # H1..H9
@@ -94,15 +104,16 @@ open(dst, "w", encoding="utf-8").write(t.replace(token, ""))
 PY
 
 cat >"$TMP/sectneg.py" <<'PY'
-# Section-scoped ABSENCE scan (cf-126 C05 AC4): the reword must leave NO
-# retired alert-surface mention inside the Context-handoff section — the
-# wedge detector is now the pipeline-locks listener, and the skill states
-# the record, not the phone leg.
+# Section-scoped ABSENCE scan (cf-126 C05 AC4 + C07): the reword must leave
+# NO retired mention inside the named section — the wedge detector is the
+# pipeline-locks listener (C05) and the retired close-protocol tokens left
+# the Context-handoff section with the C07 doctrine swap; the Dispatcher
+# section's reset cite rewords in place.
 import re, sys
-path = sys.argv[1]
-banned = sys.argv[2:]
+path, title = sys.argv[1], sys.argv[2]
+banned = sys.argv[3:]
 text = open(path, encoding="utf-8").read()
-m = re.search(r'(?ms)^#+[^\n]*Context handoff[^\n]*\n(.*?)(?=^#+[^\n]*$|\Z)', text)
+m = re.search(r'(?ms)^#+[^\n]*' + re.escape(title) + r'[^\n]*\n(.*?)(?=^#+[^\n]*$|\Z)', text)
 if not m:
     print("section-missing")
 else:
@@ -118,24 +129,26 @@ PY
 if want h1; then
   for f in "$BD_SRC" "$BD_GEN"; do
     [ -f "$f" ] || fail "H1: $f missing (harness fault)"
-    python3 "$TMP/sectwin.py" --ci "$f" 1600 'Context handoff' 'primary' 'token limit' 're-prompt' \
-      || fail "H1[C03 AC4]: $f has no Context-handoff section stating that a FAILED compaction (compaction.failed / 'Compaction summary reached the output token limit') is the PRIMARY signal — never re-prompt the wedged session (upstream #56784/#57187); run the handoff protocol on the failure instead (red before C03 dev)"
+    python3 "$TMP/sectwin.py" --ci "$f" 1600 'Context handoff' 'primary' 'token limit' 're-prompt' 're-ground' \
+      || fail "H1[C03 AC4 + C07 re-pin]: $f has no Context-handoff section stating that a FAILED compaction (compaction.failed / 'Compaction summary reached the output token limit') is the PRIMARY signal — never re-prompt the wedged session (upstream #56784/#57187); C07: the failure routes to the re-grounding at the next step instead (the wedge law holds by construction — the re-grounding never depends on the summary call succeeding; designed red until C07 dev rewords the intro)"
+    hits=$(python3 "$TMP/sectneg.py" "$f" 'Context handoff' 'handoff protocol')
+    [ -z "$hits" ] || fail "H1[cf-126 C07 AC3]: $f's Context-handoff section still carries the retired close-protocol routing ($hits) — the failure routes to the re-grounding instead (designed red pre-landing)"
   done
   python3 "$TMP/stripcopy.py" "$BD_SRC" "$TMP/h1-off.md" 'primary' \
     || fail "H1 control: could not fabricate the drift copy (anchor missing — the live pin is vacuous)"
   if python3 "$TMP/sectwin.py" --ci "$TMP/h1-off.md" 1600 'Context handoff' 'primary' >/dev/null 2>&1; then
     fail "H1 control: the copy stripped of the primary-signal wording still passed — the pin is vacuous"
   fi
-  ok "H1[C03 AC4]: failed compaction as the primary signal, no-re-prompt law (source + mirror); stripped copy reddens"
+  ok "H1[C03 AC4 + C07 re-pin]: failed compaction as the primary signal, no-re-prompt law, the failure routing to the re-grounding (retired handoff-protocol routing absent; source + mirror); stripped copy reddens"
 fi
 
 # --- H2: the successor bootstrap is the /pipeline-resume convention (line b) -----
 if want h2; then
   for f in "$BD_SRC" "$BD_GEN"; do
-    python3 "$TMP/sectwin.py" --ci "$f" 1400 'Context handoff' 'read order' 'MUST-load' 'pipeline-resume' \
-      || fail "H2[C03 AC4/D10]: $f's Context-handoff section does not state the successor bootstrap law — the /pipeline-resume convention (read the plan folder in the read order, then the MUST-load skills), NO new mechanism (red before C03 dev)"
+    python3 "$TMP/sectwin.py" --ci "$f" 1400 'Context handoff' 'read order' 'MUST-load' 'pipeline-resume' 'checked stages' \
+      || fail "H2[C03 AC4/D10 + C07 re-pin]: $f's Context-handoff section does not state the bootstrap law — C07: the bootstrap runs IN-SESSION, the /pipeline-resume convention content (read order, MUST-load skills, checked stages), NO new mechanism (D10's convention survives the route's supersession — the content tokens must stand through C07's reword; red if the reword drops any of them)"
   done
-  ok "H2[C03 AC4/D10]: successor bootstrap = the resume convention (source + mirror)"
+  ok "H2[C03 AC4/D10 + C07 re-pin]: in-session bootstrap = the resume convention content (read order, MUST-load skills, checked stages; source + mirror)"
 fi
 
 # --- H3: no per-turn manual compaction (line c) ----------------------------------
@@ -164,7 +177,7 @@ if want h4; then
     # reword keeps.
     python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' 'listener' 'record-only' 'coord' \
       || fail "H4[cf-126 C05 AC4 re-pin, D32]: $f's Context-handoff section does not carry the record wording — the pipeline-locks LISTENER RECORDS each session.compaction.failed (audit row + logNote — record-ONLY, no push; the owner ruling) as the wedge-DETECTION record, the relaunch decision stays the coord's (red until C05 dev rewords)"
-    hits=$(python3 "$TMP/sectneg.py" "$f" 'HA alert' 'question-notify')
+    hits=$(python3 "$TMP/sectneg.py" "$f" 'Context handoff' 'HA alert' 'question-notify')
     [ -z "$hits" ] || fail "H4[cf-126 C05 AC4]: $f's Context-handoff section still mentions the retired alert surface ($hits) — the phone leg left with the qn extraction; the skill states the record"
   done
   python3 "$TMP/stripcopy.py" "$BD_SRC" "$TMP/h4-off.md" '59110' \
@@ -186,10 +199,16 @@ fi
 # --- H5: the dispatcher's fresh-start reset (line e) ------------------------------
 if want h5; then
   for f in "$BD_SRC" "$BD_GEN"; do
-    python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' 'dispatcher' 'fresh' 'running facts' \
-      || fail "H5[C03 AC4/D15]: $f's Context-handoff section does not state the dispatcher's reset shape — its handoff spawns a FRESH dispatcher carrying the running facts and ends; the fresh one starts from the loop body + the board block (red before C03 dev)"
+    python3 "$TMP/sectwin.py" --ci "$f" 1800 'Context handoff' 'dispatcher' 're-grounds' 'loop body' \
+      || fail "H5[C03 AC4/D15 + C07 re-pin]: $f's Context-handoff section does not state the dispatcher's reset shape — C07: the dispatcher re-grounds IN PLACE (loop body + marker + board reads re-consumed at the boundary; the proxy behavior and the card-spawn job stand) — the reset-per-marker spawn-end is retired (designed red until C07 dev rewords line (e); 're-grounds' is the line-(e) verb — the intro's 're-grounding' and the (f) scope note's generic-leg 'successor-bootstrap' are different phrases)"
+    hits=$(python3 "$TMP/sectneg.py" "$f" 'Context handoff' 'running facts' 'then ending' 'spawn the successor')
+    [ -z "$hits" ] || fail "H5[cf-126 C07 AC3]: $f's Context-handoff section still carries the retired close-protocol tokens ($hits) — the spawn-end shape left with the doctrine swap (designed red pre-landing; the (f) scope note's generic-leg 'successor-bootstrap' wording is a different phrase and stays)"
+    python3 "$TMP/sectwin.py" --ci "$f" 1400 'Dispatcher (shared session)' 're-ground' 'marker' \
+      || fail "H5[C03 AC4/D15 + C07 re-pin]: $f's Dispatcher section does not carry the reworded reset cite — the in-session contract sentence (still cite-only for mechanics — the plugin owns them) (designed red until C07 dev rewords the cite)"
+    hits=$(python3 "$TMP/sectneg.py" "$f" 'Dispatcher (shared session)' 'successor dispatcher')
+    [ -z "$hits" ] || fail "H5[cf-126 C07 AC3]: $f's Dispatcher section still carries the retired successor-dispatcher bootstrap ($hits) — the reworded cite says the dispatcher re-grounds in place (designed red pre-landing)"
   done
-  ok "H5[C03 AC4/D15]: the dispatcher fresh-start reset (source + mirror)"
+  ok "H5[C03 AC4/D15 + C07 re-pin]: the dispatcher's in-place re-grounding reset (line (e)) + the reworded Dispatcher-section cite (retired spawn-end tokens absent; source + mirror)"
 fi
 
 # --- H6: the repo-wide scope note, cite-only (line f, the OQ3 ruling) ------------

@@ -15,17 +15,20 @@
 # AC trace: N1[C06 AC1 presence, 50 files] N2[AC1 template legs]
 # N3[AC1 role differentiation] N4[AC2 single-authority restatement ban]
 # N5[AC1/AC5 generic vocabulary absence + bare-line extractor guard]
-# N6[AC3 frontmatter immobility + append-only prefix + twin discipline]
+# N6[AC3 frontmatter immobility + append-only prefix + twin discipline + the C07 named-line exception]
 # N7[AC5 OUT-roster freeze] N8[the artifact-line record pin].
 #
-# Red posture: ROUND-2 STATUS (D37) — C06 dev round 1 + the review polish have
-# landed: N1–N5 and the twin legs are GREEN on the settled base; the whole suite
-# runs rc=0 bare (the polish round's CHUNK_BASE-set proof is now the default).
-# N6's prefix legs, N7 and N8 stay HOLD-green guards (red only on an
-# append-only/roster/wording violation). Fabricated-drift controls (strip,
-# restate, template-swap, bare-line, moving-base) run against mutants and prove
-# every pin non-vacuous. The round-2 app surface (.openchamber/project.json +
-# its fixture) is validated in tests/openchamber-project/, not here.
+# Red posture (C07 re-pin wave): N3's coord-six + dispatcher role windows are
+# DESIGNED-RED until C07 dev rewords the windows (the re-ground vocabulary in,
+# the retired close-protocol phrases pinned absent); N6's prefix freeze gains
+# the ONE C07 named-line exception (the dispatcher's pre-window bullet —
+# single-line, keyed to its exact settled-base text, with the
+# other-lines-must-not-move controls) — the settled base $BASE stays.
+# N1/N2/N4/N5/N7/N8 HOLD at the ledger values (rc=0 bare). Fabricated-drift
+# controls (strip, restate, template-swap, bare-line, moving-base,
+# single-line-allow mutants) run against mutants and prove every pin
+# non-vacuous. The round-2 app surface (.openchamber/project.json + its
+# fixture) is validated in tests/openchamber-project/, not here.
 #
 # Usage:
 #   bash tests/agent-narratives/surface.sh            # N1..N8
@@ -167,14 +170,18 @@ if want n3; then
     f=".rulesync/subagents/$n.md"
     python3 "$TMP/extract.py" "$f" "$HDR" "$TMP/sec.md" >/dev/null \
       || fail "N3[C06 AC1]: $f unreadable for the coord role needle set (designed red pre-C06)"
-    python3 "$TMP/win.py" --ci "$TMP/sec.md" 1600 'handoff' 'successor' 'Context handoff' \
-      || fail "N3[C06 AC1]: $f's section omits the coord role story (the next-step handoff protocol: state current, successor via the session-creation rows, outcome handoff, end) or its Context-handoff cite"
+    python3 "$TMP/win.py" --ci "$TMP/sec.md" 1600 're-ground' 'Context handoff' \
+      || fail "N3[C06 AC1 + C07 re-pin]: $f's section omits the coord role story (C07: the next step re-grounds IN THIS session — state current, re-read in read order, MUST-load skills, step boundary; the card and lock stay put) or its Context-handoff cite"
+    hits=$(python3 "$TMP/ban.py" "$TMP/sec.md" tokens 'handoff protocol' 'spawn the successor' 'and end' || true)
+    [ -z "$hits" ] || fail "N3[cf-126 C07 AC4]: $f's section still carries the retired close-protocol wording ($hits) — the spawn-successor/handoff-close/end protocol is out (designed red pre-landing)"
   done
   for f in .rulesync/subagents/agent-board-dispatch.md; do
     python3 "$TMP/extract.py" "$f" "$HDR" "$TMP/sec.md" >/dev/null \
       || fail "N3[C06 AC1]: $f unreadable (designed red pre-C06)"
-    python3 "$TMP/win.py" --ci "$TMP/sec.md" 1600 'marker' 'Dispatcher' \
-      || fail "N3[C06 AC1]: the dispatcher narrative omits the reset-per-marker end (fresh dispatcher with the running facts) or the Dispatcher-section cite"
+    python3 "$TMP/win.py" --ci "$TMP/sec.md" 1600 're-ground' 'marker' 'Dispatcher' \
+      || fail "N3[C06 AC1 + C07 re-pin]: the dispatcher narrative omits the in-place re-grounding (loop body + marker + board reads re-consumed at the boundary; the proxy behavior and the card-spawn job stand) or the Dispatcher-section cite"
+    hits=$(python3 "$TMP/ban.py" "$TMP/sec.md" tokens 'reset-per-marker' 'spawn a FRESH dispatcher' 'running facts' 'successor' || true)
+    [ -z "$hits" ] || fail "N3[cf-126 C07 AC4]: the dispatcher section still carries the retired reset-per-marker spawn-end wording ($hits) — C07 re-grounds in place (designed red pre-landing)"
   done
   for n in agent-plan agent-test agent-explore agent-research; do
     f=".rulesync/subagents/$n.md"
@@ -198,7 +205,7 @@ if want n3; then
     python3 "$TMP/win.py" --ci "$TMP/sec.md" 1200 'card comment' 'notify' \
       || fail "N3[C06 AC1/D18]: $f omits the hand-back story (done or out of context → notify the dispatcher or let the user, leave a card comment — cited, not restated)"
   done
-  ok "N3[C06 AC1]: role-by-role narratives land — coord six (handoff/successor + Context-handoff cite), dispatcher (marker + Dispatcher cite), the four relaunch-fresh, the dev pair chunk-brief, review re-run-tests, the deploy pair hand-back"
+  ok "N3[C06 AC1 + C07 re-pin]: role-by-role narratives land — coord six (re-ground + Context-handoff cite; retired close-protocol wording absent), dispatcher (re-ground + marker + Dispatcher cite; retired spawn-end wording absent), the four relaunch-fresh, the dev pair chunk-brief, review re-run-tests, the deploy pair hand-back"
 fi
 
 # --- N4: single-authority — restated mechanics reddens (AC2) -----------------------
@@ -243,7 +250,7 @@ if want n5; then
   ok "N5[C06 AC1/AC5]: the nine standalone sections (sources + mirrors) stay generic — no handoff/pipeline_claim/Lifecycle vocabulary and no /pipeline string anywhere in them; the template-swap mutant reddens"
 fi
 
-# --- N6: append-only prefix + twin discipline (AC3; HOLD guard arms) ----------------
+# --- N6: append-only prefix + twin discipline (AC3; HOLD guard arms; the one C07 named-line exception) ----------------
 if want n6; then
   python3 - "$BASE" "$TMP/extract.py" "$HDR" "${PIPE16[@]}" "${STAND9[@]}" <<'PY' || fail "N6[C06 AC3]: the append-only/frontmatter guard reddens (see reason above)"
 import subprocess, sys
@@ -252,22 +259,53 @@ names = sys.argv[4:]
 def sec_via_extractor(path):
     r = subprocess.run(["python3", extract, path, hdr, "/dev/null"], capture_output=True, text=True)
     return r.returncode == 0
+# cf-126 C07: the one designed named-line exception — the dispatcher's
+# pre-window bullet (its EXACT settled-base text, whose successor clause C07
+# rewords in place; leaving it stale would teach the retired doctrine). Any
+# OTHER prefix line moving stays red — the exception is single-line, keyed to
+# the bullet's exact base text.
+BULLET = "- Your own context stays survivable per the same compaction-pointer contract every pipeline session gets (the successor bootstraps from the plan folders and the board, like any resumed run)."
+def check_prefix(old, new, allow_bullet):
+    if new.startswith(old):
+        return True, ""
+    if not allow_bullet:
+        return False, "bytes BEFORE the appended section moved"
+    ol, nl = old.split("\n"), new.split("\n")
+    if len(ol) != len(nl):
+        return False, "line count moved — the C07 exception is a same-line reword only"
+    diff = [i for i in range(len(ol)) if ol[i] != nl[i]]
+    if len(diff) == 1 and ol[diff[0]] == BULLET:
+        return True, ""
+    return False, f"a prefix line other than the C07-named bullet moved ({len(diff)} lines differ)"
 for n in names:
     for rel in (f".rulesync/subagents/{n}.md", f".opencode/agents/{n}.md"):
         old = subprocess.run(["git", "show", f"{base}:{rel}"], capture_output=True, text=True)
         if old.returncode != 0:
             print(f"{rel}: missing at base {base} (harness fault)"); sys.exit(1)
         new = open(rel, encoding="utf-8").read()
-        if not new.startswith(old.stdout):
-            print(f"{rel}: bytes BEFORE the appended section moved vs {base} — frontmatter and every existing line are byte-frozen; only the sanctioned '{hdr}' section may extend the body"); sys.exit(1)
-        tail = new[len(old.stdout):].lstrip("\n")
+        okp, why = check_prefix(old.stdout, new, "agent-board-dispatch" in rel)
+        if not okp:
+            print(f"{rel}: {why} vs {base} — frontmatter and every existing line are byte-frozen except the C07-named dispatcher bullet (single-line, keyed to its exact base text); only the sanctioned '{hdr}' section may extend the body"); sys.exit(1)
+        tail = new[len(old.stdout):].lstrip("\n") if new.startswith(old.stdout) else ""
         if tail and not tail.startswith(hdr):
             print(f"{rel}: the tail appended after base is not the sanctioned section ({tail[:60]!r})"); sys.exit(1)
 # self-proof of bite: a mid-edit copy must fail the same prefix logic
-old = "a\nb\n"
-new = "a\nX\n"
-if new.startswith(old):
+if check_prefix("a\nb\n", "a\nX\n", False)[0]:
     print("prefix self-test broken (harness fault)"); sys.exit(1)
+# C07 named-line exception control: the SAME shipped checker must admit the
+# bullet reword and reject every other prefix movement — both directions, plus
+# the non-dispatcher byte-freeze. A one-sided or absent fixture would prove
+# the allow vacuous.
+doc = "line1\n" + BULLET + "\nline3\n"
+reworded = "line1\n" + BULLET.replace("successor bootstraps", "session re-grounds in place") + "\nline3\n"
+if not check_prefix(doc, reworded, True)[0]:
+    print("C07 exception control broken: the bullet-only reword was rejected (harness fault)"); sys.exit(1)
+if check_prefix(doc, "line1-moved\n" + BULLET + "\nline3\n", True)[0]:
+    print("C07 exception control broken: the other-line-moved mutant passed — the single-line allow is vacuous"); sys.exit(1)
+if check_prefix(doc, "line1-moved\n" + reworded[len("line1\n"):], True)[0]:
+    print("C07 exception control broken: the two-lines-moved mutant passed — the single-line allow is vacuous"); sys.exit(1)
+if check_prefix(doc, reworded, False)[0]:
+    print("C07 exception control broken: a non-dispatcher file took the bullet reword — the byte-freeze is vacuous"); sys.exit(1)
 # cf-126 C06 round-2 (D37 AA3) MOVING-BASE drift proof: with BASE floated to
 # HEAD, the commit that landed the sections becomes the base, and the NEXT
 # sanctioned fold-in (an inside-section edit — legitimate against the settled
@@ -294,7 +332,7 @@ PY
     cmp -s "$TMP/twinA.md" "$TMP/twinB.md" \
       || fail "N6[C06 AC3]: twin pair ($1,$2) sections differ — alias twins receive BYTE-IDENTICAL sections (the parity law's prose face)"
   done
-  ok "N6[C06 AC3]: every body's pre-append bytes are immovable vs $BASE and only the sanctioned section extends them (mid-edit self-proof bites); alias twin sections are byte-identical once present"
+  ok "N6[C06 AC3 + C07 named-line exception]: every body's pre-append bytes are immovable vs $BASE and only the sanctioned section extends them — the dispatcher's pre-window bullet may reword in place (single-line, keyed to its exact base text; the other-line-moved and two-lines-moved mutants redden, the non-dispatcher freeze holds); alias twin sections are byte-identical once present"
 fi
 
 # --- N7: the OUT roster stays byte-frozen (AC5) -------------------------------------
