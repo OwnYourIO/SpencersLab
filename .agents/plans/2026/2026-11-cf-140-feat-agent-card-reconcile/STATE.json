@@ -113,10 +113,33 @@
     }
   ],
   "research_queue": {
-    "running": [
-      { "id": "R5", "topic": "forgejo issues/PR access + card-id tagging best practice", "session": "ses_df614e651ffeTuj2u1jDvRTF0M" }
-    ],
+    "running": [],
     "done": [
+      {
+        "id": "R5",
+        "topic": "forgejo issues/PR access + card-id tagging best practice",
+        "session": "ses_df614e651ffeTuj2u1jDvRTF0M",
+        "file": "RESEARCH-r5-forgejo-linkage.md",
+        "status": "DONE (440 lines; a compaction fired mid-round, survived by files, deliverable verified on disk)",
+        "headline": "Reads need no token (both forges serve the repo publicly); writes are owner-mint-first; per-card LABELS are rejected because a missing label name silently degrades a filter to no-filter.",
+        "facts": [
+          "two forges, both v15.0.10+gitea-1.22.0: prod/canonical git.spencerslab.com (ROLE=prod) and dev git.scifi.farm, both serving CuratedForest/SpencersLab publicly; main fan-out is prod-only, non-force, to GitHub + dev via instance-side PUSH_URL_*/PUSH_TOKEN_*",
+          "NO Forgejo MCP server exists in the fleet (project-local 6 servers) or the AGENTS.md table; swagger is disabled on both instances, so the deployed tag's source is the spec",
+          "agent sessions hold ZERO forge credentials today (FORGEJO_* absent; the forgejo-token Bitwarden item is dev-cluster-only and points at the DEV forge) — reads work unauthenticated because the repo is public, writes need an owner-minted PAT first",
+          "label writes are permitted from a non-admin write:issue token at this tag, but GET /labels is [] on BOTH instances despite renovate.json asking for `dependencies`, and a labels= filter naming a missing label silently returns unfiltered results -> a per-card label would fail silently. REJECTED.",
+          "canonical link instead: branch name (= the slug, already law) read back via the zero-write live-proven GET /pulls/{base}/{head}, plus a `Card:` commit trailer (survives squash-merge, needs no API) and a PR-body footer carrying the card _id. No new WeKan custom field; forge state lives in the run registry / plan folder.",
+          "the webhook drop holds for Forgejo too: outbound-only, reqAdmin()-gated, default ALLOWED_HOST_LIST=external refuses an in-cluster receiver, 5s timeout, no retry knobs at this tag; the polling shape is GET /issues?state=all&type=pulls&since= (covers issues AND PRs in one cheap call; /pulls alone has no since)",
+          "TRAP for the plan: pipeline-push-pr pushes the branch to origin (Forgejo prod) but opens the PR with `gh pr create` on GitHub, where the branch was never pushed — and GitHub carries a live renovate[bot] lane (927 PRs). Without a canonical-PR-home ruling the reconciler answers 'nothing landed' for PRs that exist on the other side."
+        ],
+        "open_questions": [
+          "OQ-R5a (owner): mint a scoped forge PAT + where its secret lives — gates ANY forge writer",
+          "OQ-R5b (owner): canonical PR home (Forgejo prod vs GitHub mirror) and whether pipeline-push-pr's PR leg changes",
+          "OQ-R5c (plan): labels adopted or dropped (research recommends dropped)",
+          "OQ-R5d (plan): is forge-issue state in scope for this ticket at all",
+          "OQ-R5e (owner, pre-existing): GitHub mirror main divergence",
+          "OQ-R5f (plan): which file owns the per-run forge record"
+        ]
+      },
       {
         "id": "R4",
         "topic": "card change detection",
