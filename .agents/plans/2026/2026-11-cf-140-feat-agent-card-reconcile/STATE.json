@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-140-feat-agent-card-reconcile",
-  "plan_status": "draft",
+  "plan_status": "needs-approval",
   "coord_session": "ses_df6746e69ffe3r6oWe58jKqW2N",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-24T09:30:00Z",
+  "updated_at": "2026-11-23T21:04:53Z",
   "kickoff": {
     "slug": "cf-140-feat-agent-card-reconcile",
     "card": "zKf2GkiwPgeDmfpu2",
@@ -18,18 +18,26 @@
       }
     ],
     "type": "feat",
-    "services": ["home", "agent context"],
+    "services": [
+      "home",
+      "agent context"
+    ],
     "origin_dir": "/home/coder/SpencersLab",
     "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-140-feat-agent-card-reconcile",
     "branch": "cf-140-feat-agent-card-reconcile",
     "branch_source": "kickoff-mint-branch.sh on detached worktree",
     "commits": "87d4566c2 (pre-planning records)",
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
-    "priority": { "raw": null, "class": "default" },
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
     "run_tag": null,
     "claim": {
       "set_id": "34617c28-d3a9-4561-8e33-d4d7d296d7a9",
-      "pipelines": ["Context"],
+      "pipelines": [
+        "Context"
+      ],
       "shared": false,
       "takeover": "none",
       "note": "PIPELINE LOCK LOST notice fired 2026-11-23; pipeline_status re-read shows this session still holding the claim live, no new reap (lastReap 2026-11-23T16:34:57.826Z predates the claim). Owner answered the one sanctioned question: continue under the live claim. R4 later proved why the notice fired: the host runs TWO opencode server processes, so a single-process view under-reports holders."
@@ -43,11 +51,30 @@
       "dev": "openrouter/qwen/qwen3.8-flash",
       "explore": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "research": "gpu-ai/qwen3.8-27b-radiance-tp2",
-      "note": "API tiers are the card's own per-step assignment and are UNCHANGED: coord/chunk-review/test/dev = openrouter/qwen/qwen3.8-flash, plan/final-review = openrouter/qwen/qwen3.8-2.4t-a95b. Local tiers (explore/research) follow the owner's 2026-11-24 ruling back to gpu-ai/qwen3.8-27b-radiance-tp2 — the card body's original ask — superseding the 2026-11-23 detour onto gpu-ai/qwen3.8-flash-next-radiance. CAUTION on record: pipeline-models documents the tp2 lane as parked at replicas 0, where routing answers a loud 502 rather than falling back silently; a 502 on a local-tier launch is therefore reported to the owner, never quietly re-routed."
+      "note": "API tiers are the card's own per-step assignment and are UNCHANGED: coord/chunk-review/test/dev = openrouter/qwen/qwen3.8-flash, plan/final-review = openrouter/qwen/qwen3.8-2.4t-a95b. Local tiers (explore/research) follow the owner's LATER ruling back to gpu-ai/qwen3.8-27b-radiance-tp2 — the card body's original ask — superseding the EARLIER same-day detour (both 2026-11-23; the reversal arrived between commit f08a5347f and 6730240b0). CAUTION on record: pipeline-models documents the tp2 lane as parked at replicas 0, where routing answers a loud 502 rather than falling back silently; a 502 on a local-tier launch is therefore reported to the owner, never quietly re-routed."
     },
-    "stages": ["Session Rename", "Worktree Creation", "Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
-    "stages_skipped": ["Agent Decides Research", "Deployment", "Single Session", "Follow-up cards created"],
-    "stop_points": ["Planning", "Final Review"],
+    "stages": [
+      "Session Rename",
+      "Worktree Creation",
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Post Research",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_skipped": [
+      "Agent Decides Research",
+      "Deployment",
+      "Single Session",
+      "Follow-up cards created"
+    ],
+    "stop_points": [
+      "Planning",
+      "Final Review"
+    ],
     "board_context": {
       "collected": "2026-11-23T17:54:32.409Z",
       "board_id": "TNQJ2BrXenZovngTS",
@@ -70,21 +97,54 @@
       }
     },
     "checklist_verify": {
-      "at": "2026-11-24T09:20:00Z",
+      "at": "2026-11-23 between 20:21Z and 20:41Z (bounded by the STATE.json mtime at the R4 record and commit 2c9dcf942; the single instant first written here was assumed, not measured — see DECISIONS)",
       "how": "list_checklists + get_checklist per checklist (ids: Model(s) TeMtwFLQ4QE4xejYS, Services KAb8NceTHwurJMRZX, Type CurzX3d5755uYzpWf, Lifecycle 2jirHkLiHtdTjc5aj, HITL 838XDxALvqcuW4Qod)",
       "why": "the post-plan write-back deletes every UNCHECKED item, so the tick state was re-read live before that step rather than trusted from the claim-time block",
       "checked": {
-        "Model(s)": ["Qwen Flash"],
-        "Services": ["home", "agent context"],
-        "Type": ["feat"],
-        "Lifecycle": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
-        "Human in the Loop": ["Planning", "Final Review"]
+        "Model(s)": [
+          "Qwen Flash"
+        ],
+        "Services": [
+          "home",
+          "agent context"
+        ],
+        "Type": [
+          "feat"
+        ],
+        "Lifecycle": [
+          "Exploration",
+          "Pre Research",
+          "Planning",
+          "Post Research",
+          "Test Writing",
+          "Chunk Development",
+          "Chunk Review",
+          "Final Review"
+        ],
+        "Human in the Loop": [
+          "Planning",
+          "Final Review"
+        ]
       },
-      "lifecycle_absent": ["Session Rename", "Worktree Creation", "Follow-up cards created", "Human in the Loop (item)"],
+      "lifecycle_absent": [
+        "Session Rename",
+        "Worktree Creation",
+        "Follow-up cards created",
+        "Human in the Loop (item)"
+      ],
       "shape": "legacy 11-item Lifecycle; Session Rename + Worktree Creation ran per the blank default (DECISIONS)"
     },
-    "preload": { "at": "2026-11-23T18:05:00Z", "tool": "preload_board", "cards": 116, "degraded": "with_checklists arg not advertised by the deployed tool; checklist trees rode the payload unconsumed" },
-    "card_details": { "at": "2026-11-23T18:00:00Z", "tool": "get_card_details", "degraded": "no block on the claim answer; coord called get_card_details once for the claimed card" }
+    "preload": {
+      "at": "2026-11-23T18:05:00Z",
+      "tool": "preload_board",
+      "cards": 116,
+      "degraded": "with_checklists arg not advertised by the deployed tool; checklist trees rode the payload unconsumed"
+    },
+    "card_details": {
+      "at": "2026-11-23T18:00:00Z",
+      "tool": "get_card_details",
+      "degraded": "no block on the claim answer; coord called get_card_details once for the claimed card"
+    }
   },
   "preplan_handoffs": [
     {
@@ -96,20 +156,34 @@
         "session-api": "ses_df66abefcffemMj58dOEIs8UUS"
       },
       "status": "DONE x4",
-      "files": ["EXPLORE-plugins.md", "EXPLORE-agents.md", "EXPLORE-wekan-mcp.md", "EXPLORE-session-api.md"]
+      "files": [
+        "EXPLORE-plugins.md",
+        "EXPLORE-agents.md",
+        "EXPLORE-wekan-mcp.md",
+        "EXPLORE-session-api.md"
+      ]
     },
     {
       "stage": "review-existing (card-mandated, 2.4t)",
-      "sessions": { "review": "ses_df63ea765ffemcNnwsyhaex3cd" },
+      "sessions": {
+        "review": "ses_df63ea765ffemcNnwsyhaex3cd"
+      },
       "status": "DONE",
-      "files": ["REVIEW-existing-plugins.md"],
+      "files": [
+        "REVIEW-existing-plugins.md"
+      ],
       "verdicts": [
         "lock retirement is safe; run-registry firewall must replace it",
         "board-block re-injection is a ctx.storage capability flap (15/17 sessions, worst 12/34 prompts) -> once-mark must move to a cross-process surface",
         "this ticket's own lock-lost storm is an 8-row spurious 'stolen' audit on a live claim",
         "scope cuts: drop webhooks, drop format:yaml tool arg, scope objective-completed to explicit signals, repair AGENTS.md drift in commit 1"
       ],
-      "open_questions": ["OQ-R1 question-notify re-enable vs absorb", "OQ-R2 provision Awaiting Answers + Timeout lists vs permanent jsonl degrade", "OQ-R3 keep plugin id vs rename+migrate", "OQ-R4 pending-question persistence + busy/idle on v2.3.2 (routed to R3)"]
+      "open_questions": [
+        "OQ-R1 question-notify re-enable vs absorb",
+        "OQ-R2 provision Awaiting Answers + Timeout lists vs permanent jsonl degrade",
+        "OQ-R3 keep plugin id vs rename+migrate",
+        "OQ-R4 pending-question persistence + busy/idle on v2.3.2 (routed to R3)"
+      ]
     }
   ],
   "research_queue": {
@@ -230,16 +304,202 @@
     "queued": []
   },
   "open_question_pool_for_batched_round": [
-    "npm dev surface: adopt the pinned tsc --noEmit gate (+ @types/node, tsconfig) as card-runner's type check, or stay zero-dep and let type errors surface at runtime",
-    "question-notify: re-enable it (owner-disabled 2026-11-21) or absorb its three detection legs into card-runner — the Awaiting-Answers alert path assumes a phone channel that is currently off",
-    "Awaiting Answers + Timeout lists: provision them via the board-provision engine now, or accept the jsonl degrade as permanent design",
-    "card-runner plugin id: keep `local.pipeline-locks` (zero kv migration) or rename and migrate rows at setup",
-    "objective-complete detection: board-list membership only, or also opt-in goal/work mode on spawned sessions",
-    "when the 15-minute question bound is breached: cancel the pending Form, or leave it pending and only move the card",
-    "CARD.yaml writer: the plugin (needs slug->folder resolution outside the run) or the coordinator itself",
-    "scope realism: the card's 'review the existing plugin code' + 5 research topics + a 3-plugin rewrite + agent-definition rewrite + board provisioning is a very large plan — confirm the wave split (hygiene -> question flow -> lock retirement) the review proposed, or cut further"
+    "O1 npm dev surface: ADOPT the pinned tsc --noEmit gate (+@types/node, tsconfig.opencode.json, .gitignore line; run C20 early wave 1) vs stay zero-dep (skip C20, type errors surface at runtime). Recommend: adopt.",
+    "O2 question-notify: ABSORB detection into card-runner, leave the plugin disabled+untouched, breach/dead-run alerts via the admin-HA tier (haNotify-gated) vs re-enable it (then C08/C15 owe cross-plugin consume-once dedupe). Recommend: absorb.",
+    "O3 provision Awaiting Answers + Timeout lists via the engine (owner applies at C19) vs accept the jsonl degrade as permanent design. Recommend: provision both.",
+    "O4 forge PAT minting: DO NOT mint for this ticket (every forge leg is read-only, credential-free) vs mint bot+scoped PAT now (gates any future writer). Recommend: do not mint.",
+    "O5 canonical PR home: RULE Forgejo prod (git.spencerslab.com; C13 config default; GitHub stays main-mirror) vs GitHub mirror (config flip; pipeline-push-pr leg unchanged). Must be ruled before the forge leg's answers are trusted (split-brain trap RESEARCH §4.4). Recommend: Forgejo prod.",
+    "O6 owner live-fire probe legs (WeKan modifiedAt-no-bump + scoped activities export + admin export flags; Forgejo public read + pulls lookup + label probe): owner runs at C19 per the HANDOFF-runbook; until then C11/C12/C13 ship capability-gated. Recommend: run them at handoff.",
+    "Q-A pipeline-dispatch model literal: merged AGENTS.md MIRRORS THE SHIPPED LOOP FILES (dispatch=strata-q4, worker=radiance; a dispatch flip stays gated on cf-126 C04) vs the 2026-11-22 radiance ruling extends to dispatch (then pipeline-dispatch.md model row flips too + fingerprint re-approval). Recommend: mirror the shipped files.",
+    "Q-B retire agent-board-dispatch + .agents/loops/pipeline-dispatch.md at C17 (wake one-name, TWO loop files, gate four names; owner retires the OpenChamber task per runbook) vs keep frozen beside the reconciler (wake two-name, THREE loop files, gate five names). Recommend: retire."
   ],
-  "chunks": {},
+  "chunks": {
+    "C01": {
+      "title": "AGENTS.md / overview.md drift repair (FIRST commit)",
+      "size": "S",
+      "wave": 1,
+      "depends_on": [],
+      "status": "pending"
+    },
+    "C02": {
+      "title": "AD-73 sibling sweep: retire legacy session field from live contract docs",
+      "size": "S",
+      "wave": 1,
+      "depends_on": [],
+      "status": "pending",
+      "sibling": "AD-73 card _id qMMB5XRQpX9JXdbxZ (grouped sibling ask lands here)"
+    },
+    "C03": {
+      "title": "card-runner skeleton: scaffold, cross-process once-mark, localIso re-home",
+      "size": "M",
+      "wave": 1,
+      "depends_on": [
+        "C01"
+      ],
+      "status": "pending"
+    },
+    "C04": {
+      "title": "Absorb board-context into card-runner; fix symptom (a); delete board-context",
+      "size": "L",
+      "wave": 1,
+      "depends_on": [
+        "C03"
+      ],
+      "status": "pending"
+    },
+    "C05": {
+      "title": "CARD.yaml contract: schema home, coord writer step, plan-file map, three-home rule",
+      "size": "M",
+      "wave": 1,
+      "depends_on": [
+        "C04"
+      ],
+      "status": "pending"
+    },
+    "C06": {
+      "title": "agent-card-reconcile: agent + loop file + wake re-target + gate liveness set",
+      "size": "L",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "status": "pending"
+    },
+    "C07": {
+      "title": "boards skill Reconcile doctrine: tick loop, decision matrix, spawn contract",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C06"
+      ],
+      "status": "pending"
+    },
+    "C08": {
+      "title": "card-runner question hook: durable pending-question record",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C03"
+      ],
+      "status": "pending"
+    },
+    "C09": {
+      "title": "Awaiting Answers provisioning: skill spec bullet + engine ensure + fixtures",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "status": "pending"
+    },
+    "C10": {
+      "title": "Question-flow wiring: breach + resume procedures, B1 decision-order guarantee",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C07",
+        "C08",
+        "C09"
+      ],
+      "status": "pending"
+    },
+    "C11": {
+      "title": "wekan-mcp additive reads: list_card_activities + whoami (container, CI-deferred)",
+      "size": "M",
+      "wave": 3,
+      "depends_on": [],
+      "status": "pending"
+    },
+    "C12": {
+      "title": "Card-change detection + bounded forwarding (.pipeline/cards store, M6 bounds)",
+      "size": "L",
+      "wave": 3,
+      "depends_on": [
+        "C05",
+        "C07",
+        "C10"
+      ],
+      "status": "pending"
+    },
+    "C13": {
+      "title": "Forgejo awareness: branch->PR lookup, Card: trailer doctrine, forge record slot",
+      "size": "M",
+      "wave": 3,
+      "depends_on": [
+        "C12"
+      ],
+      "status": "pending"
+    },
+    "C14": {
+      "title": "Run registry + zombie firewall + registration-verb tools (B2/B3)",
+      "size": "L",
+      "wave": 4,
+      "depends_on": [
+        "C06",
+        "C08",
+        "C12"
+      ],
+      "status": "pending"
+    },
+    "C15": {
+      "title": "Retire pipeline-locks: compaction re-home, commands, no-op predicate, T15",
+      "size": "L",
+      "wave": 4,
+      "depends_on": [
+        "C14"
+      ],
+      "status": "pending"
+    },
+    "C16": {
+      "title": "Re-pin sweep I: 25 subagent Compaction paragraphs + permission rows + mirrors",
+      "size": "L",
+      "wave": 4,
+      "depends_on": [
+        "C15"
+      ],
+      "status": "pending"
+    },
+    "C17": {
+      "title": "Re-pin sweep II: boards lock doctrine, overview.md, dispatch retirement (Q-B), N4/N8",
+      "size": "L",
+      "wave": 4,
+      "depends_on": [
+        "C15"
+      ],
+      "status": "pending",
+      "gated": "Q-B: dispatch+pipeline-dispatch.md retirement legs run only on a 'retire' answer"
+    },
+    "C18": {
+      "title": "Coord intake rewrite: no card-fetch expectation, four intake paths, MCP propose",
+      "size": "M",
+      "wave": 4,
+      "depends_on": [
+        "C14",
+        "C17"
+      ],
+      "status": "pending"
+    },
+    "C19": {
+      "title": "Owner handoff: board catch-up dry-run, loop-approval runbook, O6 probes, full sweep",
+      "size": "S",
+      "wave": 5,
+      "depends_on": [
+        "C18"
+      ],
+      "status": "pending"
+    },
+    "C20": {
+      "title": "CONDITIONAL (O1=yes): tsc gate + vendored typescript-strict + plugin-lanes TS skill",
+      "size": "S",
+      "wave": 1,
+      "depends_on": [
+        "C01"
+      ],
+      "status": "pending",
+      "conditional": "O1=yes only; runs early wave 1 after C01 and before C03; skipped on O1=no"
+    }
+  },
   "blocked": [],
-  "deferred": []
+  "deferred": [],
+  "plan_file": "2026-11-23-feat-cf-140-feat-agent-card-reconcile.md"
 }
