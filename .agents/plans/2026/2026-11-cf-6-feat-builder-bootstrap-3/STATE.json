@@ -23,7 +23,12 @@
     "minor_ruling": "NOT skipped: 'first fetch' particular -> dev micro-retry to truth it to the class form (pair-level, either fetch, step-log defers) per the family's comment-truth law."
   },
   "current_wave": 1,
-  "updated_at": "2026-11-23T01:12:00+00:00",
+  "updated_at": "2026-11-23T01:34:00+00:00",
+  "post_merge": {
+    "evidence": "dispatch #2 on hardened main: build step 4m16s, base CACHED, retry flags LIVE — curl (35) connection reset after 129.2 s INSIDE the budget = deterministic-block case; mtu NOT yet active (runner app OutOfSync since 22:22 — daemon never restarted).",
+    "corrected_legs": "infra: sync gpu-forgejo-runner-gpu (delivers mtu daemon + instance-label map; fleet already dead — no regression) -> bare dispatch (retry+mtu together) -> UA-10 anonymous probe -> fleet jobs recover. dev: strictly copy -> probe -> sync (dev fleet ALIVE on public act map today — never sync into pull-death). If post-sync dispatch still (35): fallback family (b) lane --network=host plan (run -4) + §4.3.3 in-job reachability probe.",
+    "plan_status_note": "repo-side run CLOSED complete at 5414581eb; deploy troubleshooting continues under post_merge; run -4 only if post-sync dispatch still fails."
+  },
   "c01_commit": "5414581eb (amended from dbd3346ad while unpushed, per final-review minor 1: tests/containers/forgejo-runner.sh:147 fail text truthed to pair-level+deferral — both shipped files now make the SAME evidence claim; walker/teeth unchanged, 8/8 re-verified post-truthing + mutation probe confirms the new text prints red-state verbatim)",
   "final_review": {
     "session": "ses_dfa0e914cffeiJwtk4G2yesxcI",
