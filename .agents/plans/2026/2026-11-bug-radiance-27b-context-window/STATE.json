@@ -117,7 +117,7 @@
       "Fork caveat: three cited sources are from 2.x main while we pin 1.17.0; issue #457 claims −30%/2× step time for this family in 2.0.0. Any 1.17.0→2.x move is an owner decision.",
       "P11/D9(a): flash-TP2 print 'pool backs 52% … 4.1 full-length sessions' is an M<8 refutation on the live default route — route to the owner as a RULING (revert ceiling on fn-TP2 by forward fix, or accept the deficit explicitly), not a re-run."
     ],
-    "next_action": "dispatch the flash-TP2 optimization RESEARCH round over .agents/plans/2026/2026-11-bug-radiance-flash-tp2-perf/EXPLORE.md, then bring the ceiling/P11 ruling items to the owner. Do NOT re-dispatch the 27b round (complete)."
+    "next_action": "dispatch the flash-TP2 optimization RESEARCH round over .agents/plans/2026/2026-11-bug-radiance-flash-tp2-perf/EXPLORE.md, then bring the ceiling/P11 ruling items to the owner. Do NOT re-dispatch the 27b round (complete). RESUME IN THIS WORKTREE, NOT ON MAIN: three post-merge commits are branch-local (`3400ed49d` D19, `2a20bb102` the two scout artifacts incl. the 854-line 27b RESEARCH.md, `5a264994d` this handoff record) — `git branch -a --contains 5a264994d` lists only `feat-radiance-multi-instance`, not main/origin/main. The radiance WORK is on main via `bc4b2a3fa`; the RESEARCH/EXPLORE/handoff RECORDS are not, so a successor checking out main would find the folders missing. Landing those three is an owner leg."
   },
   "deferred": [
     "1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is validated on this model). Revisit trigger: a fresh YaRN validation pass + an owner ruling.",
