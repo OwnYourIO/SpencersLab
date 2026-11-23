@@ -121,8 +121,78 @@ rejected, why.
   gate which can pass on absence is not a gate. (Chosen over my recommendation of owner-captures/C04-records,
   which leaves closure dependent on a human remembering to come back.) The nine-item receipt set comes from
   RESEARCH implication (e); the block is authored in the C01 test wave so the closing gate and the script are
-  one artifact, and any lane-count change from D5 lands in that block too.
+  one artifact, and any lane-count change from D5/D9 lands in that block too.
+- 2026-11-23 human, ruling **D9 (RULING 5 — fn-TP2 IS INCLUDED: "Just raise it everywhere. I know the risk.
+  Do it.")**, answering the coordinator's second, evidence-backed objection. Recorded as an **informed**
+  decision this time, which is what D5 was not: the owner was shown, before ruling, that (i) **fn's 200000 is
+  the one MEASURED value in this ticket** — cf-143 D28(1)/D30(1) record the live boot print that priced it
+  (`out of memory` at cgroup 64 GiB vs 71.04 GiB observed pinned, "8.0 sessions at 200000"), and that print is
+  what the 110Gi hold still rides; (ii) **upstream publishes no 262144 serve shape at all** — across 57 compose
+  files every 27b variant and `flashnext.yaml` ship 200000, and the only 262144 anywhere is a **2-session**
+  streaming demo; (iii) because Radiance **warns rather than refuses** on a context bound, an under-funded fn
+  would not crash — it would **silently serve fewer than 8 concurrent sessions**, the one property a shared
+  default route exists to provide; and (iv) fn is at `replicas: 0` by the owner's own scale act, so **no
+  receipt for the new value is obtainable until it is back up**.
+  Dissent recorded and NOT re-run: the coordinator's position was that a measured value on the live default
+  route deserved its print before the edit. The owner accepts the risk; this ruling supersedes D5's pending
+  question, and D5's dissent grounds (ii) (live-route risk) survive as **risk accepted**, not resolved.
+  NON-NEGOTIABLE consequences the plan must carry, because the ruling is "raise it" and not "unmonitor it":
+  (a) fn's value lands PROVISIONAL with the named adjudicator — the `kv: pool backs N% … M full-length
+  sessions` line — and **M ≥ 8 is the pass bar**; fewer than 8 admitted sessions at 262144 is a refutation, and
+  the revert path is the pre-agreed forward fix, not a live improvisation; (b) the eight-admitted-sessions
+  smoke is part of the pre-authored receipt block (D8), so the silent failure mode has a loud check attached to
+  it; (c) fn's raise is a **second pod roll on the pipeline's own critical path** (parent-D16: every tier plus
+  the hourly runner route through fn), so the roll window is stated to the owner before landing, not after;
+  (d) fn-TP2 has **no transcription leg** — only the `FULL_PROFILE` constant moves — so its test-authority
+  change is a constant re-pin, while flash-TP1's is the deviation-with-ruling re-pin (D5/F5) and must be
+  authored BEFORE the dev edit per parent-D30.
+- 2026-11-23 coord-note D10 (**no memory change anywhere in this ticket**). F2's arithmetic closed the last
+  open question about sizing: flash-TP1 at 262144 fits the held 110Gi at BOTH candidate cost rates
+  (≈69–89 GiB used; engine rule `110 − 87 = 23 ≥ 4`), fn-TP2's worst-case pool goes 18.3 → **24.0 GiB** trunk
+  against 2 × 31.86 GiB usable with the per-sequence recurrent state and checkpoint slots essentially
+  unmoved, and the 27b lanes' host band barely shifts. So **no lane's memory value changes** in this ticket —
+  memory remains print-gated by cf-143 D28(6) / cf-144 P11, exactly as RULING D7 ruled, and nothing here
+  pre-empts those prints.
 
+- 2026-11-23 plan, ruling **D11 (FOLD PROVENANCE — the plan re-filed for FOUR lanes per
+  D5/D9/D10; the flash round-2 evidence made durable in the contract)**: D5 and D9 changed
+  the scope twice after the 2026-11-22 draft (which scoped C01/C02 to two 27b env values),
+  so the draft no longer described the work — `plan_status` stays `draft`, approval pending
+  this fold. This fold: (1) re-files the plan of record + `chunks/C01`-`C04` for four
+  lanes with the three DIFFERENT kinds of test-authority change (D9(d): fn a constant
+  re-pin only — no transcription leg exists; flash-TP1 the deviation-with-ruling re-pin,
+  the verbatim leg re-pinned to "exactly TWO values swapped — id + context, per ruling
+  D5/D9" and its fidelity claim bounded by ruling — the source commit `e7536b2c9^` is
+  immutable, the leg is never again described as verbatim); (2) DISCOVERS THE M8-B RE-PIN
+  — the draft's "M8-B verify-only / fn stays 200000" assumption is broken by D9: the fn
+  needle at `surface.sh` asserts `str(mm) == "200000"`, so C01 re-pins it to 262144
+  (designed red until C02); the both-figures commentary teeth stay green pre- and
+  post-C02 (the stale comment names 200000; the window carries 262144); (3) CARRIES the
+  flash round-2 evidence (F1-F5 + the five print-pending items, research session
+  `ses_dfa43b76cffex5QZ8Vj9E9pGf1`, live fetches 2026-11-23) into the plan's Verified
+  facts with attribution — its RESEARCH.md write was denied at the research tier AND at
+  the coordinator's (FRICTION round-2 row), so without this fold the evidence lived only
+  in FRICTION + the transcript; (4) records the fn-TP2 live fact: `replicas: 0` by the
+  owner's own scale act (git carries 1 at :1063) — fn's receipt (the first TP2 print,
+  cf-144 P11) is unobtainable until the owner brings fn back up, and C02's landing is a
+  second pod roll on the pipeline's own critical path (D9(c), parent-D16) — stated in
+  the plan's Risks/Landing, with the roll window owed to the owner BEFORE landing.
+  **The D4 lane-equality statement, VERIFIED against the jsonc row census 2026-11-23
+  (not assumed)**: the twelve radiance-family rows are all `limit.context 262144`
+  (verified at :720/:727/:734 fn trio, :776/:783/:790 q27 trio, :831/:838/:845
+  flash-TP1 trio, :852/:859/:866 q27-TP2 trio); post-C02, ALL FOUR radiance lanes end
+  with served == trained == 262144 — the D47 pair COLLAPSES to equality on every
+  radiance lane; the unequal catalog context figures (131072 `qwen38-humanlike`; 16384
+  ×45; 8192 ×2; 1010000 ×2) exist ONLY in non-radiance strata/llama.cpp rows (the
+  strata row itself is 262144, equal to its own trained ceiling per its comment) and
+  M9-A2's scope is the twelve-row family, which never governs them — the D47 unequal
+  pair survives only OUTSIDE the family. Open questions re-filed as PRINT-PENDING (five,
+  in the plan — listed so no session invents answers); no open OWNER questions remain
+  (D5/D6/D7/D9/D10 settled them; the draft's OQ1/OQ2/OQ3 are retired, not re-asked).
+  Superseded by this fold: the draft's two-lane C01/C02 scope, its "fn/flash-tp1 no-op
+  proof" task, and its OQ1/OQ2/OQ3 — the superseded draft is preserved verbatim in git
+  (`e4c094b43`); the fold's agreements/differences are recorded here, per the parent's
+  D13 idiom.
 ## Deferred
 - The 1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is
   validated on this model). Revisit trigger: a fresh YaRN validation pass + an owner ruling.

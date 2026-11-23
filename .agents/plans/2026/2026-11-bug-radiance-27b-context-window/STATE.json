@@ -1,26 +1,26 @@
 {
   "feature": "2026/2026-11-bug-radiance-27b-context-window",
   "plan_status": "draft",
-  "plan_status_note": "DRAFT 2026-11-22: plan stage only — NO commits this session (9a5f731c7, the research commit, predates the plan). Written for the owner's three rulings (RULING 1/2/3; DECISIONS D1-D3, two of them against the coordinator's recommendation with the dissent recorded) and awaiting the batched open-questions round (five items, best guesses stated in the plan's Open questions section) before approval. No coord/test/dev/review session launched yet; the plan session is ses_dfa557f95ffeoy0Ut5WNAyoxeQ. Wave order: C01 (test-authority re-pin BY RULING) -> C02 (config move + prose plane) -> C03 (CONDITIONAL TP1 revert leg, trigger = the owner's refuting print) -> C04 (receipts-close leg, always). C03/C04 are POST-MERGE follow-up legs per RULING 3 (the receipt sequence is a follow-up leg, not a gate before the config edit); push/PR/merge are owner-only.",
+  "plan_status_note": "DRAFT — FOLDED 2026-11-23 (scope re-filed for FOUR lanes; approval pending this fold). NO implementation commits; the ticket's docs commits are e4c094b43 (the two-lane plan draft) / 484ee8f31 (D5-D8) / f31c40d41 (the flash round-2 evidence persistence, HEAD). The 2026-11-22 draft scoped C01/C02 to two 27b env values; D5 (the raise extended to the flash lanes) and D9 (fn-TP2 included, informed, risk accepted) changed the scope twice, and D10 closed the memory question (NO memory value changes anywhere). This fold re-files the plan of record + chunks for four lanes, carries the flash round-2 evidence (F1-F5, session ses_dfa43b76cffex5QZ8Vj9E9pGf1, live fetches 2026-11-23 — it could NOT be written into RESEARCH.md: write denied at the research tier AND at the coordinator's, so it lived in FRICTION + the transcript; it is now durable in the plan's Verified facts) into the contract, discovers the M8-B re-pin (the draft's \"M8-B verify-only/green\" assumption is broken by D9: the fn needle asserts 200000, C01 re-pins to 262144, designed red until C02), and records that fn-TP2 is at replicas: 0 by the OWNER'S SCALE ACT (git carries replicas: 1 at :1063) — so fn's receipt (the first TP2 print, cf-144 P11) is unobtainable until the owner brings fn back up, and C02's landing is a second pod roll on the pipeline's own critical path (D9(c), parent-D16). Plan session: ses_dfa557f95ffeoy0Ut5WNAyoxeQ (2026-11-22 draft); fold session: this one. Wave order: C01 (test wave, four lanes, three authority kinds + the D8 receipt block) -> C02 (four env values + prose plane + the fn roll stated) -> C03 (conditional, per-lane: 27b-TP1 predicted not to fit / flash-TP1 predicted to fit / fn the M>=8 bar) -> C04 (always; the D8 gate closes PROVISIONAL only if every item is present). C03/C04 are POST-MERGE follow-up legs (D3); push/PR/merge are owner-only. Open questions are PRINT-PENDING (five, listed in the plan so no session invents answers); no open OWNER questions remain (D5/D6/D7/D9/D10 settled them).",
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-11-22T23:58:00+00:00",
+  "updated_at": "2026-11-23T12:00:00+00:00",
   "kickoff": {
     "card": null,
-    "origin": "Owner-directed in-session 2026-11-22, continuing the MERGED feat-radiance-multi-instance (merge owner-confirmed 2026-11-22 via `git branch -a --contains` on the parent's commits — the merge state is not re-litigated, FRICTION #1). The three rulings were stated by the owner in-session: RULING 1 (raise TP2 to 262144), RULING 2 (attempt TP1 too, the boot print adjudicates — against the coordinator's recommendation), RULING 3 (write the config NOW, receipts after landing; the D28(6) relaxation is by owner word).",
+    "origin": "Owner-directed in-session 2026-11-22, continuing the MERGED feat-radiance-multi-instance (merge owner-confirmed 2026-11-22 via `git branch -a --contains` on the parent's commits — the merge state is not re-litigated, FRICTION #1). Rulings: D1 (raise 27b TP2), D2 (attempt 27b TP1, the boot print adjudicates — against the coordinator's recommendation), D3 (write the config NOW, receipts after landing; the D28(6) relaxation by owner word), then 2026-11-23: D5 (the raise extended to the flash lanes — against the coordinator's recommendation), D6 (max-num-seqs stays 8), D7 (held memory moves only on a contradicting print), D8 (the pre-authored single command block; C04 closes only if every item is present), D9 (fn-TP2 INCLUDED — informed, risk accepted), D10 (no memory change anywhere).",
     "slug": "bug-radiance-27b-context-window",
     "slug_basis": "coordinator-supplied slug (the folder name); run-tag-free (cf-90 idiom — run tags are retired for every flavor)",
     "type": "bug",
     "run_tag": null,
     "worktree": "feat-radiance-multi-instance",
     "branch": "feat-radiance-multi-instance",
-    "base": "Existing worktree/branch at 9a5f731c7 (the research commit). The parent ticket's work is owner-confirmed MERGED (2026-11-22). The local `main` ref in this worktree lacks the branch's last three commits — a statement about the local ref, not the merge state (FRICTION #1); the owner's ground truth governs.",
+    "base": "Existing worktree/branch; the ticket's docs commits e4c094b43/484ee8f31/f31c40d41 (HEAD) land this ticket's plan + DECISIONS + the flash round-2 evidence. The parent ticket's work is owner-confirmed MERGED (2026-11-22). The local `main` ref in this worktree lacks the branch's commits — a statement about the local ref, not the merge state (FRICTION #1); the owner's ground truth governs.",
     "models": {
       "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "code": "gpu-ai/qwen3.8-27b-radiance-tp2"
     },
-    "models_basis": "Owner routing instruction for this session (2026-11-22): EVERY tier (plan/test/dev/review/final; the two STATE slots carry the same value) rides gpu-ai/qwen3.8-27b-radiance-tp2. PHASE-SCOPED deviation from the parent ticket's D27 (every tier flash-next-radiance, re-confirmed FOR THAT ticket): the parent's D27 was scoped to the parent ticket, and this ticket's subject IS the 27b TP2 lane's config — the adjudicating TP1 boot runs on the model whose window is being raised, so the owner re-routed the whole pipeline onto it. The deviation is recorded, not silent: a later leg that needs the parent's routing posture re-reads the parent's D27, not this ticket's.",
+    "models_basis": "Owner routing instruction for this session (2026-11-22): EVERY tier (plan/test/dev/review/final; the two STATE slots carry the same value) rides gpu-ai/qwen3.8-27b-radiance-tp2. PHASE-SCOPED deviation from the parent ticket's D27 (every tier flash-next-radiance, re-confirmed FOR THAT ticket): the parent's D27 was scoped to the parent ticket, and this ticket's subject IS the 27b TP2 lane's config — the adjudicating boots run on the models whose windows are being raised, so the owner re-routed the whole pipeline onto it. The deviation is recorded, not silent: a later leg that needs the parent's routing posture re-reads the parent's D27, not this ticket's.",
     "local": false,
     "stages": [
       "Exploration",
@@ -31,11 +31,11 @@
       "Chunk Review",
       "Final Review"
     ],
-    "stages_basis": "Owner-directed in-session (no WeKan card, no checked Lifecycle set — the stage set is the standard pipeline set MINUS Deployment: the landing shape is the owner's scale act plus the post-merge receipt sequence C03/C04, not a session-executed deployment, RULING 3). Exploration DONE (parent's EXPLORE.md + this ticket's grounding reads), Pre Research DONE (RESEARCH.md — the 418-line 2026-11-22 storm round, V1-V5 + S1-S19), Planning in flight (this draft), Test Writing / Chunk Development / Chunk Review / Final Review pending in wave order.",
+    "stages_basis": "Owner-directed in-session (no WeKan card, no checked Lifecycle set — the stage set is the standard pipeline set MINUS Deployment: the landing shape is the owner's scale acts plus the post-merge receipt sequence C03/C04, not a session-executed deployment, D3). Exploration DONE (parent's EXPLORE.md + grounding reads), Pre Research DONE (RESEARCH.md — the 418-line 2026-11-22 storm round + the 2026-11-23 flash round 2 whose evidence is carried into the plan's Verified facts because its RESEARCH.md write was denied), Planning FOLDED (this 2026-11-23 fold re-files the plan for four lanes per D5/D9/D10; approval pending the fold), Test Writing / Chunk Development / Chunk Review / Final Review pending in wave order.",
     "hitl": ["Planning", "Final Review"],
     "claim": {
       "pipeline": null,
-      "note": "No board card and no pipeline lock claimed — owner-directed in-session work; the hourly board-coord gate does not own this run; recorded honestly per the boards convention. No pipeline_* call was made in the plan session; there is nothing to record beyond this line."
+      "note": "No board card and no pipeline lock claimed — owner-directed in-session work; the hourly board-coord gate does not own this run; recorded honestly per the boards convention. No pipeline_* call was made in the plan or fold sessions; there is nothing to record beyond this line."
     }
   },
   "chunks": {
@@ -46,7 +46,8 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [],
+      "note": "The TEST WAVE (parent-D30 — there is no dev round): four lanes, THREE authority kinds — (1) 27b: Q27_CTX/Q27_PROFILE/q27_tp2_profile() -> 262144, the q27 provenance record becomes a deviation-with-ruling (recorded with the D1/D2 cites, not pretended verbatim); (2) flash-TP1: the verbatim transcription leg CHANGES SHAPE (testlib flash_tp1_profile() :966 + FLASH_TP1_TRANSCRIPTION :663 + test_resting_lanes.py:218-244: \"EXACTLY one value swapped\" -> \"exactly TWO values swapped — id + context, per ruling D5/D9\"; the fidelity claim is now bounded by ruling — the source commit e7536b2c9^ is immutable, the leg is never again described as verbatim); (3) fn: a constant re-pin ONLY (FULL_PROFILE :120 — no transcription leg exists; the provenance is the comment at values.yaml:1070-1072, the cf-144 SS7 recipe; fn's change is CHEAPER in test terms and MORE expensive in risk terms, D9). Plus: the M8-B fn needle re-pin 200000 -> 262144 (D9 breaks the draft's verify-only assumption; designed red until C02); the M9-A2 SERVED_FIGURE dated per-lane annotation (value half untouched — twelve rows already 262144; prose half preserved — the stale commentary names both figures until the owner's C04 leg); TEST_SPEC SS1 the per-lane served column for FOUR lanes + the D4 equality table (plan fact 13, VERIFIED); the pre-authored receipt command block (D8) — all four lanes enumerated, the nine-item set + the eight-admitted-sessions smoke (D9(b)), the closing gate and the script are ONE artifact. Designed reds: the four lanes' composed-argv legs + M8-B + the flash transcription leg, all naming C02."
     },
     "C02": {
       "status": "pending",
@@ -55,7 +56,8 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [],
+      "note": "The config move + prose plane: the FOUR env values 200000 -> 262144 (fn :1121, q27 :1367, flash-tp1 :1495, q27-tp2 :1588), each with a dated PROVISIONAL annotation naming the pending receipt + ruling cites (D3(a); D1/D2 the 27b lanes, D5/D9 flash-TP1 + fn). Prose (annotate-never-rewrite): the values WHY comment (:1344-1352, the V3 correction + the F2/F3 framing); the \"not a memory story\" comment (:1570) + the roster \"UP at what cost\" column (the V5 verdict — host-pin TRUE / card-VRAM FALSE 12.48 -> 40.08 GiB); the fn block comment (:1070-1072) reads SUPERSEDED BY RULING D9, the measurement provenance PRESERVED (the cf-143 D28(1)/D30(1) print stays quoted — the reason fn's raise is risky is precisely that a measurement existed); the boot note's \"honest envelope\" (:300) annotated as pre-D47 history. THE FN ROLL (D9(c), fact 16): fn is the live default route (parent-D16) and is at replicas: 0 by the owner's scale act — C02's landing is a second pod roll on the pipeline's own critical path; the roll window is stated to the owner BEFORE landing; that boot is the first TP2 print (cf-144 P11, still owed). The one-home table + roster SS3 + NOTES.txt re-checked UNCHANGED with the proof (D10: no memory value moved — the held 24Gi/110Gi pairs are untouched)."
     },
     "C03": {
       "status": "pending",
@@ -65,7 +67,7 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "CONDITIONAL — the pre-agreed TP1 revert leg (RULING 2 outcome B: the owner's boot print refutes the TP1 fit: OOM/refuse/truncate, the `kv: pool backs N%` line under-funding the 262144 worst case, or the ~199k cap). Pre-authored contract: test re-pin wave splits the constants (Q27_PROFILE keeps 200000 for TP1; q27_tp2_profile() gains the explicit `--max-model-len 262144` override; Q27_CTX becomes the per-lane pair) -> dev one-env edit -> DECISIONS records the refuting print as the receipt. If the print CONFIRMS the fit, C03 retires as a no-op and the confirmation is recorded in C04. Post-merge, owner-triggered."
+      "note": "CONDITIONAL — the pre-agreed revert leg, PER-LANE triggers: 27b-TP1 (PREDICTED not to fit — V3/S10 ~199k cap; warn-not-refuse, so the refutation is a truncated-pool serve: OOM/refuse/truncate or the pool-backs line under-funding); flash-TP1 (PREDICTED to fit per F2 — its scale-up failure mode is the LOUD start-refusal, guide :1092-1093); fn-TP2 (D9(a): M < 8 in the pool-backs line — the silent failure mode; the eight-admitted-sessions smoke is the loud check, D9(b)). Pre-authored per-lane contracts: 27b — the Q27_PROFILE split (Q27_PROFILE keeps 200000 for TP1; q27_tp2_profile() gains the explicit override; Q27_CTX per-lane pair); flash-TP1 — flash_tp1_profile() drops the context override (back to the single-swap derivation) + the transcription leg re-pins to \"one value swapped\"; fn — FULL_PROFILE re-pins to 200000 + the M8-B needle back. Dev: the per-lane env edit(s). DECISIONS records each refuting print as the receipt (the D28(6) one-edit overlay repair — a FORWARD fix commit, never a revert of the merge, never history rewriting). A confirming print retires that lane's leg as a no-op, recorded in C04. Executor: a follow-up dev session under the coordinator, owner-triggered by the refuting print, test re-pin first (parent-D30)."
     },
     "C04": {
       "status": "pending",
@@ -75,13 +77,13 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "ALWAYS (post-merge follow-up leg, the owner's print in hand): records the nine-item receipt set (RESEARCH implication (e)) in DECISIONS + the boot note, closes the PROVISIONAL status by dated annotation naming the leg/commit that closes it (RULING 3(d)), retires the D47 dissent by receipt item 9, and records the owner-prose jsonc comment restatement as the owner's leg (D27). Post-merge, owner-triggered."
+      "note": "ALWAYS (post-merge follow-up — the owner runs the D8 command block ONCE at the scale act): records the FOUR-LANE receipt set (the nine-item set per lane + the eight-admitted-sessions smoke for fn, D9(b)); closes PROVISIONAL ONLY IF EVERY ITEM IS PRESENT (the D8 anti-drift gate — parent-D49: a gate that can pass on absence is not a gate), by dated annotation naming the leg/commit that closes it (D3(d)); retires the parent-D47 dissent by item 9 (a near-262144 session accepted — for fn, the M >= 8 bar, D9(a)); records the owner-prose jsonc commentary restatement as the OWNER's leg (parent-D27 — not executed by this ticket); STATES EXPLICITLY, per D10, that NO memory value moved in this ticket (the held 110/24/110Gi pairs are untouched; nothing here pre-empts those prints — the guard against a \"helpful\" re-pin during this leg)."
     }
   },
   "blocked": [],
   "deferred": [
     "1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is validated on this model). Revisit trigger: a fresh YaRN validation pass + an owner ruling.",
-    "The stale jsonc commentary restatement — the owner's prose leg at C04 (D27: catalog bytes are the owner's); the legs stay green meanwhile (the needles name both figures).",
-    "max-num-seqs 8 -> 32 alignment (upstream S8) — open question 2; a FORM change (D46; FORM_FIXED_FLAGS testlib :936), not a values edit; a fresh ruling + fresh print."
+    "The stale jsonc commentary restatement — the owner's prose leg at C04 (parent-D27: catalog bytes are the owner's); the legs stay green meanwhile (the needles name both figures).",
+    "max-num-seqs 8 -> 32 — D6 RULING: stays 8 (FORM-fixed, parent-D46; FORM_FIXED_FLAGS testlib :936); a FORM change (one chart edit, all four lanes, the wrapper bytes + the FORM legs' re-pin); upstream's 32 recorded as a legitimate future ruling with its own print."
   ]
 }
