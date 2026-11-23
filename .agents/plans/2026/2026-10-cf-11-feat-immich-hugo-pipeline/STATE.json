@@ -2,7 +2,7 @@
   "feature": "2026-10-cf-11-feat-immich-hugo-pipeline",
   "plan_status": "approved",
   "run_kind": "build",
-  "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
+  "coord_session": "ses_e6e2b3ed6ffepP4C6aR2CWbzAF",
   "test_session": "ses_e6b68f656ffel2Mc5m4kveEz0q",
   "test_handback": {
     "at": "2026-11-01",
@@ -10,7 +10,7 @@
     "summary": "C01 t01-t13 (containers/forgejo-host-runner/tests/), C02 static gate (tests/containers/), C03 dev-host contract (tests/services/dev-forgejo-runner.sh extended red-first), C04+C05 gpu contracts (tests/services/gpu-*.sh), C06 site-staging t1-t5 w/ render-shell fixtures; executed, expected-RED states honest; C07 deferred per owner precondition."
   },
   "current_wave": 0,
-  "updated_at": "2026-11-05T22:30:00Z",
+  "updated_at": "2026-11-23T21:11:24+00:00",
   "kickoff": {
     "card": "3wb5ejxZj36juM2a9",
     "card_number": 11,
@@ -293,12 +293,13 @@
         "C06"
       ],
       "repo": "CuratedForest.com (Forgejo)",
-      "status": "in_progress",
+      "status": "done",
+      "closed_2026_11_23": "SUPERSEDED-BY-OWNER-PUSH, closed by coord on owner answer + agent-explore live verification (ses_df5bdc648ffe, EXPLORE.md): owner pushed the artifacts DIRECTLY to site main — commit 380ffc7 (2026-11-07 15:52) inside 380ffc757. Site main carries the round-4 FINAL shape: single .forgejo/workflows/pipeline.yml (179 lines, sync cron '0 6 * * *' UTC, both jobs runs-on cf-host, ${{ vars.IMMICH_URL }}, five secret names), empty sync-albums.yaml; the old deploy.yml/sync.yml absent; pulls API 0, zero refs/pull/* (branch+PR form retired by the owner's own push — their privilege on their repo; no agent ever committed to site main). The remaining first-green gates are owner legs: Actions seed (5 secrets + IMMICH_URL variable — owner 2026-11-23: NOT YET) + the cf-88 runner chain below.",
       "dev_rounds": 1,
       "dev_session": "ses_e524be62dffeRXgl56VlnmS0dP",
       "precondition": "RESOLVED 2026-11-05 and PROVEN by dev r1: owner migrated CuratedForest.com to git.spencerslab.com WITH LFS. Coord live-verified pre-launch (unauthenticated API): instance 15.0.10+gitea-1.22.0 up; repo public, default main, 398193 KB, updated 2026-11-05T21:45:31Z. Dev r1 re-verified from a fresh clone: 74/74 LFS objects present, git lfs fsck OK, 3 magic-byte spot checks (real JPEG/JPEG/PNG, no pointer form). Matches C04 seed values + C05 watchdog syncWorkflow=sync.yml — C05 open question (repo + workflow file vs C06 deliverable) closed.",
-      "blocked_on": "owner write credential for push+PR (hugo-build-forgejo PAT — plan user action 4 mint+store, or a session-provided token). Local porting work is COMPLETE.",
-      "local_state": "RELOCATED 2026-11-06 per owner direction ('remove that junk and leave the work uncommitted in /home/coder/CuratedForest.com'): the 3 POST-REWORK staged files now sit UNTRACKED/UNCOMMITTED in the owner's real checkout /home/coder/CuratedForest.com (branch main @ 6b69726, [ahead 2] — the owner's pre-existing dirty state, proven otherwise unchanged: before/after porcelain diff = additions-only, HEAD sha identical). Byte proofs (sha256): .forgejo/workflows/deploy.yml 0d75be21…, .forgejo/workflows/sync.yml a3022e00…, sync-albums.yaml dc2fb2de… (all cmp-identical to the committed site-staging/ source of record in this worktree). Both /tmp clones were already absent at relocation time — nothing removed. Commit+push+PR are the owner's from that checkout (post-rework PR body handed in the 2026-11-06 coord message). Recovery if the checkout is reset: re-copy the 3 files from site-staging/.",
+      "blocked_on": "NONE as of 2026-11-23 — the credential question is moot: the owner landed the files themselves (see closed_2026_11_23). Whole-ticket remaining chain lives in the top-level blocked array.",
+      "local_state": "CLOSED. Historical: the 3 post-rework files sat untracked in /home/coder/CuratedForest.com; owner committed+pushed them to site main (380ffc7 within 380ffc757, 2026-11-07; round-3 consolidation into pipeline.yml + round-4 cron 06:00 included). Recovery source of record is now SITE MAIN ITSELF (verified 2026-11-23 by agent-explore via public clone: shapes match the round-4 rulings exactly); the ticket's site-staging/ was removed from the branch 2026-11-06 as recorded.",
       "note": "staging set per final fold: workflows + sync-albums.yaml only (no archetype, no _index, no hugo.yaml edit). Clone-side hugo -D --gc stop (go binary absent from agent envs by design — t5 tier B parity) is environment-blocked, NOT a port defect: the LFS/gitInfo intent of AC2 is proven by lfs fsck + magic-byte spot checks + the build reaching module load on real bytes; the runner-side remediation is C08. C07 dev r1 also produced the live finding that spawned C08 (no go in the runner image).",
       "handoffs": [
         {
@@ -337,7 +338,8 @@
     }
   },
   "blocked": [
-    "C07 (remote legs: site-repo push+PR — owner owns it or provisions a credential; local porting complete)"
+    "cf-88 chain (replaces the old C07 entry, 2026-11-23): branch cf-88-feat-gpu-host-runner (worktree /home/coder/SpencersLab/.agents/worktrees/cf-88-feat-gpu-host-runner, tip 4d3b6ea8d, local-only) must be RE-LANDED onto current origin/main b89acb5df — 6 runner-chart commits (cf-55/cf-6, 11-21→11-23) make the branch's own h7 leg RED by drift (EXPLORE.md Q4); then the one-line custom-values/gpu/prod-values.yaml slot fill (forgejo-runner-gpu-host.bitwardenIds.runner-token = the owner's Bitwarden item UUID — owner answered BOTH 11-07 legs DONE 2026-11-23, UUID pending paste-in-chat) turns h6 green; coord commits; owner merges + ArgoCD syncs; runner registers cf-host:host; waiting run #239 (or next 06:00 schedule) auto-picks-up.",
+    "Owner site Actions seed: 5 repo secrets (hugo-build-* items) + IMMICH_URL variable (https://immich.spencerslab.com) — owner 2026-11-23: NOT YET; first real runs fail loud until seeded (expected posture, per 2026-11-07 ruling)."
   ],
   "rework_2026_11_06": {
     "trigger": "owner branch review of cf-11-feat-immich-to-hugo vs main (owner pushed the branch and is line-reviewing the PR)",
