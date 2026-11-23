@@ -15,20 +15,21 @@
 # AC trace: N1[C06 AC1 presence, 50 files] N2[AC1 template legs]
 # N3[AC1 role differentiation] N4[AC2 single-authority restatement ban]
 # N5[AC1/AC5 generic vocabulary absence + bare-line extractor guard]
-# N6[AC3 frontmatter immobility + append-only prefix + twin discipline + the C07 named-line exception]
+# N6[AC3 frontmatter immobility + append-only prefix + twin discipline + the C07 named-line exception (no-append + combined reword+append controls)]
 # N7[AC5 OUT-roster freeze] N8[the artifact-line record pin].
 #
-# Red posture (C07 re-pin wave): N3's coord-six + dispatcher role windows are
-# DESIGNED-RED until C07 dev rewords the windows (the re-ground vocabulary in,
-# the retired close-protocol phrases pinned absent); N6's prefix freeze gains
-# the ONE C07 named-line exception (the dispatcher's pre-window bullet —
-# single-line, keyed to its exact settled-base text, with the
-# other-lines-must-not-move controls) — the settled base $BASE stays.
-# N1/N2/N4/N5/N7/N8 HOLD at the ledger values (rc=0 bare). Fabricated-drift
-# controls (strip, restate, template-swap, bare-line, moving-base,
-# single-line-allow mutants) run against mutants and prove every pin
-# non-vacuous. The round-2 app surface (.openchamber/project.json + its
-# fixture) is validated in tests/openchamber-project/, not here.
+# Red posture (C07 dev round 1 landed, 58b9ec295): the whole suite runs rc=0
+# bare — N1–N5 GREEN on the settled base (N3 flipped on dev's re-ground
+# reword), N6's prefix freeze GREEN with the ONE C07 named-line exception
+# admitted (the dispatcher's pre-window bullet — single-line, keyed to its
+# exact settled-base text, now admitted alone AND together with the
+# C06-appended section, the combination the landed dispatcher file is; the
+# other-lines-must-not-move + combined-case mutants redden). N7/N8 HOLD green
+# (rc=0 bare). Fabricated-drift controls (strip, restate, template-swap,
+# bare-line, moving-base, single-line-allow + combined-case mutants) run
+# against mutants and prove every pin non-vacuous. The round-2 app surface
+# (.openchamber/project.json + its fixture) is validated in
+# tests/openchamber-project/, not here.
 #
 # Usage:
 #   bash tests/agent-narratives/surface.sh            # N1..N8
@@ -250,7 +251,7 @@ if want n5; then
   ok "N5[C06 AC1/AC5]: the nine standalone sections (sources + mirrors) stay generic — no handoff/pipeline_claim/Lifecycle vocabulary and no /pipeline string anywhere in them; the template-swap mutant reddens"
 fi
 
-# --- N6: append-only prefix + twin discipline (AC3; HOLD guard arms; the one C07 named-line exception) ----------------
+# --- N6: append-only prefix + twin discipline (AC3; HOLD guard arms; the C07 named-line exception + combined-case controls) ----------------
 if want n6; then
   python3 - "$BASE" "$TMP/extract.py" "$HDR" "${PIPE16[@]}" "${STAND9[@]}" <<'PY' || fail "N6[C06 AC3]: the append-only/frontmatter guard reddens (see reason above)"
 import subprocess, sys
@@ -270,13 +271,32 @@ def check_prefix(old, new, allow_bullet):
         return True, ""
     if not allow_bullet:
         return False, "bytes BEFORE the appended section moved"
-    ol, nl = old.split("\n"), new.split("\n")
-    if len(ol) != len(nl):
-        return False, "line count moved — the C07 exception is a same-line reword only"
-    diff = [i for i in range(len(ol)) if ol[i] != nl[i]]
-    if len(diff) == 1 and ol[diff[0]] == BULLET:
-        return True, ""
-    return False, f"a prefix line other than the C07-named bullet moved ({len(diff)} lines differ)"
+    # Line lists without the trailing-newline artifact: a base ending in "\n"
+    # splits to a final "" element, and an appended section begins at exactly
+    # that slot — comparing the raw split lists would place the section's
+    # first line against the artifact and miscount the prefix.
+    ol = old.split("\n")
+    if old.endswith("\n"):
+        ol = ol[:-1]
+    nl = new.split("\n")
+    if new.endswith("\n"):
+        nl = nl[:-1]
+    if len(nl) < len(ol):
+        return False, f"line count moved — {len(nl)} < {len(ol)}: prefix lines missing (the C07 exception is a same-line reword only)"
+    # C07 combined case: the named-bullet reword is admitted TOGETHER WITH the
+    # C06-appended section (the exact combination the dispatcher's landed file
+    # is) — compare new's first len(ol) lines against the base and require the
+    # appended tail to open with the section header (the no-append case is the
+    # same comparison with an empty tail).
+    prefix = nl[:len(ol)]
+    diff = [i for i in range(len(ol)) if ol[i] != prefix[i]]
+    if len(diff) != 1 or ol[diff[0]] != BULLET:
+        return False, f"a prefix line other than the C07-named bullet moved ({len(diff)} lines differ)"
+    if len(nl) > len(ol):
+        tail = "\n".join(nl[len(ol):]).lstrip("\n")
+        if not tail.startswith(hdr):
+            return False, f"the tail appended after the reword is not the sanctioned section ({tail[:60]!r})"
+    return True, ""
 for n in names:
     for rel in (f".rulesync/subagents/{n}.md", f".opencode/agents/{n}.md"):
         old = subprocess.run(["git", "show", f"{base}:{rel}"], capture_output=True, text=True)
@@ -306,6 +326,20 @@ if check_prefix(doc, "line1-moved\n" + reworded[len("line1\n"):], True)[0]:
     print("C07 exception control broken: the two-lines-moved mutant passed — the single-line allow is vacuous"); sys.exit(1)
 if check_prefix(doc, reworded, False)[0]:
     print("C07 exception control broken: a non-dispatcher file took the bullet reword — the byte-freeze is vacuous"); sys.exit(1)
+# C07 combined-case controls: the named-bullet reword must be admitted
+# TOGETHER with the C06-appended section (the exact combination C07 mandates
+# on the dispatcher — the dev's landed file IS prefix-frozen-except-the-named-
+# line + tail-is-exactly-the-sanctioned-section), and the appended tail must
+# open with the section header.
+combined_ok = reworded + "\n" + hdr + "\nbody\n"
+if not check_prefix(doc, combined_ok, True)[0]:
+    print("C07 combined-case control broken: the bullet reword + appended section was rejected (harness fault)"); sys.exit(1)
+combined_bad = "line1-moved\n" + reworded[len("line1\n"):] + "\n" + hdr + "\nbody\n"
+if check_prefix(doc, combined_bad, True)[0]:
+    print("C07 combined-case control broken: the reword+append+other-line-moved mutant passed — the single-line allow is vacuous"); sys.exit(1)
+prefix_hdr = "line1\n" + BULLET + "\n" + hdr + "\n"
+if check_prefix(doc, prefix_hdr, True)[0]:
+    print("C07 combined-case control broken: the section-header-in-prefix mutant passed — the prefix freeze is vacuous"); sys.exit(1)
 # cf-126 C06 round-2 (D37 AA3) MOVING-BASE drift proof: with BASE floated to
 # HEAD, the commit that landed the sections becomes the base, and the NEXT
 # sanctioned fold-in (an inside-section edit — legitimate against the settled
@@ -332,7 +366,7 @@ PY
     cmp -s "$TMP/twinA.md" "$TMP/twinB.md" \
       || fail "N6[C06 AC3]: twin pair ($1,$2) sections differ — alias twins receive BYTE-IDENTICAL sections (the parity law's prose face)"
   done
-  ok "N6[C06 AC3 + C07 named-line exception]: every body's pre-append bytes are immovable vs $BASE and only the sanctioned section extends them — the dispatcher's pre-window bullet may reword in place (single-line, keyed to its exact base text; the other-line-moved and two-lines-moved mutants redden, the non-dispatcher freeze holds); alias twin sections are byte-identical once present"
+  ok "N6[C06 AC3 + C07 named-line exception]: every body's pre-append bytes are immovable vs $BASE and only the sanctioned section extends them — the dispatcher's pre-window bullet may reword in place, alone OR together with the C06-appended section (single-line, keyed to its exact base text; the other-line-moved, two-lines-moved and header-in-prefix mutants redden, the reword+append mutant is admitted, the non-dispatcher freeze holds); alias twin sections are byte-identical once present"
 fi
 
 # --- N7: the OUT roster stays byte-frozen (AC5) -------------------------------------
