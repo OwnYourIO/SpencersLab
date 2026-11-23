@@ -1,0 +1,113 @@
+{
+  "feature": "2026/2026-11-cf-140-feat-agent-card-reconcile",
+  "plan_status": "draft",
+  "coord_session": "ses_df6746e69ffe3r6oWe58jKqW2N",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-23T18:51:09Z",
+  "kickoff": {
+    "slug": "cf-140-feat-agent-card-reconcile",
+    "card": "zKf2GkiwPgeDmfpu2",
+    "card_number": 140,
+    "grouped_siblings": [
+      {
+        "card": "qMMB5XRQpX9JXdbxZ",
+        "card_number": 73,
+        "trigger": "inbound related-to -> AD-140",
+        "moved": "Executing under this run's claim"
+      }
+    ],
+    "type": "feat",
+    "services": ["home", "agent context"],
+    "origin_dir": "/home/coder/SpencersLab",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-140-feat-agent-card-reconcile",
+    "branch": "cf-140-feat-agent-card-reconcile",
+    "branch_source": "kickoff-mint-branch.sh on detached worktree",
+    "commits": "pending",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "priority": { "raw": null, "class": "default" },
+    "run_tag": null,
+    "claim": {
+      "set_id": "34617c28-d3a9-4561-8e33-d4d7d296d7a9",
+      "pipelines": ["Context"],
+      "shared": false,
+      "takeover": "none",
+      "note": "PIPELINE LOCK LOST notice fired 2026-11-23; pipeline_status re-read shows this session still holding the claim live, no new reap (lastReap 2026-11-23T16:34:57.826Z predates the claim). Owner answered the one sanctioned question: continue under the live claim."
+    },
+    "models": {
+      "coord": "openrouter/qwen/qwen3.8-flash",
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "final_review": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "chunk_review": "openrouter/qwen/qwen3.8-flash",
+      "test": "openrouter/qwen/qwen3.8-flash",
+      "dev": "openrouter/qwen/qwen3.8-flash",
+      "explore": "gpu-ai/qwen3.8-flash-next-radiance",
+      "research": "gpu-ai/qwen3.8-flash-next-radiance",
+      "note": "Card body named per-step desires (coord/chunk reviewer api flash, planner/overall reviewer api 2.4t, research+explore+others gpu-ai radiance tp2 27b); Model(s) checklist alone reads Qwen Flash + Provider: API. Owner ruling in-session 2026-11-23 moved explore+research off the parked tp2 lane onto gpu-ai/qwen3.8-flash-next-radiance; API assignments unchanged."
+    },
+    "stages": ["Session Rename", "Worktree Creation", "Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+    "stages_skipped": ["Agent Decides Research", "Deployment", "Single Session", "Follow-up cards created"],
+    "stop_points": ["Planning", "Final Review"],
+    "board_context": {
+      "collected": "2026-11-23T17:54:32.409Z",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj",
+        "Resume Later": "Hy9AEjEvxqh5ksRgC"
+      },
+      "fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      }
+    },
+    "preload": { "at": "2026-11-23T18:05:00Z", "tool": "preload_board", "cards": 116, "degraded": "with_checklists arg not advertised by the deployed tool; checklist trees rode the payload unconsumed" },
+    "card_details": { "at": "2026-11-23T18:00:00Z", "tool": "get_card_details", "degraded": "no block on the claim answer; coord called get_card_details once for the claimed card" }
+  },
+  "preplan_handoffs": [
+    {
+      "stage": "Exploration",
+      "sessions": {
+        "plugins": "ses_df66abf03ffe2jAfWBEGEUe5CG",
+        "agents": "ses_df66abeffffeeQPISFQ74gBMG8",
+        "wekan-mcp": "ses_df66abef9ffeOfjdG7wBBSqBtF",
+        "session-api": "ses_df66abefcffemMj58dOEIs8UUS"
+      },
+      "status": "DONE x4",
+      "files": ["EXPLORE-plugins.md", "EXPLORE-agents.md", "EXPLORE-wekan-mcp.md", "EXPLORE-session-api.md"]
+    },
+    {
+      "stage": "review-existing (card-mandated, 2.4t)",
+      "sessions": { "review": "ses_df63ea765ffemcNnwsyhaex3cd" },
+      "status": "DONE",
+      "files": ["REVIEW-existing-plugins.md"],
+      "verdicts": [
+        "lock retirement is safe; run-registry firewall must replace it",
+        "board-block re-injection is a ctx.storage capability flap (15/17 sessions, worst 12/34 prompts) -> once-mark must move to a cross-process surface",
+        "this ticket's own lock-lost storm is an 8-row spurious 'stolen' audit on a live claim",
+        "scope cuts: drop webhooks, drop format:yaml tool arg, scope objective-completed to explicit signals, repair AGENTS.md drift in commit 1"
+      ],
+      "open_questions": ["OQ-R1 question-notify re-enable vs absorb", "OQ-R2 provision Awaiting Answers + Timeout lists vs permanent jsonl degrade", "OQ-R3 keep plugin id vs rename+migrate", "OQ-R4 pending-question persistence + busy/idle on v2.3.2 (routed to R3)"]
+    }
+  ],
+  "research_queue": {
+    "running": [
+      { "id": "R1", "topic": "typescript-authoring skills", "session": "ses_df63f3b3dffeZ34gl5D9KBj7Wq" },
+      { "id": "R2", "topic": "opencode-plugin authoring skills", "session": "ses_df63f3b39ffe7Q28McvAm3TF6m" },
+      { "id": "R3", "topic": "session awareness + session creation", "session": "ses_df63f3b36ffeqFexjHjloW7itl" },
+      { "id": "R4", "topic": "card change detection", "session": "ses_df63f3b27ffeYtbWh0ri5F8Vgn" }
+    ],
+    "queued": [{ "id": "R5", "topic": "forgejo issues/PR access + card-id tagging best practice", "launch_when": "first research slot frees (card caps concurrency at 4)" }]
+  },
+  "chunks": {},
+  "blocked": [],
+  "deferred": []
+}
