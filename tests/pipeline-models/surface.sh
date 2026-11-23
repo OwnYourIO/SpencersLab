@@ -912,6 +912,10 @@ if want m8; then
 // (the trained window OpenCode budgets against) on every radiance-family row,
 // while the pod SERVES --max-model-len 200000 (the radiance roster block in
 // services/gpu-ai/prod/values.yaml — C03 moved lane data out of the chart).
+// [2026-11-23, bug-radiance-27b-context-window D14: post-C02 every radiance lane
+// serves --max-model-len 262144 PROVISIONAL (print pending — the C04 D8 receipt
+// gate); 200000 is the superseded pre-C02 figure, and the divergence this
+// paragraph describes has collapsed to equality (D4).]
 // The cf-143 equality needle (ctx == the shipped maxModelLen) is therefore
 // RETIRED BY RULING, not dropped: M8-B below pins the served scalar and the
 // documented divergence instead. The wire modelID is SHARED on all three rows
@@ -932,7 +936,7 @@ for (const [k, prio] of [['qwen3.8-flash-next-radiance', 5],
   if (e.modelID !== 'qwen3.8-flash-next-radiance')
     errs.push(`${k}: modelID is ${e.modelID}, want the shared wire value qwen3.8-flash-next-radiance (D7)`);
   if (!e.limit || e.limit.context !== CTX_CATALOG)
-    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want ${CTX_CATALOG} (the owner's radiance catalog figure — b3d7fada8, protected by D27; re-pinning it to the served 200000 is an owner act, not a ticket act)`);
+    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want ${CTX_CATALOG} (the owner's radiance catalog figure — b3d7fada8, protected by D27; re-pinning it to the served 200000 is an owner act, not a ticket act (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure)`);
   if (!e.body || e.body.priority !== prio)
     errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio} (Q2 HIGHER-WINS: urgent 9 / default 5 / low 1 — a 1/5/9 port of the retired vLLM numbers is exactly the inversion bug RESEARCH RQ2 names)`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
@@ -960,7 +964,7 @@ for (const [k, prio] of [['qwen3.8-27b-radiance', 4],
   if (e.modelID !== 'qwen3.8-27b-radiance')
     errs.push(`${k}: modelID is ${e.modelID}, want the shared q27 wire value qwen3.8-27b-radiance (honest-id law, the fn trio's D7 pattern cloned)`);
   if (!e.limit || e.limit.context !== CTX_CATALOG)
-    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want ${CTX_CATALOG} (the owner's radiance-family catalog figure — b3d7fada8/D27; q27's PER-SESSION served ceiling stays the chart's --max-model-len 200000, and the ~335-409K aggregate is a CONCURRENCY caveat, not a context number — §R19-Q1)`);
+    errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want ${CTX_CATALOG} (the owner's radiance-family catalog figure — b3d7fada8/D27; q27's PER-SESSION served ceiling is the chart's --max-model-len 262144 (PROVISIONAL until the C04 D8 receipt gate prints; the pre-C02 figure was 200000), and the ~335-409K aggregate is a CONCURRENCY caveat, not a context number — §R19-Q1)`);
   if (!e.body || e.body.priority !== prio)
     errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio} (OQ-16: 8/4/0 sits strictly below fn's 9/5/1 without inverting higher-wins — the strict-less-than relation is this exact-pin arithmetic, fn's rows pinned above)`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
@@ -1026,7 +1030,7 @@ if (deltaOk(added.concat(['qwen3.8-planted-seventh']).sort(), removed))
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/rad-catalog.js" "$CAT" \
-    || fail "M8: the radiance catalog contract is violated (FOUR trios under one ladder: fn 9/5/1 + q27 8/4/0 HOLD + D19's two resting-lane trios via M9 — shared modelIDs, higher-wins un-inverted, ctx 262144 the owner's trained figure with the served 200000 reconciled in prose, input [text,image], tools true; frozen delta vs the D19 base (added == the six new trio rows exactly, a seventh row refuses) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
+    || fail "M8: the radiance catalog contract is violated (FOUR trios under one ladder: fn 9/5/1 + q27 8/4/0 HOLD + D19's two resting-lane trios via M9 — shared modelIDs, higher-wins un-inverted, ctx 262144 the owner's trained figure with the served 200000 reconciled in prose (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure), input [text,image], tools true; frozen delta vs the D19 base (added == the six new trio rows exactly, a seventh row refuses) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
   # M8-B: the ctx axis, both ends + the documented divergence. The cf-143 leg
   # asserted catalog ctx == the shipped maxModelLen; the owner's 2026-11-22
   # catalog edit (b3d7fada8, D27) makes the two figures deliberately different,
@@ -1336,10 +1340,10 @@ PY
     n=$(printf '%s\n' "$touched" | grep -c . || true)
     [ "$n" -eq 0 ] || [ "$n" -eq 6 ] \
       || fail "M8[cf-radiance C02 AC4]: the range vs $CF143_BASE_SHA moves $n of the 6 runner-literal carriers: $touched — the pairing law moves all six in one commit or none"
-    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, the owner's 262144 ctx figure with the served 200000 scalar reconciled in prose, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4) + re-frozen delta + strata DEMOTION shape (PM alternate kept, kickoff/boards barred, lane kept served) + negative peer-id bars + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the runner-literal pairing leg, range-pairing checked vs $CF143_BASE_SHA"
+    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, the owner's 262144 ctx figure with the served 200000 scalar reconciled in prose (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure), [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4) + re-frozen delta + strata DEMOTION shape (PM alternate kept, kickoff/boards barred, lane kept served) + negative peer-id bars + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the runner-literal pairing leg, range-pairing checked vs $CF143_BASE_SHA"
   else
     skip "M8: runner-literal range half not run — review sets CF143_BASE_SHA=<merge-base> and re-runs M8 (git diff check, chunks/C02.md Tests)"
-    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, the owner's 262144 ctx figure with the served 200000 scalar reconciled in prose, [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4) + re-frozen delta + strata DEMOTION shape (PM alternate kept, kickoff/boards barred, lane kept served) + negative peer-id bars + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the runner-literal pairing leg with planted-drift teeth (range half skipped: CF143_BASE_SHA unset)"
+    ok "M8: radiance TWO-trio HOLD (fn 9/5/1 + q27 8/4/0 under un-inverted higher-wins, shared modelIDs, the owner's 262144 ctx figure with the served 200000 scalar reconciled in prose (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure), [text,image] + tools) + serving cross-check (peers.radiance.models == evidence floor 5; peers.radiance-q27 == its evidence floor 4) + re-frozen delta + strata DEMOTION shape (PM alternate kept, kickoff/boards barred, lane kept served) + negative peer-id bars + re-pinned class/favorited tables on source AND mirror + chart polarity comment + the runner-literal pairing leg with planted-drift teeth (range half skipped: CF143_BASE_SHA unset)"
   fi
 fi
 
@@ -1385,6 +1389,10 @@ fi
 # other way — over-budgeted requests meet a loud server refusal) is recorded in
 # FRICTION, not here. Before this leg NO leg read the new rows' ctx in either
 # direction — D27's recurring lesson: an unpinned convention drifts.
+# [2026-11-23, bug-radiance-27b-context-window D14: post-C02 the served figure is
+# 262144 on every radiance lane (PROVISIONAL, print pending — C04 D8); 200000 is
+# the superseded pre-C02 figure, kept by the stale commentary until the owner's
+# C04 restatement leg.]
 if want m9; then
   [ -f "$CAT" ] || fail "M9: $CAT missing"
   cat >"$TMP/fleet.js" <<'JS'
@@ -1661,7 +1669,7 @@ PY
     python3 "$TMP/win.py" --ci "$f" 900 'qwen3.8-27b-radiance-tp2' '502' \
       || fail "M9[C05]: $f names the 27b-TP2 lane without the 502-while-idle law (the resting lane refuses loudly — same sentence q27's row carries)"
   done
-  ok "M9[C05]: four-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie accepted per TEST_SPEC §3, floors 5/4/3/2 == each lane's own default row; D47 ctx: every row at limit.context 262144 with the served 200000 named in the governing commentary, both ctx teeth self-proven) + frozen delta == exactly the six new rows + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05"
+  ok "M9[C05]: four-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie accepted per TEST_SPEC §3, floors 5/4/3/2 == each lane's own default row; D47 ctx: every row at limit.context 262144 with the served 200000 named in the governing commentary, both ctx teeth self-proven (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure)) + frozen delta == exactly the six new rows + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"
