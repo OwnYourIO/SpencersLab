@@ -47,10 +47,11 @@
       "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
       "final_review": "openrouter/qwen/qwen3.8-2.4t-a95b",
       "chunk_review": "openrouter/qwen/qwen3.8-flash",
-      "test": "openrouter/qwen/qwen3.8-flash",
-      "dev": "openrouter/qwen/qwen3.8-flash",
+      "test": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "dev": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "explore": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "research": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "lane_health_gate": "OWNER RULING 2026-11-23T21:17Z moved test+dev onto the local tp2 lane. PRECONDITION before Test Writing: that lane must be proved reachable. Evidence against: the radiance seam refused a connection at 21:1xZ (peer proxy error, dial tcp 10.43.64.103:8000 connection refused) and pipeline-models documents q27-tp2 parked at replicas 0 (loud 502, never a silent fallback). A retry probe is in flight; a dead code tier stalls the whole implementation phase, so it is reported to the owner, never quietly re-routed.",
       "note": "API tiers are the card's own per-step assignment and are UNCHANGED: coord/chunk-review/test/dev = openrouter/qwen/qwen3.8-flash, plan/final-review = openrouter/qwen/qwen3.8-2.4t-a95b. Local tiers (explore/research) follow the owner's LATER ruling back to gpu-ai/qwen3.8-27b-radiance-tp2 — the card body's original ask — superseding the EARLIER same-day detour (both 2026-11-23; the reversal arrived between commit f08a5347f and 6730240b0). CAUTION on record: pipeline-models documents the tp2 lane as parked at replicas 0, where routing answers a loud 502 rather than falling back silently; a 502 on a local-tier launch is therefore reported to the owner, never quietly re-routed."
     },
     "stages": [
