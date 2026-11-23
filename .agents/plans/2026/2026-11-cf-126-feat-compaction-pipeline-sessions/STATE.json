@@ -1,7 +1,8 @@
 {
   "feature": "2026/2026-11-cf-126-feat-compaction-pipeline-sessions",
   "plan": "2026-11-17-feat-compaction-pipeline-sessions.md",
-  "plan_status": "approved",
+  "plan_status": "needs-replan",
+  "round4_note": "2026-11-23 owner ruling D41 (C07): compaction doctrine swapped to IN-SESSION RE-GROUNDING for the coord family + dispatcher (spawn-successor/handoff/end retired as never-exercised; PRIV CHECK first, per the ruling — CONFIRMED: block rows 66-77 A20-pinned + runtime POST /api/session proven by the C03/C06 probes). Card reopened Executing, fresh card-id claim d6b63300 (the orphaned 2d3318b4 was reaped as predicted — any timeouts comment on the card is that documented event). Branch carries the main merge 998eaafd8 (D40: merge-not-rebase preserves the hash pins; squash-at-landing retires t5). Also correcting: plan_status had stood 'approved' across the round-3 close (never flipped to complete) — the round-3 close is evidenced by delta-review-2 READY + hand-off comments. C07 planning amendment in flight; approval gate to owner; then test re-pin (X2/X3 note legs, narratives role windows, H section) -> dev -> review -> delta re-check -> fourth Review hand-off.",
   "round3_approved": "2026-11-22T23:05 +0000 — owner approved the C06 plan + chunks/C06.md + ALL FIVE planner proposals (roster 16 full + 9 generic, out: agent-board/agent-fuser/0-pipeline; appended '## Compaction & fresh-start' sections, frontmatter immovable, no bare /name lines; artifact line 'Follow your agent's compaction instructions — the hook-injected note is the law; produce exactly the pointer summary they specify.'; probe + owner empirical-fire verification posture, USER step 7; zero designed reds beyond the new narrative arms + nine-surface regression duty). Test wave in flight -> C06 dev -> review -> delta re-check on C06 scope -> third Review hand-off.",
   "round3_note": "2026-11-22T22:45 — owner direction D35/D36: agent-definition narratives + drafted OpenChamber compaction-prompt line as ticket artifact. Third reopen: fresh card-id claim 2d3318b4 (round-2 release of 73cd3ebd was clean + status-confirmed; the stale LOCK LOST banner = 7th drift occurrence). Card back Executing; prior APPROVED records stand; C06 re-plan in flight (agent-plan continuation), approval gate before implementation.",
   "delta_recheck": "APPROVED (final-delta-review, ses_dffe97774ffe3qu7f86bNcYpsT, 2026-11-21): full battery x2 at f2d4ef0a4 — 390/390 node both passes; 22-red ledger byte-identical round-1==A==B; C05's 14 flips all green; coherence sweep clean (wedge behavior sole in pipeline-locks, doctrine in its homes only, step-10 inversion consistent across role-coord/boards/AGENTS.md, D30→D33 chain true, AD-152 live read matches D34); records audit with duplicate-detection passed post-1fcf42e1c; aislop 100/0/0; rulesync no-op+check clean. Second Review hand-off executed this turn (see release_record).",
@@ -154,10 +155,10 @@
     "preload": { "at": "claim 2026-11-17T01:51-ish", "tool": "preload_board", "cards": 195, "degraded": false },
     "card_details": { "at": "claim", "tool": "get_card_details", "degraded": false },
     "claim": {
-      "setId": "73cd3ebd-7161-4a35-bbb7-4fdcff9d1991",
+      "setId": "d6b63300-9694-4c74-bde7-f129e7c3c646",
       "pipelines": ["PpN4g7xQDD4LXEuPW"],
-      "at": "2026-11-21T15:10 +0000",
-      "note": "fresh card-id-key claim after the second reap (history: Context-set claim 9c5800dd reaped in gap 1; card-id claim c2a1d9ee reaped 2026-11-19T21:58 after the C03 session went silent; the owner's 2026-11-21 continuation answers the sanctioned question)"
+      "at": "2026-11-23T04:50 +0000",
+      "note": "round-4 reopen claim (owner ruling D41). History: 9c5800dd (Context set) reaped in gap 1; c2a1d9ee card-id reaped 2026-11-19T21:58; a67a283f released done at the second-round close; 73cd3ebd claimed/released rounds 2-3; 2d3318b4 (round 3) ORPHANED when the release verb no-opped from every root (ninth engine symptom, FRICTION) and reaped as predicted. Sanctioned-question budget: each reopen answered by an owner continuation, none by the run's own asking."
     }
   },
   "chunks": {
