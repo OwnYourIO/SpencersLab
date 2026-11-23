@@ -252,6 +252,21 @@ rejected, why.
   permissions contract). Ordering constraint the follow-up must not skip: the runner literal cannot be
   **verified** until a lane is scaled up, so that ticket closes on a completed scheduled tick against a live
   lane, not on a merged config edit.
+- 2026-11-23 coord-note **D18 (ONE whole-plan review session covered BOTH tickets — the shared
+  `ses_dfae44584ffetHOUru9MO3GP3R` id in each ticket's `final_review.session` is correct, not a copy error)**.
+  The bug ticket's record write flagged the id collision as possibly a typo; it is neither. A single final
+  whole-plan review was run over the combined landing state and its report explicitly answered **the parent's
+  five owner asks** (routing, pool rename, strata assignment, 4× deploy, landing discipline) while its
+  conditions were raised against **the bug ticket's** records — so both tickets legitimately cite it, and the
+  ids are byte-identical because the session was. Why this is recorded rather than left implied: an
+  auditor-pattern check ("two records must not share one review session") would otherwise present this as data
+  corruption and someone would "fix" it by inventing a second session id, which would be worse than the
+  ambiguity. Where the scopes differ, each ticket's `final_review.scope` says what that review covered for it;
+  the parent's `plan_status_note` and this ticket's D15 split the conditions by which file they were found in.
+  Also fixed here, in prose so it is not "corrected" later: the two battery figures living in this ticket's
+  STATE are a **time series, not a contradiction** — 162P was the pre-rebase count at completion, 194P is the
+  post-rebase count on main's newer base, and the delta is entirely main's own added test files (6 mine +
+  26 cf-145's), attributed commit-by-commit rather than left as a discrepancy.
 - 2026-11-23 coord-ruling **D16 (the receipt gate's fit hole is closed as a gate change; its residual limits are
   recorded as limits, not defects)**. Final review's F2 filed the overstatement as a MINOR with a reword;
   substance required a fix — see D15. Landed at `97d284787`: per-lane `M >= read-configured
