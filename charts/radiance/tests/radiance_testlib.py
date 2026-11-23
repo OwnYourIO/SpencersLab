@@ -117,13 +117,27 @@ SCALARS = {
 # retained at TP2: checkpoint-interval 4096, ngram disk, served-name, host::,
 # port 8000, the model anchor. maxModelLen/maxNumSeqs/headroom/spec unchanged
 # (P09: the profile move is tp-pinned, not ctx-pinned).
+# [2026-11-23 bug-radiance-27b-context-window D9 — CONSTANT RE-PIN BY RULING]:
+# --max-model-len 200000 -> 262144. This is a constant re-pin ONLY — fn has no
+# git-diff transcription leg (its provenance is the comment at
+# services/gpu-ai/prod/values.yaml:1070-1072, the cf-144 §7 recipe), so the
+# change is CHEAPER in test terms and MORE expensive in risk terms (D9): fn's
+# 200000 was the one MEASURED value in this ticket — the cf-143 D28(1)/D30(1)
+# boot print priced it ("8.0 sessions at 200000", out of memory at cgroup 64
+# GiB vs 71.04 GiB observed pinned) — and ruling D9 (informed, risk accepted)
+# OVERTURNS that measurement on the live default route. The measurement's
+# provenance is preserved in DECISIONS (the cf-143 D28(1)/D30(1) print stays
+# quoted, not erased) — the accepted risk is precisely that a measurement is
+# being overturned. The loud checks attached to the ruling: the M >= 8 bar on
+# the `kv: pool backs N% … M full-length sessions` line (D9(a)) and the
+# eight-admitted-sessions smoke (D9(b)), both inside the D8 receipt block.
 FULL_PROFILE = {
     "--model": MODEL_PATH,
     "--port": "8000",
     "--host": "::",
     "--tp": "2",
     "--tp-wire": "wht6",
-    "--max-model-len": "200000",
+    "--max-model-len": "262144",
     "--max-num-seqs": "8",
     "--placement": "expert_tiered",
     "--host-pool-mib": "12288",
@@ -279,11 +293,21 @@ Q27_PACK_URL = f"https://huggingface.co/{Q27_PACK_REPO}/resolve/main/{Q27_PACK_F
 # resolved; served-name added per the honest-id law). Set equality is
 # EXACT and order-insensitive (AC2, the fn AC3 idiom): an extra flag is as
 # red as a missing one.
+# [2026-11-23 bug-radiance-27b-context-window D1/D2 — DEVIATION BY RULING,
+# annotated, never rewritten]: --max-model-len moves 200000 -> 262144 (the
+# trained ceiling). The 200000 was TRANSCRIBED from the cf-143 D54(1) owner
+# recipe verbatim (matching the upstream compose profile, RESEARCH V4/S8) and
+# never measured on our node (V4 — the 27b lanes rest at replicas 0, no boot
+# print exists) — so the move is a ruling, not a correction: this profile now
+# DEVIATES from the D54-ratified recipe on that one flag, recorded here with
+# the cites (D1 27b-TP2; D2 27b-TP1, the boot print adjudicates the attempt),
+# not pretended verbatim. q27_tp2_profile() inherits the move by derivation
+# (no second literal). PROVISIONAL until the C04 D8 receipt gate closes it.
 Q27_PROFILE = {
     "--model": Q27_MODEL_PATH,
     "--tp": "1",
     "--max-num-seqs": "8",
-    "--max-model-len": "200000",
+    "--max-model-len": "262144",
     "--kv-cache-dtype": "fp8",
     "--prefix-cache-mib": "4096",             # Wilde's operational patch, NOT the card's
     #                                          # (§R19-Q2); below one 200K fp8 conversation,
@@ -329,9 +353,16 @@ Q27_CATALOG_PRIOS = {   # OQ-16 approved: each STRICTLY below fn's 9/5/1,
     "default": 4,       # byte-unchanged. priority-0 SEMANTICS UNVERIFIED —
     "low": 0,           # C16's smoke read confirms; the arms pin the
 }                       # AUTHORED value, not a claimed behaviour.
-Q27_CTX = 200000        # per-session ceiling (--max-model-len); the
+Q27_CTX = 262144        # per-session ceiling (--max-model-len); the
 #                        # ~335-409K aggregate is a CONCURRENCY caveat, not a
 #                        # context number (§R19-Q1).
+#                        # [2026-11-23 bug-radiance-27b-context-window D1/D2 —
+#                        # re-pinned by ruling, contract carrier]: defined here,
+#                        # referenced by no other leg. Pre-move it carried the
+#                        # transcribed 200000 (V4). If C03's 27b-TP1 refutation
+#                        # fires, this constant becomes the per-lane pair (TP1
+#                        # 200000 / TP2 262144) — that split is C03's
+#                        # pre-authored contract, not C01's.
 Q27_CAPS_INPUT = ["text", "image"]           # in-pack vision tower (Q8 pattern);
 #                                             # the C16 smoke retires the claim on failure
 Q27_PEER_FLOOR = 4      # q27's default class; fn's 5 floor is NOT reused
@@ -657,9 +688,12 @@ FLASH_TP1_PEERS_EVIDENCE = (
     REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-flash-tp1-peers-expected.yaml"
 )
 # The transcription source, named by commit: the cf-143 TP1-era array (the file as
-# it stood BEFORE e7536b2c9 flipped the fn lane to TP2). The lane is that array with
-# EXACTLY one value swapped — the served-model-name — so the proof leg is a diff,
-# not a re-derived flag list.
+# it stood BEFORE e7536b2c9 flipped the fn lane to TP2). [2026-11-23
+# bug-radiance-27b-context-window D5/D9 — the fidelity claim is now BOUNDED BY
+# RULING]: the lane is that array with exactly TWO values swapped — the served
+# id (the lane's own, OQ-F) and the context (262144, per ruling D5/D9). The
+# source commit is immutable and the lane moves by ruling, so the proof is a
+# two-swap deviation-with-ruling: this leg is NEVER AGAIN described as verbatim.
 FLASH_TP1_TRANSCRIPTION = ("e7536b2c9^", "charts/radiance/values.yaml")
 
 Q27_TP2_APP_NAME = "radiance-q27-tp2"
@@ -966,10 +1000,13 @@ def expected_env(profile: dict) -> dict:
 @functools.lru_cache(maxsize=None)
 def flash_tp1_profile() -> dict:
     """The flash-TP1 ruled profile, DERIVED never recalled: the cf-143 TP1-era
-    chart array at FLASH_TP1_TRANSCRIPTION, with exactly one value swapped —
-    the served id becomes the lane's own (OQ-F). git absence or a source that
-    does not resolve fails the legs loudly (the transcription has no other
-    authority)."""
+    chart array at FLASH_TP1_TRANSCRIPTION, with exactly TWO values swapped —
+    the served id becomes the lane's own (OQ-F), and --max-model-len becomes
+    262144 (per ruling D5/D9, 2026-11-23 bug-radiance-27b-context-window; the
+    fidelity claim is BOUNDED BY RULING — the source commit e7536b2c9^ is
+    immutable, and this leg is never again described as verbatim). git absence
+    or a source that does not resolve fails the legs loudly (the transcription
+    has no other authority)."""
     commit, path = FLASH_TP1_TRANSCRIPTION
     assert shutil.which("git"), "D43: git binary absent — the transcription source cannot resolve"
     shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
@@ -979,12 +1016,23 @@ def flash_tp1_profile() -> dict:
     assert isinstance(source, list) and source, f"D43: no serveArgs array at {commit}:{path}"
     want = {source[i]: str(source[i + 1]) for i in range(0, len(source) - 1, 2)}
     assert "--model" in want, f"D43: the {commit} array is not a serve profile: {sorted(want)}"
-    return {f: (FLASH_TP1_SERVED_ID if f == "--served-model-name" else v) for f, v in want.items()}
+    assert "--max-model-len" in want, (
+        f"D43/D5: the {commit} array carries no --max-model-len — the D5/D9 context swap "
+        "has no key to apply to; the pin names the wrong revision or the array moved"
+    )
+    return {f: (FLASH_TP1_SERVED_ID if f == "--served-model-name"
+               else "262144" if f == "--max-model-len" else v) for f, v in want.items()}
 
 
 def q27_tp2_profile() -> dict:
     """27b-TP2 = the q27 array with the TP pair applied and its own served id
-    (OQ-G) — derived from Q27_PROFILE, never a fourth literal."""
+    (OQ-G) — derived from Q27_PROFILE, never a fourth literal.
+    [2026-11-23 bug-radiance-27b-context-window D1 — dated derivation note]:
+    the context bound (262144) reaches this lane BY DERIVATION from the
+    re-pinned Q27_PROFILE — no second literal, so the TP2 lane is visibly
+    accounted for by the same ruling (D1), not silently carried; the TP2
+    fit is the MEASURED one (RESEARCH V3/S10: full 262144 fits the card
+    with ~100 MiB headroom per card)."""
     return {**Q27_PROFILE, "--tp": "2", "--tp-wire": "wht6",
             "--served-model-name": Q27_TP2_SERVED_ID}
 

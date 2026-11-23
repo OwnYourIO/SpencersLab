@@ -16,7 +16,45 @@ suite pins both ends instead of forcing one number:
 | Surface | Figure | Whose ruling |
 |---|---|---|
 | `.opencode/opencode.jsonc`, all twelve radiance-family rows (fn trio, q27 trio, flash-TP1 trio, 27b-TP2 trio) | `limit.context: 262144` | the owner's catalog edit `b3d7fada8` (2026-11-22) set the six then-live rows, protected by DECISIONS D27 ("never those six context values"); owner ruling D47 (2026-11-23) moved the six C05 rows to the same figure — it is the trained window the CLIENT budgets against, on every row |
-| `charts/radiance/values.yaml` → `app-template.maxModelLen`, and the `--max-model-len` the chart renders | `200000` | D17 FULL profile — what the engine ADMITS per request |
+| `charts/radiance/values.yaml` → `app-template.maxModelLen`, and the `--max-model-len` the chart renders | `200000` | D17 FULL profile — what the engine ADMITS per request **[pre-move state — kept as dated history; re-pinned below]** |
+
+**[2026-11-23 re-pin, bug-radiance-27b-context-window D4/D9/D11 — the served
+figure moves per lane, by ruling.]** The table above is the PRE-MOVE state.
+D1/D2 move the 27b lanes (the boot print adjudicates the TP1 attempt), D5
+moves flash-TP1, D9 moves fn (informed, risk accepted: its 200000 was the one
+MEASURED value in this ticket and the ruling overturns that measurement on the
+live default route). Post-C02 every radiance lane serves 262144 PROVISIONAL
+until the C04 D8 receipt gate closes it.
+
+**The per-lane served column (four lanes):**
+
+| Lane | Pre-move served | Post-move served | Authority |
+|---|---|---|---|
+| `radiance` (fn-TP2) | 200000 — MEASURED (the cf-143 D28(1)/D30(1) boot print; the raise overturns it) | 262144 PROVISIONAL | D9 (M ≥ 8 bar, D9(a); eight-admitted-sessions smoke, D9(b)) |
+| `radiance-q27` (27b-TP1) | 200000 — transcribed, never measured (V4) | 262144 PROVISIONAL | D1/D2 (the boot print adjudicates the attempt) |
+| `radiance-flash-tp1` | 200000 — a serving choice, not an empirical bound (F1) | 262144 PROVISIONAL | D5 |
+| `radiance-q27-tp2` | 200000 — transcribed, never measured (V4) | 262144 PROVISIONAL | D1 (the fit is MEASURED — V3/S10, ~100 MiB headroom per card) |
+
+**The D4 restated pairing law — per lane `trained >= served`, EQUALITY LEGAL —
+applied per lane. VERIFIED, not assumed (plan fact 13, the jsonc row census
+2026-11-23):** post-C02 ALL FOUR radiance lanes end with served == trained ==
+262144; the D47 unequal pair COLLAPSES to equality on every radiance lane (the
+twelve family rows are already `limit.context 262144`, owner `b3d7fada8`). The
+unequal catalog context figures (131072 `qwen38-humanlike`; 16384 ×45; 8192
+×2; 1010000 ×2) exist ONLY in non-radiance strata/llama.cpp rows — M9-A2's
+scope is the twelve-row family and never governs them, so the D47 unequal pair
+survives only OUTSIDE the family.
+
+**M8-B description, re-pinned (2026-11-23):** the fn needle at 262144 post-C02
+(designed-red naming C02 while the env stands at 200000; PROVISIONAL until
+C04). The both-figures commentary teeth are PRESERVED: the stale comment names
+the pre-move 200000 (green pre- and post-C02; the restatement is the owner's
+C04 leg — a restatement that drops 200000 from the prose re-pins that needle
+in a recorded C04 follow-up, not pre-authored), and the window carries 262144
+via the row value + the comma-normalised comment spelling. Post-C02 the
+divergence-reconciliation rationale retires with the collapse to equality: the
+200000 needle then locks the stale comment in place rather than reconciling a
+gap — that is its recorded post-move meaning.
 
 The cf-143 needle asserted the two were EQUAL (`ctx == maxModelLen`, the
 "catalog mirrors served truth" law). The owner's edit retired that equality by
@@ -25,6 +63,14 @@ stays 200000, the catalog figure stays above it, and the catalog COMMENT must
 name both figures where the rows sit. An unexplained gap between what the client
 plans and what the pod admits is exactly the drift class this suite exists to
 catch — the numbers may differ, the prose may not go silent.
+[2026-11-23 dated annotation, bug-radiance-27b-context-window D4]: the "served
+scalar stays 200000 / the catalog figure stays above it" half is the PRE-MOVE
+state. Post-C02 the served scalar is 262144 on every radiance lane and the
+pair COLLAPSES to equality (D4: `trained >= served` per lane, EQUALITY LEGAL —
+the "stays above it" half retires with the divergence). The "both figures
+named" teeth stay: 200000 survives in the stale commentary as the pre-move
+served figure until the owner's C04 restatement leg — see the M8-B description
+re-pin above.
 
 Rejected alternative, recorded so nobody re-files it: re-pinning the six rows to
 200000. D27 puts those bytes outside this ticket (and outside every later one
