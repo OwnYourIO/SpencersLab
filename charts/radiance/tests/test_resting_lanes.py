@@ -215,16 +215,22 @@ def test_c05_lane_pair_is_guaranteed_on_the_renamed_pool(name):
 # the sandbox/env equality (designed-red until dev round 3 lands the wrapper
 # and the lane envs — what the lane actually serves).
 
-def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_verbatim_except_the_id():
-    """C05 AC1 (OQ-F) transcription half: the flash-TP1 ruled profile IS the
-    cf-143 TP1-era chart array at the pinned commit, with EXACTLY one value
-    swapped — its own served id. Anything else means the profile was
-    re-derived by hand, and the TP1 recipe (pool 43000, --kv-resident 32768,
-    expert_tiered, speculative 3) is exactly what a hand-copy gets wrong."""
+def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_with_exactly_two_values_swapped():
+    """C05 AC1 (OQ-F) transcription half, re-pinned BY RULING (2026-11-23
+    bug-radiance-27b-context-window D5/D9): the flash-TP1 ruled profile IS the
+    cf-143 TP1-era chart array at the pinned commit, with EXACTLY two values
+    swapped — its own served id and the context (262144, per ruling D5/D9).
+    The fidelity claim is bounded by ruling — the source commit is immutable,
+    so this leg is never again described as verbatim. Anything else means the
+    profile was re-derived by hand, and the TP1 recipe (pool 43000,
+    --kv-resident 32768, expert_tiered, speculative 3) is exactly what a
+    hand-copy gets wrong. The equality below is the 'NO THIRD value may
+    differ' arm — a drift of host-pool or batched-tokens away from the pinned
+    array reddens it; the planted teeth prove the arm bites."""
     commit, path = R.FLASH_TP1_TRANSCRIPTION
     assert shutil.which("git"), "C05: git binary absent — the transcription source cannot resolve"
     shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
-                           timeout=120, cwd=str(R.REPO_ROOT))
+                            timeout=120, cwd=str(R.REPO_ROOT))
     assert shown.returncode == 0, (
         f"C05: the transcription source {commit}:{path} does not resolve — the proof has no "
         "authority, so the leg fails rather than passing vacuously"
@@ -237,10 +243,22 @@ def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_verbatim_except_the_id():
         "names the wrong revision or the array moved"
     )
     want["--served-model-name"] = R.lane(R.FLASH_TP1_APP_NAME)["served_id"]
+    want["--max-model-len"] = "262144"
     got = {f: str(v) for f, v in R.lane_profile(R.FLASH_TP1_APP_NAME).items()}
     assert got == want, (
-        "C05: the flash-TP1 ruled profile is NOT the TP1 array with exactly the id swapped — "
-        f"differing flags: {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
+        "C05: the flash-TP1 ruled profile is NOT the TP1 array with exactly the id and the "
+        "context swapped (D5/D9) — a third unplanned diff (host-pool, batched-tokens, ...) "
+        f"or a re-derived value: {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
+    )
+    # Teeth: a THIRD unplanned swap must be refused by the same equality — a
+    # delta check that cannot refuse a re-derived flag is an inventory print,
+    # not a proof. Plant one (host-pool away from the pinned 43000) and show
+    # the comparison bites.
+    planted = dict(want)
+    planted["--host-pool-mib"] = "1"
+    assert planted != got, (
+        "C05 teeth: a planted third diff (host-pool 1 vs the pinned 43000) passed the "
+        "two-swap equality — the transcription leg cannot refuse a re-derived profile"
     )
 
 

@@ -1030,12 +1030,24 @@ JS
   # M8-B: the ctx axis, both ends + the documented divergence. The cf-143 leg
   # asserted catalog ctx == the shipped maxModelLen; the owner's 2026-11-22
   # catalog edit (b3d7fada8, D27) makes the two figures deliberately different,
-  # so the equality needle is retired BY RULING and replaced by three teeth: the
-  # served scalar stays the chart's 200000, the catalog figure stays above it,
-  # and the catalog comment must name BOTH figures where the rows sit (an
-  # unexplained gap between what the client budgets and what the pod serves is
-  # the drift class this suite catches — the numbers may differ, the prose may
-  # not go quiet).
+  # so the equality needle is retired BY RULING and replaced by three teeth:
+  # the served scalar, the catalog figure, and the catalog comment that names
+  # both figures where the rows sit (an unexplained gap between what the
+  # client budgets and what the pod serves is the drift class this suite
+  # catches — the numbers may differ, the prose may not go quiet).
+  # [2026-11-23 bug-radiance-27b-context-window D4, re-pinned by ruling D9 —
+  # the restated pairing law, annotated]: D47 restates as per-lane
+  # `trained >= served` with EQUALITY LEGAL; post-C02 every radiance lane
+  # serves 262144, so the fn pair COLLAPSES to equality (served == trained)
+  # and the "catalog figure stays ABOVE the served" half retires with the
+  # divergence. The three teeth, restated: (1) the served scalar is the
+  # chart's 262144 (PROVISIONAL until C04; designed-red naming C02 while the
+  # env stands at 200000); (2) the comment still names 200000 — post-move
+  # that is the PRE-MOVE served figure, kept by the stale comment (the
+  # restatement is the owner's C04 leg; if it drops 200000 from the prose,
+  # this needle's re-pin is a recorded C04 follow-up, not pre-authored);
+  # (3) the window carries 262144 (the row value + the comma-normalised
+  # comment spelling "262,144") — green pre- and post-C02.
   python3 - <<'PY' || fail "M8: the radiance ctx axis drifted off its ruling (served scalar / catalog figure / the comment that reconciles them)"
 import re, sys, yaml
 try:
@@ -1052,10 +1064,11 @@ block = ((svc.get("radiance") or {}).get("app-template") or {})
 lanectr = (((block.get("controllers") or {}).get("radiance") or {}).get("containers") or {}).get("radiance") or {}
 env = {e.get("name"): e.get("value") for e in lanectr.get("env") or []}
 mm = env.get("RADIANCE_MAX_MODEL_LEN")
-assert mm is not None and str(mm) == "200000", (
-    f"the radiance block env RADIANCE_MAX_MODEL_LEN is {mm!r}, want 200000 — the pod's served "
-    "admission ceiling (D17 FULL profile); env is the lane's sizing channel since D43 and the "
-    "chart suite pins the composed --max-model-len to it"
+assert mm is not None and str(mm) == "262144", (
+    f"the radiance block env RADIANCE_MAX_MODEL_LEN is {mm!r}, want 262144 — the pod's served "
+    "admission ceiling (D9; PROVISIONAL until C04); designed-red naming C02 while the env "
+    "stands at 200000; env is the lane's sizing channel since D43 and the chart suite pins "
+    "the composed --max-model-len to it"
 )
 src = open(".opencode/opencode.jsonc").read()
 low = src.lower()
@@ -1064,11 +1077,14 @@ assert gap >= 0, "no radiance row in the provider catalog"
 block = src[max(0, gap - 3000):gap + 200]
 flat = block.replace(",", "")
 assert "200000" in flat, (
-    "the radiance catalog commentary never names the served figure 200000 — the gap between the catalog "
-    "limit.context (262144, the owner's figure) and the pod's --max-model-len must be stated at the rows"
+    "the radiance catalog commentary never names the pre-move served figure 200000 — post-C02 "
+    "this is the historical figure the stale comment keeps until the owner's C04 restatement leg "
+    "(the needle's re-pin is a recorded C04 follow-up if the restatement drops it)"
 )
 assert "262144" in flat, (
-    "the radiance catalog commentary never names the trained figure 262144 — the same divergence, other end"
+    "the radiance window never carries the trained/served figure 262144 — post-C02 trained == "
+    "served == 262144 (the D4 collapsed pair); the row value and the comma-normalised comment "
+    "spelling are both in-window, so this half is defense in depth on the value"
 )
 PY
   # M8-C: serving-fact cross-check (the cf-83 M4 role, radiance era): the wire
@@ -1389,6 +1405,15 @@ const LANES = [
 // the drift class D47 was asked about — fn/q27 duplication of M8-A's pin is
 // deliberate defence in depth, one law two places, not a second formulation.
 const CTX_FIGURE = 262144;
+// [2026-11-23 bug-radiance-27b-context-window D4/D9 — dated per-lane
+// annotation, value UNCHANGED]: pre-C02 the single served figure was 200000 on
+// all four lanes; post-C02 EVERY radiance lane serves 262144 (served ==
+// trained, the D47 pair collapsed to equality per lane — plan fact 13,
+// verified against the jsonc row census). The constant stays 200000 on
+// purpose: it is the PROSE half's needle (the stale commentary's pre-move
+// figure, kept green until the owner's C04 restatement leg), not a claim
+// about what any lane serves. The per-lane served column is TEST_SPEC §1's,
+// not a leg constant.
 const SERVED_FIGURE = 200000;
 function ctxValueErr(key, e) {
   if (!e.limit || e.limit.context !== CTX_FIGURE)
