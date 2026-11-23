@@ -1,0 +1,87 @@
+{
+  "feature": "2026/2026-11-bug-radiance-27b-context-window",
+  "plan_status": "draft",
+  "plan_status_note": "DRAFT 2026-11-22: plan stage only — NO commits this session (9a5f731c7, the research commit, predates the plan). Written for the owner's three rulings (RULING 1/2/3; DECISIONS D1-D3, two of them against the coordinator's recommendation with the dissent recorded) and awaiting the batched open-questions round (five items, best guesses stated in the plan's Open questions section) before approval. No coord/test/dev/review session launched yet; the plan session is ses_dfa557f95ffeoy0Ut5WNAyoxeQ. Wave order: C01 (test-authority re-pin BY RULING) -> C02 (config move + prose plane) -> C03 (CONDITIONAL TP1 revert leg, trigger = the owner's refuting print) -> C04 (receipts-close leg, always). C03/C04 are POST-MERGE follow-up legs per RULING 3 (the receipt sequence is a follow-up leg, not a gate before the config edit); push/PR/merge are owner-only.",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-22T23:58:00+00:00",
+  "kickoff": {
+    "card": null,
+    "origin": "Owner-directed in-session 2026-11-22, continuing the MERGED feat-radiance-multi-instance (merge owner-confirmed 2026-11-22 via `git branch -a --contains` on the parent's commits — the merge state is not re-litigated, FRICTION #1). The three rulings were stated by the owner in-session: RULING 1 (raise TP2 to 262144), RULING 2 (attempt TP1 too, the boot print adjudicates — against the coordinator's recommendation), RULING 3 (write the config NOW, receipts after landing; the D28(6) relaxation is by owner word).",
+    "slug": "bug-radiance-27b-context-window",
+    "slug_basis": "coordinator-supplied slug (the folder name); run-tag-free (cf-90 idiom — run tags are retired for every flavor)",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": "feat-radiance-multi-instance",
+    "branch": "feat-radiance-multi-instance",
+    "base": "Existing worktree/branch at 9a5f731c7 (the research commit). The parent ticket's work is owner-confirmed MERGED (2026-11-22). The local `main` ref in this worktree lacks the branch's last three commits — a statement about the local ref, not the merge state (FRICTION #1); the owner's ground truth governs.",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "code": "gpu-ai/qwen3.8-27b-radiance-tp2"
+    },
+    "models_basis": "Owner routing instruction for this session (2026-11-22): EVERY tier (plan/test/dev/review/final; the two STATE slots carry the same value) rides gpu-ai/qwen3.8-27b-radiance-tp2. PHASE-SCOPED deviation from the parent ticket's D27 (every tier flash-next-radiance, re-confirmed FOR THAT ticket): the parent's D27 was scoped to the parent ticket, and this ticket's subject IS the 27b TP2 lane's config — the adjudicating TP1 boot runs on the model whose window is being raised, so the owner re-routed the whole pipeline onto it. The deviation is recorded, not silent: a later leg that needs the parent's routing posture re-reads the parent's D27, not this ticket's.",
+    "local": false,
+    "stages": [
+      "Exploration",
+      "Pre Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "Owner-directed in-session (no WeKan card, no checked Lifecycle set — the stage set is the standard pipeline set MINUS Deployment: the landing shape is the owner's scale act plus the post-merge receipt sequence C03/C04, not a session-executed deployment, RULING 3). Exploration DONE (parent's EXPLORE.md + this ticket's grounding reads), Pre Research DONE (RESEARCH.md — the 418-line 2026-11-22 storm round, V1-V5 + S1-S19), Planning in flight (this draft), Test Writing / Chunk Development / Chunk Review / Final Review pending in wave order.",
+    "hitl": ["Planning", "Final Review"],
+    "claim": {
+      "pipeline": null,
+      "note": "No board card and no pipeline lock claimed — owner-directed in-session work; the hourly board-coord gate does not own this run; recorded honestly per the boards convention. No pipeline_* call was made in the plan session; there is nothing to record beyond this line."
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "CONDITIONAL — the pre-agreed TP1 revert leg (RULING 2 outcome B: the owner's boot print refutes the TP1 fit: OOM/refuse/truncate, the `kv: pool backs N%` line under-funding the 262144 worst case, or the ~199k cap). Pre-authored contract: test re-pin wave splits the constants (Q27_PROFILE keeps 200000 for TP1; q27_tp2_profile() gains the explicit `--max-model-len 262144` override; Q27_CTX becomes the per-lane pair) -> dev one-env edit -> DECISIONS records the refuting print as the receipt. If the print CONFIRMS the fit, C03 retires as a no-op and the confirmation is recorded in C04. Post-merge, owner-triggered."
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02", "C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "ALWAYS (post-merge follow-up leg, the owner's print in hand): records the nine-item receipt set (RESEARCH implication (e)) in DECISIONS + the boot note, closes the PROVISIONAL status by dated annotation naming the leg/commit that closes it (RULING 3(d)), retires the D47 dissent by receipt item 9, and records the owner-prose jsonc comment restatement as the owner's leg (D27). Post-merge, owner-triggered."
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "1M/YaRN factor-4 path — NOT engine-validated (S7: only factor 2, to 524288, is validated on this model). Revisit trigger: a fresh YaRN validation pass + an owner ruling.",
+    "The stale jsonc commentary restatement — the owner's prose leg at C04 (D27: catalog bytes are the owner's); the legs stay green meanwhile (the needles name both figures).",
+    "max-num-seqs 8 -> 32 alignment (upstream S8) — open question 2; a FORM change (D46; FORM_FIXED_FLAGS testlib :936), not a values edit; a fresh ruling + fresh print."
+  ]
+}
