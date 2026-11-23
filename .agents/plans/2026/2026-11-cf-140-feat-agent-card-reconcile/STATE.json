@@ -41,9 +41,9 @@
       "chunk_review": "openrouter/qwen/qwen3.8-flash",
       "test": "openrouter/qwen/qwen3.8-flash",
       "dev": "openrouter/qwen/qwen3.8-flash",
-      "explore": "gpu-ai/qwen3.8-flash-next-radiance",
-      "research": "gpu-ai/qwen3.8-flash-next-radiance",
-      "note": "Card body named per-step desires (coord/chunk reviewer api flash, planner/overall reviewer api 2.4t, research+explore+others gpu-ai radiance tp2 27b); Model(s) checklist alone reads Qwen Flash + Provider: API. Owner ruling in-session 2026-11-23 moved explore+research off the parked tp2 lane onto gpu-ai/qwen3.8-flash-next-radiance; API assignments unchanged."
+      "explore": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "research": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "note": "API tiers are the card's own per-step assignment and are UNCHANGED: coord/chunk-review/test/dev = openrouter/qwen/qwen3.8-flash, plan/final-review = openrouter/qwen/qwen3.8-2.4t-a95b. Local tiers (explore/research) follow the owner's 2026-11-24 ruling back to gpu-ai/qwen3.8-27b-radiance-tp2 — the card body's original ask — superseding the 2026-11-23 detour onto gpu-ai/qwen3.8-flash-next-radiance. CAUTION on record: pipeline-models documents the tp2 lane as parked at replicas 0, where routing answers a loud 502 rather than falling back silently; a 502 on a local-tier launch is therefore reported to the owner, never quietly re-routed."
     },
     "stages": ["Session Rename", "Worktree Creation", "Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
     "stages_skipped": ["Agent Decides Research", "Deployment", "Single Session", "Follow-up cards created"],
