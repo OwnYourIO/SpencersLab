@@ -185,6 +185,39 @@ rejected, why.
   scope nor my own), and **C04's restatement leg does not cover it** — that leg names the owner-protected
   jsonc commentary. "Someone will catch it in the close-out leg" is precisely how D12's near-orphan happened,
   so it gets its own named repair round now rather than a sympathetic home later.
+- 2026-11-23 coord-ruling **D15 (FINAL WHOLE-PLAN REVIEW: APPROVED_WITH_CONDITIONS — condition 1 was my own
+  stale record; and the review's MINOR ships as a gate FIX, not a reword)**. Base verified as the true
+  merge-base `9a5f731c7`; 12 commits, 20 files, 2367+/74−; every battery leg the reviewer ran personally
+  matched expectation (radiance 162P, llama-swap 517P/9S, amd-gpu 36P, vllm 36P, M1-M9 green with M6 never
+  run, five notes suites green, four-lane renders correct, aislop 0/0), and Q1/Q4 came back clean — **no
+  premise drift** ("wrong" attaches only to the owner's claim, never to the value) and **C02 orthogonality
+  proven** (values delta is exactly the four context lines, chart FORM untouched, `charts/radiance` non-test
+  diff empty).
+  **Condition 1 (closed).** `STATE.json` still read `"DRAFT … approval pending this fold"` with C01/C02 at
+  `pending/0/0/null` and `current_wave: 1` while `plan_status` said `approved` — the D52/D53 class I wrote
+  rules for, in the ticket where I had been warned about it twice, and a resume scan would have re-run
+  approved waves. The reviewer contrasted it against the parent's STATE.json, which is current: the convention
+  existed, I just stopped maintaining it under four scope changes. **My first corrective edit then reproduced
+  the very bug** — it *added* `plan_status_note` / `coord_session` / `test_session` / `current_wave` above the
+  stale originals instead of replacing them, so last-wins left the stale values governing while the file looked
+  fixed. Caught only because I re-read my own edit. Repaired by renaming the superseded note to
+  `superseded_note_fold_round` (keeping it as history, per annotate-never-rewrite) and deleting the three stale
+  key lines, then verifying by count that each top-level key appears exactly once.
+  **F2, elevated past its label.** The review filed as a MINOR with a suggested reword the fact that item 3
+  emits `POOL_OK` on mere PRESENCE of the `kv: the pool backs …` line and parses `M >= 8` **only for fn** — so
+  `75% … 4 full-length sessions` passes today on a non-fn lane. The lane most likely to be under-funded is
+  q27-TP1, the one V3/S10 predict cannot fit a single 32 GB card, and its fit is precisely what the gate does
+  not check. A completeness gate certifying the existence of the number it exists to adjudicate is the D49
+  failure class living inside the artifact built to catch it. Routed as a gate fix: parse `M` per lane against
+  each lane's **configured** seqs — read, not hardcoded 8, so a future FORM ruling cannot silently invalidate
+  the bar — refuse on absent or unparseable `M`, and surface `N% < 100` as a visible **warning** rather than
+  inventing a machine threshold the evidence does not support. The boundary is stated in the tool itself:
+  machine-decided = presence, completeness, per-lane funding against configured concurrency; owner-read =
+  whether a funded-but-degraded pool is acceptable. **A PASS must never again be readable as "fit certified."**
+  **Ticket state.** C01/C02 landed and approved; C03 armed-not-triggered; C04 owner-triggered and NOT run —
+  **PROVISIONAL is OPEN on all four lanes and no agent can close it.** `plan_status: complete` describes the
+  AGENT-side work only, and that distinction is written into the note itself, because "complete" and
+  "evidenced" are different claims and these values merged on the strength of the first.
 - 2026-11-23 coord-note **D10 (no memory change anywhere in this ticket)** — F2's arithmetic closed the last
   open question about sizing: flash-TP1 at 262144 fits the held 110Gi at BOTH candidate cost rates
   (≈69–89 GiB used; engine rule `110 − 87 = 23 ≥ 4`), fn-TP2's worst-case pool goes 18.3 → **24.0 GiB** trunk

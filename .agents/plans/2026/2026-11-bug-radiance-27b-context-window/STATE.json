@@ -1,10 +1,11 @@
 {
   "feature": "2026/2026-11-bug-radiance-27b-context-window",
-  "plan_status": "approved",
-  "plan_status_note": "DRAFT — FOLDED 2026-11-23 (scope re-filed for FOUR lanes; approval pending this fold). NO implementation commits; the ticket's docs commits are e4c094b43 (the two-lane plan draft) / 484ee8f31 (D5-D8) / f31c40d41 (the flash round-2 evidence persistence, HEAD). The 2026-11-22 draft scoped C01/C02 to two 27b env values; D5 (the raise extended to the flash lanes) and D9 (fn-TP2 included, informed, risk accepted) changed the scope twice, and D10 closed the memory question (NO memory value changes anywhere). This fold re-files the plan of record + chunks for four lanes, carries the flash round-2 evidence (F1-F5, session ses_dfa43b76cffex5QZ8Vj9E9pGf1, live fetches 2026-11-23 — it could NOT be written into RESEARCH.md: write denied at the research tier AND at the coordinator's, so it lived in FRICTION + the transcript; it is now durable in the plan's Verified facts) into the contract, discovers the M8-B re-pin (the draft's \"M8-B verify-only/green\" assumption is broken by D9: the fn needle asserts 200000, C01 re-pins to 262144, designed red until C02), and records that fn-TP2 is at replicas: 0 by the OWNER'S SCALE ACT (git carries replicas: 1 at :1063) — so fn's receipt (the first TP2 print, cf-144 P11) is unobtainable until the owner brings fn back up, and C02's landing is a second pod roll on the pipeline's own critical path (D9(c), parent-D16). Plan session: ses_dfa557f95ffeoy0Ut5WNAyoxeQ (2026-11-22 draft); fold session: this one. Wave order: C01 (test wave, four lanes, three authority kinds + the D8 receipt block) -> C02 (four env values + prose plane + the fn roll stated) -> C03 (conditional, per-lane: 27b-TP1 predicted not to fit / flash-TP1 predicted to fit / fn the M>=8 bar) -> C04 (always; the D8 gate closes PROVISIONAL only if every item is present). C03/C04 are POST-MERGE follow-up legs (D3); push/PR/merge are owner-only. Open questions are PRINT-PENDING (five, listed in the plan so no session invents answers); no open OWNER questions remain (D5/D6/D7/D9/D10 settled them).",
-  "coord_session": null,
-  "test_session": null,
-  "current_wave": 1,
+  "plan_status": "complete",
+  "plan_status_note": "COMPLETE 2026-11-23 (agent-side). FINAL WHOLE-PLAN REVIEW = APPROVED_WITH_CONDITIONS; its one blocking condition was MY OWN stale record (D52/D53 class: this note still read 'approval pending this fold' while plan_status said 'approved', and C01/C02 still read pending/0/0/null, current_wave 1 — a resume scan would have re-run approved waves). Condition closed by this edit. CURRENT STATE: C01 (test authorities, four lanes, three authority kinds + the D8 receipt block) and C02 (config move + prose + test re-pins) are LANDED and APPROVED — commits 01b6c2ff1, c877edf8e, e37af0bca, e0856a1b2, efb5d15bf. C03 is ARMED-NOT-TRIGGERED (fires only on a refuting per-lane print). C04 is OWNER-TRIGGERED and NOT YET RUN: it closes PROVISIONAL and it cannot be closed by an agent. **PROVISIONAL IS STILL OPEN ON ALL FOUR LANES — this ticket is complete as work and INCOMPLETE as evidence.** No push/PR/merge/sync has been executed (owner-only legs). Battery at completion: radiance 162P, llama-swap 517P/9S, amd-gpu 36P, vllm 36P, surface M1-M9 green (M6 never run, no claim), five notes suites green, aislop 0/0, receipt gate correctly REFUSING for want of logs. --- PRIOR FOLD NOTE (kept as history): DRAFT FOLDED 2026-11-23 for FOUR lanes; the 2026-11-22 draft scoped C01/C02 to two 27b env values; D5 extended the raise to the flash lanes and D9 included fn-TP2 (informed, risk accepted); D10 closed the memory question (no memory value changes anywhere); the flash round-2 evidence (F1-F5) could not be written into RESEARCH.md — denied at both tiers — so it is carried in the plan's Verified facts with attribution. The fold discovered the M8-B re-pin (the fn needle asserted 200000 and D9 breaks it: C01 re-pinned to 262144, designed red until C02). fn-TP2 sits at replicas: 0 by the owner's scale act (git carries 1), so fn's first TP2 print is unobtainable until fn is brought back up, and C02's landing is a second pod roll on the pipeline's own critical path.",
+  "coord_session": "ses_e012e8e56ffeAZSKwAKhGDCoL3",
+  "test_session": "ses_dfa2432aeffe2EVBQukhRpTJdQ",
+  "current_wave": 3,
+  "superseded_note_fold_round": "DRAFT — FOLDED 2026-11-23 (scope re-filed for FOUR lanes; approval pending this fold). NO implementation commits; the ticket's docs commits are e4c094b43 (the two-lane plan draft) / 484ee8f31 (D5-D8) / f31c40d41 (the flash round-2 evidence persistence, HEAD). The 2026-11-22 draft scoped C01/C02 to two 27b env values; D5 (the raise extended to the flash lanes) and D9 (fn-TP2 included, informed, risk accepted) changed the scope twice, and D10 closed the memory question (NO memory value changes anywhere). This fold re-files the plan of record + chunks for four lanes, carries the flash round-2 evidence (F1-F5, session ses_dfa43b76cffex5QZ8Vj9E9pGf1, live fetches 2026-11-23 — it could NOT be written into RESEARCH.md: write denied at the research tier AND at the coordinator's, so it lived in FRICTION + the transcript; it is now durable in the plan's Verified facts) into the contract, discovers the M8-B re-pin (the draft's \"M8-B verify-only/green\" assumption is broken by D9: the fn needle asserts 200000, C01 re-pins to 262144, designed red until C02), and records that fn-TP2 is at replicas: 0 by the OWNER'S SCALE ACT (git carries replicas: 1 at :1063) — so fn's receipt (the first TP2 print, cf-144 P11) is unobtainable until the owner brings fn back up, and C02's landing is a second pod roll on the pipeline's own critical path (D9(c), parent-D16). Plan session: ses_dfa557f95ffeoy0Ut5WNAyoxeQ (2026-11-22 draft); fold session: this one. Wave order: C01 (test wave, four lanes, three authority kinds + the D8 receipt block) -> C02 (four env values + prose plane + the fn roll stated) -> C03 (conditional, per-lane: 27b-TP1 predicted not to fit / flash-TP1 predicted to fit / fn the M>=8 bar) -> C04 (always; the D8 gate closes PROVISIONAL only if every item is present). C03/C04 are POST-MERGE follow-up legs (D3); push/PR/merge are owner-only. Open questions are PRINT-PENDING (five, listed in the plan so no session invents answers); no open OWNER questions remain (D5/D6/D7/D9/D10 settled them).",
   "updated_at": "2026-11-23T12:00:00+00:00",
   "kickoff": {
     "card": null,
@@ -40,42 +41,46 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "APPROVED without a separate chunk review — covered by C02's review Q4(d) (the C01-only tree at 01b6c2ff1 was extracted and measured: 13F/148P = exactly the designed red set, no stray greens, red-first ordering proven to precede the config commit) and by the final whole-plan review. Recorded honestly: no dedicated review round was run for this chunk, and its red-first discipline is the thing that was verified.",
       "handoffs": [],
       "note": "The TEST WAVE (parent-D30 — there is no dev round): four lanes, THREE authority kinds — (1) 27b: Q27_CTX/Q27_PROFILE/q27_tp2_profile() -> 262144, the q27 provenance record becomes a deviation-with-ruling (recorded with the D1/D2 cites, not pretended verbatim); (2) flash-TP1: the verbatim transcription leg CHANGES SHAPE (testlib flash_tp1_profile() :966 + FLASH_TP1_TRANSCRIPTION :663 + test_resting_lanes.py:218-244: \"EXACTLY one value swapped\" -> \"exactly TWO values swapped — id + context, per ruling D5/D9\"; the fidelity claim is now bounded by ruling — the source commit e7536b2c9^ is immutable, the leg is never again described as verbatim); (3) fn: a constant re-pin ONLY (FULL_PROFILE :120 — no transcription leg exists; the provenance is the comment at values.yaml:1070-1072, the cf-144 SS7 recipe; fn's change is CHEAPER in test terms and MORE expensive in risk terms, D9). Plus: the M8-B fn needle re-pin 200000 -> 262144 (D9 breaks the draft's verify-only assumption; designed red until C02); the M9-A2 SERVED_FIGURE dated per-lane annotation (value half untouched — twelve rows already 262144; prose half preserved — the stale commentary names both figures until the owner's C04 leg); TEST_SPEC SS1 the per-lane served column for FOUR lanes + the D4 equality table (plan fact 13, VERIFIED); the pre-authored receipt command block (D8) — all four lanes enumerated, the nine-item set + the eight-admitted-sessions smoke (D9(b)), the closing gate and the script are ONE artifact. Designed reds: the four lanes' composed-argv legs + M8-B + the flash transcription leg, all naming C02."
     },
     "C02": {
-      "status": "pending",
+      "status": "approved",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED by ses_df9f95f5fffeKbbVKbVuxe3Wm8 over c877edf8e + e37af0bca + e0856a1b2: 0 blockers / 0 majors. Non-comment delta proven to be exactly the four env value lines; all four PROVISIONAL annotations verified genuinely distinct (provenance, fit state, failure mode, revert path); fn's measurement quotation verified preserved; the runbook chain verified as a real gate by the reviewer's own carrier-break and ledger-break plants in /tmp.",
+      "handoffs": [
+        "config + prose + test halves all committed; D12's two red legs closed by name (runbook via the test half, q27-boot via the doc half alone with NO test change)",
+        "D14 follow-up: surface.sh:963 message re-pin swept to 7 sites (e0856a1b2), message-text only, verdicts unchanged M1-M9 pre/post"
+      ]
+    },
       "note": "The config move + prose plane: the FOUR env values 200000 -> 262144 (fn :1121, q27 :1367, flash-tp1 :1495, q27-tp2 :1588), each with a dated PROVISIONAL annotation naming the pending receipt + ruling cites (D3(a); D1/D2 the 27b lanes, D5/D9 flash-TP1 + fn). Prose (annotate-never-rewrite): the values WHY comment (:1344-1352, the V3 correction + the F2/F3 framing); the \"not a memory story\" comment (:1570) + the roster \"UP at what cost\" column (the V5 verdict — host-pin TRUE / card-VRAM FALSE 12.48 -> 40.08 GiB); the fn block comment (:1070-1072) reads SUPERSEDED BY RULING D9, the measurement provenance PRESERVED (the cf-143 D28(1)/D30(1) print stays quoted — the reason fn's raise is risky is precisely that a measurement existed); the boot note's \"honest envelope\" (:300) annotated as pre-D47 history. THE FN ROLL (D9(c), fact 16): fn is the live default route (parent-D16) and is at replicas: 0 by the owner's scale act — C02's landing is a second pod roll on the pipeline's own critical path; the roll window is stated to the owner BEFORE landing; that boot is the first TP2 print (cf-144 P11, still owed). The one-home table + roster SS3 + NOTES.txt re-checked UNCHANGED with the proof (D10: no memory value moved — the held 24Gi/110Gi pairs are untouched)."
     },
     "C03": {
-      "status": "pending",
+      "status": "armed-not-triggered",
       "wave": 3,
       "depends_on": ["C02"],
       "dev_rounds": 0,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "NOT RUN — conditional by design. Triggers only on a refuting per-lane print (fn M < 8; q27-TP1 truncated pool; flash-TP1 start-refusal). Owner-triggered; test re-pin first per parent-D30, forward fix never a revert.",
       "handoffs": [],
       "note": "CONDITIONAL — the pre-agreed revert leg, PER-LANE triggers: 27b-TP1 (PREDICTED not to fit — V3/S10 ~199k cap; warn-not-refuse, so the refutation is a truncated-pool serve: OOM/refuse/truncate or the pool-backs line under-funding); flash-TP1 (PREDICTED to fit per F2 — its scale-up failure mode is the LOUD start-refusal, guide :1092-1093); fn-TP2 (D9(a): M < 8 in the pool-backs line — the silent failure mode; the eight-admitted-sessions smoke is the loud check, D9(b)). Pre-authored per-lane contracts: 27b — the Q27_PROFILE split (Q27_PROFILE keeps 200000 for TP1; q27_tp2_profile() gains the explicit override; Q27_CTX per-lane pair); flash-TP1 — flash_tp1_profile() drops the context override (back to the single-swap derivation) + the transcription leg re-pins to \"one value swapped\"; fn — FULL_PROFILE re-pins to 200000 + the M8-B needle back. Dev: the per-lane env edit(s). DECISIONS records each refuting print as the receipt (the D28(6) one-edit overlay repair — a FORWARD fix commit, never a revert of the merge, never history rewriting). A confirming print retires that lane's leg as a no-op, recorded in C04. Executor: a follow-up dev session under the coordinator, owner-triggered by the refuting print, test re-pin first (parent-D30)."
     },
     "C04": {
-      "status": "pending",
+      "status": "owner-triggered-not-run",
       "wave": 3,
       "depends_on": ["C02", "C03"],
       "dev_rounds": 0,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "NOT RUN — this is the receipts-close leg and it cannot be executed by an agent: it requires the owner's boot prints. PROVISIONAL remains OPEN on all four lanes until it runs. If a future session marks this done without `receipt_gate.py --gate` passing on real logs, that is close-on-absence, which AC1 makes a review blocker (parent-D49).",
       "handoffs": [],
       "note": "ALWAYS (post-merge follow-up — the owner runs the D8 command block ONCE at the scale act): records the FOUR-LANE receipt set (the nine-item set per lane + the eight-admitted-sessions smoke for fn, D9(b)); closes PROVISIONAL ONLY IF EVERY ITEM IS PRESENT (the D8 anti-drift gate — parent-D49: a gate that can pass on absence is not a gate), by dated annotation naming the leg/commit that closes it (D3(d)); retires the parent-D47 dissent by item 9 (a near-262144 session accepted — for fn, the M >= 8 bar, D9(a)); records the owner-prose jsonc commentary restatement as the OWNER's leg (parent-D27 — not executed by this ticket); STATES EXPLICITLY, per D10, that NO memory value moved in this ticket (the held 110/24/110Gi pairs are untouched; nothing here pre-empts those prints — the guard against a \"helpful\" re-pin during this leg)."
     }
