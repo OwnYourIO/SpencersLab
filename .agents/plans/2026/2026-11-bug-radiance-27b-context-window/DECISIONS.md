@@ -240,6 +240,18 @@ rejected, why.
   Also recorded here: the stale `fix-radiance-context` branch (2026-11-17 attempt at this same raise, two lanes,
   catalog rows still asserting 200000 — superseded by `b3d7fada8` and by this ticket) was deleted at the owner's
   word along with its worktree; tip was `e8fa061fe`, recoverable from the reflog.
+  **Follow-up ticket scope, fixed by the post-rebase gate (2026-11-23)** — the runner change is not just one
+  loop-file row. Four reds are already on `main`, all traceable to the `54cc84188` merge wave, all with inputs
+  byte-identical main-vs-branch, so the follow-up owns: (1) `rulesync generate --check` **fails on main** —
+  `AGENTS.md` is out of sync with `.rulesync/rules/overview.md` on the runner-literal paragraph, so the follow-up
+  regenerates and commits sources and twins together; (2) `surface.sh` **M8** (class table expects Q27 trio rows
+  main's boards SKILL never gained, plus the runner-literal leg whose generated paragraph wraps); (3)
+  `agents-md.sh` **c11** and **c13** (c13 = the dispatcher wake/delegated-pairing needle in `overview.md` —
+  cf-126 added an arm it does not satisfy). It also inherits the two out-of-ticket reds this ticket has carried
+  by name throughout: `rulesync-surface c19` (cf-124 custom-field roster) and `gate t17` (coord-family
+  permissions contract). Ordering constraint the follow-up must not skip: the runner literal cannot be
+  **verified** until a lane is scaled up, so that ticket closes on a completed scheduled tick against a live
+  lane, not on a merged config edit.
 - 2026-11-23 coord-ruling **D16 (the receipt gate's fit hole is closed as a gate change; its residual limits are
   recorded as limits, not defects)**. Final review's F2 filed the overstatement as a MINOR with a reword;
   substance required a fix — see D15. Landed at `97d284787`: per-lane `M >= read-configured
