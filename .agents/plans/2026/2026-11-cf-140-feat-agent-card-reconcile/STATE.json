@@ -1,8 +1,36 @@
 {
   "feature": "2026/2026-11-cf-140-feat-agent-card-reconcile",
-  "plan_status": "needs-approval",
+  "plan_status": "approved",
+  "plan_approved": {
+    "at": "2026-11-23T21:31:50Z",
+    "by": "owner",
+    "words": "Go ahead",
+    "plan_file": "2026-11-23-feat-cf-140-feat-agent-card-reconcile.md",
+    "shape": "20 chunks / 5 waves (+C20 scheduled in wave 1)",
+    "approval_pause_satisfied": "the Planning gate + the card's HITL Planning stop both closed here; the Final Review stop is still ahead"
+  },
+  "writeback": {
+    "at": "2026-11-23T21:33:00Z",
+    "slug_field": {
+      "id": "RaNeqvh9YoT4bnkZ8",
+      "prior_value": "empty (verified by read-back at write time — a fresh run, no stack to append onto)",
+      "written": "[cf-140-feat-agent-card-reconcile](https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_df6746e69ffe3r6oWe58jKqW2N)",
+      "law": "read-modify-write, never blind overwrite; newest line LAST",
+      "consistency_check": "the link half equals kickoff.session_origin exactly — this run's first write-back performs the Config-constants drift check and passes"
+    },
+    "priority_field": { "id": "fp5vnD5YrA7oAxPiK", "prior": null, "stamped": 5, "class": "default", "note": "unset card stamped with the int default for visibility only; routing unchanged (the default class is what unset already selected)" },
+    "checklists_swept": {
+      "Model(s)": { "deleted": ["Qwen Large", "Qwen Dense", "Local (gpu-ai)"], "survivors": ["Qwen Flash"] },
+      "Services": { "deleted": ["backups", "dev", "gpu", "gpu-ai", "grow", "infra", "media", "monitoring", "personal", "proxy-backup", "proxy-local", "proxy-remote", "home-assistant"], "survivors": ["home", "agent context"] },
+      "Type": { "deleted": ["bug", "debug", "dep", "refactor", "chore", "docs"], "survivors": ["feat"] },
+      "Lifecycle": { "deleted": ["Agent Decides Research", "Deployment", "Single Session"], "survivors": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"] },
+      "Human in the Loop": { "deleted": ["Exploration", "Agent Decides Research", "Pre Research", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Deployment", "Single Session"], "survivors": ["Planning", "Final Review"] }
+    },
+    "item_ids_reread_live": "yes — every checklist was re-read for current item ids before deleting, rather than trusting the claim-time block",
+    "sibling_not_swept": "AD-73's checklists were deliberately left alone: the post-plan write-back is the CLAIMED card's record, and the grouped-sibling flow assigns the coord only its moves (Executing now, Review with a summary comment at the end). Sweeping it would rewrite the owner's answers on a card whose ask has not yet shipped."
+  },
   "coord_session": "ses_df6746e69ffe3r6oWe58jKqW2N",
-  "test_session": null,
+  "test_session": "ses_df5ab9bfdffetN8RUvwq99qafQ",
   "current_wave": 1,
   "updated_at": "2026-11-23T21:28:16Z",
   "kickoff": {
