@@ -210,9 +210,21 @@ rider was DROPPED by D54(2) and lives only as the Step 0 prose:
 
 ```bash
 radiance --model /models/radiance/qwen3.8-27b-mxfp4.rad --port 8000 --host :: \
-  --tp 1 --max-model-len 200000 --max-num-seqs 8 --kv-cache-dtype fp8 \
+  --tp 1 --max-model-len 262144 --max-num-seqs 8 --kv-cache-dtype fp8 \
   --prefix-cache-mib 4096 --served-model-name qwen3.8-27b-radiance
 ```
+
+**[2026-11-23 C02 follow-up, re-pin wave — current-law witness, not
+history.]** This block is the T2 machine witness — it must stay
+parse-equal to the lane's shipped subtree, so it carries the post-C02
+figure `--max-model-len 262144` (rulings D1/D2 moved the q27 env's
+`RADIANCE_MAX_MODEL_LEN` 200000 → 262144; PROVISIONAL until the C04
+receipt close, D8; this lane is the PREDICTED-NOT-TO-FIT leg — D2: the
+boot print adjudicates both paths). The pre-C02 block read
+`--max-model-len 200000`; that form stays visible in git history and in
+Step 4's annotated envelope — a witness that restated the past would fail
+its own equality law, so the value is re-pinned here while the history
+stays annotated, not erased.
 
 ```bash
 kubectl -n default logs deploy/gpu-ai-radiance-q27 -c radiance | head -120
@@ -238,7 +250,11 @@ Read, in order:
    `kv: the pool backs N% of the worst case … M full-length sessions`
    (R19-Q1(iv)) — M is how many full-length sessions the engine itself
    thinks it funds, and what it prints is the datum that decides whether
-   the advertised `limit.context 200000` stays honest. Do not pre-empt it:
+   the advertised `limit.context 262144` stays honest
+   **[2026-11-23 C02 follow-up, re-pin wave: D1/D2 moved the q27 served
+   ceiling 200000 → 262144 PROVISIONAL (the D8 close lands at C04);
+   pre-C02 the figure was 200000, the D47 "served stated separately in
+   prose" half]**. Do not pre-empt it:
    "one 200K session fits" is written here as the thing the boot CONFIRMS
    or CORRECTS, never as a promise — the print, not Step 4's division, is
    the authority on the served aggregate.
@@ -293,9 +309,12 @@ Read, in order:
    sufficient for a dense 27B lane. UNVERIFIED — no measurement exists;
    this row fixes the receipt, claims no size, changes no value.
 
-If any print contradicts `200000` or `24`: report it. Do NOT improvise a
+If any print contradicts `262144` or `24`: report it. Do NOT improvise a
 fix — the repair is DECISIONS → values → arms in one wave (D36(4)), never
-a silent retarget of a shipped number.
+a silent retarget of a shipped number. **[2026-11-23 C02 follow-up, re-pin
+wave: the context figure moved 200000 → 262144 with the C02 ruling wave
+(D1/D2; PROVISIONAL until the C04 receipt close, D8); `24` is UNMOVED —
+D10: the held 24Gi pair moves only on a contradicting print.]**
 
 ## Step 4 — The honest envelope (what to tell anyone who asks "how much context")
 

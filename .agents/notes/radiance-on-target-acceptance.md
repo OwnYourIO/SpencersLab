@@ -243,7 +243,7 @@ The pinned-RAM ceiling all of this rides on: RAM − RAM/64 − 1.5 GiB ≈
 | Peer URL (the ONE client route) | `http://gpu-ai-radiance.default.svc.cluster.local:8000` — no `/v1` suffix (request paths append verbatim) |
 | Public chain (through llama-swap only) | `https://llama.spencerslab.com/v1` |
 | GPU pools (gpu-ai only, D21 belt) | radiance claims `amd.com/gpu-r9700` (the patched-table name, D24; at TP2 the claim COUNT is 2 — cf-144 shape A: one pod, both cards); llama-swap claims `amd.com/gpu-8060s`; bare `amd.com/gpu` carries **zero capacity** there (§D2.2 kubelet retention: the key sits at 0 after the single-naming plugin was pruned — "absent" was the wrong word; the claim carrier moved per-cluster, C10/D26) — a stray bare claim on gpu-ai is still Pending-forever, the scheduler text literally `Insufficient amd.com/gpu`, loud by design |
-| Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup; cf-144 P11 2026-11-21, annotate-never-rewrite: the TP2 flip HELD this scalar — the DOWN re-pin to the first-boot printed class is a POST-TP2-BOOT owner-receipt leg and this line re-pins only when that print exists) / `hostPoolMib: 12288` per rank at TP2 (2×12288 MiB ≈ 24 GiB pinned; the single-card era read 43000) / `maxModelLen: 200000` / `maxNumSeqs: 8` / `tp: 2` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung; cf-144 dated annotation 2026-11-21 — that tail is TP1-era scope: the live ladder rungs are pool/ctx/prefix-tier, `tp` is now a ledgered SHAPE constant, not a rung, and `guaranteedMemoryGi` ships HELD at 110 until the post-boot print (P11)) |
+| Shipped sizing scalars | `guaranteedMemoryGi: 110` (C12/AC1 — the owner ruling over D28's 96; the live receipt that moved it: the engine printed `pinned by this process 71.04 GiB` vs the old 64.00 cgroup; cf-144 P11 2026-11-21, annotate-never-rewrite: the TP2 flip HELD this scalar — the DOWN re-pin to the first-boot printed class is a POST-TP2-BOOT owner-receipt leg and this line re-pins only when that print exists) / `hostPoolMib: 12288` per rank at TP2 (2×12288 MiB ≈ 24 GiB pinned; the single-card era read 43000) / `maxModelLen: 262144` / `maxNumSeqs: 8` / `tp: 2` (`charts/radiance/values.yaml` — the ladder moves these, one scalar per rung; cf-144 dated annotation 2026-11-21 — that tail is TP1-era scope: the live ladder rungs are pool/ctx/prefix-tier, `tp` is now a ledgered SHAPE constant, not a rung, and `guaranteedMemoryGi` ships HELD at 110 until the post-boot print (P11)). **[2026-11-23 C02 follow-up, re-pin wave — the context scalar moved 200000 → 262144 with the C02 ruling wave (D5/D9 for this fn lane; PROVISIONAL until the C04 receipt close, D8): the pre-C02 line read `maxModelLen: 200000`; the scalar now rides the `RADIANCE_MAX_MODEL_LEN` lane env (D43 re-aim), so this figure tracks the env, not the chart.]** |
 | Engine image | `docker.io/stilldeadcode/radiance:1.17.0` — amd64 IMAGE-MANIFEST digest `sha256:6fb0e99bfb862e17cc15cb7b2f116c7dbdc831df59f82456a0691122e6cf5330`; tag INDEX (manifest-list wrapper) `sha256:c2acbaa373c89272ec47a22befa1cf04d2ddf1de51c2baf534f5273e517f7100` — which-is-which per RESEARCH RQ0, llmkube pins the manifest form |
 | Plugin image | `docker.io/rocm/k8s-device-plugin:1.31.0.12` — amd64 digest `sha256:6437c74f6566e5d11c20c42369fca7194315943aea91f7bd6c98de1b19caf117` (`charts/amd-gpu/values.yaml`, §R6-Q5's verification receipts; the chart is first-party app-template since C08/D23 and ships the patched `amdgpu.ids` ConfigMap per D24) |
 | Patched table | the `amdgpu-ids` ConfigMap in `charts/amd-gpu/values.yaml` — 10 data rows (1 renamed 7551/C0 `r9700-1` row + 9 carried 1586 rows), rows spliced from the fetched v1.31.0.12 baked file (authority `sha256:382ef0d5282fd8f5c17872c9f3641518d08a93e8c8e12b190e37005d48f3b1fa`, recorded in the test fixture header) |
@@ -520,7 +520,7 @@ law; the contract suite diffs this block against the chart):
 --host ::
 --tp 2
 --tp-wire wht6
---max-model-len 200000
+--max-model-len 262144
 --max-num-seqs 8
 --placement expert_tiered
 --host-pool-mib 12288
@@ -533,6 +533,17 @@ law; the contract suite diffs this block against the chart):
 --ngram-placement disk
 --served-model-name qwen3.8-flash-next-radiance
 ```
+
+**[2026-11-23 C02 follow-up, re-pin wave — current-law witness, not
+history.]** This block is the T2 rendered==shipped witness (the contract
+suite diffs it against the compose vector), so it carries the post-C02
+figure: `--max-model-len 262144` (rulings D5/D9 moved the fn lane's
+`RADIANCE_MAX_MODEL_LEN` 200000 → 262144; PROVISIONAL until the C04
+receipt close, D8). The pre-C02 block read `--max-model-len 200000`; that
+form stays visible in git history and in the quoted fn print (cf-143
+D28(1)/D30(1): "8.0 sessions at 200000") — a witness that restated the
+past would fail its own equality law, so the value is re-pinned here while
+the history stays quoted, not erased.
 
 Absence law is part of the needle (cf-144 P04 polarity flip baked in): NO
 `serve` verb anywhere (the engine takes args directly — RESEARCH RQ0), NO
@@ -659,10 +670,16 @@ own reconciliation; re-run the gate after each):
   the receipt law (never a pre-emptive softening), same mechanics: one
   scalar, experts spill back onto the card, KV room shrinks — measure the
   receipt line change.
-- ladder DOWN by context next: `maxModelLen` 200000 → 128K-class (131072) →
+- ladder DOWN by context next: `maxModelLen` 262144 → 200000 → 128K-class (131072) →
   64K-class (65536) at 8 seqs. One scalar — but the catalog `limit.context`
   rows MUST follow the engine (true-axis law: the advertisement holds only
-  while the shipped ctx does — a re-pin of 200000 is a paired edit).
+  while the shipped ctx does — a re-pin of 262144 is a paired edit).
+  **[2026-11-23 C02 follow-up, re-pin wave — the rung start moved with the
+  ruling: D5/D9 moved the shipped ceiling 200000 → 262144 (PROVISIONAL
+  until the C04 receipt close, D8), so the ladder now runs
+  262144 → 200000 → 131072 → 65536; the pre-C02 ladder ran
+  200000 → 131072 → 65536 and its top rung stays visible here, not
+  rewritten away.]**
 - fewer live sessions: `maxNumSeqs` 8 → 4 — halves the reserved per-slot
   footprint. Cf-144 dated, annotate-never-rewrite: the TP1 wording named
   the kv-resident host copy here (reserved as max-num-seqs ×
