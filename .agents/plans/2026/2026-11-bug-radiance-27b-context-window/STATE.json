@@ -60,8 +60,7 @@
       "handoffs": [
         "config + prose + test halves all committed; D12's two red legs closed by name (runbook via the test half, q27-boot via the doc half alone with NO test change)",
         "D14 follow-up: surface.sh:963 message re-pin swept to 7 sites (e0856a1b2), message-text only, verdicts unchanged M1-M9 pre/post"
-      ]
-    },
+      ],
       "note": "The config move + prose plane: the FOUR env values 200000 -> 262144 (fn :1121, q27 :1367, flash-tp1 :1495, q27-tp2 :1588), each with a dated PROVISIONAL annotation naming the pending receipt + ruling cites (D3(a); D1/D2 the 27b lanes, D5/D9 flash-TP1 + fn). Prose (annotate-never-rewrite): the values WHY comment (:1344-1352, the V3 correction + the F2/F3 framing); the \"not a memory story\" comment (:1570) + the roster \"UP at what cost\" column (the V5 verdict — host-pin TRUE / card-VRAM FALSE 12.48 -> 40.08 GiB); the fn block comment (:1070-1072) reads SUPERSEDED BY RULING D9, the measurement provenance PRESERVED (the cf-143 D28(1)/D30(1) print stays quoted — the reason fn's raise is risky is precisely that a measurement existed); the boot note's \"honest envelope\" (:300) annotated as pre-D47 history. THE FN ROLL (D9(c), fact 16): fn is the live default route (parent-D16) and is at replicas: 0 by the owner's scale act — C02's landing is a second pod roll on the pipeline's own critical path; the roll window is stated to the owner BEFORE landing; that boot is the first TP2 print (cf-144 P11, still owed). The one-home table + roster SS3 + NOTES.txt re-checked UNCHANGED with the proof (D10: no memory value moved — the held 24Gi/110Gi pairs are untouched)."
     },
     "C03": {
