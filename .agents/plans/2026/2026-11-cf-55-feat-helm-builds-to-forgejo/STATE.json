@@ -39,6 +39,7 @@
     "test_wave_fr2": "ses_df5b77772ffe0Nf0CYk2I4tvZ5 DONE 2026-11-23 — forgejo-release.sh 162+/4- ONLY file: t21 leg (three separate carrier extractions replayed over live-measured fixtures: base 3-URL rows, loki single, empty-REPOSITORY guard, hivetools oci-both, zero-dep WARNING shape + AC2 derivation feeding each victim chart's SHIPPED Chart.lock rows through every carrier demanding full URL coverage) + t6 comment re-truth + header delta; t1-t20 byte-stable (removed-lines audit = the 4 old comment lines). Battery: SHIPPED t21-only RED naming 3 jobs/18 offender lines; M_FIX 21/21; single-site mutants name exactly their job; M_CONT stays green (no keyword over-pin); M_TWIN designated set {t21,t6}. Adjacent: ci-surface only-t4, containers contract 8/8; aislop 100/0/1-warn (other-ticket plugin file)",
     "plan_delta": "ses_df5be37adffe3IYTSabXoLVSCt DONE 2026-11-23 — plan +108/0 (Fix round 2 section: goal, owner-fire evidence, root cause, D45 central design with b/c rejections, landing, commands), chunks/C08.md NEW (AC1-AC5 reproducible shapes, t21 spec + teeth battery), DECISIONS +63/0 (D45 incl. supersession fact: the defect sits INSIDE cf-55's shipped surface — C01-era loop carried through rebuild, no other ticket owns it). Append-only verified via numstat; live-site re-verification: the three awk sites byte-identical at :125/:308/:368, victims base=3/k8s-monitoring=2/postiz=2/traefik=2 rows, hivetools oci-both-rows fixture shape confirmed",
     "ua11_watch": "runner egress to the five never-before-added hosts (jetstack, christianhuth, prometheus-community, go.temporal, crowdsecurity) is workspace-proven only (TEST F) — owner first-fire watch on the next release fire, not code",
+    "fr2_close": "2026-11-23 — C08 r1 APPROVED (dev+review sessions in chunks.C08); test wave 8ed387375, plans delta d892af8c2, swap commit follows; instance-side evidence the chain lives: b89acb5df is the pipeline's OWN bump commit on main (detect/test-build/bump green on the instance). Hand-off: card back to Review + lease release; owner = micro-merge + re-fire under UA-11; UA-8 watch now also against the moving origin/main (g7 diff-base sensitivity noted for future rounds)",
     "landing_contingency": "micro-merge (C08 alone) then release re-fire under UA-11 watch"
   },
   "rebuild": {
@@ -303,12 +304,18 @@
       ]
     },
     "C08": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "note": "fix-round-2 waves are their own sequence: test wave (t21 + t6 comment re-truth) before dev (3-word awk swap)"
+      "note": "fix-round-2 waves are their own sequence: test wave (t21 + t6 comment re-truth) before dev (3-word awk swap)",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_df5abc667ffehiQteZRkdXXB8I",
+      "last_verdict": "APPROVED (r1, ses_df5a8e905ffey3V5xcxvHmCeM2)",
+      "handoffs": [
+        { "role": "dev", "status": "DONE", "chunk": "C08", "session": "ses_df5abc667ffehiQteZRkdXXB8I", "at": "2026-11-23", "summary": "release.yaml only: exit->next at :125/:308/:368, zero residue (3 next, 0 exit at carriers), bump-loop :247/:255/:260 and :423 verify-status exit untouched and correct; 21/21 + full green table (dev 58/58, gpu 19/19 at ticket base)" },
+        { "role": "review", "status": "APPROVED (r1)", "chunk": "C08", "session": "ses_df5a8e905ffey3V5xcxvHmCeM2", "at": "2026-11-23", "verdict": "APPROVED — 21/21; OWN battery M1/M2/M3 reddened t21 naming exactly that job, M_all3 all three, M_cont green (behavior-pinned not keyword); AC5 strengthened to byte-identical reconstruction (HEAD+3-sed == working file); real-helm 3.16.4 carrier replay base 3/3 + traefik/k8s-mon/postiz 2/2 + oci-both + cf-77 guard + zero-dep all correct; main-drift b89acb5df = instance's OWN benign forgejo-runner bump (D44-predicted, bump leg green on instance), touches nothing our legs read, 21/21 holds" }
+      ]
     }
   },
   "blocked": [],
