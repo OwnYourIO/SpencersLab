@@ -20,13 +20,29 @@ Logs live in tests/radiance-receipt/ — deliberately NOT under
 charts/radiance/tests/evidence/ (the C03 pin covers evidence/; a receipt log
 there would break it).
 
-fn carries the two loud checks attached to ruling D9: (a) the M >= 8 bar on
-the pool-backs line — fewer than 8 full-length sessions is a refutation and a
-C03 trigger, not a close; (b) the eight-admitted-sessions smoke — Radiance
-warns rather than refuses on an under-funded pool, so "serves fewer than 8"
-is a SILENT failure mode and this is its loud check. Both are fn-only: the
-silent-mode risk was ruled on the live default route (D9 informed, risk
-accepted).
+Fit adjudication (the 2026-11-23 gate-fix round — the pre-fix gate certified
+item 3 by the PRESENCE of the pool-backs line and parsed the M figure for
+fn only, which let a non-fn lane's 4-session pool at 75% of the worst case
+pass: an unguarded completeness gate on an unobserved value is the D49
+class, in the artifact whose job is to catch it):
+  MACHINE-DECIDED (a refusal keeps PROVISIONAL open):
+  - every item present on every lane (absence is never a pass, D49);
+  - a block-detected FAIL/MISMATCH marker;
+  - EVERY lane: the pool-backs line's M figure parses and M >= the chart's
+    FORM-fixed --max-num-seqs — the bar is READ from
+    charts/radiance/values.yaml (D6: 8 today, parent-D46 FORM_FIXED), so a
+    future FORM ruling moves the bar with it; a missing or ambiguous flag
+    is a refusal, never a fallback to a hardcoded 8 (an unverified bar is
+    the pass-on-absence class);
+  - fn ONLY (D9(b) — the silent-mode risk was ruled on the live default
+    route, risk accepted): the eight-admitted-sessions smoke, all 2xx —
+    Radiance warns rather than refuses on an under-funded pool, so "serves
+    fewer than 8" is a SILENT failure mode and the smoke is its loud check.
+  OWNER-READ (a warning — surfaced and attributable, never a refusal):
+  - EVERY lane: N% < 100 (or the N% figure absent). The funding margin is
+    the owner's judgment; the gate records and surfaces it, it does not
+    price it. A PASS certifies the machine bar and the presence — it is
+    NOT a fit certification.
 """
 
 from __future__ import annotations
@@ -48,7 +64,10 @@ FN_LANE = "radiance"
 # Expected served figure on ALL FOUR lanes post-C02 (PROVISIONAL until this
 # gate closes it); the block hard-wires it, the gate checks the item's presence.
 EXPECTED_SERVED = 262144
-M_BAR = 8        # D9(a) — fn only
+# The M bar is NOT a constant: it is read per run from the chart's compose
+# FORM (D6: --max-num-seqs is FORM-fixed — 8 today — so a future FORM ruling
+# moves the bar; hardcoding 8 would silently invalidate it). The fn-only
+# smoke count stays a constant: the ruling named eight sessions (D9(b)).
 SMOKE_SESSIONS = 8  # D9(b) — fn only
 
 # The nine-item receipt set (RESEARCH implication (e)) + the fn smoke. Marker
@@ -58,7 +77,7 @@ SMOKE_SESSIONS = 8  # D9(b) — fn only
 ITEMS = (
     (1, "DIAG_OK", "DIAG_MISMATCH", "the /diagnostics config echo shows the served --max-model-len"),
     (2, "VRAM_OK", "VRAM_MISSING", "the VRAM-split lines (weights vs KV pool per card)"),
-    (3, "POOL_OK", "POOL_MISSING", "the 'kv: the pool backs N% of the worst case ... M full-length sessions' line (the named adjudicator)"),
+    (3, "POOL_OK", "POOL_MISSING", "the 'kv: the pool backs N% ... M full-length sessions' line — parsed per lane: M >= the FORM-fixed --max-num-seqs is the machine bar (all four lanes); N% is the owner's read (a warning when < 100, never a bar)"),
     (4, "PIN_OK", "PIN_FAIL PIN_MISSING", "the pinned line vs the held 24Gi/110Gi (the limit - printed-pinned >= 4 law)"),
     (5, "SLOTS_OK", "SLOTS_MISSING", "the checkpoint-slot count (log-scaled)"),
     (6, "WARN_OK", "WARN_MISSING", "the prefix-cache tier warning (the TP2 either/or)"),
@@ -224,7 +243,41 @@ echo "run the closing gate: python3 charts/radiance/tests/receipt_gate.py --gate
 # N% of the worst case ... M full-length sessions" (the cf-143 print's form;
 # print-pending tolerance: hyphen/space variants, case-insensitive).
 _M_RE = re.compile(r"(\d+)\s*full[- ]length\s+sessions", re.IGNORECASE)
+_N_RE = re.compile(r"pool\s+backs\s+(\d+(?:\.\d+)?)\s*%", re.IGNORECASE)
 _ADMITTED_RE = re.compile(r"^SMOKE: ADMITTED (\d+) (\S+)\s*$")
+
+# The M bar's source of truth: the chart's compose FORM (one shared line,
+# FORM-owned — D6). The gate reads it rather than hardcoding 8, so a future
+# FORM ruling moves the bar; when it cannot be read, the gate refuses
+# (an unverified bar is the D49 pass-on-absence class, not a fallback).
+_SEQS_RE = re.compile(r"--max-num-seqs\s+(\d+)")
+
+
+def chart_values_path() -> Path:
+    """The gate's own chart (charts/radiance/values.yaml) — the compose FORM
+    the block's pods run is the same bytes this file reads."""
+    return Path(__file__).resolve().parent.parent / "values.yaml"
+
+
+def read_configured_max_num_seqs(values_path: Path) -> tuple[int | None, str | None]:
+    """The per-lane M bar, READ from the compose FORM (D6: FORM-fixed —
+    8 today). Returns (bar, None) on success; (None, reason) when the bar
+    cannot be established — a missing file, a missing flag, or two distinct
+    values are all REFUSALS, never a fallback to a hardcoded 8 (D49)."""
+    try:
+        text = Path(values_path).read_text()
+    except OSError as e:
+        return None, (f"the configured --max-num-seqs cannot be read from {values_path} ({e.__class__.__name__}) — "
+                     f"the M bar cannot be evaluated, so it cannot pass (absence is not a pass, D49)")
+    found = _SEQS_RE.findall(text)
+    if not found:
+        return None, (f"no --max-num-seqs flag in {values_path} — the M bar cannot be evaluated, "
+                     f"so it cannot pass (absence is not a pass, D49); this gate never falls back to a hardcoded 8")
+    distinct = sorted(set(found))
+    if len(distinct) > 1:
+        return None, (f"ambiguous --max-num-seqs in {values_path}: {distinct} — the M bar cannot be "
+                     f"decided, so it cannot pass (an unverified bar is not a bar, D49)")
+    return int(distinct[0]), None
 
 
 def _item_line(text: str, num: int) -> str | None:
@@ -234,13 +287,21 @@ def _item_line(text: str, num: int) -> str | None:
     return None
 
 
-def gate(logs_dir: Path) -> list[str]:
-    """The D8 closing gate: EMPTY (pass) only if every item is present on
-    every lane. Refuses — and NAMES the reason — on: a missing log file, a
-    missing item line, a block-detected FAIL/MISMATCH marker, an fn M < 8
-    (D9(a) — a C03 trigger, not a close), and an fn smoke with fewer than
-    eight 2xx admissions (D9(b)). Absence is not a pass (parent-D49)."""
+def gate(logs_dir: Path, values_path: Path | None = None) -> tuple[list[str], list[str]]:
+    """The D8 closing gate: the refusals list is EMPTY (pass) only if every
+    item is present on every lane, the per-lane M bar holds, and the fn
+    smoke is 8x2xx. Refuses — and NAMES the reason — on: a missing log
+    file, a missing item line, a block-detected FAIL/MISMATCH marker, an
+    M figure that is absent/unparseable or below the configured
+    --max-num-seqs on ANY lane (D49: absence is not a pass), an unreadable
+    or ambiguous bar, and an fn smoke with fewer than eight 2xx admissions
+    (D9(b)). The warnings list is the owner's read: N% < 100 (or the N%
+    figure absent) per lane — surfaced and attributable, never a refusal."""
     diags: list[str] = []
+    warnings: list[str] = []
+    bar, bar_err = read_configured_max_num_seqs(values_path if values_path is not None else chart_values_path())
+    if bar is None:
+        diags.append(bar_err)
     for lane in LANES:
         path = Path(logs_dir) / f"{lane}.log"
         if not path.is_file():
@@ -256,21 +317,46 @@ def gate(logs_dir: Path) -> list[str]:
                 continue
             fail_state = " ".join(m for m in line.split(" ", 1)[1].split()[:2])
             diags.append(f"{lane}: item {num} ({desc}) — {fail_state}: {line[len(f'ITEM{num}: '):]}")
+        if bar is not None:
+            d, w = _pool_diags(lane, text, bar)
+            diags.extend(d)
+            warnings.extend(w)
         if lane == FN_LANE:
-            diags.extend(_fn_diags(text))
-    return diags
+            diags.extend(_fn_smoke_diags(text))
+    return diags, warnings
 
 
-def _fn_diags(text: str) -> list[str]:
+def _pool_diags(lane: str, text: str, bar: int) -> tuple[list[str], list[str]]:
+    """The per-lane fit adjudication — all four lanes (pre-fix the M check
+    was fn-only, which let a non-fn lane's POOL_OK presence certify an
+    under-funded pool). The machine decision: M parses and M >= bar. The
+    owner's read: N% < 100 (or absent) — a warning, never a refusal."""
     diags: list[str] = []
+    warnings: list[str] = []
     pool = _item_line(text, 3)
     if pool is not None and pool.split(" ", 1)[1].startswith("POOL_OK"):
         raw = pool[len("ITEM3: POOL_OK "):]
         m = _M_RE.search(raw)
         if m is None:
-            diags.append(f"{FN_LANE}: D9(a) — the pool-backs line carries no 'M full-length sessions' figure to parse: {raw!r} (the M >= 8 bar cannot be evaluated, so it cannot pass)")
-        elif int(m.group(1)) < M_BAR:
-            diags.append(f"{FN_LANE}: D9(a) — the pool backs M={m.group(1)} full-length sessions, want M >= {M_BAR} — a C03 trigger, not a close (D9(a))")
+            if lane == FN_LANE:
+                diags.append(f"{lane}: D9(a) — the pool-backs line carries no 'M full-length sessions' figure to parse: {raw!r} (the M >= {bar} bar cannot be evaluated, so it cannot pass)")
+            else:
+                diags.append(f"{lane}: item 3 — the POOL_OK line carries no 'M full-length sessions' figure to parse: {raw!r} — the M bar cannot be evaluated, so it cannot pass (absence is not a pass, D49)")
+        elif int(m.group(1)) < bar:
+            if lane == FN_LANE:
+                diags.append(f"{lane}: D9(a) — the pool backs M={m.group(1)} full-length sessions, want M >= {bar} — a C03 trigger, not a close (D9(a))")
+            else:
+                diags.append(f"{lane}: the pool backs M={m.group(1)} full-length sessions, want M >= {bar} (the chart's FORM-fixed --max-num-seqs) — the lane is under-funded at the ruled window; Radiance SILENTLY serves fewer sessions (warns, does not refuse) — this is what the gate exists to catch")
+        n = _N_RE.search(raw)
+        if n is None:
+            warnings.append(f"{lane}: the pool-backs line carries no 'N%' figure — the owner's fit read is under-informed (the machine M bar is evaluated regardless)")
+        elif float(n.group(1)) < 100:
+            warnings.append(f"{lane}: the pool backs N={n.group(1)}% of the worst case — under 100%: surfaced for the owner's read, not a close bar (the machine bar is M >= {bar})")
+    return diags, warnings
+
+
+def _fn_smoke_diags(text: str) -> list[str]:
+    diags: list[str] = []
     admitted = {}
     for ln in text.splitlines():
         am = _ADMITTED_RE.match(ln)
@@ -310,13 +396,18 @@ def main(argv: list[str]) -> int:
             else:
                 print(f"unknown argument: {argv[i]}", file=sys.stderr)
                 return 2
-        diags = gate(logs_dir)
+        diags, warnings = gate(logs_dir)
         if diags:
-            print(f"REFUSED — PROVISIONAL stays open ({len(diags)} missing item(s); a gate that can pass on absence is not a gate, D49):")
+            print(f"REFUSED — PROVISIONAL stays open ({len(diags)} refusal(s); a gate that can pass on absence is not a gate, D49):")
             for d in diags:
                 print(f"  - {d}")
+        if warnings:
+            print(f"owner-read warnings ({len(warnings)}) — N% < 100 or the N% figure absent: surfaced and attributable, never a close bar (the machine bar is the per-lane M figure):")
+            for w in warnings:
+                print(f"  ! {w}")
+        if diags:
             return 1
-        print("PASS — every item present on all four lanes; PROVISIONAL may close by the C04 dated annotation")
+        print("PASS — the machine bar held on all four lanes (every item present, per-lane M >= the FORM-fixed --max-num-seqs, fn eight-session smoke all 2xx); any N% warning above is the owner's read, not a fit certification; PROVISIONAL may close by the C04 dated annotation")
         return 0
     print(f"unknown argument: {argv[0]}", file=sys.stderr)
     return 2
