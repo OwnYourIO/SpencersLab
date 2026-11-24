@@ -167,14 +167,16 @@
       ]
     },
     "C08": {
-      "status": "pending",
+      "status": "done",
       "wave": 9,
       "depends_on": ["C06", "C07"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "APPROVED",
       "note": "runbook rewrite #3 + git mv to .agents/notes/2026-11-17-argocd-sync-fanout.md + suite rename/re-pin (tests/notes/argocd-fanout-runbook.sh); human legs collapse to 11 mints + ONE org-level vault paste (owner ORG Settings → Actions — ruled 2026-11-23) + moot-key deletes; zero Bitwarden; rollback unset leg moves to org scope; all ruled postures stated as answers (newline records, warn-and-skip preflight row, indefinite TTL + revoke)",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-24T02:00+00:00", "event": "dev DONE: renamed+rewritten, every quoted token byte-true vs landed workflow/script; runbook 6/6 after three doc-side iterations; all four suites green together 38/38; stale-path sweeps 0 shipped hits; AC-verify folded into the combined chain re-review (dev iterated against the designed suite; no separate chunk round)" }
+      ]
     }
   },
   "blocked": [],
