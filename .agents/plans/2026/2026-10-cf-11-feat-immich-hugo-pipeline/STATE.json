@@ -1,6 +1,18 @@
 {
   "feature": "2026-10-cf-11-feat-immich-hugo-pipeline",
-  "plan_status": "approved",
+  "plan_status": "complete",
+  "final_review": {
+    "at": "2026-11-24",
+    "session": "ses_df4656413ffeZJiKhWX0kfp3Bm",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2 (owner directive supersedes planning-tier map)",
+    "verdict": "APPROVED",
+    "evidence": "All six validation legs own-hands green: host suite PASS 22 ok (h1-h8), branch suite PASS 20 ok, pure-main control 19 ok (fresh detached worktree @ b89acb5df, disclosed substitution), helm lint pass, aislop 0/0, hadolint 0 errors, C01 suite 53/53. Adversarial re-proofs: all 8 fence shapes re-verified on own scratch harness (test session's harness was ad-hoc, not on disk); degenerate fifth/fourth-class shapes confirmed backstopped RED at g2 — suite as a whole not weakened. Whole-plan coherence: goal met (C01/C02/C03/C08 merged, C04/C05 dropped by ruling, C06/C07 owner-push-closed re-verified by fresh public clone of site main, cf-88 chain b89acb5df->4d4474a78->e50650f10->33f51293d clean, zero overlap with main's advance, merges as-is). DECISIONS/FRICTION consistency confirmed; orphan research-folder surface verified empty/zero git footprint.",
+    "findings": "minor (record-only): g7 fifth-class header claims value-exact but is count+membership; degenerate combos fence-green yet suite-red at g2 backstop; same pattern pre-exists in approved 4th class; recorded in chunks/C03.md. No action.",
+    "remaining_after_approval": [
+      "OWNER: merge cf-88-feat-gpu-host-runner (33f51293d) -> ArgoCD sync -> cf-host registration -> run #239 / 06:00 pickup; Actions seed (5 secrets + IMMICH_URL) — first real runs fail loud until seeded (expected).",
+      "coord at card hand-off: slug-stack in-place refresh + Priority stamp + card to Review + pipeline_release(done). In-work mark stays open until the owner declares the ticket complete (step 9 rule)."
+    ]
+  },
   "run_kind": "build",
   "coord_session": "ses_e6e2b3ed6ffepP4C6aR2CWbzAF",
   "test_session": "ses_e6b68f656ffel2Mc5m4kveEz0q",
