@@ -178,7 +178,7 @@ def test_c03_form_flags_reach_every_lane_from_the_carrier(flag):
     style) and EVERY lane's composed vector must lose that flag. The rename
     must find the token (a FORM flag with no carrier byte is not carrier-
     sourced) — proving the fixed flags are the chart's, while the DATA flags
-    above are the lanes'. Runs across all four lanes per flag: the FORM is one
+    above are the lanes'. Runs across all five lanes per flag: the FORM is one
     script and a per-lane drift here is the fork class."""
     docs = R.lane_docs("radiance")
     hit = R.serve_script_from_render(docs)
@@ -208,6 +208,209 @@ def test_c03_form_flags_reach_every_lane_from_the_carrier(flag):
             f"C03/D43 [{name}]: the renamed flag carried a value other than the FORM's "
             f"{R.FORM_FIXED_FLAGS[flag]!r}: {pairs.get(f'{flag}-x')!r}"
         )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_seqs_channel_env_moves_only_max_num_seqs(name):
+    """D-16 channel teeth (seqs, mutation arm): set the lane's env to
+    RADIANCE_MAX_NUM_SEQS=9 and EXACTLY --max-num-seqs may move to 9 in the
+    composed vector; every other flag stays byte-equal. Against today's FORM
+    (seqs still a hardcoded byte, the env unread) this is designed-red naming
+    C02 — the channel that lets a lane size its own seqs does not exist until
+    the spine line becomes the ${...:-8} expansion."""
+    comp = R.lane_composition(name)
+    base = comp["facts"]
+    assert base["argv"], f"C03/D-16 [{name}]: no baseline vector (see the AC1 leg)"
+    pairs_base = R.flag_pairs(base["argv"])
+    moved = dict(comp["env"])
+    moved[R.ENV_MAX_NUM_SEQS] = "9"
+    after = R.compose_serve_argv(comp["script"][2], moved)
+    assert after["argv"] is not None, (
+        f"C03/D-16 [{name}]: setting {R.ENV_MAX_NUM_SEQS} killed the wrapper "
+        f"(rc {after['rc']}, stderr {after['stderr'][:160]!r})"
+    )
+    pairs_after = R.flag_pairs(after["argv"])
+    assert pairs_after.get("--max-num-seqs") == "9", (
+        f"C03/D-16 [{name}]: env seqs=9 did not reach --max-num-seqs "
+        f"(composed {pairs_after.get('--max-num-seqs')!r}) — the seqs channel is not env-fed yet"
+    )
+    drift = {f for f in set(pairs_base) | set(pairs_after)
+             if f != "--max-num-seqs" and pairs_base.get(f) != pairs_after.get(f)}
+    assert not drift, (
+        f"C03/D-16 [{name}]: the seqs env also moved {sorted(drift)} — one env, one flag"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_seqs_channel_fallback_is_the_shipped_byte_never_256(name):
+    """D-16 fallback teeth (the RESEARCH §4.1 hazard): with the seqs env absent
+    the FORM composes the shipped byte 8 — NEVER the engine default 256, which
+    would size a resting lane's worst case at 256x-context. This is the
+    byte-identity guarantee (D-16: the fallback preserves today's shipped byte
+    so landing the channel moves no lane): it holds against today's hardcoded 8
+    and must keep holding once C02 swaps the byte for the ${...:-8} fallback,
+    because the whole point of the channel is that an env-less lane composes
+    exactly what it composes today."""
+    comp = R.lane_composition(name)
+    env = {k: v for k, v in comp["env"].items() if k != R.ENV_MAX_NUM_SEQS}
+    facts = R.compose_serve_argv(comp["script"][2], env)
+    assert facts["argv"] is not None, f"C03/D-16 [{name}]: compose died with seqs env removed"
+    pairs = R.flag_pairs(facts["argv"])
+    assert "--max-num-seqs" in pairs, (
+        f"C03/D-16 [{name}]: no seqs env means NO --max-num-seqs — the FORM would fall to the "
+        "engine default 256, the hazard D-16 records against"
+    )
+    assert pairs["--max-num-seqs"] == R.MAX_NUM_SEQS_DEFAULT, (
+        f"C03/D-16 [{name}]: absent seqs env composed {pairs['--max-num-seqs']!r}, want the shipped "
+        f"fallback {R.MAX_NUM_SEQS_DEFAULT!r} (never 256, the engine default)"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_seqs_channel_composes_from_the_carrier_alone(name):
+    """D-16 rename-token teeth (single FORM source, seqs): rename the
+    --max-num-seqs token INSIDE the carrier bytes and every lane must lose the
+    flag from its composed vector — the value reaches argv only from the one
+    carrier byte, never a second source. The seqs/dtype flags moved out of the
+    FORM_FIXED_FLAGS class but keep this carrier-source proof (the DATA is
+    per-lane; the flag byte is one place)."""
+    docs = R.lane_docs("radiance")
+    hit = R.serve_script_from_render(docs)
+    assert hit is not None, "C03/D-16: no serve wrapper to rename — designed-red naming dev round 3"
+    renamed = hit[2].replace("--max-num-seqs", "--max-num-seqs-x")
+    assert renamed != hit[2], (
+        "C03/D-16: the carrier bytes never name --max-num-seqs — the seqs channel has no FORM byte"
+    )
+    comp = R.lane_composition(name)
+    after = R.compose_serve_argv(renamed, comp["env"])
+    assert after["argv"] is not None, (
+        f"C03/D-16 [{name}]: renaming --max-num-seqs broke the wrapper outright (rc {after['rc']})"
+    )
+    pairs = R.flag_pairs(after["argv"])
+    assert "--max-num-seqs" not in pairs, (
+        f"C03/D-16 [{name}]: --max-num-seqs still composed after the token rename — a second "
+        "argv source outside the carrier byte"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_dtype_channel_env_moves_only_kv_cache_dtype(name):
+    """D-16 channel teeth (dtype, mutation arm): the dtype env moves ONLY
+    --kv-cache-dtype; the seqs byte and every other flag stay byte-equal. The
+    two channels are independent — a dtype env that also shifted seqs is the
+    crossed-wires class. Designed-red naming C02 until the spine carries the
+    ${...:-fp8} dtype expansion."""
+    comp = R.lane_composition(name)
+    base = comp["facts"]
+    assert base["argv"], f"C03/D-16 [{name}]: no baseline vector (see the AC1 leg)"
+    pairs_base = R.flag_pairs(base["argv"])
+    moved = dict(comp["env"])
+    moved[R.ENV_KV_CACHE_DTYPE] = "fp8_v4"
+    after = R.compose_serve_argv(comp["script"][2], moved)
+    assert after["argv"] is not None, f"C03/D-16 [{name}]: dtype env killed the wrapper"
+    pairs_after = R.flag_pairs(after["argv"])
+    assert pairs_after.get("--kv-cache-dtype") == "fp8_v4", (
+        f"C03/D-16 [{name}]: dtype env did not reach --kv-cache-dtype "
+        f"(composed {pairs_after.get('--kv-cache-dtype')!r}) — the dtype channel is not env-fed yet"
+    )
+    drift = {f for f in set(pairs_base) | set(pairs_after)
+             if f != "--kv-cache-dtype" and pairs_base.get(f) != pairs_after.get(f)}
+    assert not drift, (
+        f"C03/D-16 [{name}]: the dtype env also moved {sorted(drift)} — the two channels are independent"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_dtype_channel_fallback_is_the_shipped_byte_never_absent(name):
+    """D-16 fallback teeth (the §3.3 hazard): with the dtype env absent the
+    FORM composes the shipped byte fp8 — NEVER the flag-absent shape that
+    would let the engine boot at its bf16 default (2x the bytes on a parked
+    lane). Byte-identity leg: green against today's hardcoded fp8, must stay
+    green post-C02 via the ${...:-fp8} fallback."""
+    comp = R.lane_composition(name)
+    env = {k: v for k, v in comp["env"].items() if k != R.ENV_KV_CACHE_DTYPE}
+    facts = R.compose_serve_argv(comp["script"][2], env)
+    assert facts["argv"] is not None, f"C03/D-16 [{name}]: compose died with dtype env removed"
+    pairs = R.flag_pairs(facts["argv"])
+    assert "--kv-cache-dtype" in pairs, (
+        f"C03/D-16 [{name}]: no dtype env means NO --kv-cache-dtype — the FORM would fall to the "
+        "engine bf16 default, the hazard D-3/D-16 record against"
+    )
+    assert pairs["--kv-cache-dtype"] == R.KV_DTYPE_DEFAULT, (
+        f"C03/D-16 [{name}]: absent dtype env composed {pairs['--kv-cache-dtype']!r}, want the shipped "
+        f"fallback {R.KV_DTYPE_DEFAULT!r}"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_dtype_channel_composes_from_the_carrier_alone(name):
+    """D-16 rename-token teeth (single FORM source, dtype): renaming the
+    --kv-cache-dtype token inside the carrier removes the flag from every
+    lane's composed vector."""
+    docs = R.lane_docs("radiance")
+    hit = R.serve_script_from_render(docs)
+    assert hit is not None, "C03/D-16: no serve wrapper to rename — designed-red naming dev round 3"
+    renamed = hit[2].replace("--kv-cache-dtype", "--kv-cache-dtype-x")
+    assert renamed != hit[2], (
+        "C03/D-16: the carrier bytes never name --kv-cache-dtype — the dtype channel has no FORM byte"
+    )
+    comp = R.lane_composition(name)
+    after = R.compose_serve_argv(renamed, comp["env"])
+    assert after["argv"] is not None, (
+        f"C03/D-16 [{name}]: renaming --kv-cache-dtype broke the wrapper outright (rc {after['rc']})"
+    )
+    pairs = R.flag_pairs(after["argv"])
+    assert "--kv-cache-dtype" not in pairs, (
+        f"C03/D-16 [{name}]: --kv-cache-dtype still composed after the token rename — a second "
+        "argv source outside the carrier byte"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
+@helm_skip
+def test_c03_kv_dtype_is_not_a_request_body_channel(name):
+    """D-8/D43 (the real law the launch brief called the "--extra_body law"):
+    the KV dtype is a BOOT-time fact (the pool is built at startup), so it
+    reaches the engine ONLY through the FORM's env channel — never a per-
+    request body param. A serve FORM carrying --extra_body, or composing the
+    dtype from anything but RADIANCE_KV_CACHE_DTYPE, is the second-argv-source
+    class D43 exists to kill. This is a bar, green by construction, kept visible."""
+    docs = R.lane_docs(name)
+    hit = R.serve_script_from_render(docs)
+    assert hit is not None, "C03/D43: no serve wrapper — designed-red naming dev round 3"
+    script = hit[2]
+    assert "--extra_body" not in script, (
+        "C03/D43/D-8: the serve FORM carries --extra_body — a request-body dtype is a second "
+        "argv source and a boot-time pool decision made per-request (the dtype channel is env, D-8)"
+    )
+    env = R.radiance_env(R.container_env(R.serve_container(R.deployment(docs))))
+    pairs = R.flag_pairs(R.compose_serve_argv(script, env)["argv"] or [])
+    if "--kv-cache-dtype" in pairs:
+        assert env.get(R.ENV_KV_CACHE_DTYPE, R.KV_DTYPE_DEFAULT) == pairs["--kv-cache-dtype"], (
+            f"C03/D43 [{name}]: --kv-cache-dtype {pairs['--kv-cache-dtype']!r} did not arrive "
+            "through the RADIANCE_KV_CACHE_DTYPE env — dtype is the env channel or nothing"
+        )
+
+
+def test_c03_seqs_and_dtype_are_not_required_envs():
+    """R2/D-16 boundary: seqs and dtype are ENV_DEFAULTED (present value or the
+    shipped fallback), NOT ENV_REQUIRED — adding them to ENV_REQUIRED would
+    make an env-less lane die at the loud guard instead of composing the
+    byte, i.e. the R2-violating shape. This leg pins that they are absent from
+    the required set (and present in ENV_DEFAULTED), so the loud-guard param
+    above never silently widens to size-/dtype-gated boots."""
+    for env_name in (R.ENV_MAX_NUM_SEQS, R.ENV_KV_CACHE_DTYPE):
+        assert env_name not in R.ENV_REQUIRED, (
+            f"D-16: {env_name} is in ENV_REQUIRED — an env-defaulted channel must fall back, "
+            "never fail loud (that is the R2-violating shape)"
+        )
+        assert env_name in R.ENV_DEFAULTED, f"D-16: {env_name} belongs to the ENV_DEFAULTED class"
 
 
 @pytest.mark.parametrize("name", sorted(R.COMPOSITION_LANES))
@@ -507,10 +710,13 @@ def test_c03_chart_ships_the_fetch_form():
 
 def test_c03_chart_ships_the_serve_form():
     """C03/D43 serve-side twin of the fetch-FORM leg: the compose FORM is
-    chart-owned bytes carrying the FORM-fixed flags, the loud guard on the
-    required env, the startup echo, and the exec of the engine by BARE name
-    (§D1.5 ENTRYPOINT law — the wrapper adds argv, it does not re-path the
-    engine). Designed-red naming dev round 3 until the carrier lands."""
+    chart-owned bytes carrying the FORM-owned flag NAMES (port/host fixed; the
+    seqs and dtype names are env-defaulted with shipped-value fallbacks after
+    D-16 — the names stay FORM bytes, only their values move per lane), the
+    loud guard on the required env, the startup echo, and the exec of the
+    engine by BARE name (§D1.5 ENTRYPOINT law — the wrapper adds argv, it does
+    not re-path the engine). Designed-red naming dev round 3 until the carrier
+    lands."""
     text = R.chart_carrier_text()
     hit = [ln for ln in text.splitlines() if "--served-model-name" in ln]
     assert hit, (
@@ -518,7 +724,8 @@ def test_c03_chart_ships_the_serve_form():
         "landed (the lanes still carry argv, or nothing); designed-red naming dev round 3"
     )
     for toks, what in (
-        (("--port", "--host", "--max-num-seqs", "--kv-cache-dtype"), "the FORM-fixed flags"),
+        (("--port", "--host", "--max-num-seqs", "--kv-cache-dtype"),
+         "the FORM-owned flags (two fixed, two env-defaulted with shipped-value fallbacks)"),
         (("radiance",), "the bare-name engine exec"),
     ):
         missing = [t for t in toks if t not in text]
@@ -553,7 +760,7 @@ def test_c03_chart_ships_no_lane_data():
     )
     ids = [lit for lit in R.LANE_IDENTITY_LITERALS if lit in text]
     assert not ids, (
-        f"C03 AC2/D43: chart-owned bytes hard-code lane identities {ids} — four releases of one "
+        f"C03 AC2/D43: chart-owned bytes hard-code lane identities {ids} — five releases of one "
         "shell inherit them, which is the exact failure the roster cannot work around"
     )
     live_claims = [
@@ -724,17 +931,22 @@ def test_c03_chart_bare_render_is_mechanism_only():
 # --- AC1/AC2 carrier: NOTES.txt says shell law ---------------------------------
 
 
-def test_c03_notes_state_the_four_lane_shell():
-    """C03 (task 2): NOTES.txt becomes shell law — it enumerates the lanes, states the claim math per
-    lane (any TP2 holds both cards; at most one TP2 up; at the transcribed memory the two TP1 lanes cannot
-    co-boot), and repeats the 502-idle law. The fn-only text is what a q27 or resting-lane operator reads
-    today, and it is wrong for them."""
+def test_c03_notes_state_the_five_lane_shell():
+    """C03 (task 2), widened to five lanes by 2026-11-feat-radiance-fp8v4-lane
+    C02: NOTES.txt becomes shell law — it enumerates the lanes, states the
+    claim math per lane (any TP2 holds both cards; at most one TP2 up; at the
+    transcribed memory the two TP1 lanes cannot co-boot), and repeats the
+    502-idle law. The fn-only text is what a q27 or resting-lane operator reads
+    today, and it is wrong for them. The fp8_v4 lane is a third TP2 — the at-
+    most-one-TP2-UP and RAM co-boot laws are unchanged by it, so the only
+    widening this leg needs is the name (C02 lands the NOTES.txt byte)."""
     notes = (R.CHART_DIR / "templates" / "NOTES.txt").read_text()
     flat = " ".join(notes.split())
-    for lane_name in ("radiance", R.Q27_APP_NAME, R.FLASH_TP1_APP_NAME, R.Q27_TP2_APP_NAME):
+    for lane_name in ("radiance", R.Q27_APP_NAME, R.FLASH_TP1_APP_NAME, R.Q27_TP2_APP_NAME,
+                      R.Q27_FP8V4_APP_NAME):
         assert lane_name in flat, (
-            f"C03: NOTES.txt never names the {lane_name} lane — the chart is one shell with four releases and "
-            "the notes still read as the fn lane's private page"
+            f"C03: NOTES.txt never names the {lane_name} lane — the chart is one shell with five releases and "
+            "the notes still read as the fn lane's private page; designed-red naming C02 (the NOTES byte)"
         )
     assert re.search(r"(?i)tp ?2[^.]{0,80}(both cards|both devices|claim ?2)", flat), (
         "C03: NOTES.txt never states that any TP2 lane holds BOTH cards — the claim math is the operator's only "

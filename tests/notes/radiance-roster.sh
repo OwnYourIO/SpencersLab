@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # 2026-11-feat-radiance-multi-instance C06 — the roster note contract
 # (chunks/C06.md Tests bullet 1): .agents/notes/radiance-multi-instance-roster.md
-# is the ticket's single prose authority for the roster — the five claimants on
-# the pool (four radiance releases + the PARKED strata lane), the steady-state
+# is the ticket's single prose authority for the roster — the claimants on
+# the pool [four radiance releases + the PARKED strata lane at C05; widened by
+# 2026-11-feat-radiance-fp8v4-lane C01 to SIX: five radiance releases + strata],
+# the steady-state
 # claim table C04 points at, the routing wave's shipped defaults, the MoE
 # bring-up order, and the convention reconciliation ask 4 needed.
 #
@@ -97,7 +99,12 @@ def lane(key):
     }
 
 rows = {}
-for key in ("radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"):
+# Five radiance releases + strata = six claimants on the two-card pool (fp8v4
+# lane C01 widens this list; the fp8_v4 block is C03's and its roster row is
+# C06's — both absent here, so T2 is the designed red naming C03/C06. seqs is
+# NOT a T2-derived field — the per-lane seqs truth is the note's prose, C06).
+for key in ("radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2",
+            "radiance-q27-fp8v4"):
     rows[key] = lane(key)
 strata = ((doc.get("llama-swap") or {}).get("app-template") or {}).get("controllers", {}) \
            .get("strata", {})
@@ -171,14 +178,14 @@ if want t1; then
   if grep -qE 'amd\.com/r9700' "$NOTE"; then
     fail "T1: the roster note names an impossible claim string (amd.com/ + the bare product) — the plugin's code constants make it unreachable, so it can only mislead"
   fi
-  for who in radiance radiance-q27 radiance-flash-tp1 radiance-q27-tp2 strata; do
+  for who in radiance radiance-q27 radiance-flash-tp1 radiance-q27-tp2 radiance-q27-fp8v4 strata; do
     grep -qE "(^|[^a-z0-9-])${who}([^a-z0-9-]|$)" "$NOTE" \
-      || fail "T1: the roster note never names the claimant '$who' — five things hold claims on this pool and the note is their single table"
+      || fail "T1: the roster note never names the claimant '$who' — six things hold claims on this pool and the note is their single table; designed-red naming C06 (the note's fp8_v4 sentence lands with the doc)"
   done
   if ! grep -qiE 'custom-values' "$NOTE" || ! grep -qiE 'secrets.only|secrets only' "$NOTE"; then
     fail "T1: the reconciliation sentence is missing — the note must say custom-values stays secrets-only and that the per-release service blocks are this chart's per-instance carrier (ask 4's convention law, cross-cited to DECISIONS)"
   fi
-  ok "T1: roster note exists, dated, retired-pool-clean, names all five claimants, and carries the carrier-law sentence"
+  ok "T1: roster note exists, dated, retired-pool-clean, names all six claimants, and carries the carrier-law sentence"
 fi
 
 # --- T2: the table matches the shipped tree -------------------------------------

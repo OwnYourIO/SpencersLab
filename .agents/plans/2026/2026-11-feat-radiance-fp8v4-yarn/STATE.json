@@ -4,9 +4,9 @@
   "plan_status": "approved",
   "plan_status_note": "APPROVED 2026-11-24 by the owner (batched approval round; DECISIONS D-19) on the revised plan (scope-change round D-15..D-18 folded, then approval rulings D-19..D-26: C01 dispatch authorized for next round, C05 order gate WAIVED, fifth trio 5/1/0 + second named low tie authorized, accuracy A/B authorized as an owner-executed landing leg, spelling confirmed, OQ-7 left open by status). current_wave stays 1; C01 dispatches after this fold. History: drafted 2026-11-23, revised same-day by the owner scope-change round, approved 2026-11-24.",
   "coord_session": null,
-  "test_session": null,
-  "current_wave": 1,
-  "updated_at": "2026-11-24T03:24:11Z",
+  "test_session": "ses_df45cfb50ffeMhdkGlT8OhdWFq",
+  "current_wave": 2,
+  "updated_at": "2026-11-24T04:55:48Z",
   "kickoff": {
     "slug": "feat-radiance-fp8v4-lane",
     "type": "feat",
@@ -23,8 +23,8 @@
   "stages": {
     "pre_research": "DONE (RESEARCH.md, grounding round 2026-11-23, agent-research; seqs inventory = its §4.1-§4.3, used as-is + re-verified; §7 Option-A lines carry dated 2026-11-24 erratum annotations per D-26 — the 7.65/96% there is k6_v4's figure)",
     "planning": "DONE — APPROVED 2026-11-24 (DECISIONS D-19; plan_status flipped in this record)",
-    "test_writing": "READY (C01 dispatches next round — red-first test-authority wave INCLUDING the receipt_gate per-lane re-cut + its tests; MUST precede any charts/** or services/** edit)",
-    "chunk_development": "PENDING (waves 2-6: C02 chart FORM two channels; C03 new-lane service wave (8 seqs, deficit RULED, A/B-gated opt-in); C04 resting-lane seqs 5 x3 + q27-note pair; C05 fn seqs wave + runbook pair [order gate WAIVED 2026-11-24]; C06 roster docs)",
+    "test_writing": "DONE (C01 landed 2026-11-24 and APPROVED with its single condition folded — D-27; battery + red-owner mapping in chunks/C01.md ## Review)",
+    "chunk_development": "PENDING — C02 CLEARED FOR DISPATCH (2026-11-24, STATE.chunks.C02.dispatch); waves 2-6: C02 chart FORM two channels; C03 new-lane service wave (8 seqs, deficit RULED, A/B-gated opt-in); C04 resting-lane seqs 5 x3 + q27-note pair; C05 fn seqs wave + runbook pair [order gate WAIVED 2026-11-24]; C06 roster docs",
     "chunk_review": "PENDING (per-chunk; C05 gets its OWN review — live default route, §4.3 evidence set; final whole-plan review after C06)",
     "deployment": "PENDING — OWNER-GATED (branch never pushed/merged by agents; owner legs in order: PR/merge, scale acts + boot prints, the tool-calling accuracy A/B on the new lane's first boot BEFORE any routing opt-in (raw output quoted into DECISIONS — D-23), per-lane-bar gate run (new-lane M<8 refusal is EXPECTED per D-20, never a defect, never a lowered bar), jsonc trio rows AFTER the receipts, ReBAR + Gen3x4 receipts collected separately; baseline current-shape block WAIVED 2026-11-24 (D-21) — no receipt leg precedes the merge anymore; all records under the D-14 receipt LAW: owner-paste or Loki-quoted print only, never a derived prediction)"
   },
@@ -45,7 +45,7 @@
     "A/D-19: PLAN APPROVED; C01 dispatches next round (after this fold); current_wave stays 1",
     "B/D-20: OQ-3 RULED — new lane STAYS seqs 8; deficit accepted; seqs 6 (fully funded at derived M~6.77, backing ~100%) OFFERED and DECLINED; C03 success criterion = 'boot print captured + deficit recorded as accepted ruling'; the gate's M<8 refusal on this lane is an EXPECTED outcome, never a defect, never a lowered bar; 6.77 stays derived, no AC reads it as a pass",
     "C/D-21: OQ-5 WAIVED — baseline current-shape receipt block does NOT run (paste option offered, not taken); C05 order gate = WAIVED 2026-11-24 — proceed; no before/after fn baseline exists (accepted cost, stated in C05); parent C04 neither closed nor re-opened; parent folder untouched by this ticket (single-writer; coordinator records there); D-14 receipt LAW still binds every AC",
-    "D/D-22: OQ-2 AUTHORIZED — fifth trio 5/1/0 + second NAMED low tie in ACCEPTED_LOW_TIES (surface.sh:1499); the twelve existing rows NEVER move; floors 5/4/3/2/1 each lane's own default row",
+    "D/D-22: OQ-2 AUTHORIZED — fifth trio 5/1/0 + second NAMED low tie in ACCEPTED_LOW_TIES (surface.sh:1525 verified 2026-11-24; cited :1499 at ruling time — drift recorded D-27c); the twelve existing rows NEVER move; floors 5/4/3/2/1 each lane's own default row",
     "E/D-23: OQ-6 AUTHORIZED — tool-calling accuracy A/B on the new lane's first boot, BEFORE any routing opt-in; raw output QUOTED into DECISIONS (receipt LAW on an accuracy artifact); C03 carries the no-routed-traffic line",
     "F/D-24: OQ-4 CONFIRMED as specced — fp8v4 compact identifiers; fp8_v4 literal only as the dtype value",
     "G/D-25: OQ-7 UNANSWERED — fn dtype move remains a separate follow-up ruling/ticket; NO ticket minted without the owner's word; C04/C05 prose assumes no fn dtype change"
@@ -61,19 +61,20 @@
   ],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "approved",
       "wave": 1,
       "depends_on": [],
-      "dispatch": "next round (after the 2026-11-24 approval fold lands — D-19)",
+      "dispatch": "DISPATCHED and CLOSED 2026-11-24 (test wave landed; review folded the sole AC6 condition — D-27; was: \"next round (after the 2026-11-24 approval fold lands — D-19)\")",
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVE_WITH_CONDITIONS 2026-11-24 — condition (AC6 stale runbook/roster posture, pre-D-18 remnant) FOLDED same round; battery certified in chunks/C01.md ## Review; seqs-read deviation sanctioned (D-27)",
       "handoffs": []
     },
     "C02": {
       "status": "pending",
       "wave": 2,
       "depends_on": ["C01"],
+      "dispatch": "AUTHORIZED FOR DISPATCH 2026-11-24 (C01 APPROVED with its condition folded — D-27); chart FORM wave: both env-defaulted channels on the spine line; red-owner mapping in chunks/C01.md ## Review",
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,

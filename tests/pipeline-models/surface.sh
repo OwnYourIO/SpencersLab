@@ -163,7 +163,7 @@
 # (PM alternate kept, kickoff/boards single-authority BAR, lane kept served),
 # re-authors M8-H from an empty-diff touch-bar into the runner-literal PAIRING
 # leg with planted-drift teeth, and replaces the retired ctx-equality needle with
-# the two-figure ctx axis. M9 is C05's new arm: the four-trio radiance fleet, the
+# the two-figure ctx axis. M9 is C05's new arm: the five-trio radiance fleet, the
 # per-lane floors, the re-frozen +6 delta and the two new peers/evidence units —
 # designed-RED naming C05, NOT in the default set. Every decision, the priority
 # ladder's arithmetic proof included, is in tests/pipeline-models/TEST_SPEC.md.
@@ -1007,9 +1007,16 @@ const CF143_C15_BASE_KEYS = CF143_BASE_KEYS.concat(["qwen3.8-flash-next-radiance
     "qwen3.8-flash-next-radiance-urgent", "qwen3.8-flash-next-radiance-low"]);
 const D19_BASE_KEYS = CF143_C15_BASE_KEYS.concat(["qwen3.8-27b-radiance",
     "qwen3.8-27b-radiance-urgent", "qwen3.8-27b-radiance-low"]);
+// fp8v4-lane C01 RE-FREEZE (2026-11-24, D-22 authorized the ladder): the base
+// gains the fifth trio so the live delta stays EXACTLY the six C05 rows — a
+// seventh ADDED row still refuses (:1029 teeth), and until the owner's Landing
+// step-6 rows land the trio shows as `removed`, the designed catalog-red window
+// (R-6). The twelve existing rows never move; only the freeze point advances.
+const FP8V4_C01_BASE_KEYS = D19_BASE_KEYS.concat(["qwen3.8-27b-radiance-fp8v4",
+    "qwen3.8-27b-radiance-fp8v4-urgent", "qwen3.8-27b-radiance-fp8v4-low"]);
 const liveKeys = Object.keys(models).sort();
-const added = liveKeys.filter(k => !D19_BASE_KEYS.includes(k));
-const removed = D19_BASE_KEYS.filter(k => !liveKeys.includes(k));
+const added = liveKeys.filter(k => !FP8V4_C01_BASE_KEYS.includes(k));
+const removed = FP8V4_C01_BASE_KEYS.filter(k => !liveKeys.includes(k));
 const wantAdded = ['qwen3.8-flash-next-radiance-tp1', 'qwen3.8-flash-next-radiance-tp1-urgent',
                    'qwen3.8-flash-next-radiance-tp1-low',
                    'qwen3.8-27b-radiance-tp2', 'qwen3.8-27b-radiance-tp2-urgent',
@@ -1018,9 +1025,9 @@ const wantRemoved = ['qwen3.8-27b-vllm', 'qwen3.8-27b-vllm-urgent', 'qwen3.8-27b
 const deltaOk = (add, rem) =>
   JSON.stringify(add) === JSON.stringify(wantAdded) && JSON.stringify(rem) === JSON.stringify(wantRemoved);
 if (!deltaOk(added, removed))
-  errs.push(`live catalog rows added vs the D19 base are ${JSON.stringify(added)}, want exactly the six new trio rows (D19 full trios for the two resting lanes — the frozen delta bars a seventh row as firmly as it bars a missing one; fn's and q27's trios live inside the re-frozen base)`);
+  errs.push(`live catalog rows added vs the fp8v4 re-frozen base are ${JSON.stringify(added)}, want exactly the six C05 trio rows (the frozen delta bars a seventh row as firmly as it bars a missing one; fn's, q27's and the fp8_v4 trios live inside the re-frozen base)`);
 if (JSON.stringify(removed) !== JSON.stringify(wantRemoved))
-  errs.push(`live catalog rows removed vs the D19 base are ${JSON.stringify(removed)}, want exactly the vllm trio (C01 disable — every other row stays live, strata AND the landed radiance trios included)`);
+  errs.push(`live catalog rows removed vs the fp8v4 re-frozen base are ${JSON.stringify(removed)}, want exactly the vllm trio once the fifth trio lands (the fp8_v4 trio shows here as 'removed' until the owner's Landing step-6 rows arrive — the designed catalog-red window R-6; every other row stays live, strata AND the landed radiance trios included)`);
 // Teeth (M9-A2's philosophy carried onto the freeze): the planted seventh row
 // MUST fail the equality. If a future edit loosens the gate to a superset
 // check, this arm reddens first — a delta that cannot refuse growth is a
@@ -1030,7 +1037,7 @@ if (deltaOk(added.concat(['qwen3.8-planted-seventh']).sort(), removed))
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/rad-catalog.js" "$CAT" \
-    || fail "M8: the radiance catalog contract is violated (FOUR trios under one ladder: fn 9/5/1 + q27 8/4/0 HOLD + D19's two resting-lane trios via M9 — shared modelIDs, higher-wins un-inverted, ctx 262144 the owner's trained figure with the served 200000 reconciled in prose (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure), input [text,image], tools true; frozen delta vs the D19 base (added == the six new trio rows exactly, a seventh row refuses) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
+    || fail "M8: the radiance catalog contract is violated (FIVE trios under one ladder: fn 9/5/1 + q27 8/4/0 HOLD + D19's two resting-lane trios + the fp8_v4 trio 5/1/0 via M9 — shared modelIDs, higher-wins un-inverted, ctx 262144 the owner's trained figure with the served 200000 reconciled in prose (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure), input [text,image], tools true; frozen delta vs the fp8v4 re-frozen base (added == the six C05 trio rows exactly, a seventh row refuses) — chunks/C05.md Tests + chunks/C15.md T5 + M8 header)"
   # M8-B: the ctx axis, both ends + the documented divergence. The cf-143 leg
   # asserted catalog ctx == the shipped maxModelLen; the owner's 2026-11-22
   # catalog edit (b3d7fada8, D27) makes the two figures deliberately different,
@@ -1373,6 +1380,13 @@ fi
 #   q27       (live)     8       4       0      4
 #   flash-tp1 (new)      7       3       2      3
 #   q27-tp2   (new)      6       2       1      2
+#   fp8v4     (new)      5       1       0      1   # D-22 authorized 2026-11-24
+#
+# D19's shipped collision (fn low 1 == 27b-tp2 low 1) and the fp8v4 low 0 ==
+# q27 low 0 tie are BOTH accepted NAMED ties: the five lanes are five separate
+# engines with five separate queues, each peer's floor is per lane, and the
+# "four engines, four queues" justification D19 recorded extends to five
+# (surface.sh ACCEPTED_LOW_TIES carries both pairs by name).
 #
 # The low rungs 2 and 1 sit inside the shipped, smoke-proven range (fn's low has
 # served 1 since cf-143; the ladder keeps 0 for q27). The on-target smoke read
@@ -1401,12 +1415,18 @@ function load(p) { return eval('(' + fs.readFileSync(p, 'utf8') + ')'); }
 const o = load(process.argv[2]);
 const models = (((o.providerMetas || o.providers || {})['gpu-ai'] || {}).models) || {};
 
-// The four lanes of the radiance family, lane rank order (fn first).
+// The five lanes of the radiance family, lane rank order (fn first). The fifth
+// trio 5/1/0 floor 1 is AUTHORIZED 2026-11-24 (D-22) — urgent 5 and default 1
+// cross-lane unique and strictly decreasing below 27b-TP2's 6/2, and low 0
+// TIES q27's low 0 (the second NAMED low tie, accepted below). The twelve
+// existing rows never move: no live-lane re-rank, no existing-row limit.context
+// edit; the new hop's floor is its OWN default-class row (1), not a borrowed 5/4.
 const LANES = [
   { base: 'qwen3.8-flash-next-radiance',      urgent: 9, def: 5, low: 1, floor: 5 },
   { base: 'qwen3.8-27b-radiance',             urgent: 8, def: 4, low: 0, floor: 4 },
   { base: 'qwen3.8-flash-next-radiance-tp1',  urgent: 7, def: 3, low: 2, floor: 3 },
   { base: 'qwen3.8-27b-radiance-tp2',         urgent: 6, def: 2, low: 1, floor: 2 },
+  { base: 'qwen3.8-27b-radiance-fp8v4',       urgent: 5, def: 1, low: 0, floor: 1 },
 ];
 // D47 ctx law, value half: the trained-window figure every radiance row must
 // carry. Stated for ALL four lanes (the family-wide law); the six NEW rows are
@@ -1496,7 +1516,16 @@ for (const lane of LANES) {
 //  * every trio is strictly decreasing within its own lane, and NO rung is
 //    negative: the catalog has only ever shipped non-negative body.priority
 //    (six live rows, 0..9) — negative rungs are out of the verified class.
-const ACCEPTED_LOW_TIES = [['qwen3.8-flash-next-radiance', 'qwen3.8-27b-radiance-tp2']];
+// The SECOND NAMED low tie (fp8v4 low 0 == q27 low 0) is AUTHORIZED 2026-11-24
+// by D-22: five engines, five queues, floors per lane — the "four engines,
+// four queues" justification D19 recorded for fn/27b-tp2 extends literally.
+// Binding invariant (restated so the leg never drifts): the TWELVE existing
+// rows NEVER move — no live-lane re-rank and no existing-row limit.context edit
+// (D27 holds). The tie leg greens on C01's own authoring, no pending ruling.
+const ACCEPTED_LOW_TIES = [
+  ['qwen3.8-flash-next-radiance', 'qwen3.8-27b-radiance-tp2'],
+  ['qwen3.8-27b-radiance', 'qwen3.8-27b-radiance-fp8v4'],
+];
 function lowTieErrors(lanes) {
   const bad = [];
   const seen = new Map();
@@ -1560,7 +1589,7 @@ errs.push(...lowTieErrors(LANES));
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/fleet.js" "$CAT" \
-    || fail "M9[C05]: the four-lane radiance fleet contract is violated (four trios under one higher-wins ladder, TEST_SPEC §3; plus the D47 ctx law — every radiance row at limit.context 262144 and BOTH figures named in the new-family commentary) — designed-red naming C05 until D19's six rows land"
+    || fail "M9[C05 + fp8v4 C01]: the five-lane radiance fleet contract is violated (five trios under one higher-wins ladder, TEST_SPEC §3; plus the D47 ctx law — every radiance row at limit.context 262144 and BOTH figures named in the new-family commentary) — designed-red naming C05 until D19's six rows land, and the fp8_v4 trio legs until the owner's Landing step-6 rows land (R-6)"
   # M9-B: the frozen-delta law, re-frozen at the pre-ticket catalog (the cf-143
   # C15 precedent): base := the C15 base + the q27 trio, so the delta is exactly
   # the SIX new trio rows and nothing else. A seventh row can only arrive as a
@@ -1587,6 +1616,10 @@ want_added = {"qwen3.8-flash-next-radiance-tp1", "qwen3.8-flash-next-radiance-tp
               "qwen3.8-flash-next-radiance-tp1-low",
               "qwen3.8-27b-radiance-tp2", "qwen3.8-27b-radiance-tp2-urgent",
               "qwen3.8-27b-radiance-tp2-low"}
+# fp8v4-lane C01 RE-FREEZE (D-22): the base gains the fifth trio so the live
+# delta stays exactly the six C05 rows above; the fp8_v4 trio lands as 'removed'
+# (owner-gated Landing step 6, R-6) rather than widening want_added to nine rows.
+base |= {"qwen3.8-27b-radiance-fp8v4", "qwen3.8-27b-radiance-fp8v4-urgent", "qwen3.8-27b-radiance-fp8v4-low"}
 want_removed = {"qwen3.8-27b-vllm", "qwen3.8-27b-vllm-urgent", "qwen3.8-27b-vllm-low"}
 added = set(live) - base
 removed = base - set(live)
@@ -1602,11 +1635,17 @@ import sys, yaml
 svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
 peers = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers") or {}
 errs = []
+# The peer floor is each lane's OWN default-class row (D45, restated by D-22):
+# fn 5 / q27 4 / flash-TP1 3 / 27b-TP2 2 / fp8_v4 1 — named explicitly so a
+# borrowed rank (e.g. fp8_v4 reusing fn's 5) is a refusal, not a silent drift.
+EXPECTED_FLOORS = {"radiance": 5, "radiance-q27": 4, "radiance-flash-tp1": 3,
+                   "radiance-q27-tp2": 2, "radiance-q27-fp8v4": 1}
 for key, evfile, lane in (
         ("radiance", "radiance-peers-expected.yaml", "radiance"),
         ("radiance-q27", "radiance-q27-peers-expected.yaml", "radiance-q27"),
         ("radiance-flash-tp1", "radiance-flash-tp1-peers-expected.yaml", "radiance-flash-tp1"),
-        ("radiance-q27-tp2", "radiance-q27-tp2-peers-expected.yaml", "radiance-q27-tp2")):
+        ("radiance-q27-tp2", "radiance-q27-tp2-peers-expected.yaml", "radiance-q27-tp2"),
+        ("radiance-q27-fp8v4", "radiance-q27-fp8v4-peers-expected.yaml", "radiance-q27-fp8v4")):
     try:
         ev = yaml.safe_load(open(f"charts/llama-swap/tests/evidence/{evfile}"))[lane]
     except FileNotFoundError:
@@ -1622,6 +1661,8 @@ for key, evfile, lane in (
     want = ev["filters"]["setParams"]["priority?"]
     if floor != want:
         errs.append(f"peers.{key} priority? floor {floor!r} != the evidence floor {want!r} (the floor is the lane's OWN default-class row — the M8 coherence law, per lane)")
+    if floor != EXPECTED_FLOORS[key]:
+        errs.append(f"peers.{key} priority? floor {floor!r} != the explicit ladder floor {EXPECTED_FLOORS[key]} (D-22 floors 5/4/3/2/1 — a borrowed rank is a refusal)")
     if "/v1" in (p.get("proxy") or ""):
         errs.append(f"peers.{key}.proxy carries a /v1 suffix — request paths append verbatim")
     if p.get("apiKey"):
@@ -1639,7 +1680,7 @@ if strata not in sev["models_states"]:
 if errs:
     print("; ".join(errs), file=sys.stderr); sys.exit(1)
 PY
-  # M9-D: the shadow bar and the solver-invisibility bar for both new wire ids.
+  # M9-D: the shadow bar and the solver-invisibility bar for each new wire id.
   python3 - <<'PY' || fail "M9[C05]: a new radiance wire id shadows a local llama-swap model id, or sits in the outer models/matrix (peers are invisible to the solver — coexistence stays operator discipline)"
 import yaml
 def model_ids(cfg):
@@ -1652,13 +1693,14 @@ chart = yaml.safe_load(open("charts/llama-swap/values.yaml"))
 svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
 outer = (svc.get("llama-swap") or {}).get("config") or {}
 ids = model_ids(chart.get("config") or {}) | model_ids(outer)
-for wire in ("qwen3.8-flash-next-radiance-tp1", "qwen3.8-27b-radiance-tp2"):
+for wire in ("qwen3.8-flash-next-radiance-tp1", "qwen3.8-27b-radiance-tp2",
+             "qwen3.8-27b-radiance-fp8v4"):
     assert wire not in ids, f"{wire} is a LOCAL llama-swap model id — it would shadow its own unqualified peer"
     assert wire not in str(outer.get("matrix", "")), f"{wire} appears in the outer matrix — peers stay out of the arena"
 PY
   # M9-E: the serving-fact guard extended to the new ids (the C05 half of the
   # M4 no-op guard — every id the tables name must be served somewhere).
-  for id in qwen3.8-flash-next-radiance-tp1 qwen3.8-27b-radiance-tp2; do
+  for id in qwen3.8-flash-next-radiance-tp1 qwen3.8-27b-radiance-tp2 qwen3.8-27b-radiance-fp8v4; do
     grep -qF "$id" services/gpu-ai/prod/values.yaml \
       || fail "M9[C05 AC2]: '$id' is absent from the gpu-ai serving authority (peers + lane block) — the tables must never name an unserved id"
   done
@@ -1669,7 +1711,7 @@ PY
     python3 "$TMP/win.py" --ci "$f" 900 'qwen3.8-27b-radiance-tp2' '502' \
       || fail "M9[C05]: $f names the 27b-TP2 lane without the 502-while-idle law (the resting lane refuses loudly — same sentence q27's row carries)"
   done
-  ok "M9[C05]: four-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 low tie accepted per TEST_SPEC §3, floors 5/4/3/2 == each lane's own default row; D47 ctx: every row at limit.context 262144 with the served 200000 named in the governing commentary, both ctx teeth self-proven (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure)) + frozen delta == exactly the six new rows + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05"
+  ok "M9[C05 + fp8v4 C01]: five-trio radiance fleet (fn 9/5/1 · q27 8/4/0 · flash-tp1 7/3/2 · q27-tp2 6/2/1 · fp8v4 5/1/0 — urgent/def cross-lane unique and strictly decreasing, trios strictly decreasing per lane, no negative rung, the fn/27b-tp2 AND q27/fp8v4 low ties both accepted per D-22 / TEST_SPEC §3, floors 5/4/3/2/1 == each lane's own default row; D47 ctx: every row at limit.context 262144 with the served 200000 named in the governing commentary, both ctx teeth self-proven (2026-11-23 D14: post-C02 the served figure is 262144 PROVISIONAL, print pending — C04 D8 receipt gate; 200000 is the superseded pre-C02 figure)) + frozen delta == exactly the six C05 new rows (the fp8_v4 trio re-frozen into the base) + evidence-first peers unit (no /v1, no apiKey, roster-derived hosts, strata wave kept) + shadow/matrix bars for the new wire ids + serving-authority guard + the PM opt-in/502-while-idle sentences on source and mirror — designed-red naming C05 for the C05 rows and the owner's Landing step 6 for the fp8_v4 trio"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

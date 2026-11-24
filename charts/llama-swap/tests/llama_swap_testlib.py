@@ -946,15 +946,16 @@ def expected_radiance_q27_peer(ev: dict, models: list) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# 2026-11-feat-radiance-multi-instance C05: the two RESTING lanes' peer
-# evidence (radiance-flash-tp1, radiance-q27-tp2). Same D13 per-key law as the
+# 2026-11-feat-radiance-multi-instance C05, widened by 2026-11-feat-radiance-
+# fp8v4-lane C01: the RESTING lanes' peer evidence (radiance-flash-tp1,
+# radiance-q27-tp2, and now radiance-q27-fp8v4). Same D13 per-key law as the
 # fn/q27 files — each lane one file, siblings byte-untouched, dev conforms
 # values to the evidence. The loaders are ONE parameterized pair rather than
-# twin copies: the fn/q27 twins stay as era pins, and a third and fourth clone
+# twin copies: the fn/q27 twins stay as era pins, and a further clone
 # of the same parser is the drift surface this suite keeps charging itself for.
 # ---------------------------------------------------------------------------
 
-RESTING_RADIANCE_LANES = ("radiance-flash-tp1", "radiance-q27-tp2")
+RESTING_RADIANCE_LANES = ("radiance-flash-tp1", "radiance-q27-tp2", "radiance-q27-fp8v4")
 
 
 def radiance_lane_peers_evidence(lane: str) -> dict:

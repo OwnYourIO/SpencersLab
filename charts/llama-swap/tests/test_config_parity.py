@@ -333,16 +333,20 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     # so no interim state survives a commit boundary ("every intermediate
     # state is EXACT, never a superset grab-bag" — the cf-86 models_states
     # precedent, carried).
+    # [2026-11-feat-radiance-fp8v4-lane C01 — dated widening]: the wave goes to
+    # SIX with the fp8_v4 lane's peer (radiance-q27-fp8v4); designed-red until
+    # C03 lands it (peers + golden + roster + evidence in ONE commit, D13).
     wave = set(peers)
-    assert wave == {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}, (
-        f"peer entries {sorted(wave)} are not the landed C05 wave — the sanctioned shape is "
-        "strata + the FOUR radiance lanes' peers (D19 full trios, resting lanes included); "
-        "a live vllm peer or any other key is drift"
+    assert wave == {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2",
+                    "radiance-q27-fp8v4"}, (
+        f"peer entries {sorted(wave)} are not the fp8_v4-widened wave — the sanctioned shape is "
+        "strata + the FIVE radiance lanes' peers (D19 full trios + the fp8_v4 trio, resting lanes "
+        "included); a live vllm peer or any other key is drift"
     )
     assert golden_peers == peers, (
         f"peers block {None if golden_peers is None else sorted(golden_peers)} "
-        f"!= fresh {sorted(peers)} — the re-captured golden must mirror all five peers "
-        "(the C05 landing-round golden re-capture, TEST_SPEC §12 golden law)"
+        f"!= fresh {sorted(peers)} — the re-captured golden must mirror all six peers "
+        "(the C05 landing-round golden re-capture, widened by the fp8_v4 lane, TEST_SPEC §12 golden law)"
     )
     p = peers["strata"]
     assert "apiKey" not in p, "inner apiKeys: [] is the quarantine posture — a key here contradicts Q4/Q5"

@@ -17,6 +17,14 @@ legs above are green; the standing designed reds are C05's own remaining scope
 — the two charts: roster entries, the two peers entries, the two CI extraction
 steps.
 
+State update (2026-11-feat-radiance-fp8v4-lane D-16, 2026-11-24): a THIRD
+resting lane joins this file's roster map — radiance-q27-fp8v4 (C03 lands its
+block, so every NEW_LANE_NAMES-parameterized leg — roster/rest/peers/CI/render
+— gains a designed-red param naming C03/C05 while the existing four lanes keep
+their state; the seqs 5 move and the fp8_v4 dtype move live in the profile and
+transcription legs below, not in the block shape). "the two RESTING lanes" in
+the header is this file's parent-C05 provenance, kept as written.
+
 Run per-directory: python3 -m pytest charts/radiance/tests -v
 """
 
@@ -132,7 +140,7 @@ def test_c05_roster_entry_is_the_chart_override(name):
     )
     assert entry == R.lane(name)["roster"], (
         f"C05: charts.{name} is {entry}, want EXACTLY {R.lane(name)['roster']} "
-        "(chart-dir override is what lets one chart serve four releases)"
+        "(chart-dir override is what lets one chart serve five releases)"
     )
 
 
@@ -215,18 +223,19 @@ def test_c05_lane_pair_is_guaranteed_on_the_renamed_pool(name):
 # the sandbox/env equality (designed-red until dev round 3 lands the wrapper
 # and the lane envs — what the lane actually serves).
 
-def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_with_exactly_two_values_swapped():
+def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_with_exactly_three_values_swapped():
     """C05 AC1 (OQ-F) transcription half, re-pinned BY RULING (2026-11-23
-    bug-radiance-27b-context-window D5/D9): the flash-TP1 ruled profile IS the
-    cf-143 TP1-era chart array at the pinned commit, with EXACTLY two values
-    swapped — its own served id and the context (262144, per ruling D5/D9).
-    The fidelity claim is bounded by ruling — the source commit is immutable,
-    so this leg is never again described as verbatim. Anything else means the
-    profile was re-derived by hand, and the TP1 recipe (pool 43000,
-    --kv-resident 32768, expert_tiered, speculative 3) is exactly what a
-    hand-copy gets wrong. The equality below is the 'NO THIRD value may
-    differ' arm — a drift of host-pool or batched-tokens away from the pinned
-    array reddens it; the planted teeth prove the arm bites."""
+    bug-radiance-27b-context-window D5/D9 + this ticket's D-16/R2): the flash-
+    TP1 ruled profile IS the cf-143 TP1-era chart array at the pinned commit,
+    with EXACTLY THREE values swapped — its own served id, the context (262144,
+    per D5/D9), and --max-num-seqs (5, per R2/D-16). The fidelity claim is
+    bounded by ruling x3 — the source commit is immutable (it ships seqs 8),
+    so this leg is never again described as verbatim or as a two-value swap.
+    Anything else means the profile was re-derived by hand, and the TP1 recipe
+    (pool 43000, --kv-resident 32768, expert_tiered, speculative 3) is exactly
+    what a hand-copy gets wrong. The equality below is the 'NO FOURTH value
+    may differ' arm — a drift of host-pool or batched-tokens away from the
+    pinned array reddens it; the planted teeth prove the arm bites."""
     commit, path = R.FLASH_TP1_TRANSCRIPTION
     assert shutil.which("git"), "C05: git binary absent — the transcription source cannot resolve"
     shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
@@ -242,23 +251,26 @@ def test_c05_flash_tp1_profile_is_the_cf143_tp1_array_with_exactly_two_values_sw
         f"C05: the {commit} array does not serve the fn-era id — the transcription pin "
         "names the wrong revision or the array moved"
     )
+    # the three sanctioned swaps: the lane's own id, the context ruling, the seqs ruling.
     want["--served-model-name"] = R.lane(R.FLASH_TP1_APP_NAME)["served_id"]
     want["--max-model-len"] = "262144"
+    want["--max-num-seqs"] = "5"
     got = {f: str(v) for f, v in R.lane_profile(R.FLASH_TP1_APP_NAME).items()}
     assert got == want, (
-        "C05: the flash-TP1 ruled profile is NOT the TP1 array with exactly the id and the "
-        "context swapped (D5/D9) — a third unplanned diff (host-pool, batched-tokens, ...) "
-        f"or a re-derived value: {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
+        "C05: the flash-TP1 ruled profile is NOT the TP1 array with exactly the id, the "
+        "context, and the seqs swapped (D5/D9 + D-16) — a fourth unplanned diff "
+        "(host-pool, batched-tokens, ...) or a re-derived value: "
+        f"{sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
     )
-    # Teeth: a THIRD unplanned swap must be refused by the same equality — a
+    # Teeth: a FOURTH unplanned swap must be refused by the same equality — a
     # delta check that cannot refuse a re-derived flag is an inventory print,
     # not a proof. Plant one (host-pool away from the pinned 43000) and show
     # the comparison bites.
     planted = dict(want)
     planted["--host-pool-mib"] = "1"
     assert planted != got, (
-        "C05 teeth: a planted third diff (host-pool 1 vs the pinned 43000) passed the "
-        "two-swap equality — the transcription leg cannot refuse a re-derived profile"
+        "C05 teeth: a planted fourth diff (host-pool 1 vs the pinned 43000) passed the "
+        "three-swap equality — the transcription leg cannot refuse a re-derived profile"
     )
 
 
@@ -266,7 +278,12 @@ def test_c05_q27_tp2_profile_is_the_q27_array_plus_the_tp_pair():
     """C05 AC1 (OQ-G) transcription half: 27b-TP2's ruled profile is the
     EXISTING q27 profile plus the TP pair (`--tp` moved to 2, `--tp-wire
     wht6` added) with its own served id — derived from the sibling constant,
-    so the proof is arithmetic on the map, never a copy."""
+    so the proof is arithmetic on the map, never a copy.
+    [2026-11-feat-radiance-fp8v4-lane D-16 — dated]: the seqs 5 reaches this
+    lane by the same derivation (this leg reads R.Q27_PROFILE, which now
+    carries 5), so the equality re-derives with no literal here — the whole
+    point of the derived profile. q27_fp8v4_profile() then diverges back to
+    8, and the next leg pins that re-override against this lane's 5."""
     want = dict(R.Q27_PROFILE)
     want["--tp"] = "2"
     want["--tp-wire"] = "wht6"
@@ -279,6 +296,35 @@ def test_c05_q27_tp2_profile_is_the_q27_array_plus_the_tp_pair():
     assert list(R.Q27_TP2_EXTRA_FLAGS) == ["--tp", "2", "--tp-wire", "wht6"], (
         "C05: the EXTRA_FLAGS constant no longer matches the ruling — the OQ-G add is fixed text"
     )
+
+
+def test_c05_fp8v4_profile_is_the_q27_tp2_profile_plus_dtype_and_seqs_override():
+    """The fifth release is derived the same OQ-G way (clone shape + explicit
+    override, never a fresh literal): the 27b-TP2 profile with the ruled dtype
+    fp8_v4, this lane's served id, and — the trap this leg exists to pin — its
+    OWN --max-num-seqs re-override back to 8. The ruling is 8 (R1/D-20); the
+    parent 27b-TP2 profile now carries 5 (D-16), so a derived lane that does
+    NOT re-override would silently serve 5 and erase the ruling. Assert both
+    the derived equality AND the explicit 8-vs-5 parent/child split."""
+    parent = R.q27_tp2_profile()
+    want = dict(parent)
+    want["--kv-cache-dtype"] = "fp8_v4"
+    want["--served-model-name"] = R.lane(R.Q27_FP8V4_APP_NAME)["served_id"]
+    want["--max-num-seqs"] = "8"
+    got = {f: str(v) for f, v in R.lane_profile(R.Q27_FP8V4_APP_NAME).items()}
+    assert got == want, (
+        "C01: the fp8_v4 ruled profile is NOT (27b-TP2 profile + dtype + own id + "
+        f"seqs re-override): differing flags {sorted(f for f in set(got) | set(want) if got.get(f) != want.get(f))}"
+    )
+    # the derivation trap, pinned: child carries 8, parent carries 5, and they differ.
+    assert int(got["--max-num-seqs"]) == 8, "the fp8_v4 lane's seqs is its ruled 8"
+    assert int(parent["--max-num-seqs"]) == 5, "its 27b-TP2 parent carries the existing-lane 5"
+    assert got["--max-num-seqs"] != parent["--max-num-seqs"], (
+        "the seqs re-override is gone — the child silently inherited the parent's 5, "
+        "erasing the D-20 ruling (the trap this leg exists for)"
+    )
+    assert got["--kv-cache-dtype"] == "fp8_v4", "the ruled dtype reaches the profile"
+    assert R.Q27_FP8V4_SEQS == "8", "the seqs constant the re-override reads is the ruled 8"
 
 
 @pytest.mark.parametrize("name", R.NEW_LANE_NAMES)

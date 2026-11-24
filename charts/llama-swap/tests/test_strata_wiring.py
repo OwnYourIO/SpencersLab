@@ -181,8 +181,11 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     assert set(cfg["peers"]) in ({S.PEER_NAME}, {S.PEER_NAME, "radiance"},
                                  {S.PEER_NAME, "radiance", "radiance-q27"},
                                  {S.PEER_NAME, "radiance", "radiance-q27",
-                                  "radiance-flash-tp1", "radiance-q27-tp2"}), (
-        f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143/C05 wave"
+                                  "radiance-flash-tp1", "radiance-q27-tp2"},
+                                 {S.PEER_NAME, "radiance", "radiance-q27",
+                                  "radiance-flash-tp1", "radiance-q27-tp2",
+                                  "radiance-q27-fp8v4"}), (
+        f"peers keys {sorted(cfg['peers'])} are not a sanctioned cf-143/C05/fp8v4 wave"
     )
     # cf-86 wave law: the peers models list equals the sanctioned list for the
     # inner arenas this render actually serves (evidence models_states), so the
