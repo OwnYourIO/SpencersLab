@@ -79,3 +79,30 @@ via RESULT `friction:`; coord appends (its own items included).
   sanctioned form; applied two bracket erratums (:598/:613 areas) with the analysis bytes
   untouched; had it not been named, the honest move is to decline and record in RESULT — judged
   in-contract here and applied. · fixed
+- 2026-11-24 · review(C02) · **`tests/provider-loops/surface.sh` REWRITES `AGENTS.md` in place
+  mid-review** — its `t14` leg runs `rulesync generate`, and because `rulesync generate --check` is
+  RED on this branch's base (the cf-126 dispatcher paragraph in committed `AGENTS.md` is not the
+  rulesync output of committed `.rulesync/rules/overview.md`), running that suite in a worktree
+  **silently deleted** that hand-carried paragraph; the reviewer caught it, restored with
+  `git restore AGENTS.md`, and re-verified the tree clean. This is a live footgun for every agent in
+  this repo, not a C02 artifact: AGENTS.md is a GENERATED surface (hard rule: never hand-edit; edit
+  `.rulesync/` and regenerate), so any leg that regenerates while sources and output disagree will
+  drop prose that only exists in the committed output. · open (LAW for this family: before running
+  any `tests/provider-loops/**` or other rulesync-invoking suite in a worktree, note that it mutates
+  `AGENTS.md`; run `git status --porcelain` immediately after and restore anything regenerated;
+  reconcile the drift in the cf-126 C04 flip wave, which is owner-gated — the runner literal moves
+  only by a fresh owner ruling)
+- 2026-11-24 · review(C02) · **A `git archive` HEAD tree is NOT a faithful red-set baseline** — the
+  author's byte-identity proof used one, and it is sound for argv comparison, but as a *baseline* for
+  counting designed reds it distorts: git-dependent transcription legs and one skip behave differently
+  in an extracted tree, reporting **55F/193P/1S** against the true HEAD state of **48F/201P/0S**, which
+  would have falsely implied that C02 introduced new reds. · resolution: for red-set deltas use a real
+  detached worktree (`git worktree add --detach` + copy the vendored `app-template-5.0.1.tgz`), which
+  reproduced the baseline exactly; recorded so no later round misreads an archive-tree count as a
+  regression. · fixed
+- 2026-11-24 · dev(C02) · **`npx aislop scan --changes` scopes ZERO files on an uncommitted wave** —
+  `--changes` reads committed state, and this pipeline holds a chunk uncommitted until the coordinator
+  commits on review approval, so a chunk hand-off cannot get a diff-scoped gate result from it; a naive
+  `0 changed file(s)` reads as a clean pass. · resolution: run `npx aislop scan <path>` on the touched
+  trees (C02: `charts/radiance` 100/0/0, 14 files) and rely on CI's `aislop ci --changes` after the
+  commit; the author flagged the discrepancy instead of reporting the vacuous 100. · fixed
