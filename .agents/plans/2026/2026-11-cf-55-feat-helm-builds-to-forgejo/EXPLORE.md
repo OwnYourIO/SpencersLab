@@ -947,3 +947,191 @@ round's authority is the upstream source + the reproduction:
 - Whether any GitHub-side twin fire actually FAILED red between 2026-10-28 and
   the move (GH logs unreachable here — the index-staleness corroboration is
   repo-side only).
+
+## Fire-3 discrimination (2026-11-24)
+
+C08 (exit→next, D45) shipped to main as `f5c48dfbc` (committer 2026-11-23
+22:00:26Z) and the owner's re-run then failed BYTE-IDENTICAL (same six packaged
+charts, same `no repository definition for https://charts.jetstack.io,
+https://charts.christianhuth.de`, exitcode 1). This section discriminates
+H-A (stale re-run executing the ORIGINAL commit's workflow definition) against
+H-B (C08 code ran; `helm repo add` failed for the two hosts and was swallowed).
+
+**VERDICT: H-A with high confidence (three independent grounds below); H-B is
+REFUTED as shipped.** C08's code has NEVER executed on any runner.
+
+### F1. Graph elimination — no fresh fire of C08's code was possible
+
+- Trigger law (`origin/main .forgejo/workflows/release.yaml:29-33`):
+  `on: push branches:[main] paths:[charts/**]` ONLY — no workflow_dispatch
+  (the shipped file has zero dispatch surfaces). A run of C08's awk requires a
+  push to main whose diff touches charts/** AFTER f5c48dfbc.
+- Walked `b89acb5df..f5c48dfbc` (parents single-chain: 217c49ad7→…→b89acb5df→
+  9d12d4be0→d5099d36d→7549343d6→f5c48dfbc→87d3da0c3): the four post-fire-2
+  commits (plans ×2, test t21, C08 dev) touch NO charts/** file (per-commit
+  name-only sweep empty; f5c48dfbc = STATE.json + chunks/C08.md + release.yaml
+  only). After C08: the only push is `87d3da0c3` — the pipeline's OWN bump,
+  and workflow-token pushes NEVER re-trigger (`:174-177` "its push re-triggers
+  no workflow — that non-re-trigger is the loop guard (R3/D5)"). origin/main
+  tip IS 87d3da0c3 (22:02:12) with nothing after. ⇒ NO event that could run
+  the new definition has ever fired, anywhere.
+- Run-identity law (Forgejo Actions reference, v17.0 docs, fetched 2026-11-24):
+  `FORGEJO_SHA`/`github.sha` = "the commit SHA that triggered the workflow",
+  stable across re-runs; `FORGEJO_RUN_ATTEMPT` = "incrementing when the job is
+  re-run". A re-run therefore executes the trigger commit's workflow YAML —
+  for the fire-2 lineage that is `3303b711d` (18:00:15, the ONLY charts/**
+  push in the 16:00-21:00 window; touched charts/forgejo-runner/values.yaml)
+  or a pre-C08 SHA alike — all pre-C08 definitions.
+
+### F2. The re-run fingerprint at 87d3da0c3 (H-A's positive evidence)
+
+- Parent = exactly `f5c48dfbc` (created 76s after the C08 merge) — a run
+  executing at 22:02 whose bump reset to the NEW main tip (`:180-181`
+  fetch+reset --hard refs/remotes/origin/main) then pushed FF on top of it.
+  That is bump-loop behavior under a RE-RUN, not a new event.
+- Content identity: `87d3da0c3` = `chore(release): bump forgejo-runner`,
+  Chart.yaml `1.0.3 → 1.0.4`; fire-2's own bump `b89acb5df` (20:46:23) =
+  same message, `1.0.2 → 1.0.3`. Same single-chart CHARTS set re-derived from
+  the same old event (detect diffs the OLD payload range :60-63), version
+  recomputed strictly above tree per `:233-239` — the idempotent re-bump a
+  re-run always produces. Author/committer identity `AN=tms` identical on
+  both bumps (the triggering push's actor), the pipeline's own signature.
+- The byte-identical log then follows automatically: re-run's release job =
+  pre-C08 `exit` loop (its 16-name add set provably contains neither jetstack
+  nor christianhuth — computed from the shipped buggy pipeline over the tree)
+  running cr package against the NEW tree (base unchanged multi-row shape,
+  still lock-with-unvendored) ⇒ fire-2 scout TEST-D state reproduced.
+  STATE.json `fr2_close` already handed off "owner = micro-merge + RE-FIRE
+  under UA-11" — a RE-FIRE (new push) was asked for; a RE-RUN happened.
+
+### F3. Code-semantics elimination — the shipped C08 loop cannot produce this
+
+- Quoted failure branch: there is NONE. All three copies are bare adds under
+  `set -euo pipefail` — release step at `:300-313` (`set -euo pipefail` :302,
+  carrier awk :308 with `next`, `helm repo add "$name" "$url"` :310 with no
+  `|| warn`, no `|| true`, no continue); identically test-build `:117-130`
+  (`:125` awk `next`, add at `:127`) and forgejo-publish `:360-373` (add
+  `:370`). The step's own cf-77 comment (`:304-307`) NARRATES the law: "breaks
+  this step under bash -e". So under the C08 definition a failing add reddens
+  the STEP with helm's add error ("could not get …/index.yaml…" class), never
+  reaching cr package; a succeeding add makes the named error IMPOSSIBLE
+  (Build resolves lock URLs against the repositories file — all would match).
+- E2E proof of the shipped loop from main's own text (f5c48dfbc file, fresh
+  HOME, this workspace): 20 http(s) name+URL pairs added in 8.8s,
+  `jetstack|christianhuth` count in `helm repo list` = 2, and ALL FOUR victim
+  charts (base, traefik, k8s-monitoring, postiz) `helm dependency build` OK.
+  ⇒ the owner's signature cannot come from the new definition under any
+  add-outcome — only the old definition can produce it.
+
+### F4. Host forensics (workspace-side, for the future fresh fire — UA-11)
+
+| host | role | bytes (index.yaml) | cdn/ip | redirects | TTFB | add |
+|---|---|---|---|---|---|---|
+| charts.jetstack.io | base row2 (the named missing) | 467,336 | Cloudflare 104.18.31.120 | none, 200 direct | 0.036s | OK |
+| charts.christianhuth.de | base row3 (the named missing) | 5,582,033 | Fastly/GHP 185.199.110.153 | none, 200 direct | 0.030s | OK |
+| argoproj.github.io/argo-helm | base row1 (added even under the bug) | 1,713,552 | Fastly/GHP | none, 200 | 0.024s | OK |
+| bjw-s-labs.github.io/helm-charts | 55 charts row1 (added, succeeded-era) | 201,811 | Fastly/GHP | none, 200 | 0.025s | OK |
+| grafana.github.io/helm-charts | loki+k8s-monitoring row1 | 4,117,843 | Fastly/GHP | 200 | — | OK |
+| prometheus-community.github.io/helm-charts | k8s-monitoring row2 (never attempted) | 6,832,371 | GitHub Pages | 200 | — | OK |
+| go.temporal.io/helm-charts | postiz row2 (never attempted) | 84,295 | — | 200 | — | OK |
+| crowdsecurity.github.io/helm-charts | traefik row2 (never attempted) | 69,765 | — | 200 | — | OK |
+
+The owner's "christianhuth difference" intuition is NOT supported: both named
+hosts serve 200 at `<url>/index.yaml` directly (no 301/path quirk: christianhuth
+is at the ROOT path like every succeeding GitHub-Pages-class host — same Fastly
+anycast family 185.199.x as argo/bjw-s/grafana, and AAAA records exist for all
+three measured; jetstack is Cloudflare-fronted but small and fast). The REAL
+difference between the two named URLs and the succeeding ones is purely
+HISTORICAL: they are exactly the rows the old loop never attempted (fire-2 §A2).
+Sizes say the slowest add is prometheus-community 6.8MB — also never-attempted;
+if the instance runners' egress MTU flake (cf-6 8ef4545fe fought it with dind
+--mtu=1450; EXPLORE §9-9 k3s MTU law) bites any big-index add on the first real
+fire, it will bite LOUDLY at the Add-repositories step, with the retry-vs-not
+tradeoff in F5/O1.
+
+### F5. Spelling/collision audit (the "add succeeded under a different name,
+Build still errors" class — O3 input)
+
+- base Chart.yaml rows vs Chart.lock rows: byte-identical strings AND order
+  (`['https://argoproj.github.io/argo-helm','https://charts.jetstack.io',
+  'https://charts.christianhuth.de']` == lock) — no trailing-slash/oci-vs-https
+  drift; cr Build names lock URLs verbatim, the same strings the add registers.
+- Repo-wide: NO Chart.lock carries a URL absent from its Chart.yaml rows
+  (sweep empty) — the lock-union == dependency-list-derived set EXACTLY
+  (20 http(s) URLs, live diff `diff lockunion dlunion` empty) ⇒ O2's union
+  offers zero coverage today, only parse-format robustness.
+- 21 unique name+URL pairs, 21 names, 20 URLs: NO name maps to >1 URL (a
+  `helm repo add` name-collision RED is impossible today); the one URL with 2
+  names (grafana ← {loki, k8s-monitoring}) is harmless (entries coexist, URL
+  match). NO chart has an oci-row-1-over-http-row-2 shape today (hazard sweep
+  from §A2 stays clean).
+- Lock freshness note: victim locks' `generated:` stamps (base 2026-11-21,
+  traefik 11-17, k8s-monitoring 10-25, postiz 10-24) all match current rows
+  (strings verified above); a digest-mismatch re-resolution, if any, uses the
+  same URLs — not this failure's class.
+
+### F6. Fix-shape options (fire-design, no decision)
+
+- **O4 fresh-fire protocol (PRIMARY under H-A — the fix is already shipped;
+  no code change is mandatory).** Owner validation = a NEW run on post-C08
+  main: push ANY commit touching charts/** (the next renovate chart PR does
+  it naturally; a 1-line charts/README edit is the token trigger). NEVER
+  validate a workflow-code fix by re-running an old run — re-runs are forever
+  pinned to the trigger commit's definition (F1). Blast: zero files.
+  Optional O4b belt (recommended, tiny): an identity echo step opening the
+  changes job — `echo "fire at sha=$GITHUB_SHA attempt=$GITHUB_RUN_ATTEMPT"`
+  (both vars doc-proven, F1) so any stale re-run is self-identifying in logs.
+  Blast: one added run-step in `changes`; t5/t12/t13/t19/t21 unaffected (t19
+  pins commands in the OTHER three jobs; no `uses:`; no id needed — t13 only
+  requires every referenced steps.<id> to exist); the D43 "vacated slots"
+  ban is about installer/presence NAMES — 'Show run identity' matches none.
+- **O1 loud + bounded retry (hardening for the first REAL fire).** Premise
+  correction: the shipped loop is ALREADY loud — there is no warn-swallow to
+  replace (F3; `:127/:310/:370` bare adds under `set -euo pipefail`). O1
+  therefore means ONLY adding a bounded retry around `helm repo add` (e.g.
+  3 attempts, short sleep, final loud failure), motivated by F4 sizes + the
+  MTU/ECONNRESET egress class that spawned D33/D37. Blast: 3 byte-identical
+  sites in one commit (all-three law, C08 Tasks); the awk carrier text stays
+  byte-identical so t6/t21 keep green; t19's 'helm repo add' token still
+  present; cost: a persistently-dead host takes 3× to redden (designed-loud
+  tradeoff preserved — the step still dies, just later).
+- **O2 lock-union pre-add.** Evidence: sets already IDENTICAL to the
+  dependency-list derivation (F5) — no coverage gain; the gain is immunity to
+  helm `dependency list` table-format drift (the `tail +2 | head -n -1`
+  trailing-blank arithmetic was verified correct at BOTH 3.16.4 and 3.22.1 —
+  fire-2 §A0/B'). Cost is real: dropping `helm dependency list` from the
+  three jobs REDDENS t6 (:240 token) AND t19 (:1043-1050 presence law) and
+  rewrites t21's carrier replay (it extracts and replays THE dependency-list
+  carriers) — three legs re-pinned to defend a class with no live instance.
+  Reject on evidence unless helm's table format actually breaks.
+- **O3 normalization.** Nothing to normalize — the F5 audit is clean (no
+  spellings drift, no collisions, no oci/http ordering hazard). Zero files.
+- Non-option: the fire-2 §A6 (c) vendoring remains gitignore-blocked
+  (.gitignore:3) and unchanged in verdict.
+
+### F7. The discriminating ONE-LINEs for the owner (read off the run page NOW)
+
+1. Run header: the SHA it is bound to + attempt. A re-run shows the OLD
+   trigger commit (fire-2 lineage = `3303b711d` "fix(containers): forgejo-runner
+   bake takes tools from digest-pinned OCI stages", pre-C08) with attempt 2+
+   under the SAME run number. SHA ≠ post-C08 ⇒ H-A confirmed outright.
+2. Release job → `Add repositories` step log: search for `cert-manager` or
+   `gateway-api-crds`. The old loop's set (16 pairs, computed) contains
+   NEITHER; the C08 loop adds both names before cr ever runs. Absent ⇒ old
+   definition executed ⇒ H-A. Present + failed ⇒ H-B (would additionally have
+   reddened the STEP, not cr).
+3. Corroboration already visible: the `87d3da0c3` bump on main 76s after the
+   C08 merge, bumping the same single chart one patch above the old run's bump
+   — the re-run's own footstep (F2).
+
+### F8. Not verifiable from this seat
+
+- What the owner actually clicked (re-run vs fresh UI run) — F7/1 answers it
+  instance-side; repo-side, no fresh-fire trigger event exists to run the new
+  code, which is what the verdict rests on.
+- Runner-side egress to the four never-attempted hosts (jetstack+christianhuth
+  measured workspace-side in F4; prometheus-community/go.temporal/crowdsec
+  likewise) — the UA-11 first-real-fire watch (STATE ua11_watch) stays open.
+- Forgejo UI exactness of "re-run reuses the trigger SHA's workflow" — the
+  docs quote the sha/run_attempt semantics; the repo-side elimination in F3
+  makes the verdict independent of this residual.

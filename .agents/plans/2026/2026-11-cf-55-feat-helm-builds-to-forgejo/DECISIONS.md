@@ -648,3 +648,35 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
   on a fetch error to a new host, that is runner egress, not the loop —
   owner-side observation, benign re-run posture as D42 established. Not code,
   not a chunk.
+ - 2026-11-24 coord D46 (fire-3 discrimination — VERDICT H-A stale re-run; C08
+   stands, never executed): the owner's "again byte-identical" re-fire was
+   investigated by the same scout session (+188/0 '## Fire-3 discrimination').
+   Three independent grounds: (1) GRAPH ELIMINATION — release.yaml triggers ONLY
+   on push·main·charts/** (:29-33, no dispatch); the sole charts/** push in the
+   window was 3303b711d (fire-2's own event); workflow-token pushes never
+   re-trigger (:174-177 loop guard) — so NO FRESH FIRE of the post-C08
+   definition was even possible; (2) RE-RUN FINGERPRINT — 87d3da0c3's parent is
+   exactly f5c48dfbc, 76 s post-merge, same author as fire-2's bump, and the
+   bump content (forgejo-runner 1.0.3->1.0.4) is the OLD event's idempotent
+   re-derivation after the bump leg's fetch+reset onto new main — the stale
+   re-run's footstep; Forgejo re-runs pin the trigger commit's YAML
+   (FORGEJO_SHA fixed, run_attempt increments); (3) CODE-SEMANTICS ELIMINATION
+   of the coord's H-B warn-swallow hypothesis — CORRECTION ON THE RECORD: the
+   coord's 2026-11-23 message asserted the repo-add loops were 'warn-only,
+   swallowing failures'; that is FALSE — all three loops are bare `helm repo
+   add` under `set -euo pipefail` (:127/:310/:370), a failed add REDS the step
+   before cr package is ever reached; and the shipped fixed loop run E2E from
+   main's own text adds all 20 URLs in 8.8 s with the four victim charts
+   dep-building green. The christianhuth/jetstack hosts are 200-direct,
+   ordinary CDN (5.6 MB / 467 KB indexes) — the owner's 'difference' intuition
+   found no host-side anomaly; the only difference was the OLD loop never
+   ATTEMPTED them. LANDS AS PROTOCOL (O4), not code: validate fixes by RE-FIRE
+   (push any charts/** commit — e.g. the next renovate chart PR), never by
+   re-run of a pre-fix run; the run page's bound SHA + the Add-repositories
+   step's cert-manager/gateway-api-crds presence are the one-line discriminants
+   (owner confirmation still welcome but non-blocking — grounds 1-3 are
+   conclusive). Optional belt considered and left to owner word: O4b identity-
+   echo step (print the fire's SHA early so stale re-runs self-identify in any
+   log) — NOT applied by default. Retry-hardening (O1) MOOT: adds are already
+   loud. O2 lock-union pre-add / O3 name-collision: rejected on evidence (sets
+   identical 20==20, zero drift, zero collisions).
