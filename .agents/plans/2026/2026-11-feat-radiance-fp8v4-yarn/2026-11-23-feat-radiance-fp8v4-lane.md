@@ -35,7 +35,7 @@ suites, bash surface suites, `receipt_gate.py`, llama-swap peers, OpenCode proje
 as-is and cited §4.2) + parent law: cf-143 D27, context-window D6/D7/D8/D9/D10/D16, multi-instance
 D43/D45/D46.
 
-## Owner rulings — SETTLED, do NOT re-open (original batched round + 2026-11-23 scope-change round)
+## Owner rulings — SETTLED, do NOT re-open (2026-11-23 batched round + 2026-11-23 scope-change round + 2026-11-24 approval round)
 
 1. **R1 (informed, final):** new lane dtype **`fp8_v4`**, no rope scaling, served context native
    262,144. The owner was shown the corrected matrix (RESEARCH.md:284-295 — fp8_v4 = 84.7%/M 6.77
@@ -61,6 +61,50 @@ D43/D45/D46.
    print exists to price the change against. Parent C04 stays `owner-triggered-not-run`; this
    ticket records that and does NOT try to close it. The family receipt LAW (DECISIONS D-14) binds
    every AC: require a boot print, never a derived prediction, never assume a receipt happened.
+   **[AMENDED 2026-11-24 by the approval round (D-21): the order constraint's baseline block is
+   WAIVED — C05 proceeds without a pre-change print, its cost recorded honestly (see Approval
+   ruling C and R-11). The no-oversell law, the parent-C04 discipline, and the receipt LAW above
+   all STAND unchanged.]**
+
+## Approval rulings — 2026-11-24 batched round (settled; do NOT re-open)
+
+- **A (D-19)**: **PLAN APPROVED** by the owner, dated 2026-11-24 (`plan_status: approved`).
+  `current_wave` stays 1; **C01 dispatches next round, after this fold lands**.
+- **B (D-20)**: OQ-3 RULED — the new lane **stays `--max-num-seqs 8`** and the deficit is an
+  **accepted ruling, not a discovery**. The owner was explicitly offered seqs **6** (fully funded
+  at the derived M ≈ 6.77: demand 6 × 3.27 = 19.62 ≤ 22.15 GiB/card, backing ≈ 100%) and chose 8.
+  C03's success criterion becomes: **the boot print is captured and the deficit is recorded
+  against it as an accepted ruling** — the receipt gate's refusal at M < 8 on this lane is an
+  EXPECTED outcome, never a defect (reviewers: do not file it as one), and nobody later lowers
+  the machine bar (that would violate D49 AND this ruling). 6.77 stays DERIVED: it appears as a
+  pass-condition nowhere.
+- **C (D-21)**: OQ-5 WAIVED — the baseline current-shape receipt block does NOT run (the paste
+  option was offered and not taken). C05's order gate becomes **"WAIVED 2026-11-24 by owner
+  ruling — proceed"**. Recorded honestly: **no before/after baseline print exists for fn's
+  8→5 change — fn's evidence rests on the post-change print alone**. Parent C04 remains
+  `owner-triggered-not-run` with **no receipt on record** — this ticket neither closes nor
+  re-opens it, and (single-writer) **does not edit
+  `.agents/plans/2026/2026-11-bug-radiance-27b-context-window/`** — the coordinator records it
+  there. The D-14 receipt LAW still binds every AC.
+- **D (D-22)**: OQ-2 AUTHORIZED — fifth trio **5/1/0**, second **NAMED** low tie admitted to
+  `ACCEPTED_LOW_TIES` (`tests/pipeline-models/surface.sh:1499`). Invariants: **the twelve existing
+  rows NEVER move** (no live-lane re-rank, no `limit.context` edit on existing rows); peer floors
+  expected explicitly **5/4/3/2/1** — each hop's floor is its lane's own default-class row (D45).
+- **E (D-23)**: OQ-6 AUTHORIZED — **one tool-calling accuracy A/B on the new lane's first boot,
+  BEFORE any routing opt-in**, owner-executed landing leg, **raw output QUOTED into DECISIONS**
+  (the receipt LAW applied to an accuracy artifact — paraphrase is not record). Reason stays
+  visible: V-int4 layouts have never been scored on agent transcripts; the docs' KL table is a
+  log-analysis corpus; this deployment is the pipeline's own route.
+- **F (D-24)**: OQ-4 CONFIRMED as specced — `fp8v4` compact identifiers; `fp8_v4` literal only as
+  the engine dtype value (RFC1123).
+- **G (D-25)**: OQ-7 **UNANSWERED** — fn's narrow-dtype follow-up stays a separate ruling/ticket;
+  **no ticket is minted without the owner's word**; the execution default governs and C04/C05
+  prose assumes NO fn dtype change.
+- **Self-corrections folded (D-26)**: the uniform-8 "scope reduction" argument survives NOWHERE
+  as a live claim (only dated supersession references); the dtype pair is corrected wherever the
+  mislabel propagated — `fp8_v4` @262,144×8 → **6.77 / 84.7%**, `k6_v4` → **7.65 / 95.7%** — and
+  RESEARCH.md §7 Option-A (:598, :613) received **dated 2026-11-24 erratum annotations**
+  (appended lines; its analysis untouched — the research round owns its prose).
 
 ## Out of scope (explicit)
 
@@ -102,7 +146,9 @@ D43/D45/D46.
   20.98 kv_attn + 1.16 state + 0.09 kv_draft (MEASURED; kv_draft stays fp8 under v4 — the 0.09
   does not shrink; context pool 22.15). Per-token/card: fp8 16 KiB, fp8_v4 12.5, k6_v4 11 (§2.1).
   NEW lane fp8_v4@262,144×**8**: **84.7% / M ≈ 6.77** (worst case 26.16 GiB/card) — DERIVED
-  prediction, unfunded at 8 by 1.2; the gate refuses by design at first receipt (OQ-3).
+  prediction, unfunded at 8 by 1.2; the gate's refusal at first receipt is the **RULED expected
+  state** (D-20 — deficit accepted; seqs 6 offered and declined), never a defect, never a lowered
+  bar.
   Existing lanes at **5** seqs: fp8@262,144×5 = 100% (106.9%) / M 5.34 — the 27b lanes become
   FUNDED (predictions; prints adjudicate); **fn (MoE geometry, [EF]): backing 52→82.4%, M ≈ 4.1 —
   REFUTES the 5 bar; §2.3/§4.3 — R5's no-oversell law.** The k6_v4 row (7.65/95.7%) is R1-rejected
@@ -153,7 +199,8 @@ D43/D45/D46.
 - **V-9 naming (unchanged)**: RFC1123 — identifiers `radiance-q27-fp8v4` /
   `gpu-ai-radiance-q27-fp8v4` / `qwen3.8-27b-radiance-fp8v4`; literal `fp8_v4` ONLY as the engine
   dtype value (env value/composed argv/prose); `surface.sh:1632` host-derivation is
-  underscore-replace-safe. OQ-4 confirms.
+  underscore-replace-safe. **CONFIRMED 2026-11-24 (D-24)**; the literal `fp8_v4` remains only as
+  the engine dtype value.
 - **V-10 pool/exclusivity (RESEARCH §5, roster note)**: 5 radiance releases + strata = **six
   claimants / 2 cards**; the new lane is TP2 (claim "2"): co-boots with NOTHING; the four seqs-5
   lanes change no claim. TP1 rejected for this lane (§2.4: funds M ≤ 2 at any dtype — not the
@@ -163,7 +210,8 @@ D43/D45/D46.
 - **V-11 catalog/ladder (unchanged from first round)**: twelve existing radiance rows at
   `limit.context 262144`, five-key safe shape, no page/pagesize form (the cf-131 page-unification
   trap, cf-131 STATE.json:90 chain); ladder fn 9/5/1 · q27 8/4/0 · flash-TP1 7/3/2 · 27b-TP2 6/2/1
-  (TEST_SPEC §3); fifth trio best guess 5/1/0 floor 1 needs the second NAMED low tie (OQ-2);
+  (TEST_SPEC §3); fifth trio 5/1/0 floor 1 + the second NAMED low tie **AUTHORIZED 2026-11-24
+  (D-22)** — twelve existing rows never move, no re-ranking, no existing-row `limit.context` edit;
   M9-A2 equality trained==served==262144, value UNCHANGED.
 - **V-12 six llama-swap widening sites (unchanged)**: llama_swap_testlib.py:957
   `RESTING_RADIANCE_LANES`; test_config_parity.py:337; test_flashnext_blast_radius.py:217;
@@ -233,9 +281,9 @@ in two suites — never combine).
 |-----|-------|------|------|------------|--------------------|
 | C01 | Test-authority wave — BOTH channels' legs, per-lane profiles 5/5/5/5/8, receipt-gate per-lane RE-CUT + its tests re-pinned, five-lane maps, M-series ladder, evidence, roster-script legs (RED-FIRST) | L | 1 | [] | test authority before any charts/**/services/** edit (parent-D30); the gate re-cut + test re-pin must land in the SAME wave (a gate rewrite after the FORM would certify nothing) |
 | C02 | Chart FORM — seqs + dtype env-defaulted channels on the spine line + NOTES five-lane/8-session-ladder re-aim | M | 2 | [C01] | C01 pins the byte-shape the FORM must compose; landing alone changes NO lane (fallbacks = today's shipped bytes) |
-| C03 | New-lane service wave — roster entry, `radiance-q27-fp8v4` block (dtype env, no seqs env), peers + evidence, CI step, golden re-capture | M | 3 | [C01, C02] | block's dtype env needs the C02 channel; peers+evidence+golden+CI land in ONE commit (parity cross-pins) |
+| C03 | New-lane service wave — roster entry, `radiance-q27-fp8v4` block (dtype env, no seqs env), peers + evidence, CI step, golden re-capture **[D-20: deficit RULED, gate refusal expected; D-23: no routed traffic before the accuracy A/B is on record]** | M | 3 | [C01, C02] | block's dtype env needs the C02 channel; peers+evidence+golden+CI land in ONE commit (parity cross-pins) |
 | C04 | Resting-lane seqs wave — env `"5"` on q27 / flash-TP1 / q27-TP2 blocks + `radiance-q27-boot.md:213` doc half (both named here) | M | 4 | [C01, C02] | profiles/gate bars for 5 are pinned by C01, the channel exists after C02; parked lanes carry no live-route risk — fn deliberately NOT here (R5) |
-| C05 | fn seqs wave — env `"5"` on the live-default-route block + runbook doc half + runbook-script test half (§4.3 evidence set, roll window, five-admitted smoke) | M | 5 | [C01, C02] + **order-gate: owner baseline receipts landed or waiver ruled (D-17)** | fn is every tier + the runner (context-window D16/D19 chain): own chunk, own review, and NO sync of this chunk's seqs change before the current-shape print exists (§4.1) |
+| C05 | fn seqs wave — env `"5"` on the live-default-route block + runbook doc half + runbook-script test half (§4.3 evidence set, roll window, five-admitted smoke) | M | 5 | [C01, C02] — order gate **WAIVED 2026-11-24 (D-21): proceed; no baseline print exists; the waiver's cost is stated in-chunk** | fn is every tier + the runner (context-window D16/D19 chain): own chunk, own review, no-oversell prose; with the waiver (D-21), C05 no longer waits — parent C04 remains its own un-closed owner leg and this ticket does not write that folder |
 | C06 | Docs — roster note six-claimant re-title + exclusivity + per-lane seqs prose + ReBAR/Gen3×4 separate receipt items; dated annotations (second-gpu-tp2.md:251, TEST_SPEC §13.2) | S | 6 | [C03, C04, C05] | roster T2 re-derives rows from the final tree; the note must describe 5/5/5/5/8 truthfully |
 
 ## Wave order
@@ -246,20 +294,21 @@ in two suites — never combine).
 3. **C03** — greens the new lane's render/roster/peers/golden legs (composes 8/fp8_v4).
 4. **C04** — greens q27-family profiles-vs-env (5), q27-boot note pair; catalog legs still owner-red.
 5. **C05** — greens fn's whole re-pinned pair (runbook doc+test, five-admitted smoke legs);
-   **refuses to start** until the D-17 order gate is satisfied (baseline receipts recorded under
-   the receipt LAW, or the owner's waiver ruled and dated in DECISIONS).
+   **[AMENDED 2026-11-24] its order gate is WAIVED (D-21) — the chunk proceeds directly; the
+   waiver's cost (no baseline print; post-change print alone is fn's evidence) is stated in C05,
+   not hidden.**
 6. **C06** — greens radiance-roster.sh T1/T2/T4; final whole-plan review runs the full battery and
    records the remaining owner-gated reds BY NAME (D12).
 
 ## Landing shape — owner legs (nothing lands on main here)
 
-0. **Baseline receipts FIRST (order constraint, §4.1/R5)**: at the next scale act, the owner runs
-   the CURRENT-shape D8 block (today's four-lane artifact as merged — before any seqs/dtype env
-   reaches it) and the output is recorded under the D-14 receipt LAW (owner-paste or Loki-quoted
-   print only). This closes the evidence debt context-window left (`C04 owner-triggered-not-run`,
-   NO receipt on record — recorded, not closed, by this ticket). If the owner instead rules
-   "receipts taken on the new shape directly", the waiver is dated into DECISIONS BEFORE C05
-   starts. Without one of the two, C05 does not run.
+0. **Baseline receipts — WAIVED 2026-11-24 (D-21).** The first draft's step-0 order constraint
+   (run the current-shape D8 block before the seqs wave) was WAIVED by the owner: the paste
+   option was offered and not taken. Honest consequences, encoded not glossed: **no before/after
+   baseline print exists for fn's 8→5 change — fn's evidence rests on the post-change print
+   alone** (R-11); parent context-window C04 remains `owner-triggered-not-run`, NO receipt on
+   record — this ticket **neither closes nor re-opens it** and does not write that folder (the
+   coordinator records there; single-writer).
 1. **Push/PR/merge** — owner creates/merges; agents never advance/push `main`.
 2. **Sync + scale acts**: per-lane down-then-up as needed (three TP2 lanes still mutually
    exclusive); fn's re-roll carries the seqs-5 change = a pod roll on the pipeline's own route
@@ -268,31 +317,50 @@ in two suites — never combine).
    `--max-num-seqs 5 --kv-cache-dtype fp8`, queued default now 40, checkpoint slots ≈ 50/lane
    (§2.7 slack recorded, memory untouched D10); new lane — echo shows `--max-num-seqs 8
    --kv-cache-dtype fp8_v4 --max-model-len 262144`; pool-backs expected near 84.7%/M 6.77
-   (PREDICTION, D-15(b)); page line expected ~200.00 KiB/16-token block (print calibrates).
-4. **Gate run**: `receipt_gate.py --gate` with per-lane bars 5/5/5/5/8 — expected REFUSALS, each
-   an owner-read: fn (M 4.1 < 5, R5's honest bar) and the new lane (6.77 < 8, OQ-3) unless the
-   prints differ; N% < 100 warnings are owner-read, never machine bars (D16).
-5. **jsonc trio rows** (owner diff per plan spec; AFTER step 3 receipts): rows 5/1/0 floor 1,
-   shared modelID, five-key safe shape (V-11 — NO pages/pagesize form anywhere; context stays the
-   family 262,144 token figure, M9-A2 equality legal), commentary names BOTH D47 figures and the
-   honest capacity/no-speed prose.
-6. **ReBAR receipts** (owner, independent of 2–5): `lspci -vv -d 1002:7551 | grep "Region 0"` →
+   (DERIVED prediction — the print prices it, never the reverse); page line expected ~200.00
+   KiB/16-token block (print calibrates).
+4. **Tool-calling accuracy A/B (owner-executed, D-23) — between the boot prints and ANY routing
+   opt-in**: one A/B on the new lane (fp8_v4 vs the fp8 baseline class, agent-transcript/tool-
+   calling shape); the **raw output is quoted into DECISIONS verbatim — paraphrase is not a
+   record** (receipt LAW on an accuracy artifact). Until it is on record, the lane receives no
+   routed traffic (C03 carries the sentence). Reason on the surface, not buried: V-int4 was
+   never scored on transcripts; the KL table is a log-analysis corpus; this is the pipeline's
+   own route.
+5. **Gate run**: `receipt_gate.py --gate` with per-lane bars 5/5/5/5/8 — **expected REFUSALS by
+   ruling, not defects**: fn (M ≈ 4.1 MEASURED-class < 5 — R5's honest bar) and the new lane
+   (M < 8 — the D-20 ACCEPTED deficit; success = print captured + deficit recorded against the
+   ruling; the machine bar NEVER moves); N% < 100 warnings are owner-read, never machine bars (D16).
+6. **jsonc trio rows** (owner diff per plan spec; AFTER steps 3–5; D-22 authorized the ladder):
+   rows 5/1/0 floor 1, shared modelID, five-key safe shape (V-11 — NO pages/pagesize form
+   anywhere; context stays the family 262,144 token figure, M9-A2 equality legal), commentary
+   names BOTH D47 figures and the honest capacity/no-speed prose; **the twelve existing rows
+   byte-untouched**.
+7. **ReBAR receipts** (owner, independent of 2–6): `lspci -vv -d 1002:7551 | grep "Region 0"` →
    `size=32G` per card, both cards — collection only, NOT BIOS authorization; kept textually and
    operationally **separate from the rank-1 Gen3×4 width defect** (own reseat lane) in C06's note.
 
 ## Risks
 
-- **R-1** (was the attribution risk; CLOSED as R1-informed) — residual: a later agent must not
-  re-litigate the dtype or import the k6_v4 figures into success criteria (D-15 guards).
-- **R-2** new lane prints M < 8 (6.77 expected) → gate refuses — owner-RULED deficit (OQ-3), same
-  class as fn's open 5.3/66%; never a silent "fix" by dropping the new lane below 8 later.
+- **R-1** (attribution risk — CLOSED as R1-informed, and again by the D-20 round) — residual:
+  a later agent must not re-litigate the dtype, must not import the k6_v4 figures into success
+  criteria, and must not re-offer seqs 6 (both declined on the record — D-15/D-20).
+- **R-2 (re-stated per D-20, exact form)**: the new lane at 262,144 × `fp8_v4` × `--max-num-seqs 8`
+  is expected to print **M ≈ 6.77 < 8** (DERIVED), backing **≈ 84.7%** of the worst case — versus
+  today's MEASURED **66% / 5.3** (27b-TP2 fp8@8) and **52% / 4.1** (flash-TP2 fn@8). The owner was
+  offered **seqs 6** — which would have been fully funded at the same derived M ≈ 6.77 (demand
+  ≈ 19.62 ≤ 22.15 GiB/card; backing ≈ 100%) — and **DECLINED it, choosing 8 with the deficit
+  ruled acceptable**. So the receipt gate's M<8 refusal on this lane is the EXPECTED steady state
+  (Landing step 5): success = print captured + deficit recorded against the ruling. NEVER lower
+  the machine bar; NEVER treat the refusal as a defect; NEVER let 6.77 appear as a pass condition.
 - **R-3** fn refutes at 5 (M 4.1 < 5) — the ruling does not fund fn; C05's review set must prove
-  the honesty; any prose claiming otherwise is a review blocker (R5/D-17).
+  the honesty; any prose claiming otherwise is a review blocker (R5/D-17). fn's dtype move is
+  NOT assumed anywhere (OQ-7 unanswered, D-25).
 - **R-4** live-route rolls: fn's seqs-5 sync + the new lane's bring-up both interrupt capacity on
-  the pipeline's own route (V-16 class); order-gated and owner-paced.
+  the pipeline's own route (V-16 class); owner-paced. Routing opt-in additionally gated on the
+  D-23 accuracy A/B being on record.
 - **R-5** admission-shape drift at 5: queued 64→40 [G@t] — 429-class pressure rises under
   many-client bursts; recorded in each lane's block comment; peers surface 429+Retry-After as-is.
-- **R-6 catalog-red window**: M8-A2/M9 catalog halves stay red until owner step 5 — designed,
+- **R-6 catalog-red window**: M8-A2/M9 catalog halves stay red until owner step 6 — designed,
   named, dated (D12/D15 precedent), never "fixed" by relaxing legs.
 - **R-7 print-shape**: v4/seqs prints are DERIVED expectations; gate greps calibrate on first run
   (D16); absence/unparseable M keeps refusing (D49) — never a pass on absence, never a prediction
@@ -301,46 +369,59 @@ in two suites — never combine).
   (V-2/V-8/V-11/V-12/V-13/V-14); prose re-pins ride it so fail messages never lie.
 - **R-9 1.17.0-line pin**: both env channels name dtype/seqs shapes that 2.x refuses (V-16) — any
   future engine move is a separate from-scratch ruling; the values annotations carry the law.
-- **R-10 order-gate erosion**: if C05 lands without the baseline print (or a dated waiver), the
-  ticket re-pays CW D3's merged-unobserved wound; the gate is a plan constraint, not a suggestion.
+  Recorded as risk-register fact by R1 (D-15), NOT a reason to reconsider.
+- **R-10 order-gate erosion — TRANSFORMED 2026-11-24 (D-21)**: the erosion this gate guarded
+  became its accepted waiver. The guard survives as: the waiver is DATED in DECISIONS and its
+  cost is STATED in C05; an artifact claiming "baseline exists" or silently acting as if a
+  before/after comparison will be available violates D-21.
+- **R-11 waiver's cost (new, D-21)**: no before/after baseline print for fn 8→5 — fn's evidence
+  is the post-change print alone; §4.1's wound (no baseline to price the change against) is
+  ACCEPTED knowingly, not overlooked. Readers must not "reconstruct" the baseline from today's
+  prints of other shapes.
+- **R-12 accuracy before opt-in (new, D-23)**: routing traffic to the lane before the tool-calling
+  A/B is on record puts an un-scored V-int4 layout on the pipeline's own route on the strength of
+  a log-analysis corpus table. C03 + Landing step 4 gate it; a paraphrased A/B is not a record.
 
-## Open questions (ONE batched round — OQ-1 CLOSED by R1, kept numbered for traceability)
+## Open questions — ALL ANSWERED except OQ-7 (statuses dated 2026-11-24 unless noted)
 
-- **OQ-1 — CLOSED 2026-11-23 (R1/D-15)**: dtype kept `fp8_v4` informed; figures recorded.
-- **OQ-2 (fifth-trio ladder / second named low-tie)**: no collision-free fifth trio under M9-A2
-  laws; best guess urgent 5 / default 1 / low 0 + second NAMED tie in `ACCEPTED_LOW_TIES`
-  (surface.sh:1499). Impact: M9 reds until ruled; existing twelve rows never move.
-- **OQ-3 (new-lane deficit at 8)**: expected print M ≈ 6.77 < 8 → gate refuses at step 4. Confirm
-  the owner accepts the explicit deficit (recorded with the receipt), or pre-authorizes the
-  alternative lever. Best guess: accept. Impact: unretracted, the lane's PROVISIONAL reads as
-  failure, not ruling.
-- **OQ-4 (spelling)**: identifiers `fp8v4` compact / literal `fp8_v4` only as dtype value
-  (V-9/D-2). Best guess: as specced. Impact: cosmetic pre-boot, annoying after rows/receipts.
-- **OQ-5 (baseline timing vs waiver)**: when at the next scale act does step 0 run (it may ride
-  the same window as fn's bring-up)? Best guess: block-first in the window, then the seqs sync.
-  Impact: this is C05's order gate — slipping it re-opens CW D3's wound (R-10).
-- **OQ-6 (quality probe)**: one small tool-calling accuracy A/B on the lane's first boot (fp8_v4
-  vs today's fp8; V int4 never scored on agent transcripts — RESEARCH §0 "could not verify" 3)
-  before routing opt-in. Best guess: run, quote into DECISIONS; declining is legitimate at
-  replicas 0. Note: the existing lanes' seqs 5 needs no probe (wht6 crossing gets RARER — small
-  win, V-4).
-- **OQ-7 (fn's standing refutation)**: fn at 5 still prints 4.1 < 5 (§2.3); the ONLY lever that
-  funds fn is its own dtype move (§2.3: fp8_v4→≈5.1, k6_v4→≈5.7 — changes the live route's output
-  bits; RESEARCH §9 C6 left it un-asked). Does the owner want fn's lane dtype ruled NOW (it would
-  ride a follow-up ticket), or accept fn's deficit-with-honest-bar and keep dtype where it is?
-  Best guess: accept 5 + deficit; a dtype follow-up gets its own receipts. Impact: decides whether
-  a follow-up ticket spawns; nothing in THIS plan depends on the answer.
+- **OQ-1 — CLOSED 2026-11-23 (R1/D-15)**: dtype kept `fp8_v4` informed; corrected figures on the
+  record; the §7 Option-A k6_v4 lines carry dated erratums (D-26).
+- **OQ-2 — AUTHORIZED 2026-11-24 (D-22)**: fifth trio **5/1/0**; second NAMED low tie admitted to
+  `ACCEPTED_LOW_TIES` (`tests/pipeline-models/surface.sh:1499`). Invariants: twelve existing rows
+  never move; floors 5/4/3/2/1, each lane's own default class. Folded into C01 (legs green on
+  authoring, no longer pending any ruling) and C06/plan prose.
+- **OQ-3 — RULED 2026-11-24 (D-20)**: lane **stays seqs 8**; deficit **accepted as a ruling** —
+  seqs 6 (fully funded at derived M ≈ 6.77 / backing ≈ 100%) was offered and DECLINED. Gate
+  refusal at M<8 = expected steady state; success = print captured + deficit recorded against
+  the ruling; bar never lowers; 6.77 never a pass condition.
+- **OQ-4 — CONFIRMED as specced 2026-11-24 (D-24)**: `fp8v4` compact identifiers; `fp8_v4`
+  literal only as the dtype value.
+- **OQ-5 — WAIVED 2026-11-24 (D-21)**: no baseline current-shape block run. C05 proceeds; the
+  cost (no before/after fn print; post-change print alone is the evidence) is recorded in C05 +
+  R-10/R-11. Parent C04 untouched here (neither closed nor re-opened; coordinator records there).
+- **OQ-6 — AUTHORIZED 2026-11-24 (D-23)**: the tool-calling A/B is a named owner-executed landing
+  leg (step 4), raw output QUOTED into DECISIONS, and gates any routing opt-in (R-12; C03 line).
+  (The existing lanes' seqs-5 move needs no probe — wht6 crossing gets RARER, V-4.)
+- **OQ-7 — UNANSWERED (D-25) — do not record as decided**: fn's narrow-dtype follow-up stays a
+  separate ruling/ticket; **no ticket mints without the owner's word**. Execution default: fn
+  ships seqs 5 with its accepted deficit-and-honest-bar posture; C04/C05 prose assumes NO fn
+  dtype change; the question may resurface at fn's receipt record (which belongs to the owner).
 
-## Deviations recorded (from the first launch brief; scope-change round folded)
+## Deviations recorded (first brief → scope-change round → approval fold)
 
 1. Brief's "`--extra_body` law with file:line" → no literal rule exists; D43 named with real
    cites (DECISIONS D-8).
 2. Brief's `RADIANCE_KV_DTYPE` example → `RADIANCE_KV_CACHE_DTYPE`; plus new `RADIANCE_MAX_NUM_SEQS`
    (flag-mirroring convention).
-3. Brief's example `radiance-fp8-v4` → `radiance-q27-fp8v4` identifiers (D-2).
+3. Brief's example `radiance-fp8-v4` → `radiance-q27-fp8v4` identifiers (D-2; confirmed D-24).
 4. Brief's "scope reduction to exploit" (uniform-8 → no gate rewrite) → VOID per owner R2; the
    gate re-cut is first-class C01 work (D-16). The D-7 verification stands as history of the
-   superseded ruling.
+   superseded ruling. Approval-fold verification (D-26): no plan/chunk prose retains it as a
+   live claim — only dated supersession references remain.
 5. RESEARCH §5's "three exact-set legs" → six widening sites (V-12).
 6. RESEARCH §4.2's M-leg "no churn" claim → **independently verified** this session before
    trusting it in the chunk plan (V-6).
+7. Approval fold (2026-11-24): RESEARCH.md received **appended dated erratum annotations only**
+   (§7 Option-A sites) — analysis untouched, per the research-round-owns-prose convention; if
+   that were judged out of contract the file would have been left alone, but the coordinator's
+   brief named the erratum as the sanctioned form, so it was applied (D-26; see RESULT).

@@ -61,3 +61,21 @@ via RESULT `friction:`; coord appends (its own items included).
   child (old tip still an ancestor) touching only context-window FRICTION/STATE — all cited
   surfaces byte-identical, citations hold; the retraction's family-wide receipt LAW folded in as
   DECISIONS D-14 + plan OQ-5/Landing-3. · fixed
+- 2026-11-24 · plan(approval-fold) · The pre-fold chunk files contradicted three fresh rulings
+  (C03/C01 read the deficit as "pending OQ-3 / confirm", C01/C06 read the ladder as "PENDING
+  OQ-2", C05's header made C05 wait on a baseline that D-21 just waived) — the exact stale-artifact
+  class this ticket family pays for. · resolution: single-round fold — D-19..D-26 dated 2026-11-24;
+  C01 (ladder AUTHORIZED, floors 5/4/3/2/1 explicit, D-20 refusal-as-expected test encoding), C03
+  (success criterion re-cut per D-20, opt-in gate line per D-23), C05 (order gate → WAIVED with
+  cost stated, parent discipline), C06 (ladder/tie cite now a ruling, floor set, step numbers);
+  D-14/D-17 got dated inline AMENDED annotations (body never rewritten). · fixed
+- 2026-11-24 · plan(approval-fold) · Landing-step renumbering after the A/B insertion broke
+  cross-references (three artifacts still said "step 5"/"step-5" for the jsonc leg). ·
+  resolution: renumbered Landing shape 0–7 and grepped every artifact for stale step cites;
+  C03/C06/R-6 now say step 6 for the rows, steps 3–5 for the receipt/gate sequence. · fixed
+- 2026-11-24 · plan(approval-fold) · RESEARCH.md §7's Option-A/Option-C k6_v4 lines were the
+  mislabel's origin — a plan session editing another role's research artifact is normally out of
+  contract. · resolution: the coordinator's fold brief NAMED the dated-erratum annotation as the
+  sanctioned form; applied two bracket erratums (:598/:613 areas) with the analysis bytes
+  untouched; had it not been named, the honest move is to decline and record in RESULT — judged
+  in-contract here and applied. · fixed

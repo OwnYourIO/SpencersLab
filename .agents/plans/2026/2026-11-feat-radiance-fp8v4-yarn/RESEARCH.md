@@ -599,6 +599,15 @@ impossible at any in-family dtype** — §2.2's grid is the proof — so one of 
   **+43% funded sessions over today** (§2.2) — and is the only lane whose M ≥ 5-vs-8 bar has
   *margin*; no YaRN, catalog family stays uniform (cheapest §6). The window goal is deferred to
   Option B's receipt sequence, not silently dropped.
+  > **[ERRATUM annotation — plan-fold round, 2026-11-24, DECISIONS D-26; the analysis above is the
+  > research round's own and stands byte-untouched:] the M ≈ 7.65 / ~96% figures on this Option-A
+  > block are **k6_v4's** (Option A specced the lane as `radiance-q27-k6v4`). The lane that was
+  > BUILT is `fp8_v4` — owner-reconfirmed informed after seeing k6_v4 dominate the pin table
+  > (D-15) — whose figures at 262,144 × 8 are **M ≈ 6.77 / 84.7%** (§2.2); the earlier brief line
+  > "fp8_v4 alone → funds 7.66 of 8" was this pair's mislabel and survives nowhere as a
+  > success criterion. The built ticket further runs Option-A-style seqs 5 on the existing four
+  > and 8 on the new lane, seqs-6 being offered and declined with the deficit ruled accepted
+  > (D-20). No number here is a receipt: boot prints price everything (D-14 receipt LAW).
 - **Option B — window first.** Same lane with the dtype move AND `RADIANCE_ROPE_SCALING
   "yarn:2"` + `RADIANCE_MAX_MODEL_LEN 393216`, but **seqs 5** on this lane too (not 8): prints
   **M ≈ 5.19 / funded at 5** — §2.2's only funded 1.5× shape — on the *validated* factor with the
@@ -613,6 +622,11 @@ impossible at any in-family dtype** — §2.2's grid is the proof — so one of 
   lane (no new pod, dtype via the same FORM channel) → 7.65 sessions on the lane that exists today,
   minus a pod-swap row, minus a catalog trio, minus a ladder ruling. Cheapest path to the
   concurrency the original finding was about.
+  > **[ERRATUM annotation — plan-fold round, 2026-11-24, DECISIONS D-26; analysis untouched:]** the
+  > "7.65 sessions" on this Option-C block is likewise **k6_v4's** figure (proposed here for the
+  > existing q27-TP2 lane). The fp8_v4 pair is **6.77 / 84.7%**; Option C as written was NOT taken
+  > (the new pod was built with fp8_v4, the seqs-5 wave WAS taken on the existing four, and the
+  > fn deficit was ruled accepted, D-20/D-16).
 
 **What must give, plainly:** at `fp8_v4`+`yarn`+8-seqs (the request as literally composed), the
 funded-session count gives (5.3 → 4.6), and the gate will print the warning line to prove it.
