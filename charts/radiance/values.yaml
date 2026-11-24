@@ -217,14 +217,24 @@ app-template:
           : "${RADIANCE_TP:?RADIANCE_TP is required - tp must equal the pod card claim}"
           : "${RADIANCE_MAX_MODEL_LEN:?RADIANCE_MAX_MODEL_LEN is required - the context ceiling is a lane fact}"
 
-          # Fixed flags (FORM-owned, identical for every release): port 8000
-          # (the Service and probes agree), host :: (the cf-143 idiom), 8
-          # sessions, fp8 KV cache. Everything below them is env-fed: absent
-          # env means absent flag, which is how the dense lanes omit the
-          # whole expert family without this FORM knowing which lane it
-          # serves.
+          # FORM-owned flags: port 8000 (the Service and probes agree) and
+          # host :: (the cf-143 idiom) stay identical for every release; the
+          # session count and the KV dtype ride this same spine as env-fed
+          # channels whose fallback is the SHIPPED byte (8 / fp8). The
+          # fallbacks are law, not style: the engine's own defaults are 256
+          # sessions and a bf16 cache, so an absent-means-absent channel here
+          # would silently re-size every parked lane and double its KV bytes
+          # (2026-11-23 owner rulings R1/R2, DECISIONS D-3/D-16). Every other
+          # arm below stays absent-means-absent, which is how the dense lanes
+          # omit the whole expert family without this FORM knowing which lane
+          # it serves.
+          # Receipt-gate guardrail: the gate reads each lane's M bar from the
+          # fallback digit in these bytes and refuses when it finds two
+          # distinct digits, so prose here must not spell the flag beside a
+          # bare digit — a second readable match is a refusal at the gate.
           set -- --model "$RADIANCE_MODEL_PATH" --served-model-name "$RADIANCE_SERVED_ID" \
-            --port 8000 --host :: --max-num-seqs 8 --kv-cache-dtype fp8 \
+            --port 8000 --host :: --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-8}" \
+            --kv-cache-dtype "${RADIANCE_KV_CACHE_DTYPE:-fp8}" \
             --tp "$RADIANCE_TP" --max-model-len "$RADIANCE_MAX_MODEL_LEN"
           [ -n "${RADIANCE_TP_WIRE:-}" ] && set -- "$@" --tp-wire "$RADIANCE_TP_WIRE"
           [ -n "${RADIANCE_HOST_POOL_MIB:-}" ] && set -- "$@" --host-pool-mib "$RADIANCE_HOST_POOL_MIB"

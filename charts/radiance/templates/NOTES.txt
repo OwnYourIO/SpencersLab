@@ -19,15 +19,17 @@ chart is a lane's default any more, so read the lane you installed:
   radiance-q27       27B dense TP1 — rests at replicas 0, the swap lane
   radiance-flash-tp1 flash-next TP1 — rests at 0, the single-card twin
   radiance-q27-tp2   27B dense TP2 — rests at 0, the two-card twin
+  radiance-q27-fp8v4 27B dense TP2, fp8_v4 KV, 8 seqs — rests at 0, the dtype twin
 
-CLAIM MATH — read it before any scale-up. A TP2 lane claims BOTH cards (claim
-2 of the named pool amd.com/gpu-r9700, which holds exactly the two R9700s), so
-at most one TP2 lane can be UP at a time: 2 + 2 is more than the pool has and
-the second pod sits Pending, never co-resident. A TP1 lane claims 1 and the
-scheduler gives it the pool's lowest-KFD-NodeId free card. The swap order
-survives the shape change: the live lane scales DOWN before the other scales
-UP, and every sync re-applies git over a hand-scale — OutOfSync through a
-switch window is the parked swap, not a defect to chase.
+CLAIM MATH — read it before any scale-up. Three releases are TP2 — radiance,
+radiance-q27-tp2 and radiance-q27-fp8v4 — and a TP2 lane claims BOTH cards
+(claim 2 of the named pool amd.com/gpu-r9700, which holds exactly the two
+R9700s), so at most one TP2 lane can be UP at a time: 2 + 2 is more than the
+pool has and the second pod sits Pending, never co-resident. A TP1 lane claims
+1 and the scheduler gives it the pool's lowest-KFD-NodeId free card. The swap
+order survives the shape change: the live lane scales DOWN before the other
+scales UP, and every sync re-applies git over a hand-scale — OutOfSync through
+a switch window is the parked swap, not a defect to chase.
 
 MEMORY MATH — the pool fits the two TP1 lanes side by side, the node's RAM
 does not: at the transcribed numbers, fn's 110 GiB pair beside q27's 24 GiB,
@@ -70,4 +72,6 @@ Debug access from outside the cluster (kubectl only — not a client path):
 Next step — the on-target acceptance + host-prep runbook
 (.agents/notes/radiance-on-target-acceptance.md, cf-143 C06): the naming
 receipts, the kfd/GID + io_uring memlock gates, the pack sha check and the
-8-session ladder.
+per-lane configured-seqs ladder (5 on the four shipped lanes, 8 on the
+fp8v4 lane; the receipt gate reads the env per lane — 2026-11-23 owner
+rulings R1/R2).

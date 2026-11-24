@@ -5,8 +5,8 @@
   "plan_status_note": "APPROVED 2026-11-24 by the owner (batched approval round; DECISIONS D-19) on the revised plan (scope-change round D-15..D-18 folded, then approval rulings D-19..D-26: C01 dispatch authorized for next round, C05 order gate WAIVED, fifth trio 5/1/0 + second named low tie authorized, accuracy A/B authorized as an owner-executed landing leg, spelling confirmed, OQ-7 left open by status). current_wave stays 1; C01 dispatches after this fold. History: drafted 2026-11-23, revised same-day by the owner scope-change round, approved 2026-11-24.",
   "coord_session": null,
   "test_session": "ses_df45cfb50ffeMhdkGlT8OhdWFq",
-  "current_wave": 2,
-  "updated_at": "2026-11-24T04:55:48Z",
+  "current_wave": 3,
+  "updated_at": "2026-11-24T07:22:02Z",
   "kickoff": {
     "slug": "feat-radiance-fp8v4-lane",
     "type": "feat",
@@ -71,19 +71,20 @@
       "handoffs": []
     },
     "C02": {
-      "status": "pending",
+      "status": "approved",
       "wave": 2,
       "depends_on": ["C01"],
-      "dispatch": "AUTHORIZED FOR DISPATCH 2026-11-24 (C01 APPROVED with its condition folded — D-27); chart FORM wave: both env-defaulted channels on the spine line; red-owner mapping in chunks/C01.md ## Review",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dispatch": "DISPATCHED and CLOSED 2026-11-24 — chart FORM two channels landed; red-owner mapping in chunks/C01.md ## Review; findings + 3 minors in chunks/C02.md ## Review (2026-11-24)",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED 2026-11-24 — byte-identity re-proved by a second method (byte-splice through compose_serve_argv, ordered argv identical for all four lanes, dash/bash/sh agree); 48F→39F with 9 legs flipped green and ZERO newly red, all 39 mapped to C03/C04/C05 and none to C02; non-recommendation sweep clean; aislop 100/0/0. Minors deferred to the C03 wave: values.yaml:231-234 wording overstates (refusal is on two DISTINCT digits), NOTES.txt 9-line re-wrap to flag in the PR body, NOTES.txt:75-77 says 5-on-four-lanes which is true only post-C04/C05. Next-test-touch queue (C01 authority, not C02): ordered-slot and expansion-quoting legs (unquoted expansion and reordered slots planted with ZERO reds — AC1's two laws had no leg, only my script), dupe-check ordering at test_c03_generic_shell.py:123-132, and two gate hardenings (valueFrom-shaped seqs env resolves to fallback silently; an env on a non-serve container moves the bar without moving the pod — the false-pass direction).",
       "handoffs": []
     },
     "C03": {
       "status": "pending",
       "wave": 3,
       "depends_on": ["C01", "C02"],
+      "dispatch": "AUTHORIZED FOR DISPATCH 2026-11-24 (C02 APPROVED) — the fifth lane: services block radiance-q27-fp8v4 with EXACTLY RADIANCE_KV_CACHE_DTYPE fp8_v4 and NO RADIANCE_MAX_NUM_SEQS (8 is now the live FORM fallback; authoring 8 reddens the extra-env arm), roster entry, peers + evidence, CI step, golden re-capture; greens 26 reds; success criterion = boot print captured with the M<8 deficit recorded as the D-20 ACCEPTED ruling (never a defect, never a lowered bar); no routed traffic before the D-23 owner accuracy A/B is on record. Also folds C02's three minors.",
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
