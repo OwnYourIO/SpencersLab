@@ -17,16 +17,27 @@
 # Destinations and credentials live instance-side (PUSH_URL_* repo vars and
 # PUSH_TOKEN_* secrets), not in this file — the file carries no repo URL and
 # no token, so it is safe to host on both instances and review without
-# secret exposure. The fan-out trigger's pair (vars.ARGOCD_HOOK_URL +
-# secrets.ARGOCD_HOOK_SECRET) follows the same rule, prod instance only.
+# secret exposure. The fan-out's single vault input,
+# secrets.ARGOCD_SYNC_TOKENS, follows the same rule and is an ORG-level
+# Actions secret on the prod instance (owner ruling 2026-11-23: org-scoped
+# key hygiene, inherited by the repository here). A secrets reference cannot
+# distinguish scopes — resolution is repo→org→user with a repo key winning —
+# so a key of that name must never be created repo-side, and this file only
+# documents the placement the runbook creates.
 #
-# The hook-relay job POSTs only after push-gh succeeded: the fleet's app
-# sources read GitHub, so an earlier call would fan out the PREVIOUS
-# revision — the ordering is the race resolution (cf-139 R1 option (c));
-# no external webhook exists anywhere, this job IS the webhook. Its own
-# failure posture is warn-not-break like this file's unset-ROLE one: unset
-# keys skip, failures warn, the job ends green — the next push self-heals
-# (the relay fan-out is SHA-agnostic) and manual sync covers otherwise.
+# The sync-fanout job IS the webhook: no external webhook exists. It drives
+# every cluster's ArgoCD API directly with the per-cluster bearer tokens and
+# fires only after push-gh succeeded, because the fleet's app sources read
+# GitHub — an earlier fan-out would land the PREVIOUS revision (the ordering
+# is the race resolution, cf-139 R1 option (c)). Its failure posture has two
+# halves: the unset-vault state is designed (warn and skip green, manual
+# sync or the next push covers it), while setup errors go RED through the
+# unguarded script call — a typo'd vault record must not silently lose a
+# cluster every push forever (DECISIONS 2026-11-23 exit-posture refinement).
+# The push itself already landed in the completed push jobs, so a red
+# fan-out job breaks nothing but hides nothing either; per-target runtime
+# failures audit honestly and stay green (the fan-out is SHA-agnostic, the
+# next push self-heals).
 
 on:
   push:
@@ -76,13 +87,17 @@ jobs:
           rest="${PUSH_URL#https://}"
           git push "https://x-access-token:${PUSH_TOKEN}@${rest}" HEAD:refs/heads/main
 
-  hook-relay:
+  sync-fanout:
     # needs: [push-gh] IS the race resolution (cf-139 R1 option (c)): the
     # fleet's app sources track GitHub, so the fan-out may only fire once
     # GitHub already carries this push — earlier, every sync lands the
-    # previous revision. GitHub-shaped delivery; the job signs it with
-    # X-Forgejo-Signature plain hex (R3 — the hub-dialect prefix form
-    # belongs to the R2 door, not to this file).
+    # previous revision. The single vault reference is the ORG-level secret
+    # (owner ruling 2026-11-23): mapped into env only — the value must never
+    # reach the run body (it would land in the step script file the runner
+    # writes) or argv. The python call is UN-guarded on purpose: config/setup
+    # errors go red (the ruled exit-posture refinement), unset vault was
+    # already skipped green above, and per-target runtime failures stay soft
+    # inside the script's own contract.
     needs: [push-gh]
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
@@ -91,59 +106,19 @@ jobs:
         run: |
           set -euo pipefail
           echo "ROLE=${{ vars.ROLE }}"
-      - name: trigger relay fan-out
+      - uses: actions/checkout@v7
+      - name: fan out ArgoCD syncs
         env:
-          RELAY_URL: ${{ vars.ARGOCD_HOOK_URL }}
-          RELAY_SECRET: ${{ secrets.ARGOCD_HOOK_SECRET }}
+          ARGOCD_SYNC_TOKENS: ${{ secrets.ARGOCD_SYNC_TOKENS }}
           EVT_REF: ${{ github.event.ref }}
-          EVT_BEFORE: ${{ github.event.before }}
-          EVT_AFTER: ${{ github.event.after }}
-          EVT_FULL_NAME: ${{ github.event.repository.full_name }}
-          GH_SHA: ${{ github.sha }}
-          GH_REPO: ${{ github.repository }}
           GH_REF: ${{ github.ref }}
-          # run_id-run_attempt: a re-run of the same workflow is a distinct
-          # delivery for the relay's audit trail.
-          RUN_TAG: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          if [ -z "${RELAY_URL:-}" ] || [ -z "${RELAY_SECRET:-}" ]; then
-            echo '::warning::hook-relay not configured (instance vars.ARGOCD_HOOK_URL / secrets.ARGOCD_HOOK_SECRET) — fan-out trigger skipped, manual sync or the next push covers it'
+          if [ -z "${ARGOCD_SYNC_TOKENS:-}" ]; then
+            echo '::warning::sync-fanout not configured (org-level Actions secret ARGOCD_SYNC_TOKENS absent) — fan-out skipped, manual sync or the next push covers it'
             exit 0
           fi
-          # dispatch/first-push may lack event fields (release.yaml:54
-          # precedent) — the fallbacks are the answer, not more guards.
+          # dispatch/first-push may carry no event ref (release.yaml:54
+          # precedent) — the chain resolves main, never an empty ref.
           REF="${EVT_REF:-${GH_REF:-refs/heads/main}}"
-          BEFORE="${EVT_BEFORE:-}"
-          AFTER="${EVT_AFTER:-$GH_SHA}"
-          FULL_NAME="${EVT_FULL_NAME:-$GH_REPO}"
-          # json.dumps builds the JSON, the shell only passes argv — no
-          # quoting hazards in payload values. The relay consumes only ref;
-          # the rest is signature-covered delivery identity.
-          BODY=$(python3 -c 'import json,sys; ref,before,after,full_name=sys.argv[1:5]; print(json.dumps({"ref": ref, "before": before, "after": after, "repository": {"full_name": full_name}}))' "$REF" "$BEFORE" "$AFTER" "$FULL_NAME") || BODY=""
-          if [ -z "$BODY" ]; then
-            echo "::warning::hook-relay payload build failed (delivery=$RUN_TAG) — fan-out trigger skipped, next push covers it"
-            exit 0
-          fi
-          SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$RELAY_SECRET" | awk '{print $NF}') || SIG=""
-          if [ -z "$SIG" ]; then
-            echo "::warning::hook-relay HMAC signing failed (delivery=$RUN_TAG) — fan-out trigger skipped, next push covers it"
-            exit 0
-          fi
-          # Bounded and captured: retries ride connection errors and 5xx,
-          # the final HTTP code drives classification, and a curl that
-          # cannot reach the relay still yields a code, never a dead job.
-          CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 --retry 3 --retry-delay 5 --retry-all-errors \
-            -H 'Content-Type: application/json' \
-            -H 'X-Forgejo-Event: push' \
-            -H 'X-GitHub-Event: push' \
-            -H "X-Forgejo-Delivery: $RUN_TAG" \
-            -H "X-GitHub-Delivery: $RUN_TAG" \
-            -H "X-Forgejo-Signature: $SIG" \
-            --data "$BODY" "$RELAY_URL") || CODE=000
-          case "$CODE" in
-            2??) echo "ok: relay accepted code=$CODE delivery=$RUN_TAG" ;;
-            401) echo "::warning::relay answered 401 for delivery=$RUN_TAG — the relay HMAC secret disagrees with the Actions vault secret; this push lands on no cluster until they match" ;;
-            *)   echo "::warning::relay answered code=$CODE for delivery=$RUN_TAG — the fan-out trigger disagrees with this push; manual sync or the next push covers it" ;;
-          esac
-          exit 0
+          python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"

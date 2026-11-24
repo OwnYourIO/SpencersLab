@@ -143,14 +143,16 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 8,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "main-sync.yaml hook-relay → sync-fanout (checkout + python invocation, one ORG-level vault secret secrets.ARGOCD_SYNC_TOKENS referenced via scope inheritance [ruled 2026-11-23: header org-scope sentence + pinned org-worded unset warning + no-var-twin leg], HMAC/curl dropped) + forgejo-main-sync.sh t3/t5/t9–t13 replacement",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-24T00:40+00:00", "event": "dev DONE (mid-flight interruption re-verified byte-by-byte by dev itself) + review R1 APPROVED: suite 13/13, AC1-7 byte-verified, unset-guard covers empty+unset, config-RED live-proven exit 1, push jobs byte-zero, 2 wording nits non-blocking" }
+      ]
     },
     "C07": {
       "status": "pending",
