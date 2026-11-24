@@ -214,7 +214,9 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
     # anything outside the listed states still REFUSES the carve.
     if not isinstance(peers, dict) or set(peers) not in (
             {"strata"}, {"strata", "radiance"}, {"strata", "radiance", "radiance-q27"},
-            {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}):
+            {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"},
+            {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2",
+             "radiance-q27-fp8v4"}):
         return False
     entry = peers["strata"]
     if not isinstance(entry, dict) or set(entry) != {"proxy", "models", "timeouts"}:

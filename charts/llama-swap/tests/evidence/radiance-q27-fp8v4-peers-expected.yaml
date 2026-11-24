@@ -1,0 +1,80 @@
+# Pinned expectation for the ADDITIVE radiance-q27-fp8v4 peer on the gpu-ai
+# outer llama-swap render (2026/2026-11-feat-radiance-fp8v4-yarn, C01; DECISIONS
+# D-2 names the key, D-24 confirms the compact fp8v4 identifier, D13's
+# per-peer-key law keeps every sibling file valid and UNEDITED beside it).
+# Authored in this ticket's test session; dev must not edit this file — dev
+# conforms services/gpu-ai/prod/values.yaml to it, never the reverse (the law
+# radiance-q27-peers-expected.yaml carries).
+#
+# SINGLE source for the radiance-q27-fp8v4 peer shape. Consumers read it live
+# (tests/pipeline-models/surface.sh M9-C, the peers<->evidence parity arms and
+# the charts/radiance lane suite), so a test-session re-author re-aligns them.
+#
+# Shape = a clone of peers.radiance-q27-tp2: proxy is the gpu-ai-radiance-q27-
+# fp8v4 release's cluster DNS on 8000, NO /v1 suffix (request paths append
+# verbatim); the models list carries exactly the lane's one --served-model-name
+# id; the timeouts copy the q27 sibling (same pack, same boot class). Keyless
+# per cf-143 D8.
+#
+# This is a capacity/pool lane, not a speed lane (D-6): q27-TP2 geometry with
+# the KV dtype fp8_v4 and served context native 262,144. The "+12% prefill"
+# that originally sold the dtype belongs to --attn-prefill-fp8 (lossy, out of
+# scope), NOT to fp8_v4 — the pin's dtype table is speed-neutral at the pin
+# (9.76/9.76/9.84 s across fp8/fp8_v4/k6_v4). Nothing here sells a speed win.
+#
+# SEQS, this ticket's load-bearing per-lane fact (D-16/R2): the lane's
+# configured --max-num-seqs is 8 — the chart FORM fallback, which it authors
+# through NO env (8 is the default) — while its four siblings (fn, q27,
+# flash-TP1, 27b-TP2) move to 5 this ticket (each gains one RADIANCE_MAX_NUM_SEQS
+# "5" env line). The receipt gate reads the bar PER LANE (chart fallback + that
+# lane's env), so a per-lane 5-vs-8 split is the designed steady state, never
+# an ambiguity. The funding figure for this lane (≈6.77 M / ≈84.7% backing at
+# 262,144x8) is DERIVED and appears as a pass condition NOWHERE (D-14 receipt
+# law): the first boot print adjudicates, and the gate's M<8 refusal on this
+# lane is the RULED accepted deficit (D-20), not a defect and never a lowered
+# bar. k6_v4 (which would fund ≈7.65) is the declined dtype (R1/D-15) and names
+# NO success criterion.
+#
+# Scheduling arithmetic is claim math, not policy: this lane claims 2 cards
+# (TP2), so while it is up nothing else on the pool schedules, and it can NEVER
+# co-boot with the flash-TP1 lane (2 + 1 > 2 cards). It is pack-shared with its
+# q27 siblings (one mxfp4 pack on the PVC; the init marker-skip makes a co-boot
+# a no-download, not a second fetch). It rests at replicas 0; the boot flip is
+# an owner scale act.
+#
+# filters.setParams "priority?" = 1 is the set-if-undefined floor equal to THIS
+# lane's default class (owner ruling D-22: the fifth trio 5/1/0, and each
+# hop's floor is its lane's OWN default row, floors 5/4/3/2/1, tests/
+# pipeline-models/TEST_SPEC.md §3). The floor is not fn's 5 or q27's 4 (the
+# cf-143 D54 "ranks are NOT stolen" law, applied per lane). This lane's low
+# rung 0 TIES q27's low 0 by design — the SECOND NAMED low tie, admitted into
+# ACCEPTED_LOW_TIES (surface.sh:1499) by D-22; five engines with separate peers
+# and separate floors never compete for queue slots. The twelve existing rows
+# never move (no re-rank, no existing-row limit.context edit).
+#
+# Idle law: while the lane rests at replicas 0 the hop fails with a 502 peer
+# proxy error (no endpoints; llama-swap neither health-checks nor hides peers) —
+# loud, never silent. Nothing routes here by default, and the lane receives NO
+# routed traffic until the owner-executed tool-calling accuracy A/B (D-23) is
+# on record.
+#
+# models_states is APPEND-ONLY history; the seeded state is the one-id list the
+# honest-id law rules (peer models exactly [qwen3.8-27b-radiance-fp8v4], the
+# --served-model-name of the q27 array plus --tp 2 --tp-wire wht6 --kv-cache-
+# dtype fp8_v4). A second arena would be the next appended state — waves route
+# through the test session.
+radiance-q27-fp8v4:
+  proxy: http://gpu-ai-radiance-q27-fp8v4.default.svc.cluster.local:8000
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  filters:
+    setParams:
+      "priority?": 1
+  models_must_include:
+    - qwen3.8-27b-radiance-fp8v4
+  models_allowed:
+    - qwen3.8-27b-radiance-fp8v4
+  models_states:
+    # this ticket's C01/C03 seeded state (the one-id first state):
+    - [qwen3.8-27b-radiance-fp8v4]

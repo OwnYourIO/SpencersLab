@@ -16,12 +16,25 @@ item 3 by the PRESENCE of the pool-backs line and parsed the M figure for
 fn only — a non-fn lane's POOL_OK at 4 full-length sessions (75% of the
 worst case) passed, which is exactly the unobserved-value completeness gate
 the D49 lesson exists to catch. The legs below prove the fix both
-directions: the machine bar (per-lane M >= the chart's FORM-fixed
---max-num-seqs, READ not hardcoded, D6) refuses on a short or unparseable
-M on ANY lane and on an unreadable/ambiguous bar; N% < 100 (or the N%
-figure absent) is surfaced as an owner-read warning — visible, attributable,
-never a refusal; the fn loud checks (D9(a) M bar, D9(b) eight-session smoke)
-stay intact.
+directions: the machine bar refuses on a short or unparseable M on ANY lane
+and on an unreadable/ambiguous fallback; N% < 100 (or the N% figure absent)
+is surfaced as an owner-read warning — visible, attributable, never a
+refusal; the fn loud checks (D9(a) M bar, the admitted-sessions smoke) stay
+intact.
+
+[2026-11-feat-radiance-fp8v4-lane D-16/D-20 — the per-lane bar RE-CUT, this
+wave's load-bearing rewrite]: --max-num-seqs became per-lane (5 on the four
+existing lanes, 8 on the new fp8_v4 lane), so the M bar is no longer the
+whole chart's single FORM-fixed digit — it is resolved PER LANE as the chart
+fallback overridden by that lane's RADIANCE_MAX_NUM_SEQS env, and the old
+"two distinct = ambiguous" rule (which per-lane formation produces by
+design) is re-pinned: per-lane bars are the DESIGNED state, while an
+undecidable FALLBACK (unreadable chart, absent flag, two distinct fallbacks)
+or a malformed lane env still REFUSES (the D49 absence law survives in its
+new form). fn's smoke becomes five-admitted (D-16 superseding D9(b)'s eight).
+The fp8_v4 lane's M < 8 refusal is the ACCEPTED deficit (D-20): its bar stays
+8, the boot print adjudicates, and 6.77 / 84.7% are DERIVED figures that
+appear as a pass condition NOWHERE.
 """
 
 from __future__ import annotations
@@ -35,10 +48,11 @@ import pytest
 import receipt_gate as G
 import radiance_testlib as R
 
-HELD_GIB = {"radiance": "110", "radiance-q27": "24", "radiance-flash-tp1": "110", "radiance-q27-tp2": "24"}
+HELD_GIB = {"radiance": "110", "radiance-q27": "24", "radiance-flash-tp1": "110",
+            "radiance-q27-tp2": "24", "radiance-q27-fp8v4": "24"}
 
 
-def _lane_print(lane: str, *, pool_m: str | None = "8", pool_pct: str = "41", smoke: int = 8) -> str:
+def _lane_print(lane: str, *, pool_m: str | None = "8", pool_pct: str = "41", smoke: int = 5) -> str:
     held = HELD_GIB[lane]
     lines = [f"=== lane {lane} (held {held} GiB) @ synthetic ==="]
     lines.append("ITEM1: DIAG_OK max-model-len 262144")
@@ -67,6 +81,7 @@ def _served_id(lane: str) -> str:
         "radiance-q27": "qwen3.8-27b-radiance",
         "radiance-flash-tp1": "qwen3.8-flash-next-radiance-tp1",
         "radiance-q27-tp2": "qwen3.8-27b-radiance-tp2",
+        "radiance-q27-fp8v4": "qwen3.8-27b-radiance-fp8v4",
     }[lane]
 
 
@@ -82,11 +97,12 @@ def _complete_prints() -> dict[str, str]:
 
 
 def test_receipt_gate_passes_on_a_complete_synthetic_print(tmp_path):
-    """The positive control + the M>=8/N%<100 plant: every item present on
-    all four lanes (M=8 at 41% on every lane, eight admitted on fn) — the
-    gate closes (no refusals) AND every lane's 41% figure surfaces as an
-    owner-read warning: N% < 100 is recorded and surfaced (visible,
-    attributable), not silently accepted and not a close bar."""
+    """The positive control + the M>=bar/N%<100 plant: every item present on
+    all five lanes (M=8 at 41% on every lane — on today's env-less tree every
+    bar is the fallback 8 — five admitted on fn) — the gate closes (no
+    refusals) AND every lane's 41% figure surfaces as an owner-read warning:
+    N% < 100 is recorded and surfaced (visible, attributable), not silently
+    accepted and not a close bar."""
     _write_logs(tmp_path, _complete_prints())
     diags, warnings = G.gate(tmp_path)
     assert diags == []
@@ -119,9 +135,10 @@ def test_receipt_gate_refuses_a_non_fn_lane_with_an_underfunded_pool(tmp_path):
     diags, _ = G.gate(tmp_path)
     assert diags, "an under-funded NON-FN lane must REFUSE (presence is not a pass)"
     assert any("radiance-q27" in d and "M=4" in d and "M >= 8" in d for d in diags), f"the lane, the parsed M and the bar must all be NAMED: {diags}"
-    # the other three lanes' items are complete and their M=8 holds — only the
-    # under-funded lane is refused
-    assert not any(d.startswith("radiance:") or d.startswith("radiance-flash-tp1") or d.startswith("radiance-q27-tp2") for d in diags), f"the funded lanes must not be named: {diags}"
+    # the other lanes' items are complete and their M=8 holds — only the
+    # under-funded lane is refused (the fp8_v4 lane is a funded synthetic here;
+    # its real first print is the D-20 deficit, exercised by its own leg)
+    assert not any(d.startswith("radiance:") or d.startswith("radiance-flash-tp1") or d.startswith("radiance-q27-tp2") or d.startswith("radiance-q27-fp8v4") for d in diags), f"the funded lanes must not be named: {diags}"
 
 
 def test_receipt_gate_refuses_a_non_fn_lane_whose_pool_line_lacks_an_m_figure(tmp_path):
@@ -133,6 +150,35 @@ def test_receipt_gate_refuses_a_non_fn_lane_whose_pool_line_lacks_an_m_figure(tm
     _write_logs(tmp_path, prints)
     diags, _ = G.gate(tmp_path)
     assert any("radiance-flash-tp1" in d and "cannot be evaluated" in d for d in diags), diags
+
+
+def test_gate_refuses_the_fp8v4_lane_below_8_as_the_ruled_deficit(tmp_path):
+    """DECISIONS D-20 — the ACCEPTED DEFICIT, encoded so a reviewer cannot
+    misread it as an unfunded failure awaiting repair. The fp8_v4 lane's
+    configured --max-num-seqs is 8 (the chart fallback; it authors no seqs env),
+    and its first boot print is EXPECTED to fund FEWER than 8 sessions. This
+    leg asserts exactly two things: (a) the machine bar for this lane is 8 and
+    is NEVER lowered to make the deficit pass (D49 + D-20), and (b) a print
+    showing fewer than 8 REFUSES, naming the lane's own 8 bar — the ruled
+    expected steady state, not a defect. It asserts NOTHING about what number
+    the print will show: the boot print adjudicates. 6.77 and 84.7% are DERIVED
+    figures and must appear as a pass condition nowhere; the below-bar value
+    planted here ("3") is an arbitrary sub-bar stand-in to fire the refusal,
+    never a predicted outcome."""
+    chart_text, err = G._read_chart_text(G.chart_values_path())
+    assert err is None, err
+    services = G._read_services_doc(G.services_values_path())
+    bar, bar_err = G.lane_max_num_seqs("radiance-q27-fp8v4", chart_text, services)
+    assert bar == 8, f"D-20: the fp8_v4 lane's bar must stay at its configured 8, never lowered: {bar} ({bar_err})"
+    prints = _complete_prints()
+    prints["radiance-q27-fp8v4"] = _lane_print("radiance-q27-fp8v4", pool_m="3", pool_pct="60")
+    _write_logs(tmp_path, prints)
+    diags, _ = G.gate(tmp_path)
+    assert any("radiance-q27-fp8v4" in d and "M >= 8" in d for d in diags), (
+        f"the M<8 refusal on this lane is the ruled expected state and must name its own 8 bar: {diags}")
+    verdicts = " ".join(diags)
+    assert "6.77" not in verdicts and "84.7" not in verdicts, (
+        f"D-20/receipt LAW: a derived figure leaked into a gate verdict as if it were a pass value: {verdicts}")
 
 
 def test_receipt_gate_refuses_a_planted_partial_print_and_names_the_items(tmp_path):
@@ -164,28 +210,29 @@ def test_receipt_gate_names_a_missing_log_file(tmp_path):
     assert any("radiance-q27" in d and "no log file" in d for d in diags), diags
 
 
-def test_receipt_gate_names_a_seven_of_eight_admitted_smoke(tmp_path):
-    """D9(b) loud check: seven of eight near-full sessions admitted — the
-    silent failure mode (Radiance warns, does not refuse) is named, not
-    waved through."""
+def test_receipt_gate_names_a_four_of_five_admitted_smoke(tmp_path):
+    """D-16 loud check (fn's five-admitted smoke, superseding D9(b)'s eight):
+    four of five near-full sessions admitted — the silent failure mode
+    (Radiance warns, does not refuse) is named, not waved through."""
     prints = _complete_prints()
-    prints["radiance"] = _lane_print("radiance", smoke=7)
+    prints["radiance"] = _lane_print("radiance", smoke=4)
     _write_logs(tmp_path, prints)
     diags, _ = G.gate(tmp_path)
     assert diags
-    assert any("D9(b)" in d and "7/8" in d and "missing: ['8']" in d for d in diags), diags
+    assert any("D9(b)/D-16" in d and "4/5" in d and "missing: ['5']" in d for d in diags), diags
 
 
 def test_receipt_gate_names_a_non_2xx_admission(tmp_path):
-    """D9(b), other end: eight entries but one 503 — 'admitted' means 2xx;
-    a funded-but-refused session is the refutation the bar prices."""
+    """D-16, other end: five entries but one 503 — 'admitted' means 2xx; a
+    funded-but-refused session is the refutation the bar prices."""
     prints = _complete_prints()
     lines = prints["radiance"].splitlines()
-    lines[-4] = "SMOKE: ADMITTED 5 503"
+    lines = ["SMOKE: ADMITTED 5 503" if ln == "SMOKE: ADMITTED 5 200" else ln for ln in lines]
+    assert any(ln == "SMOKE: ADMITTED 5 503" for ln in lines), "the planted 503 did not land on an fn smoke line"
     prints["radiance"] = "\n".join(lines) + "\n"
     _write_logs(tmp_path, prints)
     diags, _ = G.gate(tmp_path)
-    assert any("D9(b)" in d and "503" in d for d in diags), diags
+    assert any("D9(b)/D-16" in d and "503" in d for d in diags), diags
 
 
 def test_receipt_gate_names_a_block_detected_fail_marker(tmp_path):
@@ -225,41 +272,81 @@ def test_receipt_gate_refuses_when_the_configured_seqs_cannot_be_read(tmp_path):
     assert any("--max-num-seqs" in d and "cannot be evaluated" in d for d in diags), f"the read failure must be NAMED: {diags}"
 
 
-def test_gate_reads_the_form_fixed_bar_from_the_chart():
-    """The bar follows the FORM (D6: --max-num-seqs is FORM-fixed, parent-
-    D46): it is READ from the chart's compose line, not hardcoded — today's
-    FORM ships 8, so a future FORM ruling surfaces as a named update here
-    and the gate's bar moves with it (a hardcoded 8 would silently
-    invalidate)."""
+def test_gate_bar_is_read_from_the_chart_fallback_and_overridden_per_lane():
+    """The per-lane bar RE-CUT (D-16). The baseline follows the FORM, not a
+    hardcoded 8: read_configured_max_num_seqs on the real chart returns the
+    shipped fallback (8 today, whether the literal or the ${...:-8} expansion),
+    and a planted chart with fallback 5 moves the default bar for env-less
+    lanes. Then the per-lane override: a lane that authors
+    RADIANCE_MAX_NUM_SEQS "5" has bar 5 while its env-less sibling stays at the
+    chart fallback — the existing four move to 5 and the fp8_v4 lane keeps the
+    fallback 8, each bar read from its own source."""
+    chart8 = '  set -- --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-8}"\n'
     bar, err = G.read_configured_max_num_seqs(G.chart_values_path())
     assert err is None, err
-    assert bar == 8, f"the FORM-fixed byte today is 8 (parent-D46 FORM_FIXED_FLAGS); got {bar}"
+    assert bar == 8, f"the shipped fallback byte today is 8 (parent-D46, FORM fallback); got {bar}"
+    assert G.chart_seqs_fallback('  --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-5}"') == (5, None), \
+        "a planted fallback-5 chart must move the baseline bar for env-less lanes"
+    services = {"radiance-flash-tp1": {"app-template": {"controllers": {"radiance":
+                {"containers": {"radiance": {"env": [
+                    {"name": "RADIANCE_MAX_NUM_SEQS", "value": "5"}]}}}}}}}
+    assert G.lane_max_num_seqs("radiance-flash-tp1", chart8, services) == (5, None), \
+        "the env-authoring lane's bar is its own 5"
+    assert G.lane_max_num_seqs("radiance-q27-tp2", chart8, services) == (8, None), \
+        "an env-less sibling keeps the chart fallback — per-lane, not shared"
 
 
-def test_gate_refuses_an_ambiguous_configured_seqs(tmp_path):
-    """Two distinct --max-num-seqs values in the FORM = an ambiguous bar —
-    the gate cannot decide the bar, so it refuses (an unverified bar is not
-    a bar; picking one of two would be the silent-invalidation the read
-    exists to prevent)."""
-    (tmp_path / "values.yaml").write_text("form-a: --max-num-seqs 8\nform-b: --max-num-seqs 32\n")
-    bar, err = G.read_configured_max_num_seqs(tmp_path / "values.yaml")
-    assert bar is None
-    assert err is not None and "--max-num-seqs" in err, f"the ambiguity must be NAMED: {err}"
+def test_gate_per_lane_bars_are_the_designed_state_not_an_ambiguity(tmp_path):
+    """The re-pin of the old "two distinct = ambiguous" rule (D-16). Per-lane
+    resolution makes different bars across lanes the DESIGNED state, never an
+    ambiguity — but the ambiguity guard keeps teeth for the case that still
+    means ambiguity: a fallback that cannot be decided for the whole FORM (two
+    distinct expansion matches), and the D49 absence law (a missing fallback)
+    both still refuse."""
+    chart8 = '  --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-8}"'
+    env_5 = {"app-template": {"controllers": {"radiance": {"containers": {"radiance": {"env": [
+        {"name": "RADIANCE_MAX_NUM_SEQS", "value": "5"}]}}}}}}
+    services = {lane: env_5 for lane in ("radiance", "radiance-q27",
+                                         "radiance-flash-tp1", "radiance-q27-tp2")}
+    bars = {G.lane_max_num_seqs(l, chart8, services)[0] for l in G.LANES}
+    assert bars == {5, 8}, (f"four env-authored lanes at 5 and the fp8_v4 lane at the fallback 8 is the "
+                            f"designed per-lane state, not an ambiguity: {bars}")
+    two = 'a --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-8}" b --max-num-seqs "${RADIANCE_MAX_NUM_SEQS:-32}"'
+    fb, err = G.chart_seqs_fallback(two)
+    assert fb is None and err is not None and "--max-num-seqs" in err, \
+        f"a FORM whose fallback is undecided must REFUSE, naming the flag: {err}"
+    none_fb, none_err = G.chart_seqs_fallback("nothing that configures seqs here")
+    assert none_fb is None and none_err is not None and "cannot be evaluated" in none_err, \
+        f"a missing fallback still refuses (the D49 absence law, re-cut's new form): {none_err}"
 
 
-def test_receipt_gate_lanes_are_exactly_the_four_ruled_lanes():
-    """D8: the block and the gate share the lane set — and it is the FOUR
-    ruled lanes (the ticket's scope: D1/D2/D5/D9), nothing more, nothing
-    less. Cross-pinned against testlib's composition lanes so a lane rename
-    cannot drift the two artifacts apart."""
-    assert set(G.LANES) == {"radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}
+def test_gate_resolves_every_bar_to_the_chart_fallback_on_the_current_tree():
+    """AC2a — the re-cut never invents bars. No lane authors a seqs env yet
+    (C04/C05 land them, C03's block does not exist), so on the current tree
+    ALL FIVE bars resolve from the chart fallback to the shipped 8; the fp8_v4
+    lane resolves to 8 with no block present at all."""
+    chart_text, err = G._read_chart_text(G.chart_values_path())
+    assert err is None, err
+    services = G._read_services_doc(G.services_values_path())
+    assert not any(G.lane_max_num_seqs(l, chart_text, services)[0] != 8 for l in G.LANES), \
+        {l: G.lane_max_num_seqs(l, chart_text, services) for l in G.LANES}
+
+
+def test_receipt_gate_lanes_are_exactly_the_five_ruled_lanes():
+    """D8: the block and the gate share the lane set — and it is the FIVE
+    ruled lanes (the ticket's scope: the four context-window lanes plus this
+    ticket's fp8_v4 lane), nothing more, nothing less. Cross-pinned against
+    testlib's composition lanes so a lane rename cannot drift the two artifacts
+    apart."""
+    assert set(G.LANES) == {"radiance", "radiance-q27", "radiance-flash-tp1",
+                            "radiance-q27-tp2", "radiance-q27-fp8v4"}
     assert set(G.LANES) == set(R.COMPOSITION_LANES)
-    assert len(G.LANES) == len(set(G.LANES)) == 4
+    assert len(G.LANES) == len(set(G.LANES)) == 5
 
 
-def test_command_block_enumerates_all_four_lanes_and_the_receipt_dir():
-    """The pre-authored block: all four lanes enumerated with held + served
-    facts, the eight-session smoke gated to fn, the logs written to
+def test_command_block_enumerates_all_five_lanes_and_the_receipt_dir():
+    """The pre-authored block: all five lanes enumerated with held + served
+    facts, the five-session smoke gated to fn (D-16), the logs written to
     tests/radiance-receipt/ — and NEVER to evidence/ (the C03 pin's
     territory; a log there breaks the pin)."""
     block = G.RECEIPT_COMMAND_BLOCK
@@ -267,6 +354,7 @@ def test_command_block_enumerates_all_four_lanes_and_the_receipt_dir():
         assert f'"{lane}|' in block, f"the block must enumerate {lane}"
     assert "tests/radiance-receipt" in block
     assert "SMOKE: ADMITTED" in block and 'if [ "$name" = "radiance" ]' in block
+    assert 'while [ "$i" -le 5 ]' in block, "the fn smoke loop must run five admitted sessions (D-16 superseding eight)"
     assert "262143" in block  # the near-full token figure (item 9 + the smoke)
     # evidence/ must be a comment-only mention (the warning), never a write target
     for ln in block.splitlines():

@@ -7,11 +7,18 @@ D7 / cf-143 D28(6) / cf-144 P11 — memory moves only on a contradicting
 print, never pre-emptively (F2's arithmetic closed the sizing question, so
 nothing pre-empts those prints). This leg pins the memory VALUES in the
 values file — the edit site, so a later "helpful" re-pin is caught here
-rather than trusted — for ALL FOUR lanes, and it is green pre- and
+rather than trusted — for ALL FIVE lanes, and it is green pre- and
 post-C02 (C02 does not touch it). The existing render-side legs (fn
 110Gi in test_serve_args/test_render, the resting lanes' pairs in
 test_resting_lanes, q27 24Gi in test_q27_lane) pin the rendered half;
 this one pins the authored scalars the render splices from.
+
+[2026-11-feat-radiance-fp8v4-lane D-16/D10 — dated annotation, the law is
+unchanged]: the fifth lane (radiance-q27-fp8v4) joins the HELD set at 24Gi
+and its leg is designed-red until C03 lands the block; no memory value
+moves anywhere. The seqs-5 checkpoint-slot shrink (RESEARCH §2.7: ~4.5 GiB
+host slack appears on the 27b lanes at seqs 5) is RECORDED here, never
+pre-empted — a slot change is a print-gated act, not this wave's edit.]
 """
 
 from __future__ import annotations
@@ -23,12 +30,15 @@ import radiance_testlib as R
 
 # The held pairs, per lane (D10/D7): fn + flash-TP1 hold the fn working set
 # (110Gi), the 27b lanes hold the 24Gi band. Pre- and post-C02 — the context
-# move is orthogonal to the cgroup price (plan fact 11).
+# move is orthogonal to the cgroup price (plan fact 11). The fp8v4 lane holds
+# the 24Gi band with its q27-TP2 sibling (D-4); its block is C03's, so the
+# fifth param is designed-red naming C03 until that lands.
 HELD_MEMORY = {
     "radiance": "110Gi",
     "radiance-q27": "24Gi",
     "radiance-flash-tp1": "110Gi",
     "radiance-q27-tp2": "24Gi",
+    "radiance-q27-fp8v4": "24Gi",
 }
 
 

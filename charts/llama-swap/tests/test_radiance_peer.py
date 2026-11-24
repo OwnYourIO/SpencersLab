@@ -127,10 +127,11 @@ def test_t3_golden_three_peer_shape():
     (never a dev edit), delta recorded in the §12 capture note."""
     golden = L.golden_config("gpu-ai")
     gp = _peers(golden)
-    assert set(gp) == {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2"}, (
-        f"cf-radiance C05: golden peers keys {sorted(gp)} — golden/gpu-ai.config.yaml is "
-        "not yet the five-peer (C05/D19) capture; the test landing round owns the re-capture "
-        "against C05's renders, per the §12 golden law"
+    assert set(gp) == {"strata", "radiance", "radiance-q27", "radiance-flash-tp1", "radiance-q27-tp2",
+                        "radiance-q27-fp8v4"}, (
+        f"cf-radiance C05 + fp8v4 C01: golden peers keys {sorted(gp)} — golden/gpu-ai.config.yaml is "
+        "not yet the six-peer (five radiance lanes + strata) capture; the test landing round owns the "
+        "re-capture against C03's render, per the §12 golden law"
     )
     cfg = L.rendered_config("gpu-ai")
     assert gp == _peers(cfg), (

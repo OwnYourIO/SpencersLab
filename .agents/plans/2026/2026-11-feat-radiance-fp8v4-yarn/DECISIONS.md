@@ -331,6 +331,45 @@ rejected, why.
   `radiance-q27-k6v4` lane); a reader on THIS ticket must not lift 7.65/96% as the fp8_v4 lane's
   funding — the erratums say so.
 
+- 2026-11-24 human+review (C01 review round) **D-27 (C01 APPROVED WITH CONDITIONS — the single
+  condition folded; the receipt-gate seqs-read DEVIATION SANCTIONED; the :1499 cite drift
+  annotated)**:
+  (a) **The condition.** `chunks/C01.md` AC6 still read "radiance-runbook.sh red at T2's :278/593
+  arms naming C05 … roster red naming C03/C06" — a first-draft remnant predating the D-18 pair
+  reassignment; as-written it fails against a suite the reviewer measured **GREEN, 5 ok**. Folded
+  this round to the certified wording (runbook GREEN-unchanged until C05 lands its doc+test pair —
+  C01 authors no edit there, D12 read literally; roster red naming C06). Verdict, reproduced
+  battery counts, the era-prefix-immune red-owner mapping, and the byte-identity-guard audit
+  (guard genuine, not a tautology: three paired arms per channel — fallback / mutation /
+  rename-token; today's green-by-hardcode is the designed pre-C02 state, plan Wave-order step 2)
+  live in `chunks/C01.md ## Review (2026-11-24)`.
+  (b) **Sanctioned deviation — ruled correct, recorded as a ruling because it is about HOW A LEG
+  IS WRITTEN:** C01 specced the gate's seqs read "anchored on the EXPANSION form"; the landed
+  `chart_seqs_fallback` accepts EITHER `${RADIANCE_MAX_NUM_SEQS:-N}` OR the pre-C02 literal
+  (`_SEQS_EXPANSION_RE + _SEQS_LITERAL_RE`), with `lane_max_num_seqs` overriding per lane from the
+  block env. Reason: the plan Commands' own current-tree arm ("gate on the current tree resolves
+  every bar to 8") is unsatisfiable by a pure-expansion anchor while `values.yaml:227` still ships
+  the literal — the OR-anchor is what makes that arm AND the pre-C02 posture true simultaneously.
+  The D49 refusal class is INTACT, synthetic-proven: absence of BOTH forms refuses, two distinct
+  digits refuse, a non-integer lane env refuses per lane, and the gate never falls back to a
+  hardcoded 8 (verified in the landed code this round). The pre-C02-literal arm's work ends when
+  C02 lands the expansion; the anchor stays OR-shaped. The chunk's "anchored on EXPANSION"
+  phrasing is annotated by this entry, not rewritten.
+  (c) **Cite drift.** `ACCEPTED_LOW_TIES` verified this round at `tests/pipeline-models/surface.sh:1525`;
+  the ":1499" carried in chunk/plan/DECISIONS prose is the pre-wave anchor. Fixed where this round
+  touched (chunks/C01.md Tasks + Review); historical cites elsewhere are annotated by this line —
+  nothing renumbered (lines move; cite by content where you can).
+  (d) **Carried, NOT acted on (single-writer; the coordinator's to surface/mint):** four
+  non-blocking nits in `surface.sh` (:1432 "ALL four lanes" comment above a five-lane array;
+  :1538 refusal text naming only the fn/27b-tp2 tie after D-22 authorized the second; the drifted
+  line cite; STATE.updated_at at review time) — agent-test surfaces, fold at the next test touch.
+  And the **pre-existing M8-E class-table red** (`surface.sh:1183-1210`): both `pipeline-models`
+  SKILL.md inputs byte-identical HEAD↔worktree and untouched by this wave; mechanically proven
+  pre-existing by running HEAD's own script; identified by the reviewer as cf-126's **C04
+  owner-gated flip set** (designed-red arms M1/M8/M9 + N8) whose follow-up card was **never
+  minted** (that staging item unchecked) — explicitly NOT cf-106's `c11`/`c13`. This ticket edits
+  nothing for it; the owner sees it via the coordinator.
+
 ## Deferred
 - See STATE.json `deferred` (YaRN path, k6_v4-on-this-lane (declined INFORMED, D-15), fn dtype
   (§C6 — the only lever that could fund fn past a 5 bar; separate ruling), 2.x move, hardware

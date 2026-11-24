@@ -95,6 +95,12 @@ SCALARS = {
     # now — their authority is the ruled profile (FULL_PROFILE → expected_env),
     # which the env-authority legs compare against the render. A scalar here
     # for an env-fed value would be a dead second home.
+    # [2026-11-feat-radiance-fp8v4-lane D-16 (2026-11-23 owner R2) — dated, this
+    # claim is now HALF stale and kept for provenance, not rewritten: seqs left
+    # FORM_FIXED_FLAGS for the ENV_DEFAULTED channel (fallback 8), so the lane
+    # MAY now size it, by authoring one env line; the "dead second home" law is
+    # unchanged — a seqs scalar here would still be a second home, the profile
+    # is the single authority. port/host stay FORM-fixed; only seqs/dtype moved.]
     "cpuCores": 8,
 }
 # KV_RESIDENT_TOKENS RETIRED at cf-144 C01 (P04): the TP2 recipe drops
@@ -138,7 +144,15 @@ FULL_PROFILE = {
     "--tp": "2",
     "--tp-wire": "wht6",
     "--max-model-len": "262144",
-    "--max-num-seqs": "8",
+    # [2026-11-feat-radiance-fp8v4-lane D-16 (2026-11-23 owner R2) — CONSTANT
+    # RE-PIN BY RULING, dated, never a silent move]: --max-num-seqs 8 -> 5. seqs
+    # left FORM_FIXED_FLAGS (now the ENV_DEFAULTED channel, fallback 8), so this
+    # profile value projects one env line (RADIANCE_MAX_NUM_SEQS "5") onto the fn
+    # block and is the lane's whole intended delta. The fallback keeps today's
+    # byte for every lane that authors nothing; the 5 is this lane's ruling, and
+    # RESEARCH §2.3 measures fn's M ~4.1 STILL refuting it (R5 — the bar is
+    # honest, not funded; no leg here reads a predicted M as a pass).
+    "--max-num-seqs": "5",
     "--placement": "expert_tiered",
     "--host-pool-mib": "12288",
     "--gpu-headroom-mib": "96",
@@ -306,7 +320,11 @@ Q27_PACK_URL = f"https://huggingface.co/{Q27_PACK_REPO}/resolve/main/{Q27_PACK_F
 Q27_PROFILE = {
     "--model": Q27_MODEL_PATH,
     "--tp": "1",
-    "--max-num-seqs": "8",
+    # [2026-11-feat-radiance-fp8v4-lane D-16 — dated RE-PIN BY RULING]: 8 -> 5,
+    # the ENV_DEFAULTED seqs channel's authored value for this lane. TP2 and the
+    # fp8v4 release inherit the 5 by derivation (q27_tp2_profile copies this map;
+    # q27_fp8v4_profile re-overrides it back to 8 — the parent-carries-5 trap).
+    "--max-num-seqs": "5",
     "--max-model-len": "262144",
     "--kv-cache-dtype": "fp8",
     "--prefix-cache-mib": "4096",             # Wilde's operational patch, NOT the card's
@@ -710,7 +728,37 @@ Q27_TP2_PEERS_EVIDENCE = (
 )
 Q27_TP2_EXTRA_FLAGS = ("--tp", "2", "--tp-wire", "wht6")   # the ONLY add over the q27 array
 
-# The roster's four releases, in ladder order. `resting` lanes ship replicas 0 and
+# --- 2026-11-feat-radiance-fp8v4-lane C01: the fifth release -------------------
+# q27-TP2 geometry with the ruled KV dtype fp8_v4 and seqs 8 (R1/D-20), context
+# native 262144. TP2 (claim "2"), resting replicas 0 (D-4): the only shape where
+# the dtype story means anything — TP1 funds M ~1.9 at any in-family dtype
+# (RESEARCH §2.4), not the concurrency pod asked for. Identifiers are the RFC1123
+# COMPACT form `fp8v4` (D-2/D-24); the literal `fp8_v4` is ONLY the engine dtype
+# value (env value / composed argv / boot echo), never a resource name.
+Q27_FP8V4_APP_NAME = "radiance-q27-fp8v4"
+Q27_FP8V4_RELEASE = "gpu-ai-" + Q27_FP8V4_APP_NAME
+Q27_FP8V4_SERVED_ID = "qwen3.8-27b-radiance-fp8v4"
+Q27_FP8V4_MEMORY = "24Gi"            # the q27-TP2 held pair (D10: no memory value moves)
+Q27_FP8V4_CLAIM_COUNT = "2"          # both cards: the TP2 shape of the same pool
+# Explicit seqs constant, NOT inherited: this lane's parent profile carries 5 and
+# the ruling is 8 (R1/D-20). The re-override in q27_fp8v4_profile is the trap this
+# constant and its own leg exist to pin — the fallback (8) happens to agree, but
+# the value that matters here is the authored ruling, not the fallback.
+Q27_FP8V4_SEQS = "8"
+Q27_FP8V4_PEER_FLOOR = 1             # == this lane's own default class (D45/D-22)
+# AUTHORIZED 2026-11-24 (DECISIONS D-22): fifth trio 5/1/0 — urgent 5 (unique,
+# below 27b-TP2's 6), default 1 (below 27b-TP2's 2), low 0 (ties q27's 0, the
+# second NAMED low tie now in ACCEPTED_LOW_TIES). The twelve existing rows never
+# move (no re-rank, no limit.context edit); 6.77 is DERIVED and never a target.
+Q27_FP8V4_CATALOG_PRIOS = {"urgent": 5, "default": 1, "low": 0}
+Q27_FP8V4_ROSTER = {"namespace": "default", "ServerSideApply": "false", "chart": "radiance"}
+Q27_FP8V4_PEER_URL = f"http://{Q27_FP8V4_RELEASE}.default.svc.cluster.local:8000"   # NO /v1
+Q27_FP8V4_PEERS_EVIDENCE = (
+    REPO_ROOT / "charts" / "llama-swap" / "tests" / "evidence" / "radiance-q27-fp8v4-peers-expected.yaml"
+)
+Q27_FP8V4_EXTRA_FLAGS = ("--tp", "2", "--tp-wire", "wht6", "--kv-cache-dtype", "fp8_v4")
+
+# The roster's releases, in ladder order. `resting` lanes ship replicas 0 and
 # are never a default route; `live` lanes are the ones the tables name today.
 LANES = {
     FLASH_TP1_APP_NAME: {
@@ -736,6 +784,21 @@ LANES = {
         "roster": Q27_TP2_ROSTER,
         "peer_url": Q27_TP2_PEER_URL,
         "evidence": Q27_TP2_PEERS_EVIDENCE,
+        "pack": (Q27_MODEL_PATH, Q27_PACK_REPO, Q27_PACK_BYTES, Q27_PACK_LFS_SHA),
+        "resting": True,
+    },
+    Q27_FP8V4_APP_NAME: {
+        "release": Q27_FP8V4_RELEASE,
+        "served_id": Q27_FP8V4_SERVED_ID,
+        "memory": Q27_FP8V4_MEMORY,
+        "claim": Q27_FP8V4_CLAIM_COUNT,
+        "floor": Q27_FP8V4_PEER_FLOOR,
+        "prios": Q27_FP8V4_CATALOG_PRIOS,
+        "roster": Q27_FP8V4_ROSTER,
+        "peer_url": Q27_FP8V4_PEER_URL,
+        "evidence": Q27_FP8V4_PEERS_EVIDENCE,
+        # pack-shared with its q27 siblings (D-4): the same mxfp4 pack on one
+        # PVC, marker-skip makes a co-boot a no-download — not a new pack.
         "pack": (Q27_MODEL_PATH, Q27_PACK_REPO, Q27_PACK_BYTES, Q27_PACK_LFS_SHA),
         "resting": True,
     },
@@ -964,14 +1027,42 @@ ENV_OPTIONAL = {
     ENV_PREFIX + "MAX_NUM_BATCHED_TOKENS": "--max-num-batched-tokens",
     ENV_PREFIX + "CHECKPOINT_INTERVAL": "--checkpoint-interval",
 }
-ENV_TO_FLAG = {**ENV_REQUIRED, **ENV_OPTIONAL}
+# ENV_DEFAULTED (2026-11-feat-radiance-fp8v4-lane, DECISIONS D-3/D-16): the seqs
+# and dtype flags leave FORM_FIXED_FLAGS and become per-lane data through env
+# whose FORM fallback preserves today's shipped byte. The fallback is the load-
+# bearing half: the engine's own defaults are 256 sessions and a bf16 cache, so
+# a channel that composed NOTHING when its env was absent would size a resting
+# lane's worst case at 256x-context and double its KV bytes (RESEARCH §4.1/§3.3).
+# A profile value equal to the fallback projects no env (the lane takes the
+# fallback and authors nothing); only a different value becomes an env line — so
+# each existing lane's whole delta is the one seqs line, and the new lane authors
+# the dtype line and no seqs line.
+ENV_MAX_NUM_SEQS = ENV_PREFIX + "MAX_NUM_SEQS"
+ENV_KV_CACHE_DTYPE = ENV_PREFIX + "KV_CACHE_DTYPE"
+MAX_NUM_SEQS_DEFAULT = "8"
+KV_DTYPE_DEFAULT = "fp8"
+ENV_DEFAULTED = {
+    ENV_KV_CACHE_DTYPE: ("--kv-cache-dtype", KV_DTYPE_DEFAULT),
+    ENV_MAX_NUM_SEQS: ("--max-num-seqs", MAX_NUM_SEQS_DEFAULT),
+}
+# Inverse view the projection and ban legs read: flag -> (env name, fallback).
+ENV_DEFAULTED_BY_FLAG = {flag: (name, default) for name, (flag, default) in ENV_DEFAULTED.items()}
+# k6_v4 is the declined dtype (R1/D-15): never a ruled value, so its name is
+# barred from chart bytes outright rather than only from the profile union.
+REJECTED_DTYPE_VALUE = "k6_v4"
+ENV_TO_FLAG = {**ENV_REQUIRED, **ENV_OPTIONAL,
+               **{name: flag for name, (flag, _default) in ENV_DEFAULTED.items()}}
 # FORM-fixed: shipped by the wrapper itself, identical for every lane; a lane
 # that supplies one of these through env is a dual-channel edit and reddens.
+# [2026-11-feat-radiance-fp8v4-lane D-16 (2026-11-23 owner R2) — dated, the class
+# shrinks while the law holds: --max-num-seqs and --kv-cache-dtype moved out of
+# here into ENV_DEFAULTED above, so they stay env-channeled with a shipped-byte
+# fallback rather than absent-when-unenv-ed. port/host remain here because they
+# are not per-lane rulings. The former 8/fp8 entries are byte-identical today
+# through the ENV_DEFAULTED fallbacks, not by being pinned in this map.]
 FORM_FIXED_FLAGS = {
     "--port": "8000",
     "--host": "::",
-    "--max-num-seqs": "8",
-    "--kv-cache-dtype": "fp8",
 }
 
 
@@ -979,7 +1070,11 @@ def expected_env(profile: dict) -> dict:
     """Project one ruled profile onto the ruled env contract: every non-FORM
     flag must have exactly one env name; FORM-fixed flags must carry their
     FORM value in the profile (a profile that re-prices a FORM flag is a
-    ruling contradiction caught here, not a lane freedom)."""
+    ruling contradiction caught here, not a lane freedom); an ENV_DEFAULTED flag
+    equal to its shipped fallback projects NO env — the lane takes the fallback
+    and authors nothing (so an existing lane's only projected line is the seqs
+    move, and the new lane projects the dtype and no seqs), and only a value
+    that differs from the fallback becomes an env line."""
     out = {}
     for flag, value in profile.items():
         if flag in FORM_FIXED_FLAGS:
@@ -987,6 +1082,12 @@ def expected_env(profile: dict) -> dict:
                 f"D43: profile carries {flag} {value!r} but the FORM fixes it at "
                 f"{FORM_FIXED_FLAGS[flag]!r} — FORM flags are ruled, not lane-sized"
             )
+            continue
+        if flag in ENV_DEFAULTED_BY_FLAG:
+            env_name, fallback = ENV_DEFAULTED_BY_FLAG[flag]
+            if str(value) == fallback:
+                continue
+            out[env_name] = str(value)
             continue
         names = [n for n, f in ENV_TO_FLAG.items() if f == flag]
         assert len(names) == 1, (
@@ -1000,13 +1101,15 @@ def expected_env(profile: dict) -> dict:
 @functools.lru_cache(maxsize=None)
 def flash_tp1_profile() -> dict:
     """The flash-TP1 ruled profile, DERIVED never recalled: the cf-143 TP1-era
-    chart array at FLASH_TP1_TRANSCRIPTION, with exactly TWO values swapped —
-    the served id becomes the lane's own (OQ-F), and --max-model-len becomes
-    262144 (per ruling D5/D9, 2026-11-23 bug-radiance-27b-context-window; the
-    fidelity claim is BOUNDED BY RULING — the source commit e7536b2c9^ is
-    immutable, and this leg is never again described as verbatim). git absence
-    or a source that does not resolve fails the legs loudly (the transcription
-    has no other authority)."""
+    chart array at FLASH_TP1_TRANSCRIPTION, with exactly THREE values swapped —
+    the served id becomes the lane's own (OQ-F), --max-model-len becomes 262144
+    (per ruling D5/D9, 2026-11-23 bug-radiance-27b-context-window), and
+    --max-num-seqs becomes 5 (per this ticket's owner R2/D-16). The fidelity
+    claim is bounded by ruling x3 — the source commit e7536b2c9^ is immutable
+    (it ships seqs 8, dtype fp8, ctx 200000, fn-era id), so this leg is never
+    again described as verbatim and no FOURTH value may move. git absence or a
+    source that does not resolve fails the legs loudly (the transcription has no
+    other authority)."""
     commit, path = FLASH_TP1_TRANSCRIPTION
     assert shutil.which("git"), "D43: git binary absent — the transcription source cannot resolve"
     shown = subprocess.run(["git", "show", f"{commit}:{path}"], capture_output=True, text=True,
@@ -1020,8 +1123,13 @@ def flash_tp1_profile() -> dict:
         f"D43/D5: the {commit} array carries no --max-model-len — the D5/D9 context swap "
         "has no key to apply to; the pin names the wrong revision or the array moved"
     )
+    assert "--max-num-seqs" in want, (
+        f"D43/D-16: the {commit} array carries no --max-num-seqs — the R2 seqs swap "
+        "has no key to apply to; the pin names the wrong revision or the array moved"
+    )
     return {f: (FLASH_TP1_SERVED_ID if f == "--served-model-name"
-               else "262144" if f == "--max-model-len" else v) for f, v in want.items()}
+               else "262144" if f == "--max-model-len"
+               else "5" if f == "--max-num-seqs" else v) for f, v in want.items()}
 
 
 def q27_tp2_profile() -> dict:
@@ -1032,9 +1140,27 @@ def q27_tp2_profile() -> dict:
     re-pinned Q27_PROFILE — no second literal, so the TP2 lane is visibly
     accounted for by the same ruling (D1), not silently carried; the TP2
     fit is the MEASURED one (RESEARCH V3/S10: full 262144 fits the card
-    with ~100 MiB headroom per card)."""
+    with ~100 MiB headroom per card).
+    [2026-11-feat-radiance-fp8v4-lane D-16 — dated]: the seqs 5 reaches this lane
+    the same way (by derivation from the re-pinned Q27_PROFILE), no second
+    literal; q27_fp8v4_profile then re-overrides it back to 8 — the trap that
+    lane exists to pin."""
     return {**Q27_PROFILE, "--tp": "2", "--tp-wire": "wht6",
             "--served-model-name": Q27_TP2_SERVED_ID}
+
+
+def q27_fp8v4_profile() -> dict:
+    """The fifth release, DERIVED never recalled (the OQ-G idiom of the sibling
+    TP2 lane): the q27-TP2 profile with this lane's served id, the ruled dtype
+    `fp8_v4`, and — the load-bearing half — its OWN --max-num-seqs re-override.
+    Its parent (q27_tp2_profile, via Q27_PROFILE) now carries 5; this lane is
+    ruled 8 (R1/D-20), so without the explicit override it would silently serve
+    the parent's 5 and quietly erase the ruling. The re-override is mandatory
+    and pinned by its own leg. Context stays 262144 by derivation (D4 — no
+    context move anywhere in this ticket)."""
+    return {**q27_tp2_profile(), "--max-num-seqs": Q27_FP8V4_SEQS,
+            "--kv-cache-dtype": "fp8_v4",
+            "--served-model-name": Q27_FP8V4_SERVED_ID}
 
 
 def _docs_radiance_service():
@@ -1045,7 +1171,7 @@ def _docs_q27():
     return render_q27()[0]
 
 
-# The four lanes, each with its ruled profile resolver and rendered-docs
+# The five lanes, each with its ruled profile resolver and rendered-docs
 # resolver. Legs parameterize over this map: profiles come from the constants/
 # transcriptions above, vectors come from executing the shipped carrier.
 COMPOSITION_LANES = {
@@ -1053,6 +1179,7 @@ COMPOSITION_LANES = {
     Q27_APP_NAME: (lambda: Q27_PROFILE, _docs_q27),
     FLASH_TP1_APP_NAME: (flash_tp1_profile, lambda: render_lane(FLASH_TP1_APP_NAME)[0]),
     Q27_TP2_APP_NAME: (q27_tp2_profile, lambda: render_lane(Q27_TP2_APP_NAME)[0]),
+    Q27_FP8V4_APP_NAME: (q27_fp8v4_profile, lambda: render_lane(Q27_FP8V4_APP_NAME)[0]),
 }
 
 
@@ -1189,24 +1316,33 @@ def data_pair_bans(profiles: tuple) -> list:
     appear in the serve FORM. Flag NAMES may live in the FORM — a carrier that
     restates the VALUES does not compose from env, and a restated vector drifts
     the moment env moves (the exact staleness class D43 exists to kill).
-    FORM-fixed pairs (flag AND value equal to the ruling) are the wrapper's
-    own shipping bytes and stay legal."""
+    A pair the FORM itself ships stays legal: a FORM-fixed pair (flag AND value
+    equal to the ruling) and an ENV_DEFAULTED pair equal to its fallback (the
+    `:-8` / `:-fp8` byte that composes for every env-less lane). A DATA value
+    that differs from the fallback — `--max-num-seqs 5`, `--kv-cache-dtype
+    fp8_v4` — is a lane's ruling restated in the chart and stays banned. k6_v4
+    is the declined dtype (R1/D-15) and no ruled profile carries it, so its name
+    is barred outright rather than only through the profile union."""
     out = []
     for p in profiles:
         for flag, value in p.items():
             if flag in FORM_FIXED_FLAGS and str(value) == FORM_FIXED_FLAGS[flag]:
                 continue
+            if flag in ENV_DEFAULTED_BY_FLAG and str(value) == ENV_DEFAULTED_BY_FLAG[flag][1]:
+                continue
             out += [f"{flag} {value}", f"{flag}={value}"]
+    out.append(REJECTED_DTYPE_VALUE)
     return sorted(set(out))
 
 
 def all_ruled_profiles() -> tuple:
     """Every lane's ruled profile — the cheap-fake ban scans the union so a
     carrier cannot restate a SIBLING's values to fake the compose."""
-    return (FULL_PROFILE, Q27_PROFILE, flash_tp1_profile(), q27_tp2_profile())
+    return (FULL_PROFILE, Q27_PROFILE, flash_tp1_profile(), q27_tp2_profile(),
+            q27_fp8v4_profile())
 
 
 # Identities no serve-FORM byte (or comment) may carry: the wrapper composes
 # paths and ids from env, so one literal here is a lane pinned into the chart.
 LANE_IDENTITY_LITERALS = (MODEL_PATH, Q27_MODEL_PATH, SERVED_ID, Q27_SERVED_ID,
-                          FLASH_TP1_SERVED_ID, Q27_TP2_SERVED_ID)
+                          FLASH_TP1_SERVED_ID, Q27_TP2_SERVED_ID, Q27_FP8V4_SERVED_ID)

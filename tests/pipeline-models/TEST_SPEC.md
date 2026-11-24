@@ -18,6 +18,18 @@ suite pins both ends instead of forcing one number:
 | `.opencode/opencode.jsonc`, all twelve radiance-family rows (fn trio, q27 trio, flash-TP1 trio, 27b-TP2 trio) | `limit.context: 262144` | the owner's catalog edit `b3d7fada8` (2026-11-22) set the six then-live rows, protected by DECISIONS D27 ("never those six context values"); owner ruling D47 (2026-11-23) moved the six C05 rows to the same figure — it is the trained window the CLIENT budgets against, on every row |
 | `charts/radiance/values.yaml` → `app-template.maxModelLen`, and the `--max-model-len` the chart renders | `200000` | D17 FULL profile — what the engine ADMITS per request **[pre-move state — kept as dated history; re-pinned below]** |
 
+**Row census — dated 2026-11-24 (fp8v4-lane V-11/D-9):** the radiance family is
+TWELVE rows since C05 and becomes FIFTEEN once the owner lands the fp8_v4 trio
+at Landing step 6 (fn/q27/flash-TP1/27b-TP2 trios byte-untouched; the three new
+rows carry `limit.context 262144` at the family figure, exactly as the existing
+twelve). Rows carry TOKEN counts only — NO `pages`/`pagesize`/page-shaped field
+appears in any radiance row (the cf-131 page-unification trap: a prior draft's
+`1696×4096` bf16 PAGE figure was mistaken for the model MAX and strided-padded
+every group; the engine page figures ~200.00 KiB/16-token block live ONLY in
+boot-print expectations, never in the catalog). The census count itself is not
+machine-gated: M8-A2/M9-B pin the frozen delta (added == the six C05 rows, the
+fp8_v4 trio re-frozen into the base), and a seventh ADDED row refuses.
+
 **[2026-11-23 re-pin, bug-radiance-27b-context-window D4/D9/D11 — the served
 figure moves per lane, by ruling.]** The table above is the PRE-MOVE state.
 D1/D2 move the 27b lanes (the boot print adjudicates the TP1 attempt), D5
@@ -34,6 +46,19 @@ until the C04 D8 receipt gate closes it.
 | `radiance-q27` (27b-TP1) | 200000 — transcribed, never measured (V4) | 262144 PROVISIONAL | D1/D2 (the boot print adjudicates the attempt) |
 | `radiance-flash-tp1` | 200000 — a serving choice, not an empirical bound (F1) | 262144 PROVISIONAL | D5 |
 | `radiance-q27-tp2` | 200000 — transcribed, never measured (V4) | 262144 PROVISIONAL | D1 (the fit is MEASURED — V3/S10, ~100 MiB headroom per card) |
+
+**[2026-11-24 re-pin, 2026-11-feat-radiance-fp8v4-lane D-16/R2 — dated, the fn
+Authority cell above is SUPERSEDED for fn by this ticket; the context column is
+NOT.]** seqs became per-lane (owner R2): fn's receipt bar is now `M >= its
+configured 5` and its smoke is FIVE-admitted, superseding the D9(a)/D9(b)
+counts recorded in the fn row's Authority cell (those counts stay quoted as
+history — the eight-session ruling was real, it is now replaced, not erased).
+The MEASURED provenance still stands: fn's flash-TP2 print 52% / M ~4.1 is the
+recorded basis, and R5 keeps the bar honest — 4.1 still refutes even a 5 bar,
+so no leg sells "5 fixes funding". This ticket adds a FIFTH lane,
+`radiance-q27-fp8v4` (served context 262144, seqs 8, dtype fp8_v4): the
+served/context column is UNCHANGED for it (no context move anywhere in the
+ticket), and its own ladder trio lives in §3.
 
 **The D4 restated pairing law — per lane `trained >= served`, EQUALITY LEGAL —
 applied per lane. VERIFIED, not assumed (plan fact 13, the jsonc row census
@@ -112,7 +137,7 @@ The Strata lane is DEMOTED, not deleted, and M8-F flipped to match:
 Red posture: M1/M2/M5/M8-F/M8-H are the designed reds naming C02; M3/M4/M6/M7
 are HOLD and must stay green across the window.
 
-## 3. The four-lane priority ladder (D19's numbers, resolved by the coordinator's follow-up ruling on the test author's D-3)
+## 3. The priority ladder (D19's four lanes resolved by the coordinator's follow-up ruling on the test author's D-3; widened to FIVE by 2026-11-feat-radiance-fp8v4-lane D-22, AUTHORIZED 2026-11-24)
 
 Owner ruling D19 adopts the sibling's starting shape (`flash-tp1 7/3/2`,
 `27b-tp2 6/2/1`), states laws (full trios, strictly-below-live per class column,
@@ -128,6 +153,17 @@ plan's starting shape stands:
 | q27 (live) | 8 | 4 | 0 | 4 |
 | flash-TP1 (C05) | 7 | 3 | 2 | 3 |
 | 27b-TP2 (C05) | 6 | 2 | 1 | 2 |
+| fp8_v4 (C01, D-22) | 5 | 1 | 0 | 1 |
+
+**[2026-11-24 — the fifth trio, AUTHORIZED by D-22 (OQ-2), not merely deferred]:**
+`5/1/0` floor 1 — `urgent 5` unique and strictly below 27b-TP2's 6, `default 1`
+below 27b-TP2's 2, `low 0` ties q27's shipped `0` and is admitted as the SECOND
+NAMED low tie in `ACCEPTED_LOW_TIES`. There is no collision-free fifth trio under
+the laws (RESEARCH §6.1: urgent ≤ 5, default ≤ 1 forcing low 0), so the tie is
+the ruled resolution, not a slip. **Binding invariant: the twelve existing rows
+NEVER move** — no live-lane re-rank, no existing-row `limit.context` edit (D27).
+The tie leg greens on C01's own authoring (the ruling is given); the M9 catalog
+legs stay owner-gated red until Landing step 6 lands the rows (R-6).
 
 **Why the negatives were rejected** (the coordinator's citation, kept because a
 resolution is only as honest as its evidence): the catalog has ONLY ever shipped
@@ -144,11 +180,13 @@ bars any negative rung on its face.
 lane): full trios registered per lane; the `urgent`/`default` columns are
 cross-lane law — pairwise unique and strictly decreasing in lane rank (every new
 lane below both live lanes); every trio strictly decreasing WITHIN its lane; no
-rung negative. The `low` column is per-lane law: the four lanes are four
-separate engines with four separate queues, each peer's `priority?` floor is
+rung negative. The `low` column is per-lane law: the lanes are separate engines
+with separate queues (four in D19's era, five now — fp8v4-lane D-22 extends the
+"four engines, four queues" justification literally), each peer's `priority?` floor is
 per-lane, and no M8 leg requires cross-peer uniqueness — so fn's `low 1` and
-27b-TP2's `low 1` are an **ACCEPTED CROSS-PEER TIE, not a collision**. The tie
-is enumerated in the suite (`ACCEPTED_LOW_TIES`); a second, unnamed tie reddens,
+27b-TP2's `low 1` are an **ACCEPTED CROSS-PEER TIE, not a collision** (and so is
+q27's `low 0` with the fp8_v4 lane's `0`, the second named tie). The tie
+is enumerated in the suite (`ACCEPTED_LOW_TIES`); a further, unnamed tie reddens,
 and the teeth plant exactly one (`flash-tp1 low := 0` vs q27's shipped `0`).
 
 **Peer floors vs the chunk text (the D-2 law, unchanged).** chunks/C05.md says

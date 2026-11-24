@@ -4672,6 +4672,20 @@ allowlist grew by exactly the two resting routed ids — evidence-backed
 exceptions only (the lane renders + its evidence file exists), never an
 allowlist-of-everything.
 
+**[2026-11-24 fp8v4-lane C01 dated widening — annotation only, no re-capture].**
+The sanctioned peers set grows to SIX at `{strata, radiance, radiance-q27,
+radiance-flash-tp1, radiance-q27-tp2, radiance-q27-fp8v4}` and the same four
+pinned sites re-pin to it (`_assert_strata_peers`, the strata_wiring wave
+tuple, the blast-radius `_cf77_peers_carved` carve, `test_t3_golden_three_peer_shape`),
+plus a third resting lane in the parameterized loader (`RESTING_RADIANCE_LANES`
+now carries radiance-q27-fp8v4, its evidence file
+`radiance-q27-fp8v4-peers-expected.yaml`). `golden/gpu-ai.config.yaml` is NOT
+re-captured in this wave — the six-peer golden is C03's paired obligation (the
+test landing round re-captures against C03's RENDER once the fp8_v4 block lands,
+§8.3 cadence); here the five-vs-six delta stands as the designed red naming C03.
+The peer floor for the new hop is its OWN default class, 1 (D-22, floors
+5/4/3/2/1), never a borrowed fn-5/q27-4; the evidence YAML and M9-C carry it.
+
 **M8-A2 re-freeze (pipeline-models axis).** The frozen catalog delta is now
 the 86-key base + fn trio + q27 trio + the two new trios, minus the retired
 vllm trio — verbatim-aligned with M9-B's base (one formulation, not three).
