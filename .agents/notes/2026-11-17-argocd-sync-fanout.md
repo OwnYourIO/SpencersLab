@@ -96,9 +96,9 @@ that the UI stored all 11 lines (multi-line paste is an instance-UI behavior the
 owner checks once, at creation).
 
 **4. Delete-check the moot pair** — delete `vars.ARGOCD_HOOK_URL` and
-`secrets.ARGOCD_HOOK_SECRET` from this repo's Settings → Actions if they exist;
-EXPLORE [P2] confirmed they were never created, so this is a no-op: confirm their
-ABSENCE and move on. The fan-out reads neither.
+`secrets.ARGOCD_HOOK_SECRET` from this repo's Settings → Actions if they exist; the
+reopen1 leg that would have created them was post-merge and never ran, so absence is
+expected: confirm their ABSENCE and move on. The fan-out reads neither.
 
 ## 3. Step 1 — the merge IS the install
 
