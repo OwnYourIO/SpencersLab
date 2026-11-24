@@ -416,3 +416,8 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   honest failed line meanwhile; the mint+dispatch smoke answers definitively, likely
   remedy = the crowdsec-only `git`/`forms` route exception precedent (separate owner call,
   out of this ticket if needed). C08 preflight row carries the 307-vs-401 reading.
+- 2026-11-24 coord (C07 ownership re-stamp): the two relay suites' physical `git rm` was
+  executed by C07, not the test session, as an earlier line implied — the test session's
+  commit renamed/re-pinned what survives; a suite whose implementation is disposed cannot
+  self-delete, and C07's AC1/AC6 need the tracked absence. Law stands: test session owns
+  test CONTENT; the disposal chunk owns test DELETION of disposed surfaces.

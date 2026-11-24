@@ -155,14 +155,16 @@
       ]
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 8,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "APPROVED",
       "note": "disposals (branch-local git rm, [P2]-verified never-deployed): charts/argocd-hook, containers/argocd-hook, proxy-local trio hunk, custom-values block, relay suites (test session deletes; dev verifies) + disposal.sh absence/pins; parallel-safe with C06 (disjoint surfaces)",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-24T01:10+00:00", "event": "dev DONE: 12 files git rm'd + 2 hunk reversals to BYTE-IDENTICAL merge-base (net 0); disposal.sh 7/7; detect A/B on real history proves HEAD-guard filters the dead dir ([] post-deletion vs [\"argocd-hook\"] present); structural render loses exactly the 3 relay objects; adjacent suites green incl. containers-build 41/41 + renovate lanes; runbook r1 stays designed-red for C08 (correct); ownership re-stamped DECISIONS 2026-11-24; fast-path commit per merge-base-byte-identity evidence, chain re-review owns final verification" }
+      ]
     },
     "C08": {
       "status": "pending",
