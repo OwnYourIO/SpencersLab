@@ -72,6 +72,12 @@
         "slug": "RaNeqvh9YoT4bnkZ8"
       },
       "collected_at": "2026-10-31T17:34:03.217Z"
+    },
+    "priority_2026_11_24": {
+      "raw": "5",
+      "class": "default",
+      "stamped": true,
+      "note": "unset at claim -> stamped per the D20 conditional single-card rule (visibility only, default class unchanged). Transport deviation recorded: deployed dev-boards set_card_custom_field requires the STRING form on this NUMBER field (int rejected: 'value: Expected string') — the boards wording's 'int, never the string form' describes the SEMANTICS (numeric 5, never a word), the deployed schema enforces string transport; reader-side string->int coercion is the skill's own rule, so the stored value honors the intent. Recorded in the final card comment too."
     }
   },
   "landing": {
