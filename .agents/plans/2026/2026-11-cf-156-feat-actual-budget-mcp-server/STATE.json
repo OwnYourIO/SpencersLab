@@ -5,6 +5,23 @@
   "test_session": "ses_df1f0c304ffe61hq5LzFUdMdyO",
   "current_wave": 1,
   "updated_at": "2026-11-25T01:15:00Z",
+  "run_state": {
+    "at": "2026-11-25T01:30:00Z",
+    "plan_status_decision": "left at 'approved', NOT 'complete' — the done-gate requires every chunk done and C02 is dev_done_blocked by owner ruling (two custom-values UUID mirrors cannot exist until the owner mints the Bitwarden items). Marking the plan complete would assert a finished gate that the suite's two reds contradict; the pipeline's own rule is that files state facts, not aspirations.",
+    "commit": {
+      "sha": "0d2a662bd",
+      "branch": "cf-156-feat-actual-budget-mcp-server",
+      "base": "8f04bf915b4ce1f561e7c26b06fbc22e16e45e9e",
+      "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-156-feat-actual-budget-mcp-server",
+      "contents": "16 files, +2960: C01's four values files, C02's hivetools entry + two ExternalSecret templates + PVC template, the test suite at mode 100755, and the whole ticket folder (plan of record, STATE, DECISIONS, FRICTION, EXPLORE, RESEARCH, chunks/C01+C02)",
+      "single_commit_rationale": "services/home/prod/values.yaml carries both chunks' hunks in one file, so a per-chunk commit split would need hunk surgery on already-reviewed content; one commit citing both chunks and both verdicts keeps the branch history honest.",
+      "pushed": false,
+      "push_note": "never pushed — the feature branch push needs an explicit owner request, and main is never advanced by this run"
+    },
+    "landing_state": "NOT landed in main by content (main is unchanged at 8f04bf915; no merge, no rebase, no push). Branch and worktree are KEPT — the default under step 10 when the work has not landed.",
+    "main_cleanup": "reverse-applied the cf-156-only patch in /home/coder/SpencersLab: the three exclusively-cf-156 files returned to HEAD, custom-values is clean, and services/home/prod/values.yaml now differs from HEAD by exactly 8 insertions — the co-tenant's audio-ad-detection hunk, left byte-as-found. The four new files and main's stale copy of the ticket folder were removed after the branch copy was hash-verified and committed."
+  },
+  "updated_at": "2026-11-25T01:30:00Z",
   "final_review": {
     "status": "done",
     "verdict": "APPROVED (whole plan)",
