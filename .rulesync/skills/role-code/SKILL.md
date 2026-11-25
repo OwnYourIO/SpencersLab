@@ -63,7 +63,7 @@ pasted into chat.
    merge pushes `yy.mm.N` + `:latest` + `:main` to both registries via the
    forge `containers-build.yaml`, and the GitHub `docker-build.yaml` is a
    `workflow_dispatch`-only manual fallback). Set an initial version only when
-   creating a brand-new chart (`version: 1.0.0`).
+   creating a brand-new chart (`version: Y.M.1` — the current stamp, unpadded month).
 4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before
    finishing.

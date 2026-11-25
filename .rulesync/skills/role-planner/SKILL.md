@@ -63,7 +63,7 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
    `prod`-role main merge pushes `yy.mm.N` + `:latest` + `:main` to both
    registries via the forge `containers-build.yaml`; the GitHub
    `docker-build.yaml` is a `workflow_dispatch`-only manual fallback). Only
-   brand-new charts get an initial version (`1.0.0`).
+   brand-new charts get an initial version (`Y.M.1` — the current stamp, unpadded month).
 7. Right-size the work: multi-session, cross-subsystem, or new-interface
    changes do not belong in one standalone plan — recommend the `agent-*`
    pipeline (`/pipeline`), which will chunk them with fresh plan/test/dev/

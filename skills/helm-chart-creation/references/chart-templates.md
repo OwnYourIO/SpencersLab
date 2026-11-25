@@ -84,13 +84,14 @@ minimal internal `charts:` entry. Reference implementation: `charts/erp-next`
 (wraps frappe/erpnext).
 
 1. `mkdir -p charts/<service>/templates`
-2. `Chart.yaml` — name `<service>`, `version: 1.0.0`, `appVersion` of the
+2. `Chart.yaml` — name `<service>`, `version: Y.M.1` (the current stamp, per
+   the calendar seed law), `appVersion` of the
    wrapped app, and the official chart as a dependency:
 
    ```yaml
    apiVersion: v2
    name: <service>
-   version: 1.0.0
+   version: Y.M.1
    appVersion: <app-version>
    dependencies:
    - name: <official-chart-name>
