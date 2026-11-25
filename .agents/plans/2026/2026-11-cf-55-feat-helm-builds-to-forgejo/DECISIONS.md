@@ -777,6 +777,28 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    commit). Approval ask: run C09 → C10 → C11 (+ C12 iff a route is named),
    waves 1/2/3 as tabled; owner merge order C09, C12, C10, C11-LAST with the
    first-fire consequences written into the plan's Round-4 landing section.
+ - 2026-11-25 coord D50 (round-4 test-wave adjudications; wave ses_def674664fferVKggtFKLUUZFQ
+   DONE: forgejo-release.sh +394/-9 [t22/t23/t24/t25/t26 new, t15 re-aim], ci-surface.sh
+   +90/-0 [t8 armed], forgejo-renovate.sh +50/-6 [t4 widen, t5 7->8 keys, t10 pair-fence],
+   renovate/forgejo-move-config.sh +3/-1 [m6 widen — C12.md AC3 names the file, mandated]):
+   (1) DEVIATION 4 ACCEPTED as a CORRECTION OF C09.md, not of the test — all 74 committed
+   Chart.locks serialize exactly {name, version, repository} (+ digest when present), so the
+   chunk's 8-field projection (condition/tags/alias) would keep charts/base red forever even
+   post-heal; t24's narrowed projection is the shipped contract, range pins still fail loud,
+   digest-strip mutants still bite. C09.md's field list is superseded by the suite header.
+   (2) DEVIATION 2 ACCEPTED — t19's build->update swap rides C09's workflow flip commit (the
+   only shape satisfying both green-at-HEAD t1-t21 and the merge-green contract); obligation
+   written in the suite header, M1-proven; t25/t26 numbering follows the post-D49 brief
+   (t25 static+battery, t26 law-pair incl. the Y.M.1 seed leg) — SUITE NUMBERING IS
+   CANONICAL where C10.md's lines differ (content-union preserved; chunk left as written,
+   this entry is the reconciliation). (3) OQ-3 RULED — t8 does NOT ban dated, path-qualified
+   historical mentions (containers-build's reword prose): history that self-identifies as
+   history is honest prose; banning it would force contortions. (4) Guard-trio Chart.lock
+   admit joins DEFERRED TO POST-C09-DEV as planned — when the regen commit exists, the joins
+   route to the same test session (mechanical, silent per gates), provenance-at-commit-time.
+   Fire consequence noted for merge order (D47.3): C09's merge is itself a fire (patch bumps
+   for the trio + consumer-pin PRs next renovate pass; dev t10 flips green, t24 its hermetic
+   sibling).
  - 2026-11-25 human D49 (round-4 batched owner round — ALL APPROVED): the owner
    answered the D48 trio plus the approval in ONE round. (1) OQ-R4-1 renovate
    image route = official `-full` (44.181.5-full, existence measured) behind the

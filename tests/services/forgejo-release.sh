@@ -54,6 +54,35 @@
 # t6's comment is re-truthed to the per-row contract; t1-t20 are
 # byte-unchanged.
 #
+# Round 4 (2026-11-25, chunks/C09.md + C10.md; D47/D49): 26 legs, written
+# RED-FIRST against the pre-heal/pre-calendar workflow (the drift trio
+# {base, traefik, traefik-zerotrust} is live at HEAD). C09: t22 pins the
+# bump-job full-tree lock heal (glob loop placed after the main-tip reset
+# and before the version derivation, locks staged beside the bumps, the
+# commit guarded on staged content, the message naming the heal set); t23
+# pins the test-build build->update flip and the file-wide code-line
+# absence of the aborting verb; t24 is the hermetic full-tree
+# lock-consistency projection (cf-135 dev-forgejo-runner t10's contract
+# made offline — t10 STAYS as the live-helm witness, untouched). C10: t25
+# pins the calendar bump — static (one unpadded `date -u +%Y.%-m` stamp
+# per run, a stamp binding into python, the fail-loud tree-ahead arm,
+# ver()/pairing-parser retention) plus the executed walk battery replayed
+# against MUTANT fixtures with a stubbed stamp (the Masterminds
+# leading-zero trap gets its own case); t26 pins the post-rewrite
+# AGENTS.md + .rulesync law pair: calendar language, the unpadded-month
+# statement, and the brand-new-chart seed as Y.M.1 per the D49 owner
+# override. t15 is re-aimed in place (C10.md): the pairing behavior it
+# replays is byte-preserved, its ROLE is re-truthed from derivation term
+# to the skip-when-already-published collision guard.
+#
+# Carried by C09's flip commit, NOT by this wave (chunk Files-in-scope):
+# t19's test-build cmds list swaps 'helm dependency build' -> 'helm
+# dependency update' exactly when the workflow flips (AC2's
+# green-at-merge law); the guard-trio admit joins for the three healed
+# Chart.lock paths join at the same commit. t1-t21 are otherwise
+# byte-stable except this header, the t15 block, and that one future
+# t19 line.
+#
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-release.sh
 set -euo pipefail
@@ -664,11 +693,14 @@ ok "t14: charts-route uploads carry -X POST (v15 route is POST-only); the instan
 # Both published-index readers are pure functions of index text, and both were
 # proven WRONG on that text in review (old-branch BLOCKER 3: a naive line scan
 # returns traefik's upstream dependency pin 42.1.3 for a real entry whose own
-# version is 1.0.103, so the bump mints jump releases that every later bump
-# chains from — public and unreclaimable). t7 pins the bump loop's control
-# flow; nothing but this leg pins the VALUE either lookup feeds to
-# `base = max(tree, published)`. It runs the extracted carriers offline against
-# fixtures mirroring the live index shape — no network, no live fetch.
+# version is 1.0.103). C10 (D47.4) demotes the index from a derivation term
+# to the skip-when-already-published COLLISION GUARD of the calendar walk:
+# the guard reads exactly this map, so a pin-contaminated entry would either
+# re-mint a published version or skip a bump that must happen — the phantom
+# class is unchanged, its consumer is. t25 pins the walk arithmetic; nothing
+# but this leg pins the VALUE the guard is fed. It runs the extracted carriers
+# offline against fixtures mirroring the live index shape — no network, no
+# live fetch.
 if ! python3 - "$WF" <<'PY'
 import os, re, shutil, subprocess, sys, tempfile, yaml
 
@@ -797,16 +829,28 @@ try:
     # `published` out of the executed namespace; if a future parser renames
     # the map, this leg's message says so explicitly rather than silently
     # resolving None.
+    # C10 re-aim: once the carrier binds a clock stamp (argv/env), the
+    # exec-wrapper must feed it a stub too — under the pre-C10 parser both
+    # stubs are inert.
+    stamp_names = sorted(set(re.findall(
+        r'''environ(?:\.get)?[\(\[]\s*["']([A-Za-z_][A-Za-z0-9_]*)["']''', python_src))) if 'environ' in python_src else []
+    stamp_env = {n: ('2026' if n.endswith('_Y') else '11' if n.endswith('_M') else '2026.11')
+                 for n in stamp_names}
+    for g in ('CALVER_STAMP', 'CALVER_Y', 'CALVER_M', 'CAL_STAMP', 'CAL_Y', 'CAL_M'):
+        stamp_env[g] = '2026' if g.endswith('_Y') else '11' if g.endswith('_M') else '2026.11'
     parser_path = os.path.join(work, 'parser.py')
     with open(parser_path, 'w') as f:
         f.write(python_src)
     runner_path = os.path.join(work, 'runner.py')
     with open(runner_path, 'w') as f:
-        f.write('import json, sys\n'
+        f.write('import json, os, sys\n'
                 'def _enc(v):\n'
                 '    return ".".join(str(x) for x in v) if isinstance(v, (tuple, list)) else str(v)\n'
+                'for _k, _v in ' + repr(stamp_env) + '.items():\n'
+                '    os.environ.setdefault(_k, _v)\n'
                 'src_path, charts_json, index_path = sys.argv[1:4]\n'
-                'sys.argv = [src_path, charts_json, index_path]\n'
+                '_s = open(src_path).read()\n'
+                'sys.argv = [src_path, charts_json, index_path] + (["2026", "11"] if "sys.argv[4]" in _s else ["2026.11", "2026", "11"] if "sys.argv[3]" in _s else [])\n'
                 'ns = {"__name__": "__main__"}\n'
                 'exec(compile(open(src_path).read(), src_path, "exec"), ns)\n'
                 'assert "published" in ns, "no top-level published map in the parser namespace"\n'
@@ -828,11 +872,11 @@ try:
 
     got = run_python(fx['fixture'])
     need(got.get('traefik') == (1, 0, 103),
-         f"bump parser: traefik resolved to {got.get('traefik')!r}, expected the ENTRY version (1,0,103) — 42.1.3 is the upstream dependency pin inside the same entry's dependencies: block (measured on the live index); winning this lookup mints traefik-42.1.4 jump releases that every later bump chains from")
+         f"bump parser: traefik resolved to {got.get('traefik')!r}, expected the ENTRY version (1,0,103) — 42.1.3 is the upstream dependency pin inside the same entry's dependencies: block (measured on the live index); the calendar walk's collision guard (C10) reads this map, and a dep-pin entry here walks N past versions that were never published")
     need(got.get('alpha') == (1, 0, 2),
          f"bump parser: alpha resolved to {got.get('alpha')!r}, expected the entry version (1,0,2) — the app-template dep pin 9.9.9 must not leak either way")
     need(got.get('forgejo') == (1, 0, 7),
-         f"bump parser: forgejo resolved to {got.get('forgejo')!r}, expected (1,0,7) — its Chart.yaml is exactly this repo's real shape (dependency forgejo 17.3.1, chart 1.0.7, oci:// repository with dots in the URL); base=max(tree,published) would jump 17.3.2 on first fire")
+         f"bump parser: forgejo resolved to {got.get('forgejo')!r}, expected (1,0,7) — its Chart.yaml is exactly this repo's real shape (dependency forgejo 17.3.1, chart 1.0.7, oci:// repository with dots in the URL); a dep-pin read as published would have the collision guard skip bumps that never happened")
     got_dep = run_python(fx['dep_only'])
     phantoms = {k: v for k, v in got_dep.items() if k in ('traefik', 'alpha', 'forgejo')}
     need(not phantoms,
@@ -1243,5 +1287,353 @@ then
   fail "t21: see the t21 detail above"
 fi
 ok "t21: all three repo-add carriers emit every URL-shaped dependency row (base 3-of-3, loki-shape 1, oci-both 2, empty-REPOSITORY row silent, zero-dep silent) and the derived repo set covers every http(s) Chart.lock URL of the four victim charts"
+
+# --- t22: the bump job's lock self-heal pin (C09, D47.1) -------------------------
+# One drifted Chart.lock poisons EVERY fire: cr package Build()s every chart
+# every run, so the heal must be full-tree, must run on the REMOTE tip (after
+# the reset — heal decisions may never ride the event checkout's stale tree),
+# must precede the version derivation, and must land the locks in the SAME
+# bump commit (the top-level version: is outside helm's digest inputs, so
+# bump+heal in one commit is digest-safe by construction). Static carrier pin
+# (t21/t15 idiom); red at HEAD: the loop does not exist yet.
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+bodies = [str(s.get('run', '')) for s in (jobs.get('bump') or {}).get('steps', [])
+          if isinstance(s, dict) and 'run' in s]
+body = next((b for b in bodies if 'refs/remotes/origin/main' in b and 'python3' in b), None)
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t22: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(body is not None, 'the bump job has no run block combining the main-tip reset with the python derivation — nothing to pin the heal into')
+code = [(i, l) for i, l in enumerate(body.splitlines()) if not l.lstrip().startswith('#')]
+
+reset_i = next((i for i, l in code if 'git reset --hard refs/remotes/origin/main' in l), None)
+py_i = next((i for i, l in code if 'python3' in l), None)
+need(reset_i is not None and py_i is not None, 'reset/python3 anchors missing from the bump step')
+
+# (a) full-tree regen: a charts/*/Chart.lock-glob loop running the regen verb
+loop_i = next((i for i, l in code if re.search(r'\bfor\s+[A-Za-z_]\w*\s+in\s+charts/\*/Chart\.lock\b', l)), None)
+need(loop_i is not None, 'no `for <v> in charts/*/Chart.lock` heal loop in the bump step — the full-tree self-heal (D47.1) is not in place; glob-gated by design (charts without a lock are skipped, zero-dep charts no-op)')
+end = next((i for i, l in code if i > loop_i and re.search(r'\bdone\b', l)), code[-1][0])
+window = '\n'.join(l for i, l in code if loop_i <= i <= end)
+need('helm dependency update' in window, 'the Chart.lock glob loop does not invoke `helm dependency update` — that is the only regen verb (no --force-update exists on the dep subcommands)')
+
+# (b) placement: on the remote tip, before the version rewrite
+need(loop_i > reset_i, f'the heal loop sits at line {loop_i}, reset at {reset_i} — healing BEFORE the main-tip reset lets a stale event checkout decide what is drifted')
+need(loop_i < py_i, f'the heal loop sits at line {loop_i}, python3 derivation at {py_i} — locks must be healed before versions are derived from the tree')
+
+# (c) locks staged next to the bumped Chart.yamls
+need(any('git add' in l and 'Chart.lock' in l for _, l in code),
+     'no git add line covers Chart.lock — a healed lock that is never staged cannot ride the bump commit')
+
+# (d) commit guarded on staged content (a fresh-tree fire must not mint an
+# empty commit under set -euo pipefail; helm itself skips byte-equal writes)
+commit_i = next((i for i, l in code if 'git commit' in l), None)
+need(commit_i is not None, 'no git commit in the bump step')
+cl = next(l for i, l in code if i == commit_i)
+guard_inline = re.search(r'git\s+diff\s+--cached\s+--quiet\s*\|\|\s*git commit', cl)
+prev = [l for i, l in code if commit_i - 3 <= i < commit_i]
+guard_block = any(re.search(r'if\s+!?\s*git\s+diff\s+--cached\s+--quiet', p) for p in prev)
+need(guard_inline or guard_block,
+     f'the bump commit is unguarded ({cl.strip()[:80]!r}) — `git diff --cached --quiet || git commit` (or the if-block twin) is required so a no-op heal stages nothing and fires nothing')
+
+# (e) message names BOTH sets when the heal set is non-empty
+need(any('chore(release): bump' in l for _, l in code),
+     'the commit message no longer heads with `chore(release): bump <bumped>` (D17-era head, kept per C09.md)')
+need(any('+ heal' in l for _, l in code),
+     'the message construction never appends ` + heal <healed-locks>` — the heal set must be named when non-empty (the message shape is pinned from C09 onward)')
+need(any(re.search(r'\[\s*-n\s+[^\]]*heal', l, re.I) for _, l in code),
+     'the heal-set append is unconditional or unguarded — the + heal segment must ride a non-empty test of the heal set')
+PY
+then
+  fail "t22: see the t22 detail above"
+fi
+ok "t22: bump heals full-tree after the main-tip reset and before the derivation, stages the locks in the guarded single bump commit, and names the heal set in the message"
+
+# --- t23: the test-build build->update flip (C09, D47.2) ------------------------
+# Job order is test-build -> bump: a smoke that ABORTS on drift (dependency
+# build digest-checks before any download) makes the self-heal unreachable on
+# exactly the drift-carrying push. The smoke flips to the ephemeral heal; the
+# repo-side drift signal moves to t24, which runs pre-merge. Red at HEAD.
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+raw = open(sys.argv[1]).read()
+jobs = (yaml.safe_load(raw) or {}).get('jobs') or {}
+step = next((s for s in (jobs.get('test-build') or {}).get('steps', [])
+             if isinstance(s, dict) and 'helm lint' in str(s.get('run', ''))), None)
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t23: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(step is not None, 'test-build has no smoke step running helm lint — the step the flip re-truths is gone')
+run = str(step.get('run', ''))
+need('helm dependency update "charts/${{ matrix.chart }}"' in run,
+     'the Lint-and-package-smoke does not run `helm dependency update "charts/${{ matrix.chart }}"` — the flip (D47.2) heals ephemerally on the matrix copy instead of aborting on drift')
+need('helm lint' in run and 'helm package' in run,
+     'the flip may not delete the work: lint + package stay in the smoke')
+for l in raw.splitlines():
+    if l.lstrip().startswith('#'):
+        continue
+    need('helm dependency build' not in l,
+         f'a code line still invokes the aborting verb ({l.strip()[:90]!r}) — dependency build must end up absent from every code line file-wide (the aborting leg is the self-heal-unreachable defect)')
+PY
+then
+  fail "t23: see the t23 detail above"
+fi
+ok "t23: test-build re-negotiates (dependency update) with lint+package intact; the aborting verb appears on zero code lines file-wide"
+
+# --- t24: hermetic full-tree lock consistency (C09 AC1/D47.3) -------------------
+# cf-135's dev-forgejo-runner t10 contract (the lock must resolve to the
+# Chart.yaml) made OFFLINE and FULL-TREE: no helm, no network — pure
+# committed-state projection. Red at HEAD naming exactly {charts/base,
+# charts/traefik, charts/traefik-zerotrust} (the drift trio RESEARCH item 83
+# measured); green once C09's regeneration merges; t10 stays the live-helm
+# witness untouched (one branch one concern).
+if ! python3 - <<'PY'
+import glob, os, re, sys, yaml
+
+EXACT = re.compile(r'^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$')
+
+
+def project(entry, keys):
+    # Go omitempty mirror: absent/empty-string/empty-list drop out, an
+    # explicit false stays — a value is a value.
+    return {k: entry[k] for k in keys if entry.get(k) is not None and entry.get(k) != '' and entry.get(k) != []}
+
+
+offenders = []
+for cy in sorted(glob.glob('charts/*/Chart.yaml')):
+    d = os.path.dirname(cy)
+    deps = (yaml.safe_load(open(cy)) or {}).get('dependencies') or []
+    if not deps:
+        continue
+    lock_p = os.path.join(d, 'Chart.lock')
+    if not os.path.exists(lock_p):
+        offenders.append(f'{d}: Chart.yaml declares dependencies but carries no Chart.lock (build would silently mirror update)')
+        continue
+    lock = yaml.safe_load(open(lock_p)) or {}
+    entries = lock.get('dependencies') or []
+    if not str(lock.get('digest', '')).startswith('sha256:'):
+        offenders.append(f'{d}: Chart.lock carries no sha256 digest: field (not a helm-written lock)')
+    # Helm v3 serializes name/repository/version into lock entries; the other
+    # chart.Dependency fields (alias/tags/condition/enabled/import-values)
+    # enter the digest from the Chart.yaml side only. Project both sides onto
+    # the union the lock actually carries so the check stays true against
+    # today's format and self-adapts if helm ever serializes more.
+    keys = sorted({'name', 'version', 'repository'} | {k for e in entries for k in e if project(e, [k])})
+    want = [project(e, keys) for e in deps]
+    got = [project(e, keys) for e in entries]
+    for e in deps:
+        v = str(e.get('version', ''))
+        if not EXACT.match(v):
+            offenders.append(f'{d}: dependency {e.get("name")} pins {v!r} — not an exact resolved version; a range pin makes resolved-lock != constraint by design and must be RE-DESIGNED, not silently drifted (RESEARCH 1207-1211)')
+    if got != want:
+        offenders.append(f'{d}: Chart.lock projects to {got}, Chart.yaml to {want} — helm hashes exactly this serialized-field pair, so dependency build would abort on this delta')
+
+if offenders:
+    print('FAIL: t24: committed Chart.lock files disagree with their Chart.yaml '
+          'dependency declarations (position, name, version, repository field-wise; '
+          'the trio heals in C09, every future drift-source is caught pre-merge):', file=sys.stderr)
+    for o in offenders:
+        print('  ' + o, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t24: see the t24 detail above"
+fi
+ok "t24: every Chart.yaml dependency declaration projects field-wise onto its committed Chart.lock, full-tree, hermetic (digest+generated headers present, all pins exact)"
+
+# --- t25: the calendar walk — static pins + executed battery (C10, D47.4/D49) ----
+# The owner's scheme: `2026.11.1++` with N derived LOCALLY from the tree + one
+# clock stamp per run; the published index demotes to a collision guard. The
+# Masterminds trap is the load-bearing part: NewVersion rejects leading zeros,
+# so `2026.07.1` is INVALID semver and dies at helm package (the D15 lesson
+# reborn, RESEARCH 1178-1184 [88]) — `date -u +%Y.%-m` plus a numeric
+# round-trip must make the padded form unproducible. Red at HEAD: no stamp,
+# no walk arms, the derivation is still max(tree, published)+1.
+if ! python3 - "$WF" <<'PY'
+import json, os, re, shutil, subprocess, sys, tempfile, yaml
+
+raw = open(sys.argv[1]).read()
+jobs = (yaml.safe_load(raw) or {}).get('jobs') or {}
+bodies = [str(s.get('run', '')) for s in (jobs.get('bump') or {}).get('steps', [])
+          if isinstance(s, dict) and 'run' in s]
+body = next((b for b in bodies if 'refs/remotes/origin/main' in b and 'python3' in b), None)
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t25: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(body is not None, 'no bump derivation step to calendarize')
+code = '\n'.join(l for l in body.splitlines() if not l.lstrip().startswith('#'))
+
+# --- static calendar pins (C10.md t25) ---
+stamps = [l for l in code.splitlines() if 'date' in l and re.search(r'\+?%Y', l)]
+need(len(stamps) == 1 and '+%Y.%-m' in stamps[0],
+     f'the bump step carries {len(stamps)} clock-stamp line(s), expected exactly one `date -u +%Y.%-m` (one stamp per run like containers-build\'s month= law; UNPADDED month is the Masterminds law, D47.4)')
+for bad in ('+%Y.%m', '02d', '%.2d', 'strftime'):
+    need(bad not in code,
+         f'a zero-pad spelling ({bad!r}) survives on code lines — a padded stamp renders invalid semver (2026.07.1) and dies at helm package; the trap must be unproducible')
+
+heredoc = re.search(r"<<'PY'[ ]*\n(.*?)\nPY[ ]*(?=\n|\Z)", body, re.S)
+need(heredoc is not None, 'the bump step no longer embeds its derivation heredoc')
+src = heredoc.group(1)
+need(('sys.argv[3]' in src) or ('environ' in src),
+     'the python block reads no stamp binding (sys.argv[3] or os.environ) — the one-shot stamp must be PASSED to the derivation, never recomputed inside it')
+need(re.search(r'\(\s*Y\s*,\s*M\s*,\s*0\s*\)', src) and re.search(r'(?:raise|SystemExit)[^\n]*ahead', src, re.S),
+     'no fail-loud arm for tree > (Y, M, 0) — the walk must REFUSE to walk backwards (never re-mint below the clock), not clamp')
+need('def ver(' in src and 'len(parts) == 3' in src and 'isdigit' in src,
+     'ver() is no longer the 3-part tuple parser — 4-digit calendar majors ride the same comparison (RESEARCH 1192-1194)')
+need('name, name_indent = m.group(1), indent' in src and 'indent == name_indent' in src,
+     'the same-indent pairing parser block moved — t15 pins its VALUE semantics and C10 keeps it verbatim as the collision-guard feed')
+
+# --- executed walk battery (C10.md t26 cases (i)-(viii)) ---
+mode = 'argv' if 'sys.argv[3]' in src else 'env'
+env_names = sorted(set(re.findall(r'''environ(?:\.get)?[\(\[]\s*["']([A-Za-z_][A-Za-z0-9_]*)["']''', src))) if mode == 'env' else []
+if mode == 'env':
+    need(bool(env_names), 'environ is mentioned but no os.environ[...] variable name is discoverable — the leg cannot stub the stamp')
+
+def write_case(root, name, tree, published):
+    os.makedirs(os.path.join(root, 'charts', name), exist_ok=True)
+    with open(os.path.join(root, 'charts', name, 'Chart.yaml'), 'w') as f:
+        f.write(f'apiVersion: v2\nname: {name}\nversion: {tree}\n')
+    idx = os.path.join(root, 'published-index.yaml')
+    lines = ['apiVersion: v1', 'entries:']
+    for k, v in published.items():
+        lines += [f'  {k}:', '  - apiVersion: v2', f'    name: {k}', f'    version: {v}']
+    with open(idx, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    return idx
+
+
+parser = os.path.join(tempfile.gettempdir(), 'r4t25-carrier.py')
+work = []
+problems = []
+CASES = [
+    # name,            tree,        published,           stamp,  expect
+    ('samemonth',      '2026.11.3', {},                  ('2026', '11'), '2026.11.4'),   # (i)
+    ('rollover',       '2026.10.5', {},                  ('2026', '11'), '2026.11.1'),   # (ii)
+    ('legacyjump',     '1.0.203',   {},                  ('2026', '11'), '2026.11.1'),   # (iii)
+    ('aheadtree',      '2027.1.2',  {},                  ('2026', '11'), None),          # (iv) FAIL LOUD
+    ('collision',      '2026.11.1', {'collision': '2026.11.3'}, ('2026', '11'), '2026.11.4'),   # (v)
+    ('indexnotderiv',  '1.0.203',   {'indexnotderiv': '2026.10.9'}, ('2026', '11'), '2026.11.1'),  # (vi)
+    ('padtrap',        '1.0.5',     {},                  ('2026', '07'), '2026.7.1'),    # (vii)
+    ('yearroll',       '2026.12.4', {},                  ('2027', '1'), '2027.1.1'),     # (viii)
+]
+try:
+    with open(parser, 'w') as f:
+        f.write(src)
+    for name, tree, published, (ys, ms), expect in CASES:
+        root = tempfile.mkdtemp(prefix='forgejo-release-t25.')
+        work.append(root)
+        idx = write_case(root, name, tree, published)
+        cmd = [sys.executable, parser, json.dumps([name]), idx]
+        if mode == 'argv':
+            # C10.md prices "argv or env"; argv shapes may be one stamp string
+            # (argv[3]="Y.M") or split vars (argv[3]=Y, argv[4]=M) — the form
+            # is read off the carrier itself so both legal dev shapes run.
+            if re.search(r'sys\.argv\[4\]', src):
+                cmd += [ys, ms]
+            else:
+                cmd += [f'{ys}.{ms}', ys, ms]
+        env = os.environ.copy()
+        for var in list(env_names) + ['CALVER_STAMP', 'CALVER_Y', 'CALVER_M', 'CAL_STAMP', 'CAL_Y', 'CAL_M']:
+            if var.endswith('_Y'):
+                env[var] = ys
+            elif var.endswith('_M'):
+                env[var] = ms
+            else:
+                env[var] = f'{ys}.{ms}'
+        r = subprocess.run(cmd, cwd=root, capture_output=True, text=True, env=env)
+        if expect is None:
+            # (iv): must die LOUD, naming the chart — a silent skip would let
+            # a clock-skew push walk released versions backwards.
+            if r.returncode == 0:
+                cur = re.search(r'(?m)^version: (\S+)$', open(os.path.join(root, 'charts', name, 'Chart.yaml')).read())
+                problems.append(f'{name} (tree-ahead): exit 0 with version {cur.group(1) if cur else "?"!r} — the walk refused to fail loud on tree > clock stamp')
+            elif name not in (r.stderr + r.stdout):
+                problems.append(f'{name} (tree-ahead): nonzero exit but never names the chart ({(r.stderr.strip()[-160:] or r.stdout.strip()[-160:])!r})')
+            continue
+        if r.returncode != 0:
+            problems.append(f"{name} ({tree} @ {ys}.{ms}): exit {r.returncode} ({(r.stderr.strip()[-160:] or r.stdout.strip()[-160:])!r}), expected {expect}")
+            continue
+        cur = re.search(r'(?m)^version: (\S+)$', open(os.path.join(root, 'charts', name, 'Chart.yaml')).read())
+        got = cur.group(1) if cur else '<none>'
+        if got != expect:
+            problems.append(f'{name} ({tree} @ {ys}.{ms}, published={published or "-"}): wrote {got!r}, expected {expect!r} — strict string equality is the padding defense too (2026.07.1 != 2026.7.1 is the Masterminds trap)')
+finally:
+    for root in work:
+        shutil.rmtree(root, ignore_errors=True)
+    if os.path.exists(parser):
+        os.unlink(parser)
+
+if problems:
+    print('FAIL: t25: the bump derivation does not implement the calendar walk (D47.4 '
+          'local-N rule: same-month N+1, tree<(Y,M,0) -> N=1, tree-ahead fails loud, '
+          'the published index only guards collisions, stamps round-trip numerically):', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t25: see the t25 detail above"
+fi
+ok "t25: one unpadded clock stamp per run is passed to the derivation (argv/env), ver()/pairing-parser survive, and the executed walk battery passes all eight calendar cases incl. the padded-stamp round-trip and the tree-ahead loud refusal"
+
+# --- t26: the AGENTS + rulesync law pair, calendar form (C10, D49) ---------------
+# The hard-rule bullet is the law every session loads; the D49 owner override
+# picks the Y.M.1 seed for brand-new charts, so BOTH the generated AGENTS.md
+# and its .rulesync source must carry the calendar wording after C10's pair
+# commit — red at HEAD on the old patch language by design (rulesync generate
+# keeps the pair in step; C10 owns the rewrite, never hand-edit AGENTS.md).
+if ! python3 - <<'PY'
+import sys
+
+
+def norm(p):
+    return ' '.join(open(p).read().split())
+
+
+pairs = [('AGENTS.md', norm('AGENTS.md')),
+         ('.rulesync/rules/overview.md', norm('.rulesync/rules/overview.md'))]
+
+problems = []
+for path, text in pairs:
+    for tok in ('calendar release', 'Y.M.N', 'unpadded month', 'same-month N+1', 'new-month N=1'):
+        if tok not in text:
+            problems.append(f'{path}: missing the calendar-law token {tok!r} (D47.4/R-Q1 rewrite: bumps `version` to the calendar release `Y.M.N` (unpadded month) — same-month N+1, new-month N=1)')
+    i = text.find('brand-new chart')
+    if i < 0 or 'Y.M.1' not in text[max(0, i - 320):i + 40]:
+        problems.append(f'{path}: the brand-new-chart clause does not carry the D49 seed form (set version <current Y.M.1> only on a brand-new chart)')
+    for dead in ('bumps `Chart.yaml` `version` (patch)', 'Set `version: 1.0.0` only on a brand-new chart'):
+        if dead in text:
+            problems.append(f'{path}: still states the retired patch-scheme clause {dead!r}')
+
+if problems:
+    print('FAIL: t26: the version-law PAIR (source + generated mirror) is not in its '
+          'post-C10 calendar form:', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t26: see the t26 detail above"
+fi
+ok "t26: AGENTS.md and overview.md pair-states the calendar law (Y.M.N, unpadded month, same-month N+1, new-month N=1) with the D49 Y.M.1 seed clause and no patch-scheme residue"
 
 printf 'PASS: forgejo-release checks (%d ok)\n' "$checks"

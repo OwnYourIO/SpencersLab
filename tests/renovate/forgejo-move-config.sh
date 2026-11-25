@@ -235,7 +235,9 @@ i, line = img[0]
 # The end-of-line anchor is deliberate: only a tag-terminated line is a
 # docker-datasource bump target, so the digest comment must sit on its own
 # line rather than trailing the tag (C02 task).
-need(re.match(r'^\s+image: ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+$', line),
+# C12 (cf-55, route F): the `-full` suffix rides the same immutable
+# full-patch shape — one-line widen, message unchanged.
+need(re.match(r'^\s+image: ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+(?:-full)?$', line),
      f'image line is {line!r}, expected "image: ghcr.io/renovatebot/renovate:<x.y.z>" '
      'ending the line — full-patch immutable tag, no latest, no trailing comment')
 if i > 0:

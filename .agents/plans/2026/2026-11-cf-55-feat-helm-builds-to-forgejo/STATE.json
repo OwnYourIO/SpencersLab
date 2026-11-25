@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "updated_at": "2026-11-25T02:06:42+00:00",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
-  "test_session": "ses_e006a6794ffeHqXl8O0Lx4sLoQ (fix-round test wave, 2026-11-21 — current for validation_at_fault routing; the rebuild-round session was lost-in-restart, its suites were disk-verified)",
+  "test_session": "ses_def674664fferVKggtFKLUUZFQ (round-4 test wave, 2026-11-25 — current for validation_at_fault routing; fix-round-1 session ses_e006a6794ffe)",
   "current_wave": 3,
   "fix_round": {
     "at": "2026-11-21",
