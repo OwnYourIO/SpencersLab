@@ -101,13 +101,31 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01", "C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "dev_session": "ses_deebdf055ffesxEjlCF2GFwSUz",
+      "review_rounds": 1,
+      "review_sessions": ["ses_deeadfc84ffezespZZQOP69y4I"],
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "from": "dev C03",
+          "at": "2026-11-25T06:26:00+00:00",
+          "status": "DONE",
+          "files_changed": [".forgejo/workflows/coder-template-push.yaml", ".agents/notes/2026-11-25-coder-template-push.md"],
+          "summary": "Workflow: main+paths filter, dispatch templates input, narrow-on-unset ROLE guard, detect job + fail-fast:false matrix, runs-on with NO container field, env exactly CODER_URL from vars + CODER_SESSION_TOKEN from secrets, fetch-depth per detect-range law, zero literals incl comments. Runbook: UA1-UA4 owner legs + posture answers (max-lifetime tokens, no --var, ttl user-owned, rename/delete unhandled, warn-green vs red, ArgoCD sole apply surface). Both gate suites 6 ok each; full five-suite regression green; YAML parse green; packaging guard 0; terraform validate skipped (no template files touched — recorded why).",
+          "deviations": "(1) aislop 0.18.1 probe shows it scores ONLY Python-class languages — shell/YAML/Dockerfile all outside its set; the workflow YAML is NOT scored in any mode (its quality gate is the w1-w6 static suite); earlier 'scripts/ 100 Healthy' covered the 3 Python files, not shell. (2) runbook states the kubectl ban as 'ArgoCD is the sole apply surface' because r3 bans the kubectl token doc-wide — same posture, test-forced phrasing. (3) detector owns the empty-set warning (inverted vs containers-build), documented in the step comment.",
+          "friction_note": "plan Commands honest-scope note inaccurate re 0.18.1 coverage -> routed to planner for one-line correction; probe evidence in deviation 1"
+        },
+        {
+          "from": "review C03",
+          "at": "2026-11-25T06:48:00+00:00",
+          "status": "APPROVED",
+          "summary": "Round 1 fresh session, zero blockers. Both gate suites 6 ok re-run; five-suite regression + helm trio + packaging guard green; aislop coverage claim independently re-probed and ACCEPTED (.forgejo/ not-scored, scripts/ 3 Python files); three dev deviations all accepted (coverage-on-evidence, posture-equivalent kubectl phrasing, detector-owned warning matching landed C02 contract). Beyond-the-suite reads: vars/secrets inventory exactly the OQ5-minimal set, detect env accessors byte-identical to containers-build precedent minus PR keys, dispatch wired to subset arm, ROLE/concurrency/runs-on/no-container shapes match the five-workflow house, zero literals incl comments, runbook UA1-UA4 verified against in-tree files. Two non-blocking observations in chunks/C03.md."
+        }
+      ]
     }
   },
   "blocked": [],
