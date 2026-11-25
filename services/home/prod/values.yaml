@@ -9,6 +9,9 @@ bitwardenIds:
   # Read-only CNPG role credential for the postgres-paperless ToolHive MCP
   # server (svc-level ExternalSecret templates/pg-paperless-mcp-secret.yaml).
   mcp-pg-paperless: OVERRIDE_VIA_CUSTOM_VALUES
+  # actual-budget-mcp / actual-budget-mcp-key: custom-values mirrors stay absent until the owner mints those Bitwarden items — a UUID is issued by item creation, cannot be derived, and a fabricated one would pass the 1:1 form check while pointing an ExternalSecret at nothing (owner ruling 2026-11-24; the 1:1 check is deliberately red on these two keys until then).
+  actual-budget-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  actual-budget-mcp-key: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -95,6 +98,10 @@ charts:
   #  ServerSideApply: "true"
   #  chart: zigbee2mqtt
   bri-budget:
+    namespace: default
+    ServerSideApply: "true"
+    chart: actualbudget
+  wuulf-budget:
     namespace: default
     ServerSideApply: "true"
     chart: actualbudget
@@ -195,6 +202,9 @@ ingress:
       port: 5006
     bri-budget:
       service: home-bri-budget
+      port: 5006
+    wuulf-budget:
+      service: home-wuulf-budget
       port: 5006
 
     bookmarks:
@@ -956,6 +966,16 @@ bri-budget:
     global:
       nameOverride: bri-budget
 
+# Third ActualBudget instance (wuulf's budget), deployed as its own ArgoCD
+# Application (home-wuulf-budget) from the standalone charts/actualbudget chart.
+# Declared via the 'wuulf-budget' entry under the top-level 'charts:' key above;
+# this block is injected into the chart as its values. All other configuration
+# comes from the chart's own values.yaml defaults.
+wuulf-budget:
+  app-template:
+    global:
+      nameOverride: wuulf-budget
+
 karakeep:
   global:
     nameOverride: karakeep
@@ -1155,3 +1175,52 @@ hivetools:
       - name: paperless
         bitwardenIdKey: mcp-pg-paperless
         database: paperless
+  mcp:
+    actual-budget:
+      enabled: true
+      image: sstefanov/actual-mcp:v1.15.1
+      transport: streamable-http
+      mcpPort: 3000
+      args:
+        - --sse
+        - --enable-bearer
+      env:
+        - name: ACTUAL_SERVER_URL
+          value: "http://home-wuulf-budget.default.svc:5006"
+        - name: ACTUAL_DATA_DIR
+          value: "/data"
+      secrets:
+        - name: actual-budget-mcp
+          key: BEARER_TOKEN
+          targetEnvName: BEARER_TOKEN
+        - name: actual-budget-mcp-key
+          key: ACTUAL_SESSION_TOKEN
+          targetEnvName: ACTUAL_SESSION_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            fsGroup: 65532
+          containers:
+            - name: mcp
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /data
+                  name: actual-budget-mcp-data
+          volumes:
+            - name: actual-budget-mcp-data
+              persistentVolumeClaim:
+                claimName: actual-budget-mcp-data

@@ -32,6 +32,10 @@ bri-budget:
   bitwardenIds:
     actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
 
+wuulf-budget:
+  bitwardenIds:
+    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
+
 actualbudget:
   bitwardenIds:
     actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
