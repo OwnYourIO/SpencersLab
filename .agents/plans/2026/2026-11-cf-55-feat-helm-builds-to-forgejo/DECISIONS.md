@@ -680,3 +680,100 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    log) — NOT applied by default. Retry-hardening (O1) MOOT: adds are already
    loud. O2 lock-union pre-add / O3 name-collision: rejected on evidence (sets
    identical 20==20, zero drift, zero collisions).
+ - 2026-11-25 plan D47 (round-4 replan — rulings settled from evidence; RESEARCH.md
+   '## Round-4 research' :883-1418 + EXPLORE '## Rename surface' :1139-1210 + owner
+   directives Q1/Q2/Q3 in STATE.round4_directive are the inputs):
+   (1) HEAL PLACEMENT — full-tree `helm dependency update` inside the bump loop
+   AFTER the fetch+reset and BEFORE the version rewrite; Chart.locks staged next
+   to the bumped Chart.yamls in the SAME single bump commit per loop attempt
+   (today's one-commit shape; FF law is about the push, D17 intact). Safe by
+   construction: the top-level `version:` is outside helm's hashed digest inputs
+   (:1053-1056 [73]); fresh-lock update is a byte-no-op so no empty commits
+   (:1061-1064 [72], staged-content guard added); `ensureMissingRepos` means no
+   repo-add step is needed in bump (:1065-1067). Full-tree because cr Build()s
+   EVERY chart every fire — changed-set-only leaves the poison path open
+   (:1092-1096, :1118-1121). Commit message names bump-set + heal-set.
+   (2) TEST-BUILD POSTURE — flip `helm dependency build` → `update` (ephemeral
+   heal on the matrix copy, never pushed); abort-loud REJECTED: job order is
+   test-build → bump, so an aborting smoke on drift means bump never runs and
+   the self-heal can never fire on the drift-carrying push — the guarantee
+   would be unreachable exactly when needed. The drift SIGNAL moves pre-merge:
+   new hermetic projection leg (t24) in forgejo-release.sh over every
+   Chart.lock; `helm dependency build` ends absent from all code lines.
+   (3) TRIO — C09 commits the regenerated {base, traefik, traefik-zerotrust}
+   locks DIRECTLY (research's repro fixture = the repo-state fix; chunk law is
+   merge-with-validations-green), which makes the C09 merge itself a fire under
+   the still-patch scheme: three benign patch bumps → the next renovate pass
+   opens the trio's consumer-pin PRs across the 61-pin exact set; also flips
+   the admitted dev-forgejo-runner t10 red green. t10 STAYS untouched as the
+   live-helm witness — t24 is its hermetic full-tree sibling, not its
+   replacement (one branch one concern).
+   (4) LOCAL-N WALK — owner 'Simple: local N only': derivation = tree + one
+   clock stamp per run (containers `month=` law): same (Y,M) → patch+1; tree <
+   (Y,M,0) → N=1 (covers month rollover, legacy 1.0.x first calendar stamp,
+   first-ever); tree ahead → FAIL LOUD (never walks backwards). The gh-pages
+   index fetch (t20) and the same-indent pairing parser (t15) SURVIVE — their
+   role is demoted from derivation term to the skip-when-already-published
+   collision guard (bounded walk, fail loud past the cap). INSTANCE INDEX
+   EXCLUDED from the derivation — evidence-set, not preference: reading it
+   needs FORGE_PUSH_TOKEN in the bump job, violating the shipped t7
+   no-secrets-in-bump pin; the forgejo-publish skip-if-present guard stays.
+   Unpadded month is LAW (`date -u +%Y.%-m` + numeric re-format — Masterminds
+   rejects leading zeros :1178-1184 [88], the D15 twin); 4-digit year adopted
+   per owner literal (:1308-1311). Migration strictly per-chart-on-next-change;
+   NO sweep, no cutover commit (owner Q1 + research (d) :1255-1263).
+   (5) SUITE NAMING — rename forgejo-release.sh → forgejo-build-charts.sh with
+   the workflow (forgejo-<workflow>.sh pairing precedent; price = git mv +
+   three prose re-pins at ci-surface L4/172/197 + containers/forgejo-runner/
+   README:68; zero path consumers, scout-verified; keep-price = zero reds but
+   a permanent mis-narrating header). NO global sed anywhere (the
+   `forgejo-releases` RENOVATE DATASOURCE token contains the substring —
+   EXPLORE §H.4); all edits surgical per the A/B tables.
+   (6) RENAME DETAILS — `name:` field → 'Build Charts' (display-only, nothing
+   machine-reads it — EXPLORE §D; keeping file and display in step); the
+   deleted GitHub twin keeps its historical name forever in composed forms; the
+   three `release.yaml:54` cites survive because C09/C10 edit only BELOW line
+   54 (verified at plan time; dev re-verifies); FROZEN exemption set = 105
+   .agents/plans records + 2 vendored skills + c05_expected_evidence.yaml
+   (append-only law); the new t8 sweep leg bans bare literals on LIVE surfaces
+   only; `tests/cf96-deploy/readback-runbook.md:88` LEAVE-AS-RECORD (dated
+   runbook).
+   (7) C12 SHAPE — the renovate-image fix is a CONDITIONAL CHUNK (wave 1,
+   file-disjoint), not a UA: primary route `-full` behind the one-time
+   helm4-writes/helm3-builds digest cross-check (gate executable from the
+   workspace seat; `-full` existence measured: ghcr manifest 200 for
+   44.181.5-full, 2026-11-25), fallback lab-baked containers/renovate (helm
+   v3.22.1 sidecar, the C05 pattern); if the owner declines both it degrades to
+   UA-12 + follow-up card (the red-`renovate/artifacts`-merge hole stays
+   process-open — nothing in repo law blocks it). PREMISE CORRECTION on the
+   launch brief: no `charts/renovate` deployment exists — the fix surface is
+   the `container:` image line of renovate.yaml (:67) + env, and its pin
+   contracts are forgejo-renovate.sh t4/t5 (+ one new pair-fence leg) and
+   tests/renovate/forgejo-move-config.sh:238 (surgical cross-suite regex
+   widen, cf-139-owned file). renovate.json untouched (constraints.helm is
+   inert under global [58]; its comment hygiene → follow-up note).
+   (8) FIRE-COUPLED DEFERRALS — stale FAIL-message prose in
+   charts/{amd-gpu,radiance}/tests + tests/multi-repo/{ha-chart,
+   mosquitto-chart}.sh is NOT re-pinned this round (charts/** edits mint real
+   releases for message cosmetics; follow-up card; they fold into each chart's
+   next natural PR).
+   (9) RECOMMENDED ANSWERS (owner-forked, D48): lockFileMaintenance OFF
+   (under all-exact pins a weekly refresh is a provable no-op → zero coverage
+   above C09+C12); new-chart seed keeps 1.0.0 (first fire then publishes
+   exactly Y.M.1, the AGENTS clause survives verbatim; straight-Y.M.1 seeding
+   makes the first PUBLISHED stamp Y.M.2 — the seed is never published either
+   way, so 1.0.0 costs nothing and anchors each chart's calendar epoch at .1);
+   renovate route = `-full` + gate.
+ - 2026-11-25 plan D48 (round-4 batched owner round — plan_status stays
+   needs-replan until answered; nothing in D47's owner-forked trio is
+   pre-committed): OQ-R4-1 renovate image route — RECOMMENDED: `-full` tag
+   behind the digest cross-check gate (C12 executes; if the gate is RED at dev
+   time, C12 halts and Route B gets priced mid-round); alternatives: lab-baked
+   containers/renovate (v3-pure, bigger surface) or neither (UA-12 + follow-up
+   card — the pipeline heal stands alone). OQ-R4-2 lockFileMaintenance enable/
+   disable — RECOMMENDED OFF (D47.9). OQ-R4-3 new-chart seed 1.0.0 vs Y.M.1 —
+   RECOMMENDED keep 1.0.0 (D47.9; AGENTS.md's hard-rule clause survives
+   unchanged; a straight-Y.M.1 ruling rewrites the clause inside C10's pair
+   commit). Approval ask: run C09 → C10 → C11 (+ C12 iff a route is named),
+   waves 1/2/3 as tabled; owner merge order C09, C12, C10, C11-LAST with the
+   first-fire consequences written into the plan's Round-4 landing section.
