@@ -777,3 +777,23 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    commit). Approval ask: run C09 → C10 → C11 (+ C12 iff a route is named),
    waves 1/2/3 as tabled; owner merge order C09, C12, C10, C11-LAST with the
    first-fire consequences written into the plan's Round-4 landing section.
+ - 2026-11-25 human D49 (round-4 batched owner round — ALL APPROVED): the owner
+   answered the D48 trio plus the approval in ONE round. (1) OQ-R4-1 renovate
+   image route = official `-full` (44.181.5-full, existence measured) behind the
+   one-time helm4-writes/helm3-builds digest cross-check gate — C12 RUNS (not
+   degraded to UA-12); if the gate reddens at dev time C12 halts and Route B
+   (lab-baked containers/renovate v3 sidecar) is priced then, not pre-chosen.
+   (2) OQ-R4-2 helmv3 lockFileMaintenance = OFF (accepted the D47.9/D48 rec).
+   (3) OQ-R4-3 new-chart seed = **Y.M.1 (OWNER OVERRIDE of the plan's keep-1.0.0
+   recommendation)**: a brand-new Chart.yaml seeds at the current calendar stamp
+   (unpadded month). Consequence accepted per D47.9's own finding: such a chart's
+   FIRST PUBLISHED version is Y.M.2 (seed is the epoch; the first fire walks
+   N+1), not Y.M.1 — the owner chose literalness over the .1-anchored epoch.
+   THIS REQUIRES C10 to rewrite the AGENTS.md/.rulesync 'version: 1.0.0 only on a
+   brand-new chart' hard-rule clause to the calendar seed (source + generated
+   mirror, the rulesync pair law) — D47's 'clause survives verbatim' branch is
+   superseded; the C10 AC set must include the pair-commit clause rewrite and a
+   suite leg pinning the new seed form. (4) APPROVAL: run C09 -> C10 -> C11 with
+   C12 in wave 1 (file-disjoint), merge order C09, C12, C10, C11-LAST; test wave
+   first (C09 t22-t24, C10 t25/t26 + t15 re-aim + the new seed leg, C11 ci-surface
+   t8), dev waves 1->3. plan_status -> approved. Models per D35 (openrouter flash).
