@@ -1098,7 +1098,7 @@ def runs(jn):
 
 
 tb, rel, fj = runs('test-build'), runs('release'), runs('forgejo-publish')
-for cmd in ('helm dependency list', 'helm repo add', 'helm dependency build',
+for cmd in ('helm dependency list', 'helm repo add', 'helm dependency update',
             'helm lint', 'helm package'):
     need(cmd in tb,
          f'test-build no longer runs {cmd!r} — the flip cannot be satisfied by deleting the work the baked helm serves')

@@ -22,9 +22,12 @@
 # run-time tool download, the flaky-egress class the bake retires). No step
 # installs anything here, and no presence-check step stands in for one
 # (D43): the plain helm/cr calls below ARE the toolchain check — a mis-baked
-# image dies at its first command-not-found, loud and early. The published-
-# index fetch in the bump leg is the one runtime download that survives the
-# bake: it carries data, not a tool, and it rides a bounded --retry (D37).
+# image dies at its first command-not-found, loud and early. The bake retires
+# TOOL downloads, not DATA ones: the bump leg still reads the published index
+# (bounded --retry, D37), and the helm dependency updates — the test-build
+# smoke and the bump leg's lock self-heal — fetch repo indexes and subchart
+# tarballs, the same upstream-egress class cr's Build() already pays per
+# chart per fire (D47).
 name: Release Charts
 on:
   push:
@@ -131,12 +134,16 @@ jobs:
       - name: Lint and package smoke
         run: |
           set -euo pipefail
-          # The GitHub twin's build-only leg (its upload step was disabled);
-          # the consumer contract is proven, so the shape stays: dependency
-          # build offline from Chart.lock against the added repos, then lint
-          # and package. No publish API call.
+          # dependency update, not the digest-checking build verb: build
+          # aborts on a drifted lock BEFORE any download, and with job order
+          # test-build → bump an aborting smoke on the drift-carrying push
+          # would make the bump job's self-heal unreachable exactly when it
+          # is needed (D47.2). The update re-negotiates and heals the matrix
+          # copy ephemerally, never pushed; the pre-merge drift signal lives
+          # in the contract suite's hermetic lock-consistency leg. lint +
+          # package stay (consumer-shape smoke, no publish API call).
           mkdir -p /tmp/chart-smoke
-          helm dependency build "charts/${{ matrix.chart }}"
+          helm dependency update "charts/${{ matrix.chart }}"
           helm lint "charts/${{ matrix.chart }}"
           helm package "charts/${{ matrix.chart }}" --destination /tmp/chart-smoke
 
@@ -180,6 +187,22 @@ jobs:
             git fetch origin refs/heads/main:refs/remotes/origin/main
             git reset --hard refs/remotes/origin/main
             curl -fsSL --retry 3 -o /tmp/published-index.yaml "$PUBLISHED_INDEX"
+            # Lock self-heal, full tree (D47.1): cr package Build()s EVERY
+            # chart EVERY fire, so one drifted lock outside the changed
+            # matrix poisons release + forgejo-publish whatever this push
+            # touched — changed-set-only healing leaves that path open.
+            # dependency update is the only regen verb, a byte-no-op on a
+            # fresh lock, and auto-adds unknown repos, so no repo-add step
+            # is needed and the pass is cheap on churn. It runs AFTER the
+            # reset because heal decisions must ride the remote tip, never
+            # the event checkout's stale tree. Locks land in the same commit
+            # as the versions: the top-level version: is outside helm's
+            # digest inputs, so the pair is digest-safe by construction.
+            # No retries: an upstream egress blip reddens this bump loudly
+            # and a re-fire is the recovery, the posture cr already has.
+            for lock in charts/*/Chart.lock; do
+              helm dependency update "charts/$(basename "$(dirname "$lock")")"
+            done
             bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml <<'PY'
           import json, re, sys
 
@@ -249,7 +272,17 @@ jobs:
             for c in $bumped; do
               git add "charts/$c/Chart.yaml"
             done
-            git commit -m "chore(release): bump ${bumped}"
+            # The regenerated locks ride the same bump commit; a byte-no-op
+            # update stages nothing.
+            git add charts/*/Chart.lock
+            healed=$(git diff --cached --name-only | grep 'Chart\.lock$' || true)
+            message="chore(release): bump ${bumped}"
+            if [ -n "$healed" ]; then
+              message="${message} + heal $(echo "$healed" | tr '\n' ' ')"
+            fi
+            # Staged-content guard: a fresh-tree fire must not mint an
+            # empty commit under set -euo pipefail.
+            git diff --cached --quiet || git commit -m "$message"
             if git push origin HEAD:refs/heads/main; then
               echo "bumped and pushed: ${bumped}"
               exit 0

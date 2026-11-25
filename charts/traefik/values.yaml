@@ -116,8 +116,8 @@ traefik:
         version: "v1.4.2"
 
   service:
-    type: LoadBalancer
     spec:
+      type: LoadBalancer
       externalTrafficPolicy: Local
 
   ports:
