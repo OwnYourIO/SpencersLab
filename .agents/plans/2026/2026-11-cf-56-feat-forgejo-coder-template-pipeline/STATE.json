@@ -1,0 +1,63 @@
+{
+  "feature": "2026/2026-11-cf-56-feat-forgejo-coder-template-pipeline",
+  "plan_status": "approved",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-25T03:38:45+00:00",
+  "priority": { "raw": 5, "class": "default", "stamped": true, "stored_form": "string \"5\" (dev-boards set_card_custom_field schema is value:string; int-form ask impossible tool-side — drift noted for the wekan-mcp surface)" },
+  "plan_approved_at": "2026-11-25T04:07:49+0000",
+  "checklist_pruned": "2026-11-25T04:07 round: 34 unchecked items deleted across the 5 checklists; survivors = Services dev/gpu/infra, Type feat, Model(s) Dense+Local, Lifecycle 8 checked stages, HITL Final Review",
+  "kickoff": {
+    "card": "BdMdZ5ia7kemwTB5x",
+    "slug": "cf-56-feat-forgejo-coder-template-pipeline",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-56-feat-forgejo-coder-template-pipeline",
+    "branch": "cf-56-feat-forgejo-coder-template-pipeline",
+    "branch_source": "kickoff mint @ bfe424a4",
+    "origin_dir": "/home/coder/SpencersLab",
+    "coord_session": null,
+    "coord_session_reason": "session-rename-skipped",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "code": "gpu-ai/qwen3.8-27b-radiance-tp2"
+    },
+    "local": true,
+    "priority": { "raw": null, "class": "default" },
+    "pipeline_set": ["CICD"],
+    "shared_claim": true,
+    "run_tag": null,
+    "plan_status": "approved"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
