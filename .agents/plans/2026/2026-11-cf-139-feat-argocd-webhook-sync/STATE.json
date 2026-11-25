@@ -379,11 +379,25 @@
         "C09",
         "C10"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "CHANGES_REQUESTED",
       "note": "runbook rewrite #4: §2 11 org vars + 11 org secrets (no paste/composition), sourced-env --check recipe (no argv leak), §2.4 trio delete-check (incl. ARGOCD_SYNC_TOKENS), §5 native-masking spot-check ([26]/multi-line legs dropped), §7 kill lever = delete/blank org TOKEN secrets (token-side predicate -> warn-green), §8 per-key rotation + decommission lockstep + category law; SECOND test launch at wave-12 start re-pins the runbook suite (parity greps read C09/C10 landed files)",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-25T07:10+00:00", "event": "dev DONE (6/6 after 4 doc-side iterations) + review R1 CHANGES_REQUESTED (MAJOR1 §8 decommission claim contradicted landed code -> coord ruling (j) CODE REPAIR not doc reword; 4 minors + 3 nits) + fix round DONE (all applied, suite-neutral, 6/6) committed 995bf892d; round-2 clear folded into chain re-review #3" }
+      ]
+    },
+    "C12": {
+      "status": "done",
+      "wave": 12,
+      "depends_on": ["C09"],
+      "dev_rounds": 1,
+      "review_rounds": 0,
+      "last_verdict": "PENDING-CHAIN-REVIEW",
+      "note": "ruling (j) repair: both-empty enumerated rows join the aggregated sorted config RED when the fleet is configured; kill-lane boundaries preserved both directions (t5 pins); discover_targets-only diff (+16/-6), t13 core byte-lock green at 6ed762140",
+      "handoffs": [
+        { "at": "2026-11-25T07:30+00:00", "event": "dev DONE: behavior 13/13 (t4 (j)-family ∧ t5 boundaries — the ruling split proven both ways), disposal 7/7, forgejo 13/13, self-probes a/b/c pinned postures, aislop 100/0; fast-path commit per C02-class precedent; verification folded into chain re-review #3" }
+      ]
     }
   },
   "blocked": [],

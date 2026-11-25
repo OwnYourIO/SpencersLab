@@ -134,10 +134,11 @@ def discover_targets(env):
     Broad-scan the pair keys, strict-validate segment and derived category
     (regex laws above): a malformed name carrying a value is RED naming
     the RAW KEY — an ignored typo'd enumeration row would re-open the
-    silent-cluster-loss class this posture exists for; empty residue
-    (malformed or double-empty) is unattempted: ignored, unechoed. Empty
+    silent-cluster-loss class this posture exists for; empty malformed
+    residue is unattempted: ignored, unechoed; a double-empty fully-
+    enumerated row in a CONFIGURED fleet is a ruling-(j) violation. Empty
     string == absent, since static enumeration passes unset org keys
-    through empty. Lane order (DECISIONS 2026-11-25 a/b/c+i):
+    through empty. Lane order (DECISIONS 2026-11-25 a/b/c/i/j):
     malformed-with-value outranks even the all-absent kill lane (a typo'd
     TOKEN row must never warn-green a cluster away); the TOKEN side alone
     decides configured-vs-kill; the configured lane demands per category a
@@ -168,10 +169,19 @@ def discover_targets(env):
         return NOT_CONFIGURED
     targets, tokens, violations = [], {}, []
     for cat in sorted(sides):
-        url = sides[cat].get("URL") or ""
-        tok = sides[cat].get("TOKEN") or ""
+        spec = sides[cat]
+        url = spec.get("URL") or ""
+        tok = spec.get("TOKEN") or ""
         if not url and not tok:
-            continue  # double-empty strict residue: an unattempted row
+            # Ruling (j): a fully-enumerated both-empty row in a CONFIGURED
+            # fleet is key-only-delete residue whose workflow row survived —
+            # RED in the sorted aggregate, never unattempted-green (a row
+            # without BOTH names present stays unattempted). The kill-lane
+            # fleets returned above: paste-pending and the whole-fleet §7
+            # lever stay byte-exact warn-green.
+            if "URL" in spec and "TOKEN" in spec:
+                violations.append('category "%s" enumerated but both values empty' % cat)
+            continue
         if not tok:
             violations.append('category "%s" missing TOKEN value' % cat)
         elif not JWT_RE.match(tok):
