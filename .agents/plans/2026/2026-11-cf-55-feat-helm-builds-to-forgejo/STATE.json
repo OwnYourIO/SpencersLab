@@ -322,10 +322,13 @@
         { "role": "dev", "status": "DONE", "chunk": "C08", "session": "ses_df5abc667ffehiQteZRkdXXB8I", "at": "2026-11-23", "summary": "release.yaml only: exit->next at :125/:308/:368, zero residue (3 next, 0 exit at carriers), bump-loop :247/:255/:260 and :423 verify-status exit untouched and correct; 21/21 + full green table (dev 58/58, gpu 19/19 at ticket base)" },
         { "role": "review", "status": "APPROVED (r1)", "chunk": "C08", "session": "ses_df5a8e905ffey3V5xcxvHmCeM2", "at": "2026-11-23", "verdict": "APPROVED — 21/21; OWN battery M1/M2/M3 reddened t21 naming exactly that job, M_all3 all three, M_cont green (behavior-pinned not keyword); AC5 strengthened to byte-identical reconstruction (HEAD+3-sed == working file); real-helm 3.16.4 carrier replay base 3/3 + traefik/k8s-mon/postiz 2/2 + oci-both + cf-77 guard + zero-dep all correct; main-drift b89acb5df = instance's OWN benign forgejo-runner bump (D44-predicted, bump leg green on instance), touches nothing our legs read, 21/21 holds" }
       ]
-    }
-  },
-    "C09": { "status": "pending", "wave": 1, "depends_on": [], "dev_rounds": 0, "review_rounds": 0 },
-    "C12": { "status": "pending", "wave": 1, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "note": "conditional chunk APPROVED with the -full route behind the digest gate (D49)" },
+    },
+    "C12": { "status": "done", "wave": 1, "depends_on": [], "dev_rounds": 2, "review_rounds": 2, "dev_session": "ses_def1b1f3bffeBicLvFDGOlX6ot", "last_verdict": "APPROVED (r2, ses_def0725f4ffemzqYvhn1uAY5q2)", "handoffs": [
+        { "role": "dev", "status": "DONE (gate GREEN)", "chunk": "C12", "session": "ses_def1b1f3bffeBicLvFDGOlX6ot", "at": "2026-11-25", "summary": "digest gate first: -full ships helm v4.3.1 (image config history; corrects research's v4.3.2), v4-written lock digest EQUALS committed v3 lock, v3.22.1 dep build zero-rewrite, v3 dep update byte-no-op; then renovate.yaml image -> ghcr.io/renovatebot/renovate:44.181.5-full + RENOVATE_BINARY_SOURCE=global + dated why-line" },
+        { "role": "review", "status": "CHANGES_REQUESTED (r1)", "chunk": "C12", "session": "ses_def123f30ffedkdjqrLbq1dBrn", "at": "2026-11-25", "verdict": "gate reproduced independently; maj-1 digest comment 63-hex (dropped c6); min-2 no shape leg; slim-mutant enforcement is t10-only (claim corrected)" },
+        { "role": "fold+test", "status": "DONE", "chunk": "C12", "session": "dev ses_def1b1f3bffe + test ses_def674664ff", "at": "2026-11-25", "summary": ":69 corrected to true 64-hex (live re-measure x2); t11 digest-shape leg added, battery 63/65/uppercase/wrap/absent all red, slim-no-comment green by pinned posture; suite 10 ok + t9 skip" },
+        { "role": "review", "status": "APPROVED (r2)", "chunk": "C12", "session": "ses_def0725f4ffemzqYvhn1uAY5q2", "at": "2026-11-25", "verdict": "r1 items closed-by-name; digest triple-agreement (awk length + ghcr HEAD + GET-body sha256sum); t11 mutant re-proven; scope exact" }
+      ] },
     "C10": { "status": "pending", "wave": 2, "depends_on": ["C09"], "dev_rounds": 0, "review_rounds": 0, "note": "carries the AGENTS seed-clause rewrite per D49 owner override (rulesync pair)" },
     "C11": { "status": "pending", "wave": 3, "depends_on": ["C09", "C10"], "dev_rounds": 0, "review_rounds": 0, "note": "rename lands LAST (owner)" },
     "C09": {
