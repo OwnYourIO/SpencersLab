@@ -1,67 +1,70 @@
 #!/usr/bin/env bash
-# Fan-out engine behavior contract (2026/2026-11-cf-139-feat-argocd-webhook-sync, C05):
+# Fan-out engine behavior contract (2026/2026-11-cf-139-feat-argocd-webhook-sync):
 # scripts/argocd-fanout.py + scripts/argocd-fanout.json — the vault-direct
 # fan-out logic home (ruling R6), stdlib-only, ported 1:1 from the shipped
 # relay's main.py semantics (root-first -> settle -> children sweep, live
 # targetRevision + byte repoURL match, prune=false in query AND body,
-# 409-as-success, per-target isolation) with the new vault-parsing +
-# ThreadPoolExecutor(4) layer and the ruled exit posture (DECISIONS
-# 2026-11-23): 0 runtime-green (failures audit, self-heal next push),
-# 1 config/setup-red (the typo'd-category silent-no-op class must not ride
-# the warn-and-green lane), 2 argparse usage.
+# 409-as-success, per-target isolation, M2 redirect containment).
 #
-# Contract source: chunks/C05.md "## Tests" + plan "Fan-out contract" (the
-# pinned interface every later chunk consumes). AC trace:
-# t1[AC1] t2[AC11] t3[AC3 + vault parser matrix incl. OQ8 newline form and
-# the tolerant paste-accident defense] t4[AC4 + AC8 shared no-echo grep]
-# t5[AC5 + ThreadPool(4) no-post-settle-race + OQ8 live comma rerun]
-# t6[AC5 prune pinning] t7[AC5 409-as-success-continues] t8[AC6 isolation
-# incl. the RULED OQ9 warn-and-skip honest-failed posture] t9[AC7 ref gate]
-# t10[AC9 dry-run GET-only] t11[AC10 all-skipped warning] t12[AC8 secret
-# hygiene sweep + no-positional/unknown-flag usage posture].
-# Review round 1 (CHANGES_REQUESTED) arms, folded into those legs —
-# t4: M1 reversed `token:cat` record (pinned reversed-message + LEAK grep:
-# the token value must be ABSENT) and the cat[:64] echo bound; m2 empty
-# allowed_refs; m3 unknown top-level roster keys named; nits finiteness
-# (Infinity/NaN without importing math) and whole-number workers.
-# t8: M2 redirect containment on BOTH legs (list 302 / sync 301) against a
-# separate-origin target stub whose access log witnesses bearer egress, and
-# a 3xx page that can never earn result=ok. t11: m1 column-0 anchored,
-# exactly-one ::warning:: on a two-target all-skipped run.
+# Re-pin at reopen3 (R7, plan "Fan-out INPUT contract", waves 10–11): the
+# single-blob ARGOCD_SYNC_TOKENS vault DIES — targets are DISCOVERED from the
+# environment's ARGOCD_SYNC_<CAT>_URL / _TOKEN org key pairs (category
+# upper-snake: GPU_AI -> gpu-ai), the roster JSON shrinks to five globals,
+# --check prints from discovery, the configured predicate is TOKEN-side, and
+# the kill lane / pair-integrity postures land exactly as pinned by DECISIONS
+# 2026-11-25 (micro-calls a-h). The FAN-OUT CORE is untouched: legs t5(happy)
+# –t11 semantics assertions are the C09 AC10 guarantee, and t13 diffs the
+# core function bodies against the shipped baseline directly.
 #
-# OQ8 ruled 2026-11-23: newline `cat:token` records are the vault form; the
-# [,\s]+ split is paste-accident defense, so comma/space/mixed/CRLF inputs
-# must still parse — this suite proves both halves.
+# Contract source: chunks/C09.md "## Tests" re-pin map + plan "Fan-out INPUT
+# contract". AC trace: t1[AC1] t2[globals schema + micro-call f] t3[AC5 AC8]
+# t4[AC4 AC11] t5[AC6 AC9] t6[AC9] t7[AC9] t8[AC9+M2] t9[AC9] t10[AC7 AC9]
+# t11[AC9] t12[AC8] t13[AC10].
+#
+# TRANSITIONAL-ERA SHIM (why run_core exists): the core-semantics legs must
+# stay green ON THE SHIPPED script today (C09's red map keeps them out of the
+# designed-red set — only input-surface legs move) and stay green on the
+# re-cut script after C09. No single invocation shape satisfies both eras
+# (shipped requires roster targets[]; C09 forbids it), so run_core() tries
+# the C09 form first (pairs env + five-globals roster) and re-runs the
+# legacy form (blob env + targets roster) ONLY when the fingerprint is the
+# shipped-era roster-schema ConfigError. Any other red stands as a real
+# failure — an input-layer regression can never fall back silently: the
+# discovery legs (t3/t4/t5-kill/t10) have no fallback and stay red until
+# C09 lands.
+#
+# The suite's invocations are SOURCED-ENV ONLY: pair values flow through the
+# subprocess environment (the runbook's `set -a; source env-file; set +a`
+# recipe shape) — never KEY=value argv — and t12 sweeps the argv ledger to
+# prove it (no '=' byte, no ARGOCD_SYNC name, no token material anywhere).
 #
 # Offline-deterministic: the fake ArgoCD API is threaded loopback
-# http.server stubs (the shipped relay-suite stub pattern, re-armed for
-# the script's REST-client side); scratch under
-# /tmp/opencode per the repo's script.sh precedent. Every fixture token is
-# JWT-shaped and carries the SENT23 stem so t12's zero-echo sweep is one
-# grep over every captured leg log + the argv ledger.
+# http.server stubs (the relay-suite stub pattern, re-armed for the
+# script's REST-client side); scratch under /tmp/opencode per the repo's
+# script.sh precedent. Every fixture token is JWT-shaped and carries the
+# SENT23 stem so t12's zero-echo sweep is one grep over every captured leg
+# log + the argv ledger.
 #
-# Run from the repo root:
-#   bash tests/argocd-fanout/behavior.sh            # t1..t12
-#   bash tests/argocd-fanout/behavior.sh t4 t8      # subset
-# Env: FANOUT_SCRIPT / FANOUT_ROSTER point the suite at script/roster
-#      copies (green-shape proofs, mutation legs).
+# Red posture (C09 "Red posture"): t1 fail-fasts naming the absent script;
+# the input-surface legs (t1 roster arms, t2, t3, t4, t5, t9, t10) are
+# designed-red until C09 lands; the core-semantics legs (t5-happy/t6/t7/t8/
+# t11) ride green across both eras via run_core, and t13 is green today as
+# the core-diff regression pin (it reddens if C09 gains ANY hunk in the
+# named core functions).
 #
-# Red posture (C05 "Red posture"): t1 fail-fasts naming the absent script
-# until C05 lands; the roster pins (t2) are red until the JSON lands.
-#
-# HARNESS-PINNED SURFACE (authored before the implementation, same doctrine
-# as the shipped relay suite — minimal observation contracts beyond the
-# chunk's CLI list): 1. --dry-run prints one per-target line carrying
-# `target=<name>` (the audit grammar extended to the dry mode — the only
-# greppable channel for AC9's eligibility lines). 2. Config-error lines land
-# on stderr (AC4 says "stderr line prefixed"). 3. The ref-gate line names the
-# rejected ref (AC7's "one log line" must be attributable to the gate).
+# HARNESS-PINNED SURFACE (authored before the implementation): 1. --dry-run
+# prints one per-target line carrying `target=<name>`. 2. Config-error lines
+# land on stderr (the `argocd-fanout config:` prefix is contract-pinned).
+# 3. The ref-gate line names the rejected ref. 4. The kill-lane stdout is
+# EXACTLY the pinned column-0 warning line (AC6: no other stdout).
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
+# C09's AC10 core-diff baseline (shipped tip; review may repoint CHUNK_BASE).
+CORE_BASE="${CHUNK_BASE:-6ed762140}"
 
 checks=0
 
@@ -77,10 +80,10 @@ ok() {
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 12); do WANT["t$i"]=1; done
+  for i in $(seq 1 13); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|1[0-2])$ ]] || fail "unknown test id '$a' (expected t1..t12)"
+    [[ "$a" =~ ^t([1-9]|1[0-3])$ ]] || fail "unknown test id '$a' (expected t1..t13)"
     WANT["$a"]=1
   done
 fi
@@ -94,61 +97,88 @@ mkdir -p "$OUT"
 # py_compile writes __pycache__ next to the source; keep it out of the repo
 # so disposal sweeps never see test-session noise.
 export PYTHONPYCACHEPREFIX="$WORK/pycache"
-export BEH_FANOUT="$FANOUT" BEH_ROSTER="$ROSTER" BEH_OUT="$OUT"
+export BEH_FANOUT="$FANOUT" BEH_ROSTER="$ROSTER" BEH_OUT="$OUT" BEH_CORE_BASE="$CORE_BASE"
 
-# --- t1: files, stdlib-only import set, docker-free (AC1) ----------------------
+# --- t1: files, exact import set, five-globals roster (AC1) ----------------------
 if want t1; then
   [ -f "$FANOUT" ] ||
-    fail "t1: $FANOUT does not exist — C05 (the fan-out engine) is not implemented (red posture: this fail-fast names the absent script)"
+    fail "t1: $FANOUT does not exist — the fan-out engine is not implemented (red posture: this fail-fast names the absent script)"
   [ -f "$ROSTER" ] ||
-    fail "t1: $ROSTER does not exist — C05 ships the roster beside the script"
+    fail "t1: $ROSTER does not exist — the roster globals ship beside the script"
   python3 -m py_compile "$FANOUT" || fail "t1: py_compile failed on $FANOUT"
   if ! python3 - "$FANOUT" <<'PY'
-import re, sys
+import json, os, re, subprocess, sys
 
 src = open(sys.argv[1]).read()
-# The C05 import budget is main.py's set minus the http/hmac server side
-# (plan: json/urllib/re/threading/concurrent.futures; pyyaml is NOT
-# guaranteed on the job image, requests would break stdlib-only).
-ALLOWED = {'argparse', 'concurrent', 'dataclasses', 'json', 'os', 're', 'sys',
-           'threading', 'time', 'urllib'}
+# C09 AC1 pins the import set UNCHANGED from the shipped script: no module
+# may be ADDED (the job image guarantees only this budget), pyyaml/requests
+# stay banned, and a pure REST client spawns nothing.
+EXPECTED = {'argparse', 'concurrent', 'json', 'os', 're', 'sys', 'time', 'urllib'}
 mods = set()
 for m in re.finditer(r'(?m)^(?:import|from)\s+([A-Za-z_][A-Za-z0-9_]*)', src):
     mods.add(m.group(1))
-extra = sorted(mods - ALLOWED)
-if extra:
-    print('FAIL: t1: non-stdlib/outside-budget imports: %s (allowed: %s)'
-          % (', '.join(extra), ', '.join(sorted(ALLOWED))), file=sys.stderr)
+if mods != EXPECTED:
+    extra = sorted(mods - EXPECTED)
+    missing = sorted(EXPECTED - mods)
+    print('FAIL: t1: import set changed: added %s, removed %s (C09 AC1: unchanged from the shipped stdlib budget)'
+          % (extra or '[]', missing or '[]'), file=sys.stderr)
     sys.exit(1)
 for banned in ('yaml', 'requests'):
     if re.search(r'(?m)^(?:import|from)\s+%s\b' % banned, src):
-        print('FAIL: t1: imports %s — the job image does not guarantee it (plan Context: stdlib-only)' % banned, file=sys.stderr)
+        print('FAIL: t1: imports %s — the job image does not guarantee it (stdlib-only)' % banned, file=sys.stderr)
         sys.exit(1)
-# A pure REST client: no child processes, no docker, no server side.
 for word in ('subprocess', 'docker'):
     if word in src:
         print('FAIL: t1: %r appears in the script — the fan-out spawns nothing (docker-free by ruling; the runner already carries python3)' % word, file=sys.stderr)
         sys.exit(1)
+
+# Roster: EXACTLY the five globals (targets[] dies with R7; no compat shim).
+roster = json.load(open(os.environ["BEH_ROSTER"]))
+if set(roster) != {"allowed_refs", "tracked_repo", "settle_seconds",
+                   "target_timeout_seconds", "parallel_workers"}:
+    print('FAIL: t1: roster keys are %s, expected exactly the five globals (R7 consequence 3: targets[] DELETES — env discovery is the endpoint list, no category list in code or JSON)'
+          % sorted(roster), file=sys.stderr)
+    sys.exit(1)
+
+# Legacy roster carrying `targets` must be RED via the unknown-keys rule (C09
+# task: no back-compat). Written scratch, run through --check with any env.
+import os
+legacy = dict(roster)
+legacy["targets"] = [{"name": "dev", "url": "https://cluster.example", "root_app": "dev"}]
+path = os.path.join(os.environ["BEH_OUT"], "..", "t1-legacy-roster.json")
+with open(path, "w") as f:
+    json.dump(legacy, f)
+env = {k: v for k, v in os.environ.items() if not k.startswith("ARGOCD_SYNC")}
+env["ARGOCD_SYNC_DEV_URL"] = "https://cluster.example"
+env["ARGOCD_SYNC_DEV_TOKEN"] = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtY3AtYm90In0.devSENT23xKq"
+r = subprocess.run([sys.executable, "-u", sys.argv[1], "--check", "--config", path],
+                   capture_output=True, text=True, env=env, timeout=30)
+if r.returncode != 1 or "targets" not in (r.stderr or ""):
+    print('FAIL: t1: a roster still carrying targets exited %s (expected 1, unknown-keys message naming targets) — R7 forbids a compat shim:\n%s'
+          % (r.returncode, (r.stdout + r.stderr)[:400]), file=sys.stderr)
+    sys.exit(1)
 print('ok: t1')
 PY
   then
-    fail "t1: the script shape contract is violated (reason printed above)"
+    fail "t1: the script/roster shape contract is violated (reason printed above)"
   fi
-  python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$ROSTER" \
-    || fail "t1: $ROSTER is not valid JSON"
-  ok "t1: script+roster exist; py_compile clean; import set stdlib-only and inside the C05 budget; no subprocess/docker server-side surface (AC1)"
+  ok "t1: script+roster exist; py_compile clean; import set EXACTLY the shipped stdlib budget; roster is the five globals and a legacy targets-bearing roster goes RED naming the key (AC1, R7 no-back-compat)"
 fi
 
-# --- shared harness for t3..t12 -------------------------------------------------
+# --- shared harness for t3..t13 --------------------------------------------------
 if want t3 || want t4 || want t5 || want t6 || want t7 || want t8 \
-   || want t9 || want t10 || want t11 || want t12; then
+   || want t9 || want t10 || want t11 || want t12 || want t13; then
   cat > "$WORK/harness.py" <<'HARNESS'
-"""Stub ArgoCD API + fan-out subprocess driver for the cf-139 C05 contract.
+"""Stub ArgoCD API + fan-out subprocess driver for the cf-139 R7 contract.
 
 One records list per stub with seq + wall-clock stamps: per-target request
 ORDER (root sync before the post-settle list before child syncs) is the
 threading guarantee under ThreadPoolExecutor(4) — global audit-line order is
-deliberately NOT asserted (C05 notes: results print as they finish).
+deliberately NOT asserted (results print as workers finish).
+
+R7 input plumbing: pairs flow as ARGOCD_SYNC_<CAT>_URL / _TOKEN env keys
+(category upper-snake); the run_core() shim keeps the CORE-semantics legs
+green across both input eras (see behavior.sh header).
 """
 import json
 import os
@@ -169,6 +199,11 @@ SEG1 = "eyJhbGciOiJIUzI1NiJ9"
 SEG2 = "eyJzdWIiOiJtY3AtYm90In0"
 REC_LOCK = threading.Lock()
 
+# Pinned column-0 kill-lane warning (plan Fan-out INPUT contract / DECISIONS
+# micro-call a). Exact bytes: the runbook greps it and operators read it.
+WARN_KILL = ("::warning::sync-fanout not configured (no ARGOCD_SYNC_*_TOKEN keys "
+             "with values) — fan-out skipped, manual sync or the next push covers it")
+
 
 def token_for(cat):
     # JWT-shaped per the pinned regex, per-category distinctive so an echo
@@ -177,8 +212,18 @@ def token_for(cat):
     return "%s.%s.%s%sxKq" % (SEG1, SEG2, slug, STEM)
 
 
-def vault(cats, delim="\n"):
-    return delim.join("%s:%s" % (c, token_for(c)) for c in cats)
+def url_key(cat):
+    return "ARGOCD_SYNC_" + cat.upper().replace("-", "_") + "_URL"
+
+
+def token_key(cat):
+    return "ARGOCD_SYNC_" + cat.upper().replace("-", "_") + "_TOKEN"
+
+
+def vault(cats):
+    """DEAD-GRAMMAR blob (reopen2 era): only run_core's legacy fallback and
+    the blob-ignored arms construct one — never a C09 input path."""
+    return "\n".join("%s:%s" % (c, token_for(c)) for c in cats)
 
 
 def record(records, rec):
@@ -214,7 +259,7 @@ class StubArgo:
     get_raw    — respond 200 with non-JSON (garbage arm)
     get_redirect/post_redirect/redirect_to — 3xx door arms (review M2):
                  the redirect TARGET stub records separately, so bearer
-                 egress off the rostered origin is observable, not inferred.
+                 egress off the discovered origin is observable, not inferred.
     """
 
     def __init__(self, name, records, apps=None, sync_codes=None,
@@ -264,10 +309,10 @@ class StubArgo:
                         time.sleep(outer.get_delay)
                         if outer.get_raw is not None:
                             self._send(200, outer.get_raw.encode(), "application/json")
+                        elif outer.get_code != 200:
+                            self._send(outer.get_code, {"error": {"message": "mock list failure"}})
                         else:
-                            self._send(outer.get_code, {"items": list(outer.apps)}
-                                       if outer.get_code == 200 else
-                                       {"error": {"message": "mock list failure"}})
+                            self._send(200, {"items": list(outer.apps)})
                     elif outer.get_raw is not None:
                         self._send(200, outer.get_raw.encode(), "application/json")
                     elif outer.get_code != 200:
@@ -329,19 +374,20 @@ class StubArgo:
 FANOUT = os.environ["BEH_FANOUT"]
 ROSTER = os.environ["BEH_ROSTER"]
 OUT = os.environ["BEH_OUT"]
+CORE_BASE = os.environ.get("BEH_CORE_BASE", "HEAD")
 
-
-def make_roster(dirpath, targets, **overrides):
-    """Fixture roster in the SHIPPED schema (name/url/root_app, no relay-era
-    tokenKey/local/repo keys). targets: list of {name,url,root_app}."""
-    os.makedirs(dirpath, exist_ok=True)
-    cfg = {"allowed_refs": ["refs/heads/main"],
+GLOBALS = {"allowed_refs": ["refs/heads/main"],
            "tracked_repo": REPO,
            "settle_seconds": 0.2,
            "target_timeout_seconds": 5.0,
-           "parallel_workers": 4,
-           "targets": [{"name": t["name"], "url": t["url"],
-                        "root_app": t.get("root_app", t["name"])} for t in targets]}
+           "parallel_workers": 4}
+
+
+def make_globals(dirpath, **overrides):
+    """R7 roster: the five globals ONLY (targets[] is gone — endpoints are
+    discovered from env pairs)."""
+    os.makedirs(dirpath, exist_ok=True)
+    cfg = dict(GLOBALS)
     cfg.update(overrides)
     path = os.path.join(dirpath, "roster.json")
     with open(path, "w") as f:
@@ -349,20 +395,55 @@ def make_roster(dirpath, targets, **overrides):
     return path
 
 
-def run(name, *args, vault_value=None, unset=False, config=None, timeout=40):
+def make_legacy(dirpath, cats_urls, **overrides):
+    """Pre-C09 roster shape (globals + targets[]) for run_core's transitional
+    fallback ONLY. cats_urls: list of {name,url} — root_app mirrors name."""
+    os.makedirs(dirpath, exist_ok=True)
+    cfg = dict(GLOBALS)
+    cfg["targets"] = [{"name": t["name"], "url": t["url"], "root_app": t["name"]}
+                      for t in cats_urls]
+    cfg.update(overrides)
+    path = os.path.join(dirpath, "roster-legacy.json")
+    with open(path, "w") as f:
+        json.dump(cfg, f)
+    return path
+
+
+def clean_env():
+    env = dict(os.environ)
+    for k in list(env):
+        if k.startswith("ARGOCD_SYNC"):
+            del env[k]
+    return env
+
+
+def pair_env(env, pairs):
+    """pairs: {cat: {"url": str|None, "token": str|None}} — None means the
+    key is ABSENT, "" means the empty-string residue Forgejo passes."""
+    for cat, spec in (pairs or {}).items():
+        if spec is None:
+            continue
+        if spec.get("url") is not None:
+            env[url_key(cat)] = spec["url"]
+        if spec.get("token") is not None:
+            env[token_key(cat)] = spec["token"]
+    return env
+
+
+def run(name, *args, pairs=None, blob=None, raw_env=None, config=None, timeout=40):
     """Invoke the real script as a subprocess; capture combined output to
     $OUT/<name>.log and the argv to $OUT/argv.log (t12 sweeps both).
-    unset=True runs with ARGOCD_SYNC_TOKENS removed from the environment;
-    vault_value=None without unset simply means "no vault given"."""
-    cmd = [sys.executable, "-u", FANOUT, "--config", config or "UNSET", *args]
-    if config is None:
-        cmd.remove("UNSET")
-        cmd.remove("--config")
-    env = dict(os.environ)
-    if unset or vault_value is None:
-        env.pop("ARGOCD_SYNC_TOKENS", None)
-    else:
-        env["ARGOCD_SYNC_TOKENS"] = vault_value
+    Values flow through the environment ONLY — the sourced-recipe shape the
+    runbook pins; argv stays flag-and-path bytes."""
+    cmd = [sys.executable, "-u", FANOUT]
+    if config is not None:
+        cmd += ["--config", config]
+    cmd += list(args)
+    env = clean_env()
+    pair_env(env, pairs)
+    if blob is not None:
+        env["ARGOCD_SYNC_TOKENS"] = blob
+    env.update(raw_env or {})
     argv_line = "%s\t%s" % (name, "\x1f".join(cmd))
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             text=True, env=env)
@@ -378,6 +459,30 @@ def run(name, *args, vault_value=None, unset=False, config=None, timeout=40):
     with open(os.path.join(OUT, "argv.log"), "a") as f:
         f.write(argv_line + "\n")
     return proc.returncode, stdout, stderr
+
+
+# Shipped-era fingerprint: load_roster demanding the deleted targets key.
+_SHIPPED_ROSTER_ERR = re.compile(r"roster missing required fields:.*targets")
+
+
+def run_core(name, *args, urls=None, config=None, timeout=60):
+    """Core-semantics runner across the input redesign (see behavior.sh
+    header). urls: {cat: url}; tokens are always the fixture JWTs. C09 form
+    first; legacy form ONLY on the shipped-era roster-schema fingerprint."""
+    cats = sorted(urls)
+    pairs = {c: {"url": urls[c], "token": token_for(c)} for c in cats}
+    rc, out, err = run("%s-r7" % name, *args, pairs=pairs, config=config, timeout=timeout)
+    if rc == 1 and _SHIPPED_ROSTER_ERR.search(out + err):
+        # Shipped-era code: rerun the same invocation with the pre-R7 input
+        # (globals+targets roster, newline blob env) so the CORE assertions
+        # below test the same fan-out shape across both eras.
+        base = json.load(open(config)) if config else dict(GLOBALS)
+        base.pop("targets", None)
+        lc = make_legacy(os.path.join(OUT, "..", "legacy-%s" % name),
+                         [{"name": c, "url": urls[c]} for c in cats], **base)
+        rc, out, err = run("%s-legacy" % name, *args, blob=vault(cats),
+                           config=lc, timeout=timeout)
+    return rc, out, err
 
 
 AUDIT_RE = re.compile(
@@ -405,31 +510,18 @@ def bad(msg):
 HARNESS
 fi
 
-# --- t2: roster byte-pins against [P2 §1] (AC11) --------------------------------
+# --- t2: roster globals byte-pins (R7 consequence 3, micro-call f) ---------------
+# The reopen2 eleven-host pin leg is DELETED here: instance-side keys are the
+# endpoint list now, so the route-truth doctrine relocates to the runbook §6
+# table + the --check pairs listing + the dispatch smoke (DECISIONS 2026-11-25
+# micro-call f — "correct against live, never guess" transfers with them).
+# What STAYS repo-pinned: the five globals, byte-exact.
 if want t2; then
-  [ -f "$ROSTER" ] || fail "t2: $ROSTER missing — the roster pins (route-truth doctrine) cannot run until C05 lands the JSON"
+  [ -f "$ROSTER" ] || fail "t2: $ROSTER missing — the roster globals cannot be pinned"
   if ! python3 - "$ROSTER" <<'PY'
-import json, re, sys
+import json, sys
 
 roster = json.load(open(sys.argv[1]))
-
-# The [P2 RESEARCH §1] measured table, verbatim: 10 TLS-verified hosts + the
-# two sanctioned exceptions (dev, home). The route-truth leg exists because
-# the derived-form + exception indirection produced reopen1's two wrong
-# hosts — a re-derived URL must redden HERE, not a live cluster.
-P2 = {
-    "dev": "https://cluster.dev.scifi.farm",
-    "home": "https://cluster.home-lab.spencerslab.com",
-    "gpu": "https://cluster.gpu.spencerslab.com",
-    "gpu-ai": "https://cluster.gpu-ai.spencerslab.com",
-    "grow": "https://cluster.grow.spencerslab.com",
-    "infra": "https://cluster.infra.spencerslab.com",
-    "media": "https://cluster.media.spencerslab.com",
-    "monitoring": "https://cluster.monitoring.spencerslab.com",
-    "proxy-local": "https://cluster.proxy-local.spencerslab.com",
-    "proxy-backup": "https://cluster.proxy-backup.spencerslab.com",
-    "proxy-remote": "https://cluster.proxy-remote.spencerslab.com",
-}
 
 
 def bad(msg):
@@ -438,43 +530,28 @@ def bad(msg):
 
 
 if set(roster) != {"allowed_refs", "tracked_repo", "settle_seconds",
-                   "target_timeout_seconds", "parallel_workers", "targets"}:
-    bad("top-level keys are %s, expected exactly the six pinned by the plan roster schema" % sorted(roster))
+                   "target_timeout_seconds", "parallel_workers"}:
+    bad("top-level keys are %s, expected exactly the FIVE globals (R7: targets[] deleted — the endpoint list lives in the org key pairs)" % sorted(roster))
 if roster["allowed_refs"] != ["refs/heads/main"]:
     bad("allowed_refs is %r, expected exactly [\"refs/heads/main\"]" % roster["allowed_refs"])
 # R1(c): the fleet's live app sources read GitHub; flip ONLY in lockstep
-# with the cluster annotations ([P §3] — the skipped-x11 trap).
+# with the cluster annotations ([P §3] — the skipped-x11 trap). The ONE
+# global URL the design still pins repo-side.
 if roster["tracked_repo"] != "https://github.com/OwnYourIO/SpencersLab.git":
     bad("tracked_repo is %r, expected the GitHub byte-exact string" % roster["tracked_repo"])
 if roster["settle_seconds"] != 10.0 or roster["target_timeout_seconds"] != 60.0:
-    bad("tunables settle=%r timeout=%r, expected 10.0 / 60.0 (shipped values; the 20s tightening was rejected)")
+    bad("tunables settle=%r timeout=%r, expected 10.0 / 60.0 (shipped values; the 20s tightening was rejected)" % (roster["settle_seconds"], roster["target_timeout_seconds"]))
 if roster["parallel_workers"] != 4:
     bad("parallel_workers is %r, expected 4 (RESEARCH Implications 6)" % roster["parallel_workers"])
-
-targets = roster["targets"]
-if len(targets) != 11:
-    bad("%d targets, expected the 11 roster categories (backups/personal have no root app and stay absent)" % len(targets))
-names = [t.get("name") for t in targets]
-if sorted(names) != sorted(P2):
-    bad("target names %s != the 11 categories %s" % (sorted(names), sorted(P2)))
-for t in targets:
-    if set(t) != {"name", "url", "root_app"}:
-        bad("target %r carries keys %s, expected exactly {name,url,root_app} (relay-era tokenKey/local/repo keys must not survive the port)" % (t.get("name"), sorted(t)))
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+", str(t.get("name"))):
-        bad("target name %r violates the audit-line charset [A-Za-z0-9_.-]+" % t.get("name"))
-    if t.get("root_app") != t.get("name"):
-        bad("target %r root_app is %r, expected the category name" % (t.get("name"), t.get("root_app")))
-    if t.get("url") != P2[t["name"]]:
-        bad("target %r url is %r, expected the [P2 §1] literal %r (route truth: measured, never guessed)" % (t["name"], t.get("url"), P2[t["name"]]))
 print("ok: t2")
 PY
   then
-    fail "t2: the roster does not pin the [P2 §1] table / plan schema (reason printed above)"
+    fail "t2: the roster globals are not pinned (reason printed above)"
   fi
-  ok "t2: roster is exactly the 11 [P2]-byte-pinned targets + GitHub tracked_repo + shipped tunables, schema-clean (AC11)"
+  ok "t2: roster is exactly the five globals — refs/allowed_refs + GitHub tracked_repo + shipped tunables; host pins relocated per micro-call f (R7)"
 fi
 
-# --- t3: --check offline contract + vault parser matrix (AC3 + OQ8) -------------
+# --- t3: env discovery, category law, broad-catch (AC5, AC8) ----------------------
 if want t3; then
   if ! python3 - "$WORK" <<'PY'
 import os, re, sys
@@ -482,80 +559,105 @@ import os, re, sys
 sys.path.insert(0, sys.argv[1])
 import harness as h
 
-# (a) 11-category fixture roster against a bound stub: --check must print the
-# OK line, the category/URL table, the refs and tunables — and touch ZERO
-# sockets (AC3: the server is bound but untouched).
 recs = []
 stub = h.StubArgo("all", recs)
-stub.start()
+stub2 = h.StubArgo("ai", recs, apps=[h.app("gpu-ai", h.REPO, "main", "OutOfSync")])
+stub.start(); stub2.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t3"),
-                           [{"name": c, "url": stub.url} for c in h.CATS])
-    rc, out, err = h.run("t3a", "--check", vault_value=h.vault(h.CATS), config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t3"))
+
+    # (a) happy discovery incl. the underscore→hyphen law (GPU_AI -> gpu-ai,
+    # PROXY_REMOTE -> proxy-remote): --check prints the derived table.
+    pairs = {"dev": {"url": stub.url, "token": h.token_for("dev")},
+             "gpu-ai": {"url": stub2.url, "token": h.token_for("gpu-ai")},
+             "proxy-remote": {"url": stub.url, "token": h.token_for("proxy-remote")}}
+    rc, out, err = h.run("t3a", "--check", pairs=pairs, config=roster)
     blob = out + err
     if rc != 0:
-        h.bad("t3: --check on the valid fixture exited %s\n%s" % (rc, blob[:600]))
+        h.bad("t3: happy discovery --check exited %s (env pairs must BE the input now):\n%s" % (rc, blob[:600]))
     if "argocd-fanout --check: OK" not in blob:
-        h.bad("t3: no `argocd-fanout --check: OK` line (AC3 pinned the exact success line):\n%s" % blob[:600])
-    for c in h.CATS:
-        if c not in blob:
-            h.bad("t3: --check table has no row for category %r (AC3: 11-line category/URL table)" % c)
-    if stub.url not in blob:
-        h.bad("t3: --check table does not print the target URLs (AC3)")
-    if "refs/heads/main" not in blob:
-        h.bad("t3: --check never echoes allowed_refs (AC3)")
-    if not (re.search(r"(?i)settle", blob) and re.search(r"(?i)timeout", blob) and "4" in blob):
-        h.bad("t3: --check never echoes the tunables row (AC3: settle/timeout/workers are printed):\n%s" % blob[:600])
+        h.bad("t3: no OK line:\n%s" % blob[:400])
+    for cat in ("dev", "gpu-ai", "proxy-remote"):
+        if cat not in blob:
+            h.bad("t3: table has no row for category %r — upper-snake env names must derive hyphen categories (GPU_AI→gpu-ai): %s" % (cat, blob[:500]))
+    if "gpu_ai" in blob:
+        h.bad("t3: an underscore category leaked into the table — the category law maps _ to - (audit grammar and org keys must agree)")
+    if stub.url not in blob or stub2.url not in blob:
+        h.bad("t3: --check table does not print the DISCOVERED env URLs (the pairs are the endpoint list now)")
+    if not re.search(r"(?m)^pairs: 3 targets discovered \(values never printed\)", blob):
+        h.bad("t3: the pinned single-line `pairs: N targets discovered (values never printed)` phrase is missing (plan --check contract):\n%s" % blob[:500])
     if recs:
-        h.bad("t3: --check opened sockets — %d stub requests landed (AC3: ZERO network; --check must never dial, --dry-run is the dialing mode)" % len(recs))
+        h.bad("t3: --check opened sockets — %d requests landed (zero-network law survives R7)" % len(recs))
     if h.STEM in blob:
-        h.bad("t3: --check output echoes vault token material (AC8)")
+        h.bad("t3: --check echoes token material (AC8)")
 
-    # (b) the SHIPPED roster parses offline too (env FANOUT_ROSTER default),
-    # proven against the same stub-free code path with a wall guard: a
-    # --check that dials the 11 real hosts would hang or fail here.
-    rc, out, err = h.run("t3b", "--check", vault_value=h.vault(h.CATS),
-                         config=h.ROSTER, timeout=20)
+    # (b) BROAD-CATCH: a typo'd enumeration row with a NON-EMPTY value must
+    # go RED naming the RAW KEY — silently ignoring it re-opens the
+    # silent-cluster-loss class the config-red posture exists for.
+    for tag, key in (("lower", "ARGOCD_SYNC_gpu2_URL"),
+                     ("dot", "ARGOCD_SYNC_A.B_TOKEN"),
+                     ("double-underscore", "ARGOCD_SYNC_GPU__URL"),
+                     ("leading-underscore", "ARGOCD_SYNC__DEV_TOKEN")):
+        rc, out, err = h.run("t3b-%s" % tag, "--check",
+                             pairs={"dev": {"url": stub.url, "token": h.token_for("dev")}},
+                             raw_env={key: stub.url}, config=roster)
+        blob = out + err
+        if rc != 1:
+            h.bad("t3[%s]: malformed env key %r with a value exited %s, expected 1 (broad-catch strict-validate, DECISIONS (c))" % (tag, key, rc))
+        if key not in blob:
+            h.bad("t3[%s]: the RED does not name the raw key %r — operators cannot find the typo'd row otherwise:\n%s" % (tag, key, blob[:400]))
+        if h.STEM in blob:
+            h.bad("t3[%s]: token material echoed (AC8)" % tag)
+
+    # (c) malformed-but-EMPTY residue is ignored (an unattempted row).
+    rc, out, err = h.run("t3c", "--check",
+                         pairs={"dev": {"url": stub.url, "token": h.token_for("dev")}},
+                         raw_env={"ARGOCD_SYNC_gpu2_URL": "", "ARGOCD_SYNC_A.B_TOKEN": ""},
+                         config=roster)
     blob = out + err
     if rc != 0 or "argocd-fanout --check: OK" not in blob:
-        h.bad("t3: --check on the shipped roster exited %s / no OK line (the shipped file must validate as-is):\n%s" % (rc, blob[:600]))
-    for c in h.CATS:
-        if c not in blob:
-            h.bad("t3: shipped-roster --check table has no row for %r" % c)
-    if not ("10" in blob and "60" in blob):
-        h.bad("t3: shipped-roster --check does not print the shipped tunables 10/60 (AC3)")
+        h.bad("t3: empty malformed residue must be IGNORED (rc %s):\n%s" % (rc, blob[:400]))
+    if "pairs: 1 targets discovered" not in blob:
+        h.bad("t3: empty malformed residue changed the discovered count:\n%s" % blob[:400])
+    if "gpu2" in blob or "A.B" in blob:
+        h.bad("t3: ignored empty keys were echoed anyway:\n%s" % blob[:400])
+
+    # (d) the dead blob name is ignored BY CONSTRUCTION and never echoed.
+    rc, out, err = h.run("t3d", "--check",
+                         pairs={"dev": {"url": stub.url, "token": h.token_for("dev")}},
+                         blob="dev:%s\nZQ:%s" % (h.token_for("dev"), h.token_for("gpu")),
+                         config=roster)
+    blob = out + err
+    if rc != 0 or "pairs: 1 targets discovered" not in blob:
+        h.bad("t3: ARGOCD_SYNC_TOKENS must match nothing and change nothing (rc %s):\n%s" % (rc, blob[:400]))
+    if "ARGOCD_SYNC_TOKENS" in blob:
+        h.bad("t3: the dead blob KEY NAME was echoed — ignored names stay silent (AC5)")
     if h.STEM in blob:
-        h.bad("t3: shipped-roster --check echoes token material (AC8)")
+        h.bad("t3: blob junk echoed (AC8)")
 
-    # (c) parser matrix: OQ8 ruled newline records (the documented form,
-    # per-line masking [26]); the [,\s]+ tolerance is paste-accident defense,
-    # so comma / space / mixed+CRLF+edge-blank forms must ALL parse.
-    for form, val in (
-            ("comma", h.vault(h.CATS, delim=",")),
-            ("space", h.vault(h.CATS, delim=" ")),
-            ("mixed+CRLF+edges", "\r\n \r\n" + ",\t".join("%s:%s" % (c, h.token_for(c)) for c in h.CATS[:6])
-             + "  \n  " + "\r\n".join("%s:%s" % (c, h.token_for(c)) for c in h.CATS[6:]) + "\n\n"),
-            ("trailing-newline", h.vault(h.CATS) + "\n"),
-    ):
-        rc, out, err = h.run("t3c-%s" % form.replace("+", "_").replace(" ", ""),
-                             "--check", vault_value=val, config=roster)
-        blob = out + err
-        if rc != 0 or "argocd-fanout --check: OK" not in blob:
-            h.bad("t3: delimiter form %r must parse (paste-accident defense, plan vault parsing): rc=%s\n%s" % (form, rc, blob[:400]))
-        if h.STEM in blob:
-            h.bad("t3: %s-form --check echoes token material (AC8)" % form)
+    # (e) URL trailing-slash normalization: the discovered URL is dialed
+    # byte-clean (rstrip('/') ported to the env path).
+    live = h.make_globals(os.path.join(sys.argv[1], "t3e"))
+    rc, out, err = h.run("t3e", "--ref", "refs/heads/main",
+                         pairs={"dev": {"url": stub.url + "/", "token": h.token_for("dev")}},
+                         config=live)
+    if rc != 0:
+        h.bad("t3: trailing-slash run exited %s\n%s" % (rc, (out + err)[:400]))
+    paths = [r["path"] for r in recs if r["stub"] == "all"]
+    if any("//" in p for p in paths):
+        h.bad("t3: a double-slash path landed (%s) — the rstrip('/') normalization must apply to ENV URLs (stub URL was built without a trailing slash, so the slash came from the pair)" % paths)
 finally:
-    stub.stop()
+    stub.stop(); stub2.stop()
 
-print("ok: t3 — --check exits 0 with the OK line, 11-row table, refs and tunables while the bound stub sees ZERO requests; the shipped roster validates offline within 20s; newline/comma/space/mixed-CRLF/edge-blank vault forms all parse; no token echo anywhere (AC3 + OQ8)")
+print("ok: t3 — GPU_AI/PROXY_REMOTE pairs discover to hyphen categories with the pinned pairs-line check output and zero sockets; four malformed-key shapes with values go RED naming the raw key; empty malformed residue and the dead blob name are ignored and unechoed; env URLs normalize the trailing slash (AC5, AC8)")
 PY
   then
-    fail "t3: the --check offline contract is violated (reason printed above)"
+    fail "t3: the discovery contract is violated (reason printed above)"
   fi
-  ok "t3: --check offline contract + vault parser matrix hold (AC3, OQ8)"
+  ok "t3: discovery + category law + broad-catch matrix hold (AC5/AC8)"
 fi
 
-# --- t4: config-error vocabulary, exit 1, loud, never echoing values (AC4/AC8) --
+# --- t4: pair-integrity aggregation + preserved roster guards (AC4, AC11) --------
 if want t4; then
   if ! python3 - "$WORK" <<'PY'
 import json, os, re, sys
@@ -567,149 +669,133 @@ recs = []
 stub = h.StubArgo("probe", recs, apps=[h.app("dev", h.REPO, "main", "OutOfSync")])
 stub.start()
 try:
-    good_roster = h.make_roster(os.path.join(sys.argv[1], "t4"), [
-        {"name": "dev", "url": stub.url},
-        {"name": "grow", "url": stub.url},
-    ])
-    good_vault = h.vault(["dev", "grow"])
+    roster = h.make_globals(os.path.join(sys.argv[1], "t4"))
+    HEALTHY = {"dev": {"url": stub.url, "token": h.token_for("dev")}}
 
-    def load_roster(path):
-        return json.load(open(path))
-
-    def roster_copy(mutate, tag):
-        cfg = load_roster(good_roster)
-        mutate(cfg)
-        path = os.path.join(sys.argv[1], "t4-%s.json" % tag)
-        with open(path, "w") as f:
-            json.dump(cfg, f)
-        return path
-
-    # (name, argv-extra, vault value or None+unset, expected stderr regex,
-    # extra no-echo value). LIVE mode (no --check): the exact invocation the
-    # C06 job runs — config errors must exit 1 there (the ruled red), and
-    # they must be caught BEFORE any network (zero stub dials).
-    # Review-round-1 arms added: M1 reversed `token:cat` paste (the first
-    # field is JWT-shaped -> the reversed message, NEVER the value) and the
-    # cat[:64] echo bound (probed separately below the loop); m2 empty
-    # allowed_refs (a legal-but-silently-dead roster goes RED); m3 unknown
-    # top-level keys (relay-era leftovers cannot linger green); the
-    # nit-arms keep the finiteness/whole-number reds in the same family.
-    arms = [
-        ("unknown-category", good_vault + "\nnotacat:" + h.token_for("notacat"), None,
-         r'argocd-fanout config: record for unknown category "notacat"'),
-        ("reversed", h.token_for("dev") + ":dev", None,
-         r'argocd-fanout config: vault record looks reversed \(token before category\)'),
-        ("missing-token", h.vault(["dev"]), None,
-         r'argocd-fanout config: roster target "grow" has no token'),
-        ("non-jwt", "dev:%s\ngrow:plain-secret-not-a-jwt" % h.token_for("dev"), None,
-         r'argocd-fanout config: token for "grow" is not JWT-shaped'),
-        ("no-colon", good_vault + "\nbogusNOCOLONRECORD", None,
-         r'argocd-fanout config:'),
-        ("empty-env", "", None, r'argocd-fanout config:'),
-        ("unset-env", None, True, r'argocd-fanout config:'),
-        ("bad-json", good_vault, None, r'argocd-fanout config:'),          # config swapped below
-        ("unreadable-file", good_vault, None, r'argocd-fanout config:'),   # config swapped below
-        ("tags-ref", good_vault, None, r'argocd-fanout config:'),         # roster swapped
-        ("short-ref", good_vault, None, r'argocd-fanout config:'),
-        ("dup-name", good_vault, None, r'argocd-fanout config:'),
-        ("bad-scheme", good_vault, None, r'argocd-fanout config:'),
-        ("empty-refs", good_vault, None,
-         r'argocd-fanout config:.*allowed_refs'),                          # m2: [] must go RED, not silently gate every push off
-        ("extra-keys", good_vault, None,
-         r'argocd-fanout config:.*clusterHosts'),                          # m3: unknown top-level key named in the message
-        ("inf-settle", good_vault, None,
-         r'argocd-fanout config:.*settle_seconds'),                        # nit: Infinity/NaN rejected without importing math
-        ("nan-timeout", good_vault, None,
-         r'argocd-fanout config:.*target_timeout_seconds'),
-        ("frac-workers", good_vault, None,
-         r'argocd-fanout config:.*parallel_workers'),                      # nit: 4.5 truncating silently is a config typo class
-    ]
+    def grow(spec):
+        p = dict(HEALTHY)
+        p["grow"] = spec
+        return p
 
     def check(tag, rc, out, err, pat, no_echo=()):
         blob = out + err
         if rc != 1:
-            h.bad("t4[%s]: exit %s, expected 1 — setup errors are the ruled RED lane (DECISIONS 2026-11-23; the job must fail, not warn-and-green a permanent silent no-op)" % (tag, rc))
+            h.bad("t4[%s]: exit %s, expected 1 — pair-integrity/config errors are the ruled RED lane (token-side configured predicate; a residue beside a live fleet must never warn-green a half-sync)" % (tag, rc))
         if not any(re.search(pat, ln) for ln in err.splitlines()):
-            h.bad("t4[%s]: stderr lacks the pinned `argocd-fanout config:` shape (%r):\n%s" % (tag, pat, err[:400]))
+            h.bad("t4[%s]: stderr lacks the pinned shape (%r):\n%s" % (tag, pat, err[:400]))
         if h.STEM in blob:
             h.bad("t4[%s]: output echoes vault token material (AC8: messages name categories and fields, never values)" % tag)
         for v in no_echo:
             if v in blob:
                 h.bad("t4[%s]: output echoes the offending value %r (AC8: never values)" % (tag, v))
 
-    for tag, vval, unset, pat in arms:
-        cfg = good_roster
-        extra_no = ()
-        if tag == "bad-json":
-            cfg = os.path.join(sys.argv[1], "t4-bad.json")
-            open(cfg, "w").write("{ not valid json ]")
-        elif tag == "unreadable-file":
-            cfg = os.path.join(sys.argv[1], "t4-absent.json")
-        elif tag == "tags-ref":
-            cfg = roster_copy(lambda c: c.update(allowed_refs=["refs/heads/main", "refs/tags/v1"]), "tags")
-        elif tag == "short-ref":
-            cfg = roster_copy(lambda c: c.update(allowed_refs=["main"]), "short")
-        elif tag == "dup-name":
-            cfg = roster_copy(lambda c: c["targets"].append({"name": "dev", "url": stub.url, "root_app": "dev"}), "dup")
-        elif tag == "bad-scheme":
-            cfg = roster_copy(lambda c: c["targets"][0].update(url="cluster.dev.lan"), "scheme")
-        elif tag == "empty-refs":
-            cfg = roster_copy(lambda c: c.update(allowed_refs=[]), "emptyrefs")
-        elif tag == "extra-keys":
-            cfg = roster_copy(lambda c: c.update(clusterHosts={"dev": "x"}, tokenKey="legacy"), "extrakeys")
-        elif tag == "inf-settle":
-            cfg = roster_copy(lambda c: c.update(settle_seconds=float("inf")), "infsettle")
-        elif tag == "nan-timeout":
-            cfg = roster_copy(lambda c: c.update(target_timeout_seconds=float("nan")), "nantimeout")
-        elif tag == "frac-workers":
-            cfg = roster_copy(lambda c: c.update(parallel_workers=4.5), "fracworkers")
-        elif tag == "non-jwt":
-            extra_no = ("plain-secret-not-a-jwt",)
-        elif tag == "reversed":
-            extra_no = (h.token_for("dev"),)
+    # Per-violation pinned phrases, one arm each (DECISIONS (b): collected,
+    # one aggregated line; these arms have the healthy dev pair so the lane
+    # is CONFIGURED and integrity RED fires, not the kill lane).
+    arms = [
+        ("url-without-token", grow({"url": stub.url}),
+         r'argocd-fanout config:.*category "grow" missing TOKEN value'),
+        ("token-without-url", grow({"token": h.token_for("grow")}),
+         r'argocd-fanout config:.*category "grow" missing URL value'),
+        ("empty-token-residue", grow({"url": stub.url, "token": ""}),
+         r'argocd-fanout config:.*category "grow" missing TOKEN value'),
+        ("empty-url-residue", grow({"url": "", "token": h.token_for("grow")}),
+         r'argocd-fanout config:.*category "grow" missing URL value'),
+        ("non-jwt-token", grow({"url": stub.url, "token": "plain-secret-not-a-jwt"}),
+         r'argocd-fanout config:.*category "grow" token is not JWT-shaped',
+         ("plain-secret-not-a-jwt",)),
+        ("bad-scheme-url", grow({"url": "cluster.grow.lan", "token": h.token_for("grow")}),
+         r'argocd-fanout config:.*category "grow" URL must start with http\(s\)://'),
+        ("userinfo-url", grow({"url": "https://user:pw@cluster.grow.lan", "token": h.token_for("grow")}),
+         r'argocd-fanout config:.*category "grow"'),
+        ("query-url", grow({"url": "https://cluster.grow.lan?redirect=1", "token": h.token_for("grow")}),
+         r'argocd-fanout config:.*category "grow"'),
+    ]
+    for arm in arms:
+        tag, pairs, pat = arm[0], arm[1], arm[2]
+        no_echo = arm[3] if len(arm) > 3 else ()
         rc, out, err = h.run("t4-%s" % tag, "--ref", "refs/heads/main",
-                             vault_value=vval, unset=bool(unset), config=cfg)
-        check(tag, rc, out, err, pat, extra_no)
+                             pairs=pairs, config=roster)
+        check(tag, rc, out, err, pat, no_echo)
 
-    # M1's echo BOUND: a long non-JWT first field is an informative typo,
-    # and its echo is allowed only up to 64 chars (review: cat[:64]) — an
-    # unbounded field echoed into the job log is a log-spam surface even
-    # when it is not a token. The bound is proven by the 65-char prefix
-    # being ABSENT; whether fewer chars print is the implementation's call.
-    longcat = "ZQ" * 150
-    rc, out, err = h.run("t4-echo-bound", "--ref", "refs/heads/main",
-                         vault_value=good_vault + "\n" + longcat + ":" + h.token_for("dev"),
-                         config=good_roster)
-    blob = out + err
+    # AGGREGATION (DECISIONS (b)): several broken categories at once ⇒ ONE
+    # `argocd-fanout config:` line listing them SORTED (first-error-raise
+    # would hide half a broken fleet behind one push's red).
+    p = dict(HEALTHY)
+    p["grow"] = {"token": h.token_for("grow")}                  # missing URL
+    p["media"] = {"url": stub.url, "token": "not-jwt-ZQZQ"}    # non-JWT
+    p["infra"] = {"url": "", "token": h.token_for("infra")}    # missing URL
+    rc, out, err = h.run("t4-aggregate", "--ref", "refs/heads/main",
+                         pairs=p, config=roster)
+    cfg_lines = [ln for ln in err.splitlines() if ln.startswith("argocd-fanout config:")]
     if rc != 1:
-        h.bad("t4[echo-bound]: a 300-char unknown category exited %s, expected 1" % rc)
-    if longcat[:65] in blob:
-        h.bad("t4[echo-bound]: MORE than 64 chars of the offending field echoed (cat[:64] bound, review M1 optional half) — the leak-guard must also cap non-JWT field dumps")
-    if h.STEM in blob:
-        h.bad("t4[echo-bound]: the bound-arm record echoed token material (AC8)")
+        h.bad("t4[aggregate]: exit %s, expected 1" % rc)
+    if len(cfg_lines) != 1:
+        h.bad("t4[aggregate]: %d `argocd-fanout config:` lines, expected ONE aggregated line (DECISIONS (b)):\n%s" % (len(cfg_lines), err[:400]))
+    line = cfg_lines[0] if cfg_lines else ""
+    idx = [(cat, line.find('"%s"' % cat)) for cat in ("grow", "infra", "media")]
+    if any(pos < 0 for _, pos in idx):
+        h.bad("t4[aggregate]: the single line must name every broken category: %r" % line[:300])
+    if [pos for _, pos in idx] != sorted(pos for _, pos in idx):
+        h.bad("t4[aggregate]: categories must be listed SORTED (grow, infra, media), got %r" % line[:300])
+    if h.STEM in line:
+        h.bad("t4[aggregate]: the aggregated line echoes token material (AC8)")
+
+    # The --check mode enforces the SAME integrity matrix (AC7 tail).
+    rc, out, err = h.run("t4-check-integrity", "--check",
+                         pairs=grow({"url": stub.url}), config=roster)
+    check("check/integrity", rc, out, err,
+          r'argocd-fanout config:.*category "grow" missing TOKEN value')
+
+    # AC11: the preserved roster guards (the reopen2 review-round family —
+    # allowed_refs/tunables/roster-shape semantics survive R7 UNCHANGED).
+    def roster_copy(mutate, tag):
+        cfg = json.load(open(roster))
+        mutate(cfg)
+        path = os.path.join(sys.argv[1], "t4-%s.json" % tag)
+        with open(path, "w") as f:
+            json.dump(cfg, f)
+        return path
+
+    guards = [
+        ("empty-refs", lambda c: c.update(allowed_refs=[]), r'argocd-fanout config:.*allowed_refs'),
+        ("tags-ref", lambda c: c.update(allowed_refs=["refs/heads/main", "refs/tags/v1"]), r'argocd-fanout config:'),
+        ("short-ref", lambda c: c.update(allowed_refs=["main"]), r'argocd-fanout config:'),
+        ("extra-keys", lambda c: c.update(clusterHosts={"dev": "x"}), r'argocd-fanout config:.*clusterHosts'),
+        ("inf-settle", lambda c: c.update(settle_seconds=float("inf")), r'argocd-fanout config:.*settle_seconds'),
+        ("nan-timeout", lambda c: c.update(target_timeout_seconds=float("nan")), r'argocd-fanout config:.*target_timeout_seconds'),
+        ("frac-workers", lambda c: c.update(parallel_workers=4.5), r'argocd-fanout config:.*parallel_workers'),
+    ]
+    for tag, mutate, pat in guards:
+        cfg = roster_copy(mutate, tag)
+        rc, out, err = h.run("t4-%s" % tag, "--ref", "refs/heads/main",
+                             pairs=HEALTHY, config=cfg)
+        check(tag, rc, out, err, pat)
+
+    # Malformed roster files.
+    bad_json = os.path.join(sys.argv[1], "t4-bad.json")
+    open(bad_json, "w").write("{ not valid json ]")
+    rc, out, err = h.run("t4-bad-json", "--ref", "refs/heads/main",
+                         pairs=HEALTHY, config=bad_json)
+    check("bad-json", rc, out, err, r'argocd-fanout config:')
+    rc, out, err = h.run("t4-unreadable", "--ref", "refs/heads/main",
+                         pairs=HEALTHY, config=os.path.join(sys.argv[1], "t4-absent.json"))
+    check("unreadable-file", rc, out, err, r'argocd-fanout config:')
 
     if recs:
         h.bad("t4: %d stub requests landed despite every arm being a config error — validation must fail closed BEFORE the network (a dialed-anyway arm can half-sync)" % len(recs))
-
-    # The --check mode must reject the SAME classes (it "parses roster +
-    # vault fully", plan Modes).
-    rc, out, err = h.run("t4-check-unknown", "--check",
-                         vault_value=good_vault + "\nnotacat:" + h.token_for("notacat"),
-                         config=good_roster)
-    check("check/unknown-category", rc, out, err,
-          r'argocd-fanout config: record for unknown category "notacat"')
 finally:
     stub.stop()
 
-print("ok: t4: every config-error class exits 1 with the pinned `argocd-fanout config:` stderr shape (the four byte-pinned messages plus the field-naming m1/m2/m3/nit arms), none echoes any token or offending value, the M1 echo stays within the cat[:64] bound, none dials the network, and --check enforces the same vocabulary (AC4, AC8, ruled red-posture, review-round arms M1/m2/m3/nits)")
+print("ok: t4 — all eight pair-integrity violations exit 1 naming their category with the pinned phrases (values never echoed), multi-category failures aggregate into ONE sorted line, --check enforces the same matrix, and the preserved roster guards (refs/tunables/schema) stay red (AC4, AC11)")
 PY
   then
-    fail "t4: the config-error contract is violated (reason printed above)"
+    fail "t4: the pair-integrity/guards contract is violated (reason printed above)"
   fi
-  ok "t4: config-error vocabulary + zero-dial + zero-echo hold in live and --check modes (AC4/AC8)"
+  ok "t4: aggregated pair-integrity RED + preserved roster guards + zero-dial/zero-echo (AC4/AC11)"
 fi
 
-# --- t5: happy fan-out over stubbed clusters (AC5) ------------------------------
+# --- t5: kill lane (3 arms) + happy fan-out ordering + ref gate (AC6, AC9) --------
 if want t5; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -718,26 +804,63 @@ sys.path.insert(0, sys.argv[1])
 import harness as h
 
 recs = []
-dev = h.StubArgo("dev", recs, apps=[
+stub = h.StubArgo("all", recs)
+stub.start()
+try:
+    roster = h.make_globals(os.path.join(sys.argv[1], "t5"))
+
+    # Kill-lane arms (AC6): the TOKEN-side predicate decides; URLs populated
+    # or not, keys absent, or all-empty strings — three arms — ⇒ pinned
+    # column-0 warning, exit 0, ZERO sockets, no table, no summary.
+    kill_arms = [
+        ("keys-absent", {}),
+        ("urls-populated", {"dev": {"url": stub.url}, "gpu": {"url": stub.url}}),
+        ("all-empty", {"dev": {"url": stub.url, "token": ""}, "gpu": {"token": ""}}),
+        ("empty-malformed-residue", {"dev": {"url": stub.url, "token": ""}}),
+    ]
+    for tag, pairs in kill_arms:
+        rc, out, err = h.run("t5-kill-%s" % tag, "--ref", "refs/heads/main",
+                             pairs=pairs, config=roster)
+        if rc != 0:
+            h.bad("t5[kill/%s]: an unconfigured fleet is a designed GREEN skip, got exit %s\n%s" % (tag, rc, (out + err)[:400]))
+        if recs:
+            h.bad("t5[kill/%s]: %d stub requests landed on the kill lane (zero-socket law)" % (tag, len(recs)))
+        if h.WARN_KILL not in out:
+            h.bad("t5[kill/%s]: the pinned column-0 warning is absent (DECISIONS micro-call a, byte-exact):\n%s" % (tag, (out + err)[:400]))
+        wl = [ln for ln in out.splitlines() if "::warning::" in ln]
+        if len(wl) != 1 or not wl[0].startswith("::warning::sync-fanout not configured"):
+            h.bad("t5[kill/%s]: the warning must be EXACTLY one column-0 line (m1 lesson applies to this new lane too): %r" % (tag, wl))
+        if out.count(h.WARN_KILL) != 1:
+            h.bad("t5[kill/%s]: the pinned warning appears %d times, expected once" % (tag, out.count(h.WARN_KILL)))
+        # "no other stdout" (AC6): the kill lane prints ONLY the warning.
+        extra = [ln for ln in out.splitlines() if ln.strip() and ln.strip() != h.WARN_KILL]
+        if extra:
+            h.bad("t5[kill/%s]: kill-lane stdout carries %r beyond the warning (AC6: no table, no summary, no ref-gate line)" % (tag, extra[:3]))
+        if "fan-out summary" in out + err or "target=" in out + err:
+            h.bad("t5[kill/%s]: a summary/audit line on the kill lane — the skip returns BEFORE any fan-out shape" % tag)
+        if "not in allowed_refs" in out + err:
+            h.bad("t5[kill/%s]: the unconfigured fleet also printed the REF-GATE line — the kill signal returns before the gate (C09 main task)" % tag)
+finally:
+    stub.stop()
+
+# ---- happy fan-out + ref gate: the CORE legs, run_core across eras ----
+recs2 = []
+dev = h.StubArgo("dev", recs2, apps=[
     h.app("dev", h.REPO, "main", "OutOfSync", multi=True),  # roots are multi-source
     h.app("dev-app1", h.REPO, "main", "OutOfSync"),         # -> sync
-    h.app("dev-synced", h.REPO, "main", "Synced"),         # -> leave
-    h.app("dev-wrongrev", h.REPO, "stage", "OutOfSync"),   # -> leave (live targetRevision)
+    h.app("dev-synced", h.REPO, "main", "Synced"),          # -> leave
+    h.app("dev-wrongrev", h.REPO, "stage", "OutOfSync"),    # -> leave (live targetRevision)
     h.app("dev-wrongrepo", h.OTHER_REPO, "main", "OutOfSync"),  # -> leave (byte repoURL)
-    h.app("dev-multi", h.REPO, "main", "Unknown", multi=True),  # sources-shape child, not Synced -> sync
+    h.app("dev-multi", h.REPO, "main", "Unknown", multi=True),  # sources-shape child -> sync
 ])
-media = h.StubArgo("media", recs, apps=[h.app("media", h.REPO, "main", "OutOfSync")])
-grow = h.StubArgo("grow", recs, apps=[h.app("grow-child", h.REPO, "main", "OutOfSync")])  # root absent -> skipped
+media = h.StubArgo("media", recs2, apps=[h.app("media", h.REPO, "main", "OutOfSync")])
+grow = h.StubArgo("grow", recs2, apps=[h.app("grow-child", h.REPO, "main", "OutOfSync")])  # root absent -> skipped
 for s in (dev, media, grow):
     s.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t5"), [
-        {"name": "dev", "url": dev.url},
-        {"name": "media", "url": media.url},
-        {"name": "grow", "url": grow.url},
-    ], settle_seconds=0.3)  # per-roster knob, not env (shipped relay read env; the script takes the roster)
-    rc, out, err = h.run("t5", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["dev", "media", "grow"]), config=roster)
+    roster2 = h.make_globals(os.path.join(sys.argv[1], "t5core"), settle_seconds=0.3)
+    urls = {"dev": dev.url, "media": media.url, "grow": grow.url}
+    rc, out, err = h.run_core("t5-happy", "--ref", "refs/heads/main", urls=urls, config=roster2)
     blob = out + err
     if rc != 0:
         h.bad("t5: happy run exited %s (runtime must be green — per-target failures self-heal next push)\n%s" % (rc, blob[:600]))
@@ -776,36 +899,39 @@ try:
     if gseq != ["list"]:
         h.bad("t5: skipped target dialed %s, expected exactly its eligibility list (a skip must not POST)" % gseq)
 
-    # ThreadPool(4) witness: two settling targets must OVERLAP in wall time
-    # (a serial port of the shipped loop would make them strictly ordered).
     d_first, d_last = min(r["ts"] for r in dev.calls()), max(r["ts"] for r in dev.calls())
     m_first, m_last = min(r["ts"] for r in media.calls()), max(r["ts"] for r in media.calls())
     if not (d_first < m_last and m_first < d_last):
         h.bad("t5: dev and media request windows do not overlap (%.3f..%.3f vs %.3f..%.3f) — the fan-out must run targets concurrently, plan contract parallel_workers 4" % (d_first, d_last, m_first, m_last))
 
-    # OQ8 live rerun: the ruled form is newline, but a comma-paste must fan
-    # out identically (paste-accident defense is code, not just parsing).
-    rc2, out2, err2 = h.run("t5-comma", "--ref", "refs/heads/main",
-                            vault_value=h.vault(["dev", "media", "grow"], delim=","),
-                            config=roster)
-    blob2 = out2 + err2
-    a2 = {x["name"]: x for x in h.audits(blob2)}
-    got2 = {k: v["result"] for k, v in a2.items()}
-    if rc2 != 0 or got2 != {"dev": "ok", "media": "ok", "grow": "skipped"}:
-        h.bad("t5: comma-form vault must parse and fan out with identical per-target results (the stub app state is static): rc=%s %r" % (rc2, got2))
+    # Ref gate (C09 map folds it into t5; assertions ported unchanged):
+    pre_gate = len(recs2)
+    rc, out, err = h.run_core("t5-refgate", "--ref", "refs/heads/other",
+                              urls={"dev": dev.url}, config=roster2)
+    blob = out + err
+    if rc != 0:
+        h.bad("t5: a non-allowed ref is a designed no-op, not an error — exit %s\n%s" % (rc, blob[:400]))
+    if len(recs2) != pre_gate:
+        h.bad("t5: %d stub requests landed for a ref outside allowed_refs (AC9: ZERO API calls — the gate is the OQ7 widening guarantee)" % (len(recs2) - pre_gate))
+    if "refs/heads/other" not in blob:
+        h.bad("t5: the skip is silent — the one log line must name the ref (AC9: gate line unchanged)")
+    if h.summary(blob):
+        h.bad("t5: the ref gate emitted a fan-out summary — no fan-out ran; the ref-gate path is the one line + exit 0")
+    if len(h.audits(blob)) != 0:
+        h.bad("t5: the ref gate emitted per-target audit lines (one log line, not audits)")
 finally:
     for s in (dev, media, grow):
         s.stop()
 
-print("ok: t5: exact audit grammar, per-target root->settle->re-list->children order under ThreadPool(4) overlap, Synced/wrong-rev/wrong-repo children never POSTed, pinned skip detail, summary math, and the comma-paste live rerun all hold (AC5, OQ8)")
+print("ok: t5: four kill-lane arms print ONLY the pinned column-0 warning, exit 0, dial zero sockets and skip the ref-gate line; the core fan-out keeps root->settle->re-list->children order, ThreadPool overlap, the child filters, pinned details and summary math; the ref gate stays a one-line green no-op (AC6, AC9)")
 PY
   then
-    fail "t5: the live fan-out shape is violated (reason printed above)"
+    fail "t5: the kill-lane / happy-shape / ref-gate contract is violated (reason printed above)"
   fi
-  ok "t5: fan-out semantics + parallel-ordering guarantees hold against stubbed clusters (AC5)"
+  ok "t5: kill lane (4 arms) + core ordering + ref gate hold (AC6/AC9)"
 fi
 
-# --- t6: prune=false in query AND body, never force (AC5/OQ6) -------------------
+# --- t6: prune=false in query AND body, never force (AC9/OQ6) --------------------
 if want t6; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -820,10 +946,9 @@ stub = h.StubArgo("gpu", recs, apps=[
 ])
 stub.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t6"),
-                           [{"name": "gpu", "url": stub.url}], settle_seconds=0.0)
-    rc, out, err = h.run("t6", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["gpu"]), config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t6"), settle_seconds=0.0)
+    rc, out, err = h.run_core("t6", "--ref", "refs/heads/main",
+                              urls={"gpu": stub.url}, config=roster)
     if rc != 0:
         h.bad("t6: run exited %s\n%s" % (rc, (out + err)[:400]))
     syncs = stub.syncs()
@@ -840,15 +965,15 @@ try:
 finally:
     stub.stop()
 
-print("ok: t6: every sync POST carries prune=false in query AND body with no force anywhere (AC5/OQ6)")
+print("ok: t6: every sync POST carries prune=false in query AND body with no force anywhere (AC9/OQ6)")
 PY
   then
     fail "t6: the prune/force pinning is violated (reason printed above)"
   fi
-  ok "t6: prune=false in both places, never force (OQ6)"
+  ok "t6: prune=false in both places, never force (OQ6, byte-stable)"
 fi
 
-# --- t7: 409 is success AND the sweep continues (AC5) ---------------------------
+# --- t7: 409 is success AND the sweep continues (AC9) -----------------------------
 if want t7; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -863,10 +988,9 @@ stub = h.StubArgo("media", recs,
                   sync_codes={"media": 409})
 stub.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t7"),
-                           [{"name": "media", "url": stub.url}], settle_seconds=0.0)
-    rc, out, err = h.run("t7", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["media"]), config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t7"), settle_seconds=0.0)
+    rc, out, err = h.run_core("t7", "--ref", "refs/heads/main",
+                              urls={"media": stub.url}, config=roster)
     blob = out + err
     a = h.audits(blob)
     if rc != 0:
@@ -879,15 +1003,15 @@ try:
 finally:
     stub.stop()
 
-print("ok: t7: 409 audits as root=in-progress success and the sweep continues to children (AC5)")
+print("ok: t7: 409 audits as root=in-progress success and the sweep continues to children (AC9, byte-stable)")
 PY
   then
     fail "t7: the 409-as-success posture is violated (reason printed above)"
   fi
-  ok "t7: 409-as-success with continued sweep (AC5)"
+  ok "t7: 409-as-success with continued sweep (AC9, byte-stable)"
 fi
 
-# --- t8: per-target isolation incl. the RULED OQ9 posture (AC6) -----------------
+# --- t8: per-target isolation incl. the RULED OQ9 posture + M2 3xx (AC9) ---------
 if want t8; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -906,16 +1030,11 @@ media = h.StubArgo("media", recs, apps=[h.app("media", h.REPO, "main", "OutOfSyn
 for s in (dev, gpu, grow, media):
     s.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t8"), [
-        {"name": "dev", "url": dev.url},
-        {"name": "gpu", "url": gpu.url},
-        {"name": "grow", "url": grow.url},
-        {"name": "media", "url": media.url},
-        {"name": "proxy-backup", "url": "http://127.0.0.1:%d" % dead_port},
-    ], settle_seconds=0.0, target_timeout_seconds=0.5)
-    rc, out, err = h.run("t8", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["dev", "gpu", "grow", "media", "proxy-backup"]),
-                         config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t8"), settle_seconds=0.0,
+                            target_timeout_seconds=0.5)
+    urls = {"dev": dev.url, "gpu": gpu.url, "grow": grow.url, "media": media.url,
+            "proxy-backup": "http://127.0.0.1:%d" % dead_port}
+    rc, out, err = h.run_core("t8", "--ref", "refs/heads/main", urls=urls, config=roster)
     blob = out + err
     if rc != 0:
         h.bad("t8: dead/401/garbage/timeout/refused targets must NOT flip the exit code (R1 self-heal: the next push covers them) — got %s\n%s" % (rc, blob[:500]))
@@ -923,7 +1042,7 @@ try:
     if set(a) != {"dev", "gpu", "grow", "media", "proxy-backup"}:
         h.bad("t8: audit set %s != the 5 targets — every target, healthy or not, gets its line (isolation must not swallow lines)" % sorted(a))
     if a["dev"]["result"] != "ok":
-        h.bad("t5-adjacent break: healthy target dev got %r while neighbors failed (per-target isolation)" % a["dev"]["result"])
+        h.bad("t8: healthy target dev got %r while neighbors failed (per-target isolation)" % a["dev"]["result"])
     for t, why in (("gpu", "401"), ("grow", "garbage JSON"), ("media", "timeout"),
                    ("proxy-backup", "connection refused — the RULED OQ9 warn-and-skip posture: a listed but unreachable cluster is an honest failed audit line, never a silent drop")):
         if a[t]["result"] != "failed":
@@ -945,8 +1064,8 @@ try:
     # trigger is real: cluster.proxy-local answers 307 to the SSO edge even
     # with a bearer present (review round 1). The pinned posture: a door 3xx
     # surfaces in the FAILED audit lane with the shipped HTTP-code wording,
-    # the bearer never leaves the rostered origin, and a 3xx-turned-GET can
-    # never earn result=ok.
+    # the bearer never leaves the discovered origin, and a 3xx-turned-GET
+    # can never earn result=ok.
     x1, x2 = [], []
     cross1 = h.StubArgo("cross1", x1, apps=[h.app("gpu", h.REPO, "main", "OutOfSync")])
     cross2 = h.StubArgo("cross2", x2, apps=[h.app("media", h.REPO, "main", "OutOfSync")])
@@ -958,12 +1077,9 @@ try:
     for s in (cross1, cross2, front_list, front_sync):
         s.start()
     try:
-        roster2 = h.make_roster(os.path.join(sys.argv[1], "t8-3xx"), [
-            {"name": "gpu", "url": front_list.url},
-            {"name": "media", "url": front_sync.url},
-        ], settle_seconds=0.0)
-        rc2, out2, err2 = h.run("t8-3xx", "--ref", "refs/heads/main",
-                                vault_value=h.vault(["gpu", "media"]), config=roster2)
+        urls2 = {"gpu": front_list.url, "media": front_sync.url}
+        rc2, out2, err2 = h.run_core("t8-3xx", "--ref", "refs/heads/main",
+                                     urls=urls2, config=roster)
         blob2 = out2 + err2
         if rc2 != 0:
             h.bad("t8-3xx: a redirecting cluster is a RUNTIME failure — soft lane, exit 0 (got %s)\n%s" % (rc2, blob2[:400]))
@@ -973,16 +1089,13 @@ try:
         if a2.get("gpu", {}).get("result") != "failed" or "applications list HTTP 302" not in a2.get("gpu", {}).get("detail", ""):
             h.bad("t8-3xx: the 302 list door must audit failed with the shipped `applications list HTTP 302` wording (no silent follow), got %r" % a2.get("gpu"))
         if a2.get("media", {}).get("result") != "failed" or "sync HTTP 301" not in a2.get("media", {}).get("detail", ""):
-            h.bad("t8-3xx: the 301 sync door must audit failed with `sync HTTP 301` — and MUST NOT audit ok: the default opener turns POST into GET, lands an HTML page, and would fake a green sweep (review M2 false-green)", )
+            h.bad("t8-3xx: the 301 sync door must audit failed with `sync HTTP 301` — and MUST NOT audit ok: the default opener turns POST into GET, lands an HTML page, and would fake a green sweep (review M2 false-green)")
         if "result=ok" in blob2:
             h.bad("t8-3xx: result=ok appeared with zero real syncs performed — the operator-grepped success channel was earned by a redirect page (M2)")
         for label, xlog in (("cross1", x1), ("cross2", x2)):
             if xlog:
                 leaks = [r for r in xlog if r.get("auth")]
-                h.bad("t8-3xx: %d request(s) landed on the redirect TARGET %s (%d carrying Authorization!) — the bearer left the rostered origin; api_request must refuse redirects" % (len(xlog), label, len(leaks)))
-        # the rostered origins were dialed exactly once list-each (+ the
-        # front-sync POST attempt): containment happens at the door, not by
-        # skipping the target.
+                h.bad("t8-3xx: %d request(s) landed on the redirect TARGET %s (%d carrying Authorization!) — the bearer left the discovered origin; api_request must refuse redirects" % (len(xlog), label, len(leaks)))
         gl = [r for r in recs if r["stub"] == "front-list"]
         gs = [r for r in recs if r["stub"] == "front-sync"]
         if not any(r["method"] == "GET" for r in gl) or not any(r["method"] == "GET" for r in gs):
@@ -991,13 +1104,8 @@ try:
             h.bad("t8-3xx: front-sync never received the POST attempt — eligibility said sync, so the sync leg must fire into the door")
         if h.summary(blob2) != ("2", "0", "0", "2"):
             h.bad("t8-3xx: summary %r, expected targets=2 ok=0 skipped=0 failed=2" % (h.summary(blob2),))
-        # token stem never rides any line — cross logs stayed empty, and the
-        # Bearer header that WAS sent went only to the rostered origin.
         if h.STEM in blob2:
             h.bad("t8-3xx: token material echoed in the 3xx legs' output (AC8)")
-        # egress check on the wire itself: the front stubs saw the bearer
-        # (their origin, correct); assert the auth headers on door requests
-        # reference the dev/media tokens, not a stray target.
         for r in gl + gs:
             if r["auth"] and not r["auth"].startswith("Bearer " + h.SEG1):
                 h.bad("t8-3xx: door request carried an unexpected Authorization shape: %r" % r["auth"][:30])
@@ -1008,15 +1116,15 @@ finally:
     for s in (dev, gpu, grow, media):
         s.stop()
 
-print("ok: t8: 401/garbage/timeout/refused neighbors fail in isolation — each audits a reason, the healthy target completes, the summary reconciles, exit stays 0; the closed-port arm is the OQ9 honest-failed posture; the 3xx phase proves redirect containment on BOTH legs (M2): door 3xx audits `applications list HTTP 302` / `sync HTTP 301`, no result=ok, zero requests on the redirect target and its bearer (AC6)")
+print("ok: t8: 401/garbage/timeout/refused neighbors fail in isolation — each audits a reason, the healthy target completes, the summary reconciles, exit stays 0; the closed-port arm is the OQ9 honest-failed posture; the 3xx phase proves redirect containment on BOTH legs (M2): door 3xx audits `applications list HTTP 302` / `sync HTTP 301`, no result=ok, zero requests on the redirect target and its bearer (AC9)")
 PY
   then
     fail "t8: the isolation posture is violated (reason printed above)"
   fi
-  ok "t8: per-target isolation + OQ9 honest failed lines + soft exit (AC6)"
+  ok "t8: per-target isolation + OQ9 honest failed lines + M2 3xx containment + soft exit (AC9, byte-stable)"
 fi
 
-# --- t9: ref gate is zero-touch (AC7) -------------------------------------------
+# --- t9: summary math with the DISCOVERED count (AC9) -----------------------------
 if want t9; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -1025,36 +1133,48 @@ sys.path.insert(0, sys.argv[1])
 import harness as h
 
 recs = []
-stub = h.StubArgo("dev", recs, apps=[h.app("dev", h.REPO, "main", "OutOfSync")])
-stub.start()
+dev = h.StubArgo("dev", recs, apps=[h.app("dev", h.REPO, "main", "OutOfSync")])
+gpu_ai = h.StubArgo("gpu-ai", recs, apps=[h.app("gpu-ai", h.REPO, "main", "OutOfSync")])
+grow = h.StubArgo("grow", recs, apps=[h.app("grow", h.REPO, "main", "Synced")])
+for s in (dev, gpu_ai, grow):
+    s.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t9"),
-                           [{"name": "dev", "url": stub.url}])
-    rc, out, err = h.run("t9", "--ref", "refs/heads/other",
-                         vault_value=h.vault(["dev"]), config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t9"), settle_seconds=0.0)
+    # Two discovered pairs (incl. the GPU_AI category) ⇒ summary targets=2 —
+    # the count is the DISCOVERED fleet, the roster carries no number.
+    rc, out, err = h.run_core("t9-2pairs", "--ref", "refs/heads/main",
+                              urls={"dev": dev.url, "gpu-ai": gpu_ai.url}, config=roster)
     blob = out + err
     if rc != 0:
-        h.bad("t9: a non-allowed ref is a designed no-op, not an error — exit %s\n%s" % (rc, blob[:400]))
-    if recs:
-        h.bad("t9: %d stub requests landed for a ref outside allowed_refs (AC7: ZERO API calls — the gate is the OQ7 widening guarantee)" % len(recs))
-    if "refs/heads/other" not in blob:
-        h.bad("t9: the skip is silent — the one log line must name the ref (AC7: exactly one log line)")
-    if h.summary(blob):
-        h.bad("t9: the ref gate emitted a fan-out summary — no fan-out ran; the ref-gate path is the one line + exit 0 (a skipped-x-targets summary would be a different, unpinned shape)")
-    if len(h.audits(blob)) != 0:
-        h.bad("t9: the ref gate emitted per-target audit lines (AC7: one log line, not audits)")
+        h.bad("t9: exited %s\n%s" % (rc, blob[:400]))
+    if h.summary(blob) != ("2", "2", "0", "0"):
+        h.bad("t9: summary %r, expected targets=2 ok=2 skipped=0 failed=0 — targets= must carry the DISCOVERED count (R7: no roster count exists any more)" % (h.summary(blob),))
+    names = {x["name"] for x in h.audits(blob)}
+    if names != {"dev", "gpu-ai"}:
+        h.bad("t9: audit set %s, expected the discovered categories incl. the hyphen-mapped gpu-ai" % sorted(names))
+    # Third pair added ⇒ targets=3 (a fleet grows by instance keys + env
+    # rows, never by repo edits — the summary follows). The grow root is
+    # Synced but still ELIGIBLE: an eligible root audits ok (skipped is
+    # reserved for non-tracking roots).
+    rc, out, err = h.run_core("t9-3pairs", "--ref", "refs/heads/main",
+                              urls={"dev": dev.url, "gpu-ai": gpu_ai.url, "grow": grow.url},
+                              config=roster)
+    blob = out + err
+    if h.summary(blob) != ("3", "3", "0", "0"):
+        h.bad("t9: three-pair summary %r, expected targets=3 ok=3 skipped=0 failed=0 (the discovered count tracks the PAIRS, not any repo-side list)" % (h.summary(blob),))
 finally:
-    stub.stop()
+    for s in (dev, gpu_ai, grow):
+        s.stop()
 
-print("ok: t9: --ref outside allowed_refs logs one line naming the ref, dials nothing, prints no audits/summary, exits 0 (AC7)")
+print("ok: t9: the summary's targets= equals the DISCOVERED pair count (2 then 3), gpu-ai audits under its derived name, arithmetic reconciles (AC9)")
 PY
   then
-    fail "t9: the ref gate is violated (reason printed above)"
+    fail "t9: the discovered-count summary leg is violated (reason printed above)"
   fi
-  ok "t9: ref gate zero-touch posture (AC7)"
+  ok "t9: summary carries the discovered count (AC9)"
 fi
 
-# --- t10: --dry-run is live GETs only (AC9) -------------------------------------
+# --- t10: --check from pairs + zero sockets, --dry-run GET-only (AC7, AC9) --------
 if want t10; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -1070,12 +1190,46 @@ dev = h.StubArgo("dev", recs, apps=[
 grow = h.StubArgo("grow", recs, apps=[h.app("grow", h.REPO, "main", "Synced")])
 dev.start(); grow.start()
 try:
-    roster = h.make_roster(os.path.join(sys.argv[1], "t10"), [
-        {"name": "dev", "url": dev.url},
-        {"name": "grow", "url": grow.url},
-    ])
-    rc, out, err = h.run("t10", "--dry-run", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["dev", "grow"]), config=roster)
+    roster = h.make_globals(os.path.join(sys.argv[1], "t10"))
+    pairs = {"dev": {"url": dev.url, "token": h.token_for("dev")},
+             "grow": {"url": grow.url, "token": h.token_for("grow")}}
+
+    # (a) --check (AC7): table from DISCOVERED pairs, pinned pairs-line, zero
+    # sockets — the C09 replacement for the reopen2 vault-table leg.
+    rc, out, err = h.run("t10-check", "--check", pairs=pairs, config=roster)
+    blob = out + err
+    if rc != 0:
+        h.bad("t10: --check exited %s\n%s" % (rc, blob[:400]))
+    if "argocd-fanout --check: OK" not in blob:
+        h.bad("t10: no OK line")
+    if "pairs: 2 targets discovered" not in blob:
+        h.bad("t10: --check table is not derived from the discovered pairs (missing the pairs: 2 line):\n%s" % blob[:500])
+    for cat, url in (("dev", dev.url), ("grow", grow.url)):
+        if cat not in blob or url not in blob:
+            h.bad("t10: --check NAME/URL table lacks the pair %r→%r (the discovered endpoints must be visible for the owner's verification legs)" % (cat, url))
+    if "refs/heads/main" not in blob:
+        h.bad("t10: --check never echoes allowed_refs")
+    if recs:
+        h.bad("t10: --check opened sockets — %d requests landed (zero-network law)" % len(recs))
+    if h.STEM in blob:
+        h.bad("t10: --check echoes token material (AC8)")
+
+    # --check must also RED on the integrity matrix (AC7 tail) and stay
+    # GREEN-only-on-warning in the kill lane (kill returns before tables).
+    broken = {"dev": {"url": dev.url, "token": h.token_for("dev")},
+              "grow": {"url": grow.url}}
+    rc, out, err = h.run("t10-check-broken", "--check", pairs=broken, config=roster)
+    if rc != 1 or 'category "grow" missing TOKEN value' not in (err or ""):
+        h.bad("t10: --check on a broken fleet must exit 1 with the pinned integrity line (got rc=%s):\n%s" % (rc, (out + err)[:400]))
+    rc, out, err = h.run("t10-check-kill", "--check",
+                         pairs={"dev": {"url": dev.url}}, config=roster)
+    if rc != 0 or h.WARN_KILL not in (out + err) or "--check: OK" in (out + err):
+        h.bad("t10: --check on an unconfigured fleet is the kill lane: exit 0, ONLY the warning, NO table (rc %s):\n%s" % (rc, (out + err)[:400]))
+
+    # (b) --dry-run (AC9, the shipped smoke mode, byte-stable): live GETs
+    # only, ZERO POSTs, per-target eligibility, exit 0.
+    rc, out, err = h.run_core("t10-dry", "--dry-run", "--ref", "refs/heads/main",
+                              urls={"dev": dev.url, "grow": grow.url}, config=roster)
     blob = out + err
     if rc != 0:
         h.bad("t10: --dry-run exited %s\n%s" % (rc, blob[:400]))
@@ -1086,19 +1240,19 @@ try:
         h.bad("t10: --dry-run skipped a target's list call — it is the REACHABILITY proof (the proxy-backup preflight row), every target must be dialed")
     for t in ("dev", "grow"):
         if ("target=%s" % t) not in blob:
-            h.bad("t10: no per-target eligibility line for %r in --dry-run output (AC9: eligibility + would-sync counts per target):\n%s" % (t, blob[:500]))
+            h.bad("t10: no per-target eligibility line for %r in --dry-run output (AC9):\n%s" % (t, blob[:500]))
 finally:
     dev.stop(); grow.stop()
 
-print("ok: t10: --dry-run dials every target with GETs, records ZERO POSTs, prints per-target eligibility, exits 0 (AC9 — the smoke/preflight mode)")
+print("ok: t10: --check prints the pairs-derived table + pinned pairs line with ZERO sockets, reds on the integrity matrix, kill-lanes on an unconfigured fleet; --dry-run dials GETs only, never POSTs, per-target eligibility, exit 0 (AC7, AC9)")
 PY
   then
-    fail "t10: the dry-run contract is violated (reason printed above)"
+    fail "t10: the check/dry-run contract is violated (reason printed above)"
   fi
-  ok "t10: dry-run GET-only reachability posture (AC9)"
+  ok "t10: --check-from-pairs + dry-run GET-only hold (AC7/AC9)"
 fi
 
-# --- t11: all-skipped warns and stays green (AC10) ------------------------------
+# --- t11: all-skipped warns and stays green (AC9) ---------------------------------
 if want t11; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -1112,14 +1266,11 @@ stub.start()
 try:
     # The trackedRepo-mismatch trap [P §3]: a fan-out that skipped 100% of
     # targets is almost certainly a drifted tracked_repo, not an empty fleet.
-    # Two targets: the m1 "exactly once" pin cannot bite on a one-target run
-    # (per-target emission would still count 1).
-    roster = h.make_roster(os.path.join(sys.argv[1], "t11"),
-                           [{"name": "dev", "url": stub.url},
-                            {"name": "grow", "url": stub.url}],
-                           tracked_repo="https://github.com/OwnYourIO/NeverDeployed.git")
-    rc, out, err = h.run("t11", "--ref", "refs/heads/main",
-                         vault_value=h.vault(["dev", "grow"]), config=roster)
+    # Two targets: the m1 "exactly once" pin cannot bite on a one-target run.
+    roster = h.make_globals(os.path.join(sys.argv[1], "t11"),
+                            tracked_repo="https://github.com/OwnYourIO/NeverDeployed.git")
+    rc, out, err = h.run_core("t11", "--ref", "refs/heads/main",
+                              urls={"dev": stub.url, "grow": stub.url}, config=roster)
     blob = out + err
     a = h.audits(blob)
     if rc != 0:
@@ -1128,11 +1279,6 @@ try:
         h.bad("t11: audits %r, expected both targets skipped" % [dict(x) for x in a])
     if "::warning::" not in blob:
         h.bad("t11: all-skipped run lacks the pinned `::warning::` line (plan: the trackedRepo-mismatch trap [P §3] must announce)")
-    # Review m1: the annotation grammar is LINE-ANCHORED (act lineage
-    # commandPatternGA ^::cmd::, runner issue #4692's framing) — a warning
-    # behind log()'s timestamp is readable but never becomes an annotation,
-    # and a per-target trap line would spam the job. Pin: exactly one, at
-    # column 0.
     wlines = [ln for ln in blob.splitlines() if "::warning::" in ln]
     if len(wlines) != 1:
         h.bad("t11: %d lines carry ::warning:: — the trap annotation appears EXACTLY once per run" % len(wlines))
@@ -1143,15 +1289,15 @@ try:
 finally:
     stub.stop()
 
-print("ok: t11: all-skipped audits skipped, warns ONE column-0 ::warning:: (m1), summarizes, exits 0 (AC10)")
+print("ok: t11: all-skipped audits skipped, warns ONE column-0 ::warning::, summarizes, exits 0 (AC9, byte-stable)")
 PY
   then
     fail "t11: the all-skipped posture is violated (reason printed above)"
   fi
-  ok "t11: all-skipped warning posture (AC10)"
+  ok "t11: all-skipped warning posture (AC9, byte-stable)"
 fi
 
-# --- t12: secret hygiene sweep + usage posture (AC8 + CLI contract) --------------
+# --- t12: secret hygiene sweep + usage posture (AC8 + CLI contract) ---------------
 if want t12; then
   if ! python3 - "$WORK" <<'PY'
 import os, sys
@@ -1166,25 +1312,34 @@ if rc != 0:
     h.bad("t12: --help exited %s\n%s" % (rc, blob[:300]))
 for flag in ("--config", "--ref", "--check", "--dry-run"):
     if flag not in blob:
-        h.bad("t12: --help does not advertise %s (the CLI contract is exactly these four flags + --help)" % flag)
-for flag in ("--token", "--secret", "--vault"):
+        h.bad("t12: --help does not advertise %s (the CLI contract is exactly these four flags + --help — UNCHANGED by R7)" % flag)
+for flag in ("--token", "--secret", "--vault", "--pairs"):
     if flag in blob:
-        h.bad("t12: --help advertises %s — tokens come ONLY from the ARGOCD_SYNC_TOKENS env var, never argv (plan CLI contract)" % flag)
+        h.bad("t12: --help advertises %s — values come ONLY from the environment pairs, never argv (plan CLI contract)" % flag)
+if "ARGOCD_SYNC_TOKENS" in blob:
+    h.bad("t12: --help still advertises the DEAD blob name — the R7 wording must point at the ARGOCD_SYNC_<CAT>_* pairs")
 
-rc, out, err = h.run("t12-positional", "refs/heads/main", vault_value=h.vault(["dev"]))
+rc, out, err = h.run("t12-positional", "refs/heads/main",
+                     pairs={"dev": {"url": "http://127.0.0.1:1", "token": h.token_for("dev")}})
 if rc != 2:
     h.bad("t12: a positional ref exited %s, expected argparse 2 — 'No positional args' is the pinned CLI contract" % rc)
 # A decoy value (not a fixture token) keeps the argv ledger sweep honest: the
 # probe proves no token channel exists without poisoning the ledger with one.
 rc, out, err = h.run("t12-token-flag", "--token", "DECOY42-not-a-real-token",
-                     vault_value=h.vault(["dev"]))
+                     pairs={"dev": {"url": "http://127.0.0.1:1", "token": h.token_for("dev")}})
 if rc != 2:
-    h.bad("t12: a --token flag exited %s, expected argparse 2 — a token-receiving flag must not exist")
+    h.bad("t12: a --token flag exited %s, expected argparse 2 — a token-receiving flag must not exist" % rc)
+# The KEY=value argv shape (a non-sourced invocation) must be rejected too:
+# the runbook pins the source-then-run recipe precisely so values never
+# reach a command line.
+rc, out, err = h.run("t12-kv-argv", "ARGOCD_SYNC_DEV_TOKEN=DECOY42-zzz")
+if rc != 2:
+    h.bad("t12: a KEY=value argv shape exited %s, expected argparse 2 — no positional channel exists for env-shaped args" % rc)
 
 # The sweep: every leg captured so far — combined output of ALL runs — must
 # not contain a single fixture token (SENT23 stem), and the argv ledger must
-# carry no JWT-shaped value at all (the SEG1 header appears only inside real
-# fixture tokens, which flow to the script via env, never argv).
+# carry no JWT-shaped value, no '=' assignment byte, and no ARGOCD_SYNC key
+# name (the sourced-recipe-only law).
 hits = []
 for fn in sorted(os.listdir(h.OUT)):
     path = os.path.join(h.OUT, fn)
@@ -1193,21 +1348,96 @@ for fn in sorted(os.listdir(h.OUT)):
             hits.append(fn)
 if hits:
     h.bad("t12: token material echoed in %s — the zero-token-echo guarantee (AC8) failed on at least one leg; logs kept at %s" % (hits, h.OUT))
-argv_hits = [ln.split("\t")[0] for ln in open(os.path.join(h.OUT, "argv.log"), errors="replace")
-             if h.SEG1 in ln or ":".join([h.SEG1, h.SEG2]) in ln]
+argv_lines = open(os.path.join(h.OUT, "argv.log"), errors="replace").read().splitlines()
+argv_hits = [ln.split("\t")[0] for ln in argv_lines if h.SEG1 in ln]
 if argv_hits:
-    h.bad("t12: fixture token reached the argv of leg(s) %s — tokens come ONLY from the environment variable (plan CLI contract)" % argv_hits)
+    h.bad("t12: fixture token reached the argv of leg(s) %s — values come ONLY from the environment (plan CLI contract)" % argv_hits)
+# t12-kv-argv is the intentional decoy probe (it PUTS a KEY=value in argv to
+# prove argparse rejects it with exit 2); its own ledger line is excluded
+# from the assignment-byte scan so the suite does not flag its own fixture.
+kv_hits = [ln.split("\t")[0] for ln in argv_lines
+           if ln.split("\t")[0] != "t12-kv-argv" and ("=" in ln or "ARGOCD_SYNC" in ln)]
+if kv_hits:
+    h.bad("t12: argv of leg(s) %s carries an assignment byte or an ARGOCD_SYNC name — the sourced-env recipe (set -a; source; set +a) is the PINNED invocation shape, never KEY=value argv" % kv_hits)
 for c in h.CATS:
     if c.replace("-", "") + h.STEM in " ".join(open(os.path.join(h.OUT, fn), errors="replace").read()
                                                for fn in os.listdir(h.OUT)):
         h.bad("t12: per-category token for %r echoed (attribution-level sweep)" % c)
 
-print("ok: t12: --help shows only the four pinned flags (no token channel); positional and --token invocations exit 2; SENT23 appears in ZERO bytes across every leg's captured stdout+stderr and the argv ledger (AC8)")
+print("ok: t12: --help shows only the four pinned flags with no blob-name wording; positional, --token and KEY=value argv all exit 2; SENT23 appears in ZERO bytes across every leg's captured output; the argv ledger is free of token and assignment bytes (AC8, sourced-recipe pin)")
 PY
   then
     fail "t12: the secret-hygiene/usage contract is violated (reason printed above)"
   fi
-  ok "t12: zero token echo across all legs + usage posture (AC8)"
+  ok "t12: zero token echo + sourced-env-only argv posture (AC8)"
+fi
+
+# --- t13: core-diff proof — the untouched functions gained ZERO hunks (AC10) ------
+# C09's guarantee is that ONLY the input surface moved: ast-extract the named
+# core functions/classes from the shipped baseline ($CHUNK_BASE, default
+# 6ed762140) and from the working file, and demand byte-equal sources
+# (comments included — the why-comments survive verbatim per the chunk).
+# Designed-GREEN today (identical files); reddens if C09 touches the core.
+if want t13; then
+  if ! python3 - "$FANOUT" "$CORE_BASE" <<'PY'
+import ast, os, subprocess, sys
+
+fanout, base = sys.argv[1:3]
+
+
+def bad(msg):
+    print("FAIL: t13: %s" % msg, file=sys.stderr)
+    sys.exit(1)
+
+
+try:
+    shown = subprocess.run(["git", "show", "%s:scripts/argocd-fanout.py" % base],
+                           capture_output=True, text=True)
+    if shown.returncode != 0:
+        bad("cannot read the shipped baseline (`git show %s:scripts/argocd-fanout.py`): %s — repoint CHUNK_BASE to the pre-C09 commit" % (base, shown.stderr.strip()[:120]))
+    base_src = shown.stdout
+except OSError as e:
+    bad("git unavailable for the core-diff leg: %s" % e)
+
+# The Functions/classes C09 pins UNTOUCHED (chunk "Files in scope").
+CORE = ["log", "ref_tail", "app_name", "app_sources", "app_matches",
+        "app_sync_status", "_NoRedirect", "api_request", "list_applications",
+        "sync_application", "_reason", "drive_target", "fan_out"]
+
+
+def segments(src, label):
+    try:
+        tree = ast.parse(src)
+    except SyntaxError as e:
+        bad("%s does not parse (%s)" % (label, e))
+    out = {}
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            seg = ast.get_source_segment(src, node)
+            if seg is not None:
+                out[node.name] = seg
+    return out
+
+
+old, new = segments(base_src, "shipped %s" % base), segments(open(fanout).read(), "working %s" % fanout)
+missing = [n for n in CORE if n not in new]
+if missing:
+    bad("core names vanished from the working file: %s (AC10 — the core survives intact)" % missing)
+changed = [n for n in CORE if old.get(n) != new[n]]
+if changed:
+    for n in changed:
+        a = (old.get(n) or "").splitlines()
+        b = new[n].splitlines()
+        import difflib
+        diff = "\n".join(list(difflib.unified_diff(a, b, lineterm="", n=1))[:14])
+        print("  %s hunk:\n%s" % (n, diff), file=sys.stderr)
+    bad("core function bodies gained hunks: %s — R7 pinned the fan-out core byte-UNTOUCHED (C09 AC10); input changes belong to load_roster/discover_targets/cmd_check/main" % changed)
+print("ok: t13")
+PY
+  then
+    fail "t13: the core-diff proof failed (reason printed above)"
+  fi
+  ok "t13: all 13 core functions/classes are byte-identical to the shipped baseline — only the input surface moved (AC10)"
 fi
 
 rm -rf "$WORK"

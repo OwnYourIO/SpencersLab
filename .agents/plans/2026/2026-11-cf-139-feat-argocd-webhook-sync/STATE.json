@@ -10,7 +10,7 @@
       "state": "live (verified 2026-11-25)"
     },
     "plan_recut_at": "2026-11-25T01:40:00Z",
-    "recut": "waves 10-12 (C09 input redesign, C10 workflow env map, C11 runbook #4); fan-out semantics byte-untouched; DECISIONS 2026-11-25 R7 + pinned micro-calls a-h"
+    "recut": "waves 10-12 (C09 input redesign, C10 workflow env map, C11 runbook #4); fan-out semantics byte-untouched; DECISIONS 2026-11-25 R7 + pinned micro-calls a-h; + (i) coord ruling 2026-11-25 (test-session spec gap): malformed-with-value + zero-valid-tokens => RED-FIRST (broad-catch precedes the kill lane; a typo'd row must not skip green past its only visible trace), kill-lane-green applies only with no malformed non-empty residue"
   },
   "plan_status_note": "reopen3 re-cut drafted 2026-11-25 under R7 (per-cluster org key pairs, env discovery) — ruling complete, NO batched round needed; plan stays approved (pinned micro-calls a-h in DECISIONS 2026-11-25 are best-guesses, none gating). History: reopen2 approved 2026-11-23 batched round (OQ8 newline/OQ9 warn-skip/OQ10 indefinite/ORG-scope — OQ8 mechanics since superseded by R7); reopen2 waves 7-9 shipped and chain-reviewed at 6ed762140.",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
