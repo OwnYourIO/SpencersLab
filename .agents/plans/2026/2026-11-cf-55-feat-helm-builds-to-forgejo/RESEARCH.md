@@ -879,3 +879,540 @@ Own measurements (this round): codeberg code fetches on `v15.0/forgejo`
 (HTTP 200 bodies quoted above), `helm pull` of the upstream chart, grep of
 `renovate.json` managers/rules + `git log -S` of the two renovate[bot] pin
 bumps (`14e63aa77`, `2ecaf66c2`).
+
+## Round-4 research (2026-11-25): Chart.lock ownership + calendar chart versions
+
+Round type: decision-grade research for the owner's two asks on the live
+fire class ("the lock file (Chart.lock) is out of sync with the dependencies
+file (Chart.yaml)") and the calendar-versions wish. STORM method, 5 lenses
+(Renovate internals, Helm core, release-pipeline/cr, versioning schema,
+GitOps-consumer); new numbered items run 53–88 (1–52 unchanged, none re-used).
+Tool pins this round reasons against: Renovate 44 docs pages state
+"correspond to Mend Renovate 44.261.2" (lab image is 44.181.5 — same v44
+architecture [53][58]); Helm docs current at v4.3.1 with the v3 line at
+3.22.1 (the lab's baked runner helm is exactly v3.22.1, so every Helm claim
+below is read against the `dev-v3` branch, cross-checked against `main`=v4
+where it matters); chart-releaser read at tag v1.10.1 (the version the
+forgejo-runner bakes).
+Repo grounding read this round: release.yaml @3f21e85e8,
+containers-build.yaml, renovate.json, renovate.yaml workflow, .gitignore,
+live Chart.yaml/Chart.lock drift table over all 74 charts.
+
+### TL;DR
+
+1. The drift is NOT a Renovate design gap — the instance's Renovate TRIED to
+   update every Chart.lock and FAILED in-sandbox (smoking-gun PR comments:
+   `EACCES /opt/containerbase/data` → `Install tool helm failed`, and
+   `spawn helm ENOENT`); it then opens the yaml-only PR after 2 h with a red
+   `renovate/artifacts` check, which the human-merge posture walks straight
+   over. GitHub-era Renovate (pre-11-19) updated the locks in the same PRs
+   because the hosted environment has helm.
+2. Renovate's helmv3 lockfile update is DEFAULT behavior (no
+   postUpdateOptions opt-in exists any more); a `helm-locks` manager has
+   never existed upstream. The fix is an environment fix: give the Renovate
+   container a runnable helm (self-baked image with helm v3 +
+   `binarySource=global`, or the official `-full` image — which ships helm
+   **v4** and needs a cross-version lock check first).
+3. The pipeline can own the heal unconditionally: `helm dependency update`
+   regenerates a stale lock and is a byte-no-op when the lock is already
+   fresh; there is no `--force-update` on dep build (that flag belongs to
+   `helm repo add`). Because `cr package` Build()s EVERY chart every fire,
+   one drifted chart poisons the whole release leg — the heal must cover the
+   tree cr touches, not just the changed matrix. RECOMMENDED: BOTH — fix
+   Renovate's image (root cause at the PR) AND self-heal in the pipeline
+   (deterministic green guarantee); details and the exact knob settings below.
+4. Calendar chart versions (`2026.11.1++`) are legal semver end-to-end: helm
+   package validates with Masterminds `NewVersion` (rejects LEADING ZEROS —
+   so the month must be unpadded, `date +%Y.%-m`, the D15 lesson reborn);
+   the bump loop's own `ver()` already parses 4-digit majors; ArgoCD and
+   Renovate consume exact pins, so the 1.0.x → 2026.y jump is one benign
+   major PR per pin (all 61 own-chart pins verified exact — zero ranges).
+5. A deterministic walk rule for the bump loop (single month clock stamp,
+   N = same-month max(tree, gh-pages index).patch+1 else N=1) preserves the
+   D17 FF-only loop unchanged; live precedents exist (NVIDIA GPU Operator
+   22.9.0 style CalVer, current Helm charts shipping YY.MM.N — sbomify
+   26.11.1, ethora-core).
+
+---
+
+### Q1-A — Renovate side: what the helmv3 manager does TODAY
+
+**A(a) Lock-in-same-PR is the default, not an option.** The current `helmv3`
+manager's artifact updater [54] runs, for every dependency change in
+Chart.yaml when a `Chart.lock` exists in the repo, a three-part command
+sequence in the Renovate sandbox: `helm registry login` per OCI repo that has
+hostRules credentials [55], `helm repo add <name> <url> --force-update
+[--username/--password]` for every non-OCI repository found in the NEW
+Chart.yaml *and* the existing lock (plus `registryAliases`) [54], then
+`helm dependency update <chart-dir>` — and commits the regenerated
+`Chart.lock` into the same PR/branch. The old `postUpdateOptions` opt-ins
+for this are RETIRED: the current allowedValues list contains exactly one
+helm entry, `helmUpdateSubChartArchives` (vendored-`charts/` archives
+support); there is no `helm3` and no `helmLockFileUpdate` [58]. The helmv3
+manager docs now describe the lock only via `lockFileMaintenance` support
+("delegated to the underlying package manager") [53]. `helm-locks` as a
+separate manager DOES NOT EXIST upstream: zero matches in the entire
+renovatebot/renovate GitHub issue+PR index [59], and it is absent from the
+docs manager list [53]. What upstream *does* offer for lock-only refreshes
+is `lockFileMaintenance` (off by default, `before 4am on monday` schedule) —
+for helmv3 it deletes Chart.lock and runs `helm dependency update` [58].
+
+**A(b) What fails / does not update** (source-level [54]):
+- No committed `Chart.lock` → Renovate returns without touching anything
+  (it never CREATES a lock). Our locks are committed (only `charts/**/charts`
+  tgz caches are gitignored) ✓.
+- The helm exec itself fails → `artifactErrorResult` [54]; the branch worker
+  then STILL raises/updates the PR with the Chart.yaml-only change once the
+  PR is older than 2 hours ("raise PR with lock file errors"), after adding
+  the `:warning: Artifact update problem` PR comment and a failing
+  `renovate/artifacts` status check (default `statusCheckWhen.artifactError
+  = "failed"`) [57][58]. This is the exact observed shape — see A(d).
+- OCI deps need `hostRules` (hostType docker, matchHost per-repo or global)
+  for login; classic http(s) repos need hostRules hostType `helm` creds for
+  private ones [53][55]. All our dep repos are public https — no
+  credentials needed.
+- Repository *aliases* (`@repo` / registryAliases) resolve only if
+  `registryAliases` config maps them [53]; our Chart.yaml files use full
+  URLs ✓. Transitive and alias deps are handled by delegating to helm
+  itself (`helm dep update` rewrites the lock including aliases) — Renovate
+  does not parse the graph itself [54].
+
+**A(c) `helm-locks`: not upstream** — see A(a); anyone citing it is
+describing either a config pattern of `lockFileMaintenance` on helmv3 or an
+unmerged proposal.
+
+**A(d) The REAL root cause of our drift — measured, with smoking guns.**
+Own-forensics at 3f21e85e8:
+- GitHub-era Renovate commits updated locks: `73da0c56b` (traefik 42.4.1,
+  11-18, author `renovate[bot]@users.noreply.github.com`, Chart.lock +
+  Chart.yaml in one PR) and `bcf254c3b` (argo-cd 10.11.6, 11-03) ✓.
+- Instance-era Renovate commits skip the lock: `80c503f72` (argo-cd 10.18.2,
+  11-19), `95533725d` (argo-cd 10.18.3, 11-24), `a619fe6ad` (traefik 42.4.2,
+  11-24) — all author `tms@spencerslab.com` (the RENOVATE_GIT_AUTHOR stamp),
+  Chart.yaml-only.
+- Live instance PRs carry the proof: PR #112 (argo-cd 10.18.3) status check
+  `renovate/artifacts => failure | Artifact file update failure`, combined
+  state `failure`, and the artifact-problem comment quoting, for
+  charts/base/Chart.lock: `[06:21:18] ERROR: EACCES: can't write to
+  /opt/containerbase/data, the current user has no write permission …
+  FATAL: Install tool helm failed in 3ms` [61]; PR #113 (traefik 42.4.2)
+  quotes `spawn helm ENOENT` for BOTH traefik Chart.locks [62].
+- Mechanism: the workflow runs the **slim** image `ghcr.io/renovatebot/renovate:44.181.5`
+  (renovate.yaml:67), whose default `binarySource` is **`install`** — tools
+  are fetched at runtime via containerbase `install-tool` [56][60]; our repo
+  even pins `constraints.helm: 3.22.1`, which `install` mode feeds to that
+  installer [54][60]. On the act runner the containerbase data dir is not
+  writable by the job user (EACCES), and helm is not otherwise on PATH
+  (ENOENT). On the old GitHub platform the same default worked because the
+  hosted runners have a writable/executable toolchain. The red
+  `renovate/artifacts` check lands on the PR but nothing blocks the merge —
+  AGENTS.md's "human-merge posture" walks over it — so yaml-only drift
+  accumulates on main, then dies at the next release fire (and today, at
+  this HEAD, drift is LIVE again in exactly base + both traefik charts).
+- Config knobs that actually change behavior, ranked:
+  1. **Self-baked renovate image with helm v3 inside + `binarySource=global`**
+     (env `RENOVATE_BINARY_SOURCE=global`) — the C05/C06 forgejo-runner
+     precedent applied to renovate: `FROM ghcr.io/renovatebot/renovate@<digest>`
+     + COPY helm (digest-pinned OCI stage, same shape as
+     containers/forgejo-runner's helm sidecar), pinned immutable tag law
+     applies (runners never re-pull cached tags). Under `global`,
+     `constraints.helm` is IGNORED [58] — so the image IS the version pin,
+     and it must be a **v3** to keep lock digests byte-compatible with the
+     v3.22.1 the release pipeline runs (see B matrix).
+  2. **Official `-full` image** (`:44.x-full`, tag suffix per the build docs):
+     binarySource=global + most tools pre-installed, "no outbound access at
+     runtime" [60] — but the base-image Dockerfile installs `helm v4.3.2`
+     into full [60], while our pipeline builds locks/consumes with helm v3;
+     the digest function itself is byte-identical v3 vs v4 (`json.Marshal`
+     of `[2][]*chart.Dependency`, unchanged on `main`) [66][73], so
+     compatibility is *probably* fine — one live cross-check (helm4 `dep
+     update` → helm3 `dep build`) must gate this choice.
+  3. Keep slim + `install` but fix the sandbox (writable
+     `/opt/containerbase/data` via container options/volume): reintroduces
+     the get.helm.sh egress fragility class D33 retired; rejected for
+     the same reason release.yaml left setup-helm behind.
+  4. Optional belt: `lockFileMaintenance {enabled:true}` on the helmv3
+     manager (weekly Chart.lock refresh PRs even without dep bumps) —
+     cheap, matches A(a) semantics [53][58].
+
+---
+
+### Q1-B — Pipeline side: exact helm dependency semantics
+
+Verified against the `helm/helm` **dev-v3** source (the lab's v3.22.1 line)
+and the versioned docs [69][70][71][72][76][77]:
+
+**B(a) `helm dependency build` vs `update` — the abort condition.**
+`Build()` reads Chart.yaml + Chart.lock and computes
+`resolver.HashReq(req, lock.Dependencies)` = `sha256:` over the **JSON
+marshal of BOTH dependency lists** (Chart.yaml deps and lock deps) [73]; if
+that sum ≠ the lock's `digest:` field, build aborts with exactly our error
+"the lock file (Chart.lock) is out of sync with the dependencies file
+(Chart.yaml). Please update the dependencies" [72]. Which fields count:
+every field that serializes on `chart.Dependency` — name, alias, version,
+repository, tags, condition, enabled, import-values — on BOTH sides;
+the top-level chart `version:` is NOT hashed (a plain Chart.yaml version
+bump never invalidates the lock ✓ — load-bearing for the bump-commit-
+with-lock idea). The `generated:` timestamp is not part of the digest.
+Other build aborts: repo not added → `ErrRepoNotFound` "…Please add the
+missing repos via 'helm repo add'" [69] (the C08 "Add repositories" step is
+what serves this); **no Chart.lock at all → build silently mirrors
+`update`** (documented behavior, `lock == nil → m.Update()`) [69][72][78].
+`Update()` never aborts on staleness by definition — it re-negotiates from
+Chart.yaml, downloads, and REWRITES the lock; and when the recomputed digest
+equals the existing one it skips the write entirely — so update on a fresh
+lock is a **byte-no-op** (idempotency for the bump job ✓) [72]. It also
+auto-adds unknown repos to its own repo file (`ensureMissingRepos`; the
+source comment flags this for removal in Helm v4) [72] — so
+`helm dep update` works even where `build` would demand repo add first.
+
+**B(b) `--force-update` does NOT exist on `helm dependency build/update`.**
+The dependency subcommand flags are exactly: --verify, --keyring,
+--skip-refresh, --username/--password/--cert-file/--key-file/
+--insecure-skip-tls-verify/--plain-http/--ca-file [70][71]; the docs page
+(4.3.1, identical flag set for build) confirms [71]. `--force-update` belongs
+to `helm repo add` — which is precisely how Renovate drives it [54]. The
+regeneration verb IS `helm dependency update` [78].
+
+**B(c) The failure matrix (lock stale/fresh × deps cached/not):**
+
+| command | lock stale, any cache state | lock fresh, deps NOT in charts/ | lock fresh, deps cached |
+|---|---|---|---|
+| `helm dep build` | **ABORTS** — digest check runs BEFORE any download [72] | fetches repos+tgz (always downloads; no cache-skip — `downloadAll` copies via tmpPath every run) [72] | re-downloads anyway, succeeds |
+| `helm dep build` (no lock at all) | n/a — behaves as `update` [69][78] | n/a | n/a |
+| `helm dep update` | succeeds, rewrites lock | succeeds, downloads | success, lock NOT rewritten (digest-equal skip) [72] |
+| `helm lint` | passes (lint never reads the lock) | **WARNING only** "found in Chart.yaml, but missing in charts/ directory" → exit 0 unless --strict [74] | passes |
+| `helm package` (no -u) | passes if charts/ populated (package ignores the lock); fails if not, on `CheckDependencies` ("missing in charts/"), not on staleness [75][76][77] | **ERROR** [76][77] | success; tgz embeds what's in charts/ |
+| `helm package -u/--dependency-update` | runs `manager.Update()` first → self-heals, packages fresh [77] | same | same |
+| `cr package` (v1.10.1, what release + forgejo-publish run) | **ABORTS** — runs `downloadManager.Build()` per chart before packaging [79] | needs the added repos + network (same as build) | Build() still re-downloads (no offline shortcut), then packages |
+
+Two corrections to the brief's framing: (i) the fire died at the EXPLICIT
+`helm dependency build` step of test-build (release.yaml:139) — a stale lock
+aborts regardless of caching, and the tgz caches are gitignored so charts/
+is always empty at checkout anyway [72]; (ii) `cr package charts/*/` runs on
+EVERY chart every fire, so a drifted chart OUTSIDE the changed set kills the
+release + forgejo-publish legs too — blast radius is the whole published
+tree, not the matrix slice [79]. The current test-build failure simply
+precedes that.
+
+**B(d) If the bump job ran `helm dependency update` per chart and committed
+Chart.lock alongside the version bump:**
+- vs cr packaging: compatible — the release/forgejo-publish jobs re-checkout
+  main TIP (they already do, V-6-3), so they Build() against the healed
+  lock; the top-level version bump never invalidates the digest [73].
+- vs ArgoCD: compatible — consumers pull the packaged tgz from the index;
+  the tgz embeds the subchart archives Build() fetched; ArgoCD's helm
+  `template` never sees Chart.lock or charts/** [81].
+- vs FF-only single-writer law (D17): compatible — the heal runs INSIDE the
+  existing loop iteration (after `git reset --hard origin/main`, before the
+  version rewrite): two files in one commit is still one FF push; a rejected
+  push re-derives everything including a fresh heal pass [72].
+- Idempotency: fresh lock → helm skips the write → `git add Chart.lock`
+  stages nothing → commit carries only Chart.yaml (no churn, no empty
+  commits under `set -euo pipefail` if the loop guards the commit on staged
+  content). `helm dep update` needs no repo-add step (auto-adds) but DOES
+  need upstream egress — a class the release leg already depends on via cr
+  Build(), so the bump job gains no NEW dependency, only earlier exposure
+  (a transient upstream outage now reddens bump instead of release —
+  availability trade-off, loudly either way).
+- One design trap to respect: healing only the CHANGED charts leaves the
+  cr-wide blast radius exposed — either heal the full tree (cost ≈ what cr
+  package already pays on every fire) or heal-on-test-build-failure per
+  chart. The plan must pick; the safe shape is full-tree heal in bump.
+
+---
+
+### Q1-C — Verdict: who owns Chart.lock?
+
+| option | latency-to-heal | failure modes it leaves | blast radius on the four workflows |
+|---|---|---|---|
+| **Renovate-owns only** (fix the image; today's default behavior finally runs) | 0 (lock lands in the bump PR itself, reviewable) | human edits of Chart.yaml deps never get a lock (but those are still charts/** pushes → the fire's test-build would die); a future sandbox regression silently re-opens yaml-only PRs — only the red `renovate/artifacts` check is the signal, and nothing today blocks on it | release.yaml untouched; renovate.yaml image line + env; main-sync/containers-build/builder-bootstrap untouched |
+| **Pipeline-owns only** (bump-job `helm dep update` + commit; test-build switches to update or heals first) | ≤ next fire — and every drift source is itself a charts/** push, which IS a fire trigger, so effectively at-the-push | locks on main stay stale between the renovate merge and the fire (cosmetic; PRs show it); bump job reddens on upstream-egress blips (same class release already has); doesn't heal *unpushed* local state | release.yaml (test-build, bump); suites forgejo-release re-pin; strata lock-guard flips from enforcer to witness; other three workflows untouched |
+| **BOTH** | Renovate: 0 for bot bumps; pipeline: 0 guarantee at publish | Renovate-internal failures degrade to "pipeline heals" (silent, benign); pipeline never sees drift from renovate when renovate works | union of the two |
+
+2025-era practice elsewhere: chart-releaser-action ships **no** lockfile
+automation — its README never mentions Chart.lock at all [80]; helm's own
+best-practices page for dependency versions recommends *ranges* (`~1.2.3`)
+over pins and carries no lock guidance [82]; the tools that keep locks
+fresh are the dependency updaters themselves: Renovate does it by default
+[54], Dependabot regenerates the lock natively in its own implementation —
+"generated, not authored" is the maintainers' framing for why
+lockfile-only config does not apply [67][68][63]. The norm that holds:
+whoever changes Chart.yaml regenerates the lock in the same transaction;
+nobody in the known-good setups lets a stale lock reach the release
+branch.
+
+**RECOMMENDATION: BOTH, pipeline as the guarantee.**
+1. Pipeline (load-bearing, kills this fire class deterministically):
+   test-build's smoke swaps `helm dependency build` → `helm dependency
+   update`; the bump loop, after its main-tip reset and before the version
+   rewrite, runs `helm dependency update` over every chart carrying a
+   Chart.lock (full-tree, cheapest correct shape per B(d)), stages
+   `charts/*/Chart.lock` next to `charts/*/Chart.yaml` (with a
+   staged-content guard before `git commit`), FF-pushes as today.
+2. Renovate (root cause at the PR): give the instance Renovate a runnable
+   helm v3 — a lab-baked image
+   (`FROM ghcr.io/renovatebot/renovate:44.x@digest` + helm 3.22.1 sidecar
+   copy, exactly the containers/forgejo-runner pattern) with
+   `RENOVATE_BINARY_SOURCE=global`; keep the immutable pin + digest law.
+   Accepting the official `-full` image instead is only lawful after the
+   one-time helm4-update → helm3-build digest cross-check passes.
+3. Optional: enable helmv3 `lockFileMaintenance` weekly (cheap drift sweep
+   while renovate itself is being fixed).
+
+---
+
+### Q2 — calendar chart versions
+
+Owner framing: "I'd like version to work like containers-build.yaml —
+2026.11.1++ … expectation is they'll get there as I naturally update &
+rebuild".
+
+**(a) Semver legality + tool acceptance.** SemVer 2 clause 1: X.Y.Z are
+"non-negative integers, MUST NOT contain leading zeroes … Each element MUST
+increase numerically (1.9.0 -> 1.10.0 -> 1.11.0)" — no width cap, so
+`2026.11.1` is a normal legal version [84]. Helm's chart-version law
+(topics/charts): "should follow the
+SemVer 2 standard but it is not strictly enforced", non-semver explicitly
+disallowed, `x`/`x.y` coerced [75]; `helm package` validates with
+Masterminds `semver.NewVersion` [76], whose regex is
+`v?(0|[1-9]\d*)...` per component — **rejects leading zeros** [88].
+Therefore the D15 lesson returns exactly: the month MUST be unpadded —
+`date +%Y.%-m` (or `10#` coercion) — `2026.07.1` is invalid semver and dies
+at `helm package`; `2026.7.1` orders correctly. Unquoted YAML is safe for
+the 3-dot form (it never parses as a float; that trap is the 2-segment
+`1.0`/`2026.11` case the docs' appVersion warning describes [75]).
+cr: treats version as a string (tgz name `<name>-<version>.tgz` ↔
+release tag `<name>-<version>`, index key) [79]; ArgoCD pulls by exact pin
+[81]; Renovate's helm datasource default versioning is the `helm`
+module = semver/Masterminds semantics, ranges supported [64][65]; the OCI/
+Helm-registry path only ever puts version in tag/reference strings, same
+grammar as image tags (our containers already ship 26.11.N there). No
+4-digit-major gotcha found in any of the four surfaces. apiVersion v2 is
+orthogonal; Helm 4 keeps the same validation. Our own bump loop's `ver()`
+helper already parses 2026.11.1 (3 numeric parts) and tuple-compares
+correctly against 1.0.x [repo release.yaml:186-190].
+
+**(b) Ordering + upgrade safety.** 2026.11.1 ≫ 1.0.203 numerically: `helm
+upgrade`/`helm template` place no guard on chart-version majors (version is
+a release marker only; only `kubeVersion` and `appVersion` semantics are
+checked — appVersion is "informational, no impact on chart version
+calculations") [75]. ArgoCD: chart+exact targetRevision pin → repo resolves
+that literal; no downgrade or major guard; and Argo CD re-renders with the
+helm binary per release — the docs page states modern Argo CD renders with
+**helm v4** ("The only Helm binary used to render charts in Argo CD
+(starting with version 3.5) is v4") [81] (see Contradictions — the repo's
+"renders with helm v3" law is going stale, but that is ArgoCD's bundled
+binary, not a constraint on our version FORMAT). Renovate consumption of
+the published index: all 61 own-chart pins are EXACT (audited: `#version:
+1.0.x # renovate: datasource=helm registryUrl=…` + appset `appName/
+baseChartVersion` pairs; zero `^ ~ *` ranges anywhere in services/,
+charts Chart.yaml dep pins, or custom-values — grep clean [repo]); under
+`config:recommended` a 1.x → 2026.y pin update is a normal **major** update
+PR (majors are not suppressed for these packages — no packageRule touches
+them; the only helm-related holds are `helm/helm` + `alpine/helm` tool
+holds [repo renovate.json rules 4/5], and rule 9's regex versioning covers
+the *docker* calendar tags only — chart pins keep default `helm` versioning
+and need no regex, unlike the containers precedent). First-fire churn: one
+major-bump PR per pin per chart that converts (16+17+12+5+… pins across the
+61-line set), human-merged like every other renovate PR; prConcurrentLimit
+0 already accepts the volume.
+
+**(c) The N-walk design (parity with containers-build, adapted).** The
+containers pipeline derives N by walking PUBLISHED tags (union max of two
+registry tag lists + bounded existence walk) because its two registries are
+async truth sources with no shared transaction [containers-build
+:185-330]. For charts the situation is kinder: the **tree is a
+synchronous, FF-ordered shared ledger** — every minted version is committed
+before it is published — so the bump loop's existing idempotency pair
+(max(tree, gh-pages index) + 1) already IS the two-runner-safety mechanism
+(D17 law; the FF push is the lock). Deterministic calendar rule proposed
+for the bump leg (single-writer loop, re-derived every attempt, one clock
+stamp per job like the containers `month=` law):
+
+```
+Y.M = date -u +%Y.%-m            # fixed once per run (containers law)
+base = max(ver(tree), ver(published gh-pages index))   # tuple compare, today's ver() parses it
+if base.major == Y and base.minor == M:  new = (Y, M, base.patch + 1)   # same-month walk
+elif base < (Y, M, 0):                   new = (Y, M, 1)  # month-change reset, legacy 1.x first jump, first-ever chart
+else:                                    FAIL LOUD      # base ahead of clock = clock skew; never walk backwards
+```
+Edge cases resolved: charts whose published max predates the calendar
+(1.0.202) take the strict-jump to 2026.11.1 under the `base < (Y,M,0)` arm
+— no `max(index)+1` is needed because `(1,0,202) < (2026,11,0)` by
+definition; the instance Helm registry stays handled by its existing
+skip-if-present guard (reading it in bump would drag FORGE_PUSH_TOKEN into
+the bump job's credential surface for a truth the tree already carries —
+recommend tree+gh-pair, instance as skip-only); re-run of an old pipeline
+after a new fire re-derives from the advanced tree tip and pushes one
+benign extra N (today's D17 shape, unchanged); midnight-straddle is moot
+within one run because month is stamped once; two runners both derive N,
+first FF wins, second re-derives N+1 — monotone (the D17 loop law itself;
+the write-skip freshness check is what makes the heal no-op repeat-safe
+[72]). The test-build smoke regex (`^version: (\d+)\.(\d+)\.(\d+)$`,
+patch+1) needs no change: on a converted chart it walks N locally.
+
+**(d) Migration shape.** Convert-at-next-change works cleanly: index lists
+are mixed-version-tolerant (every published version is a separate entry;
+"latest" = highest semver = the calendar one, which is desired); consumers
+pin exact versions and get bumped by renovate per chart (b), so one chart
+jumping while neighbors stay 1.x breaks nothing; the C01 same-indent
+index-pairing guard and value-semantics legs (t15) are name/version-string
+blind — 4-digit majors parse under the same `ver()` (they are the exact
+shape the guard was written for). No global cutover commit is needed; the
+owner's "as I naturally update & rebuild" path is the mechanism.
+
+**(e) Precedents + anti-patterns.** CalVer-in-semver is a documented
+pattern (calver.org's own scheme table: YYYY/M/MM; case studies NVIDIA GPU
+Operator `22.9.0` — "new major every six months", RAPIDS `21.06.00`) [85];
+live Helm-chart examples today: sbomify's chart ships `26.11.1 (YY.MM.MICRO
+CalVer)` and ethora-core states "The chart version is CalVer, YY.M.patch
+for the month it ships" [86][87]; the lab itself already publishes
+`26.11.N` calendar container tags and a `pipenv 2026.11.0` install-tool pin
+appears in Renovate's own base image — the 4-digit-major form is
+business-as-usual across the ecosystem. Anti-pattern to respect: any
+consumer range like `^1.0.0` or `~1.0` would silently STOP updating at the
+jump (caret excludes 2026.x) — **audited this repo: zero chart-version
+ranges; all pins exact** ✓. The only ranges in the chart world here are
+upstream `dependencies[].version` pins, which our renovate helmv3 manager
+rewrites as exact values. Second watch-point: `version: 1.0.0` for
+brand-new charts (AGENTS law) — decide whether new charts start at the
+current `Y.M.1` or at 1.0.0-and-convert; either is consistent with the walk
+rule (c).
+
+---
+
+### Contradictions and how they were weighed
+
+- **"Renovate doesn't update Chart.lock" vs "it does"** — both are true
+  depending on environment. The docs [53][58] and source [54] show the
+  behavior is default; our instance's PR evidence [61][62] shows the
+  EXECUTION fails (EACCES/ENOENT), and the 2-hour rule [57] then ships the
+  half-PR. Weighted toward the live PR artifacts + source code over prose.
+- **Old RESEARCH/plan prose ("GitHub Renovate opened lock-keeping PRs")** —
+  the pre-migration commits (42.4.0/42.4.1, #899/#921) prove hosted Renovate
+  succeeded where the slim-in-act-container fails; consistent, not
+  contradictory — the migration (card #139) moved the failing environment.
+- **Repo law "ArgoCD renders this repo's charts with helm v3" (renovate.json
+  rules 4/5, D38) vs ArgoCD docs "starting with version 3.5 the only Helm
+  binary used to render is v4"** [81]. Not load-bearing for either ask
+  today (both lock-format and version-format claims hold on v3 and v4 —
+  HashReq identical, semver validation identical), but it means the
+  helm-v4 hold's stated REASON is stale: ArgoCD itself will move under us;
+  the v3 alignment that still binds is OUR baked runner + cr's bundled helm
+  v3 libs. Flag for a future owner ruling; do not change the holds here.
+- **D15's rejected date-tag spelling** (hyphen form broke renovate sorting)
+  vs today's calendar wish — the same law applies in the semver world:
+  zero-padding and hyphens are the killers; unpadded numeric YYYY.M.N
+  sorts everywhere by construction.
+- **containers `yy.mm` vs charts `2026.mm`**: owner asked 4-digit for
+  charts; 2-digit year sorts fine too, but 4-digit avoids any future
+  collision with genuine 26.x majors and makes the ledger self-describing;
+  adopting owner's literal.
+
+### Implications for the plan (what the planner must decide differently)
+
+- Q1 is NOT solved by a renovate.json knob — no knob enables what is already
+  on; the plan decides the IMAGE route (baked-with-helm recommended; full
+  image gated by the v4→v3 digest cross-check) and the pipeline heal shape
+  (full-tree dep update inside the bump loop + staged-content guard;
+  test-build smoke choice: `update` vs heal-then-`build`).
+- Committing Chart.lock beside Chart.yaml in the bump commit requires no
+  new laws: FF loop, credential topology (auto token, no re-trigger), cr
+  and ArgoCD consumption all verified compatible above.
+- The bump version-derivation block becomes the calendar walk of (c);
+  suites re-pin: the t-suite's `ver()`-pair legs, the smoke regex leg, and
+  (if Q1 pipeline lands) a new leg per healed file pair. AGENTS.md's
+  "bumps Chart.yaml version (patch)" sentence and the
+  helm-chart-creation skill versioning law change with it (rulesync twin).
+- Calendar adoption is per-chart-on-next-change; the plan must add the
+  `date +%Y.%-m` non-padding law (D15 twin) and the FAIL-LOUD clock-skew
+  arm, and decide the new-chart seed version rule.
+
+### Open questions (for the batched plan round; research can't close them)
+
+1. Renovate image route: custom `containers/renovate` bake with helm v3
+   (+`RENOVATE_BINARY_SOURCE=global`) vs official `-full` image (needs the
+   one-time helm4-writes / helm3-builds digest cross-check gate) vs
+   leaving the red-check-merge hole to process (owner's own review posture)?
+2. Pipeline heal placement: heal in bump only (release legs then never see
+   drift, but test-build must stop `build`-ing or run after a heal) vs heal
+   in test-build too; and full-tree vs changed-set — full-tree is the only
+   shape that also protects `cr package charts/*/'s whole-tree Build().
+3. Should `lockFileMaintenance` (weekly lock refresh) be enabled as a third
+   belt, with its PR volume accepted?
+4. New-chart seed: `1.0.0` (convert at first change) or straight to
+   `Y.M.1`?
+5. Does the owner want the instance-index consulted in the N derivation
+   (extra credential in bump job) or stay tree+gh-pages pair + skip guard?
+6. Year 2027+ rollover is safe by arithmetic; but confirm the owner wants
+   MONTH granularity (not the containers' `yy.mm` 2-digit) — adopted above
+   pending explicit word.
+
+### Reliability notes (round-4 peer review, per the storm method)
+
+- **Confidence by finding** (1–10): Renovate-default lock flow [54 source
+  read] 9 — code is unambiguous, but read at `main` (44.261.2-era) while
+  the lab runs 44.181.5; the two artifacts.ts commits straddling are
+  behavior-stable, not re-diffed per release. Instance root-cause
+  (EACCES/ENOENT) 10 — live PR comments + status checks quoted verbatim.
+  Helm build/update/package/lint matrix 9 — all primary claims read from
+  dev-v3 source, cross-checked with v4 text; the one soft spot is mapping
+  dev-v3-tip semantics onto the shipped 3.22.1 binary (same line, tagged
+  v3.22.1 source not re-fetched per file). cr packager 10 — tag-pinned
+  source read. Calendar semver legality 9 — parser-level evidence across
+  every consuming surface; the ArgoCD/OCI legs rest on docs, not a lab
+  instance probe. Walk rule 8 — design derived from the repo's own proven
+  D17 loop, not yet executed.
+- **Weakest claim**: the full-image route's v4↔v3 lock-digest
+  compatibility — textual identity of HashReq [66][73] strongly implies
+  it, but no live `helm4 dep update → helm3 dep build` run was performed
+  here; it is gated as a plan-side verification, do not ship on this
+  sentence alone.
+- **Not verified, flagged as-is**: the dependabot "regenerates Chart.lock
+  natively" specifics come from ecosystem threads [67][68][63] — direction
+  certain, mechanism (pure-Ruby vs helm invocation) not source-read.
+- **Perspective weighting**: the Renovate lens dominated (appropriate —
+  it owns the drift's first cause); the GitOps-consumer lens was thin
+  because pin-shape facts were all repo-side greps; a fleet-operator lens
+  (per-cluster baseChartVersion override annotations, appset.yaml:44-49)
+  was noted but not exercised — calendar jumps interacting with frozen
+  per-cluster overrides is a plan-round question, not a research gap.
+- **Blind spot none of the interviews probed**: chart-releaser's own
+  provenance/signing path with a rebuilt lock (checksums under `cr
+  package --sign`) — irrelevant while signing is off, listed for
+  completeness.
+
+### Sources (round 4; 53–88; 1–52 from earlier rounds unchanged)
+
+53. https://docs.renovatebot.com/modules/manager/helmv3/ — lockFileMaintenance support for Chart.lock; helmUpdateSubChartArchives; hostRules for private repos/OCI; registryAliases [A]
+54. https://raw.githubusercontent.com/renovatebot/renovate/main/lib/modules/manager/helmv3/artifacts.ts — DEFAULT lock flow: `helm repo add --force-update` + `helm dependency update`; no lock → null; failure → artifactErrorResult; generated-line-blind diff [A(a),A(b),A(d),C]
+55. https://raw.githubusercontent.com/renovatebot/renovate/main/lib/modules/manager/helmv3/common.ts — OCI registry-login from hostRules [A(b)]
+56. https://raw.githubusercontent.com/renovatebot/renovate/main/lib/config/options/index.ts — binarySource default `install`, allowedValues [global,docker,install,hermit]; docker mode deprecated [A(d)]
+57. https://raw.githubusercontent.com/renovatebot/renovate/main/lib/workers/repository/update/branch/index.ts — artifactErrors: PR raised anyway >2 h ("raise PR with lock file errors"), error-topic comment + removal logic [A(d)]
+58. https://docs.renovatebot.com/configuration-options/ — postUpdateOptions allowedValues (no helmLockFileUpdate/helm3), lockFileMaintenance default {enabled:false,"before 4am on monday"}, statusCheckWhen.artifactError default "failed", notes that constraints/installTools do NOT take effect under binarySource=global [A(a),A(d)]
+59. https://api.github.com/search/issues?q=repo:renovatebot/renovate+%22helm-locks%22 — total_count 0: no upstream helm-locks manager/issue/PR [A(a)]
+60. https://docs.renovatebot.com/docker-build-process/ + https://raw.githubusercontent.com/renovatebot/base-image/main/Dockerfile — slim=install (runtime egress), full=global (pre-installed tools; full stage `RUN install-tool helm v4.3.2`; `install-tool pipenv 2026.11.0`); default-tools policy "generally only the full image" [A(d), Q2(e)]
+61. https://git.spencerslab.com/api/v1/repos/CuratedForest/SpencersLab/issues/112/comments + …/commits/95533725d/status — LIVE: renovate/artifacts=failure; EACCES /opt/containerbase/data, "Install tool helm failed in 3ms" [A(d)]
+62. https://git.spencerslab.com/api/v1/repos/CuratedForest/SpencersLab/issues/113/comments — LIVE: "spawn helm ENOENT" for both traefik locks [A(d)]
+63. https://stackradar.io/blog/open-source-kubernetes-dependency-management — corroboration: "Dependabot has supported Helm since 9 April 2025" [C]
+64. https://docs.renovatebot.com/modules/datasource/helm/ — reads index.yaml; DEFAULT versioning `helm`; release timestamps from `created` [Q2(a),Q2(b)]
+65. https://docs.renovatebot.com/modules/versioning/helm/ — semver + Masterminds semantics, ranges supported [Q2(a),Q2(b)]
+66. https://raw.githubusercontent.com/helm/helm/main/internal/resolver/resolver.go + main pkg/chart layout (dependency.go compat accessors + v2/) — v4 HashReq textually identical to v3's; v2/v3 metadata compatibility kept [A(d)-full-image cross-check]
+67. https://github.blog/changelog/2025-04-09-dependabot-version-updates-now-support-helm/ — Dependabot Helm version-updates GA [C]
+68. https://github.com/dependabot/dependabot-core/issues/2237 (+ ecosystem note in #15216: "Chart.lock is generated, not authored") — Dependabot Helm implementation thread [C]
+69. https://raw.githubusercontent.com/helm/helm/dev-v3/cmd/helm/dependency_build.go — build desc ("will not re-negotiate…"; "If no lock file is found… mirror… update"); ErrRepoNotFound → "Please add the missing repos via 'helm repo add'" [B(a),B(c)]
+70. https://raw.githubusercontent.com/helm/helm/dev-v3/cmd/helm/dependency.go — full dependency-subcommand flag set; NO --force-update [B(b)]
+71. https://helm.sh/docs/helm/helm_dependency_build/ (4.3.1; 3.22.1 twin at /docs/v3/) — user-facing synopsis + identical flag list [B(b)]
+72. https://raw.githubusercontent.com/helm/helm/dev-v3/pkg/downloader/manager.go — Build(): digest-check abort, hasAllRepos, UpdateRepositories unless --skip-refresh, downloadAll (always fetches via tmpPath — no charts/ cache-skip); Update(): ensureMissingRepos (v4-removal TODO), digest-equal ⇒ lock NOT rewritten [B(a),B(c),B(d),Q2(c)]
+73. https://raw.githubusercontent.com/helm/helm/dev-v3/internal/resolver/resolver.go — HashReq = sha256 over json.Marshal([Chart.yaml deps, lock deps]); top-level chart version outside the hashed inputs [B(a),B(d),A(d)]
+74. https://raw.githubusercontent.com/helm/helm/dev-v3/pkg/lint/rules/dependencies.go — dep missing from charts/ = WARNING severity (exit 0 sans --strict); lock never consulted [B(c)]
+75. https://helm.sh/docs/topics/charts/ — "version should follow SemVer 2 … not strictly enforced"; non-semver disallowed, x/y coerced; package name = version token; appVersion informational; dependencies repo + repo-add note [B(c),Q2(a),Q2(b)]
+76. https://raw.githubusercontent.com/helm/helm/dev-v3/pkg/action/package.go — validateVersion = Masterminds semver.NewVersion; CheckDependencies error "missing in charts/" [B(c),Q2(a)]
+77. https://raw.githubusercontent.com/helm/helm/dev-v3/cmd/helm/package.go — -u/--dependency-update runs downloader Manager.Update() before packaging [B(c)]
+78. https://helm.sh/docs/helm/helm_dependency_update/ — the regeneration verb; synopsis of deps-in-Chart.yaml flow [B(a),B(b),B(c)]
+79. https://raw.githubusercontent.com/helm/chart-releaser/v1.10.1/pkg/packager/packager.go — cr package: downloadManager.Build() per chart, error ABORTS the run; then helm action.Package; version handled as the Chart.yaml string [B(c),B(d),Q2(a)]
+80. https://github.com/helm/chart-releaser-action — README (v1.7–v1.9): zero Chart.lock/dependency automation; skip_packaging escape hatch [C]
+81. https://argo-cd.readthedocs.io/en/stable/user-guide/helm/ — helm used only to `helm template`; chart+targetRevision exact pins; "starting with [Argo CD] version 3.5 [the] only Helm binary used to render charts is v4" [B(d),Q2(a),Q2(b),Contradictions]
+82. https://helm.sh/docs/chart_best_practices/dependencies/ — recommends RANGE dep versions (`~1.2.3`), no lockfile guidance (measured 2026-11-25) [C,Q2(e)]
+83. Own measurements (round 4): full-tree Chart.yaml↔Chart.lock drift scan at 3f21e85e8 (DRIFT live: charts/base argo-cd 10.18.3↔10.18.2; charts/traefik + charts/traefik-zerotrust traefik 42.4.2↔42.4.1; all other dep-carrying charts in sync); git-log provenance split GitHub-era (locks present: bcf254c3b, 73da0c56b) / instance-era (locks absent: 80c503f72, 95533725d, a619fe6ad) with author/committer emails; Forgejo API PR/commit status reads; renovate.json audit (13 customManagers, 11 packageRules, no enabledManagers ⇒ built-in helmv3+helm-values live; constraints.helm 3.22.1 present); services/ pin-shape audit (61 datasource=helm pins, all exact 1.0.x; zero ^/~/* chart-version ranges repo-wide); release.yaml/containers-build.yaml line-level reads (@3f21e85e8).
