@@ -100,7 +100,12 @@ want() { [ -n "${WANT[$1]:-}" ]; }
 # floor is content, not label form: a v-prefixed arg and a bare tag are the
 # same release, so callers normalize before calling.
 ver_ge() {
-  local IFS=. a=("$1") b=("$2") i
+  # IFS=. read -ra: the split actually happens — an array-subscript
+  # assignment (a=("$1")) never word-splits, which made this a vacuous
+  # always-true (every -gt/-lt compared "x.y.z" as one non-integer).
+  local a b i
+  IFS=. read -ra a <<<"$1"
+  IFS=. read -ra b <<<"$2"
   for i in 0 1 2; do
     if [ "${a[i]:-0}" -gt "${b[i]:-0}" ]; then return 0; fi
     if [ "${a[i]:-0}" -lt "${b[i]:-0}" ]; then return 1; fi

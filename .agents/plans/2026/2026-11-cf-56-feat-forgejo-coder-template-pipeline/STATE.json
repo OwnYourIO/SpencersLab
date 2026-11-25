@@ -39,13 +39,38 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "dev_session": "ses_deeee0631ffeZl6G0m1c5Mtgf4",
+      "review_rounds": 1,
+      "review_sessions": ["ses_deed5c44bffe1mTCQ0bM6lwVA7"],
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "from": "dev C01",
+          "at": "2026-11-25T04:17:00+00:00",
+          "status": "DONE",
+          "files_changed": ["containers/forgejo-runner/Dockerfile"],
+          "summary": "codertool stage added: ghcr.io/coder/coder:v2.39.5 index digest 40fade40, ARG CODER_VERSION=2.39.5 (renovate github-releases annotation, single-tracker rationale), manual-pinned CODER_BIN_SHA256=8343...fe4 of the EXTRACTED binary (offline-verified: amd64 manifest 878a8e0a, layer cd812300, coder version executed on extracted binary => v2.39.5+f11d2a1); third COPY transport; anchor RUN extended; header records OQ3 ruling + hand-bump consequence. act-24.04 base, helm/cr legs, no USER/apt/ENTRYPOINT untouched.",
+          "commands_run": "tests/containers/forgejo-runner.sh => 9 ok PASS (t1/t2/t5/t6/t9 flipped, t3/t4/t7/t8 stayed green, t8 designed CI-deferred); hadolint error-threshold clean (1 inherited DL4006); aislop not-scored for Dockerfile (honest scope); ghcr offline verification => pass",
+          "deviations": "suite file left untouched (read-only); aislop 4-path form rejected by 0.18.1 -> single-path scoped run; plan Commands for C02/C03 files not run (out of chunk scope)",
+          "flagged": "tests/containers/forgejo-runner.sh ver_ge (lines 102-109) vacuous: local IFS=. a=(\"$1\") does not word-split in assignment context -> every compare errors, falls through return 0; floor check effectively unenforced (repro ver_ge 2.30.0 2.35.2 => true); verdict unaffected (2.39.5 genuinely >= 2.35.2) -> routed to test session"
+        },
+        {
+          "from": "test-repair (validation_at_fault route)",
+          "at": "2026-11-25T05:20:00+00:00",
+          "status": "DONE",
+          "summary": "ver_ge repaired in tests/containers/forgejo-runner.sh (IFS=. read -ra per arg); teeth proven 9 cases; full suite 9 ok on landed tree, t2 stderr clean; only the test file touched"
+        },
+        {
+          "from": "review C01",
+          "at": "2026-11-25T05:30:18+00:00",
+          "status": "APPROVED",
+          "summary": "Fresh-session review: suite re-run 9 ok, hadolint clean (1 inherited DL4006 warning), aislop not-scored honest scope; digest story consistent (index 40fade40 / amd64 manifest 878a8e0a / extracted-binary sha 83431171...fe4); renovate annotation matches customManagers[8], no double-match with [10]; no USER/apt/ENTRYPOINT/CMD/RUN-fetch; helm/cr legs byte-preserved; OQ3 fidelity (no coder-cli dir, consequences documented); comments house-style. No blockers/majors/minors. Notes appended to chunks/C01.md."
+        }
+      ]
     },
     "C02": {
       "status": "pending",
