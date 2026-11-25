@@ -421,3 +421,69 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   commit renamed/re-pinned what survives; a suite whose implementation is disposed cannot
   self-delete, and C07's AC1/AC6 need the tracked absence. Law stands: test session owns
   test CONTENT; the disposal chunk owns test DELETION of disposed surfaces.
+
+## Owner reopen 2026-11-25 — reopen3 (STATE `reopen3`, card comment DM2pP35CGPbCjAWXu):
+## vault INPUT redesign (R7); waves 7–9 stand as done history; input-mechanism ONLY
+- 2026-11-25 human: **R7 — per-cluster Actions key pairs, env discovery.** The
+  single-blob secret is ruled out (too error-prone): org VARS `ARGOCD_SYNC_<CAT>_URL` +
+  org SECRETS `ARGOCD_SYNC_<CAT>_TOKEN` (category upper-snake: gpu-ai→GPU_AI,
+  proxy-remote→PROXY_REMOTE); `scripts/argocd-fanout.py` builds its endpoint list by
+  SCANNING ITS ENVIRONMENT for the `ARGOCD_SYNC_*` pairs — no category list in code or
+  JSON. Supersedes OQ8's MECHANICS only (newline `cat:token` records, multi-line paste,
+  [26] per-line-masking legs): the fan-out semantics, job shape, disposals and doc spine
+  from waves 7–9 stand untouched. This adopts RESEARCH §2 option (2) — strongest masking
+  (native per-secret single-line values [21][22]) — accepting its two named costs
+  knowingly: static enumeration rows per fleet change, and no dynamic secret indexing
+  (`${{ secrets[matrix] }}` unsupported [21][25]), the latter resolved by moving
+  discovery into the script's env scan instead of expressions.
+- 2026-11-25 human/coord (consequences pinned WITH the ruling, recorded as ruled,
+  reversible): (1) **pair integrity** — unset org keys arrive as EMPTY STRINGS (static
+  enumeration passes them), so the script's empty-detection is the guard: partial pair or
+  empty-string residue ⇒ config RED naming the category, value-free; all-absent ⇒
+  designed warn-green skip. (2) **static enumeration** — the workflow env map carries all
+  22 lines. (3) **roster shrinks to GLOBALS** — `scripts/argocd-fanout.json` keeps
+  allowed_refs/tracked_repo/settle/timeout/workers; `targets[]` DELETES, URLs come from
+  env; `tracked_repo` stays the one global GitHub URL ([P §3] lockstep law unchanged),
+  allowed_refs unchanged; root_app == category == discovered name becomes a code
+  convention. (4) **masking simplifies** — [26] per-line verification leg and the
+  multi-line-paste UI leg DROP from the runbook; the comma/newline-tolerant parser and
+  the M1 reversed-record arm DIE with the blob (the JWT-shape guard survives on the
+  TOKEN side; the value-never-echoed law matters more).
+- 2026-11-25 plan(reopen3): pinned micro-calls (best guesses; none gates; each a
+  one-line follow-up): **(a) configured predicate keys on the TOKEN side** — a fleet is
+  configured iff ≥1 non-empty `*_TOKEN` exists; forced by the owner's own kill-lever
+  statement ("deleting the TOKEN secrets suffices — empty env ⇒ all-absent warn-green"):
+  URL-side keying would turn §7's lever into a red-storm. All-absent lane pins the
+  column-0 line `::warning::sync-fanout not configured (no ARGOCD_SYNC_*_TOKEN keys with
+  values) — fan-out skipped, manual sync or the next push covers it`. **(b) aggregated
+  RED** — every pair-integrity violation is COLLECTED and listed (categories sorted) in
+  one `argocd-fanout config:` line — first-error-raise would hide half a broken fleet.
+  **(c) broad-catch category law** — env names are scanned broadly (`^ARGOCD_SYNC_(.+)_(URL|TOKEN)$`)
+  then STRICT-validated; a malformed segment with a NON-EMPTY value (typo'd enumeration
+  row) goes RED naming the raw key — silently ignoring it would re-open the exact
+  silent-cluster-loss class the whole red posture exists for; empty malformed residue is
+  ignored. Category constraint recorded: fleet categories MUST be hyphen-only DNS labels
+  (`_` in a real category name is unrepresentable — collides with its hyphen twin on one
+  env key, undetectable at scan; dots are unrepresentable in `vars.` expressions).
+  **(d) decommission lockstep** — removing a cluster = org pair + its 2 workflow rows in
+  the SAME release (a key-only delete leaves residue ⇒ RED by design; both drift
+  directions are visible, none silent — the enumeration cost, paid knowingly).
+  **(e) shell guard dies** — the job's `-z` unset-guard is DELETED (no 22-way emptiness
+  test in YAML); the script owns both lanes, single source of truth. **(f)
+  route-truth test duty relocates** — the repo can no longer test-pin the 11 hosts
+  (instance-side now): behavior t2's host pins are replaced by the runbook §6 table +
+  `--check` pair listing + the dispatch smoke; the "live-verified, never guessed"
+  doctrine transfers with them. **(g) enumeration order** alphabetical by category
+  (proxy-backup before proxy-local — a deliberate sort-order change vs the old roster
+  array), t5 pins it. **(h) no-back-compat** — `ARGOCD_SYNC_TOKENS` is banned file-wide
+  (t10 gains the ban) and ignored by construction in the script; runbook §2.4's
+  delete-check grows to the moot TRIO (hook pair + the reopen2 blob, which the
+  11-23→11-25 window may have had created).
+- 2026-11-25 plan(reopen3): Chunks = waves 10–12 (continuing numbering): C09 (M) engine
+  input redesign + behavior.sh re-pin; C10 (S) workflow 22-row env map + guard deletion +
+  main-sync suite re-pin; C11 (S) runbook rewrite #4 + runbook-suite re-pin executed as a
+  SECOND test launch at wave-12 start (its parity greps read the C09/C10 landed files —
+  per brief, rides their landing). Test session law holds for the first launch (one
+  session, behavior + main-sync re-pins, before wave 10). C05/C06/C08 stay done history
+  with reopen3 supersession notes; C07's disposals unaffected; disposal.sh untouched.
+  plan_status stays APPROVED — the ruling is complete, no batched round needed.
