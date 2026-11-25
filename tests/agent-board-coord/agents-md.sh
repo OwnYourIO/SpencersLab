@@ -412,6 +412,15 @@ fi
 # catch-all would outlive the ticket and admit every future chart surface);
 # release.yaml and the suites ride the cf-55 arms above per the fix-round
 # paragraph. A replan-added file joins THIS line.
+# cf-55 ROUND 4 / C12 (2026-11-25, route F approved by D49; chunks/C12.md):
+# .forgejo/workflows/renovate.yaml joins as an EXACT path — the first
+# cf-55-round edit of that file (dev commit 93cb79107: the -full image swap
+# behind the helm4-writes/helm3-builds digest cross-check gate plus the
+# declared RENOVATE_BINARY_SOURCE pair, r2 APPROVED). The fix rounds admitted
+# release.yaml only and the C09 join above covered the locks + values, so
+# the branch delta tripped this arm until the carryover fold — exact path,
+# no .forgejo/workflows/* wildcard (main-sync/containers-build stay outside,
+# C11's rename will flip the release line, not add a sibling).
 # bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
 # joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
 # files already ride tests/*, .rulesync/skills/* and .opencode/skills/*; the
@@ -481,12 +490,13 @@ if want c7; then
       charts/forgejo-runner/*|containers/forgejo-runner/*|\
       charts/base/Chart.lock|charts/traefik/Chart.lock|charts/traefik-zerotrust/Chart.lock|\
       charts/traefik/values.yaml|charts/traefik-zerotrust/values.yaml|\
+      .forgejo/workflows/renovate.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-124 plan-folder + cf-143 radiance + cf-55 chart-half admits in the union)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-124 plan-folder admit + cf-126 own-folder + D37 artifact admits (.openchamber/project.json + canonical fixture) + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + cf-123 own-folder admit (bug-board-preload-lean-consumer) + 2026-11-07 fan-out-dedup standalone root plan doc + cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3); base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit + cf-124 plan-folder admit + cf-126 own-folder + D37 artifact admits (.openchamber/project.json + canonical fixture) + cf-143 plan-folder/new-chart-trees/vllm-tests-era/workflows/docs admits + cf-55 own-folder + chart-half surface admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + cf-123 own-folder admit (bug-board-preload-lean-consumer) + 2026-11-07 fan-out-dedup standalone root plan doc + cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3) + cf-55 round-4/C12 admit (the renovate workflow's -full image+env pair behind the digest gate, D49, dev 93cb79107); base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

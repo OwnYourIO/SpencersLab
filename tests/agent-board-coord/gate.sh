@@ -956,6 +956,12 @@ fi
 # charts/traefik-zerotrust/values.yaml). Explicit paths only: a charts/*
 # wildcard would outlive the ticket and swallow future chart surfaces whole;
 # release.yaml and the suites ride the cf-55 arms above.
+# cf-55 ROUND 4 / C12 (2026-11-25, route F approved by D49; chunks/C12.md):
+# .forgejo/workflows/renovate.yaml joins as an EXACT path — dev 93cb79107
+# (r2 APPROVED) is the first cf-55-round edit of that file: -full image
+# behind the helm4/helm3 digest cross-check gate + declared
+# RENOVATE_BINARY_SOURCE. Exact-only, no workflows wildcard: the cf-6
+# siblings (main-sync, containers-build, builder-bootstrap) stay outside.
 # bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
 # joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
 # files already ride tests/* and the explicit "$BOARDS_SRC"/*+"$BOARDS_GEN"/*
@@ -1039,12 +1045,13 @@ if want t14; then
       charts/forgejo-runner/*|containers/forgejo-runner/*|\
       charts/base/Chart.lock|charts/traefik/Chart.lock|charts/traefik-zerotrust/Chart.lock|\
       charts/traefik/values.yaml|charts/traefik-zerotrust/values.yaml|\
+      .forgejo/workflows/renovate.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-124 own-folder admit, the cf-126 own-folder + C06-round-3 artifact admits (.openchamber/project.json + the canonical fixture, D37), the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) + the cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3) (whole-ticket scope union; base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits, the cf-106 own-folder admit, the cf-123 own-folder admit, the cf-124 own-folder admit, the cf-126 own-folder + C06-round-3 artifact admits (.openchamber/project.json + the canonical fixture, D37), the cf-143 own-folder + new-chart-trees/vllm-tests-era/ render-workflows/radiance-docs admits, and the cf-55 own-folder + chart-half admits (Forgejo release builder, deleted GitHub twin, C04 infra values, helm-chart-creation skill, renovate-mcp comment truth) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) + the cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3) + the cf-55 round-4/C12 admit (the renovate workflow's -full image+env pair behind the digest gate, D49, dev 93cb79107) (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
