@@ -461,13 +461,15 @@ change.
 - If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
 - Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
 - **Never bump versions or image tags by hand.** `release.yaml` runs on the
-  prod Forgejo Actions: it bumps `Chart.yaml` `version` (patch) when changes
-  land on Forgejo main (idempotent FF-only single-writer loop; GitHub learns
+  prod Forgejo Actions: it bumps `Chart.yaml` `version` to the calendar
+  release `Y.M.N` (unpadded month) — same-month N+1, new-month N=1, a tree
+  ahead of the clock fails loud — when changes land on Forgejo main
+  (idempotent FF-only single-writer loop; GitHub learns
   the bumps via the main-sync fan-out, never a CI push to GitHub), then
   publishes DUAL — GitHub Releases + the gh-pages index via cr (consumer
   contract byte-stable, release tag `<chart>-<version>`) AND the instance's
-  Helm package registry (FORGE_PUSH_TOKEN). Set `version: 1.0.0` only on a
-  brand-new chart.
+  Helm package registry (FORGE_PUSH_TOKEN). Set
+  `version: Y.M.1` (the current stamp) only on a brand-new chart.
   Containers are tag-based: on a `prod`-role instance a main/dispatch build
   pushes `yy.mm.N` + `:latest` + `:main` to `ghcr.io/ownyourio/<image>` AND
   the same three tags to that instance's own Forgejo registry as

@@ -26,10 +26,11 @@ Is there an official Helm chart?
 When no official chart exists:
 
 1. `mkdir -p charts/<service>/templates`
-2. Create `Chart.yaml` (pattern below) — name, `version: 1.0.0` (initial only;
-   `release.yaml` — on prod-Forgejo Actions — auto-bumps patch on every merge
-   landing on Forgejo `main` and chart-releaser tags `<chart>-<version>` —
-   never bump it by hand), `appVersion`
+2. Create `Chart.yaml` (pattern below) — name, `version: Y.M.1` (the current
+   calendar stamp, initial only; `release.yaml` — on prod-Forgejo Actions —
+   bumps the calendar release on every merge landing on Forgejo `main`:
+   same-month N+1, new-month N=1 — and chart-releaser tags
+   `<chart>-<version>` — never bump it by hand), `appVersion`
    (latest from Docker Hub), app-template dependency at the repo-standard
    version (check an existing chart; currently `5.0.1`).
 3. Create `values.yaml` from the template below — inject service-specific env
@@ -151,7 +152,7 @@ Notes:
 ```yaml
 apiVersion: v2
 name: <service-name>
-version: 1.0.0  # initial only — release.yaml (prod Forgejo) bumps patch on every merge to main
+version: Y.M.1  # current calendar stamp, initial seed only — release.yaml (prod Forgejo) bumps it: same-month N+1, new-month N=1
 appVersion: <latest-version>  # research from Docker Hub
 dependencies:
 - name: app-template
