@@ -449,6 +449,21 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   multi-line-paste UI leg DROP from the runbook; the comma/newline-tolerant parser and
   the M1 reversed-record arm DIE with the blob (the JWT-shape guard survives on the
   TOKEN side; the value-never-echoed law matters more).
+- 2026-11-25 ruling (coord, C11 review MAJOR 1): **(j) double-empty enumeration rows
+  RED in a configured fleet — CODE REPAIR (C12), not doc reword.** Landed C09 treats
+  an all-empty pair (both sides "", e.g. after an accidental org-key deletion while the
+  workflow row survives) as `unattempted` GREEN — visible only via the discovered count.
+  That contradicts micro-call (d) ("key-only delete ⇒ residue RED by design") AND the
+  asymmetry already ruled elsewhere: one-sided residue (URL set + TOKEN blanked) is
+  integrity-RED, and §7's single-cluster kill is deliberately RED. A fleet that IS
+  configured (≥1 non-empty TOKEN) must account for EVERY enumerated row: both-empty ⇒
+  violation `category <cat> enumerated but both values empty` in the aggregated sorted
+  RED. UNCHANGED lanes: zero non-empty tokens anywhere ⇒ kill-lane warn-green (the
+  paste-pending state + the whole-fleet §7 lever both survive — the fix only fires when
+  OTHER clusters are configured, which is exactly when silence is wrong); empty
+  malformed-shape residue still ignored; direction-2 drift (workflow row deleted, org
+  keys survive) stays invisible to the script by construction — vault hygiene, doc must
+  state that precisely, not "both directions visible".
 - 2026-11-25 plan(reopen3): pinned micro-calls (best guesses; none gates; each a
   one-line follow-up): **(a) configured predicate keys on the TOKEN side** — a fleet is
   configured iff ≥1 non-empty `*_TOKEN` exists; forced by the owner's own kill-lever
