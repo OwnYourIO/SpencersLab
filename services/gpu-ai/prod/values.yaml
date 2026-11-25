@@ -1732,3 +1732,19 @@ radiance-q27-tp2:
                 cpu: "8"
                 memory: "24Gi"
                 amd.com/gpu-r9700: "2"
+
+# Owner directive 2026-11-25: gpu-ai scrapes at 15s (upstream k8s-monitoring
+# 4.5.5 global default is 60s). The double key is the merge path, not a typo:
+# the outer is this app's per-app subtree that the base appset folds into the
+# Application's valuesObject (charts/base/templates/appset-charts.yaml,
+# `index $.Values $appName`); the inner is the wrapper chart's dependency
+# alias (charts/k8s-monitoring/values.yaml:6). The per-cluster merge keeps
+# every other cluster at 60s; all gpu-ai routes — annotation autodiscovery,
+# the operator-object defaults, the feature modules — inherit this one scalar.
+# Side benefit (cf-145 RESEARCH.md): the $__rate_interval floor drops
+# ~4min -> ~1min for the churning radiance lanes. scrapeTimeout (10s default)
+# stays < interval.
+k8s-monitoring:
+  k8s-monitoring:
+    global:
+      scrapeInterval: 15s

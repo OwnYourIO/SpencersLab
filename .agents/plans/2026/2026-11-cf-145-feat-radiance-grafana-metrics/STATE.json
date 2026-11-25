@@ -149,6 +149,15 @@
       "grounding": "agent-explore ses_dff3555c2ffedmbbJixxotX1H5: NOT TRACKED — trailing dead # renovate: comment breaks cm#5 regex; annotations in values.yaml never consumed by any manager (cm#8 is appset-only)",
       "dev": { "session": "ses_dff2e40edffeR6nTHEespblYRw", "status": "BLOCKED (role law)", "shipped": "sweep 9 dead comments deleted across 6 services values files; 16/16 enabled trios now extract; doctrine source amended + rulesync regenerated AGENTS.md (one hunk, --check clean); guard leg authored+proven but staged /tmp (dev tests/** deny honored)", "pre_existing": "chart-yaml-legs k5/k10 stale since cf-135 merge" },
       "test": { "session": "ses_dffd43e53ffeUX8VsfUTa7LUfU", "status": "DONE", "shipped": "guard leg landed verbatim + red-paths re-proven both hosts md5-restored; k5 literal 12.65.0->12.99.0 grounded off Chart pair; k10 'docker' extended per flat-token convention + header law-comment corrected; all five legs RC=0; radiance suite 96/0/1 unchanged", "discovery_truth": "tests/renovate legs have NO CI wiring anywhere — manual convention; recorded in FRICTION" }
+    },
+    {
+      "id": "gpu-ai-15s-scrape",
+      "at": "2026-11-25",
+      "directive": "owner: increase data collection rate 60s->15s for everything on gpu-ai",
+      "shape": "per-cluster valuesObject subtree in services/gpu-ai/prod/values.yaml (double-nested k8s-monitoring alias block, WHY-commented); runbook step-9 interval phrase re-anchored; gpu-ai-only verified tree-wide (single scrapeInterval hit)",
+      "impact": "12 alloy interval sites 60s->15s (2 autodiscovery relabels, 3 operator defaults, 7 feature modules); ingest +7.4% fleet, gpu-ai 7d storage ~3GB vs 50Gi; scrapeTimeout 10s invariant; alloy reload once at owner sync; rate-window floor improvement per research round",
+      "sessions": "scout ses_defc877bdffeaXFam9kq5OYZgJ (topology + blast-radius) · dev ses_defbd4285ffe8HHm6jtxCo1B7H (DONE, render-proven) · review ses_defb369cdffeXItHthSIJsj8fH (APPROVED; minor test-comment 60s wording folded via test session)",
+      "owner_leg": "sync the gpu-ai-k8s-monitoring Application (lane apps unaffected); verify 15s spacing + panels draw ~30s post-lane-up"
     }
   ],
   "post_refactor": {
@@ -174,6 +183,14 @@
       "verification": "fresh full gauntlet (ses_dff550e06fferUpjtom7z7L1E3): VERDICT GREEN — charts/radiance suite 96P/0F/1S (my 26 green; baseline now 70P/1S from cf-144's +3 legs); tag chain closed testlib==pin==url at 1.17.0 (no re-pin); R5b job label radiance on both releases post-serveArgs-flip, zero annotation collision; runbook window coherent with cf-144's insert-only notes (grep-clean of scrape/dashboards terms); all four tests/notes + chart-lock guards pass; sentinels + R8 clean; git diff main...HEAD = 14 files +1886/-6 identical to pre-rebase; aislop 100/100",
       "known_stale_citations": "C01 review's values.yaml:193-194 (now 237-238) and plan Commands 67P baseline (now 70P) — historical, tests position-agnostic, no action"
     }
+  },
+  "research_followup": {
+    "at": "2026-11-22",
+    "directive": "owner: research round — systematic fix for churning-target blank rate panels + narrow-range viewing",
+    "session": "ses_dfa6a7f8fffecA9K6RyBr1xFRf",
+    "deliverable": "RESEARCH.md (33.7KB, 35+ sources, vendored-chart-source grounding)",
+    "coord_resolution": "O-1 RESOLVED POSITIVE by coord's live Prometheus reads this session (radiance:decode_tokens_per_second=283.4, prefill gauge present in job radiance catalog) — dashboard JSON omits them, engine ships them",
+    "owner_decisions_open": ["O-2 third annotation ruling (k8s.grafana.com/instance templated Release.Name) vs wrapper extraDiscoveryRules fallback — O-2 contradicts the cf-145 exactly-two ruling by design", "O-3 overlay shape: inline json: (uncontested, rollout-gated) vs sidecar ConfigMap (live, chart-comment contested)", "upstream ask list (Q5): TPS gauges in JSON panels, instance-free grouping, radiance:info"]
   },
   "chunks": {
     "C01": {

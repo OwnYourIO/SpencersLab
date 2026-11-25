@@ -43,8 +43,11 @@ PAIR = {
 CHECKSUM_KEY = "checksum/configMaps"
 
 # The keys the D8/Q5 exactly-two law deliberately leaves UNSHIPPED (plan R5b):
-# metrics.path -> the autodiscovery default /metrics; metrics.scrapeInterval
-# -> the feature's global 60 s default; job -> the label fallback `radiance`.
+# metrics.path -> the autodiscovery default /metrics; metrics.scrapeInterval ->
+# cadence rides the GLOBAL default, not the annotation — k8s-monitoring 4.5.5
+# upstream default is 60 s, gpu-ai's EFFECTIVE cadence 15 s since the owner
+# directive 2026-11-25 via the umbrella k8s-monitoring valuesObject
+# scrapeInterval override; job -> the label fallback `radiance`.
 BANNED_ANNOTATION_KEYS = (
     "k8s.grafana.com/job",
     "k8s.grafana.com/metrics.path",
@@ -176,8 +179,10 @@ def test_t4_no_banned_autodiscovery_annotations():
         banned = [k for k in ann if k in BANNED_ANNOTATION_KEYS]
         assert not banned, (
             f"cf-145 C01 AC4: {name} render carries {banned} — the D8/Q5 exactly-two law "
-            "leaves job, interval and path to the documented autodiscovery defaults "
-            "(job `radiance`, 60 s, /metrics); an override key is a ruling, not a tweak"
+            "leaves job and path to the documented fallback chain (job `radiance`, /metrics) and "
+            "the cadence to the global default — upstream 60 s, gpu-ai EFFECTIVE 15 s per the "
+            "umbrella scrapeInterval override (owner directive 2026-11-25); "
+            "an annotation override key is a ruling, not a tweak"
         )
 
 
