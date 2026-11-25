@@ -4,7 +4,7 @@
 # values.yaml comments. Cluster-internal peer engine: no ingress, no secrets.
 apiVersion: v2
 name: radiance
-version: 1.0.0
+version: 1.0.1
 appVersion: "1.17.0"
 dependencies:
 # The repo app-template idiom: the single dep bundles the common chart
