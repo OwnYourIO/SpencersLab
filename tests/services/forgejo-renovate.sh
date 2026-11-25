@@ -52,7 +52,10 @@
 # RENOVATE_BINARY_SOURCE=global (explicit, so a base-image default flip can
 # never silently regress to install mode); t9's needle is UNCHANGED (the tag
 # shares the depName). New t10 pins image-and-env as one PAIR — the
-# install-mode regression fence. Gate posture: the one-time helm4-writes/
+# install-mode regression fence. New t11 (C12 review r1 min-2) binds the
+# image-line digest comment to the strict sha256:[0-9a-f]{64} shape — a
+# 63-hex transcription rode through every prior leg because nothing read the
+# comment. Gate posture: the one-time helm4-writes/
 # helm3-builds digest cross-check is C12 DEV's pre-merge run (chunk AC1), not
 # a suite leg.
 #
@@ -431,5 +434,61 @@ then
   fail "t10: see the t10 detail above"
 fi
 ok "t10: image is the -full variant AND RENOVATE_BINARY_SOURCE=global is declared — the pair, or neither (install-mode regression fence)"
+
+# --- t11 [C12 review r1 min-2]: the image-line digest comment is strict-shape ------
+# The 63-hex transcription slip rode through every shipped leg because nothing
+# bound the comment's shape: a stale or mangled digest silently falsifies the
+# chunk's implementation-time evidence (C12.md task 2 requires the comment to
+# CARRY the -full tag's index digest; the review posture is "verify the digest
+# comment is the -full index digest, not the slim's"). SHAPE only — no leg
+# here reaches the registry (offline-suite law); verifying the token lives in
+# the dev RESULT's gate transcript, not in CI.
+# Posture pinned: for a -full image an accompanying digest comment is
+# REQUIRED (absent => red) — C12.md AC2 ships the pair "with a fresh digest
+# comment" (the slim era had the comment; the chunk REPLACES it, never drops
+# it, and the review posture reads it). For any image, every sha256 token
+# beside the image line must be exactly 64 lowercase hex on ONE line —
+# 63/65/uppercase/wrapped forms are the transcription class this leg exists
+# to catch.
+if ! python3 - "$WF" <<'PY'
+import re, sys
+
+lines = open(sys.argv[1]).read().splitlines()
+img_i = [i for i, l in enumerate(lines) if re.match(r'^\s+image:\s*ghcr\.io/renovatebot/renovate:', l)]
+if len(img_i) != 1:
+    print(f'FAIL: t11: {len(img_i)} image lines found, expected exactly one (the t4/m6 anchor) — no single digest companion to bind', file=sys.stderr)
+    sys.exit(1)
+i = img_i[0]
+image = lines[i].split(':', 1)[1].strip()
+
+# The digest comment rides the image line: comment lines directly after it
+# (the block up to the next executable key), plus the one line before.
+block = [l for l in ([lines[i - 1]] if i and lines[i - 1].lstrip().startswith('#') else [])]
+for l in lines[i + 1:]:
+    if l.lstrip().startswith('#'):
+        block.append(l)
+    else:
+        break
+
+TOKEN = re.compile(r'sha256:[0-9A-Za-z]+')
+BAD = re.compile(r'^sha256:[0-9a-f]{64}$')
+
+tokens = [m.group(0) for l in block for m in TOKEN.finditer(l)]
+bad = [t for t in tokens if not BAD.match(t)]
+if bad:
+    why = []
+    for t in bad:
+        h = t[len('sha256:'):]
+        why.append(f'{t[:24]}... length {len(h)}' + ('' if h.islower() else ' (uppercase hex)'))
+    print(f'FAIL: t11: digest comment beside the image line violates the sha256:[0-9a-f]{{64}} shape: {why} — a 63/65-hex, uppercase, or line-wrapped transcription is exactly the slip C12 review r1 caught (the 63-hex comment passed every prior leg)', file=sys.stderr)
+    sys.exit(1)
+if image.endswith('-full') and not tokens:
+    print('FAIL: t11: the -full image carries no sha256 digest comment beside its line — C12.md AC2 ships the image+env pair WITH a fresh digest comment (the -full tag\'s manifest digest read at implementation time, replacing the stale slim-era one); without it that evidence is unverifiable', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t11: see the t11 detail above"
+fi
+ok "t11: the image-line digest comment is a complete lowercase sha256:[0-9a-f]{64} on one line, present for the -full tag (shape-only — registry truth is the dev transcript's, per the offline-suite law)"
 
 printf 'PASS: forgejo-renovate checks (%d ok)\n' "$checks"

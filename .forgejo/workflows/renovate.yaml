@@ -64,9 +64,9 @@ jobs:
     # No timeout-minutes: the lab runner's own 30m job ceiling bounds the
     # pass, and a restated value would drift from the runner config.
     container:
-      image: ghcr.io/renovatebot/renovate:44.181.5
+      image: ghcr.io/renovatebot/renovate:44.181.5-full
       # Image-index digest of the tag, read anonymously at implementation
-      # time: sha256:611eac05a6ee11c06d23157ae2ca11364f5b4a096c12d7f82a65aec2b6ec8a48
+      # time: sha256:9dc90dea9a6fd0c6f0ee86a138817aa48fb01b9e57c321687e4ba35de64444f4
     env:
       LOG_LEVEL: info
       RENOVATE_PLATFORM: forgejo
@@ -75,6 +75,11 @@ jobs:
       RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
       RENOVATE_GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
       RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}
+      # Declared, not inherited: without this key a base-image default flip
+      # back to install mode silently re-arms the PR #112/#113 class, where
+      # the sandbox could not run helm and chart-dep PRs shipped stale locks
+      # (cf-55 C12, 2026-11-25).
+      RENOVATE_BINARY_SOURCE: global
     steps:
       - name: diag
         run: |
