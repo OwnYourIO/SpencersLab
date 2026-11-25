@@ -40,7 +40,7 @@ from the repo — `terraform.tfvars` per template + `main.tf` defaults — inclu
 - hadolint (Dockerfile contract, error threshold): `~/.local/bin/hadolint --failure-threshold error containers/forgejo-runner/Dockerfile`
 - smoke: terraform validate, scratch copy — never `init` inside the repo, for BOTH `kubernetes` and `kubernetes-hardened` (verified working in-session 2026-11-25):
   `export PATH=$HOME/.local/bin:$PATH && export TF_PLUGIN_CACHE_DIR=/tmp/opencode/tf-plugin-cache && rm -rf /tmp/opencode/tf-validate-<tmpl> && mkdir -p /tmp/opencode/tf-validate-<tmpl> && cp charts/coder/coder-templates/<tmpl>/main.tf /tmp/opencode/tf-validate-<tmpl>/ && (cd /tmp/opencode/tf-validate-<tmpl> && terraform init -backend=false -input=false && terraform validate)`
-- quality gate: `npx --yes aislop@0.18.1 ci scripts/ .forgejo/ containers/forgejo-runner charts/coder/coder-templates` (record honest scope for shell/YAML/Dockerfile files)
+- quality gate (aislop 0.18.1 accepts ONE path per invocation — the 4-argument form dies with "Expected 1 argument but got 4"): `npx --yes aislop@0.18.1 ci scripts/ && npx --yes aislop@0.18.1 ci .forgejo/ && npx --yes aislop@0.18.1 ci containers/forgejo-runner && npx --yes aislop@0.18.1 ci charts/coder/coder-templates` (record honest scope: 0.18.1 scores shell/YAML and does not score Dockerfiles — `containers/forgejo-runner`'s Dockerfile is hadolint's territory, the hadolint line above)
 
 ## Chunks
 | id  | title | size | wave | depends_on | why the dependency |
