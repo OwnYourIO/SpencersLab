@@ -799,6 +799,28 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    Fire consequence noted for merge order (D47.3): C09's merge is itself a fire (patch bumps
    for the trio + consumer-pin PRs next renovate pass; dev t10 flips green, t24 its hermetic
    sibling).
+ - 2026-11-25 coord D51 (C09 NEEDS_INFO rulings — Q1 fold, Q2/Q3 routed): C09 dev
+   (ses_def47fb8effes2D1KDn7UK9pme) landed release.yaml heal+flip+header-truth and the
+   three regenerated locks (live helm; workspace v3.16.4 + runner-parity v3.22.1 both
+   verified), dev-forgejo-runner 58/58 with t10 flipped GREEN by the heal, suite table
+   t1-t24 green-in-simulation, t25/t26 verbatim red-for-C10 — then measured a
+   PRE-EXISTING SECOND WALL: traefik subchart >=42.4.0 added additionalProperties:false
+   to the service schema and rejects parent-passed service.type, so charts/traefik +
+   charts/traefik-zerotrust lint/template HARD-FAIL at any lock state (silently landed
+   with the renovate 42.4.0 bump 874558cca; package/cr never schema-validate, only
+   lint/template do; no services/** override carries the key; verified on both helm
+   versions). Consequence if unfixed: the C09-merge fire reddens at test-build for 2 of
+   3 matrix entries -> ZERO bumps, contradicting the plan's predicted three. Q1 RULING =
+   option A: FOLD the measured, behavior-identical two-key values migration
+   (traefik.service.type moved under spec:, scratch-proven identical rendered Service incl.
+   externalTrafficPolicy Local) into C09's commit set — same concern (unblocking the
+   trio's release path), zero deployed-behavior change, blast radius exactly the two
+   chart values files; C09 scope 4 -> 6 files. Q2: the t19 suite-line token swap
+   (build->update, ~line 1101) is the D50.2 commit-shape obligation routed to the TEST
+   session (dev role correctly refused the tests edit). Q3: guard-trio admit joins (three
+   Chart.lock paths + the two values files) ride the same test-session fold. Foreign
+   stash@{0} (WIP on main:13f6f8a57) observed untouched — owner's, noted.
+   ORDER: dev fold (values) -> test fold (t19 token + admits) -> review C09.
  - 2026-11-25 human D49 (round-4 batched owner round — ALL APPROVED): the owner
    answered the D48 trio plus the approval in ONE round. (1) OQ-R4-1 renovate
    image route = official `-full` (44.181.5-full, existence measured) behind the
