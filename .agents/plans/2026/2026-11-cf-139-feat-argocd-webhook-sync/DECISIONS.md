@@ -449,6 +449,13 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   multi-line-paste UI leg DROP from the runbook; the comma/newline-tolerant parser and
   the M1 reversed-record arm DIE with the blob (the JWT-shape guard survives on the
   TOKEN side; the value-never-echoed law matters more).
+- 2026-11-25 coord (labeled record for the micro-call cited everywhere as (i)): **(i)
+  RED-FIRST ordering** — a malformed ARGOCD_SYNC_* key carrying a non-empty value is
+  evaluated BEFORE the all-absent kill lane: configured-but-malformed residue must never
+  skip green past its only visible trace (a typo'd enumeration row); the kill-lane
+  warn-green applies only when NO malformed non-empty residue exists. Origin: the test
+  session's spec-gap flag at the wave-10 re-pin, ruled by coord 2026-11-25 (recorded in
+  STATE `reopen3.recut`); the script's lane order and behavior t5/t4 arms implement it.
 - 2026-11-25 ruling (coord, C11 review MAJOR 1): **(j) double-empty enumeration rows
   RED in a configured fleet — CODE REPAIR (C12), not doc reword.** Landed C09 treats
   an all-empty pair (both sides "", e.g. after an accidental org-key deletion while the
@@ -464,6 +471,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   malformed-shape residue still ignored; direction-2 drift (workflow row deleted, org
   keys survive) stays invisible to the script by construction — vault hygiene, doc must
   state that precisely, not "both directions visible".
+   EXECUTION RECORD (C12 — no chunks/C12.md: dev AND coord sessions are write-denied on chunks/** since the restarts; folded here): carrier 178b4e020 (t4 (j)-family + t5 boundary arms, oracle /tmp/opencode/cf139-ref4) + repair de3bccf43 (discover_targets body+docstring only, +16/−6, AST-verified; both-empty phrase `category "<cat>" enumerated but both values empty` in the aggregated sorted RED only when ≥1 non-empty *_TOKEN; kill lane untouched in both boundary shapes; ABSENT names are NOT enumerated-empty; direction-2 invisible by construction). behavior 13/13 split-proven, disposal 7/7, forgejo 13/13, self-probes a/b/c, aislop 100/0; chain re-review #3 CLOSED C12 with own 29/29 posture probes + own AST diff; sole finding (§5a mirror clause) fixed same day suite-neutral. PERMISSION DRIFT FLAG: coord-to-chunks grant not in force this session — audit when the permission layer settles.
 - 2026-11-25 plan(reopen3): pinned micro-calls (best guesses; none gates; each a
   one-line follow-up): **(a) configured predicate keys on the TOKEN side** — a fleet is
   configured iff ≥1 non-empty `*_TOKEN` exists; forced by the owner's own kill-lever

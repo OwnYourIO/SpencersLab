@@ -189,9 +189,12 @@ itself is unaffected either way: the push jobs complete before the fan-out runs.
   when GitHub is current); the `sync-fanout` log then carries one audit line per
   discovered category — `target=<name> result=<ok|skipped|failed> root=<root-app> ref=<full-ref> elapsed=<N.N>s detail=<...>` —
   and the roll-up `fan-out summary: targets=11 ok=<n> skipped=<n> failed=<n>`, where
-  the `targets=11` is the DISCOVERED pair count: it tracks the org keys, and a run
-  before all eleven secret rows carry values reads as a smaller count — never a
-  silently hidden cluster. Two rows are
+  the `targets=11` is the DISCOVERED pair count — enumeration rows x filled org rows:
+  zero TOKEN rows filled gives the §4 warning and no roll-up at all, while any
+  enumerated pair still empty while others carry values is an aggregated config RED
+  naming it (ruling (j), §8), not a quiet subtraction — a cluster is never silently
+  hidden, and the count shrinks only when its enumeration rows leave the workflow.
+  Two rows are
   EXPECTED FAILED by ruling, not regressions:
   `target=proxy-local result=failed` — structural: the hub route 307s to the SSO
   login even WITH a valid bearer (Keycloak middleware reads cookies, not
