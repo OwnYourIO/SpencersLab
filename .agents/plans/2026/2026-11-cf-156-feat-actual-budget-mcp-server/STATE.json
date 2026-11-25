@@ -5,7 +5,10 @@
     "at": "2026-11-26T04:02:56Z",
     "approved_by": "owner, in-session — 'Approve C03 as planned' plus the OQ3 confirmation 'bearer=BEARER_TOKEN, key=ACTUAL_SESSION_TOKEN'; the PVC-stays-in-chart alternative was offered and declined, so the 5Gi SDK-cache PVC moves into the chart with the two ExternalSecrets",
     "wave": 3,
-    "depends_on": ["C01", "C02"],
+    "depends_on": [
+      "C01",
+      "C02"
+    ],
     "shape_approved": "chart-default-off gate mcp.enabled=false with true only in the wuulf per-instance block; release-prefixed resource names ({{ .Release.Name }}-mcp-*) so a second enabled instance cannot collide; deletionPolicy: Delete; sentinels move to the chart with both real UUIDs mirrored at custom-values TOP level (the appset merge does not feed the chart map from per-app blocks); three-way render proof required (wuulf renders them, bri renders NONE, home-actualbudget renders NONE)",
     "oq3_closed": "name-to-role mapping CONFIRMED by the owner rather than guessed: actualbudget-mcp-bearer (075f18ca-a137-415a-9296-b50e0033589c) -> BEARER_TOKEN; actualbudget-mcp-key (29e97ab5-db7f-4214-affd-b50e0032788d) -> ACTUAL_SESSION_TOKEN",
     "consequence_accepted": "the 29/2 designed-red shape is retired: with real UUIDs landed, the suite is expected to reach 0 failures, C02's blocker clears (it can move out of dev_done_blocked once the C03 tests go green), and the MCP pod may now actually start and connect. The read-only boundary remains the absence of --enable-write.",
@@ -73,7 +76,13 @@
       "carried nit: the new hivetools entry omits the '# oidc:' re-enable marker its 9 gpu + 2 chart siblings carry"
     ],
     "no_validation_at_fault": true,
-    "deferred_carried_forward": ["Prerequisite 1 Keycloak redirect URIs + web origins (owner)", "Prerequisite 3 the 26.12.x pin move via Renovate + the attached exactly-26.10.0 SDK re-check, canary --test-resources + tools/list (owner)", "leg-4 --enable-write flip (owner, no re-mint)", "OQ4: a future bri MCP ticket needs its own items + a per-app UUID injection path — the gate is collision-safe, not a shared-credential solution", "5Gi data-PVC size remains an assumption (no upstream guidance)"]
+    "deferred_carried_forward": [
+      "Prerequisite 1 Keycloak redirect URIs + web origins (owner)",
+      "Prerequisite 3 the 26.12.x pin move via Renovate + the attached exactly-26.10.0 SDK re-check, canary --test-resources + tools/list (owner)",
+      "leg-4 --enable-write flip (owner, no re-mint)",
+      "OQ4: a future bri MCP ticket needs its own items + a per-app UUID injection path — the gate is collision-safe, not a shared-credential solution",
+      "5Gi data-PVC size remains an assumption (no upstream guidance)"
+    ]
   },
   "final_review": {
     "status": "done",
@@ -112,7 +121,12 @@
     "writeback": {
       "at": "2026-11-24T05:20:00Z",
       "slug_field": "written as the BARE slug 'cf-156-feat-actual-budget-mcp-server' (field id RaNeqvh9YoT4bnkZ8) — this run is rename-skipped, so no session link exists to append; the Resume rule parses a bare value, so resume still works",
-      "priority": { "raw": 5, "class": "default", "stamped": true, "note": "field read null at claim; the default-class stamp is visibility only, per the board ruling" },
+      "priority": {
+        "raw": 5,
+        "class": "default",
+        "stamped": true,
+        "note": "field read null at claim; the default-class stamp is visibility only, per the board ruling"
+      },
       "unchecked_items_deleted": 31,
       "survivors_verified": "re-read after deletion: every surviving item still finished=true (Services home+agent context; Type feat; Model(s) Qwen Dense+Local; Lifecycle the eight running stages; HITL Pre Research, Planning, Final Review, Deployment). A first read-back looked like a reset only because the field is 'finished', not 'isChecked' — read artifact, no board damage.",
       "legacy_session_field": "untouched, still null — retired, never read, never written"
@@ -150,7 +164,9 @@
     "posture": "uncommitted, in place, on main in the landing checkout; the coordinator makes zero commits - the never-advance-main law is honoured by that absence, never by refusing to work",
     "claim": {
       "setId": "5d58d120-6e5c-4f66-abee-b1ad09333abb",
-      "pipelines": ["Local"],
+      "pipelines": [
+        "Local"
+      ],
       "pipeline_source": "derived from board label 'Pipeline: Local' (D17)",
       "shared": true,
       "shared_reason": "explicit owner word in-session 2026-11-23T21:14Z for THIS claim only, after pipeline_claim answered occupied",
@@ -163,32 +179,46 @@
           "heartbeatAt": "2026-11-23T20:39:58.105Z"
         }
       ],
-      "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/Local.json"],
+      "lockPaths": [
+        "/home/coder/SpencersLab/.pipeline/locks/Local.json"
+      ],
       "note": "plugin-owned surfaces; this record names the shared key only for traceability. Two sessions hold this card; each releases only its own holder.",
       "reaped": {
         "at": "2026-11-24T01:19:58.999Z",
-        "lostPipelines": ["Local"],
+        "lostPipelines": [
+          "Local"
+        ],
         "cause": "the 2h stale clock keeps ticking through stop points; the run was paused at the card's checked 'Pre Research' HITL stop when it expired"
       },
       "takeover": {
         "authorized_by": "owner answered the ONE sanctioned question ('may I continue anyway?') = YES, in-session 2026-11-24",
         "resume_form": "fresh claim under the card-id key — the only door after a reap; no self-reclaim of the reaped Local label",
         "setId": "fd1d1121-7591-4ef1-896e-be6b2e394096",
-        "pipelines": ["itMHzqvEWzc6LAWvh"],
-        "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"],
+        "pipelines": [
+          "itMHzqvEWzc6LAWvh"
+        ],
+        "lockPaths": [
+          "/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"
+        ],
         "card_list": "unchanged, still Executing — no move was made or needed",
         "co_tenant": "ses_df6dcd46bffeG0el3qCKVmGh2X keeps its own holder; this run releases only its own"
       },
       "takeover_2": {
         "reaped_at": "2026-11-24T23:47:47.397Z",
         "lost_setId": "fd1d1121-7591-4ef1-896e-be6b2e394096",
-        "lost_pipelines": ["itMHzqvEWzc6LAWvh"],
+        "lost_pipelines": [
+          "itMHzqvEWzc6LAWvh"
+        ],
         "cause": "the 2h stale clock expired while the session sat idle at the C02 hand-back boundary; the reap record names this card explicitly",
         "answer_to_the_one_question": "the owner's 'Continue' continuation prompt is the sanctioned answer (boards Human-stops rule: a later continuation IS the answer, not a workaround), so the question was NOT asked a second time in this run",
         "resume_form": "fresh claim under the card-id key — the reaped fd1d1121 set is never revived",
         "setId": "838a0af2-0e2a-4b9f-8abe-5d8817b46c9a",
-        "pipelines": ["itMHzqvEWzc6LAWvh"],
-        "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"],
+        "pipelines": [
+          "itMHzqvEWzc6LAWvh"
+        ],
+        "lockPaths": [
+          "/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"
+        ],
         "card_list": "unchanged, still Executing",
         "at": "2026-11-25T00:24:43Z"
       }
@@ -205,16 +235,53 @@
       "override_caveat": "git renders gpu-ai-radiance-q27-tp2 at replicas 0 (2-card claim parks the pool); llama-swap neither health-checks nor hides peers, so if the owner's scale act has not landed the next launch answers the same loud 502. On that answer this run STOPS and names the missing scale act rather than routing around the owner's chosen lane. No kubernetes surface exists in this session's catalog, so the endpoint state could not be pre-probed.",
       "served_model_note": "the Exploration scout ran on the interim hosted route because the override arrived after its launch; not re-run to avoid duplicating a live subagent"
     },
-    "priority": { "raw": null, "class": "default" },
+    "priority": {
+      "raw": null,
+      "class": "default"
+    },
     "checklists_consumed": {
-      "Type": ["feat"],
-      "Services": ["home", "agent context"],
-      "Model(s)": ["Qwen Dense", "Local (gpu-ai)"],
-      "Lifecycle_checked_in_card_order": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
-      "Lifecycle_unchecked": ["Agent Decides Research", "Deployment", "Single Session"],
-      "Lifecycle_absent_from_shape": ["Session Rename", "Worktree Creation"],
-      "Human_in_the_Loop_checked": ["Pre Research", "Planning", "Final Review", "Deployment"],
-      "stop_points": ["after Pre Research", "after Planning (= the plan-approval pause)", "after Final Review", "after Deployment (VACUOUS - stage unchecked)"],
+      "Type": [
+        "feat"
+      ],
+      "Services": [
+        "home",
+        "agent context"
+      ],
+      "Model(s)": [
+        "Qwen Dense",
+        "Local (gpu-ai)"
+      ],
+      "Lifecycle_checked_in_card_order": [
+        "Exploration",
+        "Pre Research",
+        "Planning",
+        "Post Research",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review"
+      ],
+      "Lifecycle_unchecked": [
+        "Agent Decides Research",
+        "Deployment",
+        "Single Session"
+      ],
+      "Lifecycle_absent_from_shape": [
+        "Session Rename",
+        "Worktree Creation"
+      ],
+      "Human_in_the_Loop_checked": [
+        "Pre Research",
+        "Planning",
+        "Final Review",
+        "Deployment"
+      ],
+      "stop_points": [
+        "after Pre Research",
+        "after Planning (= the plan-approval pause)",
+        "after Final Review",
+        "after Deployment (VACUOUS - stage unchecked)"
+      ],
       "checklist_ids": {
         "Model(s)": "LPatxS5f82wxMryod",
         "Services": "d5XmTPRgArcfrWS4Y",
@@ -232,7 +299,9 @@
     "preload": {
       "at": "2026-11-23T21:14:00Z",
       "tool": "preload_board",
-      "scope": ["In Process"],
+      "scope": [
+        "In Process"
+      ],
       "ask": "with_checklists=false passed; the deployed build still returned per-card checklists (pre-bump build, harmless furniture)",
       "cards": null,
       "cards_note": "not tallied - the payload is deliberately not persisted (only the lean stamp is)",
@@ -262,7 +331,9 @@
       "handoff": {
         "status": "DONE",
         "chunk": "plan",
-        "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/EXPLORE.md"],
+        "files_changed": [
+          ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/EXPLORE.md"
+        ],
         "commands_run": [
           "grep actualbudget/bri/wuulf across repo => pass",
           "git log -S bri-budget (commits 217dae71d, cce60c729, 0bcc88d37) => pass",
@@ -294,7 +365,9 @@
       "handoff": {
         "status": "DONE",
         "chunk": "plan",
-        "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/RESEARCH.md"],
+        "files_changed": [
+          ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/RESEARCH.md"
+        ],
         "commands_run": [
           "storm_run.py init (run dir under /tmp/opencode/storm) => pass",
           "storm_run.py merge (26 numbered sources) => pass",
@@ -410,7 +483,9 @@
       "handoff": {
         "status": "DONE",
         "chunk": "plan",
-        "files_changed": ["tests/services/actual-budget-wuulf-mcp.sh"],
+        "files_changed": [
+          "tests/services/actual-budget-wuulf-mcp.sh"
+        ],
         "commands_run": [
           "bash tests/services/actual-budget-wuulf-mcp.sh (real tree, pre-implementation) => fail — EXPECTED RED: 7 pass / 15 fail, every failure an unimplemented C01/C02 entry; the 7 passes are live regression pins (chart has no initContainers/enable-openid, the umbrella block still carries the broken 01-enable-openid step, bri-budget untouched, all 8 pre-existing top-level sentinels UUID-mirrored). The tree also carried the co-tenant's uncommitted cf-133 audio-ad-detection entry in services/home/prod/values.yaml — no assertion touches it and it was left alone",
           "bash tests/services/actual-budget-wuulf-mcp.sh from the tests/services subdir => fail (identical 7/15) — run-from-anywhere verified",
@@ -500,7 +575,9 @@
       "status": "done",
       "status_changed_by": "C03 review 2026-11-26 — the reviewer's open_questions(1) recommended the move and the coordinator applied it. Post-hoc changed-requirement record, in the same form used for C01's AC3: C02's blocked_on condition (the two custom-values UUID mirrors) was resolved by C03's top-level custom-values leg under the owner's RENAMED items (owner instruction 2 supersedes the names this chunk originally pinned); C02's AC3 (template location under services/home/prod/templates) and AC6 (the designed 29/2 suite shape) are satisfied in C03's re-pinned form, not in their original wording. No C02 criterion is unmet in substance — AC1/AC2/AC4/AC5 invariants were re-verified by the C03 renders (image pin, gate-free hivetools entry, secret wiring to the renamed resources, no OVERRIDE_* in new documents).",
       "wave": 2,
-      "depends_on": ["C01"],
+      "depends_on": [
+        "C01"
+      ],
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED (implemented surface, by ruling) — chunk NOT done: validations cannot all pass until the owner lands the two UUID mirrors",
@@ -558,7 +635,9 @@
           "verbatim": {
             "status": "DONE",
             "chunk": "C02",
-            "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C02.md (review notes appended)"],
+            "files_changed": [
+              ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C02.md (review notes appended)"
+            ],
             "commands_run": [
               "bash tests/services/actual-budget-wuulf-mcp.sh => fail (EXPECTED by ruling): 29 pass / 2 fail, exit 1 — the 2 failures are s6's count-based 1:1 + per-key legs on ['actual-budget-mcp','actual-budget-mcp-key'] (got None — mirrors absent); every other check green",
               "hivetools render (plan ## Commands, both test UUIDs) => pass (MCPServer mcp-actual-budget: sstefanov/actual-mcp:v1.15.1, streamable-http, mcpPort 3000, --sse/--enable-bearer, no --enable-write, both secrets entries, fsGroup 65532, /data=PVC actual-budget-mcp-data, resources 200m/256Mi + 50m/64Mi; ingress mcp.home-lab.test.example.com path /actual-budget -> mcp-mcp-actual-budget-proxy:8080, TLS cluster-wildcard-cert; 0 OVERRIDE_* in that document; only chart-template ExternalSecrets present)",
@@ -584,7 +663,10 @@
     "C03": {
       "status": "done",
       "wave": 3,
-      "depends_on": ["C01", "C02"],
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
@@ -635,7 +717,10 @@
     "C03_planner_skeleton": {
       "status": "pending",
       "wave": 3,
-      "depends_on": ["C01", "C02"],
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "note": "the owner rework (2026-11-26, four binding instructions — DECISIONS 2026-11-26): proxy-remote removal, owner item names + real UUIDs (actualbudget-mcp-key / actualbudget-mcp-bearer), the two ExternalSecret templates + the data PVC moved into charts/actualbudget/templates/ behind the per-instance gate (mcp.enabled, chart default false, the wuulf block true) with release-prefixed collision-safe names, both UUIDs in custom-values. Lands on top of C01+C02 already committed to the branch (depends_on satisfied by branch state, not by waiting). C03's custom-values task IS the 2026-11-24 ruling's close-out leg 1 — it unblocks C02's dev_done_blocked state. Sequence: owner approval of the re-plan (plan-approval pause, plan_status proposed) -> a FRESH Test Writing session re-pins s2/s5/s6 (chunks/C03.md Tests section) -> C03 dev (runs the re-pinned suite while implementing) -> chunk review -> the final-review re-run over the whole plan (the close-out legs: Prerequisite 1 Keycloak, Prerequisite 3 the 26.12.x pin move + the attached @actual-app/api exactly-26.10.0 SDK re-check, the --enable-write flip)."
