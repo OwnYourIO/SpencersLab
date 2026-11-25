@@ -24,7 +24,7 @@ Push only the run's feature/ticket branch, and only when the run's mandate is re
 
 ## What a push triggers here
 
-A push is build+test, not deploy: `.github/workflows/aislop.yaml` runs `aislop ci --changes` on PRs (every touched file must clear the score floor with no error findings), the forge `containers-build.yaml` PR arm builds and pushes `pr-<branch>-<sha>` to the local registry only (a `prod`-role main merge or `workflow_dispatch` run publishes `yy.mm.N` + `:latest` + `:main` to both registries — merge = publish stays the split), and the forge `release.yaml` fires on push to prod main (paths `charts/**`) — the GitHub `docker-build.yaml` is a `workflow_dispatch`-only manual fallback (no push or PR auto-triggers it); ArgoCD syncs only after that user-owned merge.
+A push is build+test, not deploy: `.github/workflows/aislop.yaml` runs `aislop ci --changes` on PRs (every touched file must clear the score floor with no error findings), the forge `containers-build.yaml` PR arm builds and pushes `pr-<branch>-<sha>` to the local registry only (a `prod`-role main merge or `workflow_dispatch` run publishes `yy.mm.N` + `:latest` + `:main` to both registries — merge = publish stays the split), and the forge `build-charts.yaml` fires on push to prod main (paths `charts/**`) — the GitHub `docker-build.yaml` is a `workflow_dispatch`-only manual fallback (no push or PR auto-triggers it); ArgoCD syncs only after that user-owned merge.
 
 ## PR creation
 

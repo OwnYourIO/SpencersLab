@@ -2565,9 +2565,9 @@ PY
 }
 
 leg_x4() {
-  # release.yaml left this fence on 2026-11-21 (cf-6 absorption of cf-55's
-  # 1ada03a50, which deleted the GitHub release twin when the chart
-  # releases moved to .forgejo/workflows/release.yaml). The fence guards the
+  # The GitHub release twin left this fence on 2026-11-21 (cf-6 absorption of cf-55's
+  # 1ada03a50, which deleted it when the chart
+  # releases moved to .forgejo/workflows/release.yaml, since renamed build-charts.yaml). The fence guards the
   # .github sibling fleet at cutover, not release continuity across fleets —
   # the moved file and its deleted twin are pinned by forgejo-ci-surface.sh
   # t1/t2 and the agent-board-coord twin-path bans.

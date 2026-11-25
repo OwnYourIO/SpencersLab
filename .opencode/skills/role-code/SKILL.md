@@ -58,7 +58,7 @@ pasted into chat.
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
 3. Never bump versions or image tags — CI does it on merge to main (the forge
-   `release.yaml` bumps Chart.yaml `version` when changes land on Forgejo main
+   `build-charts.yaml` bumps Chart.yaml `version` to the calendar release when changes land on Forgejo main
    and publishes dual — GitHub Releases/gh-pages plus the instance's Helm
    registry; containers are tag-based: a `prod`-role main
    merge pushes `yy.mm.N` + `:latest` + `:main` to both registries via the

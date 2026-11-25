@@ -118,7 +118,7 @@ jobs:
             echo '::warning::sync-fanout not configured (org-level Actions secret ARGOCD_SYNC_TOKENS absent) — fan-out skipped, manual sync or the next push covers it'
             exit 0
           fi
-          # dispatch/first-push may carry no event ref (release.yaml:54
+          # dispatch/first-push may carry no event ref (build-charts.yaml:57
           # precedent) — the chain resolves main, never an empty ref.
           REF="${EVT_REF:-${GH_REF:-refs/heads/main}}"
           python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"

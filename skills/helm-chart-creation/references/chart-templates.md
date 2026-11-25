@@ -27,7 +27,7 @@ When no official chart exists:
 
 1. `mkdir -p charts/<service>/templates`
 2. Create `Chart.yaml` (pattern below) — name, `version: Y.M.1` (the current
-   calendar stamp, initial only; `release.yaml` — on prod-Forgejo Actions —
+   calendar stamp, initial only; `build-charts.yaml` — on prod-Forgejo Actions —
    bumps the calendar release on every merge landing on Forgejo `main`:
    same-month N+1, new-month N=1 — and chart-releaser tags
    `<chart>-<version>` — never bump it by hand), `appVersion`
@@ -152,7 +152,7 @@ Notes:
 ```yaml
 apiVersion: v2
 name: <service-name>
-version: Y.M.1  # current calendar stamp, initial seed only — release.yaml (prod Forgejo) bumps it: same-month N+1, new-month N=1
+version: Y.M.1  # current calendar stamp, initial seed only — build-charts.yaml (prod Forgejo) bumps it: same-month N+1, new-month N=1
 appVersion: <latest-version>  # research from Docker Hub
 dependencies:
 - name: app-template

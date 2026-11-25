@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Offline contract suite for .forgejo/workflows/release.yaml (cf-55 on the
+# Offline contract suite for .forgejo/workflows/build-charts.yaml (cf-55 on the
 # REBUILT branch — DECISIONS D31/D32 reconcile): the chart bump+publish
 # pipeline running on Forgejo Actions with DUAL publish, reconciled to the
 # cf-6 conventions that landed on main. The invariants pinned here are the
@@ -84,12 +84,12 @@
 # t19 line.
 #
 # Run from anywhere in the worktree:
-#   bash tests/services/forgejo-release.sh
+#   bash tests/services/forgejo-build-charts.sh
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-WF=".forgejo/workflows/release.yaml"
+WF=".forgejo/workflows/build-charts.yaml"
 
 checks=0
 
@@ -193,7 +193,7 @@ for expr in live_ifs:
         # unset; the `vars.ROLE == null` widen clause (containers-build's
         # deliberate opposite) has no place here.
         need('== null' not in expr and '!= null' not in expr,
-             f'a live if carries an unset-widen clause ({expr!r}) — release.yaml is narrow-on-unset by the bump-is-a-state-change reading (D31/D32)')
+             f'a live if carries an unset-widen clause ({expr!r}) — build-charts.yaml is narrow-on-unset by the bump-is-a-state-change reading (D31/D32)')
 # The dev instance receives the synced copy and must fire no job here.
 need("vars.ROLE == 'dev'" not in raw, 'a job guards on vars.ROLE == dev (the dev stage must fire nothing)')
 # The header must carry the substring caveat: contains() is a substring test,
@@ -308,7 +308,7 @@ def need(cond, msg):
 
 
 need('strategy' not in job,
-     'bump has a strategy: — the matrix bump was the known-broken shape (the old release.yaml TODO); the fix is ONE job looping the changed charts (D4)')
+     'bump has a strategy: — the matrix bump was the known-broken shape (the pre-rename builder TODO); the fix is ONE job looping the changed charts (D4)')
 runs = [str(s.get('run', '')) for s in job.get('steps', []) if isinstance(s, dict) and 'run' in s]
 blob = '\n'.join(runs)
 
@@ -1636,4 +1636,4 @@ then
 fi
 ok "t26: AGENTS.md and overview.md pair-states the calendar law (Y.M.N, unpadded month, same-month N+1, new-month N=1) with the D49 Y.M.1 seed clause and no patch-scheme residue"
 
-printf 'PASS: forgejo-release checks (%d ok)\n' "$checks"
+printf 'PASS: forgejo-build-charts checks (%d ok)\n' "$checks"

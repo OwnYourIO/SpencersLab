@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Whole-state surface guard for the REBUILT cf-55 (chart-half move, reconciled
 # to cf-6's conventions per DECISIONS D31/D32): the fence's OTHER side.
-# forgejo-release.sh proves the moved builder's internals from the .forgejo
+# forgejo-build-charts.sh proves the moved builder's internals from the .forgejo
 # side; this suite pins the inventory from both sides and sweeps every live
 # surface for stale claims the rebuild must have erased:
 #   - .forgejo/workflows/ holds EXACTLY the five-workflow family (cf-6's
-#     main-sync/renovate/containers-build + this ticket's release.yaml + the
+#     main-sync/renovate/containers-build + this ticket's build-charts.yaml + the
 #     cf-6 builder-bootstrap dispatch recovery lane);
 #   - .github/workflows/ keeps the seven gate workflows AND docker-build.yaml
 #     — the workflow_dispatch-only manual-fallback builder cf-6 deliberately
-#     kept — and NOT release.yaml (the chart half moved, the container half
+#     kept — and NOT the deleted chart twin (the chart half moved, the container half
 #     did not);
 #   - no live surface cites the deleted GitHub release path;
 #   - on the carriers the reconcile touched, every docker-build mention
@@ -77,7 +77,7 @@ GH = '.github/workflows'
 # builder-bootstrap is cf-6's public-image dispatch recovery lane — the
 # fence moved to five before the file landed (red-first doctrine), so a
 # fourth-file-only tree is a designed RED here, not a stale pin.
-FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'release.yaml',
+FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'build-charts.yaml',
           'builder-bootstrap.yaml'}
 # Ruling R1's five gates + the render-test growth (amd-gpu, radiance) that
 # landed on main since, PLUS the docker-build manual fallback cf-6 kept.
@@ -96,13 +96,13 @@ def names(d):
 
 fj = names(FJ)
 if fj != FJ_SET:
-    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the five-workflow forge family — release.yaml is this ticket\'s, builder-bootstrap.yaml is the cf-6 recovery lane, nothing else may appear)', file=sys.stderr)
+    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the five-workflow forge family — build-charts.yaml is this ticket\'s, builder-bootstrap.yaml is the cf-6 recovery lane, nothing else may appear)', file=sys.stderr)
     sys.exit(1)
 print('ok: t1: the Forgejo inventory is exactly the five-workflow family (cf-6 trio + the moved chart builder + the bootstrap recovery lane)')
 
 gh = names(GH)
 if gh != GH_SET:
-    print(f'FAIL: t2: {GH} holds {sorted(gh)}, expected the seven gate workflows + docker-build.yaml (the manual-fallback builder cf-6 kept) and NOT release.yaml (the chart half moved) — a stray here means a gate was deleted or a cutover half-did', file=sys.stderr)
+    print(f'FAIL: t2: {GH} holds {sorted(gh)}, expected the seven gate workflows + docker-build.yaml (the manual-fallback builder cf-6 kept) and NOT the chart twin (the chart half moved) — a stray here means a gate was deleted or a cutover half-did', file=sys.stderr)
     sys.exit(1)
 if os.path.join(GH, 'release.yaml') in [os.path.join(GH, n) for n in gh]:
     print('FAIL: t2: the GitHub release twin survived the cutover', file=sys.stderr)
@@ -124,7 +124,7 @@ if stale=$(git grep -IlE "$STALE_PAT" -- skills tests containers .rulesync .open
   printf 'FAIL: t3: live surfaces still citing the deleted GitHub release path:\n%s\n' "$stale" >&2
   exit 1
 fi
-ok "t3: no tracked live-surface file cites the deleted GitHub release.yaml path"
+ok "t3: no tracked live-surface file cites the deleted GitHub twin's workflow path"
 
 # --- t4: builder-claim sweep on the reconciled carriers -------------------------
 # docker-build.yaml still EXISTS (cf-6 kept it as the workflow_dispatch-only
@@ -182,7 +182,7 @@ def need(cond, msg):
 
 # The credential law as LANDED: AGENTS names the shared instance PAT + the
 # lowercase namespace; the GitHub-side secret name is workflow law pinned
-# per file — chart releases by forgejo-release.sh t8, container pushes by
+# per file — chart releases by forgejo-build-charts.sh t8, container pushes by
 # cf-6's containers-build suite t7 — and ONE name serves both lanes since
 # R-A (2026-11-22): PUSH_TOKEN_GH. The rules file deliberately stays at the
 # shared identity + the job-token prohibition.
@@ -207,7 +207,7 @@ PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; one GitHub-side name — PUSH_TOKEN_GH — for both lanes, pinned per file by forgejo-release.sh t8 and the containers-build suite) with every retired scheme absent"
+ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; one GitHub-side name — PUSH_TOKEN_GH — for both lanes, pinned per file by forgejo-build-charts.sh t8 and the containers-build suite) with every retired scheme absent"
 
 # --- t6: ROLE guard membership is consistent across the .forgejo family ---------------
 if ! python3 - <<'PY'
@@ -257,15 +257,15 @@ def need(cond, msg):
 
 # The chart-creation reference teaches where bumps/publish run; a reader
 # following it must land on the Forgejo reality, not the deleted GitHub one.
-need('release.yaml' in ref and 'Forgejo' in ref,
-     'chart-templates.md does not situate release.yaml on prod Forgejo — the two release.yaml sentences must describe where CI actually runs')
+need('build-charts.yaml' in ref and 'Forgejo' in ref,
+     'chart-templates.md does not situate build-charts.yaml on prod Forgejo — the two build-charts.yaml sentences must describe where CI actually runs')
 for tok in ('publishes DUAL', 'gh-pages', 'Helm package registry'):
     need(tok in agents, f'AGENTS.md lost the chart clause token {tok!r} — the DUAL publish (GitHub Releases + Pages AND the instance Helm registry) is the landed law')
 PY
 then
   fail "t7: see the t7 detail above"
 fi
-ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forgejo release.yaml, DUAL publish to GitHub Releases/gh-pages and the instance Helm registry)"
+ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forgejo build-charts.yaml, DUAL publish to GitHub Releases/gh-pages and the instance Helm registry)"
 
 # --- t8: stale-name sweep, armed by the rename (C11 AC2/D47.6) -------------------
 # EXPLORE's rename law: after the git mv, NO live surface may carry the old

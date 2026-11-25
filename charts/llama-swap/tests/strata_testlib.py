@@ -48,7 +48,7 @@ BIN = "/opt/strata/bin"
 STRATA_TEMPLATES_DIR = CHART_DIR / "templates"
 # cf-55 moved the chart release pipeline to Forgejo Actions and deletes the
 # GitHub twin in the same commit — the Q-C pristine guard binds the MOVED file.
-RELEASE_WORKFLOW = REPO_ROOT / ".forgejo" / "workflows" / "release.yaml"
+RELEASE_WORKFLOW = REPO_ROOT / ".forgejo" / "workflows" / "build-charts.yaml"
 GITIGNORE = REPO_ROOT / ".gitignore"
 
 # The retired standalone-chart dir. C02's repo grep (r2-C02 AC3) forbids live

@@ -460,7 +460,7 @@ change.
 - Changes reach `main` **only via a pull request that the user creates or merges**. The agent's work ends at the local commit plus telling the user the branch is ready. Pushing the *feature* branch to origin (e.g. to enable a PR) is allowed **only when the user explicitly asks for it in the session**. Otherwise leave commits local.
 - If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
 - Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
-- **Never bump versions or image tags by hand.** `release.yaml` runs on the
+- **Never bump versions or image tags by hand.** `build-charts.yaml` runs on the
   prod Forgejo Actions: it bumps `Chart.yaml` `version` to the calendar
   release `Y.M.N` (unpadded month) — same-month N+1, new-month N=1, a tree
   ahead of the clock fails loud — when changes land on Forgejo main
@@ -500,7 +500,7 @@ change.
   deliberate in all five `.forgejo` workflows: `containers-build.yaml`
   widens on unset (a null clause ahead of the membership tests — the
   single-server case publishes everything), while `main-sync.yaml`,
-  `renovate.yaml`, `release.yaml` and `builder-bootstrap.yaml` stay narrow
+  `renovate.yaml`, `build-charts.yaml` and `builder-bootstrap.yaml` stay narrow
   on unset (bare membership tests, fail-safe: neither the fan-out nor the
   daily Renovate pass may fire unconfigured, and a bump/publish pipeline
   even less so — the bootstrap lane mints calendar tags, so an unset ROLE

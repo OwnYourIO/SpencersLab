@@ -65,7 +65,7 @@ version each tool reports, so a mis-baked tool fails the image build, not
 the next release fire. `tests/containers/forgejo-runner.sh`
 is the static contract for this Dockerfile (pins included — a renovate
 version bump must re-pin the suite's literals in the same commit); the
-release-workflow suite contract (`tests/services/forgejo-release.sh`)
+release-workflow suite contract (`tests/services/forgejo-build-charts.sh`)
 forbids the workflows from ever installing tools at run time again.
 
 ## Bump law

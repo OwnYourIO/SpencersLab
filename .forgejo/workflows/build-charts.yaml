@@ -1,7 +1,7 @@
-# Release Charts — the chart bump+publish pipeline running on Forgejo Actions
+# Build Charts — the chart bump+publish pipeline running on Forgejo Actions
 # (cf-55). The prod instance's runner is the single chart-version authority:
-# it detects changed charts, test-builds them, commits Chart.yaml patch bumps
-# to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
+# it detects changed charts, test-builds them, commits Chart.yaml calendar
+# bumps (Y.M.N) to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
 # byte-stable consumer contract) and this instance's Helm package registry.
 #
 # Both instances receive the synced copy, so EVERY job guards on the
@@ -28,7 +28,7 @@
 # smoke and the bump leg's lock self-heal — fetch repo indexes and subchart
 # tarballs, the same upstream-egress class cr's Build() already pays per
 # chart per fire (D47).
-name: Release Charts
+name: Build Charts
 on:
   push:
     branches: [main]

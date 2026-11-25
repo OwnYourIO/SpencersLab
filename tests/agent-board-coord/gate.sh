@@ -928,7 +928,7 @@ fi
 # cf-55 (2026-11-16, agent-test re-anchor round; DECISIONS D31/D32): the
 # rebuilt ticket's own plan folder joins on the same once-per-ticket rule,
 # plus the CHART-HALF surfaces its chunks declare that no wildcard here
-# covers: .forgejo/workflows/release.yaml and its deleted GitHub twin (the
+# covers: .forgejo/workflows/build-charts.yaml and its deleted GitHub twin (the
 # path admitted in the composed ".github/"-quote form so this branch's
 # forgejo-ci-surface.sh sweep — which bans the plain deleted path on live
 # surfaces — does not catch its own guard suite), custom-values/infra/prod-values.yaml
@@ -945,7 +945,7 @@ fi
 # chunks/C05-C07): charts/forgejo-runner/* (the C06 label re-point) and
 # containers/forgejo-runner/* (the C05 baked act job image) join as
 # directory admits — the cf-143 new-chart-trees precedent; the fix-round
-# release.yaml edits, suites and prose ride the cf-55 arm above plus the
+# build-charts.yaml edits, suites and prose ride the cf-55 arm above plus the
 # tests/*, rules/mirror and AGENTS.md wildcards already here.
 # cf-55 ROUND 4 / C09 (2026-11-25, D50.4/D51-Q3 fold; chunks/C09.md): the
 # regenerated drift-trio locks (charts/base/Chart.lock,
@@ -955,13 +955,27 @@ fi
 # schema fold (charts/traefik/values.yaml,
 # charts/traefik-zerotrust/values.yaml). Explicit paths only: a charts/*
 # wildcard would outlive the ticket and swallow future chart surfaces whole;
-# release.yaml and the suites ride the cf-55 arms above.
+# build-charts.yaml and the suites ride the cf-55 arms above.
+# cf-55 ROUND 4 / C11 (2026-11-25, owner Q3 "rename, LANDS LAST";
+# chunks/C11.md): the git mv renames the admitted builder path — the old
+# .forgejo/workflows/release.yaml became build-charts.yaml (since renamed;
+# the composed ".github/" twin entry stays forever, the deleted GitHub twin
+# keeps its historical name). Two new per-file joins for the rename's own
+# edits, neither wildcard-covered: .forgejo/workflows/main-sync.yaml (the
+# anchor cite re-pin — the C09 header edit shifted the detect-step env block
+# off :54, cites moved to the verified true number :57) and
+# charts/prowlarr/Chart.yaml (its shipped comment re-truth; touching
+# charts/** makes the rename merge the designed first fire under heal +
+# calendar, plan Round-4 landing #4). The renamed suite, surface.sh and the
+# strata pins ride the existing tests/* and charts/llama-swap/tests/*
+# wildcards. A replan-added file joins THIS line.
 # cf-55 ROUND 4 / C12 (2026-11-25, route F approved by D49; chunks/C12.md):
 # .forgejo/workflows/renovate.yaml joins as an EXACT path — dev 93cb79107
 # (r2 APPROVED) is the first cf-55-round edit of that file: -full image
 # behind the helm4/helm3 digest cross-check gate + declared
 # RENOVATE_BINARY_SOURCE. Exact-only, no workflows wildcard: the cf-6
-# siblings (main-sync, containers-build, builder-bootstrap) stay outside.
+# siblings stay outside (main-sync since joined by the C11 paragraph above,
+# 2026-11-25; containers-build, builder-bootstrap stay outside).
 # bug-board-preload-lean-consumer (2026-11-21, agent-test, C01 Tests): this ticket's own plan folder
 # joins on the once-per-ticket rule (cf-106 precedent row) — its six in-scope
 # files already ride tests/* and the explicit "$BOARDS_SRC"/*+"$BOARDS_GEN"/*
@@ -1039,13 +1053,14 @@ if want t14; then
       .agents/notes/vllm-on-target-acceptance.md|.agents/notes/radiance-on-target-acceptance.md|\
       .agents/notes/radiance-second-gpu-tp2.md|\
       .agents/plans/2026/2026-11-cf-55-feat-helm-builds-to-forgejo/*|\
-      .forgejo/workflows/release.yaml|".github/"workflows/release.yaml|\
+      .forgejo/workflows/build-charts.yaml|".github/"workflows/release.yaml|\
       custom-values/infra/prod-values.yaml|skills/helm-chart-creation/*|\
       containers/renovate-mcp/Dockerfile|\
       charts/forgejo-runner/*|containers/forgejo-runner/*|\
       charts/base/Chart.lock|charts/traefik/Chart.lock|charts/traefik-zerotrust/Chart.lock|\
       charts/traefik/values.yaml|charts/traefik-zerotrust/values.yaml|\
       .forgejo/workflows/renovate.yaml|\
+      .forgejo/workflows/main-sync.yaml|charts/prowlarr/Chart.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;
