@@ -108,6 +108,14 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
+  audio-ad-detection:
+    # Headless worker (no UI): the service trio's proxy leg is N/A by design,
+    # not an oversight (no ingress.subdomains entry, dev-mosquitto precedent);
+    # verdict (a) carries no secrets, so no custom-values entry either.
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 ingress:
   subdomains:

@@ -1,0 +1,222 @@
+# Passed to the ApplicationSet at deploy time (repo shape). No template in
+# this chart consumes it, so it never reaches rendered output: this chart has
+# no ingress and no secrets to build hostnames or credentials from.
+domain: OVERRIDE_VIA_APPSET
+
+# The D-8 scrape-annotation gate: true by default; `--set
+# monitoring.annotations=false` renders the pair with inert (empty) values
+# instead of dropping the keys — an empty value is what disables the scrape.
+# Top-level on purpose: the chart renders through its own common loader
+# (templates/common.yaml), so the ternary evaluates in the root values
+# context; the nested app-template.monitoring key the vllm chart carries is
+# NOT reachable from a top-level --set (verified against vllm itself).
+monitoring:
+  annotations: true
+
+# Top-level config: rendered by this chart's templates/common.yaml loader
+# include in the root values context (the app-template dependency's own
+# loader runs in the subchart context, whose values are not reachable from
+# top-level --set flags).
+# `common` must be a NON-EMPTY map: the loader's values.init merge (the only
+# step that turns the values into the plain map the library's dig calls
+# require) runs only when .Values.common is truthy. The single key is a real
+# common-library default (also dig's fallback value).
+common:
+  defaultPodOptionsStrategy: overwrite
+
+# The app-template: stub below only suppresses the subchart loader's default
+# ServiceAccount so the subchart render contributes no objects.
+global:
+  # The worker never calls the K8s API; 5.0.1 would otherwise add an
+  # unprivileged default ServiceAccount object to every render.
+  createDefaultServiceAccount: false
+
+defaultPodOptions:
+  # D-8: exactly two k8s.grafana.com/* annotations (scrape + port). Values
+  # are ternary-templated on the monitoring.annotations gate; the map is
+  # tpl'd as a whole by app-template 5.0.1, so gate-OFF keeps the keys with
+  # inert (empty) values instead of dropping them.
+  annotations:
+    k8s.grafana.com/scrape: '{{ .Values.monitoring.annotations | ternary "true" "" }}'
+    k8s.grafana.com/metrics.portNumber: '{{ .Values.monitoring.annotations | ternary "8080" "" }}'
+
+controllers:
+  main:
+    # The D-8 pair is mirrored here (controller metadata) in addition to the
+    # pod copy below: the library renders controller annotations tpl-then-
+    # toYaml, which keeps the gated scalars in the double-quoted shape the
+    # t27 contract pins, while the pod path toYaml's before tpl (single-
+    # quoted). Both carry the identical gated pair; the pod copy is the one
+    # k8s-monitoring v4's annotationAutodiscovery consumes (vllm precedent).
+    annotations:
+      k8s.grafana.com/scrape: '{{ .Values.monitoring.annotations | ternary "true" "" }}'
+      k8s.grafana.com/metrics.portNumber: '{{ .Values.monitoring.annotations | ternary "8080" "" }}'
+    # The PVC is RWO and the candidate dir lives on it: a second replica
+    # could never mount it, and the single stream is one consumer.
+    strategy: Recreate
+    replicas: 1
+    pod:
+      securityContext:
+        # uid/gid 65532 is the aadworker the Dockerfile mints; fsGroup puts
+        # group 65532 on the PVC mount so the app's writes (snapshot +
+        # candidate files) have a group that owns the volume.
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        fsGroup: 65532
+    containers:
+      main:
+        image:
+          repository: ghcr.io/ownyourio/audio-ad-detection
+          # Brand-new image: no calendar tag exists yet, so track the
+          # rolling :main tag the containers-build workflow publishes
+          # (pinned-image rule's "no pinned version" exception).
+          # PIN-ME: pin the first :yy.mm.N once a prod build lands, then
+          # drop pullPolicy: Always.
+          tag: main
+          pullPolicy: Always
+        ports:
+          - containerPort: 8080
+            name: health
+        env:
+          # The worker's config surface (src/Config.cs + AutoPromote.cs);
+          # every value matches the in-code default — stated explicitly so
+          # the render is the documented contract.
+          SNAP_URL: "tcp://home-snapcast:1704"
+          # Pinned client identity: without it the worker reconnects under a
+          # random MAC each pod recreation, churning the client identity the
+          # snapcast server tracks for the owner's stream.
+          SNAP_HOST_ID: "audio-ad-detection"
+          # Channels must be * (the CLI rejects numeric channels at startup);
+          # 5512 is SoundFingerprinting's hard input rate.
+          SNAP_SAMPLE_FORMAT: "5512:16:*"
+          # Required: the owner's snapcast group name (the family-TV group;
+          # not yet supplied). Until a real value lands the worker runs
+          # config-order with a logged marker; name supply is a C05 owner leg.
+          SNAP_STREAM_ID: "TBD-owner"
+          # The 1780 JSON-RPC leg; the deployed server opens it without an
+          # [auth] section.
+          SNAP_RPC_URL: "http://home-snapcast-snapcast-http:1780/jsonrpc"
+          # Verdict (a): anonymous against the in-cluster broker. No
+          # MQTT_USERNAME/MQTT_PASSWORD keys here — that pair is an optional
+          # code path reserved for the recorded (c) fallback, not built or
+          # rendered in this run.
+          MQTT_BROKER_HOST: "home-mosquitto"
+          MQTT_BROKER_PORT: "1883"
+          NEW_OCCURRENCE_ABOVE: "120"
+          COVERAGE_SECONDS: "5"
+          ONGOING_ENTRY_STALENESS_CEILING: "120"
+          CAPTURE_MIN_SPAN_SECONDS: "30"
+          CAPTURE_MAX_SPAN_SECONDS: "300"
+          CAPTURE_RMS_FLOOR_DB: "-45"
+          CAPTURE_RETENTION_DAYS: "14"
+          CAPTURE_MAX_CANDIDATES: "200"
+          AUTO_PROMOTE_MIN_SIGHTINGS: "2"
+          AUTO_PROMOTE_MIN_GAP_HOURS: "24"
+          AUTO_PROMOTE_MAX_PER_DAY: "20"
+          MODEL_DIR: "/models"
+          HEALTH_PORT: "8080"
+        probes:
+          # The startup window gates liveness/readiness until the worker is
+          # really up. First-run estimate: the snapshot load is a few
+          # seconds at most (empty dir on first boot; O(100)-O(1,000)
+          # tracks load from the PVC in seconds — R1 §3 RAM-trivial), so
+          # the 300 s budget (failureThreshold 30 x periodSeconds 10) is
+          # dominated by the snapclient's 15 s startup grace + the first
+          # MQTT session's 1 s -> 60 s backoff: ~75 s worst case, ~4x
+          # headroom.
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8080
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 30
+          # /healthz is 503 for up to 45 s during the watchdog's
+          # kill-escalation respawn window (>=3 kills in 5 min) and the
+          # child flaps dead during a 30-60 s snapserver restart; the 120 s
+          # failure budget must ride both out without killing a live
+          # process.
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 12
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /readyz
+                port: 8080
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+        resources:
+          # R3 §6 O(100) spot sizing — verify against first-run metrics.
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1
+            memory: 1Gi
+        # The dotnet runtime + snapclient writable set is the mounted set
+        # (R3 §1: no official RO-root doc; dev-time verified on first boot):
+        # /tmp, the app $HOME, and the model PVC.
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+
+service:
+  main:
+    controller: main
+    type: ClusterIP
+    ports:
+      health:
+        port: 8080
+
+persistence:
+  # Model snapshot + candidate dir (model + <=2 Gi candidates) survive pod
+  # recreation. The size label mirrors the spec's storage request in PVC
+  # metadata (self-describing; visible via --show-labels).
+  models:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    labels:
+      aad.io/size: 10Gi
+    globalMounts:
+      - path: /models
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  home:
+    type: emptyDir
+    globalMounts:
+      - path: /home/aadworker
+
+# The root-context loader's rbac renderer dereferences .Values.rbac.roles
+# without a nil guard; an empty map keeps the render clean.
+rbac: {}
+
+# Subchart stub: the app-template dependency's own loader also runs (subchart
+# context); this keeps its default-ServiceAccount injection off so the
+# subchart render contributes no objects.
+app-template:
+  global:
+    createDefaultServiceAccount: false

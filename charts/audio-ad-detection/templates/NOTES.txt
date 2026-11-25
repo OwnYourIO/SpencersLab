@@ -1,0 +1,22 @@
+audio-ad-detection (headless worker)
+
+The worker has no UI and no ingress (the proxy leg is N/A by design).
+It is reached in-cluster only:
+
+  kubectl -n default port-forward svc/home-audio-ad-detection 8080
+  curl localhost:8080/healthz   # process + snapclient child alive
+  curl localhost:8080/readyz    # pipe + model + query loop + broker session
+  curl localhost:8080/metrics   # Prometheus text exposition
+
+Service: home-audio-ad-detection (ClusterIP, port 8080).
+PVC: home-audio-ad-detection (size: 10Gi, RWO, mounted at /models) —
+holds the model snapshot + the candidate dir (model + <=2 Gi candidates).
+
+Follow-ups:
+
+  - SNAP_STREAM_ID is "TBD-owner" until the owner supplies the family-TV
+    snapcast group name; until then the worker runs config-order with a
+    logged marker and performs no stream assignment.
+  - Verdict (a): re-point Home Assistant's single mqtt config entry
+    (core-mosquitto, hassio) at the in-cluster home-mosquitto broker — a
+    one-time HA UI action, no restarts (supports_reconfigure: true).

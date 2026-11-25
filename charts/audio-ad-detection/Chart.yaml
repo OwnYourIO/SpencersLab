@@ -1,0 +1,9 @@
+apiVersion: v2
+name: audio-ad-detection
+description: Headless snapcast-stream ad detector (SoundFingerprinting worker, MQTT event publisher)
+version: 1.0.0
+appVersion: "0.1.0"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/
