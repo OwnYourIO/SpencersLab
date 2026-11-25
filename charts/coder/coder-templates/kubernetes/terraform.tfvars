@@ -9,7 +9,18 @@
 #
 # To bump opencode/openchamber/kilo: edit here, push a new template version,
 # then update + restart the workspaces.
+#
+# namespace is required in main.tf with no default, so it is supplied here.
+# "default" is valid on both instances: the coderd release sits in `default`
+# on both (services/dev/prod/values.yaml, services/gpu/prod/values.yaml),
+# the `dev-shared` SeaweedFS PVC this template mounts is unnamespaced
+# (services/gpu/prod/templates/pvc-dev-seaweedfs.yaml) -> `default`, and
+# the dev git-auth secrets (github-pat, forgejo-token) the
+# kubernetes-hardened sibling requires are `default`
+# (services/dev/prod/templates/secret-github.yaml,
+# secret-forgejo-token.yaml).
 
 opencode_version    = "2.0.22"
 openchamber_version = "2.1.0"
 kilo_cli_version    = "7.7.7"
+namespace           = "default"
