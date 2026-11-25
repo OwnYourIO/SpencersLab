@@ -17,13 +17,17 @@
 # Destinations and credentials live instance-side (PUSH_URL_* repo vars and
 # PUSH_TOKEN_* secrets), not in this file — the file carries no repo URL and
 # no token, so it is safe to host on both instances and review without
-# secret exposure. The fan-out's single vault input,
-# secrets.ARGOCD_SYNC_TOKENS, follows the same rule and is an ORG-level
-# Actions secret on the prod instance (owner ruling 2026-11-23: org-scoped
-# key hygiene, inherited by the repository here). A secrets reference cannot
-# distinguish scopes — resolution is repo→org→user with a repo key winning —
-# so a key of that name must never be created repo-side, and this file only
-# documents the placement the runbook creates.
+# secret exposure. The fan-out's input follows the same rule as per-cluster
+# key PAIRS (cf-139 R7): ARGOCD_SYNC_<CAT>_URL as org VARS and
+# ARGOCD_SYNC_<CAT>_TOKEN as org SECRETS on the prod instance (owner ruling
+# 2026-11-23: org-scoped key hygiene, inherited by the repository here; R7
+# extended it to both kinds). Expressions cannot distinguish scopes —
+# resolution is repo→org→user and a repo key WINS silently — so a pair key
+# of either kind must never be created repo-side, and this file only
+# documents the placement the runbook creates. The env map below is a
+# static enumeration by design (Forgejo cannot index secrets dynamically in
+# expressions): adding or removing a cluster means its org pair AND its two
+# rows here, in one release (lockstep, DECISIONS 2026-11-25 micro-call d).
 #
 # The sync-fanout job IS the webhook: no external webhook exists. It drives
 # every cluster's ArgoCD API directly with the per-cluster bearer tokens and
@@ -37,11 +41,12 @@
 # owner's D59 ruling: sync waits until it BUILDS successfully — a red
 # builder holds the fleet at the previous revision until the next green
 # fan, and the unmoved marker re-covers the failed range by construction).
-# Its failure posture has two
-# halves: the unset-vault state is designed (warn and skip green, manual
-# sync or the next push covers it), while setup errors go RED through the
-# unguarded script call — a typo'd vault record must not silently lose a
-# cluster every push forever (DECISIONS 2026-11-23 exit-posture refinement).
+# Its failure posture lives in the script (scripts/argocd-fanout.py owns
+# both lanes): an unconfigured fleet is a designed warn-and-skip-green — the
+# column-0 line comes from the script's own stdout — while setup errors
+# (pair residue, a malformed enumeration row, a broken roster) go RED
+# through the unguarded call, because a typo'd key must not silently lose a
+# cluster every push forever (DECISIONS exit-posture refinement).
 # The push itself already landed in the completed push jobs, so a red
 # fan-out job breaks nothing but hides nothing either; per-target runtime
 # failures audit honestly and stay green (the fan-out is SHA-agnostic, the
@@ -182,16 +187,16 @@ jobs:
     # needs: [push-gh, build-containers, build-charts] IS the race
     # resolution (cf-139 R1 option (c)) grown by the D59 owner ruling: the
     # fleet's app sources track GitHub, so the fan-out may only fire once
-    # GitHub already carries this push, AND it waits for both builders to
-    # come back green (a red release holds the fleet; the unmoved marker
-    # re-covers the failed range next fan). The single vault reference is
-    # the ORG-level secret (owner ruling 2026-11-23): mapped into env only
-    # — the value must never
-    # reach the run body (it would land in the step script file the runner
-    # writes) or argv. The python call is UN-guarded on purpose: config/setup
-    # errors go red (the ruled exit-posture refinement), unset vault was
-    # already skipped green above, and per-target runtime failures stay soft
-    # inside the script's own contract.
+    # GitHub already carries this push, AND both builders came back green
+    # (a red release holds the fleet; the unmoved marker re-covers the
+    # failed range next fan). The org key pairs are env-mapped to the step
+    # below: token values must never reach the run body (an interpolation
+    # lands in the step script file the runner writes) or argv — the
+    # script's env scan is the endpoint list (static rows, no dynamic
+    # secret indexing). The python call is UN-guarded on purpose: the
+    # script owns the unset skip (warn-green) and the config-RED lanes,
+    # and its exit code must reach the job; per-target runtime failures
+    # stay soft inside its audit contract.
     needs: [push-gh, build-containers, build-charts]
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
@@ -203,20 +208,37 @@ jobs:
       - uses: actions/checkout@v7
       - name: fan out ArgoCD syncs
         env:
-          ARGOCD_SYNC_TOKENS: ${{ secrets.ARGOCD_SYNC_TOKENS }}
-          EVT_REF: ${{ forgejo.event.ref }}
-          # GH_REF stays the github.ref compat name: no proven forgejo.ref
-          # sibling on this fleet (DECISIONS D4 — the ref family keeps the
-          # documented github.* fallback beside the fleet-proven event.*
-          # sub-context).
+          # Static enumeration IS the discovery surface: the 11 org pairs,
+          # alphabetical by category (proxy-backup sorts before
+          # proxy-local), URL (var) then TOKEN (secret) per pair; the
+          # script scans these names from its environment.
+          ARGOCD_SYNC_DEV_URL: ${{ vars.ARGOCD_SYNC_DEV_URL }}
+          ARGOCD_SYNC_DEV_TOKEN: ${{ secrets.ARGOCD_SYNC_DEV_TOKEN }}
+          ARGOCD_SYNC_GPU_URL: ${{ vars.ARGOCD_SYNC_GPU_URL }}
+          ARGOCD_SYNC_GPU_TOKEN: ${{ secrets.ARGOCD_SYNC_GPU_TOKEN }}
+          ARGOCD_SYNC_GPU_AI_URL: ${{ vars.ARGOCD_SYNC_GPU_AI_URL }}
+          ARGOCD_SYNC_GPU_AI_TOKEN: ${{ secrets.ARGOCD_SYNC_GPU_AI_TOKEN }}
+          ARGOCD_SYNC_GROW_URL: ${{ vars.ARGOCD_SYNC_GROW_URL }}
+          ARGOCD_SYNC_GROW_TOKEN: ${{ secrets.ARGOCD_SYNC_GROW_TOKEN }}
+          ARGOCD_SYNC_HOME_URL: ${{ vars.ARGOCD_SYNC_HOME_URL }}
+          ARGOCD_SYNC_HOME_TOKEN: ${{ secrets.ARGOCD_SYNC_HOME_TOKEN }}
+          ARGOCD_SYNC_INFRA_URL: ${{ vars.ARGOCD_SYNC_INFRA_URL }}
+          ARGOCD_SYNC_INFRA_TOKEN: ${{ secrets.ARGOCD_SYNC_INFRA_TOKEN }}
+          ARGOCD_SYNC_MEDIA_URL: ${{ vars.ARGOCD_SYNC_MEDIA_URL }}
+          ARGOCD_SYNC_MEDIA_TOKEN: ${{ secrets.ARGOCD_SYNC_MEDIA_TOKEN }}
+          ARGOCD_SYNC_MONITORING_URL: ${{ vars.ARGOCD_SYNC_MONITORING_URL }}
+          ARGOCD_SYNC_MONITORING_TOKEN: ${{ secrets.ARGOCD_SYNC_MONITORING_TOKEN }}
+          ARGOCD_SYNC_PROXY_BACKUP_URL: ${{ vars.ARGOCD_SYNC_PROXY_BACKUP_URL }}
+          ARGOCD_SYNC_PROXY_BACKUP_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_BACKUP_TOKEN }}
+          ARGOCD_SYNC_PROXY_LOCAL_URL: ${{ vars.ARGOCD_SYNC_PROXY_LOCAL_URL }}
+          ARGOCD_SYNC_PROXY_LOCAL_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_LOCAL_TOKEN }}
+          ARGOCD_SYNC_PROXY_REMOTE_URL: ${{ vars.ARGOCD_SYNC_PROXY_REMOTE_URL }}
+          ARGOCD_SYNC_PROXY_REMOTE_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_REMOTE_TOKEN }}
+          EVT_REF: ${{ github.event.ref }}
           GH_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
-          if [ -z "${ARGOCD_SYNC_TOKENS:-}" ]; then
-            echo '::warning::sync-fanout not configured (org-level Actions secret ARGOCD_SYNC_TOKENS absent) — fan-out skipped, manual sync or the next push covers it'
-            exit 0
-          fi
-          # dispatch/first-push may carry no event ref (build-charts.yaml:96
+          # dispatch/first-push may carry no event ref (build-charts.yaml:95
           # precedent) — the chain resolves main, never an empty ref.
           REF="${EVT_REF:-${GH_REF:-refs/heads/main}}"
           python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"

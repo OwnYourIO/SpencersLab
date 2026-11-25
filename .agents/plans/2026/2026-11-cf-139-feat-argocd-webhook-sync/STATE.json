@@ -361,14 +361,14 @@
       ]
     },
     "C10": {
-      "status": "pending",
+      "status": "done",
       "wave": 11,
       "depends_on": [
         "C09"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "main-sync.yaml: 22-row org key-pair env map (alphabetical, URL+TOKEN per category) replaces blob map; shell unset-guard DELETED (script owns both lanes); header/job comments reworded; forgejo-main-sync t5/t11/t12/t13 re-pin incl. ARGOCD_SYNC_TOKENS file-wide ban",
       "handoffs": []
     },
