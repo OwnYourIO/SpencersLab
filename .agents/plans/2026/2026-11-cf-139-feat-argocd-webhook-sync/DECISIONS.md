@@ -479,6 +479,18 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   (t10 gains the ban) and ignored by construction in the script; runbook §2.4's
   delete-check grows to the moot TRIO (hook pair + the reopen2 blob, which the
   11-23→11-25 window may have had created).
+- 2026-11-25 ruling (coord, C09 review minors): **(i-adj-1) catch envelope ACCEPTED AS-IS,
+  no widening** — value-carrying degenerate shapes (`ARGOCD_SYNC__TOKEN=x`, lowercase
+  side-suffixes) fall outside the pinned regex and stay ignored: in Actions the ONLY
+  values reaching the env are the 22 enumerated names, and C10's t11 env-name
+  set-equality leg is the primary guard there; the script's broad-catch is defense in
+  depth for manual/local runs, and the class it must catch (a typo'd ENUMERATION ROW)
+  it does. C11 §8 states the true envelope (valid-shape malformed ⇒ RED; degenerate
+  value-carrying shapes ignored by design; repo-side rows are review-guarded). One
+  future cluster rule stands from micro-call (c): categories stay hyphen-only DNS
+  labels. **(i-adj-2) two-round posture ACCEPTED** — malformed-with-value short-circuits
+  the integrity aggregation; violations are never silent, one class surfaces per push,
+  fix-forward is the designed loop.
 - 2026-11-25 plan(reopen3): Chunks = waves 10–12 (continuing numbering): C09 (M) engine
   input redesign + behavior.sh re-pin; C10 (S) workflow 22-row env map + guard deletion +
   main-sync suite re-pin; C11 (S) runbook rewrite #4 + runbook-suite re-pin executed as a

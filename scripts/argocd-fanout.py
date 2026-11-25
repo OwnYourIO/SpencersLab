@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """argocd-fanout — push-to-main fan-out driving real ArgoCD API syncs on
-every cluster directly, from the Forgejo Actions vault (cf-139 reopen2,
-ruling R6: this repo-side script is the fan-out logic home, invoked by the
-main-sync sync-fanout job from the checkout; no relay, no in-cluster part).
+every cluster directly (cf-139 R7: repo-side fan-out home, invoked by the
+main-sync sync-fanout job; targets DISCOVERED from ARGOCD_SYNC_<CAT>_URL
+and _TOKEN Actions key pairs — org vars plus per-secret tokens; no blob
+vault, no roster endpoint list).
 
 The fleet keeps syncPolicy.automated off on every root app by owner ruling
 (cf-139 OQ1), so this script calls each cluster's sync API itself. Semantics
 port 1:1 from the shipped relay's main.py (root-first -> settle -> re-list
 -> children sweep, byte repoURL + live targetRevision match, prune=false in
 query AND body, 409 = success, per-target isolation); the HTTP/HMAC/event
-layers drop, the vault parsing and the ThreadPool fan-out are new.
+layers drop, and the env-pair discovery plus the ThreadPool fan-out are new.
 
 Exit posture (DECISIONS 2026-11-23, refined vs the relay's all-warn rule):
 0 runtime-green (per-target failures audit honestly, next push self-heals),
 1 config/setup RED (a typo'd category must not silently lose a cluster),
-2 argparse usage. Tokens arrive ONLY as the ARGOCD_SYNC_TOKENS environment
-variable — never argv, never files — and are never echoed by any output.
+2 argparse usage. Token values arrive ONLY through the
+ARGOCD_SYNC_<CAT>_TOKEN keys — never argv, never files, never echoed.
 """
 
 import argparse
@@ -29,18 +30,32 @@ from urllib import error as urlerror
 from urllib import parse as urlparse
 from urllib import request as urlrequest
 
-# Target names land verbatim in the audit lines operators grep, so the roster
-# is restricted to what that parser accepts: [A-Za-z0-9_.-]+
-TARGET_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+# R7 endpoint pairs: the broad shape catches every enumeration row the job
+# can receive; SEG/CAT then decide legitimacy — single-underscore joins
+# make the upper-snake -> hyphen category mapping injective, so a real
+# category with an underscore is unrepresentable by design (runbook §8).
+PAIR_KEY_RE = re.compile(r"^ARGOCD_SYNC_(.+)_(URL|TOKEN)$")
+SEG_RE = re.compile(r"^[A-Z0-9](?:_?[A-Z0-9])*$")
+CAT_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 
-# ArgoCD local-account tokens are JWTs: base64url segments joined by dots,
-# no whitespace/commas in practice (RESEARCH [30][31]) — a record failing
-# this shape is a paste or typo, caught at parse time, not a silent 401.
+# ArgoCD local-account tokens are JWTs: base64url segments joined by dots
+# (RESEARCH [30][31]) — a failing value is a paste or typo, caught here,
+# not a silent 401.
 JWT_RE = re.compile(r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_.-]+$")
 
-TOKENS_ENV = "ARGOCD_SYNC_TOKENS"
+# Kill-lane line, pinned byte-exact (micro-call a); column 0 because the
+# runner's annotation grammar is line-anchored (review m1).
+WARN_NOT_CONFIGURED = ("::warning::sync-fanout not configured (no "
+                       "ARGOCD_SYNC_*_TOKEN keys with values) — fan-out "
+                       "skipped, manual sync or the next push covers it")
+
+# Discovery's designed skip-and-green when no TOKEN key carries a value:
+# §7's kill lever — deleting/blanking the org TOKEN secrets suffices, URL
+# residue may stay populated.
+NOT_CONFIGURED = object()
+
 ROSTER_KEYS = {"allowed_refs", "tracked_repo", "settle_seconds",
-               "target_timeout_seconds", "parallel_workers", "targets"}
+               "target_timeout_seconds", "parallel_workers"}
 
 
 class ConfigError(Exception):
@@ -70,9 +85,9 @@ def load_roster(path):
     missing = ROSTER_KEYS - set(raw)
     if missing:
         raise ConfigError("roster missing required fields: %s" % ", ".join(sorted(missing)))
-    # Extras go red too (review m3): symmetric with the per-target key check,
-    # so a relay-era leftover (clusterHosts, tokenKey...) cannot linger
-    # green through the disposal wave.
+    # Extras go red too (review m3): symmetric with the per-target key
+    # check, so leftovers (clusterHosts, tokenKey, reopen2's targets[])
+    # cannot linger green — R7 deleted the endpoint list with no shim.
     extra = set(raw) - ROSTER_KEYS
     if extra:
         raise ConfigError("roster has unknown top-level keys: %s" % ", ".join(sorted(extra)))
@@ -107,75 +122,72 @@ def load_roster(path):
     if not isinstance(tracked, str) or not tracked:
         raise ConfigError("tracked_repo must be a non-empty string")
 
-    targets = raw["targets"]
-    if not isinstance(targets, list) or not targets:
-        raise ConfigError("targets must be a non-empty list")
-    out = []
-    seen = set()
-    for i, t in enumerate(targets):
-        if not isinstance(t, dict) or set(t) != {"name", "url", "root_app"}:
-            raise ConfigError("targets[%d] must be an object with exactly name/url/root_app" % i)
-        for k in ("name", "url", "root_app"):
-            v = t[k]
-            if not isinstance(v, str) or not v:
-                raise ConfigError("targets[%d] needs a non-empty string %s" % (i, k))
-        if not TARGET_NAME_RE.match(t["name"]):
-            raise ConfigError("targets[%d].name %r must match %s" % (i, t["name"], TARGET_NAME_RE.pattern))
-        if not t["url"].startswith(("http://", "https://")):
-            raise ConfigError("targets[%d].url must start with http:// or https://" % i)
-        if t["name"] in seen:
-            raise ConfigError("duplicate target name %r" % t["name"])
-        seen.add(t["name"])
-        # rstrip("/") ported from the relay: URL and path concatenation
-        # would otherwise double-slash on the first operator-added trailing
-        # slash (and the stub-based suite pins byte paths).
-        out.append({"name": t["name"], "url": t["url"].rstrip("/"), "root_app": t["root_app"]})
-
     return {"allowed_refs": refs, "tracked_repo": tracked,
             "settle": float(raw["settle_seconds"]),
             "timeout": float(raw["target_timeout_seconds"]),
-            "workers": int(raw["parallel_workers"]),
-            "targets": out}
+            "workers": int(raw["parallel_workers"])}
 
 
-def parse_vault(roster_names):
-    raw = os.environ.get(TOKENS_ENV)
-    if raw is None or not raw.strip():
-        raise ConfigError("%s is empty or unset: expected newline cat:token records" % TOKENS_ENV)
-    tokens = {}
-    # OQ8 ruled newline cat:token records (per-line masking, RESEARCH [26]);
-    # the [,\s]+ split is paste-accident defense, not an advertised style.
-    # Tearing a value is impossible: JWTs contain no whitespace/commas and
-    # categories contain none either, so delimiters can only sit BETWEEN
-    # records. The first ":" splits category from token.
-    for rec in re.split(r"[,\s]+", raw.strip()):
-        if not rec:
+def discover_targets(env):
+    """R7: the environment IS the endpoint list.
+
+    Broad-scan the pair keys, strict-validate segment and derived category
+    (regex laws above): a malformed name carrying a value is RED naming
+    the RAW KEY — an ignored typo'd enumeration row would re-open the
+    silent-cluster-loss class this posture exists for; empty residue
+    (malformed or double-empty) is unattempted: ignored, unechoed. Empty
+    string == absent, since static enumeration passes unset org keys
+    through empty. Lane order (DECISIONS 2026-11-25 a/b/c+i):
+    malformed-with-value outranks even the all-absent kill lane (a typo'd
+    TOKEN row must never warn-green a cluster away); the TOKEN side alone
+    decides configured-vs-kill; the configured lane demands per category a
+    non-empty URL (scheme, no @/query, slash normalized — relay port) and
+    a non-empty JWT-shaped TOKEN, COLLECTING all violations into ONE
+    category-sorted ConfigError (first-error-raise hides half a broken
+    fleet). Returns {"targets" (root_app == category), "tokens"} or
+    NOT_CONFIGURED; errors name keys and categories, never values.
+    """
+    malformed = []
+    sides = {}
+    for key, value in env.items():
+        m = PAIR_KEY_RE.match(key)
+        if not m:
+            # Outside the pair shape — the dead ARGOCD_SYNC_TOKENS blob name
+            # among them — matches nothing, by construction, and stays silent.
             continue
-        if ":" not in rec:
-            raise ConfigError('vault record without a ":" separator (expected cat:token per line)')
-        cat, _, tok = rec.partition(":")
-        if cat not in roster_names:
-            # A reversed "token:cat" paste lands the JWT in the category
-            # slot; echoing it would print the whole token to stderr —
-            # unmasked in CI, since [26] registers secret LINES and this
-            # value is the line minus its tail. Real typos stay informative;
-            # the echo is bounded because an unbounded field is a log-spam
-            # surface too.
-            if JWT_RE.match(cat):
-                raise ConfigError("vault record looks reversed (token before category) — expected cat:token")
-            raise ConfigError('record for unknown category "%s"' % cat[:64])
-        if cat in tokens:
-            raise ConfigError('duplicate vault record for category "%s"' % cat)
-        if not JWT_RE.match(tok):
-            raise ConfigError('token for "%s" is not JWT-shaped' % cat)
-        tokens[cat] = tok
-    # Set equality BOTH directions, loud: RESEARCH Implications 4 names the
-    # typo'd-category class (a vault record that silently matches no roster
-    # target) as the fan-out's one new silent failure — losing a cluster
-    # every push forever. It goes RED here, never warn-and-green.
-    for cat in sorted(roster_names - set(tokens)):
-        raise ConfigError('roster target "%s" has no token' % cat)
-    return tokens
+        seg, side = m.group(1), m.group(2)
+        cat = seg.lower().replace("_", "-")
+        if not (SEG_RE.match(seg) and CAT_RE.match(cat)):
+            if value:
+                malformed.append(key)
+            continue
+        sides.setdefault(cat, {})[side] = value
+    if malformed:
+        raise ConfigError("malformed ARGOCD_SYNC_* enumeration keys with values: %s — keys must be ARGOCD_SYNC_<CATEGORY>_<URL|TOKEN> with an upper-snake category" % ", ".join(sorted(malformed)))
+    if not any(v for s in sides.values() for k, v in s.items() if k == "TOKEN"):
+        return NOT_CONFIGURED
+    targets, tokens, violations = [], {}, []
+    for cat in sorted(sides):
+        url = sides[cat].get("URL") or ""
+        tok = sides[cat].get("TOKEN") or ""
+        if not url and not tok:
+            continue  # double-empty strict residue: an unattempted row
+        if not tok:
+            violations.append('category "%s" missing TOKEN value' % cat)
+        elif not JWT_RE.match(tok):
+            violations.append('category "%s" token is not JWT-shaped' % cat)
+        if not url:
+            violations.append('category "%s" missing URL value' % cat)
+        elif not url.startswith(("http://", "https://")):
+            violations.append('category "%s" URL must start with http(s)://' % cat)
+        elif "@" in url or "?" in url:
+            violations.append('category "%s" URL must not carry @ userinfo or a query' % cat)
+        else:
+            targets.append({"name": cat, "url": url.rstrip("/"), "root_app": cat})
+            tokens[cat] = tok
+    if violations:
+        raise ConfigError("pair integrity: %s" % "; ".join(sorted(violations)))
+    return {"targets": targets, "tokens": tokens}
 
 
 def ref_tail(ref):
@@ -385,8 +397,8 @@ def fan_out(cfg, tokens, ref, dry=False):
 
 
 def cmd_check(cfg, tokens):
-    # Offline by contract: parse roster + vault fully, print the table,
-    # open zero sockets (--dry-run is the dialing mode).
+    # Offline by contract: parse roster + discovered pairs fully, print the
+    # table, open zero sockets (--dry-run is the dialing mode).
     print("argocd-fanout --check: OK")
     print("allowed_refs: %s" % ", ".join(cfg["allowed_refs"]))
     print("tunables: settle_seconds=%g target_timeout_seconds=%g parallel_workers=%d"
@@ -395,33 +407,42 @@ def cmd_check(cfg, tokens):
     print("  %-14s %s" % ("NAME", "URL"))
     for t in cfg["targets"]:
         print("  %-14s %s" % (t["name"], t["url"]))
-    print("vault: %d records matched to the roster (values never printed)" % len(tokens))
+    print("pairs: %d targets discovered (values never printed)" % len(cfg["targets"]))
     return 0
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="argocd-fanout",
-        description="vault-direct ArgoCD sync fan-out (caller: the Forgejo main-sync sync-fanout job; "
-                    "token values come only from the ARGOCD_SYNC_TOKENS environment variable)")
+        description="env-discovered ArgoCD sync fan-out (caller: the Forgejo main-sync sync-fanout job; endpoints and tokens come only from ARGOCD_SYNC_<CATEGORY>_URL/_TOKEN environment keys)")
     parser.add_argument("--config", default="scripts/argocd-fanout.json",
-                        help="roster JSON path (checkout-borne)")
+                        help="roster JSON path (checkout-borne; the five globals only)")
     parser.add_argument("--ref", default="refs/heads/main",
                         help="full git ref of the push (non-secret)")
     parser.add_argument("--check", action="store_true",
-                        help="parse roster + vault fully, print the table, exit; zero network")
+                        help="parse roster + env pairs fully, print the table, exit; zero network")
     parser.add_argument("--dry-run", action="store_true", dest="dry_run",
                         help="live GETs only: eligibility + would-sync per target, zero POSTs")
     args = parser.parse_args(argv)
 
     try:
         cfg = load_roster(args.config)
-        tokens = parse_vault({t["name"] for t in cfg["targets"]})
+        discovered = discover_targets(os.environ)
     except ConfigError as e:
-        # Setup errors name categories and fields, never values (AC8): the
-        # message goes to stderr, the job goes RED (ruled posture).
+        # Setup errors name keys, categories and fields, never values (AC8):
+        # the message goes to stderr, the job goes RED (ruled posture).
         print("argocd-fanout config: %s" % e, file=sys.stderr)
         return 1
+
+    if discovered is NOT_CONFIGURED:
+        # Before the ref gate and any output shape: an unconfigured fleet is
+        # the designed green skip — exactly the one column-0 line, zero
+        # sockets, no table, no summary (the kill lever's proof-of-off).
+        print(WARN_NOT_CONFIGURED, flush=True)
+        return 0
+
+    cfg["targets"] = discovered["targets"]
+    tokens = discovered["tokens"]
 
     if args.check:
         return cmd_check(cfg, tokens)

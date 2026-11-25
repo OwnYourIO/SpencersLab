@@ -3,18 +3,5 @@
   "tracked_repo": "https://github.com/OwnYourIO/SpencersLab.git",
   "settle_seconds": 10.0,
   "target_timeout_seconds": 60.0,
-  "parallel_workers": 4,
-  "targets": [
-    {"name": "dev", "url": "https://cluster.dev.scifi.farm", "root_app": "dev"},
-    {"name": "gpu", "url": "https://cluster.gpu.spencerslab.com", "root_app": "gpu"},
-    {"name": "gpu-ai", "url": "https://cluster.gpu-ai.spencerslab.com", "root_app": "gpu-ai"},
-    {"name": "grow", "url": "https://cluster.grow.spencerslab.com", "root_app": "grow"},
-    {"name": "home", "url": "https://cluster.home-lab.spencerslab.com", "root_app": "home"},
-    {"name": "infra", "url": "https://cluster.infra.spencerslab.com", "root_app": "infra"},
-    {"name": "media", "url": "https://cluster.media.spencerslab.com", "root_app": "media"},
-    {"name": "monitoring", "url": "https://cluster.monitoring.spencerslab.com", "root_app": "monitoring"},
-    {"name": "proxy-local", "url": "https://cluster.proxy-local.spencerslab.com", "root_app": "proxy-local"},
-    {"name": "proxy-backup", "url": "https://cluster.proxy-backup.spencerslab.com", "root_app": "proxy-backup"},
-    {"name": "proxy-remote", "url": "https://cluster.proxy-remote.spencerslab.com", "root_app": "proxy-remote"}
-  ]
+  "parallel_workers": 4
 }

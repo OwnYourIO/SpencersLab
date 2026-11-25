@@ -349,14 +349,16 @@
       "reopen3_status": "done history — runbook rewrite #3 stands as the spine; #4 (C11) rewrites §2/§5/§7/§8 input mechanics only"
     },
     "C09": {
-      "status": "pending",
+      "status": "done",
       "wave": 10,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "engine input redesign: env pair discovery (broad-catch/strict-validate, token-side configured predicate, aggregated RED), roster globals-only (targets[] deleted), --check from pairs, kill-lane warning; behavior.sh re-pin; fan-out core byte-untouched (AC10 diff proof)",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-25T03:20+00:00", "event": "dev DONE (13/13, t13 byte-lock at 6ed762140) + review APPROVED (18/18 adversarial discovery probes + reviewer's own AST re-proof + rootApp==name historical audit at 6ed762140: equality law is NOT a behavior change); 2 contract minors ruled in DECISIONS (i-adj-1 envelope accepted, (i-adj-2) two-round posture accepted); aislop format+size warns accepted with evidence" }
+      ]
     },
     "C10": {
       "status": "pending",
