@@ -827,7 +827,9 @@ central Prometheus through the `k8s.grafana.com/scrape` +
 (fn, q27, flash-tp1, q27-tp2; no per-lane nameOverride, so the label
 fallback below unifies every lane into the one job). gpu-ai's
 k8s-monitoring annotationAutodiscovery consumes the pair at `podIP:8000`
-`/metrics` on the 60 s feature default into job `radiance` — the pair is
+`/metrics` on gpu-ai's 15 s scrape override (owner directive 2026-11-25 on
+the umbrella values; k8s-monitoring 4.5.5's global default is 60 s) into job
+`radiance` — the pair is
 exactly two keys, no third annotation; the job identity is the
 `app.kubernetes.io/name` label fallback, not a monitor-object `<ns>/<name>`
 shape. The vllm-compat plus native `radiance:` families behind the curl
