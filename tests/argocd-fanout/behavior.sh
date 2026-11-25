@@ -20,6 +20,15 @@
 # contract". AC trace: t1[AC1] t2[globals schema + micro-call f] t3[AC5 AC8]
 # t4[AC4 AC11] t5[AC6 AC9] t6[AC9] t7[AC9] t8[AC9+M2] t9[AC9] t10[AC7 AC9]
 # t11[AC9] t12[AC8] t13[AC10].
+# Ruling (j) (DECISIONS 2026-11-25, C11 review MAJOR 1 → code repair C12),
+# arms added to t4/t5: BOTH-EMPTY enumerated rows in a CONFIGURED fleet are
+# aggregated RED with the pinned phrase `category <cat> enumerated but both
+# values empty` (t4: single-class arm, both-empty+one-sided mixed arm, the
+# §7 partial-kill three-class mix, and the --check twin); the kill lane
+# STAYS green for all-empty/zero-token fleets incl. rows whose both values
+# are empty strings (t5 boundary arms — the paste-pending shape and the
+# whole-fleet lever). Landed C09 green-skips the both-empty class: the t4
+# (j) arms are its designed-red carrier until C12 lands.
 #
 # TRANSITIONAL-ERA SHIM (why run_core exists): the core-semantics legs must
 # stay green ON THE SHIPPED script today (C09's red map keeps them out of the
@@ -710,6 +719,13 @@ try:
          r'argocd-fanout config:.*category "grow"'),
         ("query-url", grow({"url": "https://cluster.grow.lan?redirect=1", "token": h.token_for("grow")}),
          r'argocd-fanout config:.*category "grow"'),
+        # Ruling (j): a double-empty ENUMERATED row in a CONFIGURED fleet is
+        # RED, not unattempted-green — a fleet that is configured must
+        # account for every row (a key-only org delete whose workflow row
+        # survives must not fan out silent). Landed C09 skips these rows,
+        # so this arm is the designed-red carrier for C12.
+        ("both-empty-row", grow({"url": "", "token": ""}),
+         r'argocd-fanout config:.*category .grow. enumerated but both values empty'),
     ]
     for arm in arms:
         tag, pairs, pat = arm[0], arm[1], arm[2]
@@ -741,11 +757,64 @@ try:
     if h.STEM in line:
         h.bad("t4[aggregate]: the aggregated line echoes token material (AC8)")
 
+    # Ruling (j) mixed aggregate: ONE both-empty row AND one one-sided row ⇒
+    # the SAME single line names both, sorted (the both-empty phrase and the
+    # one-sided phrase coexist in one aggregated RED).
+    p = dict(HEALTHY)
+    p["grow"] = {"url": "", "token": ""}                 # both-empty row
+    p["infra"] = {"token": h.token_for("infra")}         # one-sided residue
+    rc, out, err = h.run("t4-j-mixed", "--ref", "refs/heads/main",
+                         pairs=p, config=roster)
+    cfg_lines = [ln for ln in err.splitlines() if ln.startswith("argocd-fanout config:")]
+    if rc != 1 or len(cfg_lines) != 1:
+        h.bad("t4[j-mixed]: exit %s / %d config lines, expected 1/1 — (j) folds the both-empty row into the existing ONE-line aggregation" % (rc, len(cfg_lines)))
+    line = cfg_lines[0] if cfg_lines else ""
+    mg = re.search(r'category .grow. enumerated but both values empty', line)
+    mi = re.search(r'category .infra. missing URL value', line)
+    if not (mg and mi):
+        h.bad("t4[j-mixed]: the single line must carry BOTH the (j) phrase for grow and the one-sided phrase for infra: %r" % line[:300])
+    if mg and mi and mg.start() >= mi.start():
+        h.bad("t4[j-mixed]: categories must sort (grow before infra): %r" % line[:300])
+    if h.STEM in line:
+        h.bad("t4[j-mixed]: aggregated line echoes token material (AC8)")
+
+    # §7 partial-kill scenario per (j): the whole-fleet lever (all tokens
+    # blank ⇒ kill-lane green, t5) is different from KILLING FEWER THAN ALL:
+    # one survivor configures the fleet and every blanked/deleted row —
+    # one-sided OR both-empty — aggregates into ONE sorted RED naming them.
+    p = {"dev": {"url": stub.url, "token": h.token_for("dev")}}   # the survivor
+    p["media"] = {"url": stub.url}                                  # token deleted
+    p["grow"] = {"url": "", "token": ""}                            # pair deleted, row survives
+    p["proxy-backup"] = {"url": "", "token": h.token_for("proxy-backup")}  # url deleted, token kept
+    rc, out, err = h.run("t4-j-levermix", "--ref", "refs/heads/main",
+                         pairs=p, config=roster)
+    cfg_lines = [ln for ln in err.splitlines() if ln.startswith("argocd-fanout config:")]
+    if rc != 1 or len(cfg_lines) != 1:
+        h.bad("t4[j-levermix]: partial §7 kill must be ONE aggregated RED (exit %s, %d lines):\n%s" % (rc, len(cfg_lines), (out + err)[:400]))
+    line = cfg_lines[0] if cfg_lines else ""
+    pos = {}
+    for cat, rx in (("media", r'media. missing TOKEN value'),
+                    ("grow", r'grow. enumerated but both values empty'),
+                    ("proxy-backup", r'proxy-backup. missing URL value')):
+        m = re.search(rx, line)
+        if not m:
+            h.bad("t4[j-levermix]: line must carry the %s phrase for %s (ruling (j) mixes one-sided and both-empty classes): %r" % (rx, cat, line[:300]))
+        pos[cat] = m.start()
+    if not (pos["grow"] < pos["media"] < pos["proxy-backup"]):
+        h.bad("t4[j-levermix]: aggregate must sort (grow, media, proxy-backup): %r" % pos)
+    if h.STEM in line:
+        h.bad("t4[j-levermix]: token material echoed (AC8)")
+
     # The --check mode enforces the SAME integrity matrix (AC7 tail).
     rc, out, err = h.run("t4-check-integrity", "--check",
                          pairs=grow({"url": stub.url}), config=roster)
     check("check/integrity", rc, out, err,
           r'argocd-fanout config:.*category "grow" missing TOKEN value')
+    # (j) must hold in --check too (it validates the fleet fully).
+    rc, out, err = h.run("t4-check-bothempty", "--check",
+                         pairs=grow({"url": "", "token": ""}), config=roster)
+    check("check/both-empty", rc, out, err,
+          r'argocd-fanout config:.*category .grow. enumerated but both values empty')
 
     # AC11: the preserved roster guards (the reopen2 review-round family —
     # allowed_refs/tunables/roster-shape semantics survive R7 UNCHANGED).
@@ -787,12 +856,12 @@ try:
 finally:
     stub.stop()
 
-print("ok: t4 — all eight pair-integrity violations exit 1 naming their category with the pinned phrases (values never echoed), multi-category failures aggregate into ONE sorted line, --check enforces the same matrix, and the preserved roster guards (refs/tunables/schema) stay red (AC4, AC11)")
+print("ok: t4 — every pair-integrity violation (eight one-sided/scheme shapes + the ruling-(j) both-empty class) exits 1 naming its category with the pinned phrases (values never echoed); both-empty+one-sided and the §7 partial-kill mix aggregate into ONE sorted line; --check enforces the same matrix, and the preserved roster guards (refs/tunables/schema) stay red (AC4, AC11, ruling (j))")
 PY
   then
     fail "t4: the pair-integrity/guards contract is violated (reason printed above)"
   fi
-  ok "t4: aggregated pair-integrity RED + preserved roster guards + zero-dial/zero-echo (AC4/AC11)"
+  ok "t4: aggregated pair-integrity RED incl. the ruling-(j) both-empty class + preserved roster guards + zero-dial/zero-echo (AC4/AC11/(j))"
 fi
 
 # --- t5: kill lane (3 arms) + happy fan-out ordering + ref gate (AC6, AC9) --------
@@ -812,11 +881,17 @@ try:
     # Kill-lane arms (AC6): the TOKEN-side predicate decides; URLs populated
     # or not, keys absent, or all-empty strings — three arms — ⇒ pinned
     # column-0 warning, exit 0, ZERO sockets, no table, no summary.
+    # Kill-lane arms (AC6 + the ruling-(j) boundary proofs): the TOKEN-side
+    # predicate decides; (j) fires ONLY when OTHER clusters are configured,
+    # so both-empty rows in an all-empty fleet must STILL warn-green —
+    # the paste-pending state and the whole-fleet §7 lever survive.
     kill_arms = [
         ("keys-absent", {}),
         ("urls-populated", {"dev": {"url": stub.url}, "gpu": {"url": stub.url}}),
         ("all-empty", {"dev": {"url": stub.url, "token": ""}, "gpu": {"token": ""}}),
         ("empty-malformed-residue", {"dev": {"url": stub.url, "token": ""}}),
+        ("all-rows-both-empty", {"dev": {"url": "", "token": ""}, "gpu": {"url": "", "token": ""}}),
+        ("zero-tokens-one-bothempty", {"dev": {"url": "", "token": ""}, "gpu": {"url": stub.url}}),
     ]
     for tag, pairs in kill_arms:
         rc, out, err = h.run("t5-kill-%s" % tag, "--ref", "refs/heads/main",
@@ -923,12 +998,12 @@ finally:
     for s in (dev, media, grow):
         s.stop()
 
-print("ok: t5: four kill-lane arms print ONLY the pinned column-0 warning, exit 0, dial zero sockets and skip the ref-gate line; the core fan-out keeps root->settle->re-list->children order, ThreadPool overlap, the child filters, pinned details and summary math; the ref gate stays a one-line green no-op (AC6, AC9)")
+print("ok: t5: six kill-lane arms (incl. the ruling-(j) boundary: all-rows-both-empty and zero-tokens-with-one-bothempty stay WARN-GREEN — (j) only fires when OTHER clusters are configured) print ONLY the pinned column-0 warning, exit 0, dial zero sockets and skip the ref-gate line; the core fan-out keeps root->settle->re-list->children order, ThreadPool overlap, the child filters, pinned details and summary math; the ref gate stays a one-line green no-op (AC6, AC9, ruling (j))")
 PY
   then
     fail "t5: the kill-lane / happy-shape / ref-gate contract is violated (reason printed above)"
   fi
-  ok "t5: kill lane (4 arms) + core ordering + ref gate hold (AC6/AC9)"
+  ok "t5: kill lane (6 arms incl. the ruling-(j) boundaries) + core ordering + ref gate hold (AC6/AC9/(j))"
 fi
 
 # --- t6: prune=false in query AND body, never force (AC9/OQ6) --------------------
@@ -1378,6 +1453,12 @@ fi
 # 6ed762140) and from the working file, and demand byte-equal sources
 # (comments included — the why-comments survive verbatim per the chunk).
 # Designed-GREEN today (identical files); reddens if C09 touches the core.
+# Ruling-(j)/C12 note: the repair may change discover_targets/main/constants
+# freely — NONE of those are in the CORE list; the 13 names below stay
+# byte-locked to the same 6ed762140 baseline through C12 (the kill-lane
+# strings live in WARN_NOT_CONFIGURED, discovery in discover_targets;
+# fan_out/drive_target/api layers untouched by (j) — this leg plus t5-t11
+# enforce that split).
 if want t13; then
   if ! python3 - "$FANOUT" "$CORE_BASE" <<'PY'
 import ast, os, subprocess, sys
