@@ -1,0 +1,202 @@
+# Push the changed Coder templates to the Coder instance hosted by the
+# executing Forgejo instance (AD-56): the card's ask, the endpoint from
+# a variable and the token from the repo vault. Instance selection is by
+# the repo variable ROLE, never by an instance URL: ROLE is a comma list
+# without spaces over the vocabulary {dev, prod}, the guards test
+# membership with contains() — a case-insensitive substring that never
+# errors on a hand-typed value, where a guard expression that errors
+# fails the job while a false one only skips it. Unlike
+# containers-build.yaml, whose guards widen on unset, an unset ROLE stays
+# fail-safe here on purpose: this pipeline publishes to an external
+# service, so it must never fire unconfigured (the release.yaml
+# fail-safe class, beside main-sync.yaml's narrow guards). Both role
+# members fire because each instance serves its own Coder: the executing
+# instance pushes every changed template to its own instance, the
+# endpoint from the instance-side repo var CODER_URL and the token from
+# the repo secret CODER_SESSION_TOKEN — the OQ5-minimal vault, exactly
+# one var + one secret; every template input value rides the in-repo
+# terraform.tfvars and the main.tf defaults, so the push script passes
+# no --var of any kind. Substring caveat: no future role word may
+# contain dev or prod as a substring — "production" would silently
+# widen the prod guards.
+#
+# Trigger. A push to main that touches charts/coder/coder-templates/**,
+# plus the workflow_dispatch escape hatch with the templates input (an
+# empty list pushes nothing — the containers-build.yaml shape). No PR
+# leg: fork heads carry empty secrets and a read-only token, and a PR
+# push would mint an active template version — every push mints one
+# (--activate defaults true), so only a main-tree change or an explicit
+# dispatch may fire it.
+#
+# Detection. A push diffs the whole before..sha range as trees — every
+# commit between the endpoints lands in the changed set — which is why
+# the detect job checks out with fetch-depth: 0 and the push jobs, which
+# never diff, stay shallow: only the checked-out HEAD sha reaches the
+# push script (the version name and the message). The detector is
+# scripts/coder-template-detect.sh: a sorted JSON array of the changed
+# pushable template dirs (DNS-safe + carrying a main.tf). The detector
+# owns the empty-set warning with its exemption arithmetic: a no-op ref
+# update (before == sha) and an empty dispatch list (its own no-op
+# intent) stay silent, every other empty set warns on stderr, and the
+# first push to a branch (all-zero before) narrows to the tip commit
+# and says so with a ::warning:: line. A dispatch carries no commit
+# range: it names its push list outright.
+#
+# Runs. Without concurrency:, Forgejo cancels an in-flight run of the
+# same workflow on every new push or dispatch event; a cancelled matrix
+# would push half a template set, so runs queue instead. The lab runner
+# has capacity 1, so matrix cells serialize through one pod; the matrix
+# is fail-fast: false, so one template's 401 does not cancel the
+# siblings' pushes.
+#
+# Jobs run on the lab's job image exactly as today: runs-on:
+# ubuntu-24.04 with no container: field — the same shape as the other
+# four non-renovate workflows (the renovate.yaml container: job is the
+# suite's sole deviation — one tool with no upstream-lab fit — not the
+# shape). The Coder CLI is the forgejo-runner bake (AD-56 C01), behind
+# the label the label already routes to, and the diag step's plain
+# coder version call IS the toolchain check (the D43 posture): a
+# pre-bake image dies there at command-not-found, loud and early — the
+# runbook's UA3/UA4 sequencing state, not a pipeline bug. No step
+# installs anything here.
+#
+# Exit posture: an unconfigured instance (the var or the secret absent)
+# warn-and-skip skips green per template — the script's designed
+# outcome, exit 0 with the missing key named on stderr (the
+# main-sync.yaml unset-vault posture); a configured 401 fails red, the
+# CLI's non-zero exit propagating through the script to the job.
+#
+# Credentials arrive as Actions vault references mapped into env blocks
+# only (CODER_URL from the instance-side repo var, CODER_SESSION_TOKEN
+# from the repo secret) — never interpolated into the run body or argv
+# (the argocd-fanout.py doctrine); the script hands the token to the
+# coder CLI as the environment variable only. This file carries no
+# instance URL literal and no token literal: it is identical-safe to
+# host on both Forgejo instances, and the instance-side placement is
+# what the runbook documents.
+#
+# Steps are plain shell. Actions resolve through the instance's mirror,
+# whose inventory beyond actions/checkout — the only action used here —
+# is unproven.
+
+name: Deploy Coder templates
+
+on:
+  push:
+    branches: [main]
+    paths: ['charts/coder/coder-templates/**']
+  # Push escape hatch: name the templates to (re)push when their
+  # sources did not change but a publish is due (a failed or cancelled
+  # earlier run, a re-minted token, a divergent namespace). An empty
+  # list pushes nothing.
+  workflow_dispatch:
+    inputs:
+      templates:
+        description: 'Template names to push (comma/space separated)'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  # A cancelled matrix would push half a template set, so runs queue
+  # instead (the capacity-1 runner; the containers-build rationale).
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    if: contains(vars.ROLE, 'dev') || contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    outputs:
+      changed-templates: ${{ steps.detect.outputs.changed-templates }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history is what keeps a multi-commit push's non-tip
+          # changes visible: detection diffs the whole before..sha range,
+          # and at the depth-1 default the endpoints do not exist locally
+          # — the step then dies on 'bad object' (exit 128, loud), never
+          # quietly drops the changes (the V-6-1 shallow-clone law, the
+          # containers-build rationale comment).
+          fetch-depth: 0
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "ROLE=[${{ vars.ROLE }}]"
+          echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
+      - name: detect changed templates
+        id: detect
+        env:
+          EVENT_NAME: ${{ forgejo.event_name }}
+          EVENT_BEFORE: ${{ forgejo.event.before }}
+          SHA: ${{ forgejo.sha }}
+          MANUAL_TEMPLATES: ${{ forgejo.event.inputs.templates }}
+        run: |
+          set -euo pipefail
+          # Assign before emitting: a substitution inside echo's argument
+          # reports echo's exit status, so a failed detection would write
+          # an empty output (and the push matrix would be built from an
+          # empty list) instead of failing this job on the detector's
+          # exit.
+          changed=$(bash scripts/coder-template-detect.sh detect)
+          # The verdict and the endpoints that produced it go to the job
+          # log: a green run that pushed nothing must read differently
+          # from one whose range silently resolved to nothing. The
+          # empty-set warning is the detector's own stderr line (its
+          # exemption arithmetic: a no-op ref update — before == sha —
+          # and an empty dispatch list both stay silent, every other
+          # empty set warns), so the step does not re-warn.
+          echo "changed templates: $changed (event $EVENT_NAME before=$EVENT_BEFORE sha=$SHA)"
+          # Forgejo exports the GITHUB_* compatibility family; the
+          # FORGEJO_* name is the fallback per the v15.0 reference.
+          echo "changed-templates=$changed" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+
+  push:
+    # The same narrow guard (an unset ROLE renders empty and matches
+    # neither member — this pipeline publishes to an external service,
+    # so it must never fire unconfigured) plus the detect gate: an
+    # empty changed set skips the whole matrix, the designed no-op
+    # reading as a skip, not a zero-cell run.
+    if: (contains(vars.ROLE, 'dev') || contains(vars.ROLE, 'prod')) && needs.detect-changes.outputs.changed-templates != '[]'
+    needs: detect-changes
+    runs-on: ubuntu-24.04
+    name: push ${{ matrix.template }}
+    strategy:
+      # One template's 401 must not cancel its siblings'.
+      fail-fast: false
+      matrix:
+        template: ${{ fromJSON(needs.detect-changes.outputs.changed-templates) }}
+    # env-only doctrine: the whole vault is exactly these two keys
+    # (OQ5-minimal: one var + one secret — no value var of any kind),
+    # mapped into env and never interpolated into the run body or argv
+    # (the argocd-fanout.py doctrine); the script hands the token to
+    # the coder CLI as the environment variable only.
+    env:
+      CODER_URL: ${{ vars.CODER_URL }}
+      CODER_SESSION_TOKEN: ${{ secrets.CODER_SESSION_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        # The push leg never diffs: only the checked-out HEAD sha
+        # reaches the script (the version name and the message), so the
+        # depth-1 default is the whole need (the containers-build
+        # build-job shallow shape).
+      - name: diag
+        run: |
+          set -euo pipefail
+          echo "ROLE=[${{ vars.ROLE }}]"
+          echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
+          # The plain call IS the toolchain check (the D43 posture, the
+          # release.yaml class): a pre-bake runner image dies here at
+          # command-not-found, loud and early — the runbook's UA3/UA4
+          # sequencing state, not a pipeline bug.
+          coder version
+      - name: push ${{ matrix.template }}
+        env:
+          EVENT_NAME: ${{ forgejo.event_name }}
+          SHA: ${{ forgejo.sha }}
+        run: |
+          set -euo pipefail
+          # The script's exit is the job's: the warn-and-skip green is
+          # the script's own designed outcome (exit 0, the missing key
+          # named on stderr), and a configured 401's non-zero exit
+          # propagates to red.
+          bash scripts/coder-template-push.sh '${{ matrix.template }}'
