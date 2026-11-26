@@ -167,12 +167,15 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 | C03 | MQTT publisher + shutdown ordering + Snapshot on exit | M | 2 | [C01] | consumes C01's health/readyz surface; C02a's event sink is interface-first, C03 the consumer |
 | C04 | Chart + home service wiring | M | 2 | [C01] | consumes C01's env names / ports / PVC path (the config contract) |
 | C05 | Integration verification + tuning (live smoke, discovery, capture + promote, thresholds) | S | 3 | [C02a, C02b, C03, C04] | needs the full worker + chart + wiring to exist |
+| C06 | Chart idiom conformance rework (test-arm fixes t27/t28 by the test session first, then values under `app-template:` nesting, hand-written PVC, D-8 pod-only, nameOverride) | M | 4 | [C04] | replaces the C04-delivered hybrid chart (C04 done; rework against the 62351fa17 baseline per the owner finding) |
+| C07 | Skill codification (D-8 section + anti-hybrid guardrail + qualified `--set` gotcha + precedence rule in `skills/helm-chart-creation`) | S | 4 | [C06] | cites the post-C06 idiom tree as the in-repo exemplar; must land after the conformance shape exists |
 
 ## Wave order
 1. C01
 2. C02a, then C02b (intra-wave: C02b consumes C02a's engine); C03, C04
    mutually independent of the C02a/C02b line (run in id order)
 3. C05
+4. C06, then C07 (intra-wave: C07 codifies the idiom shape C06 delivers)
 
 ## Risks / assumptions
 - **SF 18.0.0 maturity (Q4)**: shipped 2026-11-20 (a week old at plan time);
@@ -281,6 +284,24 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
    creates no cards (Follow-up cards stage unchecked) — recorded in the
    Deferred asks section; the coord's final report carries it to the owner.
 
+## Open questions — rework round 2026-11-26 (batched; only genuine items)
+9. **Idiom defaults — confirm the two scout recommendations** (both resolve to
+   the sibling idiom; **recommended: yes to both**). (a) **Drop the D-8
+   controller copy** (pod-only annotations; the `controllers.main.annotations`
+   mirror is scraping-inert — k8s-monitoring v4 `annotationAutodiscovery`
+   runs pod+service roles only; vllm/radiance carry the pair pod-only).
+   (b) **Hand-written PVC** (`app-template.persistence.models:
+   {existingClaim: audio-ad-detection}` + `templates/
+   pvc-audio-ad-detection-default.yaml`, the 44-chart idiom, qdrant
+   exemplar) instead of the library PVC render (`type:
+   persistentVolumeClaim` + `size:` — 1/75). Plan-owned defaults wired into
+   C06's ACs pending this confirmation.
+10. **Commit shape** — fix commit on `cf-133-feat-audio-ad-detection` vs
+    amend of 62351fa17 (unpushed → both clean; **recommended: the fix
+    commit**, for the audit trail — the rework is a distinct owner-ruling
+    event; 2026-11-25 posture: the coordinator is the sole committer, local
+    commit, no push).
+
 ## Post Research scope (round runs after planning, per the card's Lifecycle timing — thread already in flight)
 - **Recurrence-promotion precedent check** (in flight) — prior art for
   auto-promote-on-recurrence in audio-fingerprinting deployments; if the
@@ -295,3 +316,104 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 - No other deep research needed (R1–R4 cover the plan surface); the live
   verification items (snapclient on noble, `Server.GetRPCVersion` on 0.28.0,
   HA reachability, first forge build) ride C05's owner/dev legs, not research.
+
+## Rework R1 (2026-11-26): chart idiom conformance
+
+Owner finding (2026-11-26, final-review review): the C04 chart shipped in the
+**hybrid shape** — parent-side `templates/common.yaml` loader + top-level
+app-template library keys + D-8 double copy + library PVC render with the
+self-describing `aad.io/size` label — and the owner **rejected** it: it is
+1/75 charts. Authority for the rework: the chart-idiom re-exploration
+(EXPLORE.md section "Chart idiom re-exploration (2026-11-26, owner review
+finding)" — a 75-chart taxonomy + scratch renders, release name
+`home-audio-ad-detection`). The owner's ruling inverts the conformance
+direction: **the chart conforms to the repo idiom; the test arms that
+encoded the hybrid get fixed**. This supersedes the C04 round-1 review's
+"test-forced" acceptance (adjudications 1–3, MINOR-1) and the
+`test-forced` ruling recorded in DECISIONS — see the 2026-11-26 human
+entry. The third-party hash-pinned `helm-bjw-s-chart` skill is the mislead
+source (its documented canonical shape is the standalone-`common`-dep +
+parent-loader variant); it is provenance-locked and is NOT edited — the
+codification lands in `skills/helm-chart-creation` (C07).
+
+**Revised chart architecture** (replaces the chart's structural description
+above; the functional surface — probes, env, security, service — is carried
+verbatim):
+- `charts/audio-ad-detection/` in the **majority idiom (55/55 app-template
+  siblings)**: Chart.yaml dep stanza in the sibling spelling (`app-template`
+  `5.0.1` from `https://bjw-s-labs.github.io/helm-charts/`, **no
+  `catalogVersion`** — the stanza is already byte-identical to the
+  siblings; C06 verifies against `charts/vllm/Chart.yaml:5-8` when writing),
+  committed `Chart.lock` (digest `sha256:0ea7893a5c4e…` stable — the dep
+  spec is unchanged), **all workload config nested under `app-template:`**,
+  **`templates/common.yaml` deleted** (the single dep bundles the common
+  chart internally; the workload renders from the `app-template:` values
+  with no parent-side loader and no second dep — the
+  `charts/vllm/Chart.yaml:5-8` idiom comment), secret-free root keys =
+  `domain: OVERRIDE_VIA_APPSET` + `app-template:` only.
+  - `app-template.global.nameOverride: audio-ad-detection` (the sibling
+    norm — mosquitto/qdrant/vllm/radiance all set it to the chart name;
+    required for `app.kubernetes.io/name` + the autodiscovery job name to
+    stay identical to the current render) + `createDefaultServiceAccount:
+    false`
+  - `app-template.defaultPodOptions`: the 65532 pod securityContext
+    (runAsUser/runAsGroup/fsGroup + runAsNonRoot) + the D-8 pair
+    **pod-only** — the `controllers.main.annotations` mirror is **dropped**
+    (vllm/radiance idiom; the mirror is scraping-inert — plan-owned default
+    pending owner confirmation, rework OQ9a) — with the gate
+    `app-template.monitoring: {annotations: true}` **nested in the same
+    subtree** (the gate must live in the same values context as the map it
+    gates — the radiance `values.yaml:243-250` comment)
+  - `app-template.controllers.main` (strategy `Recreate`, 1 replica, the
+    M1-verified probe windows — startup 30×10 s `/readyz`, liveness 12×10 s
+    `/healthz`, readiness 3×10 s `/readyz`), `app-template.service.main`
+    (ClusterIP, `health` 8080), `app-template.persistence.tmp/home`
+    (emptyDir) — verbatim under the nested block; the `SNAP_STREAM_ID:
+    "TBD-owner"` env line + its required-value comment (within 3 lines —
+    t29's proximity pin) carried verbatim
+  - PVC: **hand-written `templates/pvc-audio-ad-detection-default.yaml`**
+    (static `name: audio-ad-detection`, `namespace: default`, RWO,
+    `storage: 10Gi` — the 44-chart idiom, qdrant exemplar; plan-owned
+    default pending owner confirmation, rework OQ9b) +
+    `app-template.persistence.models: {existingClaim: audio-ad-detection,
+    globalMounts: [{path: /models}]}`; the library PVC render + the
+    `aad.io/size` label **disappear**
+  - the `common:` / `rbac: {}` stubs and the inert `app-template:`
+    stub-as-stub **disappear** (load-bearing only for the parent loader);
+    `templates/NOTES.txt` reworded for the static PVC name
+- `services/home/prod/values.yaml` wiring is **unchanged** — the appset
+  consumption is chart-shape-agnostic (EXPLORE §3: the chart's own
+  `values.yaml` carries the `app-template:` block; no appset change).
+
+**Render-equivalence goal**: the reworked chart renders the same workload as
+the committed baseline (62351fa17, release name `home-audio-ad-detection`) —
+the scout's checklist (EXPLORE §4, scratch-verified) is the contract,
+checked in C06 as an explicit AC against the baseline render: equal object
+count/kinds/names, D-8 pod copy, gate-off shape, `SNAP_STREAM_ID` line,
+pod/container security, `Recreate`/1 replica, PVC 10Gi RWO at `/models`,
+emptyDir mounts, ClusterIP service, probe windows, 0 ServiceAccount,
+`app.kubernetes.io/name: audio-ad-detection` (requires the nameOverride).
+**Documented divergences** (the scout's list): the PVC object name (static
+`audio-ad-detection` — sibling norm), the dropped D-8 controller copy,
+`helm.sh/chart: app-template-5.0.1`, absent `app.kubernetes.io/version`,
+boolean fields rendering `false` — all sibling shape (mosquitto
+render-verified); the only functionally meaningful delta is the PVC name.
+
+**Test-arm alignment** (executed FIRST inside C06, by the **test session** —
+the coord routes it; dev never edits tests): only **t27** (top-level
+`--set monitoring.annotations=false` → qualified `--set
+app-template.monitoring.annotations=false`; the double-quote-only value
+regexes widened to quote-tolerant `['\"]?true['\"]?` /
+`['\"]?8080['\"]?` / gate-off `['\"]{2}`) and **t28** (`size: 10Gi` label
+carrier → `storage: 10Gi` spec field, quote-tolerant grep) encode the
+hybrid; the scout maps t25/t26/t29/t30/t31 as shape-agnostic, **unchanged**
+— t31's ruled defaults pin no chart internals (verified in the mapping), so
+t31 stands intact.
+
+**Updated Commands** (delta on the plan's Commands section): the same suite
++ the gate-off helm arm now runs the qualified form —
+`export PATH=$HOME/.local/bin:$PATH && helm template charts/
+audio-ad-detection --set app-template.monitoring.annotations=false` (a
+top-level `--set` cannot reach subchart values; the repo test convention is
+the qualified `app-template.<path>` — `tests/services/
+dev-forgejo-runner.sh:828-830`); t28's PVC arm greps `storage: 10Gi`.

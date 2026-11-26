@@ -1,11 +1,11 @@
 {
   "feature": "2026/2026-11-cf-133-feat-audio-ad-detection",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "coord_session": null,
   "coord_session_reason": "session-rename-skipped (card Lifecycle omits Session Rename)",
   "test_session": "ses_df42f3707ffeA5DxxYBbpLaJ0x",
   "current_wave": 1,
-  "updated_at": "2026-11-24T04:02:07+00:00",
+  "updated_at": "2026-11-26T03:56:19+00:00",
   "kickoff": {
     "card": "NPuFqZkaYDtCcCeaB",
     "card_number": 133,
@@ -40,7 +40,9 @@
         }
       ],
       "takeover": true,
-      "previous_reap": "2026-11-23T16:34:57.826Z timer reap touched NPuFqZkaYDtCcCeaB"
+      "previous_reap": "2026-11-23T16:34:57.826Z timer reap touched NPuFqZkaYDtCcCeaB",
+      "reap_2026_11_25": { "at": "2026-11-25T03:09:54.345Z", "lost_pipelines": ["Home-Assistant"], "cause": "session idle overnight awaiting owner hand-off answer; 2h staleness rule", "owner_answer": "YES (sanctioned single question answered in-session 2026-11-26)" },
+      "reclaim": { "setId": "14a25753-552e-400a-bacd-0731878a5e90", "pipelines": ["NPuFqZkaYDtCcCeaB"], "lock_file": "NPuFqZkaYDtCcCeaB.json", "form": "fresh card-id-key claim per D20/D21 recovery (after_reap class); takeover comment RtudbgfHDKBdP3HAm" }
     },
     "board_context": {
       "collected": "2026-11-23T21:10:28.084Z",
@@ -67,7 +69,8 @@
     "Test Writing": "done (agent-test ses_df42f3707ffeA5DxxYBbpLaJ0x; tests/containers/audio-ad-detection.sh t1-t31, red-for-absence baseline verified + green-path arms proven)",
     "Chunk Development": "done (C01 1+1, C02a 1+1, C02b 3+3, C03 2+2, C04 1+1, C05 1+1 — all APPROVED; suite 31/31 exit 0 at close)",
     "Chunk Review": "done (9 review sessions total; 3+3 cap reached once on C02b, closed clean; zero validation_at_fault; one mechanical test repair routed to test session: t20 5-arm rework)",
-    "Final Review": "APPROVED (ses_df320f071ffe5HRLIdC8VWzqa2, planning tier; whole-tree fresh validation 31/31+lint+both render arms; goal/seam/fidelity/hard-rules all pass; minors carried non-blocking; FRICTION backfilled) — HITL stop presented to owner 2026-11-24 ~11:44Z; awaiting word for Review-card hand-off + release"
+    "Final Review": "RE-OPENED (owner review finding 2026-11-26: chart idiom deviation — hybrid common/loader shape rejected; C04 'test-forced' acceptance superseded by owner ruling; re-exploration done ses_dea2897f5ffeYgFlJhnzZ16x42, taxonomy in EXPLORE.md +601 lines) — rework replan running in agent-plan ses_df53733c0ffeI2Xp20eSuvRtKr (C06 chart+arms, C07 skill codification)",
+    "Rework R1": "executing (owner APPROVED 2026-11-26 ~04:40Z: both sibling-idiom picks confirmed — drop double-copy pod-only D-8 + hand-written PVC; fix-commit landing chosen; step 1 = t27/t28 arm fixes routed to test_session ses_df42f3707ffeA5DxxYBbpLaJ0x (session_move to worktree first); C06 dev gated on arms reading red-on-hybrid + green-on-idiom-scratch; then fresh reviews, C07 skill codification, final-review re-close)"
   },
   "stage_handoffs": [
     {
@@ -111,6 +114,11 @@
     {
       "stage": "Final Review", "session": "ses_df320f071ffe5HRLIdC8VWzqa2", "at": "2026-11-24T11:42:00+00:00", "status": "APPROVED — ready for Review-card hand-off",
       "result_verbatim": "Verdict APPROVED (fresh whole-plan review, planning tier). STEP-1 fresh: suite 31/31 exit 0; helm lint 0 failed (icon INFO = sibling norm); both template arms verified (3 objects; 0 OVERRIDE_/ExternalSecret/bitwarden; TBD-owner present; gate-off diff exactly 4 D-8 lines); docker/dotnet CI-deferred designed shape — forge merge-fire build is the authoritative compile discharging the CS1061/CS0117 residual; zero-commit posture held (+8 appset lines only). STEP-2: GOAL trace end-to-end holds (child->watchdog->fan-out BLOCKER-2 law intact->Sinc64->10240 single-site->RealtimeQuery 120/5/120->sink kind=ad gate->MQTT retained-discovery/LWT/never-retained-state/1-60s backoff->HA three entities event-only; capture->ring->GroupLeg naming->recurrence 2/24/20 dedup auto_promoted capped_total->catalogue->snapshot.complete marker semantics). Seams: 22 code env reads = 20 rendered (19 value-equal + placeholder; MQTT_USERNAME/PASSWORD deliberately unrendered); aad_* token inventory 5/5 exact; SF 18.0.0 tree-wide (17.4.x = recorded fallback text only); Dockerfile pins + renovate annotation; Chart.yaml 1.0.0/5.0.1, lock digest, tgz git-ignored re-verified; custom-values + services Chart.lock unchanged. DECISIONS fidelity: all owner rulings verified. Hard rules clean. Minors carried (C04 M1-M3+NIT-1, C05 phrasing, C02a/b/C03 nits) none blocking; NEW coord-side minor (FRICTION completeness) backfilled same-turn with 9 lines. Next: Review-card hand-off + pipeline_release(outcome done); summary comment carries L1-L7 digest + 6-item deferred roll."
+    },
+    {
+      "stage": "Chart idiom re-exploration (owner review finding)", "session": "ses_dea2897f5ffeYgFlJhnzZ16x42", "at": "2026-11-26T04:10:00+00:00", "status": "DONE",
+      "result_verbatim": "RESULT status: DONE chunk: explore (read-only) / files: EXPLORE.md +601-line section '## Chart idiom re-exploration (2026-11-26, owner review finding)', original 306 lines byte-preserved (cmp vs HEAD) / taxonomy: 75 charts; common.yaml 1/75=OURS; 56 with app-template: root key (55 pure-nested siblings + ours hybrid), no other chart has top-level library keys; ALL app-template charts pin app-template 5.0.1 from https://bjw-s-labs.github.io/helm-charts/ WITHOUT catalogVersion field (idiom charts/vllm/Chart.yaml:5-8); Chart.lock committed 75/75; PVC idiom = hand-written templates/pvc-*-default.yaml + existingClaim (44 charts; our library-rendered PVC type is 1/75); D-8 pair only in vllm+radiance: pod-only annotations, nested app-template.monitoring gate, port 8000; --set paths non-interchangeable between shapes, idiom = --set app-template.monitoring.annotations=false; repo test convention qualified (dev-forgejo-runner.sh:828-830); appset consumption chart-shape-agnostic. Test-arm impact: ONLY t27 (qualify --set path + widen quote regexes) and t28 (size: 10Gi -> storage: 10Gi); t25/t26/t29/t30/t31 unchanged; aad.io/size carrier and D-8 double-copy do not survive. Skills: helm-chart-creation already idiom-aligned (gap: no D-8 section); third-party helm-bjw-s-chart (obeone, hash-pinned) is the mislead source — never hand-edit. open_questions: (1) D-8 double-copy drop (recommended) vs keep; (2) PVC hand-written idiom (recommended) vs keep library; (3) C04 zero-object-subchart mechanism claim not re-verified, empirically moot.",
+      "carry_forward": {"plan": "agent-plan rework chunk per taxonomy; recommend both scout open_questions resolve to the sibling idiom (drop double-copy; hand-written PVC)", "skill": "update skills/helm-chart-creation: D-8 section + anti-hybrid guard + qualified --set gotcha + PVC idiom note; third-party skill untouched"}
     }
   ],
   "chunks": {
@@ -257,6 +265,55 @@
         {
           "role": "review", "session": "ses_df327a351ffeLKc6B2vgqoHLZa", "at": "2026-11-24T11:06:00+00:00", "status": "APPROVED (round 1) — READY FOR FINAL WHOLE-PLAN REVIEW",
           "result_verbatim": "Verdict APPROVED (1+1). All claims re-run: suite 31/31 exit 0 with t30 child re-entry verified in arm code; helm lint 0; render 3 objects 0 sentinels/ExternalSecret/creds + TBD-owner present + gate-off diff exactly 4 D-8 lines; COMMENT-ONLY proven (render reproduces every C04 fact; sole values.yaml delta = probe comment 120-127); ENV cross-table REDONE independently: 20 rendered vs 22 code-read sites (19 Config.cs + 3 AutoPromote via two GetEnvironmentVariable funnels, tree sweep clean), 0 name drift, 19 value-equal + placeholder, only MQTT_USERNAME/PASSWORD unrendered; t31 8/8 literals intact post-shell-append; runbook valid (JSON-RPC curls 10.0.3.78:1780, nc -z 10.43.74.33 1883, zero kubectl apply/admin- verbs, in-pod lines owner-marked, 13/13 deferred items incl NIT-1 gitignore verified + commit list exact src/=18); tuning non-change justified (probe arithmetic vs 15s/500ms/45s/60s code constants, 75s vs 300s, 120s vs 105s); AC5 negative evidence fresh (0 pods/Deployments; HA entry still core-mosquitto loaded); build facts re-verified (digests byte-identical, deb glibc 2.34<=2.39). One non-blocking minor: '19/19' phrasing vs 20 rendered (substantive invariant holds; nothing in tree carries miscount). Ready for final whole-plan review."
+        }
+      ]
+    },
+    "C06": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": ["C04"],
+      "dev_session": "ses_de9df847dffem40UvkZcvTVcFP",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "test-fix", "session": "ses_df42f3707ffeA5DxxYBbpLaJ0x", "at": "2026-11-26T05:05:00+00:00", "status": "DONE — red-on-hybrid gate satisfied",
+          "result_verbatim": "Rework R1 step 1: t27 qualified --set app-template.monitoring.annotations=false + quote-tolerant greps (['\\\"]? forms; old tail-quote form missed single-quoted 'true'); t28 plain 'storage: 10Gi' (deviation ruled correct: quote-tolerant would match the hybrid's quoted library-PVC line and never go red, breaking AC-1; idiom hand-written PVC renders unquoted per scout scratch). GATE EVIDENCE: t27+t28 RED on hybrid (both gate-off greps fail — qualified --set cannot flip top-level gate; storage grep fails); full suite identical to the 31/31 baseline EXCEPT t27/t28 + t30 child-re-entry cascade (green with C06 rework = AC-2). bash -n pass; aislop scan --changes 0/0/0; suite mechanics intact.",
+          "changed_files": ["tests/containers/audio-ad-detection.sh"]
+        },
+        {
+          "role": "dev", "session": "ses_de9df847dffem40UvkZcvTVcFP", "at": "2026-11-26T05:58:00+00:00", "status": "DONE (retry 1; first launch ses_de9e424d7ffe died ECONNREFUSED at connect — transient, lane held)",
+          "result_verbatim": "RESULT status: DONE chunk: C06 / rework: values.yaml root = domain + app-template: only (all config nested: monitoring gate same-subtree per radiance law, global nameOverride audio-ad-detection + createDefaultServiceAccount, D-8 POD-ONLY under defaultPodOptions, controller/Recreate/1/pod-security 65532, 20-env surface verbatim incl SNAP_STREAM_ID: TBD-owner + 3-line Required-comment, probes, service ClusterIP health 8080, persistence.models = existingClaim + globalMounts; library PVC render + aad.io/size label GONE); templates/common.yaml DELETED; templates/pvc-audio-ad-detection-default.yaml NEW (qdrant byte-exemplar modulo name: static audio-ad-detection, ns default, RWO, storage: 10Gi unquoted); Chart.yaml dep stanza byte-identical to vllm spelling (no catalogVersion; optional idiom comment added; version 1.0.0 unchanged); Chart.lock regenerated digest sha256:0ea7893a5c4e byte-identical; NOTES.txt PVC line reworded / validations: pre-rework 28 ok t27/t28 red (starting gate confirmed); post-rework 31/31 exit 0 incl t27/t28 + t30 cascade green; helm lint 0 (icon INFO); template default+gate-off (diff = exactly 2-line pod pair -> ''); render-equivalence vs 62351fa17: env byte-identical, probes/security/strategy/service/emptyDirs/0-SA identical, 3 objects both; divergences documented (a) PVC name static audio-ad-detection (sibling norm), (b) controller D-8 copy dropped (owner pick, scraping-inert mirror), (c) no PVC labels (test-driven carrier gone with library render), (d) unquoted RWO/storage (hand-written artifact, semantically equal), (e) helm.sh/chart label = app-template-5.0.1 (sibling shape), (f) app-version label absent (sibling shape), (g) booleans render 'false' (sibling shape), (h) subchart-comment surface artifact / services/home + Chart.lock + custom-values diff EMPTY; scope = charts/audio-ad-detection/** only; zero commits; aislop 0 issues; comment-slop pass (5 new comments all why-grounded) / deviations: none out of scope; reviewer notes: (1) t28 grep fixed-string (test session's pre-existing fix, functionally equivalent for static template, arm green); (2) Chart.yaml comment-only addition / next_suggested: fresh review round 1",
+          "changed_files": ["charts/audio-ad-detection/values.yaml", "charts/audio-ad-detection/templates/common.yaml (deleted)", "charts/audio-ad-detection/templates/pvc-audio-ad-detection-default.yaml", "charts/audio-ad-detection/templates/NOTES.txt", "charts/audio-ad-detection/Chart.yaml"]
+        },
+        {
+          "role": "review", "session": "ses_de9d5d9dbffeTpV0Ybmp62hCzV", "at": "2026-11-26T06:40:00+00:00", "status": "APPROVED (round 1)",
+          "result_verbatim": "Verdict APPROVED (1+1). Full suite 31/31 exit 0 (t30 cascade green); lint 0 (icon INFO); both template arms (gate-off diff = exactly 2 pod-pair lines); AC-1 independently reproduced (fixed t27/t28 RED against scratch-rendered 62351fa17 baseline; shape-agnostic arms green on both); arms spot-read: NOT weakened (t28 fixed-string stricter than chunk regex, only form red-on-hybrid); conformance: root keys {domain, app-template} only; env 20 byte-identical, M1 windows intact 300/120/3x10, TBD-owner + Required-comment present; common.yaml GONE; PVC template byte-identical to qdrant exemplar modulo name, existingClaim mechanism + claimName/MODEL_DIR chain coherent, C05 runbook has NO stale old-PVC-name reference (4 hits are Application/pod names, still true); Chart.yaml byte-identical to vllm spelling (no catalogVersion, 1.0.0 untouched, sanctioned comment only); Chart.lock digest 0ea7893a reproduced fresh, tgz gitignored; D-8 pod-only exactly 2 lines, zero Deployment metadata, matches vllm/radiance; NOTES truthful; services entry git-clean + appset simulation renders 3 sentinel-free objects; divergences a-h each verified vs sibling renders. MINOR (final-review note): C05 runbook historical surface-list still names templates/common.yaml / omits new PVC template (stale pre-rework record). NIT (pre-existing): test script fixed /tmp/opencode scratch paths clobber-prone under concurrent runs (this review bitten, re-verified clean). Next: C07 skill codification, then final-review re-close."
+        }
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": ["C06"],
+      "dev_session": "ses_de9c85624ffeSaOdrbsm0sXqHf",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev", "session": "ses_de9c85624ffeSaOdrbsm0sXqHf", "at": "2026-11-26T07:18:00+00:00", "status": "DONE",
+          "result_verbatim": "RESULT status: DONE chunk: C07 / files: skills/helm-chart-creation/SKILL.md only (+113/-1, first hunk after frontmatter; frontmatter/scaffold/existing sections preserved) / content: D-8 pattern section (pod-only under defaultPodOptions, nested app-template.monitoring gate, gate-off renders '', k8s-monitoring v4 reads pod+service roles => controller copy scraping-inert; vllm/radiance/ours citations); ANTI-HYBRID guardrail (no parent common.yaml loader; values root = domain + app-template:; forbidden top-level WORKLOAD keys enumerated; no catalogVersion; dep per vllm stanza; hand-written pvc-*.yaml + existingClaim); qualified --set gotcha (dev-forgejo-runner.sh precedent); precedence rule (74 siblings + this skill canon; pinned obeone helm-bjw-s-chart = named mislead class never edited; cf-133 anchor 2 lines) / verification: python3 75-chart sweep (0/75 common.yaml post-C06, 56 app-template roots, 56x 5.0.1+URL, 0 catalogVersion, 75/75 Chart.lock, 49 existingClaim hand-written pairings, 0 library PVC renders); 16 line-anchored citations checked vs disk; suite 31/31 unchanged (scope proof); .agents/skills/helm-bjw-s-chart zero changes; references/chart-templates.md verified aligned untouched; aislop markdown-honest; comment-slop 0 slop / deviations: (1) 49/75 PVC count post-C06 vs chunk's 44 (honest recount); (2) 0/75 common.yaml stated (deleted instance; shape name kept as anti-hybrid label); (3) root global.nameOverride passthrough documented as named exception (11 siblings, snapcast:1-2) vs overclaim; (4) references pointers in SKILL.md only / open_questions: none / next: fresh review round 1, then coordinated fix-commit + final-review re-close",
+          "changed_files": ["skills/helm-chart-creation/SKILL.md"]
+        },
+        {
+          "role": "review", "session": "ses_de9b9010effePHGgy50p4tAzqZ", "at": "2026-11-26T07:52:00+00:00", "status": "APPROVED (round 1; M1-M3 folded pre-commit)",
+          "result_verbatim": "Verdict APPROVED (1+1). Scope: SKILL.md only (+113/-1); pinned surfaces (helm-bjw-s-chart/, skills-lock.json, references/) ZERO diff; frontmatter cmp-identical; suite 31/31 unchanged. Content audit: independent 75-chart sweep confirmed 0/75 common.yaml, 0 catalogVersion, 56/56 5.0.1+URL pins, 75/75 Chart.lock, 0 library PVC, 0 top-level workload keys, 11 root-global blocks all nameOverride-only; PVC union truth 48 existingClaim + keycloakx claimName variant = 49 (dev recount accepted); 10 line-anchored citations verified on disk (audio-ad-detection:19-24/:35-37, vllm Chart.yaml:6-12 + values:103-105/:257-264, radiance values:243-252/:269-275, snapcast:1-2, dev-forgejo-runner.sh:826-830); ANTI-HYBRID walk: all 7 C04-shape elements caught by explicit rules; scraping-inert claim scoped to k8s-monitoring v4; precedence rule grep-clean of any pinned-skill edit instruction. MINORS (coord folding into a micro-fix before commit): M1 SKILL.md:299-300 root enumeration omits the 15/56 auxiliary parent-context root class (cachePvcSize/modelsPvcSize/runner: — EXPLORE §1(b) sanctioned home; tension with same-chunk --set bullet); M2 49/75 folds keycloakx claimName: spelling (strict 48); M3 'byte-identical across all 56' vs home-assistant extra condition: line (3-line spelling identical, qualifier needed). 2 deferred PRE-EXISTING notes (out of diff scope): :68-69 'gitignored' vs AGENTS.md tracked-skill phrasing; :70-71 stale self-written-skill list. Deviations 1-4 ACCEPTED."
+        },
+        {
+          "role": "dev-fix", "session": "ses_de9c85624ffeSaOdrbsm0sXqHf", "at": "2026-11-26T08:14:00+00:00", "status": "DONE (micro-alignment M1-M3)",
+          "result_verbatim": "M1: values-root rule now forbidden-top-level-WORKLOAD-keys vs PERMITTED auxiliary parent-context roots (15/56 verified; cites vllm:8 cachePvcSize, llama-swap:10 modelsPvcSize, forgejo-runner:107 runner:); M2: 48 strict existingClaim + keycloakx claimName variant = 49 honest wording; M3: 3-line name/version/repository stanza identical across 56, extra fields allowed, home-assistant:13 condition: cited. Deferred notes :68-71 byte-untouched. Self-caught duplicate-citation wrinkle repaired same turn. SKILL.md-only diff; suite 31/31; HEAD 62351fa17 unchanged, zero commits. C07 complete: 2 dev + 1 review."
         }
       ]
     }

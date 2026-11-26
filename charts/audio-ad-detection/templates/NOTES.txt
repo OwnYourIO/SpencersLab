@@ -9,7 +9,7 @@ It is reached in-cluster only:
   curl localhost:8080/metrics   # Prometheus text exposition
 
 Service: home-audio-ad-detection (ClusterIP, port 8080).
-PVC: home-audio-ad-detection (size: 10Gi, RWO, mounted at /models) —
+PVC: audio-ad-detection (10Gi, RWO, mounted at /models) —
 holds the model snapshot + the candidate dir (model + <=2 Gi candidates).
 
 Follow-ups:

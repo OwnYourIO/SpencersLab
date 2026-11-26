@@ -915,7 +915,7 @@ if want t26; then
   fi
 fi
 
-# --- t27: D-8 annotation pair — on by default, inert when gated off -------
+# --- t27: D-8 scrape annotation — on by default, inert when gated off -----
 if want t27; then
   A=$fail_count
   if ! helm_available; then
@@ -925,19 +925,19 @@ if want t27; then
   elif ! get_render "$RENDER"; then
     tail -n 20 "${RENDER}.err" >&2
     fail "t27: helm template failed (log at ${RENDER}.err)"
-  elif ! get_render "$RENDER_OFF" --set monitoring.annotations=false; then
+  elif ! get_render "$RENDER_OFF" --set app-template.monitoring.annotations=false; then
     tail -n 20 "${RENDER_OFF}.err" >&2
-    fail "t27: helm template --set monitoring.annotations=false failed (log at ${RENDER_OFF}.err)"
+    fail "t27: helm template --set app-template.monitoring.annotations=false failed (log at ${RENDER_OFF}.err)"
   else
-    grep -qE 'k8s\.grafana\.com/scrape[[:space:]]*:[[:space:]]*"?true"?' "$RENDER" ||
-      fail "t27: k8s.grafana.com/scrape does not render 'true' by default — the D-8 pair (the charts/vllm idiom) is on by default"
-    grep -qE 'k8s\.grafana\.com/metrics\.portNumber[[:space:]]*:[[:space:]]*"?8080"?' "$RENDER" ||
+    grep -qE "k8s\.grafana\.com/scrape[[:space:]]*:[[:space:]]*['\"]?true['\"]?" "$RENDER" ||
+      fail "t27: k8s.grafana.com/scrape does not render true by default (quote-tolerant: bare true, 'true' or \"true\") — the D-8 scrape annotation (the charts/vllm idiom) is on by default"
+    grep -qE "k8s\.grafana\.com/metrics\.portNumber[[:space:]]*:[[:space:]]*['\"]?8080['\"]?" "$RENDER" ||
       fail "t27: k8s.grafana.com/metrics.portNumber does not render 8080 by default (the health/metrics port)"
-    grep -qE 'k8s\.grafana\.com/scrape[[:space:]]*:[[:space:]]*""' "$RENDER_OFF" ||
-      fail "t27: gate-off render: k8s.grafana.com/scrape is not empty — the vllm D8 behavior keeps the keys with inert (empty) values when the gate is off; an empty value is what disables the scrape"
-    grep -qE 'k8s\.grafana\.com/metrics\.portNumber[[:space:]]*:[[:space:]]*""' "$RENDER_OFF" ||
+    grep -qE "k8s\.grafana\.com/scrape[[:space:]]*:[[:space:]]*['\"]{2}" "$RENDER_OFF" ||
+      fail "t27: gate-off render (qualified --set app-template.monitoring.annotations=false): k8s.grafana.com/scrape is not empty — the vllm D8 behavior keeps the keys with inert (empty) values when the gate is off; an empty value ('' or \"\") is what disables the scrape"
+    grep -qE "k8s\.grafana\.com/metrics\.portNumber[[:space:]]*:[[:space:]]*['\"]{2}" "$RENDER_OFF" ||
       fail "t27: gate-off render: metrics.portNumber is not empty"
-    if [ "$fail_count" -eq "$A" ]; then ok "t27: D-8 pair renders scrape=true + portNumber=8080 by default; gate-off renders the inert empty-value shape"; fi
+    if [ "$fail_count" -eq "$A" ]; then ok "t27: D-8 scrape annotation renders true (quote-tolerant) + port 8080 by default; the qualified gate-off renders the inert empty-value shape"; fi
   fi
 fi
 
@@ -980,7 +980,7 @@ if want t28; then
       fail "t28: no emptyDir mounts in the render (the writable set: /tmp + the non-root \$HOME)"
     grep -q 'mountPath: /tmp' "$RENDER" ||
       fail "t28: no /tmp mount in the render"
-    grep -q 'size: 10Gi' "$RENDER" ||
+    grep -q 'storage: 10Gi' "$RENDER" ||
       fail "t28: no 10Gi PVC in the render (model snapshot + candidate budget: model + <=2 Gi candidates)"
     grep -q 'ReadWriteOnce' "$RENDER" ||
       fail "t28: no ReadWriteOnce access mode in the render"
