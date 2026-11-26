@@ -841,3 +841,199 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    C12 in wave 1 (file-disjoint), merge order C09, C12, C10, C11-LAST; test wave
    first (C09 t22-t24, C10 t25/t26 + t15 re-aim + the new seed leg, C11 ci-surface
    t8), dev waves 1->3. plan_status -> approved. Models per D35 (openrouter flash).
+  - 2026-11-26 plan D52 (round-5 — C13 parser fix shape): the fire cause is
+    the terminal `$` anchor on BOTH parse sites — `build-charts.yaml:111`
+    (`^version: (\d+)\.(\d+)\.(\d+)$`, the observed
+    "is not MAJOR.MINOR.PATCH") and `:258` (`^version: (\S+)$` → the
+    "no top-level version: line" sibling, same class, different message;
+    EXPLORE §B.1/B.2). FIX = comment-tolerant tails at BOTH sites
+    (`(?:[ \t]+#[^\n]*)?[ \t]*$`) keeping the column-0 anchor (wrapper
+    dependency-pin collision law, the traefik 42.x block at :223-230) and
+    the group-sliced rewrites, so a tolerated comment SURVIVES the bump.
+    `1.0.1 junk` and `1.0.1#nospace` still refuse (garbage-refuses law
+    preserved, mutant-proven); `ver()` guards values unchanged.
+    charts/prowlarr/Chart.yaml:3's comment predates C11 (verified: present
+    with the release.yaml-era wording at 0404a906f; C11 only renamed the
+    token in place) — the line has ALWAYS been unparseable; it enters the
+    detected set for the first time at C11's own merge, which is why the
+    bug surfaced now. The comment moves ABOVE the line (class killer) and
+    a new static leg bans trailing comments on every live
+    `charts/*/Chart.yaml` version line. DEVIATION-FROM-BRIEF note:
+    grep-verified NO suite leg byte-pins the two regex strings (t25 pins
+    block semantics: `def ver(`, pairing, fail-loud arms — none of which
+    move), so the brief's "re-pin of whatever legs pin the regex strings"
+    resolves to the new executed batteries only; the suite's own embedded
+    readers (:1567/:1575) consume scratch inputs with clean lines and
+    stay. FIRST-FIRE CONSEQUENCE corrected: C13's merge is the first real
+    calendar fire and releases exactly {prowlarr} (changed-set filter;
+    llama-swap 1.0.40 converts at its own next change per D47.4) — the
+    r2-era "expected set {llama-swap, prowlarr}" anticipated two, the
+    filter makes it one; deterministic and honest.
+  - 2026-11-26 plan D53 (round-5 — shared marker naming, rename mechanics,
+    build-charts adoption): SHARED BRANCH = `refs/heads/ci/last-built`
+    (owner suggest adopted as the plan name; OWNER VETO SLOT — a rename is
+    2 workflow lines + ~8 suite lines, cheap to swap in the batched
+    round). Rationale: one branch covering helm + docker + incoming coder
+    templates cannot keep a domain name (`ci/containers-built`); `ci/`
+    stays the established Forgejo-local namespace (main-sync mirrors
+    refs/heads/main ALONE — the marker never reaches GitHub, aeda85f86
+    header law; dev instance carries NO marker — same fact, so the
+    migration push is prod-only, UA-R5-1). Read/advance semantics copy
+    the shipped shape (`:147` ls-remote, non-sha → fatal, unreachable →
+    fatal with owner verbs; plain push, no force — monotonicity).
+    ADOPTION KEY POINT: build-charts advances the marker to its BUMP
+    COMMIT (bump's `git rev-parse HEAD` output), never to the event sha —
+    the bump commit itself edits `charts/*/Chart.yaml`, so an event-sha
+    endpoint would re-enter it in the next detection and mint an eternal
+    one-extra-release-per-fire tail (the containers builder cannot hit
+    this because it creates no commits; the asymmetry is why the helm
+    chain needed its own analysis). `marker==sha` verified-empty INFO
+    line + loud empty-before die mirror containers semantics into the
+    inline chain, REPLACING build-charts's silent HEAD^-fallback on
+    empty before (the newer containers law says no real push payload
+    sends one; the R3/D5 note dies with the trigger in C15 — marker
+    idempotence is the new loop guard). C14 lands an INTERIM per-builder
+    advance (directive's own words: "marker advance gated on charts
+    fully-green fire"); its dual-writer poison window exists only across
+    the C14→C15 landing gap (plan landing §2: land C15 same session).
+    t16's ref-exclusivity walk INVERTS to a named allow-set — the leg
+    that would otherwise redden every future builder that names the ref
+    by design (scout §A "KEY INTERACTION").
+  - 2026-11-26 plan D54 (round-5 — advance topology ruling + failure
+    semantics; RECOMMENDED, owner may veto): the FINAL advance is a
+    SINGLE AGGREGATE `advance-marker` job under main-sync.yaml, needs =
+    both called builders, target = build-charts's `bump_sha` output else
+    the event sha. PER-BUILDER advance on a shared multi-owner branch is
+    structurally POISONED: one builder's green fire moves the ref past
+    the other builder's FAILED range, and those changes fall behind the
+    marker forever — destroying exactly the dead-run recovery the owner
+    adopted the marker for (the Nov-25 prowlarr dead-fire is the worked
+    example: containers green in between would have swallowed the whole
+    un-released charts window). Rejected alternatives: (a) per-builder
+    tolerance-only — heals crashes of the SAME builder's re-runs, not
+    cross-domain; (b) event-sha endpoints — the D53 bump-commit tail;
+    (c) two branches — violates the directive's ONE shared branch.
+    Consequence accepted: in a mixed outcome BOTH builders re-cover next
+    fire, so the green one may mint one extra calendar version (containers:
+    same-tag republish is idempotent; helm: tree+1 walk — today's failed-
+    then-re-run semantics, not a new class). FAILURE SEMANTICS (directive
+    4's "sync-fanout waits until both are finished", made precise):
+    `sync-fanout: needs [push-gh, build-containers, build-charts]` +
+    `if: always() && contains(vars.ROLE, 'prod')` — a builder RED neither
+    blocks the ArgoCD fan-out (release path and deploy path stay
+    decoupled exactly as today, where a dead builder stops NO sync) nor
+    moves the marker (advance skips via plain needs-gate); push-gh
+    success stays the cf-139 race gate byte-untouched. Hard-gating
+    fanout on builder green REJECTED (one flaky bump would park every
+    cluster's sync). A skipped-by-ROLE builder reads success (empty
+    called run) — dev instance safe. `dispatch+poll` fallback NOT used:
+    workflow_call is real on 15.0.10 (docs-grounded, scout §C live-probe)
+    and keeps the wait inside the needs graph; dispatch+poll would be
+    the lab's FIRST Actions-API consumer on an unproven token write-scope
+    — documented halt-and-report shape if the instance contradicts the
+    docs at first fire.
+  - 2026-11-26 plan D55 (round-5 — coder-templates scope boundary → card
+    #56): this round LEAVES ROOM for the third builder but does NOT
+    build it (launch-brief law; card #56 owns it). Room = (1) the t16
+    allow-set {build-containers.yaml, build-charts.yaml, main-sync.yaml}
+    — #56 joins by adding its file to the set; (2) the call pattern —
+    #56 adds one `uses:` job + one `advance-marker` needs entry, the
+    aggregate's target rule already handles a builder with no outputs
+    (event-sha fallback); (3) naming — a `build-coder-templates.yaml`
+    needs no marker-branch work, only the shared ref. DELIBERATELY NOT
+    TOUCHED: the `cut -d/ -f2` collapse of `charts/coder/coder-templates/**`
+    into charts/coder's bump set (live today, scout §E) — "fixing" it
+    here would change helm's live release set for another card's concern
+    (one branch one concern); recorded in the plan's out-of-scope block
+    so #56 inherits it as its filter decision. The autoscaling follow-up
+    is ALREADY MINTED (`iaJq5bgWHHDHotcBY`, Inbox, research+implement,
+    Services infra+gpu, parent-linked to #55 — STATE round5 block):
+    reference-only; this plan recreates nothing on the board.
+  - 2026-11-26 plan D56 (round-5 — trigger-removal boundary, verbatim
+    scope of directive 4): "remove push/main-merge detection from BOTH
+    builders" applies to EXACTLY two `on:` arms — containers-build's
+    `push: branches:[main] paths:[containers/**]` and build-charts's
+    `push: branches:[main] paths:[charts/**]`. Everything else keeps its
+    triggers, VERIFIED at 2b6ad58cc: `builder-bootstrap.yaml` is
+    workflow_dispatch-ONLY already (its `:22` "Trigger: workflow_dispatch
+    ONLY, by ruling (P1)" — it has NO push arm to remove; D44's cf-6
+    shape stands); `main-sync.yaml` keeps `push:[main] +
+    workflow_dispatch` and BECOMES the only main-merge entry point (its
+    own triggers unchanged — it is the caller, not a builder);
+    `renovate.yaml` untouched; build-containers KEEPS `pull_request` (the
+    dev-role `pr-<branch>-<sha>` lane — the AG.md-published contract) and
+    `workflow_dispatch` (named rebuild hatch, dispatch never advances the
+    marker); build-charts ends `workflow_call`-ONLY (it never had
+    dispatch — t2's "no dispatch, no PR" pin re-aims to "call only");
+    GitHub twins stay out of it (`docker-build.yaml` remains the
+    workflow_dispatch-only manual fallback, automatic trigger blocks stay
+    commented). Round-5 supersession ledger: D44's per-instance runner
+    LABEL pins (R-B/OQ-1=B, 26.11.x refs) are NOT touched by marker work;
+    D49's seed law is NOT touched by the prowlarr comment MOVE (position,
+    not wording — the line's claim about what bumps it re-truths at
+    C15/C16's law pass, not at C13); D51's heal fold (full-tree dep
+    update in the bump loop, traefik values migration) rides the bump job
+    UNCHANGED — C14/C15 add a marker step and change triggers, the heal
+    block is byte-untouched; D42's single-PR-vs-split landing posture
+    stands (owner's call at merge time, waves keep it separable); the
+    C11-era rename disciplines ALL re-arm for the containers rename —
+    composed GitHub-twin forms, NO global sed (`forgejo-releases`
+    datasource token), trio joins, FJ_SET, t7/x3/x5 tuples, P3/P7
+    needles, b9 four-workflow ban, FROZEN records (105+ files, incl.
+    this ticket's own prior rounds and the cf-6 marker plan).
+  - 2026-11-26 human D57 (round-5 — B1 AMENDED under the owner's
+    verbatim directive "runners to replicas 10 (both instances)", STATE
+    round5.directive item 5): the shipped decision B1 (charts/forgejo-
+    runner/values.yaml:158-162 "one (uuid, token) pair must map to
+    exactly one pod; scaling means more runner records, NEVER more
+    replicas of one identity") and its two test legs
+    (dev-forgejo-runner.sh t2 :302-304, gpu-forgejo-runner.sh g2
+    :256-258) are SUPERSEDED on the replicas dimension by owner ruling —
+    NOT deleted: the CHART DEFAULT stays 1 (new releases are one pod
+    until a slice rules otherwise — a (c)-leg fences it), the ruling
+    rides PER SLICE (`forgejo-runner-dev` and `forgejo-runner-gpu`
+    top-level values blocks — the only two runner releases, one per
+    instance, scout §D topology). Mechanism stated honestly: 10 pods
+    poll ONE registration (instance sees one runner record, last-seen
+    churns, log attribution blurs — the accepted cost of the ruling);
+    CAPACITY STAYS 1 (decision: the owner asked for 10 runners, not an
+    in-pod queue; 10 pods × capacity 1 = 10 concurrent jobs, each pod's
+    dind limits per-pod honest — a capacity>1 route would fake
+    parallelism inside one 2cpu/4Gi envelope; pinned by a new suite leg
+    so a future bump is a ruling, not a drift). `secret-runner.yaml:88`
+    untouched. Resource consequence is an OWNER landing observation
+    (UA-R5-5): 10 × (2Gi data + 10Gi docker-data) RWO local-path PVCs
+    per release, provisioner-pinned per pod — node headroom check on
+    both clusters before the rolling sync. The job-count AUTOSCALING
+    dimension (right-size, not fixed-10) is the owner-minted follow-up
+    card iaJq5bgWHHDHotcBY — this chunk is the directive's literal step
+    toward it, not its answer.
+  - 2026-11-26 plan D58 (round-5 — landing transitions + the inverted
+    fire coupling; plan 'Landing order' is the operative text): each
+    merge's fire outcome under the NEW world is enumerated in the plan
+    section — C13 fires under STILL-push triggers (first real calendar
+    release: exactly prowlarr, per D52), C14 is inert (no charts/** or
+    containers/** touches; marker migration is the owner pre-step), C15
+    fires the FIRST called run (both builders empty; owner pre-step:
+    advance ci/last-built to the main tip immediately before merging,
+    else the first called fire re-covers C13's already-released window
+    and mints one benign extra prowlarr version — UA-R5-2, predicted and
+    priced), C16 fires the first real bump THROUGH the chain
+    (charts/forgejo-runner 1.0.x → Y.M.1 + aggregate advance at the bump
+    commit = the end-to-end acceptance proof). STRUCTURAL COUPLING
+    INVERSION recorded for every future round: from C15 on, a
+    `charts/**` merge does NOT itself fire build-charts — main-sync's
+    next run calls it, so the C11-era "this prose edit makes the merge
+    the first fire" assumption is DEAD; fire timing = the fan, contents =
+    marker..sha (every merge since the marker lands is in range, no
+    paths filter needed — which is also why the verified-empty info line
+    becomes the normal green shape of a no-chart push, and the suite
+    legs must keep reading it as calm, not anomalous). Old-ref deletion
+    after C15 = UA-R5-3 (prod only). Batched-round owner forks this
+    plan RECOMMENDED but did not pre-commit: none open beyond the
+    D53 marker-name veto slot and D54's failure-semantics ruling (both
+    already have recommendations wired into the chunk tasks; a fresh
+    owner word swaps them at bounded cost).
+    plan_status -> needs-approval (round-5 delta complete on the existing
+    plan of record; no new folder, STATE untouched by the planner per
+    the launch instruction). Models per D35 (openrouter flash).

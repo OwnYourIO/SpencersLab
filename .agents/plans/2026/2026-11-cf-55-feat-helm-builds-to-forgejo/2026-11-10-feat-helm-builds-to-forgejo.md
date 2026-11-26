@@ -942,3 +942,227 @@ is then exactly `Y.M.1`, the AGENTS clause survives verbatim, and the
 walk rule handles the jump as the (iii) battery case; owner may prefer
 seeding straight `Y.M.1`, which the C10 task list already prices).
 
+## Round 5 (2026-11-26) — parser fix, shared last-built marker, call-based orchestration, runner scale
+
+**Goal:** fix the prowlarr bump failure (the `$`-anchored version regexes
+reject the trailing comment on `charts/prowlarr/Chart.yaml:3`; zero calendar
+bumps exist because of it), give `build-charts.yaml` the marker..sha
+detection `containers-build.yaml` shipped in `aeda85f86` on ONE SHARED
+marker branch across helm + docker + the incoming coder-templates builder,
+rename `containers-build.yaml` → `build-containers.yaml`, move both builders
+off push triggers to `main-sync.yaml`-invoked `workflow_call`, and scale
+both runner releases to 10 replicas — all six legs are verbatim owner
+directives (STATE `round5.directive`), which ARE the batched-round answers:
+no re-ask.
+
+**Out of scope (round-5 boundary):** the coder-templates BUILDER itself
+(card #56 — this round only leaves ROOM: marker allow-set + call pattern);
+`builder-bootstrap.yaml` stays dispatch-ONLY by its P1 ruling (it has no
+push arm — verified at :22 — so directive 4 does not touch it);
+`renovate.yaml` and `main-sync.yaml` keep their own triggers; `D44`'s
+per-instance runner-label pins are untouched by marker work; the autoscaling
+follow-up is ALREADY MINTED (`iaJq5bgWHHDHotcBY`, Inbox) — reference, never
+recreate; the dismissed round-4 close question (admitted-externals /
+carry-over / old-name-prose / C12-evidence) stays owner-pending, untouched.
+
+**Ground truth:** EXPLORE '## Round-5 scout' §A–F (:1212-1291) — marker
+shipped-shape (read `:147`, advance `:483`, chain marker→tip-only→before,
+`marker==sha` verified-empty info line), both regex sites
+(`build-charts.yaml:111` + `:258` — same class, fix BOTH), Forgejo
+**15.0.10 live-probed on both instances** with `on.workflow_call` +
+same-repo `uses:` + `secrets: inherit` documented and **NO `workflow_run`**
+(orchestration must be call-based), t16's exclusivity walk inverting to an
+allow-set, the runner B1/capacity surface, the coder-templates
+`cut -d/ -f2` collapse, and the 10-surface rename blast.
+
+### Round-5 chunks
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C13 | Parser + comment fix: comment-tolerant version regexes at BOTH sites, prowlarr comment moved off the version line, executed mutant batteries, guard-trio admit of `charts/prowlarr/Chart.yaml` | S | 1 | [] | unblocks the fire: every later chunk re-fires the bump path; no regex leg is byte-pinned today (verified), so the delta is new legs, not re-pins |
+| C14 | Shared marker: rename `refs/heads/ci/containers-built` → `refs/heads/ci/last-built` + ancestor-tolerant advance body; build-charts adoption (resolver step, marker..sha chain mirroring containers semantics incl the idempotence info-line and loud die, `bump_sha` output, INTERIM own-fire advance job); t16 exclusivity walk → builder ALLOW-SET; `main-sync.yaml:121` anchor re-cite | M | 2 | [C13] | a marker chain on the dead parser re-dies on the same leg; C14's new build-charts legs stack on the fixed suite's ordinal (t27+), and C13's merge is the first real fire the chain must not double-kill |
+| C15 | Builders invoked by main-sync + the rename: `containers-build.yaml` → `build-containers.yaml` (10 hard pins enumerated as tasks), BOTH builders lose push triggers and gain `on: workflow_call`; main-sync calls both in parallel ROLE-guarded `uses:` jobs; advance moves to an AGGREGATE main-sync job gated on both builders green (the interim build-charts job and the containers job are deleted); sync-fanout `needs` both and waits, `always()`-tolerant of builder red; detect script call-arm; full suite folds incl. new main-sync t14+ legs and the t8 stale-name widen | L | 3 | [C14] | the rename + trigger removal ride the shared branch C14 establishes (FJ_SET/WIDEN_OK/t16 allow-set/t2 pins all key on C14's final file state); aggregate-advance relocation is one atomic graph change — splitting it would leave a mixed push/call writer topology, the poisoned shape (D54) |
+| C16 | Runner scale: `replicas: 10` per release on both instances (services slices `forgejo-runner-dev` / `forgejo-runner-gpu`), B1 comment re-truthed in chart values, capacity STAYS 1, dev/gpu suite re-pins | S | 4 | [C15] | no file dependency (file-disjoint from C13–C15) — ordered last for landing linearity: its merge is the designed first end-to-end proof of the post-C15 call chain (a `charts/forgejo-runner/**` change fires only via main-sync after C15, and it should fire ONCE through the final shape, not twice through intermediates) |
+
+Waves: 1 = C13 → 2 = C14 → 3 = C15 → 4 = C16.
+
+### Central design rulings (detail + rejected alternatives in DECISIONS D52–D58)
+
+1. **Parser fix keeps the column-0 anchor** (`(?m)^version:` — wrapper
+   dependency-pin collision law, traefik 42.x comment at `:223-230`) and
+   tolerates ONLY a `#`-prefixed trailing comment:
+   `:111` → `^version: (\d+)\.(\d+)\.(\d+)(?:[ \t]+#[^\n]*)?[ \t]*$`,
+   `:258` → `^version: (\S+)(?:[ \t]+#[^\n]*)?[ \t]*$`. Garbage after the
+   token (`1.0.1 junk`) still refuses loud; `1.0.1#nospace` still refuses
+   (`\S+` swallows, `ver()` rejects). Rewrite slices stay group-anchored so
+   a tolerated comment SURVIVES the bump rewrite. The prowlarr comment
+   moves ABOVE the line anyway (class-killer, belt), and a new static leg
+   bans comments on `version:` lines across `charts/*/Chart.yaml`.
+2. **Shared marker naming: `refs/heads/ci/last-built`** (owner veto slot in
+   the batched round; change cost = 2 workflow lines + ~8 suite lines).
+   Rationale: the branch outlives the docker domain (helm now, coder
+   templates per #56), so the name must not; `ci/` stays the established
+   Forgejo-local namespace (main-sync mirrors `refs/heads/main` alone —
+   GitHub never receives it, `aeda85f86` header law).
+3. **Advance topology: single writer = an AGGREGATE `advance-marker` job
+   under main-sync** (C15), gated on BOTH called builders green, target =
+   build-charts's `bump_sha` output if non-empty else the event sha.
+   Per-builder advance on a SHARED branch is poisoned: one builder green
+   advances past the other's failed range and its dead-run changes are
+   lost FOREVER (the exact class the marker exists to heal — the Nov-25
+   prowlarr dead-fire is the worked example). C14's interim (builders still
+   push-triggered, directive-prescribed own-fire advances) carries that
+   exposure only across the C14→C15 landing gap — land C15 in the same
+   owner session.
+4. **`marker == sha` verified-empty info line is the new loop guard** once
+   the push non-re-trigger guard (R3/D5) dies with the trigger removal: a
+   called run at-or-behind the marker diffs empty and mints nothing.
+   The bump's own push-to-main still re-triggers nothing (the rule that
+   makes today safe is unchanged by this round); the marker property makes
+   re-triggering harmless EVEN IF the rule ever changes — belt, recorded.
+5. **Failure semantics (recommended ruling, D54):** a builder red ⇒
+   aggregate advance SKIPS (needs-graph ⇒ marker unmoved ⇒ next fire
+   re-covers) and `sync-fanout` STILL RUNS: `needs: [push-gh,
+   build-containers, build-charts]` with
+   `if: always() && contains(vars.ROLE, 'prod')` — ArgoCD sync is the
+   deploy path and stays decoupled from the release path exactly as today
+   (a failed builder blocks nothing that a push today blocks); the cf-139
+   race gate (fanout after push-gh success) is unchanged. Hard-gating
+   fanout on builder green REJECTED.
+6. **What still fires what after C15:** main-sync = push-to-main +
+   workflow_dispatch (unchanged; PRs never fired it); builders = called
+   ONLY (containers KEEPS `pull_request` for the dev-role `pr-` tag lane +
+   `workflow_dispatch` for the rebuild escape hatch; build-charts ends
+   `workflow_call`-only — it never had dispatch); builder-bootstrap =
+   dispatch-only (untouched); renovate = untouched. Boundary of directive 4
+   = the two builders' push arms, nothing else.
+7. **Runner scale:** replicas per SLICE (`app-template.controllers.runner.
+   replicas: 10` under each release's top-level values block; chart default
+   STAYS 1), capacity stays 1 per record, B1 AMENDED not deleted under the
+   verbatim owner directive; VCT multiplication (10×(2Gi+10Gi) local-path
+   per release) is a landing-observation UA, not a code leg. Autoscaling
+   card `iaJq5bgWHHDHotcBY` carries the job-count dimension — referenced
+   in the B1 note, never recreated here.
+8. **Coder-templates room (#56 boundary):** t16's allow-set becomes a named
+   set `{build-containers.yaml, build-charts.yaml, main-sync.yaml}` with
+   the leg asserting "ref named ONLY in allow-set files" so a fourth
+   builder joins by adding one member + one `uses:` job + one needs entry;
+   the `cut -d/ -f2` coder-templates collapse under `charts/coder/**` is
+   documented as #56's filter to resolve — unchanged this round (editing
+   it here would change helm's live bump set for someone else's concern).
+
+### Landing order & first-fire consequences (owner merge sequence; each intermediate state spelled out)
+
+1. **C13 merge IS the first real calendar fire** (touches
+   `charts/prowlarr/Chart.yaml` while build-charts is STILL push-triggered):
+   the fixed parser converts prowlarr 1.0.1 → `2026.11.1` (December-clock
+   crossover → `2026.12.1`; stamp read at fire time), published DUAL, one
+   benign bump commit. **llama-swap 1.0.40 stays** — not in the changed
+   set; D47.4's per-chart-on-next-change law governs (this CORRECTS the
+   earlier "expect TWO first releases" phrasing: the expected set named
+   {llama-swap, prowlarr}, the changed-set filter makes it exactly
+   {prowlarr}). Marker machinery irrelevant here — containers still
+   push-triggered on the old ref name; nothing to migrate yet.
+2. **C14 merge**: touches `.forgejo/**` + tests + `main-sync.yaml` prose —
+   NO fire under either push trigger (no `charts/**`, no `containers/**`).
+   BEFORE merging: owner migration push on the PROD instance —
+   `git push origin refs/heads/ci/containers-built:refs/heads/ci/last-built`
+   (dev has no marker — main-sync mirrors `refs/heads/main` alone). If
+   skipped, the first fire bootstraps tip-only + `::warning::` — designed
+   tolerant, recovery resumes next fire. INTERIM STATE after this merge:
+   push-triggered builders, dual writers of the shared ref, per-fire
+   advances with ancestor tolerance; the cross-domain swallow window is
+   OPEN — do not let C14 sit on main alone across days (land C15 same
+   session; any container fire before C15 can advance past an unreleased
+   charts range).
+3. **C15 merge** (owner pre-step first: advance `ci/last-built` to the
+   main tip immediately before merging — UA-R5-2; skipping it makes the
+   first called fire re-detect C13's already-released prowlarr window and
+   mint ONE benign extra patch-class calendar version — harmless, noisy,
+   predicted): touches `.forgejo/**` + tests + docs + `renovate.json` →
+   main-sync fires → calls both builders → each diffs marker..E empty →
+   aggregate advance lands the marker at E, `bumped nothing` reads green,
+   fanout still syncs (its today behavior on a no-chart push). This is the
+   call-chain smoke: expected green on all six jobs. After this merge the
+   OLD ref is unreferenced → owner deletes it (UA-R5-3). From here a
+   `charts/**` prose merge bumps NOTHING until main-sync next fires — the
+   C11-era "merge itself is the first fire" coupling is INVERTED (F#10).
+4. **C16 merge**: touches `charts/forgejo-runner/values.yaml` +
+   `services/{dev,gpu}/prod/values.yaml` → via main-sync calls, build-charts
+   detects {forgejo-runner} marker..E → its FIRST calendar release +
+   advance at the bump commit B1 → end-to-end proof of marker→bump→
+   aggregate-advance→DUAL-publish→fanout. Post-merge owner observation:
+   both runner STSs roll to 10 pods on one registration each, node
+   disk-headroom for the PVC fan, runs still schedule (the 30-min
+   ceiling/shutdown posture unchanged).
+- First-fire observations (UI run-history grouping across the rename;
+  `bump_sha` output plumbing under real calls; dev-instance empty green
+  called runs) stay owner-side UA, EXPLORE §F precedent — run IDs survive
+  renames regardless.
+- Standalone-PR posture unchanged (D42): the owner lands each merge; the
+  single-PR vs split choice is theirs, and these four are separable by
+  wave by construction.
+
+### Commands (round-5 additions; standing laws: `PATH=$HOME/.local/bin:$PATH`
+before suite runs; guard-trio runs with `CHUNK_BASE=<round base ref>`
+(never default HEAD — FRICTION law); scratch drivers written and executed
+in the SAME invocation (/tmp law); rulesync via the PATH binary, never
+`npx rulesync@latest`, source+mirror pair in one commit where law prose
+moves; NO docker daemon this round; `aislop ci --changes` per chunk with
+the vacuous-clean shell posture recorded honestly)
+
+- C13: `bash tests/services/forgejo-build-charts.sh` (t1–t29, t27–t29 new)
+  + `helm lint charts/prowlarr && helm template charts/prowlarr --debug`
+  + guard-trio with `CHUNK_BASE` + `aislop ci --changes`.
+- C14: `bash tests/services/forgejo-build-charts.sh` (t1–t33, t30–t33 new)
+  + `bash tests/services/forgejo-containers-build.sh` (ref re-pins + t16
+  allow-set + t17 tolerance cases) + `bash tests/services/forgejo-main-sync.sh`
+  (anchor prose legs) + `git grep` blast check + aislop.
+- C15: `bash tests/services/forgejo-build-containers.sh` (renamed suite) +
+  `bash tests/services/forgejo-build-charts.sh` (trigger/advance re-aims) +
+  `bash tests/services/forgejo-main-sync.sh` (t1–t13 re-aims + t14+ new) +
+  `bash tests/services/forgejo-ci-surface.sh` (FJ_SET/WIDEN_OK/t5/t8) +
+  `bash tests/pipeline-push-pr/surface.sh` + `bash tests/services/forgejo-packages.sh`
+  + `bash tests/renovate/services-values-pins.sh` + rulesync x2 +
+  `rulesync generate --check` + guard-trio admits + aislop.
+- C16: `bash tests/services/dev-forgejo-runner.sh` + `bash tests/services/gpu-forgejo-runner.sh`
+  (replicas re-pins + slice legs) + `helm lint/template charts/forgejo-runner`
+  + aislop.
+
+### Round-5 test-wave expectations (reproducible shapes, suites continue their own sequences)
+
+- C13 mutants: a trailing-comment `version:` line PARSES and the comment
+  SURVIVES the rewrite (both `:111`-class and `:258`-class executed);
+  `version: 1.0.1 junk` REFUSES; indented `version:` (dependency pin) is
+  never matched; the static guard leg reddens if ANY live
+  `charts/*/Chart.yaml` version line carries a trailing comment (class
+  cannot regrow).
+- C14 idempotence/recovery: executed against a scratch bare remote —
+  marker==sha ⇒ `changed set verified empty` info line, CHARTS empty,
+  NO anomaly annotation; a red (simulated) fire leaves the marker put and
+  the NEXT fire at a newer sha RE-COVERS the lost charts range (the dead-run
+  heal, executed not texted); non-sha garbage ⇒ loud; unreachable marker ⇒
+  loud with owner verbs; absent marker + all-zero before ⇒ tip-only +
+  `::warning::`; absent marker + empty EVENT_BEFORE on a push ⇒ loud die.
+  t16's inverted allow-set leg: the ref is named in NO `.forgejo` file
+  outside {containers-build.yaml, build-charts.yaml} (C14 state; C15
+  re-aims to the three-builder-era set).
+- C15: the aggregate advance battery on a scratch remote (both-green
+  creates/FF; target==marker up-to-date green; marker ahead AND ancestor
+  of target's skip-green info line; marker ahead NOT-ancestor ⇒ RED with
+  divergence named; one called leg red ⇒ advance job skipped by
+  needs-graph — the re-cover law, structural); fanout shape leg
+  (`needs` set-exact + `if` byte-exact `always() && contains(vars.ROLE,
+  'prod')` + push-gh-gate preserved); trigger-set legs (build-charts
+  `{'workflow_call'}`; containers `{'pull_request','workflow_dispatch',
+  'workflow_call'}`); `uses:` byte-pins (exact same-repo paths,
+  `secrets: inherit`, ROLE guard on all three new jobs); t8 widened to ban
+  the stale `.forgejo/workflows/containers-build.yaml` path token on live
+  surfaces (composed GitHub-twin forms exempt; FROZEN records exempt —
+  the full 105+-file set per the Rename-surface §G list, unchanged).
+- C16: t2/g2 render legs flip to `replicas == 10` with the AMENDED-law
+  message (citing the owner directive, not B1-as-written); new slice legs
+  assert each services block carries `app-template.controllers.runner.
+  replicas: 10` and the chart default stays 1; a capacity leg asserts
+  `secret-runner.yaml` still renders `capacity: 1` (decision, pinned).
+
