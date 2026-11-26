@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
-  "plan_status": "approved",
-  "updated_at": "2026-11-25T05:30:00+00:00",
+  "plan_status": "complete",
+  "updated_at": "2026-11-26T07:38:54+00:00",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
   "test_session": "ses_def674664fferVKggtFKLUUZFQ (round-4 test wave, 2026-11-25 — current for validation_at_fault routing; fix-round-1 session ses_e006a6794ffe)",
   "current_wave": 3,
@@ -92,7 +92,11 @@
     "open_from_r4": "round-4 close question was DISMISSED — the admitted-externals / carry-over / old-name-prose / C12-evidence card list still awaits the owner's word; the autoscaling card was ordered explicitly and is minted",
     "owner_answers_r5": "2026-11-26 batched round — APPROVED C13->C14->C15->C16 (test wave first); F1 marker name ci/last-built ACCEPTED; F2 OWNER OVERRIDE of D54: sync-fanout HARD-GATES on both builders green (plain needs, no always()) — the MIRROR jobs (push-gh/push-dev) stay unconditional per the owner's own words ('sync to github and dev'); what the gate freezes is the FLEET sync-fanout step until a green build, recovery rides the un-advanced marker; plan fold resolved my looser 'mirror freezes' phrasing — settled wording, interpretation CLOSED; F3+F4 ACCEPTED: pre-advance ci/last-built to main tip before C15 (UA-R5-2 owner step) + land C14+C15 same session. Plan fold running ses_dea24aa04ffe (D59) — LANDED 394a6affc",
     "test_wave_r5": "ses_de9f365c7ffeT15oRy6an00GHH DONE 2026-11-26 — 13 suites: build-charts +700/-40 (t27-t34 new; re-aims t2/t3/t4/t7/t18), containers-build +80/-25 (REF->ci/last-built, t16 ALLOW-SET INVERSION, t17 tolerance), NEW forgejo-build-containers.sh 2810L (C15-era, dev's git-mv pairs it), main-sync +338/-20 (t3 six-job GUARD-loop, t9 needs-exact + result-function BAN, t14/t15 byte-pins, t16 executed advance battery, t17 D59 TRUTH TABLE, t18 anchor-liveness), ci-surface +77/-45 (two independently-armed sweeps), packages t7, renovate-pins v3, push-pr P7, trio round-5 admits, dev +140 (t2 replicas-10 deployed render, t18/t19/t20), gpu +117 (g2 flip, g8/g9/g10). Coord rulings: gate = attribution table (chunk legs green, rest pre-existing-or-future red); uses:-form dev's choice + first-fire observe; build-charts t24 RED = LIVE drift witness (base 10.19.1 yaml vs 10.18.3 lock, PR #115 pre-C12) -> greens via C13's fire full-tree heal, no repo edit; externals unchanged (ci-surface t4, trio c13/t17/c19)",
-    "c13_c15_close": "C13 r1 APPROVED (23f4299de): version regexes comment-tolerant (tails survive the group-sliced write; junk/#nospace refuse — 19-posture battery), prowlarr comment on own line, 74-chart scan clean. C14 r1 APPROVED (aab9c2728): ci/last-built shared marker (old-ref zero hits), build-charts resolver+chain+info-line+bump_sha output+interim tolerant advance; chunk's 'fetch not needed' proven WRONG — dev's read-only fetch kept; dual-writer window: no silent-loss ordering on linear main. C15 r2 APPROVED (eca699c33): build-containers rename + old suite rm'd (2810L successor continuity verified), builders call-only via workflow_call (bootstrap + main-sync triggers byte-frozen), main-sync calls both + AGGREGATE single-writer advance (any red builder skips advance => both ranges re-cover next fan), D59 hard-gate fanout needs=[push-gh,both], zero result-functions. r1 caught B1 (t34 laundered the chunk's step/job-key conflation; jobs.bump.outputs.bump_sha chain re-derived) + M1 (dead push-gate -> marker-presence calm; arms mutant-proven); post-fold: build-charts {t24 witness}, build-containers 50/50, main-sync 18/18, ci-surface {t4}, trio {c13,t17,c19}. FRICTION new laws: byte-pins can't audit plan prose; rebuild scratch drivers in-round. Owner: UA-R5-1/R5-2 + same-session landing satisfied by the single branch merge"
+    "c13_c15_close": "C13 r1 APPROVED (23f4299de): version regexes comment-tolerant (tails survive the group-sliced write; junk/#nospace refuse — 19-posture battery), prowlarr comment on own line, 74-chart scan clean. C14 r1 APPROVED (aab9c2728): ci/last-built shared marker (old-ref zero hits), build-charts resolver+chain+info-line+bump_sha output+interim tolerant advance; chunk's 'fetch not needed' proven WRONG — dev's read-only fetch kept; dual-writer window: no silent-loss ordering on linear main. C15 r2 APPROVED (eca699c33): build-containers rename + old suite rm'd (2810L successor continuity verified), builders call-only via workflow_call (bootstrap + main-sync triggers byte-frozen), main-sync calls both + AGGREGATE single-writer advance (any red builder skips advance => both ranges re-cover next fan), D59 hard-gate fanout needs=[push-gh,both], zero result-functions. r1 caught B1 (t34 laundered the chunk's step/job-key conflation; jobs.bump.outputs.bump_sha chain re-derived) + M1 (dead push-gate -> marker-presence calm; arms mutant-proven); post-fold: build-charts {t24 witness}, build-containers 50/50, main-sync 18/18, ci-surface {t4}, trio {c13,t17,c19}. FRICTION new laws: byte-pins can't audit plan prose; rebuild scratch drivers in-round. Owner: UA-R5-1/R5-2 + same-session landing satisfied by the single branch merge",
+    "final_review_round5": {
+      "r1": "ses_de9445878ffeFfvQ0JUsQMXTYE APPROVED — S1 chain walked as one program (bump_sha key-chain re-derived from SOURCE per the byte-pin law; no state advances the marker on incomplete work); S2 re-cover holds via single-writer both-gated advance (cost honestly measured: path-filter + N-walks + published guards; NO digest-compare ships — the launch's 'digest-skip' name was a fiction); residual one extra N per re-covered range (owner-priced); S3 law stack coherent across six surfaces; S4 fresh table green (only {t24}+{t4}+{c13,t17,c19}); S5 records coherent — pending items landed by this block + C13-C16 chunk entries; S6 landing sheet issued",
+      "sheet": "PRE-MERGE (prod, strictly before): UA-R5-1+R5-2 coincide today as ONE push: git push origin $(git rev-parse origin/main):refs/heads/ci/last-built (never to branch tip, NEVER post-merge — the only swallowing ordering; skipping is designed-tolerant, costs one benign extra version). MERGE: single branch PR. FIRST FAN: charts detect {forgejo-runner, prowlarr} -> ONE bump B, TWO calendar births + '+ heal charts/base/Chart.lock' (retires t24); containers arm NOT empty: 5 warm rebuilds {forgejo-runner, renovate-mcp, strata, vllm-radiance-mxfp4, wekan-mcp} — benign one-off; 'marker advanced to <B>' with B != event sha = acceptance proof; fanout then runs (both green); mirrors already ran. OBSERVES: resolver event=workflow_call + base=marker lines; vars.ROLE in called runs; UI history grouping for BOTH renames (cosmetic). C12 EVIDENCE DUE: tick rebase/retry on PR #116 (or await next chart PR) — green shape = lock in PR diff + renovate/artifacts all-success; ENOENT surviving retry -> Route B. POST: UA-R5-3 delete ci/containers-built; UA-R5-5 node-disk headroom 10x(2Gi+10Gi)x2 releases x2 clusters before sync rolls STSes; rollback = marker is a plain ref (reset/delete verbs in-file), builders revert clean, slice revert returns replicas to default 1. t24 greens itself via the first fan's heal — do NOT hand-fix the lock pre-merge"
+    }
   },
   "final_review": {
     "at": "2026-11-11T06:35:00Z",
@@ -368,6 +372,26 @@
         { "role": "test-fold", "status": "DONE", "chunk": "C09", "session": "ses_def674664fferVKggtFKLUUZFQ", "at": "2026-11-25", "summary": "t19 one-token swap (single hunk); trio admit joins (2 case-patterns + provenance + leg-ok per arm; release.yaml verified already-admitted); live tree => t1-t24 green, t25/t26 verbatim red-for-C10; teeth both directions proven" },
         { "role": "review", "status": "APPROVED (r1)", "chunk": "C09", "session": "ses_def22d9f5ffe5bodQDTcoE1C1R", "at": "2026-11-25", "verdict": "APPROVED — merge-state proof fresh (24 green, stop@t25); all stacked laws re-verified live incl round-2 awk carriers and round-3 --retry; locks pure pin-sync, no other lock moved; lint/template 3/3 renders identical (LB+Local); dev 58/58 t10 green (AC5 witness flipped); baselines exact; scope 10+notes clean. Carries: :54->:57 anchor shift for C11; FRICTION api-versions + rulesync@latest traps" }
       ]
+    },
+    "C13": {
+      "status": "done", "wave": 1, "depends_on": [], "dev_rounds": 1, "review_rounds": 1,
+      "dev_session": "ses_def47fb8effes2D1KDn7UK9pme", "last_verdict": "APPROVED (r1, ses_de9bd5682ffeCBuf5lnMOW83gu)",
+      "summary": "parser comment-tolerance both sites + prowlarr line move; commit 23f4299de"
+    },
+    "C14": {
+      "status": "done", "wave": 2, "depends_on": ["C13"], "dev_rounds": 1, "review_rounds": 1,
+      "dev_session": "ses_def47fb8effes2D1KDn7UK9pme", "last_verdict": "APPROVED (r1, ses_de99e1799ffeDaQEAH72oRu7Te)",
+      "summary": "ci/last-built shared marker + build-charts resolver/chain/info/bump_sha/interim tolerant advance; commit aab9c2728"
+    },
+    "C15": {
+      "status": "done", "wave": 3, "depends_on": ["C14"], "dev_rounds": 2, "review_rounds": 2,
+      "dev_session": "ses_def47fb8effes2D1KDn7UK9pme", "last_verdict": "APPROVED (r2, ses_de9726da9ffeeD831EBax8u0sd)",
+      "summary": "build-containers rename + builders call-only via workflow_call + main-sync aggregate advance + D59 hard-gate fanout; r1 caught B1 bump_sha chain + M1 calm gate, both folded with mutant proof; commit eca699c33"
+    },
+    "C16": {
+      "status": "done", "wave": 4, "depends_on": ["C15"], "dev_rounds": 1, "review_rounds": 1,
+      "dev_session": "ses_def47fb8effes2D1KDn7UK9pme", "last_verdict": "APPROVED (r1, ses_de94e1289ffePsZJXhx19UZSVa)",
+      "summary": "replicas 10 via services/{dev,gpu} slices, capacity/default stay 1 (D57 amend), g7 fifth-class fold; rendered proofs 10/10/1; commit 226aecb86"
     }
   },
   "blocked": [],
