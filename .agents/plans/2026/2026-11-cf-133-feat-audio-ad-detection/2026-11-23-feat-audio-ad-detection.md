@@ -169,6 +169,8 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 | C05 | Integration verification + tuning (live smoke, discovery, capture + promote, thresholds) | S | 3 | [C02a, C02b, C03, C04] | needs the full worker + chart + wiring to exist |
 | C06 | Chart idiom conformance rework (test-arm fixes t27/t28 by the test session first, then values under `app-template:` nesting, hand-written PVC, D-8 pod-only, nameOverride) | M | 4 | [C04] | replaces the C04-delivered hybrid chart (C04 done; rework against the 62351fa17 baseline per the owner finding) |
 | C07 | Skill codification (D-8 section + anti-hybrid guardrail + qualified `--set` gotcha + precedence rule in `skills/helm-chart-creation`) | S | 4 | [C06] | cites the post-C06 idiom tree as the in-repo exemplar; must land after the conformance shape exists |
+| C08 | Forge-build compile fixes (the 10-error class sweep + volatile-DateTime/StopAsync/using/default-arg fixes + local dotnet attempt) + chart image switch to the instance registry | M | 5 | [C07] | the sweep must run on the post-C15 rebased tree (step 0) so the class sweep covers the exact source the next CI compile sees; the registry switch cites the post-rebase sibling cite |
+| C09 | Detection hardening (build-charts `workflow_call` arm before the empty-before die + bootstrap no-marker full-set on both detect surfaces) + C05 runbook L1 reword for the post-C15 fan | M | 5 | [C08] | C09's runbook reword names the post-C08 registry pull story and the post-C15 file names that only exist after C08's step-0 rebase |
 
 ## Wave order
 1. C01
@@ -176,6 +178,8 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
    mutually independent of the C02a/C02b line (run in id order)
 3. C05
 4. C06, then C07 (intra-wave: C07 codifies the idiom shape C06 delivers)
+5. C08, then C09 (intra-wave: C09's runbook reword and post-C15 workflow
+   edits stand on C08's step-0 rebase and registry switch)
 
 ## Risks / assumptions
 - **SF 18.0.0 maturity (Q4)**: shipped 2026-11-20 (a week old at plan time);
@@ -417,3 +421,97 @@ audio-ad-detection --set app-template.monitoring.annotations=false` (a
 top-level `--set` cannot reach subchart values; the repo test convention is
 the qualified `app-template.<path>` — `tests/services/
 dev-forgejo-runner.sh:828-830`); t28's PVC arm greps `storage: 10Gi`.
+
+## Rework R2 (2026-11-26): deployment-incident replan
+
+**The incident** (2026-11-26 ~18:35Z): the owner ran the `workflow_dispatch`
+hatch on merged main (the branch had been merged by the owner; the build ran
+there). `dotnet publish` **FAILED with 10 errors**, verbatim:
+`ModelService.cs(62,12) CS0246 'IModelService'`;
+`AdEventSink.cs(36,22)+(38,31) CS0246 'ILogger<>'`;
+`SnapClientSupervisor.cs(245,29) + MqttPublisher.cs(132,35) CS0507 StopAsync:
+cannot change access modifiers`; `MqttPublisher.cs(39,29) CS0246
+'MqttQualityOfServiceLevel'`; `SnapClientSupervisor.cs(63,31)+(64,31) CS0677
+volatile DateTime illegal` (two fields); `CandidateWriter.cs(21,72) CS1736
+default parameter 'utcNow' not a compile-time constant`;
+`MqttPublisher.cs(379,30) CS0246 'TrackData'`.
+
+**The compiler-oracle lesson** (DECISIONS): no-SDK sessions structurally
+cannot catch C# *rule* violations. The Post-Research/dev API-source sweeps
+verified API shapes against tags but catch none of these ten — access
+modifiers, `volatile` on a non-primitive, default-argument constancy, missing
+usings are all compile-time rules the source-reading oracle is blind to. **CI
+is the authoritative compile.** The mitigation, codified as an AC in C08: a
+local `dotnet-install.sh` channel-10.0 attempt into `~/.dotnet` (network
+precedent: MCR/NuGet reachable); on install failure the report is honest and
+the fix rests on the class sweep + the next CI round.
+
+**The owner's registry ruling** (2026-11-26): the chart's image must
+reference the **Forgejo instance registry** (`git.spencerslab.com`, public per
+the owner) instead of `ghcr.io/ownyourio/audio-ad-detection` (a private
+namespace the home cluster cannot pull). The convention was verified, never
+invented: `charts/forgejo-runner/values.yaml:149-153` (main) cites
+`git.spencerslab.com/curatedforest/forgejo-runner:26.11.1` — the shape is
+`<host>/<lowercase-owner>/<lowercase-image>`. The dual publish is unchanged
+(the workflow pushes both registries under the same three tags); the home
+cluster pulls the public one. C08 switches
+`charts/audio-ad-detection/values.yaml` to
+`git.spencerslab.com/curatedforest/audio-ad-detection`, keeps the
+rolling-`:main` + `pullPolicy: Always` + PIN-ME story, and rewords the
+adjacent comment (which still names the pre-C15 workflow) to the truth.
+
+**The detection-hardening ruling** (owner, onto this ticket as C09) — the
+**C15 asymmetry**: post-C15 (`build-containers.yaml` / `build-charts.yaml`,
+the cf-55 r5 renames — the branch is pre-C15 and never touched the workflow
+files, verified) the `main-sync.yaml` prod-main fan *calls* both builders
+(push arm retired; PR + dispatch lanes byte-frozen) and seals the shared
+`ci/last-built` marker (`advance-marker`, D54 single writer, `needs:` is the
+aggregate gate). The `build-containers` detect script special-cases
+`workflow_call` (an empty `before` is **EXPECTED** — a called run carries no
+push payload; the die stays scoped to real pushes), but the `build-charts`
+detect body still **dies on an empty `before` with no marker** — every
+no-marker called run of build-charts is a dead run. And the **bootstrap
+tip-only**: a first called run with no marker diffs `HEAD^..HEAD` (announced)
+— directories introduced below a burst tip are invisible, both builders go
+green, the marker seals at the tip, and the missed directories are never
+built. **Chosen fix** (C09): on a no-marker first called run, a **wider-base
+diff — the full set** (empty-tree base, announced) on *both* detect surfaces,
+plus the build-charts `workflow_call` arm before the die. **Rejected fix
+(documented)**: refusing to advance the marker on a multi-commit push — it
+does not resolve the skip (the next no-marker called run is still tip-only;
+deferral is not coverage), it defeats the marker's re-cover property
+(C14/D53), and it cascades into the main-sync D54 single-writer job and its
+test (cf-55 territory, outside this ticket).
+
+**Runbook truth (C09)**: the C05 owner-leg runbook L1 describes the pre-C15
+push-triggered `containers-build.yaml` run; post-C15 the push arm is
+retired, `main-sync.yaml` calls the workflows, and the `workflow_dispatch`
+hatch is the manual rebuild lane (the incident build was exactly that hatch).
+L1 is reworded to the post-C15 fan + the post-C08 registry pull story;
+historical records (EXPLORE/RESEARCH) keep the pre-C15 names — they are dated
+scout records.
+
+**Wave-5 topology**: C08 (compile fixes + registry switch) depends on C07
+(the tree is complete and reviewed; the sweep runs on the rebased tree); C09
+(depends on C08 — its reword cites the post-C08 pull story and its workflow
+edits stand on the post-C15 names C08's step-0 rebase brings in). **Step 0
+(rebase, C08 precondition)**: the branch is NOT an ancestor of `origin/main`
+—the owner re-committed the three ticket commits as `6cad3667c` /
+`a04a95860` / `889cd1329` — and post-fork main carries the C15 renames + the
+`0ce0d4d8f` release bump (which touches our `Chart.yaml` — the branch lands
+on main's version; no hand-bump). The branch never touched `.forgejo/` or
+`scripts/` (verified), so the rebase takes main's post-C15 workflow shape
+with no conflict; the suite re-verifies 31/31 after.
+
+**t-sequence**: C08/C09 add **no new t-numbers**. Verified 2026-11-26: the
+whole `tests/containers/audio-ad-detection.sh` (t1–t31) greps **no**
+`ghcr`/`ownyourio`/`repository:` and none of the C08 source tokens
+(`volatile`/`StopAsync`/`protected`/`using`); t25 (default render
+sentinel/credential-free) and t26 (Recreate + replica + probes) pin render
+shape only. No mod-in-place was needed; the gate stays 31/31.
+
+**Open questions**: none new — OQ9 (idiom defaults: drop the D-8 controller
+copy; hand-written PVC) and OQ10 (fix commit vs amend of the relocated
+commit; fix commit recommended) stand for the coord's batched round;
+`SNAP_STREAM_ID` stays TBD-owner (L2.5 owner leg). No user questions this
+round — the C08/C09 scope is fully determined.
