@@ -27,8 +27,11 @@
 #
 # The sync-fanout job IS the webhook: no external webhook exists. It drives
 # every cluster's ArgoCD API directly with the per-cluster bearer tokens and
-# fires only after push-gh succeeded AND both called builders (C15) came
-# back green, because the fleet's app sources read
+# fires only after push-gh succeeded AND the two release builders
+# (build-containers + build-charts) came back green — the third called
+# builder (push-coder-templates, cf-56 C04) is deliberately NOT in this
+# gate: the fleet release does not hold over an external-service publish —
+# because the fleet's app sources read
 # GitHub — an earlier fan-out would land the PREVIOUS revision (the ordering
 # is the race resolution, cf-139 R1 option (c); the builder wait is the
 # owner's D59 ruling: sync waits until it BUILDS successfully — a red
@@ -118,11 +121,29 @@ jobs:
     uses: ./.forgejo/workflows/build-charts.yaml
     secrets: inherit
 
+  push-coder-templates:
+    # Same for the coder-template publisher (cf-56 C04, the OQ10 fan
+    # member, card #56): CALLED, not push-triggered — its push arm
+    # retired with the C15 re-aim, the marker..sha detection inside does
+    # the path work over charts/coder/coder-templates/ (the shared marker
+    # is read-only there; this workflow never writes it). It mints no
+    # commits, so the bump-sha endpoint rule's event-sha fallback covers
+    # it. Deliberately NOT in sync-fanout's needs: a red coder leg
+    # blocks the aggregate below but not the fleet release — the fleet
+    # does not hold over an external-service publish (D59's hard gate is
+    # about the registry releases).
+    if: contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    uses: ./.forgejo/workflows/coder-template-push.yaml
+    secrets: inherit
+
   advance-marker:
-    # D54 single writer: needs IS the aggregate rule — both builders green
-    # or this job never runs; a red fan leaves the marker put, so the next
-    # fan's marker..sha range still carries the failed work (re-cover).
-    needs: [build-containers, build-charts]
+    # D54 single writer: needs IS the aggregate rule — the builders green
+    # (build-containers, build-charts, push-coder-templates; a red coder
+    # leg holds the shared marker) or this job never runs; a red fan
+    # leaves the marker put, so the next fan's marker..sha range still
+    # carries the failed work (re-cover).
+    needs: [build-containers, build-charts, push-coder-templates]
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
     steps:
