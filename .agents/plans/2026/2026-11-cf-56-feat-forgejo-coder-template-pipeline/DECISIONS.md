@@ -72,6 +72,32 @@ decisions carried into the plan's Open questions (OQ1–OQ9) for the batched rou
   2026-11-25-coder-template-push.md` with UA1–UA5 owner legs, the postures stated as
   answers, and `tests/notes/coder-template-push-runbook.sh` pinning them.
 
+## 2026-11-26 (round 2 — main r5 merged; C04 re-ground required)
+
+- **Owner instruction**: "pull in main as the shape has changed some and you'll need to
+  adapt." Replan commit 16df8a38d banked first; then `git merge main` @ 5f5762a19
+  (cf-55 round 5) — clean auto-merge, no conflicts.
+- **Lock status**: lastReap 2026-11-26T08:10 reaped the CICD key's AD-139 holder group
+  (silent); THIS run's claim (setId 4b1f093c) survived fresh and is now the key's only
+  holder (`shared:false`). Card stays Executing, owned.
+- **The r5 law supersedes the r4 grounding C04 was written against** (AGENTS.md diff):
+  containers-build.yaml RENAMED build-containers.yaml; it is now a workflow_call CALLED
+  run from main-sync's prod-main fan (C15); the marker is the SHARED `ci/last-built`
+  (C14) and main-sync's AGGREGATE job advances it once the whole fan's builders publish
+  green — the builder workflow no longer advances its own marker; a called run with no
+  marker narrows tip-only and announces; build-charts rides the same shared marker on the
+  prod-main fan. `scripts/forgejo-container-detect.sh` changed again (73 lines).
+- **Merge touched C01's surface**: containers/forgejo-runner/Dockerfile (2 lines),
+  tests/containers/forgejo-runner.sh (4 lines), charts/forgejo-runner/values.yaml
+  (9 lines) — post-merge regression re-run required; the runbook UA3 `:26.11.1` pin facts
+  need re-verification.
+- **Consequence**: C04's design re-ground needed against r5 — own-workflow marker vs
+  sharing `ci/last-built` (a path-filtered consumer sharing a fan-advanced marker is the
+  dead-run-loss class again — must be reasoned, not guessed), advance-job shape under the
+  workflow_call idiom, stale `containers-build.yaml` refs across my four artifacts +
+  EXPLORE r2/C04 text. The interrupted OQ10–OQ13 round will be RE-ISSUED in the r5 shapes
+  after the delta scout + plan re-ground.
+
 ## 2026-11-26 (main moved — marker-scheme adaptation round)
 
 - **Catch-up merge (owner-side)**: `00cedcd1e` merged main tip `52d3b5c45` (cf-55 round 4)
