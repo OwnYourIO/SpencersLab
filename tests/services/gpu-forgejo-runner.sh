@@ -718,7 +718,16 @@ fi
 # (absence against a base without it stays green), add-side only (a revert
 # belongs to the dev-forgejo-runner.sh t2 args render pin, the docker_host
 # precedent), and anything short of the exact pair — half, wrong value, flow
-# style, a third copy, another file — stays red. The original hazards (a
+# style, a third copy, another file — stays red. ROUND 5 C16 (owner ruling
+# 2026-11-26, D57) adds the FIFTH class: the replicas-10 scale hunk — the
+# byte-exact four-line shape `  app-template:` / `    controllers:` /
+# `      runner:` / `        replicas: 10` added ONCE under a runner release's
+# top-level slice (forgejo-runner-dev: on services/dev, forgejo-runner-gpu:
+# on services/gpu) and nowhere else — the same positional+shape+size
+# discipline as R2′, add-side only (a scale-down revert is a fresh ruling,
+# not a silent hunk; the render pins t2/g2 and the slice pins t18/g8 carry
+# the content law). A partial hunk, a second occurrence, foreign indent, or
+# the shape under any other top-level block stays red. The original hazards (a
 # shared-chart fork, a cross-instance or rolling ref, gpu-attributed wiring
 # landing in dev files, any custom-values/dev move) stay red; anything wider
 # than the sanctioned classes stays red too.
@@ -764,6 +773,9 @@ try:
     # lines invisible to the forgejo-runner filter (labels: key, act-22.04
     # entry) are bounded by the cap + dev-forgejo-runner.sh t17's exact
     # five-set, not by silence.
+    # C16/D57 fifth class: the byte-exact replicas-10 hunk shape (absolute
+    # indents as shipped under a top-level slice).
+    REPS4 = ('  app-template:', '    controllers:', '      runner:', '        replicas: 10')
     DEV_CAL = re.compile(
         r'^[+-][ \t]*-[ \t]*\S+:docker://git\.scifi\.farm/curatedforest/forgejo-runner:[0-9]{2}\.[0-9]{2}\.[0-9]+[ \t]*$')
     DEV_KEYS = re.compile(r'^\+[ \t]*labels:[ \t]*$')
@@ -771,12 +783,15 @@ try:
         r'^\+[ \t]*-[ \t]*ubuntu-22\.04:docker://ghcr\.io/catthehacker/ubuntu:act-22\.04[ \t]*$')
     SLICE_RE = re.compile(r'^forgejo-runner-dev:[ \t]*$')
 
-    def slice_span(text):
+    def slice_span(text, rx=None):
         # 1-based (start, end) line span of the top-level slice block —
         # end is the next top-level key (or EOF), so everything indented
-        # under forgejo-runner-dev: is inside.
+        # under forgejo-runner-dev: is inside. rx parameterizes the block
+        # key (the C16 gpu leg mirrors the same discipline on the
+        # forgejo-runner-gpu: slice); default keeps the dev behavior exact.
+        rx = rx or SLICE_RE
         lines = text.splitlines()
-        start = next((i for i, l in enumerate(lines) if SLICE_RE.match(l)), None)
+        start = next((i for i, l in enumerate(lines) if rx.match(l)), None)
         if start is None:
             return None
         end = next((i for i in range(start + 1, len(lines))
@@ -822,9 +837,29 @@ try:
         bad(f'g7: services/dev forgejo-runner content lines moved OUTSIDE the top-level forgejo-runner-dev slice: {[c[2].strip() for c in stray_runner][:4]} — the sanctioned dev content override sits inside that slice alone (the appset merges only this key into the release); a labels key under charts:, a renamed slice, or a moved runner line elsewhere is the C05 hazard OQ-C kept red (cf-6 OQ-C + run-1 R2′)')
     inslice = [c for c in content_changes if in_slice(c)]
     unsanc = [c for c in inslice
-              if not (DEV_CAL.match(c[1] + c[2]) or DEV_KEYS.match(c[1] + c[2]) or DEV_2204.match(c[1] + c[2]))]
+              if not (DEV_CAL.match(c[1] + c[2]) or DEV_KEYS.match(c[1] + c[2])
+                      or DEV_2204.match(c[1] + c[2])
+                      or (c[1] == '+' and c[2] in REPS4))]
     if unsanc:
         bad(f'g7: the forgejo-runner-dev slice carries an unsanctioned content move: {[c[2].strip() for c in unsanc][:4]} — inside the slice only the five-entry labels list (each changed forgejo-runner ref a git.scifi.farm/curatedforest calendar pin, added AND removed sides), its labels: key, and the byte-exact act-22.04 re-declaration may change; the url line and every other key stay byte-untouched (run-1 R2′)')
+    # Fifth-class fence (C16/D57): the shape is invisible to the
+    # forgejo-runner substring filter, so it needs its own walk — position
+    # decides legitimacy for it too, and the whole-set/once/add-only rules
+    # are the size discipline (the R2′ mirror the owner recipe names).
+    reps_moved = [c for c in changes if c[2] in REPS4]
+    reps_out = [c for c in reps_moved if not in_slice(c)]
+    if reps_out:
+        bad(f'g7: the replicas-10 hunk shape appears OUTSIDE the top-level forgejo-runner-dev slice: {[c[2] for c in reps_out][:4]} — C16/D57 sanctions the four-line shape under the release\'s own slice alone; the appset merges only that key, so a foreign-position app-template override is unsanctioned content')
+    reps_rem = [c for c in reps_moved if c[1] == '-']
+    if reps_rem:
+        bad(f'g7: the diff REMOVES replicas-hunk shape lines: {[c[2] for c in reps_rem][:4]} — the C15/D57 fifth class is add-side only (docker_host/MTU precedent); scaling a runner release back is a fresh owner ruling, and the content law rides t2/t18 render pins, not a silent hunk')
+    reps_add = [c for c in reps_moved if c[1] == '+']
+    if reps_add:
+        seen_each = [c[2] for c in reps_add]
+        if len(seen_each) != len(set(seen_each)):
+            bad(f'g7: a replicas-hunk shape line occurs more than ONCE in the services/dev diff ({seen_each}) — the sanctioned hunk is one occurrence per slice (second copy = a fork or a moved block)')
+        if set(seen_each) != set(REPS4):
+            bad(f'g7: the replicas-10 hunk is PARTIAL ({sorted(set(seen_each))} of the required four) — half, reordered-with-extras, or wrong-indent shape is not the byte-exact sanctioned hunk')
     if len(inslice) > 12:
         bad(f'g7: {len(inslice)} changed content lines inside the forgejo-runner-dev slice — the sanctioned override is the five-entry list plus its labels: key (the landing changes 6, a ref-pair bump 8); more is a fork of the override, not a bump (run-1 R2′)')
     if content_changes and not any(re.search(r'\d{4}-\d{2}-\d{2}', c[2]) for c in changes
@@ -840,7 +875,7 @@ try:
                 and ('forgejo-runner' in l or re.search(r'relocat', l, re.I))]
         if not any(re.search(r'\d{4}-\d{2}-\d{2}', l) for l in hunk):
             bad(f'g7: the services/dev forgejo-runner comment hunk is undated — the sanctioned dev-surface edit is the dated cf-104 relocation truth (cf-6 OQ-C): {hunk[:4]}')
-    ok('g7: services/dev changed only dated comments and the sanctioned labels-override hunk inside the forgejo-runner-dev slice (dev-instance calendar refs, capped, dated), and custom-values/dev gained none (cf-6 OQ-C + run-1 R2′)')
+    ok('g7: services/dev changed only dated comments, the sanctioned labels-override hunk inside the forgejo-runner-dev slice (dev-instance calendar refs, capped, dated), the once-only byte-exact replicas-10 shape under that slice alone when present (C16/D57 fifth class), and custom-values/dev gained none (cf-6 OQ-C + run-1 R2′ + round-5 C16)')
 
     diff_text = git('diff', base, '--', 'charts/forgejo-runner')
     changed = [l for l in diff_text.splitlines()
@@ -921,6 +956,57 @@ try:
     if nonlab:
         bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines: {nonlab[:4]} — only the labels list, its comments, and the one sanctioned docker_host line may change; the values dind/runner pins and the app-template subtree stay byte-untouched (renovate law)')
     ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, nothing else moved)')
+
+    # C16/D57 fifth class, gpu leg: services/gpu gains its OWN positional
+    # shape fence (the dev-side R2′ mirror) — the replicas-10 four-line hunk
+    # is sanctioned under the top-level forgejo-runner-gpu: slice ONLY,
+    # once, add-side; the rest of the services/gpu surface stays governed by
+    # the charts:/forbidden-entry checks below (this fence targets the
+    # shape class, not new blanket content law).
+    GPU_SLICE_RE = re.compile(r'^forgejo-runner-gpu:[ \t]*$')
+    gpu_diff_text = git('diff', base, '--', 'services/gpu')
+    gcur_new = gcur_old = None
+    gn_no = go_no = 0
+    gchanges = []
+    for l in gpu_diff_text.splitlines():
+        if l.startswith('+++ b/'):
+            gcur_new = l[6:]
+        elif l.startswith('--- a/'):
+            gcur_old = l[6:]
+        elif l.startswith('@@'):
+            m = re.match(r'^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@', l)
+            if m:
+                go_no, gn_no = int(m.group(1)), int(m.group(2))
+        elif l.startswith('+'):
+            gchanges.append((gcur_new, '+', l[1:], gn_no))
+            gn_no += 1
+        elif l.startswith('-'):
+            gchanges.append((gcur_old, '-', l[1:], go_no))
+            go_no += 1
+        elif l.startswith(' '):
+            gn_no += 1
+            go_no += 1
+    gshape = [c for c in gchanges if c[2] in REPS4]
+    gspan = slice_span(open(gpu_values).read(), GPU_SLICE_RE) if os.path.exists(gpu_values) else None
+
+    def gpu_in_slice(c):
+        return (c[0] == gpu_values and gspan is not None
+                and gspan[0] <= c[3] <= gspan[1])
+
+    grem = [c for c in gshape if c[1] == '-']
+    if grem:
+        bad(f'g7: the services/gpu diff REMOVES replicas-hunk shape lines: {[c[2] for c in grem][:4]} — the C16/D57 fifth class is add-side only (g8/g2 own the gpu content law)')
+    gadd = [c for c in gshape if c[1] == '+']
+    gout = [c for c in gadd if not gpu_in_slice(c)]
+    if gout:
+        bad(f'g7: the replicas-10 hunk shape appears OUTSIDE the top-level forgejo-runner-gpu: slice ({[(c[0], c[2]) for c in gout][:4]}) — C16/D57 sanctions it under the release\'s own slice alone (the appset merges only this key); under any other block it is an unsanctioned app-template override')
+    if gadd:
+        gseen = [c[2] for c in gadd]
+        if len(gseen) != len(set(gseen)):
+            bad(f'g7: a replicas-hunk shape line occurs more than ONCE in the services/gpu diff ({gseen}) — one occurrence per slice (C16/D57 size discipline)')
+        if set(gseen) != set(REPS4):
+            bad(f'g7: the gpu replicas-10 hunk is PARTIAL ({sorted(set(gseen))} of the required four) — the sanctioned hunk is the byte-exact set')
+        ok('g7: fifth class gpu leg (C16/D57 owner ruling 2026-11-26) — the exact app-template/controllers/runner/replicas: 10 hunk added once under forgejo-runner-gpu: alone, nothing removed, nowhere else')
 
     import yaml as _yaml
     lines = []

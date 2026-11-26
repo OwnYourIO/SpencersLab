@@ -271,6 +271,13 @@ ingress:
 forgejo-runner-gpu:
   runner:
     url: https://git.spencerslab.com
+  # Owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57 amends B1):
+  # replicas 10 on one registration, capacity 1 per pod; the chart default
+  # stays single — both instances scale via their slices.
+  app-template:
+    controllers:
+      runner:
+        replicas: 10
 
 llama-swap:
   # gpu working set (CA2 catalog enablement; frozen ENABLEMENT table

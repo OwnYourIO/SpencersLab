@@ -155,9 +155,12 @@ runner:
 app-template:
   controllers:
     runner:
-      # Single replica on purpose: one (uuid, token) pair must map to
-      # exactly one pod. Scaling means more runner records, never more
-      # replicas of one identity (decision B1).
+      # Decision B1 AS AMENDED (owner ruling 2026-11-26, cf-55 round-5):
+      # the DEFAULT stays one pod — a new release is single until a
+      # services slice rules otherwise — while the ruling permits
+      # per-release scale-out to N poller pods sharing one (uuid, token)
+      # registration via the slice override. Job-count autoscaling stays
+      # OUT (Inbox card iaJq5bgWHHDHotcBY owns that dimension).
       type: statefulset
       replicas: 1
       annotations:

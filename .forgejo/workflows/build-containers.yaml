@@ -78,8 +78,10 @@
 #
 # Runs. Without concurrency:, Forgejo cancels an in-flight run of the same
 # workflow on every new push or PR synchronize event; a cancelled matrix
-# would publish half a tag set, so runs queue instead. The lab runner has
-# capacity 1, so matrix cells serialize through one pod, and every job gets
+# would publish half a tag set, so runs queue instead. Each runner release
+# polls with 10 pods at capacity 1 each (owner ruling 2026-11-26, scale
+# via slice — D57), so matrix cells spread across pods while every job
+# still lands alone in one pod, and every job gets
 # the runner's 30-minute ceiling — a cold build of a large image can hit it.
 # workflow_dispatch shares the release arm: a dispatch from any branch
 # repoints latest and main on both registries and mints a calendar tag in
