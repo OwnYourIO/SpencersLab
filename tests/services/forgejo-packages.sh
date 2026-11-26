@@ -3,7 +3,7 @@
 # package registries (cf-55 C04, rebuilt): the `[packages]` declaration in
 # custom-values/infra/prod-values.yaml is what serves BOTH registries the CI
 # pushes to — the Helm registry (build-charts.yaml's forgejo-publish leg) and the
-# OCI registry (cf-6's containers-build.yaml instance push) — the single
+# OCI registry (cf-6's build-containers.yaml instance push) — the single
 # section gating both. Invariants pinned here — the declaration rides the
 # INFRA slice only (dev stays un-enabled, D20; its registries would silently
 # share the prod publish targets), the value is the STRING "true" in the
@@ -303,7 +303,7 @@ if i < 0:
     sys.exit(1)
 comment = raw[max(0, i - 1600):i]
 for tok, why in (
-        ('containers-build.yaml', 'the OCI sibling consumer — the section gates BOTH registries'),
+        ('build-containers.yaml', 'the OCI sibling consumer — the section gates BOTH registries (C15 pin 6: the tuple and the comment above packages: flip together)'),
         ('cf-6', 'the provenance that the registry is already exercised live (the declaration is an explicit-on pin, not a flip)'),
         ('[storage] stays deliberately unconfigured', 'the chart-law non-touch that keeps attachments/avatars off the S3 drag'),
         ('D24', 'the key-set law: {ENABLED} only, per-type caps unlimited by default'),
@@ -315,6 +315,6 @@ PY
 then
   fail "t7: see the t7 detail above"
 fi
-ok "t7: the packages: comment carries the reconciled provenance (containers-build.yaml sibling, cf-6 proven-live, [storage] non-touch, D24/D20 laws)"
+ok "t7: the packages: comment carries the reconciled provenance (build-containers.yaml sibling, cf-6 proven-live, [storage] non-touch, D24/D20 laws)"
 
 printf 'PASS: forgejo-packages checks (%d ok)\n' "$checks"

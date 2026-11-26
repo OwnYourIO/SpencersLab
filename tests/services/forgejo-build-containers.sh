@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Offline contract suite for the cf-6 Forgejo container-build pipeline: the
-# static invariants of .forgejo/workflows/containers-build.yaml +
+# static invariants of .forgejo/workflows/build-containers.yaml +
 # scripts/forgejo-container-detect.sh, the GitHub fallback
 # .github/workflows/docker-build.yaml, the repo-wide guard sweep over
 # .forgejo/workflows/, and the detection-contract doc pins. Run -2 hardening
@@ -22,7 +22,9 @@
 # Run -5 (cf-6-debug-detect-rerun C01, plan 2026-11-25-feat-containers-built-marker):
 # t13/t14 re-pin + t16/t17 (new) + d16-d19 (new) [AC1-AC9 — the O2 last-built
 # marker: push base chain marker→tip-only→before with the A5 die first, the
-# advance-marker job shape and its executed non-FF monotonicity, the resolver's
+# the shared-marker fence and its executed law (round-5 C15 moved the
+# advance-marker job and its tolerance battery to forgejo-main-sync.sh —
+# this file pins zero-writer fences, the resolver leg stays), the resolver's
 # absent/present/orphan/garbage shapes, the verified-empty info posture, and the
 # marker-missing fallback regression pin]; x5 re-pin (the marker..sha trio
 # vocabulary, same-commit parity law). AC11 (`docker build
@@ -38,13 +40,13 @@
 #     Group selectors are SEPARATE argv words (`... t d`); a quoted `'t d'`
 #     dies as one unknown id — the parser takes argv per id. The legacy `c02`
 #     alias is run -1's `t d r` subset and is not a run -2 gate.
-#   - t/d legs read only containers-build.yaml + the detector (scratch git
+#   - t/d legs read only build-containers.yaml + the detector (scratch git
 #     fixtures under /tmp/opencode for d-legs, and for t14's behavioral half,
 #     which EXECUTES the shipped detect-step run body against the shipped
 #     detector; t17 also stages the resolver and advance step bodies and runs
 #     them against a scratch BARE "origin" — a file-transport local repo, so
 #     the executed legs stay offline); r legs read only
-#     containers-build.yaml; x legs read only docker-build.yaml, renovate.json
+#     build-containers.yaml; x legs read only docker-build.yaml, renovate.json
 #     and the gated docs; g1 sweeps .forgejo/workflows/. No leg reads a file
 #     outside its chunk's set.
 #
@@ -199,23 +201,36 @@
 #     behavior — no live probe belongs to them and the no-network rule bars
 #     probing registries anyway.
 #
+# Round 5 (2026-11-26, chunks/C14.md; D53/D54): the marker ref becomes the
+# SHARED ci/last-built branch (name FINAL per owner F1), so t16/t17 ride the
+# rename and the advance body grows the shared-branch tolerance: the plain
+# push stays the first verb, a refusal CLASSIFIES (fetch + merge-base
+# --is-ancestor: marker past this run's endpoint = skip-green info, diverged
+# = RED naming both sides — non-FF is no longer itself the signal, D54).
+# t16's exclusivity walk INVERTS to a builder allow-set — the ref may live
+# in the C14-era two-workflow set (C15 re-aims
+# the three-file set; card #56 joins by extending it). Red posture after
+# this wave: t16/t17 red for the ref rename + tolerance body the C14 dev
+# wave lands; the d-legs and t13's env map stay byte-true (the detect
+# script is ref-agnostic and push-gated until C15).
+#
 # Constraints: no network; no actionlint/hadolint/yamllint (not installed —
 # never invoked here); no pytest and no helm (no chart test rides this ticket);
 # needs python3+pyyaml and git on PATH.
 #
 # Run from anywhere in the worktree (groups as separate argv words, never
 # quoted together):
-#   bash tests/services/forgejo-containers-build.sh              # full set — 47 ok at run end
-#   bash tests/services/forgejo-containers-build.sh t d          # C01 gate — 36 ok
-#   bash tests/services/forgejo-containers-build.sh g1           # C02 gate leg (cf-135 suites are separate files)
-#   bash tests/services/forgejo-containers-build.sh x            # C03 gate — 5 ok
-#   bash tests/services/forgejo-containers-build.sh c02          # run -1's t d r alias, not a run -2 gate
-#   bash tests/services/forgejo-containers-build.sh t16 t17 d16  # per-leg (run -5)
+#   bash tests/services/forgejo-build-containers.sh              # full set — 47 ok at run end
+#   bash tests/services/forgejo-build-containers.sh t d          # C01 gate — 36 ok
+#   bash tests/services/forgejo-build-containers.sh g1           # C02 gate leg (cf-135 suites are separate files)
+#   bash tests/services/forgejo-build-containers.sh x            # C03 gate — 5 ok
+#   bash tests/services/forgejo-build-containers.sh c02          # run -1's t d r alias, not a run -2 gate
+#   bash tests/services/forgejo-build-containers.sh t16 t17 d16  # per-leg (run -5)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-WF=".forgejo/workflows/containers-build.yaml"
+WF=".forgejo/workflows/build-containers.yaml"
 HELP="scripts/forgejo-container-detect.sh"
 GHB=".github/workflows/docker-build.yaml"
 HELP_ABS="$PWD/$HELP"
@@ -223,12 +238,12 @@ HELP_ABS="$PWD/$HELP"
 checks=0
 FAILED=0
 
-TMP=$(mktemp -d /tmp/opencode/forgejo-containers-build-test.XXXXXX) || { echo 'harness: mktemp failed' >&2; exit 2; }
+TMP=$(mktemp -d /tmp/opencode/forgejo-build-containers-test.XXXXXX) || { echo 'harness: mktemp failed' >&2; exit 2; }
 trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 group_t() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17; do WANT["t$i"]=1; done; }
-group_d() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19; do WANT["d$i"]=1; done; }
+group_d() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22; do WANT["d$i"]=1; done; }
 group_x() { for i in 1 2 3 4 5; do WANT["x$i"]=1; done; }
 group_r() { for i in 1 2 3 4 5; do WANT["r$i"]=1; done; }
 group_g() { WANT[g1]=1; }
@@ -244,8 +259,8 @@ else
       r)   group_r ;;
       g)   group_g ;;
       c02) group_t; group_d; group_r ;;
-      t1[0-7]|t[1-9]|d1[0-9]|d[1-9]|x[1-5]|r[1-5]|g1) WANT["$lc"]=1 ;;
-      *) printf 'FAIL: unknown check id %s (expected t1..t17, d1..d19, x1..x5, r1..r5, g1, or groups t d x r g c02)\n' "$a" >&2; exit 2 ;;
+      t1[0-7]|t[1-9]|d2[0-9]|d1[0-9]|d[1-9]|x[1-5]|r[1-5]|g1) WANT["$lc"]=1 ;;
+      *) printf 'FAIL: unknown check id %s (expected t1..t17, d1..d22, x1..x5, r1..r5, g1, or groups t d x r g c02)\n' "$a" >&2; exit 2 ;;
     esac
   done
 fi
@@ -258,7 +273,7 @@ run_leg() {
   if ! "$fn"; then FAILED=$((FAILED + 1)); fi
 }
 
-# --- C01 workflow legs (t1-t17): .forgejo/workflows/containers-build.yaml ----
+# --- C01 workflow legs (t1-t17): .forgejo/workflows/build-containers.yaml ----
 
 leg_t1() {
   [ -f "$WF" ] || { printf 'FAIL: t1: %s does not exist (C01 creates it)\n' "$WF" >&2; return 1; }
@@ -286,9 +301,12 @@ def need(cond, msg):
 
 
 need(isinstance(trig, dict), 'no top-level on: mapping')
-need(set(trig) == {'push', 'pull_request', 'workflow_dispatch'},
-     f'on: keys are {sorted(map(str, trig))}, expected exactly push + pull_request + workflow_dispatch (D7: no dev leg)')
-for name in ('push', 'pull_request'):
+# C15 §A: the push arm dies with owner directive 4 (main-sync calls this
+# workflow); the PR arm (dev-role pr-<branch>-<sha> lane) and the dispatch
+# rebuild hatch stay byte-frozen, and workflow_call is the new sibling.
+need(set(trig) == {'pull_request', 'workflow_dispatch', 'workflow_call'},
+     f'on: keys are {sorted(map(str, trig))}, expected exactly pull_request + workflow_dispatch + workflow_call (C15/D56: the boundary of directive 4 is the push arm ALONE — a dropped PR or dispatch arm is out of scope, a surviving push arm keeps the pre-call era)')
+for name in ('pull_request',):
     blk = trig[name] if isinstance(trig[name], dict) else {}
     need(bool(blk), f'{name}: trigger is not a mapping')
     need(blk.get('branches') == ['main'],
@@ -305,7 +323,7 @@ PY
   then
     return 1
   fi
-  ok "t2: on: is exactly push/PR on main with containers/** paths + string dispatch input, no dev leg [C01 AC2]"
+  ok "t2: on: is exactly PR-on-main with containers/** paths + the string dispatch input + workflow_call — no push arm (C15 re-aim; the merge-base PR posture and rebuild hatch byte-frozen) [C01 AC2; round-5 C15]"
 }
 
 leg_t3() {
@@ -1116,7 +1134,11 @@ PY
   # dispatch no-op, the before==sha no-op and a non-empty set stay silent; a
   # real empty push range and a real empty PR merge-base range both warn. Run
   # -5 keeps those five byte-equivalent as the marker-MISSING bootstrap proofs
-  # (AC2's posture survives the re-scope) and adds three marker-set shapes. The
+  # (AC2's posture survives the re-scope — verified against the round-5
+  # marker-presence gate: dispatch and before==sha stay silent, both real
+  # empty ranges still warn, none of the five hinged on the dead push-event
+  # calm-gate) and adds four marker-set shapes (run -5's three push-era ones
+  # plus the C15 call-era verified-empty case). The
   # all-zero first-push shape is deliberately not pinned here (the detector
   # owns that announcement, d11; the step warning there is the shipped
   # behavior, and neither posture may be demanded by this leg).
@@ -1176,11 +1198,16 @@ PY
   # exits info while the same endpoints without a marker still warn (the
   # shipped shape one line above); (c) marker set with a non-empty answer keeps
   # the no-warning posture and names the marker in the echo. All three stay
-  # silent as ::notice::-free plain echoes (runner v13.2.0).
+  # silent as ::notice::-free plain echoes (runner v13.2.0). The C15 M1
+  # review-fold adds the call-era twin of (b): under the final trigger set
+  # EVERY fan arrives as workflow_call, and the calm branch is gated on MARKER
+  # PRESENCE, not on the dead push event (the M1 blocker: the same endpoints
+  # warned under the push-only gate the fix replaced).
   t14_step_marker "$sdir" 'marker-equals-sha push'        info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_C" || return 1
   t14_step_marker "$sdir" 'marker-verified-empty push'    info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_D" "MARKER_SHA=$S_A" || return 1
   t14_step_marker "$sdir" 'marker set, non-empty push'    visible "$S_A" EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_A" || return 1
-  ok "t14: the detect step echoes changed containers: with the event, endpoint and MARKER_SHA tokens, and the warning scope executes right on eight shapes — empty push/PR ranges without a marker warn, the dispatch no-op, the before==sha no-op and non-empty sets stay silent, and both marker-verified-empty shapes exit with the plain verified-empty info line and no annotation (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6; run -5 C01 AC3]"
+  t14_step_marker "$sdir" 'marker-verified-empty call run' info   -  EVENT_NAME=workflow_call EVENT_BEFORE= "SHA=$S_D" "MARKER_SHA=$S_A" || return 1
+  ok "t14: the detect step echoes changed containers: with the event, endpoint and MARKER_SHA tokens, and the warning scope executes right on nine shapes — empty push/PR ranges without a marker warn, the dispatch no-op, the before==sha no-op and non-empty sets stay silent, and the marker-verified-empty shapes (push and workflow_call alike, plus marker==sha) exit with the plain verified-empty info line and no annotation: the calm gate reads MARKER_SHA presence for any event, the payload warning reserved for marker-missing ranges (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6; run -5 C01 AC3; round-5 C15 M1]"
 }
 
 leg_t15() {
@@ -1239,7 +1266,11 @@ PY
   ok "t15: set -eu stands and no git call in detect() carries || true, 2>/dev/null, a masking redirect or an if-git soft-pedal; next-n's tolerated grep || true is the named exemption [run -2 C01, invariant 5]"
 }
 
-# --- Run -5 marker pins (t16-t17): the advance job and its executed law -------
+# --- Run -5 marker pins (t16-t17): the shared marker — fence + resolver law ----
+# C15 re-aim: the advance job DELETED here (its executed shape now rides
+# forgejo-main-sync.sh t15/t16 — the aggregate writer); what stays is the
+# single-writer FENCE over this file plus the resolver battery on the
+# shared ci/last-built ref.
 
 leg_t16() {
   [ -f "$WF" ] || { printf 'FAIL: t16: %s does not exist\n' "$WF" >&2; return 1; }
@@ -1249,8 +1280,7 @@ import os, re, sys, yaml
 path = sys.argv[1]
 doc = yaml.safe_load(open(path))
 jobs = (doc or {}).get('jobs') or {}
-REF = 'refs/heads/ci/containers-built'
-PUSH = 'git push origin HEAD:' + REF
+REF = 'refs/heads/ci/last-built'
 
 
 def need(cond, msg):
@@ -1259,72 +1289,50 @@ def need(cond, msg):
         sys.exit(1)
 
 
-# AC6 (run -5): the marker moves ONLY through this job, so its shape is the
-# whole delivery-loss law — needs carries the partial-failure rule, the if:
-# carries the push ∧ full-success rule, the plain push carries monotonicity
-# (t17 executes the refusal; r1 byte-pins the condition).
-adv = jobs.get('advance-marker')
-need(adv is not None,
-     'no advance-marker job — the marker can never move, so every push re-diffs its payload before and the delivery-loss class stays open (AC6)')
-needs = adv.get('needs')
-needs = [needs] if isinstance(needs, str) else (needs or [])
-need('detect-changes' in needs and 'build-release' in needs,
-     f'advance-marker.needs is {adv.get("needs")!r}, expected to contain detect-changes + build-release '
-     '(the needs-gate IS the partial-failure law: a red or skipped build-release skips the advance, AC6/AC7)')
-if_expr = str(adv.get('if') or '')
-need("forgejo.event_name == 'push'" in if_expr,
-     f"advance-marker.if is {if_expr!r}, expected the push-event clause — PR/dispatch runs must never move the marker (design 4)")
-need("needs.build-release.result == 'success'" in if_expr,
-     f"advance-marker.if is {if_expr!r}, expected the build-release success clause — a matrix failure must leave the marker put so the re-run retries the residue")
-need('ROLE' not in if_expr,
-     f'advance-marker.if carries ROLE vocabulary ({if_expr!r}) — the job piggybacks build-release role polarity; no own ROLE guard, no new unset-polarity clause (design 4, ci-surface t6 exclusivity)')
-adv_blob = yaml.dump(adv)
-for tok in ('vars.ROLE', 'secrets.'):
-    need(tok not in adv_blob,
-         f'the advance-marker job references {tok} — the marker push rides the checkout automatic same-repo credential '
-         '(the release.yaml idiom); no new secret (plan OQ-2 resolution, AC6)')
-checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and s.get('uses') == 'actions/checkout@v7']
-need(checkouts, 'advance-marker has no actions/checkout@v7 step — the push needs the repository')
-w = checkouts[0].get('with') or {}
-depth = w.get('fetch-depth')
-need(type(depth) is int and depth == 0,
-     f'advance-marker checkout fetch-depth is {depth!r}, expected the integer 0 — the push-negotiation law '
-     '(main-sync/release precedent: a shallow clone cannot negotiate the common history a plain push needs)')
-body = '\n'.join(str(s.get('run', '')) for s in adv.get('steps') or []
-                 if isinstance(s, dict) and 'run' in s)
-need(PUSH in body,
-     f'the advance step does not carry the plain-push idiom byte-exactly: {PUSH!r} (AC6; t17 executes this body)')
-push_stmts = [ln.split('#', 1)[0].strip() for ln in body.splitlines()
-              if re.search(r'git\s+push', ln) and not ln.strip().startswith('#')]
-need(push_stmts, 'no executable git push statement in advance-marker (harness fault if the byte pin passed)')
-for stmt in push_stmts:
-    need('--force' not in stmt and '--force-with-lease' not in stmt
-         and not re.search(r'(^|\s)-f(\s|$)', stmt) and '+' not in stmt,
-         f'the advance push statement {stmt!r} carries a force form (-f/--force/--force-with-lease/+ refspec) — '
-         'git non-FF refusal IS the monotonicity guard, never a forced move (AC6; prose comments may name the refusal, the command may not wear the flag)')
+adv = [n for n in jobs if 'advance' in str(n)]
+need(not adv,
+     f'this builder still carries advance job(s) {adv} — C15 deletes them (the aggregate writer lives in main-sync.yaml; a per-builder advance on the SHARED branch is the poison D54 ruled out: one green fire would swallow the sibling failed range)')
+raw = open(path).read()
+pushes = [ln.strip() for ln in raw.splitlines()
+          if re.search(r'git\s+push', ln) and REF in ln and not ln.strip().startswith('#')]
+need(not pushes,
+     f'the file carries marker-push statements outside any job pin ({pushes[:2]!r}) — a hidden writer dodges the single-writer fence (C15 AC5)')
+need(REF in raw,
+     f'the resolver no longer names {REF} — a builder that stopped READING the shared marker hands every run the payload fallback and re-opens the delivery-loss class (C14 adoption stands through C15)')
+# Named readers/writers set — the #56 join-point (D55): the ref may live ONLY
+# in the allow-set, and among those files exactly main-sync.yaml pushes it.
+ALLOW = {'build-containers.yaml', 'build-charts.yaml', 'main-sync.yaml'}
+writers = set()
 for dirpath, _dn, filenames in os.walk(os.path.dirname(path)):
     for name in sorted(filenames):
         if not name.endswith(('.yaml', '.yml')):
             continue
         p2 = os.path.join(dirpath, name)
-        if os.path.basename(p2) != os.path.basename(path):
-            need(REF not in open(p2).read(),
-                 f'{p2} also names {REF} — the marker ref lives in containers-build.yaml only (main-sync mirrors refs/heads/main; GitHub never receives it, plan Out-of-scope)')
+        txt = open(p2).read()
+        if name not in ALLOW:
+            need(REF not in txt,
+                 f'{p2} names the shared marker ref outside the set {sorted(ALLOW)} — a new builder joins the set in its own commit (card #56), it does not route around this leg')
+            continue
+        if any(REF in ln and re.search(r'git\s+push', ln) and not ln.strip().startswith('#')
+               for ln in txt.splitlines()):
+            writers.add(name)
+need(writers == {'main-sync.yaml'},
+     f'marker-push carriers are {sorted(writers)}, expected exactly [main-sync.yaml] — both builders carry zero advance jobs and the aggregate is the single writer (C15 AC5, D54)')
 PY
   then
     return 1
   fi
-  ok "t16: advance-marker exists; needs detect-changes+build-release; its if: names the push event and build-release success (no ROLE vocabulary anywhere in the job, no secrets.); its checkout pins integer fetch-depth 0; the step body byte-carries git push origin HEAD:refs/heads/ci/containers-built with no force form on any push statement; the ref is named in no other .forgejo workflow [run -5 C01, AC6]"
+  ok "t16: no advance job and zero marker pushes in this file; the resolver still names refs/heads/ci/last-built; the ref lives in no .forgejo workflow outside {build-charts.yaml, build-containers.yaml, main-sync.yaml}; of that set only main-sync.yaml carries a marker push — the single-writer fence; executed writes live in forgejo-main-sync.sh (C15 §D t16 re-aim, AC5/D54/D55)"
 }
 
 leg_t17() {
   local sdir="$TMP/t17"
   rm -rf "$sdir"; mkdir -p "$sdir" \
     || { printf 'FAIL: t17: harness could not stage the t17 scratch dir\n' >&2; return 1; }
-  if ! python3 - "$WF" "$sdir/advance.sh" "$sdir/resolver-push.sh" "$sdir/resolver-pr.sh" <<'PY'
+  if ! python3 - "$WF" "$sdir/resolver-call.sh" "$sdir/resolver-pr.sh" <<'PY'
 import sys, yaml
 
-wf, adv_out, push_out, pr_out = sys.argv[1:5]
+wf, call_out, pr_out = sys.argv[1:4]
 jobs = (yaml.safe_load(open(wf)) or {}).get('jobs') or {}
 
 
@@ -1332,12 +1340,6 @@ def fail(msg):
     print(f'FAIL: t17: {msg}', file=sys.stderr)
     sys.exit(1)
 
-
-adv = (jobs.get('advance-marker') or {}).get('steps') or []
-adv_runs = [str(s.get('run', '')) for s in adv if isinstance(s, dict) and 'run' in s]
-if not adv_runs:
-    fail('the advance-marker job carries no run step to stage (the job is absent — authored-red until C01 lands it)')
-open(adv_out, 'w').write('\n'.join(adv_runs) + '\n')
 
 det = (jobs.get('detect-changes') or {}).get('steps') or []
 
@@ -1351,27 +1353,24 @@ def locate(pred):
 
 mi, mstep = locate(lambda s: s.get('id') == 'marker')
 if mi is None or not str((mstep or {}).get('run', '')):
-    fail('detect-changes carries no run step with id: marker to stage — the resolver is absent, and the detect env names steps.marker.outputs.sha (authored-red until C01 lands it)')
+    fail('detect-changes carries no run step with id: marker to stage — the resolver is absent')
 di, _d = locate(lambda s: 'diag' in str(s.get('name', '')))
 ti, _t = locate(lambda s: 'changed-containers=' in str(s.get('run', '')))
 if di is None or ti is None:
     fail('harness cannot locate the diag/detect steps to pin the resolver position (harness fault, not a code red)')
 if not di < mi < ti:
-    fail(f'the id: marker step sits at index {mi}, not between diag ({di}) and the detect step ({ti}) — the C01 task names its position')
-# Only the event interpolation is normalized for offline execution (header
-# pin); any other ${{ ... }} stays literal and reddens the run it is in.
+    fail(f'the id: marker step sits at index {mi}, not between diag ({di}) and the detect step ({ti}) — the resolver position is law')
+# C15: the advance-exec half of this battery moved to forgejo-main-sync.sh
+# (the aggregate writer); the resolver stays and its marker-side event is now
+# workflow_call (the push arm is gone with the trigger — D56).
 mtext = str(mstep.get('run', ''))
-open(push_out, 'w').write(mtext.replace('${{ forgejo.event_name }}', 'push') + '\n')
+open(call_out, 'w').write(mtext.replace('${{ forgejo.event_name }}', 'workflow_call') + '\n')
 open(pr_out, 'w').write(mtext.replace('${{ forgejo.event_name }}', 'pull_request') + '\n')
 PY
   then
-    printf 'FAIL: t17: could not stage the resolver/advance step bodies from %s\n' "$WF" >&2
+    printf 'FAIL: t17: could not stage the resolver step bodies from %s\n' "$WF" >&2
     return 1
   fi
-  # Scratch topology: bare remote + clone; work2 is copied BEFORE its own
-  # commit, so the commit it pushes as the marker's ahead-move is unreachable
-  # from work — one fixture feeds the non-FF arm (b) and the orphaned-marker
-  # arm (c3) without any history rewriting.
   local R="$sdir/remote.git" W="$sdir/work" W2="$sdir/work2" W3="$sdir/work3"
   git init -q --bare "$R" >/dev/null 2>&1 \
     || { printf 'FAIL: t17: harness could not init the scratch bare remote\n' >&2; return 1; }
@@ -1386,84 +1385,62 @@ PY
   local rc MARK1 MARK2 HEAD2 GOT
   local garbage; garbage=$(printf 'z%.0s' {1..40})
 
-  # (c1) resolver, marker ABSENT: bootstrap shape — exit 0, sha= emitted empty
+  # (c1) resolver, marker ABSENT on a call run: bootstrap shape — exit 0,
+  # sha= emitted empty (the tip-only detect arm reads it next)
   rm -f "$sdir/out"; rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-absent.log" 2>&1 || rc=$?
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=workflow_call MARKER_SHA= bash "$sdir/resolver-call.sh" ) >"$sdir/resolver-absent.log" 2>&1 || rc=$?
   [ "$rc" -eq 0 ] \
-    || { printf 'FAIL: t17: the resolver exited %d with the marker absent on the scratch remote — a missing marker is the bootstrap shape: emit sha= empty, exit 0 (C01 Tasks a) — see %s\n' "$rc" "$sdir/resolver-absent.log" >&2; return 1; }
+    || { printf 'FAIL: t17: the resolver exited %d with the marker absent on a call run — a missing marker is the bootstrap shape: emit sha= empty, exit 0 — see %s\n' "$rc" "$sdir/resolver-absent.log" >&2; return 1; }
   grep -q '^sha=$' "$sdir/out" \
-    || { printf 'FAIL: t17: absent-marker output is [%s], expected an empty sha= emission — steps.marker.outputs.sha must be DEFINED on every event (chunk Notes-for-dev), and bootstrap must not synthesize a value\n' "$(tr '\n' ';' < "$sdir/out" 2>/dev/null)" >&2; return 1; }
+    || { printf 'FAIL: t17: absent-marker output is [%s], expected an empty sha= emission — steps.marker.outputs.sha must be DEFINED on every event (a missing output key unsets the detect env)\n' "$(tr '\n' ';' < "$sdir/out" 2>/dev/null)" >&2; return 1; }
 
-  # (a) advance body against the marker-less remote: creates the ref at HEAD
-  rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-create.log" 2>&1 || rc=$?
-  [ "$rc" -eq 0 ] \
-    || { printf 'FAIL: t17: the staged advance body exited %d pushing to a scratch remote with no marker — first-creation must succeed (AC6; the release.yaml automatic-credential idiom, executed here over file transport) — see %s\n' "$rc" "$sdir/advance-create.log" >&2; return 1; }
-  MARK1=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built) \
-    || { printf 'FAIL: t17: after the advance body ran the scratch remote carries no refs/heads/ci/containers-built — see %s\n' "$sdir/advance-create.log" >&2; return 1; }
-  [ "$MARK1" = "$HEAD1" ] \
-    || { printf 'FAIL: t17: the marker landed at %s, expected the run HEAD %s (HEAD:refs/heads/ci/containers-built)\n' "$MARK1" "$HEAD1" >&2; return 1; }
-
-  # (c2) resolver, marker present and reachable: emits the marker sha
+  # create the marker directly (the WRITER is main-sync now — this battery
+  # only consumes), then (c2) resolver with the marker present+reachable.
+  git -C "$W" push -q origin "HEAD:refs/heads/ci/last-built" \
+    || { printf 'FAIL: t17: harness could not seed the scratch marker (setup fault)\n' >&2; return 1; }
   rm -f "$sdir/out"; rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-present.log" 2>&1 || rc=$?
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=workflow_call MARKER_SHA= bash "$sdir/resolver-call.sh" ) >"$sdir/resolver-present.log" 2>&1 || rc=$?
   [ "$rc" -eq 0 ] \
     || { printf 'FAIL: t17: the resolver exited %d with a present, reachable marker — see %s\n' "$rc" "$sdir/resolver-present.log" >&2; return 1; }
   GOT=$(sed -n 's/^sha=//p' "$sdir/out" | tail -n1)
   [ "$GOT" = "$HEAD1" ] \
     || { printf 'FAIL: t17: the resolver answered sha=%s, expected the marker oid %s (present+reachable must hand detect the marker, not an empty fallback)\n' "$GOT" "$HEAD1" >&2; return 1; }
 
-  # (b) non-FF advance EXECUTED: move the marker ahead from a second clone,
-  # then re-run the SAME body from the behind clone — git must refuse and the
-  # ref must not move (monotonicity is the push law, not a written check)
+  # (c3) resolver, marker unreachable from THIS checkout (advanced from a
+  # sibling clone the checkout never fetched): LOUD fail naming the value and
+  # the owner verbs — never a silent downgrade to the fallback.
   cp -a "$W" "$W2" || { printf 'FAIL: t17: harness could not copy the scratch clone\n' >&2; return 1; }
   echo ahead > "$W2/ahead.txt"
   git -C "$W2" add -A && git -C "$W2" commit -qm ff-ahead || return 1
   HEAD2=$(git -C "$W2" rev-parse HEAD) || return 1
-  git -C "$W2" push -q origin "HEAD:refs/heads/ci/containers-built" \
+  git -C "$W2" push -q origin "HEAD:refs/heads/ci/last-built" \
     || { printf 'FAIL: t17: harness could not pre-move the scratch marker fast-forward (setup fault)\n' >&2; return 1; }
-  rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv2" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-refused.log" 2>&1 || rc=$?
-  [ "$rc" -ne 0 ] \
-    || { printf 'FAIL: t17: the advance body exited 0 against a marker already ahead at %s — a plain push MUST be refused by git here; if this leg is green the body grew a force form or a rewind (AC6, design 4)\n' "$HEAD2" >&2; return 1; }
-  MARK2=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built)
-  [ "$MARK2" = "$HEAD2" ] \
-    || { printf 'FAIL: t17: the refused advance left the marker at %s, expected the unmoved ahead sha %s\n' "$MARK2" "$HEAD2" >&2; return 1; }
-  grep -qiE 'non-fast-forward|\[rejected\]' "$sdir/advance-refused.log" \
-    || { printf 'FAIL: t17: the refused advance names no rejection form (non-fast-forward / [rejected]) — the monotonicity refusal is the loud guard the operator reads in the job log, not just a red exit — see %s\n' "$sdir/advance-refused.log" >&2; return 1; }
-
-  # (c3) resolver, marker unreachable from THIS checkout (orphaned by a
-  # history rewrite): LOUD fail naming the value and the owner verbs — never
-  # a silent downgrade to the fallback (d13 kin)
   rm -f "$sdir/out"; rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-orphan.log" 2>&1 || rc=$?
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=workflow_call MARKER_SHA= bash "$sdir/resolver-call.sh" ) >"$sdir/resolver-orphan.log" 2>&1 || rc=$?
   [ "$rc" -ne 0 ] \
-    || { printf 'FAIL: t17: the resolver exited 0 although the marker (%s) is unreachable from the checkout — an orphaned marker must fail loud, not downgrade this run to before..sha in silence (AC5)\n' "$HEAD2" >&2; return 1; }
+    || { printf 'FAIL: t17: the resolver exited 0 although the marker (%s) is unreachable from the checkout — an orphaned marker must fail loud, not downgrade this run to the payload fallback in silence\n' "$HEAD2" >&2; return 1; }
   grep -qF -- "$HEAD2" "$sdir/resolver-orphan.log" \
     || { printf 'FAIL: t17: the orphaned-marker fail does not name the marker sha — a die that hides which value broke it is not diagnosable from the job log\n' >&2; return 1; }
   grep -qiE 'reset|delete' "$sdir/resolver-orphan.log" \
-    || { printf 'FAIL: t17: the orphaned-marker fail carries no owner note (reset or delete the ref, C01 Tasks a) — the message must say what unblocks the run\n' >&2; return 1; }
+    || { printf 'FAIL: t17: the orphaned-marker fail carries no owner note (reset or delete the ref) — the message must say what unblocks the run\n' >&2; return 1; }
 
   # (c4) resolver, non-hex garbage from ls-remote (PATH shim answers the read):
-  # fatal, naming the value — the resolver cannot be fed a non-sha through the
-  # scratch-remote route, and the script-side twin of this posture is d19
+  # fatal, naming the value.
   local shim="$sdir/shim" realgit
   mkdir -p "$shim" || return 1
   realgit=$(command -v git) || return 1
-  printf '#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%%s\\trefs/heads/ci/containers-built\\n" "%s"; exit 0; fi\nexec %s "$@"\n' \
+  printf '#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%%s\\trefs/heads/ci/last-built\\n" "%s"; exit 0; fi\nexec %s "$@"\n' \
     "$garbage" "$realgit" > "$shim/git" || return 1
   chmod +x "$shim/git" || return 1
   rm -f "$sdir/out"; rc=0
-  ( cd "$W" && env PATH="$shim:$PATH" GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-garbage.log" 2>&1 || rc=$?
+  ( cd "$W" && env PATH="$shim:$PATH" GITHUB_OUTPUT="$sdir/out" EVENT_NAME=workflow_call MARKER_SHA= bash "$sdir/resolver-call.sh" ) >"$sdir/resolver-garbage.log" 2>&1 || rc=$?
   [ "$rc" -ne 0 ] \
-    || { printf 'FAIL: t17: the resolver accepted a non-hex ls-remote value (%s) with exit %d — garbage in the marker ref is fatal, not a bootstrap reinterpretation (design 2)\n' "$garbage" "$rc" >&2; return 1; }
+    || { printf 'FAIL: t17: the resolver accepted a non-hex ls-remote value (%s) with exit %d — garbage in the marker ref is fatal, not a bootstrap reinterpretation\n' "$garbage" "$rc" >&2; return 1; }
   grep -qF -- "$garbage" "$sdir/resolver-garbage.log" \
     || { printf 'FAIL: t17: the non-hex resolver fail does not name the garbage value — the die must be self-describing\n' >&2; return 1; }
 
-  # (c5) non-push events: sha= emitted, exit 0, NO network — the origin here is
-  # a dead path, so any resolver that touches the network on the PR arm dies
-  # loudly instead of answering; the output must stay defined (AC8 posture:
-  # PR/dispatch arms byte-identical, the marker is push-side only)
+  # (c5) non-marker-side events: sha= emitted, exit 0, NO network — the dead
+  # origin makes any read die loudly; PR/dispatch arms stay empty-emitting.
   mkdir -p "$W3" \
     && ( cd "$W3" && git init -q . && git config user.email test@example.invalid && git config user.name test \
          && echo x > x.txt && git add -A && git commit -qm x && git remote add origin "$sdir/no-such-remote.git" ) \
@@ -1471,15 +1448,15 @@ PY
   rm -f "$sdir/out"; rc=0
   ( cd "$W3" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=pull_request MARKER_SHA= bash "$sdir/resolver-pr.sh" ) >"$sdir/resolver-pr.log" 2>&1 || rc=$?
   [ "$rc" -eq 0 ] \
-    || { printf 'FAIL: t17: the resolver exited %d on pull_request against a DEAD origin — non-push events must emit sha= empty and exit 0 with no network read (C01 Tasks a)\n' "$rc" >&2; return 1; }
+    || { printf 'FAIL: t17: the resolver exited %d on pull_request against a DEAD origin — non-marker-side events must emit sha= empty and exit 0 with no network read\n' "$rc" >&2; return 1; }
   grep -q '^sha=$' "$sdir/out" \
-    || { printf 'FAIL: t17: the pull_request resolver run wrote no empty sha= output — the detect env must never go missing-and-unset on PR/dispatch (chunk Notes-for-dev) — see %s\n' "$sdir/resolver-pr.log" >&2; return 1; }
-  ok "t17: executed offline against a scratch bare remote — the resolver emits empty for an absent marker, emits the marker sha when present+reachable, fails LOUD naming the value for an orphaned marker (with the reset-or-delete owner note) and for non-hex garbage, and stays network-free emitting sha= on pull_request; the staged advance body creates refs/heads/ci/containers-built at HEAD, and the same push against a moved-ahead marker exits non-zero with the non-fast-forward refusal named and the ref unmoved (monotonicity executed, not texted) [run -5 C01, AC5+AC6]"
+    || { printf 'FAIL: t17: the pull_request resolver run wrote no empty sha= output — the detect env must never go missing-and-unset off the marker side\n' >&2; return 1; }
+  ok "t17: executed offline against a scratch bare remote on the CALL side — the resolver emits empty for an absent marker, emits the marker sha when present+reachable, fails LOUD naming the value for an orphaned marker (with the reset-or-delete owner note) and for non-hex garbage, and stays network-free emitting sha= on pull_request; the advance-exec half of this battery now lives in forgejo-main-sync.sh t16 (the aggregate writer, C15 §D) [run -5 C01 AC5; round-5 C15]"
 }
 
-# --- C02 run -1 ROLE/dual-registry legs (r1-r5): containers-build.yaml --------
+# --- C02 run -1 ROLE/dual-registry legs (r1-r5): build-containers.yaml --------
 
-# r1-r5 pin the run -1 contract on .forgejo/workflows/containers-build.yaml
+# r1-r5 pin the run -1 contract on .forgejo/workflows/build-containers.yaml
 # alone (no-mixing: they read no other file). The guard bytes are the
 # owner-confirmed cannot-error spellings — an expression ERROR fails a job on
 # the deployed runner while a false guard merely skips it, and no live probe
@@ -2384,6 +2361,67 @@ leg_d19() {
   ok "d19: an unreachable MARKER_SHA propagates git 128 with no JSON on stdout through the unmasked diff — the script stays independently loud about the new base [run -5 C01, AC5]"
 }
 
+# --- round-5 C15 call-arm legs (d20-d22): workflow_call through the detector ----
+# C15 §A task 4 re-orders the push arm so the MARKER check precedes the
+# empty-before die (under a call an empty before is EXPECTED — there is no
+# push payload — while the die stays scoped to real pushes), and gives the
+# no-marker call its own tip-only bootstrap announce.
+
+leg_d20() {
+  helper_ready d20 || return 1
+  build_fix3 || { printf 'FAIL: d20: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # call + marker + EMPTY before: the marker wins — no A5 die (the die belongs
+  # to push payloads only). before='' would have died under the shipped order.
+  detect_capture "$FIX3" EVENT_NAME=workflow_call "MARKER_SHA=$SHA3_A" "EVENT_BEFORE=" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 0 ] \
+    || { printf 'FAIL: d20: a workflow_call run with the marker set and an empty before exited %d — the marker check must precede the empty-before die (C15 call-aware reorder); stderr: %s\n' "$CAP_RC" "$CAP_ERR" >&2; return 1; }
+  local stripped; stripped="${CAP_OUT//[[:space:]]/}"
+  [ "$stripped" = '["alpha","beta"]' ] \
+    || { printf 'FAIL: d20: call run marker=A before="" sha=C answered %s, expected the marker range A..C ["alpha","beta"]\n' "$stripped" >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qF 'base=marker' \
+    || { printf 'FAIL: d20: the call run echoes no base=marker token — call runs must read distinctly from push-era ones (C15 header: base token echoes per base_src)\n' >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qF 'workflow_call' \
+    || { printf 'FAIL: d20: the range echo does not name the workflow_call event — the event token is part of the channel law\n' >&2; return 1; }
+  ok "d20: workflow_call with a marker and an empty before diffs marker..sha (base=marker) — the marker check precedes the payload die (C15 §A task 4)"
+}
+
+leg_d21() {
+  helper_ready d21 || return 1
+  build_fix3 || { printf 'FAIL: d21: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # call + NO marker: tip-only bootstrap — HEAD^..HEAD, announced, exit 0.
+  # An empty before on a call run must NOT hit the push-payload die either.
+  detect_capture "$FIX3" EVENT_NAME=workflow_call "MARKER_SHA=" "EVENT_BEFORE=" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 0 ] \
+    || { printf 'FAIL: d21: a workflow_call run with no marker exited %d — the bootstrap call shape is tip-only, not a death (C15 new arm); stderr: %s\n' "$CAP_RC" "$CAP_ERR" >&2; return 1; }
+  local stripped; stripped="${CAP_OUT//[[:space:]]/}"
+  [ "$stripped" = '["alpha"]' ] \
+    || { printf 'FAIL: d21: no-marker call answered %s, expected the tip-only posture ["alpha"] (HEAD^..HEAD on the fixture)\n' "$stripped" >&2; return 1; }
+  case "$CAP_ERR" in
+    *'::warning::'*) ;;
+    *) printf 'FAIL: d21: the no-marker call carries no ::warning:: — the bootstrap announce is the difference between a narrowing and a silent lie (C15: tip-only + warning)\n' >&2; return 1 ;;
+  esac
+  printf '%s' "$CAP_ERR" | grep -qF 'tip-only' \
+    || { printf 'FAIL: d21: the call bootstrap annotation does not name tip-only — the stable marker token is the grep handle\n' >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qF 'base=tip-only' \
+    || { printf 'FAIL: d21: the range echo carries no base=tip-only token — call runs must read distinctly from push-era ones\n' >&2; return 1; }
+  ok "d21: workflow_call with no marker falls back to an announced tip-only HEAD^..HEAD range (base=tip-only), never the push-payload die (C15 §A task 4 new arm)"
+}
+
+leg_d22() {
+  helper_ready d22 || return 1
+  build_fix3 || { printf 'FAIL: d22: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # The die's SCOPE survives the reorder: a REAL push (event push) with an
+  # empty before and no marker still dies — the reordered marker check must
+  # not have swallowed the push law (d12 is the no-marker twin; this leg
+  # proves the reorder moved the marker arm, not the die past everything).
+  detect_capture "$FIX3" EVENT_NAME=push "MARKER_SHA=" "EVENT_BEFORE=" "SHA=$SHA3_C"
+  [ "$CAP_RC" -ne 0 ] \
+    || { printf 'FAIL: d22: a push with empty before and no marker exited 0 (%s) — under the call-aware reorder the die stays scoped to real pushes (no push payload sends an empty before)\n' "${CAP_OUT//[[:space:]]/}" >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qi 'before' \
+    || { printf 'FAIL: d22: the push-arm die names nothing — it must keep naming the before it refused (A5 law, now scoped)\n' >&2; return 1; }
+  ok "d22: the empty-before push run (marker absent) still dies loud after the call-aware reorder — the die stayed scoped to real pushes, the marker arm moved ahead of it (C15 §A task 4)"
+}
+
 # --- C02 cutover legs (x1-x5) --------------------------------------------------
 
 leg_x1() {
@@ -2551,8 +2589,8 @@ for f in files:
     except OSError as exc:
         errs.append(f'cannot read {f}: {exc}')
         continue
-    if not any('containers-build' in ln for ln in lines):
-        errs.append(f'{f} names containers-build nowhere — C02 re-pins the container-CI docs to the forge workflow')
+    if not any('build-containers' in ln for ln in lines):
+        errs.append(f'{f} names build-containers nowhere — the round-5 rename re-pins the container-CI docs to the builder\'s new name (C15 pin 4; the C02 rule survives: the docs must name the workflow that actually runs)')
     for i, ln in enumerate(lines, 1):
         if 'docker-build.yaml' in ln and 'workflow_dispatch' not in ln:
             errs.append(f'{f}:{i} names docker-build.yaml without workflow_dispatch — the only allowed co-mention is the workflow_dispatch-only manual fallback (C02 x3 gate)')
@@ -2561,7 +2599,7 @@ if errs:
         print(f'FAIL: x3: {e}', file=sys.stderr)
     sys.exit(1)
 PY
-  ok "x3: SKILL.md, overview.md and regenerated AGENTS.md name containers-build; every docker-build.yaml line co-names workflow_dispatch [C02 AC3]"
+  ok "x3: SKILL.md, overview.md and regenerated AGENTS.md name build-containers; every docker-build.yaml line co-names workflow_dispatch [C02 AC3; round-5 C15 pin 4 re-needle]"
 }
 
 leg_x4() {
@@ -2763,6 +2801,9 @@ run_leg d16 leg_d16
 run_leg d17 leg_d17
 run_leg d18 leg_d18
 run_leg d19 leg_d19
+run_leg d20 leg_d20
+run_leg d21 leg_d21
+run_leg d22 leg_d22
 run_leg x1 leg_x1
 run_leg x2 leg_x2
 run_leg x3 leg_x3
@@ -2771,8 +2812,8 @@ run_leg x5 leg_x5
 run_leg g1 leg_g1
 
 if [ "$FAILED" -eq 0 ]; then
-  printf 'PASS: forgejo-containers-build checks (%d ok)\n' "$checks"
+  printf 'PASS: forgejo-build-containers checks (%d ok)\n' "$checks"
 else
-  printf 'FAIL: forgejo-containers-build checks (%d ok, %d failed)\n' "$checks" "$FAILED"
+  printf 'FAIL: forgejo-build-containers checks (%d ok, %d failed)\n' "$checks" "$FAILED"
   exit 1
 fi

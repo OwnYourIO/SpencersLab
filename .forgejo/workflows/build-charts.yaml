@@ -1,5 +1,8 @@
 # Build Charts — the chart bump+publish pipeline running on Forgejo Actions
-# (cf-55). The prod instance's runner is the single chart-version authority:
+# (cf-55), INVOKED BY main-sync.yaml on the prod-main fan (C15/D56 — the
+# push arm is retired; path filtering lives in the marker..sha detection on
+# the shared ci/last-built marker). The prod instance's runner is the single
+# chart-version authority:
 # it detects changed charts, test-builds them, commits Chart.yaml calendar
 # bumps (Y.M.N) to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
 # byte-stable consumer contract) and this instance's Helm package registry.
@@ -11,7 +14,7 @@
 # contains(), so a list value like dev,prod passes, and a non-prod value
 # renders the guard false and nothing fires — an unguarded twin would
 # double-publish from the dev copy (D8). Unset stays narrow here BY
-# DELIBERATE choice, beside containers-build.yaml's widen: this pipeline
+# DELIBERATE choice, beside build-containers.yaml's widen: this pipeline
 # commits to main and mints releases, so it must never fire unconfigured.
 # Substring caveat: no future role word may contain prod as a substring —
 # "production" would silently widen these guards. has-changes gating belongs
@@ -30,10 +33,10 @@
 # chart per fire (D47).
 name: Build Charts
 on:
-  push:
-    branches: [main]
-    paths:
-      - charts/**
+  workflow_call:
+    outputs:
+      bump_sha:
+        value: ${{ jobs.bump.outputs.bump_sha }}
 
 jobs:
   changes:
@@ -50,18 +53,65 @@ jobs:
           # below return an empty change set — a silently green "nothing
           # changed" run, the loudest shallow-clone failure (V-6-1).
           fetch-depth: 0
+      - name: resolve last-built marker
+        id: marker
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          # The marker is the fire's base (C14/D53). Marker-side events:
+          # push now, workflow_call from C15 — the gate is written final so
+          # C15 removes the trigger, not this body. Non-marker events still
+          # emit the output key: a step output that goes missing would reach
+          # detect() unset rather than empty, and an empty marker is exactly
+          # the state the payload arms are specified against.
+          if [ "$EVENT_NAME" != push ] && [ "$EVENT_NAME" != workflow_call ]; then
+            echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+            exit 0
+          fi
+          marker=$(git ls-remote origin refs/heads/ci/last-built | cut -f1)
+          if [ -z "$marker" ]; then
+            # No marker yet: the payload arms answer, and this run's own
+            # green advance creates it.
+            echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+            exit 0
+          fi
+          if ! printf '%s' "$marker" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "build-charts: the marker ref answered a non-sha value: $marker" >&2
+            exit 1
+          fi
+          if ! git cat-file -e "$marker^{commit}"; then
+            # A history rewrite can orphan the marker: silently downgrading
+            # this fire to before..sha would re-open the hole the marker
+            # exists to close, so the run stops here with the owner verbs.
+            echo "build-charts: marker $marker is unreachable from this checkout — reset the marker ref to a reachable commit or delete it to fall back" >&2
+            exit 1
+          fi
+          echo "sha=$marker" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
       - name: Detect changed charts
         id: detect
         env:
           EVENT_BEFORE: ${{ github.event.before }}
           EVENT_SHA: ${{ github.sha }}
+          EVENT_MARKER: ${{ steps.marker.outputs.sha }}
         run: |
           set -euo pipefail
-          # Pure-git detection (D3). Forgejo event payloads can carry missing
-          # keys (RESEARCH A3): an absent or all-zero 'before' is the
-          # first-push-on-the-branch shape, diff HEAD^ instead.
-          if [ -z "${EVENT_BEFORE}" ] || [ "${EVENT_BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+          # Pure-git detection (D3), marker-anchored (C14/D53): whenever the
+          # resolver found a marker it is the base — marker..sha wins over
+          # every payload fallback, so a chart change a dead run lost stays
+          # inside the next fire's range instead of being skipped forever.
+          # All-zero before (first push, marker absent) diffs HEAD^ and says
+          # so; an EMPTY before is fatal — no push payload sends one, and the
+          # silent HEAD^ fallback that used to hide it is buried (the
+          # containers law mirrored; D53 records the behavior change).
+          if [ -n "${EVENT_MARKER}" ]; then
+            CHANGED_FILES=$(git diff --name-only "${EVENT_MARKER}" "${EVENT_SHA}" -- charts/ || true)
+          elif [ "${EVENT_BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+            echo "::warning::first push on the branch (all-zero before, no marker yet) — diffing HEAD^ only" >&2
             CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- charts/ || true)
+          elif [ -z "${EVENT_BEFORE}" ]; then
+            echo "build-charts: EVENT_BEFORE is empty and no marker exists — the payload chain cannot resolve a base; no push payload sends an empty before" >&2
+            exit 1
           else
             CHANGED_FILES=$(git diff --name-only "${EVENT_BEFORE}" "${EVENT_SHA}" -- charts/ || true)
           fi
@@ -75,6 +125,20 @@ jobs:
               RESULT=$(echo "$RESULT" | jq -c --arg c "$c" '. + [$c]')
             fi
           done
+          # Idempotence reads as data (C14 task 3): a marker-anchored run
+          # with an empty set means the marker already covers the range —
+          # the verified-empty info line, NOT an anomaly annotation. The
+          # anomaly warning stays reserved for an empty set on a payload
+          # range; a before==sha no-op push stays silent (containers'
+          # :199-204 semantics, inline form).
+          if [ -z "$CHANGED_FILES" ] && [ -n "${EVENT_MARKER}" ]; then
+            echo "changed set verified empty: marker..sha (marker=${EVENT_MARKER} sha=${EVENT_SHA})"
+          elif [ -z "$CHANGED_FILES" ] && [ -z "${EVENT_MARKER}" ] \
+               && [ -n "${EVENT_BEFORE}" ] \
+               && [ "${EVENT_BEFORE}" != "0000000000000000000000000000000000000000" ] \
+               && [ "${EVENT_BEFORE}" != "${EVENT_SHA}" ]; then
+            echo "::warning::empty changed set on a real before..sha range — nothing under charts/ moved" >&2
+          fi
           echo "CHARTS=$RESULT" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
           if [ "$RESULT" = "[]" ]; then
             echo "HAS_CHANGES=false" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
@@ -108,12 +172,16 @@ jobs:
 
           path = sys.argv[1]
           text = open(path).read()
-          m = re.search(r"(?m)^version: (\d+)\.(\d+)\.(\d+)$", text)
+          m = re.search(r"(?m)^version: (\d+)\.(\d+)\.(\d+)(?:[ \t]+#[^\n]*)?[ \t]*$", text)
           if not m:
               raise SystemExit(f"{path}: top-level version: is not MAJOR.MINOR.PATCH")
           new = f"{m.group(1)}.{m.group(2)}.{int(m.group(3)) + 1}"
           # Only the version: line is rewritten — appVersion stays untouched
-          # (the old action's app_version: false semantics).
+          # (the old action's app_version: false semantics). The tolerated
+          # tail is a # comment: it sits after m.end(3), so the group-sliced
+          # write leaves it in the file (C13 — a comment on the line must not
+          # kill the parse, the Nov-25 fire class; junk and #nospace tails
+          # still refuse).
           print(f"test-bump {path}: {m.group(0)} -> version: {new}")
           open(path, "w").write(text[:m.start(1)] + new + text[m.end(3):])
           PY
@@ -150,6 +218,8 @@ jobs:
   bump:
     if: contains(vars.ROLE, 'prod')
     needs: [test-build, changes]
+    outputs:
+      bump_sha: ${{ steps.bump.outputs.sha }}
     runs-on: ubuntu-24.04
     concurrency:
       # Opportunistic only: Forgejo documents concurrency as best-effort and
@@ -164,6 +234,7 @@ jobs:
           # single-commit default checkout (V-6).
           fetch-depth: 0
       - name: Bump changed charts and fast-forward main
+        id: bump
         env:
           CHARTS_JSON: ${{ needs.changes.outputs.charts }}
           PUBLISHED_INDEX: https://ownyourio.github.io/SpencersLab/index.yaml
@@ -181,9 +252,13 @@ jobs:
           # git itself refuses a stale head: fast-forward-only, a refused
           # attempt re-loops and can never overwrite (V-4). No secret
           # reference: the checkout's automatic same-repo credential pushes
-          # main, and its push re-triggers no workflow — that
-          # non-re-trigger is the loop guard (R3/D5).
-          # ONE clock stamp per run (the containers-build month= law): all
+          # main. Loop guard (C15/D53): a re-fire of the same range reads
+          # marker..sha EMPTY — the marker at-or-past the endpoint makes the
+          # detection verified-empty and mints nothing, so even a triggering
+          # re-run cannot double-bump; the marker idempotence IS the loop
+          # guard (the retired push-era shape relied on main's own
+          # non-re-trigger of a workflow push).
+          # ONE clock stamp per run (the build-containers month= law): all
           # retry attempts share one Y.M, so a straddle of UTC midnight on
           # the 1st cannot split a release lineage across two months. The
           # month is UNPADDED here and int()-reformatted in the derivation:
@@ -255,7 +330,7 @@ jobs:
           for chart in json.loads(sys.argv[1]):
               path = f"charts/{chart}/Chart.yaml"
               text = open(path).read()
-              m = re.search(r"(?m)^version: (\S+)$", text)
+              m = re.search(r"(?m)^version: (\S+)(?:[ \t]+#[^\n]*)?[ \t]*$", text)
               if not m:
                   raise SystemExit(f"{path}: no top-level version: line")
               # The index keys and release names carry the Chart.yaml NAME,
@@ -286,7 +361,7 @@ jobs:
               # second half) — a published version is never re-minted.
               # Bounded walk: an index more than 50 same-month versions
               # ahead of the candidate is a corruption signal to fail on,
-              # not a queue to drain (containers-build's bounded-walk
+              # not a queue to drain (build-containers's bounded-walk
               # precedent).
               steps = 0
               while published.get(key, (0, 0, 0)) >= cand:
@@ -320,6 +395,11 @@ jobs:
             git diff --cached --quiet || git commit -m "$message"
             if git push origin HEAD:refs/heads/main; then
               echo "bumped and pushed: ${bumped}"
+              # The landed commit — B1 or the re-looped one — is the marker
+              # endpoint the interim advance rides (C14 task 4; D53: never
+              # the event sha, that tail re-feeds the bump's own charts/**
+              # edits into the next detection).
+              echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
               exit 0
             fi
             echo "push refused (main advanced mid-loop) — re-checking" >&2
@@ -450,7 +530,7 @@ jobs:
         if: needs.changes.outputs.has_changes == 'true'
         env:
           # The Actions job token's package permission check is unimplemented
-          # upstream — the same fact containers-build.yaml already pays with
+          # upstream — the same fact build-containers.yaml already pays with
           # FORGE_PUSH_TOKEN (a human-minted, non-admin write:package PAT on
           # the account owning the curatedforest namespace). The username
           # half of the basic-auth pair is cosmetic — the same

@@ -57,7 +57,7 @@ This server is deployed through the lab's GitOps repo — **never
 `kubectl apply`**; ArgoCD syncs everything.
 
 - **Image**: built and pushed automatically by the Forgejo workflow
-  `.forgejo/workflows/containers-build.yaml` on any merge to `main` (or a
+  `.forgejo/workflows/build-containers.yaml` on any merge to `main` (or a
   `workflow_dispatch` run) that touches `containers/wekan-mcp/`; a PR
   targeting `main` that touches the container pushes `pr-<branch>-<sha>` to
   the instance registry only. Each main build on a `prod`-role instance

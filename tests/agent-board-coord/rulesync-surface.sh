@@ -666,6 +666,28 @@ fi
 # the amendment is skill-side only (plan D8: no tool, plugin, collector or
 # rules surface), so nothing else joins.
 if want c8; then
+# (round-5 entries ride the cf-55 lines inside c8_admits; provenance)
+# cf-55 ROUND 5 (2026-11-26, chunks/C14-C16.md; D52-D59): the shared-marker
+# adaptation edits the PRE-RENAME container-builder workflow (C14 ref rename
+# + ancestor tolerance) and C15's git mv lands it as build-containers.yaml —
+# both paths join (the mv surfaces the deleted pre-rename path as one side
+# of the delta; the bare literal is quote-composed below so the ci-surface
+# t8 containers-era sweep never reads this arm as a live claim).
+# renovate.json joins for the pin-7 description re-pin, and the two services
+# values files for the C16 per-slice replicas (D57 owner ruling). The
+# renamed suite rides tests/*, the detect script scripts/*,
+# charts/forgejo-runner/values.yaml the existing charts/forgejo-runner/*
+# wildcard (C16 asked to verify — covered), and the prowlarr admit already
+# stands from the C11 round (C13's fold is a no-op there). A replan-added
+# file joins THIS line.
+# cf-55 ROUND 5 / C15 (2026-11-26, D56; chunks/C15.md): the rename's
+# collateral comment re-truths are forced on live surfaces by ci-surface
+# t8's armed containers sweep — join lines extended with
+# .github/workflows/docker-build.yaml:5 (the GitHub twin citing the forge
+# builder) and containers/vllm-radiance-mxfp4/{Dockerfile,README.md}
+# (first-build calendar-tag cites). Exact per-file joins, no wildcards;
+# the rebuild round's "NO docker-build or vllm-radiance admits" premise
+# assumed the branch touches neither — C15's fence says otherwise.
   c8_admits() {
     case "$1" in
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
@@ -726,6 +748,9 @@ if want c8; then
       .forgejo/workflows/renovate.yaml|\
       charts/prowlarr/Chart.yaml|\
       .forgejo/workflows/main-sync.yaml|\
+      .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
+      .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
+      services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
       .agents/plans/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
@@ -762,12 +787,16 @@ if want c8; then
   # cf-55 fix round (2026-11-21): the two new directory admits stay
   # tree-exact — the act-base sibling container and the Forgejo-instance
   # chart beside the runner chart join the probes below.
+  # cf-55 ROUND 5 (2026-11-26, chunks/C16.md; D57): services/gpu/prod/
+  # values.yaml RETIRES from this probe list — the owner's runner-scale
+  # ruling makes it an admitted per-file surface (the replicas slice), the
+  # same way services/dev/prod/values.yaml never carried a probe here.
   for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
            containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
            charts/llama-swap/templates/deployment.yaml \
            charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md \
-           charts/vllm/values.yaml services/gpu/prod/values.yaml \
+           charts/vllm/values.yaml \
            charts/loki/Chart.lock \
            custom-values/gpu/prod-values.yaml \
            containers/renovate-mcp/README.md \

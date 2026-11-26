@@ -5,7 +5,8 @@
 # side; this suite pins the inventory from both sides and sweeps every live
 # surface for stale claims the rebuild must have erased:
 #   - .forgejo/workflows/ holds EXACTLY the five-workflow family (cf-6's
-#     main-sync/renovate/containers-build + this ticket's build-charts.yaml + the
+#     main-sync/renovate + the container builder (renamed build-containers
+#     in round 5) + this ticket's chart builder + the
 #     cf-6 builder-bootstrap dispatch recovery lane);
 #   - .github/workflows/ keeps the seven gate workflows AND docker-build.yaml
 #     — the workflow_dispatch-only manual-fallback builder cf-6 deliberately
@@ -48,6 +49,17 @@
 # mentions) passing. That makes the half-renamed intermediate the leg's
 # red state — its named purpose — and C11's merge its first full run.
 #
+# reading: the t-spec's teeth "drop one bare literal into a live file -> red"
+# only have meaning once build-charts.yaml exists).
+#
+# Round 5 (C15 §D): t8 now carries TWO independent sweeps (release-era and
+# containers-era), each vacuous until its own rename arms it; the
+# containers-era one accepts the D50.3 dated-history exemption on top of
+# the composed forms. t1's FJ_SET member, t5's token tuple and t6's
+# WIDEN_OK name the builder under its FINAL file — red through the
+# C13/C14 waves by design (pin 3: docs + suite move in ONE commit set at
+# C15).
+#
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-ci-surface.sh
 set -euo pipefail
@@ -72,12 +84,15 @@ import os, sys
 
 FJ = '.forgejo/workflows'
 GH = '.github/workflows'
-# cf-6 shipped main-sync (predates), renovate and containers-build; cf-55
-# contributes the chart half ONLY (its container twin was superseded);
+# cf-6 shipped main-sync (predates), renovate and the container builder;
+# cf-55 contributes the chart half ONLY (its container twin was superseded);
 # builder-bootstrap is cf-6's public-image dispatch recovery lane — the
 # fence moved to five before the file landed (red-first doctrine), so a
-# fourth-file-only tree is a designed RED here, not a stale pin.
-FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'build-charts.yaml',
+# fourth-file-only tree is a designed RED here, not a stale pin. Round 5
+# (C15 pin 3): the container builder is renamed — the member below names its
+# FINAL file; red until the rename commit lands (pairing law: docs + suite
+# move in the same commit).
+FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'build-containers.yaml', 'build-charts.yaml',
           'builder-bootstrap.yaml'}
 # Ruling R1's five gates + the render-test growth (amd-gpu, radiance) that
 # landed on main since, PLUS the docker-build manual fallback cf-6 kept.
@@ -183,7 +198,7 @@ def need(cond, msg):
 # The credential law as LANDED: AGENTS names the shared instance PAT + the
 # lowercase namespace; the GitHub-side secret name is workflow law pinned
 # per file — chart releases by forgejo-build-charts.sh t8, container pushes by
-# cf-6's containers-build suite t7 — and ONE name serves both lanes since
+# cf-6's build-containers suite t7 — and ONE name serves both lanes since
 # R-A (2026-11-22): PUSH_TOKEN_GH. The rules file deliberately stays at the
 # shared identity + the job-token prohibition.
 for tok in ('FORGE_PUSH_TOKEN', 'curatedforest'):
@@ -199,7 +214,7 @@ for tok in DEAD:
 # The container skill (cf-6-rewritten): the live builder, the calendar tag,
 # the forge PAT + the one GitHub-side PAT — and none of the retired
 # spellings.
-for tok in ('containers-build.yaml', 'yy.mm.N', 'FORGE_PUSH_TOKEN', 'PUSH_TOKEN_GH'):
+for tok in ('build-containers.yaml', 'yy.mm.N', 'FORGE_PUSH_TOKEN', 'PUSH_TOKEN_GH'):
     need(tok in skill, f'container-creation SKILL.md lost {tok!r} — it must describe the builder that actually runs')
 for tok in ('10000', 'type=gha', '%Y%m%d', 'HHMM', 'PUSH_TOKEN_FJ', 'FJ_PACKAGE_USER', 'GHCR_PUSH_PAT', 'github.actor', 'secrets.GITHUB_TOKEN'):
     need(tok not in skill, f'container-creation SKILL.md carries {tok!r} — retired scheme/credential prose (the auto-token push and the v-date/offset schemes are dead; docs must not re-teach them)')
@@ -213,7 +228,7 @@ ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_T
 if ! python3 - <<'PY'
 import glob, re, sys, yaml
 
-WIDEN_OK = {'containers-build.yaml'}   # the one file whose unset polarity is deliberate
+WIDEN_OK = {'build-containers.yaml'}   # the one file whose unset polarity is deliberate
 
 bad = []
 for path in sorted(glob.glob('.forgejo/workflows/*.yaml')):
@@ -231,7 +246,7 @@ for path in sorted(glob.glob('.forgejo/workflows/*.yaml')):
         if re.search(r'vars\.ROLE\s*[=!]=\s*["\x27]', e):
             bad.append(f'{name}: ROLE guard compares ROLE to a STRING value ({e[:90]!r}) — equality polarity is retired (AGENTS Hard rule)')
         if re.search(r'vars\.ROLE\s*[=!]=\s*null', e) and name not in WIDEN_OK:
-            bad.append(f'{name}: unset-widen clause in {e[:90]!r} — widen-on-unset is containers-build\'s alone; main-sync/renovate/release stay narrow by the fail-safe reading')
+            bad.append(f'{name}: unset-widen clause in {e[:90]!r} — widen-on-unset is the container builder\'s alone; main-sync/renovate/chart builder stay narrow by the fail-safe reading')
 if bad:
     print('FAIL: t6:\n  ' + '\n  '.join(bad), file=sys.stderr)
     sys.exit(1)
@@ -239,7 +254,7 @@ PY
 then
   fail "t6: see the t6 detail above"
 fi
-ok "t6: every ROLE guard in every .forgejo workflow is a contains() membership test; the unset-widen clause stays exclusive to containers-build.yaml"
+ok "t6: every ROLE guard in every .forgejo workflow is a contains() membership test; the unset-widen clause stays exclusive to build-containers.yaml"
 
 # --- t7: the chart clause in the chart skill names the forge builder -------------------
 if ! python3 - <<'PY'
@@ -267,8 +282,8 @@ then
 fi
 ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forgejo build-charts.yaml, DUAL publish to GitHub Releases/gh-pages and the instance Helm registry)"
 
-# --- t8: stale-name sweep, armed by the rename (C11 AC2/D47.6) -------------------
-# EXPLORE's rename law: after the git mv, NO live surface may carry the old
+# --- t8: stale-name sweeps, armed by each rename (C11 AC2/D47.6; C15 widen) ----
+# EXPLORE's rename law: after a git mv, NO live surface may carry the old
 # workflow's bare name or display-title token — every legitimate survivor is
 # either a composed twin mention (os.path.join, the path-qualified `".github/"`
 # alternation the coord allow-cases use, the dated containers-build history
@@ -276,7 +291,11 @@ ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forge
 # vacuously green by design: the name is live truth, nothing lies; the leg's
 # red state is the half-renamed intermediate (C11.md's posture — report
 # reading: the t-spec's teeth "drop one bare literal into a live file -> red"
-# only have meaning once build-charts.yaml exists).
+# only have meaning once build-charts.yaml exists). Round 5 WIDENS the leg
+# (C15 §D): a second sweep, armed by the containers-build ->
+# build-containers.yaml rename, bans the bare old file token on live
+# surfaces; composed forms + FROZEN records + self-identifying dated
+# history exempt (D50.3).
 if ! python3 - <<'PY'
 import os, re, subprocess, sys
 
@@ -285,13 +304,8 @@ import os, re, subprocess, sys
 OLD = 'release' + '.' + 'yaml'
 old_re = re.compile('release' + r'[.]' + 'yaml')
 title_re = re.compile('Release' + r'[ ]Charts')
-
-# Armed = the renamed builder exists and the old workflow file no longer
-# does (the rename commit's state; a half-landed checkout flips this too).
-if not (os.path.exists(os.path.join('.forgejo', 'workflows', 'build-charts.yaml'))
-        and not os.path.exists(os.path.join('.forgejo', 'workflows', OLD))):
-    print('  (pre-rename state: the builder still lives under its old name — sweep vacuous-green, armed by C11\'s git mv)')
-    sys.exit(0)
+OLD2 = 'containers-build' + '.' + 'yaml'
+old2_re = re.compile('containers-build' + r'[.]' + 'yaml')
 
 # Hard-listed exemptions (C11.md FROZEN + LEAVE-AS-RECORD + D47.8 fire-
 # coupled deferrals — every entry names why it may carry the historical
@@ -305,36 +319,54 @@ EXEMPT = {
     os.path.join('tests', 'multi-repo', 'mosquitto-chart.sh'),                                 #   ...same deferral
 }
 
-offenders = []
 files = subprocess.run(['git', 'ls-files', '-z'], capture_output=True, text=True).stdout.split('\0')
-for f in files:
-    if not f or f.startswith('.agents' + os.sep):
-        continue
-    if f in EXEMPT:
-        continue
-    try:
-        text = open(f, encoding='utf-8', errors='replace').read()
-    except (IsADirectoryError, OSError):
-        continue
-    for i, l in enumerate(text.splitlines(), 1):
-        if title_re.search(l):
-            offenders.append(f'{f}:{i}: [title token] {l.strip()[:100]}')
+offenders = []
+
+def sweep(re_path, token_re, extra_res, armed_label, history_free):
+    """One rename sweep over every tracked live surface. Returns offenders.
+    history_free=1 adds the D50.3 dated-history exemption (second rename
+    only — the release-era sweep keeps its original, stricter teeth)."""
+    hits = []
+    for f in files:
+        if not f or f.startswith('.agents' + os.sep):
             continue
-        for m in old_re.finditer(l):
-            # Composed forms pass (EXPLORE H.1 / C11 AC2): an os.path.join
-            # carrier, or a path-qualified mention whose line already names
-            # the GitHub twin or brackets itself as history ("since renamed",
-            # "moved to"). A bare name claim — stale allow-case member,
-            # forgotten prose cite — matches neither and reddens.
-            if 'os.path.join' in l:
-                continue
-            before = l[:m.start()]
-            if before.endswith('/') and re.search(r'(?i)github|renamed|moved to', l):
-                continue
-            offenders.append(f'{f}:{i}: [bare name token] {l.strip()[:100]}')
+        if f in EXEMPT:
+            continue
+        if os.path.exists(os.path.join('.forgejo', 'workflows', re_path)):
+            continue  # the old file is still LIVE truth — vacuous (armed later)
+        try:
+            text = open(f, encoding='utf-8', errors='replace').read()
+        except (IsADirectoryError, OSError):
+            continue
+        for i, l in enumerate(text.splitlines(), 1):
+            for rx in extra_res:
+                if rx.search(l):
+                    hits.append(f'{f}:{i}: [{armed_label} title token] {l.strip()[:100]}')
+                    break
+            else:
+                for m in token_re.finditer(l):
+                    # Composed forms pass (EXPLORE H.1 / C11 AC2): an
+                    # os.path.join carrier, or a line that names the GitHub
+                    # twin or brackets itself as history ("since renamed",
+                    # "moved to"). A bare name claim — stale allow-case
+                    # member, forgotten prose cite — matches neither.
+                    if 'os.path.join' in l:
+                        continue
+                    before = l[:m.start()]
+                    if before.endswith('/') and re.search(r'(?i)github|renamed|moved to', l):
+                        continue
+                    if history_free and re.search(r'(?i)since renamed|moved to|\bdated\b|histor|pre-rename|\bera\b', l):
+                        continue
+                    hits.append(f'{f}:{i}: [{armed_label} bare name token] {l.strip()[:100]}')
+    return hits
+
+if os.path.exists(os.path.join('.forgejo', 'workflows', 'build-charts.yaml')):
+    offenders += sweep(OLD, old_re, [title_re], 'release-rename', 0)
+if os.path.exists(os.path.join('.forgejo', 'workflows', 'build-containers.yaml')):
+    offenders += sweep(OLD2, old2_re, [], 'containers-rename', 1)
 
 if offenders:
-    print('FAIL: t8: live surfaces still carrying the old builder name/title after the rename — the git mv and the re-fence ride ONE commit set (C11 AC2):', file=sys.stderr)
+    print('FAIL: t8: live surfaces still carry an old builder name/title after a rename — the git mv and the re-fence ride ONE commit set (C11 AC2; C15 widen):', file=sys.stderr)
     for o in offenders:
         print('  ' + o, file=sys.stderr)
     sys.exit(1)
@@ -342,6 +374,6 @@ PY
 then
   fail "t8: see the t8 detail above"
 fi
-ok "t8: with the rename landed, zero bare old-name/old-title tokens survive on live surfaces (composed twin forms and the hard-listed records pass; pre-rename the leg is vacuous-green by design)"
+ok "t8: with each rename landed, zero bare old-name/old-title tokens survive on live surfaces (composed twin forms and the hard-listed records pass; each sweep vacuous-green until its own rename arms it — the containers-era sweep joins the release-era one)"
 
 printf 'PASS: forgejo-ci-surface checks (%d ok)\n' "$checks"

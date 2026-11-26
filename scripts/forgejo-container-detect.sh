@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
 # Changed-container detection and registry tag math for
-# .forgejo/workflows/containers-build.yaml. Pure shell + coreutils: the
+# .forgejo/workflows/build-containers.yaml. Pure shell + coreutils: the
 # workflow parses the tags/list JSON textually because the runner image
 # ships no jq or python.
 #
 #   detect    stdout a sorted JSON array of the containers/<name> dirs to
 #             rebuild, run at the checked-out repo root. Inputs are
 #             environment variables: EVENT_NAME (push|pull_request|
-#             workflow_dispatch), EVENT_BEFORE and SHA (push range), MARKER_SHA
-#             (the last-built marker: when set it replaces before as the push
-#             base, so a build a dead or cancelled run lost is re-covered by
-#             the next push instead of staying skipped forever). The
-#             container-build workflow resolves and validates MARKER_SHA; this
+#             workflow_call|workflow_dispatch), EVENT_BEFORE and SHA (push-era
+#             range), MARKER_SHA
+#             (the last-built marker: when set it replaces before as the base,
+#             so a build a dead or cancelled run lost is re-covered by the
+#             next run instead of staying skipped forever; on a workflow_call
+#             run with no marker the range is tip-only and announced — a
+#             called run carries no push payload, so an empty before is
+#             expected there and the push arm still dies on it). The
+#             build-containers workflow resolves and validates MARKER_SHA; this
 #             script only reads it, and an empty value is the bootstrap
-#             fallback to before..sha. BASE_SHA and HEAD_SHA (pull-request
+#             fallback. The base token echoed on stderr names which arm won:
+#             marker|tip-only|before, so called runs read distinctly from
+#             push-era ones. BASE_SHA and HEAD_SHA (pull-request
 #             range), MANUAL_CONTAINERS (dispatch list, comma/space separated).
 #   next-n    stdin a tags/list JSON body (either registry), env YYMM=yy.mm;
 #             stdout the month's next calendar release number, max(yy.mm.N)+1 or 1.
@@ -49,34 +55,47 @@ detect() {
       a=$(git merge-base "$a" "$b")
     else
       local before="${EVENT_BEFORE:-}"
-      if [ -z "$before" ]; then
-        # A v15.0.10 push payload always carries before: a real oid, or the
-        # all-zero sentinel on branch creation. An empty one therefore means
-        # a wrong accessor or an unexpected event routed into the push arm,
-        # and reading it as a first push would silently narrow a multi-commit
-        # push to the tip commit.
-        die 'push arm: EVENT_BEFORE is empty, which no push payload sends'
-      fi
-      # Marker first: the payload before can name a range a dead or
-      # cancelled run already lost, and re-diffing it is the heal this
-      # base exists for.
+      # Marker first (C15 call-aware): the payload before can name a range
+      # a dead or cancelled run already lost, and re-diffing it is the heal
+      # this base exists for. Under workflow_call an empty before is
+      # EXPECTED (called runs carry no push payload), so the marker check —
+      # then the call bootstrap arm — precede the payload die; the die
+      # stays scoped to real pushes.
       if [ -n "${MARKER_SHA:-}" ]; then
         a="$MARKER_SHA"
         b="${SHA:-HEAD}"
         base_src='marker'
-      elif [ -z "${before//[0]/}" ]; then
-        # The first push to a branch carries an all-zero before and
-        # HEAD^..HEAD is the pushed commit — a tip-only range: older
-        # commits of that push stay invisible, and the log line is where
-        # the narrowing announces itself.
-        printf '::warning::first push (all-zero before): tip-only detection over HEAD^..HEAD\n' >&2
+      elif [ "$event" = workflow_call ]; then
+        # First called run with no marker (bootstrap, or the owner has not
+        # migrated the ref yet): tip-only and LOUD about it — the narrowing
+        # announces itself exactly like the all-zero first push arm.
+        printf '::warning::first called run (workflow_call, no marker): tip-only detection over HEAD^..HEAD\n' >&2
         a='HEAD^'
         b='HEAD'
         base_src='tip-only'
       else
-        a="$before"
-        b="${SHA:-HEAD}"
-        base_src='before'
+        if [ -z "$before" ]; then
+          # A v15.0.10 push payload always carries before: a real oid, or the
+          # all-zero sentinel on branch creation. An empty one therefore means
+          # a wrong accessor or an unexpected event routed into the push arm,
+          # and reading it as a first push would silently narrow a multi-commit
+          # push to the tip commit.
+          die 'push arm: EVENT_BEFORE is empty, which no push payload sends'
+        fi
+        if [ -z "${before//[0]/}" ]; then
+          # The first push to a branch carries an all-zero before and
+          # HEAD^..HEAD is the pushed commit — a tip-only range: older
+          # commits of that push stay invisible, and the log line is where
+          # the narrowing announces itself.
+          printf '::warning::first push (all-zero before): tip-only detection over HEAD^..HEAD\n' >&2
+          a='HEAD^'
+          b='HEAD'
+          base_src='tip-only'
+        else
+          a="$before"
+          b="${SHA:-HEAD}"
+          base_src='before'
+        fi
       fi
     fi
     # The endpoints actually diffed, named on stderr before the call: a red

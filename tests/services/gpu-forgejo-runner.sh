@@ -19,6 +19,10 @@
 #       sentinel-free forgejo-runner-gpu values JSON                C05 AC5
 #   g7  blast radius: dev runner trio untouched, no gpu Forgejo or
 #       SeaweedFS, runner chart untouched beyond C04's swap         C05 AC6
+#   g8  the SERVICES slice carries app-template.controllers.runner.
+#       replicas: 10 — owner ruling 2026-11-26 (B1-as-amended)      C16 (a)
+#   g9  the deployed render keeps runner capacity 1 (stay-1 ruling)  C16 (b)
+#   g10 the chart default renders replicas 1 with NO override       C16 (c)
 #
 # Why the URL is pinned instead of derived: `git.spencerslab.com` is the infra
 # instance's canonical DOMAIN/ROOT_URL host and split DNS carries it to the
@@ -193,12 +197,37 @@ else
   else
     ok "g1: helm dependency build succeeds for $RUNNER and $GPU on copies ($("$helm_bin" version --short 2>/dev/null || echo helm))"
 
-    # --- g2: standalone render of the gpu release (C05 AC1) ------------------
+    # --- g2: deployed-shape render of the gpu release (C05 AC1; round-5 C16) --
+    # cv slice (vault slots) + the SERVICES top-level block (the ONLY values
+    # the appset merges — and since the owner ruling 2026-11-26, where the
+    # replicas: 10 slice lives, D57). Anchor-tolerant load: the gpu services
+    # file carries REDEF-style anchors.
     extract_slice "$GPU_CV" "$APP" "$WORK/runner-gpu-slice.yaml" g2
+    gpu_services_slice="$WORK/gpu-services-slice.yaml"
+    if ! python3 - "$GPU_VALUES" "$APP" "$gpu_services_slice" <<'PY'
+import re, sys, yaml
+
+src, key, out = sys.argv[1:4]
+lines = []
+for line in open(src):
+    line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+    line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+    lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get(key)
+if not isinstance(block, dict):
+    print(f'FAIL: g2: {src} has no top-level {key}: slice — the appset merges only this key (g3 owns the same block)', file=sys.stderr)
+    sys.exit(1)
+with open(out, 'w') as f:
+    yaml.safe_dump(block, f)
+PY
+    then
+      fail "g2: could not extract the gpu services slice from $GPU_VALUES"
+    fi
     gpu_render="$WORK/gpu-render.yaml"
     gpu_err="$WORK/gpu-render.err"
     if ! "$helm_bin" template "$APP" "$runner_copy" \
-      -f "$WORK/runner-gpu-slice.yaml" \
+      -f "$WORK/runner-gpu-slice.yaml" -f "$gpu_services_slice" \
       --set "runner.url=$GPU_URL" \
       >"$gpu_render" 2>"$gpu_err"; then
       tail -n 30 "$gpu_err" >&2
@@ -254,8 +283,8 @@ try:
 
     sts = next(d for d in docs if d.get('kind') == 'StatefulSet')
     spec = sts.get('spec') or {}
-    if spec.get('replicas') != 1:
-        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 1 (one uuid/token pair maps to one pod)')
+    if spec.get('replicas') != 10:
+        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5): runners to replicas 10, both instances; B1 AS AMENDED per D57 (10 pods poll ONE registration, capacity stays 1 per pod) — the services slice carries the override, the chart default stays single')
     vcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in (spec.get('volumeClaimTemplates') or [])}
     if set(vcts) != {'data', 'docker-data'}:
         bad(f'g2: volumeClaimTemplates named {sorted(vcts)}, expected exactly [data, docker-data]')
@@ -269,7 +298,7 @@ try:
         # default needs no per-cluster override.
         if vspec.get('storageClassName') != 'local-path':
             bad(f'g2: VCT {name} storageClassName is {vspec.get("storageClassName")!r}, expected local-path')
-    ok('g2: replicas 1, VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass)')
+    ok('g2: replicas 10 via the services slice (B1-as-amended, owner ruling 2026-11-26), VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass) — the per-pod shape did not scale, the pod count did')
 
     es = next(d for d in docs if d.get('kind') == 'ExternalSecret')
     data = (((es.get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
@@ -689,7 +718,16 @@ fi
 # (absence against a base without it stays green), add-side only (a revert
 # belongs to the dev-forgejo-runner.sh t2 args render pin, the docker_host
 # precedent), and anything short of the exact pair — half, wrong value, flow
-# style, a third copy, another file — stays red. The original hazards (a
+# style, a third copy, another file — stays red. ROUND 5 C16 (owner ruling
+# 2026-11-26, D57) adds the FIFTH class: the replicas-10 scale hunk — the
+# byte-exact four-line shape `  app-template:` / `    controllers:` /
+# `      runner:` / `        replicas: 10` added ONCE under a runner release's
+# top-level slice (forgejo-runner-dev: on services/dev, forgejo-runner-gpu:
+# on services/gpu) and nowhere else — the same positional+shape+size
+# discipline as R2′, add-side only (a scale-down revert is a fresh ruling,
+# not a silent hunk; the render pins t2/g2 and the slice pins t18/g8 carry
+# the content law). A partial hunk, a second occurrence, foreign indent, or
+# the shape under any other top-level block stays red. The original hazards (a
 # shared-chart fork, a cross-instance or rolling ref, gpu-attributed wiring
 # landing in dev files, any custom-values/dev move) stay red; anything wider
 # than the sanctioned classes stays red too.
@@ -735,6 +773,9 @@ try:
     # lines invisible to the forgejo-runner filter (labels: key, act-22.04
     # entry) are bounded by the cap + dev-forgejo-runner.sh t17's exact
     # five-set, not by silence.
+    # C16/D57 fifth class: the byte-exact replicas-10 hunk shape (absolute
+    # indents as shipped under a top-level slice).
+    REPS4 = ('  app-template:', '    controllers:', '      runner:', '        replicas: 10')
     DEV_CAL = re.compile(
         r'^[+-][ \t]*-[ \t]*\S+:docker://git\.scifi\.farm/curatedforest/forgejo-runner:[0-9]{2}\.[0-9]{2}\.[0-9]+[ \t]*$')
     DEV_KEYS = re.compile(r'^\+[ \t]*labels:[ \t]*$')
@@ -742,12 +783,15 @@ try:
         r'^\+[ \t]*-[ \t]*ubuntu-22\.04:docker://ghcr\.io/catthehacker/ubuntu:act-22\.04[ \t]*$')
     SLICE_RE = re.compile(r'^forgejo-runner-dev:[ \t]*$')
 
-    def slice_span(text):
+    def slice_span(text, rx=None):
         # 1-based (start, end) line span of the top-level slice block —
         # end is the next top-level key (or EOF), so everything indented
-        # under forgejo-runner-dev: is inside.
+        # under forgejo-runner-dev: is inside. rx parameterizes the block
+        # key (the C16 gpu leg mirrors the same discipline on the
+        # forgejo-runner-gpu: slice); default keeps the dev behavior exact.
+        rx = rx or SLICE_RE
         lines = text.splitlines()
-        start = next((i for i, l in enumerate(lines) if SLICE_RE.match(l)), None)
+        start = next((i for i, l in enumerate(lines) if rx.match(l)), None)
         if start is None:
             return None
         end = next((i for i in range(start + 1, len(lines))
@@ -793,9 +837,29 @@ try:
         bad(f'g7: services/dev forgejo-runner content lines moved OUTSIDE the top-level forgejo-runner-dev slice: {[c[2].strip() for c in stray_runner][:4]} — the sanctioned dev content override sits inside that slice alone (the appset merges only this key into the release); a labels key under charts:, a renamed slice, or a moved runner line elsewhere is the C05 hazard OQ-C kept red (cf-6 OQ-C + run-1 R2′)')
     inslice = [c for c in content_changes if in_slice(c)]
     unsanc = [c for c in inslice
-              if not (DEV_CAL.match(c[1] + c[2]) or DEV_KEYS.match(c[1] + c[2]) or DEV_2204.match(c[1] + c[2]))]
+              if not (DEV_CAL.match(c[1] + c[2]) or DEV_KEYS.match(c[1] + c[2])
+                      or DEV_2204.match(c[1] + c[2])
+                      or (c[1] == '+' and c[2] in REPS4))]
     if unsanc:
         bad(f'g7: the forgejo-runner-dev slice carries an unsanctioned content move: {[c[2].strip() for c in unsanc][:4]} — inside the slice only the five-entry labels list (each changed forgejo-runner ref a git.scifi.farm/curatedforest calendar pin, added AND removed sides), its labels: key, and the byte-exact act-22.04 re-declaration may change; the url line and every other key stay byte-untouched (run-1 R2′)')
+    # Fifth-class fence (C16/D57): the shape is invisible to the
+    # forgejo-runner substring filter, so it needs its own walk — position
+    # decides legitimacy for it too, and the whole-set/once/add-only rules
+    # are the size discipline (the R2′ mirror the owner recipe names).
+    reps_moved = [c for c in changes if c[2] in REPS4]
+    reps_out = [c for c in reps_moved if not in_slice(c)]
+    if reps_out:
+        bad(f'g7: the replicas-10 hunk shape appears OUTSIDE the top-level forgejo-runner-dev slice: {[c[2] for c in reps_out][:4]} — C16/D57 sanctions the four-line shape under the release\'s own slice alone; the appset merges only that key, so a foreign-position app-template override is unsanctioned content')
+    reps_rem = [c for c in reps_moved if c[1] == '-']
+    if reps_rem:
+        bad(f'g7: the diff REMOVES replicas-hunk shape lines: {[c[2] for c in reps_rem][:4]} — the C15/D57 fifth class is add-side only (docker_host/MTU precedent); scaling a runner release back is a fresh owner ruling, and the content law rides t2/t18 render pins, not a silent hunk')
+    reps_add = [c for c in reps_moved if c[1] == '+']
+    if reps_add:
+        seen_each = [c[2] for c in reps_add]
+        if len(seen_each) != len(set(seen_each)):
+            bad(f'g7: a replicas-hunk shape line occurs more than ONCE in the services/dev diff ({seen_each}) — the sanctioned hunk is one occurrence per slice (second copy = a fork or a moved block)')
+        if set(seen_each) != set(REPS4):
+            bad(f'g7: the replicas-10 hunk is PARTIAL ({sorted(set(seen_each))} of the required four) — half, reordered-with-extras, or wrong-indent shape is not the byte-exact sanctioned hunk')
     if len(inslice) > 12:
         bad(f'g7: {len(inslice)} changed content lines inside the forgejo-runner-dev slice — the sanctioned override is the five-entry list plus its labels: key (the landing changes 6, a ref-pair bump 8); more is a fork of the override, not a bump (run-1 R2′)')
     if content_changes and not any(re.search(r'\d{4}-\d{2}-\d{2}', c[2]) for c in changes
@@ -811,7 +875,7 @@ try:
                 and ('forgejo-runner' in l or re.search(r'relocat', l, re.I))]
         if not any(re.search(r'\d{4}-\d{2}-\d{2}', l) for l in hunk):
             bad(f'g7: the services/dev forgejo-runner comment hunk is undated — the sanctioned dev-surface edit is the dated cf-104 relocation truth (cf-6 OQ-C): {hunk[:4]}')
-    ok('g7: services/dev changed only dated comments and the sanctioned labels-override hunk inside the forgejo-runner-dev slice (dev-instance calendar refs, capped, dated), and custom-values/dev gained none (cf-6 OQ-C + run-1 R2′)')
+    ok('g7: services/dev changed only dated comments, the sanctioned labels-override hunk inside the forgejo-runner-dev slice (dev-instance calendar refs, capped, dated), the once-only byte-exact replicas-10 shape under that slice alone when present (C16/D57 fifth class), and custom-values/dev gained none (cf-6 OQ-C + run-1 R2′ + round-5 C16)')
 
     diff_text = git('diff', base, '--', 'charts/forgejo-runner')
     changed = [l for l in diff_text.splitlines()
@@ -893,6 +957,57 @@ try:
         bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines: {nonlab[:4]} — only the labels list, its comments, and the one sanctioned docker_host line may change; the values dind/runner pins and the app-template subtree stay byte-untouched (renovate law)')
     ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, nothing else moved)')
 
+    # C16/D57 fifth class, gpu leg: services/gpu gains its OWN positional
+    # shape fence (the dev-side R2′ mirror) — the replicas-10 four-line hunk
+    # is sanctioned under the top-level forgejo-runner-gpu: slice ONLY,
+    # once, add-side; the rest of the services/gpu surface stays governed by
+    # the charts:/forbidden-entry checks below (this fence targets the
+    # shape class, not new blanket content law).
+    GPU_SLICE_RE = re.compile(r'^forgejo-runner-gpu:[ \t]*$')
+    gpu_diff_text = git('diff', base, '--', 'services/gpu')
+    gcur_new = gcur_old = None
+    gn_no = go_no = 0
+    gchanges = []
+    for l in gpu_diff_text.splitlines():
+        if l.startswith('+++ b/'):
+            gcur_new = l[6:]
+        elif l.startswith('--- a/'):
+            gcur_old = l[6:]
+        elif l.startswith('@@'):
+            m = re.match(r'^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@', l)
+            if m:
+                go_no, gn_no = int(m.group(1)), int(m.group(2))
+        elif l.startswith('+'):
+            gchanges.append((gcur_new, '+', l[1:], gn_no))
+            gn_no += 1
+        elif l.startswith('-'):
+            gchanges.append((gcur_old, '-', l[1:], go_no))
+            go_no += 1
+        elif l.startswith(' '):
+            gn_no += 1
+            go_no += 1
+    gshape = [c for c in gchanges if c[2] in REPS4]
+    gspan = slice_span(open(gpu_values).read(), GPU_SLICE_RE) if os.path.exists(gpu_values) else None
+
+    def gpu_in_slice(c):
+        return (c[0] == gpu_values and gspan is not None
+                and gspan[0] <= c[3] <= gspan[1])
+
+    grem = [c for c in gshape if c[1] == '-']
+    if grem:
+        bad(f'g7: the services/gpu diff REMOVES replicas-hunk shape lines: {[c[2] for c in grem][:4]} — the C16/D57 fifth class is add-side only (g8/g2 own the gpu content law)')
+    gadd = [c for c in gshape if c[1] == '+']
+    gout = [c for c in gadd if not gpu_in_slice(c)]
+    if gout:
+        bad(f'g7: the replicas-10 hunk shape appears OUTSIDE the top-level forgejo-runner-gpu: slice ({[(c[0], c[2]) for c in gout][:4]}) — C16/D57 sanctions it under the release\'s own slice alone (the appset merges only this key); under any other block it is an unsanctioned app-template override')
+    if gadd:
+        gseen = [c[2] for c in gadd]
+        if len(gseen) != len(set(gseen)):
+            bad(f'g7: a replicas-hunk shape line occurs more than ONCE in the services/gpu diff ({gseen}) — one occurrence per slice (C16/D57 size discipline)')
+        if set(gseen) != set(REPS4):
+            bad(f'g7: the gpu replicas-10 hunk is PARTIAL ({sorted(set(gseen))} of the required four) — the sanctioned hunk is the byte-exact set')
+        ok('g7: fifth class gpu leg (C16/D57 owner ruling 2026-11-26) — the exact app-template/controllers/runner/replicas: 10 hunk added once under forgejo-runner-gpu: alone, nothing removed, nowhere else')
+
     import yaml as _yaml
     lines = []
     with open(gpu_values) as f:
@@ -919,6 +1034,89 @@ PY
   else
     exit 1
   fi
+fi
+
+# --- g8: the deployed services slice carries replicas 10 (C16 leg (a)) ---------
+if ! python3 - "$GPU_VALUES" "$APP" <<'PY'
+import re, sys, yaml
+
+src, key = sys.argv[1:3]
+lines = []
+for line in open(src):
+    line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+    line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+    lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get(key) or {}
+rep = (((block.get('app-template') or {}).get('controllers') or {}).get('runner') or {}).get('replicas')
+if rep != 10:
+    print(f'FAIL: g8: {src} top-level {key} block carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57): BOTH runner releases scale via the per-slice override', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "g8: see the g8 detail above"
+fi
+ok "g8: services/gpu/prod/values.yaml forgejo-runner-gpu block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, B1-as-amended)"
+
+# --- g9: capacity STAYS 1 in the deployed render (C16 leg (b), D57) ------------
+# 10 pods x capacity 1 = 10 concurrent jobs; an in-pod queue (capacity>1)
+# would fake parallelism inside one dind envelope. The stay-1 is a DECISION
+# — fenced so a bump becomes a ruling, never drift.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "g9: not run (renders unavailable)"
+else
+  if ! python3 - "${gpu_render:-/dev/null}" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+if not es:
+    print('FAIL: g9: no ExternalSecret in the deployed render (its config.yaml home is the capacity site — t/g2 would already be red)', file=sys.stderr)
+    sys.exit(1)
+data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+cfg = yaml.safe_load(data.get('config.yaml') or '')
+cap = ((cfg or {}).get('runner') or {}).get('capacity')
+if cap != 1:
+    print(f'FAIL: g9: the deployed render carries runner.capacity {cap!r}, expected 1 (D57 stay-1 ruling; secret-runner.yaml is NOT touched by the replicas scale)', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "g9: see the g9 detail above"
+  fi
+  ok "g9: the deployed gpu render carries runner capacity 1 — stay-1 fenced (D57: ten pods, one job each)"
+fi
+
+# --- g10: chart default renders replicas 1 with NO slice (C16 leg (c)) ---------
+# The amended law keeps the DEFAULT single: a future runner release cannot
+# silently inherit 10; and C16 AC3's default-mutant lands here plus in g2's
+# no-override sibling.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "g10: not run (renders unavailable)"
+else
+  g10_out="$WORK/g10-default-render.yaml"
+  if ! "$helm_bin" template "$APP" "$runner_copy" \
+      --set "bitwardenIds.runner-token=00000000-0000-0000-0000-000000000009" \
+      >"$g10_out" 2>"$WORK/g10.err"; then
+    tail -n 30 "$WORK/g10.err" >&2
+    fail "g10: chart-default standalone template failed (log kept at $WORK/g10.err)"
+  fi
+  if ! python3 - "$g10_out" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+sts = [d for d in docs if d.get('kind') == 'StatefulSet']
+if len(sts) != 1:
+    print(f'FAIL: g10: {len(sts)} StatefulSets in the no-override render, expected 1', file=sys.stderr)
+    sys.exit(1)
+rep = (sts[0].get('spec') or {}).get('replicas')
+if rep != 1:
+    print(f'FAIL: g10: the NO-OVERRIDE chart render is replicas {rep!r}, expected 1 — charts/forgejo-runner/values.yaml keeps the single-pod default (D57: scale rides per-slice overrides; a chart flip would multiply EVERY future release)', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "g10: see the g10 detail above"
+  fi
+  ok "g10: with no slice the chart renders replicas 1 — the default stays single (B1-as-amended, D57)"
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

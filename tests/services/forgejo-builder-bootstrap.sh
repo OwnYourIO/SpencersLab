@@ -739,7 +739,7 @@ code_joined = '\n'.join(code_all)
 
 # REQUIRED half: the ONE surviving walk keeps calling the shared script's
 # month math (P6 reuse — re-inlining the arithmetic would fork it away
-# from containers-build's proven single source). Under OQ-1=B the count
+# from build-containers's proven single source). Under OQ-1=B the count
 # is exactly one: the shipped ×2 (the union parity walk) is now the RED
 # shape, the owner's named tooth.
 nncalls = [s for s in code_all if 'next-n' in s]
@@ -853,7 +853,7 @@ PAIR = ('AGENTS.md', '.rulesync/rules/overview.md')
 LANE = 'skills/container-creation/SKILL.md'
 README = 'containers/forgejo-runner/README.md'
 # The five live lane-wording surfaces (plan fact 6 / R9): the residue pin
-# greps EXACTLY these — containers-build.yaml's own dispatch description is
+# greps EXACTLY these — build-containers.yaml's own dispatch description is
 # exempt (true about itself, file FORBIDDEN) and tests/ is exempt (this
 # suite carries the phrases inside b9's prohibition tuples: teeth, not
 # residue). History folders are dated record, not lies.

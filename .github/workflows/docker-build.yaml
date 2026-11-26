@@ -2,7 +2,7 @@ name: Build and Push Docker Containers
 
 # GitHub-side MANUAL rebuild fallback: this workflow runs only on
 # workflow_dispatch. The automatic container pipeline is the Forgejo workflow
-# .forgejo/workflows/containers-build.yaml, which publishes the calendar
+# .forgejo/workflows/build-containers.yaml, which publishes the calendar
 # yy.mm.N plus the rolling latest and main tags on main, and pr-<branch>-<sha>
 # on pull requests. A dispatch here mints v<run_number> (monotonic immutable
 # tag) + <branch>, the tags the build job below computes.

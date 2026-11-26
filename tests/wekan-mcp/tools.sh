@@ -348,7 +348,7 @@ NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
 for n in NEW:
     if n not in readme:
         bad(f't5: README tool list is missing {n}')
-# The forge truth (containers-build.yaml, prod-role): calendar yy.mm.N
+# The forge truth (build-containers.yaml, prod-role): calendar yy.mm.N
 # (immutable, minted one past the highest yy.mm.* across both registries)
 # plus the rolling :latest / :main tags, published to ghcr and the
 # instance's own Forgejo registry; a PR build pushes pr-<branch>-<sha>
@@ -359,7 +359,7 @@ for n in NEW:
 # under the forge contract it is one of the two published rolling tags.
 for stale in ('bumped by CI', 'semver source of truth', 'v<version>'):
     if stale in readme:
-        bad(f't5: README still carries the stale semver/VERSION claim "{stale}" (containers-build.yaml publishes the calendar yy.mm.N tag + rolling :latest/:main)')
+        bad(f't5: README still carries the stale semver/VERSION claim "{stale}" (build-containers.yaml publishes the calendar yy.mm.N tag + rolling :latest/:main)')
 if 'yy.mm.' not in readme:
     bad('t5: README must describe the actual tag scheme (calendar yy.mm.N + rolling :latest/:main; PR builds pr-<branch>-<sha>) it already links to')
 

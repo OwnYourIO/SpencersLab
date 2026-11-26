@@ -218,9 +218,44 @@ if [ "$skip_helm" -eq 0 ]; then
 fi
 
 # --- t2: single-instance render per release (C01 c2) ----------------------
+# Round 5 (C16/D57): the DEPLOYED dev shape joins the pair — the chart plus
+# the extracted top-level forgejo-runner-dev services slice (the only values
+# the appset merges, so replicas: 10 rides there). The two standalone
+# renders stay exactly the chart-default truth (the no-override case AC3
+# fences); the slice render flips the deployed replicas expectation to 10.
 if [ "$skip_helm" -eq 1 ]; then
   skip "t2: render not run (dependency update unavailable)"
 else
+  t2_slice="$WORK/t2-dev-slice.yaml"
+  if ! python3 - "$DEV_VALUES" "$t2_slice" <<'PY'
+import re, sys, yaml
+
+src, out = sys.argv[1:3]
+lines = []
+with open(src) as f:
+    for line in f:
+        line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+        line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+        lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get('forgejo-runner-dev')
+if not isinstance(block, dict):
+    print(f'FAIL: t2: {src} has no top-level forgejo-runner-dev: slice to extract — the appset merges only this key (t17 loader discipline)', file=sys.stderr)
+    sys.exit(1)
+with open(out, 'w') as f:
+    yaml.safe_dump(block, f)
+PY
+  then
+    fail "t2: could not extract the dev services slice from $DEV_VALUES"
+  fi
+  runner_out_slice="$WORK/runner-render-dev-slice.yaml"
+  if ! "$helm_bin" template "$RELEASE_DEV" "$runner_copy" \
+      -f "$t2_slice" \
+      --set "bitwardenIds.runner-token=$TEST_UUID_DEV" \
+    >"$runner_out_slice" 2>"$WORK/runner-render-dev-slice.err"; then
+    tail -n 30 "$WORK/runner-render-dev-slice.err" >&2
+    fail "t2: helm template of $RUNNER (dev release WITH the services slice) failed (log kept at $WORK/runner-render-dev-slice.err)"
+  fi
   runner_out_dev="$WORK/runner-render-dev.yaml"
   runner_out_infra="$WORK/runner-render-infra.yaml"
   if ! "$helm_bin" template "$RELEASE_DEV" "$runner_copy" \
@@ -237,11 +272,11 @@ else
   fi
   [ -s "$runner_out_dev" ] || fail "t2: helm template (release $RELEASE_DEV) rendered nothing"
   [ -s "$runner_out_infra" ] || fail "t2: helm template (release $RELEASE_INFRA) rendered nothing"
-  if python3 - "$runner_out_dev" "$runner_out_infra" "$RELEASE_DEV" "$RELEASE_INFRA" "$TEST_UUID_DEV" "$TEST_UUID_INFRA" "$WORK/runner-count" <<'PY'
+  if python3 - "$runner_out_dev" "$runner_out_infra" "$runner_out_slice" "$RELEASE_DEV" "$RELEASE_INFRA" "$TEST_UUID_DEV" "$TEST_UUID_INFRA" "$WORK/runner-count" <<'PY'
 import re, sys, yaml
 
-(render_dev, render_infra, rel_dev, rel_infra,
- uuid_dev, uuid_infra, count_file) = sys.argv[1:8]
+(render_dev, render_infra, render_slice, rel_dev, rel_infra,
+ uuid_dev, uuid_infra, count_file) = sys.argv[1:9]
 ok_n = 0
 
 def ok(msg):
@@ -301,7 +336,7 @@ try:
 
         spec = (by_kind(docs, 'StatefulSet')[0].get('spec')) or {}
         if spec.get('replicas') != 1:
-            bad(f't2: {release} — replicas is {spec.get("replicas")!r}, expected 1 (one (uuid, token) pair maps to exactly one pod; scaling means more runner records)')
+            bad(f't2: {release} — replicas is {spec.get("replicas")!r}, expected 1: this is the NO-OVERRIDE chart-default render (B1 as amended by the owner ruling 2026-11-26 keeps the default single — a new release is one pod until a slice rules otherwise; a default flip is a ruling, not a drift)')
         vcts = spec.get('volumeClaimTemplates') or []
         if len(vcts) != 2:
             bad(f't2: {release} — {len(vcts)} volumeClaimTemplates, expected exactly 2 (data + docker-data)')
@@ -316,7 +351,7 @@ try:
                 bad(f't2: {release} — VCT {name} accessModes are {vspec.get("accessModes")!r}, expected [ReadWriteOnce]')
             if vspec.get('storageClassName') != 'local-path':
                 bad(f't2: {release} — VCT {name} storageClassName is {vspec.get("storageClassName")!r}, expected local-path')
-        ok(f't2: {release} — replicas 1, VCTs exactly data (2Gi) + docker-data (10Gi), both RWO local-path')
+        ok(f't2: {release} — replicas 1 with no slice override (chart default stays single per B1-as-amended, D57), VCTs exactly data (2Gi) + docker-data (10Gi), both RWO local-path')
 
         pod = ((spec.get('template') or {}).get('spec')) or {}
         ics = pod.get('initContainers') or []
@@ -503,6 +538,21 @@ try:
 
     check_release(render_dev, rel_dev, uuid_dev)
     check_release(render_infra, rel_infra, uuid_infra)
+
+    # Deployed dev shape (C16/D57): the appset merges ONLY the top-level
+    # services slice, so the release this cluster actually runs carries
+    # replicas 10 — ten poller pods on ONE registration, one job per pod.
+    sdocs = [d for d in yaml.safe_load_all(open(render_slice)) if d]
+    ssts = by_kind(sdocs, 'StatefulSet')
+    if len(ssts) != 1:
+        bad(f't2: the slice-overlay render carries {len(ssts)} StatefulSets, expected exactly 1')
+    sspec = (ssts[0].get('spec')) or {}
+    if sspec.get('replicas') != 10:
+        bad(f't2: {rel_dev} DEPLOYED render — replicas is {sspec.get("replicas")!r}, expected 10 (owner ruling 2026-11-26, cf-55 round-5 directive 5: runners to replicas 10, both instances — B1 AS AMENDED per D57, NOT B1-as-written: 10 pods poll one (uuid, token) registration and capacity stays 1 per pod)')
+    svcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in (sspec.get('volumeClaimTemplates') or [])}
+    if set(svcts) != {'data', 'docker-data'}:
+        bad(f't2: {rel_dev} slice render — volumeClaimTemplates named {sorted(svcts)}, expected [data, docker-data] (the per-pod shape is not what scaled)')
+    ok(f't2: {rel_dev} with the services slice — replicas 10 (B1-as-amended, owner ruling 2026-11-26), VCTs unchanged data + docker-data')
 
     seen, dupes = set(), set()
     for render_file in (render_dev, render_infra):
@@ -1963,6 +2013,91 @@ PY
   else
     exit 1
   fi
+fi
+
+# --- t18: the deployed services slice carries replicas 10 (C16 leg (a), D57) ----
+# The ruling rides the SLICE, never the chart: the appset merges only this
+# top-level block, so this static pin is the durable record of where the 10
+# lives (t2's overlay render proves it survives the merge).
+if ! python3 - "$DEV_VALUES" <<'PY'
+import re, sys, yaml
+
+src = sys.argv[1]
+lines = []
+for line in open(src):
+    line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+    line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+    lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get('forgejo-runner-dev')
+if not isinstance(block, dict):
+    print(f'FAIL: t18: {src} has no top-level forgejo-runner-dev: slice', file=sys.stderr)
+    sys.exit(1)
+rep = (((block.get('app-template') or {}).get('controllers') or {}).get('runner') or {}).get('replicas')
+if rep != 10:
+    print(f'FAIL: t18: the dev slice carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57): both runner releases scale to 10 POLLER PODS on one registration via the per-slice override (the chart default stays 1)', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t18: see the t18 detail above"
+fi
+ok "t18: services/dev/prod/values.yaml forgejo-runner-dev block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, B1-as-amended — slice, not chart)"
+
+# --- t19: capacity STAYS 1 in the deployed render (C16 leg (b), D57) ------------
+# The owner asked for 10 RUNNERS, not an in-pod queue: 10 pods x capacity 1
+# = 10 concurrent jobs, each pod inside its honest dind envelope. The
+# stay-1 decision is un-pinned today (scout §D) — this leg fences it, so a
+# future capacity bump is a ruling, not drift.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t19: not run (dependency update unavailable)"
+else
+  if ! python3 - "$runner_out_slice" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+if not es:
+    print('FAIL: t19: the deployed render carries no ExternalSecret — the config.yaml home moved (t2 would already be red; this leg names its own dependency)', file=sys.stderr)
+    sys.exit(1)
+data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+cfg = yaml.safe_load(data.get('config.yaml') or '')
+cap = ((cfg or {}).get('runner') or {}).get('capacity')
+if cap != 1:
+    print(f'FAIL: t19: the deployed render carries runner.capacity {cap!r}, expected 1 — the stay-1 is a DECISION (D57: ten pods poll one registration; a capacity>1 route would fake parallelism inside one 2cpu/4Gi dind envelope), and secret-runner.yaml is not touched by the scale', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "t19: see the t19 detail above"
+  fi
+  ok "t19: the deployed (slice-overlay) render still carries runner capacity 1 — the stay-1 decision fenced (D57; 10 pods x 1 job, not a queue)"
+fi
+
+# --- t20: the chart default stays 1 without any override (C16 leg (c), D57) -----
+# The amended law keeps the single-pod DEFAULT so a future release cannot
+# silently inherit 10: with no slice merged, the STS renders replicas 1.
+# (t2's no-override renders are the same witness for the two tested
+# releases; this leg names the MUTANT explicitly: chart-default changes
+# redden here and in t2's no-override case, per C16 AC3.)
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t20: not run (dependency update unavailable)"
+else
+  if ! python3 - "$runner_out_dev" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+sts = [d for d in docs if d.get('kind') == 'StatefulSet']
+if len(sts) != 1:
+    print(f'FAIL: t20: {len(sts)} StatefulSets in the no-override render, expected exactly 1', file=sys.stderr)
+    sys.exit(1)
+rep = (sts[0].get('spec') or {}).get('replicas')
+if rep != 1:
+    print(f'FAIL: t20: the NO-OVERRIDE render is replicas {rep!r}, expected the chart default 1 — D57 keeps the default single (scaling rides per-slice overrides only; a chart flip to 10 would silently multiply every future runner release)', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "t20: see the t20 detail above"
+  fi
+  ok "t20: chart default renders replicas 1 with no slice — the amended law keeps a new release one pod until a slice rules otherwise"
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

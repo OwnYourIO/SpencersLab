@@ -227,7 +227,7 @@ role × permission matrix is in the `agents-sync` skill references
   `NEEDS_INFO` as functionality-changing becomes a user question.
 - There is no docker daemon in agent sessions (Coder workspace). A
   container chunk's `docker build` AC is CI-primary: the forge's
-  `.forgejo/workflows/containers-build.yaml` on the pushed branch,
+  `.forgejo/workflows/build-containers.yaml` on the pushed branch,
   publishing to ghcr and the instance's own Forgejo registry (the GitHub
   `.github/workflows/docker-build.yaml` is a `workflow_dispatch`-only
   manual rebuild fallback with its automatic triggers kept commented);
@@ -236,11 +236,13 @@ role × permission matrix is in the `agents-sync` skill references
   reports them honestly in `commands_run`. A `docker build => no-daemon,
   CI-deferred` line is the designed passing gate shape, not a deviation
   (ruled 2026-10-28, cf-77). Detection in that forge workflow is
-  range-pinned: a push diffs `marker..sha` — from the last-built marker
-  ref, which the workflow advances only on a push run whose whole build
-  matrix published green, so a build a dead run lost is re-covered by
-  the next push instead of staying skipped forever — with the whole
-  `before..sha` range as the marker-missing fallback; the reason its
+  range-pinned: a called run (main-sync's prod-main fan, C15) diffs
+  `marker..sha` — from the last-built marker
+  ref, which main-sync's aggregate job advances only once the whole fan's
+  builders published green, so a build a dead run lost is re-covered by
+  the next fan instead of staying skipped forever — with the whole
+  `before..sha` range as the marker-missing fallback; a called run with no
+  marker yet narrows to tip-only and announces it; the reason its
   detect job checks out with `fetch-depth: 0` is that either range must
   resolve locally, and a PR diffs merge-base to head, hand-rolled
   because the `git diff --merge-base` flag needs git ≥ 2.43 and the
@@ -249,8 +251,9 @@ role × permission matrix is in the `agents-sync` skill references
   empty changed set on a real push/PR range without a marker; a no-op
   push (its `before` equals its `sha`) and an empty dispatch list stay
   silent by ruling, and an empty range measured from a present marker is
-  informational — it proves nothing was missed; an empty `before` is
-  fatal and an unresolvable range fails loud rather than resolving to
+  informational — it proves nothing was missed; an empty `before` on a
+  real push is fatal and an unresolvable range fails loud rather than
+  resolving to
   nothing. Push payloads leave `total_commits` at 0, so detection never
   counts commits.
 - Agent-shell tooling recipes: `helm` lives at `~/.local/bin` — export
@@ -463,7 +466,8 @@ change.
 - If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
 - Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
 - **Never bump versions or image tags by hand.** `build-charts.yaml` runs on the
-  prod Forgejo Actions: it bumps `Chart.yaml` `version` to the calendar
+  prod Forgejo Actions, invoked by `main-sync.yaml` on the prod-main fan
+  (marker..sha detection on the shared `ci/last-built` marker): it bumps `Chart.yaml` `version` to the calendar
   release `Y.M.N` (unpadded month) — same-month N+1, new-month N=1, a tree
   ahead of the clock fails loud — when changes land on Forgejo main
   (idempotent FF-only single-writer loop; GitHub learns
@@ -472,7 +476,8 @@ change.
   contract byte-stable, release tag `<chart>-<version>`) AND the instance's
   Helm package registry (FORGE_PUSH_TOKEN). Set
   `version: Y.M.1` (the current stamp) only on a brand-new chart.
-  Containers are tag-based: on a `prod`-role instance a main/dispatch build
+  Containers are tag-based: on a `prod`-role instance the main-sync fan (and
+  dispatch) build
   pushes `yy.mm.N` + `:latest` + `:main` to `ghcr.io/ownyourio/<image>` AND
   the same three tags to that instance's own Forgejo registry as
   `curatedforest/<image>` (host derived in-workflow — no URL literals in
@@ -499,7 +504,7 @@ change.
   over the vocabulary `{dev, prod}` (e.g. `dev,prod`); job `if:` guards test
   membership with `contains()` — `on:` itself cannot be conditioned, so the
   role/event split lives in the job guards. Unset defaults per file,
-  deliberate in all five `.forgejo` workflows: `containers-build.yaml`
+  deliberate in all five `.forgejo` workflows: `build-containers.yaml`
   widens on unset (a null clause ahead of the membership tests — the
   single-server case publishes everything), while `main-sync.yaml`,
   `renovate.yaml`, `build-charts.yaml` and `builder-bootstrap.yaml` stay narrow

@@ -981,6 +981,27 @@ fi
 # files already ride tests/* and the explicit "$BOARDS_SRC"/*+"$BOARDS_GEN"/*
 # pair; the amendment is skill-side only (plan D8: gate and command surfaces
 # stay byte-untouched, the t12/t15/t16 freezes included), so nothing else joins.
+# cf-55 ROUND 5 (2026-11-26, chunks/C14-C16.md; D52-D59): the shared-marker
+# adaptation edits the PRE-RENAME container-builder workflow (C14 ref rename
+# + ancestor tolerance) and C15's git mv lands it as build-containers.yaml —
+# both paths join (the mv surfaces the deleted pre-rename path as one side
+# of the delta; the bare literal is quote-composed below so the ci-surface
+# t8 containers-era sweep never reads this arm as a live claim).
+# renovate.json joins for the pin-7 description re-pin, and the two services
+# values files for the C16 per-slice replicas (D57 owner ruling). The
+# renamed suite rides tests/*, the detect script scripts/*,
+# charts/forgejo-runner/values.yaml the existing charts/forgejo-runner/*
+# wildcard (C16 asked to verify — covered), and the prowlarr admit already
+# stands from the C11 round (C13's fold is a no-op there). A replan-added
+# file joins THIS line.
+# cf-55 ROUND 5 / C15 (2026-11-26, D56; chunks/C15.md): the rename's
+# collateral comment re-truths are forced on live surfaces by ci-surface
+# t8's armed containers sweep — join lines extended with
+# .github/workflows/docker-build.yaml:5 (the GitHub twin citing the forge
+# builder) and containers/vllm-radiance-mxfp4/{Dockerfile,README.md}
+# (first-build calendar-tag cites). Exact per-file joins, no wildcards;
+# the rebuild round's "NO docker-build or vllm-radiance admits" premise
+# assumed the branch touches neither — C15's fence says otherwise.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -1061,6 +1082,9 @@ if want t14; then
       charts/traefik/values.yaml|charts/traefik-zerotrust/values.yaml|\
       .forgejo/workflows/renovate.yaml|\
       .forgejo/workflows/main-sync.yaml|charts/prowlarr/Chart.yaml|\
+      .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
+      .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
+      services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;

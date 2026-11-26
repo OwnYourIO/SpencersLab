@@ -18,9 +18,10 @@
 # dev-role instance publishes pr-<branch>-<sha> to the local registry only:
 # a PR can never move a rolling or calendar tag, and the job works with zero
 # ghcr credentials. The last-built marker belongs to no registry: it is a
-# commit ref on this repository, advanced by the workflow itself after a
-# fully-green push build, and it gates nothing — it only says where the
-# already-published history ends.
+# commit ref on this repository, advanced by main-sync.yaml's aggregate job
+# after the whole fan builds green (C15/D54 — the single writer; this
+# workflow only READS the marker), and it gates nothing — it only says where
+# the already-published history ends.
 #
 # Calendar N. Neither registry has tag immutability — re-pushing a taken tag
 # silently overwrites what it names — so N is the union maximum of both
@@ -41,23 +42,28 @@
 # main-sync pushes with and release publishes with; owner ruling 2026-11-22), stays
 # the ghcr credential. Retention is owner-side: forge Cleanup Rules scoped strictly
 # to pr-.* — latest is code-protected, but main and the calendar line survive
-# only while that pattern stays narrow. The marker ref is the one write here
-# that wears no PAT: it is a branch of this repository, so the checkout's own
-# same-repo credential pushes it (the release.yaml idiom), and it stays
+# only while that pattern stays narrow. The marker ref receives no write
+# here (C15): main-sync.yaml's aggregate job is its single writer, riding
+# that caller's own same-repo credential — no PAT — and the ref stays
 # Forgejo-local — main-sync mirrors refs/heads/main alone, so GitHub never
 # receives the marker and the registry PATs are never marker credentials.
+# This workflow only READS the marker (the resolver step above).
 #
-# Detection. A push diffs marker..sha — the last run that built this
-# repository green, remembered as the ci/containers-built marker ref, so a
-# change a dead or cancelled run lost is re-covered by the next push instead
+# Detection. A called run diffs marker..sha — the last fan that built this
+# repository green, remembered as the ci/last-built marker ref (shared with
+# the chart builder since C14; main-sync calls this workflow on the prod-main
+# fan — C15), so a
+# change a dead or cancelled run lost is re-covered by the next call instead
 # of staying skipped forever. With no marker yet (the bootstrap state, and
-# every state until the first green push run advances it) a push falls back
-# to its payload's whole before..sha range. Either way the diff is a tree
+# every state until main-sync's aggregate first advances it) a called run
+# narrows to the tip commit and announces it, and a run that does carry a
+# payload before falls back
+# to its whole before..sha range. Either way the diff is a tree
 # diff, so every commit between the endpoints lands in the changed set —
 # which is why the detect job checks out with fetch-depth: 0 and the build
 # jobs, which never diff, stay shallow. A pull request diffs
 # merge-base..head, so a base that moved contributes nothing; the marker is
-# push-side only and never feeds a PR build. The first push to a branch
+# call-side only and never feeds a PR or dispatch build. The first push to a branch
 # (all-zero before) narrows to the tip commit and says so with a ::warning::
 # log line; an empty before is fatal, because no real push payload sends one
 # and its arrival means a wrong accessor or event. The resolved set is echoed
@@ -72,8 +78,10 @@
 #
 # Runs. Without concurrency:, Forgejo cancels an in-flight run of the same
 # workflow on every new push or PR synchronize event; a cancelled matrix
-# would publish half a tag set, so runs queue instead. The lab runner has
-# capacity 1, so matrix cells serialize through one pod, and every job gets
+# would publish half a tag set, so runs queue instead. Each runner release
+# polls with 10 pods at capacity 1 each (owner ruling 2026-11-26, scale
+# via slice — D57), so matrix cells spread across pods while every job
+# still lands alone in one pod, and every job gets
 # the runner's 30-minute ceiling — a cold build of a large image can hit it.
 # workflow_dispatch shares the release arm: a dispatch from any branch
 # repoints latest and main on both registries and mints a calendar tag in
@@ -84,10 +92,8 @@
 # unproven. Fork heads get empty secrets and a read-only token, so the PR
 # leg works for same-repository pull requests only.
 
+name: Build Containers
 on:
-  push:
-    branches: [main]
-    paths: ['containers/**']
   pull_request:
     branches: [main]
     paths: ['containers/**']
@@ -101,6 +107,10 @@ on:
         required: false
         default: ''
         type: string
+  # C15/D56: the push arm died with owner directive 4 — main-sync.yaml
+  # calls this workflow on its prod-main fan; path filtering lives in the
+  # marker..sha detection instead. PR and dispatch lanes stay byte-frozen.
+  workflow_call: {}
 
 concurrency:
   cancel-in-progress: false
@@ -136,30 +146,31 @@ jobs:
           EVENT_NAME: ${{ forgejo.event_name }}
         run: |
           set -euo pipefail
-          # The marker is push-side only. Non-push events still emit the
+          # The marker is call-side (C15/D56: main-sync's called runs read
+          # it; the push arm is gone). Non-marker-side events still emit the
           # output key: a step output that goes missing would reach detect()
           # unset rather than empty, and an empty MARKER_SHA is exactly the
           # state the payload arms are specified against.
-          if [ "$EVENT_NAME" != push ]; then
+          if [ "$EVENT_NAME" != workflow_call ]; then
             echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
             exit 0
           fi
-          marker=$(git ls-remote origin refs/heads/ci/containers-built | cut -f1)
+          marker=$(git ls-remote origin refs/heads/ci/last-built | cut -f1)
           if [ -z "$marker" ]; then
-            # No marker yet: the before-chain answers, and this run's own
-            # green advance will create it.
+            # No marker yet: the before-chain answers, and main-sync's first
+            # aggregate green advance creates it.
             echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
             exit 0
           fi
           if ! printf '%s' "$marker" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "containers-build: the marker ref answered a non-sha value: $marker" >&2
+            echo "build-containers: the marker ref answered a non-sha value: $marker" >&2
             exit 1
           fi
           if ! git cat-file -e "$marker^{commit}"; then
             # A history rewrite can orphan the marker: silently downgrading
             # this run to before..sha would re-open the hole the marker exists
             # to close, so the run stops here with the owner verbs named.
-            echo "containers-build: marker $marker is unreachable from this checkout — reset the marker ref to a reachable commit or delete it to fall back" >&2
+            echo "build-containers: marker $marker is unreachable from this checkout — reset the marker ref to a reachable commit or delete it to fall back" >&2
             exit 1
           fi
           echo "sha=$marker" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
@@ -197,9 +208,9 @@ jobs:
           # range measured FROM the marker proves nothing was missed, so it
           # reads as one plain info line instead of an anomaly.
           if [ "$EVENT_NAME" != workflow_dispatch ] && [ "$changed" = '[]' ]; then
-            if [ "$EVENT_NAME" = push ] && [ -n "$MARKER_SHA" ]; then
+            if [ -n "$MARKER_SHA" ]; then
               echo "changed set verified empty: marker..sha (marker=$MARKER_SHA sha=$SHA) — nothing was missed between the marker and this run"
-            elif [ "$EVENT_NAME" = pull_request ] || [ "$EVENT_BEFORE" != "$SHA" ]; then
+            elif [ "$EVENT_NAME" = pull_request ] || { [ -n "$EVENT_BEFORE" ] && [ "$EVENT_BEFORE" != "$SHA" ]; }; then
               echo "::warning::changed set resolved empty for event $EVENT_NAME — both build arms will skip"
             fi
           fi
@@ -460,24 +471,3 @@ jobs:
           tag="$forge_registry/curatedforest/${{ matrix.container }}:$pr_tag"
           docker build -t "$tag" "containers/${{ matrix.container }}"
           docker push "$tag"
-
-  advance-marker:
-    if: forgejo.event_name == 'push' && needs.build-release.result == 'success'
-    needs: [detect-changes, build-release]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          # A one-commit shallow clone cannot negotiate a non-force push
-          # (the main-sync and release precedent).
-          fetch-depth: 0
-      - name: advance the last-built marker
-        run: |
-          set -euo pipefail
-          # Plain push, no force flag anywhere: git's own non-fast-forward
-          # refusal is the monotonicity law, so a queued or rewound run that
-          # lands behind the marker fails this job loudly instead of moving
-          # it backwards. The non-FF shape is the advance contract, not a
-          # retry case — a red leg here is the signal, never something to
-          # force past.
-          git push origin HEAD:refs/heads/ci/containers-built

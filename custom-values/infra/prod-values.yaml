@@ -86,7 +86,7 @@ forgejo:
         # Package registries the cf-55 dual-publish CI pushes to (RESEARCH
         # V-3): [packages] gates BOTH the Helm chart registry (build-charts.yaml's
         # forgejo-publish job) and the OCI container registry
-        # (containers-build.yaml's instance OCI push). Prod-only by ruling
+        # (build-containers.yaml's instance OCI push). Prod-only by ruling
         # D20 — the dev slice intentionally carries no packages block.
         # ENABLED already defaults true on Forgejo 15 and cf-6's container
         # pushes exercise the registry, so the flag is proven live — the

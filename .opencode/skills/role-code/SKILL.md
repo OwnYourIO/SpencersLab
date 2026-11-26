@@ -62,7 +62,7 @@ pasted into chat.
    and publishes dual — GitHub Releases/gh-pages plus the instance's Helm
    registry; containers are tag-based: a `prod`-role main
    merge pushes `yy.mm.N` + `:latest` + `:main` to both registries via the
-   forge `containers-build.yaml`, and the GitHub `docker-build.yaml` is a
+   forge `build-containers.yaml`, and the GitHub `docker-build.yaml` is a
    `workflow_dispatch`-only manual fallback). Set an initial version only when
    creating a brand-new chart (`version: Y.M.1` — the current stamp, unpadded month).
 4. After chart changes, run `helm lint charts/<name>` and

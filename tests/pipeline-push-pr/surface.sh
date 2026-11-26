@@ -310,12 +310,12 @@ if want p7; then
       || fail "P7[C05 AC1]: the no-tests-yet rule is missing — prefer live playwright-MCP actions when the app is reachable, else write tests from research"
     python3 "$TMP/win.py" --ci "$f" 600 'app-template' 'testing/' \
       || fail "P7[C05 AC1]: the containers coverage shape (each container's testing/ values.yaml app-template defines the run) is absent"
-    grep -qiE 'containers-build' "$f" \
-      || fail "P7[C05 AC1]: container builds are not routed to the forge containers-build.yaml (PR = pr-<branch>-<sha> to the instance registry only; merge = calendar yy.mm.N + rolling tags to both registries)"
+    grep -qiE 'build-containers' "$f" \
+      || fail "P7[C05 AC1]: container builds are not routed to the forge build-containers.yaml (C15 pin 5 re-needle; PR = pr-<branch>-<sha> to the instance registry only; merge = calendar yy.mm.N + rolling tags to both registries)"
     python3 "$TMP/win.py" --ci "$f" 1200 'assumed' 'follow-up' \
       || fail "P7[C05 AC1]: the closing posture sentence is absent — mechanics SHIP UNDER the follow-up cards; this section is the contract ASSUMING them in place"
   done
-  ok "P7[C05 AC1]: the single-authority section carries both trigger shapes, the draft guard, skip-testing, kopia restore, the env-credential names, L7-L12 pointers, the playwright fallback, the container shape, the forge containers-build routing and the assumed-in-place sentence — source AND mirror"
+  ok "P7[C05 AC1]: the single-authority section carries both trigger shapes, the draft guard, skip-testing, kopia restore, the env-credential names, L7-L12 pointers, the playwright fallback, the container shape, the forge build-containers routing and the assumed-in-place sentence — source AND mirror"
 fi
 
 # --- P8: the three -pr surfaces CITE the section, never restate (AC2) -----------

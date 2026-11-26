@@ -9,7 +9,7 @@
 # static contract + hadolint, and the build leg reports the designed-passing
 # shape "docker build => no-daemon, CI-deferred" (ruled 2026-10-28, cf-77;
 # AGENTS "Pipeline specifics in this repo") — the merge fire's own
-# containers-build.yaml run is the authoritative build test, and detection is
+# build-containers.yaml run is the authoritative build test, and detection is
 # path-based (scripts/forgejo-container-detect.sh gates on the containers/**
 # diff + a DNS-safe name + Dockerfile presence), so nothing registers this
 # image anywhere (D36/§F3).
@@ -366,7 +366,7 @@ if want t8; then
       fail "t8: docker build failed (log kept at /tmp/opencode/forgejo-runner-build.log)"
     fi
   else
-    # Not a deviation: the containers-build.yaml run on the merged main IS the
+    # Not a deviation: the build-containers.yaml run on the merged main IS the
     # build authority for containers (AGENTS 'Pipeline specifics'); the static
     # contract above is this session's share. This line is the DESIGNED
     # passing shape for the image legs (cf-77 ruling), not a failure.

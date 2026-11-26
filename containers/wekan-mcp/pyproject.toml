@@ -1,6 +1,6 @@
 [project]
 name = "wekan-mcp"
-# Cosmetic only: image tags are managed by CI (containers-build.yaml's
+# Cosmetic only: image tags are managed by CI (build-containers.yaml's
 # yy.mm.N calendar scheme).
 version = "0.0.2"
 description = "MCP server that wraps the WeKan REST API with credential isolation."

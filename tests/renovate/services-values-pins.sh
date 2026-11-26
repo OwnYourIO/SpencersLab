@@ -163,7 +163,7 @@ need(len(cal) == 1,
 # Byte-identical pin of the calendar rule (JSON-space equality): C02 must not
 # touch it, and leg B's bump PR must not need to either.
 EXPECTED = {
-    'description': 'Calendar line owns ghcr.io/ownyourio images: .forgejo/workflows/containers-build.yaml '
+    'description': 'Calendar line owns ghcr.io/ownyourio images: .forgejo/workflows/build-containers.yaml '
     'publishes them as yy.mm.N, and the docker datasource\'s default versioning ranks the legacy '
     'v<run_number> tags above every 26.x calendar tag (v162 > 26.11.1), so pins would never cross '
     'onto the calendar line. This regex versioning compares calendar tags numerically; a legacy '
