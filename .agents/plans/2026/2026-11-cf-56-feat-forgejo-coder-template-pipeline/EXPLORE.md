@@ -797,3 +797,590 @@ is adopted.
    confirm the runbook gets a short "marker bootstrap" note (pre-init
    fallback = today's semantics; first green run auto-creates) instead of a
    cf-6-style B1/B2 owner leg.
+
+## Round 3 (2026-11-26, delta scout) — main r5 merged; the law moved again
+
+Grounded 2026-11-26 by `agent-explore` (read-only, delta round) on the merge
+`01d2e3f45` (parents `16df8a38d` this-branch r4-era + `5f5762a19` main r5;
+clean auto-merge, no conflicts; head `d68eefb41` the DECISIONS record).
+Scope: the r5 delta to the marker law (C14 shared marker + C15
+workflow_call orchestration) vs the r4 shape rounds 1–2 grounded, the
+post-merge C01 regression facts, the stale-ref sweep, and the r5 suite
+mirror shapes. Round 2's `R2-Q1`/`R2-Q2`/`R2-Q5` line citations against
+`containers-build.yaml` describe the r4 shape and are superseded below where
+r5 moved it.
+
+### R3-Q1 — `main-sync.yaml` r5: the prod-main fan + the aggregate marker advance
+
+**The fan** (`main-sync.yaml:57-60,105-119`): `on:` = push main +
+`workflow_dispatch: {}` (no inputs). Jobs `push-gh` (`:63-82`), `push-dev`
+(`:84-103`) unchanged in shape; the two builders are now **called**, not
+push-triggered: `build-containers` (`:105-111`: `if: contains(vars.ROLE,
+'prod')`, `runs-on: ubuntu-24.04`, `uses: ./.forgejo/workflows/
+build-containers.yaml`, `secrets: inherit`) and `build-charts` (`:113-119`:
+same triple, `uses: ./.forgejo/workflows/build-charts.yaml`; comment `:114-
+115`: "Same for the chart builder (marker..sha detection inside replaces the
+retired paths filter); its bump_sha output feeds the advance below"). No
+`with:` inputs on either call — the called workflows need none (their
+detection reads the event payload + the marker). `secrets: inherit` is the
+only secret plumbing (the builders' `FORGE_PUSH_TOKEN`/`PUSH_TOKEN_GH`
+resolve through the caller's scope; no new secret).
+
+**The aggregate advance** (`:121-158`): `advance-marker` with
+`needs: [build-containers, build-charts]` (`:125` — comment `:122-124`:
+"needs IS the aggregate rule — both builders green or this job never runs; a
+red fan leaves the marker put, so the next fan's marker..sha range still
+carries the failed work (re-cover)"), `if: contains(vars.ROLE, 'prod')`
+(`:126` — no `always()`, no result function: the plain `needs`-gate IS the
+green-fire rule; D59 override of D54's recommendation, cf-55 DECISIONS
+L1045-1052). Checkout `actions/checkout@v7` with **integer**
+`fetch-depth: 0` (`:129-133`, comment "Push negotiation needs the real
+history, not the single-commit default (the main-sync and builder precedent)").
+The advance step (`:134-158`):
+- `git fetch origin refs/heads/main:refs/remotes/origin/main` (`:145`) — the
+  bump object must be pushable from this checkout;
+- **endpoint**: `TARGET=${{ needs.build-charts.outputs.bump_sha }}` then
+  `TARGET=${TARGET:-$GITHUB_SHA}` (`:146-147`) — the charts **bump commit**
+  when this fan's range minted one (D53 — "an event-sha endpoint would
+  re-enter the bump's own charts/** edits into the next detection forever"),
+  else the event sha;
+- **FF vs non-FF law (r5 change)**: one plain push first — `git push origin
+  "${TARGET}:refs/heads/ci/last-built"` (`:148`) — no force form anywhere;
+  on a refusal the step **CLASSIFIES** (C14/D54, `:152-158`): fetch the
+  marker; `git merge-base --is-ancestor "${TARGET}" FETCH_HEAD` → "marker
+  already advanced past this run's endpoint — consistent" `exit 0` (skip-
+  green, `:153-156`); otherwise → RED naming both sides + the owner verbs
+  ("reset the marker ref to a reachable commit or delete it to fall back to
+  the payload chain", `:157`). **Non-FF refusal is no longer itself the
+  signal** (cf-55 suite t16 comment L207-209: "non-FF is no longer itself
+  the signal, D54") — the r4 shape (a queued/rewound run fails the advance
+  loudly) became: endpoint already at-or-past the marker = calm green;
+  diverged = loud red. Monotonicity still holds (a behind-marker endpoint
+  that is not an ancestor is refused + red).
+- **Credential**: NO `secrets.` reference in the job — the checkout's
+  automatic same-repo credential (header `:47-55`: "the push wears no PAT
+  (the same-repo credential … moved here with the job)"; "The marker stays
+  Forgejo-local: this file mirrors refs/heads/main alone, so GitHub never
+  receives it"). **Event kinds that advance**: push-main and dispatch on the
+  prod-stage instance, when both called builders return green. **Partial
+  fan failure**: one builder red → `advance-marker` SKIPPED (plain needs-
+  gate) → marker put → next fan re-covers both domains; `sync-fanout`
+  (`:160-197`, `needs: [push-gh, build-containers, build-charts]` `:174`,
+  D59 hard gate: "a red release holds the fleet at the previous revision")
+  skips too. **Dev-role instance**: every job's guard is false (header
+  `:1-6` — "there the guard is false for both, so nothing fires on dev and
+  the pushes cannot ping-pong"; unset ROLE renders empty and fires nothing)
+  → **nothing fires; the dev repo never gets a marker** (cf-55 DECISIONS
+  D53 L880-881: "dev instance carries NO marker — same fact, so the
+  migration push is prod-only, UA-R5-1"). **Dispatch on prod**: a no-input
+  `workflow_dispatch` re-fires the whole fan (push-gh/push-dev plain no-op
+  re-pushes; the builders re-run detection over `marker..sha` or bootstrap
+  tip-only; advance + fan-out follow the same green table) — a legitimate
+  re-cover mechanism.
+
+### R3-Q2 — `build-containers.yaml` (renamed) r5: the called-run contract
+
+**Rename + trigger removal** (`:110-113`): "C15/D56: the push arm died with
+owner directive 4 — main-sync.yaml calls this workflow on its prod-main fan;
+path filtering lives in the marker..sha detection instead. PR and dispatch
+lanes stay byte-frozen." `on:` (`:96-113`) = `pull_request` main + `paths:
+['containers/**']` + `workflow_dispatch` (`containers` input, byte-frozen
+`:100-109`) + **`workflow_call: {}` (`:113`)** — **no `push:` arm at all**.
+`concurrency: cancel-in-progress: false` survives (`:115-116`).
+
+**The marker is call-side only** (`:143-176` resolver, `id: marker`): gate
+`if [ "$EVENT_NAME" != workflow_call ]` → emit empty `sha=` and exit 0
+(`:154-157`, comment `:149-153`: "The marker is call-side (C15/D56 … the
+push arm is gone). Non-marker-side events still emit the output key … an
+empty MARKER_SHA is exactly the state the payload arms are specified
+against"). Then `git ls-remote origin refs/heads/ci/last-built | cut -f1`
+(`:158`); empty (ref absent) → empty `sha=` + exit 0 (`:159-163`, "No marker
+yet: the before-chain answers, and main-sync's first aggregate green advance
+creates it"); 40-hex validation with loud fail naming the value
+(`:165-168`); `git cat-file -e "$marker^{commit}"` unreachable → `exit 1`
+with the reset-or-delete owner verbs (`:169-175`). So **`marker..sha`
+detection is ONLY for called runs** — the PR arm (merge-base, byte-frozen,
+script `:44-55`) and the dispatch arm (list, `:38-41`) never read the
+marker.
+
+**The detect step** (`:177-216`): 7 env accessors (`:179-186` — the 7th
+`MARKER_SHA: ${{ steps.marker.outputs.sha }}`); verdict echo names event,
+endpoints and `marker=` (`:197`); **warning law** (`:210-216`):
+`EVENT_NAME != workflow_dispatch && changed == '[]'` → if `MARKER_SHA`
+non-empty → one plain info line "changed set verified empty: marker..sha
+(marker=… sha=…) — nothing was missed between the marker and this run"
+(`:211-212`); elif pull_request or (`EVENT_BEFORE` non-empty and `!= SHA`)
+→ `::warning::changed set resolved empty … both build arms will skip`
+(`:213-214`). **No-marker tip-only announce**: header `:57-62` — "With no
+marker yet (the bootstrap state, and every state until main-sync's aggregate
+first advances it) a called run narrows to the tip commit and announces it,
+and a run that does carry a payload before falls back to its whole
+before..sha range"; empty-set law `:70-77` (no-op `before == sha` + empty
+dispatch silent; empty range from a present marker = the info line; nothing
+reads `event.commits`/`total_commits`).
+
+**The old advance-marker job is GONE from this file — it moved to main-sync**
+(header `:45-50`: "The marker ref receives no write here (C15):
+main-sync.yaml's aggregate job is its single writer, riding that caller's
+own same-repo credential — no PAT … This workflow only READS the marker";
+`:20-24`: "advanced by main-sync.yaml's aggregate job after the whole fan
+builds green (C15/D54 — the single writer; this workflow only READS the
+marker)"). The `build-release` guard is `forgejo.event_name != 'pull_request'
+&& (vars.ROLE == null || contains(vars.ROLE, 'prod')) && … != '[]'`
+(`:219`); `build-pr` the dev-role twin (`:426`).
+
+### R3-Q3 — `scripts/forgejo-container-detect.sh` r5 (the 73-line change)
+
+**Decision tree — the r4→r5 reorder + new arm** (`:56-99`): the r4 shape
+(round-2 `R2-Q2`: "empty-before `die` first and unconditional; then marker
+wins …") is **reordered and re-scoped** for the call era:
+1. **`MARKER_SHA` non-empty → marker wins** (`a="$MARKER_SHA"`,
+   `b="${SHA:-HEAD}"`, `base_src='marker'`, `:64-67`) — now FIRST, ahead of
+   the payload die (comment `:58-63`: "Marker first (C15 call-aware): …
+   Under workflow_call an empty before is EXPECTED (called runs carry no
+   push payload), so the marker check — then the call bootstrap arm —
+   precede the payload die; the die stays scoped to real pushes");
+2. **NEW — `event == workflow_call` + no marker → tip-only + announced**
+   (`:68-75`): `::warning::first called run (workflow_call, no marker):
+   tip-only detection over HEAD^..HEAD`, `a='HEAD^'`, `b='HEAD'`,
+   `base_src='tip-only'` ("First called run with no marker (bootstrap, or
+   the owner has not migrated the ref yet)");
+3. **empty `before` → `die`** (`:77-84`) — now **scoped to real pushes**
+   ("A v15.0.10 push payload always carries before … the push arm still
+   dies on it");
+4. all-zero `before` → tip-only `HEAD^..HEAD` + `::warning::` (`:85-93`,
+   unchanged);
+5. otherwise `before..sha` (`:94-98`, unchanged).
+
+**Header/env** (`:9-23`): `EVENT_NAME` vocabulary now
+`push|pull_request|workflow_call|workflow_dispatch`; the `MARKER_SHA` doc
+carries the call-aware posture (`:11-17`). **Echo** (`:107-108`): `detect:
+range %s..%s (event %s${base_src:+, base=$base_src})` — the
+`base=marker|tip-only|before` token, PR arm carries no token (`:104-106`).
+**Warning/die law ownership**: the empty-set warning remains **step-owned**
+(the workflow `:210-216`); the script's only warnings are the two tip-only
+announces; `die()` exit-2 unchanged (`:30-33`); `next-n`/`sanitize`
+unchanged.
+
+**Delta vs our landed `scripts/coder-template-detect.sh` (decision trees, r5):**
+
+| | upstream r5 | ours (C02, landed) |
+|---|---|---|
+| events | push, pull_request, **workflow_call**, workflow_dispatch (`:9-13`) | push, workflow_dispatch only (no PR arm, OQ2; header `:10-13`) |
+| inputs | 7 env keys incl. `MARKER_SHA` (`:11-17`) | 4 env keys (`:10-13`) — **no `MARKER_SHA`** |
+| non-PR/non-dispatch arm order | **marker → call bootstrap tip-only → empty-before die (scoped) → all-zero tip-only → before** (`:56-99`) | **empty-before die (first, unconditional) → all-zero tip-only → before** (`:37-58`) |
+| `die` scope | real pushes only — a call run's empty `before` is expected, not fatal (`:60-63`, `:77-84`) | unconditional first (`:38-45`) |
+| base echo | `base=marker|tip-only|before` token, PR none (`:107-108`) | no base token (`:63`) |
+| empty-set warning | step-owned, marker-aware (YAML `:210-216`) | script-owned `exempt` flag (`:24-29`, `:35`, `:58`, `:86-92`) — the C03-documented inversion |
+| dispatch all-ungated-list warning | absent (dispatch exempt wholesale) | present (`:87-88`) — the C02 divergence |
+| path gate | `containers/` + `Dockerfile`, `cut -d/ -f2` (`:113-114`, `:120-126`) | `charts/coder/coder-templates/` + `main.tf`, `cut -d/ -f4` (`:68-69`, `:76-83`) |
+| subcommands | `detect` \| `next-n` \| `sanitize` | `detect` only |
+| die contract | exit 2, stderr-prefixed — identical shape | exit 2, stderr-prefixed |
+
+**Consequence for the C04 re-ground**: the chunk's "empty-before `die` first
+and unconditional" pin (C04 AC2, grounded against r4) must re-pin to the
+r5 order **if the marker arm is adopted verbatim** — but the call bootstrap
+arm (item 2) has no analog in our standalone push-trigger shape: for a
+**standalone** workflow (push trigger, own ref, own writer) the die-stays-
+first shape is the r4/cf-6 shape (a push payload always carries `before`; a
+dispatch never reaches the push arm) and the call bootstrap arm is simply
+not present. The r5 reorder exists because the push arm DIED upstream; ours
+keeps its push arm (OQ2 trigger ruling), so the r4 order is not stale for
+the standalone shape — the delta is the marker arm + the `base=` echo + the
+`MARKER_SHA` header line (the r2 change set, minus the call arm).
+
+### R3-Q4 — `build-charts.yaml` r5: the C14 adoption and the shared-marker model
+
+**How it reads the same shared marker** (`:56-90`, `id: marker`): the gate
+is **final-form** (`:68`: `if [ "$EVENT_NAME" != push ] && [ "$EVENT_NAME"
+!= workflow_call ]` → empty `sha=` + exit 0; comment `:62-67`: "Marker-side
+events: push now, workflow_call from C15 — the gate is written final so C15
+removes the trigger, not this body"). Then the same ladder: `ls-remote
+origin refs/heads/ci/last-built | cut -f1` (`:72`); absent → empty + exit 0
+(`:73-77`); 40-hex validation loud (`:79-82`); `cat-file -e` unreachable →
+reset-or-delete owner-verb fail (`:83-89`). The detect is **inline** (not a
+script, `:91-147`): `EVENT_MARKER` non-empty → `git diff --name-only
+"${EVENT_MARKER}" "${EVENT_SHA}" -- charts/ || true` (`:107-108`, **path
+filter `-- charts/`**); all-zero `before` + no marker → `HEAD^` +
+`::warning::` (`:109-111`); empty `before` + no marker → **fatal**
+(`:112-114` — "the silent HEAD^-fallback that used to hide it is buried");
+otherwise `before..sha` (`:115-117`). Name gate: `cut -d'/' -f2` + DNS-safe
++ `Chart.yaml` presence (`:120-127`). Warning law inline (`:134-141`):
+marker-present + empty → the same verified-empty info line; empty on a real
+`before..sha` (no marker, `before != sha`, all-zero excluded) →
+`::warning::empty changed set on a real before..sha range`; `before == sha`
+silent. Output: `CHARTS` JSON + `HAS_CHANGES`.
+
+**The sharing model (C14/D54/D55 — cf-55 DECISIONS L872-951):** **one ref
+per repo per instance: `refs/heads/ci/last-built`** (name **FINAL** per
+owner F1, D59 L1043-1044; D53 L873-874: owner suggest adopted, veto slot
+closed). **Readers**: `build-containers.yaml` resolver + `build-charts.yaml`
+resolver — two consumers, one base. **Single writer**: `main-sync.yaml`
+`advance-marker` (D54 L902-915 — per-builder advance on a shared multi-
+owner branch is "structurally POISONED: one builder's green fire moves the
+ref past the other builder's FAILED range, and those changes fall behind
+the marker forever — destroying exactly the dead-run recovery"; rejected:
+per-builder tolerance, event-sha endpoints, two branches). **Endpoint**:
+bump commit if the charts leg minted one, else event sha (D53 L884-889 —
+the bump commit itself edits `charts/*/Chart.yaml`, so an event-sha
+endpoint "would re-enter it in the next detection and mint an eternal one-
+extra-release-per-fire tail"; the containers builder "cannot hit this
+because it creates no commits — the asymmetry is why the helm chain needed
+its own analysis"; the target rule's event-sha fallback covers output-less
+builders — D55 L940-941).
+
+**Collision semantics (two consumers, different path filters, one marker):**
+no ref collision is possible (one writer); the per-consumer path filter is
+applied over the same shared base — `build-containers` diffs
+`-- containers/` (script `:113`), `build-charts` diffs `-- charts/`
+(`:108`). A consumer whose filtered set is empty does NOT block the
+advance: its called run completes green (verified-empty info line), and
+`needs` reads it as success — only a **red** consumer holds the marker
+(main-sync `:122-124` re-cover law; cf-55 suite t17 truth table; D54
+L928-929: "a skipped-by-ROLE builder reads success (empty called run) —
+dev instance safe"). The aggregate advance therefore requires **BOTH
+consumers green (or skipped)**; a partial-failure fan leaves the marker
+put and the next fan re-covers **both** domains (D54 L916-919: "in a mixed
+outcome BOTH builders re-cover next fire, so the green one may mint one
+extra calendar version — containers: same-tag republish is idempotent;
+helm: tree+1 walk — today's failed-then-re-run semantics, not a new class").
+**Inherited filter decision (D55 L943-947, recorded for card #56 = this
+ticket)**: "the `cut -d/ -f2` collapse of `charts/coder/coder-templates/**`
+into charts/coder's bump set (live today, scout §E) — 'fixing' it here
+would change helm's live release set for another card's concern (one branch
+one concern); recorded in the plan's out-of-scope block so #56 inherits it
+as its filter decision" — i.e. under r5, a template edit already rides the
+fan and bumps the `charts/coder` wrapper chart (the packaging guard keeps
+`coder-templates/` out of the tgz; the bump mints a version whose package
+differs only in the `Chart.yaml` version line).
+
+### R3-Q5 — Implications for the C04 re-ground (facts, not decisions)
+
+**(a) Standalone own-workflow advance vs joining the fan.** The r5 tree
+contains **no standalone push-trigger + own-marker workflow anymore** — both
+builders moved into the fan under the shared ref (D56 L952-983; D58
+L1024-1031: "from C15 on, a `charts/**` merge does NOT itself fire
+build-charts — main-sync's next run calls it … fire timing = the fan,
+contents = marker..sha"). The facts each shape carries:
+- **Standalone (r4/cf-6 shape, what C04 was written for)**: keeps the OQ1
+  per-instance semantics — both forges fire the push trigger, each pushes to
+  its OWN Coder (the dev instance receives main via the fan-out push, a
+  normal push event on the dev repo; round-2 `D16`), and each repo's own
+  ref carries per-instance state. The D54 poison ruling does **not** reach
+  it: the poison is per-builder advance on a **shared multi-owner** branch;
+  a single-writer per-repo ref (only our workflow writes it) is the cf-6
+  shape r2 grounded. The r4 plain non-FF advance shape (monotonicity =
+  refusal) remains available; the r5 classify shape (already-advanced =
+  skip-green) is what the shared-ref aggregate adopted. No upstream suite
+  surface touches our ref: the upstream t16 walk is scoped to the
+  `ci/last-built` token (R3-Q6), and the OQ11 candidate ref is named in no
+  `.forgejo` workflow (grep-measured r3 — `ci/containers-built` appears in
+  no other workflow file, as r2 measured; the rename keeps that true for
+  `ci/last-built`'s two named readers + the writer).
+- **Fan member (the D55 pre-built room, cf-55 DECISIONS L935-951 — "this
+  round LEAVES ROOM for the third builder but does NOT build it (launch-
+  brief law; card #56 owns it). Room = (1) the t16 allow-set … #56 joins
+  by adding its file to the set; (2) the call pattern — #56 adds one
+  `uses:` job + one `advance-marker` needs entry, the aggregate's target
+  rule already handles a builder with no outputs (event-sha fallback); (3)
+  naming — a `build-coder-templates.yaml` needs no marker-branch work, only
+  the shared ref")**: the join is mechanically cheap (one `uses:` + one
+  `needs` entry + one allow-set member in the upstream suite — a cross-
+  ticket surface edit in our commit, the "one branch one concern" tension
+  D55 itself names); the dispatch hatch survives the call (build-containers
+  keeps `workflow_dispatch` byte-frozen beside `workflow_call` — the named
+  rebuild hatch, "dispatch never advances the marker", D56 L963-965); we
+  mint no commits, so the D53 bump-tail does not apply to us. **But the
+  fan is prod-stage-instance only** (main-sync guard `contains(vars.ROLE,
+  'prod')`; D53: "dev instance carries NO marker") — fan membership means
+  the **dev Coder is never pushed by the pipeline**, a direct conflict with
+  the 2026-11-25 OQ1 ruling (per-instance, both Coders, each executing
+  Forgejo pushes to its own Coder; confirmed in the batched round,
+  DECISIONS L125-126). The marker state becomes single-repo (the prod
+  repo's `ci/last-built`).
+
+**(b) Marker ref naming (standalone).** Live inventory at origin (the
+prod-stage Forgejo, `git ls-remote origin 'refs/heads/ci/*'` read
+2026-11-26): **exactly one ref — `refs/heads/ci/containers-built` @
+`52d3b5c45`** (the r4-era ref; D58 L1031-1032: "Old-ref deletion after
+C15 = UA-R5-3 (prod only)"). **`refs/heads/ci/last-built` is NOT yet
+live** — the C14 migration pre-steps (UA-R5-1/UA-R5-2, cf-55 DECISIONS
+L1017-1020) are owner-side and not visible on the remote yet. No
+`ci/coder-templates-pushed` or any coder ref exists. The OQ11 candidate
+`refs/heads/ci/coder-templates-pushed` is therefore **free**, and the
+upstream single-writer fence cannot catch it (its walk is token-scoped to
+the `ci/last-built` literal, R3-Q6). If the fan-join shape is chosen
+instead, the ref is the shared `ci/last-built` itself (D55 room (3): "needs
+no marker-branch work, only the shared ref").
+
+**(c) Post-merge regression facts (C01 surface + UA3 pins).** The merge
+touched exactly (first-parent diff `16df8a38d → 01d2e3f45`):
+- `containers/forgejo-runner/Dockerfile` — **2 lines** = ONE header comment
+  rename `containers-build` → `build-containers` (`:5`). The C01 bake is
+  byte-intact: `FROM ghcr.io/coder/coder:v2.39.5@sha256:40fade40… AS
+  codertool` (`:65`), `ARG CODER_VERSION=2.39.5` + renovate annotation
+  (`:86-87`), `ARG CODER_BIN_SHA256=83431171…fe4` (`:105`), `COPY --from=
+  codertool /opt/coder /usr/local/bin/coder` (`:130`), the single anchor
+  RUN's `coder version | grep -q "v${CODER_VERSION}"` (`:144-147`), all cf-
+  56 provenance comments.
+- `tests/containers/forgejo-runner.sh` — **4 lines** = TWO comment renames
+  (header `:12` + t8 `:369`, both `containers-build.yaml` →
+  `build-containers.yaml`). The re-pinned contract is intact: **all nine
+  legs t1..t9 present** (t1 four-FROM incl. the codertool tag/ARG pairing;
+  t2 the CODER_VERSION floor + annotation + CODER_BIN_SHA256 provenance
+  pins incl. the repaired `ver_ge` helper; t9 the coder stage-transport
+  leg).
+- `charts/forgejo-runner/values.yaml` — **9 lines** = the B1 comment block
+  replaced by "Decision B1 AS AMENDED (owner ruling 2026-11-26, cf-55
+  round-5): the DEFAULT stays one pod … while the ruling permits per-
+  release scale-out to N poller pods sharing one (uuid, token)
+  registration via the slice override. Job-count autoscaling stays OUT
+  (Inbox card iaJq5bgWHHDHotcBY owns that dimension)" — `replicas: 1`
+  unchanged; the four act-24.04-family label lines (`:149-153`) still pin
+  `:26.11.1` (the act-22.04 ghcr line unchanged).
+- **Beyond the three-file scope** (context for the risk wording): both
+  runner slices gained `replicas: 10` (D57, `services/dev/prod/values.
+  yaml:179-185`, `services/gpu/prod/values.yaml:274-280` — "10 poller pods
+  share one (uuid, token) registration; capacity stays 1 per pod"; cf-55
+  DECISIONS L996-1001: "10 pods × capacity 1 = 10 concurrent jobs, each
+  pod's dind limits per-pod honest — a capacity>1 route would fake
+  parallelism inside one 2cpu/4Gi envelope"). The dev slice's own
+  five-entry label list (`:201-205`, incl. its bootstrap `:26.11.1` copy)
+  is intact.
+- **UA3 runbook facts survive**: the runbook's `:26.11.1` pins
+  (`.agents/notes/2026-11-25-coder-template-push.md:176,204`) remain
+  consistent with both label sites post-merge; the runbook's pointer to
+  "the chart's own comment" for the Helm-wholesale-replacement law still
+  resolves (the B1 comment exists, AMENDED). **Stale wording to re-pin in
+  C04's risk reword**: the plan/chunk "capacity-1 runner + FIFO queue"
+  phrasing (round-2 `R2-Q5`, plan Risks) now reads as **10 poller pods ×
+  capacity-1 + FIFO + `cancel-in-progress: false`** (build-containers
+  `:81-85` documents the 10-pod scale, D57) — the race remains vanishing
+  (per-pod serialization), the label moves.
+- **Suite regression (executed 2026-11-26 on the post-merge tree)**:
+  `bash tests/containers/forgejo-runner.sh` → **9 ok, exit 0** (t1–t9; t8
+  the designed `docker build => no-daemon, CI-deferred` shape). Note: the
+  first execution in-session reported a false t6 "no deviation comment"
+  (the two comment greps pass standalone; the full re-run is 9/9 green) —
+  a session-flux artifact of the run that followed a dropped shell, not a
+  tree defect; the re-run is the evidence.
+
+**(d) Stale `containers-build.yaml` sweep (file:line, r3-measured).**
+- `.forgejo/workflows/coder-template-push.yaml`: **L9** ("whose guards
+  widen on unset"), **L25** ("the containers-build.yaml shape"), **L102**
+  ("the containers-build rationale"), **L119** ("containers-build rationale
+  comment"), **L180** ("(the containers-build" fetch-depth citation) — L9
+  and L25 carry the bare `.yaml` token (sweep-catchable); L102/L119/L180
+  carry the token **without** `.yaml` (prose form, passes the sweep, still
+  stale).
+- `tests/coder/coder-template-push.sh` (w-legs): **L113** (dispatch-hatch
+  provenance), **L115** ("must carry the containers-build.yaml
+  description"), **L121** ("the containers-build.yaml shape is type:
+  string"), **L187** ("the containers-build.yaml rationale"), **L337**
+  ("the containers-build rationale, the V-6-1 shallow-clone law") — L113/
+  115/121/187 are the bare-token (sweep-catchable) lines; the w2 assertion
+  string itself (`"Template names to push (comma/space separated)"`, our
+  own wording, `:114`) is rename-untouched — only the failure-message
+  provenance labels move (→ `build-containers.yaml`; the upstream dispatch
+  description it paraphrases is `'Container names to build (comma/space
+  separated)'`, build-containers `:106`).
+- `.agents/notes/2026-11-25-coder-template-push.md` (runbook): **L47**
+  ("Unlike `containers-build.yaml` (widens on unset)"), **L67** (UA3
+  "merge's `containers-build.yaml` fire publishes the new calendar tag"),
+  **L81** ("the `containers-build.yaml` shape). No PR leg"), **L166** (UA4
+  "fire publishes the new `forgejo-runner` calendar"), **L276** ("The
+  merge's `containers-build.yaml` fire plus the UA3 hand-bumped pin") —
+  round-2 `R2-Q4` item 4 ("The other `containers-build.yaml` citations
+  (L47, 67, 81, 166, 276) remain valid (the name is unchanged)") is
+  **invalidated by r5**; the runbook is outside the t8 sweep (`.agents/`
+  excluded) so these stay invisible to the upstream suite.
+- **The release-era stale refs (pre-existing since the r4 rename; C04's
+  known "two stale refs" task + two NEW findings)**:
+  `.forgejo/workflows/coder-template-push.yaml` **L11** ("the `release.
+  yaml` fail-safe class") and **L188** ("the `release.yaml` class") —
+  already in the C04 plan/chunk; **NEW: `tests/coder/coder-template-
+  push.sh` L158** (w3 failure message "the release.yaml fail-safe class,
+  narrow on unset") and **L165** (w3 grep-fail message "the release.yaml
+  fail-safe class for external-service publishes") — the w3 leg's own
+  failure prose carries the stale token; round-2 `R2-Q4` did not sweep the
+  suites, so these two are new surface for the C04 suite re-pin. The
+  runbook L50 ref is the known third.
+- **Upstream sweep posture (executed r3)**: `tests/services/forgejo-ci-
+  surface.sh` **t1 is RED on this branch** (pre-existing, not merge-
+  introduced — FJ_SET is the five-workflow family `{'main-sync.yaml',
+  'renovate.yaml', 'build-containers.yaml', 'build-charts.yaml',
+  'builder-bootstrap.yaml'}` both pre- and post-merge; our workflow is a
+  sixth member, and the suite runs green on main, which does not carry
+  our file). **t8 is RED** (standalone-executed r3; the fail-fast suite
+  dies at t1 first): the containers-era sweep (armed by the rename,
+  `history_free` D50.3 dated-history exemption) catches exactly the 6 bare-
+  token lines — workflow L9, L25; tests L113, L115, L121, L187 — plus the
+  4 release-era lines above. **C04's re-ground must re-point the stale
+  lines** (the 2 known release-era workflow refs + the 2 new w3 release-
+  era suite refs + the 5 containers-era workflow lines + the 5 suite lines
+  + the 5 runbook lines fold into the same change set) **or the upstream
+  ci-surface suite stays red on this ticket's branch** (it is a cf-55
+  suite, green on main; the red-on-our-branch state is a cross-ticket
+  surface the ticket's own commits should heal, the D50.3 pairing law:
+  "docs + suite move in ONE commit set").
+- Plan/EXPLORE/chunks/STATE/DECISIONS mentions (plan L29, L72, L133, L140,
+  L183, L212, L216, L234; EXPLORE round-1/2 as listed in round 2 `R2-Q4`;
+  `chunks/C04.md` L16, L171, L245, L326, L335; `STATE.json` L126, L133;
+  DECISIONS append-only): historical records — no in-place fix; the plan's
+  C04 section is re-grounded by the replan, this section corrects EXPLORE.
+
+### R3-Q6 — The r5 suites (mirror shape for the C04 test wave)
+
+`tests/services/forgejo-build-containers.sh` (renamed from `forgejo-
+containers-build.sh`; full set 47 ok at run end; legs t1–t17, d1–d22, x1–
+x5, r1–r5, g1):
+- **t2** (`:307`): `on:` is exactly `{pull_request, workflow_dispatch,
+  workflow_call}` — "no push arm (C15 re-aim; the merge-base PR posture
+  and rebuild hatch byte-frozen)".
+- **t5 / r1** (`:412-418`, `:1492-1499`): job set = the C02 trio
+  (detect-changes + build-release + build-pr) **plus at most** `advance-
+  marker` (the both-trees transition form).
+- **t13** (carried): the **seven** detect-step env accessors byte-exact
+  (the 7th = `MARKER_SHA`).
+- **t14** (`:1203-1210`): the behavioral half now executes **nine** shapes
+  — "empty push/PR ranges without a marker warn, the dispatch no-op, the
+  before==sha no-op and non-empty sets stay silent, and the marker-verified-
+  empty shapes (push **and workflow_call alike**, plus marker==sha) exit
+  with the plain verified-empty info line and no annotation: the calm gate
+  reads MARKER_SHA presence for any event" (round-5 C15 M1).
+- **t16** (`:1292-1325`) — **inverted to the single-writer fence**: no
+  `advance`-named job in the builder ("C15 deletes them … a per-builder
+  advance on the SHARED branch is the poison D54 ruled out: one green
+  fire would swallow the sibling failed range"); **zero** `git push`
+  statements naming the marker ref in the file; the resolver still names
+  `refs/heads/ci/last-built`; the ref lives in **no `.forgejo` workflow
+  outside the allow-set `{'build-containers.yaml', 'build-charts.yaml',
+  'main-sync.yaml'}`** — "a new builder joins the set in its own commit
+  (card #56), it does not route around this leg"; of that set, **exactly
+  `main-sync.yaml` carries a marker push** (`writers ==
+  {'main-sync.yaml'}`).
+- **t17** (`:1328-1454`): the resolver battery, now **call-side only** —
+  staged with `forgejo.event_name` → `workflow_call` (and `→ pull_request`
+  for the non-marker side), executed offline against a scratch bare remote:
+  absent marker → `sha=` empty + exit 0; present+reachable → the marker
+  oid; orphaned (advanced from a sibling clone) → LOUD fail naming the sha
+  + reset-or-delete owner note; non-hex garbage (PATH-shimmed `ls-remote`)
+  → fatal naming the value; `pull_request` on a dead origin → `sha=` +
+  exit 0, no network. **The advance-exec half moved to `forgejo-main-
+  sync.sh` t16** (header `:22-33`).
+- **d20** (`:2364-2385`): `workflow_call` + marker set + **empty before** →
+  diffs `marker..sha` (`base=marker`), exit 0 — "the marker check must
+  precede the empty-before die (C15 call-aware reorder)".
+- **d21** (`:2387-2407`): `workflow_call` + no marker + empty before →
+  announced tip-only `HEAD^..HEAD` (`base=tip-only`), **never the push-
+  payload die** (the C15 new arm).
+- **d22** (`:2410-2422`): a REAL `push` event + empty before + no marker
+  **still dies** (naming `before`) — "the die stayed scoped to real
+  pushes, the marker arm moved ahead of it".
+- **x5** (`:2637-2645`): the gated docs trio (`skills/container-creation/
+  SKILL.md`, `.rulesync/rules/overview.md`, `AGENTS.md`) must carry the
+  marker vocabulary — `before..sha`/whole pushed range, merge-base, tip-
+  only, announce, `fetch-depth: 0`, **`marker..sha`** — with the first-
+  push sentence pairing the event with its narrowing in one paragraph and
+  no annotation-render over-claim. (The `AGENTS.md` r5 paragraph in this
+  tree already carries it — "Pipeline specifics in this repo" — so our
+  reworded citations can key on the same vocabulary.)
+
+`tests/services/forgejo-main-sync.sh` (+362 lines r5; legs t1–t18):
+- **t3** (`:94-137`): **exactly six jobs** `{push-gh, push-dev, build-
+  containers, build-charts, advance-marker, sync-fanout}`, every one
+  byte-guarded on `contains(vars.ROLE, 'prod')`.
+- **t14** (`:580-614`): the two CALLED builder jobs byte-pinned (`uses:` +
+  `secrets: inherit` + the prod guard).
+- **t15** (`:615-665`): the aggregate `advance-marker` byte-pinned —
+  `needs` exactly the two builders; `if:` **wears no result function**
+  ("the plain needs-gate IS the green-fire rule; decoration reintroduces
+  the per-builder poison (D54/D59)"); checkout present (full depth); the
+  `outputs.bump_sha` + `TARGET=${TARGET:-$GITHUB_SHA}` chain; a plain
+  `git push … $TARGET:refs/heads/ci/last-built`; the ancestor-tolerance
+  body; no force; no secret.
+- **t16** (`:667-775`): the **EXECUTED** aggregate-advance battery on a
+  scratch bare remote — create (explicit `bump_sha` value, no marker yet);
+  target==marker up-to-date green; **ancestor-ahead skip-green with the
+  info line and the ref unmoved**; non-ancestor divergence **RED and
+  naming it**; the empty-`bump_sha` fallback advancing at `$GITHUB_SHA` —
+  "the advance law fully executed at its new home".
+- **t17** (`:777-843`): the D59 truth table executed over the parsed needs
+  graph — both-green **RUNS**; containers-red / charts-red / both-red /
+  push-gh-failed all **SKIPPED** for sync-fanout AND the aggregate
+  advance follows the same table; push-gh/push-dev unconditional siblings
+  in every row.
+- **t18** (`:845+`): comment line-anchor liveness (the scout §C anti-
+  pattern killer).
+
+`tests/services/forgejo-ci-surface.sh` (126 lines r5): `FJ_SET`/`WIDEN_OK`
+re-aimed to `build-containers.yaml` (red-through-C13/C14 by design, pin 3:
+"docs + suite move in ONE commit set at C15"); **t8 WIDENED** with a
+second, containers-era stale-name sweep (bare `containers-build.yaml`
+token ban on live surfaces, `history_free` D50.3 dated-history exemption)
+beside the release-era one — the leg whose red state is measured in
+R3-Q5(d).
+
+### Round-3 gotchas (new since r2)
+
+1. **The r5 reorder invalidates the chunk's die-first pin only for the fan
+   shape**: the call bootstrap arm exists because the upstream push arm
+   DIED (D56); a standalone push-trigger workflow (OQ2) has no call arm, so
+   the r4 die-first order is not stale for it — the C04 task text "empty-
+   before `die` first and unconditional (unchanged)" survives verbatim for
+   the standalone shape, and becomes "marker first, die scoped" only if
+   the fan-join shape is chosen (in which case the advance job is main-
+   sync's, not ours, and the chunk's `advance-marker` task retires).
+2. **The r5 advance shape changed the monotonicity contract**: r4's "a
+   queued or rewound run fails this job loudly (non-FF refusal IS the
+   signal)" became the C14/D54 **classify** (already-advanced = skip-
+   green info; diverged = red). The C04 chunk's "executed-offline
+   monotonicity leg" (t17 analog: "the same push against a moved-ahead
+   marker exits non-zero with the non-fast-forward refusal named") must
+   re-pin to the r5 battery shapes (up-to-date green / ancestor-ahead
+   skip-green ref-unmoved / divergence red) **for the shared-ref shape** —
+   for a single-writer own ref the r4 plain shape remains the defensible
+   contract (there is no second owner to get ahead of).
+3. **The `:26.11.1` UA3 pin is intact but the runner topology moved**
+   (10 poller pods × capacity-1, D57) — any C04 risk text quoting "the
+   capacity-1 runner" must reword, and the runbook's "the chart's own
+   comment" pointer still resolves (B1 comment AMENDED, not deleted).
+4. **The upstream ci-surface suite is red on this branch for two reasons**
+   (t1 FJ_SET — pre-existing since C03; t8 — the 6 r5-introduced stale
+   lines + the 4 release-era ones, 2 of them in our own suite's w3 prose)
+   — C04's re-ground should fold the full stale-line re-point into its
+   change set so the ticket's branch heals its own cross-ticket surface.
+5. **`ci/last-built` is not yet live on the remote** (only the r4-era
+   `ci/containers-built` @ `52d3b5c45`); the C14 migration pre-steps
+   (UA-R5-1/UA-R5-2) are owner-side — a standalone-shape marker (a new
+   ref) does not depend on them, a fan-join shape lands into a
+   pre-migration shared-ref state (the first called fires would be
+   bootstrap tip-only until the owner's pre-step + first aggregate green).
+
+### Round-3 open questions (for the planner/owner — not resolved here)
+
+1. **Fan member vs standalone own-workflow advance** (R3-Q5a): the D55
+   room pre-builds the join (cheap: one `uses:` + one `needs` entry + one
+   allow-set member), but the fan is **prod-stage-instance only** — fan
+   membership strands the dev Coder (the OQ1 ruling: per-instance, both
+   Coders). Standalone keeps OQ1 + per-instance refs + the r4 plain non-FF
+   advance shape, at the cost of no longer matching the r5 house pattern.
+   The OQ10–OQ13 batch (r2) re-issues in the r5 shapes; OQ11's ref
+   candidate is free on the remote (R3-Q5b).
+2. **Per-consumer marker collision if shared** (R3-Q4): one shared base +
+   per-consumer path filters + a single aggregate writer = no ref
+   collision is possible; the operative questions are (a) whether the
+   inherited `charts/coder` bump-on-template-edit (D55's recorded filter
+   decision) is acceptable to ride, and (b) whether an output-less builder
+   (us) in the aggregate's `bump_sha-or-event-sha` chain needs any
+   per-builder guard — D55 says the target rule already handles it
+   (event-sha fallback), the t15/t16 battery pins that.
+3. **Which advance shape pins the executed monotonicity leg** (round-3
+   gotcha 2): r4 plain non-FF (single-writer own ref) vs the r5 classify
+   (shared ref) — follows from open question 1; the chunk's leg text must
+   re-pin accordingly.
+4. **The stale-line re-point scope** (round-3 gotcha 4): confirm the full
+   list folds into C04's change set (the 2 known release-era workflow refs
+   were already planned; the 5 containers-era workflow lines, the 5 suite
+   lines, the 2 new w3 release-era suite lines, and the 5 runbook lines
+   are the delta).

@@ -72,6 +72,32 @@ decisions carried into the plan's Open questions (OQ1–OQ9) for the batched rou
   2026-11-25-coder-template-push.md` with UA1–UA5 owner legs, the postures stated as
   answers, and `tests/notes/coder-template-push-runbook.sh` pinning them.
 
+## 2026-11-26 (batched round 2 — owner rulings, r5 shapes)
+
+- **OQ10 RULED FAN MEMBER — overrides the plan's standalone best-guess**: the coder-template
+  workflow joins main-sync's prod-main fan as a `workflow_call` run (build-containers r5
+  contract: own push arm retired, marker-first + call-bootstrap arms, advance job retired —
+  main-sync's aggregate is the single marker writer). Accepted consequence, spelled in the
+  question and ruled anyway: the fan runs on the PROD-STAGE instance, so automated coverage
+  is the gpu Coder; DEV-SIDE pushes ride the `workflow_dispatch` escape hatch on the dev
+  instance (manual leg — the runbook must state it). Supersedes OQ1's automation reach,
+  not its per-instance endpoint story.
+- **OQ11 RULED SHARE ci/last-built**: consistent with fan membership — one shared
+  per-repo-per-instance marker ref, read marker..sha on called runs, no own ref, no own
+  advance. Coupling accepted: a red coder leg blocks the aggregate's advance (needs-gate),
+  and a red sibling holds the marker (re-covered next fan — the law's designed behavior).
+  Remote pre-state noted by scout: ci/last-built not yet live (first green fan creates it);
+  only ci/containers-built exists.
+- **OQ12 confirmed step-owned** warning law (retire the C03 inversion).
+- **OQ13 confirmed short runbook note** + asymmetries reworded to D57 topology + UA3
+  re-verified (four :26.11.1 pins intact; C01 suite 9 ok green post-merge).
+- **OQ14 confirmed FULL HEAL in C04** of upstream tests/services/forgejo-ci-surface.sh
+  (FJ_SET six-workflow re-aim + t1 prose; t8 green via the same-commit stale-ref re-fence;
+  D50.3 pairing; suite bytes test-session-owned).
+- **Cross-ticket surface accepted with the ruling**: C04 edits main-sync.yaml (fan entry +
+  needs wiring) and the ci-surface suite — cf-55/cf-139 territory by ownership, sanctioned
+  here by explicit owner choice.
+
 ## 2026-11-26 (round 2 — main r5 merged; C04 re-ground required)
 
 - **Owner instruction**: "pull in main as the shape has changed some and you'll need to
@@ -242,3 +268,132 @@ pins carried into the batched round (the plan's OQ10–OQ13 table):
   runs keep the old behavior exactly (marker put ⇒ same range ⇒ same full set re-
   pushed, succeeded legs included). The cf-6 owner accepted it knowing; the OQ10
   scope question confirms it as the acceptable price for the coder-templates port.
+
+## 2026-11-26 (r5 re-ground — C04 rework, OQ10–OQ14 re-issued)
+
+Re-grounding round after the `01d2e3f45` merge (main r5, cf-55 C14/C15)
+into this ticket branch — the r4 replan's pins (D12–D18, grounded
+against `containers-build.yaml`'s r4 shape) are superseded where r5
+moved the law: the push arm DIED upstream (the builder is now a
+`workflow_call` called run from `main-sync`'s prod-main fan), the
+advance moved to `main-sync`'s aggregate job on the SHARED
+`ci/last-built` (single writer; the advance CLASSIFIES non-FF
+refusals — already-advanced = skip-green, diverged = red), the detect
+script re-ordered marker-first + gained the call bootstrap arm, the
+empty-set warning is step-owned in the workflow (`build-containers.
+yaml:210-216`, marker-aware), and the `containers-build.yaml` →
+`build-containers.yaml` rename staled our artifacts' citations (the
+`release.yaml` → `build-charts.yaml` rename staled the w3 suite prose
+too). The 2026-11-25 OQ1–OQ9 rulings stand unchanged; the interrupted
+OQ10–OQ13 round RE-ISSUES in the r5 shapes + OQ14 (the ci-surface
+heal). Best-guess pins carried into the batched round (the plan's
+OQ10–OQ14 table; full re-ground in the plan's C04 section +
+`chunks/C04.md`, grounded on EXPLORE Round 3 L801–1386):
+
+- **D19 — C04 shape (OQ10, best guess: STANDALONE)**: own push trigger
+  + own marker ref + own plain non-FF `advance-marker` job — the
+  r4/cf-6 shape, NOT a fan member. Rationale: (1) the fan runs on the
+  PROD-STAGE instance only (`main-sync`'s `contains(vars.ROLE,'prod')`
+  guard; the dev instance carries no marker) — fan membership would
+  strand the dev Coder, a direct conflict with the OQ1 ruling
+  (per-instance, both Coders); (2) the D54 poison ruling does not
+  reach a single-writer per-repo ref (the poison is per-builder
+  advance on a SHARED multi-owner ref); (3) the r4 plain non-FF shape
+  (a queued/rewound run fails loudly) is the defensible contract for
+  an own ref (no second owner to get ahead of — the r5 classify shape
+  is what the shared-ref aggregate adopted); (4) the dispatch escape
+  hatch stays on the push-triggered workflow. The fan-member
+  alternative is honestly pinned as the isolated delta (one-leg re-pin,
+  not a re-plan): the join is mechanically cheap (the D55 pre-built
+  room: one `uses:` + one `needs` entry + one t16 allow-set member;
+  the aggregate's target rule handles an output-less builder via the
+  event-sha fallback), the dispatch hatch survives the call, and we
+  mint no commits (the D53 bump-tail does not apply) — but it strands
+  the dev Coder, makes the marker state single-repo (the prod repo's
+  `ci/last-built`), lands into the pre-migration shared-ref state
+  (`ci/last-built` NOT yet live — the first called fires would be
+  bootstrap tip-only until the owner's UA-R5-1/UA-R5-2 pre-steps + the
+  first aggregate green), and is a cross-ticket surface edit in our
+  commit (the "one branch one concern" tension D55 names). Under the
+  fan shape the script re-orders marker-first + gains the call
+  bootstrap tip-only arm and the die scopes to real pushes, and the
+  `advance-marker` task retires (main-sync's aggregate advances the
+  shared ref).
+- **D20 — marker ref name (OQ11, best guess re-pinned): `refs/heads/
+  ci/coder-templates-pushed`** — free on the remote (R3-Q5b, read
+  2026-11-26: exactly one `ci/` ref — `ci/containers-built` @
+  `52d3b5c45` (the r4-era ref; its deletion = UA-R5-3); `ci/last-
+  built` is NOT yet live — the C14 migration pre-steps are owner-
+  side). Naming mirrors `ci/containers-built` (domain + past-tense
+  verb) with this pipeline's own verb. Sharing `ci/last-built` (the
+  fan-join room) is rejected on the R3-Q4 collision analysis: its
+  single writer is main-sync's aggregate (advanced only when BOTH
+  builders publish green) — a red sibling builder would hold OUR
+  range, coupling our push timing to an unrelated domain's build
+  health; our consumer is path-filtered (`charts/coder/coder-templates/`)
+  and instance-paired (per-instance ref state), not the shared-base
+  model. The upstream t16 fence cannot catch our ref either way
+  (token-scoped to the `ci/last-built` literal) — the decoupling, not
+  the fence, is the point. Owner-vetoable per the cf-6 OQ-1 pattern:
+  one string + one pin.
+- **D21 — warning-law location (OQ12, best guess re-pinned: step-
+  owned)**: the r5 upstream empty-set warning lives in the workflow
+  step (`build-containers.yaml:210-216`, marker-aware) — the C03
+  documented inversion (the script's `exempt` flag + stderr warning)
+  retires; the script keeps only its two tip-only announces; the all-
+  ungated-dispatch-list warning retires with it (dispatch exempt
+  wholesale, the upstream law — the OQ10 scope consequence). Enables
+  the t14-analog behavioral test shape (six shapes — the upstream nine
+  minus the PR and workflow_call shapes by the OQ2 ruling + our
+  standalone shape). Alternative (ruled, not default): script-owned —
+  extend the `exempt` flag with the marker-verified-empty → info case,
+  keep the documented deviation.
+- **D22 — runbook note scope (OQ13, best guess: short note, yes, + the
+  UA3 re-verification)**: the per-instance marker self-initialization
+  note (short, NON-leg — no full-fleet legs, the templates are already
+  live; no new secret — the advance rides the checkout's same-repo
+  credential; the first live advance run is the proof leg for the job
+  credential's non-main `refs/heads` push) + the NAMED ASYMMETRIES
+  reworded to the r5 runner topology (10 poller pods × capacity-1 +
+  FIFO + `cancel-in-progress: false`, D57 — the race remains vanishing
+  by per-pod serialization; the plan/chunk "capacity-1 runner"
+  phrasing rewords with it) + the UA3 pin facts RE-VERIFIED post-
+  merge (R3-Q5c: the four act-24.04-family label lines in
+  `charts/forgejo-runner/values.yaml:149-153` still pin `:26.11.1`;
+  the act-22.04 ghcr line unchanged; the dev slice's five-entry label
+  list `services/dev/prod/values.yaml:201-205` incl. its bootstrap
+  `:26.11.1` copy intact; the B1 comment exists AMENDED, not deleted
+  — the runbook's "the chart's own comment" pointer still resolves;
+  the C01 post-merge regression 9 ok GREEN, the bake byte-intact).
+- **D23 — the ci-surface suite heal (OQ14, best guess: FJ_SET re-aim
+  + the t8 expect-list, upstream-suite legs byte-identical otherwise)**:
+  `tests/services/forgejo-ci-surface.sh` is RED on this branch for two
+  reasons (t1: FJ_SET is the five-workflow family — our workflow is a
+  sixth member; t8: the containers-era bare-token sweep catches the 6
+  bare lines (workflow L9/L25, suite L113/L115/L121/L187) + the 4
+  release-era lines (workflow L11/L188, suite L158/L165)). The heal =
+  FJ_SET re-aimed to the six-workflow family (naming
+  `coder-template-push.yaml`) + the t1 comment/FAIL-message/ok-line
+  reword (five → six); t8 stays BYTE-IDENTICAL — its teeth are a
+  token sweep over every tracked live surface (no per-file expect-
+  list), so its red state resolves from our side's 20-line re-fence in
+  the SAME commit set (the D50.3 pairing law: "docs + suite move in
+  ONE commit set"); no other leg (t2–t7, WIDEN_OK) touched (our
+  workflow's guard is narrow-on-unset — WIDEN_OK stays
+  `build-containers.yaml` alone; our file is outside the t3/t4 routes).
+  Suite bytes owned by the test session; dev never edits tests.
+- **D24 — the full stale-ref sweep folds into C04 (20 lines, one
+  change set)**: the `containers-build.yaml` mentions in our artifacts
+  now name a file that no longer exists (the r5 rename) and the
+  release-era `release.yaml` mentions predate the `build-charts.yaml`
+  rename: the workflow 7 lines (L9, L11, L25, L102, L119, L180, L188),
+  the w-suite 7 lines (L113, L115, L121, L158, L165, L187, L337), the
+  runbook 6 lines (L47, L50, L67, L81, L166, L276) — re-fenced to
+  `build-containers.yaml`/`build-charts.yaml` in the same commit set as
+  the suite heal (D23) so the cross-ticket suite goes green on this
+  branch; the prose-form lines (no bare `.yaml` token — workflow L102/
+  L119/L180, suite L337) pass the t8 sweep but are still stale and
+  move with the x5-parity reword. The plan/chunk/STATE/DECISIONS/
+  EXPLORE-r1-r2 mentions are historical record — no in-place fix (the
+  plan's live blocks re-fence with this re-grounding; EXPLORE round 3
+  corrects the round-2 pins).
