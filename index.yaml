@@ -254,6 +254,22 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/actualbudget-1.0.1/actualbudget-1.0.1.tgz
     version: 1.0.1
+  amd-gpu:
+  - apiVersion: v2
+    appVersion: 1.31.0.12
+    created: "2026-11-26T16:50:50.613089037Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: AMD GPU device plugin (ROCm k8s-device-plugin) with product resource
+      naming, first-party app-template chart
+    digest: e6070b041e87b1103fa20f8201e5eb9404c0a7f51890e9f176d28216ec17755e
+    name: amd-gpu
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/amd-gpu-1.0.0/amd-gpu-1.0.0.tgz
+    version: 1.0.0
   appset-backups:
   - apiVersion: v2
     appVersion: 1.1.1
@@ -1030,6 +1046,34 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/argocd-1.0.23/argocd-1.0.23.tgz
     version: 1.0.23
+  audiobookrequest:
+  - apiVersion: v2
+    appVersion: 1.10.7
+    created: "2026-11-26T16:50:51.133113445Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 0935a66284dd3021c7b4cbc940655182787c5357eb4219cc56df3618635658aa
+    name: audiobookrequest
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/audiobookrequest-1.0.0/audiobookrequest-1.0.0.tgz
+    version: 1.0.0
+  audiomuse-ai:
+  - apiVersion: v2
+    appVersion: 1.1.6
+    created: "2026-11-26T16:50:51.400552958Z"
+    dependencies:
+    - name: audiomuse-ai
+      repository: https://NeptuneHub.github.io/AudioMuse-AI-helm
+      version: 1.1.6
+    description: AudioMuse-AI - AI music discovery for Jellyfin (wrapper)
+    digest: 8fc1654dab3250fbba9be98bc72b3ff47a3cd4a0c235e60e3e88eb2cbe1ab5e6
+    name: audiomuse-ai
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/audiomuse-ai-1.0.0/audiomuse-ai-1.0.0.tgz
+    version: 1.0.0
   auth:
   - apiVersion: v2
     appVersion: 1.1.6
@@ -5119,6 +5163,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.2/base-1.0.2.tgz
     version: 1.0.2
+  betanin:
+  - apiVersion: v2
+    appVersion: 0.6.3
+    created: "2026-11-26T16:50:51.966706Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: betanin + beets write-only music tagging pipeline
+    digest: c91545e6b062c83356199acc68a44908f80c2b6e5a167e96d026d8a9bc63850d
+    name: betanin
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/betanin-1.0.0/betanin-1.0.0.tgz
+    version: 1.0.0
   brother-ptouch-automation:
   - apiVersion: v2
     appVersion: 0.2.0
@@ -6391,6 +6450,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/espresense-1.0.5/espresense-1.0.5.tgz
     version: 1.0.5
+  explo:
+  - apiVersion: v2
+    appVersion: 1.2.0
+    created: "2026-11-26T16:50:53.561644071Z"
+    dependencies:
+    - name: explo
+      repository: https://lumepart.github.io/Explo
+      version: 1.2.0
+    description: Explo - ListenBrainz discovery for self-hosted music stacks (wrapper)
+    digest: 524a46a03b47dff69c65cb3ea736362ea78cae9b6f25921d522d0e114094f438
+    name: explo
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/explo-1.0.0/explo-1.0.0.tgz
+    version: 1.0.0
   exporter-mikrotik:
   - apiVersion: v2
     appVersion: 1.0.11
@@ -7154,6 +7228,22 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.1/forgejo-1.0.1.tgz
     version: 1.0.1
   forgejo-runner:
+  - apiVersion: v2
+    appVersion: 13.2.0
+    created: "2026-11-26T16:50:54.899394889Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Forgejo Actions runner — one 1-replica StatefulSet per release (privileged
+      DinD sidecar, declarative registration), deployed once per target Forgejo instance
+      (the dev ApplicationSet installs it twice)
+    digest: 0ad74fa316635098b699ec768061c9040eb0e96c10d412c45f7a0eb07afe2868
+    name: forgejo-runner
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-runner-2026.11.1/forgejo-runner-2026.11.1.tgz
+    version: 2026.11.1
   - apiVersion: v2
     appVersion: 13.2.0
     created: "2026-10-25T15:16:41.847416884Z"
@@ -10893,6 +10983,18 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/langgraph-1.0.1/langgraph-1.0.1.tgz
     version: 1.0.1
+  lazylibrarian:
+  - apiVersion: v2
+    created: "2026-11-26T16:50:58.947584936Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 5f92b6e6827e91151762f0334be2e4a10ae1d231be27020c6e76e1f187873349
+    name: lazylibrarian
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/lazylibrarian-1.0.0/lazylibrarian-1.0.0.tgz
+    version: 1.0.0
   ledfx:
   - apiVersion: v2
     appVersion: 1.0.10
@@ -12184,6 +12286,33 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/media-appset-1.1.1/media-appset-1.1.1.tgz
     version: 1.1.1
+  mediamanager:
+  - apiVersion: v2
+    appVersion: 1.12.3
+    created: "2026-11-26T16:51:00.720344916Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: d92f5bd8c7165daf4483faf5389a7375cd549ac2f8523862165122f0efc68970
+    name: mediamanager
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/mediamanager-1.0.0/mediamanager-1.0.0.tgz
+    version: 1.0.0
+  metube:
+  - apiVersion: v2
+    appVersion: "2025-05-01"
+    created: "2026-11-26T16:51:01.000155433Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: MeTube - self-hosted yt-dlp web UI for downloading YouTube content
+    digest: 9d1cb4c4ca6cc3a839685a6eb17e2baa10bcc05cb6f13c531aeadbe98193ebea
+    name: metube
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/metube-1.0.0/metube-1.0.0.tgz
+    version: 1.0.0
   minuspod:
   - apiVersion: v2
     appVersion: 2.95.3
@@ -12483,6 +12612,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/monitoring-appset-1.1.0/monitoring-appset-1.1.0.tgz
     version: 1.1.0
+  mosquitto:
+  - apiVersion: v2
+    appVersion: 2.0.22
+    created: "2026-11-26T16:51:01.522364818Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 69cffc22e659872f05b3daf4a5708fa2c2a15b4c38a3e1f96e2d93267bdd55d1
+    name: mosquitto
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/mosquitto-1.0.0/mosquitto-1.0.0.tgz
+    version: 1.0.0
   music-assistant:
   - apiVersion: v2
     appVersion: 1.0.17
@@ -14441,6 +14583,18 @@ entries:
   prowlarr:
   - apiVersion: v2
     appVersion: 2.1.5.5216
+    created: "2026-11-26T16:51:04.055966213Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 57356404b11f11cbe8a442296f7ecb172a8bf74632cc91e11d8287d7eec0142c
+    name: prowlarr
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/prowlarr-2026.11.1/prowlarr-2026.11.1.tgz
+    version: 2026.11.1
+  - apiVersion: v2
+    appVersion: 2.1.5.5216
     created: "2026-09-20T18:41:11.123022381Z"
     dependencies:
     - name: app-template
@@ -14484,6 +14638,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/pt750-1.0.1/pt750-1.0.1.tgz
     version: 1.0.1
+  qbittorrent:
+  - apiVersion: v2
+    appVersion: 5.0.4
+    created: "2026-11-26T16:51:04.589764142Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: qBittorrent torrent client (onedr0p image) for downloading/seedbox
+      duty
+    digest: a718a75ab5b710228c881faf64c7a119bc293492d09a82ce49d84132e989910e
+    name: qbittorrent
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/qbittorrent-1.0.0/qbittorrent-1.0.0.tgz
+    version: 1.0.0
   qdrant:
   - apiVersion: v2
     appVersion: 1.11.0
@@ -14497,6 +14666,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/qdrant-1.0.0/qdrant-1.0.0.tgz
     version: 1.0.0
+  radiance:
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2026-11-26T16:51:05.06084858Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: c22ef6198690d8d123361a7eda12748cec28e183830bba0fc7cc41f6d43967c4
+    name: radiance
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/radiance-1.0.1/radiance-1.0.1.tgz
+    version: 1.0.1
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
@@ -15969,6 +16151,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.1/snapcast-1.0.1.tgz
     version: 1.0.1
+  spotdl:
+  - apiVersion: v2
+    appVersion: 4.5.2
+    created: "2026-11-26T16:51:07.544993931Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: spotDL nightly sync CronJob (keyless mode)
+    digest: 5e3f43f69f80827900c160bba3dc4b70f6495e23f8fd4875d89b4fa4fbae54a3
+    name: spotdl
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/spotdl-1.0.0/spotdl-1.0.0.tgz
+    version: 1.0.0
   strata:
   - apiVersion: v2
     appVersion: 0.2.7
@@ -19167,6 +19364,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/tvheadend-1.0.1/tvheadend-1.0.1.tgz
     version: 1.0.1
+  vllm:
+  - apiVersion: v2
+    appVersion: 0.30.0
+    created: "2026-11-26T16:51:08.880326296Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: db4d93223ce295bd5990409ec75df3a85bb27ffd01fbebe8a848c3a56124ba68
+    name: vllm
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/vllm-1.0.0/vllm-1.0.0.tgz
+    version: 1.0.0
   zigbee2mqtt:
   - apiVersion: v2
     appVersion: 1.0.38
@@ -20080,4 +20290,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-11-01T13:20:00.42443361Z"
+generated: "2026-11-26T16:51:09.133002541Z"
