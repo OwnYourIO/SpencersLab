@@ -1172,3 +1172,15 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
     charts/forgejo-runner now shows main's first-fan 2026.11.1). Models per
     D35 (openrouter flash); next surface: the round-6 TEST WAVE (dev/gpu
     suite re-aims, green-in-red-first), then C17 dev.
+ - 2026-11-26 human D64 (round-6 batched owner round — BOTH ANSWERED):
+   (1) C17 DESIGN APPROVED verbatim: "Approve A', run it" — one reusable
+   instance-scope registration token, per-pod register-on-first-boot with the
+   identity persisted on the per-ordinal data PVC, D61 interpretation (ii) and
+   D62's rejected alternatives stand as planned; the round-6 TEST WAVE goes
+   first, dev behind G1-G3 after.
+   (2) BITWARDEN PLACEMENT = REPURPOSE EXISTING ITEMS: UA-R6-3 confirmed as
+   planned — the owner mints one registration token per instance WHEN READY
+   (before the deploy window; token-mint timing stays owner-side, revocable)
+   and REPLACES THE PASSWORD FIELD of the two existing runner items; the stale
+   uuid fields are ignored by the new ESO shape; no new vault items, no
+   naming churn. plan_status -> approved (coord flip).
