@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
-  "plan_status": "complete",
+  "plan_status": "needs-approval",
   "updated_at": "2026-11-26T07:38:54+00:00",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
   "test_session": "ses_def674664fferVKggtFKLUUZFQ (round-4 test wave, 2026-11-25 — current for validation_at_fault routing; fix-round-1 session ses_e006a6794ffe)",
@@ -100,6 +100,7 @@
   },
   "round6": {
     "at": "2026-11-26",
+    "plan_delta_r6": "ses_de6f18723ffe2E1cm2JP7J2pU6 DONE 2026-11-26 — REBASED branch onto origin/main 0ce0d4d8f (r6 records unmerged, ticket folder byte-identical, no remote — equivalent-safe anchor; replayed 838535668/92434b29d/19d8790ba). Plan +216/0 (Round 6 section), DECISIONS +94/0 (D61-D63), chunks/C17.md NEW (M, w1, dep C16); commit b6a8edb25. DESIGN RULING A': ONE reusable registration token per instance; per-pod register-on-first-boot via the admin API; identity (uuid+token) PERSISTED on the per-ordinal data PVC => restarts are re-attach, no churn; ESO shape: single fetched registration-token key, template RETIRED (t12 re-aims); individuality in the runner RECORD + pod-name (labels stay the uniform 5-set — Declare overwrites agent_labels, D61 correction of the interim label-injection idea); podManagementPolicy: Parallel belt; rejected: emptyDir-naive (churn), Job/secret-per-ordinal (writes Secrets outside ESO / N vault identities), 2-3-releases (multi-token), offline --secret (uuid=secret-prefix). UA legs: R6-1 gpu VM reboot (owner, done-side), R6-2 verify dev STS really 10, R6-3 mint one instance-scope registration token/instance + replace the two Bitwarden items' PASSWORD (uuid fields stay), R6-4 admin UI shows 10 rows/release named <sts>-N + delete-a-pod-survives re-attach proof, R6-5 scale-down leaves offline rows, cleanup cron stays OFF (runbook in values header). G1-G3 dev gates before implementation (endpoint/auth/expiry, init-image tooling, config-schema). NEXT: owner batched round -> test wave (dev/gpu re-aims + new registration legs) -> C17 dev",
     "directive": "owner: 'Ok, cool, that scaled up the pods, but I needed to do so in a way that Forgejo sees. Can you do some research on how?' — the C16 shape (10 replicas sharing ONE uuid+token registration at capacity:1) is suspected to present as a single logical runner to Forgejo's dispatcher; research commissioned on the registration model (shared-registration dispatch semantics, capacity:N single-pod alternative, per-pod registration under ESO/GitOps, ephemeral-runner mode, official 13.x scaling guidance)",
     "lease": "card-id claim 2ae4da0b; card Review->Executing with claim comment",
     "verified_from_main": "ROUND 5 LANDED AND WORKS: main carries the r5 merge; first-fan evidence = 060f1771b 'chore(release): bump forgejo-runner prowlarr + heal charts/base/Chart.lock' (the aggregate advance + heal tail executed); charts/{prowlarr,forgejo-runner} both at version 2026.11.1 (first calendar births); t24-class drift self-healed in that commit. C12 EVIDENCE CHECK SATISFIED: renovate-authored commit 82449e6e4 (PR #119, argo-cd v10.20.0) carries Chart.lock + Chart.yaml in ONE commit — lock-atomic PRs confirmed on the -full image. Route B not needed.",
@@ -402,6 +403,10 @@
       "status": "done", "wave": 4, "depends_on": ["C15"], "dev_rounds": 1, "review_rounds": 1,
       "dev_session": "ses_def47fb8effes2D1KDn7UK9pme", "last_verdict": "APPROVED (r1, ses_de94e1289ffePsZJXhx19UZSVa)",
       "summary": "replicas 10 via services/{dev,gpu} slices, capacity/default stay 1 (D57 amend), g7 fifth-class fold; rendered proofs 10/10/1; commit 226aecb86"
+    },
+    "C17": {
+      "status": "pending", "wave": 1, "depends_on": ["C16"], "dev_rounds": 0, "review_rounds": 0,
+      "note": "round-6 wave series; design A' single-token per-pod self-registration with per-ordinal PVC identity persistence; G1-G3 gates before implementation"
     }
   },
   "blocked": [],
