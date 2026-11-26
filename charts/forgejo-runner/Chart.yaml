@@ -1,8 +1,9 @@
 apiVersion: v2
 name: forgejo-runner
-description: Forgejo Actions runner — one 1-replica StatefulSet per release (privileged
-  DinD sidecar, declarative registration), deployed once per target Forgejo instance
-  (the dev ApplicationSet installs it twice)
+description: Forgejo Actions runner — a StatefulSet per release whose pods
+  self-register at first boot with one shared instance-scope runner token
+  (privileged DinD sidecar per pod), deployed once per target Forgejo
+  instance (the dev ApplicationSet installs it twice)
 type: application
 version: 2026.11.1
 appVersion: 13.2.0

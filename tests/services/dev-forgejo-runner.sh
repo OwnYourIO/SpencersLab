@@ -2287,9 +2287,23 @@ def legs(render_file, tag):
     url = conn.get('url')
     if not url:
         bad(f't21: {tag} — skeleton carries no connection url to cross-check the registration target (t2 pins it; this leg names its own dependency)')
-    url_env = next((e for e in envs.values() if (e or {}).get('value') == url), None)
-    if url_env is None and url not in script:
-        bad(f't21: {tag} — the registration target never flows: no env carries the skeleton url {url!r} and the script never names it — one runner.url must feed both the config and the POST (RUNNER_URL per C17 Tasks)')
+    # D65 re-aim of the url leg (validation-at-fault): the env-equality form
+    # was UNSATISFIABLE, not merely unchosen — app-template renders container
+    # env VALUES against the SUBCHART values context (common/_env.tpl
+    # rootContext = app-template), where the parent chart's top-level
+    # runner.url — slice-pinned, t3/t17-flowed — does not exist; the
+    # import-values lane runs child->parent only. What IS satisfiable, and
+    # single-source STRONGER, is the flow dev's shape delivers: the script
+    # extracts the target from the MOUNTED skeleton (the same rendered file
+    # the daemon will dial), so pin (a) the register container mounts the
+    # skeleton ConfigMap volume and (b) the script sed/awk-extracts the
+    # url: value out of that mounted config.yaml.
+    cm_vols = {(v or {}).get('name') for v in (pod.get('volumes') or []) if (v or {}).get('configMap')}
+    mounts_cm = any((m or {}).get('name') in cm_vols for m in (reg.get('volumeMounts') or []))
+    if not mounts_cm:
+        bad(f't21: {tag} — the register init mounts no ConfigMap volume — the skeleton (holding the runner.url the POST must dial AND the uuid placeholder to substitute) is unreachable; the target must flow from the rendered single source (D65)')
+    if not re.search(r"(sed|awk|grep|cut)[^\n]*url[^\n]*config\.yaml", script):
+        bad(f't21: {tag} — the script never extracts the url from the mounted skeleton config.yaml — the registration target must be READ from that file (D65 flow proof: an env cannot carry the parent runner.url through the subchart env context, and a second baked URL literal would fork the source)')
     if re.search(r'ephemeral[^A-Za-z]{0,8}\btrue\b', script, re.I):
         bad(f't21: {tag} — payload carries ephemeral TRUE — the v13 daemon refuses ephemeral records (exits "not supported in daemon-mode", [S9 daemon.go]) and the server deletes the row after one job: the crash-loop class, tooth (d)')
     if not re.search(r'ephemeral[^A-Za-z]{0,12}\bfalse\b', script, re.I):
@@ -2298,8 +2312,6 @@ def legs(render_file, tag):
         if p not in script:
             bad(f't21: {tag} — script never writes {p} — the minted identity must land on the ordinal data PVC (the skeleton render target and the absolute token_url file, D62)')
     ph = conn.get('uuid')
-    cm_vols = {(v or {}).get('name') for v in (pod.get('volumes') or []) if (v or {}).get('configMap')}
-    mounts_cm = any((m or {}).get('name') in cm_vols for m in (reg.get('volumeMounts') or []))
     if isinstance(ph, str) and ph and ph not in script and not mounts_cm:
         bad(f't21: {tag} — the skeleton uuid placeholder is neither named by the script nor reachable via a mounted skeleton ConfigMap — nothing would substitute it: the daemon would crash on a literal placeholder (fail-fast class)')
     if not any((m or {}).get('mountPath') == '/data' for m in (reg.get('volumeMounts') or [])):
@@ -2341,6 +2353,14 @@ chart_vals, secret_tpl, chart_yaml = sys.argv[1:4]
 def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
+
+# D65 defect (3) of the C17 validation round: this block shipped without
+# def ok — with every check passing the leg still died NameError on its
+# success path, so the green side had never executed (mutant probes only
+# prove the RED side). The FRICTION law it taught: waves run a
+# green-reachability pass on the live tree, not only fixtures + mutants.
+def ok(msg):
+    print(f'ok: {msg}')
 
 def collapse(parts):
     return ' '.join(' '.join(parts).split())
@@ -2396,7 +2416,17 @@ if 'token_url: file:/data/config/token' not in vtext:
     bad('t22: no absolute token_url wiring in values.yaml — the skeleton must point the daemon at the PVC-written token (AC4)')
 
 stext = open(secret_tpl).read()
-snoncomment = '\n'.join(l for l in stext.splitlines() if not l.strip().startswith('#'))
+# D65 re-aim of the needle-scan scope: start at the apiVersion: line — the
+# live ESO body. The header plus the byte-pinned host-gate block (:24-58,
+# whose {{- /* */}} prose names config.yaml/uuid as HISTORY) is protected
+# byte-exact by the gate-sha leg below; scanning the needle list over it
+# would set the two C17 legs against each other. Comments inside the live
+# body stay excluded by the '#'-strip.
+slines_all = stext.splitlines()
+api_i = next((i for i, l in enumerate(slines_all) if l.startswith('apiVersion:')), None)
+if api_i is None:
+    bad('t22: secret-runner.yaml has no apiVersion: line — the live ESO body is not locatable, so the single-key scan cannot run')
+snoncomment = '\n'.join(l for l in slines_all[api_i:] if not l.strip().startswith('#'))
 for needle, why in (
     ('template:', 'the ESO inline template retires entirely (D62) — with no template the card-#97 mergePolicy class cannot recur'),
     ('mergePolicy', 'the policy pin rode the retired template block (its lesson lives in the t12 message now)'),

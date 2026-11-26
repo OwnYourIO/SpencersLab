@@ -21,7 +21,7 @@
 #   g6  gpu umbrella sentinel sweep at the pinned baseline 1 and a
 #       sentinel-free forgejo-runner-gpu values JSON                C05 AC5
 #   g7  blast radius: dev runner trio untouched, no gpu Forgejo or
-#       SeaweedFS, chart moves confined to the C17 re-shape trio    C05 AC6
+#       SeaweedFS, chart moves confined to the C17 re-shape surfaces  C05 AC6
 #   g8  the SERVICES slice carries app-template.controllers.runner.
 #       replicas: 10 — D57 count standing under D61                  C16 (a)
 #   g9  the deployed render keeps runner capacity 1 in the skeleton
@@ -771,15 +771,20 @@ fi
 # not a silent hunk; the render pins t2/g2 and the slice pins t18/g8 carry
 # the content law). A partial hunk, a second occurrence, foreign indent, or
 # the shape under any other top-level block stays red. ROUND 6 / C17 (owner
-# ruling D64, chunks/C17.md) adds the SIXTH class: the register-on-boot
+# ruling D64, chunks/C17.md; re-armed D65 fold) adds the SIXTH class: the register-on-boot
 # re-shape confined to charts/forgejo-runner/{values.yaml,
-# templates/secret-runner.yaml, Chart.yaml} plus dated comment-only hunks in
+# templates/secret-runner.yaml, templates/configmap-skeleton.yaml,
+# templates/NOTES.txt, Chart.yaml} — the skeleton renders as a PARENT-chart
+# template (app-template tpl's configMaps data against the SUBCHART context,
+# where the parent runner.* is invisible; import-values child->parent only,
+# the theorem STATE round6.c17_dev records) and the NOTES one-time-action
+# retires WITH the shape — plus dated comment-only hunks in
 # custom-values/{dev,gpu} (the UUID slots themselves stay pinned) — the
 # chart's non-comment moves outside those files stay red, and the re-shape's
 # CONTENT is pinned by the render/static legs, not by this fence. The
 # original hazards (a
 # shared-chart fork, a cross-instance or rolling ref, gpu-attributed wiring
-# landing in dev files, any custom-values/dev move) stay red; anything wider
+# landing in dev files, any custom-values/dev CONTENT move) stay red; anything wider
 # than the sanctioned classes stays red too.
 if [ -z "$DIFF_BASE" ]; then
   skip "g7: no main/origin/main ref to diff against; the blast-radius leg was not run (set GPU_RUNNER_DIFF_BASE)"
@@ -978,8 +983,23 @@ try:
     # t2/t12/t21/t22 and the gpu twins here, not by this diff fence.
     # Anything outside those three files (NOTES.txt, Chart.lock, other
     # templates) stays red: the C05-era fork hazard never lapsed for them.
+    # C17_FILES (sixth class, re-armed by D65's fold): the sanctioned
+    # register-on-boot re-shape surfaces — values.yaml (init/env/persistence/
+    # policy/skeleton-source + header), templates/secret-runner.yaml (the
+    # single-key ESO rewrite), templates/configmap-skeleton.yaml (NEW — the
+    # skeleton's honest single-source home: app-template renders configMaps
+    # data via tpl against the SUBCHART context where the parent runner.*
+    # is invisible, so the chart template renders it; import-values runs
+    # child->parent only), templates/NOTES.txt (the one-time-action story
+    # retires WITH the shape — D65 fold; its wording is pinned by t11), and
+    # Chart.yaml (description only). Their CONTENT is pinned by
+    # dev-forgejo-runner.sh t2/t12/t21/t22 + t11, not by this fence;
+    # anything OUTSIDE the set (Chart.lock, other templates, values schema)
+    # stays red.
     C17_FILES = ('charts/forgejo-runner/values.yaml',
                  'charts/forgejo-runner/templates/secret-runner.yaml',
+                 'charts/forgejo-runner/templates/configmap-skeleton.yaml',
+                 'charts/forgejo-runner/templates/NOTES.txt',
                  'charts/forgejo-runner/Chart.yaml')
     nonlab, cur3 = [], None
     for l in diff_text.splitlines():
@@ -1048,9 +1068,9 @@ try:
     stray_files = [(f, l) for f, l in nonlab if f not in C17_FILES]
     c17_in = [(f, l) for f, l in nonlab if f in C17_FILES]
     if stray_files:
-        bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines OUTSIDE the C17 re-shape surfaces: {[(f, l.strip()) for f, l in stray_files][:4]} — the sixth class (cf-55 ROUND 6 / C17, 2026-11-26) covers values.yaml, templates/secret-runner.yaml and Chart.yaml ONLY; templates/NOTES.txt, Chart.lock and every other chart file stay byte-pinned (C17 Files-in-scope + renovate law)')
+        bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines OUTSIDE the C17 re-shape surfaces: {[(f, l.strip()) for f, l in stray_files][:4]} — the sixth class (cf-55 ROUND 6 / C17 + D65 fold) covers values.yaml, templates/secret-runner.yaml, templates/configmap-skeleton.yaml, templates/NOTES.txt and Chart.yaml ONLY; Chart.lock and every other chart file stay byte-pinned (C17 Files-in-scope + renovate law)')
     if c17_in:
-        ok(f'g7: sixth class (cf-55 ROUND 6 / C17, D62/D63) — {len(c17_in)} non-comment chart lines moved inside the sanctioned re-shape surfaces (single-key ESO rewrite, values.yaml register-on-boot rework, Chart.yaml description); content rides t2/t12/t21/t22, not this fence')
+        ok(f'g7: sixth class (cf-55 ROUND 6 / C17, D62/D63 + D65 fold) — {len(c17_in)} non-comment chart lines moved inside the sanctioned re-shape surfaces (single-key ESO rewrite, values.yaml register-on-boot rework, parent-rendered skeleton template, NOTES one-time-action re-truth, Chart.yaml description); content rides t2/t12/t21/t22/t11, not this fence')
     ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8 with the docker_host move exempted, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, non-comment moves confined to the C17 surfaces)')
 
     # C16/D57 fifth class, gpu leg: services/gpu gains its OWN positional
