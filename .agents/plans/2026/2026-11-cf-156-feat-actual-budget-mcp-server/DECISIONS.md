@@ -168,3 +168,117 @@ registry manifest — never memory or string sort):
 - **The SDK-pin consequence is now a standing close-out obligation attached to Prerequisite 3.** `v1.15.1` bundles `@actual-app/api` **exactly `26.10.0` — a pin, not a caret**, so the image will **not** self-heal when the 26.12.x server pin move lands. Whoever executes leg 3 must re-check for an s-stefanov release carrying a 26.12+ SDK (none exists at `v1.15.1`); until then the only runtime guard is the `--test-resources` + `tools/list` canary. The plan's Risks names the drift hazard but not this sharpness.
 - **Deferred, not a change demand:** the new `mcp.actual-budget` entry omits the commented `# oidc:` "OIDC temporarily disabled (2026-09)" marker every pre-existing hivetools entry carries. Functionally the same opt-out (no `oidcConfigRef` in the render), but a future platform-wide OIDC re-enable grep will not surface this server. A later touch should add the marker for consistency.
 - **All five dev-time values were spot-verified upstream at the tag itself** — tag by the registry's own `tag_last_pushed` plus repo `package.json` corroboration; port 3000 in source and manifest; the complete six-flag set proving `--enable-write`'s absence is the *only* write control; no `USER`, bare `node` entrypoint, empty baked `TMPDIR`; `BEARER_TOKEN` from `process.env`. The agigante80 root/su-exec conclusion was confirmed **not** inherited: the 65532 + `fsGroup` choice derives from this image's own write surface.
+
+## 2026-11-26 — C03 replan: the owner's four instructions (binding) + the gate/naming decisions
+
+### The owner's four instructions (2026-11-26, verbatim record, binding — folded as C03, not re-litigated)
+1. Remove `wuulf-budget: enabled: true` from `services/proxy-remote/prod/values.yaml`
+   (owner's words: "so I don't want anything on proxy-remote yet") — wuulf stays on
+   proxy-local.
+2. Use `actualbudget-mcp-key: 29e97ab5-db7f-4214-affd-b50e0032788d` and
+   `actualbudget-mcp-bearer: 075f18ca-a137-415a-9296-b50e0033589c` — rename both
+   `bitwardenIds` sentinels, both ExternalSecret templates/resources and their
+   `remoteRef` item names to the owner's spelling; use these UUIDs.
+3. Move the two ExternalSecret templates (and, if judged correct, the PVC — state and
+   justify explicitly) from `services/home/prod/templates/` into
+   `charts/actualbudget/templates/`.
+4. Add both UUIDs to `custom-values/home/prod-values.yaml`.
+
+### Decisions (recorded with the grounding that settled them)
+- **Per-instance opt-in gate, chart default off.** `mcp: {enabled: false}` (new key,
+  chart default) in `charts/actualbudget/values.yaml`; the `wuulf-budget:` per-instance
+  block sets `mcp: {enabled: true}`; the moved templates gate on
+  `{{- if index .Values "mcp" "enabled" }}` (nil-safe `index` access — the same access
+  shape as the chart's own `pvc-data-default.yaml` name expression). Precedents: the
+  `shared-storage` conditional-template pattern (`storage-and-secrets.md` §2 — chart
+  declares the default map, the template uses `index` access); the `enabled` nil-safe
+  gate vocabulary (`appset-charts.yaml:17-18` comment referencing the hivetools
+  pattern). The hazard the gate exists for: `chart: actualbudget` is consumed by
+  **two** Applications — `bri-budget` and `wuulf-budget` (the only two `chart:`
+  consumers in `services/`, verified 2026-11-26); an unconditional move would render a
+  second copy of the same-named ExternalSecret + PVC into the **bri** release — the
+  documented two-Application sync-fight hazard. `home-actualbudget` cannot render the
+  chart's templates by construction (the umbrella's `Chart.yaml` carries seven
+  `app-template` dependencies, one aliased `actualbudget`, and **no** `actualbudget`
+  chart dependency — verified 2026-11-26), so it renders NONE without any gate.
+- **Release-prefixed, collision-safe names.** `{{ .Release.Name }}-mcp-key` /
+  `-mcp-bearer` / `-mcp-data` (rendering `home-wuulf-budget-mcp-*` for the wuulf
+  release; the appset release-name convention is `<category>-<appName>` — consistent
+  with the entry's existing hardcoded `http://home-wuulf-budget.default.svc:5006`).
+  Precedent: `charts/zigbee2mqtt` — a `chart:`-multi-instance chart (deployed three
+  times: `zigbee2mqtt` / `zigbee2mqtt-coord` / `zigbee2mqtt-remote`) whose
+  `secret-zigbee2mqtt.yaml` and `pvc-zigbee2mqtt-default.yaml` name their objects
+  `{{ .Release.Name }}`-prefixed. Consequence proven in the C03 AC: a second instance
+  enabling the gate renders `home-bri-budget-mcp-*` — **no object name shared** with
+  the wuulf release, so the gate can never cause a sync-fight.
+- **The PVC moves too (instruction 3's "if judged correct" — judged YES, justified).**
+  The data PVC is part of the MCP-side resource set (the SDK budget-cache claim the
+  mcp pod mounts at `/data`); gating it with the same key keeps all three MCP objects
+  owned by the one Application that enables the gate, so no Application owns an object
+  nobody uses. The bri release's **own** data PVC (the chart's pre-existing
+  `pvc-data-default.yaml`, rendering `home-bri-budget-data`) is untouched and
+  coexists with the gated template.
+- **`deletionPolicy: Delete` on the two credential ExternalSecrets — a named part of
+  the moved shape** (the mcp-servers.md Techniques recommendation; the repo-wide
+  convention: `secret-argocd-mcp.yaml`, `secret-grafana-mcp-token.yaml`,
+  `secret-grafana-mcp-admin-token.yaml`, `secret-postgres-mcp.yaml` all carry it,
+  under `target:` beside `creationPolicy`).
+- **Injection path after the move (stated, not re-derived in dev).** The sentinels
+  move from the home service values' top-level `bitwardenIds` into a **new**
+  `bitwardenIds:` map in `charts/actualbudget/values.yaml` (the lowest merge tier);
+  the real UUIDs stay at the **top level** of
+  `custom-values/home/prod-values.yaml`, where the appset merge
+  (`appset-charts.yaml:101-123`: per-app custom > service-wide custom > service-level
+  globals > base values) overrides the chart tier — the same injection that resolves
+  `actualbudget-sso-secret` today. Per-app `custom-values` blocks
+  (`wuulf-budget: bitwardenIds: …`) land as **nested** keys in chart values and never
+  feed the chart's top-level map — so **no per-app MCP UUID blocks are added**; the
+  two top-level UUIDs are the only mirror. The 1:1 check is re-pinned to count the
+  chart sentinels (both files 1:1, GREEN with the owner's UUIDs).
+- **Name→UUID mapping (OQ3, name-derived best guess, impact named).** The owner
+  supplied names + UUIDs without restating roles; the plan wires by name semantics:
+  `actualbudget-mcp-key` = the budget-scoped API key → `ACTUAL_SESSION_TOKEN` (the
+  "key" naming is this plan's own across binding #4 / Prerequisite 4 / C02; the old
+  `actual-budget-mcp-key` item is its direct dash-normalized successor);
+  `actualbudget-mcp-bearer` = the MCP-side Bearer token → `BEARER_TOKEN`. If the
+  roles were minted swapped, the fix is a two-line `secrets:`/`remoteRef` swap —
+  **no re-mint, no item change** — and the failure mode is visible, not silent (the
+  pod 401s at startup; `--test-resources` surfaces it).
+- **C01's AC3 is recorded as a CHANGED requirement, not a re-opened chunk.**
+  Instruction 1 removes the proxy-remote leg from C01's grep trio (C01 is `done`; the
+  post-hoc revision is recorded in the plan's Open questions, the suite's s2 leg is
+  re-pinned to an **absence** assertion by the Test Writing session, and the plan's
+  `## Commands` trio is updated in place).
+
+### Verified at replan time (2026-11-26, grounding the decisions above)
+- **The C01/C02 surface is branch-only — nothing of it is live.** Targeted live gets
+  (readonly-home-kubernetes): PVC `actual-budget-mcp-data`, PVC `wuulf-budget-data`,
+  ExternalSecret `actual-budget-mcp`, ExternalSecret `actual-budget-mcp-key`,
+  MCPServer `mcp-actual-budget` — **all five not found** (the branch is unmerged;
+  ArgoCD tracks `main`). Consequence: the template move prunes **no live object** —
+  the `values-and-appset.md` ownership-flip hazard (prune-before-adopt credential
+  gaps, orphaned target Secrets) does not fire; every object is a pure creation at
+  first post-merge sync. One residual, self-healing window: at first sync the mcp pod
+  can start before `home-wuulf-budget-mcp-data` exists → Pending until the `wuulf-budget`
+  Application syncs the PVC; the next ArgoCD loop recovers it. No action needed.
+- **The standing-constraint comment goes with the old sentinels** (C02's deliberate-red
+  record; C03 resolves the red it documented, so the comment is stale narration).
+
+### The inert premise is over (consequence, recorded)
+The 2026-11-24 "inert until the key lands" cause is gone: **Prerequisites 2 (the two
+Bitwarden items) and 4 (the API-key mint) are SATISFIED** by the owner's rework —
+`actualbudget-mcp-key` (the budget-scoped key, minted per OQ2's full documented-
+workflow scope) and `actualbudget-mcp-bearer` (the random MCP-side Bearer) exist with
+the supplied UUIDs. Therefore: the 1:1 sentinel check goes **GREEN** with C03; the
+suite's designed 29/2 shape is **RETIRED** — the re-pinned suite's expected outcome
+is passing in full (**0 failures**); and a live MCP pod **may now actually start and
+connect** the moment C03 lands (the ExternalSecrets resolve the real UUIDs → the
+target Secrets exist → the pod starts, connecting to wuulf through the budget-scoped
+key in the `ACTUAL_SESSION_TOKEN` slot). The credential-is-the-gate mechanism stands
+(Post Research Q2: the key has no read/write axis; a budget-file grant is full
+read+write *within that budget only*); the first tier's boundary is unchanged — the
+**absence of `--enable-write`**. Prerequisite 1 (Keycloak redirect URIs + web origins
+for the wuulf host) and Prerequisite 3 (the 26.12.x pin move **+ the attached
+`@actual-app/api` exactly-26.10.0 re-check** — `v1.15.1` bundles the SDK as a pin,
+the image does not self-heal; canary `--test-resources` + `tools/list`) remain
+owner-owned.

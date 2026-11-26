@@ -1,10 +1,20 @@
 {
   "feature": "cf-156-feat-actual-budget-mcp-server",
   "plan_status": "approved",
+  "c03_approval": {
+    "at": "2026-11-26T04:02:56Z",
+    "approved_by": "owner, in-session — 'Approve C03 as planned' plus the OQ3 confirmation 'bearer=BEARER_TOKEN, key=ACTUAL_SESSION_TOKEN'; the PVC-stays-in-chart alternative was offered and declined, so the 5Gi SDK-cache PVC moves into the chart with the two ExternalSecrets",
+    "wave": 3,
+    "depends_on": ["C01", "C02"],
+    "shape_approved": "chart-default-off gate mcp.enabled=false with true only in the wuulf per-instance block; release-prefixed resource names ({{ .Release.Name }}-mcp-*) so a second enabled instance cannot collide; deletionPolicy: Delete; sentinels move to the chart with both real UUIDs mirrored at custom-values TOP level (the appset merge does not feed the chart map from per-app blocks); three-way render proof required (wuulf renders them, bri renders NONE, home-actualbudget renders NONE)",
+    "oq3_closed": "name-to-role mapping CONFIRMED by the owner rather than guessed: actualbudget-mcp-bearer (075f18ca-a137-415a-9296-b50e0033589c) -> BEARER_TOKEN; actualbudget-mcp-key (29e97ab5-db7f-4214-affd-b50e0032788d) -> ACTUAL_SESSION_TOKEN",
+    "consequence_accepted": "the 29/2 designed-red shape is retired: with real UUIDs landed, the suite is expected to reach 0 failures, C02's blocker clears (it can move out of dev_done_blocked once the C03 tests go green), and the MCP pod may now actually start and connect. The read-only boundary remains the absence of --enable-write.",
+    "still_owner_owned": "Prerequisite 1 (Keycloak redirect URIs + web origins for wuulf-budget.spencerslab.com) and Prerequisite 3 (the 26.12.x pin move via Renovate + the attached @actual-app/api exactly-26.10.0 SDK re-check)"
+  },
   "coord_session": null,
   "test_session": "ses_df1f0c304ffe61hq5LzFUdMdyO",
-  "current_wave": 1,
-  "updated_at": "2026-11-25T01:15:00Z",
+  "current_wave": 3,
+  "updated_at": "2026-11-26T03:34:22+00:00",
   "run_state": {
     "at": "2026-11-25T01:30:00Z",
     "plan_status_decision": "left at 'approved', NOT 'complete' — the done-gate requires every chunk done and C02 is dev_done_blocked by owner ruling (two custom-values UUID mirrors cannot exist until the owner mints the Bitwarden items). Marking the plan complete would assert a finished gate that the suite's two reds contradict; the pipeline's own rule is that files state facts, not aspirations.",
@@ -21,7 +31,7 @@
     "landing_state": "NOT landed in main by content (main is unchanged at 8f04bf915; no merge, no rebase, no push). Branch and worktree are KEPT — the default under step 10 when the work has not landed.",
     "main_cleanup": "reverse-applied the cf-156-only patch in /home/coder/SpencersLab: the three exclusively-cf-156 files returned to HEAD, custom-values is clean, and services/home/prod/values.yaml now differs from HEAD by exactly 8 insertions — the co-tenant's audio-ad-detection hunk, left byte-as-found. The four new files and main's stale copy of the ticket folder were removed after the branch copy was hash-verified and committed."
   },
-  "updated_at": "2026-11-25T01:30:00Z",
+  "updated_at": "2026-11-26T03:34:22+00:00",
   "final_review": {
     "status": "done",
     "verdict": "APPROVED (whole plan)",
@@ -192,6 +202,15 @@
     }
   },
   "stages": {
+    "replan": {
+      "status": "done",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "at": "2026-11-26T03:34:22+00:00",
+      "trigger": "owner instruction 2026-11-26 — four verbatim directives (recorded in DECISIONS 2026-11-26, binding, not re-litigated): (1) remove wuulf-budget from proxy-remote ('so I don't want anything on proxy-remote yet'); (2) use actualbudget-mcp-key: 29e97ab5-db7f-4214-affd-b50e0032788d and actualbudget-mcp-bearer: 075f18ca-a137-415a-9296-b50e0033589c — rename both bitwardenIds sentinels, both ExternalSecret templates/resources and their remoteRef item names to the owner's spelling; (3) move the two ExternalSecret templates (and, if judged correct, the PVC — judged YES, justified) from services/home/prod/templates/ into charts/actualbudget/templates/; (4) add both UUIDs to custom-values/home/prod-values.yaml. Folded as a NEW chunk C03 (wave 3, depends C01+C02) — no second plan file.",
+      "what_changed": "plan of record edited in place: Goal + Out-of-scope gain the C03 rework paragraph + the collision-safe-future-bri note + the proxy-remote-removal note; a 'Verified at C03 replan time (2026-11-26)' section added (the C01/C02 surface is branch-only — all five targeted live gets not found; home-actualbudget cannot render the chart by construction — no actualbudget dependency in services/home/prod/Chart.yaml; the appset values-merge order; the shared-storage / enabled-gate / zigbee2mqtt-release-name / deletionPolicy precedents; the chart consumers are exactly bri-budget + wuulf-budget); Prerequisites 2 and 4 marked SATISFIED (the owner's mint), 1 and 3 remain owner-owned (3 with the @actual-app/api exactly-26.10.0 re-check attached); ## Commands: the C01 grep trio revised to a 4-file grep + a proxy-remote ABSENCE leg, the hivetools render re-pinned to the release-prefixed secrets/claimName (the ExternalSecrets no longer render there), the C03 three-way render proof added (wuulf gate-open + real injection via the extracted custom-values bitwardenIds / bri gate-closed rendering NONE / the umbrella rendering NONE for home-actualbudget) + the collision-safety proof (gate on bri renders home-bri-budget-mcp-*, distinct names), the 1:1 check re-pinned to the chart sentinels (expected GREEN), the suite line re-pinned (the designed 29/2 shape RETIRED — re-pinned suite expected 0 failures; a live MCP pod may now start and connect, the read-only boundary still the absence of --enable-write); chunks table + wave order gain C03; Risks: the inert-premise paragraph replaced by the sync-fight hazard the gate exists for, the ownership-flip hazard assessed benign (nothing live is pruned), and the inert-premise-is-over changed-requirement record; Open questions: the C01-AC3 changed-requirement record, OQ3 (item-name -> role mapping, name-derived best guess, visible-not-silent failure mode, two-line fix if swapped), OQ4 (shared-credential limitation of the two-instance gate — design note, the future bri MCP ticket needs its own items + a per-app UUID injection path; C03 is the collision-safe prerequisite, not the solution). chunks/C03.md created (9 tasks, 7 files in scope, 9 ACs, the test re-pin spec for a FRESH Test Writing session — s2 proxy-remote absence leg, s5 chart template paths + new names + gate keys + hivetools re-named entry, s6 chart sentinel source + both files 1:1 + real UUIDs green + old names absent; s1/s3/s4/s7 unchanged, Notes for dev, empty Review notes). DECISIONS.md: the dated 2026-11-26 C03 section appended (the owner's four instructions verbatim record + the gate/naming/PVC-move/deletionPolicy/injection-path/mapping decisions with their grounding + the verified-at-replan-time facts + the inert-premise-over consequence). plan_status approved -> proposed: the plan is no longer the approved shape — it awaits a fresh owner approval of the re-plan at the plan-approval pause before C03's Test Writing + dev.",
+      "consequences": "the inert-until-the-key-lands premise is OVER: Prerequisites 2 and 4 satisfied (both items minted with real UUIDs), the 1:1 sentinel check goes GREEN with C03, the suite's designed 29/2 shape is retired (re-pinned suite expected to pass in full, 0 failures — the two s6 reds flip green because the mirrors land with the owner's real UUIDs), and a live MCP pod may now actually start and connect the moment C03 lands (the ExternalSecrets resolve the real UUIDs -> the target Secrets exist -> the pod starts, connecting to wuulf through the budget-scoped key in the ACTUAL_SESSION_TOKEN slot). C02's dev_done_blocked is unblocked BY C03: C03's custom-values task IS the 2026-11-24 ruling's close-out leg 1 (the two UUID lines, under the owner's item names). Prerequisites 1 (Keycloak redirect URIs + web origins) and 3 (the 26.12.x pin move + the attached SDK re-check) remain owner-owned. C01's AC3 is a CHANGED requirement (the proxy-remote leg removed), recorded, not a re-opened chunk.",
+      "friction": "none — the batched-question protocol held (no user questions; the two genuine gaps — the item-name -> role mapping and the shared-credential limitation — went to plan Open questions with best guess + impact, per the brief)"
+    },
     "exploration": {
       "status": "done",
       "session": "ses_df5ba492affewXmmK6G7fVuYV1",
@@ -517,6 +536,14 @@
           "coord_note": "this is the first hand-back in the ticket that emitted the literal RESULT schema block rather than prose — the instruction to do so is retained for the final review launch."
         }
       ]
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "note": "the owner rework (2026-11-26, four binding instructions — DECISIONS 2026-11-26): proxy-remote removal, owner item names + real UUIDs (actualbudget-mcp-key / actualbudget-mcp-bearer), the two ExternalSecret templates + the data PVC moved into charts/actualbudget/templates/ behind the per-instance gate (mcp.enabled, chart default false, the wuulf block true) with release-prefixed collision-safe names, both UUIDs in custom-values. Lands on top of C01+C02 already committed to the branch (depends_on satisfied by branch state, not by waiting). C03's custom-values task IS the 2026-11-24 ruling's close-out leg 1 — it unblocks C02's dev_done_blocked state. Sequence: owner approval of the re-plan (plan-approval pause, plan_status proposed) -> a FRESH Test Writing session re-pins s2/s5/s6 (chunks/C03.md Tests section) -> C03 dev (runs the re-pinned suite while implementing) -> chunk review -> the final-review re-run over the whole plan (the close-out legs: Prerequisite 1 Keycloak, Prerequisite 3 the 26.12.x pin move + the attached @actual-app/api exactly-26.10.0 SDK re-check, the --enable-write flip)."
     }
   },
   "blocked": [],
