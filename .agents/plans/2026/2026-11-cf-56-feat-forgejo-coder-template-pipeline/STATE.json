@@ -1,13 +1,20 @@
 {
   "feature": "2026/2026-11-cf-56-feat-forgejo-coder-template-pipeline",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": null,
   "final_review": {
     "at": "2026-11-25T07:02:00+00:00",
     "session": "ses_deea77d4dfferqem52S6xE44nl",
     "verdict": "APPROVED",
     "summary": "Fresh-eyes whole-plan review: 16 validation groups re-run green (35 suite legs total), ghcr digest chain independently re-verified, cross-file coherence + secret-hygiene + house-convention sweeps clean, goal met line-by-line 1-7, all owner rulings OQ1-OQ9 satisfied. No blocker/major/minor/nit. Notes appended to chunks/C01-C03.md.",
-    "open_friction": ["git push-deny substring-glob FP in coord/dev definitions (candidate follow-up)", "AGENTS.md/plan aislop coverage wording (repo-wide leg, candidate follow-up)"]
+    "open_friction": ["git push-deny substring-glob FP in coord/dev definitions (candidate follow-up)", "AGENTS.md/plan aislop coverage wording (repo-wide leg, candidate follow-up)"],
+    "delta_round": {
+      "at": "2026-11-26T21:48:13+00:00",
+      "session": "ses_de63c36b4ffeBNncrgOzNv1UCA",
+      "verdict": "APPROVED",
+      "summary": "Post-C04 whole-plan delta: 24 validation groups green at expected counts; Goal met line-by-line 1-9 after the fan conversion; shared-marker coupling coherent end to end; t4 deferral re-verified pre-existing. Two non-blocking comment findings in chunks/C04.md: main-sync.yaml:51 stale 'both builders' (one-word fix, candidate fold with t4 follow-up), fan-entry citation +3 drift (cosmetic).",
+      "handoff_state": "work done + reviewed; card->Review move + lock release await owner word at the HITL Final Review stop; UA1-UA5 are the remaining owner legs"
+    }
   },
   "test_session": "ses_def1ab090ffepGx0c6SYQHS8XT",
   "current_wave": 3,
