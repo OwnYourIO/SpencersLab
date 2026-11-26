@@ -82,6 +82,15 @@
     ],
     "vllm_adjudication": "dev round flagged charts/vllm/tests/test_contract.py 'docker-build claims stale at :3/:429/:488' — NOT SUPPORTED: the file (identical to main, untouched by this branch — not in the branch's changed set) carries no docker-build reference at all (full-dump verified; its only workflow reference is the per-chart vllm-render-tests.yaml ladder, and one 'chart-releaser bumps the patch on every merge to main' comment that stays true under the cr tool). Pre-existing state on main, not caused by this round's edits — reported, not fixed, per the not-our-scope ruling."
   },
+  "round5": {
+    "at": "2026-11-26",
+    "directive": "owner, post round-4 merge: fires ran on main; test-build (prowlarr) failed at the bump step 'top-level version: is not MAJOR.MINOR.PATCH' (suspected C11 self-inflicted: seed-law comment placed ON the version line); asks: (1) fix; (2) adapt build-charts.yaml to main's NEW containers-build mechanics — aeda85f86 last-built marker (marker..sha detection, marker advances only on fully-green matrix; a chart lost to a dead run is re-covered next push) — with ONE SHARED MARKER BRANCH across helm+docker+incoming coder templates (rename likely); (3) rename containers-build.yaml -> build-containers.yaml; (4) remove push/main-merge detection from BOTH builders — main-sync.yaml calls them, parallel to existing jobs, sync-fanout waits for both; (5) scale runners to 10; (6) follow-up card for job-count-based runner autoscaling",
+    "lease": "card-id claim fac3a18b (CICD untouched); card Review->Executing with claim comment",
+    "branch_state": "reset --hard origin/main 52d3b5c45 — full round-4 stack landed as twins (755ef2aed..52d3b5c45); owner's aeda85f86 + radiance/renovate work on top",
+    "autoscaling_card": "MINTED iaJq5bgWHHDHotcBY (Inbox, research+implement, Services infra+gpu, feat, Qwen Dense, parent-links #55 in body; parent_id PUT 405s on this build as before)",
+    "scout": "ses_dea348c49ffeYmLuG95nZVFApu IN FLIGHT — grounds A containers-build marker mechanics + rename blast, B build-charts detection + version-regex bug + prowlarr/llama-swap fire outcomes, C main-sync orchestration options (workflow_call support on THIS Forgejo? dispatch+poll alternative), D runner replica keys + suite pins, E coder-templates location for the shared-marker story, F containers-build rename surface list",
+    "open_from_r4": "round-4 close question was DISMISSED — the admitted-externals / carry-over / old-name-prose / C12-evidence card list still awaits the owner's word; the autoscaling card was ordered explicitly and is minted"
+  },
   "final_review": {
     "at": "2026-11-11T06:35:00Z",
     "session": "ses_e3722c892ffe9ZJgacvDLiAPZu",
