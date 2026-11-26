@@ -608,3 +608,32 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   guesses either way: oracle enforced on the FILE channel only (manual env exports
   need not mirror the fleet); `filter: N keys selected` print line; secrets-side wins
   collisions; malformed-preemption order preserved.
+
+## OQ-A batched-round answer 2026-11-26 — reopen4 APPROVED (pure discovery; the
+## coordinator-recommended categories oracle is DECLINED)
+- 2026-11-26 human (batched round): **OQ-A = PURE DISCOVERY (option b) — adopted
+  against the recommendation.** No membership list anywhere: the org vault map alone IS
+  fleet membership; `scripts/argocd-fanout.json` stays the five globals exactly as
+  landed (zero schema churn — the main-sync t13 parse-only split becomes PERMANENT,
+  the six-vs-five question dies with the oracle).
+- 2026-11-26 human/plan: resulting posture stated precisely (ruled envelope, survives
+  in exactly these words): **(1)** one-sided delete (TOKEN gone, URL survives — or the
+  reverse) ⇒ half-pair ⇒ config RED naming the category — the existing class,
+  untouched; **(2)** BOTH keys deleted ⇒ CLEAN INTENTIONAL DECOMMISSION ⇒ the category
+  vanishes, fleet−1, the `fan-out summary: targets=N` count is the ONLY signal — by
+  design: making that state RED would demand a repo edit per decommission and the owner
+  declined the friction; **(3)** blanked-but-present pair (`""` arrives in the map) ⇒
+  still the (j) RED while the fleet is configured (blank-everything stays the §7
+  all-absent warn-green lever); **(4)** a stray COMPLETE valid pair JOINS silently —
+  the mirror image of (2), same rationale; org Actions write is therefore
+  fleet-config, and the weight the oracle would have carried in code shifts to the
+  branch-protection follow-up card `abkP2XsbuuPuuvri6` + §8's org-name discipline.
+- 2026-11-26 plan: supersession deltas — reopen4 micro-call (g)'s "deletes need the
+  oracle to stay loud" re-reads: clean deletes were RULED quiet; the (j) subclass
+  survives only for BLANKED pairs (both names present, both empty); half-pair/malformed/
+  JWT/URL classes all survive untouched. R7 micro-call (d) stays dead (it died with the
+  rows). The malformed-lane script phrase "enumeration keys" stays byte-true (docs
+  re-read it as "delivered vault keys"; the script retypes nothing). C14/C15 specs
+  updated in place; the test session's pre-wave-13 launch brief must NOT write the
+  drafted oracle arms (behavior t9 becomes the ruled-envelope arms per C14's Tests).
+  plan_status → APPROVED; waves 13–15 unblocked; no open questions remain.

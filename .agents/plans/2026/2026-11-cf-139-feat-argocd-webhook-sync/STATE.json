@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "reopen4_note": "research-gated re-cut pending",
   "reopen3": {
     "at": "2026-11-25T01:35:00+00:00",
@@ -20,16 +20,17 @@
     "owner_decision": "ADOPT WITHOUT PROBING (2026-11-26): premise source-refuted, build on it; RESEARCH's probe-gated recommendation overridden by owner - engine claims now rest on Forgejo source-reads + production precedent; FIRST dispatch smoke is the de-facto live validation. Branch-protection follow-up card created: abkP2XsbuuPuuvri6 (Inbox, labels Provider: Local + Pipeline: CICD applied via set_card_labels).",
     "R8": "dynamic adoption: 22 rows -> toJSON(secrets)+toJSON(vars) blobs + inline filter step -> $RUNNER_TEMP/pairs.json; script gains ARGOCD_PAIRS_FILE channel, env scan stays default; ≈0 widening claim documented, protected by the follow-up card's branch protection",
     "plan_recut_at": "2026-11-26T03:28:00Z",
-    "recut": "waves 13-15 (C13 workflow fleet-blind + filter, C14 script ARGOCD_PAIRS_FILE channel + categories oracle, C15 runbook #5); fan-out core + lane strings + owner vault procedures byte-untouched; fallback-if-red = revert d81831446",
+    "recut": "waves 13-15 (C13 workflow fleet-blind + filter, C14 script ARGOCD_PAIRS_FILE channel — no oracle, no schema churn per the OQ-A answer, C15 runbook #5); fan-out core + lane strings + owner vault procedures byte-untouched; fallback-if-red = revert d81831446",
     "approval_gate": [
       "OQ-A categories oracle (recommend adopt; gates final approval only — C13 is oracle-independent, C14/C15 carry the flag-able lines)"
-    ]
+    ],
+    "approval_gate_resolved": "OQ-A ANSWERED 2026-11-26: (b) pure discovery — oracle declined; see DECISIONS OQ-A block"
   },
-  "plan_status_note": "reopen4 re-cut drafted 2026-11-26 (R8 dynamic, probe gate overridden): APPROVAL GATED on ONE owner call — OQ-A categories oracle (recommendation: adopt minimal categories list in argocd-fanout.json as the membership/drift oracle; alternative: pure discovery with count-only drift). All other design points pinned (DECISIONS 2026-11-25 reopen4 block). History: reopen3 closed complete at d81831446 (waves 10-12, full-chain green); reopen2 approved 2026-11-23; reopen1 approved 2026-11-21.",
+  "plan_status_note": "reopen4 APPROVED 2026-11-26 — OQ-A batched round answered PURE DISCOVERY (option b), against the coordinator-recommended categories oracle: the org vault map alone is fleet membership, roster stays the five globals (zero schema churn, main-sync t13 parse-only split permanent). Ruled envelope: half-delete RED / blanked-both (j)-RED / both-deleted clean-quiet-drop (count-only signal, by design) / stray-complete-pair joins-quiet. History: reopen4 drafted gated on OQ-A; reopen3 closed complete at d81831446; reopen2 approved 2026-11-23; reopen1 approved 2026-11-21.",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
   "current_wave": 13,
-  "updated_at": "2026-11-26T03:28:00Z",
+  "updated_at": "2026-11-26T04:11:00Z",
   "reopen": {
     "at": "2026-11-21T20:05:00+00:00",
     "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub",
@@ -442,7 +443,7 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "note": "workflow fleet-blind: 22 rows die -> SECRETS_JSON/VARS_JSON toJSON blobs [40][41][49] + inline filter step (dumb serializer: pair-regex union select, $RUNNER_TEMP/pairs.json flat {NAME:value}, chmod 600, count line only) + ARGOCD_PAIRS_FILE fan-out env; header precedence fix [44][45]; main-sync suite re-pin (fleet-blind bans, filter contract, t13 relaxed to parse-only)",
+      "note": "workflow fleet-blind: 22 rows die -> SECRETS_JSON/VARS_JSON toJSON blobs [40][41][49] + inline filter step (dumb serializer: pair-regex union select, $RUNNER_TEMP/pairs.json flat {NAME:value}, chmod 600, count line only) + ARGOCD_PAIRS_FILE fan-out env; header precedence fix [44][45]; main-sync suite re-pin (fleet-blind bans, filter contract, t13 relaxed to parse-only); t13 roster parse-only leg PERMANENT (schema pin stays in behavior t2; no six-vs-five question survives the OQ-A answer)",
       "handoffs": []
     },
     "C14": {
@@ -454,7 +455,7 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "note": "script ARGOCD_PAIRS_FILE channel: load_pairs_file (path-named REDs, {} => all-absent lane) feeds the existing discover_targets; precedence file-wins; env scan default unchanged; roster +categories oracle (OQ-A recommended; file-channel-strict only); core byte-lock leg extended; behavior.sh re-pin (precedence/error/parity/oracle-diff arms)",
+      "note": "script ARGOCD_PAIRS_FILE channel: load_pairs_file (path-named REDs, {} => all-absent lane) feeds the existing discover_targets UNCHANGED (no expected= param — OQ-A ruled pure discovery); precedence file-wins; env scan default unchanged; roster STAYS five globals (zero churn); behavior.sh re-pin (precedence/error/parity + ruled-envelope arms: half-delete RED, both-gone quiet N-1, stray-pair quiet join, blanked-both (j) RED); core+validator byte-lock leg",
       "handoffs": []
     },
     "C15": {
@@ -467,7 +468,7 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "note": "runbook rewrite #5 (surgery): sections 1/4/5/7/8 enumeration-era sentences; 2/3/6/appendix byte-unchanged (owner vault work identical); 5(a) becomes the first-dispatch live-validation leg list + d81831446 fallback sentence; 7 lever byte-kept + decommission wording per OQ-A; 8 envelope/org-name discipline/masking-edge/branch-protection-card sentences; second test launch at wave start re-pins the runbook suite",
+      "note": "runbook rewrite #5 (surgery): sections 1/4/5/7/8 enumeration-era sentences; 2/3/6/appendix byte-unchanged (owner vault work identical); 5(a) first-dispatch validation leg list + d81831446 fallback + fleet-drift honesty line (expect == vault reality); 7 decommission = delete BOTH org keys, zero repo edits, lever byte-kept; 8 pure-discovery envelope + org-name discipline + branch-protection card abkP2XsbuuPuuvri6 as the oracle-substitute lever; categories/oracle vocabulary BANNED file-wide; second test launch at wave start",
       "handoffs": []
     }
   },

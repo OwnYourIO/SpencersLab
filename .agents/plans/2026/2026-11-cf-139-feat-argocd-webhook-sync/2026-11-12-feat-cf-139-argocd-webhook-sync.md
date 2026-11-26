@@ -9,8 +9,9 @@ the one-commit fallback to `d81831446`'s static enumeration). Waves 10–12 (C09
 closed at `d81831446`, 13/13 behavior + full-chain green) stand as DONE history: this
 round deletes ONLY the 22-row enumeration — the fan-out core, both input lanes'
 semantics, the warnings/RED strings, and the disposals are byte-untouched.
-**plan_status: draft — one real owner call (OQ-A, categories oracle) gates approval;
-everything else is pinned.** History: reopen1 2026-11-21 (R1–R4), reopen2 2026-11-23
+**plan_status: APPROVED 2026-11-26 — the one real call (OQ-A) answered PURE DISCOVERY
+(option b, against the coordinator's oracle recommendation; DECISIONS 2026-11-26);
+no open questions remain.** History: reopen1 2026-11-21 (R1–R4), reopen2 2026-11-23
 (R5/R6 + OQ8–OQ10 batch), reopen3 2026-11-25 (R7 env-pair input, waves 10–12).
 
 ## Goal
@@ -65,10 +66,11 @@ today (§2 of the runbook does not change).
   same (j) RED (names present, values empty — unchanged semantics, "present" now means
   "in the map"); deleted-TOKEN beside surviving tokens ⇒ half-pair RED (URL present,
   TOKEN absent) as before; **deleted-COMPLETE-pair ⇒ the category vanishes from
-  discovery entirely** — under OQ-A's recommendation the roster `categories` list
-  catches it RED (list↔map set-equality in the configured lane, BOTH directions: a
-  vault pair not in the list is also membership drift); without the oracle it is a
-  count-only drift signal (summary `targets=N`). Malformed-name-with-value stays a
+  discovery entirely** — RULED (OQ-A answered b, 2026-11-26): that is CLEAN INTENTIONAL
+  DECOMMISSION — the category drops, the fleet count is the only signal, by design;
+  making it loud would demand a repo edit per decommission and the owner declined the
+  friction; the real lever shifts to org name-discipline + the branch-protection card.
+  Malformed-name-with-value stays a
   pre-predicate RED short-circuit regardless of channel ((i-adj-2) order preserved).
   The kill lever (delete-or-blank ALL 11 TOKEN secrets ⇒ zero non-empty tokens ⇒
   NOT_CONFIGURED ⇒ the EXACT same §4 warning string — verified still-true phrasing,
@@ -134,19 +136,20 @@ today (§2 of the runbook does not change).
 - Probing first: ruled out by the owner (the override IS the accepted risk — Risks
   row 1). Mechanism 2 (matrix-from-outputs chain) and 3 (REST-API discovery) per
   RESEARCH Agenda 5 scoring. Retro-fitting the env channel: it stays exactly as
-  landed (local/manual default; no membership diffing there, see OQ-A pin).
+  landed (local/manual default; under pure discovery NO channel has a membership
+  concept — there is nothing to diff).
 
 ## Commands (validation-first)
 
 - C13: `bash tests/services/forgejo-main-sync.sh` (re-pinned: blob-expression legs,
-  fleet-blind ban — zero `ARGOCD_SYNC_<SEG>_(URL|TOKEN)` name strings and zero category
-  tokens in the file, filter-contract legs incl. no-print grep + `bash -n` of the
-  filter run block, pairs-path wiring; t13 roster leg RELAXED to parse-only so the
-  six-vs-five schema question cannot red wave 13) + `git diff --name-only` keep-outs
+  fleet-blind ban — zero `ARGOCD_SYNC_<SEG>_(URL|TOKEN)` name strings in the file,
+  filter-contract legs incl. no-print grep + `bash -n` of the
+  filter run block, pairs-path wiring; t13 roster leg parse-only PERMANENTLY — the
+  five-globals schema pin lives in behavior t2 and changes NOT at all this round) + `git diff --name-only` keep-outs
   (`needs: [push-gh]`, ROLE guard, push jobs byte-zero).
 - C14: `python3 -m py_compile scripts/argocd-fanout.py`; `bash tests/argocd-fanout/behavior.sh`
-  (file-channel arms + precedence + env-unchanged legs); roster schema leg flips to
-  SIX keys incl. `categories` here (t2) — behavior.sh owns the schema pin now.
+  (file-channel arms + precedence + env-unchanged legs; roster schema legs UNCHANGED —
+  the five globals as landed, zero schema churn under pure discovery).
 - C15: `bash tests/notes/argocd-fanout-runbook.sh` (re-pinned for rewrite #5: §4
   filter anatomy, §5 first-dispatch-as-validation leg list + fallback sentence greps,
   §7 lever strings byte-true (`WARN_NOT_CONFIGURED` parity), §8 envelope reword,
@@ -160,8 +163,8 @@ today (§2 of the runbook does not change).
 |----|-------|------|------|--------|------------|--------------------|
 | C01…C12 | relay → vault-direct → env-pairs waves 1–12 | — | 1–12 | **done-at-review history** (C09/C10/C12 input-mechanics legs superseded at reopen4; fan-out core + lanes + strings live on unchanged) | — | untouched |
 | C13 | main-sync.yaml fleet-blind rework: 22 rows → `toJSON` blobs + inline filter step → `$RUNNER_TEMP/pairs.json`; fan-out step gains `ARGOCD_PAIRS_FILE`; header comment fix (precedence halves, enumeration retirement) + main-sync suite re-pin | M | 13 | pending | [] | the workflow is the new channel's PRODUCER; its filter contract is pinned by this plan so C14's reader matches |
-| C14 | script `ARGOCD_PAIRS_FILE` channel (load → same `discover_targets` body; precedence; path-error REDs; `{}` ⇒ warn-green; roster gains `categories` oracle per OQ-A recommendation) + behavior.sh re-pin | M | 14 | pending | [C13] | implements the reader for the producer's exact file shape + env name; landing together-in-branch keeps CI coherent (mid-branch the script warn-greens — inert, never wrong) |
-| C15 | runbook rewrite #5 (§2 vault work UNCHANGED + fleet-blind sentence; §4 filter anatomy; §5 first dispatch = the live engine-claims validation, legs enumerated, fallback sentence; §7 lever + decommission wording per OQ-A; §8 envelope/escape/masking honesty) + second test launch (runbook suite re-pin) | S | 15 | pending | [C13, C14] | parity greps read both landed files, as every prior docs chunk has |
+| C14 | script `ARGOCD_PAIRS_FILE` channel (load → same `discover_targets` body, UNCHANGED — no oracle, no schema churn: pure discovery is ruled; precedence; path-error REDs; `{}` ⇒ warn-green) + behavior.sh re-pin | M | 14 | pending | [C13] | implements the reader for the producer's exact file shape + env name; landing together-in-branch keeps CI coherent (mid-branch the script warn-greens — inert, never wrong) |
+| C15 | runbook rewrite #5 (§2 vault work UNCHANGED + fleet-blind sentence; §4 filter anatomy; §5 first dispatch = the live engine-claims validation, legs enumerated, fallback sentence, fleet-drift honesty line; §7 decommission = delete BOTH org keys — no repo edit; §8 pure-discovery envelope/escape/masking honesty) + second test launch (runbook suite re-pin) | S | 15 | pending | [C13, C14] | parity greps read both landed files, as every prior docs chunk has |
 
 Test sessions (law: tests precede dev): **pre-wave-13 ONE session** re-pins
 `tests/services/forgejo-main-sync.sh` (blob/filter/fleet-blind legs; t13 roster leg
@@ -174,8 +177,9 @@ launch re-pins `tests/notes/argocd-fanout-runbook.sh` (reads C13/C14 landed byte
 13. C13 → 14. C14 → 15. C15 (runbook-test launch first inside wave 15). Serial per the
 brief's sequencing; C14 could parallel-run C13 on disjoint files but the shape pins
 (file format, env name) are C13-published, and reopen4 keeps the strict test-first-
-then-consumer order for a clean designed-red story. Plan approval gates on OQ-A
-(batched round, coord-side); the other micro-calls below are pinned best guesses.
+then-consumer order for a clean designed-red story. The batched round ANSWERED OQ-A
+(2026-11-26, option b — pure discovery, the oracle recommendation declined); the plan
+is APPROVED and every micro-call below stands as pinned.
 
 ## Fan-out INPUT contract v3 (pinned; C13 produces, C14 consumes, C15 documents)
 
@@ -196,19 +200,15 @@ then-consumer order for a clean designed-red story. Plan approval gates on OQ-A
 - Script (C14): `main` branch: `pairs_file = os.environ.get("ARGOCD_PAIRS_FILE")`;
   truthy ⇒ `load_pairs_file(pairs_file)` (existence/read/JSON/dict/value-str checks →
   ConfigError naming the path only) and `discover_targets(that_map)`; else
-  `discover_targets(os.environ)` unchanged. `discover_targets` body: ZERO semantic
-  change for shared classes; NEW optional membership oracle (OQ-A): when
-  `strict_membership` (file channel only — pin) compare the category set against
-  `cfg["categories"]` in the configured lane, collecting both-direction diffs into the
-  same sorted aggregate (`category "x" listed but has no vault keys` / `vault pair "y"
-  not in categories`); malformed-preemption and TOKEN-side predicate order preserved.
-  Roster: five globals + (OQ-A recommendation) `"categories": [11 hyphen names]`;
-  `--check` derives from whichever channel and gains a `membership: 11 listed / N
-  discovered` line ONLY if the oracle lands (string pinned then; current line survives
-  otherwise).
+  `discover_targets(os.environ)` unchanged. `discover_targets` body: ZERO changes —
+  no params, no oracle, no membership concept (RULED, OQ-A answered b: the delivered
+  map IS the fleet); malformed-preemption and TOKEN-side predicate order are already
+  channel-agnostic by construction. Roster: the FIVE globals exactly as landed — zero
+  schema churn. `--check` derives from whichever channel; output lines unchanged.
 - Strings pinned UNCHANGED: `WARN_NOT_CONFIGURED`, `pair integrity: …` aggregation,
-  `malformed ARGOCD_SYNC_* … keys with values: …` (reword ONLY if OQ-A rejects — the
-  phrase "enumeration keys" → "vault keys" rides the same decision), `pairs: N targets
+  `malformed ARGOCD_SYNC_* … keys with values: …` (the phrase "enumeration keys" stays
+  byte-true — the script re-types nothing; runbook §8 notes it now reads "delivered
+  vault keys"), `pairs: N targets
   discovered (values never printed)`, fan-out core entirely (C09/C12 t13 byte-lock
   doctrine extended: C14's AC includes a zero-hunk proof for
   `ref_tail…fan_out`/`_NoRedirect`/`drive_target`).
@@ -218,11 +218,13 @@ then-consumer order for a clean designed-red story. Plan approval gates on OQ-A
 - Vault work **unchanged**: 11 mints, 11 org vars, 11 org secrets, trio delete-check —
   literally the same legs; the only difference is the owner NEVER touches the workflow
   again for fleet membership.
-- **NEW owner calls via the batched round:** OQ-A (categories oracle: adopt — the
-  recommendation — or accept count-only drift). If the oracle lands, first
-  cluster-add after this merge = org pair + one `categories` line in a PR; first
-  DECOMMISSION = delete pair + delete line (PR-first ordering avoids the interim RED,
-  documented either way).
+- **Fleet ops are vault-only now (OQ-A ruled, pure discovery):** cluster ADD = create
+  the org pair — zero PRs, joins at the next run; decommission = DELETE BOTH org keys —
+  zero PRs, vanishes at the next run, the `fan-out summary: targets=N` count is the
+  roster audit (fleet-drift honesty line, runbook §5/§8); a half-delete (one key gone)
+  surfaces config-RED naming the category until the twin follows — by design. The
+  owner declined the repo-edit-per-decommission friction; the branch-protection card
+  is the accepted weight for org-write-equals-fleet-config.
 - **The first dispatch smoke gains its true role (override consequence):** it is the
   live validation of the engine claims RESEARCH could not close without probes — legs
   enumerated in runbook §5 (expression green ⇒ toJSON+delivery; `filter: 22 keys` ⇒
@@ -252,35 +254,37 @@ then-consumer order for a clean designed-red story. Plan approval gates on OQ-A
 - Empty-string-vs-absent semantics hinge on `toJSON` including created-but-blank keys
   (source says the map carries what exists — blanks included [44]); the smoke's
   filter-count line discriminates.
+- **org-write = fleet-config (RULED consequence of pure discovery):** a stray COMPLETE
+  valid pair silently JOINS the fleet and a fully-deleted pair silently DROPS it — the
+  only signals are the summary count and the log. Half-states were and stay RED-loud;
+  malformed names with values stay RED-loud ((i-adj-1) re-read for vault-delivered
+  keys). Mitigations accepted on the owner's word: name discipline (§8), and the
+  branch-protection lever carded at `abkP2XsbuuPuuvri6` — that card now carries the
+  drift story the oracle would have closed in-code.
 - Carried: gpu self-restart window, dind DNS (dispatch is its leg too), mirror lag,
   home Unknown, proxy-local 307 owner decision.
 
-## Open questions (batched round — ONE real call + pinned micro-calls)
+## Open questions — RESOLVED BY RULING 2026-11-26 (OQ-A answered: plan APPROVED)
 
-1. **OQ-A — categories oracle (the big one, real owner call):** in the blob world a
-   cleanly DELETED pair (both org keys) leaves no residue — the fleet just shrinks
-   (summary count signal only). Options: **(a) RECOMMENDED — keep a minimal
-   `"categories": [11 names]` array in `scripts/argocd-fanout.json` as the membership
-   oracle:** configured-lane set-equality list↔discovered, both directions RED (agile
-   on values, PR-gated on membership — restores ruling-(j) loudness; fleet changes =
-   vault keys + one JSON line in a PR; the workflow stays fleet-blind exactly as the
-   owner asked — the objection was "hardcoded into the JOB", and the job indeed carries
-   zero names); **(b) accept count-only drift** — pure discovery, zero files touched on
-   a fleet change, at the cost of silent clean-deletes and vault-writes becoming fleet
-   config (softening the PR-review doctrine; the branch-protection card then matters
-   more). Under (a): the oracle enforces in the FILE channel (CI); the env channel
-   (local manual) stays pure-discovery — pinned best guess, flipping it just adds a
-   `--strict` knob nobody asked for. `deleting-a-key-plus-list-entry` under (a) means
-   a clean decommission: consistent everywhere ⇒ green with N−1 targets, the interim
-   window (keys gone, line still in main) is RED-loud by design.
+1. **OQ-A — categories oracle: ANSWERED (b) PURE DISCOVERY — against the coordinator's
+   recommendation.** The org vault map alone IS fleet membership: no `categories` list
+   anywhere, no membership diffing in any channel, the roster stays the five globals
+   byte-unchanged. Consequences stated precisely: one-sided delete ⇒ half-pair ⇒ config
+   RED (existing class, untouched); BOTH keys deleted ⇒ clean intentional decommission
+   ⇒ the category vanishes, fleet−1, the summary count is the only signal — by design,
+   because making it loud would demand a repo edit per decommission and the owner
+   declined the friction; blanked-token (present-but-`""` in the blob) ⇒ still (j)-RED.
+   Weight shifts to the branch-protection card (`abkP2XsbuuPuuvri6`) + org name
+   discipline (§8). The main-sync t13 parse-only relaxation becomes PERMANENT (reworded
+   in C13), not OQ-conditional.
 2. Pinned micro-calls (NOT questions — best guesses, reversible one-liners): filter
    prints `filter: N keys selected` only; secrets-wins collision order; `PAIRS_FILE`
    set-and-non-empty ⇒ env scan skipped entirely (strict precedence); `{}` file is the
    all-absent lane, a missing/invalid file is RED naming the path; chmod 600 is the
    filter's duty, the script does not stat modes; `ARGOCD_PAIRS_FILE=""` ⇒ unset;
-   main-sync t13 roster leg relaxed to parse-only (schema pin moves to behavior t2);
-   malformed-lane message wording keeps "keys" (channel-neutral) regardless of OQ-A;
-   the header precedence fix ships with C13 as queued.
+   malformed-lane message keeps its landed "enumeration keys" wording byte-true
+   (documents re-read it as "delivered vault keys"; the script retypes nothing); the
+   header precedence fix ships with C13 as queued.
 
 ## Rejected alternatives
 
@@ -295,6 +299,9 @@ names-only via API [47][48], tokens would need an org PAT crown jewel); naive sh
 (blob into the script's env — scripts-only attacker gains PUSH_TOKEN_* + token aliases,
 RESEARCH Agenda-4(b)); nested `{cat:{url,token}}` pairs file (second grammar — the
 flat env-namespace map keeps ONE validator body for both channels); a CLI `--pairs-file`
-flag (argparse surface churn for zero gain over the env channel); oracle-on-both-channels
-(manual/local runs must not need the full fleet exported); deleting the runbook's §2
+flag (argparse surface churn for zero gain over the env channel); **the membership
+`categories` oracle — coordinator-RECOMMENDED, owner-DECLINED 2026-11-26 (OQ-A answered
+b)**: the loudness it bought (clean-delete RED, stray-pair RED) was priced at a repo
+edit per decommission, and the owner chose zero-file fleet ops + the protection card
+instead; deleting the runbook's §2
 legs (the owner's vault work literally did not change).
