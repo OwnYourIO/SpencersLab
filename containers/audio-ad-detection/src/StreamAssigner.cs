@@ -70,7 +70,7 @@ public sealed class StreamAssigner
 
             var setParams = new JsonObject
             {
-                ["id"] = groupId.Clone(),
+                ["id"] = groupId.DeepClone(),
                 ["stream_id"] = _config.SnapStreamId,
             };
             await PostAsync("Group.SetStream", setParams, ct);
@@ -101,9 +101,9 @@ public sealed class StreamAssigner
             {
                 var clientId = client.EnumerateObject().First(p => p.Name == "id").Value;
                 if (clientId.ValueKind == JsonValueKind.String && clientId.GetString() == hostId)
-                    return id.Clone();
+                    return JsonNode.Parse(id.GetRawText());
                 if (clientId.ValueKind == JsonValueKind.Number && clientId.GetRawText() == hostId)
-                    return id.Clone();
+                    return JsonNode.Parse(id.GetRawText());
             }
         }
         return null;

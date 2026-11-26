@@ -36,7 +36,7 @@ public static class PruneCommand
             }
         }
 
-        using var logger = loggerFactory.CreateLogger<PruneCommand>();
+        var logger = loggerFactory.CreateLogger("AudioAdDetection.PruneCommand");
         var model = new ModelService(config, loggerFactory, loggerFactory.CreateLogger<ModelService>());
         var retentionDays = olderThan ?? config.CaptureRetentionDays;
 

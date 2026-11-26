@@ -1,3 +1,6 @@
+using System.Buffers.Binary;
+using System.Text;
+
 namespace AudioAdDetection;
 
 /// <summary>
@@ -17,9 +20,18 @@ public static class CandidateWriter
     /// <summary>The candidate file extension (kept here so the token lives in one file).</summary>
     public const string CandidateExt = ".wav";
 
-    /// <summary>Builds the candidate file name (&lt;group&gt;_&lt;UTC-timestamp&gt;_&lt;duration&gt;s.wav).</summary>
-    public static string BuildFileName(string group, DateTime utcNow = DateTime.UtcNow, int durationSeconds = 0) =>
-        $"{group}_{utcNow:yyyyMMddTHHmmssZ}_{durationSeconds}s.wav";
+    /// <summary>
+    /// Builds the candidate file name (&lt;group&gt;_&lt;UTC-timestamp&gt;_&lt;duration&gt;s.wav).
+    /// <paramref name="utcNow"/> is the fixed-timestamp injection seam:
+    /// null resolves to <see cref="DateTime.UtcNow"/> at call time (a
+    /// default parameter must be a compile-time constant, so the seam is
+    /// nullable); a supplied value pins the timestamp in the name.
+    /// </summary>
+    public static string BuildFileName(string group, DateTime? utcNow = null, int durationSeconds = 0)
+    {
+        var now = utcNow ?? DateTime.UtcNow;
+        return $"{group}_{now:yyyyMMddTHHmmssZ}_{durationSeconds}s.wav";
+    }
 
     /// <summary>The candidate directory: $MODEL_DIR/candidates/ (created on demand).</summary>
     public static string CandidatesDir(WorkerConfig config) => Path.Combine(config.ModelDir, "candidates");
@@ -88,15 +100,15 @@ public static class CandidateWriter
             if (!bytes.AsSpan(0, 4).SequenceEqual(Encoding.ASCII.GetBytes("RIFF")) ||
                 !bytes.AsSpan(8, 4).SequenceEqual(Encoding.ASCII.GetBytes("WAVE")))
                 return false;
-            var channels = BitConverter.ToInt16LittleEndian(bytes.AsSpan(22, 2));
-            sampleRate = BitConverter.ToInt32LittleEndian(bytes.AsSpan(24, 4));
-            var bitsPerSample = BitConverter.ToInt16LittleEndian(bytes.AsSpan(34, 2));
+            var channels = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(22, 2));
+            sampleRate = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(24, 4));
+            var bitsPerSample = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(34, 2));
             if (channels != 1 || bitsPerSample != 16)
                 return false;
             var data = bytes.AsSpan(HeaderBytes);
             samples = new float[data.Length / 2];
             for (var i = 0; i < samples.Length; i++)
-                samples[i] = BitConverter.ToInt16LittleEndian(data.Slice(i * 2, 2)) / 32768f;
+                samples[i] = BinaryPrimitives.ReadInt16LittleEndian(data.Slice(i * 2, 2)) / 32768f;
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

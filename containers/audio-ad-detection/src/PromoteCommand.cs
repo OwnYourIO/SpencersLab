@@ -26,7 +26,7 @@ public static class PromoteCommand
         if (parseError != 0)
             return parseError;
 
-        using var logger = loggerFactory.CreateLogger<PromoteCommand>();
+        var logger = loggerFactory.CreateLogger("AudioAdDetection.PromoteCommand");
         var model = new ModelService(config, loggerFactory, loggerFactory.CreateLogger<ModelService>());
         var ffmpeg = new FFmpegAudioService();
 

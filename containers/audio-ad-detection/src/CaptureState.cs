@@ -42,7 +42,7 @@ public sealed class CaptureMachine : BackgroundService
     private int _ringPos;
     private long _ringTotal;
 
-    private readonly List<float> _spanBody = new();
+    private List<float> _spanBody = new();
     private float[]? _spanPreRoll;
     private DateTime _openAtUtc = DateTime.MinValue;
     private DateTime _noMatchSinceUtc = DateTime.MinValue;
@@ -78,8 +78,20 @@ public sealed class CaptureMachine : BackgroundService
 
         try
         {
-            while (await _pipeline.CaptureChunks.TryTakeAsync(out var chunk, stoppingToken))
+            while (true)
             {
+                // BlockingCollection has no async TryTake: the Task.Run bridge
+                // blocks until an item arrives or the producer completes the
+                // queue at shutdown; the WhenAny race keeps the wait
+                // cancellation-aware (a still-blocked TryTake returns false at
+                // CompleteAdding, which surfaces as a null here).
+                var takeTask = Task.Run(() =>
+                    _pipeline.CaptureChunks.TryTake(out var item) ? item : null);
+                if (await Task.WhenAny(takeTask, Task.Delay(Timeout.Infinite, stoppingToken)) != takeTask)
+                    throw new OperationCanceledException(stoppingToken);
+                var chunk = await takeTask;
+                if (chunk is null)
+                    break;
                 ProcessChunk(chunk, stoppingToken);
             }
         }

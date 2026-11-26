@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -165,7 +166,14 @@ public sealed class AudioPipeline : BackgroundService
         // next chunk. One sample feeds both queues (read-only on both
         // legs).
         var sample = new AudioSamples((float[])_chunk.Clone(), string.Empty, TargetRate);
-        await _chunks.AddAsync(sample, ct);
+        // BlockingCollection has no async Add: the Task.Run bridge keeps the
+        // blocking backpressure (a full query queue stalls the producer), and
+        // the WhenAny race keeps the wait cancellation-aware — a still-blocked
+        // Add unblocks at CompleteAdding (the producer's own finally).
+        var addTask = Task.Run(() => _chunks.Add(sample));
+        if (await Task.WhenAny(addTask, Task.Delay(Timeout.Infinite, ct)) != addTask)
+            throw new OperationCanceledException(ct);
+        await addTask;
         // Non-blocking with DropOldest: the capture leg must never stall the
         // query leg — a full capture queue sheds the oldest chunk.
         if (!_captureChunks.TryAdd(sample) && _captureChunks.TryTake(out _))
@@ -197,8 +205,8 @@ public sealed class AudioPipeline : BackgroundService
         var n = 0;
         for (var p = 0; p + FrameBytes <= total; p += FrameBytes)
         {
-            var l = BitConverter.ToInt16LittleEndian(_frameBuf.AsSpan(p, 2));
-            var r = BitConverter.ToInt16LittleEndian(_frameBuf.AsSpan(p + 2, 2));
+            var l = BinaryPrimitives.ReadInt16LittleEndian(_frameBuf.AsSpan(p, 2));
+            var r = BinaryPrimitives.ReadInt16LittleEndian(_frameBuf.AsSpan(p + 2, 2));
             _monoBuf[n++] = ((l / 32768.0f) + (r / 32768.0f)) * 0.5f;
         }
         return n;
