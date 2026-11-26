@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-56-feat-forgejo-coder-template-pipeline",
-  "plan_status": "complete",
+  "plan_status": "awaiting-approval",
   "coord_session": null,
   "final_review": {
     "at": "2026-11-25T07:02:00+00:00",
@@ -10,8 +10,8 @@
     "open_friction": ["git push-deny substring-glob FP in coord/dev definitions (candidate follow-up)", "AGENTS.md/plan aislop coverage wording (repo-wide leg, candidate follow-up)"]
   },
   "test_session": "ses_def1ab090ffepGx0c6SYQHS8XT",
-  "current_wave": 1,
-  "updated_at": "2026-11-25T04:12:30+00:00",
+  "current_wave": 3,
+  "updated_at": "2026-11-26T03:29:56+00:00",
   "test_phase": {
     "status": "done",
     "at": "2026-11-25T04:12:30+00:00",
@@ -133,6 +133,11 @@
           "summary": "Round 1 fresh session, zero blockers. Both gate suites 6 ok re-run; five-suite regression + helm trio + packaging guard green; aislop coverage claim independently re-probed and ACCEPTED (.forgejo/ not-scored, scripts/ 3 Python files); three dev deviations all accepted (coverage-on-evidence, posture-equivalent kubectl phrasing, detector-owned warning matching landed C02 contract). Beyond-the-suite reads: vars/secrets inventory exactly the OQ5-minimal set, detect env accessors byte-identical to containers-build precedent minus PR keys, dispatch wired to subset arm, ROLE/concurrency/runs-on/no-container shapes match the five-workflow house, zero literals incl comments, runbook UA1-UA4 verified against in-tree files. Two non-blocking observations in chunks/C03.md."
         }
       ]
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02", "C03"]
     }
   },
   "blocked": [],
