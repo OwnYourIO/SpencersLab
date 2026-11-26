@@ -108,12 +108,16 @@ jobs:
 
           path = sys.argv[1]
           text = open(path).read()
-          m = re.search(r"(?m)^version: (\d+)\.(\d+)\.(\d+)$", text)
+          m = re.search(r"(?m)^version: (\d+)\.(\d+)\.(\d+)(?:[ \t]+#[^\n]*)?[ \t]*$", text)
           if not m:
               raise SystemExit(f"{path}: top-level version: is not MAJOR.MINOR.PATCH")
           new = f"{m.group(1)}.{m.group(2)}.{int(m.group(3)) + 1}"
           # Only the version: line is rewritten — appVersion stays untouched
-          # (the old action's app_version: false semantics).
+          # (the old action's app_version: false semantics). The tolerated
+          # tail is a # comment: it sits after m.end(3), so the group-sliced
+          # write leaves it in the file (C13 — a comment on the line must not
+          # kill the parse, the Nov-25 fire class; junk and #nospace tails
+          # still refuse).
           print(f"test-bump {path}: {m.group(0)} -> version: {new}")
           open(path, "w").write(text[:m.start(1)] + new + text[m.end(3):])
           PY
@@ -255,7 +259,7 @@ jobs:
           for chart in json.loads(sys.argv[1]):
               path = f"charts/{chart}/Chart.yaml"
               text = open(path).read()
-              m = re.search(r"(?m)^version: (\S+)$", text)
+              m = re.search(r"(?m)^version: (\S+)(?:[ \t]+#[^\n]*)?[ \t]*$", text)
               if not m:
                   raise SystemExit(f"{path}: no top-level version: line")
               # The index keys and release names carry the Chart.yaml NAME,
