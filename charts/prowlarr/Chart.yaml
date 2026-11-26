@@ -1,7 +1,7 @@
 apiVersion: v2
 name: prowlarr
 # initial only — build-charts.yaml auto-bumps the calendar version on merge to main
-version: 1.0.1
+version: 2026.11.1
 appVersion: 2.1.5.5216
 dependencies:
 - name: app-template
