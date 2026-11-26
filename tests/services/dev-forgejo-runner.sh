@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # C01 contract (2026-10-refactor-forgejo-runner-per-instance) for
-# charts/forgejo-runner as a SINGLE-runner chart: exactly one StatefulSet
-# + one dind sidecar per release, all resources named after the release
-# name, one ExternalSecret per release (bitwarden-login; uuid<-username,
-# token<-password), one server.connections.default entry in config.yaml
+# charts/forgejo-runner as the per-instance runner chart, re-aimed to the
+# cf-55 ROUND-6 shape (D61/D62, owner ruling 2026-11-26): exactly one
+# StatefulSet per release whose pods SELF-REGISTER (dind sidecar +
+# register init container + podManagementPolicy Parallel), all resources named after the release
+# name, one ExternalSecret per release (bitwarden-login; the item's
+# password -> the SINGLE fetched registration-token key, no inline
+# template — the C16 (uuid, token) record pair retires), one
+# server.connections.default entry in the skeleton config.yaml
 # (5-label act set — since the cf-55 fix round four of them ride the baked
-# job image, timeout 30m, shutdown_timeout 5m), hardened runner
-# (13.2.0 pin, dumb-init daemon, drop ALL, no register, no registration
-# env), VCTs data 2Gi + docker-data 10Gi local-path, grace 300 + fsGroup
+# job image, timeout 30m, shutdown_timeout 5m) — the skeleton renders as
+# a release-named ConfigMap and the register init container substitutes
+# the minted uuid + writes the token onto the ordinal's /data PVC, hardened runner
+# (13.2.0 pin, dumb-init daemon, drop ALL, no register subcommand, no
+# daemon-side registration env), VCTs data 2Gi + docker-data 10Gi local-path, grace 300 + fsGroup
 # 1000, no Ingress/LoadBalancer/cluster RBAC — deployed TWICE by the dev
 # ApplicationSet via the chart: alias (charts.forgejo-runner-dev +
 # charts.forgejo-runner-infra, both chart: forgejo-runner), per-app URLs in
@@ -336,7 +342,9 @@ try:
 
         spec = (by_kind(docs, 'StatefulSet')[0].get('spec')) or {}
         if spec.get('replicas') != 1:
-            bad(f't2: {release} — replicas is {spec.get("replicas")!r}, expected 1: this is the NO-OVERRIDE chart-default render (B1 as amended by the owner ruling 2026-11-26 keeps the default single — a new release is one pod until a slice rules otherwise; a default flip is a ruling, not a drift)')
+            bad(f't2: {release} — replicas is {spec.get("replicas")!r}, expected 1: this is the NO-OVERRIDE chart-default render (the D57 default-single stands under D61 — a new release is one pod until a slice rules otherwise; a default flip is a ruling, not a drift)')
+        if spec.get('podManagementPolicy') != 'Parallel':
+            bad(f't2: {release} — podManagementPolicy is {spec.get("podManagementPolicy")!r}, expected Parallel (D62 belt: one pending ordinal must not freeze the ones behind it — the exact StatefulSet sequencing class that held gpu at 3/10, EXPLORE Round-6 A1; OrderedReady is the default this round replaces)')
         vcts = spec.get('volumeClaimTemplates') or []
         if len(vcts) != 2:
             bad(f't2: {release} — {len(vcts)} volumeClaimTemplates, expected exactly 2 (data + docker-data)')
@@ -351,7 +359,7 @@ try:
                 bad(f't2: {release} — VCT {name} accessModes are {vspec.get("accessModes")!r}, expected [ReadWriteOnce]')
             if vspec.get('storageClassName') != 'local-path':
                 bad(f't2: {release} — VCT {name} storageClassName is {vspec.get("storageClassName")!r}, expected local-path')
-        ok(f't2: {release} — replicas 1 with no slice override (chart default stays single per B1-as-amended, D57), VCTs exactly data (2Gi) + docker-data (10Gi), both RWO local-path')
+        ok(f't2: {release} — replicas 1 with no slice override (chart default stays single per D57-as-superseded-by-D61), VCTs exactly data (2Gi) + docker-data (10Gi), both RWO local-path')
 
         pod = ((spec.get('template') or {}).get('spec')) or {}
         ics = pod.get('initContainers') or []
@@ -382,6 +390,10 @@ try:
         if dind.get('args') != ['--mtu=1450']:
             bad(f't2: {release} — dind args is {dind.get("args")!r}, expected exactly ["--mtu=1450"] — the run -3 egress ruling lands the documented MTU mitigation on every dind daemon; args are dockerd-prefixed by the image entrypoint (verified: docker:29.9.2-dind declares no Cmd)')
         ok(f't2: {release} — dind sidecar — docker:29.9.2-dind, restartPolicy Always, privileged, socket startup+liveness probes, args [--mtu=1450]')
+        reg = next((c for c in ics if (c or {}).get('name') == 'register'), None)
+        if reg is None:
+            bad(f't2: {release} — no initContainer named register (C17/D62: each ordinal mints its OWN runner record on first boot off the one reusable registration token; the script-shape teeth live in t21 — its absence here is the C16 shared-record pair coming back)')
+        ok(f't2: {release} — initContainers carry dind AND the register init (ten rows, one token — D61)')
 
         cons = pod.get('containers') or []
         runner = next((c for c in cons if (c or {}).get('name') == 'runner'), None)
@@ -402,39 +414,32 @@ try:
         if re.search(r'\bregister\b', joined):
             bad(f't2: {release} — command/args {joined!r} contain a register subcommand (v13 registration is declarative-only — RESEARCH.md Q2)')
         env = {(e or {}).get('name'): e for e in runner.get('env') or []}
-        cdir = (env.get('CREDENTIALS_DIRECTORY') or {}).get('value')
-        if not cdir:
-            bad(f't2: {release} — runner has no CREDENTIALS_DIRECTORY env (config.yaml token_url references file:$CREDENTIALS_DIRECTORY/token)')
+        if 'CREDENTIALS_DIRECTORY' in env:
+            bad(f't2: {release} — runner still carries CREDENTIALS_DIRECTORY {env["CREDENTIALS_DIRECTORY"]!r} — C17 retires the env/Secret pair: the config and token arrive on the ordinal /data PVC from the register init, and the skeleton token_url is absolute (D62)')
         if (env.get('DOCKER_HOST') or {}).get('value') != 'unix:///var/run/docker.sock':
             bad(f't2: {release} — DOCKER_HOST is {(env.get("DOCKER_HOST") or {}).get("value")!r}, expected unix:///var/run/docker.sock (the in-pod socket)')
-        # Env/mount consistency: the whole-secret mount lands where
-        # CREDENTIALS_DIRECTORY says, and the config.yaml subPath lands where
-        # the daemon's -c flag points. The creds volume is identified via
-        # the subPath mount, so no path literal is assumed.
+        # Command/persistence consistency (C17 re-aim): the -c path is the
+        # PVC-rendered config home, reached by the /data mount — never by a
+        # Secret mount. subPath is the shadow class; any Secret volume in the
+        # daemon container is the cold-boot-credential-in-steady-state class.
         toks = (runner.get('command') or []) + (runner.get('args') or [])
         cfg_path = None
         for i, t in enumerate(toks):
             if t in ('-c', '--config') and i + 1 < len(toks):
                 cfg_path = toks[i + 1]
-        if not cfg_path:
-            bad(f't2: {release} — command/args {joined!r} carry no -c/--config flag (the daemon must point at the rendered config.yaml)')
+        if cfg_path != '/data/config/config.yaml':
+            bad(f't2: {release} — the daemon -c flag points at {cfg_path!r}, expected /data/config/config.yaml (AC3: the command is unchanged by C17 — what changed is that the file is PRODUCED there by the register init instead of mounted from the Secret)')
         mounts = runner.get('volumeMounts') or []
-        subs = [m for m in mounts if (m or {}).get('subPath') == 'config.yaml']
-        if len(subs) != 1:
-            bad(f't2: {release} — runner has {len(subs)} config.yaml subPath mount(s), expected exactly 1')
-        creds_vol = subs[0].get('name')
-        wholes = [m for m in mounts if (m or {}).get('name') == creds_vol and not (m or {}).get('subPath')]
-        if len(wholes) != 1:
-            bad(f't2: {release} — runner has {len(wholes)} whole-volume mount(s) of the creds volume {creds_vol!r}, expected exactly 1 (the token file must land at CREDENTIALS_DIRECTORY)')
-        if wholes[0].get('mountPath') != cdir:
-            bad(f't2: {release} — whole-secret mount is {wholes[0].get("mountPath")!r} but CREDENTIALS_DIRECTORY is {cdir!r}')
-        if subs[0].get('mountPath') != cfg_path:
-            bad(f't2: {release} — config.yaml is mounted at {subs[0].get("mountPath")!r} but the daemon -c flag points at {cfg_path!r}')
+        if [m for m in mounts if (m or {}).get('subPath') == 'config.yaml']:
+            bad(f't2: {release} — the runner container keeps a config.yaml subPath mount — a subPath Secret mount would SHADOW the /data/config/config.yaml the register init renders onto the PVC (C17/D62: the mount retires precisely because the file is now produced, not mounted)')
         vols = {(v or {}).get('name'): v for v in pod.get('volumes') or []}
-        sec_name = (((vols.get(creds_vol) or {}).get('secret') or {}).get('secretName'))
-        if sec_name != release:
-            bad(f't2: {release} — creds volume {creds_vol!r} references Secret {sec_name!r}, expected {release!r} (each release mounts its own release-named target Secret)')
-        ok(f't2: {release} — runner — 13.2.0 pin, dumb-init daemon (no register), drop-ALL + no privilege escalation, CREDENTIALS_DIRECTORY/DOCKER_HOST and -c path consistent with the {release} mounts')
+        secret_vols = {n for n, v in vols.items() if (v or {}).get('secret')}
+        mounted_secrets = [m for m in mounts if (m or {}).get('name') in secret_vols]
+        if mounted_secrets:
+            bad(f't2: {release} — the runner container mounts Secret volume(s) {sorted(m["name"] for m in mounted_secrets)} — the release Secret holds only the registration token now; it belongs to the init container (env or init-only mount), never the daemon (AC3 — the shadow-mount + steady-state-credential class C17 closes)')
+        if not [m for m in mounts if (m or {}).get('mountPath') == '/data']:
+            bad(f't2: {release} — the runner container has no /data mount — the config/token now live on the data PVC, so the daemon must read what the register init wrote there')
+        ok(f't2: {release} — runner — 13.2.0 pin, dumb-init daemon (no register subcommand), drop-ALL + no privilege escalation, DOCKER_HOST on the in-pod socket, -c /data/config/config.yaml on the data PVC, NO CREDENTIALS_DIRECTORY and NO Secret mount (re-attach-from-PVC shape, D62)')
 
         bad_envs = []
         for c in ics + cons:
@@ -496,41 +501,56 @@ try:
                 for v in node:
                     walk(v)
         walk(es)
-        if ('uuid', 'username') not in pairs or ('token', 'password') not in pairs:
-            bad(f't2: {release} — the ExternalSecret remoteRefs are {sorted(pairs)}, expected uuid<-username and token<-password')
+        if pairs != {('registration-token', 'password')}:
+            bad(f't2: {release} — the ExternalSecret remoteRefs are {sorted(pairs)}, expected exactly [registration-token, password] — D61/D62: the item carries ONE reusable instance-scope registration token in its password field; a second fetched key (the uuid record pair) is the C16 shape returning, and one (uuid, token) can never show more than one row because ActionRunner.UUID is UNIQUE (RESEARCH TL;DR 1 [S2])')
         if keys != {uuid}:
-            bad(f't2: {release} — the ExternalSecret remoteRef keys are {sorted(keys)}, expected exactly {uuid!r} (this release\'s bitwardenIds.runner-token after --set)')
-        data = (((es.get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-        if 'token' not in data:
-            bad(f't2: {release} — the ExternalSecret template data has no token key')
-        elif data['token'] != '{{ .token }}':
-            bad(f't2: {release} — the ExternalSecret token template is {data["token"]!r}, expected {{{{ .token }}}}')
-        if 'config.yaml' not in data:
-            bad(f't2: {release} — the ExternalSecret template data has no config.yaml key')
-        else:
-            try:
-                cfg = yaml.safe_load(data['config.yaml'])
-            except Exception as ex:
-                bad(f't2: {release} — the config.yaml template entry is not parseable YAML: {ex}')
-            else:
-                conns = (((cfg or {}).get('server') or {}).get('connections') or {})
-                if set(conns) != {'default'}:
-                    bad(f't2: {release} — the config connections are {sorted(conns)}, expected exactly [default] (one release owns its whole config — the per-instance dev/infra keys are gone)')
-                conn = conns.get('default') or {}
-                if conn.get('uuid') != '{{ .uuid }}':
-                    bad(f't2: {release} — default.uuid is {conn.get("uuid")!r}, expected {{{{ .uuid }}}} (quoted — must stay a string before substitution)')
-                if conn.get('url') != CHART_DEFAULT_URL:
-                    bad(f't2: {release} — default.url is {conn.get("url")!r}, expected the chart default {CHART_DEFAULT_URL!r}')
-                if conn.get('token_url') != 'file:$CREDENTIALS_DIRECTORY/token':
-                    bad(f't2: {release} — default.token_url is {conn.get("token_url")!r}, expected file:$CREDENTIALS_DIRECTORY/token')
-                if set(conn.get('labels') or []) != ACT_LABELS:
-                    bad(f't2: {release} — default.labels are {conn.get("labels")!r}, expected the baked 5-label chart default: four act-24.04-family labels on git.spencerslab.com/curatedforest/forgejo-runner plus plain act-22.04 (cf-55 D39/D40; infra-instance re-pin cf-6-debug-forge-runner-docker-1, 2026-11-22)')
-                runner_cfg = (cfg or {}).get('runner') or {}
-                if runner_cfg.get('timeout') != '30m':
-                    bad(f't2: {release} — config runner.timeout is {runner_cfg.get("timeout")!r}, expected 30m (ruling 4)')
-                if runner_cfg.get('shutdown_timeout') != '5m':
-                    bad(f't2: {release} — config runner.shutdown_timeout is {runner_cfg.get("shutdown_timeout")!r}, expected 5m (ruling 4)')
-        ok(f't2: {release} — ExternalSecret — bitwarden-login, target {release!r}, uuid(username)+token(password) from this release\'s item, token + config.yaml with the baked 5-label set, timeout 30m, shutdown_timeout 5m, chart-default url')
+            bad(f't2: {release} — the ExternalSecret remoteRef keys are {sorted(keys)}, expected exactly {uuid!r} (the bitwardenIds.runner-token item after --set — the KEY name survives C17 per D63 blast-radius discipline; only its CONTENT meaning changes to the registration token)')
+        if (((es.get('spec') or {}).get('target') or {}).get('template')) is not None:
+            bad(f't2: {release} — spec.target.template still renders — C17 deletes the inline template entirely (the config skeleton moved to the release ConfigMap, D62); with no template the v2-CRD mergePolicy Replace trap of card #97 is moot by construction')
+        ok(f't2: {release} — ExternalSecret — bitwarden-login, target {release!r}, ONE fetched key registration-token from the item password, no target.template')
+
+        # Config skeleton (C17/D62): the static half of config.yaml renders as
+        # a release-named ConfigMap (app-template configMaps); the register
+        # init substitutes the minted uuid for the placeholder and writes the
+        # token file onto the /data PVC. Readers moved off the retired ESO
+        # template.data (C17 TEST FOLD: the kind switches, the rulings ride).
+        cms = by_kind(docs, 'ConfigMap')
+        if len(cms) != 1:
+            bad(f't2: {release} — {len(cms)} ConfigMaps rendered, expected exactly 1 (the config-skeleton home since C17 — one app-template configMaps entry per release)')
+        cm = cms[0]
+        cmname = (cm.get('metadata') or {}).get('name') or ''
+        if cmname != release and not cmname.startswith(f'{release}-'):
+            bad(f't2: {release} — the skeleton ConfigMap is named {cmname!r}, expected the release-derived app-template name')
+        cmdata = cm.get('data') or {}
+        if set(cmdata) != {'config.yaml'}:
+            bad(f't2: {release} — the skeleton ConfigMap data keys are {sorted(cmdata)}, expected exactly [config.yaml] (the register init renders this file to /data/config/config.yaml)')
+        body = cmdata.get('config.yaml') or ''
+        if '{{' in body or '{%' in body:
+            bad(f't2: {release} — the rendered skeleton carries unresolved template braces — the ESO-era dot-uuid/dot-token substitution pair retires with the template; the placeholder must be a plain string the init script substitutes')
+        cfg = yaml.safe_load(body)
+        conns = (((cfg or {}).get('server') or {}).get('connections') or {})
+        if set(conns) != {'default'}:
+            bad(f't2: {release} — the skeleton connections are {sorted(conns)}, expected exactly [default] (one release owns its whole config)')
+        conn = conns.get('default') or {}
+        ph = conn.get('uuid')
+        if not isinstance(ph, str) or not ph.strip():
+            bad(f't2: {release} — skeleton default.uuid is {ph!r}, expected a non-empty PLACEHOLDER string the register script substitutes (C17 Tasks — an empty uuid would reproduce the daemon fail-fast crash-loop the old B1 note carried)')
+        if re.fullmatch(r'[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', ph):
+            bad(f't2: {release} — skeleton default.uuid is a literal UUID ({ph!r}) — the shared skeleton must carry a placeholder; one baked uuid in the ConfigMap is the C16 one-row shape back (D61: ten records named after the pods)')
+        if conn.get('url') != CHART_DEFAULT_URL:
+            bad(f't2: {release} — default.url is {conn.get("url")!r}, expected the chart default {CHART_DEFAULT_URL!r}')
+        if conn.get('token_url') != 'file:/data/config/token':
+            bad(f't2: {release} — default.token_url is {conn.get("token_url")!r}, expected the absolute PVC path file:/data/config/token (D62/G3 — the file:dollar-CREDENTIALS token pair retires with the Secret mount)')
+        if set(conn.get('labels') or []) != ACT_LABELS:
+            bad(f't2: {release} — skeleton default.labels are {conn.get("labels")!r}, expected the baked 5-label chart default: four act-24.04-family labels on git.spencerslab.com/curatedforest/forgejo-runner plus plain act-22.04 (cf-55 D39/D40; the byte-identity law moves from the ESO render to the ConfigMap render — D62 keeps EVERY row advertising the identical set so jobs route uniformly)')
+        runner_cfg = (cfg or {}).get('runner') or {}
+        if runner_cfg.get('capacity') != 1:
+            bad(f't2: {release} — skeleton runner.capacity is {runner_cfg.get("capacity")!r}, expected 1 (D57 arithmetic survives D61 and is now honest per row: one ordinal = one record = one slot)')
+        if runner_cfg.get('timeout') != '30m':
+            bad(f't2: {release} — config runner.timeout is {runner_cfg.get("timeout")!r}, expected 30m (ruling 4)')
+        if runner_cfg.get('shutdown_timeout') != '5m':
+            bad(f't2: {release} — config runner.shutdown_timeout is {runner_cfg.get("shutdown_timeout")!r}, expected 5m (ruling 4)')
+        ok(f't2: {release} — ConfigMap skeleton — connections [default] with the uuid placeholder, absolute file:/data/config/token, the baked 5-label set, capacity 1, timeout 30m, shutdown_timeout 5m, chart-default url')
 
         if 'OVERRIDE_' in raw:
             bad(f't2: {release} — the rendered output still carries an OVERRIDE_* sentinel after --set bitwardenIds.runner-token')
@@ -548,11 +568,20 @@ try:
         bad(f't2: the slice-overlay render carries {len(ssts)} StatefulSets, expected exactly 1')
     sspec = (ssts[0].get('spec')) or {}
     if sspec.get('replicas') != 10:
-        bad(f't2: {rel_dev} DEPLOYED render — replicas is {sspec.get("replicas")!r}, expected 10 (owner ruling 2026-11-26, cf-55 round-5 directive 5: runners to replicas 10, both instances — B1 AS AMENDED per D57, NOT B1-as-written: 10 pods poll one (uuid, token) registration and capacity stays 1 per pod)')
+        bad(f't2: {rel_dev} DEPLOYED render — replicas is {sspec.get("replicas")!r}, expected 10 (owner ruling 2026-11-26: ten pods, both instances — the D57 count and capacity-1 arithmetic STAND under D61, but the identity law changed: ten pods now hold TEN self-minted records behind ONE reusable registration token, not one shared (uuid, token) pair)')
+    if sspec.get('podManagementPolicy') != 'Parallel':
+        bad(f't2: {rel_dev} DEPLOYED render — podManagementPolicy is {sspec.get("podManagementPolicy")!r}, expected Parallel (D62 belt — the exact freeze class from EXPLORE Round-6 A1: one pending ordinal must never block registration of the ordinals behind it)')
+    spod = ((ssts[0].get('spec') or {}).get('template') or {}).get('spec') or {}
+    snames = {(c or {}).get('name') for c in (spod.get('initContainers') or [])}
+    if 'register' not in snames:
+        bad(f't2: {rel_dev} DEPLOYED render — initContainers are {sorted(snames)}, expected the register init next to dind (C17: the deployed shape exists for the per-ordinal self-registration)')
+    srunner = next((c for c in (spod.get('containers') or []) if (c or {}).get('name') == 'runner'), {})
+    if any((e or {}).get('name') == 'CREDENTIALS_DIRECTORY' for e in ((srunner or {}).get('env') or [])):
+        bad(f't2: {rel_dev} DEPLOYED render — the daemon container still carries CREDENTIALS_DIRECTORY (C17 retires the env/Secret pair on the PVC-arrived config; the standalone renders pin the shape, this is the deployed witness)')
     svcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in (sspec.get('volumeClaimTemplates') or [])}
     if set(svcts) != {'data', 'docker-data'}:
         bad(f't2: {rel_dev} slice render — volumeClaimTemplates named {sorted(svcts)}, expected [data, docker-data] (the per-pod shape is not what scaled)')
-    ok(f't2: {rel_dev} with the services slice — replicas 10 (B1-as-amended, owner ruling 2026-11-26), VCTs unchanged data + docker-data')
+    ok(f't2: {rel_dev} with the services slice — replicas 10 + podManagementPolicy Parallel + register init + no CREDENTIALS_DIRECTORY (one token, ten records — D61), VCTs unchanged data + docker-data')
 
     seen, dupes = set(), set()
     for render_file in (render_dev, render_infra):
@@ -622,8 +651,15 @@ try:
         name = (es[0].get('metadata') or {}).get('name')
         if name != release:
             bad(f't3: {release} — the probe ExternalSecret is named {name!r}, expected {release!r}')
-        data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-        cfg = yaml.safe_load(data.get('config.yaml') or '')
+        # C17 reader move: the config skeleton renders from the release
+        # ConfigMap; the ESO-template limb only keeps this URL-flow ruling
+        # green against the pre-C17 tree (t2/t12/t21 pin the new shape).
+        cms = [d for d in docs if d.get('kind') == 'ConfigMap']
+        if cms:
+            cfg = yaml.safe_load(((cms[0].get('data') or {}).get('config.yaml') or ''))
+        else:
+            data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+            cfg = yaml.safe_load(data.get('config.yaml') or '')
         conns = (((cfg or {}).get('server') or {}).get('connections') or {})
         if set(conns) != {'default'}:
             bad(f't3: {release} — the probe config connections are {sorted(conns)}, expected exactly [default]')
@@ -697,10 +733,10 @@ fi
 # the cf-6 OQ-A narrowing the capture ends before the next entry's leading
 # comment — the false-positive class this suite carried), so neither is
 # re-checked here.
-if python3 - "$RUNNER/templates/secret-runner.yaml" "$WORK/t14-count" <<'PY'
+if python3 - "$RUNNER/templates/secret-runner.yaml" "$RUNNER/values.yaml" "$WORK/t14-count" <<'PY'
 import re, sys
 
-tpl, count_file = sys.argv[1:3]
+tpl_old, tpl_new, count_file = sys.argv[1:4]
 ok_n = 0
 
 def ok(msg):
@@ -730,11 +766,23 @@ def near(text, a, b, window=200):
     return False
 
 try:
-    with open(tpl) as f:
-        lines = f.read().splitlines()
-    labels_idx = next((i for i, l in enumerate(lines) if re.match(r'^\s*labels:\s*$', l)), None)
-    if labels_idx is None:
-        bad(f't14: no `labels:` key in {tpl} — the record is pinned beside the labels map; re-derive the leg if the config moved')
+    # C17 home first: the config body (with its labels-map record) moves
+    # from the retired ESO template into the values.yaml ConfigMap skeleton,
+    # rendered via `.Values.runner.labels | toYaml`. The template limb only
+    # keeps the pre-C17 tree readable — t2/t12 pin the new shape outright.
+    lines = labels_idx = tpl = None
+    for cand in (tpl_new, tpl_old):
+        ls = open(cand).read().splitlines()
+        ix = next((i for i, l in enumerate(ls)
+                   if re.match(r'^\s*labels:\s*$', l)
+                   and i + 1 < len(ls) and 'runner.labels | toYaml' in ls[i + 1]), None)
+        if ix is None and cand == tpl_old:
+            ix = next((i for i, l in enumerate(ls) if re.match(r'^\s*labels:\s*$', l)), None)
+        if ix is not None:
+            lines, labels_idx, tpl = ls, ix, cand
+            break
+    if lines is None:
+        bad(f't14: no labels-map anchor — {tpl_new} has no `labels:` key rendered via the runner.labels toYaml line (the C17 home beside the skeleton), and {tpl_old} carries no legacy map either; re-derive the leg if the record moved again')
 
     block = []
     i = labels_idx - 1
@@ -840,8 +888,15 @@ try:
         es = [d for d in docs if d.get('kind') == 'ExternalSecret']
         if len(es) != 1:
             bad(f't15: {release} — the render has {len(es)} ExternalSecret(s), expected exactly one')
-        data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-        cfg = yaml.safe_load(data.get('config.yaml') or '')
+        # C17 reader move (same discipline as t3): the container block rides
+        # the ConfigMap skeleton now; the ESO-template limb only keeps the
+        # pre-C17 tree readable.
+        cms = [d for d in docs if d.get('kind') == 'ConfigMap']
+        if cms:
+            cfg = yaml.safe_load(((cms[0].get('data') or {}).get('config.yaml') or ''))
+        else:
+            data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+            cfg = yaml.safe_load(data.get('config.yaml') or '')
         container = (cfg or {}).get('container')
         if container != EXPECTED:
             bad(f't15: {release} — the docker-backend config.container is {container!r}, expected exactly {EXPECTED!r} — jobs must reach the in-pod dind socket at /var/run/docker.sock (the runner default "-" shares nothing; cf-6)')
@@ -902,13 +957,28 @@ try:
     es = [d for d in docs if d.get('kind') == 'ExternalSecret']
     if len(es) != 1:
         bad(f't16: the host render has {len(es)} ExternalSecret(s), expected exactly one')
-    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-    cfg = yaml.safe_load(data.get('config.yaml') or '')
+    # C17 reader move (as t3/t15); host mode also keeps the register init —
+    # the per-ordinal self-registration is backend-AGNOSTIC by D63(3): host
+    # releases inherit the mechanism, they just null the dind sidecar.
+    cms = [d for d in docs if d.get('kind') == 'ConfigMap']
+    if cms:
+        cfg = yaml.safe_load(((cms[0].get('data') or {}).get('config.yaml') or ''))
+    else:
+        data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+        cfg = yaml.safe_load(data.get('config.yaml') or '')
     if set(cfg) != {'cache', 'host', 'runner', 'server'}:
         bad(f't16: the host-backend config keys are {sorted(cfg)}, expected exactly [cache, host, runner, server]')
     if 'container' in (cfg or {}):
         bad(f't16: the host-backend config gained a container block ({cfg["container"]!r}) — the socket-share fix is docker-branch-only; host mode executes jobs in the runner container')
-    ok('t16: the host-backend render keeps config keys exactly [cache, host, runner, server] with no container block (branch separation intact)')
+    if ((cfg or {}).get('cache') or {}).get('dir') != '/data/cache':
+        bad(f't16: the host skeleton cache.dir is {((cfg or {}).get("cache") or {}).get("dir")!r}, expected /data/cache (AC4 backend branch: the host cache rides the release data PVC so a re-attach wakes warm)')
+    if ((cfg or {}).get('host') or {}).get('workdir_parent') != '/data/workdir':
+        bad(f't16: the host skeleton host.workdir_parent is {((cfg or {}).get("host") or {}).get("workdir_parent")!r}, expected /data/workdir (AC4 backend branch)')
+    hspec = ((next((d for d in docs if d.get('kind') == 'StatefulSet'), {}).get('spec')) or {})
+    hics = (((hspec.get('template') or {}).get('spec') or {}).get('initContainers') or [])
+    if not any((c or {}).get('name') == 'register' for c in hics):
+        bad(f't16: the host render lost the register init — per-ordinal self-registration is backend-agnostic (D63(3): host releases inherit the mechanism; the null-outs target dind/DOCKER_HOST/socket only)')
+    ok('t16: the host-backend render keeps config keys exactly [cache, host, runner, server] (cache.dir + workdir_parent on the data PVC, no container block) and retains the register init — branch separation and the backend-agnostic registration both intact')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -1006,8 +1076,15 @@ def labels_and_conn(render_file):
     es = [d for d in docs if d.get('kind') == 'ExternalSecret']
     if len(es) != 1:
         bad(f't17: the render has {len(es)} ExternalSecret(s), expected exactly one')
-    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-    cfg = yaml.safe_load(data.get('config.yaml') or '')
+    # C17 reader move: the five-set pin rides the ConfigMap skeleton (the
+    # byte-identity law moved with the config, D62); the template limb only
+    # keeps the pre-C17 tree readable.
+    cms = [d for d in docs if d.get('kind') == 'ConfigMap']
+    if cms:
+        cfg = yaml.safe_load(((cms[0].get('data') or {}).get('config.yaml') or ''))
+    else:
+        data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+        cfg = yaml.safe_load(data.get('config.yaml') or '')
     conns = (((cfg or {}).get('server') or {}).get('connections') or {})
     if set(conns) != {'default'}:
         bad(f't17: config connections are {sorted(conns)}, expected exactly [default]')
@@ -1032,7 +1109,27 @@ try:
         bad(f't17: the overlay render config.container is {(cfg or {}).get("container")!r}, expected exactly {CONTAINER!r} — run-0 pinned this block so jobs reach the in-pod dind socket; the slice overlay must not disturb it')
     if 'OVERRIDE_' in raw:
         bad('t17: the overlay render carries an OVERRIDE_* sentinel after --set of the sentinel UUID')
-    ok('t17: the extracted forgejo-runner-dev slice renders the dev five-set on git.scifi.farm + byte-identical act-22.04, exactly 5 labels, the slice url, run-0 container block, zero sentinels (list-replacement trap pinned)')
+    # C17: the same five-set must reach the registration PAYLOAD from a
+    # single chart source (D62 uniform-routing law) — either the register
+    # init carries the label strings itself, or it mounts the skeleton
+    # ConfigMap they now live in. A divergent second baked copy is the
+    # Declare-thrash class the round corrected out of the record.
+    t17_docs = [d for d in yaml.safe_load_all(open(t17_render)) if d]
+    t17_sts = next((d for d in t17_docs if d.get('kind') == 'StatefulSet'), None)
+    t17_pod = ((((t17_sts or {}).get('spec') or {}).get('template') or {}).get('spec') or {})
+    t17_reg = next((c for c in (t17_pod.get('initContainers') or []) if (c or {}).get('name') == 'register'), None)
+    if t17_reg is None:
+        bad('t17: the dev-slice overlay render has no register init — the payload-labels law needs its carrier (t2 pins presence; this leg owns the payload shape)')
+    rj = ' '.join((t17_reg.get('command') or []) + (t17_reg.get('args') or []))
+    if 'docker://' in rj:
+        missing = [l for l in labels if l not in rj]
+        if missing:
+            bad(f't17: the register init inlines labels that DIVERGE from the skeleton five-set: {missing[:3]} — the POST payload must advertise EXACTLY the chart set (D62: every row carries the identical set so jobs route uniformly)')
+    else:
+        cm_vols = {(v or {}).get('name') for v in (t17_pod.get('volumes') or []) if (v or {}).get('configMap')}
+        if not any((m or {}).get('name') in cm_vols for m in (t17_reg.get('volumeMounts') or [])):
+            bad('t17: the register init takes the labels neither inline nor via the skeleton ConfigMap mount — the five-set would reach the payload from an unrendered source (fork class); mount the ConfigMap or render the set from the chart values')
+    ok('t17: the extracted forgejo-runner-dev slice renders the dev five-set on git.scifi.farm + byte-identical act-22.04, exactly 5 labels, the slice url, run-0 container block, zero sentinels, and the register init takes the same set from the single chart source (list-replacement + uniform-payload traps pinned)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -1674,18 +1771,23 @@ PY
   fi
 fi
 
-# --- t11: cf-97 C02 wording truthfulness (red-first before the dev reword) --
-# The four misnomer sites of plan Verified facts (values.yaml bitwardenIds
-# block, secret-runner.yaml header, custom-values item comment, NOTES.txt
-# one-time-action block) must read as the runner token shown once at record
-# creation — the deprecated exchange-style registration flow is not what the
-# vault password holds (RESEARCH contradiction 2). Instance-admin scope is the
-# user ruling (B3 reaffirmed): the Admin -> Actions -> Runners path is
-# asserted as PRESENCE only, never as absence of the word "org". What must
-# NOT change is pinned by the render legs above (t2/t3 ESO-contract legs,
-# t5/t7-t10 trio/slice legs) — C02 is comments + NOTES text only, so raw
-# byte equality is deliberately not asserted (template comments ride the
-# helm output).
+# --- t11: wording truthfulness at the cf-97 sites (re-aimed for C17/D61(3)) --
+# The same four sites (values.yaml bitwardenIds block, secret-runner.yaml
+# header, custom-values dev item comment, NOTES.txt one-time-action block)
+# carry the ROUND-6 truth at the first three: the item's password IS the
+# instance-scope registration token (owner-minted at Admin -> Actions ->
+# Runners, UA-R6-3, D64 repurpose-existing-items). The cf-97-era claim — a
+# (uuid, token) record pair shown once at record creation, "NOT the
+# deprecated registration-token exchange" — is the retired truth and may
+# only survive negated or historical. Instance-admin scope stays a
+# presence-only claim (B3 reaffirmed). NOTES.txt is OUT of C17's
+# Files-in-scope: its legs keep the old text byte-pinned and the
+# stray-positive guard doubles as the scope guard (its staleness vs the new
+# shape is a coord-flagged open question, not a silent re-aim). What must
+# NOT change is pinned by the render legs above (t2/t3/t12 — the re-aimed
+# ESO-contract legs, t5/t7-t10 trio/slice legs) — C17 lands comments only
+# here, so raw byte equality is deliberately not asserted (template
+# comments ride the helm output).
 if python3 - "$RUNNER/values.yaml" "$RUNNER/templates/secret-runner.yaml" \
     "$RUNNER/templates/NOTES.txt" "$DEV_CV" "$WORK/t11-count" <<'PY'
 import re, sys
@@ -1710,20 +1812,34 @@ def collapse(parts):
 
 TOKEN_RE = re.compile(r'registration[\s-]+token', re.I)
 NEG_RE = re.compile(r'\b(?:not|never|deprecated|no longer)\b', re.I)
-MAPPING_OK_RE = re.compile(r'password\s*=\s*runner[\s-]+token', re.I)
-MAPPING_BAD_RE = re.compile(r'password\s*=\s*[^.;]{0,30}registration[\s-]+token', re.I)
+# C17/D61(3) inverts the cf-97 mapping law: the vault password IS the
+# registration token now, so the OLD mapping claim (password = the runner
+# record token) becomes the misnomer this leg bans at re-aimed sites.
+MAPPING_BAD_RE = re.compile(r'password\s*=\s*(?:the\s+)?(?:runner|long-lived)[\s-]+token', re.I)
+RECORD_RE = re.compile(r'\(\s*uuid\s*,\s*token\s*\)|runner record|record creation|shown once at record|uuid\s*=\s*(?:the\s+)?runner\s+uuid', re.I)
 NEG_WINDOW = 100
 
 def excerpt(text, m):
     return '…' + text[max(0, m.start() - 40):m.end() + 40] + '…'
 
 def stray_positive(text, label):
-    # AC2: any surviving mention of the deprecated flow must be explicitly
-    # negative — a not/never/deprecated cue within the preceding window.
+    # Kept for the NOTES.txt site (out of C17 scope): a positive
+    # "registration token" mention there means the file was touched — the
+    # scope guard. Re-aimed sites get the opposite rule below.
     for m in TOKEN_RE.finditer(text):
         if not NEG_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]):
             bad(f't11: {label} — positive "registration token" mention: {excerpt(text, m)} '
-                '(only an explicitly negative reference is allowed — C02 AC2)')
+                '(NOTES.txt is out of C17 Files-in-scope; folding it in is a coord ruling, not a dev edit)')
+
+def stray_record(text, label):
+    # Retired record-pair claims may only survive behind a negation or a
+    # historical marker — an un-negated one tells the owner to mint a
+    # runner record, the exact shape D61 replaces.
+    HIST_RE = re.compile(r'\b(?:not|never|no longer|deprecated|retired|superseded|historical|historically|used to|formerly|was|C16|C0[1-6]|round[- ][45])\b', re.I)
+    for m in RECORD_RE.finditer(text):
+        if not HIST_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]):
+            bad(f't11: {label} — un-negated record-pair claim: {excerpt(text, m)} '
+                '(the (uuid, token) item content is retired; C17 header re-truths may keep it historical at most)')
 
 def strip_marker(line):
     return re.sub(r'^\s*#\s?', '', line)
@@ -1773,12 +1889,15 @@ def header_block(path, label):
 def check_comment_site(label, text):
     m = MAPPING_BAD_RE.search(text)
     if m:
-        bad(f't11: {label} — mapping comment still reads {excerpt(text, m)} (the vault password is '
-            'the runner token shown once at record creation — C02 must reword to `password = runner token`)')
-    stray_positive(text, label)
-    if not MAPPING_OK_RE.search(text):
-        bad(f't11: {label} — no `password = runner token` mapping comment (C02 wording not landed at this site)')
-    ok(f't11: {label} — password = runner token, no positive registration-token mention')
+        bad(f't11: {label} — mapping comment still reads {excerpt(text, m)} (D61(3)/C17 Tasks: the vault password IS the instance-scope registration token, owner-minted — re-truth this site)')
+    stray_record(text, label)
+    if not TOKEN_RE.search(text):
+        bad(f't11: {label} — no registration-token wording at all (the C17 header re-truth has not landed at this site)')
+    if all(NEG_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]) for m in TOKEN_RE.finditer(text)):
+        bad(f't11: {label} — every registration-token mention is negated (the old C02 polarity survives; C17 makes the token the POSITIVE item content)')
+    if 'forgejo-token' not in text:
+        bad(f't11: {label} — the standing NEVER-the-forgejo-token guard is gone (C17 Tasks keep it: that item is the Coder workspace access token, never a runner credential source)')
+    ok(f't11: {label} — registration token as the positive item content, record-pair claims retired or historical, forgejo-token guard standing')
 
 try:
     check_comment_site('values.yaml bitwardenIds block',
@@ -1819,21 +1938,24 @@ else
   exit 1
 fi
 
-# --- t12: cf-97 C04 mergePolicy pin (red-first against the unpinned chart) ---
-# The ESO operator chart went v2.14.0 (582c96488) the same day this chart was
-# authored under the pre-v2 Merge assumption (5853be497); the v2 CRD defaults
-# template.mergePolicy to Replace at admission — invisible to repo renders —
-# and Replace drops every fetched key the template does not re-emit, which
-# hid the uuid key from the live Secret and blinded the card #97 diagnosis
-# (DECISIONS 2026-11-02). C04 pins the intent. Cluster-side proof stays in
-# C03 — no leg here reads live state.
+# --- t12: ESO shape — single fetched key, NO target.template (re-aimed C17) ---
+# The cf-97 C04 leg pinned `mergePolicy: Merge` because the v2 CRD defaults
+# it to REPLACE at admission (invisible to repo renders) and Replace drops
+# every fetched key the template does not re-emit — the card-#97 lesson: the
+# live Secret carried only {config.yaml, token}, the fetched uuid key stayed
+# invisible, and a day of diagnosis was lost (DECISIONS 2026-11-02). C17/D62
+# deletes the whole target.template block, so the trap becomes MOOT BY
+# CONSTRUCTION and this leg pins the replacement shape: exactly ONE fetched
+# data entry (registration-token from the item's password field). The lesson
+# message keeps its home here rather than in a dead mergePolicy pin. No leg
+# reads live state — cluster proof stays owner-side.
 if [ "$skip_helm" -eq 1 ]; then
-  skip "t12: mergePolicy leg not run (no chart render — dependency update unavailable)"
+  skip "t12: ESO-shape leg not run (no chart render — dependency update unavailable)"
 else
-  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$WORK/t12-count" <<'PY'
+  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$TEST_UUID_DEV" "$WORK/t12-count" <<'PY'
 import sys, yaml
 
-render, release, count_file = sys.argv[1:4]
+render, release, uuid, count_file = sys.argv[1:5]
 ok_n = 0
 
 def ok(msg):
@@ -1850,32 +1972,27 @@ try:
     es = [d for d in docs if d.get('kind') == 'ExternalSecret']
     if len(es) != 1:
         bad(f't12: {release} — the render has {len(es)} ExternalSecret(s), expected exactly one')
-    template = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {})
-    mp = template.get('mergePolicy')
-    if mp != 'Merge':
-        bad(f't12: {release} — spec.target.template.mergePolicy is {mp!r}, expected Merge '
-            '(unpinned lets the v2 CRD default Replace at admission, silently dropping the '
-            'fetched uuid key C04 documents — add the pin in secret-runner.yaml)')
-    ok(f't12: {release} — mergePolicy pinned to Merge under spec.target.template '
-       '(reading this exact path is what rejects an incidental placement)')
-
-    if template.get('engineVersion') != 'v2':
-        bad(f't12: {release} — template.engineVersion is {template.get("engineVersion")!r}, '
-            'expected v2 (C04 is one added field — it must not restyle the template)')
-    keys = set((template.get('data') or {}))
-    if keys != {'config.yaml', 'token'}:
-        bad(f't12: {release} — template.data keys are {sorted(keys)}, expected exactly '
-            '[config.yaml, token] — the re-emit-the-uuid alternative the user rejected must '
-            'not sneak in; Merge adds fetched keys beside the template output, not inside it')
-    ok(f't12: {release} — engineVersion v2 + template.data keys exactly config.yaml+token '
-       '(the chosen shape holds even with the policy pinned)')
+    spec = es[0].get('spec') or {}
+    target = spec.get('target') or {}
+    if target.get('template') is not None:
+        bad(f't12: {release} — spec.target.template is still rendered (keys: {sorted(((target.get("template") or {}).get("data") or {}))}) — C17/D62 DELETES the block: the config skeleton moved to the release ConfigMap, and with no template the v2-CRD mergePolicy Replace trap that hid the uuid key of card #97 (fetched keys the template does not re-emit are silently dropped; DECISIONS 2026-11-02) is moot by construction. The engineVersion/mergePolicy pins retire with the block — their lesson lives in this message')
+    entries = spec.get('data') or []
+    if len(entries) != 1:
+        bad(f't12: {release} — spec.data carries {len(entries)} fetched entries ({sorted(((e or {}).get("secretKey")) for e in entries)}), expected exactly 1 — ONE reusable registration token per release (D61); a second key re-opens the (uuid, token) record-pair shape the round retires')
+    e0 = entries[0] or {}
+    rr = e0.get('remoteRef') or {}
+    if (e0.get('secretKey'), rr.get('property')) != ('registration-token', 'password'):
+        bad(f't12: {release} — the fetched entry is secretKey {e0.get("secretKey")!r} property {rr.get("property")!r}, expected registration-token from the item password field (the token lives where the old record token lived; D64 repurpose-existing-items)')
+    if rr.get('key') != uuid:
+        bad(f't12: {release} — remoteRef.key is {rr.get("key")!r}, expected the bitwardenIds.runner-token UUID {uuid!r} — and never a literal like the forgejo-token item (that one is the Coder workspace token: the standing guard, C17 Tasks)')
+    ok(f't12: {release} — ESO shape: no target.template (card-#97 trap moot by construction), exactly one fetched key registration-token<-password from {uuid!r}')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
     raise
 except Exception as ex:
-    bad(f't12: the mergePolicy check could not be evaluated ({type(ex).__name__}: {ex})')
+    bad(f't12: the ESO-shape check could not be evaluated ({type(ex).__name__}: {ex})')
 PY
   then
     checks=$((checks + $(cat "$WORK/t12-count")))
@@ -2035,13 +2152,13 @@ if not isinstance(block, dict):
     sys.exit(1)
 rep = (((block.get('app-template') or {}).get('controllers') or {}).get('runner') or {}).get('replicas')
 if rep != 10:
-    print(f'FAIL: t18: the dev slice carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57): both runner releases scale to 10 POLLER PODS on one registration via the per-slice override (the chart default stays 1)', file=sys.stderr)
+    print(f'FAIL: t18: the dev slice carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57 as superseded by D61 for identity): ten poller pods behind ONE reusable registration token, each minting its own runner record; the count and the capacity stay 1, only the identity law changed', file=sys.stderr)
     sys.exit(1)
 PY
 then
   fail "t18: see the t18 detail above"
 fi
-ok "t18: services/dev/prod/values.yaml forgejo-runner-dev block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, B1-as-amended — slice, not chart)"
+ok "t18: services/dev/prod/values.yaml forgejo-runner-dev block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, D57 count standing under D61 — slice, not chart)"
 
 # --- t19: capacity STAYS 1 in the deployed render (C16 leg (b), D57) ------------
 # The owner asked for 10 RUNNERS, not an in-pod queue: 10 pods x capacity 1
@@ -2055,21 +2172,29 @@ else
 import sys, yaml
 
 docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
-es = [d for d in docs if d.get('kind') == 'ExternalSecret']
-if not es:
-    print('FAIL: t19: the deployed render carries no ExternalSecret — the config.yaml home moved (t2 would already be red; this leg names its own dependency)', file=sys.stderr)
-    sys.exit(1)
-data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-cfg = yaml.safe_load(data.get('config.yaml') or '')
+# C17 reader move: capacity 1 now rides the ConfigMap skeleton; the ESO-
+# template limb only keeps the pre-C17 tree readable (t2/t12 pin the home).
+cfg = None
+for d in docs:
+    if d.get('kind') == 'ConfigMap' and ((d.get('data') or {}).get('config.yaml')):
+        cfg = yaml.safe_load(d['data']['config.yaml'])
+        break
+if cfg is None:
+    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+    if not es:
+        print('FAIL: t19: the deployed render carries neither the ConfigMap skeleton (C17 home) nor an ExternalSecret template (pre-C17 home) — the config.yaml home moved again and this leg was not re-aimed', file=sys.stderr)
+        sys.exit(1)
+    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+    cfg = yaml.safe_load(data.get('config.yaml') or '')
 cap = ((cfg or {}).get('runner') or {}).get('capacity')
 if cap != 1:
-    print(f'FAIL: t19: the deployed render carries runner.capacity {cap!r}, expected 1 — the stay-1 is a DECISION (D57: ten pods poll one registration; a capacity>1 route would fake parallelism inside one 2cpu/4Gi dind envelope), and secret-runner.yaml is not touched by the scale', file=sys.stderr)
+    print(f'FAIL: t19: the deployed render carries runner.capacity {cap!r}, expected 1 — the stay-1 is a DECISION and D61 makes it honest per row: ten pods x ten records x capacity 1 = ten concurrent jobs, each inside its own 2cpu/4Gi dind envelope (D57 arithmetic survives verbatim; EXPLORE Round-6 B: the only cap is the client-side per-process budget)', file=sys.stderr)
     sys.exit(1)
 PY
   then
     fail "t19: see the t19 detail above"
   fi
-  ok "t19: the deployed (slice-overlay) render still carries runner capacity 1 — the stay-1 decision fenced (D57; 10 pods x 1 job, not a queue)"
+  ok "t19: the deployed (slice-overlay) render still carries runner capacity 1 in the ConfigMap skeleton — stay-1 fenced (D57 arithmetic standing under D61: ten rows x one job, not a queue)"
 fi
 
 # --- t20: the chart default stays 1 without any override (C16 leg (c), D57) -----
@@ -2091,14 +2216,229 @@ if len(sts) != 1:
     sys.exit(1)
 rep = (sts[0].get('spec') or {}).get('replicas')
 if rep != 1:
-    print(f'FAIL: t20: the NO-OVERRIDE render is replicas {rep!r}, expected the chart default 1 — D57 keeps the default single (scaling rides per-slice overrides only; a chart flip to 10 would silently multiply every future runner release)', file=sys.stderr)
+    print(f'FAIL: t20: the NO-OVERRIDE render is replicas {rep!r}, expected the chart default 1 — D61 keeps the default single (scaling rides per-slice overrides only; a chart flip to 10 would silently multiply EVERY future runner release into ten self-registrations)', file=sys.stderr)
     sys.exit(1)
 PY
   then
     fail "t20: see the t20 detail above"
   fi
-  ok "t20: chart default renders replicas 1 with no slice — the amended law keeps a new release one pod until a slice rules otherwise"
+  ok "t20: chart default renders replicas 1 with no slice — D57's default-single stands under D61: a new release is one pod until a slice rules otherwise"
 fi
+
+# --- t21: register init container — behavior pins (C17 red-first) -----------
+# D62 A-prime, the load-bearing half: first boot POSTs the registration and
+# renders the skeleton onto the ordinal's data PVC; every later boot finds
+# the file and re-attaches without a POST. Pinned in BEHAVIOR form (plan
+# ruling 4 / AC5) so a registration-client swap (G2) survives the suite:
+# names and env keys per C17 Tasks, but the teeth are the semantics —
+# guard-first, downward-API name source, release-Secret token plumbing,
+# ephemeral false-class, response-to-files write paths, loud failure exit,
+# and NO deregistration call anywhere (v13 has no client-side one,
+# RESEARCH Q4 [S9 grep] — a DELETE branch would be invented lifecycle).
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t21: not run (dependency update unavailable)"
+else
+  if ! python3 - "$runner_out_dev" "$runner_out_slice" "$RELEASE_DEV" <<'PY'
+import re, sys, yaml
+
+default_render, slice_render, release = sys.argv[1:4]
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def legs(render_file, tag):
+    docs = [d for d in yaml.safe_load_all(open(render_file)) if d]
+    sts = next((d for d in docs if d.get('kind') == 'StatefulSet'), None)
+    if sts is None:
+        bad(f't21: {tag} — no StatefulSet (t2 owns this; naming own dependency)')
+    pod = ((((sts.get('spec') or {}).get('template') or {}).get('spec')) or {})
+    reg = next((c for c in (pod.get('initContainers') or []) if (c or {}).get('name') == 'register'), None)
+    if reg is None:
+        bad(f't21: {tag} — no register init container (t2 also pins presence; the script legs need its carrier)')
+    script = '\n'.join((reg.get('command') or []) + (reg.get('args') or []))
+    if not script.strip():
+        bad(f't21: {tag} — the register container carries no command/args — the guard/POST/render sequence must live in the pod, not an unpinnable image default')
+    guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', script)
+    if not guard:
+        bad(f't21: {tag} — script lacks the `[ -f /data/config/config.yaml ]` guard — without it EVERY container restart (reloader Secret-change included) re-POSTs and churns a new uuid per boot, piling stale rows (D62 restart discipline, tooth (c))')
+    post = script.find('actions/runners')
+    if post < 0:
+        bad(f't21: {tag} — no admin-scope registration endpoint in the script — the POST to the runners admin route is the minting path (RESEARCH Q2(b) [S14]); a client that hides the endpoint entirely defeats the behavior pin')
+    if guard and guard.start() > post:
+        bad(f't21: {tag} — the config guard sits AFTER the registration call — a restart would re-register before ever checking the PVC (guard-FIRST is the re-attach law, D62)')
+    envs = {(e or {}).get('name'): e for e in (reg.get('env') or [])}
+    pod_name = envs.get('POD_NAME') or {}
+    if ((pod_name.get('valueFrom') or {}).get('fieldRef') or {}).get('fieldPath') != 'metadata.name':
+        bad(f't21: {tag} — POD_NAME env is {pod_name!r}, expected a downward-API fieldRef metadata.name — the record name IS the pod name (official k8s example shape, RESEARCH [S11]); hostname or ordinal math is the off-by-one class this avoids')
+    if not re.search(r'\$\{?POD_NAME\}?', script):
+        bad(f't21: {tag} — the script never references POD_NAME — the registration body must carry the pod-derived name (AC5)')
+    tok = next(((n, e) for n, e in envs.items() if ((e or {}).get('valueFrom') or {}).get('secretKeyRef')), None)
+    if tok is None:
+        bad(f't21: {tag} — no env with valueFrom.secretKeyRef — the registration token must arrive from the release Secret (never a literal in values, never the forgejo-token item)')
+    skr = (tok[1].get('valueFrom') or {}).get('secretKeyRef') or {}
+    if skr.get('key') != 'registration-token' or skr.get('name') != release:
+        bad(f't21: {tag} — token env {tok[0]!r} points at secretKeyRef {skr!r}, expected the release Secret {release!r} key registration-token')
+    if not re.search(r'\$\{?' + re.escape(tok[0]) + r'\}?', script):
+        bad(f't21: {tag} — the fetched token env {tok[0]!r} is never used by the script (dead plumbing is broken plumbing)')
+    cm = next((d for d in docs if d.get('kind') == 'ConfigMap'), None)
+    cfg = yaml.safe_load((((cm or {}).get('data') or {}).get('config.yaml') or '') or '') or {}
+    conn = (((cfg.get('server') or {}).get('connections') or {}).get('default') or {})
+    url = conn.get('url')
+    if not url:
+        bad(f't21: {tag} — skeleton carries no connection url to cross-check the registration target (t2 pins it; this leg names its own dependency)')
+    url_env = next((e for e in envs.values() if (e or {}).get('value') == url), None)
+    if url_env is None and url not in script:
+        bad(f't21: {tag} — the registration target never flows: no env carries the skeleton url {url!r} and the script never names it — one runner.url must feed both the config and the POST (RUNNER_URL per C17 Tasks)')
+    if re.search(r'ephemeral[^A-Za-z]{0,8}\btrue\b', script, re.I):
+        bad(f't21: {tag} — payload carries ephemeral TRUE — the v13 daemon refuses ephemeral records (exits "not supported in daemon-mode", [S9 daemon.go]) and the server deletes the row after one job: the crash-loop class, tooth (d)')
+    if not re.search(r'ephemeral[^A-Za-z]{0,12}\bfalse\b', script, re.I):
+        bad(f't21: {tag} — no ephemeral false-class token in the registration payload (REQUIRED, C17 Tasks — the record must persist)')
+    for p in ('/data/config/config.yaml', '/data/config/token'):
+        if p not in script:
+            bad(f't21: {tag} — script never writes {p} — the minted identity must land on the ordinal data PVC (the skeleton render target and the absolute token_url file, D62)')
+    ph = conn.get('uuid')
+    cm_vols = {(v or {}).get('name') for v in (pod.get('volumes') or []) if (v or {}).get('configMap')}
+    mounts_cm = any((m or {}).get('name') in cm_vols for m in (reg.get('volumeMounts') or []))
+    if isinstance(ph, str) and ph and ph not in script and not mounts_cm:
+        bad(f't21: {tag} — the skeleton uuid placeholder is neither named by the script nor reachable via a mounted skeleton ConfigMap — nothing would substitute it: the daemon would crash on a literal placeholder (fail-fast class)')
+    if not any((m or {}).get('mountPath') == '/data' for m in (reg.get('volumeMounts') or [])):
+        bad(f't21: {tag} — the register init has no /data mount — it writes onto the data PVC, nowhere else')
+    if not re.search(r'set -e|exit 1|\|\|\s*exit|\|\|\s*\{', script):
+        bad(f't21: {tag} — no loud failure limb — a swallowed cold-boot error leaves the daemon crash-looping on the unsubstituted placeholder (the empty-uuid fail-fast class the chart header already documents)')
+    if re.search(r'deregist|-X\s*DELETE|DELETE\s|deleteRunner', script, re.I):
+        bad(f't21: {tag} — the register script carries a deregistration/DELETE limb — v13 has NO client-side deregistration (RESEARCH Q4 [S9 grep]) and D63 rules stale rows OUT of scope (cleanup cron stays OFF; scale-down rows are owner-side)')
+    raw = open(render_file).read()
+    noc = '\n'.join(l for l in raw.splitlines() if not l.strip().startswith('#'))
+    if re.search(r'deregist|-X\s*DELETE', noc, re.I):
+        bad(f't21: {tag} — a deregistration call hides somewhere in the render (AC5: none anywhere — no client-side path exists in v13)')
+
+legs(default_render, 'default render')
+legs(slice_render, 'DEPLOYED slice render')
+PY
+  then
+    fail "t21: see the t21 detail above"
+  fi
+  ok "t21: register init pins on both renders — guard-first, downward-API POD_NAME payload, release-Secret registration-token env, skeleton-url cross-check, ephemeral false, PVC write paths, placeholder reachability, loud failure exit, zero deregistration (behavior-form, client-swap survivable — D62/AC5)"
+fi
+
+# --- t22: chart-text re-truths + retired-shape statics (C17 red-first) ------
+# The headers and shipped comments are operator-facing code: the D61 law,
+# the :67-68 "do not work" softening (RESEARCH Contradictions verdict:
+# deprecated, not broken — D63(3) folds the reword here at next touch), the
+# D63 stale-row runbook, the CREDENTIALS_DIRECTORY pair retiring, and the
+# host-mode null-out gate byte-untouched (AC6 — pinned by hash, the same
+# byte-identity law class as C03's template comment rule). Chart.yaml's
+# false description ("one 1-replica StatefulSet ... declarative
+# registration") is retired WITHOUT a version edit (CI law: the fan bumps
+# 2026.11.1 -> 2026.11.2 after merge, never this suite).
+if ! python3 - "$RUNNER/values.yaml" "$RUNNER/templates/secret-runner.yaml" \
+    "$RUNNER/Chart.yaml" <<'PY'
+import hashlib, re, sys
+
+chart_vals, secret_tpl, chart_yaml = sys.argv[1:4]
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def collapse(parts):
+    return ' '.join(' '.join(parts).split())
+
+def strip_marker(line):
+    return re.sub(r'^\s*#\s?', '', line)
+
+def near(text, a, b, window=200):
+    ar, br = re.compile(a, re.I), re.compile(b, re.I)
+    for m in ar.finditer(text):
+        lo = max(0, m.start() - window)
+        if br.search(text[lo:m.end() + window]):
+            return True
+    return False
+
+vtext = open(chart_vals).read()
+vlines = vtext.splitlines()
+header = []
+for line in vlines:
+    s = line.strip()
+    if s.startswith('#'):
+        header.append(strip_marker(line))
+    elif s:
+        break
+h = collapse(header)
+if not h:
+    bad('t22: values.yaml has no leading comment header — the law text is operator-facing')
+if re.search(r'one registration per release', h, re.I):
+    bad('t22: the values header still claims one registration PER RELEASE — D61: one registration TOKEN, N records (N pods, N admin rows named after the pods); the title line is the first thing a reader anchors on')
+if re.search(r'release runs exactly one\s+pod', h, re.I):
+    bad('t22: the values header still claims each release runs EXACTLY ONE POD — dead since D57 and doubly false post-C17')
+if not (re.search(r'registration[\s-]+token', h, re.I) and re.search(r'self[- ]register|per[- ]pod|records', h, re.I)):
+    bad('t22: the re-aimed law text is missing — the header must positively carry the one-token / per-pod-record mechanism (D61/D62)')
+if not re.search(r're-?attach', h, re.I):
+    bad('t22: no re-attach wording — the PVC-persisted identity (restart never re-registers, D62) is the design\'s load-bearing half and belongs in the header')
+if near(h, r'register CLI', r'do(?:es)? not work'):
+    bad('t22: the values header still says the register CLI DOES NOT WORK — RESEARCH Contradictions ruled it deprecated, not broken (D63(3) folds the reword into C17 as the next-touch law)')
+if not near(h, r'register CLI', r'deprecated'):
+    bad('t22: no deprecated wording beside the register CLI claim — the softened truth (works, discouraged; [S9 register.go]) must land here, not silently disappear')
+if not (re.search(r'cleanup_offline_runners', h) and near(h, r'cleanup_offline_runners', r'\boff\b|false|stay')):
+    bad('t22: the stale-row runbook is missing the cleanup-cron posture — D63: cron.cleanup_offline_runners STAYS OFF (enabling it can delete rows under live PVCs -> crash-loop until the ordinal config is cleared)')
+if not near(h, r'/data/config/config\.yaml', r'delet|remov|clear|rm\b'):
+    bad('t22: the runbook limb is missing — row-loss recovery = delete /data/config/config.yaml on that ordinal so the next boot re-registers (D63)')
+if not near(h, r'scale-?down', r'offline|stale|row'):
+    bad('t22: no scale-down leaves-offline-rows statement (D63 stale-row law — owner-side cleanup, never a client deregister)')
+if 'D61' not in vtext:
+    bad('t22: nothing in values.yaml cites D61 — the B1-as-amended note retires to superseded-law text naming the ruling that replaced it (C17 Tasks :158-167)')
+if re.search(r'CREDENTIALS_DIRECTORY', vtext):
+    bad('t22: CREDENTIALS_DIRECTORY survives in values.yaml — the env/token_url pair retires with the Secret mount (D62/G3)')
+if re.search(r'file:\$CREDENTIALS', vtext):
+    bad('t22: the relative Secret-mount token_url survives in values.yaml — expected the absolute file:/data/config/token')
+if 'token_url: file:/data/config/token' not in vtext:
+    bad('t22: no absolute token_url wiring in values.yaml — the skeleton must point the daemon at the PVC-written token (AC4)')
+
+stext = open(secret_tpl).read()
+snoncomment = '\n'.join(l for l in stext.splitlines() if not l.strip().startswith('#'))
+for needle, why in (
+    ('template:', 'the ESO inline template retires entirely (D62) — with no template the card-#97 mergePolicy class cannot recur'),
+    ('mergePolicy', 'the policy pin rode the retired template block (its lesson lives in the t12 message now)'),
+    ('config.yaml', 'the config body belongs to the ConfigMap skeleton, not the ESO'),
+    ('uuid', 'no uuid key may survive in the ESO — the fetched record pair is the C16 shape'),
+):
+    if needle in snoncomment:
+        bad(f't22: secret-runner.yaml still carries {needle!r} outside comments — {why}')
+if 'secretKey: registration-token' not in snoncomment:
+    bad('t22: secret-runner.yaml does not fetch a registration-token key — the single-key ESO rewrite (D62) is C17\'s whole Secret story')
+if 'property: username' in snoncomment:
+    bad('t22: the username-property fetch survives — the stale uuid field is IGNORED by the new shape (D64), not fetched')
+region = None
+slines = open(secret_tpl, errors='replace').read().splitlines(keepends=True)
+i0 = next((i for i, l in enumerate(slines) if l.startswith('{{- if eq .Values.runner.backend "host" }}')), None)
+ia = next((i for i, l in enumerate(slines) if l.startswith('apiVersion:')), None)
+if i0 is None or ia is None or ia <= i0:
+    bad('t22: the host-mode null-out gate cannot be located in secret-runner.yaml — the gate block ({{- if eq .Values.runner.backend "host" }} ... up to apiVersion:) must SURVIVE the ESO rewrite (AC6: byte-untouched)')
+region = ''.join(slines[i0:ia])
+GATE_SHA = 'b8425f3c03a04cfcc30cf18fa464c7ef30e09c12e3604db48ce4049f362ba06a'
+if hashlib.sha256(region.encode()).hexdigest() != GATE_SHA:
+    bad('t22: the host-mode null-out gate region is NOT byte-identical to the C16-era hash (secret-runner.yaml lines 18-52 at 4dfe9a02e) — C17 Tasks KEEP it byte-untouched; the argo-cd#16312 silent-resurrection defense must not be re-flowed by the rewrite')
+for m in re.finditer(r'forgejo-token', stext):
+    line = stext[max(0, m.start() - 120):m.start()].rsplit('\n', 1)[0]
+    # guard sentence only: every mention sits in a comment line (render-side
+    # value absence is pinned by the remoteRef legs)
+    if not line.lstrip().startswith('#'):
+        bad(f't22: a forgejo-token reference rides a live line in secret-runner.yaml: {line.strip()!r} — the standing guard keeps it comment-only and negative')
+
+ctext = open(chart_yaml).read()
+if re.search(r'1-replica|one 1-replica', ctext, re.I):
+    bad('t22: Chart.yaml still describes ONE 1-replica StatefulSet per release — false since D57 and doubly since D61 (ten self-registering pods); the description re-truth is in C17 Tasks')
+if re.search(r'declarative registration', ctext, re.I):
+    bad('t22: Chart.yaml still claims declarative registration — C17 moves identity minting to the register-on-boot init (the record is POSTed, not declared)')
+if not re.search(r'^version: 20\d\d\.\d{1,2}\.\d{1,2}$', ctext, re.M):
+    bad('t22: Chart.yaml version is not a calendar stamp — CI owns bumps (build-charts fan); a hand-edit here is the forbidden class and a rewrite must not smuggle one in')
+ok('t22: values header law re-truthed (D61 token/records + re-attach + deprecated + runbook + D61 citation), CREDENTIALS pair gone, absolute token_url wired, ESO static shape single-key and template-free, host gate byte-stable, Chart.yaml lies retired, version untouched')
+PY
+then
+  fail "t22: see the t22 detail above"
+fi
+ok "t22: chart-text re-truths + single-key ESO statics + gate-hash pin landed (C17 ACs 2/6/7 render-side witnesses)"
 
 # A successful run is the only moment the /tmp workspace can go — a failed
 # run keeps it so every "log kept at" pointer still resolves.

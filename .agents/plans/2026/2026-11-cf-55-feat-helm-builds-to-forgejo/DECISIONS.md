@@ -1184,3 +1184,17 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    and REPLACES THE PASSWORD FIELD of the two existing runner items; the stale
    uuid fields are ignored by the new ESO shape; no new vault items, no
    naming churn. plan_status -> approved (coord flip).
+ - 2026-11-26 coord D65 (round-6 test-wave adjudications): wave authored
+   red-first C17 contracts across dev (t2/t11/t12/t16/t17/t21/t22) + gpu
+   (g2/g5/g11) + trio custom-values admits; 14/14 mutant teeth; rulings:
+   (1) forgejo-lfs.sh t11 path-fence turning red at C17 = legitimate
+   scope-set change, mechanical re-aim routes to the test session at
+   review time (validation-at-fault channel, silent per gates);
+   (2) forgejo-ssh-gateway.sh t11 = transient predecessor red, expected
+   until dev lands, not a defect; (3) NOTES.txt staleness (record-creation
+   + NEVER-scale narration contradicts D61) -> SANCTIONED FOLD: C17 dev
+   scope extended by that one file (owner-facing chart text, truth-first
+   law, render legs don't touch it); (4) wave deviations 1-5 accepted
+   (t11 re-aim forced by the same header sites, g7 sixth-class re-arm,
+   dual-source transition-green readers, behavior-form placeholder pins,
+   init-image deferred to G2).
