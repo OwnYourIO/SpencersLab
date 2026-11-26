@@ -72,6 +72,28 @@ decisions carried into the plan's Open questions (OQ1–OQ9) for the batched rou
   2026-11-25-coder-template-push.md` with UA1–UA5 owner legs, the postures stated as
   answers, and `tests/notes/coder-template-push-runbook.sh` pinning them.
 
+## 2026-11-26 (main moved — marker-scheme adaptation round)
+
+- **Catch-up merge (owner-side)**: `00cedcd1e` merged main tip `52d3b5c45` (cf-55 round 4)
+  INTO this ticket branch (author: Spencer's Bot (Claud), 02:57 UTC). AD-56's work is NOT
+  on main (`git branch --contains 63351b411` = ticket branch only); the owner's "I merged
+  in main" means the branch adopted main, not that the branch landed. Working tree clean,
+  my C01–C03 artifacts intact post-merge.
+- **Upstream law change requiring adaptation** (AGENTS.md diff): containers-build detection
+  is now `marker..sha` — from the last-built marker ref, advanced only on a push run whose
+  whole build matrix published green; whole `before..sha` is the marker-missing fallback;
+  empty range from a PRESENT marker is informational (proves nothing missed), no-op push and
+  empty dispatch stay silent, empty `before` fatal, unresolvable range fails loud. Also
+  `release.yaml` -> `build-charts.yaml` with calendar Y.M.N chart bumps.
+- **Owner instruction**: "Checkout containers-build.yaml for how it works there and adapt
+  for coder templates if not already done." The C02 detector models the OLD shape, so
+  adaptation is needed; same dead-run loss class applies (a push that died mid-matrix leaves
+  templates unre-covered by the next before..sha range). Round opens: fresh agent-explore on
+  the delta -> agent-plan replan (C04) -> agent-test extension -> dev C04 -> review ->
+  final-review delta round. `plan_status` -> needs-replan until the reworked plan lands.
+- **Precedent pointer**: main carries `.agents/plans/2026/2026-11-cf-6-debug-detect-rerun/`
+  — the detect-rerun ticket whose ruling produced the marker law; read it for intent.
+
 ## 2026-11-25 (batched plan-question round — owner rulings)
 
 - **OQ1 confirmed**: per-instance, both Coders; each executing Forgejo pushes every
@@ -131,3 +153,66 @@ into the runbook's UA3 verify-the-published-tag + hand label-pin bump leg.
   template push fire. A first-fire `command not found: coder` is the sequencing state
   (loud via the diag's plain `coder version` call, the D43 class), not a pipeline bug.
   The chart label pin is deliberately NOT a chunk task.
+
+## 2026-11-26 (C04 replan — marker-scheme adaptation)
+
+Replan round (`plan_status` `needs-replan` → `awaiting-approval`; coord flips to
+`approved` after the batched round): the `00cedcd1e` catch-up merge carried main's
+marker law (cf-55/cf-6) + the `release.yaml` → `build-charts.yaml` rename; the owner
+instructed the coder-templates adaptation "if not already done" — the landed C02
+detector models the OLD shape, so the adaptation is the directive. C04 added (wave 3,
+`depends_on` C02+C03 — both done); C01 unaffected (no image/chart surface); C02/C03
+touched only with supersession notes (R2-Q4: no in-place fix), never re-opened;
+`scripts/coder-template-push.sh` out of scope (R2-Q4: no stale references). Best-guess
+pins carried into the batched round (the plan's OQ10–OQ13 table):
+
+- **D12 — C04 scope (OQ10, best guess: full upstream mirror)**: the `marker..sha` arm
+  + the `advance-marker` job + the warning-law alignment + the re-run-law shift (cf-6
+  design 7) — not a minimal marker-only backport: the dead-run loss class (a push that
+  died mid-matrix leaves the templates unre-covered by the next `before..sha` range)
+  is exactly why the owner asked the adaptation; the minimal backport would heal
+  nothing. Consequential: under the step-owned warning mirror, the C02 dispatch
+  divergence (the all-ungated-list warning) retires — dispatch exempt wholesale, the
+  upstream law; the run-log echo still names the resolved set.
+- **D13 — marker ref name (OQ11, best guess): `refs/heads/ci/coder-templates-pushed`**
+  — scheme-consistent (`ci/` prefix, domain + past-tense verb mirroring
+  `ci/containers-built` with this pipeline's own verb), a distinct ref, named in no
+  other `.forgejo` workflow (grep-measured); owner-vetoable per the cf-6 OQ-1 pattern:
+  one string + one pin.
+- **D14 — warning-law location (OQ12, best guess: step-owned mirror)**: retire the C03
+  documented inversion (the `exempt` flag) so one law governs both workflows — the
+  empty-set decision lives marker-aware in the detect step (present marker + empty
+  set → one plain info line; no-op `before == sha` + empty dispatch silent; bootstrap
+  empty → `::warning::`), enabling the t14-analog behavioral test shape. Alternative
+  (ruled, not default): script-owned, extend the `exempt` flag with marker-verified-
+  empty → info, keep the documented deviation.
+- **D15 — runbook note scope (OQ13, best guess: short note, yes)**: the per-instance
+  marker self-initialization note (first green push run auto-creates the marker at its
+  sha; pre-init fallback = today's semantics; NO full-fleet legs — the templates are
+  already live on both Coders; NO new secret — the advance rides the checkout's
+  automatic same-repo credential, no `FORGE_PUSH_TOKEN`; the first live advance run
+  is the proof leg for the job credential's non-main `refs/heads` push — near-
+  proven, cf-6 OQ-2; fallback = a repo-write-scoped minted PAT, one-line change +
+  suite re-pin) + the R2-Q5 named asymmetries (stale-queued over-push; the re-run
+  re-mint law shift — user-visible on the Coder servers, the cf-6 accepted law). Not
+  cf-6-style B1/B2 owner legs: those initialized containers-build history, a
+  precondition we do not inherit.
+- **D16 — per-instance marker state by construction**: the marker is read
+  `git ls-remote origin` / written `git push origin` against the executing instance's
+  own repo; `main-sync` mirrors `refs/heads/main` alone, so the marker is never
+  mirrored to the other forge or to GitHub; both forges execute the push leg (the
+  guard matches `dev` and `prod` alike, OQ1), each advancing its own repo's marker —
+  per-instance "last pushed" state is the correct semantics, no cross-instance mirror
+  needed or wanted. The dev instance receives main via the main-sync fan-out push (a
+  normal push event with its own `before` payload), so `marker..sha` works identically
+  there.
+- **D17 — merge-order-independent-safe both ways**: the pre-marker fallback is byte-
+  exact to the C02 shipped behavior on every channel (the d18 pin), so the code can
+  land before any live bootstrap; each instance's first green push run
+  self-initializes its marker (cf-6 design 5, "EITHER ORDER IS SAFE — proved").
+- **D18 — re-run-law shift (plan Risk, stated honestly)**: a re-run of a fully
+  succeeded push run answers `marker..sha` with the marker advanced ⇒ empty info-exit
+  — a VERIFY, not a re-mint (user-visible on the Coder servers); failure-class re-
+  runs keep the old behavior exactly (marker put ⇒ same range ⇒ same full set re-
+  pushed, succeeded legs included). The cf-6 owner accepted it knowing; the OQ10
+  scope question confirms it as the acceptable price for the coder-templates port.
