@@ -1,32 +1,51 @@
 #!/usr/bin/env bash
-# Sync fan-out operator runbook contract — C11 re-pin (reopen3, R7; rewrite #4)
-# (2026/2026-11-cf-139-feat-argocd-webhook-sync):
+# Sync fan-out operator runbook contract — C15 re-pin (reopen4, R8; rewrite
+# #5) (2026/2026-11-cf-139-feat-argocd-webhook-sync):
 # .agents/notes/2026-11-17-argocd-sync-fanout.md, re-pinned to the LANDED
-# per-cluster org key-pair shape (C09 e48e93f12 + C10 a5265b3d6 are in the
-# tree — every parity grep reads the REAL script/workflow/roster bytes, not
-# /tmp references). §2: 11 mints + 11 org VARS + 11 org SECRETS, no compose
-# step, no paste, sourced-env --check recipe, the moot-TRIO delete-check
-# (hook pair + the reopen2 blob); §4/§7 quote the script's OWN column-0
-# kill-lane warning; §5 masks natively per-secret (the [26] per-line saga is
-# moot with the blob); §7's kill lever is the TOKEN-side delete/blank with
-# the all-or-nothing RED honesty about single-cluster kills; §8 carries
-# per-key rotation, decommission lockstep, the hyphen-only category law and
-# the TRUE broad-catch envelope per DECISIONS (i-adj-1): valid-shape
-# malformed rows RED, degenerate value-carrying shapes ignored by design,
-# workflow enumeration rows guarded by the repo-side set-equality legs —
-# the runbook may NOT claim the script catches everything.
+# fleet-blind shape (C13+C14 ad86dd576 are in the tree — every parity grep
+# reads the REAL workflow/script/roster bytes, not /tmp references).
 #
-# The path/name stay (rewrite #3's spine survived). AC trace (chunks/C11.md
-# "## Tests"): r1[AC2/AC5 + the (i-adj-1) cross-artifact trio: runbook pair
-# names == workflow env names == script-regex acceptance, set-equality all
-# three surfaces] r2[AC4 parity greps vs the landed files — strings READ
-# FROM the files, never re-typed here, so they cannot drift from what C09/
-# C10 actually shipped] r3[AC3 stale-mechanics ban; ARGOCD_SYNC_TOKENS
-# allowed exactly ONCE, on a line that also says delete] r4[AC5 posture
-# rows] r5[AC6 human markers, apply-verbs, and the sourced-recipe form —
-# `env KEY=value cmd` and prefix-assignment invocations are banned] r6[AC1
-# structure: 8 sections + appendix, ≥11 preflight rows, the §6 "values ARE
-# the org vars" header note].
+# What the re-pin MOVES vs the C11 (rewrite #4) suite:
+#  * r1's cross-artifact leg TRANSFORMS — the workflow's 22-row env
+#    enumeration is gone, so "table == workflow env names" is structurally
+#    dead. The new law: the runbook's §2 table names must match the filter
+#    step's selection regex AS LANDED in the workflow bytes, and that regex
+#    must equal the script's PAIR_KEY_RE — runbook ⇄ filter ⇄ script, three
+#    surfaces, one law (the (i-adj-1) primary guard re-expressed for R8; the
+#    workflow now enumerates ZERO names and a reappearance reddens this leg).
+#    §2's OWNER work (mints block, 11-row table modulo the sanctioned
+#    vars./secrets. prefix drop, the §2.4 trio leg) stays byte-equal against
+#    the rewrite-#4 baseline (RUNBOOK_BASE, default ad86dd576) — the
+#    redesign changed how the job discovers keys, not how the vault holds
+#    them. §2 URL values ⇄ §6 hosts equality SURVIVES.
+#  * r2 = §5's new role: the first dispatch is the de-facto live validation
+#    of the engine claims the owner chose to skip probing for (STATE
+#    reopen4.owner_decision) — the claim-token legs (toJSON / RUNNER_TEMP /
+#    filter-count / masking-log), the d81831446 revert-fallback sentence,
+#    the fleet-drift honesty line (expect == VAULT reality), and the two
+#    RULED failed rows (proxy-local 307, proxy-backup OQ9).
+#  * r3's stale-vocabulary sweep EXTENDS to the enumeration-era claims
+#    (enumeration row / 22-row / static enumeration / cannot index /
+#    workflow rows / pair-lockstep / categories / oracle / the vars. and
+#    secrets. expression forms) — with §2.4's `secrets.ARGOCD_SYNC_TOKENS`
+#    delete-check line the ONLY sanctioned ARGOCD_SYNC_ expression-form
+#    occurrence, per C15 AC4.
+#  * r4 = the ruled pure-discovery envelope, pinned as the DECISIONS
+#    2026-11-26 words state it: blank-one-token (j)-RED / delete-one-key
+#    half-pair RED / delete-BOTH-keys quiet-drop-with-count-only /
+#    stray-complete-pair quiet JOIN; decommission == delete both org keys,
+#    zero repo edits; §8 names the branch-protection card
+#    abkP2XsbuuPuuvri6 + org-name discipline + the escape-free masking edge;
+#    §7's kill-lever and §8's rotation paragraphs byte-kept from baseline.
+#  * r5's command law survives AND extends to the pairs-file recipe: the
+#    PATH may ride an env prefix (paths are not secrets, DECISIONS (c));
+#    VALUES never ride argv, no inline JSON map, no literal JWT material in
+#    any fenced block.
+#  * r6 spine + preflight rows + §6 identity note survive; the Appendix is
+#    now pinned byte-equal to baseline (C15: note-only tables unchanged).
+#
+# The path/name stay (rewrite #3's spine survived #4 and #5). AC trace
+# (chunks/C15.md "## Tests"): r1[AC3] r2[AC2] r3[AC4] r4[AC5] r5[AC6] r6[AC1].
 #
 # Fragment-needle discipline (the shipped strip-technique, C11 r3 map): the
 # dead blob name and the dead grammar strings are ASSEMBLED here from
@@ -37,8 +56,10 @@
 # green-shape proofs):
 #   bash tests/notes/argocd-fanout-runbook.sh            # r1..r6
 #   bash tests/notes/argocd-fanout-runbook.sh r2 r5      # subset
-# Env: FANOUT_RUNBOOK (doc), MAIN_SYNC_WF / FANOUT_SCRIPT / FANOUT_ROSTER
-#      (parity sources; defaults = the landed repo files).
+# Env: FANOUT_RUNBOOK (doc under test), MAIN_SYNC_WF / FANOUT_SCRIPT /
+#      FANOUT_ROSTER (parity sources; defaults = the landed repo files),
+#      RUNBOOK_BASE (rewrite-#4 baseline ref for the invariance legs;
+#      default = ad86dd576, the C13+C14 landing tip).
 set -euo pipefail
 
 cd "${FANOUT_ROOT:-$(git rev-parse --show-toplevel)}"
@@ -47,6 +68,8 @@ RUNBOOK="${FANOUT_RUNBOOK:-.agents/notes/2026-11-17-argocd-sync-fanout.md}"
 WF="${MAIN_SYNC_WF:-.forgejo/workflows/main-sync.yaml}"
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
+RUNBOOK_BASE="${RUNBOOK_BASE:-ad86dd576}"
+RUNBOOK_PATH_IN_GIT=".agents/notes/2026-11-17-argocd-sync-fanout.md"
 
 # Dead-grammar fragments (spaces keep the joined literal OUT of this file;
 # the legs strip-join them at run time):
@@ -84,13 +107,20 @@ export RB_BLOB="$BLOB_NAME"
 export RB_WORKDIR="$WORK" RB_FANOUT="$FANOUT" RB_WF="$WF" RB_ROSTER="$ROSTER"
 
 [ -f "$RUNBOOK" ] ||
-  fail "$RUNBOOK missing — the runbook (rewrite #3 landed it at this path) must exist for C11 to rewrite in place"
+  fail "$RUNBOOK missing — the runbook (rewrite #3 landed it at this path) must exist for C15 to rewrite in place"
+
+# Rewrite-#4 baseline: the §2/§7/§8/appendix invariance legs diff the doc
+# under test against these bytes (C15's "surgery, not rewrite" made testable).
+git show "$RUNBOOK_BASE:$RUNBOOK_PATH_IN_GIT" > "$WORK/baseline.md" 2>/dev/null ||
+  fail "cannot read the rewrite-#4 baseline (git show $RUNBOOK_BASE:$RUNBOOK_PATH_IN_GIT) — repoint RUNBOOK_BASE to the pre-C15 landing tip"
+export RB_BASE="$WORK/baseline.md"
 
 # Shared walker + parity-source reader (every r-leg imports this).
 cat > "$WORK/rbcommon.py" <<'PY'
-"""Section walker + landed-source helpers for the C11 runbook legs."""
+"""Section walker + landed-source helpers for the C15 runbook legs."""
 import importlib.util
 import json
+import os
 import re
 import sys
 
@@ -125,34 +155,87 @@ def make_section(lines, heads):
 
 
 def fanout_module():
-    path = __import__("os").environ.get("RB_FANOUT", "scripts/argocd-fanout.py")
+    path = os.environ.get("RB_FANOUT", "scripts/argocd-fanout.py")
     spec = importlib.util.spec_from_file_location("fanout_under_test", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod, path
 
 
-def workflow_env_names():
+def sync_fanout():
     import yaml
-    wf = __import__("os").environ.get("RB_WF", ".forgejo/workflows/main-sync.yaml")
+    wf = os.environ.get("RB_WF", ".forgejo/workflows/main-sync.yaml")
     jobs = (yaml.safe_load(open(wf)) or {}).get("jobs") or {}
+    return (jobs.get("sync-fanout") or {}), wf
+
+
+def workflow_env_names():
+    job, wf = sync_fanout()
     names = []
-    for src in [jobs.get("sync-fanout", {}).get("env") or {}] + \
-               [s.get("env") or {} for s in (jobs.get("sync-fanout", {}).get("steps") or [])
-                if isinstance(s, dict)]:
+    for src in [job.get("env") or {}] + [s.get("env") or {} for s in (job.get("steps") or [])
+                                         if isinstance(s, dict)]:
         for k in src:
             if k.startswith("ARGOCD_SYNC_"):
                 names.append(k)
     return names, wf
+
+
+def filter_step():
+    """The landed filter step (env carrying the toJSON blobs) — R8 anatomy
+    home. Anchored on the blob env KEYS, not the step name wording."""
+    job, wf = sync_fanout()
+    for s in (job.get("steps") or []):
+        env = (s.get("env") or {}) if isinstance(s, dict) else {}
+        if "SECRETS_JSON" in env or "VARS_JSON" in env:
+            return s, wf
+    return None, wf
+
+
+def step_names():
+    job, _ = sync_fanout()
+    return [str(s.get("name")) for s in (job.get("steps") or [])
+            if isinstance(s, dict) and s.get("name")]
+
+
+def fan_out_env():
+    job, _ = sync_fanout()
+    for s in (job.get("steps") or []):
+        if isinstance(s, dict) and "fan out" in str(s.get("name", "")).lower():
+            return {k: str(v) for k, v in (s.get("env") or {}).items()}
+    return {}
+
+
+def pair_table(text):
+    """Extract the §2 creation rows: category -> (bare URL key name, URL
+    value, bare TOKEN key name). Prefix-insensitive on purpose: rewrite #4
+    wrote `vars.`/`secrets.` expression forms, rewrite #5 names the bare
+    Actions-UI keys (AC4 bans the prefixed forms) — the OWNER'S work is the
+    same set either way, and that equality is what this extraction pins."""
+    rows = {}
+    for ln in text.splitlines():
+        if not ln.lstrip().startswith("|"):
+            continue
+        cells = [c.strip().strip("`* ") for c in ln.strip().strip("|").split("|")]
+        if not cells or cells[0] in ("category", "---") or set(cells[0]) <= {"-"}:
+            continue
+        um = re.search(r"(?<![A-Z])ARGOCD_SYNC_([A-Z0-9_]+)_URL(?![A-Z0-9_])", ln)
+        tm = re.search(r"(?<![A-Z])ARGOCD_SYNC_([A-Z0-9_]+)_TOKEN(?![A-Z0-9_])", ln)
+        url = re.search(r"https://[^`\s|)]+", ln)
+        if um and tm and url and cells[0].replace("-", "").isalnum():
+            rows[um.group(1).lower().replace("_", "-")] = (
+                "ARGOCD_SYNC_%s_URL" % um.group(1),
+                url.group(0).rstrip("/"),
+                "ARGOCD_SYNC_%s_TOKEN" % tm.group(1),
+            )
+    return rows
 PY
 
-# --- r1: §2 creation legs + the 3-surface name-agreement + §7/§8 postures ----------
-# The (i-adj-1) primary-guard made testable: EVERY ARGOCD_SYNC_* key name the
-# runbook tells the owner to create must (a) equal, as a set, the workflow's
-# enumerated env names, (b) be accepted by the LANDED script's own regex law
-# (module imported from the real file — discover_targets must return exactly
-# those categories), and (c) carry URL values equal to the §6 hosts table.
-# A drifted name bites HERE, before any owner ever hunts a missing key.
+# --- r1: §2 owner-work invariance + filter-law agreement + §4 anatomy parity --------
+# (C15 AC3.) The 22-row equality of the C11 suite TRANSFORMS into the three-
+# surface LAW agreement: runbook table names ⇄ the landed filter's selection
+# regex ⇄ the script's PAIR_KEY_RE, plus §2 URL values ⇄ §6 hosts (survives).
+# The workflow carrying ZERO enumerated names is asserted too — a resurrected
+# enumeration breaks the doc's own premise.
 if want r1; then
   if ! python3 - "$RUNBOOK" <<'PY'
 import os, re, sys
@@ -161,9 +244,13 @@ sys.path.insert(0, os.environ["RB_WORKDIR"])
 import rbcommon as rb
 
 doc = rb.load_doc(sys.argv[1])
+base = rb.load_doc(os.environ["RB_BASE"])
 lines = doc.splitlines()
 heads, order = rb.heads_lines(lines)
 section = rb.make_section(lines, heads)
+blines = base.splitlines()
+bheads, _ = rb.heads_lines(blines)
+bsection = rb.make_section(blines, bheads)
 
 
 def bad(msg):
@@ -173,156 +260,175 @@ def bad(msg):
 
 sec2 = section(2)
 
-# §2 org-settings creation legs for BOTH key kinds (AC2).
-if not re.search(r"(?i)org[^.\n]{0,40}settings[^.\n]{0,40}actions|org settings\s*(→|->)\s*actions", sec2):
-    bad("§2 does not place the keys in the prod instance's ORG Settings → Actions (R7: org-scoped hygiene, inherited by the repo — NOT repo settings)")
-if not re.search(r"(?i)\bvars?\b", sec2) or not re.search(r"(?i)secrets?\b", sec2):
+# --- §2 owner-work invariance vs rewrite #4 (AC3: "the owner's work did NOT
+# change") — the mints block byte-equal; the table equal modulo the sanctioned
+# prefix drop; the §2.4 trio leg intact.
+def first_block(text):
+    m = re.search(r"```[a-z]*\n(.*?)```", text, re.S)
+    return m.group(1) if m else ""
+
+mint_cur, mint_base = first_block(sec2), first_block(bsection(2))
+if not mint_cur or mint_cur != mint_base:
+    bad("§2.1's mint block is not byte-identical to the rewrite-#4 baseline (§2 work legs byte-unchanged — the 11 `argocd account generate-token` lines are the owner's procedure; a diff here means the surgery touched owner legs)")
+if mint_cur.count("generate-token") != 11:
+    bad("§2.1 carries %d mint lines, expected 11 (one mcp-bot JWT per fleet cluster)" % mint_cur.count("generate-token"))
+
+rows_cur, rows_base = rb.pair_table(sec2), rb.pair_table(bsection(2))
+if len(rows_base) != 11:
+    bad("the BASELINE table extracted %d rows, expected 11 — the extractor or the baseline ref is wrong" % len(rows_base))
+if rows_cur != rows_base:
+    only_b = {c: v for c, v in rows_base.items() if rows_cur.get(c) != v}
+    only_c = {c: v for c, v in rows_cur.items() if rows_base.get(c) != v}
+    bad("the §2 creation table drifted from the owner's work: baseline-side %s, doc-side %s (C15 keeps the 11 pairs EXACTLY — names modulo the sanctioned vars./secrets. prefix drop, values, and sides)" % (only_b or 'none', only_c or 'none'))
+if len(rows_cur) != 11:
+    bad("the §2 table names %d categories, expected 11 (both sides per category)" % len(rows_cur))
+
+# Org placement + repo-twin warning (survives; R8 kept the placement story).
+if not re.search(r"(?is)org[\s\S]{0,40}settings[\s\S]{0,40}actions", sec2):
+    bad("§2 does not place the keys in the prod instance's ORG Settings → Actions (org-scoped hygiene is unchanged by R8)")
+if not (re.search(r"(?i)\bvars?\b", sec2) and re.search(r"(?i)secrets?\b", sec2)):
     bad("§2 must describe BOTH kinds: 11 org VARS (URL-side) and 11 org SECRETS (TOKEN-side)")
-if not re.search(r"(?i)repo[- ](side|twin)[^.\n]{0,120}(win|shadow|never|silence)|(never|not)[^.\n]{0,40}repo[- ](side|level)", sec2):
-    bad("§2 lacks the single-instance repo-twin warning for both kinds (a repo key of either WINS silently — the runbook must say so)")
+if not re.search(r"(?is)repo[- ](side|twin)[\s\S]{0,160}(win|shadow|never|silence)|(never|not)[\s\S]{0,60}repo[- ](side|level)", sec2):
+    bad("§2 lacks the single-instance repo-twin warning (a repo key of either kind WINS silently — the placement law survives R8)")
 
-# Pair table: key names as CREATED in §2 (the surface the owner reads against
-# the Actions UI). Incidental citations elsewhere (§8's malformed example,
-# §2.4's dead blob name) are prose, not creation instructions, and are
-# checked by r3's bans instead.
-pat = re.compile(r"ARGOCD_SYNC_([A-Z0-9_]+)_(URL|TOKEN)")
-doc_names = set(m.group(0) for m in pat.finditer(sec2))
-doc_cats = {}
-for m in pat.finditer(sec2):
-    doc_cats.setdefault(m.group(1), set()).add(m.group(2))
-if not doc_names:
-    bad("§2 names no ARGOCD_SYNC_*_URL/_TOKEN keys — the 11-pair creation table (AC2) is the whole §2 rewrite")
+# The trio leg intact (§2.4): all three dead names, delete verbs near.
+for trio in ("ARGOCD_HOOK_URL", "ARGOCD_HOOK_SECRET", "ARGOCD_SYNC_TOK" "ENS"):
+    if trio not in sec2:
+        bad("§2.4's moot-trio delete-check no longer names %s (the cleanup leg is owner work and byte-unchanged)" % trio)
 
-wf_names, wf_path = rb.workflow_env_names()
-wf_set = set(wf_names)
-missing_in_wf = sorted(doc_names - wf_set)
-missing_in_doc = sorted(wf_set - doc_names)
-if missing_in_wf or missing_in_doc:
-    bad("cross-artifact name set-equality FAILED: runbook-only names %s, workflow-only names %s — the runbook's creation table and %s's 22-row enumeration must be THE SAME NAMES (DECISIONS (i-adj-1): this leg is the primary drift guard; the script's broad-catch is only defense in depth)" % (missing_in_wf, missing_in_doc, wf_path))
-if len(wf_set) != 22:
-    bad("workflow enumerates %d pair names, expected 22 — the runbook equality is pinned against the fleet of 11" % len(wf_set))
-if len(doc_names) != 22:
-    bad("the runbook names %d of the 22 keys, expected all 22 (11 pairs, AC2 table completeness)" % len(doc_names))
-incomplete = [seg for seg, sides in doc_cats.items() if sides != {"URL", "TOKEN"}]
-if incomplete:
-    bad("categories %s appear in §2 with only one side named — each pair must name BOTH the org var and the org secret" % incomplete)
-
-# Script-side acceptance: import the LANDED module and discover from the
-# doc's own names — every one must survive SEG_RE/CAT_RE and derive exactly
-# the workflow's categories.
+# --- the TRANSFORMED cross-surface law (r1 map): runbook ⇄ filter ⇄ script.
 mod, _ = rb.fanout_module()
-env = {n: ("https://cluster.example" if n.endswith("_URL") else mod.token_placeholder() if hasattr(mod, "token_placeholder") else "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhIiwic3FsIjoiZG9jLW5hbWUtdmFsaWRhdGlvbiJ9.SIGDOCVa1uE")
-       for n in sorted(doc_names)}
-try:
-    disc = mod.discover_targets(env)
-except Exception as e:
-    bad("the landed script REJECTED the runbook's key names (%s) — §2 tells the owner to create keys discovery goes red on: the doc and the regex law disagree" % e)
+fs, wf_path = rb.filter_step()
+if fs is None:
+    bad("%s has no filter step (name carrying 'filter') — r1's law source moved; the fleet-blind workflow must have landed before this leg can pass" % wf_path)
+m = re.search(r'sel = re\.compile\("(\^[^"]+\$)"\)', str(fs.get("run", "")))
+if not m:
+    bad("the landed filter step carries no `sel = re.compile(\"^…$\")` selection regex — r1's law must be READ from the workflow bytes, never re-typed")
+filter_pat = m.group(1)
+if filter_pat != mod.PAIR_KEY_RE.pattern:
+    bad("filter regex %r != the script's PAIR_KEY_RE %r — the filter and the validator must enforce ONE pair law (DECISIONS 2026-11-26 a/b); drift means the CI channel and the local channel fork" % (filter_pat, mod.PAIR_KEY_RE.pattern))
+
+wf_names, _ = rb.workflow_env_names()
+if wf_names:
+    bad("the landed workflow enumerates pair env names %s — this suite's premise is the fleet-blind job (C13 deleted the rows; a resurrected enumeration invalidates §2's law-equality leg and the runbook's anatomy)" % sorted(wf_names))
+
+selre = re.compile(filter_pat)
+bad_names = sorted(n for pair in rows_cur.values() for n in (pair[0], pair[2]) if not selre.match(n))
+if bad_names:
+    bad("§2 names that the LANDED filter would NOT select: %s — every key the runbook tells the owner to create must match the filter's regex, or CI silently drops its cluster" % bad_names)
+
+# Script-side acceptance: doc names through the landed validator.
+env = {name: ("https://cluster.example" if name.endswith("_URL")
+              else "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhIiwic3FsIjoiZG9jLW5hbWUtdmFsaWRhdGlvbiJ9.SIGDOCVa1uE")
+       for pair in rows_cur.values() for name in pair if name != pair[1]}
+disc = mod.discover_targets(env)
 if disc is mod.NOT_CONFIGURED:
-    bad("discover_targets says NOT_CONFIGURED for the doc's 11 TOKEN names — the runbook table would create a fleet the script does not see")
+    bad("discover_targets says NOT_CONFIGURED for the doc's TOKEN names — the runbook table would create a fleet the script does not see")
 got = {t["name"] for t in disc["targets"]}
-wf_cats = {n[len("ARGOCD_SYNC_"):-4].lower().replace("_", "-") for n in wf_names if n.endswith("_URL")}
-if got != wf_cats:
-    bad("runbook names discover to categories %s, workflow enumerates %s — the underscore→hyphen derivation must agree across the three surfaces" % (sorted(got), sorted(wf_cats)))
+if got != set(rows_cur):
+    bad("runbook names discover to categories %s, table rows are %s — the underscore→hyphen law must round-trip exactly" % (sorted(got), sorted(rows_cur)))
 
-# §2 URL values == §6 hosts (route truth relocated here per micro-call f):
-# per-category full-URL equality between the two tables. Lines are parsed
-# per-row so a table may carry key and value in the same or split cells.
+# --- §2 URL values == §6 hosts (route truth relocated here per micro-call f).
 sec6 = section(6)
-
-
-def cat_urls(text):
-    out = {}
-    for ln in text.splitlines():
-        km = re.search(r"ARGOCD_SYNC_([A-Z0-9_]+)_URL", ln)
-        um = re.search(r"https://[^`\s|)]+", ln)
-        if km and um:
-            out[km.group(1).lower().replace("_", "-")] = um.group(0).rstrip("/")
-    return out
-
-
-doc_urls = cat_urls(sec2)
-if not doc_urls:
-    bad("§2's pair table does not carry the full https:// URL VALUES per category (C11 AC2: values = the §6 hosts, scheme included — an operator must not have to assemble them)")
 hosts6 = {}
 for ln in sec6.splitlines():
     if not ln.lstrip().startswith("|"):
         continue
     cells = [c.strip().strip("`* ") for c in ln.strip().strip("|").split("|")]
-    if not cells:
-        continue
-    m = re.search(r"https://([a-z0-9.-]+)|^(cluster\.[a-z0-9.-]+)$", cells[1] if len(cells) > 1 else "")
-    host = (m.group(1) or m.group(2)) if m else None
-    if host:
-        hosts6[cells[0].strip("`* ")] = "https://" + host.rstrip("/")
+    if len(cells) > 1:
+        mm = re.search(r"https://([a-z0-9.-]+)|^(cluster\.[a-z0-9.-]+)$", cells[1])
+        if mm:
+            hosts6[cells[0].strip("`* ")] = "https://" + (mm.group(1) or mm.group(2)).rstrip("/")
 if len(hosts6) < 11:
     bad("§6 table exposes %d host rows in scheme-extractable form, expected 11 (the route-truth surface: runbook §6 + --check + smoke)" % len(hosts6))
-drift = {c: (doc_urls[c], hosts6[c]) for c in doc_urls if c in hosts6 and doc_urls[c] != hosts6[c]}
-if drift:
-    bad("§2 var values drift from the §6 measured hosts: %s — the org vars ARE these values; a mismatch means the paste-hunt bug class returns" % drift)
-missing = sorted(set(hosts6) - set(doc_urls))
+vdrift = {c: (rows_cur[c][1], hosts6[c]) for c in rows_cur if c in hosts6 and rows_cur[c][1] != hosts6[c]}
+if vdrift:
+    bad("§2 var values drift from the §6 measured hosts: %s — the org vars ARE these values; a mismatch means the paste-hunt bug class returns" % vdrift)
+missing = sorted(set(hosts6) - set(rows_cur))
 if missing:
     bad("§2 carries no URL value for %s (the table must be complete for all 11)" % missing)
 
-# §2 sourced-env --check recipe (step 3b) — the PINNED invocation form.
-if "source pairs.env" not in sec2.replace('"', "").replace("'", ""):
-    bad("§2 lacks the sourced-recipe pre-verify leg (`source pairs.env` then --check) — the plan pins the recipe FORM (never KEY=value on the command)")
-if not re.search(r"(?i)export", sec2):
-    bad("§2's pairs.env example must use export lines (the pinned file shape)")
+# --- §4 anatomy string parity against the LANDED files (C15 AC3: strings
+# READ from the sources so a re-typed quote reddens here).
+doc_all = doc
+fs_env = {k: str(v) for k, v in (fs.get("env") or {}).items()}
+fan_env = rb.fan_out_env()
+wf_raw = rb.load_doc(wf_path)
+mod_src = open(os.environ["RB_FANOUT"]).read()
 
-# §7 kill lever (AC5): TOKEN-side delete/blank, pinned warning as
-# proof-of-unset, all-or-nothing honesty.
-sec7 = section(7)
-if not (re.search(r"(?is)(delete|remove|blank)[^.]{0,240}secrets?[^.]{0,120}TOKEN", sec7)
-        or re.search(r"(?is)(delete|remove|blank)[^.]{0,240}TOKEN[^.]{0,120}secrets?", sec7)):
-    bad("§7's kill lever does not name deleting/BLANKING the org TOKEN secrets — the token-side configured predicate is what makes it warn-green (micro-call a)")
-if not re.search(r"(?is)lever[^.]{0,140}TOKEN|TOKEN[^.]{0,140}lever", sec7):
-    bad("§7 never binds the LEVER to the TOKEN side — the all-absent predicate is token-side (micro-call a); a URL-side lever would red-storm instead of warn-green (rejected alternative)")
-if re.search(r"(?i)(delete|remove|blank)[^.\n]{0,60}(url|var)[^.\n]{0,40}(as|the)?[^.\n]{0,20}(kill|lever|switch)", sec7):
-    bad("§7 frames the URL vars as the kill lever — URL-side keying was explicitly rejected (it would turn the lever into a red-storm)")
-if not re.search(r"(?i)(warn|skip)[^.\n]{0,80}(proof|green)|proof[- ]of[- ](off|unset)", sec7):
-    bad("§7 lacks the proof-of-unset sentence (the warning line IS the proof)")
-if not re.search(r"(?i)(one|single|partial)[^.\n]{0,220}(red|error)|red[^.\n]{0,220}(one|single|partial)", sec7):
-    bad("§7 must state the TRUE partial-kill posture: killing ONE cluster's token leaves its URL row populated ⇒ the fleet goes CONFIGURED and the residue is a config RED by ruling — all-or-nothing is the honest lever")
+names = rb.step_names()
+for want_name in ("resolve fan-out pairs", "fan out ArgoCD syncs"):
+    if want_name not in names:
+        bad("%s: the LANDED workflow has no step named %r (names present: %s) — anatomy parity reads the workflow, never this file" % (wf_path, want_name, names))
+    if want_name not in doc_all:
+        bad("the runbook never names the landed workflow step %r (§4 anatomy must quote the steps AS LANDED — fail source: %s)" % (want_name, wf_path))
 
-# §8 rotation + lockstep + category law (AC5).
-sec8 = section(8)
-if not re.search(r"(?i)delete-token", sec8):
-    bad("§8 rotation must be per-key: re-mint, argocd account delete-token the old, overwrite the ONE org secret row (micro-call: TTL posture survives, mechanics per-key)")
-if not re.search(r"(?i)overwri[^.\n]{0,60}(secret row|org secret|one row)", sec8):
-    bad("§8 lacks the overwrite-the-single-row rotation sentence")
-if not re.search(r"(?i)(lockstep|same release)[^.\n]{0,140}(workflow|enumeration|rows)|(workflow|enumeration|rows)[^.\n]{0,140}(lockstep|same release)", sec8):
-    bad("§8 lacks the decommission lockstep sentence (org pair + the 2 workflow rows in ONE release; a key-only delete leaves residue-red by design)")
-if not re.search(r"(?i)hyphen[- ]only", sec8 + sec2) or not re.search(
-        r"(?is)(categor|category)[^.\n]{0,120}(underscore|underscores|_ )[^.]{0,120}(not|never|cannot|unrepresentable)|(underscore|underscores)[^.]{0,140}(categor[^.]{0,60}(not|never|cannot|unrepresentable)|not representable|unrepresentable)", sec8 + sec2):
-    bad("§8 lacks the hyphen-only category law (a real category with an underscore is unrepresentable — micro-call c)")
+if "SECRETS_JSON" not in fs_env or "VARS_JSON" not in fs_env:
+    bad("%s: the filter step env lost the blob names (found %s) — §4's anatomy parity source moved" % (wf_path, sorted(fs_env)))
+for blob_expr in ("toJSON(secrets)", "toJSON(vars)"):
+    if blob_expr not in wf_raw:
+        bad("the landed workflow no longer serializes %s — the anatomy claim's source moved (%s)" % (blob_expr, wf_path))
+    if blob_expr not in doc_all:
+        bad("the runbook's §4 does not name %s (the delivered blobs are the R8 anatomy)" % blob_expr)
 
-# §8 TRUE envelope (i-adj-1): the catch claims must match reality.
-envsec = sec8 + "\n" + sec2
-if re.search(r"(?i)(any|every|all)[^.\n]{0,50}(typo|malformed)[^.\n]{0,50}(caught|red|reject)", envsec) and \
-   not re.search(r"(?i)(ignored|by design|outside the (regex|pair|shape))", envsec):
-    bad("§8 overclaims the catch envelope: DECISIONS (i-adj-1) pins it as valid-shape malformed ⇒ RED, DEGENERATE value-carrying shapes (e.g. ARGOCD_SYNC__TOKEN, lowercase side-suffixes) IGNORED by design, workflow rows guarded repo-side — the doc must state the true envelope, no overclaim")
-if not re.search(r"(?i)ignored[^.\n]{0,80}(by design|degenerate)|degenerate[^.\n]{0,80}ignored|outside (the|its) (regex|shape|pair)", envsec):
-    bad("§8 must name the TRUE envelope explicitly: degenerate malformed shapes are IGNORED by design (only valid-shape-with-value goes RED) — operators must not believe the scan catches all typos")
+m = re.search(r'print\("(filter: %d keys selected)"', wf_raw)
+if not m:
+    bad("the landed filter's count line changed shape — r1/r2 pins must follow the FILE (%s)" % wf_path)
+count_pin = m.group(1)
+if count_pin not in doc_all and count_pin.replace("%d", "<N>") not in doc_all:
+    bad("the runbook never quotes the filter count line — expected the landed `%s` or the documented `%s` shape (byte parity, C15 §4)" % (count_pin, count_pin.replace("%d", "<N>")))
+if 'os.chmod(path, 0o600)' not in wf_raw:
+    bad("the landed filter no longer chmods 0600 (%s) — the mode-duty claim's source moved" % wf_path)
+if not re.search(r"(?i)0600", doc_all):
+    bad("the runbook never states the pairs file's 0600 mode (C15 §4: 0600, per-job ephemeral — the filter's duty per DECISIONS (f))")
+pairs_file_key = "ARGOCD_PAIRS_FILE"
+if pairs_file_key not in fan_env:
+    bad("%s: the fan-out step env lost %s — the channel wiring's source moved" % (wf_path, pairs_file_key))
+if pairs_file_key not in doc_all:
+    bad("the runbook never names the %s channel (the script reads the pairs file in CI — §2.3's variant and §4's anatomy depend on it)" % pairs_file_key)
+if "pairs.json" not in doc_all or "pairs.json" not in wf_raw:
+    bad("the pairs.json file name must appear in BOTH the landed workflow and the runbook (the producer↔consumer contract)")
+if "RUNNER_TEMP" not in wf_raw or "RUNNER_TEMP" not in doc_all:
+    bad("RUNNER_TEMP (the per-job ephemeral home of pairs.json) must be named by the landed workflow and by the runbook alike")
+
+# The kill-lane warning + pairs line + invocation, byte-exact off the sources
+# (C11 legs that survive the re-pin — §4/§7 quote them).
+warn = getattr(mod, "WARN_NOT_CONFIGURED", None)
+if not warn or warn not in doc_all:
+    bad("the runbook never quotes the script's kill-lane warning BYTE-EXACT (§4 quote + §7 proof-of-off depend on it); landed string: %r" % warn)
+p2 = re.search(r'print\("(pairs: %d targets discovered \(values never printed\))"', mod_src)
+if not p2:
+    bad("the landed script's --check pairs line changed shape — r1's pin reads the FILE, and the runbook quotes it")
+if p2.group(1).replace("%d", "11") not in doc_all:
+    bad("the runbook's expected --check output line is not the landed `pairs: 11 targets discovered (values never printed)` (byte parity, §2.3 expectation)")
+inv = 'python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"'
+if inv not in wf_raw:
+    bad("the LANDED workflow no longer contains the pinned invocation line — r1's parity source moved; re-pin the test session side")
+if "python3 scripts/argocd-fanout.py" not in doc_all:
+    bad("the runbook never quotes the script path the job invokes")
+if "argocd-fanout.json --ref" in doc_all and inv not in doc_all:
+    bad("the runbook quotes an invocation but NOT the landed full line — a mis-typed `--ref` tail is the classic stale-doc drift; the quote must be byte-equal: %r" % inv)
 print("ok: r1")
 PY
   then
-    fail "r1: §2 creation legs / 3-surface name agreement / §7-§8 postures are violated (reason printed above)"
+    fail "r1: §2 invariance / law agreement / §4 anatomy parity are violated (reason printed above)"
   fi
-  ok "r1: §2 org-both-kinds + repo-twin warning + complete 11-pair table set-equal to the workflow's 22 env names AND accepted by the landed script's regex law (categories round-trip) + §2 URL values == §6 hosts + sourced pairs.env recipe; §7 TOKEN-side kill lever with proof-of-unset + partial-kill RED honesty; §8 per-key rotation + lockstep + hyphen-only law + the TRUE (i-adj-1) envelope wording (AC2/AC5)"
+  ok "r1: §2.1 mints + §2.2 table + §2.4 trio byte-equal to the rewrite-#4 baseline (owner work unchanged); the table's 22 names match the LANDED filter's regex == the script's PAIR_KEY_RE and round-trip through discover_targets; the workflow enumerates ZERO names (fleet-blind); §2 URLs == §6 hosts; §4 anatomy strings (step names, blobs, filter count line, 0600, ARGOCD_PAIRS_FILE, pairs.json, RUNNER_TEMP, warning, pairs-line, invocation) byte-true against the landed workflow/script (AC3)"
 fi
 
-# --- r2: parity greps against the LANDED files (AC4) -------------------------------
-# Strings are READ FROM the sources (module constants, print formats, env
-# map, invocation line, job name, roster keys) — re-typing them here would
-# drift from what C09/C10 actually shipped.
+# --- r2: §5 = the first dispatch as the live engine-claims validation (C15 AC2) -----
 if want r2; then
   if ! python3 - "$RUNBOOK" <<'PY'
-import json, os, re, sys
+import os, re, sys
 
 sys.path.insert(0, os.environ["RB_WORKDIR"])
 import rbcommon as rb
 
 doc = rb.load_doc(sys.argv[1])
+lines = doc.splitlines()
+heads, _ = rb.heads_lines(lines)
+section = rb.make_section(lines, heads)
+sec5 = section(5)
 
 
 def bad(msg):
@@ -330,65 +436,70 @@ def bad(msg):
     sys.exit(1)
 
 
-mod, mod_path = rb.fanout_module()
+# 1. The revert fallback: hash + revert verb + the one-commit/zero-impact
+#    shape (C15 §5 verbatim claim — the chunk's own parenthetical wording is
+#    avoided because AC4 bans it; the pinned truth is the hash + scope).
+if not re.search(r"(?is)revert[\s\S]{0,160}?d81831446|d81831446[\s\S]{0,160}?revert", sec5):
+    bad("§5 lacks the d81831446 revert-fallback sentence — the owner's no-probe ruling is only honest with the one-commit fallback pinned (STATE reopen4, C15 AC2)")
+if not re.search(r"(?is)d81831446[\s\S]{0,160}?(one commit|zero cluster impact)|(one commit|zero cluster impact)[\s\S]{0,160}?d81831446", sec5):
+    bad("§5's fallback sentence must carry the landed scope claim (one commit, zero cluster impact)")
 
-# 1. The kill-lane warning, byte-exact off the landed script constant.
-warn = getattr(mod, "WARN_NOT_CONFIGURED", None)
-if not warn:
-    bad("%s defines no WARN_NOT_CONFIGURED constant (wave-11 landing moved it) — r2 reads the string from the script, not from memory" % mod_path)
-if warn not in doc:
-    bad("the runbook never quotes the script's kill-lane warning BYTE-EXACT (§4 quote + §7 proof-of-unset depend on it); landed string: %r" % warn)
+# 2. The engine-claim legs the skipped probes would have run (C15 §5(a)):
+#    each claim token must appear in §5 with its consequence (windows tolerate
+#    markdown reflow — presence pins, not phrasing pins).
+for pat, why in (
+        (r"(?i)toJSON", "expression-green ⇒ toJSON supported on this fork build [49][50][53]"),
+        (r"(?i)filter:\s*(?:<N>|\d+|%d)[\s\S]{0,40}keys?\s+selected", "filter-count green ⇒ org+repo merge delivered complete [43][44][46]"),
+        (r"(?i)RUNNER_TEMP", "step-2 found the file ⇒ RUNNER_TEMP persistence across run steps [40][51]"),
+        (r"(?i)(log|search)[\s\S]{0,120}(raw|mask)|(raw|mask)[\s\S]{0,120}(log|blob)", "log value-search finds nothing raw ⇒ per-value masking survives blob serialization [40]"),
+):
+    if not re.search(pat, sec5):
+        bad("§5's first-dispatch leg list lacks the %s claim token (%s — C15 AC2: the skipped probe legs BECOME these expectations)" % (pat, why))
 
-# 2. The --check pairs line: format extracted from the script source.
-src = open(mod_path).read()
-m = re.search(r'print\("(pairs: %d targets discovered \(values never printed\))"', src)
-if not m:
-    bad("the landed script's --check pairs line changed shape (%r) — r2's pin must follow the FILE, and the runbook quotes it" % "pairs line pattern not found")
-fmt = m.group(1)
-if fmt.replace("%d", "11") not in doc:
-    bad("the runbook's expected --check output line is not the landed `pairs: 11 targets discovered (values never printed)` (byte parity, C11 step-3b expectation)")
+# 3. Fleet-drift honesty: expected == VAULT reality, count = inventory/audit,
+#    never softened into "the fan-out alerts on drift" (C15 dev note).
+if not re.search(r"(?i)vault[\s\S]{0,60}reality|reality[\s\S]{0,40}vault", sec5):
+    bad("§5 lacks the fleet-drift honesty line (the expected targets=N EQUALS VAULT REALITY — C15 §5/AC2)")
+if not re.search(r"(?is)(not|never)[\s\S]{0,40}repo\s+(list|table|number)", sec5):
+    bad("§5 must say the count expectation is NOT a repo list (the drift line's whole point)")
+if not re.search(r"(?i)(log|count)[\s\S]{0,120}(inventory|audit)|(inventory|audit)[\s\S]{0,120}(log|count)", sec5):
+    bad("§5 must point at the log/count as the fleet audit (pure discovery — no membership list exists to diff)")
+if re.search(r"(?i)(fan-?out|the job) (alerts|warns|red)s? on drift", doc):
+    bad("the runbook claims the fan-out ALERMS on clean drift — pure discovery it does NOT (count-only by ruling; C15 dev note: state the opposite plainly once)")
 
-# 3. The job name + invocation line off the workflow.
-wf_raw = open(os.environ.get("RB_WF", ".forgejo/workflows/main-sync.yaml")).read()
-if "sync-fanout" not in doc:
-    bad("the runbook never names the sync-fanout job")
-inv = 'python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"'
-if inv not in wf_raw:
-    bad("the LANDED workflow no longer contains the pinned invocation line — r2's parity source moved; re-pin the test session side")
-if "python3 scripts/argocd-fanout.py" not in doc:
-    bad("the runbook never quotes the script path the job invokes")
+# 4. The two RULED failed rows survive unchanged (C15 §5(a)).
+pl = [ln for ln in lines if "proxy-local" in ln and "307" in ln]
+if not pl:
+    bad("no line pairs proxy-local with 307 — the landed structural finding is a RULED expected-failed row (§5/§6), unchanged by R8")
+if not re.search("(?i)(fail|expected|red|ruled|structural)", " ".join(pl)):
+    bad("the proxy-local 307 rows never say it audits FAILED by ruling — expectation wording required (§5 smoke list)")
+pb = [ln for ln in lines if "proxy-backup" in ln and re.search(r"(?i)fail", ln)]
+if not pb:
+    bad("no line pairs proxy-backup with a fail expectation (the OQ9 posture, unchanged by R7/R8)")
 
-# 4. Representative env pair + all 22 names already guarded by r1; here the
-# var/secret PREFIX form must appear in the doc (§2: vars.X / secrets.X).
-for form in ("vars.ARGOCD_SYNC_DEV_URL", "secrets.ARGOCD_SYNC_DEV_TOKEN"):
-    if form not in doc:
-        bad("the runbook does not use the %s expression form for the dev pair — §2 must name the keys EXACTLY as the workflow wires them (the Actions UI shows these names)" % form)
+# 5. (b)/(c)/(d): the pre-check legs survive with the pairs-file variant added.
+if "ARGOCD_PAIRS_FILE" not in sec5:
+    bad("§5(b) lacks the pairs-file variant of the pre-check recipe (C15: (b) gains the file-channel form)")
+if not re.search(r"(?i)--dry-run", sec5):
+    bad("§5 dropped the --dry-run live leg (GETs only — the reachability proof)")
 
-# 5. Roster globals: the file parses to the five keys, and the doc quotes
-# the roster path (§1/§4) + never claims the roster lists targets.
-roster = json.load(open(os.environ.get("RB_ROSTER", "scripts/argocd-fanout.json")))
-if set(roster) != {"allowed_refs", "tracked_repo", "settle_seconds", "target_timeout_seconds", "parallel_workers"}:
-    bad("landed roster keys are %s (C09's five globals expected) — the parity source moved under the suite" % sorted(roster))
-if "scripts/argocd-fanout.json" not in doc:
-    bad("the runbook never names the roster JSON (it still exists as the globals home)")
-if re.search(r"(?i)roster[^.\n]{0,60}(11|targets|list of categories|endpoint list)", doc):
-    bad("the runbook claims the roster carries endpoints — R7: the endpoint list is the env pairs; the roster is five globals")
-
-# 6. Audit/summary grammar + refs, doc-side quotes vs script-side prints.
-for tok, where in (("fan-out summary", src), ("allowed_refs", src), ("refs/heads/main", json.dumps(roster))):
-    if tok in doc and tok not in where:
-        bad("the runbook quotes %r but the landed source (%s) no longer contains it" % (tok, "script/roster"))
-if "targets=" not in doc:
-    bad("the runbook §5 smoke must teach the summary line's targets=<DISCOVERED> shape (the count is the pair count now)")
+# 6. CLI-surface truth: the landed script exposes exactly the four flags and
+#    the runbook must not advertise a CLI pairs flag (DECISIONS (c)).
+mod_src = open(os.environ["RB_FANOUT"]).read()
+flags = set(re.findall(r'add_argument\("--([a-z-]+)"', mod_src))
+if flags != {"config", "ref", "check", "dry-run"}:
+    bad("the landed script's flag surface is %s, expected exactly config/ref/check/dry-run — r2's CLI pin must follow the FILE" % sorted(flags))
+if re.search(r"--pairs", doc):
+    bad("the runbook advertises a --pairs CLI flag — the R8 channel is the ARGOCD_PAIRS_FILE ENV var, the argparse surface is frozen (DECISIONS (c))")
 print("ok: r2")
 PY
   then
-    fail "r2: parity against the landed files is violated (reason printed above)"
+    fail "r2: §5's first-dispatch-as-validation contract is violated (reason printed above)"
   fi
-  ok "r2: byte parity for the kill-lane warning (script constant), the pairs-line check expectation (script source), the invocation + job + pair-name expression forms (workflow), the five-globals roster (JSON) and the audit/summary grammar; the roster-endpoint claim stays dead (AC4)"
+  ok "r2: d81831446 revert-fallback sentence (hash + one-commit/zero-impact scope); the four engine-claim tokens (toJSON / filter-count / RUNNER_TEMP / masking-log) as enumerated first-dispatch legs; the fleet-drift honesty line (vault reality, not a repo list, count-as-audit) with NO alert-on-drift softening; the two RULED failed rows intact; §5(b) carries the pairs-file variant; the landed flag surface is four and no --pairs flag is advertised (AC2)"
 fi
 
-# --- r3: dead-mechanics ban (AC3) ---------------------------------------------------
+# --- r3: stale-vocabulary sweep — enumeration-era claims die (C15 AC4) --------------
 if want r3; then
   if ! python3 - "$RUNBOOK" "$RB_BLOB" "$CAT_GRAMMAR" "$PASTE_NAME" <<'PY'
 import os, re, sys
@@ -405,31 +516,49 @@ def bad(msg):
     sys.exit(1)
 
 
-# Stale-mechanics needles (joined forms arrive as argv or from fragments;
-# this file never carries the blob literal inline).
+# Kept dead-mechanics needles (joined forms arrive from fragments so THIS
+# file never carries the literals — the disposal sweeps stay honest):
 NEEDLES = [
     (cat_grammar, "the superseded blob record grammar"),
     (paste_name, "the compose-the-paste artifact"),
-    ("::warning::sync-fanout not configured (org-level", "the SUPERSEDED warning wording (the script's own line — read by r2 — replaced the shell-guard text)"),
-    ("[26]", "the per-line masking citation — the blob design that needed it is dead (C11: one honest native-masking sentence, no [26] framing)"),
+    ("::warning::sync-fanout not configured (org-level", "the SUPERSEDED warning wording (the script's own line — read by r1 — replaced the shell-guard text)"),
+    ("[26]", "the per-line masking citation — the blob design that needed it is dead (one honest native-masking sentence, no [26] framing)"),
 ]
 for pat, why in NEEDLES:
     if pat in doc:
-        bad("the runbook still carries %r (%s) — dead mechanics are deleted, not softened (AC3)" % (pat, why))
+        bad("the runbook still carries %r (%s) — dead mechanics are deleted, not softened (AC4)" % (pat, why))
 
+# C15 AC4 + the launch brief's enumeration-era additions. Fragment needles,
+# file-wide, with the §2.4 delete-check exemption for the expression forms.
 for pat, why in (
-        (r"(?i)newline[- /]?(delimited|record|grammar|form|style|lines)", "the newline-records ruling (OQ8 mechanics were superseded by R7; the DELIMITER story must not be taught any more)"),
+        (r"(?i)newline[- /]?(delimited|record|grammar|form|style|lines)", "the newline-records ruling (OQ8 mechanics died with the blob)"),
         (r"(?i)comma[- ]?(separated|delimited)", "the delimiter-tolerance story (parser died with the blob)"),
-        (r"(?i)per[- ]line (mask\w*)[^.\n]{0,80}(holds|verif|granular|wins|guarante|proof|ruling)|(verif|re-weigh)[^.\n]{0,40}per[- ]line|per[- ]line masking granularity", "AFFIRMING per-line masking (the C11 dev-note allowance is ONE sentence calling the claim MOOT; affirmations re-teach the dead design)"),
-        (r"(?i)\bone (secret|vault)\b|single (secret|vault)\b|\bONE secret\b", "the ONE-secret phrasing (there are 22 keys now: 11 vars + 11 secrets)"),
+        (r"(?i)per[- ]line (mask\w*)[^.\n]{0,80}(holds|verif|granular|wins|guarante|proof|ruling)|(verif|re-weigh)[^.\n]{0,40}per[- ]line|per[- ]line masking granularity", "AFFIRMING per-line masking (only the sentence calling the claim MOOT was ever allowed)"),
+        (r"(?i)\bone (secret|vault)\b|single (secret|vault)\b|\bONE secret\b", "the ONE-secret phrasing (the vault holds per-cluster PAIRS)"),
+        # enumeration-era claims (C15's sweep); multi-word needles use \s+ so a
+        # markdown line-wrap cannot dodge them:
+        (r"(?i)enumeration\s+rows?", "an enumeration-row claim — R8 deleted the rows; the script's own 'enumeration keys' MESSAGE phrase is exempt (it stays byte-true, quoted via r1's parity legs, and never says 'row')"),
+        (r"(?i)22\s+org\s+pair\s+names|\b22[\s-]+rows?\b", "a workflow-row-count claim — the fleet-blind job carries none (a VAULT key count like '22 keys' is legitimate owner-work wording)"),
+        (r"(?i)static\s+enumeration|static\s+rows|static[\s-]+map", "a static-enumeration claim survives — R8 retired it with the rows"),
+        (r"(?i)cannot\s+index", "the refuted [21][25] indexing-premise claim — source-refuted, DECISIONS 2026-11-26"),
+        (r"(?i)workflow\s+(enumeration\s+)?rows?", "a workflow-rows claim — fleet membership is vault-only, zero repo edits ever"),
+        (r"(?is)(org\s+pair|key\s+pair|decommission|removing)[\s\S]{0,80}?(lockstep|same\s+release)|(lockstep|same\s+release)[\s\S]{0,80}?(org\s+pair|key\s+pair|workflow)", "a pair↔rows lockstep claim survives — micro-call (d) died with the rows (the tracked_repo↔annotations lockstep law is a DIFFERENT sentence and stays)"),
+        (r"(?i)\bcategories\b", "the plural membership token — the declined oracle vocabulary is banned file-wide (pure discovery names this 'the fleet'; singular 'category' as the derivation token stays fine)"),
+        (r"(?i)\boracle\b", "the declined membership-oracle vocabulary is banned file-wide — the branch-protection CARD is the named backstop, not an 'oracle'"),
 ):
-    if re.search(pat, doc):
-        m = re.search(pat, doc)
-        bad("the runbook matches the dead-grammar pattern %r (%s) at: %r (AC3)" % (pat, why, doc[max(0, m.start()-40):m.end()+40]))
+    mm = re.search(pat, doc)
+    if mm:
+        bad("the runbook matches the banned pattern %r (%s) at: %r (AC4)" % (pat, why, doc[max(0, mm.start()-40):mm.end()+40]))
 
-# The moot TRIO: hook pair + the reopen2 blob. Hook names may appear ONLY
-# in §2's delete-check; the blob name exactly ONCE, on a line that also
-# says delete.
+# Expression forms: the §2.4 delete-check line naming the dead blob key is
+# the ONLY sanctioned ARGOCD_SYNC_ expression form in the file (AC4).
+for i, ln in enumerate(lines, 1):
+    if re.search(r"(?i)(vars|secrets)\.ARGOCD_SYNC_", ln):
+        if "ARGOCD_SYNC_TOK" "ENS" not in ln:
+            bad("line %d uses the %r expression form outside the sanctioned §2.4 delete-check line — rewrite #5 names the bare Actions-UI keys (the job selects them from the delivered map; no expression references a pair key any more): %r" % (i, re.search(r"(?i)(vars|secrets)\.ARGOCD_SYNC_[A-Za-z0-9_]*", ln).group(0)[:40], ln.strip()[:120]))
+
+# The moot TRIO (unchanged discipline): hook pair names §2-only; the blob
+# name exactly ONCE, on a line that also says delete.
 def section_of(doc, n):
     heads = []
     lines_ = doc.splitlines()
@@ -449,34 +578,32 @@ def section_of(doc, n):
 
 blob_lines = [i for i, ln in enumerate(lines) if blob in ln]
 if len(blob_lines) != 1:
-    bad("the dead blob name %r appears on %d lines, expected EXACTLY the one §2.4 delete-check line (AC3: named only as a key to remove — the 11-23→11-25 window may have created it; confirm absence or delete)" % (blob, len(blob_lines)))
+    bad("the dead blob name %r appears on %d lines, expected EXACTLY the one §2.4 delete-check line (AC4: named only as a key to remove)" % (blob, len(blob_lines)))
 if blob_lines:
     i = blob_lines[0]
     window = "\n".join(lines[max(0, i - 3):i + 2])  # wrapping may split the verb and the key
     if not re.search(r"(?i)delete|remove|absence", window):
         bad("the single blob-name occurrence has no delete/remove/absence verb within its 3-line context (the sanctioned §2.4 mention shape): %r" % lines[i][:120])
-sec2 = section_of(doc, 2)
 for nn in (1, 3, 4, 5, 6, 7, 8):
     if "ARGOCD_HOOK" in section_of(doc, nn):
-        bad("section %d mentions ARGOCD_HOOK_* keys — the moot pair is nameable ONLY in §2's delete-check (AC3's trio discipline)" % nn)
-for trio in ("vars.ARGOCD_HOOK_URL", "secrets.ARGOCD_HOOK_SECRET"):
-    if trio not in sec2:
-        bad("§2's delete-check does not name %s — the moot TRIO (hook pair + the reopen2 blob) is the full cleanup leg (AC3/human-owned list)" % trio)
-if blob not in sec2:
-    bad("§2's delete-check does not name %s (the third of the trio)" % blob)
+        bad("section %d mentions ARGOCD_HOOK_* keys — the moot pair is nameable ONLY in §2's delete-check (the trio discipline)" % nn)
 
-# No webhook-creation tells (survives from rewrite #3's spine).
+# No webhook-creation tells (rewrite #3's spine survives).
 if re.search(r"(?i)add webhook|settings\s*(→|->)\s*web ?hooks", doc):
-    bad("a webhook-creation UI path survives (R1 option (c): the job IS the webhook; AC1 bars creation steps)")
+    bad("a webhook-creation UI path survives (R1 option (c): the job IS the webhook; creation steps stay barred)")
 print("ok: r3")
 PY
   then
-    fail "r3: dead mechanics survive in the runbook (reason printed above)"
+    fail "r3: stale vocabulary survives in the runbook (reason printed above)"
   fi
-  ok "r3: zero hits for cat:token / tokens-paste / old-warning / [26] / newline-comma grammar / per-line-masking / one-secret phrasing; the blob name sits EXACTLY ONCE on a delete-check line; ARGOCD_HOOK_* confined to §2's trio leg; no webhook-creation tells (AC3)"
+  ok "r3: zero hits for the kept dead mechanics (cat:token / tokens-paste / old-warning / [26] / newline-comma / per-line-masking / one-secret) AND the enumeration-era claims (enumeration row / 22-row / static enumeration / cannot index / workflow rows / pair-lockstep / categories / oracle / vars.-secrets. expression forms); the §2.4 delete-check line is the single sanctioned ARGOCD_SYNC_* expression form; the blob name sits once on a delete line; no webhook-creation tells (AC4)"
 fi
 
-# --- r4: posture rows (AC5 + the ruled expectations) --------------------------------
+# --- r4: the ruled pure-discovery envelope, pinned as contract (C15 AC5) -------------
+# DECISIONS 2026-11-26 (1)-(4): half-delete RED / both-deleted QUIET (count is
+# the only signal — asserted as DESIGNED, never hedged) / blanked-pair (j)-RED /
+# stray-complete-pair QUIET JOIN. Plus §7's kill lever and §8's rotation
+# paragraphs byte-kept from the rewrite-#4 baseline, and the carded backstop.
 if want r4; then
   if ! python3 - "$RUNBOOK" <<'PY'
 import os, re, sys
@@ -485,9 +612,16 @@ sys.path.insert(0, os.environ["RB_WORKDIR"])
 import rbcommon as rb
 
 doc = rb.load_doc(sys.argv[1])
+base = rb.load_doc(os.environ["RB_BASE"])
 lines = doc.splitlines()
 heads, _ = rb.heads_lines(lines)
 section = rb.make_section(lines, heads)
+blines = base.splitlines()
+bheads, _ = rb.heads_lines(blines)
+bsection = rb.make_section(blines, bheads)
+
+sec2, sec7, sec8 = section(2), section(7), section(8)
+envelope = sec2 + "\n" + sec7 + "\n" + sec8
 
 
 def bad(msg):
@@ -495,38 +629,74 @@ def bad(msg):
     sys.exit(1)
 
 
-# The two RULED failed rows (proxy-local 307 structural, proxy-backup OQ9):
-# the doc must expect them, naming both the category and the shape.
-pl = [ln for ln in lines if "proxy-local" in ln and "307" in ln]
-if not pl:
-    bad("no line pairs proxy-local with 307 — the landed structural finding (the hub route 307s to the SSO edge; C09's no-follow opener turns it into an honest `applications list HTTP 307`) is a RULED expected-failed row (§5/§6)")
-if not re.search("(?i)(fail|expected|red|ruled|structural)", " ".join(pl)):
-    bad("the proxy-local 307 rows never say it audits FAILED by ruling — expectation wording required (§5 smoke list)")
-pb = [ln for ln in lines if "proxy-backup" in ln and re.search(r"(?i)fail", ln)]
-if not pb:
-    bad("no line pairs proxy-backup with a fail expectation (the OQ9 warn-and-skip posture, unchanged by R7)")
+# --- the exact lever/envelope triad (C15 §2 closing + §7/§8):
+# (a) blanking a token (value present, "") ⇒ (j) RED while configured
+if not re.search(r"(?is)blank[\s\S]{0,400}?(\(j\)|\bRED\b)|\(\(?j\)?\)[\s\S]{0,400}?blank", envelope):
+    bad("the doc never states that BLANKING a token (present-but-empty value) is (j)-RED while the fleet is configured — ruling (3) of the OQ-A answer")
+# (b) deleting ONE key ⇒ half-pair RED naming the category
+if not re.search(r"(?is)(one|single|one-sided)[\s\S]{0,200}?(key|side)[\s\S]{0,250}?(half[- ]pair|RED[\s\S]{0,120}?categor|categor[\s\S]{0,120}?RED)|half[- ]pair[\s\S]{0,250}?(RED|naming)", envelope):
+    bad("the doc never states that deleting ONE side leaves a half-pair that is config RED naming the category until the twin follows — ruling (1); the runbook's §7 lever truth post-C14")
+# (c) deleting BOTH ⇒ quiet drop, count-only signal, BY DESIGN
+if not re.search(r"(?is)(both|two)[\s\S]{0,120}?keys?[\s\S]{0,400}?(silent|vanish|quiet|leaves? discovery|count[\s\S]{0,80}?(only|audit))|(silent|quiet|count-only|leaves? discovery|the (only|sole) signal)[\s\S]{0,400}?(both|decommission|clean delete)", envelope):
+    bad("the doc never states the ruled QUIET class: deleting BOTH org keys retires the cluster silently, the summary count being the only signal, by design — ruling (2); the drift honesty must not be softened, nor this state claimed loud")
+# (d) a stray COMPLETE pair joins silently
+if not re.search(r"(?is)stray[\s\S]{0,250}?join|join[\w]* (the fleet )?silently|completing? a valid pair[\s\S]{0,120}?(is|enables|joins)", envelope):
+    bad("the doc never states the stray-pair mirror: a complete valid pair JOINS silently — ruling (4) (and creating a pair IS the enablement leg)")
 
-# Masking paragraph: native per-secret, not the per-line blob story.
-sec5 = section(5)
-if not re.search(r"(?is)native[^.]{0,80}(mask|secret)|(each|every)[^.]{0,40}secret[^.]{0,60}mask|single[- ]line[^.]{0,60}mask", sec5):
-    bad("§5's masking leg does not state the NATIVE per-secret masking shape (Actions masks each secret's value wherever it appears [21][22]; the [26] per-line verification died with the blob — AC3/C11 §5c)")
-if re.search(r"(?i)\[26\]|re-weigh", sec5):
-    bad("§5 still frames the masking check as [26]-verification / ruling-re-weighing — the record-shape ruling is dead; the spot-check survives as plain hygiene")
-if not re.search(r"(?i)spot[- ]?check|zero hits", sec5):
-    bad("§5 dropped the one-time log spot-check (search a token prefix, expect zero hits) — C11 keeps it as hygiene")
+# Anti-claims (the envelope is RULED both ways — a doc may not ALSO teach the
+# inverse of a quiet class; C15 dev note: the honesty must not soften, and
+# half-states may not be called quiet):
+if re.search(r"(?is)(both|clean)[\s\S]{0,80}?delet\w+[\s\S]{0,60}?\b(RED|loud)\b", envelope):
+    m = re.search(r"(?is)(both|clean)[\s\S]{0,80}?delet\w+[\s\S]{0,60}?\b(RED|loud)\b", envelope)
+    bad("the doc calls the CLEAN both-key delete RED/loud somewhere — ruling (2) pins it QUIET (the count is the only signal); the envelope sentence may list the half-state's RED only at a wider distance: %r" % envelope[max(0, m.start()-40):m.end()+40])
+if re.search(r"(?is)(one|single)[\s\S]{0,60}?key[\s\S]{0,120}?(quiet|silent|vanish)", envelope):
+    m = re.search(r"(?is)(one|single)[\s\S]{0,60}?key[\s\S]{0,120}?(quiet|silent|vanish)", envelope)
+    bad("the doc calls a ONE-key delete quiet/silent — ruling (1): a half-pair is config RED, never a quiet drop (only blank-everything and both-key deletes are quiet): %r" % envelope[max(0, m.start()-40):m.end()+40])
 
-# No pending markers (the round is closed; rewrites state answers).
-if re.search(r"(?i)pending owner|owner (decision|call) (pending|open)|to be (decided|ruled)", doc):
-    bad("an unresolved-question marker survives — R7 + the batched rounds are ANSWERED; the runbook states rulings (AC6 of C08 survives; the sweep was written into C11's spine)")
+# --- §7: decommission == delete both org keys, zero repo edits (AC5 leg) ----------
+if not re.search(r"(?i)decommission[^.]{0,220}(delete both|both (org )?keys?)|(delete both|removing both|both (org )?keys?)[^.]{0,220}(decommission|retire)", sec7):
+    bad("§7's decommission leg must equal 'delete BOTH org keys — that IS the decommission' (C15 §7; the runbook suite fails the lockstep-era wording)")
+if not re.search(r"(?i)(no PR|zero PR|no repo edit|zero repo edit|no JSON line|never a workflow edit)", sec7):
+    bad("§7's decommission leg lacks the zero-repo-edits clause (the whole point of pure discovery: fleet ops never touch git)")
+
+# --- §7 kill lever byte-kept from baseline (C15 §7: 'lever byte-kept') --------------
+lever = re.search(r"(?ms)^1\. \*\*The kill lever.*?(?=^2\. )", bsection(7))
+if not lever:
+    bad("cannot locate the baseline §7.1 kill-lever paragraph in the rewrite-#4 doc — the byte-keep pin's source is broken")
+elif lever.group(0).rstrip() not in sec7:
+    bad("§7's kill-lever paragraph is NOT byte-kept from rewrite #4 (C15 §7: the token-side lever claim was verified still-true — zero text change; the blob world delivers the identical warning)")
+
+# --- §8: carded backstop + org-write law + rotation byte-kept ----------------------
+if "abkP2XsbuuPuuvri6" not in sec8:
+    bad("§8 does not name the branch-protection follow-up card abkP2XsbuuPuuvri6 — under pure discovery it is the NAMED substitute for the declined membership guard (C15 AC5; STATE reopen4)")
+if not re.search(r"(?i)branch[- ]protection", sec8):
+    bad("§8 never names branch protection as the lever beside the card id")
+if not re.search(r"(?is)(org[\s\S]{0,50}?actions\s+write|write\s+(at|in)\s+the\s+org)[\s\S]{0,120}?fleet|(fleet|membership)[\s\S]{0,80}?org[\s\S]{0,40}?write", sec8):
+    bad("§8 lacks the org-write-equals-fleet-config law (the ruled consequence of pure discovery)")
+rot = re.search(r"(?ms)^- \*\*Rotation is PER KEY\*\*.*?(?=^- )", bsection(8))
+if not rot:
+    bad("cannot locate the baseline §8 rotation bullet — the byte-keep pin's source is broken")
+elif rot.group(0).rstrip() not in sec8:
+    bad("§8's per-key rotation bullet is NOT byte-kept from rewrite #4 (C15 §8: rotation unchanged)")
+
+# --- masking edge honesty (C15 §8) -------------------------------------------------
+if not re.search(r"(?i)(escape[- ]free|JSON[- ]escaped)[^.]{0,200}(mask|value)|(mask\w*)[^.]{0,200}(escape|charset|character set)", sec8):
+    bad("§8 lacks the masking-edge honesty line (JSON-escaped values don't match the masker — keep values escape-free, RESEARCH [30][31])")
+if not re.search(r"(?i)\[30\]\[31\]|\[31\]\[30\]|escape-free", sec8):
+    bad("§8's charset rule must cite the escape-free shape source ([30][31]) or name the charset law")
+
+# No pending markers (posture stated as ANSWERS, not hedges — C15 AC5).
+if re.search(r"(?i)pending owner|owner (decision|call) (pending|open)|to be (decided|ruled)|oracle alternative|alternatives (considered|weighed)", doc):
+    bad("an unresolved/hedged posture marker survives — the OQ-A round is ANSWERED; §2/§7/§8 state rulings, no oracle alternatives may be mentioned (AC5)")
 print("ok: r4")
 PY
   then
-    fail "r4: a posture row is missing or stale (reason printed above)"
+    fail "r4: the pure-discovery envelope or a byte-kept posture is violated (reason printed above)"
   fi
-  ok "r4: expected-failed rows for proxy-local(307) and proxy-backup(fail) present; §5 masking says native per-secret with the hygiene spot-check and no [26]/re-weigh framing; zero pending markers (AC5)"
+  ok "r4: the ruled envelope pinned as contract — blanked-token (j)-RED, one-key-delete half-pair RED, BOTH-keys-delete QUIET with the count as the only signal, stray-complete-pair QUIET JOIN; §7 decommission == delete-both-keys with a zero-repo-edits clause; §7.1 kill lever + §8 rotation byte-kept from the rewrite-#4 baseline; §8 names the card abkP2XsbuuPuuvri6 + org-write-is-fleet-config + the escape-free masking edge; no hedged posture markers (AC5)"
 fi
 
-# --- r5: human-executed markers + command law + sourced-recipe form (AC6) -----------
+# --- r5: human-executed markers + command law + the pairs-file recipe (C15 AC6) ------
 if want r5; then
   if ! python3 - "$RUNBOOK" <<'PY'
 import os, re, sys
@@ -541,7 +711,7 @@ def bad(msg):
 
 
 if not re.search(r"(?i)human[- \t]executed", "\n".join(lines)):
-    bad("r5: no human-executed marker anywhere (AC6 of the doc's own law: this repo never applies; every leg is human-owned)")
+    bad("r5: no human-executed marker anywhere (the doc's own law: this repo never applies; every leg is human-owned)")
 
 MARK = re.compile(r"(?i)\bhuman\b|\bowner (runs|executes|pastes|mints|performs|deletes|checks|creates|blanks|removes)\b|\byou (run|paste|mint|create)\b")
 in_fence = False
@@ -574,35 +744,52 @@ for a, b in blocks:
         continue
     context = "\n".join(lines[max(0, a - 12):a]) + "\n" + head_before(a)
     if not MARK.search(context):
-        bad("r5: fenced block at line %d (`%s`...) has no human-executed marker in its heading or the 12 lines before it (AC5 of C08's command law survives)" % (a + 1, body[0].strip()[:60]))
+        bad("r5: fenced block at line %d (`%s`...) has no human-executed marker in its heading or the 12 lines before it (command law survives C15 unchanged)" % (a + 1, body[0].strip()[:60]))
     for j, l in enumerate(body, start=a + 2):
         if re.search(r"\bkubectl\b", l) or re.search(r"\bhelm (install|upgrade)\b", l) \
            or re.search(r"\bgit push origin\b", l) or re.search(r"argocd app sync", l):
             bad("r5: line %d is a repo-mutating apply command in a fence (%s) — this repo NEVER applies" % (j, l.strip()[:80]))
-        # The argv-leak forms (C11 AC6): `env KEY=value cmd` (the assignment
-        # rides env(1)'s argv, ps-visible) and a same-line ARGOCD_SYNC_*
-        # prefix assignment feeding an invocation.
+        # argv-leak forms (C11 law, extended by C15 AC6 to the pairs-file
+        # recipe): env(1) KEY=value puts values in a ps-visible argv; an
+        # inline ARGOCD_SYNC_* assignment feeds the same leak; and a
+        # PATH-valued ARGOCD_PAIRS_FILE= prefix is legal ONLY as a path —
+        # an inline JSON map or JWT material in it is the values-in-argv
+        # class the recipe exists to avoid (DECISIONS (c): paths are not
+        # secrets, values are).
         if re.search(r"\benv\s+[A-Z][A-Z0-9_]*=", l):
             bad("r5: line %d uses the forbidden `env KEY=value cmd` shape — the plan pins the source-then-run recipe because this form puts values in a ps-visible argv" % j)
         if re.search(r"^[ \t]*ARGOCD_SYNC_[A-Z0-9_]*=.*\b(python3|argocd-fanout)", l):
-            bad("r5: line %d assigns an ARGOCD_SYNC_* inline before the command — the pinned recipe is export-into-file + source pairs.env (one shape, greppable, never a bare VAR=x cmd line with the pair names)" % j)
+            bad("r5: line %d assigns an ARGOCD_SYNC_* inline before the command — the pinned recipe is export-into-file + source pairs.env (or the dumped pairs FILE); values never ride the command line" % j)
+        if re.search(r"ARGOCD_PAIRS_FILE=\S*(\{|eyJ|://)", l):
+            bad("r5: line %d gives ARGOCD_PAIRS_FILE anything but a plain path (%s) — the file-channel recipe must dump the exported pairs to a temp JSON first; inlining a map or a value defeats the whole recipe (C15 AC6)" % (j, l.strip()[:80]))
+        if "eyJ" in l:
+            bad("r5: line %d carries literal JWT material in a fenced command (%s) — examples use placeholders (<paste-dev-jwt>), never real-looking tokens" % (j, l.strip()[:60]))
 
 if "source pairs.env" not in doc.replace('"', "").replace("'", ""):
-    bad("r5: the sourced-recipe form (write pairs.env with export lines → source pairs.env → run) is the PINNED invocation shape and appears nowhere (AC6)")
+    bad("r5: the sourced-recipe form (write pairs.env with export lines → source pairs.env → run) is the PINNED local invocation shape and appears nowhere (AC6)")
+# The pairs-file variant of the recipe (C15 §2): a dump of the exported
+# pairs into a temp JSON, then ARGOCD_PAIRS_FILE=<path> --check — never
+# values in argv (the fence scan above polices that).
+if not re.search(r"(?is)startswith\(.?ARGOCD_SYNC_.{0,400}ARGOCD_PAIRS_FILE", doc):
+    bad("r5: the pairs-file variant of the --check recipe is missing — C15 §2 pins it (python3 -c dump of the exported ARGOCD_SYNC_* names into a temp JSON, then ARGOCD_PAIRS_FILE=… --check)")
 print("ok: r5")
 PY
   then
     fail "r5: the command law is violated (reason printed above)"
   fi
-  ok 'r5: every command block human-marked; zero apply-verbs; no "env KEY=value" and no inline ARGOCD_SYNC_* assignment forms; the source pairs.env recipe is present (AC6)'
+  ok 'r5: every command block human-marked; zero apply-verbs; no "env KEY=value", no inline ARGOCD_SYNC_* assignment, no JSON/JWT material in any ARGOCD_PAIRS_FILE prefix or fence line; the source pairs.env recipe AND the dumped-pairs-file variant are both present (AC6)'
 fi
 
-# --- r6: structure + §6 header note (AC1) -------------------------------------------
+# --- r6: structure + §6 header note + roster identity (C15 AC1) ----------------------
 if want r6; then
   if ! python3 - "$RUNBOOK" <<'PY'
-import os, re, sys
+import json, os, re, sys
+
+sys.path.insert(0, os.environ["RB_WORKDIR"])
+import rbcommon as rb
 
 lines = open(sys.argv[1]).read().splitlines()
+base = rb.load_doc(os.environ["RB_BASE"]).splitlines()
 
 
 def bad(msg):
@@ -616,7 +803,14 @@ for ln in lines:
     if m and int(m.group(1)) not in seq:
         seq.append(int(m.group(1)))
 if seq != list(range(1, 9)):
-    bad("r6: numbered section headers are %s, expected exactly 1..8 in order (rewrite #4 keeps rewrite #3's spine)" % seq)
+    bad("r6: numbered section headers are %s, expected exactly 1..8 in order (rewrite #5 keeps the spine — surgery, not restructure)" % seq)
+bseq = []
+for ln in base:
+    m = re.match(r"^#{1,6}\s*(?:Section\s+)?(\d+)(?=[.:)\s—–-]|$)", ln)
+    if m and int(m.group(1)) not in bseq:
+        bseq.append(int(m.group(1)))
+if seq != bseq:
+    bad("r6: section set drifted from the baseline (%s vs %s)" % (seq, bseq))
 if not any(re.match(r"^#{1,6}\s*Appendix", ln, re.I) for ln in lines):
     bad("r6: no Appendix heading (the note-only anomaly rows ride it)")
 
@@ -631,28 +825,51 @@ for ln in lines:
         if first in ("backups", "personal"):
             bad("r6: a preflight row for %s — no-root-app categories stay off every table" % first)
 if len(rows) < 11:
-    bad("r6: preflight table names %d of 11 categories (the route-truth surface moved HERE with micro-call f — it must be complete)" % len(rows))
+    bad("r6: preflight table names %d of 11 categories (the route-truth surface lives HERE + --check + smoke)" % len(rows))
 
-# §6 header note (C11 §6 task): the hosts table declares itself the org-var
-# values ("these values ARE the org vars (§2)"), the anti-hunt sentence.
-i6 = next((k for k, ln in enumerate(lines) if re.match(r"^#{1,6}\s*6(?=[.:)\s—–-]|$)", ln)), None)
-if i6 is None:
-    bad("r6: no section 6 heading")
-j6 = next((k for k in range(i6 + 1, len(lines)) if re.match(r"^#{1,6}\s*\d", lines[k])), len(lines))
-# Line-based (the note wraps and cites section numbers whose dots would
-# break any char-class window): ONE line must carry both the values/hosts
-# noun and the org-var identity.
+# §6 header note (the org-var identity line — survives rewrite #5).
+def sec_slice(ls, n):
+    i = next((k for k, ln in enumerate(ls) if re.match(r"^#{1,6}\s*%d(?=[.:)\s—–-]|$)" % n, ln)), None)
+    if i is None:
+        bad("r6: no section %d heading" % n)
+    j = next((k for k in range(i + 1, len(ls)) if re.match(r"^#{1,6}\s*\d", ls[k])), len(ls))
+    return ls[i:j]
+
+
+sec6 = sec_slice(lines, 6)
 note = any(("host" in ln.lower() or "value" in ln.lower())
            and ("org var" in ln.lower() or "ARGOCD_SYNC" in ln)
-           for ln in lines[i6:j6])
+           for ln in sec6)
 if not note:
-    bad("r6: §6 lacks the header note that the table values ARE the org VARS (§2) — the route-truth doctrine lives here + --check + smoke now, and the note is what says so")
+    bad("r6: §6 lacks the header note that the table values ARE the org VARS (§2) — the route-truth doctrine lives here + --check + smoke")
+
+# The Appendix is note-only and unchanged by C15: byte-equal to baseline.
+def appendix(ls):
+    i = next((k for k, ln in enumerate(ls) if re.match(r"^#{1,6}\s*Appendix", ln, re.I)), None)
+    return "\n".join(ls[i:]) if i is not None else ""
+
+
+if appendix(lines) != appendix(base):
+    bad("r6: the Appendix drifted from the rewrite-#4 baseline — C15 keeps the note-only tables (public-A-record anomaly, home drift, [P2] runner-vantage matrix) byte-unchanged")
+
+# Roster five-globals identity (C15 note: the roster stays exactly the five;
+# the doc still names it and never claims endpoints).
+roster = json.load(open(os.environ.get("RB_ROSTER", "scripts/argocd-fanout.json")))
+if set(roster) != {"allowed_refs", "tracked_repo", "settle_seconds",
+                   "target_timeout_seconds", "parallel_workers"}:
+    bad("landed roster keys are %s (the five globals expected) — the parity source moved under the suite" % sorted(roster))
+if "scripts/argocd-fanout.json" not in "\n".join(lines):
+    bad("r6: the runbook never names the roster JSON (it still exists as the globals home)")
+if not re.search(r"(?i)five globals", "\n".join(lines)):
+    bad("r6: the runbook lost the roster five-globals identity sentence (C15 keeps §1's globals note; the file lists NO fleet)")
+if re.search(r"(?i)roster[^.\n]{0,60}(11|targets|list of categories|endpoint list)", "\n".join(lines)):
+    bad("r6: the runbook claims the roster carries endpoints — the delivered vault map IS the fleet; the roster is five globals")
 print("ok: r6")
 PY
   then
     fail "r6: the runbook structure is wrong (reason printed above)"
   fi
-  ok "r6: sections 1..8 + appendix, all 11 preflight rows, §6 carries the org-vars identity note (AC1)"
+  ok "r6: sections 1..8 + appendix (spine identical to baseline), all 11 preflight rows, §6 carries the org-vars identity note, the Appendix table is byte-equal to rewrite #4, and the roster five-globals identity sentence stands (AC1)"
 fi
 
 rm -rf "$WORK"
