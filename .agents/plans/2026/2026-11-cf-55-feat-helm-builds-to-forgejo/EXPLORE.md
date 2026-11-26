@@ -1289,3 +1289,81 @@ Fresh Exploration relaunch on the owner's round-5 directive (STATE `directive` :
 8. Coder templates live at `charts/coder/coder-templates/**` (CLI-deployed, helmignored out of chart packaging) — today a template push collapses into charts/coder's bump set via `cut -d/ -f2`; the third builder needs that filter resolved and (for any path move) the trio + cf96/dev-git-auth literals re-admitted.
 9. Rename blast F mirrors C11's method; 10 hard surfaces enumerated (WF literal, FJ_SET, WIDEN_OK, t5 tuple, x3, P7 needle, packages t7 tuple, renovate-pin services-values-pins:166, trio admits, overview/AGENTS law pair + b9 shape); suite pairing law suggests `forgejo-build-containers.sh` (zero machine consumers); no collision; first-fire semantics INVERT under directive 4 (charts/** prose merges stop auto-bumping).
 10. Verdict on the hinge: **workflow_call exists on this Forgejo** — design the orchestration on `uses:` + needs-graph, keep dispatch+poll only as documented fallback.
+
+## Round-6 diagnosis (2026-11-26)
+
+Fresh Exploration relaunch on owner ruling D60(1): the owner observes REAL job serialization despite C16's replicas-10, contradicting `RESEARCH.md §Round-6 research`'s throughput claim ("10 pods × capacity 1 really is up to 10 concurrent jobs"). This section grounds both fronts — live cluster (A) and v15.0.10 source re-verification (B) — and renders the verdict. Read-only throughout; probes via `readonly-gpu/dev/infra-kubernetes`, anonymous instance API, codeberg raw at commit `17e1001d5e00e8ee3cbc1b6dd31be94ac38185f9` (= v15.0.10, [S1] unchanged), forgejo-runner v13.2.0 via `proxy.golang.org` zip. Measured 2026-11-26 ~17:50–18:10 UTC.
+
+### A — LIVE CLUSTER TABLES
+
+**A1 StatefulSets (ns `default`):**
+
+| STS | spec.replicas | status | pods actual |
+|---|---|---|---|
+| `gpu-forgejo-runner-gpu` | **10** | `replicas:4, currentReplicas:4, readyReplicas:3, availableReplicas:3, updatedReplicas:4` (observedGeneration 5, current==update rev `cffbdc496` — no template churn) | `-0` Running (node gpu, created 2d23h, runner container restarted 16:23:23Z, restarts=1), `-1` Running (created 16:42:15Z), `-2` Running (16:42:31Z), **`-3` Pending 69+ min, node `<none>`**, `-4`…`-9` **do not exist at all** |
+| `dev-forgejo-runner-dev` | **1** (!) | `1/1 ready`, observedGeneration 6, current==update rev `794ff5f585` | `-0` Running 17d (node dev), runner container restartCount=14, last daemon line 2026-11-23T14:38:45Z; zero task fetches since |
+
+- Pod-3 scheduler condition VERBATIM (`pods_get`, type `PodScheduled=False`, reason `Unschedulable`, since 16:43:47Z): **"0/1 nodes are available: 1 Insufficient cpu. no new claims to deallocate, preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."** — the GPU cluster is a SINGLE node (`gpu`, control-plane/master/etcd, v1.36.5+k3s1, capacity cpu=6, allocatable cpu=6, Ready, **no DiskPressure condition**) carrying 78 Running pods; sampled requests include the `coder` deployment 2000m, workspaces 250m, most stacks 15m–250m — the pool is simply spent before a 4th runner pod (each = 250m runner + 100m dind = 350m).
+- **Why ordinals 4-9 are absent, not just Pending:** StatefulSet management creates ordinals SEQUENTIALLY — pod N+1 is only created once pod N is Ready. Pod-3's CPU wall therefore FREEZES the whole scale-out at 3 ready; the remaining 7 pods never reach the scheduler. The C16 shape cannot express "10" on this node — it degrades to 3.
+
+**A2 PVCs:** `data-gpu-forgejo-runner-gpu-{0,1,2}` + `docker-data-gpu-forgejo-runner-gpu-{0,1,2}` all **Bound** (dynamic `pvc-…`, SC `local-path`); the ordinal-3 pair (`data-…-3`, `docker-data-…-3`) **Pending with empty volumeName** — the consequence, not the cause: local-path is WaitForFirstConsumer, so provisioning waits for the pod that the scheduler cannot place. No bind errors. Dev: `data-`/`docker-data-dev-forgejo-runner-dev-0` exist for the single ordinal. Nodes: gpu no DiskPressure (see A1); dev single node `dev`, capacity cpu=8.
+
+**A3 Runner daemons (pods_log, container `runner`, image `data.forgejo.org/forgejo/runner:13.2.0`):** ALL THREE gpu daemons healthy and polling: each log shows `Starting runner daemon` → `runner: gpu-runner, with version: v13.2.0, with labels: [ubuntu-latest ubuntu-24.04 ubuntu-22.04 docker node22], ephemeral: false, declared successfully` → `[poller] launched`. dind is a **native sidecar** (initContainer `dind`, `restartPolicy: Always`, image `docker:29.9.2-dind`, `args: ["--mtu=1450"]`, `privileged: true`; runner env `DOCKER_HOST=unix:///var/run/docker.sock` on the shared `socket` emptyDir) — running+ready on every gpu pod (0 restarts), ready on dev-0 (5 restarts). No registration/token/config-parse errors anywhere; only benign `ReportState error: not all logs are submitted 1 remain` ×2 and one `RESULT_CANCELLED` self-terminate (task 677, a `push-dev` job cancelled via concurrency-group at 17:08:25). So the research's Q1 discriminator ("check whether 10 sets of logs each show declared successfully + [poller] launched") **fails on pod COUNT (3+1 exist, not 10+10), not pod health**.
+
+**A4 Job concurrency, measured from log timestamps** (the anonymous API cannot answer this — see A5): fetched-task windows across the three gpu daemons show genuine cross-pod concurrency AND a hard cap at the ready-pod count:
+
+| instant | gpu-0 | gpu-1 | gpu-2 |
+|---|---|---|---|
+| 16:28:13–16:42:30 | tasks 650,651,652 then release-job chain 10–15 s apart, SERIAL (only pod alive pre-sync) | — (created 16:42:15) | — (created 16:42:31) |
+| **16:51:15** | (holding task 654, a ~25-min `release` build 16:49→17:14) | **655** → done 16:51:22 | **656** → done ~16:52:07 — ≥2 tasks simultaneously on ONE uuid |
+| 16:51:15–16:51:22 | still holding 654 (25-min build) | 655 (7 s job) | 656 (52 s job) — **3 tasks concurrently RUNNING on one uuid** |
+| 17:07:31–17:07:37 | idle | 673 (cleanup 17:07:37) | 674@17:07:37 (handoff, at best 2-way) |
+| **17:17:21** | **697** (`sync-fanout`, cleanup 17:17:26) | **696** (cleanup 17:17:27) — same-second cross-pod pair #2 | — |
+
+Effective concurrency observed: up to **3** (the 654+655+656 triple), exactly = ready-pod count; never >3 (impossible: capacity 1 per daemon, 3 daemons). The owner's serialization is fully accounted for by (a) pre-16:42 reality — literally ONE pod per instance while C16 hadn't synced, and (b) post-sync reality — 3 on prod + 1 on dev, not 10 + 10.
+
+**A5 Actions API (anonymous, prod instance `git.spencerslab.com`):** `GET /api/v1/repos/CuratedForest/SpencersLab/actions/runs` → 200 but the public-repo anonymous view strips `name/created_at/updated_at/run_started_at` (all null; only id+status), and `…/actions/runs/346/jobs` → **404** in 15.0.10 (consistent with Round-5 §C's route probes). Run 346 sits in `waiting` RIGHT NOW (pull_request event) while all three daemons polled it away instantly → the queue drains at the 3-slot service rate, no dispatch stall. Job-overlap measurement therefore rides A4's logs.
+
+**A6 ArgoCD (the dev-side root cause):** BOTH runner Applications are sourced from `https://github.com/OwnYourIO/SpencersLab.git`@main (values leg + `path: charts/forgejo-runner` chart leg), resolved revision `7b8d831b…` — **and NEITHER has `syncPolicy.automated`** (syncOptions only; plain manual-sync apps):
+
+| Application | sync | last operation | consequence |
+|---|---|---|---|
+| `gpu-forgejo-runner-gpu` | **Synced** | Succeeded **2026-11-26T16:40:51Z** | STS hit spec.replicas=10 at 16:40 — the 16:42 pod creations in A1 match to the second |
+| `dev-forgejo-runner-dev` | **OutOfSync** | Succeeded **2026-11-09T15:13:41Z** | replicas:10 has been in the rendered git revision for weeks-worth of commits but was NEVER applied here — dev STS still spec **1**, pod 17 days old |
+
+So the "scale applied" story is half-true: gpu landed via a sync this afternoon, dev never did. The git side is confirmed landed (`226aecb86` is an ancestor of `main` — `git merge-base --is-ancestor` verified; `services/dev/prod/values.yaml:178-185` and `services/gpu/prod/values.yaml:271-279` both carry `replicas: 10` with the D57 ruling comment — disk reads this run).
+
+### B — SOURCE RE-VERIFICATION (Forgejo v15.0.10 = `17e1001d`, forgejo-runner v13.2.0)
+
+**File reality first: `models/actions/task_find.go` does NOT exist at this commit** (raw fetch 404; the dir listing via `codeberg.org/api/v1/repos/forgejo/forgejo/contents/models/actions?ref=17e1001d…` shows `task.go`, `task_list.go`, `tasks_version.go`, `run_job.go`, `runner.go`, … — no `task_find.go`; that file is a different-revision artifact). The FIND path is `CreateTaskForRunner` in `models/actions/task.go`. Quote-by-quote answers to the five questions:
+
+- **(a) server-side count of the runner's RUNNING tasks vs task_capacity (per-uuid gate)? NO.** `services/actions/task.go:23 PickTask` — the ONLY per-row busy check is behind the ephemeral flag, `:29-40`:
+  ```go
+  if runner.Ephemeral {
+      hasRunnerAssignedTask, err := actions_model.HasTaskForRunner(ctx, runner.ID)
+      …
+      if hasRunnerAssignedTask { return nil, false, nil }   // don't assign new task
+  }
+  ```
+  with `models/actions/task.go:180 HasTaskForRunner = WHERE runner_id = ?` over `action_task`. The live rows read `ephemeral: false` (A3 declare lines), so this gate is inert for the C16 fleet. Non-ephemeral: no count, no cap, anywhere in the pick path.
+- **(b) one-task-per-fetch or in-progress refusal? NO refusal; capacity-shaped multi-task.** `routers/api/actions/runner/runner.go FetchTask`: `:194 taskCapacity := req.Msg.GetTaskCapacity()` then the loop keeps calling `PickTask` while `taskCapacity > 0`, appending to `additionalTasks` — the server hands back up to the CLIENT-claimed number, and never inspects whether that runner row already runs tasks. The job-eligibility query is `models/actions/task.go:300 GetAvailableJobsForRunner`: `:336 Where("task_id=? AND action_run_job.status=? AND \`repo_unit\`.type=?", 0, StatusWaiting, unit.TypeActions)` + concurrency-group EXISTS — **runner-id appears nowhere in it**. Binding: `CreateTaskForRunner` `:345` → `:363 if j.IsRequestedByRunner(handle) && j.ItRunsOn(runner.AgentLabels)` → insert task → CAS `:433 UpdateRunJobWithoutNotification(ctx, job, builder.Eq{"task_id": 0})`, `n != 1 → return nil,false,nil` (rollback) — the race-safe claim the research described, unchanged.
+- **(c) heartbeat/last_online effect on dispatch? NONE.** `interceptor.go:48-53` stamps `last_online` on every authenticated call and `last_active` on `UpdateTask`/`UpdateLog` only; no dispatch query reads either column (`GetAvailableJobsForRunner` never joins `action_runner`). Offline-ness matters only for the UI status (`RunnerOfflineTime=1m`) and the disabled-by-default cleanup cron.
+- **(d) forgejo-runner v13.2.0 client budget? YES, per daemon.** `internal/app/poll/poller.go`: `:128 availableCapacity := capacity - inProgressTasks.Load()`, `:129 if availableCapacity > 0 { fetch }` (and `:180` early-return at 0), fetchMutex held across each fetch (`capacity - inProgress` "can't perform multiple fetches simultaneously or else we could be overprovisioned", `:82-85`); default `fetch_interval 2s` (`internal/pkg/config/config.go:562-563`). So a daemon with capacity 1 asks for nothing while its job runs — the ONLY real concurrency cap in the system, and it is per-process, so N daemons = N slots.
+- **(e) server using the runner row's stored last_task/uuid to serialize? NO.** `grep LastTask models/actions/runner.go models/actions/task.go services/actions/task.go` → **zero hits — the column itself is gone in 15.0.10** (it is a Gitea-era field; research's "no session/multiplexing concept" holds). `uuid` appears only in `GetRunnerByUUID` (`models/actions/runner.go:260`, the auth lookup) and `DeleteRunner`'s sentinel rename — never in any task-finding condition.
+- One FIND-path nuance the research didn't detail, checked and BENIGN: `FetchTask` only attempts a pick when the request's version differs from the DB (`runner.go:184 if req.Msg.TasksVersion != latestVersion`) — change detection, not a cap: version bumps on run/job queueing (`models/actions/run.go:470`), jobs returning to waiting (`run_job.go:232`), and finalizing a task when `CONCURRENCY_GROUP_QUEUE_ENABLED` (`runner.go:326-327`, default true), plus the client CASes its local version to 0 after ANY successful task fetch (`poller.go:231`) forcing requery next poll. No starvation loop; the idle-but-waiting run 346 drained instantly (A5).
+- Cross-pod `requestKey` collision (would serialize fetches through the server's request-key MutexMap): ruled out — the key is a per-poller-loop RANDOM uuid (`gouuid.New()`, `poller.go:119/137`), never derived from the runner uuid.
+
+**Empirical corroboration:** A4's same-second cross-pod task pairs (655/656 at 16:51:15; 696/697 at 17:17:21) are exactly the behavior source predicts — two daemons on ONE uuid held TWO running jobs at once. A per-uuid serial gate would make those interleavings impossible.
+
+### VERDICT
+
+**`lab-side infra cause (pending pods/pvc/dind/argo drift — specifics), research claim holds`** — with BOTH legs named:
+1. **Dev fleet: the scale never landed.** `dev-forgejo-runner-dev` Application is manual-sync and last synced 2026-11-09; it sits OutOfSync with STS `spec.replicas: 1` while git says 10. One daemon = one concurrent job, 17 days of that.
+2. **GPU fleet: the scale landed but only 3 pods fit.** Single 6-cpu node; pod-3 unschedulable (`Insufficient cpu`, no preemption victims) since 16:43:47Z; StatefulSet ordinal sequencing freezes ordinals 4–9 out of existence; effective fleet = 3.
+3. Timing compounds it: until the 16:40:51Z sync BOTH fleets were literally 1 pod each — the owner's serialization observation is TRUE and was total; the protocol was never the limiter. The research predicted precisely this discriminator ("If the owner observed serialization in practice, the cause is deployment, not protocol") and its Q3 §5 pod-health check is what fails. **No CORRECTION subsection is appended to RESEARCH.md** — the source reading CONFIRMS §Round-6 Q1/TL;DR item 2 verbatim (ephemeral-only gate, CAS claims, client-side capacity), so nothing there is refuted; the two refinements recorded above (no `task_find.go` at this commit; the TasksVersion change-detection gate) do not change the throughput conclusion.
+
+**Consequence for C17 (N releases):** releases fix VISIBILITY (N rows) unconditionally, and THROUGHPUT only up to the schedulable-pod ceiling — which today is **3 on the gpu cluster and (once synced) 10 affordable on the dev cluster**:
+- Semantics verified: 1 release = 1 registration = 1 STS = 1 pod at capacity 1 = **exactly 1 concurrent job slot**; requests 350m/pod (250 runner + 100 dind).
+- **GPU cluster: 10 releases do NOT give 10 slots.** Unlike C16's frozen STS, ten separate 1-replica STSes would each schedule independently, but the node still fits only ~3 at 350m against the current request pool — expect ~7 of them Pending forever. Owner options inside C17's frame: (a) size the gpu fleet at what fits (≈3–4 releases) and raise the count only with a node/requests change (cutting per-pod requests to ~150m could double the count but throttles real 2-cpu-limited builds); (b) capacity>1 per release as a multiplier once slot math is settled (the research's option C caveat — shared dind envelope — still applies).
+- **DEV cluster: 10 releases IS affordable request-wise** (10×350m = 3.5 of 8 cpus; verify the current sum like A1 did for gpu before pinning). C17 MUST also wire the landing leg: the N dev releases are manual-sync — without an explicit `argocd app sync` (or cf-139's fan-out reaching the dev cluster's ArgoCD) each new release repeats today's silent never-applied failure. Per instance: N UI/offline registrations + N Bitwarden items (the B1 owner legs the research priced).
+- Suite note for C17: D57's per-slice `replicas: 10` becomes dead config once scaling means releases — the t2/g2 re-pins plus a render-count leg, and the rendered proof should assert `readyReplicas == replicas` per STS (this whole fire was invisible in `replicas:` alone — gpu's STS would have "proven" 10 while running 3).
