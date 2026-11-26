@@ -1,3 +1,14 @@
+# This chart is consumed by multiple releases (the 'chart:' multi-instance
+# pattern). The MCP credential objects it can render are release-prefixed and
+# gated so that only a release that opts in owns them; rendering them
+# unconditionally would put a second, identically-named copy of the External
+# Secrets and the PVC into every other release of this chart (the
+# two-Application sync-fight hazard).
+mcp:
+  enabled: false
+bitwardenIds:
+  actualbudget-mcp-key: OVERRIDE_VIA_CUSTOM_VALUES
+  actualbudget-mcp-bearer: OVERRIDE_VIA_CUSTOM_VALUES
 app-template:
   global:
     # nameOverride is intentionally defaulted to the chart name here. Each

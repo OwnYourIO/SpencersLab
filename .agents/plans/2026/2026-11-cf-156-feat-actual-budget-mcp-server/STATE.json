@@ -44,6 +44,20 @@
     "coord_verification": "I independently confirmed the recovery the session reported: git diff --cached --stat is EMPTY and git status --porcelain shows only 'M tests/services/actual-budget-wuulf-mcp.sh', so the worktree is at its true pre-C03 state and no simulated C03 surface leaked into the index or the files",
     "uuid_discipline": "the owner's real UUIDs are asserted by FORM + 1:1 pairing, never as literals in the suite; their exact values are proven by the C03 plan-Commands render (dev/review), which keeps the suite from re-creating this ticket's own stale-pin failure mode"
   },
+  "c03_review": {
+    "at": "2026-11-26T05:12:00Z",
+    "session": "ses_de9c94a98ffeXmiEesrjWb3q6S",
+    "verdict": "APPROVED",
+    "handoff_recorded_in": "chunks.C03.handoffs (review entry appended here rather than inside the array, because my multi-line JSON anchor edit risked a second orphan; the reviewer confirmed STATE.json parses after these edits)",
+    "summary": "All C03 ACs held under the reviewer's own re-runs. It read the suite whole and confirmed the re-pinned legs are substantive rather than widened into a no-op: s2 asserts proxy-remote absence with unreadable-file-fails, s5 checks the index-based gate regex, release-prefixed names, deletionPolicy and gone-old-files, s6 re-pins 1:1 to the chart sentinel source with the 8-sentinel regression pin and a sweep that fails on a missing directory. Verdict detail: charts/actualbudget is NOT cluster-wide (absent from base's charts: list; exactly two chart: consumers), so the mcp-servers.md cross-cluster sentinel concern cannot arise; deletionPolicy Delete on the ExternalSecrets is repo convention; the moved PVC has no deletionPolicy (an ES-only field) and is the SDK cache, not a source of truth, so a prune self-heals; the instances' own pvc-data-default.yaml remains unmodified and ungated.",
+    "collision_and_parity": "bri gate-ON yields home-bri-budget-mcp-* with comm -12 shared names = 0; bri gate-closed chart render is byte-identical pre/post-C03 (md5 109d542ef8757a867e180f5721a8484f); home-actualbudget Deployment doc sha256 identical (0e73db3b...) with 01-enable-openid still present.",
+    "findings": [
+      "minor: chunks/C03.md Notes line 1 says 'dev commits C03 on the ticket branch', contradicting the coordinator-solo-committer contract (and its own second sentence) — corrected in the records by the coordinator, as the reviewer recommended",
+      "nit: the suite's s5 PVC pass message narrates 'deletionPolicy Delete' boilerplate while the PVC's checked extras are kind/namespace/RWO/5Gi — the checks are honest (a PVC has no such field), only the label overstates. Left as-is, recorded here."
+    ],
+    "no_validation_at_fault": true,
+    "records_check": "python3 json.load of STATE.json passed for the reviewer after my hand-edits, confirming the re-homed C03_planner_skeleton did not break the file"
+  },
   "final_review": {
     "status": "done",
     "verdict": "APPROVED (whole plan)",
@@ -466,7 +480,8 @@
       ]
     },
     "C02": {
-      "status": "dev_done_blocked",
+      "status": "done",
+      "status_changed_by": "C03 review 2026-11-26 — the reviewer's open_questions(1) recommended the move and the coordinator applied it. Post-hoc changed-requirement record, in the same form used for C01's AC3: C02's blocked_on condition (the two custom-values UUID mirrors) was resolved by C03's top-level custom-values leg under the owner's RENAMED items (owner instruction 2 supersedes the names this chunk originally pinned); C02's AC3 (template location under services/home/prod/templates) and AC6 (the designed 29/2 suite shape) are satisfied in C03's re-pinned form, not in their original wording. No C02 criterion is unmet in substance — AC1/AC2/AC4/AC5 invariants were re-verified by the C03 renders (image pin, gate-free hivetools entry, secret wiring to the renamed resources, no OVERRIDE_* in new documents).",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 1,
@@ -550,6 +565,57 @@
       ]
     },
     "C03": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "review_session": "ses_de9c94a98ffeXmiEesrjWb3q6S",
+      "review_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "done_gate": "dev DONE + review APPROVED with the reviewer's own re-runs: suite 48/0, three lints clean, the three-way render proof, the collision proof (0 shared names), live-pair byte-parity (bri chart render byte-identical pre/post, md5 109d542ef8757a867e180f5721a8484f), 1:1 green across both files, stale-name sweep 0/0/0, aislop 0/0/0. All C01+C02+C03 chunks are now done with the suite fully green for the first time in this ticket.",
+      "dev_session": "ses_de9d994b2ffeFErSMnHUMio1GE",
+      "dev_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "handoffs": [
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-26T04:52:00Z",
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C03",
+          "files_changed": [
+            "charts/actualbudget/values.yaml",
+            "services/home/prod/values.yaml",
+            "custom-values/home/prod-values.yaml",
+            "services/proxy-remote/prod/values.yaml",
+            "charts/actualbudget/templates/secret-actualbudget-mcp-key.yaml (renamed from services/home/prod/templates/secret-actual-budget-mcp-key.yaml)",
+            "charts/actualbudget/templates/secret-actualbudget-mcp-bearer.yaml (renamed from services/home/prod/templates/secret-actual-budget-mcp.yaml)",
+            "charts/actualbudget/templates/pvc-actualbudget-mcp-data.yaml (renamed from services/home/prod/templates/pvc-actual-budget-mcp-default.yaml)"
+          ],
+          "move_method": "git mv used for all three (grant available), rename similarity 72% / 71% / 64%; no copies of the old paths remain in the tree, so no duplicate-object state was left for the coordinator to clean",
+          "headline": "suite 48 pass / 0 fail, exit 0 — the first fully green run in this ticket; the designed 29/2 shape is retired by the owner supplying the real items",
+          "commands_run": [
+            "bash tests/services/actual-budget-wuulf-mcp.sh => pass (48/0, exit 0, no reds to describe)",
+            "helm lint charts/actualbudget => pass (0 failed, in-tree and /tmp copy); helm lint charts/hivetools => pass (0 failed, both); helm lint home umbrella (/tmp copy + deps) => pass (0 failed)",
+            "C03 render (i) wuulf, gate OPEN, real injection path => pass (ExternalSecret home-wuulf-budget-mcp-bearer remoteRef.key 075f18ca-a137-415a-9296-b50e0033589c -> BEARER_TOKEN + deletionPolicy Delete; ExternalSecret home-wuulf-budget-mcp-key remoteRef.key 29e97ab5-db7f-4214-affd-b50e0032788d -> ACTUAL_SESSION_TOKEN + deletionPolicy Delete; PVC home-wuulf-budget-mcp-data RWO 5Gi; Service+Deployment home-wuulf-budget; 0 initContainers; envFrom actualbudget-sso-secret intact; 0 OVERRIDE_*)",
+            "C03 render (ii) bri, gate CLOSED (chart default) => pass (0 hits on mcp-key|mcp-bearer|mcp-data; standing legs intact; --show-only on both moved templates returns 'could not find template', i.e. the gate renders empty)",
+            "C03 render (iii) home umbrella pre-C03 vs post, same sets => pass (0 cluster objects named *mcp-key/*mcp-bearer/*mcp-data; the one raw grep hit is the per-service ApplicationSet values JSON carrying hivetools config, not an object; pre/post diff = exactly the 3 branch-only C02 objects removed + that values line; home-actualbudget Deployment doc sha256 IDENTICAL pre/post; 01-enable-openid STILL present; OVERRIDE_ lines 3==3, all pre-existing)",
+            "C03 render (iv) collision safety, bri gate ON => pass (home-bri-budget-mcp-key/-bearer/-data render; comm -12 of the wuulf vs bri name sets = 0 shared names; and with the gate CLOSED the bri chart render is BYTE-IDENTICAL pre/post-C03, md5 109d542e... — no pre-existing resource name changed anywhere)",
+            "hivetools render => pass (mcp-actual-budget: v1.15.1, streamable-http, mcpPort 3000, --sse + --enable-bearer, NO --enable-write, secrets re-pointed to home-wuulf-budget-mcp-bearer/-key, pod-local volume name actual-budget-mcp-data kept -> claimName home-wuulf-budget-mcp-data, 65532 + fsGroup, 0 OVERRIDE_*)",
+            "grep trio (revised C03 leg) => pass (all present; grep -c wuulf-budget services/proxy-remote/prod/values.yaml = 0)",
+            "1:1 sentinel<->custom-values (both files) => pass GREEN (8 home top-level sentinels 0-unmirrored + exactly 2 chart sentinels actualbudget-mcp-key/-bearer 0-unmirrored; owner UUIDs at custom-values top level; 0 sentinel VALUES in custom-values)",
+            "stale-name sweep => pass (suite regex 0 hits across services/, charts/, custom-values/; only the kept pod-local volume name actual-budget-mcp-data remains, which the chunk rules is not a cluster object reference)",
+            "npx aislop ci --changes => pass (0 errors / 0 warnings / 0 fixable)",
+            "UUID-leak + pin hygiene => pass (0 owner UUIDs anywhere in charts/ or services/; v1.15.1 pin intact; charts/actualbudget/Chart.yaml diff empty — no version bump)"
+          ],
+          "deviations": "no implementation deviations. One plan-text conflict the dev surfaced rather than silently absorbing: chunks/C03.md's Notes line said 'dev commits C03 on the ticket branch', which contradicts the role contract and this run's coordinator-solo-committer rule; it followed the coordinator's brief (no commits) and left the work staged-as-renames in the tree at HEAD 0cb16d68f.",
+          "friction": "none new; it explicitly did NOT copy the worktree for scratch work (used /tmp subdirectory copies + git archive for the pre-C03 baseline), honouring the linked-worktree rule added to FRICTION.md this round. aislop's JSON-in-wrapper-lines shape is a known read pattern.",
+          "open_questions": "none",
+          "next_suggested": "chunk review (re-run suite + three-way render + collision proofs + live-pair byte-parity), then record C03 done and C02's dev_done_blocked as cleared by C03's custom-values leg, then the final-review re-run over the whole plan with the owner legs named"
+        }
+      ]
+    },
+    "C03_planner_skeleton": {
       "status": "pending",
       "wave": 3,
       "depends_on": ["C01", "C02"],

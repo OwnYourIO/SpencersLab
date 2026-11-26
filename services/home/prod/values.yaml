@@ -9,9 +9,6 @@ bitwardenIds:
   # Read-only CNPG role credential for the postgres-paperless ToolHive MCP
   # server (svc-level ExternalSecret templates/pg-paperless-mcp-secret.yaml).
   mcp-pg-paperless: OVERRIDE_VIA_CUSTOM_VALUES
-  # actual-budget-mcp / actual-budget-mcp-key: custom-values mirrors stay absent until the owner mints those Bitwarden items — a UUID is issued by item creation, cannot be derived, and a fabricated one would pass the 1:1 form check while pointing an ExternalSecret at nothing (owner ruling 2026-11-24; the 1:1 check is deliberately red on these two keys until then).
-  actual-budget-mcp: OVERRIDE_VIA_CUSTOM_VALUES
-  actual-budget-mcp-key: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -975,6 +972,8 @@ wuulf-budget:
   app-template:
     global:
       nameOverride: wuulf-budget
+  mcp:
+    enabled: true
 
 karakeep:
   global:
@@ -1190,10 +1189,10 @@ hivetools:
         - name: ACTUAL_DATA_DIR
           value: "/data"
       secrets:
-        - name: actual-budget-mcp
+        - name: home-wuulf-budget-mcp-bearer
           key: BEARER_TOKEN
           targetEnvName: BEARER_TOKEN
-        - name: actual-budget-mcp-key
+        - name: home-wuulf-budget-mcp-key
           key: ACTUAL_SESSION_TOKEN
           targetEnvName: ACTUAL_SESSION_TOKEN
       resources:
@@ -1223,4 +1222,4 @@ hivetools:
           volumes:
             - name: actual-budget-mcp-data
               persistentVolumeClaim:
-                claimName: actual-budget-mcp-data
+                claimName: home-wuulf-budget-mcp-data

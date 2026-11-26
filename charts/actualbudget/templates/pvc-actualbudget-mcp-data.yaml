@@ -1,7 +1,8 @@
+{{- if index .Values "mcp" "enabled" }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: actual-budget-mcp-data
+  name: {{ .Release.Name }}-mcp-data
   namespace: default
 spec:
   accessModes:
@@ -9,3 +10,4 @@ spec:
   resources:
     requests:
       storage: 5Gi
+{{- end }}
