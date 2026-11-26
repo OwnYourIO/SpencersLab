@@ -20,14 +20,15 @@
 # secret exposure. The fan-out's input follows the same rule as per-cluster
 # key PAIRS (cf-139 R7): ARGOCD_SYNC_<CAT>_URL as org VARS and
 # ARGOCD_SYNC_<CAT>_TOKEN as org SECRETS on the prod instance (owner ruling
-# 2026-11-23: org-scoped key hygiene, inherited by the repository here; R7
-# extended it to both kinds). Expressions cannot distinguish scopes —
-# resolution is repo→org→user and a repo key WINS silently — so a pair key
-# of either kind must never be created repo-side, and this file only
-# documents the placement the runbook creates. The env map below is a
-# static enumeration by design (Forgejo cannot index secrets dynamically in
-# expressions): adding or removing a cluster means its org pair AND its two
-# rows here, in one release (lockstep, DECISIONS 2026-11-25 micro-call d).
+# 2026-11-23: org-scoped key hygiene, inherited by the repository here).
+# Scope resolution per source: vars run repo > org/user > global, secrets
+# repo > owner (DECISIONS 2026-11-26, RESEARCH round 3) — moot under the
+# no-repo-twin rule either way: a repo twin of either kind WINS silently, so
+# pair keys must never be created repo-side, and this file only documents
+# the placement the runbook creates. The job is FLEET-BLIND (cf-139 R8):
+# the values surface is the org key pairs and this file carries none — the
+# filter step below selects the pair-named keys out of the delivered blobs,
+# so a fleet change is org-key work, never a workflow edit.
 #
 # The sync-fanout job IS the webhook: no external webhook exists. It drives
 # every cluster's ArgoCD API directly with the per-cluster bearer tokens and
@@ -41,12 +42,16 @@
 # owner's D59 ruling: sync waits until it BUILDS successfully — a red
 # builder holds the fleet at the previous revision until the next green
 # fan, and the unmoved marker re-covers the failed range by construction).
-# Its failure posture lives in the script (scripts/argocd-fanout.py owns
-# both lanes): an unconfigured fleet is a designed warn-and-skip-green — the
-# column-0 line comes from the script's own stdout — while setup errors
-# (pair residue, a malformed enumeration row, a broken roster) go RED
-# through the unguarded call, because a typo'd key must not silently lose a
-# cluster every push forever (DECISIONS exit-posture refinement).
+# Values never reach run
+# bodies or argv: they arrive as step env (an interpolation lands in the
+# step script file the runner writes), and only the filter step's env
+# carries the serialized blobs. Its failure posture lives in the script
+# (scripts/argocd-fanout.py owns both lanes): an unconfigured fleet is a
+# designed warn-and-skip-green — the column-0 line comes from the script's
+# own stdout — while setup errors (a half pair, a malformed org key, a
+# broken roster) go RED through the unguarded call, because a typo'd key
+# must not silently lose a cluster every push forever (DECISIONS
+# exit-posture refinement, unchanged through R8).
 # The push itself already landed in the completed push jobs, so a red
 # fan-out job breaks nothing but hides nothing either; per-target runtime
 # failures audit honestly and stay green (the fan-out is SHA-agnostic, the
@@ -189,14 +194,17 @@ jobs:
     # fleet's app sources track GitHub, so the fan-out may only fire once
     # GitHub already carries this push, AND both builders came back green
     # (a red release holds the fleet; the unmoved marker re-covers the
-    # failed range next fan). The org key pairs are env-mapped to the step
-    # below: token values must never reach the run body (an interpolation
-    # lands in the step script file the runner writes) or argv — the
-    # script's env scan is the endpoint list (static rows, no dynamic
-    # secret indexing). The python call is UN-guarded on purpose: the
-    # script owns the unset skip (warn-green) and the config-RED lanes,
-    # and its exit code must reach the job; per-target runtime failures
-    # stay soft inside its audit contract.
+    # failed range next fan). Anatomy (cf-139 R8): the filter step receives
+    # the delivered merged maps as toJSON blobs in its OWN step env — the
+    # vars merge carries the instance-global tier too (global+owner+repo),
+    # the secrets merge is owner+repo — selects the pair-named keys into
+    # the ephemeral pairs file, and the fan-out step hands the script only
+    # that path — the checkout-running step's environment stays at the
+    # pair floor (RESEARCH Agenda 4). The python
+    # call is UN-guarded on purpose: the script owns the unset skip
+    # (warn-green) and the config-RED lanes, and its exit code must reach
+    # the job; per-target runtime failures stay soft inside its audit
+    # contract.
     needs: [push-gh, build-containers, build-charts]
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
@@ -206,34 +214,42 @@ jobs:
           set -euo pipefail
           echo "ROLE=${{ vars.ROLE }}"
       - uses: actions/checkout@v7
+      - name: resolve fan-out pairs
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+        run: |
+          set -euo pipefail
+          # Dumb serializer by ruling (DECISIONS 2026-11-26): select the
+          # pair-named keys out of both delivered maps — the later secrets
+          # loop wins a same-name collision — write the flat NAME->value
+          # map, then print the count and nothing else. Pair completeness,
+          # the configured/kill lanes and every validation belong to
+          # scripts/argocd-fanout.py; the split is what keeps ONE validator
+          # contract for both channels. Invalid JSON raises loud (fails the
+          # step; an engine surprise must never half-write).
+          mkdir -p "$RUNNER_TEMP"
+          python3 -c '
+          import json, os, re
+          sel = re.compile("^ARGOCD_SYNC_(.+)_(URL|TOKEN)$")
+          pairs = {}
+          for key, value in json.loads(os.environ.get("VARS_JSON") or "{}").items():
+              if sel.match(key):
+                  pairs[key] = value
+          for key, value in json.loads(os.environ.get("SECRETS_JSON") or "{}").items():
+              if sel.match(key):
+                  pairs[key] = value
+          path = os.path.join(os.environ["RUNNER_TEMP"], "pairs.json")
+          with open(path, "w") as f:
+              json.dump(pairs, f, sort_keys=True)
+          os.chmod(path, 0o600)
+          print("filter: %d keys selected" % len(pairs))
+          '
       - name: fan out ArgoCD syncs
         env:
-          # Static enumeration IS the discovery surface: the 11 org pairs,
-          # alphabetical by category (proxy-backup sorts before
-          # proxy-local), URL (var) then TOKEN (secret) per pair; the
-          # script scans these names from its environment.
-          ARGOCD_SYNC_DEV_URL: ${{ vars.ARGOCD_SYNC_DEV_URL }}
-          ARGOCD_SYNC_DEV_TOKEN: ${{ secrets.ARGOCD_SYNC_DEV_TOKEN }}
-          ARGOCD_SYNC_GPU_URL: ${{ vars.ARGOCD_SYNC_GPU_URL }}
-          ARGOCD_SYNC_GPU_TOKEN: ${{ secrets.ARGOCD_SYNC_GPU_TOKEN }}
-          ARGOCD_SYNC_GPU_AI_URL: ${{ vars.ARGOCD_SYNC_GPU_AI_URL }}
-          ARGOCD_SYNC_GPU_AI_TOKEN: ${{ secrets.ARGOCD_SYNC_GPU_AI_TOKEN }}
-          ARGOCD_SYNC_GROW_URL: ${{ vars.ARGOCD_SYNC_GROW_URL }}
-          ARGOCD_SYNC_GROW_TOKEN: ${{ secrets.ARGOCD_SYNC_GROW_TOKEN }}
-          ARGOCD_SYNC_HOME_URL: ${{ vars.ARGOCD_SYNC_HOME_URL }}
-          ARGOCD_SYNC_HOME_TOKEN: ${{ secrets.ARGOCD_SYNC_HOME_TOKEN }}
-          ARGOCD_SYNC_INFRA_URL: ${{ vars.ARGOCD_SYNC_INFRA_URL }}
-          ARGOCD_SYNC_INFRA_TOKEN: ${{ secrets.ARGOCD_SYNC_INFRA_TOKEN }}
-          ARGOCD_SYNC_MEDIA_URL: ${{ vars.ARGOCD_SYNC_MEDIA_URL }}
-          ARGOCD_SYNC_MEDIA_TOKEN: ${{ secrets.ARGOCD_SYNC_MEDIA_TOKEN }}
-          ARGOCD_SYNC_MONITORING_URL: ${{ vars.ARGOCD_SYNC_MONITORING_URL }}
-          ARGOCD_SYNC_MONITORING_TOKEN: ${{ secrets.ARGOCD_SYNC_MONITORING_TOKEN }}
-          ARGOCD_SYNC_PROXY_BACKUP_URL: ${{ vars.ARGOCD_SYNC_PROXY_BACKUP_URL }}
-          ARGOCD_SYNC_PROXY_BACKUP_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_BACKUP_TOKEN }}
-          ARGOCD_SYNC_PROXY_LOCAL_URL: ${{ vars.ARGOCD_SYNC_PROXY_LOCAL_URL }}
-          ARGOCD_SYNC_PROXY_LOCAL_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_LOCAL_TOKEN }}
-          ARGOCD_SYNC_PROXY_REMOTE_URL: ${{ vars.ARGOCD_SYNC_PROXY_REMOTE_URL }}
-          ARGOCD_SYNC_PROXY_REMOTE_TOKEN: ${{ secrets.ARGOCD_SYNC_PROXY_REMOTE_TOKEN }}
+          # The script discovers from this file; the blobs themselves stop
+          # at the filter step.
+          ARGOCD_PAIRS_FILE: ${{ runner.temp }}/pairs.json
           EVT_REF: ${{ github.event.ref }}
           GH_REF: ${{ github.ref }}
         run: |

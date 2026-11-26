@@ -2,8 +2,8 @@
 """argocd-fanout — push-to-main fan-out driving real ArgoCD API syncs on
 every cluster directly (cf-139 R7: repo-side fan-out home, invoked by the
 main-sync sync-fanout job; targets DISCOVERED from ARGOCD_SYNC_<CAT>_URL
-and _TOKEN Actions key pairs — org vars plus per-secret tokens; no blob
-vault, no roster endpoint list).
+and _TOKEN Actions key pairs — org vars plus per-secret tokens; no
+single-blob vault secret, no repo-side endpoint list).
 
 The fleet keeps syncPolicy.automated off on every root app by owner ruling
 (cf-139 OQ1), so this script calls each cluster's sync API itself. Semantics
@@ -16,7 +16,22 @@ Exit posture (DECISIONS 2026-11-23, refined vs the relay's all-warn rule):
 0 runtime-green (per-target failures audit honestly, next push self-heals),
 1 config/setup RED (a typo'd category must not silently lose a cluster),
 2 argparse usage. Token values arrive ONLY through the
-ARGOCD_SYNC_<CAT>_TOKEN keys — never argv, never files, never echoed.
+ARGOCD_SYNC_<CAT>_TOKEN keys — never argv, never echoed.
+
+R8 (reopen4, RULED 2026-11-26): the job is fleet-blind — its filter step
+serializes the delivered Actions contexts to $RUNNER_TEMP/pairs.json and
+this script reads that file when ARGOCD_PAIRS_FILE names it. Set-and-
+non-empty wins over the env scan ENTIRELY; unset or empty-string keeps
+the env scan byte-identical (the local/manual posture: --check, the
+sourced-recipe smoke). The flat {NAME: value} map is the SAME
+ARGOCD_SYNC_* namespace, so discover_targets serves both channels with
+one body and zero validation divergence. The delivered vault map IS
+fleet membership (pure discovery — no categories list, no oracle): a
+DELETED pair leaves discovery silently (count-signal only, by ruling);
+a BLANKED pair arrives as "" and stays a ruling-(j) violation. The pairs
+file is left in place (RUNNER_TEMP is per-job ephemeral; its 0600 mode
+is the filter's duty — this script never stats it and never prints its
+contents).
 """
 
 import argparse
@@ -126,6 +141,28 @@ def load_roster(path):
             "settle": float(raw["settle_seconds"]),
             "timeout": float(raw["target_timeout_seconds"]),
             "workers": int(raw["parallel_workers"])}
+
+
+def load_pairs_file(path):
+    """Read the filter's pairs file: a flat {NAME: value} JSON map in the
+    ARGOCD_SYNC_* namespace (DECISIONS 2026-11-26 b — one grammar, one
+    validator). Errors are ConfigError naming the path and reason only,
+    never a value; {} is the legal all-absent discovery result, not an
+    error."""
+    try:
+        with open(path) as f:
+            raw = json.load(f)
+    except OSError as e:
+        raise ConfigError("%s: %s" % (path, e.strerror or e.__class__.__name__))
+    except json.JSONDecodeError:
+        raise ConfigError("%s is not valid JSON" % path)
+    if not isinstance(raw, dict):
+        raise ConfigError("%s: pairs file top level must be an object" % path)
+    bad = sorted(k for k, v in raw.items() if not isinstance(v, str))
+    if bad:
+        raise ConfigError("%s: pairs file values must be strings (offending keys: %s)"
+                          % (path, ", ".join(bad)))
+    return raw
 
 
 def discover_targets(env):
@@ -424,20 +461,26 @@ def cmd_check(cfg, tokens):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="argocd-fanout",
-        description="env-discovered ArgoCD sync fan-out (caller: the Forgejo main-sync sync-fanout job; endpoints and tokens come only from ARGOCD_SYNC_<CATEGORY>_URL/_TOKEN environment keys)")
+        description="fleet-discovered ArgoCD sync fan-out (caller: the Forgejo main-sync sync-fanout job; endpoints and tokens come only from ARGOCD_SYNC_<CATEGORY>_URL/_TOKEN pairs — env-scanned locally, delivered via ARGOCD_PAIRS_FILE in CI)")
     parser.add_argument("--config", default="scripts/argocd-fanout.json",
                         help="roster JSON path (checkout-borne; the five globals only)")
     parser.add_argument("--ref", default="refs/heads/main",
                         help="full git ref of the push (non-secret)")
     parser.add_argument("--check", action="store_true",
-                        help="parse roster + env pairs fully, print the table, exit; zero network")
+                        help="parse roster + delivered pairs fully, print the table, exit; zero network")
     parser.add_argument("--dry-run", action="store_true", dest="dry_run",
                         help="live GETs only: eligibility + would-sync per target, zero POSTs")
     args = parser.parse_args(argv)
 
     try:
         cfg = load_roster(args.config)
-        discovered = discover_targets(os.environ)
+        # R8 precedence (DECISIONS 2026-11-26 d): set-and-non-empty
+        # PAIRS_FILE wins ENTIRELY; empty string or unset is the unset
+        # posture. A broken file is RED through this same lane — it must
+        # never fall back to the env scan.
+        pairs_file = os.environ.get("ARGOCD_PAIRS_FILE") or ""
+        src = load_pairs_file(pairs_file) if pairs_file else os.environ
+        discovered = discover_targets(src)
     except ConfigError as e:
         # Setup errors name keys, categories and fields, never values (AC8):
         # the message goes to stderr, the job goes RED (ruled posture).
