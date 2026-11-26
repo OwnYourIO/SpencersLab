@@ -303,7 +303,7 @@ if i < 0:
     sys.exit(1)
 comment = raw[max(0, i - 1600):i]
 for tok, why in (
-        ('containers-build.yaml', 'the OCI sibling consumer — the section gates BOTH registries'),
+        ('build-containers.yaml', 'the OCI sibling consumer — the section gates BOTH registries (C15 pin 6: the tuple and the comment above packages: flip together)'),
         ('cf-6', 'the provenance that the registry is already exercised live (the declaration is an explicit-on pin, not a flip)'),
         ('[storage] stays deliberately unconfigured', 'the chart-law non-touch that keeps attachments/avatars off the S3 drag'),
         ('D24', 'the key-set law: {ENABLED} only, per-type caps unlimited by default'),

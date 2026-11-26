@@ -19,6 +19,10 @@
 #       sentinel-free forgejo-runner-gpu values JSON                C05 AC5
 #   g7  blast radius: dev runner trio untouched, no gpu Forgejo or
 #       SeaweedFS, runner chart untouched beyond C04's swap         C05 AC6
+#   g8  the SERVICES slice carries app-template.controllers.runner.
+#       replicas: 10 — owner ruling 2026-11-26 (B1-as-amended)      C16 (a)
+#   g9  the deployed render keeps runner capacity 1 (stay-1 ruling)  C16 (b)
+#   g10 the chart default renders replicas 1 with NO override       C16 (c)
 #
 # Why the URL is pinned instead of derived: `git.spencerslab.com` is the infra
 # instance's canonical DOMAIN/ROOT_URL host and split DNS carries it to the
@@ -193,12 +197,37 @@ else
   else
     ok "g1: helm dependency build succeeds for $RUNNER and $GPU on copies ($("$helm_bin" version --short 2>/dev/null || echo helm))"
 
-    # --- g2: standalone render of the gpu release (C05 AC1) ------------------
+    # --- g2: deployed-shape render of the gpu release (C05 AC1; round-5 C16) --
+    # cv slice (vault slots) + the SERVICES top-level block (the ONLY values
+    # the appset merges — and since the owner ruling 2026-11-26, where the
+    # replicas: 10 slice lives, D57). Anchor-tolerant load: the gpu services
+    # file carries REDEF-style anchors.
     extract_slice "$GPU_CV" "$APP" "$WORK/runner-gpu-slice.yaml" g2
+    gpu_services_slice="$WORK/gpu-services-slice.yaml"
+    if ! python3 - "$GPU_VALUES" "$APP" "$gpu_services_slice" <<'PY'
+import re, sys, yaml
+
+src, key, out = sys.argv[1:4]
+lines = []
+for line in open(src):
+    line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+    line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+    lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get(key)
+if not isinstance(block, dict):
+    print(f'FAIL: g2: {src} has no top-level {key}: slice — the appset merges only this key (g3 owns the same block)', file=sys.stderr)
+    sys.exit(1)
+with open(out, 'w') as f:
+    yaml.safe_dump(block, f)
+PY
+    then
+      fail "g2: could not extract the gpu services slice from $GPU_VALUES"
+    fi
     gpu_render="$WORK/gpu-render.yaml"
     gpu_err="$WORK/gpu-render.err"
     if ! "$helm_bin" template "$APP" "$runner_copy" \
-      -f "$WORK/runner-gpu-slice.yaml" \
+      -f "$WORK/runner-gpu-slice.yaml" -f "$gpu_services_slice" \
       --set "runner.url=$GPU_URL" \
       >"$gpu_render" 2>"$gpu_err"; then
       tail -n 30 "$gpu_err" >&2
@@ -254,8 +283,8 @@ try:
 
     sts = next(d for d in docs if d.get('kind') == 'StatefulSet')
     spec = sts.get('spec') or {}
-    if spec.get('replicas') != 1:
-        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 1 (one uuid/token pair maps to one pod)')
+    if spec.get('replicas') != 10:
+        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5): runners to replicas 10, both instances; B1 AS AMENDED per D57 (10 pods poll ONE registration, capacity stays 1 per pod) — the services slice carries the override, the chart default stays single')
     vcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in (spec.get('volumeClaimTemplates') or [])}
     if set(vcts) != {'data', 'docker-data'}:
         bad(f'g2: volumeClaimTemplates named {sorted(vcts)}, expected exactly [data, docker-data]')
@@ -269,7 +298,7 @@ try:
         # default needs no per-cluster override.
         if vspec.get('storageClassName') != 'local-path':
             bad(f'g2: VCT {name} storageClassName is {vspec.get("storageClassName")!r}, expected local-path')
-    ok('g2: replicas 1, VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass)')
+    ok('g2: replicas 10 via the services slice (B1-as-amended, owner ruling 2026-11-26), VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass) — the per-pod shape did not scale, the pod count did')
 
     es = next(d for d in docs if d.get('kind') == 'ExternalSecret')
     data = (((es.get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
@@ -919,6 +948,89 @@ PY
   else
     exit 1
   fi
+fi
+
+# --- g8: the deployed services slice carries replicas 10 (C16 leg (a)) ---------
+if ! python3 - "$GPU_VALUES" "$APP" <<'PY'
+import re, sys, yaml
+
+src, key = sys.argv[1:3]
+lines = []
+for line in open(src):
+    line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+    line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+    lines.append(line)
+d = yaml.safe_load(''.join(lines)) or {}
+block = d.get(key) or {}
+rep = (((block.get('app-template') or {}).get('controllers') or {}).get('runner') or {}).get('replicas')
+if rep != 10:
+    print(f'FAIL: g8: {src} top-level {key} block carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57): BOTH runner releases scale via the per-slice override', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "g8: see the g8 detail above"
+fi
+ok "g8: services/gpu/prod/values.yaml forgejo-runner-gpu block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, B1-as-amended)"
+
+# --- g9: capacity STAYS 1 in the deployed render (C16 leg (b), D57) ------------
+# 10 pods x capacity 1 = 10 concurrent jobs; an in-pod queue (capacity>1)
+# would fake parallelism inside one dind envelope. The stay-1 is a DECISION
+# — fenced so a bump becomes a ruling, never drift.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "g9: not run (renders unavailable)"
+else
+  if ! python3 - "${gpu_render:-/dev/null}" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+if not es:
+    print('FAIL: g9: no ExternalSecret in the deployed render (its config.yaml home is the capacity site — t/g2 would already be red)', file=sys.stderr)
+    sys.exit(1)
+data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+cfg = yaml.safe_load(data.get('config.yaml') or '')
+cap = ((cfg or {}).get('runner') or {}).get('capacity')
+if cap != 1:
+    print(f'FAIL: g9: the deployed render carries runner.capacity {cap!r}, expected 1 (D57 stay-1 ruling; secret-runner.yaml is NOT touched by the replicas scale)', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "g9: see the g9 detail above"
+  fi
+  ok "g9: the deployed gpu render carries runner capacity 1 — stay-1 fenced (D57: ten pods, one job each)"
+fi
+
+# --- g10: chart default renders replicas 1 with NO slice (C16 leg (c)) ---------
+# The amended law keeps the DEFAULT single: a future runner release cannot
+# silently inherit 10; and C16 AC3's default-mutant lands here plus in g2's
+# no-override sibling.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "g10: not run (renders unavailable)"
+else
+  g10_out="$WORK/g10-default-render.yaml"
+  if ! "$helm_bin" template "$APP" "$runner_copy" \
+      --set "bitwardenIds.runner-token=00000000-0000-0000-0000-000000000009" \
+      >"$g10_out" 2>"$WORK/g10.err"; then
+    tail -n 30 "$WORK/g10.err" >&2
+    fail "g10: chart-default standalone template failed (log kept at $WORK/g10.err)"
+  fi
+  if ! python3 - "$g10_out" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+sts = [d for d in docs if d.get('kind') == 'StatefulSet']
+if len(sts) != 1:
+    print(f'FAIL: g10: {len(sts)} StatefulSets in the no-override render, expected 1', file=sys.stderr)
+    sys.exit(1)
+rep = (sts[0].get('spec') or {}).get('replicas')
+if rep != 1:
+    print(f'FAIL: g10: the NO-OVERRIDE chart render is replicas {rep!r}, expected 1 — charts/forgejo-runner/values.yaml keeps the single-pod default (D57: scale rides per-slice overrides; a chart flip would multiply EVERY future release)', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    fail "g10: see the g10 detail above"
+  fi
+  ok "g10: with no slice the chart renders replicas 1 — the default stays single (B1-as-amended, D57)"
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

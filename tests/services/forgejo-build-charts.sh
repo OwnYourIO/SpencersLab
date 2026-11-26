@@ -75,6 +75,25 @@
 # replays is byte-preserved, its ROLE is re-truthed from derivation term
 # to the skip-when-already-published collision guard.
 #
+# Round 5 (2026-11-26, chunks/C13.md + C14.md + C15.md; D52-D59): 34 legs,
+# written RED-FIRST against the pre-fix workflow — the Nov-25 fire died on
+# exactly the parse shape t27/t28 replay executed. C13: t27 batteries the
+# test-build Patch-bump heredoc (clean line, tolerated comment surviving the
+# rewrite, garbage refusing, the column-0 anchor keeping dependency pins
+# out, `#nospace` still refusing); t28 extends the t25 CASES-walk machinery
+# to the bump-derivation heredoc with the commenttolerant/garbagetail pair;
+# t29 pins the class ban — no live charts/*/Chart.yaml version line carries
+# a trailing comment. C14: t30/t31 execute the shared ci/last-built
+# resolver and the marker..sha chain against scratch bare remotes (the
+# silent empty-before fallback of the old t18 is RE-AIMED to the loud-die
+# law, the marker==sha verified-empty info line replaces the anomaly
+# warning), t32 pins the single advance WRITER as a two-state law (C14's
+# interim build-charts job ↔ C15's main-sync aggregate — exactly one
+# writer, D54) and t33 the bump_sha output plumbing. C15: t2 re-aims to
+# the called-only trigger (push-era paths pins die with the push arm,
+# D56) and t34 pins the on.workflow_call.outputs declaration. Re-aimed
+# t2/t18 are red until their own chunk lands.
+#
 # Carried by C09's flip commit, NOT by this wave (chunk Files-in-scope):
 # t19's test-build cmds list swaps 'helm dependency build' -> 'helm
 # dependency update' exactly when the workflow flips (AC2's
@@ -124,7 +143,13 @@ then
 fi
 ok "t1: $WF exists and parses; the GitHub release twin is deleted (cutover in one commit)"
 
-# --- t2: trigger -------------------------------------------------------------
+# --- t2: trigger — called-only (C15 re-aim, D56) ---------------------------
+# The push arm died with owner directive 4: main-sync's next run calls this
+# workflow, and path filtering lives in the marker..sha detection instead
+# (plan Round-5 landing §3). The push-era branches/paths pins are DELETED
+# with the arm they pinned; no dispatch and no PR ever (t2's historic "no
+# dispatch, no PR" clause re-aims to "call only"). Red until C15 lands:
+# the shipped file is still push-triggered.
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -139,22 +164,13 @@ def need(cond, msg):
 
 
 need(isinstance(trig, dict), 'no top-level on: mapping')
-# Faithful to the twin this ticket replaces: push-only, no workflow_dispatch,
-# no pull_request (the first fire rides a real merge; PR legs stay on GitHub).
-need(set(trig) == {'push'},
-     f'on: keys are {sorted(map(str, trig))}, expected exactly push')
-push = trig['push']
-need(isinstance(push, dict), 'push: is not a mapping')
-need(push.get('branches') == ['main'],
-     f'push.branches is {push.get("branches")!r}, expected exactly [main]')
-paths = push.get('paths')
-need(isinstance(paths, list) and 'charts/**' in paths,
-     f'push.paths is {paths!r}, expected to contain charts/**')
+need(set(trig) == {'workflow_call'},
+     f'on: keys are {sorted(map(str, trig))}, expected exactly workflow_call (C15/D56: build-charts ends called-only — a surviving push arm keeps the pre-call detection era alive, a dispatch/PR arm contradicts the "no dispatch, no PR" law)')
 PY
 then
   fail "t2: see the t2 detail above"
 fi
-ok "t2: on: is exactly push.branches [main] with paths covering charts/** (no dispatch, no PR)"
+ok "t2: on: is exactly {workflow_call} — push arm and paths filter retired with it, filtering rides the marker..sha detection (C15, D56)"
 
 # --- t3: jobs + ROLE-membership guards (D31 reconcile) -------------------------
 if ! python3 - "$WF" <<'PY'
@@ -173,10 +189,22 @@ def need(cond, msg):
 
 
 need(isinstance(jobs, dict), 'no jobs: mapping')
-# The job inventory the chunk prescribes; a renamed or extra job reddens here.
-need(set(jobs) == {'changes', 'test-build', 'bump', 'release', 'forgejo-publish'},
-     f'jobs keys are {sorted(jobs)}, expected exactly changes/test-build/bump/release/forgejo-publish')
+# The job inventory the chunk prescribes; a renamed or extra job reddens
+# here. C14's INTERIM advance-marker job (deleted again by C15's aggregate)
+# is the sanctioned sixth name for exactly one wave — the writer law lives
+# in t32, not here; anything else extra or missing is a rogue surface.
+INVENTORY = {'changes', 'test-build', 'bump', 'release', 'forgejo-publish'}
+need(set(jobs) in (INVENTORY, INVENTORY | {'advance-marker'}),
+     f'jobs keys are {sorted(jobs)}, expected the five-job inventory or the five plus C14\'s interim advance-marker (a sixth name beyond it, or a missing one, is an unpinned surface)')
 for name, job in jobs.items():
+    if_expr = str((job or {}).get('if') or '')
+    if name == 'advance-marker':
+        # C14's interim job: membership guard PLUS the has-changes term
+        # (t32 pins the full shape); the bare-GUARD law below is for the
+        # permanent jobs and does not apply to the carved-out sixth.
+        need(if_expr.startswith(GUARD) and "has_changes == 'true'" in if_expr,
+             f'advance-marker.if is {if_expr!r} — expected {GUARD!r} extended with the has-changes term (C14 task 5)')
+        continue
     need((job or {}).get('if') == GUARD,
          f"{name}.if is {(job or {}).get('if')!r}, expected {GUARD!r} — every job carries exactly the membership guard (AGENTS Forge Actions law: contains(), never equality; has-changes gating belongs to step-level ifs)")
 # Equality-as-live-guard is banned (D31): scan every live if, job and step.
@@ -205,7 +233,7 @@ PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly the five prescribed jobs, every one guarded on contains(vars.ROLE, 'prod') (equality/null-widen live guards absent); dev guard absent; substring caveat present"
+ok "t3: the five prescribed jobs (plus C14's carved-out interim advance-marker where present), every permanent job guarded on contains(vars.ROLE, 'prod') byte-exact, the advance job on guard+has-changes (equality/null-widen live guards absent); dev guard absent; substring caveat present"
 
 # --- t4: runner labels ---------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
@@ -344,10 +372,15 @@ need(re.search(r'seq\s+\d+|\{\s*\d+\s*\.\.\s*\d+\}|-(?:lt|le|gt|ge)\s+\d+', blob
 need('HEAD:refs/heads/main' in blob,
      'bump does not push HEAD:refs/heads/main (the detached-HEAD refspec shape)')
 
-# File-wide: never force, never merge, never rewrite.
-for pat in ('--force', '+refs', 'git push -f', 'git merge'):
+# File-wide: never force, never merge, never rewrite. The merge ban carries
+# the round-5 carve-out: `git merge-base --is-ancestor` is the marker
+# tolerance's ancestry CLASSIFY (C14 task 2, D54) — a read, not a write —
+# while `git merge` as a verb is what V-4's FF-only loop forbids.
+for pat in ('--force', '+refs', 'git push -f'):
     n = raw.count(pat)
     need(n == 0, f'{pat!r} occurs {n} time(s) file-wide, expected zero (a refused non-FF re-loops; it never overwrites)')
+n = len(re.findall(r'git\s+merge(?!-base)', raw))
+need(n == 0, f'git merge (non-base) occurs {n} time(s) file-wide, expected zero (a refused non-FF re-loops; it never overwrites; merge-base --is-ancestor is the tolerated classify)')
 
 # The bump rides the checkout's default same-repo credentials — the automatic
 # token's non-re-trigger is the loop guard — so no secret may be named in it.
@@ -1013,12 +1046,14 @@ then
 fi
 ok "t17: gh-pages publishes through the credential-slot remote with its tracking ref fetched before cr index, which names --remote publish"
 
-# --- t18: detect survives the empty/all-zero before (Forgejo payload caveat) -------
-# Forgejo push payloads can OMIT event.before or send the all-zero first-push
-# form (RESEARCH A3); either way the range diff must fall back to HEAD^ rather
-# than diff against an unusable bound — the same lesson containers-build.yaml
-# ships. An unresolvable bound that silently resolves to nothing would make
-# every merge look like "no chart changed".
+# --- t18: the marker..sha chain arms (C14 re-aim of the empty-before era) ----
+# The shipped silent HEAD^-fallback on an empty EVENT_BEFORE is DEAD law
+# (D53: no real push payload sends one; the containers law the chunk mirrors):
+# the chain must route MARKER set → marker..sha, all-zero before (marker-side
+# only) → tip-only + ::warning:: announce, empty before → LOUD die, else
+# before..sha (bootstrap-era). Red until C14 lands the resolver + chain;
+# after C15 the same arms stand with the marker as the only push-side base
+# (a called run carries no event.before), so this leg spans both eras.
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
@@ -1033,19 +1068,30 @@ def need(cond, msg):
         sys.exit(1)
 
 
-need(re.search(r'-z\s+"?\$\{?EVENT_BEFORE', det),
-     'the detect loop does not test an EMPTY event.before — Forgejo payloads may omit the key entirely (A3), and an unset bound would empty the range diff into a silently-green no-changes run')
-need('0000000000000000000000000000000000000000' in det and 'HEAD^' in det,
-     'the all-zero first-push before does not fall back to HEAD^ — the same guard containers-build.yaml ships')
-need(re.search(r'git\s+diff\s+--name-only\s+[^\n]*HEAD\^', det),
-     'no HEAD^ range diff on the fallback path')
+need(re.search(r'MARKER', det),
+     'the changes-job chain never reads a marker value — the marker..sha detection this chunk adopts is the whole delivery-loss heal (C14 task 2), a chain still anchored on the payload alone re-dies like the Nov-25 fire')
+# Arm ORDER is the law: marker first, then the all-zero tip-only announce,
+# then the empty-before die, then the before-chain fallback.
+i_marker = det.find('MARKER')
+i_zero = det.find('0000000000000000000000000000000000000000')
+i_die = re.search(r'\b(die|exit 1)\b', det[i_zero:] if i_zero >= 0 else '')
+need(i_marker >= 0 and i_zero > i_marker,
+     'the all-zero branch does not follow the marker read — marker must win over every payload fallback (C14: MARKER set → diff marker..sha first)')
+need(i_zero >= 0 and '::warning::' in det[i_zero:i_zero + 600],
+     'the all-zero first-push route carries no ::warning:: tip-only announce — the narrowing must name itself in the log (containers :199-204 semantics)')
+need(re.search(r'-z\s+"?\$\{?EVENT_BEFORE', det) and i_die is not None,
+     'an empty EVENT_BEFORE is not a LOUD die — the silent HEAD^-fallback the shipped guard hides is exactly the wrong-accessor mask the containers law buried ("no push payload sends one")')
+need(re.search(r'git\s+diff\s+--name-only[^\n]*HEAD\^', det),
+     'no HEAD^ range diff on the tip-only route — the first-push fallback stays HEAD^..HEAD scoped to charts/')
 need('"${EVENT_BEFORE}"' in det or '${EVENT_BEFORE}' in det,
-     'the normal range never uses the payload bounds')
+     'the before-fallback arm never uses the payload bound — with a marker absent but a real before, before..sha must still resolve (bootstrap-era)')
+need('-- charts/' in det and "cut -d'/' -f2" in det,
+     'the CHARTS filter moved — cut -d/ -f2 + DNS-safe + Chart.yaml gate stay EXACTLY (the coder-templates collapse is card #56\'s filter decision, not this chunk\'s)')
 PY
 then
   fail "t18: see the t18 detail above"
 fi
-ok "t18: empty-before AND all-zero-before both route to the HEAD^ fallback; a real range still diffs EVENT_BEFORE..EVENT_SHA"
+ok "t18: chain arms route marker→tip-only(announce)→loud-die-on-empty→before..sha, in order, with the charts/ filter and DNS-safe/Chart.yaml gates byte-stable (C14 re-aim; t31/t30 replay it executed)"
 
 # --- t19: the toolchain rides the baked job image — nothing installs, and the vacated slots stay empty ---
 # Fix-round flip of the runtime-cr contract (C07, D37/D38/D43): the pin pair
@@ -1635,5 +1681,642 @@ then
   fail "t26: see the t26 detail above"
 fi
 ok "t26: AGENTS.md and overview.md pair-states the calendar law (Y.M.N, unpadded month, same-month N+1, new-month N=1) with the D49 Y.M.1 seed clause and no patch-scheme residue"
+
+# --- t27: executed Patch-bump battery — comment tolerance at :111-class (C13) ----
+# The Nov-25 fire died HERE: a trailing `#` comment on the version line made
+# the `$`-anchored regex refuse and the test-build matrix leg raised. These
+# cases run the SHIPPED heredoc (extracted like t25 does the bump heredoc)
+# against fixture Chart.yamls, so the fix shape is executed, not texted —
+# and the garbage-refuses law is replayed in the same breath (a tolerance
+# that swallows ` junk` or `#nospace` is a new bug class, not a fix).
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+tb = (jobs.get('test-build') or {}).get('steps') or []
+body = next((str(s.get('run', '')) for s in tb
+             if isinstance(s, dict) and 'MAJOR.MINOR.PATCH' in str(s.get('run', ''))), None)
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t27: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(body is not None, 'the test-build job carries no Patch-bump version step — the smoke bump died (t1/t5 shape law: this leg reads the shipped heredoc, it does not substitute its own)')
+heredoc = re.search(r"<<'PY'[ ]*\n(.*?)\nPY[ ]*(?=\n|\Z)", body, re.S)
+need(heredoc is not None, 'the Patch-bump step no longer embeds its heredoc — t27 executes it verbatim')
+src = heredoc.group(1)
+need('(?m)^version:' in src,
+     'the column-0 anchor is gone from the parse — dependency pins (indented version: lines) would start winning, the traefik 42.x collision law (C13 keeps (?m)^)')
+need('m.start(1)' in src and 'm.end(3)' in src,
+     'the group-1..3 rewrite slices moved — a tolerated comment survives the bump precisely because it sits after m.end(3) (C13 task 1)')
+
+parser = os.path.join(tempfile.gettempdir(), 'r5t27-patchbump.py')
+work = []
+problems = []
+CASES = [
+    # name,      version-line,              expect_exit, expect_line_or_None, msg_needle_or_None
+    ('clean',    'version: 1.0.40',          0, r'^version: 1\.0\.41$', None),
+    ('comment',  'version: 1.0.1  # note',   0, r'^version: 1\.0\.2[ \t]+# note$', None),
+    ('junk',     'version: 1.0.1 junk',      1, None, 'is not MAJOR.MINOR.PATCH'),
+    ('indented', '  version: 5.0.1',         1, None, None),
+    ('nospace',  'version: 1.0.1#nospace',   1, None, None),
+]
+try:
+    with open(parser, 'w') as f:
+        f.write(src)
+    for name, line, want_rc, want_line, needle in CASES:
+        root = tempfile.mkdtemp(prefix='forgejo-t27.')
+        work.append(root)
+        cdir = os.path.join(root, 'charts', name)
+        os.makedirs(cdir)
+        text = f'apiVersion: v2\nname: {name}\n{line}\nappVersion: "9.9.9"\n'
+        with open(os.path.join(cdir, 'Chart.yaml'), 'w') as f:
+            f.write(text)
+        r = subprocess.run([sys.executable, parser, f'charts/{name}/Chart.yaml'],
+                           cwd=root, capture_output=True, text=True)
+        after = open(os.path.join(cdir, 'Chart.yaml')).read()
+        if want_rc == 0:
+            if r.returncode != 0:
+                problems.append(f"{name}: exit {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}), expected the bump to succeed")
+                continue
+            if not re.search(want_line, after, re.M):
+                got = [l for l in after.splitlines() if 'version:' in l]
+                problems.append(f'{name}: after the bump the file carries {got!r}, expected a line matching {want_line!r}'
+                                + (' — the seed-era comment must SURVIVE the rewrite (C13: slices end at group 3)' if name == 'comment' else ''))
+        else:
+            if r.returncode == 0:
+                problems.append(f'{name}: exit 0 — {line!r} must REFUSE (garbage-refuses law; the fix tolerates only a #-prefixed tail)')
+            if needle and needle not in (r.stderr + r.stdout):
+                problems.append(f"{name}: refused but the message does not name {needle!r} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r})")
+            if after != text:
+                problems.append(f'{name}: a refusing case still rewrote the file — the die must precede any write')
+finally:
+    for root in work:
+        shutil.rmtree(root, ignore_errors=True)
+    if os.path.exists(parser):
+        os.unlink(parser)
+
+if problems:
+    print('FAIL: t27: the Patch-bump heredoc does not implement the C13 comment-tolerant shape:', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t27: see the t27 detail above"
+fi
+ok "t27: executed on the shipped test-build heredoc — clean bump regression, comment-tolerant bump with the comment surviving the rewrite, junk/indented/#nospace all refusing loudly (the :111-class battery, C13 t27)"
+
+# --- t28: executed derivation battery — :258-class comment tolerance (C13) -------
+# The sibling parse (the bump derivation's `^version: (\S+)$`) carries the
+# same terminal-anchor bug with the OTHER refuse message. Two cases extend
+# the t25 CASES-walk machinery (stamp stubbing, argv-or-env modes): the
+# comment-tolerant derivation must rewrite the token and keep the comment
+# in the written file; a junk tail must still refuse loud (the :260 die).
+if ! python3 - "$WF" <<'PY'
+import json, os, re, shutil, subprocess, sys, tempfile, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+bodies = [str(s.get('run', '')) for s in (jobs.get('bump') or {}).get('steps', [])
+          if isinstance(s, dict) and 'run' in s]
+body = next((b for b in bodies if 'refs/remotes/origin/main' in b and 'python3' in b), None)
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t28: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(body is not None, 'no bump derivation step (t25 already reddens on the same absence; t28 cannot stage without it)')
+heredoc = re.search(r"<<'PY'[ ]*\n(.*?)\nPY[ ]*(?=\n|\Z)", body, re.S)
+need(heredoc is not None, 'the bump step no longer embeds its derivation heredoc')
+src = heredoc.group(1)
+need('(?m)^version: (\\S+)' in src,
+     'the :258-class parse is not the (\\S+) shape t28 replays (a total rewrite of the parse belongs to a fresh t-spec, not to C13)')
+need('m.start(1)' in src and 'm.end(1)' in src,
+     'the rewrite slices at group 1 moved — text[m.end(1):] is what keeps a tolerated tail byte-identical (C13 task 2)')
+
+mode = 'argv' if 'sys.argv[3]' in src else 'env'
+env_names = sorted(set(re.findall(r'''environ(?:\.get)?[\(\[]\s*["']([A-Za-z_][A-Za-z0-9_]*)["']''', src))) if mode == 'env' else []
+if mode == 'env':
+    need(bool(env_names), 'environ is mentioned but no stub-able variable name is discoverable — the leg cannot inject the stamp')
+
+CASES2 = [
+    # name, tree, published, stamp, expect (None = must refuse)
+    ('commenttolerant', '2026.11.3  # seed-era note', {}, ('2026', '11'), '2026.11.4'),
+    ('garbagetail',     '2026.11.3 junk',             {}, ('2026', '11'), None),
+]
+
+parser = os.path.join(tempfile.gettempdir(), 'r5t28-derive.py')
+work = []
+problems = []
+try:
+    with open(parser, 'w') as f:
+        f.write(src)
+    for name, tree, published, (ys, ms), expect in CASES2:
+        root = tempfile.mkdtemp(prefix='forgejo-t28.')
+        work.append(root)
+        cdir = os.path.join(root, 'charts', name)
+        os.makedirs(cdir)
+        with open(os.path.join(cdir, 'Chart.yaml'), 'w') as f:
+            f.write(f'apiVersion: v2\nname: {name}\nversion: {tree}\n')
+        idx = os.path.join(root, 'published-index.yaml')
+        lines = ['apiVersion: v1', 'entries:']
+        for k, v in published.items():
+            lines += [f'  {k}:', '  - apiVersion: v2', f'    name: {k}', f'    version: {v}']
+        with open(idx, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+        cmd = [sys.executable, parser, json.dumps([name]), idx]
+        if mode == 'argv':
+            if re.search(r'sys\.argv\[4\]', src):
+                cmd += [ys, ms]
+            else:
+                cmd += [f'{ys}.{ms}', ys, ms]
+        env = os.environ.copy()
+        for var in list(env_names) + ['CALVER_STAMP', 'CALVER_Y', 'CALVER_M', 'CAL_STAMP', 'CAL_Y', 'CAL_M']:
+            if var.endswith('_Y'):
+                env[var] = ys
+            elif var.endswith('_M'):
+                env[var] = ms
+            else:
+                env[var] = f'{ys}.{ms}'
+        r = subprocess.run(cmd, cwd=root, capture_output=True, text=True, env=env)
+        after = open(os.path.join(cdir, 'Chart.yaml')).read()
+        if expect is None:
+            if r.returncode == 0:
+                problems.append(f'{name} (junk tail): exit 0 with {after.splitlines()[2]!r} — `2026.11.3 junk` has no #, the anchored tail cannot match it, the run must REFUSE (C13: garbage-refuses law preserved)')
+            continue
+        if r.returncode != 0:
+            problems.append(f"{name}: exit {r.returncode} ({(r.stderr.strip()[-140:] or r.stdout.strip()[-140:])!r}), expected the derivation to bump {tree!r} to {expect!r} — the :258 parse still refuses a #-comment tail (the Nov-25 'no top-level version: line' class)")
+            continue
+        m2 = re.search(r'(?m)^version: (\S+)(?:[ \t]+#[^\n]*)?[ \t]*$', after)
+        got = m2.group(1) if m2 else '<none>'
+        if got != expect:
+            problems.append(f"{name}: derivation wrote {got!r}, expected {expect!r}")
+        if '# seed-era note' not in after:
+            problems.append(f'{name}: the tolerated comment did NOT survive the rewrite — the rewrite is group-1-scoped precisely so the tail rides untouched')
+finally:
+    for root in work:
+        shutil.rmtree(root, ignore_errors=True)
+    if os.path.exists(parser):
+        os.unlink(parser)
+
+if problems:
+    print('FAIL: t28: the bump derivation heredoc does not implement the C13 :258-class comment tolerance:', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t28: see the t28 detail above"
+fi
+ok "t28: executed on the shipped derivation heredoc — commenttolerant rewrites the token with the comment surviving the written file, garbagetail still refuses loud (the :258-class battery, C13 t28)"
+
+# --- t29: class ban — no live chart carries the bug shape (C13) ------------------
+# The prowlarr line MOVE is what makes the fire survivable TODAY; this leg
+# keeps the CLASS from regrowing (the seed-law prose belongs ABOVE the line —
+# charts/*/Chart.yaml top-level version lines stay comment-free, verified
+# 2026-11-26 only prowlarr carries the shape).
+if ! python3 - <<'PY'
+import glob, sys
+
+viol = []
+for p in sorted(glob.glob('charts/*/Chart.yaml')):
+    for i, ln in enumerate(open(p).read().splitlines(), 1):
+        if ln.startswith('version:') and '#' in ln:
+            viol.append(f'{p}:{i}: {ln.strip()[:90]}')
+if viol:
+    print('FAIL: t29: live charts carry a trailing comment ON the top-level version: line (the C13 fire class; move the comment to its own line above):', file=sys.stderr)
+    for v in viol:
+        print('  ' + v, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t29: see the t29 detail above"
+fi
+ok "t29: every live charts/*/Chart.yaml top-level version: line is comment-free (class ban; the prowlarr move is what turns this green)"
+
+# --- t30: executed shared-marker resolver (C14) ----------------------------------
+# The resolver step mirrors the containers shipped shape (ls-remote read,
+# absent -> empty output bootstrap, non-40-hex LOUD, present-unreachable LOUD
+# with reset/delete owner verbs) on the shared ci/last-built ref. Events
+# outside the marker-side set must emit an empty sha= WITHOUT touching the
+# network (dead-origin witness, the containers c5 idiom). Staged and executed
+# against a scratch bare remote; the battery runs the marker-side event as
+# workflow_call so it reads identically in the C14 (push+call) and C15
+# (call-only) gate states.
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+wf = sys.argv[1]
+jobs = (yaml.safe_load(open(wf)) or {}).get('jobs') or {}
+steps = (jobs.get('changes') or {}).get('steps') or []
+
+RES = 'refs/heads/ci/last-built'
+rs = [i for i, s in enumerate(steps)
+      if isinstance(s, dict) and 'ls-remote' in str(s.get('run', '')) and RES in str(s.get('run', ''))]
+ds = [i for i, s in enumerate(steps) if isinstance(s, dict) and 'CHARTS=' in str(s.get('run', ''))]
+if not rs:
+    print(f'FAIL: t30: the changes job carries no resolve step reading {RES} (the resolver is C14 task 1; absent means the marker never feeds detection)', file=sys.stderr)
+    sys.exit(1)
+if not ds:
+    print('FAIL: t30: no detect step to position the resolver against (harness fault — t1 owns that red)', file=sys.stderr)
+    sys.exit(1)
+if rs[0] >= ds[0]:
+    print(f'FAIL: t30: the resolver step sits at {rs[0]}, not BEFORE the detect step ({ds[0]}) — C14: resolve last-built marker goes before detection', file=sys.stderr)
+    sys.exit(1)
+rtext = str(steps[rs[0]].get('run', ''))
+rtext = re.sub(r'\$\{\{[^}]*event_name[^}]*\}\}', '"$EVENT_NAME"', rtext)
+
+git = shutil.which('git')
+root = tempfile.mkdtemp(prefix='forgejo-t30.')
+problems = []
+
+
+def run(script, cwd, env_extra, out):
+    e = os.environ.copy()
+    e['GITHUB_OUTPUT'] = out
+    e.update(env_extra)
+    return subprocess.run(['bash', script], cwd=cwd, capture_output=True, text=True, env=e)
+
+
+def answer(out):
+    txt = open(out).read() if os.path.exists(out) else ''
+    lines = [l for l in txt.splitlines() if l.startswith('sha=')]
+    return lines[-1][4:] if lines else None
+
+
+try:
+    remote = os.path.join(root, 'remote.git')
+    subprocess.run([git, 'init', '-q', '--bare', remote], check=True)
+    work = os.path.join(root, 'work')
+    subprocess.run([git, 'clone', '-q', remote, work], check=True, capture_output=True)
+    subprocess.run([git, '-C', work, 'config', 'user.email', 'test@example.invalid'], check=True)
+    subprocess.run([git, '-C', work, 'config', 'user.name', 'test'], check=True)
+    open(os.path.join(work, 'seed.txt'), 'w').write('seed\n')
+    subprocess.run([git, '-C', work, 'add', '-A'], check=True)
+    subprocess.run([git, '-C', work, 'commit', '-qm', 'a'], check=True)
+    subprocess.run([git, '-C', work, 'push', '-q', 'origin', 'HEAD:refs/heads/main'], check=True)
+    head1 = subprocess.run([git, '-C', work, 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+
+    script = os.path.join(root, 'resolver.sh')
+    open(script, 'w').write(rtext + '\n')
+
+    # r1: marker ABSENT -> exit 0 with an EMPTY sha= (bootstrap)
+    out = os.path.join(root, 'out1')
+    r = run(script, work, {'EVENT_NAME': 'workflow_call', 'MARKER_SHA': ''}, out)
+    if r.returncode != 0:
+        problems.append(f'r1 absent-marker: exit {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}), expected 0 — no marker yet is the bootstrap shape (emit sha= empty)')
+    elif not os.path.exists(out) or answer(out) != '':
+        problems.append(f'r1 absent-marker: output is {answer(out)!r}, expected an empty sha= emission (the detect env must never go missing)')
+
+    # r2: marker present and reachable -> emits the marker sha
+    subprocess.run([git, '-C', work, 'push', '-q', 'origin', f'{head1}:{RES}'], check=True)
+    out = os.path.join(root, 'out2')
+    r = run(script, work, {'EVENT_NAME': 'workflow_call', 'MARKER_SHA': ''}, out)
+    got = answer(out) if os.path.exists(out) else None
+    if r.returncode != 0 or got != head1:
+        problems.append(f'r2 present+reachable: exit {r.returncode} sha={got!r}, expected 0/sha={head1} — the resolver must hand detect the marker')
+
+    # r3: marker present but UNREACHABLE (advanced from a sibling clone the
+    # checkout has never fetched) -> LOUD die naming the value + owner verbs
+    work2 = os.path.join(root, 'work2')
+    shutil.copytree(work, work2)  # same objects: the marker pre-move FFs and stays unreachable from `work`
+    open(os.path.join(work2, 'ahead.txt'), 'w').write('ahead\n')
+    subprocess.run([git, '-C', work2, 'add', '-A'], check=True)
+    subprocess.run([git, '-C', work2, 'commit', '-qm', 'ahead'], check=True)
+    subprocess.run([git, '-C', work2, 'push', '-q', 'origin', f'HEAD:{RES}'], check=True)
+    head2 = subprocess.run([git, '-C', work2, 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+    out = os.path.join(root, 'out3')
+    r = run(script, work, {'EVENT_NAME': 'workflow_call', 'MARKER_SHA': ''}, out)
+    if r.returncode == 0:
+        problems.append(f'r3 orphaned-marker: exit 0 (sha={answer(out)!r}) — a marker unreachable from the checkout must fail LOUD, never downgrade this run to the payload fallback in silence (C14 mirrors the containers shipped shape)')
+    else:
+        log = r.stderr + r.stdout
+        if head2 not in log:
+            problems.append('r3 orphaned-marker: the die does not name the marker sha — undiagnosable from the job log')
+        if not re.search(r'reset|delete', log, re.I):
+            problems.append('r3 orphaned-marker: the die carries no owner verbs (reset the marker to a reachable commit or delete it)')
+
+    # r4: non-40-hex garbage from ls-remote (PATH shim) -> LOUD, naming it
+    shim = os.path.join(root, 'shim')
+    os.makedirs(shim)
+    garbage = 'z' * 40
+    stub = os.path.join(shim, 'git')
+    with open(stub, 'w') as f:
+        f.write(f'#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%s\\t{RES}\\n" "{garbage}"; exit 0; fi\nexec {git} "$@"\n')
+    os.chmod(stub, 0o755)
+    out = os.path.join(root, 'out4')
+    r = run(script, work, {'EVENT_NAME': 'workflow_call', 'MARKER_SHA': '', 'PATH': shim + os.pathsep + os.environ['PATH']}, out)
+    if r.returncode == 0:
+        problems.append('r4 garbage-marker: exit 0 — a non-sha value is fatal, not a bootstrap reinterpretation')
+    elif garbage not in (r.stderr + r.stdout):
+        problems.append('r4 garbage-marker: the die does not name the garbage value')
+
+    # r5: event OUTSIDE the marker-side set -> empty sha= with NO network
+    # (dead origin: any ls-remote attempt would die loudly instead)
+    dead = os.path.join(root, 'dead')
+    os.makedirs(dead)
+    subprocess.run([git, '-C', dead, 'init', '-q', '.'], check=True)
+    subprocess.run([git, '-C', dead, 'remote', 'add', 'origin', os.path.join(root, 'no-such-remote.git')], check=True)
+    out = os.path.join(root, 'out5')
+    r = run(script, dead, {'EVENT_NAME': 'pull_request', 'MARKER_SHA': ''}, out)
+    if r.returncode != 0:
+        problems.append(f'r5 non-marker-side event: exit {r.returncode} against a DEAD origin — outside the marker-side set the resolver must emit sha= empty and touch no network (the shipped PR/dispatch law)')
+    elif answer(out) != '':
+        problems.append(f'r5 non-marker-side event: sha={answer(out)!r}, expected the empty emission')
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+
+if problems:
+    print('FAIL: t30: the ci/last-built resolver does not implement the shipped-shape law (C14 task 1):', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t30: see the t30 detail above"
+fi
+ok "t30: executed against scratch bare remotes — absent→empty, present+reachable→sha, orphaned→loud naming value+owner verbs, non-hex→loud, non-marker-side events answer empty network-free (C14 resolver)"
+
+# --- t31: executed marker..sha chain + idempotence + re-cover (C14) --------------
+# The detect chain of the changes job, staged and run against a scratch repo
+# carrying charts/{alpha,beta,gamma}: marker..sha happy path; marker==sha ->
+# the verified-empty INFO line, empty CHARTS, NO ::warning:: anomaly (AC5);
+# all-zero before -> tip-only + ::warning::; empty before with no marker ->
+# LOUD die (the replaced silent-fallback shape, t18 static); and the dead-run
+# recovery proof (AC4): a red fire leaves the marker put, the next fire's
+# range still contains the lost chart change.
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+steps = (jobs.get('changes') or {}).get('steps') or []
+di = [i for i, s in enumerate(steps) if isinstance(s, dict) and 'CHARTS=' in str(s.get('run', ''))]
+if not di:
+    print('FAIL: t31: no detect step (the CHARTS= writer) in the changes job — nothing to stage (authored-red until C14 lands the chain)', file=sys.stderr)
+    sys.exit(1)
+dtext = str(steps[di[0]].get('run', ''))
+env_map = steps[di[0]].get('env') or {}
+ROLE_OF = (('outputs.sha', 'marker'), ('event.before', 'before'), ('event_name', 'event'), ('.sha', 'sha'))
+key_role = {}
+raw_expr = {}
+for k, v in env_map.items():
+    v = str(v)
+    for frag, role in ROLE_OF:
+        if frag in v:
+            key_role[k] = role
+            raw_expr[k] = v
+            break
+# Inline interpolations in the body bind to the canonical names; env-mapped
+# keys bind to THEIR names (both paths covered — the step contract is the
+# wiring, not one spelling).
+dtext = re.sub(r'\$\{\{[^}]*event_name[^}]*\}\}', '"$R5_EVENT"', dtext)
+dtext = re.sub(r'\$\{\{[^}]*event\.before[^}]*\}\}', '"$R5_BEFORE"', dtext)
+dtext = re.sub(r'\$\{\{[^}]*(?:forgejo|github)\.sha[^}]*\}\}', '"$R5_SHA"', dtext)
+dtext = re.sub(r'\$\{\{[^}]*outputs\.sha[^}]*\}\}', '"$R5_MARKER"', dtext)
+if '${{' in dtext:
+    print(f'FAIL: t31: the staged detect body still carries an unnormalized interpolation: {[l.strip()[:90] for l in dtext.splitlines() if "${{" in l]}', file=sys.stderr)
+    sys.exit(1)
+
+git = shutil.which('git')
+root = tempfile.mkdtemp(prefix='forgejo-t31.')
+problems = []
+
+
+def chart(repo, name):
+    d = os.path.join(repo, 'charts', name)
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, 'Chart.yaml'), 'w') as f:
+        f.write(f'apiVersion: v2\nname: {name}\nversion: 1.0.0\n')
+
+
+def commit(repo, msg):
+    subprocess.run([git, '-C', repo, 'add', '-A'], check=True)
+    subprocess.run([git, '-C', repo, 'commit', '-qm', msg], check=True)
+    return subprocess.run([git, '-C', repo, 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+
+
+def run_case(label, marker, before, sha, want_rc, want_charts=None,
+             want_info=None, want_warn=None):
+    out = os.path.join(root, f'out-{label}')
+    script = os.path.join(root, f'chain-{label}.sh')
+    open(script, 'w').write(dtext + '\n')
+    e = os.environ.copy()
+    e.update({'GITHUB_OUTPUT': out, 'EVENT_NAME': 'push',
+              'MARKER_SHA': marker, 'EVENT_BEFORE': before, 'EVENT_SHA': sha, 'SHA': sha,
+              'R5_EVENT': 'push', 'R5_BEFORE': before, 'R5_SHA': sha, 'R5_MARKER': marker})
+    for k, role in key_role.items():
+        e[k] = {'marker': marker, 'before': before, 'sha': sha, 'event': 'push'}[role]
+    r = subprocess.run(['bash', script], cwd=repo, capture_output=True, text=True, env=e)
+    log = r.stdout + r.stderr
+    if want_rc == 0:
+        if r.returncode != 0:
+            problems.append(f'{label}: exit {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}), expected 0')
+            return
+        charts = re.findall(r'(?m)^CHARTS=(.*)$', open(out).read()) if os.path.exists(out) else []
+        got = re.sub(r'\s', '', charts[-1]) if charts else '<none>'
+        if want_charts is not None and got != want_charts:
+            problems.append(f'{label}: CHARTS emitted {got!r}, expected {want_charts!r}')
+        if want_info and want_info not in log:
+            problems.append(f'{label}: the log carries no {want_info!r} — the designed calm line is how a verified-empty run reads differently from an anomaly')
+        if want_warn is True and '::warning::' not in log:
+            problems.append(f'{label}: expected a ::warning:: announcement on stderr/stdout and found none')
+        if want_warn is False and '::warning::' in log:
+            problems.append(f'{label}: the run wears a ::warning:: where the shipped law says calm — the marker==sha empty set is data, not an anomaly (C14 idempotence line)')
+    else:
+        if r.returncode == 0:
+            problems.append(f'{label}: exit 0 — expected the LOUD die (the silent HEAD^-fallback mask is exactly what C14 buried)')
+
+
+try:
+    repo = os.path.join(root, 'work')
+    os.makedirs(repo)
+    subprocess.run([git, '-C', repo, 'init', '-q', '.'], check=True)
+    subprocess.run([git, '-C', repo, 'config', 'user.email', 'test@example.invalid'], check=True)
+    subprocess.run([git, '-C', repo, 'config', 'user.name', 'test'], check=True)
+    open(os.path.join(repo, 'README.md'), 'w').write('a\n')
+    sha_a = commit(repo, 'a')
+    chart(repo, 'alpha')
+    sha_b = commit(repo, 'b-alpha')
+    chart(repo, 'beta')
+    sha_c = commit(repo, 'c-beta')
+    chart(repo, 'gamma')
+    sha_d = commit(repo, 'd-gamma')
+
+    # c1: happy marker..sha (marker=B, sha=C) — the beta change rides.
+    run_case('happy', sha_b, sha_a, sha_c, 0, want_charts='["beta"]')
+    # c2: marker==sha — verified-empty INFO line, no ::warning::, CHARTS=[] (AC5).
+    run_case('idem', sha_c, sha_b, sha_c, 0, want_charts='[]',
+             want_info='changed set verified empty', want_warn=False)
+    # c3: all-zero before with no marker — tip-only fallback, announced.
+    run_case('tiponly', '', '0' * 40, sha_d, 0, want_charts='["gamma"]', want_warn=True)
+    # c4: EMPTY before with no marker — LOUD die (the replaced silent shape).
+    run_case('die', '', '', sha_d, 1)
+    # c5: dead-run recovery (AC4): the fire at C died before advancing the
+    # marker; the next fire (tip D, marker still B) must SEE beta+gamma.
+    run_case('recover', sha_b, sha_c, sha_d, 0, want_charts='["beta","gamma"]')
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+
+if problems:
+    print('FAIL: t31: the marker..sha chain of the changes job does not implement the C14 law (happy / idempotence-info / tip-only-announce / empty-before-die / dead-run re-cover):', file=sys.stderr)
+    for p in problems:
+        print('  ' + p, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t31: see the t31 detail above"
+fi
+ok "t31: executed on a scratch repo — marker..sha detection, marker==sha verified-empty info with no anomaly annotation, all-zero tip-only announce, empty-before loud die, and the dead-run re-cover (marker put ⇒ the next fire's range contains the lost chart) (C14 tasks 2-3, AC4/AC5)"
+
+# --- t32: ONE advance writer — interim job here OR main-sync aggregate (C14/C15) --
+# Two-state pin by ruling (F4/D59: C14+C15 land in the same merge session,
+# but the waves gate independently): after C14 the marker moves ONLY through
+# this file's interim job (needs triple = the green-fire gate, ROLE guard AND
+# has_changes true, plain push of the BUMP COMMIT sha — never the event sha,
+# the D53 eternal-tail law — with the ancestor tolerance and no force form
+# anywhere); after C15 this file carries ZERO marker-push statements and the
+# writer lives in main-sync.yaml (pinned by that suite). Red at HEAD: neither
+# writer exists yet.
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+REF = 'refs/heads/ci/last-built'
+GUARD = "contains(vars.ROLE, 'prod')"
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+adv = jobs.get('advance-marker')
+
+if adv is None:
+    # C15 state: the builders carry no advance job; the writer must live in
+    # main-sync (that suite's t15 owns its shape — this leg owns the fence
+    # that NO marker push hides here).
+    raw = open(sys.argv[1]).read()
+    pushes = [ln.strip() for ln in raw.splitlines()
+              if re.search(r'git\s+push', ln) and REF in ln and not ln.strip().startswith('#')]
+    if pushes:
+        print(f'FAIL: t32: no advance-marker job, yet the file carries marker pushes in other steps: {pushes!r} — a hidden writer dodges the aggregate single-writer law (D54)', file=sys.stderr)
+        sys.exit(1)
+    ms = yaml.safe_load(open('.forgejo/workflows/main-sync.yaml')) or {}
+    if 'advance-marker' not in ((ms.get('jobs')) or {}):
+        print('FAIL: t32: no advance writer exists at all — the marker can never move, so every fire re-diffs its payload and the delivery-loss class stays open (C14 lands the interim job HERE; C15 moves it to main-sync)', file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+
+needs = adv.get('needs')
+needs = [needs] if isinstance(needs, str) else (needs or [])
+if set(needs) != {'bump', 'release', 'forgejo-publish'}:
+    print(f'FAIL: t32: advance-marker.needs is {needs!r}, expected exactly [bump, release, forgejo-publish] — the all-green-fire gate (a skipped bump skips the advance, the matrix-green-law analogue, C14 task 5)', file=sys.stderr)
+    sys.exit(1)
+if_expr = str(adv.get('if') or '')
+if GUARD not in if_expr or "needs.changes.outputs.has_changes == 'true'" not in if_expr:
+    print(f"FAIL: t32: advance-marker.if is {if_expr!r}, expected the ROLE byte-guard AND the has_changes == 'true' term — an empty CHARTS fire must not move the marker (C14 task 5)", file=sys.stderr)
+    sys.exit(1)
+checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and str(s.get('uses', '')).startswith('actions/checkout@')]
+if not checkouts:
+    print('FAIL: t32: advance-marker has no checkout step (t5 owns the action allow-list; the push needs the repository)', file=sys.stderr)
+    sys.exit(1)
+w = (checkouts[0].get('with') or {})
+if not (type(w.get('fetch-depth')) is int and w.get('fetch-depth') == 0):
+    print(f'FAIL: t32: advance-marker checkout fetch-depth is {w.get("fetch-depth")!r}, expected the integer 0 — push negotiation needs the history', file=sys.stderr)
+    sys.exit(1)
+body = '\n'.join(str(s.get('run', '')) for s in adv.get('steps') or [] if isinstance(s, dict) and 'run' in s)
+pushes = [ln.split('#', 1)[0].strip() for ln in body.splitlines()
+          if re.search(r'git\s+push', ln) and REF in ln]
+if not pushes:
+    print(f'FAIL: t32: the advance body never pushes to {REF} (C14 task 5: push the BUMP_SHA endpoint)', file=sys.stderr)
+    sys.exit(1)
+for stmt in pushes:
+    if re.search(r'--force|-f(\s|$)|force-with-lease|\+', stmt):
+        print(f'FAIL: t32: the advance push statement {stmt!r} wears a force form — plain push stays the first verb, tolerance classifies refusals, never forces past them (AC6)', file=sys.stderr)
+        sys.exit(1)
+    if 'refs/heads/main' in stmt:
+        print(f'FAIL: t32: the marker push rides a main refspec ({stmt!r}) — only the bump-commit endpoint (or the C15 target chain) advances ci/last-built (D53: an event-sha endpoint re-feeds B1 and mints an eternal one-release-per-fire tail)', file=sys.stderr)
+        sys.exit(1)
+if 'merge-base --is-ancestor' not in body:
+    print('FAIL: t32: the advance body carries no merge-base --is-ancestor classification — on refusal the body must fetch the marker and distinguish already-advanced (skip-green) from divergence (loud), the shared-branch tolerance of C14 task 2', file=sys.stderr)
+    sys.exit(1)
+if not re.search(r'git\s+fetch', body):
+    print('FAIL: t32: no fetch of the marker for the tolerance classification — merge-base needs FETCH_HEAD to reason about (C14 task 2)', file=sys.stderr)
+    sys.exit(1)
+if 'already advanced' not in body:
+    print("FAIL: t32: the skip-green info line ('marker already advanced past this run's endpoint — consistent') is missing — the descendant case must read as calm, not as a forced-through red (C14 task 2)", file=sys.stderr)
+    sys.exit(1)
+blob = yaml.dump(adv)
+for tok in ('vars.ROLE ==', 'secrets.'):
+    if tok in blob:
+        print(f'FAIL: t32: the advance job references {tok!r} — the marker push rides the checkout same-repo credential, no PAT, no equality guard (the containers t16 laws travel with the job)', file=sys.stderr)
+        sys.exit(1)
+PY
+then
+  fail "t32: see the t32 detail above"
+fi
+ok "t32: exactly one marker writer, in either era — interim job shape (needs triple, ROLE-guard+has_changes, plain push of the bump-commit endpoint, fetch/merge-base tolerance, no force, no secrets) or the deleted-job fence with the main-sync aggregate present (C14 task 5 / C15 §A, D53/D54)"
+
+# --- t33: bump_sha output plumbing (C14 task 4) ----------------------------------
+# The advance pushes the OUTPUT sha (the bump commit B1 or the re-looped
+# landed commit), never the event sha — an event-sha endpoint would re-enter
+# B1's own charts/** edits into the next detection and mint an eternal
+# one-release-per-fire tail (D53). This leg pins the step-id + job-output
+# chain t13 validates generically.
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+bump = jobs.get('bump') or {}
+outs = bump.get('outputs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t33: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need('bump_sha' in outs, f'bump.outputs is {outs!r} — no bump_sha key (C14 task 4: the job-level output the advance rides)')
+m = re.search(r'steps\.([A-Za-z0-9_-]+)\.outputs\.sha\b', str(outs.get('bump_sha')))
+need(m, f'bump.outputs.bump_sha maps {outs.get("bump_sha")!r}, expected the steps.<id>.outputs.sha idiom')
+sid = m.group(1)
+step = next((s for s in (bump.get('steps') or []) if isinstance(s, dict) and s.get('id') == sid), None)
+need(step is not None, f'no step declares id: {sid} in the bump job — t13 would redden on the dangling reference too (the output resolves empty)')
+body = str(step.get('run', ''))
+need('rev-parse HEAD' in body, f'step {sid} never rev-parse-es its own HEAD — the emitted sha is the bump commit (or the re-looped landed commit), read AFTER the successful push (C14 task 4)')
+need(re.search(r'sha=\$\(git rev-parse HEAD\)', body), f'step {sid} carries no sha= output emission')
+need('refs/heads/main' in body, f'step {sid} writes no main push — the emission belongs to the push-SUCCESS branch, before exit 0 (the bump job has exactly this one main push site)')
+PY
+then
+  fail "t33: see the t33 detail above"
+fi
+ok "t33: bump.outputs.bump_sha maps a declared step id whose body emits sha=$(git rev-parse HEAD) on the push-success path (C14 task 4; t13 covers the id-integrity generically)"
+
+# --- t34: on.workflow_call.outputs declaration (C15 §A) --------------------------
+# main-sync's advance consumes this file's bump output — declared in the
+# trigger block, mapping jobs.bump.outputs.sha (the C14 job output).
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+trig = doc.get(True) or doc.get('on') or {}
+wc = (trig or {}).get('workflow_call')
+if not isinstance(wc, dict):
+    print(f'FAIL: t34: on.workflow_call is {wc!r} — no mapping to declare outputs on (t2 owns the trigger set; C15 §A task 3)', file=sys.stderr)
+    sys.exit(1)
+outs = (wc.get('outputs') or {})
+if 'bump_sha' not in outs:
+    print(f'FAIL: t34: on.workflow_call.outputs is {outs!r} — bump_sha is not exported (main-sync consumes needs.build-charts.outputs.bump_sha)', file=sys.stderr)
+    sys.exit(1)
+val = outs['bump_sha'].get('value') if isinstance(outs['bump_sha'], dict) else outs['bump_sha']
+if str(val) != '${{ jobs.bump.outputs.sha }}':
+    print(f"FAIL: t34: on.workflow_call.outputs.bump_sha is {outs['bump_sha']!r}, expected the value jobs.bump.outputs.sha interpolation", file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t34: see the t34 detail above"
+fi
+ok "t34: on.workflow_call.outputs declares bump_sha = jobs.bump.outputs.sha — the called-run output the main-sync aggregate advance rides (C15 §A task 3)"
 
 printf 'PASS: forgejo-build-charts checks (%d ok)\n' "$checks"

@@ -22,7 +22,9 @@
 # Run -5 (cf-6-debug-detect-rerun C01, plan 2026-11-25-feat-containers-built-marker):
 # t13/t14 re-pin + t16/t17 (new) + d16-d19 (new) [AC1-AC9 — the O2 last-built
 # marker: push base chain marker→tip-only→before with the A5 die first, the
-# advance-marker job shape and its executed non-FF monotonicity, the resolver's
+# advance-marker job shape and its executed refusal law (round-5 C14 turned
+# the monotonicity pin into a tolerance CLASSIFY: descendant skip-green,
+# divergence red), the resolver's
 # absent/present/orphan/garbage shapes, the verified-empty info posture, and the
 # marker-missing fallback regression pin]; x5 re-pin (the marker..sha trio
 # vocabulary, same-commit parity law). AC11 (`docker build
@@ -198,6 +200,19 @@
 #     (ghcr) or 404 NAME_UNKNOWN (forge) for a never-pushed image is registry
 #     behavior — no live probe belongs to them and the no-network rule bars
 #     probing registries anyway.
+#
+# Round 5 (2026-11-26, chunks/C14.md; D53/D54): the marker ref becomes the
+# SHARED ci/last-built branch (name FINAL per owner F1), so t16/t17 ride the
+# rename and the advance body grows the shared-branch tolerance: the plain
+# push stays the first verb, a refusal CLASSIFIES (fetch + merge-base
+# --is-ancestor: marker past this run's endpoint = skip-green info, diverged
+# = RED naming both sides — non-FF is no longer itself the signal, D54).
+# t16's exclusivity walk INVERTS to a builder allow-set — the ref may live
+# in {containers-build.yaml, build-charts.yaml} at this state (C15 re-aims
+# the three-file set; card #56 joins by extending it). Red posture after
+# this wave: t16/t17 red for the ref rename + tolerance body the C14 dev
+# wave lands; the d-legs and t13's env map stay byte-true (the detect
+# script is ref-agnostic and push-gated until C15).
 #
 # Constraints: no network; no actionlint/hadolint/yamllint (not installed —
 # never invoked here); no pytest and no helm (no chart test rides this ticket);
@@ -1249,7 +1264,7 @@ import os, re, sys, yaml
 path = sys.argv[1]
 doc = yaml.safe_load(open(path))
 jobs = (doc or {}).get('jobs') or {}
-REF = 'refs/heads/ci/containers-built'
+REF = 'refs/heads/ci/last-built'
 PUSH = 'git push origin HEAD:' + REF
 
 
@@ -1282,7 +1297,7 @@ adv_blob = yaml.dump(adv)
 for tok in ('vars.ROLE', 'secrets.'):
     need(tok not in adv_blob,
          f'the advance-marker job references {tok} — the marker push rides the checkout automatic same-repo credential '
-         '(the release.yaml idiom); no new secret (plan OQ-2 resolution, AC6)')
+         '(the build-charts/main-sync idiom); no new secret (plan OQ-2 resolution, AC6)')
 checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and s.get('uses') == 'actions/checkout@v7']
 need(checkouts, 'advance-marker has no actions/checkout@v7 step — the push needs the repository')
 w = checkouts[0].get('with') or {}
@@ -1302,19 +1317,39 @@ for stmt in push_stmts:
          and not re.search(r'(^|\s)-f(\s|$)', stmt) and '+' not in stmt,
          f'the advance push statement {stmt!r} carries a force form (-f/--force/--force-with-lease/+ refspec) — '
          'git non-FF refusal IS the monotonicity guard, never a forced move (AC6; prose comments may name the refusal, the command may not wear the flag)')
+# C14 task 2: on a SHARED branch a refusal is a CLASSIFY, not the signal —
+# the body must fetch the marker and merge-base --is-ancestor its own
+# endpoint against it: descendant = skip-green info line, divergence = RED
+# naming the state. The plain push stays the first verb (monotonicity law
+# survives; D54 replaced the old non-FF-is-the-signal comment).
+i_push = body.find(PUSH)
+need('merge-base --is-ancestor' in body and re.search(r'git\s+fetch', body) and i_push >= 0,
+     'the advance body has no fetch + merge-base --is-ancestor tolerance behind the plain push — a sibling builder having advanced the shared ref is EXPECTED; unclassified, the refusal poisons nothing but teaches nothing either (C14 task 2, D54)')
+need(body.find('merge-base --is-ancestor') > i_push,
+     'the tolerance classify precedes the plain push — the push stays the FIRST verb, the classify runs only on its refusal (C14 task 2)')
+need('already advanced' in body,
+     "the descendant arm carries no skip-green info line ('marker already advanced past this run's endpoint — consistent') — the calm case must READ calm in the job log (C14 task 2)")
+need(re.search(r'diverge', body, re.I),
+     'the non-ancestor arm names no divergence — a red advance must say WHICH histories disagree and with what owner verbs, not just exit (C14 task 2)')
+# C14 INVERSION (D53): the shared marker ref is named by DESIGN in the
+# builder set, so the old exclusivity walk (ref in THIS file only) becomes
+# an allow-set walk — every other .forgejo workflow naming the ref is red.
+# C15 re-aims the set to {build-containers.yaml, build-charts.yaml,
+# main-sync.yaml}; card #56 joins by extending it (the leg that would
+# otherwise redden every later builder, scout §A KEY INTERACTION).
+ALLOW = {'containers-build.yaml', 'build-charts.yaml'}
 for dirpath, _dn, filenames in os.walk(os.path.dirname(path)):
     for name in sorted(filenames):
-        if not name.endswith(('.yaml', '.yml')):
+        if not name.endswith(('.yaml', '.yml')) or name in ALLOW:
             continue
         p2 = os.path.join(dirpath, name)
-        if os.path.basename(p2) != os.path.basename(path):
-            need(REF not in open(p2).read(),
-                 f'{p2} also names {REF} — the marker ref lives in containers-build.yaml only (main-sync mirrors refs/heads/main; GitHub never receives it, plan Out-of-scope)')
+        need(REF not in open(p2).read(),
+             f'{p2} names the shared marker ref outside the builder allow-set {sorted(ALLOW)} — the only sanctioned naming sites are the current builders (main-sync mirrors refs/heads/main; GitHub never receives the marker)')
 PY
   then
     return 1
   fi
-  ok "t16: advance-marker exists; needs detect-changes+build-release; its if: names the push event and build-release success (no ROLE vocabulary anywhere in the job, no secrets.); its checkout pins integer fetch-depth 0; the step body byte-carries git push origin HEAD:refs/heads/ci/containers-built with no force form on any push statement; the ref is named in no other .forgejo workflow [run -5 C01, AC6]"
+  ok "t16: advance-marker exists; needs detect-changes+build-release; its if: names the push event and build-release success (no ROLE vocabulary anywhere in the job, no secrets.); its checkout pins integer fetch-depth 0; the step body byte-carries git push origin HEAD:refs/heads/ci/last-built FIRST with the fetch/merge-base --is-ancestor tolerance behind it (refusal is a CLASSIFY, divergence the signal — D54), no force form on any push statement; the ref is named in no .forgejo workflow outside {containers-build.yaml, build-charts.yaml} [run -5 C01, AC6; round-5 C14]"
 }
 
 leg_t17() {
@@ -1372,7 +1407,7 @@ PY
   # commit, so the commit it pushes as the marker's ahead-move is unreachable
   # from work — one fixture feeds the non-FF arm (b) and the orphaned-marker
   # arm (c3) without any history rewriting.
-  local R="$sdir/remote.git" W="$sdir/work" W2="$sdir/work2" W3="$sdir/work3"
+  local R="$sdir/remote.git" W="$sdir/work" W2="$sdir/work2" W3="$sdir/work3" W5="$sdir/work5"
   git init -q --bare "$R" >/dev/null 2>&1 \
     || { printf 'FAIL: t17: harness could not init the scratch bare remote\n' >&2; return 1; }
   git clone -q "$R" "$W" 2>/dev/null \
@@ -1398,11 +1433,11 @@ PY
   rc=0
   ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-create.log" 2>&1 || rc=$?
   [ "$rc" -eq 0 ] \
-    || { printf 'FAIL: t17: the staged advance body exited %d pushing to a scratch remote with no marker — first-creation must succeed (AC6; the release.yaml automatic-credential idiom, executed here over file transport) — see %s\n' "$rc" "$sdir/advance-create.log" >&2; return 1; }
-  MARK1=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built) \
-    || { printf 'FAIL: t17: after the advance body ran the scratch remote carries no refs/heads/ci/containers-built — see %s\n' "$sdir/advance-create.log" >&2; return 1; }
+    || { printf 'FAIL: t17: the staged advance body exited %d pushing to a scratch remote with no marker — first-creation must succeed (AC6; the same-repo automatic-credential idiom, executed here over file transport) — see %s\n' "$rc" "$sdir/advance-create.log" >&2; return 1; }
+  MARK1=$(git -C "$R" rev-parse --verify -q refs/heads/ci/last-built) \
+    || { printf 'FAIL: t17: after the advance body ran the scratch remote carries no refs/heads/ci/last-built — see %s\n' "$sdir/advance-create.log" >&2; return 1; }
   [ "$MARK1" = "$HEAD1" ] \
-    || { printf 'FAIL: t17: the marker landed at %s, expected the run HEAD %s (HEAD:refs/heads/ci/containers-built)\n' "$MARK1" "$HEAD1" >&2; return 1; }
+    || { printf 'FAIL: t17: the marker landed at %s, expected the run HEAD %s (HEAD:refs/heads/ci/last-built)\n' "$MARK1" "$HEAD1" >&2; return 1; }
 
   # (c2) resolver, marker present and reachable: emits the marker sha
   rm -f "$sdir/out"; rc=0
@@ -1413,24 +1448,46 @@ PY
   [ "$GOT" = "$HEAD1" ] \
     || { printf 'FAIL: t17: the resolver answered sha=%s, expected the marker oid %s (present+reachable must hand detect the marker, not an empty fallback)\n' "$GOT" "$HEAD1" >&2; return 1; }
 
-  # (b) non-FF advance EXECUTED: move the marker ahead from a second clone,
-  # then re-run the SAME body from the behind clone — git must refuse and the
-  # ref must not move (monotonicity is the push law, not a written check)
+  # (b) SHARED-branch tolerance EXECUTED, descendant arm: move the marker
+  # ahead (fast-forward) from a sibling clone, then run the SAME body from a
+  # copy of the behind clone — the plain push is refused, the fetch +
+  # merge-base classify finds the marker PAST this run's endpoint, and the
+  # advance must read skip-GREEN with the info line, the ref unmoved (C14
+  # task 2: non-FF is a CLASSIFY, not the signal). Runs in a copy so W never
+  # fetches and (c3) keeps its unreachable-marker witness.
   cp -a "$W" "$W2" || { printf 'FAIL: t17: harness could not copy the scratch clone\n' >&2; return 1; }
   echo ahead > "$W2/ahead.txt"
   git -C "$W2" add -A && git -C "$W2" commit -qm ff-ahead || return 1
   HEAD2=$(git -C "$W2" rev-parse HEAD) || return 1
-  git -C "$W2" push -q origin "HEAD:refs/heads/ci/containers-built" \
+  git -C "$W2" push -q origin "HEAD:refs/heads/ci/last-built" \
     || { printf 'FAIL: t17: harness could not pre-move the scratch marker fast-forward (setup fault)\n' >&2; return 1; }
+  cp -a "$W" "$W5" || { printf 'FAIL: t17: harness could not copy the behind clone\n' >&2; return 1; }
   rc=0
-  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv2" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-refused.log" 2>&1 || rc=$?
-  [ "$rc" -ne 0 ] \
-    || { printf 'FAIL: t17: the advance body exited 0 against a marker already ahead at %s — a plain push MUST be refused by git here; if this leg is green the body grew a force form or a rewind (AC6, design 4)\n' "$HEAD2" >&2; return 1; }
-  MARK2=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built)
+  ( cd "$W5" && env GITHUB_OUTPUT="$sdir/out-adv2" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-descendant.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] \
+    || { printf 'FAIL: t17: the advance exited %d against a marker already advanced PAST this run (descendant %s) — the shared-branch tolerance must read this arm skip-green with the info line, not red (C14 task 2) — see %s\n' "$rc" "$HEAD2" "$sdir/advance-descendant.log" >&2; return 1; }
+  grep -qi 'already advanced' "$sdir/advance-descendant.log" \
+    || { printf 'FAIL: t17: the descendant arm went green without the skip-green info line (marker already advanced past this run endpoint) — calm must READ calm in the job log\n' >&2; return 1; }
+  MARK2=$(git -C "$R" rev-parse --verify -q refs/heads/ci/last-built)
   [ "$MARK2" = "$HEAD2" ] \
-    || { printf 'FAIL: t17: the refused advance left the marker at %s, expected the unmoved ahead sha %s\n' "$MARK2" "$HEAD2" >&2; return 1; }
-  grep -qiE 'non-fast-forward|\[rejected\]' "$sdir/advance-refused.log" \
-    || { printf 'FAIL: t17: the refused advance names no rejection form (non-fast-forward / [rejected]) — the monotonicity refusal is the loud guard the operator reads in the job log, not just a red exit — see %s\n' "$sdir/advance-refused.log" >&2; return 1; }
+    || { printf 'FAIL: t17: the skip-green advance moved the marker to %s, expected the unmoved ahead sha %s (a green classify never writes)\n' "$MARK2" "$HEAD2" >&2; return 1; }
+
+  # (b2) tolerance EXECUTED, divergence arm: the marker moved to a commit
+  # that does NOT contain this run's endpoint (sibling branch off the same
+  # base) — the classify must go RED naming the divergence, the ref unmoved
+  # (the poison D54's aggregate writer will structurally close in C15).
+  git -C "$W2" reset -q --hard "$HEAD1" || return 1
+  echo diverged > "$W2/diverged.txt"
+  git -C "$W2" add -A && git -C "$W2" commit -qm diverge || return 1
+  rc=0
+  ( cd "$W2" && env GITHUB_OUTPUT="$sdir/out-adv3" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-diverged.log" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] \
+    || { printf 'FAIL: t17: the advance exited 0 against a DIVERGED marker (%s not an ancestor of the endpoint) — divergence is the signal and must go RED naming both sides, never force or reinterpret past it (C14 task 2) — see %s\n' "$HEAD2" "$sdir/advance-diverged.log" >&2; return 1; }
+  grep -qiE 'diverge|not an ancestor' "$sdir/advance-diverged.log" \
+    || { printf 'FAIL: t17: the diverged red names no divergence — the operator must see WHICH histories disagree (C14 task 2) — see %s\n' "$sdir/advance-diverged.log" >&2; return 1; }
+  MARK3=$(git -C "$R" rev-parse --verify -q refs/heads/ci/last-built)
+  [ "$MARK3" = "$HEAD2" ] \
+    || { printf 'FAIL: t17: the diverged advance left the marker at %s, expected the unmoved %s (a red classify writes nothing either)\n' "$MARK3" "$HEAD2" >&2; return 1; }
 
   # (c3) resolver, marker unreachable from THIS checkout (orphaned by a
   # history rewrite): LOUD fail naming the value and the owner verbs — never
@@ -1450,7 +1507,7 @@ PY
   local shim="$sdir/shim" realgit
   mkdir -p "$shim" || return 1
   realgit=$(command -v git) || return 1
-  printf '#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%%s\\trefs/heads/ci/containers-built\\n" "%s"; exit 0; fi\nexec %s "$@"\n' \
+  printf '#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%%s\\trefs/heads/ci/last-built\\n" "%s"; exit 0; fi\nexec %s "$@"\n' \
     "$garbage" "$realgit" > "$shim/git" || return 1
   chmod +x "$shim/git" || return 1
   rm -f "$sdir/out"; rc=0
@@ -1474,7 +1531,7 @@ PY
     || { printf 'FAIL: t17: the resolver exited %d on pull_request against a DEAD origin — non-push events must emit sha= empty and exit 0 with no network read (C01 Tasks a)\n' "$rc" >&2; return 1; }
   grep -q '^sha=$' "$sdir/out" \
     || { printf 'FAIL: t17: the pull_request resolver run wrote no empty sha= output — the detect env must never go missing-and-unset on PR/dispatch (chunk Notes-for-dev) — see %s\n' "$sdir/resolver-pr.log" >&2; return 1; }
-  ok "t17: executed offline against a scratch bare remote — the resolver emits empty for an absent marker, emits the marker sha when present+reachable, fails LOUD naming the value for an orphaned marker (with the reset-or-delete owner note) and for non-hex garbage, and stays network-free emitting sha= on pull_request; the staged advance body creates refs/heads/ci/containers-built at HEAD, and the same push against a moved-ahead marker exits non-zero with the non-fast-forward refusal named and the ref unmoved (monotonicity executed, not texted) [run -5 C01, AC5+AC6]"
+  ok "t17: executed offline against a scratch bare remote — the resolver emits empty for an absent marker, emits the marker sha when present+reachable, fails LOUD naming the value for an orphaned marker (with the reset-or-delete owner note) and for non-hex garbage, and stays network-free emitting sha= on pull_request; the staged advance body creates refs/heads/ci/last-built at HEAD, reads an already-advanced DESCENDANT marker skip-green with the info line, and goes RED naming a DIVERGED marker — the ref unmoved in both classify arms (tolerance executed, not texted; monotonicity intact, no force form) [run -5 C01, AC5+AC6; round-5 C14]"
 }
 
 # --- C02 run -1 ROLE/dual-registry legs (r1-r5): containers-build.yaml --------

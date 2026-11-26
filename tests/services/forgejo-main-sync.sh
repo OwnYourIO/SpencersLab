@@ -8,8 +8,10 @@
 # labels, push-dev being a bare main push with no merge — and from cf-139
 # reopen2 (C06, rulings R5/R6) the `sync-fanout` job: the mirror workflow IS
 # the webhook and now speaks to the clusters DIRECTLY. t9..t13 pin its shape:
-# needs [push-gh] (firing only after GitHub advanced is the race resolution,
-# R1 option (c) — SURVIVES byte-true), a bare actions/checkout@v7 step (the
+# needs carrying the mirror plus BOTH called builders (round-5 D59 re-aim:
+# the fan-out fires only after GitHub advanced AND both builders are green —
+# the cf-139 race resolution rides first position, subsumed unchanged), a
+# bare actions/checkout@v7 step (the
 # fan-out logic home is scripts/argocd-fanout.py riding the checkout, no
 # history needed), one ORG-level Actions secret `secrets.ARGOCD_SYNC_TOKENS`
 # referenced exactly once through scope inheritance (the file cannot prove
@@ -87,12 +89,15 @@ fi
 ok "t2: on: carries exactly push.branches == [main] plus workflow_dispatch"
 
 # --- t3: jobs + prod-stage guards --------------------------------------------
-# C06 re-pin (reopen2): the job SET is exactly {push-gh, push-dev,
-# sync-fanout} — the relay trigger job becomes the direct fan-out job, so the
-# retired NAME is banned file-wide too (a renamed-but-kept job would keep an
-# unpinned fifth surface alive; the count stays three). The byte-exact
-# membership guard must hold on all three — the fan-out firing on a dev
-# instance would sync clusters for a push the mirror never made.
+# C06 re-pin (reopen2): the fan-out replaced the relay trigger job. ROUND 5
+# (C15 §B, D59) re-aims the SET to the six-job orchestration: the mirror
+# pair plus the two CALLED builders, the AGGREGATE advance-marker writer,
+# and sync-fanout — whose `if` stays BYTE-EQUAL to the pre-existing ROLE
+# GUARD (D59: the planned always()-exemption is VOID — the fan-out stays
+# inside this byte-GUARD loop and hard-gates through its needs list alone).
+# The byte-exact membership guard must hold on ALL SIX — the fan-out or a
+# builder firing on a dev instance would sync clusters / run releases for
+# a push the mirror never made (the count is now six, not three).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -113,13 +118,14 @@ def need(cond, msg):
 
 
 need(isinstance(jobs, dict), 'no jobs: mapping')
-need(set(jobs) == {'push-gh', 'push-dev', 'sync-fanout'},
-     f'jobs keys are {sorted(jobs)}, expected exactly push-gh + push-dev + sync-fanout (C06: the relay trigger job IS replaced by the fan-out job — a fourth job or a kept-alive hook job means an unpinned surface)')
+JOBS = {'push-gh', 'push-dev', 'build-containers', 'build-charts', 'advance-marker', 'sync-fanout'}
+need(set(jobs) == JOBS,
+     f'jobs keys are {sorted(jobs)}, expected exactly {sorted(JOBS)} (C15: the two called builders join beside the mirrors, the aggregate advance and the fan-out — a seventh job or a missing one means an unpinned orchestration surface)')
 need('hook-relay' not in raw,
      'the retired hook-relay name survives in the file — the job is renamed to sync-fanout (C06), no relay-era identifier may linger')
-for name in ('push-gh', 'push-dev', 'sync-fanout'):
+for name in sorted(JOBS):
     need((jobs[name] or {}).get('if') == GUARD,
-         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r} (byte-exact membership; ${{ }}-wrapped or equality forms redden this leg)")
+         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r} (byte-exact membership; ${{ }}-wrapped or equality forms redden this leg; D59: sync-fanout carries NO result-function decoration — the exemption the always()-shape needed is void)")
 # The dev-stage server must fire no job; any dev guard defeats the breaker.
 need("vars.ROLE == 'dev'" not in raw, 'a job guards on vars.ROLE == dev (the dev stage must fire nothing)')
 # URL-based instance detection is retired.
@@ -128,7 +134,7 @@ PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly three jobs (push-gh, push-dev, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod'); no dev guard, no server_url"
+ok "t3: exactly six jobs (push-gh, push-dev, build-containers, build-charts, advance-marker, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod') — sync-fanout stays INSIDE the byte-GUARD loop with no result-function token (D59); no dev guard, no server_url"
 
 # --- t4: no force --------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
@@ -284,14 +290,16 @@ ok "t7: every job runs on an advertised lab runner label"
 
 # --- t8: push-dev hygiene -----------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
-import sys, yaml
+import re, sys, yaml
 
 raw = open(sys.argv[1]).read()
 if 'backup-proxy' in raw:
     print('FAIL: t8: backup-proxy appears in the workflow (retired from the active design)', file=sys.stderr)
     sys.exit(1)
-if 'git merge' in raw:
-    print('FAIL: t8: git merge appears in the workflow (push-dev must be a plain push)', file=sys.stderr)
+if re.search(r'git\s+merge(?!-base)', raw):
+    # merge-base --is-ancestor is the C14/C15 marker-tolerance CLASSIFY (a
+    # read); merge as a WRITE verb stays banned (plain-push monotonicity).
+    print('FAIL: t8: git merge (non-base) appears in the workflow (pushes must be plain)', file=sys.stderr)
     sys.exit(1)
 job = (yaml.safe_load(raw) or {}).get('jobs', {}).get('push-dev')
 if not isinstance(job, dict):
@@ -338,9 +346,17 @@ def need(cond, msg):
 
 job = jobs.get('sync-fanout')
 need(isinstance(job, dict), 'no sync-fanout job (C06: the fan-out job replaces the relay trigger)')
-need(job.get('needs') == ['push-gh'],
-     f'needs is {job.get("needs")!r}, expected exactly the list ["push-gh"] — after push-gh success is the race resolution (apps track GitHub), unchanged from C04')
-need(job.get('if') == GUARD, f'if is {job.get("if")!r}, expected {GUARD!r} exact bytes')
+# D59 owner ruling (supersedes the D54 tolerance recommendation): the
+# fan-out HARD-GATES on the two called builders — plain needs, unchanged
+# ROLE-guard if. push-gh stays in the list (the cf-139 race gate SUBSUMED,
+# unchanged in effect).
+need(job.get('needs') == ['push-gh', 'build-containers', 'build-charts'],
+     f'needs is {job.get("needs")!r}, expected exactly ["push-gh", "build-containers", "build-charts"] — the owner verbatim: sync-fanout waits until it BUILDS successfully (D59); the ordering leg of R1 option (c) rides first position')
+ifv = str(job.get('if') or '')
+need(ifv == GUARD, f'if is {job.get("if")!r}, expected {GUARD!r} exact bytes — the pre-existing GUARD, byte-unchanged (D59: the always()-era exemption is VOID, the fanout stays inside t3\'s byte-GUARD loop)')
+for badtok in ('always(', 'failure(', 'cancelled(', 'success('):
+    need(badtok not in ifv,
+         f'the fanout if carries the result-function token {badtok!r} — a reintroduced tolerance shape makes builder-red sync anyway, exactly what the D59 hard gate forbids (the needs-graph alone is the gate; t17 executes the truth table)')
 need(job.get('runs-on') in LABELS, f'runs-on is {job.get("runs-on")!r}, not a lab label')
 steps = job.get('steps') or []
 need(steps, 'sync-fanout has no steps')
@@ -362,7 +378,7 @@ PY
 then
   fail "t9: see the t9 detail above"
 fi
-ok "t9: sync-fanout needs == [push-gh], exact prod guard, lab label, exactly one bare actions/checkout@v7 as its sole uses: step, a ROLE-echoing diag step and set -euo pipefail run heads (C06 AC3)"
+ok "t9: sync-fanout needs == [push-gh, build-containers, build-charts] (D59 hard gate, cf-139 ordering subsumed), its if byte-equals the pre-existing ROLE GUARD with NO result-function token, lab label, exactly one bare actions/checkout@v7 as its sole uses: step, a ROLE-echoing diag step and set -euo pipefail run heads (C06 AC3; C15 re-aim)"
 
 # --- t10: forbidden patterns, file-wide (C06 AC2) ---------------------------------
 # The reopen1 transport is dead weight in the reopen2 shape: with no inbound
@@ -560,5 +576,307 @@ then
   fail "t13: see the t13 detail above"
 fi
 ok "t13: all run blocks are syntactically valid bash, scripts/argocd-fanout.py py_compiles, and the roster JSON parses (C06 AC1 + cross-artifact gate)"
+
+# --- t14: the two CALLED builder jobs, byte-pinned (C15 §B/§D) --------------------
+# Exact same-repo uses: paths, secrets: inherit, the ROLE guard (t3 loop),
+# runs-on label, and NO with: inputs (the builders resolve everything from
+# the caller context — inputs stay the documented #56 option).
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+LABELS = {'ubuntu-latest', 'ubuntu-24.04', 'ubuntu-22.04', 'docker', 'node22'}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t14: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+for jn, target in (('build-containers', 'build-containers.yaml'), ('build-charts', 'build-charts.yaml')):
+    job = jobs.get(jn)
+    need(isinstance(job, dict), f'no {jn} job — main-sync does not yet call the builder (C15 §B; authored-red until the orchestration lands)')
+    uses = str(job.get('uses') or '')
+    # The docs same-repo form is ./.forgejo/workflows/x.yaml; the chunk
+    # prose spells ././.forgejo/... — both are the identical relative path,
+    # so the CLASS is pinned strictly and the spelling is dev's.
+    need(re.fullmatch(r'\./(?:\./)?\.forgejo/workflows/' + re.escape(target), uses),
+         f'{jn}.uses is {uses!r}, expected the same-repo relative path onto .forgejo/workflows/{target} (exact, no owner/repo@ref form, no URL)')
+    need(job.get('secrets') == 'inherit', f'{jn}.secrets is {job.get("secrets")!r}, expected inherit (the builders read their own vault keys through the caller)')
+    need(not job.get('with'), f'{jn} carries with: inputs — C15 declares no inputs; everything resolves from the caller context')
+    need(job.get('runs-on') in LABELS, f'{jn}.runs-on is {job.get("runs-on")!r}, not a lab label')
+PY
+then
+  fail "t14: see the t14 detail above"
+fi
+ok "t14: build-containers/build-charts are called jobs with exact same-repo uses: paths onto the two .forgejo/workflows files, secrets: inherit, no with: inputs, lab labels (C15 §B, AC4)"
+
+# --- t15: the AGGREGATE advance-marker job, byte-pinned (C15 §B/§D) --------------
+# Single writer gated on BOTH builders (needs = implicit success gate = the
+# aggregate rule, D54), target = build-charts's bump_sha else the event sha
+# (bump-commit endpoint law, D53), plain push + C14's ancestor tolerance,
+# fetch-depth 0, no PAT/force.
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+adv = jobs.get('advance-marker')
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t15: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+need(isinstance(adv, dict), 'no advance-marker job — the aggregate writer is C15 §B (authored-red until it lands)')
+needs = adv.get('needs')
+needs = [needs] if isinstance(needs, str) else (needs or [])
+need(set(needs) == {'build-containers', 'build-charts'},
+     f'advance-marker.needs is {needs!r}, expected exactly the two called builders — one red builder skips the advance, the marker stays put, the next fire re-covers (D54 aggregate rule)')
+need(not any(t in str(adv.get('if') or '') for t in ('always(', 'failure(', 'cancelled(', 'success(')),
+     f'advance-marker.if is {adv.get("if")!r} wearing a result function — the plain needs-gate IS the green-fire rule; decoration reintroduces the per-builder poison (D54/D59)')
+checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and str(s.get('uses', '')).startswith('actions/checkout@')]
+need(checkouts, 'advance-marker has no checkout — the push needs the repository')
+w = checkouts[0].get('with') or {}
+need(type(w.get('fetch-depth')) is int and w.get('fetch-depth') == 0,
+     f'advance checkout fetch-depth is {w.get("fetch-depth")!r}, expected the integer 0 (the tolerance classify needs the common history)')
+body = '\n'.join(str(s.get('run', '')) for s in adv.get('steps') or [] if isinstance(s, dict) and 'run' in s)
+need('outputs.bump_sha' in body and re.search(r'TARGET=\$\{TARGET:-\$GITHUB_SHA\}', body),
+     f'no bump_sha-or-GITHUB_SHA target chain in the advance body — bump commit if this range minted one, else the event sha (C15 §B; D53: an event-sha-only endpoint would re-enter B1 forever, a bump-sha-only chain strands no-chart fires)')
+push_stmts = [ln.split('#', 1)[0].strip() for ln in body.splitlines()
+              if re.search(r'git\s+push', ln) and not ln.strip().startswith('#')]
+need(push_stmts, 'no executable git push in advance-marker')
+for stmt in push_stmts:
+    need(re.search(r'\$\{?TARGET\}?:"?refs/heads/ci/last-built', stmt),
+         f'the advance push {stmt!r} does not push $TARGET onto refs/heads/ci/last-built (byte-shape per C15 §B)')
+    need(not re.search(r'--force|-f(\s|$)|force-with-lease|\+', stmt),
+         f'the advance push {stmt!r} wears a force form — the plain push stays, the refusal is a classify (C14 tolerance law travels with the job)')
+need('merge-base --is-ancestor' in body and 'already advanced' in body and re.search(r'diverge', body, re.I),
+     'the C14 ancestor tolerance (fetch + merge-base classify: skip-green info vs divergence-red) did not move into this job — the shared branch needs it against the sibling builders')
+blob = yaml.dump(adv)
+need(not re.search(r'secrets\.|PUSH_TOKEN|FORGE_PUSH', blob),
+     'the advance references a PAT/secret — the marker push rides the checkout same-repo credential (the header law moved homes with the job)')
+PY
+then
+  fail "t15: see the t15 detail above"
+fi
+ok "t15: advance-marker needs both builders, no result function, full-depth checkout, the bump_sha-or-GITHUB_SHA target chain, plain push of the \$TARGET endpoint onto ci/last-built with the ancestor tolerance body, no force, no secret (C15 §B, AC4/AC5; executed next)"
+
+# --- t16: EXECUTED aggregate-advance battery on a scratch bare remote ------------
+# The advance-exec half of the old containers t17 migrates here (C15 §D):
+# create / up-to-date / ancestor-ahead skip-green / non-ancestor divergence
+# RED, both target-fallback forms proven (explicit bump_sha value AND the
+# empty-value + GITHUB_SHA chain).
+ADVANCE_CASES() {
+  local sdir="$1"
+  if ! python3 - "$WF" "$sdir/advance-explicit.sh" "$sdir/advance-fallback.sh" <<'PY'
+import re, sys, yaml
+
+wf, exp_out, fb_out = sys.argv[1:4]
+jobs = (yaml.safe_load(open(wf)) or {}).get('jobs') or {}
+adv = (jobs.get('advance-marker') or {}).get('steps') or []
+runs = [str(s.get('run', '')) for s in adv if isinstance(s, dict) and 'run' in s]
+if not runs:
+    print('FAIL: t16: the advance-marker job carries no run step to stage (authored-red until C15 lands it)', file=sys.stderr)
+    sys.exit(1)
+body = '\n'.join(runs)
+
+
+def stage(bump_value):
+    b = re.sub(r'\$\{\{[^}]*outputs\.bump_sha[^}]*\}\}', bump_value, body)
+    # Everything else interpolates informational values (the diag ROLE
+    # echo): emptying it keeps the script runnable and cannot hide a
+    # functional input (t15 owns the target-chain shapes).
+    return re.sub(r'\$\{\{[^}]*\}\}', '""', b)
+
+
+body_e = stage('"@BUMP@"')
+body_f = stage('""')
+if '@BUMP@' not in body_e:
+    print('FAIL: t16: the advance body never reads needs.build-charts.outputs.bump_sha (t15 owns the shape; staging found nothing to inject)', file=sys.stderr)
+    sys.exit(1)
+if '${{' in body_e or '${{' in body_f:
+    print('FAIL: t16: staging left an unnormalized interpolation', file=sys.stderr)
+    sys.exit(1)
+open(exp_out, 'w').write(body_e + '\n')
+open(fb_out, 'w').write(body_f + '\n')
+PY
+  then
+    return 1
+  fi
+}
+
+leg_t16() {
+  local sdir
+  sdir=$(mktemp -d /tmp/opencode/forgejo-main-sync-t16.XXXXXX) \
+    || { printf 'FAIL: t16: harness could not stage the scratch dir\n' >&2; return 1; }
+  ADVANCE_CASES "$sdir" || { printf 'FAIL: t16: could not stage the advance body from %s\n' "$WF" >&2; return 1; }
+  local R="$sdir/remote.git" W="$sdir/work" W2="$sdir/work2"
+  git init -q --bare "$R" >/dev/null 2>&1 || { printf 'FAIL: t16: harness could not init the bare remote\n' >&2; return 1; }
+  git clone -q "$R" "$W" 2>/dev/null || { printf 'FAIL: t16: harness could not clone the empty remote\n' >&2; return 1; }
+  git -C "$W" config user.email test@example.invalid && git -C "$W" config user.name test || return 1
+  echo a > "$W/a.txt" && git -C "$W" add -A && git -C "$W" commit -qm a \
+    && git -C "$W" push -q origin HEAD:refs/heads/main || { printf 'FAIL: t16: harness could not seed main\n' >&2; return 1; }
+  local H1 H2 rc; H1=$(git -C "$W" rev-parse HEAD) || return 1
+  local MARK
+  mark() { git -C "$R" rev-parse --verify -q refs/heads/ci/last-built; }
+
+  # x1 create (explicit bump_sha value, no marker yet)
+  sed "s/@BUMP@/$H1/" "$sdir/advance-explicit.sh" > "$sdir/x1.sh"
+  rc=0; ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" GITHUB_SHA="$H1" bash "$sdir/x1.sh" ) >"$sdir/x1.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || { printf 'FAIL: t16: the first advance (explicit target, marker absent) exited %d — creation must succeed — see %s\n' "$rc" "$sdir/x1.log" >&2; return 1; }
+  MARK=$(mark)
+  [ "$MARK" = "$H1" ] || { printf 'FAIL: t16: create landed the marker at %s, expected %s\n' "$MARK" "$H1" >&2; return 1; }
+
+  # x2 up-to-date: target == marker (the re-fire idempotence)
+  sed "s/@BUMP@/$H1/" "$sdir/advance-explicit.sh" > "$sdir/x2.sh"
+  rc=0; ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" GITHUB_SHA="$H1" bash "$sdir/x2.sh" ) >"$sdir/x2.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || { printf 'FAIL: t16: target==marker exited %d — an already-current marker is green data, not a failure — see %s\n' "$rc" "$sdir/x2.log" >&2; return 1; }
+  [ "$(mark)" = "$H1" ] || { printf 'FAIL: t16: the up-to-date run moved the marker (%s)\n' "$(mark)" >&2; return 1; }
+
+  # x3 ancestor-ahead: marker FF-moved past this endpoint -> skip-green info
+  cp -a "$W" "$W2" || return 1
+  echo b > "$W2/b.txt" && git -C "$W2" add -A && git -C "$W2" commit -qm b \
+    && git -C "$W2" push -q origin "HEAD:refs/heads/ci/last-built" || { printf 'FAIL: t16: harness could not FF-advance the marker\n' >&2; return 1; }
+  H2=$(git -C "$W2" rev-parse HEAD) || return 1
+  sed "s/@BUMP@/$H1/" "$sdir/advance-explicit.sh" > "$sdir/x3.sh"
+  rc=0; ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" GITHUB_SHA="$H1" bash "$sdir/x3.sh" ) >"$sdir/x3.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || { printf 'FAIL: t16: the behind-endpoint advance exited %d against an ancestor-ahead marker — the classify must skip-GREEN with the info line (C14 law, migrated) — see %s\n' "$rc" "$sdir/x3.log" >&2; return 1; }
+  grep -qi 'already advanced' "$sdir/x3.log" \
+    || { printf 'FAIL: t16: the skip-green arm carries no info line\n' >&2; return 1; }
+  [ "$(mark)" = "$H2" ] || { printf 'FAIL: t16: the skip-green write-moved the marker to %s\n' "$(mark)" >&2; return 1; }
+
+  # x4 non-ancestor divergence: endpoint on a side branch -> RED, unmoved
+  git -C "$W" checkout -q --detach "$H1" 2>/dev/null || return 1
+  echo c > "$W/c.txt" && git -C "$W" add -A && git -C "$W" commit -qm c || return 1
+  local HC; HC=$(git -C "$W" rev-parse HEAD) || return 1
+  sed "s/@BUMP@/$HC/" "$sdir/advance-explicit.sh" > "$sdir/x4.sh"
+  rc=0; ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" GITHUB_SHA="$HC" bash "$sdir/x4.sh" ) >"$sdir/x4.log" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] \
+    || { printf 'FAIL: t16: a DIVERGED marker (%s vs endpoint %s) advanced green — divergence is the red signal, never forced or reinterpreted — see %s\n' "$H2" "$HC" "$sdir/x4.log" >&2; return 1; }
+  grep -qiE 'diverge|not an ancestor' "$sdir/x4.log" \
+    || { printf 'FAIL: t16: the divergence red names nothing diagnosable\n' >&2; return 1; }
+  [ "$(mark)" = "$H2" ] || { printf 'FAIL: t16: the diverged advance moved the marker to %s\n' "$(mark)" >&2; return 1; }
+
+  # x5 fallback arm: empty bump_sha output -> the event sha rides
+  git -C "$R" update-ref -d refs/heads/ci/last-built || { printf 'FAIL: t16: harness could not delete the scratch marker (setup fault)\n' >&2; return 1; }
+  rc=0; ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" GITHUB_SHA="$HC" bash "$sdir/advance-fallback.sh" ) >"$sdir/x5.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || { printf 'FAIL: t16: the empty-bump_sha fallback exited %d, expected a create at $GITHUB_SHA — the no-charts fire still advances the marker to the event sha — see %s\n' "$rc" "$sdir/x5.log" >&2; return 1; }
+  [ "$(mark)" = "$HC" ] || { printf 'FAIL: t16: the fallback landed the marker at %s, expected the event sha %s\n' "$(mark)" "$HC" >&2; return 1; }
+
+  rm -rf "$sdir"
+  ok "t16: executed on a scratch bare remote — create, target==marker up-to-date green, ancestor-ahead skip-green with the info line and the ref unmoved, non-ancestor divergence RED and naming it, and the empty-bump_sha fallback advancing at \$GITHUB_SHA (C15 §D t16, the advance law fully executed at its new home)"
+}
+
+# The battery is a function so a red case can bail while this suite keeps
+# its sequential inline style; the call is the leg.
+leg_t16 || fail "t16: see the t16 detail above"
+
+# --- t17: the D59 fan-out truth table, executed over the parsed graph -----------
+# Structural simulation of the Actions needs semantics (no live Actions):
+# every listed need must SUCCEED for the dependent job to run, UNLESS the
+# job's own if: carries a result function (the banned shape). Both-green =>
+# RUNS; either builder red => SKIPPED; both red => SKIPPED; push-gh failed
+# => SKIPPED (the cf-139 gate subsumed, unchanged in effect). push-gh and
+# push-dev carry NO needs: unconditional siblings — the gate is ONLY the
+# fan-out step (owner verbatim: it should sync to github and dev).
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+GUARD = "contains(vars.ROLE, 'prod')"
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t17: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+for name in ('sync-fanout', 'advance-marker', 'push-gh', 'push-dev'):
+    need(name in jobs, f't17 needs the {name} job parsed (t3/t15 own their shapes; the simulation needs them present)')
+
+FUNCS = ('always(', 'failure(', 'cancelled(', 'success(')
+
+
+def simulates(job_name, states, role='prod'):
+    """Effective RUNS/SKIPPED per the standard needs semantics, read purely
+    from the parsed file (needs list + if text)."""
+    job = jobs.get(job_name) or {}
+    needs = job.get('needs')
+    needs = [needs] if isinstance(needs, str) else (needs or [])
+    if_expr = str(job.get('if') or '')
+    if role != 'prod' or (if_expr and GUARD not in if_expr):
+        return 'skipped'
+    tolerant = any(t in if_expr for t in FUNCS)
+    if needs and not tolerant and any(states.get(n) != 'success' for n in needs):
+        return 'skipped'
+    return 'runs'
+
+
+BOTH = {'push-gh': 'success', 'build-containers': 'success', 'build-charts': 'success'}
+CASES = [
+    ('both-green', BOTH, 'runs'),
+    ('containers-red', dict(BOTH, **{'build-containers': 'failure'}), 'skipped'),
+    ('charts-red', dict(BOTH, **{'build-charts': 'failure'}), 'skipped'),
+    ('both-red', dict(BOTH, **{'build-containers': 'failure', 'build-charts': 'failure'}), 'skipped'),
+    ('pushgh-failed', dict(BOTH, **{'push-gh': 'failure'}), 'skipped'),
+]
+for label, states, expect in CASES:
+    got = simulates('sync-fanout', states)
+    need(got == expect,
+         f'the truth table says sync-fanout {got} for {label}, expected {expect} (D59: builder-red BLOCKS the fan-out — the exact inversion of the superseded always()-tolerant shape; an if: that re-grew a result function flips these rows red)')
+    adv_expect = 'runs' if states.get('build-containers') == 'success' and states.get('build-charts') == 'success' else 'skipped'
+    adv_got = simulates('advance-marker', states)
+    need(adv_got == adv_expect,
+         f'the aggregate advance reads {adv_got} for {label}, expected {adv_expect} (needs both builders green; marker-red-unmoved is the re-cover law)')
+    # Unconditional siblings run through every builder outcome.
+    for mirror in ('push-gh', 'push-dev'):
+        need(simulates(mirror, states) == 'runs',
+             f'{mirror} is not an unconditional sibling under {label} — the gate is ONLY the fan-out step (owner ruling D59)')
+PY
+then
+  fail "t17: see the t17 detail above"
+fi
+ok "t17: executed needs-graph truth table over the parsed file — both-green RUNS, containers-red/charts-red/both-red/pushgh-failed all SKIPPED for sync-fanout AND the aggregate advance follows the same table, push-gh/push-dev unconditional siblings in every row (D59 hard gate, structural simulation, C15 §D)"
+
+# --- t18: comment line-anchor liveness (scout §C anti-pattern killer) ------------
+# Stale build-charts.yaml:NN cites in comments go silently red-free — the
+# release.yaml:54→:57 shift is the cautionary tale; C14 inserts a step above
+# the anchor and C15 moves lines again. This leg PARSES every NN cite in the
+# workflow comment AND in this suite's own messages, then reads the live
+# build-charts.yaml line: it must carry the EVENT_SHA env pair the cite
+# names. Red-free staleness becomes red here.
+if ! python3 - "$WF" "$0" <<'PY'
+import re, sys
+
+wf, suite = sys.argv[1:3]
+targets = []
+for src in (wf, suite):
+    try:
+        text = open(src).read()
+    except OSError:
+        continue
+    targets += [(src, int(n)) for n in re.findall(r'build-charts\.yaml:(\d+)', text)]
+if not targets:
+    print('FAIL: t18: no build-charts.yaml:<line> cite found anywhere — the anchor this leg fences has vanished, which is itself a re-pin event (the cite was the pairing token of the fallback law)', file=sys.stderr)
+    sys.exit(1)
+bc = open('.forgejo/workflows/build-charts.yaml').read().splitlines()
+for src, n in targets:
+    if n > len(bc):
+        print(f'FAIL: t18: {src} cites build-charts.yaml:{n} but the file is {len(bc)} lines — the anchor is dead', file=sys.stderr)
+        sys.exit(1)
+    line = bc[n - 1]
+    if 'EVENT_SHA' not in line or 'github.sha' not in line:
+        print(f'FAIL: t18: {src} cites build-charts.yaml:{n} but that line is {line.strip()[:80]!r} — after the marker-step insertions the EVENT_SHA pair moved; RE-CITE in the same commit (scout §C: stale anchors go silently red-free without this leg)', file=sys.stderr)
+        sys.exit(1)
+print(f'  ({len(targets)} anchor cite(s) verified live)')
+PY
+then
+  fail "t18: see the t18 detail above"
+fi
+ok "t18: every build-charts.yaml:<line> cite (workflow comment + this suite's messages) resolves to the live EVENT_SHA env pair — stale line anchors can no longer land red-free (scout §C; C14/C15 anchor re-derivation enforced)"
 
 printf 'PASS: forgejo-main-sync checks (%d ok)\n' "$checks"
