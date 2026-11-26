@@ -392,7 +392,7 @@
       "reopen4_status": "done history — the 22-row enumeration is DELETED by C13 (blobs+filter replace it; micro-calls (e)(g) superseded); the job shape (needs/guard/checkout/invocation) survives byte-true"
     },
     "C11": {
-      "status": "pending",
+      "status": "done",
       "wave": 12,
       "depends_on": [
         "C09",
@@ -437,26 +437,30 @@
       "reopen4_status": "done history — ruling-(j) semantics survive for blanked keys; the deleted-complete-pair class moves to the OQ-A oracle decision"
     },
     "C13": {
-      "status": "pending",
+      "status": "done",
       "wave": 13,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "workflow fleet-blind: 22 rows die -> SECRETS_JSON/VARS_JSON toJSON blobs [40][41][49] + inline filter step (dumb serializer: pair-regex union select, $RUNNER_TEMP/pairs.json flat {NAME:value}, chmod 600, count line only) + ARGOCD_PAIRS_FILE fan-out env; header precedence fix [44][45]; main-sync suite re-pin (fleet-blind bans, filter contract, t13 relaxed to parse-only); t13 roster parse-only leg PERMANENT (schema pin stays in behavior t2; no six-vs-five question survives the OQ-A answer)",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-26T06:10+00:00", "event": "dev DONE (suite 13/13, offline filter run observed clean) + review R1 APPROVED (adversarial leak audit 10 probes zero leaks; print law; secrets-wins; paste-pending rc0 confirmed; mirror byte-zero; C14 contract drift-free) + bundled comment fixes shipped at C14's commit; committed ad86dd576 (combined C13+C14 set)" }
+      ]
     },
     "C14": {
-      "status": "pending",
+      "status": "done",
       "wave": 14,
       "depends_on": [
         "C13"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "script ARGOCD_PAIRS_FILE channel: load_pairs_file (path-named REDs, {} => all-absent lane) feeds the existing discover_targets UNCHANGED (no expected= param — OQ-A ruled pure discovery); precedence file-wins; env scan default unchanged; roster STAYS five globals (zero churn); behavior.sh re-pin (precedence/error/parity + ruled-envelope arms: half-delete RED, both-gone quiet N-1, stray-pair quiet join, blanked-both (j) RED); core+validator byte-lock leg",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-26T06:40+00:00", "event": "dev DONE (behavior 15/15 flips exactly the designed set, discover_targets ZERO edited lines, forgejo 13/13 before+after bundled comments, aislop warns proven inherited on HEAD bytes) + review R1 APPROVED (own leak probes incl. mid-file JSON corruption + symlink/odd types, precedence total-fleet-differs probe, commit-split proposal followed) + STATE C11 bookkeeping repaired; committed ad86dd576 combined" }
+      ]
     },
     "C15": {
       "status": "pending",
