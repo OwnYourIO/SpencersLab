@@ -328,7 +328,7 @@ try:
         bad(f'g2: the ExternalSecret fetches {fetched}, expected exactly one registration-token key — ONE reusable instance-scope registration token behind ten records (D61), never the (uuid, token) pair')
     cms = [d for d in docs if d.get('kind') == 'ConfigMap']
     if not cms:
-        bad('g2: the gpu render carries no ConfigMap — the config skeleton moved from the ESO template to app-template configMaps (D62)')
+        bad('g2: the gpu render carries no ConfigMap — the config skeleton moved from the ESO template to the chart-side configmap-skeleton template (D62; app-template configMaps tpls against the SUBCHART context where the parent runner.* is invisible — D65)')
     cm = cms[0]
     if set((cm.get('data') or {})) != {'config.yaml'}:
         bad(f'g2: the skeleton ConfigMap keys are {sorted((cm.get("data") or {}))}, expected exactly [config.yaml]')
@@ -1270,14 +1270,19 @@ if reg is None:
 script = '\n'.join((reg.get('command') or []) + (reg.get('args') or []))
 if not script.strip():
     bad('g11: register carries no command/args — the guard/POST/render sequence must be pinnable in the pod')
-guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', script)
+# D65-review re-aim (dev t21 twin): whole-line comments stripped; guard,
+# endpoint and ordering index CODE — the shipped G1 comment names the
+# rejected admin-REST twin and must not be able to satisfy the leg alone.
+code = re.sub(r'(?m)^\s*#.*$', '', script)
+guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', code)
 if not guard:
-    bad('g11: no /data/config/config.yaml guard — without it every gpu restart re-POSTs and churns uuids (D62 restart discipline; the reloader annotation makes that routine, not exotic)')
-post = script.find('actions/runners')
+    bad('g11: no /data/config/config.yaml guard IN CODE — without it every gpu restart re-POSTs and churns uuids (D62 restart discipline; the reloader annotation makes that routine, not exotic)')
+RPC = '/api/actions/forgejo.actions.runner.v1.RunnerService/Register'
+post = code.find(RPC)
 if post < 0:
-    bad('g11: no admin-scope registration endpoint in the script — the POST that mints the row is the mechanism (RESEARCH Q2(b) [S14])')
+    bad('g11: no G1 Register RPC procedure dialed at the /api/actions connect route IN CODE — v15.0.10 [S3/S4]: Register is exempt from header auth and authenticates the token IN THE BODY (server mints uuid+token, unbounded reuse, no expiry column); the admin-REST twin wants a site-admin API token and is the NOT-used contrast — the call, not a comment, is the pin')
 if guard and guard.start() > post:
-    bad('g11: the guard sits AFTER the registration call — re-attach must win before any POST (guard-FIRST, D62)')
+    bad('g11: the guard sits AFTER the Register call in CODE — re-attach must win before any POST (guard-FIRST, D62)')
 envs = {(e or {}).get('name'): e for e in (reg.get('env') or [])}
 pn = envs.get('POD_NAME') or {}
 if ((pn.get('valueFrom') or {}).get('fieldRef') or {}).get('fieldPath') != 'metadata.name':
@@ -1292,6 +1297,10 @@ if skr.get('key') != 'registration-token' or skr.get('name') != release:
     bad(f'g11: token env {tok[0]!r} secretKeyRef is {skr!r}, expected {release!r}/registration-token (the fetched single key; never the forgejo-token item)')
 if not re.search(r'\$\{?' + re.escape(tok[0]) + r'\}?', script):
     bad(f'g11: the fetched token env {tok[0]!r} is unused by the script')
+if not re.search(r'--post-data|-X[ ]+POST|--method[ ]*[:=][ ]*POST|request[ ]+POST', code, re.I):
+    bad('g11: the Register RPC call carries no POST limb — Register is a POST procedure at the /api/actions route (G1 [S3])')
+if not any('token' in l.lower() and re.search(r'\$\{?' + re.escape(tok[0]), l) for l in code.splitlines()):
+    bad(f'g11: the token env {tok[0]!r} is never interpolated on a request line alongside the token field — G1: token IN THE BODY for the Register RPC (dev-shape \\"token\\":\\"$env\\"); absent-at-call or header-only is not the evidenced channel')
 if re.search(r'ephemeral[^A-Za-z]{0,8}\btrue\b', script, re.I):
     bad('g11: ephemeral TRUE in the payload — the daemon refuses ephemeral records ([S9 daemon.go]); tooth (d)')
 if not re.search(r'ephemeral[^A-Za-z]{0,12}\bfalse\b', script, re.I):

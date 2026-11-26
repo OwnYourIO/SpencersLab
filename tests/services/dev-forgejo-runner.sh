@@ -510,17 +510,20 @@ try:
         ok(f't2: {release} — ExternalSecret — bitwarden-login, target {release!r}, ONE fetched key registration-token from the item password, no target.template')
 
         # Config skeleton (C17/D62): the static half of config.yaml renders as
-        # a release-named ConfigMap (app-template configMaps); the register
-        # init substitutes the minted uuid for the placeholder and writes the
-        # token file onto the /data PVC. Readers moved off the retired ESO
-        # template.data (C17 TEST FOLD: the kind switches, the rulings ride).
+        # a release-named ConfigMap from the chart's OWN configmap-skeleton
+        # template (parent tpl context — app-template's configMaps lane tpls
+        # data against the SUBCHART context where the parent runner.* is
+        # invisible, D65); the register init substitutes the minted uuid for
+        # the placeholder and writes the token file onto the /data PVC.
+        # Readers moved off the retired ESO template.data (C17 TEST FOLD:
+        # the kind switches, the rulings ride).
         cms = by_kind(docs, 'ConfigMap')
         if len(cms) != 1:
-            bad(f't2: {release} — {len(cms)} ConfigMaps rendered, expected exactly 1 (the config-skeleton home since C17 — one app-template configMaps entry per release)')
+            bad(f't2: {release} — {len(cms)} ConfigMaps rendered, expected exactly 1 (the config-skeleton home since C17 — the chart-side configmap-skeleton template)')
         cm = cms[0]
         cmname = (cm.get('metadata') or {}).get('name') or ''
         if cmname != release and not cmname.startswith(f'{release}-'):
-            bad(f't2: {release} — the skeleton ConfigMap is named {cmname!r}, expected the release-derived app-template name')
+            bad(f't2: {release} — the skeleton ConfigMap is named {cmname!r}, expected the release-derived name the configmap-skeleton template renders')
         cmdata = cm.get('data') or {}
         if set(cmdata) != {'config.yaml'}:
             bad(f't2: {release} — the skeleton ConfigMap data keys are {sorted(cmdata)}, expected exactly [config.yaml] (the register init renders this file to /data/config/config.yaml)')
@@ -1774,16 +1777,18 @@ fi
 # --- t11: wording truthfulness at the cf-97 sites (re-aimed for C17/D61(3)) --
 # The same four sites (values.yaml bitwardenIds block, secret-runner.yaml
 # header, custom-values dev item comment, NOTES.txt one-time-action block)
-# carry the ROUND-6 truth at the first three: the item's password IS the
-# instance-scope registration token (owner-minted at Admin -> Actions ->
-# Runners, UA-R6-3, D64 repurpose-existing-items). The cf-97-era claim — a
-# (uuid, token) record pair shown once at record creation, "NOT the
-# deprecated registration-token exchange" — is the retired truth and may
-# only survive negated or historical. Instance-admin scope stays a
-# presence-only claim (B3 reaffirmed). NOTES.txt is OUT of C17's
-# Files-in-scope: its legs keep the old text byte-pinned and the
-# stray-positive guard doubles as the scope guard (its staleness vs the new
-# shape is a coord-flagged open question, not a silent re-aim). What must
+# carry the ROUND-6 truth: the item's password IS the instance-scope
+# registration token (owner-minted at Admin -> Actions -> Runners, UA-R6-3,
+# D64 repurpose-existing-items). The cf-97-era claim — a (uuid, token)
+# record pair shown once at record creation, "NOT the deprecated
+# registration-token exchange" — is the retired truth and may only survive
+# negated or historical. Instance-admin scope stays a presence-only claim
+# (B3 reaffirmed). NOTES.txt FOLDED INTO the C17 surfaces by D65(3): its
+# one-time-action block runs the same post-fold rules as the re-aimed sites
+# (token to mint named, registration narrative positive, record-pair
+# narration history-only); the pre-fold scope guard — which forbade the
+# accurate 'registration token' term as a touched-file alarm — retired
+# WITH the fold (validation-at-fault re-aim, review minor 3). What must
 # NOT change is pinned by the render legs above (t2/t3/t12 — the re-aimed
 # ESO-contract legs, t5/t7-t10 trio/slice legs) — C17 lands comments only
 # here, so raw byte equality is deliberately not asserted (template
@@ -1821,15 +1826,6 @@ NEG_WINDOW = 100
 
 def excerpt(text, m):
     return '…' + text[max(0, m.start() - 40):m.end() + 40] + '…'
-
-def stray_positive(text, label):
-    # Kept for the NOTES.txt site (out of C17 scope): a positive
-    # "registration token" mention there means the file was touched — the
-    # scope guard. Re-aimed sites get the opposite rule below.
-    for m in TOKEN_RE.finditer(text):
-        if not NEG_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]):
-            bad(f't11: {label} — positive "registration token" mention: {excerpt(text, m)} '
-                '(NOTES.txt is out of C17 Files-in-scope; folding it in is a coord ruling, not a dev edit)')
 
 def stray_record(text, label):
     # Retired record-pair claims may only survive behind a negation or a
@@ -1907,23 +1903,28 @@ try:
                        comment_block(dev_cv, r'^forgejo-runner-dev:', 'custom-values dev item comment'))
 
     notes = collapse(open(notes_txt).read().splitlines())
-    # (?<![\w.-]) keeps the key reference `.bitwardenIds.runner-token` from
-    # standing in for the copy-step's prose "runner token".
-    if not re.search(r'(?<![\w.-])runner[\s-]+token\b', notes, re.I):
-        bad('t11: NOTES.txt — the copy step does not name the runner token (C02 wording not landed)')
-    stray_positive(notes, 'NOTES.txt')
+    # D65(3)-folded NOTES runs the post-fold rules (review minor 3): the
+    # copy step names the token to mint, the SELF-registration narrative is
+    # positive, record-pair phrasing survives only as history. The old
+    # (?<![\w.-]) 'runner token' demand accepted only the pre-fold term —
+    # either minted-token name is true now; an ABSENCE of both is not.
+    if not re.search(r'(?i)(?:registration|runner)[\s-]+token', notes):
+        bad('t11: NOTES.txt — the copy step names no token to mint (registration token per UA-R6-3; the UI calls it a runner token) — the one-time action is mint-one-per-instance, paste into PASSWORD')
+    if not re.search(r'(?i)regist', notes):
+        bad('t11: NOTES.txt — the registration narrative is gone — post-fold the notes must say every pod REGISTERS ITSELF on first boot and re-attaches afterwards (D61/D62), not that the owner creates the record the pods share')
+    stray_record(notes, 'NOTES.txt')
     if not re.search(r'(?i)\b(?:not|never|no longer)\b[^.;]{0,40}ephemeral|ephemeral[^.;]{0,60}\b(?:refus\w*|reject\w*|disallow\w*|unsupport\w*)', notes):
         bad('t11: NOTES.txt — no ephemeral-refusal warning (the daemon refuses ephemeral records — RESEARCH F2)')
     if not re.search(r'(?i)(?:shown|displayed)[\s-]*(?:only[\s-]*)?once', notes):
-        bad('t11: NOTES.txt — the shown-once fact is missing (the record token is displayed once at creation)')
+        bad('t11: NOTES.txt — the shown-once fact is missing (the minted registration token is displayed once at creation and cannot be retrieved)')
     if not re.search(r'(?i)\blogin\b[^.;]{0,40}\busername\b|\busername\b[^.;]{0,40}\blogin\b', notes):
         bad('t11: NOTES.txt — the login username/password field mapping is not stated '
             '(custom fields, notes and the URI are invisible to property: username|password)')
     if not re.search(r'(?i)\badmin\b[^.;]{0,40}\bactions\b[^.;]{0,40}\brunners\b', notes):
         bad('t11: NOTES.txt — the Admin -> Actions -> Runners instance path is gone '
             '(instance-admin is the only path per the user ruling reaffirming B3)')
-    ok('t11: NOTES.txt — runner-token copy step, ephemeral refusal, shown-once, login-field mapping, '
-       'no positive registration-token mention, instance-admin path present')
+    ok('t11: NOTES.txt (D65(3)-folded) — minted-token copy step, positive self-registration narrative, '
+       'record-pair phrasing history-only, ephemeral refusal, shown-once, login-field mapping, instance-admin path')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -2259,14 +2260,23 @@ def legs(render_file, tag):
     script = '\n'.join((reg.get('command') or []) + (reg.get('args') or []))
     if not script.strip():
         bad(f't21: {tag} — the register container carries no command/args — the guard/POST/render sequence must live in the pod, not an unpinnable image default')
-    guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', script)
+    # D65-review re-aim (validation-at-fault): behavior indexes on CODE, not
+    # prose. The shipped script's G1 evidence comment names the REJECTED
+    # admin-REST twin — the old find('actions/runners') was satisfied by
+    # that comment ALONE (the RPC line never contains it), so a build that
+    # deleted the real POST stayed green while a comment reword reddened
+    # the correct one. Whole-line comments are stripped; guard, endpoint and
+    # ordering index the result.
+    code = re.sub(r'(?m)^\s*#.*$', '', script)
+    guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', code)
     if not guard:
-        bad(f't21: {tag} — script lacks the `[ -f /data/config/config.yaml ]` guard — without it EVERY container restart (reloader Secret-change included) re-POSTs and churns a new uuid per boot, piling stale rows (D62 restart discipline, tooth (c))')
-    post = script.find('actions/runners')
+        bad(f't21: {tag} — script lacks the `[ -f /data/config/config.yaml ]` guard IN CODE — without it EVERY container restart (reloader Secret-change included) re-POSTs and churns a new uuid per boot, piling stale rows (D62 restart discipline, tooth (c))')
+    RPC = '/api/actions/forgejo.actions.runner.v1.RunnerService/Register'
+    post = code.find(RPC)
     if post < 0:
-        bad(f't21: {tag} — no admin-scope registration endpoint in the script — the POST to the runners admin route is the minting path (RESEARCH Q2(b) [S14]); a client that hides the endpoint entirely defeats the behavior pin')
+        bad(f't21: {tag} — no G1 Register RPC procedure dialed at the /api/actions connect route IN CODE ({RPC!r} absent from the live lines) — G1 source at 17e1001d [S3/S4]: the interceptor exempts ONLY Register from uuid/token header auth and the registration token authenticates IN THE BODY (req.Msg.Token -> GetRunnerToken); the server mints uuid+token, IsActive stays (unbounded reuse, NO expiry column). The admin-REST twin /api/v1/admin/actions/runners stays the documented NOT-used contrast: it wants a full site-admin API token, never a vault-shareable runner credential — a comment naming either path satisfies nothing; the call does')
     if guard and guard.start() > post:
-        bad(f't21: {tag} — the config guard sits AFTER the registration call — a restart would re-register before ever checking the PVC (guard-FIRST is the re-attach law, D62)')
+        bad(f't21: {tag} — the config guard sits AFTER the Register call in CODE — a restart would re-register before ever checking the PVC (guard-FIRST is the re-attach law, D62)')
     envs = {(e or {}).get('name'): e for e in (reg.get('env') or [])}
     pod_name = envs.get('POD_NAME') or {}
     if ((pod_name.get('valueFrom') or {}).get('fieldRef') or {}).get('fieldPath') != 'metadata.name':
@@ -2281,6 +2291,10 @@ def legs(render_file, tag):
         bad(f't21: {tag} — token env {tok[0]!r} points at secretKeyRef {skr!r}, expected the release Secret {release!r} key registration-token')
     if not re.search(r'\$\{?' + re.escape(tok[0]) + r'\}?', script):
         bad(f't21: {tag} — the fetched token env {tok[0]!r} is never used by the script (dead plumbing is broken plumbing)')
+    if not re.search(r'--post-data|-X[ ]+POST|--method[ ]*[:=][ ]*POST|request[ ]+POST', code, re.I):
+        bad(f't21: {tag} — the Register RPC call carries no POST limb — Register is a POST procedure at the /api/actions connect route (G1 [S3])')
+    if not any('token' in l.lower() and re.search(r'\$\{?' + re.escape(tok[0]), l) for l in code.splitlines()):
+        bad(f't21: {tag} — the token env {tok[0]!r} is never interpolated on a request line alongside the token field — G1: the RPC authenticates the registration token IN THE BODY; env plumbed but absent from the call is dead plumbing (and header-only auth is the uuid/token model Register EXEMPTS, not the registration channel)')
     cm = next((d for d in docs if d.get('kind') == 'ConfigMap'), None)
     cfg = yaml.safe_load((((cm or {}).get('data') or {}).get('config.yaml') or '') or '') or {}
     conn = (((cfg.get('server') or {}).get('connections') or {}).get('default') or {})
