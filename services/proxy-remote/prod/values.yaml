@@ -89,8 +89,6 @@ proxy:
       enabled: true
     bri-budget:
       enabled: true
-    wuulf-budget:
-      enabled: true
     llama:
       enabled: true
     # gpu cluster's public llama endpoint (2026-10-10 endpoint reorg).

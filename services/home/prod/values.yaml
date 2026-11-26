@@ -9,9 +9,6 @@ bitwardenIds:
   # Read-only CNPG role credential for the postgres-paperless ToolHive MCP
   # server (svc-level ExternalSecret templates/pg-paperless-mcp-secret.yaml).
   mcp-pg-paperless: OVERRIDE_VIA_CUSTOM_VALUES
-  # actual-budget-mcp / actual-budget-mcp-key: custom-values mirrors stay absent until the owner mints those Bitwarden items — a UUID is issued by item creation, cannot be derived, and a fabricated one would pass the 1:1 form check while pointing an ExternalSecret at nothing (owner ruling 2026-11-24; the 1:1 check is deliberately red on these two keys until then).
-  actual-budget-mcp: OVERRIDE_VIA_CUSTOM_VALUES
-  actual-budget-mcp-key: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
