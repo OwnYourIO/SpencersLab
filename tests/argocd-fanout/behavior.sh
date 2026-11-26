@@ -30,14 +30,16 @@
 # the map); a DELETED pair leaves discovery silently — t9 pins both classes
 # per ruling, never one against the other.
 #
-# RED POSTURE (pre-C14, current tree): t6–t9 red (they name the missing
-# channel — today the file is ignored and the empty env fall-through answers
+# RED POSTURE (authoring-era, pre-C14 — historical; today the whole suite is
+# green on the landed tree): t6–t9 red (they name the missing
+# channel — then the file is ignored and the empty env fall-through answers
 # the kill lane), plus the two file-channel twin sublegs inside t10/t13;
-# everything else is green on today's script and stays green through C13
+# everything else was green on the pre-C14 script and stayed green through C13
 # (C13 touches only the workflow — the script keeps env-scanning, and the
 # mid-wave CI run warn-greens inert, never wrong). After C14 the whole suite
-# must be green; the /tmp/opencode/cf139-ref5 reference script is the
-# green-shape proof authored with this re-pin.
+# must be green — PROVEN: the C14 landing (rebased c95cbaabf) turns the
+# designed-red set green on the tracked script; any /tmp oracle used to
+# pre-prove the shape is a scratch artifact, not a suite dependency.
 #
 # ALLOWED SURFACE (t15 doctrine): C14 may edit ONLY the module docstring,
 # add load_pairs_file, and rewire main's source selection. discover_targets,
@@ -83,11 +85,17 @@ cd "$(git rev-parse --show-toplevel)"
 
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
-# C09's AC10 core-diff baseline (shipped tip; review may repoint CHUNK_BASE).
-CORE_BASE="${CHUNK_BASE:-6ed762140}"
-# C14's AC6 input-layer baseline: the script tip as landed at C12 (reopen3
-# close); review may repoint INPUT_BASE when re-proving a later chain.
-INPUT_BASE="${INPUT_BASE:-de3bccf43}"
+# Core-diff baseline (post-rebase map: 0d1ba90eb = the C12 ruling-(j) fix;
+# pre-rebase 6ed762140 and de3bccf43 are dangling in origin/main's rebased
+# history). ONE commit covers BOTH locks: every core function is byte-
+# identical at 0d1ba90eb AND at the reopen3 close 3f330df1a, and 0d1ba90eb is
+# also the C12 input-layer state — review may repoint either.
+CORE_BASE="${CHUNK_BASE:-0d1ba90eb}"
+# C14's AC6 input-layer baseline: identical commit (0d1ba90eb, C12 close =
+# last script move before C13/C14; the reopen3-close chore 3f330df1a carries
+# the same script bytes; the R8 channel is docstring + load_pairs_file +
+# main's source selection ONLY).
+INPUT_BASE="${INPUT_BASE:-0d1ba90eb}"
 
 checks=0
 
@@ -1965,9 +1973,11 @@ PY
 fi
 
 # --- t15: byte-lock + zero-echo across BOTH channels (C14 AC6/AC8) ------------------
-# C09's guarantee (13 CORE names byte-identical to $CHUNK_BASE=6ed762140) is
-# KEPT UNCHANGED; the C14 extension adds the INPUT layer locked to the
-# $INPUT_BASE tip (de3bccf43, reopen3 close): the R8 channel is docstring +
+# C09's guarantee (13 CORE names byte-identical to $CHUNK_BASE=0d1ba90eb, the
+# post-rebase map for pre-rebase 6ed762140) is KEPT UNCHANGED; the C14
+# extension adds the INPUT layer locked to the same $INPUT_BASE commit
+# (0d1ba90eb — C12 close, the last script move before C13/C14; one commit
+# covers both locks, documented at the defaults): the R8 channel is docstring +
 # load_pairs_file + main's source selection ONLY. discover_targets,
 # cmd_check, load_roster, the error classes and every regex/lane constant
 # show ZERO hunks — one validator body serving both sources is the design,
@@ -2018,7 +2028,7 @@ def segments(src, label):
     return out
 
 
-# --- the unchanged CORE leg (13 names @ 6ed762140, C12 t13 doctrine) ----------
+# --- the unchanged CORE leg (13 names @ 0d1ba90eb, C12 t13 doctrine) ----------
 CORE = ["log", "ref_tail", "app_name", "app_sources", "app_matches",
         "app_sync_status", "_NoRedirect", "api_request", "list_applications",
         "sync_application", "_reason", "drive_target", "fan_out"]

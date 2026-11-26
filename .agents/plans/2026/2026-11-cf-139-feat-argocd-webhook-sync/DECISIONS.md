@@ -637,3 +637,28 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   updated in place; the test session's pre-wave-13 launch brief must NOT write the
   drafted oracle arms (behavior t9 becomes the ruled-envelope arms per C14's Tests).
   plan_status → APPROVED; waves 13–15 unblocked; no open questions remain.
+
+## Post-rebase adaptation 2026-11-26 (reopen4 wave-15 — main moved under the branch; cf-55 merge)
+- 2026-11-26 (rebase, coord): origin/main advanced under cf-139 carrying cf-55's
+  evolutions (C11/C14/C15: the called-builders fan from main-sync, the D54
+  advance-marker single writer, the D59 owner ruling). The branch was rebased:
+  19 commits replayed clean, 2 conflict regions resolved — the `sync-fanout` needs
+  list KEPT main's D59 shape (`needs: [push-gh, build-containers, build-charts]` —
+  R1 option (c) GROWN: the fan-out fires after push-gh AND both builders green; a
+  red builder holds the fleet at the previous revision and the unmoved
+  `ci/last-built` marker re-covers the failed range by construction), with the
+  cf-139 job shape (blobs + filter + pairs channel) replayed onto it. D59's
+  builder-wait is now part of the sync-fanout contract.
+- Canonical SHA map (pre-rebase references are dangling duplicates on the new
+  line): `d81831446`→`3f330df1a` (reopen3 close = the pre-R8 fallback shape the
+  runbook's §5a/§7 revert leg now names), `6ed762140`/`de3bccf43`→`0d1ba90eb`
+  (C12), `ad86dd576`→`c95cbaabf` (C13+C14), `a10a956c8`→`1767b05e9` (C15 docs),
+  plus subject-verified replays `a65d60e05`→`b828bd725` (reopen4 owner stamp).
+  The runbook fallback hashes and the plan's stale `needs: [push-gh]`/SHA
+  sentences were re-pointed in this round; the runbook-suite baselines are
+  re-pointed by the test session (same map, in parallel — suites are their
+  authority, not this note).
+- Byte-locked strings verified UNCHANGED through the replay: the script's
+  `WARN_NOT_CONFIGURED`, the `pairs: %d targets discovered` /
+  `filter: %d keys selected` lines, the invocation line, and the five-globals
+  roster — the runbook's byte-parity quotes stay true against the landed files.

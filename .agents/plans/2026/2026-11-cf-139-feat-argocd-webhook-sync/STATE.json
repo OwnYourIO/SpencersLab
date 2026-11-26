@@ -30,7 +30,7 @@
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
   "current_wave": 15,
-  "updated_at": "2026-11-26T07:50:00+00:00",
+  "updated_at": "2026-11-26T09:05:00+00:00",
   "reopen": {
     "at": "2026-11-21T20:05:00+00:00",
     "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub",
@@ -479,5 +479,10 @@
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [],
+  "post_rebase": {
+    "at": "2026-11-26T09:05:00+00:00",
+    "note": "main moved under the branch (cf-55 C11/C14/C15: called-builders fan, D54 advance-marker, D59 owner ruling); rebase replayed 19 clean + 2 conflict regions resolved (sync-fanout needs KEPT main's D59 shape: [push-gh, build-containers, build-charts]; cf-139 job shape replayed onto it - D59 builder-wait is now part of the sync-fanout contract, R1(c) grown); canonical SHA map recorded in DECISIONS 2026-11-26 post-rebase block (d81831446->3f330df1a, 6ed762140/de3bccf43->0d1ba90eb, ad86dd576->c95cbaabf, a10a956c8->1767b05e9, a65d60e05->b828bd725); runbook hashes+needs prose re-pointed (C15 post-rebase adaptation round); suites re-pointed by the test session in parallel",
+    "byte_locks_verified": "WARN_NOT_CONFIGURED, pairs/filter count lines, invocation, five-globals roster - unchanged through the replay"
+  }
 }

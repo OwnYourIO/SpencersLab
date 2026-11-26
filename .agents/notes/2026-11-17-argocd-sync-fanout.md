@@ -28,12 +28,15 @@ this file is the procedure.
   composition step, nothing to paste or format.
   `scripts/argocd-fanout.json` is five globals only (`allowed_refs`, `tracked_repo`,
   `settle_seconds`, `target_timeout_seconds`, `parallel_workers`).
-- **The job IS the trigger** (R1 option (c), unchanged): no webhook exists or is
-  created anywhere, there is no receiver endpoint, and no in-cluster component. The
-  race resolution is `needs: [push-gh]` — the fleet's apps still source
+- **The job IS the trigger** (R1 option (c), grown by the D59 owner ruling): no
+  webhook exists or is created anywhere, there is no receiver endpoint, and no
+  in-cluster component. The race resolution is
+  `needs: [push-gh, build-containers, build-charts]` — the fleet's apps still source
   `https://github.com/OwnYourIO/SpencersLab.git` (EXPLORE [P §1]), so the fan-out
-  fires only after the mirror push advanced GitHub; an earlier fan-out would land the
-  PREVIOUS revision.
+  fires only after the mirror push advanced GitHub, and the builder wait holds it
+  until the fan BUILDS green: a red builder leaves the fleet at the previous
+  revision until the next green fan (the unmoved `ci/last-built` marker re-covers
+  the range by construction). An earlier fan-out would land the PREVIOUS revision.
 - **Is not**: a change to any automated sync policy. The
   `services.<cat>.selfHeal="false"` cluster-secret annotations — the kill-switch —
   stay untouched, on roots and children alike (OQ1 ruling "kill-switch KEPT"). No
@@ -190,7 +193,9 @@ once.
 ## 4. Step 2 — the trigger's anatomy (nothing to create)
 
 No webhook to add on any platform and nothing to enable in ArgoCD — the job IS the
-mechanism: `sync-fanout`, `needs: [push-gh]`, guarded `if: contains(vars.ROLE, 'prod')`
+mechanism: `sync-fanout`, `needs: [push-gh, build-containers, build-charts]` (the
+D59 wait — the fan-out fires only once the mirror push landed AND both called
+builders came back green), guarded `if: contains(vars.ROLE, 'prod')`
 (unset `ROLE` or a dev-role instance fire nothing — fail-safe-narrow, the file-wide
 convention). Its four steps: `diag`, a bare `actions/checkout@v7`, the filter step
 `resolve fan-out pairs`, and the fan-out step `fan out ArgoCD syncs`. Only the
@@ -234,8 +239,11 @@ fan-out runs.
 
 - **(a) Dispatch smoke = the live validation** (owner-ruled no-probe adoption,
   STATE `reopen4`, 2026-11-26): on the prod instance run main-sync via
-  `workflow_dispatch` (Actions UI → main-sync → Run workflow). `push-gh` executes
-  first (its push no-ops when GitHub is current); the `sync-fanout` log then
+  `workflow_dispatch` (Actions UI → main-sync → Run workflow). The run's shape is
+  the whole fan — `push-gh` executes (its push no-ops when GitHub is current), the
+  called builders run for the range, and `sync-fanout` starts only once BOTH came
+  back green (the D59 ordering — the first dispatch observes it too, so builders
+  green are part of the acceptance); the `sync-fanout` log then
   validates, leg by leg, what the skipped engine probes would have: the
   `resolve fan-out pairs` step running green ⇒ `toJSON` of the secrets/vars contexts
   is supported on this fork build ([49][50][53]); its `filter: 22 keys selected`
@@ -257,7 +265,7 @@ fan-out runs.
   joins silently (§8). Loudness is reserved for half-states and malformed key
   names, by ruling. If an ENGINE leg reddens (expression failure, blob short, file
   not found), RESEARCH round 3's source conclusions were wrong for this build — revert the
-  branch to `d81831446` (the pre-R8 delivery shape: one commit, zero cluster
+  branch to `3f330df1a` (the pre-R8 delivery shape: one commit, zero cluster
   impact); the owner accepted that risk with the no-probe ruling, and the runner
   v13 fail-loud doctrine [53] makes such a failure visible, not silent. Two rows are
   EXPECTED FAILED by ruling, not regressions:
@@ -283,8 +291,9 @@ fan-out runs.
   any one pasted token — expect zero hits. Plain hygiene; the JSON-escape edge and
   the escape-free charset rule live in §8.
 - **(d) Real end-to-end**: push a no-op-ish PR to `main` on the prod forge and watch
-  the run — `sync-fanout` starts only after `push-gh` finishes; latency = mirror +
-  fan-out, seconds-to-a-minute (the old hand-path was ≤3 min per cluster). Watch APP
+  the run — `sync-fanout` starts only after `push-gh` finishes AND both builders come
+  back green (D59); latency = mirror + builders + fan-out, seconds-to-a-minute for
+  the fan-out itself (the old hand-path was ≤3 min per cluster). Watch APP
   status, not just the audit: ArgoCD answers a sync POST before manifest-generation
   failures land asynchronously, so the `home` root logs `ok` while its pre-existing
   drift (§6) keeps the app Unknown — manual sync fails identically there; it is not
@@ -347,7 +356,7 @@ column once, then trust it.
    with it; the pre-ticket main-sync (push jobs only) returns. The org keys become
    inert once the job stops reading them; remove them whenever convenient under §2's
    org hygiene. If an ENGINE claim fails in the field (§5a's validation legs), the
-   reopen4 fallback is this same revert — back to `d81831446` — one commit, zero
+   reopen4 fallback is this same revert — back to `3f330df1a` — one commit, zero
    cluster impact, owner's standing call.
 
 State plainly: nothing else changes anywhere — no residual impact. No cluster-side

@@ -6,7 +6,9 @@
 # ABSENCE half: directories, trio hunks, the custom-values block, the two
 # relay-era suites, and the sentinel pairing recomputed post-deletion; plus the
 # containers-build detect-guard proof that a deleted container dir can never
-# re-enter the CI build set (RESEARCH §5.7).
+# re-enter the CI build set (RESEARCH §5.7). (Post-rebase the caller is
+# build-containers.yaml, invoked by main-sync's prod-main fan; the detect
+# script and this pin's contract are unchanged.)
 #
 # The old 1:1 sentinel-pairing checks (charts side) become an absence-pair
 # check here: the relay-era bitwardenIds block is gone AND every surviving
@@ -209,7 +211,7 @@ PY
   ok "d5: relay bitwardenIds block gone; zero un-filled sentinels or orphans; surviving sentinel↔UUID pairing recomputed 1:1 (AC4)"
 fi
 
-# --- d6: containers-build detect can never re-enter a deleted dir (AC5) ----------
+# --- d6: build-containers detect can never re-enter a deleted dir (AC5) ------------
 if want d6; then
   # Static pin: the HEAD `-f` guard line RESEARCH §5.7 cites. This leg is
   # designed-GREEN today and after C07 — it is the regression pin C07 rides

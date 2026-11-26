@@ -5,8 +5,8 @@ status: REOPENED⁴ 2026-11-26 (STATE `reopen4`, owner_decision + R8; card comme
 rWTMRa4opbxwCP6jb). The owner ADOPTED the dynamic shape RESEARCH round 3 recommended —
 and explicitly OVERRODE its probe gate: build without dispatch probes; the FIRST
 dispatch smoke is the de-facto live validation (see Risks for the honest statement +
-the one-commit fallback to `d81831446`'s static enumeration). Waves 10–12 (C09–C12,
-closed at `d81831446`, 13/13 behavior + full-chain green) stand as DONE history: this
+the one-commit fallback to `3f330df1a`'s static enumeration). Waves 10–12 (C09–C12,
+closed at `3f330df1a`, 13/13 behavior + full-chain green) stand as DONE history: this
 round deletes ONLY the 22-row enumeration — the fan-out core, both input lanes'
 semantics, the warnings/RED strings, and the disposals are byte-untouched.
 **plan_status: APPROVED 2026-11-26 — the one real call (OQ-A) answered PURE DISCOVERY
@@ -96,7 +96,9 @@ today (§2 of the runbook does not change).
   under the no-repo-twin rule; the "static enumeration IS the discovery surface /
   cannot index dynamically" sentences RETIRE with the rows.
 - **Unchanged, explicitly (byte-locked):** fan-out core + `t13`-style function locks
-  from C09/C12; `needs: [push-gh]`, exact ROLE guard, diag step, bare
+  from C09/C12; `needs: [push-gh, build-containers, build-charts]` (grown by the D59
+  owner ruling on the rebased line — main's builder fan kept, the cf-139 job shape
+  replayed onto it; R1(c) ordering survives), exact ROLE guard, diag step, bare
   `actions/checkout@v7`, REF fallback chain, the invocation line
   `python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"`;
   all script strings (`WARN_NOT_CONFIGURED`, `pair integrity:` aggregation, malformed
@@ -106,7 +108,7 @@ today (§2 of the runbook does not change).
 
 ## Context — verified facts
 
-- [R3] Landed at `a65d60e05` (tip; reopen3 closed `d81831446`): `discover_targets(env)`
+- [R3] Landed at `b828bd725` (tip; reopen3 closed `3f330df1a`): `discover_targets(env)`
   is dict-shaped (a file map drops in with ZERO validation divergence — the one
   structural change is `load_pairs_file()` + channel branch in `main`/cmd flows);
   `ROSTER_KEYS` = the five globals; roster JSON = five keys; workflow = 22 enumerated
@@ -146,7 +148,7 @@ today (§2 of the runbook does not change).
   filter-contract legs incl. no-print grep + `bash -n` of the
   filter run block, pairs-path wiring; t13 roster leg parse-only PERMANENTLY — the
   five-globals schema pin lives in behavior t2 and changes NOT at all this round) + `git diff --name-only` keep-outs
-  (`needs: [push-gh]`, ROLE guard, push jobs byte-zero).
+  (`needs: [push-gh, build-containers, build-charts]` per D59 on the rebased line, ROLE guard, push jobs byte-zero).
 - C14: `python3 -m py_compile scripts/argocd-fanout.py`; `bash tests/argocd-fanout/behavior.sh`
   (file-channel arms + precedence + env-unchanged legs; roster schema legs UNCHANGED —
   the five globals as landed, zero schema churn under pure discovery).
@@ -231,7 +233,7 @@ is APPROVED and every micro-call below stands as pinned.
   merge-complete; step-2 reads the file ⇒ RUNNER_TEMP persistence; log search finds no
   raw values ⇒ blob-internal masking [40]; the two RULED failed rows unchanged:
   proxy-local 307, proxy-backup). A red smoke on any CLAIM ⇒ the probes' conclusions
-  were wrong ⇒ documented fallback: revert the branch to `d81831446`'s static
+  were wrong ⇒ documented fallback: revert the branch to `3f330df1a`'s static
   enumeration (one commit, zero cluster impact — the standing rule, not agent-owned).
 
 ## Risks / assumptions

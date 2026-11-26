@@ -2,7 +2,7 @@
 # Sync fan-out operator runbook contract — C15 re-pin (reopen4, R8; rewrite
 # #5) (2026/2026-11-cf-139-feat-argocd-webhook-sync):
 # .agents/notes/2026-11-17-argocd-sync-fanout.md, re-pinned to the LANDED
-# fleet-blind shape (C13+C14 ad86dd576 are in the tree — every parity grep
+# fleet-blind shape (C13+C14 landed at c95cbaabf post-rebase — every parity grep
 # reads the REAL workflow/script/roster bytes, not /tmp references).
 #
 # What the re-pin MOVES vs the C11 (rewrite #4) suite:
@@ -15,13 +15,14 @@
 #    workflow now enumerates ZERO names and a reappearance reddens this leg).
 #    §2's OWNER work (mints block, 11-row table modulo the sanctioned
 #    vars./secrets. prefix drop, the §2.4 trio leg) stays byte-equal against
-#    the rewrite-#4 baseline (RUNBOOK_BASE, default ad86dd576) — the
+#    the rewrite-#4 baseline (RUNBOOK_BASE, default c95cbaabf; pre-rebase
+#    ad86dd576 dangles in origin/main's rebased history) — the
 #    redesign changed how the job discovers keys, not how the vault holds
 #    them. §2 URL values ⇄ §6 hosts equality SURVIVES.
 #  * r2 = §5's new role: the first dispatch is the de-facto live validation
 #    of the engine claims the owner chose to skip probing for (STATE
 #    reopen4.owner_decision) — the claim-token legs (toJSON / RUNNER_TEMP /
-#    filter-count / masking-log), the d81831446 revert-fallback sentence,
+#    filter-count / masking-log), the 3f330df1a revert-fallback sentence,
 #    the fleet-drift honesty line (expect == VAULT reality), and the two
 #    RULED failed rows (proxy-local 307, proxy-backup OQ9).
 #  * r3's stale-vocabulary sweep EXTENDS to the enumeration-era claims
@@ -59,7 +60,8 @@
 # Env: FANOUT_RUNBOOK (doc under test), MAIN_SYNC_WF / FANOUT_SCRIPT /
 #      FANOUT_ROSTER (parity sources; defaults = the landed repo files),
 #      RUNBOOK_BASE (rewrite-#4 baseline ref for the invariance legs;
-#      default = ad86dd576, the C13+C14 landing tip).
+#      default = c95cbaabf, the post-rebase C13+C14 landing tip; mapped from
+#      the dangling pre-rebase ad86dd576).
 set -euo pipefail
 
 cd "${FANOUT_ROOT:-$(git rev-parse --show-toplevel)}"
@@ -68,7 +70,7 @@ RUNBOOK="${FANOUT_RUNBOOK:-.agents/notes/2026-11-17-argocd-sync-fanout.md}"
 WF="${MAIN_SYNC_WF:-.forgejo/workflows/main-sync.yaml}"
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
-RUNBOOK_BASE="${RUNBOOK_BASE:-ad86dd576}"
+RUNBOOK_BASE="${RUNBOOK_BASE:-c95cbaabf}"
 RUNBOOK_PATH_IN_GIT=".agents/notes/2026-11-17-argocd-sync-fanout.md"
 
 # Dead-grammar fragments (spaces keep the joined literal OUT of this file;
@@ -439,9 +441,12 @@ def bad(msg):
 # 1. The revert fallback: hash + revert verb + the one-commit/zero-impact
 #    shape (C15 §5 verbatim claim — the chunk's own parenthetical wording is
 #    avoided because AC4 bans it; the pinned truth is the hash + scope).
-if not re.search(r"(?is)revert[\s\S]{0,160}?d81831446|d81831446[\s\S]{0,160}?revert", sec5):
-    bad("§5 lacks the d81831446 revert-fallback sentence — the owner's no-probe ruling is only honest with the one-commit fallback pinned (STATE reopen4, C15 AC2)")
-if not re.search(r"(?is)d81831446[\s\S]{0,160}?(one commit|zero cluster impact)|(one commit|zero cluster impact)[\s\S]{0,160}?d81831446", sec5):
+#    Post-rebase the fallback is 3f330df1a (CANONICAL MAP: old d81831446
+#    dangles in rebased history — a doc that names it points a human at an
+#    unreachable commit; the doc-side session mirrors the map).
+if not re.search(r"(?is)revert[\s\S]{0,160}?3f330df1a|3f330df1a[\s\S]{0,160}?revert", sec5):
+    bad("§5 lacks the 3f330df1a revert-fallback sentence — the owner's no-probe ruling is only honest with the one-commit fallback pinned (STATE reopen4, C15 AC2; if the doc still names the pre-rebase d81831446, the DOC side owes the map mirror)")
+if not re.search(r"(?is)3f330df1a[\s\S]{0,160}?(one commit|zero cluster impact)|(one commit|zero cluster impact)[\s\S]{0,160}?3f330df1a", sec5):
     bad("§5's fallback sentence must carry the landed scope claim (one commit, zero cluster impact)")
 
 # 2. The engine-claim legs the skipped probes would have run (C15 §5(a)):
@@ -496,7 +501,7 @@ PY
   then
     fail "r2: §5's first-dispatch-as-validation contract is violated (reason printed above)"
   fi
-  ok "r2: d81831446 revert-fallback sentence (hash + one-commit/zero-impact scope); the four engine-claim tokens (toJSON / filter-count / RUNNER_TEMP / masking-log) as enumerated first-dispatch legs; the fleet-drift honesty line (vault reality, not a repo list, count-as-audit) with NO alert-on-drift softening; the two RULED failed rows intact; §5(b) carries the pairs-file variant; the landed flag surface is four and no --pairs flag is advertised (AC2)"
+  ok "r2: 3f330df1a revert-fallback sentence (hash + one-commit/zero-impact scope); the four engine-claim tokens (toJSON / filter-count / RUNNER_TEMP / masking-log) as enumerated first-dispatch legs; the fleet-drift honesty line (vault reality, not a repo list, count-as-audit) with NO alert-on-drift softening; the two RULED failed rows intact; §5(b) carries the pairs-file variant; the landed flag surface is four and no --pairs flag is advertised (AC2)"
 fi
 
 # --- r3: stale-vocabulary sweep — enumeration-era claims die (C15 AC4) --------------

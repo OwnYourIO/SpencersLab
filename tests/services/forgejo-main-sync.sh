@@ -9,6 +9,15 @@
 # reopen4 (C13, ruling R8) the `sync-fanout` job: the mirror workflow IS the
 # webhook and speaks to the clusters DIRECTLY, FLEET-BLIND.
 #
+# Post-rebase (cf-55 shape on origin/main, D59 owner ruling 2026-11-26): the
+# file carries SIX jobs — push-gh, push-dev, the called builders
+# build-containers + build-charts, the aggregate advance-marker, and
+# sync-fanout. The fan-out's needs GREW from [push-gh] to
+# [push-gh, build-containers, build-charts]: build-charts pushes a bump
+# commit to Forgejo main, so a fan-out firing before the builders would
+# push-gh-advance GitHub with the PRE-bump tree and sync the fleet to a
+# stale SHA — the R1(c) race resolution now covers the builder group too.
+#
 # The C10 22-row env enumeration DIES with R8: its premise (Forgejo cannot
 # index secrets dynamically) was source-refuted (DECISIONS 2026-11-26, RESEARCH
 # round 3 [43][44][46][49]). The job shape survives — diag → bare
@@ -114,9 +123,10 @@ fi
 
 # --- t3: jobs + prod-stage guards --------------------------------------------
 if want t3; then
-# The job SET is exactly {push-gh, push-dev, sync-fanout} (C06) — unchanged by
-# reopen4; the fan-out firing on a dev instance would sync clusters for a
-# push the mirror never made.
+# The job SET is exactly {push-gh, push-dev, build-containers, build-charts,
+# advance-marker, sync-fanout} (C06 rename + cf-55's called-builder fan, D59)
+# — every one guarded on the byte-exact membership form; the fan-out or a
+# builder firing on a dev instance would act for a push the mirror never made.
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -137,13 +147,15 @@ def need(cond, msg):
 
 
 need(isinstance(jobs, dict), 'no jobs: mapping')
-need(set(jobs) == {'push-gh', 'push-dev', 'sync-fanout'},
-     f'jobs keys are {sorted(jobs)}, expected exactly push-gh + push-dev + sync-fanout (C06: the relay trigger job IS replaced by the fan-out job — a fourth job or a kept-alive hook job means an unpinned surface)')
+need(set(jobs) == {'push-gh', 'push-dev', 'build-containers', 'build-charts',
+                   'advance-marker', 'sync-fanout'},
+     f"jobs keys are {sorted(jobs)}, expected exactly the six-job fan (push-gh + push-dev + the called builders + advance-marker + sync-fanout; the C06 relay replacement and the cf-55 D59 builder group are the landed set)")
 need('hook-relay' not in raw,
      'the retired hook-relay name survives in the file — the job is renamed to sync-fanout (C06), no relay-era identifier may linger')
-for name in ('push-gh', 'push-dev', 'sync-fanout'):
+for name in ('push-gh', 'push-dev', 'build-containers', 'build-charts',
+             'advance-marker', 'sync-fanout'):
     need((jobs[name] or {}).get('if') == GUARD,
-         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r} (byte-exact membership; ${{ }}-wrapped or equality forms redden this leg)")
+         f"{name}.if is {(jobs[name] or {}).get('if')!r}, expected {GUARD!r} (byte-exact membership on EVERY job of the fan; ${{ }}-wrapped or equality forms redden this leg)")
 # The dev-stage server must fire no job; any dev guard defeats the breaker.
 need("vars.ROLE == 'dev'" not in raw, 'a job guards on vars.ROLE == dev (the dev stage must fire nothing)')
 # URL-based instance detection is retired.
@@ -152,7 +164,7 @@ PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly three jobs (push-gh, push-dev, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod'); no dev guard, no server_url"
+ok "t3: exactly six jobs (push-gh, push-dev, build-containers, build-charts, advance-marker, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod'); no dev guard, no server_url"
 fi
 
 # --- t4: no force --------------------------------------------------------------
@@ -382,8 +394,10 @@ raw = open(sys.argv[1]).read()
 if 'backup-proxy' in raw:
     print('FAIL: t8: backup-proxy appears in the workflow (retired from the active design)', file=sys.stderr)
     sys.exit(1)
-if 'git merge' in raw:
-    print('FAIL: t8: git merge appears in the workflow (push-dev must be a plain push)', file=sys.stderr)
+# 'git merge' (the command) stays banned file-wide; 'git merge-base' is the
+# advance-marker's legitimate ancestry probe (C14 ancestor tolerance).
+if 'git merge' in raw.replace('git merge-base', 'ANCESTRY-PROBE'):
+    print('FAIL: t8: a git merge command appears in the workflow (push-dev must be a plain push; only merge-base ancestry probes are legitimate)', file=sys.stderr)
     sys.exit(1)
 job = (yaml.safe_load(raw) or {}).get('jobs', {}).get('push-dev')
 if not isinstance(job, dict):
@@ -408,12 +422,16 @@ fi
 ok "t8: push-dev is a bare main push — no merge, no backup-proxy, no branch creation"
 fi
 
-# --- t9: sync-fanout job shape (C13 AC6, C06 race resolution) ------------------------
+# --- t9: sync-fanout job shape (C13 AC6; D59 race resolution) -----------------------
 if want t9; then
 # The four-step pinned sequence: diag → bare checkout → resolve fan-out pairs
-# → fan out ArgoCD syncs. needs [push-gh] keeps the race resolution byte-true
-# (R1 option (c)); the sole uses: step stays bare (the fan-out needs no
-# history). Designed-red until C13 lands: today's file has three steps.
+# → fan out ArgoCD syncs. needs == [push-gh, build-containers, build-charts]
+# EXACT (D59 owner ruling 2026-11-26 — the R1(c) race resolution GREW with
+# the builder group: build-charts pushes the bump commit to Forgejo main, so
+# firing after push-gh alone would advance GitHub with the PRE-bump tree and
+# fan the stale SHA out); advance-marker gates on both builders (the plain
+# success gate IS the aggregate rule — the marker only moves on an all-green
+# fan). The sole uses: step stays bare (the fan-out needs no history).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -430,8 +448,14 @@ def need(cond, msg):
 
 job = jobs.get('sync-fanout')
 need(isinstance(job, dict), 'no sync-fanout job (C06: the fan-out job replaces the relay trigger)')
-need(job.get('needs') == ['push-gh'],
-     f'needs is {job.get("needs")!r}, expected exactly the list ["push-gh"] — after push-gh success is the race resolution (apps track GitHub), unchanged from C04')
+need(job.get('needs') == ['push-gh', 'build-containers', 'build-charts'],
+     f'needs is {job.get("needs")!r}, expected exactly the list ["push-gh", "build-containers", "build-charts"] — D59: GitHub must carry the POST-bump tree before any cluster is dialed (apps track GitHub), and a shuffled or shortened list re-opens the pre-bump race')
+need(jobs.get('advance-marker', {}).get('needs') == ['build-containers', 'build-charts'],
+     f"advance-marker needs is {jobs.get('advance-marker', {}).get('needs')!r}, expected [build-containers, build-charts] — the marker moves only once the WHOLE fan's builders published green (the aggregate rule)")
+for bname in ('build-containers', 'build-charts'):
+    bjob = jobs.get(bname) or {}
+    need(str(bjob.get('uses', '')).startswith('./.forgejo/workflows/'),
+         f'the {bname} job is not a called-workflow reference ({bjob.get("uses")!r}) — the fan CALLS the standalone builders (cf-55), it must not inline their logic')
 need(job.get('if') == GUARD, f'if is {job.get("if")!r}, expected {GUARD!r} exact bytes')
 need(job.get('runs-on') in LABELS, f'runs-on is {job.get("runs-on")!r}, not a lab label')
 need(not job.get('env'), 'the job carries a job-level env block — every blob and path is step-scoped (C13 placement: the fan-out step env is exactly the file + refs)')
@@ -457,7 +481,7 @@ PY
 then
   fail "t9: see the t9 detail above"
 fi
-ok "t9: sync-fanout needs == [push-gh], exact prod guard, lab label, no job-level env, the four pinned steps in order (diag → bare checkout@v7 → resolve fan-out pairs → fan out ArgoCD syncs), three set -euo pipefail run heads (C13 AC6)"
+ok "t9: sync-fanout needs == [push-gh, build-containers, build-charts] EXACT (D59), advance-marker gates on both builders, the two builder jobs are called-workflow refs, exact prod guard, lab label, no job-level env, the four pinned steps in order (diag → bare checkout@v7 → resolve fan-out pairs → fan out ArgoCD syncs), three set -euo pipefail run heads (C13 AC6)"
 fi
 
 # --- t10: forbidden patterns, file-wide (C13 AC2 + C06/C10 survivors) ---------------
@@ -556,7 +580,7 @@ for s in steps:
     if s.get('name') == 'fan out ArgoCD syncs':
         fan_env = {k: str(v) for k, v in (s.get('env') or {}).items()}
 need('github.event.ref' in fan_env.get('EVT_REF', ''), 'EVT_REF is not wired to github.event.ref (push events carry the ref)')
-need('github.ref' in fan_env.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the dispatch/workflow fallback, release.yaml:54 precedent)')
+need('github.ref' in fan_env.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the dispatch/workflow fallback, build-charts.yaml:95 precedent)')
 
 # Run-body interpolation ban: no secrets at all, no vars beyond the diag
 # ROLE echo the job-shape leg pins.
@@ -609,7 +633,7 @@ for ln in invocation_lines:
     need('ARGOCD_SYNC' not in ln, f'the invocation line references a vault key ({ln.strip()[:100]!r}) — pairs travel via the file, never per-call')
     need('--token' not in ln, f'the invocation passes a --token flag — banned by the CLI contract (tokens ONLY through the pairs file)')
 
-# REF fallback chain: dispatch pushes may carry no event ref (release.yaml:54
+# REF fallback chain: dispatch pushes may carry no event ref (build-charts.yaml:95
 # context-quirk precedent) — the chain is pinned exactly (survives byte-true).
 need(re.search(r'REF="\$\{EVT_REF:-\$\{GH_REF:-refs/heads/main\}\}"', blob),
      'no REF="${EVT_REF:-${GH_REF:-refs/heads/main}}" fallback chain — dispatch/first-push runs must resolve main, not fan out on an empty ref')
