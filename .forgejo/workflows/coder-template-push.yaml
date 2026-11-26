@@ -6,9 +6,9 @@
 # membership with contains() — a case-insensitive substring that never
 # errors on a hand-typed value, where a guard expression that errors
 # fails the job while a false one only skips it. Unlike
-# containers-build.yaml, whose guards widen on unset, an unset ROLE stays
+# build-containers.yaml, whose guards widen on unset, an unset ROLE stays
 # fail-safe here on purpose: this pipeline publishes to an external
-# service, so it must never fire unconfigured (the release.yaml
+# service, so it must never fire unconfigured (the build-charts.yaml
 # fail-safe class, beside main-sync.yaml's narrow guards). Both role
 # members fire because each instance serves its own Coder: the executing
 # instance pushes every changed template to its own instance, the
@@ -20,38 +20,67 @@
 # contain dev or prod as a substring — "production" would silently
 # widen the prod guards.
 #
-# Trigger. A push to main that touches charts/coder/coder-templates/**,
-# plus the workflow_dispatch escape hatch with the templates input (an
-# empty list pushes nothing — the containers-build.yaml shape). No PR
-# leg: fork heads carry empty secrets and a read-only token, and a PR
-# push would mint an active template version — every push mints one
-# (--activate defaults true), so only a main-tree change or an explicit
-# dispatch may fire it.
+# Trigger. The push arm died with the C15 re-aim: main-sync.yaml calls
+# this workflow on its prod-main fan (the fan entry, main-sync.yaml
+# :105-119 — the call is unconditional: no with: inputs, no path gate at
+# the call site; the called workflow needs none — its detection reads the
+# event payload + the shared marker), and path filtering lives in the
+# marker..sha detection instead (this gate: charts/coder/
+# coder-templates/ + a main.tf, cut -d/ -f4). The workflow_dispatch
+# hatch with the templates input (an empty list pushes nothing) stays
+# byte-frozen beside workflow_call — it is the DEV-SIDE leg (the fan
+# runs on the prod-stage instance only; the dev Coder is not
+# auto-covered, ruled-accepted) and the per-template escape hatch; a
+# dispatch never advances the shared marker (the fan law: main-sync's
+# aggregate is the single writer). No PR leg: fork heads carry empty
+# secrets and a read-only token, and a PR push would mint an active
+# template version — every push mints one (--activate defaults true), so
+# only a fan call or an explicit dispatch may fire it.
 #
-# Detection. A push diffs the whole before..sha range as trees — every
-# commit between the endpoints lands in the changed set — which is why
-# the detect job checks out with fetch-depth: 0 and the push jobs, which
-# never diff, stay shallow: only the checked-out HEAD sha reaches the
-# push script (the version name and the message). The detector is
-# scripts/coder-template-detect.sh: a sorted JSON array of the changed
-# pushable template dirs (DNS-safe + carrying a main.tf). The detector
-# owns the empty-set warning with its exemption arithmetic: a no-op ref
-# update (before == sha) and an empty dispatch list (its own no-op
-# intent) stay silent, every other empty set warns on stderr, and the
-# first push to a branch (all-zero before) narrows to the tip commit
-# and says so with a ::warning:: line. A dispatch carries no commit
-# range: it names its push list outright.
+# Detection. A called run diffs marker..sha — the last fan that pushed
+# this repository green, remembered as the ci/last-built marker ref
+# (SHARED with the container and chart builders since C14; READ-ONLY
+# here: main-sync.yaml's aggregate job is the marker's single writer,
+# this workflow carries no marker write at all — the advance job retired
+# with the push arm), so a template change a dead or cancelled run lost
+# is re-covered by the next call instead of staying skipped forever.
+# With no marker yet (the bootstrap state, and every state until
+# main-sync's aggregate first advances it) a called run narrows to the
+# tip commit and announces it, and a run that does carry a payload before
+# (the defensive push arms) falls back to its whole before..sha range.
+# Either way the diff is a tree diff, so every commit between the
+# endpoints lands in the changed set — which is why the detect job
+# checks out with fetch-depth: 0 (the marker's own reachability check,
+# the resolver's git cat-file -e pre-check, needs the same history) and
+# the push jobs, which never diff, stay shallow: only the checked-out
+# HEAD sha reaches the push script (the version name and the message).
+# The detector is scripts/coder-template-detect.sh: a sorted JSON array
+# of the changed pushable template dirs (DNS-safe + carrying a main.tf),
+# with the marker-first decision tree and its two tip-only announces;
+# the empty-set law is the detect step's, marker-aware: an empty range
+# measured from a present marker proves nothing was missed and reads as
+# one plain info line (no annotation — the runner does not interpret it,
+# the cf-6 OQ-3 class; the designed informational no-op that never
+# blocks the fan's aggregate advance), a no-op ref update (before == sha)
+# and ANY dispatch (its own no-op intent) stay silent, a real empty
+# before..sha range without a marker warns, and a non-empty set never
+# reads at all. A dispatch carries no commit range: it names its push
+# list outright. Nothing reads event.commits or total_commits: the
+# Actions push payload here leaves total_commits at 0, so a
+# commit-counted range would always come up empty.
 #
 # Runs. Without concurrency:, Forgejo cancels an in-flight run of the
-# same workflow on every new push or dispatch event; a cancelled matrix
-# would push half a template set, so runs queue instead. The lab runner
-# has capacity 1, so matrix cells serialize through one pod; the matrix
-# is fail-fast: false, so one template's 401 does not cancel the
+# same workflow on every new event; a cancelled matrix would push half a
+# template set, so runs queue instead. Each runner release polls with 10
+# pods at capacity 1 each (owner ruling 2026-11-26, scale via slice —
+# D57), so matrix cells spread across pods while every job still lands
+# alone in one pod (the serialization-by-pod posture); the matrix is
+# fail-fast: false, so one template's 401 does not cancel the
 # siblings' pushes.
 #
 # Jobs run on the lab's job image exactly as today: runs-on:
 # ubuntu-24.04 with no container: field — the same shape as the other
-# four non-renovate workflows (the renovate.yaml container: job is the
+# non-renovate workflows (the renovate.yaml container: job is the
 # suite's sole deviation — one tool with no upstream-lab fit — not the
 # shape). The Coder CLI is the forgejo-runner bake (AD-56 C01), behind
 # the label the label already routes to, and the diag step's plain
@@ -64,7 +93,12 @@
 # warn-and-skip skips green per template — the script's designed
 # outcome, exit 0 with the missing key named on stderr (the
 # main-sync.yaml unset-vault posture); a configured 401 fails red, the
-# CLI's non-zero exit propagating through the script to the job.
+# CLI's non-zero exit propagating through the script to the job. A RED
+# coder leg then blocks the fan's aggregate advance (the plain
+# needs-gate in main-sync.yaml) — the shared marker stays put, and a
+# red SIBLING holds it too, so the next fan re-covers all three domains
+# (the coupling the ruling accepted: a green leg re-pushes its range —
+# churn on the Coder version list, no correctness loss).
 #
 # Credentials arrive as Actions vault references mapped into env blocks
 # only (CODER_URL from the instance-side repo var, CODER_SESSION_TOKEN
@@ -82,9 +116,6 @@
 name: Deploy Coder templates
 
 on:
-  push:
-    branches: [main]
-    paths: ['charts/coder/coder-templates/**']
   # Push escape hatch: name the templates to (re)push when their
   # sources did not change but a publish is due (a failed or cancelled
   # earlier run, a re-minted token, a divergent namespace). An empty
@@ -96,10 +127,16 @@ on:
         required: false
         default: ''
         type: string
+  # C15/D56: the push arm died — main-sync.yaml's prod-main fan calls
+  # this workflow (the fan entry, main-sync.yaml:105-119); path
+  # filtering lives in the marker..sha detection instead. The dispatch
+  # lane stays byte-frozen (the dev-side leg + the escape hatch).
+  workflow_call: {}
 
 concurrency:
   # A cancelled matrix would push half a template set, so runs queue
-  # instead (the capacity-1 runner; the containers-build rationale).
+  # instead (the 10 poller pods at capacity 1 each, D57; the
+  # build-containers.yaml rationale).
   cancel-in-progress: false
 
 jobs:
@@ -112,17 +149,56 @@ jobs:
       - uses: actions/checkout@v7
         with:
           # Full history is what keeps a multi-commit push's non-tip
-          # changes visible: detection diffs the whole before..sha range,
-          # and at the depth-1 default the endpoints do not exist locally
-          # — the step then dies on 'bad object' (exit 128, loud), never
+          # changes visible: detection diffs the whole range — marker..sha
+          # when the marker exists, before..sha when it does not — and
+          # at the depth-1 default the endpoints do not exist locally —
+          # the step then dies on 'bad object' (exit 128, loud), never
           # quietly drops the changes (the V-6-1 shallow-clone law, the
-          # containers-build rationale comment).
+          # build-containers.yaml rationale comment); the marker's own
+          # reachability check (the resolver's git cat-file -e) needs the
+          # same history.
           fetch-depth: 0
       - name: diag
         run: |
           set -euo pipefail
           echo "ROLE=[${{ vars.ROLE }}]"
           echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
+      - name: resolve last-pushed marker
+        id: marker
+        env:
+          EVENT_NAME: ${{ forgejo.event_name }}
+        run: |
+          set -euo pipefail
+          # The marker is call-side (C15: main-sync's called runs read
+          # it; the push arm is gone). Non-marker-side events still emit
+          # the output key: a step output that goes missing would reach
+          # detect() unset rather than empty, and an empty MARKER_SHA is
+          # exactly the state the payload arms are specified against.
+          # A dispatch never reads the marker.
+          if [ "$EVENT_NAME" != workflow_call ]; then
+            echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+            exit 0
+          fi
+          marker=$(git ls-remote origin refs/heads/ci/last-built | cut -f1)
+          if [ -z "$marker" ]; then
+            # No marker yet: the before-chain answers, and main-sync's
+            # first aggregate green advance creates it.
+            echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+            exit 0
+          fi
+          if ! printf '%s' "$marker" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "coder-template-push: the marker ref answered a non-sha value: $marker" >&2
+            exit 1
+          fi
+          if ! git cat-file -e "$marker^{commit}"; then
+            # A history rewrite can orphan the marker: silently downgrading
+            # this run to before..sha would re-open the hole the marker
+            # exists to close, so the run stops here with the owner verbs
+            # named.
+            echo "coder-template-push: marker $marker is unreachable from this checkout — reset the marker ref to a reachable commit or delete it to fall back" >&2
+            exit 1
+          fi
+          echo "sha=$marker" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
       - name: detect changed templates
         id: detect
         env:
@@ -130,6 +206,7 @@ jobs:
           EVENT_BEFORE: ${{ forgejo.event.before }}
           SHA: ${{ forgejo.sha }}
           MANUAL_TEMPLATES: ${{ forgejo.event.inputs.templates }}
+          MARKER_SHA: ${{ steps.marker.outputs.sha }}
         run: |
           set -euo pipefail
           # Assign before emitting: a substitution inside echo's argument
@@ -141,14 +218,22 @@ jobs:
           # The verdict and the endpoints that produced it go to the job
           # log: a green run that pushed nothing must read differently
           # from one whose range silently resolved to nothing. The
-          # empty-set warning is the detector's own stderr line (its
-          # exemption arithmetic: a no-op ref update — before == sha —
-          # and an empty dispatch list both stay silent, every other
-          # empty set warns), so the step does not re-warn.
-          echo "changed templates: $changed (event $EVENT_NAME before=$EVENT_BEFORE sha=$SHA)"
+          # empty-set decision is this step's, marker-aware (the
+          # build-containers.yaml:210-216 shape minus the PR branch):
+          # the exemptions live on the guard below — a no-op ref update
+          # (before == sha) and any dispatch stay silent, and an empty
+          # range measured from a present marker reads as the info line.
+          echo "changed templates: $changed (event $EVENT_NAME before=$EVENT_BEFORE sha=$SHA marker=$MARKER_SHA)"
           # Forgejo exports the GITHUB_* compatibility family; the
           # FORGEJO_* name is the fallback per the v15.0 reference.
           echo "changed-templates=$changed" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
+          if [ "$EVENT_NAME" != workflow_dispatch ] && [ "$changed" = '[]' ]; then
+            if [ -n "$MARKER_SHA" ]; then
+              echo "changed set verified empty: marker..sha (marker=$MARKER_SHA sha=$SHA) — nothing was missed between the marker and this run"
+            elif [ -n "$EVENT_BEFORE" ] && [ "$EVENT_BEFORE" != "$SHA" ]; then
+              echo "::warning::changed set resolved empty for event $EVENT_NAME — the push job will skip"
+            fi
+          fi
 
   push:
     # The same narrow guard (an unset ROLE renders empty and matches
@@ -177,7 +262,7 @@ jobs:
       - uses: actions/checkout@v7
         # The push leg never diffs: only the checked-out HEAD sha
         # reaches the script (the version name and the message), so the
-        # depth-1 default is the whole need (the containers-build
+        # depth-1 default is the whole need (the build-containers.yaml
         # build-job shallow shape).
       - name: diag
         run: |
@@ -185,8 +270,8 @@ jobs:
           echo "ROLE=[${{ vars.ROLE }}]"
           echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
           # The plain call IS the toolchain check (the D43 posture, the
-          # release.yaml class): a pre-bake runner image dies here at
-          # command-not-found, loud and early — the runbook's UA3/UA4
+          # build-charts.yaml class): a pre-bake runner image dies here
+          # at command-not-found, loud and early — the runbook's UA3/UA4
           # sequencing state, not a pipeline bug.
           coder version
       - name: push ${{ matrix.template }}

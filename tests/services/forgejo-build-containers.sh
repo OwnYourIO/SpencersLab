@@ -1301,7 +1301,10 @@ need(REF in raw,
      f'the resolver no longer names {REF} — a builder that stopped READING the shared marker hands every run the payload fallback and re-opens the delivery-loss class (C14 adoption stands through C15)')
 # Named readers/writers set — the #56 join-point (D55): the ref may live ONLY
 # in the allow-set, and among those files exactly main-sync.yaml pushes it.
-ALLOW = {'build-containers.yaml', 'build-charts.yaml', 'main-sync.yaml'}
+# cf-56 C04 (card #56): coder-template-push.yaml JOINS the allow-set in its
+# own commit as a READER (the OQ11 shared marker, the OQ10 fan member) —
+# it does not route around this leg, and it never writes the ref.
+ALLOW = {'build-containers.yaml', 'build-charts.yaml', 'main-sync.yaml', 'coder-template-push.yaml'}
 writers = set()
 for dirpath, _dn, filenames in os.walk(os.path.dirname(path)):
     for name in sorted(filenames):
@@ -1317,12 +1320,12 @@ for dirpath, _dn, filenames in os.walk(os.path.dirname(path)):
                for ln in txt.splitlines()):
             writers.add(name)
 need(writers == {'main-sync.yaml'},
-     f'marker-push carriers are {sorted(writers)}, expected exactly [main-sync.yaml] — both builders carry zero advance jobs and the aggregate is the single writer (C15 AC5, D54)')
+     f'marker-push carriers are {sorted(writers)}, expected exactly [main-sync.yaml] — the readers (the two builders + the coder-template workflow) carry zero marker pushes and the aggregate is the single writer (C15 AC5, D54; C04 OQ11)')
 PY
   then
     return 1
   fi
-  ok "t16: no advance job and zero marker pushes in this file; the resolver still names refs/heads/ci/last-built; the ref lives in no .forgejo workflow outside {build-charts.yaml, build-containers.yaml, main-sync.yaml}; of that set only main-sync.yaml carries a marker push — the single-writer fence; executed writes live in forgejo-main-sync.sh (C15 §D t16 re-aim, AC5/D54/D55)"
+  ok "t16: no advance job and zero marker pushes in this file; the resolver still names refs/heads/ci/last-built; the ref lives in no .forgejo workflow outside {build-charts.yaml, build-containers.yaml, coder-template-push.yaml, main-sync.yaml}; of that four-file set only main-sync.yaml carries a marker push — the single-writer fence (C04: the coder-template workflow joins as a reader); executed writes live in forgejo-main-sync.sh (C15 §D t16 re-aim, AC5/D54/D55)"
 }
 
 leg_t17() {

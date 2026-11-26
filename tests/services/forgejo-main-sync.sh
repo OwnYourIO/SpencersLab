@@ -8,9 +8,12 @@
 # labels, push-dev being a bare main push with no merge — and from cf-139
 # reopen2 (C06, rulings R5/R6) the `sync-fanout` job: the mirror workflow IS
 # the webhook and now speaks to the clusters DIRECTLY. t9..t13 pin its shape:
-# needs carrying the mirror plus BOTH called builders (round-5 D59 re-aim:
-# the fan-out fires only after GitHub advanced AND both builders are green —
-# the cf-139 race resolution rides first position, subsumed unchanged), a
+# needs carrying the mirror plus the two builders it gates on (build-
+# containers + build-charts — round-5 D59 re-aim: the fan-out fires only
+# after GitHub advanced AND both are green; the cf-56 OQ10 fan member,
+# push-coder-templates, is NOT in its needs: the fleet release does not
+# hold over the external-service publish — the cf-139 race resolution rides
+# first position, subsumed unchanged), a
 # bare actions/checkout@v7 step (the
 # fan-out logic home is scripts/argocd-fanout.py riding the checkout, no
 # history needed), one ORG-level Actions secret `secrets.ARGOCD_SYNC_TOKENS`
@@ -90,14 +93,17 @@ ok "t2: on: carries exactly push.branches == [main] plus workflow_dispatch"
 
 # --- t3: jobs + prod-stage guards --------------------------------------------
 # C06 re-pin (reopen2): the fan-out replaced the relay trigger job. ROUND 5
-# (C15 §B, D59) re-aims the SET to the six-job orchestration: the mirror
-# pair plus the two CALLED builders, the AGGREGATE advance-marker writer,
-# and sync-fanout — whose `if` stays BYTE-EQUAL to the pre-existing ROLE
-# GUARD (D59: the planned always()-exemption is VOID — the fan-out stays
-# inside this byte-GUARD loop and hard-gates through its needs list alone).
-# The byte-exact membership guard must hold on ALL SIX — the fan-out or a
-# builder firing on a dev instance would sync clusters / run releases for
-# a push the mirror never made (the count is now six, not three).
+# (C15 §B, D59) re-aims the SET to the orchestration; cf-56 (C04, the OQ10
+# fan-member ruling) widens it to the SEVEN-job shape: the mirror pair
+# plus the THREE CALLED builders (build-containers, build-charts, and
+# push-coder-templates — the coder-template-push workflow joins the fan in
+# its own commit), the AGGREGATE advance-marker writer, and sync-fanout —
+# whose `if` stays BYTE-EQUAL to the pre-existing ROLE GUARD (D59: the
+# planned always()-exemption is VOID — the fan-out stays inside this
+# byte-GUARD loop and hard-gates through its needs list alone). The
+# byte-exact membership guard must hold on ALL SEVEN — the fan-out or a
+# builder firing on a dev instance would sync clusters / run releases for a
+# push the mirror never made (the count is now seven, not six).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -118,9 +124,9 @@ def need(cond, msg):
 
 
 need(isinstance(jobs, dict), 'no jobs: mapping')
-JOBS = {'push-gh', 'push-dev', 'build-containers', 'build-charts', 'advance-marker', 'sync-fanout'}
+JOBS = {'push-gh', 'push-dev', 'build-containers', 'build-charts', 'push-coder-templates', 'advance-marker', 'sync-fanout'}
 need(set(jobs) == JOBS,
-     f'jobs keys are {sorted(jobs)}, expected exactly {sorted(JOBS)} (C15: the two called builders join beside the mirrors, the aggregate advance and the fan-out — a seventh job or a missing one means an unpinned orchestration surface)')
+     f'jobs keys are {sorted(jobs)}, expected exactly {sorted(JOBS)} (C15 + cf-56 C04: the three called builders join beside the mirrors, the aggregate advance and the fan-out — push-coder-templates is the OQ10 fan member that joined in its own commit; an eighth job or a missing one means an unpinned orchestration surface)')
 need('hook-relay' not in raw,
      'the retired hook-relay name survives in the file — the job is renamed to sync-fanout (C06), no relay-era identifier may linger')
 for name in sorted(JOBS):
@@ -134,7 +140,7 @@ PY
 then
   fail "t3: see the t3 detail above"
 fi
-ok "t3: exactly six jobs (push-gh, push-dev, build-containers, build-charts, advance-marker, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod') — sync-fanout stays INSIDE the byte-GUARD loop with no result-function token (D59); no dev guard, no server_url"
+ok "t3: exactly seven jobs (push-gh, push-dev, build-containers, build-charts, push-coder-templates, advance-marker, sync-fanout), no hook-relay residue, every one guarded on the byte-exact contains(vars.ROLE, 'prod') — sync-fanout stays INSIDE the byte-GUARD loop with no result-function token (D59); no dev guard, no server_url"
 
 # --- t4: no force --------------------------------------------------------------
 if ! python3 - "$WF" <<'PY'
@@ -577,10 +583,13 @@ then
 fi
 ok "t13: all run blocks are syntactically valid bash, scripts/argocd-fanout.py py_compiles, and the roster JSON parses (C06 AC1 + cross-artifact gate)"
 
-# --- t14: the two CALLED builder jobs, byte-pinned (C15 §B/§D) --------------------
+# --- t14: the three CALLED builder jobs, byte-pinned (C15 §B/§D + C04) -------
 # Exact same-repo uses: paths, secrets: inherit, the ROLE guard (t3 loop),
 # runs-on label, and NO with: inputs (the builders resolve everything from
-# the caller context — inputs stay the documented #56 option).
+# the caller context — inputs stay the documented #56 option). The OQ10
+# ruling adds the third called builder: push-coder-templates calls
+# coder-template-push.yaml (the workflow is a fan member, not a standalone
+# push trigger — its push arm is retired, the fan is the trigger).
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
@@ -594,9 +603,10 @@ def need(cond, msg):
         sys.exit(1)
 
 
-for jn, target in (('build-containers', 'build-containers.yaml'), ('build-charts', 'build-charts.yaml')):
+for jn, target in (('build-containers', 'build-containers.yaml'), ('build-charts', 'build-charts.yaml'),
+                  ('push-coder-templates', 'coder-template-push.yaml')):
     job = jobs.get(jn)
-    need(isinstance(job, dict), f'no {jn} job — main-sync does not yet call the builder (C15 §B; authored-red until the orchestration lands)')
+    need(isinstance(job, dict), f'no {jn} job — main-sync does not yet call the builder (C15 §B / C04 OQ10; authored-red until the orchestration lands)')
     uses = str(job.get('uses') or '')
     # The docs same-repo form is ./.forgejo/workflows/x.yaml; the chunk
     # prose spells ././.forgejo/... — both are the identical relative path,
@@ -604,19 +614,21 @@ for jn, target in (('build-containers', 'build-containers.yaml'), ('build-charts
     need(re.fullmatch(r'\./(?:\./)?\.forgejo/workflows/' + re.escape(target), uses),
          f'{jn}.uses is {uses!r}, expected the same-repo relative path onto .forgejo/workflows/{target} (exact, no owner/repo@ref form, no URL)')
     need(job.get('secrets') == 'inherit', f'{jn}.secrets is {job.get("secrets")!r}, expected inherit (the builders read their own vault keys through the caller)')
-    need(not job.get('with'), f'{jn} carries with: inputs — C15 declares no inputs; everything resolves from the caller context')
+    need(not job.get('with'), f'{jn} carries with: inputs — C15/C04 declare no inputs; everything resolves from the caller context (the called workflow needs none — its detection reads the event payload + the shared marker)')
     need(job.get('runs-on') in LABELS, f'{jn}.runs-on is {job.get("runs-on")!r}, not a lab label')
 PY
 then
   fail "t14: see the t14 detail above"
 fi
-ok "t14: build-containers/build-charts are called jobs with exact same-repo uses: paths onto the two .forgejo/workflows files, secrets: inherit, no with: inputs, lab labels (C15 §B, AC4)"
+ok "t14: build-containers/build-charts/push-coder-templates are called jobs with exact same-repo uses: paths onto the three .forgejo/workflows files, secrets: inherit, no with: inputs, lab labels (C15 §B + C04 OQ10 fan member, AC4)"
 
-# --- t15: the AGGREGATE advance-marker job, byte-pinned (C15 §B/§D) --------------
-# Single writer gated on BOTH builders (needs = implicit success gate = the
-# aggregate rule, D54), target = build-charts's bump_sha else the event sha
-# (bump-commit endpoint law, D53), plain push + C14's ancestor tolerance,
-# fetch-depth 0, no PAT/force.
+# --- t15: the AGGREGATE advance-marker job, byte-pinned (C15 §B/§D + C04) -----
+# Single writer gated on the THREE builders (needs = implicit success gate =
+# the aggregate rule, D54 — the OQ10 ruling adds push-coder-templates: a red
+# coder leg holds the shared marker, the next fan re-covers all three
+# domains), target = build-charts's bump_sha else the event sha (bump-commit
+# endpoint law, D53), plain push + C14's ancestor tolerance, fetch-depth 0,
+# no PAT/force.
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
@@ -633,8 +645,8 @@ def need(cond, msg):
 need(isinstance(adv, dict), 'no advance-marker job — the aggregate writer is C15 §B (authored-red until it lands)')
 needs = adv.get('needs')
 needs = [needs] if isinstance(needs, str) else (needs or [])
-need(set(needs) == {'build-containers', 'build-charts'},
-     f'advance-marker.needs is {needs!r}, expected exactly the two called builders — one red builder skips the advance, the marker stays put, the next fire re-covers (D54 aggregate rule)')
+need(set(needs) == {'build-containers', 'build-charts', 'push-coder-templates'},
+     f'advance-marker.needs is {needs!r}, expected exactly the three called builders — one red builder skips the advance, the marker stays put, the next fire re-covers (D54 aggregate rule; the OQ10 fan member joins the gate: a red coder leg holds the shared marker)')
 need(not any(t in str(adv.get('if') or '') for t in ('always(', 'failure(', 'cancelled(', 'success(')),
      f'advance-marker.if is {adv.get("if")!r} wearing a result function — the plain needs-gate IS the green-fire rule; decoration reintroduces the per-builder poison (D54/D59)')
 checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and str(s.get('uses', '')).startswith('actions/checkout@')]
@@ -662,7 +674,7 @@ PY
 then
   fail "t15: see the t15 detail above"
 fi
-ok "t15: advance-marker needs both builders, no result function, full-depth checkout, the bump_sha-or-GITHUB_SHA target chain, plain push of the \$TARGET endpoint onto ci/last-built with the ancestor tolerance body, no force, no secret (C15 §B, AC4/AC5; executed next)"
+ok "t15: advance-marker needs all three builders, no result function, full-depth checkout, the bump_sha-or-GITHUB_SHA target chain, plain push of the \$TARGET endpoint onto ci/last-built with the ancestor tolerance body, no force, no secret (C15 §B + C04 OQ10, AC4/AC5; executed next)"
 
 # --- t16: EXECUTED aggregate-advance battery on a scratch bare remote ------------
 # The advance-exec half of the old containers t17 migrates here (C15 §D):
@@ -777,11 +789,16 @@ leg_t16 || fail "t16: see the t16 detail above"
 # --- t17: the D59 fan-out truth table, executed over the parsed graph -----------
 # Structural simulation of the Actions needs semantics (no live Actions):
 # every listed need must SUCCEED for the dependent job to run, UNLESS the
-# job's own if: carries a result function (the banned shape). Both-green =>
-# RUNS; either builder red => SKIPPED; both red => SKIPPED; push-gh failed
-# => SKIPPED (the cf-139 gate subsumed, unchanged in effect). push-gh and
-# push-dev carry NO needs: unconditional siblings — the gate is ONLY the
-# fan-out step (owner verbatim: it should sync to github and dev).
+# job's own if: carries a result function (the banned shape). Per-row
+# expectations are EXPLICIT (the C04 re-pin — the asymmetries are the point):
+# all-green RUNS both; containers-red / charts-red / both-red skip BOTH;
+# coder-red skips the aggregate but NOT sync-fanout (our job is NOT in its
+# needs — the fleet release does not hold over the external-service
+# publish); pushgh-failed skips sync-fanout (the cf-139 gate subsumed) but
+# NOT the aggregate (push-gh is not a builder — the marker advance does not
+# hold over a GitHub push failure). push-gh and push-dev carry NO needs:
+# unconditional siblings in every row — the gate is ONLY the fan-out step
+# (owner verbatim: it should sync to github and dev).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -795,7 +812,7 @@ def need(cond, msg):
         sys.exit(1)
 
 
-for name in ('sync-fanout', 'advance-marker', 'push-gh', 'push-dev'):
+for name in ('sync-fanout', 'advance-marker', 'push-gh', 'push-dev', 'push-coder-templates'):
     need(name in jobs, f't17 needs the {name} job parsed (t3/t15 own their shapes; the simulation needs them present)')
 
 FUNCS = ('always(', 'failure(', 'cancelled(', 'success(')
@@ -816,22 +833,26 @@ def simulates(job_name, states, role='prod'):
     return 'runs'
 
 
-BOTH = {'push-gh': 'success', 'build-containers': 'success', 'build-charts': 'success'}
+ALL = {'push-gh': 'success', 'build-containers': 'success', 'build-charts': 'success', 'push-coder-templates': 'success'}
+# (label, states, sync-fanout expect, aggregate expect) — the explicit
+# per-row table (C04 re-pin): the coder row and the pushgh row carry
+# DIFFERENT fan/aggregate expectations, which is the whole point of the
+# OQ10 gate split.
 CASES = [
-    ('both-green', BOTH, 'runs'),
-    ('containers-red', dict(BOTH, **{'build-containers': 'failure'}), 'skipped'),
-    ('charts-red', dict(BOTH, **{'build-charts': 'failure'}), 'skipped'),
-    ('both-red', dict(BOTH, **{'build-containers': 'failure', 'build-charts': 'failure'}), 'skipped'),
-    ('pushgh-failed', dict(BOTH, **{'push-gh': 'failure'}), 'skipped'),
+    ('all-green', ALL, 'runs', 'runs'),
+    ('containers-red', dict(ALL, **{'build-containers': 'failure'}), 'skipped', 'skipped'),
+    ('charts-red', dict(ALL, **{'build-charts': 'failure'}), 'skipped', 'skipped'),
+    ('coder-red', dict(ALL, **{'push-coder-templates': 'failure'}), 'runs', 'skipped'),
+    ('both-red', dict(ALL, **{'build-containers': 'failure', 'build-charts': 'failure'}), 'skipped', 'skipped'),
+    ('pushgh-failed', dict(ALL, **{'push-gh': 'failure'}), 'skipped', 'runs'),
 ]
-for label, states, expect in CASES:
-    got = simulates('sync-fanout', states)
-    need(got == expect,
-         f'the truth table says sync-fanout {got} for {label}, expected {expect} (D59: builder-red BLOCKS the fan-out — the exact inversion of the superseded always()-tolerant shape; an if: that re-grew a result function flips these rows red)')
-    adv_expect = 'runs' if states.get('build-containers') == 'success' and states.get('build-charts') == 'success' else 'skipped'
+for label, states, fan_expect, adv_expect in CASES:
+    fan_got = simulates('sync-fanout', states)
+    need(fan_got == fan_expect,
+         f'the truth table says sync-fanout {fan_got} for {label}, expected {fan_expect} (D59: builder-red BLOCKS the fan-out; C04: coder-red does NOT — the fleet release does not hold over the external-service publish; an if: that re-grew a result function or a needs entry flips these rows red)')
     adv_got = simulates('advance-marker', states)
     need(adv_got == adv_expect,
-         f'the aggregate advance reads {adv_got} for {label}, expected {adv_expect} (needs both builders green; marker-red-unmoved is the re-cover law)')
+         f'the aggregate advance reads {adv_got} for {label}, expected {adv_expect} (needs the three builders green; a red coder leg holds the shared marker, the next fan re-covers; pushgh-failed does NOT hold the marker — the GitHub push is not a builder; marker-red-unmoved is the re-cover law)')
     # Unconditional siblings run through every builder outcome.
     for mirror in ('push-gh', 'push-dev'):
         need(simulates(mirror, states) == 'runs',
@@ -840,7 +861,7 @@ PY
 then
   fail "t17: see the t17 detail above"
 fi
-ok "t17: executed needs-graph truth table over the parsed file — both-green RUNS, containers-red/charts-red/both-red/pushgh-failed all SKIPPED for sync-fanout AND the aggregate advance follows the same table, push-gh/push-dev unconditional siblings in every row (D59 hard gate, structural simulation, C15 §D)"
+ok "t17: executed needs-graph truth table over the parsed file — all-green RUNS both, containers-red/charts-red/both-red skip both, coder-red skips the aggregate but NOT sync-fanout (our job is not in its needs), pushgh-failed skips sync-fanout but NOT the aggregate, push-gh/push-dev unconditional siblings in every row (D59 hard gate + C04 OQ10 gate split, structural simulation)"
 
 # --- t18: comment line-anchor liveness (scout §C anti-pattern killer) ------------
 # Stale build-charts.yaml:NN cites in comments go silently red-free — the

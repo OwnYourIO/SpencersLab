@@ -72,6 +72,27 @@ decisions carried into the plan's Open questions (OQ1–OQ9) for the batched rou
   2026-11-25-coder-template-push.md` with UA1–UA5 owner legs, the postures stated as
   answers, and `tests/notes/coder-template-push-runbook.sh` pinning them.
 
+## 2026-11-26 (coord decision — C04 review nit)
+
+- Review C04 minor finding: main-sync.yaml sync-fanout header reword is a 4th change site
+  beyond the sanctioned 3. COORD ACCEPTS: post-C03 there are three called builders, the
+  old 'both called builders (C15)' would misinform; the new text carries the ruled
+  coupling (coder-red skips advance-marker, deliberately NOT sync-fanout) and no suite
+  pins the old wording. Recorded so the cross-ticket edit's full diff is legible.
+
+## 2026-11-26 (coord ruling — ci-surface t4 pre-existing red)
+
+- tests/services/forgejo-ci-surface.sh t4 is RED since the r5 merge itself (seaweedfs spec
+  leg, byte-identical between branch and main @ 5f5762a19; confirmed by agent-test's heal
+  wave). Suite fail-fasts, so full-suite runs die at t4 before t8.
+- RULING: DEFER — fixing t4 would violate the OQ14 ruling (t2–t7 byte-identical) and pull
+  an unrelated upstream leg into C04. C04 gates use per-leg probe runs (t1 + t8 + the six
+  touched legs); the t8 expectation after dev's 20-line re-fence stands as the gate.
+  A follow-up card is proposed to the owner at the friction round (step 11).
+- Technique noted from test wave: per-leg state read via &-free sed no-op probe variants;
+  an &-bearing replacement corrupts fail calls (produced one false-green in the wave —
+  caught, re-run clean).
+
 ## 2026-11-26 (batched round 2 — owner rulings, r5 shapes)
 
 - **OQ10 RULED FAN MEMBER — overrides the plan's standalone best-guess**: the coder-template

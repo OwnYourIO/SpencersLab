@@ -135,10 +135,31 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
-      "depends_on": ["C02", "C03"]
-    }
+      "depends_on": ["C02", "C03"],
+      "dev_rounds": 1,
+      "dev_session": "ses_de66fc190ffemroClamM1fpYJA",
+      "review_rounds": 1,
+      "review_sessions": ["ses_de6523ffdffeqGuRZQcbUWA0mw"],
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "from": "dev C04",
+          "at": "2026-11-26T18:52:00+00:00",
+          "status": "DONE",
+          "files_changed": [".forgejo/workflows/coder-template-push.yaml", ".forgejo/workflows/main-sync.yaml", "scripts/coder-template-detect.sh", ".agents/notes/2026-11-25-coder-template-push.md"],
+          "summary": "Fan-member conversion: own push arm + advance job retired, on {dispatch, call}, call-side-only resolver on shared ci/last-built, step-owned warning law; main-sync sanctioned set (fan entry + aggregate needs + wording; sync-fanout untouched); detect r5-verbatim minus PR arm; runbook fan story + UA5 + loud dev-dispatch leg. Gates: detect 13 ok, w 9 ok, p 7 ok, runner 9 ok, runbook 8 ok, main-sync 18 ok, build-containers 50 ok; ci-surface probes t1/t2/t8 green, t4 red recorded (deferred). Self-fixes: die() stderr, r7 line-pairing.",
+          "friction_note": "transient shell deny into /tmp/opencode, worked around in-tree; t4 attribution recorded pre-existing"
+        },
+        {
+          "from": "review C04",
+          "at": "2026-11-26T19:10:00+00:00",
+          "status": "APPROVED",
+          "summary": "Round 1 fresh: seven suites re-run at expected counts (13/9/7/9/8/18/50), ci-surface per-leg probes with t4 deferred honored, YAML + bash -n green, aislop honest scopes. Contract verified beyond teeth: called-run vs build-containers r5, exactly-sanctioned main-sync set + needs graph literally correct (coder-red skips advance-marker, sync-fanout RUNS), vault unchanged, zero literals incl comments, no suite weakened. One minor finding (4th sync-fanout header wording site) coord-ACCEPTED (DECISIONS). AC1-AC12 green. Notes in chunks/C04.md."
+        }
+      ]
+    },
   },
   "blocked": [],
   "deferred": []
