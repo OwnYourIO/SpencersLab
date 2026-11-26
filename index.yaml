@@ -208,6 +208,18 @@ entries:
   actualbudget:
   - apiVersion: v2
     appVersion: 26.7.0
+    created: "2026-11-26T17:16:54.94617616Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 21052e5fbbf5b9d4077dafdc1f80bf5f51f61ebbbe59f575ae9fd9229268b036
+    name: actualbudget
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/actualbudget-2026.11.1/actualbudget-2026.11.1.tgz
+    version: 2026.11.1
+  - apiVersion: v2
+    appVersion: 26.7.0
     created: "2026-10-25T17:03:31.066839802Z"
     dependencies:
     - name: app-template
@@ -1046,6 +1058,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/argocd-1.0.23/argocd-1.0.23.tgz
     version: 1.0.23
+  audio-ad-detection:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-11-26T17:16:55.641985607Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Headless snapcast-stream ad detector (SoundFingerprinting worker,
+      MQTT event publisher)
+    digest: d02cf829b738d34b2101241e377b878f08f30c3a0a154521b2b66010cebb3254
+    name: audio-ad-detection
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/audio-ad-detection-2026.11.1/audio-ad-detection-2026.11.1.tgz
+    version: 2026.11.1
   audiobookrequest:
   - apiVersion: v2
     appVersion: 1.10.7
@@ -2191,6 +2218,25 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/backups-appset-1.1.1/backups-appset-1.1.1.tgz
     version: 1.1.1
   base:
+  - apiVersion: v2
+    appVersion: 1.0.31
+    created: "2026-11-26T17:16:56.509914486Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 10.20.0
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.21.3
+    - condition: gateway-api-crds.enabled
+      name: gateway-api-crds
+      repository: https://charts.christianhuth.de
+      version: 1.2.5
+    digest: 76f5956d6c358e138dfe98378e8990a83d4c2c0f62e1bef615c94d29de2f76ac
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-2026.11.1/base-2026.11.1.tgz
+    version: 2026.11.1
   - apiVersion: v2
     appVersion: 1.0.31
     created: "2026-10-25T18:01:42.043056414Z"
@@ -20290,4 +20336,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-11-26T16:51:09.133002541Z"
+generated: "2026-11-26T17:17:14.855210223Z"
