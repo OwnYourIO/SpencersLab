@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-133-feat-audio-ad-detection",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": null,
   "coord_session_reason": "session-rename-skipped (card Lifecycle omits Session Rename)",
   "test_session": "ses_df42f3707ffeA5DxxYBbpLaJ0x",
@@ -69,8 +69,8 @@
     "Test Writing": "done (agent-test ses_df42f3707ffeA5DxxYBbpLaJ0x; tests/containers/audio-ad-detection.sh t1-t31, red-for-absence baseline verified + green-path arms proven)",
     "Chunk Development": "done (C01 1+1, C02a 1+1, C02b 3+3, C03 2+2, C04 1+1, C05 1+1 — all APPROVED; suite 31/31 exit 0 at close)",
     "Chunk Review": "done (9 review sessions total; 3+3 cap reached once on C02b, closed clean; zero validation_at_fault; one mechanical test repair routed to test session: t20 5-arm rework)",
-    "Final Review": "RE-OPENED (owner review finding 2026-11-26: chart idiom deviation — hybrid common/loader shape rejected; C04 'test-forced' acceptance superseded by owner ruling; re-exploration done ses_dea2897f5ffeYgFlJhnzZ16x42, taxonomy in EXPLORE.md +601 lines) — rework replan running in agent-plan ses_df53733c0ffeI2Xp20eSuvRtKr (C06 chart+arms, C07 skill codification)",
-    "Rework R1": "executing (owner APPROVED 2026-11-26 ~04:40Z: both sibling-idiom picks confirmed — drop double-copy pod-only D-8 + hand-written PVC; fix-commit landing chosen; step 1 = t27/t28 arm fixes routed to test_session ses_df42f3707ffeA5DxxYBbpLaJ0x (session_move to worktree first); C06 dev gated on arms reading red-on-hybrid + green-on-idiom-scratch; then fresh reviews, C07 skill codification, final-review re-close)"
+    "Final Review": "RE-CLOSED APPROVED 2026-11-26 (ses_de9a6d2d9ffeq202uEPx1C5YYz, planning tier): 31/31 fresh, both arms, real-release-name render, zero worker-contract regression, pinned-skill zero-diff across both commits, all nine owner rulings stand, L1-L7 confirmed valid; plan_status complete; hand-off pending owner word",
+    "Rework R1": "done (C06 1+1 + C07 2+1 incl reviewer-minor micro-fix; fix-commit 447207614; FRICTION backfilled at re-close; carried: C05 runbook stale-list minor, skill :68-71 pre-existing notes, /tmp scratch NIT, original deferred roll)"
   },
   "stage_handoffs": [
     {
