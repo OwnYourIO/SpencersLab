@@ -1078,3 +1078,97 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
     next surface: the round-5 TEST WAVE (C13 t27–t29, C14 t30–t33 +
     containers ref fold, C15 renamed-suite + main-sync t14–t17 vs the
     D59 graph, C16 replica/capacity/default legs), then dev waves 1→4.
+  - 2026-11-26 plan D61 (round-6 replan — the owner requirement + the
+    supersession ledger; RESEARCH.md '## Round-6 research' :1420-1818 and
+    EXPLORE '## Round-6 diagnosis' :1293-1369 are the evidence set):
+    (1) REQUIREMENT, verbatim: "a single token from Forgejo that gets used in
+    the 10 runners" (STATE round6.owner_resolution_r6). INTERPRETATION RULING
+    (ii): one reusable instance-scope REGISTRATION token, each of the 10 pods
+    self-registers at first boot and holds its own runner record — ten admin
+    rows, one Secret. Reading (i) (keep C16's shared (uuid, token)) is
+    REJECTED as the zero-delta reading: it is already shipped, and it can
+    never show more than one row — `ActionRunner.UUID` is `CHAR(36) UNIQUE`
+    [S2], no session/multiplexing concept exists [S4].
+    (2) SUPERSESSION: D60(2)'s "N releases" pick is OVERRIDDEN by the owner's
+    newer words (N records + N Bitwarden identities ≠ single token). D57
+    STANDS on its throughput dimensions — capacity stays 1 per pod, chart
+    default stays 1, per-slice replicas 10 — while its "10 pods poll ONE
+    registration" identity text is replaced by D61's law. D57's B1-amendment
+    history stays (the diagnosis §B independently re-verified: the only
+    per-row server gate is inside `if runner.Ephemeral` — PickTask,
+    source-verified — so per-record identity costs nothing in throughput).
+    (3) FACT CORRECTION the requirement hinges on: today's ESO Secret does NOT
+    hold a registration token — it holds a REGISTERED runner's (uuid, token)
+    pair (values.yaml:92-94 says "not the deprecated registration-token
+    exchange"). C17 changes the item's CONTENT (password := the owner-minted
+    registration token) and the ESO shape (single fetched key, no template).
+  - 2026-11-26 plan D62 (round-6 — design ruling A′ + rejected alternatives;
+    the brief's options (A)/(B)/(C) evaluated):
+    ADOPTED = (A) register-on-boot WITH per-ordinal PVC persistence ("A′"):
+    the init container guards on `/data/config/config.yaml` (the ordinal's OWN
+    `data` VCT — StatefulSet PVC retention makes identity stable across
+    restart, reloader Secret-change restarts, and scale-down→up cycles: re-
+    attach, not re-registration), POSTs the registration (name = downward-API
+    pod name per the official k8s example [S11]; labels = the identical baked
+    5-set so jobs route uniformly; `ephemeral: false` REQUIRED — daemon mode
+    refuses ephemeral records [S9 daemon.go]), parses `{id, uuid, token}`
+    [S14/S3], renders the chart's ConfigMap skeleton to the PVC (token at
+    `token_url: file:/data/config/token`, `$CREDENTIALS_DIRECTORY` + the
+    subPath Secret mount retire). Rejected, each with its reason: (a′) naive
+    emptyDir variant — uuid churn EVERY restart + stale-row pile-up the
+    upstream on-demand example itself warns about [S9], and it still re-
+    registers on every reloader-triggered restart; (B) chart-side Job-per-
+    ordinal + Secret-per-ordinal — the Job must write Secrets outside ESO
+    (breaks the repo's ExternalSecret+Bitwarden hard rule) or push N identities
+    into the vault (drifts from "single token" anyway); (C) 2-3 releases
+    sharing the token — 2-3 tokens AND 2-3 rows: fails the requirement's
+    letter (single) and its point (ten visible); it is D57-shape at N=3,
+    already lived through; (D60(2)) N releases — superseded per D61(2); (E)
+    offline `--secret` registration — uuid is DERIVED from the secret's first
+    16 chars [S7,S13], so one secret = one runner is arithmetically forced:
+    "single token" impossible; rotation-friendly idempotence stays relevant
+    only to the autoscaling card. Also REJECTED and recorded as a coord-record
+    correction: the interim STATE line "per-ordinal label injection" on ONE
+    registration — Declare overwrites `agent_labels` on every authenticated
+    call, so divergent per-replica labels thrash the row and mis-route jobs
+    (RESEARCH Q1 [S4]); per-row identity is the only sound visibility path on
+    15.0.10. Belt folded from the diagnosis: `podManagementPolicy: Parallel`
+    (a pending ordinal must not freeze the ones behind it — the exact class
+    that held gpu at 3/10); values-schema :97 proves the key on 5.0.1.
+  - 2026-11-26 plan D63 (round-6 — lifecycle posture, evidence gates, scope):
+    (1) STALE-ROW LAW: v13 has NO client-side deregistration [S9 grep,
+    RESEARCH Q4]; `cron.cleanup_offline_runners` stays OFF (its default
+    [S13 config-cheat-sheet]) — enabling it can delete rows under live PVCs,
+    crash-looping the ordinal until `/data/config/config.yaml` is cleared; the
+    runbook comment lands in the values header. Scale-down leaves offline
+    rows; scale-back re-attaches (STS PVC retention). Mid-job pod death =
+    failed job at the 10-min zombie sweep — unchanged class [S8].
+    (2) GATES: G1 admin-scope route + auth + reuse + expiry from v15.0.10 raw
+    at 17e1001d (halt-and-report on contradiction; the named fallbacks
+    admin-token-as-the-token / org-repo-scope / revert-to-N-releases /
+    N-secret-offline are OWNER forks — veto slots in the plan); G2 init-image
+    HTTP tooling from the 13.2.0 layer tar-listing (runner image preferred,
+    then the lab job image, then the deprecated register CLI ONLY as a
+    recorded deviation — RESEARCH's stance "deprecated, not broken — do not
+    adopt" holds as preference, not law, once identity must be minted at
+    boot); G3 v13 config schema (token vs token_url) from [S9]. Registration-
+    token TTL is NOT in the evidence set (Gitea-era 24h folklore rejected by
+    class analogy to the dead `-1` capacity myth [S10]); G1 settles it; the
+    design bounds the exposure to cold boots.
+    (3) SCOPE: no new services (trio law n/a — chart exists, client-only, no
+    proxy); custom-values keep their UUIDs (item-reuse ruling, content changes
+    owner-side = UA-R6-3); autoscaling stays card `iaJq5bgWHHDHotcBY`'s
+    (ephemeral one-job + queue API is RESEARCH's reserved D — reference, never
+    recreate); host releases have none wired (verified: zero `backend: host`
+    in services/custom-values) but inherit the backend-agnostic mechanism by
+    design; the values.yaml:67 "do not work"→"deprecated" reword folds here
+    (next-touch law, RESEARCH Contradictions §). `runner-token` stays the
+    bitwardenIds KEY name (blast-radius discipline; comments re-truth).
+    plan_status -> needs-approval (round-6 delta complete on the existing plan
+    of record — C17 alone; STATE.json flips are coord-side per the D58/D59
+    law, this planner touched nothing there). Branch anchor: rebased onto
+    origin/main 0ce0d4d8f (the three unmerged round-6 record commits replayed
+    clean — ticket folder verified byte-identical on both sides pre-rebase;
+    charts/forgejo-runner now shows main's first-fan 2026.11.1). Models per
+    D35 (openrouter flash); next surface: the round-6 TEST WAVE (dev/gpu
+    suite re-aims, green-in-red-first), then C17 dev.
