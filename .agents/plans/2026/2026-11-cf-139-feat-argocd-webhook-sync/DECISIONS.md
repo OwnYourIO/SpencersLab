@@ -522,3 +522,21 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   session, behavior + main-sync re-pins, before wave 10). C05/C06/C08 stay done history
   with reopen3 supersession notes; C07's disposals unaffected; disposal.sh untouched.
   plan_status stays APPROVED — the ruling is complete, no batched round needed.
+
+## Reopen4 research outcome 2026-11-26 (RESEARCH round 3; NOT yet a ruling — owner
+## decision pending on the probe-gated adoption)
+- 2026-11-26 coord: the reopen3 static-enumeration premise ("Forgejo cannot index
+  secrets dynamically" [21][25], micro-call (2) consequence) is SOURCE-REFUTED — the
+  Forgejo server hands every task the complete merged org+repo SECRETS and VARS maps
+  with no reference scanning; the act-lineage evaluator keeps the secrets context
+  first-class with ungated toJSON + working [ ] indexing; production precedent
+  (mitosis) runs the dynamic-discovery pattern and locates the real security lever at
+  .forgejo/workflows/** branch protection, not the reference syntax. Recommended
+  shape: 22 rows to toJSON blobs + inline filter step writing $RUNNER_TEMP/pairs.json
+  (about 0 widening delta under no-branches/no-environments), script gains
+  ARGOCD_PAIRS_FILE with the env scan kept default. PROBE-GATED: dispatch legs A-E on
+  prod 17.3.x / runner-13.2 decide; fallback = keep d81831446 static with a one-line
+  record. Queued from this round: the header precedence sentence's vars-half is wrong
+  per GetVariablesOfRun (repo wins; moot under the no-repo-twin rule - wording fix
+  rides the next workflow pass); org-key typo envelope re-verification rides any C13
+  plan round (micro-calls (c)/(i-adj-1) lanes).

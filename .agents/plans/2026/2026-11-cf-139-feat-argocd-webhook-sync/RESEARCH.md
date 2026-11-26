@@ -534,3 +534,412 @@ readonly MCP + workspace shell, no admin used); **[R]**: `.forgejo/workflows/mai
 `custom-values/proxy-local/prod-values.yaml`, `scripts/forgejo-container-detect.sh`,
 `tests/services/forgejo-main-sync.sh` (t1–t13), `tests/services/argocd-hook-wiring.sh`
 (header), runbook + ticket-folder docs, STATE.json reopen2.
+
+---
+
+# RESEARCH round 3 — dynamic discovery research (reopen4, 2026-11-26)
+
+Appended 2026-11-26 per STATE `reopen4` (owner direction: "the 11 shouldn't be
+hardcoded into the job. Instead, they should be detected dynamically and passed
+in"). Question under test: is reopen3's premise — DECISIONS 2026-11-25 R7 /
+micro-call (d), citing [21][25]: "`${{ secrets[matrix] }}` unsupported, Forgejo
+cannot index secrets dynamically" — an ENGINE limitation, or only a limitation of
+the `${{ secrets.NAME }}` reference syntax? Citations `[n]` ≥ 40 resolve in the
+Sources block at the bottom; `[R3]` = repo reads this round. Every finding is
+tagged **[docs]**, **[source]**, **[community]**, or **[unverified→probe]**.
+
+## TLDR (verdicts)
+
+1. **PREMISE REFUTED at the engine level [source].** The Forgejo server builds
+   EVERY task with the COMPLETE merged secrets map — `getSecretsOfJob` →
+   `FetchActionSecrets(ownerID, repoID)` fetches ALL owner(org) + repo secrets
+   (no reference scan), decrypts, adds the three token aliases, and ships the
+   whole map in `runnerv1.Task{Secrets: …}` alongside `Vars` [43][44][46]. The
+   act-derived evaluator keeps `secrets` as a first-class context object and
+   `toJSON` is an unconditional function [40][41][49][50].
+2. **toJSON(secrets): supported** — docs list `toJSON(value)` with no key
+   restriction and the reference page's own debug recipe serializes a whole
+   context in a `run:` body showing `"token": "***"` — a masked value INSIDE a
+   serialized blob [40][41]; the live Forgejo-platform docs at frem.sh state
+   `toJSON(secrets)` and computed names `secrets[format('{0}_KEY', 'DEPLOY')]`
+   work and reference EVERY secret [54]; the open-platform/mitosis issue #2
+   record shows a shipped+validated production Forgejo workflow doing exactly
+   the dynamic-name-discovery pattern via `${{ toJSON(secrets) }}` [55].
+   Prod-instance behavior = probe leg A (17.3.x + runner 13.2.0 [R3][53]).
+3. **Org merge: supported [source].** `secrets` = owner(org)+repo merged, repo
+   inserted last ⇒ repo wins; `vars` = global+owner+repo merged with the same
+   repo-wins order per the code comment — the v17.0 basic-concepts precedence
+   sentence (owner-over-repo) is WRONG vs current source [41][45]; either way
+   the 22 org keys appear in the job's contexts. No user-tier third lookup for
+   org-owned repos — "repo→org→user" in the workflow header is loose; the
+   second tier IS the repo owner (org or user) [43][44].
+4. **Mask-survives serialization: yes [docs+source lineage].** The masker
+   registers each delivered secret VALUE as its own masked string (multi-line
+   values split per-line, longest-first, whole-blob matching) [26][39][56] —
+   registration is global to the task's secret map, NOT per-env-key, so 22
+   values inside one JSON env var each print as `***`; the docs' own
+   `toJSON(forgejo)` sample output proves the shape [40]. Edge to probe (leg B):
+   JSON-escaped values — a secret containing `"`/`\` serializes altered and
+   would NOT exact-match; none of our JWT/URL/alnum values contain such chars
+   [30][31][R3], and a masked echo of the BLOB NAME KEYS is inventory-visible
+   (names are not masked) — acceptable, never echo the raw blob by design.
+5. **Security widening delta ≈ 0 [source].** Forgejo IGNORES `permissions:`
+   and has no environments [42][57]; EVERY job of EVERY workflow in the repo
+   already receives ALL repo+owner secrets ([source] — no reference filtering,
+   unlike GitHub which lazily unseals only referenced ones and counts
+   `toJSON(secrets)` as a whole-context reference [52]). A merged malicious
+   `.forgejo/workflows/` change can exfiltrate everything today; the static
+   22-row map protects nothing against that attacker. The inline-filter
+   mitigation keeps the CHECKOUT-RUN process's env identical in CONTENT to
+   today (11 URLs + 11 tokens, via `$RUNNER_TEMP/pairs.json` instead of env)
+   while the blob itself lives only in step-1's env — an honest restatement:
+   both files are merged-and-reviewed bytes, so the real boundary is PR review;
+   the production-validated hardening lever is branch-protecting
+   `.forgejo/workflows/**` (mitosis #16 did exactly this after red-teaming a
+   `toJSON(secrets)`-exfil workflow) [55].
+6. **Recommended shape (pending live probes A–E):** option (1) — job-level
+   `toJSON(vars)` + `toJSON(secrets)` into ONE hidden filter step that emits
+   the ARGOCD_SYNC_* pairs to `$RUNNER_TEMP/pairs.json`; the fan-out script
+   learns a file path (its env then carries FEWER names than today), the 22
+   env rows collapse to 2 blob refs + 1 file arg, org keys stay per-key vault
+   entries, micro-call (d) lockstep dies (cluster add/remove = org keys only).
+   Stay-static remains the zero-risk fallback if any probe fails.
+
+## Agenda 1 — expression engine: toJSON support, runner/act lineage
+
+- **Versions in play [R3][source]:** infra prod runs Forgejo 17.3.x
+  (EXPLORE.md:172, `charts/forgejo/Chart.yaml` dep 17.3.1). The server imports
+  `code.forgejo.org/forgejo/runner/v13/act/jobparser` — the ACT FORK LIVES
+  INSIDE the runner repo (`act/` subtree of forgejo/runner v13) [43][46].
+  Deployed runner: `tag: 13.2.0` (`charts/forgejo-runner/values.yaml:255-260`);
+  job labels 149-153 map `ubuntu-24.04` →
+  `git.spencerslab.com/curatedforest/forgejo-runner:26.11.1`, itself a
+  digest-pinned derivative of `ghcr.io/catthehacker/ubuntu:act-24.04` with
+  node + python3 + helm/cr baked (`containers/forgejo-runner/Dockerfile:49-52`,
+  README 1-26). So: expression engine = forgejo/runner v13's bundled act fork
+  (nektos/act lineage), evaluating step-level `${{ }}` RUNNER-side [41].
+- **toJSON [docs+source]:** the v17 docs list `toJSON(value)` and
+  `fromJSON(value)` among the general expression functions (plus a Forgejo-only
+  `case()`), with the `[ ]` INDEX operator and `.` deref both first-class [41].
+  Lineage source: `evaluateFuncCall` dispatches `tojson` unconditionally to
+  `json.MarshalIndent` over the evaluated argument — no secret filtering, no
+  per-key gating (only `success()/failure()/cancelled()` are context-gated)
+  [49][50]. `secrets` is an explicit top-level context variable returning
+  `env.Secrets` (the whole map) [49]. The docs' availability table lists
+  `secrets` accessible in `jobs.<id>.env` AND `steps[*].env`/`run` [40]; the
+  table's "Accessible functions: hashFiles" column is underinclusive (the same
+  page uses `toJSON(forgejo)` inside a run body) — read it as "extra gated
+  functions", not "ONLY these" [40] — **[docs, ambiguity noted → probe A]**.
+- **GitHub precedent & divergence [community]:** GitHub's own docs pattern is
+  `env: GITHUB_CONTEXT: ${{ toJSON(github) }}` [via 134460 community];
+  actions/runner discussion #2445 settled (2023) that GitHub unseals only
+  REFERENCED secrets — and that referencing `${{ toJSON(secrets) }}` counts as
+  referencing ALL: "then all available secrets are sent to the runner", with
+  the published leak step `env: ALL_MY_SECRETS: ${{ toJSON(secrets) }}` +
+  `echo "$ALL_MY_SECRETS"`, masked but readable structure [52]. **Divergence:
+  Forgejo has NO lazy path — the server ships the full map at task-pick time
+  regardless of any reference** [43][46]. Consequences: (a) `toJSON(secrets)`
+  on Forgejo cannot "accidentally" return `{}` the way a mis-scoped GitHub
+  reference might; (b) dynamic `secrets[computed]` is purely an evaluator
+  question, and `evaluateIndexAccess` handles string-indexed map lookups
+  (case-insensitive) — lineage-verified [49]; frem.sh documents it working on
+  their Forgejo platform [54].
+- **v13 runner breaking changes that matter [docs]:** expression evaluation
+  FAILURES now fail jobs ("fail jobs, steps if expression interpolation fails"
+  [#1646]) — a typo'd function or bad `format()` arg is RED, not a warning
+  [53]; `::set-output::`/`::set-env::`/`::add-path::` commands REMOVED →
+  `$FORGEJO_OUTPUT`/`$FORGEJO_ENV`/`$FORGEJO_PATH` files [53] (the C10 run
+  bodies already use none of the removed commands [R3]); the implicit
+  DOCKER_USERNAME/DOCKER_PASSWORD registry-auth was removed — its existence
+  until v13 is ANOTHER proof the runner process always held the full secret
+  map [53]. `::add-mask::` survives across the family [39].
+
+## Agenda 2 — context completeness: org + repo merge into BOTH contexts
+
+- **secrets [source]:** `FetchActionSecrets(ctx, ownerID, repoID)` finds
+  owner-scoped rows (OwnerID set, RepoID 0 — org OR user), then repo-scoped
+  rows, and inserts them into one map with `append(ownerSecrets, repoSecrets…)`
+  ⇒ repo entries OVERWRITE same-name owner entries [44]. `getSecretsOfJob`
+  calls it unconditionally for non-fork, non-workflow-call jobs, then
+  `getSecretsOfTask` adds `GITHUB_TOKEN`/`GITEA_TOKEN`/`FORGEJO_TOKEN` =
+  task token [43]; `PickTask` puts the map into `runnerv1.Task{Secrets:…}` +
+  the `Context` JSON + raw `WorkflowPayload` + `Vars` — everything a job needs
+  delivered in one fetch [46]. So the org-level placement ruled in reopen3 IS
+  visible in the context (verified: `TestGetSecretsOfJob` fixtures mix a
+  owner-scope and a repo-scope secret into one expected map [43]).
+- **vars [source]:** `GetVariablesOfRun` merges GLOBAL (OwnerID=0,RepoID=0) +
+  owner + repo variables — "Level precedence: Repo > Org / User > Global" per
+  the code comment, insertion order matches [45]. **Docs contradiction [41]:**
+  v17.0 basic-concepts says owner-precedence-over-repo — stale/wrong vs the
+  current source; weigh source. Immaterial to the design either way (runbook
+  §2 forbids repo twins), but the workflow header sentence "resolution is
+  repo→org→user and a repo key WINS" deserves a wording fix for vars, and
+  note: vars additionally merge INSTANCE-GLOBAL rows (secrets cannot exist
+  globally — `InsertEncryptedSecret` rejects ownerID=repoID=0) [44][45].
+- **The 11+11 keys' visibility is therefore guaranteed by delivery, not by
+  reference [source].** No `getSecretsOfJob` reference scan exists in the
+  17-line; the only gates are: fork-PR runs (empty map except aliases),
+  inner workflow-calls (`secrets: inherit` / evaluated selection map)
+  [43][46].
+
+## Agenda 3 — masking of the serialized blob
+
+- Registration model [26] (round-2 deepwiki read of forgejo-runner
+  `internal/pkg/report/mask.go` 14–149): EVERY secret VALUE the task carries
+  becomes a masking string; multi-line values are newline-split and each line
+  registered independently; candidates sorted longest-first; whole-blob
+  cross-row lookahead. Seeding is from the TASK's secret set — job-global, NOT
+  per-env-key — so the reopen2 [26] per-line finding generalizes: 22 delivered
+  values serialize into one env string and still mask individually.
+  Corroboration: docs security page ("the runner redacts secrets from the
+  logs") [22][40-debug-example]; the reference page's own `toJSON(forgejo)`
+  sample prints `"token": "***"` — a masked value inside a serialized JSON
+  blob, doc-verified [40]; Gitea-lineage README states masking covers job
+  logs, local job logs, summaries and container names [56]; frem.sh: "any log
+  output that exactly matches a secret value is replaced" [54].
+- **Edges (honest):** (a) exact-match only — transformed copies leak
+  [27][28]; in the JSON shape, values containing characters that JSON escapes
+  (`"`,`\`, control chars incl. raw newline handling nuances) appear ALTERED
+  and would not match ⇒ an unmasked leak channel for future weird secrets;
+  our current fleet (JWT tokens [30][31], https URLs, hex-ish tokens) is
+  escape-free — probe leg B asserts it on prod. (b) Short/empty values:
+  [28] warns short secrets are poorly protected; blanked org secrets deliver
+  `""` (no-op candidate, and the empty-detection lanes already treat "" ==
+  absent [R3 script]). (c) Masking guards LOGS, not the runner disk:
+  `$RUNNER_TEMP/pairs.json` is plaintext inside the job container (and its
+  docker volume) until job cleanup — same trust zone as today's step env,
+  no new resting place class; chmod 0600 as belt. (d) KEYS inside the blob
+  are NOT masked — echoing it reveals the org/repo secret INVENTORY to anyone
+  who can read the job log (names like PUSH_TOKEN_GH, FORGE_PUSH_TOKEN,
+  FORGEJO_TOKEN…). The design never echoes the blob; the filter step must
+  print names only if at all.
+
+## Agenda 4 — security widening analysis (the crux)
+
+- **What IS accessible at job scope TODAY [source+R3]:** every repo-scoped
+  secret + every OWNER(org)-scoped secret, merged, into every job, delivered
+  by PickTask [43][46]; `permissions:` blocks ignored [42]; no environments
+  feature (upstream discussion #440 open; fremforge built its own scoping
+  layer precisely because native Forgejo secrets "reach every job of the
+  repository") [54][57]. The repo's vault inventory (scope per main-sync
+  header + greps [R3]): `PUSH_TOKEN_GH`, `PUSH_TOKEN_DEV`, `FORGE_PUSH_TOKEN`
+  (repo-side per the header wording and AGENTS.md; owner/API verify leg),
+  org-side: the 11 `ARGOCD_SYNC_*_TOKEN` (+ `ROLE`/`PUSH_URL_*`/
+  `ARGOCD_SYNC_*_URL` as vars); `RENOVATE_*` keys are DEV-instance repo
+  secrets (renovate.yaml guards `contains(vars.ROLE,'dev')`) — different
+  forge, not delivered here [R3].
+- **Attack-surface delta of `X: ${{ toJSON(secrets) }}`:**
+  (a) *Merged-workflow-attacker* class (PR edits `.forgejo/**`): **unchanged —
+  already total.** Today a malicious merged workflow change could add
+  `env: T: ${{ secrets.PUSH_TOKEN_GH }}` + exfil; every secret in the repo's
+  resolution set is referenceable from any workflow in the repo, and
+  `on: push: branches:[main]` fires the attacker's file on the very merge
+  push. (b) *Merged-scripts-only attacker* class (PR edits
+  `scripts/argocd-fanout.py`): today gains step-env = the 11+11 enumerated
+  values; with the recommended shape gains the SAME 11+11 via pairs.json and
+  NOTHING more (step-2's env declares only `ARGOCD_PAIRS_FILE` + refs;
+  step-1's blob env is a different process). With the naive shape (blob
+  straight into the script's env) it would gain all secrets incl.
+  PUSH_TOKEN_GH/DEV + the run-scoped write token aliases — which is exactly
+  why the filter step exists. The mitigation therefore has a real, if narrow,
+  invariant: **the checked-out code's runtime env stays at the 22-value floor
+  while enumeration dies.**
+  (c) *Honesty caveat the brief asked for:* both `main-sync.yaml` and
+  `scripts/argocd-fanout.py` are merged-and-reviewed repo files — same review
+  gate, so the filter is NOT a privilege boundary against repo write-access;
+  the actual lever is making the workflow gate stricter than the script gate:
+  branch protection / CODEOWNERS on `.forgejo/workflows/**` — the mitosis #16
+  red-team-validated pattern [55]. Optional owner decision leg (no gate on
+  this ticket).
+- **Inline-filter feasibility in the act lineage [source+docs]:** step-level
+  `env:` interpolation is runner-side over the delivered map [41][49]; the
+  env VALUE (not the run body) carries the blob, so the token values never
+  land in the step script file the runner writes (the C10 job-comment doctrine
+  holds: values in env, `$VAR` refs in body [27][29][38]); `RUNNER_TEMP` is a
+  documented runner context var with `runner.temp` ↔ `RUNNER_TEMP` [40] and
+  `/tmp` in the lineage `startJobContainer` envList [51]; steps run as
+  `docker exec` in ONE persistent job container per job (reference page: the
+  job container lives for the whole job; "files written outside the workspace
+  …" caveat applies to ACTION steps' own containers, not to run steps)
+  [40][51] ⇒ a file written by step 1 in `$RUNNER_TEMP` is readable by step 2
+  — probe legs C+D confirm both (index op + temp-file persistence) on prod.
+- **Token-in-payload note (unchanged from round 2 §3):** FetchTask delivering
+  all secrets to the runner process is the same legacy shape the [23-discussion]
+  note described; reopen4 CONFIRMS it as current and org-merged [43][46].
+
+## Agenda 5 — mechanisms if toJSON(secrets) disappoints (and full scoring)
+
+| # | Mechanism | Dynamic? | Per-key vault? | Error-proneness | Verdict |
+|---|---|---|---|---|---|
+| 1 | **toJSON blobs + inline filter step → pairs.json** | YES (both kinds) | YES | LOW: 2 env lines replace 22; fleet ops never touch the YAML again | **RECOMMENDED** (probe-gated) [40][41][43][44][46][49][52][54][55] |
+| 2 | toJSON(vars)+API → detect job → `$FORGEJO_OUTPUT` name list → `strategy.matrix` from `fromJSON(needs…)` → per-cell `env: TOKEN: ${{ secrets[format('ARGOCD_SYNC_{0}_TOKEN', matrix.CAT)] }}` | YES | YES | MED-HIGH: two-step chain, matrix job-name uniqueness note, outputs-carrying-secrets hazard [56], restructures the fan-out (one process per cluster — loses the single settle/summary/parallel contract [R3]) | ENGINE-feasible (matrix-from-outputs doc-verified [40]; index-op lineage+frem.sh [49][54]), but redesign-tax with zero gain over (1) |
+| 3 | REST API discovery: `GET /orgs/{org}/actions/secrets` (names) + `/actions/variables` (names+VALUES) | vars: yes; secrets: **names only** | YES | LOW ops-wise, but runtime-impossible for TOKENS (values never leave the vault — swagger handler source) [43][44][47][48] and the AUTO token can only touch its own repo (org endpoints 404) [41] ⇒ needs an owner/org PAT in the vault = a new crown-jewel key | RUNBOOK/audit helper only, not the fan-out channel |
+| 4 | One JSON-blob secret (reopen2) | N/A (paste-time static) | NO (single key) | HIGH — owner ruled it out 2026-11-25 ("too error-prone"); mechanics were never the blocker [26] | DEAD by ruling, not by engine |
+| 5 | Stay static (22 rows) | NO | YES | LOW runtime, MED ops (lockstep edits per fleet change — the exact cost the owner rejects) | FALLBACK if any probe fails; costs unchanged from R7 |
+
+Scoring against the owner's ask (dynamic + per-key vault entries +
+error-proneness minimized): (1) satisfies all three with the smallest diff;
+(2) satisfies all three but re-pays the fan-out topology; (3) can only be
+half-dynamic; (5) fails the ask.
+
+## Agenda 6 — live verification (dispatch/smoke legs — become the runbook §5.5)
+
+The suite cannot reach git.spencerslab.com; these legs prove the design BEFORE
+any re-cut commit lands. Run as `.forgejo/workflows/cf139-probe.yaml`,
+`on: workflow_dispatch`, `if: contains(vars.ROLE,'prod')`, `runs-on:
+ubuntu-24.04`, dispatched on a NON-main branch (a probe must never merge to
+main; `workflow_dispatch` selects the branch [40][41]). Delete the file after.
+- **A — toJSON support + completeness + masking:** step `env: S: ${{
+  toJSON(secrets) }}` / `V: ${{ toJSON(vars) }}`; run: python3 one-liner that
+  prints `sorted(json.loads(os.environ["S"]))` KEYS only + count; asserts the
+  22 ARGOCD_SYNC_* names + `FORGEJO_TOKEN` present in S, the 11 URL names +
+  ROLE in V; then `printf '%s' "$S" | grep -c '\*\*\*'` (>0 ⇒ blob-internal
+  masking live) and a single `echo "$EXPECTED_ONE_TOKEN_VAR"` round-trip
+  showing `***` in the fetched log. Failure modes are distinct: function
+  absent ⇒ job RED (v13 doctrine [53]); key missing ⇒ delivery/merge gap;
+  unmasked echo ⇒ masker-seeding surprise — all abort option (1).
+- **B — escape-hazard spot-check:** `python3 -c` over the parsed blob asserting
+  every ARGOCD_SYNC_* value matches `^[A-Za-z0-9._~+/-:=]+$` (no JSON-escape or
+  whitespace chars) — keeps agenda-3(a) edge closed on real values.
+- **C — index-operator probe (only needed if option 2 were ever wanted):**
+  job-level `strategy.matrix: cat: [dev]` + step `env: X: ${{
+  secrets[format('ARGOCD_SYNC_{0}_TOKEN', matrix.cat_upper)] }}` (name
+  construction per R7 upper-snake) + length-only assert. Green would also
+  RETIRE the reopen3 [21][25] wording at its root; red confines it to docs.
+- **D — RUNNER_TEMP persistence:** step1 `echo test > "$RUNNER_TEMP/x"`;
+  step2 `test -f "$RUNNER_TEMP/x" && rm -f "$RUNNER_TEMP/x"` — pre-validates
+  the pairs.json channel [40][51].
+- **E — log-fetch assertion:** after the dispatch, `curl` (or UI) the job log
+  and grep for `BEGIN/END` markers around each step to confirm no secret value
+  appears raw anywhere (the masking spot-check §5 already does this shape
+  natively [R3 plan]).
+- **Owner API shells (not dispatch):** `curl -H "Authorization: token $PAT"
+  https://git.spencerslab.com/api/v1/orgs/CuratedForest/actions/secrets` ⇒
+  names of ALL org keys (complete the agenda-4 inventory — verifies no
+  unexpected crown jewels ride every job); `.../repos/OwnYourIO/SpencersLab/
+  actions/secrets` ⇒ the repo-side set incl. PUSH_TOKEN_* scope confirmation
+  [47][48]; `.../actions/variables` ⇒ VALUES readable (URL roster audit) [47].
+- **Rollback posture:** probes are additive and dispatch-only; any red ⇒ the
+  ticket stays on the static enumeration exactly as shipped at d81831446 —
+  nothing already merged changes.
+
+## Contradictions (this round) & how to weigh
+
+- **reopen3 [21][25] "cannot index secrets dynamically" vs [43][44][46] source
+  + [54][55] live community usage.** The docs pages the earlier round leaned on
+  never state a dynamic-index prohibition — the claim was a best-guess
+  generalization from GitHub's reference-scanning behavior. Weigh: SOURCE WINS —
+  delivery is unconditional and the evaluator is generic; the residual unknown
+  is only the exact fork build on prod (probe A/C).
+- **basic-concepts vars-precedence sentence vs `GetVariablesOfRun` source**
+  (owner-wins vs repo-wins): weigh code; both are moot under the no-repo-twin
+  rule; record for the runbook wording pass.
+- **reference availability-table "Accessible functions" vs the same page's
+  `toJSON(forgejo)` example**: the table is underinclusive prose, the engine
+  source has no such gate [49]; weigh example+source; probe A still asserts it
+  on the exact prod build.
+- **GitHub ≠ Forgejo on the WHY of "all secrets visible":** GitHub's
+  toJSON(secrets) WORKS by escalating what's fetched (lazy unseal triggered by
+  the whole-context reference [52]); Forgejo always has the full map anyway —
+  same visible outcome, different delivery models. Matters for any future
+  "port to GitHub CI" thought experiment (would silently NOT work for
+  dynamically-indexed names).
+
+## Implications for the plan (if probes green — re-cut shape, NOT executed here)
+
+- C-new (workflow): sync-fanout becomes 3 steps — checkout; **filter step**
+  (`name: resolve fan-out pairs`; `env: ARGOCD_SECRETS: ${{ toJSON(secrets) }}`
+  + `ARGOCD_VARS: ${{ toJSON(vars) }}` + the same EVT_REF/GH_REF pair; inline
+  `python3 -c` or short heredoc FILTER: keep `^ARGOCD_SYNC_(.+)_URL$` from V +
+  `^ARGOCD_SYNC_(.+)_TOKEN$` from S, write name-keyed JSON `{cat: {url,token}}`
+  to `$RUNNER_TEMP/argocd-pairs.json`, chmod 600; prints only `pairs: N`);
+  **fan-out step** (`env: ARGOCD_PAIRS_FILE: $RUNNER_TEMP/argocd-pairs.json` +
+  refs; unguarded python3 call unchanged). 22 static rows DELETE; the header's
+  "static enumeration IS the discovery surface" + "Forgejo cannot index
+  secrets dynamically" sentences RETIRE with them.
+- C-new (script input): `discover_targets` gains ONE channel — read
+  `ARGOCD_PAIRS_FILE` (absent ⇒ env scan exactly as today, preserving local
+  `--check` + the behavior suite's env shape); the pair-shape/malformed/(j)
+  logic ports to JSON values verbatim (empty-string semantics identical: the
+  blob carries "" for blanked keys). Fan-out core stays byte-locked (t13
+  doctrine). The "enumerated" vocabulary in micro-calls (c)/(d) re-reads as
+  "discovered" — typo'd ORG keys now surface WITHOUT any workflow row
+  (broad-catch already handles it: a value-carrying malformed key ⇒ RED naming
+  the raw key [R3 script] — and with dynamic discovery an EXTRA org key pair
+  auto-joins the fleet, which is the whole point; the runbook must say
+  "creating the org pair IS the enablement; the workflow is fleet-blind").
+- Suite re-pin: forgejo-main-sync t5/t11/t12 shift from 22-name pins to the
+  2-blob-name + filter-contract pins (the filter IS the enumeration — its
+  regexes deserve their own static legs); behavior t4/t5 arms (j)-family
+  mostly port through the file channel; runbook suite re-pins §2/§5/§7/§8 +
+  §5 probe legs A–E.
+- Ops consequences (all IMPROVEMENTS the owner asked for): add cluster =
+  1 var + 1 secret, zero PR; decommission = delete pair, zero PR — micro-call
+  (d) lockstep and the "both drift directions visible" wording DIE; §7 kill
+  lever unchanged (token-side predicate survives); rotation §8 unchanged.
+  New doc duties: (i) org-key NAMES become runtime-meaningful code (a stray
+  `ARGOCD_SYNC_FOO_TOKEN=x` with no URL now surfaces — the malformed/pair-RED
+  lanes catch it; a complete stray pair would JOIN the fleet — the org write
+  surface is now the fleet config surface; org Actions write perms =
+  fleet-deploy perms, worth a runbook sentence); (ii) the mask edge list
+  (agenda-3) lands in §5.
+
+## Open questions (this round — accumulated, no questions asked)
+
+1. **Probe outcomes A–D** (the only real gate on adopting option 1): best
+   guess all green given [43][44][46][49][54][55]; the fork-build caveat is
+   why they exist.
+2. Does the owner want `.forgejo/workflows/**` branch-protected (mitosis #16
+   lever) as part of this ticket or its own card? Best guess: separate card —
+   it is an org-settings leg, out of the ticket's blast radius.
+3. What ELSE lives at org scope on CuratedForest (agenda-4 inventory leg) —
+   affects only documentation honesty about "the blob carries everything",
+   never the design. Best guess: PUSH/ROLE-family keys are repo-side (header
+   says so), org holds the ARGOCD_SYNC_* pair set alone.
+4. Filter step wording/language: `python3 -c` one-liner vs the already-shipped
+   `scripts/` — it must be INLINE (not checkout-runnable) to keep the
+   "runtime env floor" invariant; a 10-liner is acceptable; `bash -n` leg
+   extends to it [R3 t13]. Best guess: inline python3 (json module stdlib ✓).
+5. Keep the malformed-name RED lane identical when the name source shifts
+   from "22 known rows" to "whatever the org has" (a typo in an ORG KEY name
+   now matters more — the lane covers it; plan round to confirm the (i-adj-1)
+   envelope wording rather than the envelope itself).
+
+## Sources (round 3, numbered continuing)
+
+40. https://forgejo.org/docs/latest/user/actions/reference/ — v17.0.2: contexts table (`secrets`/`vars` at steps env/run), availability matrix, `toJSON(forgejo)` debug example with masked `"token": "***"`, runner context `RUNNER_TEMP`, `jobs.<id>.outputs` + `$FORGEJO_OUTPUT`, matrix-from-`fromJSON(needs…)`-outputs generator example, `jobs.<id>.secrets`/workflow_call, dispatch inputs, `permissions` absent. Read 2026-11-26.
+41. https://forgejo.org/docs/latest/user/actions/basic-concepts/ — v17.0.2: Functions list incl. toJSON/fromJSON/case; operators incl. `[ ]` Index; secrets org/user/repo scopes + write-only-after-add; variables name constraints (`FORGEJO_`/`GITHUB_` prefix bans) + the (stale) owner-precedence sentence; automatic token scope ("only its repository, other repos 404"). Read 2026-11-26.
+42. https://forgejo.org/docs/latest/user/actions/github-actions/ — differences: job subkeys like `permissions` IGNORED; familiarity-not-compatibility. Read 2026-11-26.
+43. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/services/actions/secret.go — getSecretsOfTask/getSecretsOfJob: token aliases added; CanAccessSecrets gate; `FetchActionSecrets(OwnerID, RepoID)` NO reference filtering; workflow-call `inherit`/`EvaluateWorkflowCallSecrets` paths; imports `runner/v13/act/jobparser`. Read 2026-11-26.
+44. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/models/secret/secret.go — Secret model (owner XOR repo scope, global secrets rejected), FetchActionSecrets merge order (owner first, repo overwrites), ToUpper names, encrypted-at-rest decryption at fetch. Read 2026-11-26.
+45. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/models/actions/variable.go — ActionVariable incl. instance-global tier; GetVariablesOfRun "Repo > Org / User > Global". Read 2026-11-26.
+46. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/services/actions/task.go — PickTask/RecoverTasks: `runnerv1.Task{WorkflowPayload, Context, Secrets, Vars, Needs}` — full maps per task. Read 2026-11-26.
+47. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/routers/api/v1/org/action.go — swagger handlers: GET /orgs/{org}/actions/secrets ⇒ Name+Created ONLY; GET /orgs/{org}/actions/variables ⇒ Name+Data (values); full var CRUD via API. Read 2026-11-26.
+48. https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/modules/structs/secret.go + .../variable.go — `Secret{ Name, Created }` / `ActionVariable{ OwnerID, RepoID, Name, Data }`. Read 2026-11-26.
+49. https://gitea.com/gitea/act/raw/branch/main/pkg/exprparser/interpreter.go — lineage fork: evaluateVariable "secrets"→env.Secrets (whole map), "vars"→env.Vars; evaluateIndexAccess string-index ⇒ `secrets[name]` works; evaluateFuncCall `tojson` ungated; coerceToString(map)="Object". Read 2026-11-26.
+50. https://raw.githubusercontent.com/nektos/act/main/pkg/exprparser/functions.go — toJSON = json.MarshalIndent(value) unconditionally. Read 2026-11-26.
+51. https://gitea.com/gitea/act/raw/branch/main/pkg/runner/run_context.go — lineage fork: RUNNER_TEMP=/tmp in job-container envList; one persistent container per job (steps = docker exec); rc.Config.Secrets drives credential lookups (full-map visibility). Read 2026-11-26.
+52. https://github.com/actions/runner/discussions/2445 — GitHub option-1 lazy unsealing proven by diagnostic logs; `${{ toJSON(secrets) }}` counts as referencing ALL secrets ("then all available secrets are sent to the runner"; "The actions/runner will mask the json encoded secrets just fine"); published leak step shape. Read 2026-11-26.
+53. https://forgejo.org/2026-08-runner-release-v13/ — Runner v13.0.0 breaking changes: expression failures fail jobs; set-output/set-env/add-path removed (→ $FORGEJO_* files); DOCKER_USERNAME/PASSWORD implicit-auth removed; gitea context removed. Read 2026-11-26.
+54. https://docs.frem.sh/build/secrets/ — fremforge (Forgejo-based platform) docs: `${{ toJSON(secrets) }}` and computed names `${{ secrets[format('{0}_KEY', 'DEPLOY')] }}` reference EVERY secret; native Forgejo repo/org secrets "reach every job of the repository" (their scoped-secrets layer exists precisely because of it); masking = exact-value replacement. Read 2026-11-26.
+55. https://git.open-platform.sh/open-platform/mitosis/issues/2 — shipped, end-to-end-validated production design: natural-named Forgejo Actions secrets read via `${{ toJSON(secrets) }}` by a sync-env workflow; #16 credential boundary: `.forgejo/workflows/**` branch-protected to stop `toJSON(secrets)`-exfil workflows, red-team validated. Read 2026-11-26.
+56. https://gitea.com/gitea/runner (README @ main, v6 line) — lineage sibling: "Secrets and ::add-mask:: values are hidden in job logs, local job logs, job summaries and container names. As on GitHub, a job output containing one is dropped with a warning." Read 2026-11-26.
+57. https://codeberg.org/forgejo/discussions/issues/440 — no GitHub-style environments in Forgejo (feature ask open); org secrets injection into every repo job confirmed in discussion. Read via search body 2026-11-26.
+
+Plus repo/live evidence **[R3]**: `charts/forgejo-runner/values.yaml:148-153,255-266`
+(runner tag 13.2.0; act-24.04-family labels → curatedforest/forgejo-runner:26.11.1),
+`containers/forgejo-runner/{Dockerfile:49-52,README.md}` (digest-pinned
+catthehacker act-24.04 base; node/python3 inventory; manual-bump law),
+`.forgejo/workflows/*.yaml` secrets/vars grep (PUSH_TOKEN_GH/DEV +
+FORGE_PUSH_TOKEN repo-side; RENOVATE_* dev-instance-side),
+EXPLORE.md:172 (infra = Forgejo 17.3.x, charts/forgejo dep 17.3.1),
+`scripts/argocd-fanout.py` (discover_targets/kill-lane/JWT_RE),
+`tests/services/forgejo-main-sync.sh` t5/t11/t12/t13 pins, STATE/DECISIONS/plan
+INPUT contract reads.
+
+Method note: single-session targeted research (coordinator-pinned 6-agenda
+brief; no persona fan-out — the questions, not perspectives, were fixed
+upstream). code.forgejo.org is Anubis-gated and deepwiki 429-limited — the
+forgejo/runner fork internals rest on the act-lineage sources [49][50][51],
+round-2 [26], and the community usage [54][55]; probe legs A–D close exactly
+that gap. Prior-round citations [21]-[39] unchanged.
