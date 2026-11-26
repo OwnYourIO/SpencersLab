@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Offline contract suite for the cf-6 Forgejo container-build pipeline, run -2
-# hardening (2026/2026-11-cf-6-feat-forgejo-container-builds-2): the static
-# invariants of .forgejo/workflows/containers-build.yaml +
+# Offline contract suite for the cf-6 Forgejo container-build pipeline: the
+# static invariants of .forgejo/workflows/containers-build.yaml +
 # scripts/forgejo-container-detect.sh, the GitHub fallback
 # .github/workflows/docker-build.yaml, the repo-wide guard sweep over
-# .forgejo/workflows/, and the detection-contract doc pins. Shape follows
+# .forgejo/workflows/, and the detection-contract doc pins. Run -2 hardening
+# (2026/2026-11-cf-6-feat-forgejo-container-builds-2); run -5 marker teeth
+# (2026/2026-11-cf-6-debug-detect-rerun). Shape follows
 # tests/services/forgejo-main-sync.sh; the per-leg selection follows
 # tests/pipeline-models/surface.sh.
 #
@@ -17,46 +18,104 @@
 # Run -2: t12-t15 + d9-d15 [C01 — pinned checkout depth, payload-accessor bytes,
 # the loud empty/fallback postures, the wide-range and merge-base fixtures, the
 # echo that makes a nothing-built run legible]; x5 [C03 — the detection contract
-# pinned in the gated docs]. AC11 (`docker build
+# pinned in the gated docs].
+# Run -5 (cf-6-debug-detect-rerun C01, plan 2026-11-25-feat-containers-built-marker):
+# t13/t14 re-pin + t16/t17 (new) + d16-d19 (new) [AC1-AC9 — the O2 last-built
+# marker: push base chain marker→tip-only→before with the A5 die first, the
+# advance-marker job shape and its executed non-FF monotonicity, the resolver's
+# absent/present/orphan/garbage shapes, the verified-empty info posture, and the
+# marker-missing fallback regression pin]; x5 re-pin (the marker..sha trio
+# vocabulary, same-commit parity law). AC11 (`docker build
 # => no-daemon, CI-deferred`, cf-77) is a RESULT-line contract, never a build
 # test: this workspace has no docker daemon and the live Forgejo run on infra
 # is the authoritative build test — no leg here fakes one.
 #
 # Subset discipline (plan Commands):
 #   - Run -2 gates: C01 `t d` — 30 ok; C02 `g1` (paired with cf-135's suites,
-#     which live in other files); C03 `x` — 5 ok; final: the full set — 41 ok.
+#     which live in other files); C03 `x` — 5 ok; the set was 41 ok.
+#   - Run -5 gates: C01 `t d` — 36 ok; C03 `x` — 5 ok; final: the full set —
+#     47 ok. Handoff (pre-DEV) posture in the red note below.
 #     Group selectors are SEPARATE argv words (`... t d`); a quoted `'t d'`
 #     dies as one unknown id — the parser takes argv per id. The legacy `c02`
 #     alias is run -1's `t d r` subset and is not a run -2 gate.
 #   - t/d legs read only containers-build.yaml + the detector (scratch git
 #     fixtures under /tmp/opencode for d-legs, and for t14's behavioral half,
 #     which EXECUTES the shipped detect-step run body against the shipped
-#     detector); r legs read only
+#     detector; t17 also stages the resolver and advance step bodies and runs
+#     them against a scratch BARE "origin" — a file-transport local repo, so
+#     the executed legs stay offline); r legs read only
 #     containers-build.yaml; x legs read only docker-build.yaml, renovate.json
 #     and the gated docs; g1 sweeps .forgejo/workflows/. No leg reads a file
 #     outside its chunk's set.
 #
-# Red posture (red-first as authored for run -2 against the post-merge base —
-# the implementation does not exist yet): t14 (no echo today), d11 (no fallback
-# annotation), d12 (an empty before falls through green), d14/d15 (the shipped
-# PR arm is two-dot; the owner ruling is merge-base) are red until C01 lands,
-# x5 until C03 and g1 until C02 — `t d` hands off 25 ok / 5 red, the full suite
-# 34 ok / 7 red. t12/t13/t15/d9/d10/d13 are green-at-authoring regression pins
-# of a contract that exists but was unpinned — the plan's mutation column is
-# their teeth proof; a pin no mutation reddens is a vacuous leg: report it, do
-# not ship it. Run -1's posture stands: t1/t2/t4/t6/t10, d1-d8, x2-x4 are
-# byte-stable green across the run, and the FULL suite is green only after the
-# last chunk. A FAIL line that names no artifact is a harness fault: report it,
-# do not work around it.
+# Red posture (run -5 authored-red set against the pre-change tree — the marker
+# implementation does not exist yet): RED = t13 (env is six keys today, the pin
+# is seven), t14 (the echo names no MARKER_SHA), t16/t17 (the advance job and
+# the resolver step are absent), x5 (the gated docs still say before..sha only),
+# d16/d17 (today the script ignores MARKER_SHA and answers before..sha), d19
+# (a garbage marker answers green today) — 8 red / 39 ok at handoff; the `t d`
+# subset 29 ok / 7 red, the `x` subset 4 ok / 1 red. d18 (marker-missing
+# fallback == today) and every pre-existing leg are green-at-authoring and must
+# stay green to the landing tree (47 ok / 0 red post-DEV+docs). Run -2's lesson
+# stands: a pin no mutation reddens is a vacuous leg — report it, do not ship
+# it; the run -5 mutation battery lives in /tmp/opencode/cf6-detect-marker-sweep.
+# Run -1's posture stands: t1/t2/t4/t6/t10, d1-d8, x2-x4 are byte-stable green
+# across the run, and the FULL suite is green only after the last chunk. A FAIL
+# line that names no artifact is a harness fault: report it, do not work around
+# it.
 #
 # Pins and their why:
 #   - t14 has a behavioral half because a text pin cannot see a silently
 #     reverted exemption: C01 round 1 shipped the empty-set warning WITHOUT
 #     the owner's before == sha exemption and every static clause stayed
-#     green (review caught it by running the step). The leg now runs the
-#     shipped run body under five faithful env shapes and asserts which arms
-#     warn — scope pinned, spelling free (the compound line may read any
-#     way bash allows; run -1's r5 over-fitting lesson).
+#     green (review caught it by running the step). The leg runs the shipped
+#     run body under eight faithful env shapes and asserts which arms warn —
+#     scope pinned, spelling free (the compound line may read any way bash
+#     allows; run -1's r5 over-fitting lesson). Run -5 keeps the shipped five
+#     as the marker-MISSING bootstrap proofs (they must stay byte-equivalent
+#     to the shipped posture, AC2) and adds three marker scenarios:
+#     marker==sha and a chart-only marker range exit with the verified-empty
+#     info line and no annotation, and a marker-set non-empty run names the
+#     marker value in the echo.
+#   - run -5 pin disciplines:
+#       - d18 is the plan's "fallback == today" proof: green at authoring and
+#         green on the landing tree, it byte-compares the marker-unset and
+#         marker-empty calls so a marker-missing run cannot drift from the
+#         shipped answers. Its base=before clause is CONDITIONAL (pin the
+#         token's content when present, never its presence): the shipped echo
+#         carries no base= token yet, so an unconditional clause would add a
+#         ninth authoring red — the chunk's authored-red table is law at 8,
+#         and d16's unconditional base=marker carries the token's existence.
+#       - the verified-empty info line is pinned by the stable token "verified
+#         empty" (OQ-3's proposed wording "changed set verified empty:
+#         marker..sha"), never by the whole line: a fresh owner ruling on the
+#         wording re-pins this token; the POSTURE (plain echo, no ::warning::,
+#         no ::notice::) is what AC3 demands and what the scenarios prove.
+#       - t16's force-form scan (no -f, --force, --force-with-lease, no '+'
+#         refspec prefix) runs on the push STATEMENTS, and the no-secrets scan
+#         on the whole job: the ban is on the command the runner executes —
+#         a comment may explain why the guard is git's own refusal without
+#         quoting a flag into a red leg. t17 proves the refusal EXECUTED
+#         against a scratch remote (plan design 4): the text pin is the shape,
+#         the executed leg is the law.
+#       - t17 stages the resolver/advance step bodies like t14 stages the
+#         detect body, and normalizes ONLY the `${{ forgejo.event_name }}`
+#         interpolation into the scenario's event while also exporting
+#         EVENT_NAME: the offline run cannot be a Forgejo engine, and both
+#         spellings the chunk allows (inline interpolation, env: mapping)
+#         execute the same arm. Unknown `${{ ... }}` tokens stay unexpanded —
+#         a body that needs the real engine to run is a body t17 cannot audit,
+#         and it reddens loudly rather than quietly.
+#       - t5/r1 keep their green-at-authoring status with a subtraction form:
+#         the job-id set minus an OPTIONAL advance-marker must equal the C02
+#         trio — the pre-change tree passes, the landing tree passes, and a
+#         foreign, renamed or misnamed fourth job (advance_marker included)
+#         reddens both. r1's three if: byte-pins stay exactly as run -2 shipped
+#         them; every advance-job posture (condition clauses, needs pair,
+#         checkout depth, push bytes, no-force, no-secrets, ref exclusivity) is
+#         t16's authored-red contract instead, so the chunk's 8-leg red table
+#         holds and the "unchanged-expectation legs stay green" bar holds on
+#         both trees.
 #   - run -2's d11/d12/d13/d15 read stdout AND stderr AND the exit code (the
 #     detect_capture helper): the fallback annotation, the A5 die, the 128
 #     propagation and RP19's endpoint-line-before-merge-base all live on
@@ -146,12 +205,12 @@
 #
 # Run from anywhere in the worktree (groups as separate argv words, never
 # quoted together):
-#   bash tests/services/forgejo-containers-build.sh              # full set — 41 ok at run end
-#   bash tests/services/forgejo-containers-build.sh t d          # C01 gate — 30 ok
+#   bash tests/services/forgejo-containers-build.sh              # full set — 47 ok at run end
+#   bash tests/services/forgejo-containers-build.sh t d          # C01 gate — 36 ok
 #   bash tests/services/forgejo-containers-build.sh g1           # C02 gate leg (cf-135 suites are separate files)
 #   bash tests/services/forgejo-containers-build.sh x            # C03 gate — 5 ok
 #   bash tests/services/forgejo-containers-build.sh c02          # run -1's t d r alias, not a run -2 gate
-#   bash tests/services/forgejo-containers-build.sh t12 d9       # per-leg
+#   bash tests/services/forgejo-containers-build.sh t16 t17 d16  # per-leg (run -5)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -168,8 +227,8 @@ TMP=$(mktemp -d /tmp/opencode/forgejo-containers-build-test.XXXXXX) || { echo 'h
 trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
-group_t() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do WANT["t$i"]=1; done; }
-group_d() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do WANT["d$i"]=1; done; }
+group_t() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17; do WANT["t$i"]=1; done; }
+group_d() { for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19; do WANT["d$i"]=1; done; }
 group_x() { for i in 1 2 3 4 5; do WANT["x$i"]=1; done; }
 group_r() { for i in 1 2 3 4 5; do WANT["r$i"]=1; done; }
 group_g() { WANT[g1]=1; }
@@ -185,8 +244,8 @@ else
       r)   group_r ;;
       g)   group_g ;;
       c02) group_t; group_d; group_r ;;
-      t1[0-5]|t[1-9]|d1[0-5]|d[1-9]|x[1-5]|r[1-5]|g1) WANT["$lc"]=1 ;;
-      *) printf 'FAIL: unknown check id %s (expected t1..t15, d1..d15, x1..x5, r1..r5, g1, or groups t d x r g c02)\n' "$a" >&2; exit 2 ;;
+      t1[0-7]|t[1-9]|d1[0-9]|d[1-9]|x[1-5]|r[1-5]|g1) WANT["$lc"]=1 ;;
+      *) printf 'FAIL: unknown check id %s (expected t1..t17, d1..d19, x1..x5, r1..r5, g1, or groups t d x r g c02)\n' "$a" >&2; exit 2 ;;
     esac
   done
 fi
@@ -199,7 +258,7 @@ run_leg() {
   if ! "$fn"; then FAILED=$((FAILED + 1)); fi
 }
 
-# --- C01 workflow legs (t1-t15): .forgejo/workflows/containers-build.yaml ----
+# --- C01 workflow legs (t1-t17): .forgejo/workflows/containers-build.yaml ----
 
 leg_t1() {
   [ -f "$WF" ] || { printf 'FAIL: t1: %s does not exist (C01 creates it)\n' "$WF" >&2; return 1; }
@@ -331,9 +390,14 @@ def need(cond, msg):
 
 
 # NOTE 2: the PR/release split moves from a case inside one build job to two
-# jobs gated by event AND role; the job-id set is the contract.
-need(set(jobs) == {'detect-changes', 'build-release', 'build-pr'},
-     f'jobs keys are {sorted(jobs)}, expected exactly detect-changes + build-release + build-pr (C02 renames build-and-push to build-release and adds build-pr)')
+# jobs gated by event AND role; the job-id set is the contract. Run -5's
+# advance-marker must not redden this pin (chunk: unchanged-expectation legs):
+# the set minus an OPTIONAL advance-marker must equal the C02 trio — so the
+# pre-change tree passes, the landing tree passes, and any foreign, missing or
+# misnamed job (a typo'd advance_marker included) reddens. The advance job's
+# own shape is t16's authored-red contract, not this one's.
+need(set(jobs) - {'advance-marker'} == {'detect-changes', 'build-release', 'build-pr'},
+     f'jobs keys are {sorted(jobs)}, expected the C02 trio (detect-changes + build-release + build-pr) plus at most run -5\'s advance-marker (C02 renames build-and-push to build-release and adds build-pr)')
 out = (detect.get('outputs') or {}).get('changed-containers')
 need(isinstance(out, str) and 'steps.' in out,
      f'detect-changes.outputs.changed-containers is {out!r}, expected a steps.<id> reference (the detector emits it via GITHUB_OUTPUT)')
@@ -358,7 +422,7 @@ PY
   then
     return 1
   fi
-  ok "t5: job set is detect-changes + build-release + build-pr; both build jobs need the detect, matrix fromJSON with fail-fast false and a per-cell name, and short-circuit on '[]' [C02 AC2]"
+  ok "t5: job set is the C02 trio plus at most advance-marker; both build jobs need the detect, matrix fromJSON with fail-fast false and a per-cell name, and short-circuit on '[]' [C02 AC2; run -5 both-trees form]"
 }
 
 leg_t6() {
@@ -874,13 +938,16 @@ def need(cond, msg):
 
 need(len(detect_steps) == 1,
      f'{len(detect_steps)} steps carry changed-containers=, expected the one detect step')
-# The detector consumes exactly these six variables (EXPLORE section 2: no
-# head_ref, no commits[]), so this mapping IS the payload-to-shell contract.
-# A typo'd accessor resolves empty at runtime; pre-A5 that fell into the
-# tip-only fallback as a green run — the textual pin is the only offline
-# tooth. It cannot prove the payload carries the field: RESEARCH R1 section 1
-# (the v15.0.10 producer sweep) does that, and the optional H-P1 dispatch
-# probe would observe it live (RP8).
+# The detector consumes exactly these seven variables (EXPLORE section 2's six
+# plus run -5's MARKER_SHA; no head_ref, no commits[]), so this mapping IS the
+# payload-to-shell contract. A typo'd accessor resolves empty at runtime;
+# pre-A5 that fell into the tip-only fallback as a green run — the textual pin
+# is the only offline tooth. It cannot prove the payload carries the field:
+# RESEARCH R1 section 1 (the v15.0.10 producer sweep) does that, and the
+# optional H-P1 dispatch probe would observe it live (RP8). MARKER_SHA is not
+# a payload field — it is the marker resolver step's output, and its accessor
+# string is the contract that keeps detect() fed (a silent step-output rename
+# would empty it and the fallback would answer every run, green).
 EXPECTED = {
     'EVENT_NAME': '${{ forgejo.event_name }}',
     'EVENT_BEFORE': '${{ forgejo.event.before }}',
@@ -888,11 +955,12 @@ EXPECTED = {
     'BASE_SHA': '${{ forgejo.event.pull_request.base.sha }}',
     'HEAD_SHA': '${{ forgejo.event.pull_request.head.sha }}',
     'MANUAL_CONTAINERS': '${{ forgejo.event.inputs.containers }}',
+    'MARKER_SHA': '${{ steps.marker.outputs.sha }}',
 }
 env = detect_steps[0].get('env')
 need(isinstance(env, dict), 'the detect step has no env: mapping')
 need(set(env) == set(EXPECTED),
-     f'env keys are {sorted(env)}, expected exactly {sorted(EXPECTED)}')
+     f'env keys are {sorted(env)}, expected exactly {sorted(EXPECTED)} (seven: the six payload accessors + the marker step output)')
 for key, value in EXPECTED.items():
     need(env.get(key) == value,
          f'env.{key} is {env.get(key)!r}, expected exactly {value!r} (r1 byte-constant '
@@ -901,7 +969,7 @@ PY
   then
     return 1
   fi
-  ok "t13: the six detect-step env: accessors are byte-exact — textual pin only; proving the payload carries the field is R1's source chain and the optional H-P1 probe, never this leg [run -2 C01, invariant 7]"
+  ok "t13: the seven detect-step env: accessors are byte-exact — textual pin only; proving the payload carries the field is R1's source chain and the optional H-P1 probe, never this leg [run -2 C01, invariant 7; run -5 C01 marker accessor]"
 }
 
 # t14_step_warn <sdir> <label> <expect yes|no> <VAR=val>... — executes the
@@ -915,8 +983,12 @@ t14_step_warn() {
   local sdir="$1" label="$2" expect="$3"
   shift 3
   local out rc
+  # MARKER_SHA= joins the base env for run -5: the shipped five scenarios then
+  # execute as the marker-MISSING bootstrap shapes (the guard must treat them
+  # byte-exactly as before, AC2), and every scenario overrides the full pair it
+  # cares about via "$@" so no shape can depend on an ambient value.
   if out=$( cd "$sdir" && env GITHUB_OUTPUT="$sdir/output" EVENT_NAME= EVENT_BEFORE= SHA= \
-      BASE_SHA= HEAD_SHA= MANUAL_CONTAINERS= "$@" bash step.sh 2>/dev/null ); then
+      BASE_SHA= HEAD_SHA= MANUAL_CONTAINERS= MARKER_SHA= "$@" bash step.sh 2>/dev/null ); then
     rc=0
   else
     rc=$?
@@ -935,6 +1007,50 @@ t14_step_warn() {
   if [ "$expect" = no ] && [ "$warned" = yes ]; then
     printf 'FAIL: t14: the %s scenario WARNED although it is one of the two exempt shapes — a silently dropped exemption (the before==sha no-op and the dispatch empty list are correct semantics, not anomalies)\n' "$label" >&2
     return 1
+  fi
+  return 0
+}
+
+# t14_step_marker <sdir> <label> <info|visible> <marker-value-for-visible> <VAR=val>...
+# — run -5's marker-set scenarios, same staging as t14_step_warn. Every shape
+# must exit 0, print the verdict line, and carry NEITHER ::warning:: NOR
+# ::notice:: (runner v13.2.0 does not interpret the notice workflow-command —
+# the info line is a plain echo, plan OQ-3/Notes-for-dev). mode=info (the
+# verified-empty shapes) additionally requires the stable token of the plain
+# info line; mode=visible (marker set, non-empty set) additionally requires the
+# echo to name the marker endpoint, pinning marker-visibility as SCOPE: any
+# spelling of the echo that carries the value satisfies it.
+t14_step_marker() {
+  local sdir="$1" label="$2" mode="$3" markval="$4"
+  shift 4
+  local out rc
+  if out=$( cd "$sdir" && env GITHUB_OUTPUT="$sdir/output" EVENT_NAME= EVENT_BEFORE= SHA= \
+      BASE_SHA= HEAD_SHA= MANUAL_CONTAINERS= MARKER_SHA= "$@" bash step.sh 2>/dev/null ); then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ] || { printf 'FAIL: t14: the detect step exited %d in the %s marker scenario — the marker-set arms must stay executable offline\n' "$rc" "$label" >&2; return 1; }
+  case "$out" in
+    *'changed containers:'*) ;;
+    *) printf 'FAIL: t14: the %s marker scenario printed no "changed containers:" verdict line\n' "$label" >&2; return 1 ;;
+  esac
+  case "$out" in
+    *'::warning::'*) printf 'FAIL: t14: the %s scenario WARNED — a marker-verified empty push set is the GOOD case: an info line, never an anomaly annotation (plan design 3, AC3)\n' "$label" >&2; return 1 ;;
+  esac
+  case "$out" in
+    *'::notice::'*) printf 'FAIL: t14: the %s scenario emitted a ::notice:: — the info line stays a plain echo on this runner (v13.2.0 does not interpret it)\n' "$label" >&2; return 1 ;;
+  esac
+  if [ "$mode" = info ]; then
+    case "$out" in
+      *'verified empty'*) ;;
+      *) printf 'FAIL: t14: the %s scenario carries no verified-empty info line on stdout — the marker-empty exit must announce itself as informational, not fall silent (OQ-3 token "verified empty"; a fresh owner wording ruling re-pins the token, never the posture)\n' "$label" >&2; return 1 ;;
+    esac
+  else
+    case "$out" in
+      *"marker=$markval"*) ;;
+      *) printf 'FAIL: t14: the %s scenario echo does not name marker=%s — the marker endpoint must be visible in the verdict line (C01 Tasks: the echo gains the marker value)\n' "$label" "$markval" >&2; return 1 ;;
+    esac
   fi
   return 0
 }
@@ -973,9 +1089,10 @@ need(re.search(r'\$\{?' + re.escape(var) + r'\b', joined),
      f'the "changed containers:" echo never interpolates the assigned var {var}')
 for ln in marker:
     need('$(' not in ln, f'the echo line {ln.strip()!r} re-inlines a command substitution (t10 discipline)')
-for tok in ('EVENT_NAME', 'EVENT_BEFORE', 'SHA', 'BASE_SHA', 'HEAD_SHA'):
+for tok in ('EVENT_NAME', 'EVENT_BEFORE', 'SHA', 'BASE_SHA', 'HEAD_SHA', 'MARKER_SHA'):
     need(re.search(r'\b' + tok + r'\b', joined),
-         f'the echo never names {tok} — legibility is set + event + both endpoint values the step holds (OQ-e/OQ-k ruling)')
+         f'the echo never names {tok} — legibility is set + event + the endpoint values the step '
+         'holds (OQ-e/OQ-k ruling; run -5 adds MARKER_SHA so the marker-fed verdict names its base source too)')
 need(text.count('$(bash scripts/forgejo-container-detect.sh') == 1,
      'a second detect command substitution appeared — exactly the assignment may invoke the detector')
 need(sum(1 for ln in text.splitlines() if 'changed-containers=' in ln) == 1,
@@ -994,10 +1111,12 @@ PY
   # The behavioral half of t14: the before == sha exemption shipped MISSING in
   # C01 round 1 and survived every static clause of this leg — a text pin of a
   # compound guard line is the wrong tool, the exemption SCOPE is a fact of
-  # execution. Five faithful payload scenarios, executed against the shipped
-  # run body + shipped detector in a scratch git repo: only the dispatch
-  # no-op, the before==sha no-op and a non-empty set stay silent; a real
-  # empty push range and a real empty PR merge-base range both warn. The
+  # execution. Five faithful payload scenarios (marker unset), executed against
+  # the shipped run body + shipped detector in a scratch git repo: only the
+  # dispatch no-op, the before==sha no-op and a non-empty set stay silent; a
+  # real empty push range and a real empty PR merge-base range both warn. Run
+  # -5 keeps those five byte-equivalent as the marker-MISSING bootstrap proofs
+  # (AC2's posture survives the re-scope) and adds three marker-set shapes. The
   # all-zero first-push shape is deliberately not pinned here (the detector
   # owns that announcement, d11; the step warning there is the shipped
   # behavior, and neither posture may be demanded by this leg).
@@ -1011,11 +1130,19 @@ PY
   git -C "$sdir" init -q . && git -C "$sdir" config user.email test@example.invalid && git -C "$sdir" config user.name test \
     && git -C "$sdir" add -A && git -C "$sdir" commit -qm a \
     || { printf 'FAIL: t14: harness could not init the scratch git repo (scratch trees must be their own repo)\n' >&2; return 1; }
-  local S_A S_B S_C
+  local S_A S_B S_C S_D
   S_A=$(git -C "$sdir" rev-parse HEAD) || return 1
   echo readme2 > "$sdir/README.md"
   git -C "$sdir" add -A && git -C "$sdir" commit -qm b || return 1
   S_B=$(git -C "$sdir" rev-parse HEAD) || return 1
+  # Commit d (README-only, so the containers tree still equals A's) gives the
+  # run -5 marker scenarios their distinct triple: marker=A, before=B, sha=D is
+  # a chart-only marker range whose before range differs from the marker's
+  # ancestor position — without it every marker-empty shape would collapse onto
+  # marker==before and could not show the guard reads MARKER_SHA.
+  echo readme3 > "$sdir/README.md"
+  git -C "$sdir" add -A && git -C "$sdir" commit -qm d || return 1
+  S_D=$(git -C "$sdir" rev-parse HEAD) || return 1
   echo change > "$sdir/containers/alpha/Dockerfile"
   git -C "$sdir" add -A && git -C "$sdir" commit -qm c || return 1
   S_C=$(git -C "$sdir" rev-parse HEAD) || return 1
@@ -1042,7 +1169,18 @@ PY
   t14_step_warn "$sdir" 'real empty push range'      yes EVENT_NAME=push "EVENT_BEFORE=$S_A" "SHA=$S_B" || return 1
   t14_step_warn "$sdir" 'real empty PR range'        yes EVENT_NAME=pull_request "BASE_SHA=$S_A" "HEAD_SHA=$S_B" "SHA=$S_B" || return 1
   t14_step_warn "$sdir" 'non-empty push set'         no  EVENT_NAME=push "EVENT_BEFORE=$S_A" "SHA=$S_C" || return 1
-  ok "t14: the detect step echoes changed containers: with the event and endpoint values from the assigned variable, and the ::warning:: scope executes right — empty push/PR ranges warn, the dispatch no-op, the before==sha no-op and a non-empty set stay silent (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6]"
+  # Run -5's marker-set scenarios (chunk Tests): (a) marker==sha — a re-run of
+  # a succeeded push, the quiet-verify shape of the replaced re-run law — must
+  # exit info, not warn; (b) marker=A, sha=D, before=B: a chart-only marker
+  # range, the bucket-A over-fire wake whose emptiness the marker PROVES, also
+  # exits info while the same endpoints without a marker still warn (the
+  # shipped shape one line above); (c) marker set with a non-empty answer keeps
+  # the no-warning posture and names the marker in the echo. All three stay
+  # silent as ::notice::-free plain echoes (runner v13.2.0).
+  t14_step_marker "$sdir" 'marker-equals-sha push'        info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_C" || return 1
+  t14_step_marker "$sdir" 'marker-verified-empty push'    info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_D" "MARKER_SHA=$S_A" || return 1
+  t14_step_marker "$sdir" 'marker set, non-empty push'    visible "$S_A" EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_A" || return 1
+  ok "t14: the detect step echoes changed containers: with the event, endpoint and MARKER_SHA tokens, and the warning scope executes right on eight shapes — empty push/PR ranges without a marker warn, the dispatch no-op, the before==sha no-op and non-empty sets stay silent, and both marker-verified-empty shapes exit with the plain verified-empty info line and no annotation (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6; run -5 C01 AC3]"
 }
 
 leg_t15() {
@@ -1101,6 +1239,244 @@ PY
   ok "t15: set -eu stands and no git call in detect() carries || true, 2>/dev/null, a masking redirect or an if-git soft-pedal; next-n's tolerated grep || true is the named exemption [run -2 C01, invariant 5]"
 }
 
+# --- Run -5 marker pins (t16-t17): the advance job and its executed law -------
+
+leg_t16() {
+  [ -f "$WF" ] || { printf 'FAIL: t16: %s does not exist\n' "$WF" >&2; return 1; }
+  if ! python3 - "$WF" <<'PY'
+import os, re, sys, yaml
+
+path = sys.argv[1]
+doc = yaml.safe_load(open(path))
+jobs = (doc or {}).get('jobs') or {}
+REF = 'refs/heads/ci/containers-built'
+PUSH = 'git push origin HEAD:' + REF
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t16: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+# AC6 (run -5): the marker moves ONLY through this job, so its shape is the
+# whole delivery-loss law — needs carries the partial-failure rule, the if:
+# carries the push ∧ full-success rule, the plain push carries monotonicity
+# (t17 executes the refusal; r1 byte-pins the condition).
+adv = jobs.get('advance-marker')
+need(adv is not None,
+     'no advance-marker job — the marker can never move, so every push re-diffs its payload before and the delivery-loss class stays open (AC6)')
+needs = adv.get('needs')
+needs = [needs] if isinstance(needs, str) else (needs or [])
+need('detect-changes' in needs and 'build-release' in needs,
+     f'advance-marker.needs is {adv.get("needs")!r}, expected to contain detect-changes + build-release '
+     '(the needs-gate IS the partial-failure law: a red or skipped build-release skips the advance, AC6/AC7)')
+if_expr = str(adv.get('if') or '')
+need("forgejo.event_name == 'push'" in if_expr,
+     f"advance-marker.if is {if_expr!r}, expected the push-event clause — PR/dispatch runs must never move the marker (design 4)")
+need("needs.build-release.result == 'success'" in if_expr,
+     f"advance-marker.if is {if_expr!r}, expected the build-release success clause — a matrix failure must leave the marker put so the re-run retries the residue")
+need('ROLE' not in if_expr,
+     f'advance-marker.if carries ROLE vocabulary ({if_expr!r}) — the job piggybacks build-release role polarity; no own ROLE guard, no new unset-polarity clause (design 4, ci-surface t6 exclusivity)')
+adv_blob = yaml.dump(adv)
+for tok in ('vars.ROLE', 'secrets.'):
+    need(tok not in adv_blob,
+         f'the advance-marker job references {tok} — the marker push rides the checkout automatic same-repo credential '
+         '(the release.yaml idiom); no new secret (plan OQ-2 resolution, AC6)')
+checkouts = [s for s in adv.get('steps') or [] if isinstance(s, dict) and s.get('uses') == 'actions/checkout@v7']
+need(checkouts, 'advance-marker has no actions/checkout@v7 step — the push needs the repository')
+w = checkouts[0].get('with') or {}
+depth = w.get('fetch-depth')
+need(type(depth) is int and depth == 0,
+     f'advance-marker checkout fetch-depth is {depth!r}, expected the integer 0 — the push-negotiation law '
+     '(main-sync/release precedent: a shallow clone cannot negotiate the common history a plain push needs)')
+body = '\n'.join(str(s.get('run', '')) for s in adv.get('steps') or []
+                 if isinstance(s, dict) and 'run' in s)
+need(PUSH in body,
+     f'the advance step does not carry the plain-push idiom byte-exactly: {PUSH!r} (AC6; t17 executes this body)')
+push_stmts = [ln.split('#', 1)[0].strip() for ln in body.splitlines()
+              if re.search(r'git\s+push', ln) and not ln.strip().startswith('#')]
+need(push_stmts, 'no executable git push statement in advance-marker (harness fault if the byte pin passed)')
+for stmt in push_stmts:
+    need('--force' not in stmt and '--force-with-lease' not in stmt
+         and not re.search(r'(^|\s)-f(\s|$)', stmt) and '+' not in stmt,
+         f'the advance push statement {stmt!r} carries a force form (-f/--force/--force-with-lease/+ refspec) — '
+         'git non-FF refusal IS the monotonicity guard, never a forced move (AC6; prose comments may name the refusal, the command may not wear the flag)')
+for dirpath, _dn, filenames in os.walk(os.path.dirname(path)):
+    for name in sorted(filenames):
+        if not name.endswith(('.yaml', '.yml')):
+            continue
+        p2 = os.path.join(dirpath, name)
+        if os.path.basename(p2) != os.path.basename(path):
+            need(REF not in open(p2).read(),
+                 f'{p2} also names {REF} — the marker ref lives in containers-build.yaml only (main-sync mirrors refs/heads/main; GitHub never receives it, plan Out-of-scope)')
+PY
+  then
+    return 1
+  fi
+  ok "t16: advance-marker exists; needs detect-changes+build-release; its if: names the push event and build-release success (no ROLE vocabulary anywhere in the job, no secrets.); its checkout pins integer fetch-depth 0; the step body byte-carries git push origin HEAD:refs/heads/ci/containers-built with no force form on any push statement; the ref is named in no other .forgejo workflow [run -5 C01, AC6]"
+}
+
+leg_t17() {
+  local sdir="$TMP/t17"
+  rm -rf "$sdir"; mkdir -p "$sdir" \
+    || { printf 'FAIL: t17: harness could not stage the t17 scratch dir\n' >&2; return 1; }
+  if ! python3 - "$WF" "$sdir/advance.sh" "$sdir/resolver-push.sh" "$sdir/resolver-pr.sh" <<'PY'
+import sys, yaml
+
+wf, adv_out, push_out, pr_out = sys.argv[1:5]
+jobs = (yaml.safe_load(open(wf)) or {}).get('jobs') or {}
+
+
+def fail(msg):
+    print(f'FAIL: t17: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+
+adv = (jobs.get('advance-marker') or {}).get('steps') or []
+adv_runs = [str(s.get('run', '')) for s in adv if isinstance(s, dict) and 'run' in s]
+if not adv_runs:
+    fail('the advance-marker job carries no run step to stage (the job is absent — authored-red until C01 lands it)')
+open(adv_out, 'w').write('\n'.join(adv_runs) + '\n')
+
+det = (jobs.get('detect-changes') or {}).get('steps') or []
+
+
+def locate(pred):
+    for i, s in enumerate(det):
+        if isinstance(s, dict) and pred(s):
+            return i, s
+    return None, None
+
+
+mi, mstep = locate(lambda s: s.get('id') == 'marker')
+if mi is None or not str((mstep or {}).get('run', '')):
+    fail('detect-changes carries no run step with id: marker to stage — the resolver is absent, and the detect env names steps.marker.outputs.sha (authored-red until C01 lands it)')
+di, _d = locate(lambda s: 'diag' in str(s.get('name', '')))
+ti, _t = locate(lambda s: 'changed-containers=' in str(s.get('run', '')))
+if di is None or ti is None:
+    fail('harness cannot locate the diag/detect steps to pin the resolver position (harness fault, not a code red)')
+if not di < mi < ti:
+    fail(f'the id: marker step sits at index {mi}, not between diag ({di}) and the detect step ({ti}) — the C01 task names its position')
+# Only the event interpolation is normalized for offline execution (header
+# pin); any other ${{ ... }} stays literal and reddens the run it is in.
+mtext = str(mstep.get('run', ''))
+open(push_out, 'w').write(mtext.replace('${{ forgejo.event_name }}', 'push') + '\n')
+open(pr_out, 'w').write(mtext.replace('${{ forgejo.event_name }}', 'pull_request') + '\n')
+PY
+  then
+    printf 'FAIL: t17: could not stage the resolver/advance step bodies from %s\n' "$WF" >&2
+    return 1
+  fi
+  # Scratch topology: bare remote + clone; work2 is copied BEFORE its own
+  # commit, so the commit it pushes as the marker's ahead-move is unreachable
+  # from work — one fixture feeds the non-FF arm (b) and the orphaned-marker
+  # arm (c3) without any history rewriting.
+  local R="$sdir/remote.git" W="$sdir/work" W2="$sdir/work2" W3="$sdir/work3"
+  git init -q --bare "$R" >/dev/null 2>&1 \
+    || { printf 'FAIL: t17: harness could not init the scratch bare remote\n' >&2; return 1; }
+  git clone -q "$R" "$W" 2>/dev/null \
+    || { printf 'FAIL: t17: harness could not clone the empty scratch remote\n' >&2; return 1; }
+  git -C "$W" config user.email test@example.invalid && git -C "$W" config user.name test \
+    || { printf 'FAIL: t17: harness could not configure the scratch clone\n' >&2; return 1; }
+  echo built > "$W/keep.txt"
+  git -C "$W" add -A && git -C "$W" commit -qm a && git -C "$W" push -q origin HEAD:refs/heads/main \
+    || { printf 'FAIL: t17: harness could not seed the scratch remote\n' >&2; return 1; }
+  local HEAD1; HEAD1=$(git -C "$W" rev-parse HEAD) || return 1
+  local rc MARK1 MARK2 HEAD2 GOT
+  local garbage; garbage=$(printf 'z%.0s' {1..40})
+
+  # (c1) resolver, marker ABSENT: bootstrap shape — exit 0, sha= emitted empty
+  rm -f "$sdir/out"; rc=0
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-absent.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] \
+    || { printf 'FAIL: t17: the resolver exited %d with the marker absent on the scratch remote — a missing marker is the bootstrap shape: emit sha= empty, exit 0 (C01 Tasks a) — see %s\n' "$rc" "$sdir/resolver-absent.log" >&2; return 1; }
+  grep -q '^sha=$' "$sdir/out" \
+    || { printf 'FAIL: t17: absent-marker output is [%s], expected an empty sha= emission — steps.marker.outputs.sha must be DEFINED on every event (chunk Notes-for-dev), and bootstrap must not synthesize a value\n' "$(tr '\n' ';' < "$sdir/out" 2>/dev/null)" >&2; return 1; }
+
+  # (a) advance body against the marker-less remote: creates the ref at HEAD
+  rc=0
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-create.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] \
+    || { printf 'FAIL: t17: the staged advance body exited %d pushing to a scratch remote with no marker — first-creation must succeed (AC6; the release.yaml automatic-credential idiom, executed here over file transport) — see %s\n' "$rc" "$sdir/advance-create.log" >&2; return 1; }
+  MARK1=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built) \
+    || { printf 'FAIL: t17: after the advance body ran the scratch remote carries no refs/heads/ci/containers-built — see %s\n' "$sdir/advance-create.log" >&2; return 1; }
+  [ "$MARK1" = "$HEAD1" ] \
+    || { printf 'FAIL: t17: the marker landed at %s, expected the run HEAD %s (HEAD:refs/heads/ci/containers-built)\n' "$MARK1" "$HEAD1" >&2; return 1; }
+
+  # (c2) resolver, marker present and reachable: emits the marker sha
+  rm -f "$sdir/out"; rc=0
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-present.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] \
+    || { printf 'FAIL: t17: the resolver exited %d with a present, reachable marker — see %s\n' "$rc" "$sdir/resolver-present.log" >&2; return 1; }
+  GOT=$(sed -n 's/^sha=//p' "$sdir/out" | tail -n1)
+  [ "$GOT" = "$HEAD1" ] \
+    || { printf 'FAIL: t17: the resolver answered sha=%s, expected the marker oid %s (present+reachable must hand detect the marker, not an empty fallback)\n' "$GOT" "$HEAD1" >&2; return 1; }
+
+  # (b) non-FF advance EXECUTED: move the marker ahead from a second clone,
+  # then re-run the SAME body from the behind clone — git must refuse and the
+  # ref must not move (monotonicity is the push law, not a written check)
+  cp -a "$W" "$W2" || { printf 'FAIL: t17: harness could not copy the scratch clone\n' >&2; return 1; }
+  echo ahead > "$W2/ahead.txt"
+  git -C "$W2" add -A && git -C "$W2" commit -qm ff-ahead || return 1
+  HEAD2=$(git -C "$W2" rev-parse HEAD) || return 1
+  git -C "$W2" push -q origin "HEAD:refs/heads/ci/containers-built" \
+    || { printf 'FAIL: t17: harness could not pre-move the scratch marker fast-forward (setup fault)\n' >&2; return 1; }
+  rc=0
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out-adv2" EVENT_NAME=push bash "$sdir/advance.sh" ) >"$sdir/advance-refused.log" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] \
+    || { printf 'FAIL: t17: the advance body exited 0 against a marker already ahead at %s — a plain push MUST be refused by git here; if this leg is green the body grew a force form or a rewind (AC6, design 4)\n' "$HEAD2" >&2; return 1; }
+  MARK2=$(git -C "$R" rev-parse --verify -q refs/heads/ci/containers-built)
+  [ "$MARK2" = "$HEAD2" ] \
+    || { printf 'FAIL: t17: the refused advance left the marker at %s, expected the unmoved ahead sha %s\n' "$MARK2" "$HEAD2" >&2; return 1; }
+  grep -qiE 'non-fast-forward|\[rejected\]' "$sdir/advance-refused.log" \
+    || { printf 'FAIL: t17: the refused advance names no rejection form (non-fast-forward / [rejected]) — the monotonicity refusal is the loud guard the operator reads in the job log, not just a red exit — see %s\n' "$sdir/advance-refused.log" >&2; return 1; }
+
+  # (c3) resolver, marker unreachable from THIS checkout (orphaned by a
+  # history rewrite): LOUD fail naming the value and the owner verbs — never
+  # a silent downgrade to the fallback (d13 kin)
+  rm -f "$sdir/out"; rc=0
+  ( cd "$W" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-orphan.log" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] \
+    || { printf 'FAIL: t17: the resolver exited 0 although the marker (%s) is unreachable from the checkout — an orphaned marker must fail loud, not downgrade this run to before..sha in silence (AC5)\n' "$HEAD2" >&2; return 1; }
+  grep -qF -- "$HEAD2" "$sdir/resolver-orphan.log" \
+    || { printf 'FAIL: t17: the orphaned-marker fail does not name the marker sha — a die that hides which value broke it is not diagnosable from the job log\n' >&2; return 1; }
+  grep -qiE 'reset|delete' "$sdir/resolver-orphan.log" \
+    || { printf 'FAIL: t17: the orphaned-marker fail carries no owner note (reset or delete the ref, C01 Tasks a) — the message must say what unblocks the run\n' >&2; return 1; }
+
+  # (c4) resolver, non-hex garbage from ls-remote (PATH shim answers the read):
+  # fatal, naming the value — the resolver cannot be fed a non-sha through the
+  # scratch-remote route, and the script-side twin of this posture is d19
+  local shim="$sdir/shim" realgit
+  mkdir -p "$shim" || return 1
+  realgit=$(command -v git) || return 1
+  printf '#!/bin/sh\nif [ "$1" = ls-remote ]; then printf "%%s\\trefs/heads/ci/containers-built\\n" "%s"; exit 0; fi\nexec %s "$@"\n' \
+    "$garbage" "$realgit" > "$shim/git" || return 1
+  chmod +x "$shim/git" || return 1
+  rm -f "$sdir/out"; rc=0
+  ( cd "$W" && env PATH="$shim:$PATH" GITHUB_OUTPUT="$sdir/out" EVENT_NAME=push MARKER_SHA= bash "$sdir/resolver-push.sh" ) >"$sdir/resolver-garbage.log" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] \
+    || { printf 'FAIL: t17: the resolver accepted a non-hex ls-remote value (%s) with exit %d — garbage in the marker ref is fatal, not a bootstrap reinterpretation (design 2)\n' "$garbage" "$rc" >&2; return 1; }
+  grep -qF -- "$garbage" "$sdir/resolver-garbage.log" \
+    || { printf 'FAIL: t17: the non-hex resolver fail does not name the garbage value — the die must be self-describing\n' >&2; return 1; }
+
+  # (c5) non-push events: sha= emitted, exit 0, NO network — the origin here is
+  # a dead path, so any resolver that touches the network on the PR arm dies
+  # loudly instead of answering; the output must stay defined (AC8 posture:
+  # PR/dispatch arms byte-identical, the marker is push-side only)
+  mkdir -p "$W3" \
+    && ( cd "$W3" && git init -q . && git config user.email test@example.invalid && git config user.name test \
+         && echo x > x.txt && git add -A && git commit -qm x && git remote add origin "$sdir/no-such-remote.git" ) \
+    || { printf 'FAIL: t17: harness could not build the dead-origin clone\n' >&2; return 1; }
+  rm -f "$sdir/out"; rc=0
+  ( cd "$W3" && env GITHUB_OUTPUT="$sdir/out" EVENT_NAME=pull_request MARKER_SHA= bash "$sdir/resolver-pr.sh" ) >"$sdir/resolver-pr.log" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] \
+    || { printf 'FAIL: t17: the resolver exited %d on pull_request against a DEAD origin — non-push events must emit sha= empty and exit 0 with no network read (C01 Tasks a)\n' "$rc" >&2; return 1; }
+  grep -q '^sha=$' "$sdir/out" \
+    || { printf 'FAIL: t17: the pull_request resolver run wrote no empty sha= output — the detect env must never go missing-and-unset on PR/dispatch (chunk Notes-for-dev) — see %s\n' "$sdir/resolver-pr.log" >&2; return 1; }
+  ok "t17: executed offline against a scratch bare remote — the resolver emits empty for an absent marker, emits the marker sha when present+reachable, fails LOUD naming the value for an orphaned marker (with the reset-or-delete owner note) and for non-hex garbage, and stays network-free emitting sha= on pull_request; the staged advance body creates refs/heads/ci/containers-built at HEAD, and the same push against a moved-ahead marker exits non-zero with the non-fast-forward refusal named and the ref unmoved (monotonicity executed, not texted) [run -5 C01, AC5+AC6]"
+}
+
 # --- C02 run -1 ROLE/dual-registry legs (r1-r5): containers-build.yaml --------
 
 # r1-r5 pin the run -1 contract on .forgejo/workflows/containers-build.yaml
@@ -1136,8 +1512,14 @@ DETECT_IF = "vars.ROLE == null || contains(vars.ROLE, 'dev') || contains(vars.RO
 RELEASE_IF = "forgejo.event_name != 'pull_request' && (vars.ROLE == null || contains(vars.ROLE, 'prod')) && needs.detect-changes.outputs.changed-containers != '[]'"
 PR_IF = "forgejo.event_name == 'pull_request' && (vars.ROLE == null || contains(vars.ROLE, 'dev')) && needs.detect-changes.outputs.changed-containers != '[]'"
 
-need(set(jobs) == {'detect-changes', 'build-release', 'build-pr'},
-     f'jobs keys are {sorted(jobs)}, expected exactly detect-changes + build-release + build-pr (C02 job split)')
+# Run -5: the trio stays the byte-pinned contract; advance-marker is permitted
+# by the same subtraction form as t5 (its if:/needs/secret postures are t16's
+# authored-red contract — pinning them HERE too would make r1 a ninth authoring
+# red against the chunk's 8, and the byte-pins of the THREE role/event guards
+# above must stay exactly as run -2 shipped them: those three strings are the
+# cannot-error spellings, and the advance job carries no ROLE vocabulary.)
+need(set(jobs) - {'advance-marker'} == {'detect-changes', 'build-release', 'build-pr'},
+     f'jobs keys are {sorted(jobs)}, expected the C02 trio (detect-changes + build-release + build-pr) plus at most run -5\'s advance-marker (C02 job split)')
 for name, want in (('detect-changes', DETECT_IF), ('build-release', RELEASE_IF), ('build-pr', PR_IF)):
     got = (jobs.get(name) or {}).get('if')
     need(got == want,
@@ -1173,7 +1555,7 @@ PY
   then
     return 1
   fi
-  ok "r1: the three pinned if: byte-strings are exact over the {detect-changes, build-release, build-pr} set; fromJSON guards nothing and never evaluates a vars.* value (matrix-over-detector-output is the one carrier) [C02 AC2]"
+  ok "r1: the three pinned if: byte-strings are exact over the C02 trio (advance-marker, where present, is t16's contract); fromJSON guards nothing and never evaluates a vars.* value (matrix-over-detector-output is the one carrier) [C02 AC2; run -5 both-trees set form]"
 }
 
 leg_r2() {
@@ -1550,7 +1932,7 @@ PY
 }
 
 
-# --- C01 detector unit legs (d1-d15) on scratch git fixtures -----------------
+# --- C01 detector unit legs (d1-d19) on scratch git fixtures -----------------
 
 helper_ready() {
   [ -f "$HELP" ] || { printf 'FAIL: %s: %s does not exist (C01 creates it)\n' "$1" "$HELP" >&2; return 1; }
@@ -1873,7 +2255,13 @@ leg_d14() {
     EVENT_NAME=pull_request "BASE_SHA=$SHA4_M" "HEAD_SHA=$SHA4_H" || return 1
   detect_in "$FIX4" '["beta"]' \
     EVENT_NAME=pull_request "BASE_SHA=$SHA4_A" "HEAD_SHA=$SHA4_H" || return 1
-  ok "d14: the PR arm diffs merge-base..head — a moved base contributes no base-side changes, an adjacent base keeps the two-dot answer [run -2 C01, invariant 8 (B5)]"
+  # AC8 byte-identity of the untouched arm: the push base-source token must
+  # not leak into pull_request stderr — the PR echo stays the shipped form.
+  detect_capture "$FIX4" EVENT_NAME=pull_request "BASE_SHA=$SHA4_M" "HEAD_SHA=$SHA4_H"
+  case "$CAP_ERR" in
+    *'base='*) printf 'FAIL: d14: the PR arm echoes a base= token — the push base-source marker leaked into the pull_request arm, whose shipped output must stay byte-identical (AC8)\n' >&2; return 1 ;;
+  esac
+  ok "d14: the PR arm diffs merge-base..head — a moved base contributes no base-side changes, an adjacent base keeps the two-dot answer, and the PR stderr stays token-free of the push base-source (AC8) [run -2 C01, invariant 8 (B5); run -5 AC8 re-check]"
 }
 
 leg_d15() {
@@ -1900,6 +2288,100 @@ leg_d15() {
   printf '%s' "$CAP_ERR" | grep -qF -- "$SHA4_H" \
     || { printf 'FAIL: d15: the unrelated-history red run does not name the head endpoint (%s) on stderr (RP19)\n' "$SHA4_H" >&2; return 1; }
   ok "d15: PR degenerate shapes fail loud — empty endpoints exit 128 with no JSON, an unrelated pair exits non-zero (measured 1) with stderr naming both endpoints before the call [run -2 C01, invariant 8, RP19]"
+}
+
+# Run -5 marker legs (d16-d19) reuse fix3: A creates alpha+beta, B changes
+# beta, C changes alpha — so marker=A answers ["alpha","beta"] where
+# before=B answers ["alpha"], the exact differing-answers shape AC4 names.
+
+leg_d16() {
+  helper_ready d16 || return 1
+  build_fix3 || { printf 'FAIL: d16: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # AC4 (design 2): marker beats before whenever the two ranges answer
+  # differently. Today MARKER_SHA is not read at all — before..sha answers
+  # ["alpha"] and the leg is RED at authoring by construction.
+  detect_capture "$FIX3" EVENT_NAME=push "MARKER_SHA=$SHA3_A" "EVENT_BEFORE=$SHA3_B" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 0 ] \
+    || { printf 'FAIL: d16: a push with the marker set exited %d, expected 0 (stderr: %s)\n' "$CAP_RC" "$CAP_ERR" >&2; return 1; }
+  local stripped; stripped="${CAP_OUT//[[:space:]]/}"
+  [ "$stripped" = '["alpha","beta"]' ] \
+    || { printf 'FAIL: d16: marker=%s before=%s sha=%s answered %s, expected the marker range A..C ["alpha","beta"] — an ["alpha"] answer means before..sha still wins, the delivery loss the marker exists to heal\n' "$SHA3_A" "$SHA3_B" "$SHA3_C" "$stripped" >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qF 'base=marker' \
+    || { printf 'FAIL: d16: the range echo carries no base=marker token — the stable base-source word is how a job log says why this run is not diffing the payload before (AC4)\n' >&2; return 1; }
+  printf '%s' "$CAP_ERR" | grep -qF -- "$SHA3_A" \
+    || { printf 'FAIL: d16: the range echo does not name the marker endpoint %s — endpoints before the call stay the channel law for the new base too\n' "$SHA3_A" >&2; return 1; }
+  ok "d16: with MARKER_SHA set and a differing before, the push arm diffs marker..sha and the echo names base=marker [run -5 C01, AC4]"
+}
+
+leg_d17() {
+  helper_ready d17 || return 1
+  build_fix3 || { printf 'FAIL: d17: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # AC3: marker==sha is the re-run of a succeeded push — the quiet verify the
+  # replaced re-run law promises: the moved range answers empty, exits 0, and
+  # stdout stays exactly the one JSON line.
+  detect_capture "$FIX3" EVENT_NAME=push "MARKER_SHA=$SHA3_C" "EVENT_BEFORE=$SHA3_B" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 0 ] \
+    || { printf 'FAIL: d17: the marker==sha run exited %d, expected 0 — a quiet re-run is data, not a malfunction (stderr: %s)\n' "$CAP_RC" "$CAP_ERR" >&2; return 1; }
+  local stripped; stripped="${CAP_OUT//[[:space:]]/}"
+  [ "$stripped" = '[]' ] \
+    || { printf 'FAIL: d17: marker==sha answered %s, expected [] — the range endpoints are the same tree\n' "$stripped" >&2; return 1; }
+  local nlines; nlines=$(printf '%s\n' "$CAP_OUT" | grep -c . || true)
+  [ "$nlines" -eq 1 ] \
+    || { printf 'FAIL: d17: stdout carried %d non-empty line(s), expected exactly the one JSON array (channel law)\n' "$nlines" >&2; return 1; }
+  ok "d17: marker==sha answers [] with exit 0 and stdout exactly one JSON line — the quiet re-run semantics of the moved range [run -5 C01, AC3]"
+}
+
+leg_d18() {
+  helper_ready d18 || return 1
+  build_fix3 || { printf 'FAIL: d18: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # AC2 regression pin ("fallback == today"), GREEN at authoring: with the
+  # marker empty (the bootstrap state the resolver emits), the push arm must
+  # reproduce the shipped d9 answers byte-for-byte — pinning the fallback
+  # BEFORE the marker lands so the landing cannot quietly alter it. The
+  # base=before clause is conditional by the header pin: today's echo carries
+  # no base= token, and the authored-red set is law at 8.
+  detect_capture "$FIX3" EVENT_NAME=push "MARKER_SHA=" "EVENT_BEFORE=$SHA3_A" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 0 ] \
+    || { printf 'FAIL: d18: the marker-empty fallback exited %d, expected the shipped 0 (stderr: %s)\n' "$CAP_RC" "$CAP_ERR" >&2; return 1; }
+  local stripped; stripped="${CAP_OUT//[[:space:]]/}"
+  [ "$stripped" = '["alpha","beta"]' ] \
+    || { printf 'FAIL: d18: marker-empty before=A sha=C answered %s, expected the byte-identical d9 answer ["alpha","beta"] — the fallback must equal the shipped range law\n' "$stripped" >&2; return 1; }
+  case "$CAP_ERR" in
+    *'::warning::'*|*'::notice::'*)
+      printf 'FAIL: d18: the marker-empty run annotates the fallback — the shipped before..sha path stays silent here (d9 shape); an absent marker is bootstrap, not an anomaly\n' >&2; return 1 ;;
+  esac
+  printf '%s' "$CAP_ERR" | grep -qF -- "detect: range $SHA3_A..$SHA3_C (event push" \
+    || { printf 'FAIL: d18: the fallback echo does not carry the shipped endpoint form (detect: range A..C (event push...) — the range line stays diagnosable across the change\n' >&2; return 1; }
+  case "$CAP_ERR" in
+    *'base='*)
+      printf '%s' "$CAP_ERR" | grep -qF 'base=before' \
+        || { printf 'FAIL: d18: the fallback names a base token that is not base=before — marker-empty is the before arm, not the marker and not the tip-only narrowing (post-DEV landing token)\n' >&2; return 1; } ;;
+  esac
+  # Full-channel identity: the empty MARKER_SHA the resolver emits on a
+  # bootstrap push must not perturb a single byte versus the marker-unset call
+  # (answers, echoes and exit code — the "byte-equivalent to today" claim).
+  local rc1="$CAP_RC" out1="$CAP_OUT" err1="$CAP_ERR"
+  detect_capture "$FIX3" EVENT_NAME=push "EVENT_BEFORE=$SHA3_A" "SHA=$SHA3_C"
+  { [ "$CAP_RC" -eq "$rc1" ] && [ "$CAP_OUT" = "$out1" ] && [ "$CAP_ERR" = "$err1" ]; } \
+    || { printf 'FAIL: d18: the marker-empty call differs from the marker-unset call (exit %s vs %s, stdout or stderr drift) — an empty MARKER_SHA changed the shipped behavior somewhere\n' "$CAP_RC" "$rc1" >&2; return 1; }
+  ok "d18: an empty MARKER_SHA reproduces the shipped d9 fallback byte-for-byte — answer, endpoint echo, silence and exit, identical to the marker-unset call on every channel (the fallback == today pin, green at authoring) [run -5 C01, AC2]"
+}
+
+leg_d19() {
+  helper_ready d19 || return 1
+  build_fix3 || { printf 'FAIL: d19: harness could not build the wide-range fixture\n' >&2; return 1; }
+  # AC5: a garbage marker that reaches the script past the YAML resolver must
+  # die inside it too — the unmasked git diff answers 128, the d13 posture for
+  # the new base. Today MARKER_SHA is not read, so the valid before resolves
+  # GREEN: RED at authoring, and this is the leg that keeps any silencer out of
+  # the new arm (t15's no-masking scan covers it unchanged).
+  local garbage; garbage=$(printf 'f%.0s' {1..40})
+  detect_capture "$FIX3" EVENT_NAME=push "MARKER_SHA=$garbage" "EVENT_BEFORE=$SHA3_B" "SHA=$SHA3_C"
+  [ "$CAP_RC" -eq 128 ] \
+    || { printf 'FAIL: d19: a garbage MARKER_SHA (40xf) with a valid before exited %d, expected git 128 propagation — exit 0 with %s means the marker was ignored or the diff masked; a silent [] is the green lie this family forbids (d13 kin)\n' "$CAP_RC" "${CAP_OUT//[[:space:]]/}" >&2; return 1; }
+  [ -z "${CAP_OUT//[[:space:]]/}" ] \
+    || { printf 'FAIL: d19: the garbage-marker path emitted %s — a failed range must emit nothing, not a set\n' "${CAP_OUT//[[:space:]]/}" >&2; return 1; }
+  ok "d19: an unreachable MARKER_SHA propagates git 128 with no JSON on stdout through the unmasked diff — the script stays independently loud about the new base [run -5 C01, AC5]"
 }
 
 # --- C02 cutover legs (x1-x5) --------------------------------------------------
@@ -2109,7 +2591,11 @@ import re, sys
 # file), keyed and line-number-free (x3 discipline). AGENTS.md is checked
 # because it is the regenerated carrier of overview.md — C03 lands source and
 # generated surface together, so a marker present only in one of them means
-# the pair drifted apart.
+# the pair drifted apart. Run -5 grows the tuple by the marker-range law
+# (plan §6: one tuple, `marker..sha`): the trio re-word must name the moved
+# base on every carrier in the SAME commit as the code (x5 parity law) — the
+# before..sha tuple below now doubles as the fallback-clause pin, since the
+# re-worded law keeps that literal for the marker-missing case.
 DOCS = ('skills/container-creation/SKILL.md', '.rulesync/rules/overview.md', 'AGENTS.md')
 MARKERS = (
     ('pushed-range', ('before..sha', 'whole pushed range')),
@@ -2117,6 +2603,7 @@ MARKERS = (
     ('tip-only fallback', ('tip-only',)),
     ('announced empty set', ('announce',)),
     ('fetch-depth reason', ('fetch-depth: 0',)),
+    ('marker-anchored push', ('marker..sha',)),
 )
 # On v15.0.10 + runner v13.2.0 the new lines are job-log text: no gated-doc
 # sentence may promise an annotation render (RESEARCH 7.2/7.3). The phrase
@@ -2168,7 +2655,7 @@ PY
   then
     return 1
   fi
-  ok "x5: SKILL.md, overview.md and regenerated AGENTS.md carry the detection contract by marker (before..sha range / merge base / first push / tip-only / announced / fetch-depth: 0), no line over-claims an annotation render, and every docker-build.yaml line co-names workflow_dispatch [run -2 C03 AC3-AC4]"
+  ok "x5: SKILL.md, overview.md and regenerated AGENTS.md carry the detection contract by marker (before..sha fallback range / merge base / first push / tip-only / announced / fetch-depth: 0 / marker..sha range law), no line over-claims an annotation render, and every docker-build.yaml line co-names workflow_dispatch [run -2 C03 AC3-AC4; run -5 C01 AC9]"
 }
 
 # --- C04 repo-wide sweep (g1): every .forgejo/workflows/*.yaml ----------------
@@ -2250,6 +2737,8 @@ run_leg t12 leg_t12
 run_leg t13 leg_t13
 run_leg t14 leg_t14
 run_leg t15 leg_t15
+run_leg t16 leg_t16
+run_leg t17 leg_t17
 run_leg r1 leg_r1
 run_leg r2 leg_r2
 run_leg r3 leg_r3
@@ -2270,6 +2759,10 @@ run_leg d12 leg_d12
 run_leg d13 leg_d13
 run_leg d14 leg_d14
 run_leg d15 leg_d15
+run_leg d16 leg_d16
+run_leg d17 leg_d17
+run_leg d18 leg_d18
+run_leg d19 leg_d19
 run_leg x1 leg_x1
 run_leg x2 leg_x2
 run_leg x3 leg_x3

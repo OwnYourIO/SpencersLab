@@ -236,17 +236,23 @@ role × permission matrix is in the `agents-sync` skill references
   reports them honestly in `commands_run`. A `docker build => no-daemon,
   CI-deferred` line is the designed passing gate shape, not a deviation
   (ruled 2026-10-28, cf-77). Detection in that forge workflow is
-  range-pinned: a push diffs the whole `before..sha` range — the reason
-  its detect job checks out with `fetch-depth: 0` — and a PR diffs
-  merge-base to head, hand-rolled because the `git diff --merge-base`
-  flag needs git ≥ 2.43 and the runner image's git is unverified. The
-  first push to a branch is deliberately tip-only and announces itself
-  in the run log, as does an empty changed set on a real push/PR range;
-  a no-op push (its `before` equals its `sha`) and an empty dispatch
-  list stay silent by ruling; an empty `before` is fatal and an
-  unresolvable range fails loud rather than resolving to nothing. Push
-  payloads leave `total_commits` at 0, so detection never counts
-  commits.
+  range-pinned: a push diffs `marker..sha` — from the last-built marker
+  ref, which the workflow advances only on a push run whose whole build
+  matrix published green, so a build a dead run lost is re-covered by
+  the next push instead of staying skipped forever — with the whole
+  `before..sha` range as the marker-missing fallback; the reason its
+  detect job checks out with `fetch-depth: 0` is that either range must
+  resolve locally, and a PR diffs merge-base to head, hand-rolled
+  because the `git diff --merge-base` flag needs git ≥ 2.43 and the
+  runner image's git is unverified. The first push to a branch is
+  deliberately tip-only and announces itself in the run log, as does an
+  empty changed set on a real push/PR range without a marker; a no-op
+  push (its `before` equals its `sha`) and an empty dispatch list stay
+  silent by ruling, and an empty range measured from a present marker is
+  informational — it proves nothing was missed; an empty `before` is
+  fatal and an unresolvable range fails loud rather than resolving to
+  nothing. Push payloads leave `total_commits` at 0, so detection never
+  counts commits.
 - Agent-shell tooling recipes: `helm` lives at `~/.local/bin` — export
   `PATH=$HOME/.local/bin:$PATH` before suite runs and renders (without it
   pytest silently mass-skips its helm-guarded tests); `aislop` runs via
