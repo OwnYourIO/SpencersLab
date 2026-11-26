@@ -1416,3 +1416,403 @@ rule (c).
 81. https://argo-cd.readthedocs.io/en/stable/user-guide/helm/ — helm used only to `helm template`; chart+targetRevision exact pins; "starting with [Argo CD] version 3.5 [the] only Helm binary used to render charts is v4" [B(d),Q2(a),Q2(b),Contradictions]
 82. https://helm.sh/docs/chart_best_practices/dependencies/ — recommends RANGE dep versions (`~1.2.3`), no lockfile guidance (measured 2026-11-25) [C,Q2(e)]
 83. Own measurements (round 4): full-tree Chart.yaml↔Chart.lock drift scan at 3f21e85e8 (DRIFT live: charts/base argo-cd 10.18.3↔10.18.2; charts/traefik + charts/traefik-zerotrust traefik 42.4.2↔42.4.1; all other dep-carrying charts in sync); git-log provenance split GitHub-era (locks present: bcf254c3b, 73da0c56b) / instance-era (locks absent: 80c503f72, 95533725d, a619fe6ad) with author/committer emails; Forgejo API PR/commit status reads; renovate.json audit (13 customManagers, 11 packageRules, no enabledManagers ⇒ built-in helmv3+helm-values live; constraints.helm 3.22.1 present); services/ pin-shape audit (61 datasource=helm pins, all exact 1.0.x; zero ^/~/* chart-version ranges repo-wide); release.yaml/containers-build.yaml line-level reads (@3f21e85e8).
+
+## Round-6 research (2026-11-26): making runner scale visible to Forgejo
+
+Owner question (verbatim): "Ok, cool, that scaled up the pods, but I needed to do
+so in a way that Forgejo sees. Can you do some research on how?"
+
+Method note: `code.forgejo.org` (the runner's canonical repo host) is Anubis-
+challenged for non-browser fetches (2026-11-26, measured), so every runner-side
+source citation below is the exact module content fetched from the Go module
+proxy (`proxy.golang.org/code.forgejo.org/forgejo/runner/v13/@v/v13.2.0.zip` —
+v13.2.0 = the chart's pinned daemon image tag; v12.13.2 likewise) and every
+server-side citation is `codeberg.org/forgejo/forgejo` `raw/commit/17e1001d5e00
+…` — tag v15.0.10, our exact instance version, verified against the Codeberg
+release API [S1].
+
+### TL;DR
+
+1. Forgejo keys runners by **uuid (UNIQUE column)** [S2]: 10 pods sharing one
+   `(uuid, token)` registration are ONE runner record — one admin-UI row, no
+   session/multiplexing, `last_online` overwritten by whichever daemon asked
+   most recently. The server cannot see "10 machines" through one identity [S4].
+2. But the C16 shape is **not a throughput bug**: task assignment is pull-based
+   per authenticated fetch call, `capacity` is enforced client-side per daemon
+   process only, and concurrent claims on the shared row are race-safe (job-row
+   CAS + rollback) — 10 pods × `capacity: 1` really is up to 10 concurrent jobs
+   [S3,S5,S6,S8]. D57's arithmetic stands; only the *visibility* is missing.
+3. To be "seen", scale must be **N registrations**. Forgejo 15.0 exposes three
+   ways to mint them: UI records, the scoped runner-management HTTP API
+   (`POST …/actions/runners`, list/DELETE included) [S14], and **offline
+   shared-secret registration** (`forgejo forgejo-cli actions register
+   --secret …`) — idempotent, uuid deterministically derived from the secret's
+   first 16 chars, token rotation = same identifier + new last 24 chars
+   [S7,S13].
+4. v13's own scale vocabulary: one daemon can hold **N connections** (many
+   servers/orgs from one pod) and **capacity=N** (many jobs in one daemon) —
+   NOT many processes per connection; the ephemeral `one-job` + `--handle` +
+   queue-API pattern (blog, official examples) is the upstream-endorsed shape
+   for job-shaped scaling and is what autoscaling card `iaJq5bgWHHDHotcBY`
+   should build on [S9,S10,S11,S14].
+5. Minimal-change answers for our chart, ranked: (A) keep C16 — concurrency is
+   real, accept the single row; (B1) **N releases, zero chart edit** (the chart
+   is literally designed "one registration per release"); (B2) per-ordinal
+   offline registrations rendered by an init container into per-pod config
+   (medium chart edit, GitOps-clean, stable names, clean rotation); (C) capacity
+   10 on one/few pods (one template line, but one shared dind envelope).
+
+### Q1 — Dispatch model of N daemons on one registration (source-verified)
+
+**Identity is the uuid, and the uuid is UNIQUE.** `ActionRunner.UUID` carries
+`xorm:"CHAR(36) UNIQUE"` [S2]; every authenticated RPC resolves through
+`GetRunnerByUUID` in the connect interceptor [S4]. Ten daemons with one
+`(uuid, token)` therefore authenticate as one record. There is no runner-
+session table and no multiplexing concept anywhere in the request path.
+
+**Heartbeat = overwrite.** There is no dedicated heartbeat RPC: the interceptor
+sets `last_online=now` on **every** authenticated request (Register excluded)
+and `last_active=now` only on `UpdateTask`/`UpdateLog` [S4]. With 10 daemons
+polling every `fetch_interval` (default **2s** [S9 config]), the row's
+`last_online` simply churns to the max across all of them; status derives from
+the row (`OFFLINE` >1min since last_online, `IDLE` >10s since last_active,
+else `ACTIVE` [S2]). `Declare` (startup + every daemon) overwrites
+`agent_labels`/`version` on the same row — benign while all replicas carry the
+identical mounted config, but it means the UI's single row cannot distinguish
+replicas, and any label divergence between replicas would silently fight
+(last-write-wins).
+
+**Claims serialize safely.** `FetchTask` [S3] runs `PickTask` →
+`CreateTaskForRunner` in a transaction [S5,S6]: it lists waiting jobs
+(`task_id=0`, label-matched against the *row's* AgentLabels), inserts the task
+bound to `runner_id`, and wins the job only if the conditional update
+`action_run_job … WHERE task_id=0` reports exactly 1 row — otherwise the
+transaction **returns no-task and rolls the insert back** [S6]. Two replicas
+racing for the same job: exactly one gets it; the loser just re-polls. Idempotency
+is layered on top via per-request `x-runner-request-key` + a server-side mutex
+map [S3,S4]. No double-claim, no zombie insert.
+
+**Concurrency is a client budget, not a server cap.** The poller computes
+`available = capacity - inProgressTasks` per daemon, holds a fetch mutex so one
+fetch asks for all of it (`task_capacity` in `FetchTaskRequest`), and the
+server hands back up to that many tasks (`Task` + `AdditionalTasks`) [S3,S9].
+Nothing server-side counts live daemons per row or caps tasks per runner for
+**non-ephemeral** runners — the only per-row guard (`HasTaskForRunner`) is
+inside `if runner.Ephemeral` [S5]. `[actions]` exposes no concurrency ceiling
+either (only `ZOMBIE_TASK_TIMEOUT=10m`, `ENDLESS_TASK_TIMEOUT=3h`,
+`ABANDONED_JOB_TIMEOUT=24h` cleanup knobs [S12]).
+
+**Verdict:** the server treats 10 replicas as *one runner with 10
+simultaneous mouths* — effectively `Σ (replicas × capacity)` concurrent jobs,
+one UI row, one identity, one label set, blurred attribution in job logs (all
+jobs name the same runner). D57's stated mechanism ("instance sees one runner
+record, last-seen churns, log attribution blurs… 10 pods × capacity 1 = 10
+concurrent jobs") is protocol-correct on 15.0.10 + 13.2.0. If the owner
+observed *serialization in practice*, the cause is deployment, not protocol —
+check: are all 10 pods `Running` (local-path RWO × 12Gi per pod, UA-R5-5 headroom
+warning [D57]), and do 10 sets of logs each show `declared successfully` +
+`[poller] launched` [S9 daemon.go/poller.go]? Owner-visible checks are listed in Q3.
+
+### Q2 — The right scale patterns for Forgejo 15.0 / runner 13.x
+
+**(a) ONE registration, capacity=N, fewer pods.** `runner.capacity` = "Execute
+how many tasks concurrently at the same time" [S9 config.example]. The old
+Gitea-era `-1 = unlimited` gotcha is **dead** in Forgejo Runner: both v12.13.2
+and v13.2.0 reject negative values with `Ignoring invalid 'runner.capacity'`
+and keep the default **1** (a silent downgrade, not unlimited) [S9,S10].
+For OUR chart, N jobs in one daemon means N job containers inside one pod:
+one shared privileged dind daemon (image store, disk on the single 10Gi
+`docker-data` VCT, network namespace), one shared `cache.dir`, and one shared
+pod resource envelope — our pod limits are `cpu: 2 / memory: 4Gi` for dind
+*and* jobs together, so capacity>1 without raising them is fake parallelism
+(exactly what D57 said). The security docs' remedy is pairing
+`runner.capacity` with `container.options` per-job limits (`--memory=1g`,
+`--cpus=2`) [S13] and they confirm the cross-job contention class for shared
+networks. Upsides: one row honestly matches one machine; caches and pulled
+images are shared across concurrent jobs (warm cache actually helps matrix
+legs).
+
+**(b) N registrations = N pods.** All three minting methods exist in our
+versions: UI records (shown-once uuid+token [S13]); HTTP API
+`POST /{scope}/actions/runners` returning `{id, uuid, token}` with `ephemeral`
+property, list `GET …/runners` (`visible=false` for scope-only), per-runner
+GET/DELETE, plus the queue feed `…/actions/runners/jobs` — available in admin,
+org, repo and user scope [S14]; and offline registration:
+`forgejo forgejo-cli actions register --secret <40-hex>` on the server host —
+"**Idempotent** registration of a runner using a shared secret", uuid = the
+first 16 secret chars rendered as a UUID, re-running with the same identifier
+and new last-24 *updates* the secret (clean rotation) [S7,S13]. The client
+counterpart `create-runner-file --secret` derives the identical uuid [S9];
+our v13 declarative config just needs `{uuid, token}` in
+`server.connections.<name>` (the ESO template already renders exactly that —
+today from one Bitwarden item instead of N).
+The v13 `register` CLI **exists but is deprecated** ("declare connections in
+the runner configuration instead") [S9 register.go]; the official k8s example
+predates that guidance (runner 6.4-era init-container `register` +
+`generate-config`, Deployment `replicas: 2`, one shared *registration* token,
+names = pod names [S11]). The chart header's claim that "the register CLI …
+do[es] not work" (values.yaml:67-68) overstates — it works, upstream just
+discourages it; our declarative path should not adopt it regardless.
+**The k8s blocker for per-pod config:** all STS replicas mount the SAME
+Secret object, so per-pod identity inside one release needs an init container
+to *render* a per-ordinal config from a multi-key Secret (pod ordinal via the
+downward API `metadata.name`), or N releases. The chart's own design line —
+charts/forgejo-runner/values.yaml:1 "one registration per release … releases
+coexist in namespace `default` without collision" — makes **N releases the
+zero-edit path**.
+**Maturity sweep (2026-11-26, GitHub/Codeberg APIs + artifacthub):** there is
+**no mature community chart or operator** for multi-registration forgejo
+runners: wrenix/helm-charts `forgejo-runner` 0.2.9 (single-runner), dtechvision
+v0.0.1 self-flagged untested, `ultimaterex/forgejo-runner-k8s` (KEDA, 6★,
+Aug–Nov 2026, no license), `emdzej`/`farazmd`/`thaddeuscleo` "runner
+controllers" 0★ created within weeks, `sjones512` experimental k8s-backend
+plugin [S15,S16]. Upstream rejects k8s-native execution inside the main runner
+(maintainer-pool argument; a back-end plugin interface is the actual direction,
+feature-requests #107; third-party prototypes exist) [S14]. Home-grown remains
+the right call here.
+
+**(c) Ephemeral mode.** Real in our exact versions: Forgejo 15.0 "ships …
+Ephemeral Runners" [S17]; the `Ephemeral` column ("a runner that only ever get
+one single job assigned" [S2]); server deletes the record once the final
+result lands or the task is stopped/failed (`UpdateTask`, `StopTask` branches
+[S3,S5]); `FetchSingleTask` "introduced with Forgejo 15" [S9 single.go];
+`one-job --handle` is marked "Forgejo >= 15" [S9 cmd.go]; `daemon` **refuses**
+to run against an ephemeral record (exits: "not supported in daemon-mode")
+[S9 daemon.go, corroborated by S13]. Caveats from the source authors: an
+ephemeral runner that never receives a job **lingers forever** (no way to
+influence it yet, issue 109); `waiting` is ambiguous (concurrency-group blocks;
+`ready` status proposed, issue 10259) [S11,S14]; pre-warming without a handle
+defeats the routing guarantee [S14]. Ephemeral-per-pod is therefore *the*
+autoscaling answer, not the fixed-10 answer.
+
+**(d) Groups / units / scale sets.** Nothing like runner groups exists in 14/15
+— the only grouping axis is the **scope ladder** (instance → org/user → repo,
+visibility flows downward; admin scope sees all) [S14,S13]. The v15 additions
+around runners are the management/queue APIs, ephemeral mode, and
+`FetchSingleTask` [S3,S9,S14,S17]; no server-side notion of "how many
+machines back a registration" was added.
+
+### Q3 — Recommendation for "replicas 10 that Forgejo sees"
+
+Tradeoff table (all options assume both releases, dind sidecar per pod, ESO
+identity, five baked labels):
+
+| | A: keep C16 (10×cap1) | B1: N releases (10×1) | B2: per-ordinal offline reg (10×1 in-release) | C: capacity N on 1 pod | D: ephemeral one-job pods |
+|---|---|---|---|---|---|
+| Concurrency actually gained | 10 (protocol-verified) | 10 | 10 | 10 (same daemon) | job-shaped, 0→N |
+| Forgejo sees | **1 row** | 10 rows | 10 rows, stable names | 1 row | 1 row per job (auto-removed) |
+| Per-pod dind isolation | yes | yes | yes | **no** (shared socket/disk) | yes (job dies with pod) |
+| Cache locality | 10-way fragmented | 10-way fragmented | 10-way fragmented | shared (best hits) | none (unless external cache) |
+| Registration lifecycle | trivial (today) | 10 Bitwarden items + 10 slices | N secrets in one item set + per-pod render hook | trivial | API-created per job; zombies if job never runs [S14]; cron/ephemeral does the rest |
+| Token rotation | 1 item | 10 items | idempotent re-register, uuid stays [S13] | 1 item | none (per-job by design) |
+| Chart edits | none (already landed) | **none** | secret-runner.yaml + values + init-container + suite legs | 1 template line (secret-runner.yaml:88) + envelope bumps | new controller path (Jobs/ScaledJob) — the autoscaler card's own scope |
+| Fits iaJq5bgWHHDHotcBY | neutral | parallel (releases ≠ scaler) | good (same per-pod config machinery seeds the scaler's pod template) | poor | **this IS the mechanism** [S14] |
+
+**Recommendation (3 lines, matching the RESULT):**
+1. C16's 10 pods already deliver 10 concurrent jobs — confirm with the checks
+   below before changing anything; what the shape can never give is Forgejo-
+   visible, per-replica identity (one row is inherent: uuid is UNIQUE [S2]).
+2. If "seen" is the requirement: **B1 (N releases) is zero chart change** —
+   the release-per-registration design already exists (values.yaml header);
+   **B2 (per-ordinal offline registration)** is the clean in-release shape
+   (deterministic uuid, idempotent re-register, rotation without record churn
+   [S7,S13]) at the cost of a secret-render init container + template work;
+   pick B1 now if a slice sprawl of ~10 entries is acceptable, B2 if not.
+3. Reserve D (ephemeral `one-job` + runner API + queue watcher) for the
+   autoscaling card `iaJq5bgWHHDHotcBY` — it is the upstream-endorsed pattern
+   [S11,S14] and B2's per-pod config rendering is exactly the machinery that
+   card will reuse; A (capacity bump) stays the quick middle if the owner
+   would rather see ONE row with ten jobs (raise the pod envelope + per-job
+   `container.options` first [S13]).
+
+**File-level changes per option** (current lines cited from disk 2026-11-26):
+
+- A (capacity): `charts/forgejo-runner/templates/secret-runner.yaml:88`
+  `capacity: 1` → `capacity: {{ .Values.runner.capacity }}` (default 1 in
+  `charts/forgejo-runner/values.yaml` under `runner:`); per-release slices
+  (`services/dev/prod/values.yaml:178`, `services/gpu/prod/values.yaml:272`)
+  set capacity + pod resources; the D57-pinned suite legs
+  (`tests/services/dev-forgejo-runner.sh` t2, `tests/services/gpu-forgejo-
+  runner.sh` g2 — capacity-stays-1 pins per D57) must be re-aimed in the same
+  commit as any default change, and template-comment byte-identity (C03 AC2)
+  re-verified for the docker render.
+- B1 (N releases): `services/dev/prod/values.yaml` + `services/gpu/prod/
+  values.yaml` chart-entry lists (one aliased entry per runner, names follow
+  the `<serviceName>-<appName>` appset law) + top-level per-app slices
+  (replicas 1 each); `custom-values/dev/prod-values.yaml` (and gpu twin) gain
+  per-app `bitwardenIds` runner-token UUIDs; **no template changes** —
+  ExternalSecret/Secret names already derive from release name
+  (secret-runner.yaml:55-63). Owner legs: create N UI records (or run the
+  offline CLI N times) + N Bitwarden items.
+- B2 (per-ordinal in-release): `secret-runner.yaml` fetches N id/secret pairs
+  (multi-field Bitwarden item(s) → Secret keys `uuid-<i>`/`token-<i>`);
+  `values.yaml` gains `runner.registrations: N` + a config-render
+  `initContainers.register` (POD name → ordinal via downward API) writing
+  `/data/config/config.yaml` in an emptyDir (replacing today's subPath mount,
+  values.yaml:363-369), reloader annotation reviewed; `services/*/values.yaml`
+  slices keep `replicas: 10`; suite legs assert 10 distinct uuid keys render +
+  per-ordinal config. Server-side one-time leg: `forgejo forgejo-cli actions
+  register --secret …` once per ordinal (or a small pre-sync Job), idempotent
+  thereafter [S7].
+- C/D (ephemeral): new surface — Jobs/`ScaledJob` pod template + queue watcher
+  against `GET …/actions/runners/jobs` + `POST …/actions/runners` + `one-job
+  --wait --handle` [S9,S14]; scope it on `iaJq5bgWHHDHotcBY`, not C16.
+
+**Exact owner-visible checks after any shape** (both instances):
+1. `Site admin → Actions → Runners` (`/admin/actions/runners`): B1/B2 → 10
+   rows, each `online`, one per pod name; C16 → 1 row (expected, not broken).
+2. API twin (scriptable): `GET /api/v1/admin/actions/runners` with an admin
+   token — `total_count` and each row's `status`/`last_online`/`labels`
+   [S14]; `?visible=false` narrows to the scope.
+3. Concurrency in action: push a matrix workflow of ≥5 jobs (`runs-on:
+   docker`); all ≥5 should show `running` simultaneously. Per pod: `docker ps`
+   inside `forgejo-runner-dev-<i>`'s dind shows ≤1 job container (C16/B1/B2,
+   capacity 1) — a direct "each pod works" witness beyond the UI.
+4. Queue feed: `GET /api/v1/admin/actions/runners/jobs` empties only as fast
+   as Σ capacity drains [S14].
+5. Pod health pre-conditions: `kubectl -n default get pods -l …` → 10 `Running`
+   (Pending ⇒ the UA-R5-5 PVC/node-headroom leg, not Forgejo [D57]).
+
+### Q4 — Pitfalls
+
+- **Delete vs deregister.** There is no client-side deregistration anywhere in
+  v13 (no Unregister code path — a daemon exit leaves its row; verified by
+  grep of the module source [S9]). Server-side DELETE renames the uuid to a
+  `ffffffff-ffff-ffff-…` sentinel (so the old uuid can be re-minted) and soft-
+  deletes; deleted rows **linger in the DB** pending the foreign-keys rollout
+  [S2 DeleteRunner; S14 "Runner Removal"]. Scaledown therefore: C16 = no row
+  change (one row survives as long as any daemon polls); B1/B2 = one stale
+  `offline` row per removed replica until the cleanup cron or manual delete.
+- **The cleanup cron is OFF by default.** `[cron] ENABLED=false` master +
+  `cron.cleanup_offline_runners ENABLED=false`, `GLOBAL_SCOPE_ONLY=true`,
+  `OLDER_THAN=24h`, `@midnight` [S13 config-cheat-sheet] — and when enabled it
+  *can* prune persistent runners that were merely offline too long (the
+  official on-demand example warns exactly this [S11]). B1/B2/D need it on
+  (or owned deletion in the lifecycle); C16 doesn't.
+- **Mid-job pod death = failed job, not requeued.** A task fetched by daemon X
+  is bound to the runner row; if X dies, the request-key recovery only helps
+  the *same* daemon retrying the *same* fetch — another replica never
+  inherits it [S3,S6,S9]. The row then shows Running tasks until
+  `StopZombieTasks` (10 min without updates) fails them — **cron-gated** as
+  above [S12,S13]. A shared-registration fleet inherits this identically;
+  it's an argument for `shutdown_timeout` honesty (we have 5m) and for
+  ephemeral-per-job pods in D.
+- **Capacity surprises.** Negative capacity is *ignored* (→1), not unlimited
+  [S10]; `capacity: 0` also means default-1 (unset). The old "-1 = unlimited"
+  folklore actively misleads on 12.8+ — a fleet tuned with -1 silently runs 1
+  job at a time.
+- **Token rotation under N registrations.** UI/API records have no rotate —
+  delete + recreate = new uuid = a new Bitwarden item + a reloader restart per
+  release [chart header]. The offline path is the rotation-friendly one:
+  same identifier (first 16 chars), new secret tail, re-run the CLI, ESO
+  refresh, pods restart with the same uuid, UI identity stable [S13].
+- **Cache + image-store fragmentation.** The cache lives on the runner, never
+  in Forgejo [S13 admin actions]; each daemon keeps its own `cache.dir` and
+  each dind its own `docker-data`. 10 pods → a matrix leg that saved a cache
+  on pod i has no guarantee of landing on pod i next time → cold rebuilds.
+  Fixes if it bites: one shared external cache server (`cache.external_server`
+  + the `cache-server` subcommand [S9]), or a registry pull-through mirror
+  [S15]. A (capacity-N one pod) sidesteps it entirely (shared caches).
+- **Shared mounted config is C16's feature and ceiling.** All replicas render
+  identically from one ESO Secret, so labels/version can't diverge *by design*
+  — but neither can any per-replica identity exist, and one ESO/Bitwarden
+  rotation triggers a **simultaneous** 10-pod restart (reloader annotation,
+  values.yaml:166-167): in-flight jobs get the 5m window, then become zombie-
+  timed-out failures. Stagger or drain (replicas to 0 during credential
+  rotation) if jobs matter mid-flight.
+- **Declare-churn is benign only while identical.** 10 replicas × 10 declares
+  of identical labels = no-op writes; a future shape where replicas carry
+  different label sets on one uuid would silently thrash the row's
+  AgentLabels and mis-route jobs (last writer decides eligibility [S4]).
+
+### Contradictions and how they were weighed
+
+- **Our own shipped B1 note** ("one (uuid, token) pair must map to exactly one
+  pod … NEVER more replicas") vs **the protocol**: B1 stated policy, not
+  server behavior. The source shows neither enforcement nor protection —
+  sharing works, with the visibility/attribution costs above. D57's amendment
+  is thus *behaviorally sound*; this round corrects the reasoning, not the
+  ruling.
+- **values.yaml:67** "the register CLI and env-var registration do not work"
+  vs **v13 source**: `register` exists, warns "deprecated; declare
+  connections in the runner configuration instead", and the official k8s
+  example uses it [S9,S11]. Verdict: *deprecated, not broken* — do not adopt
+  it, but the comment should be softened to "deprecated" whenever that file
+  is next touched (docs hygiene, not a behavior change).
+- **Old `-1 = unlimited` capacity folklore** (Gitea act_runner docs era) vs
+  **v12.13/v13.2 code** which reject negatives [S9,S10]: current code wins —
+  on our pinned image there is no unlimited mode.
+- **"Forgejo doesn't effectively use them" (owner observation) vs protocol
+  analysis (10×1 is concurrent):** both can be true — the UI showing one
+  runner *looks* like "not used", while any actual serialization would come
+  from unhealthy pods. Weighted toward source (deterministic code reads, our
+  exact versions) with the health checks in Q3 as the discriminator; the
+  research cannot measure the live pods, only say what should happen.
+- **Docs silence on shared registrations**: neither forgejo.org docs nor any
+  upstream discussion explicitly blesses or forbids N processes per
+  registration (searched runner+gitea issues 2026-11-26); the docs' model
+  ("uuid and token … act as a username and password" [S13]) implies one
+  identity per runner *installation* — our multi-process sharing is
+  undocumented territory whose costs are exactly the Q1 visibility list.
+
+### Implications for the plan (what to decide differently)
+
+1. **C16's acceptance wording**: "10 pods × capacity 1 = 10 concurrent jobs"
+   is now source-backed (not assumed); add the Q3 §5 checks (matrix run +
+   `docker ps` per pod + `/admin/actions/runners` row count = 1 *expected*)
+   to the C16 landing observation so "Forgejo sees it" has a witness.
+2. **D57's "accepted cost" deserves one owner confirmation**: the accepted
+   costs (one record, churn, blurred attribution) are permanent for that
+   shape — the research shows visibility requires N registrations (B1/B2),
+   not more pods. If the owner's actual requirement was per-runner visibility,
+   B1 is landable with zero chart edits; B2 is the chart-change candidate.
+3. **Autoscaling card `iaJq5bgWHHDHotcBY`**: scope it to the blog/official-
+   example mechanism — queue API watcher + `POST …/actions/runners
+   (ephemeral:true)` + `one-job --handle --wait` pod template — and reuse
+   B2's per-pod config-render machinery if B2 lands (single mechanism, both
+   cards). The KEDA ScaledJob community shapes (S15) validate the plumbing
+   but none is mature enough to adopt as-is.
+4. **Secret hygiene**: B1/B2/D all multiply identities — put the runner ids/
+   secrets behind the existing `bitwardenIds` + `OVERRIDE_VIA_CUSTOM_VALUES`
+   pattern (N entries, never the `forgejo-token` item; keep the fail-fast
+   empty-uuid crash-loop note [values.yaml:91-103]).
+5. **If capacity is ever raised (option C)**: template line at
+   secret-runner.yaml:88 parameterized, pod limits raised, `container.options`
+   per-job caps added, docker-data PVC resized, and the D57 suite legs
+   re-aimed in the same commit — the "bump is a ruling, not drift" guard.
+
+### Open questions (for coord/human)
+
+1. Did the owner actually observe serialized jobs (needs pod-health dig), or
+   was the observation "the UI shows one runner"? The recommendation forks:
+   nothing-vs-B1/B2.
+2. If visibility is wanted: acceptable to carry ~10 appset aliases + 10
+   Bitwarden items per instance (B1), or is the init-container chart change
+   (B2) the preferred direction despite touching the C03 byte-identity legs?
+3. Are the instances' `[cron]`/`cron.cleanup_offline_runners` currently off
+   (repo has no app.ini leg for it — EXPLORE didn't record it)? B1/B2/D
+   hygiene depends on the answer.
+4. Should the values.yaml:67 "register CLI … do not work" comment be reworded
+   to "deprecated" at the next file touch (docs accuracy)?
+
+### Sources (round-6; independent numbering — rounds 1–5 lists unchanged)
+
+- [S1] https://codeberg.org/forgejo/forgejo — release API: tag v15.0.10 = commit `17e1001d5e00e8ee3cbc1b6dd31be94ac38185f9` (2026-10-12 security patch set; instance version verified).
+- [S2] https://codeberg.org/forgejo/forgejo/raw/commit/17e1001d…/models/actions/runner.go — `UUID xorm:"CHAR(36) UNIQUE"`, `Ephemeral` column, `LastOnline/LastActive` + `RunnerOfflineTime=1m`/`RunnerIdleTime=10s`, `Status()`, `DeleteRunner` uuid-sentinel rewrite, `DeleteOfflineRunners` (older_than, globalOnly).
+- [S3] …/routers/api/actions/runner/runner.go — `FetchTask` (`TaskCapacity` honored: primary + AdditionalTasks; request-key mutex; rollback-avoidance comment "zombie tasks"), `FetchSingleTask`, `Register` (registration-token flow, server-generated uuid, ephemeral property, "requires Forgejo 15" era), `Declare` (labels+version overwrite), `UpdateTask` (runner-ID-bound; ephemeral delete on final result), `UpdateLog` runner-ID check.
+- [S4] …/routers/api/actions/runner/interceptor.go — `x-runner-uuid`/`x-runner-token`/`x-runner-request-key` headers; `GetRunnerByUUID` + constant-time token compare; `last_online` on every call, `last_active` on Update{Task,Log}.
+- [S5] …/services/actions/task.go — `PickTask` (`if runner.Ephemeral { HasTaskForRunner }` — the only per-row concurrency gate), task recovery, `StopTask` ephemeral-delete, `UpdateTaskByState` (`runner_id` check; keeps task.Updated fresh against the zombie sweep).
+- [S6] …/models/actions/task.go — `GetAvailableJobsForRunner` (`task_id=0 AND StatusWaiting`, concurrency-group queue conditions, "only a single job can actually be run … for any given invocation"), `CreateTaskForRunner` (CAS `WHERE task_id=0`; `n != 1` → false → rollback).
+- [S7] …/cmd/forgejo/actions.go — `actions register --secret` "Idempotent registration of a runner using a shared secret", `generate-secret`, `--ephemeral`, `--keep-labels`; uuid derived from secret (40 hex chars).
+- [S8] …/models/actions/run.go + services/actions/clear_tasks.go — `StopZombieTasks`/`StopEndlessTasks`/`CancelAbandonedJobs` semantics (10m/3h/24h).
+- [S9] https://proxy.golang.org/code.forgejo.org/forgejo/runner/v13/@v/v13.2.0.zip (module = code.forgejo.org/forgejo/runner v13.2.0 source): `internal/app/poll/poller.go` (shared capacity budget across connections, fetchMutex, requestKey idempotency, "Forgejo 14.0.0 & 14.0.1" AdditionalTasks resilience), `internal/app/poll/single.go` ("fetchSingleTask() … introduced with Forgejo 15"), `internal/app/cmd/daemon.go` (ephemeral refused in daemon mode; per-connection clients), `internal/app/cmd/job.go` (`one-job`: single connection, --wait/--handle), `internal/app/cmd/cmd.go` (command set; daemon connection flags; register --ephemeral flag), `internal/app/cmd/register.go` (deprecation warning; "requires Forgejo 15 or newer" message), `internal/app/cmd/create-runner-file.go` (uuidFromSecret parity comment), `internal/pkg/config/config.go` (capacity validation; connections map; fetch_interval default 2s; codeberg 30s floor; token_url/file:$CREDENTIALS_DIRECTORY), `internal/pkg/config/config.example.yaml`, `internal/pkg/client/header.go`, `examples/kubernetes/{README.md,dind-docker.yaml}` (official register-on-boot Deployment, replicas 2), `examples/on-demand/{README.md,run.sh}` (registration-token + register + one-job autoscaler seed; "dynamically created runners pile up" warning; Forgejo 13 label-filter limitation lifted in 14).
+- [S10] https://proxy.golang.org/code.forgejo.org/forgejo/runner/v12/@v/v12.13.2.zip — `internal/pkg/config/config.go`: same `Ignoring invalid runner.capacity` rejection (the -1 gotcha predates v13).
+- [S11] https://code.forgejo.org/forgejo/runner releases v13.2.x + RELEASE-NOTES (via module zip): "Add new `--one-job` flag … execute one task if it exists and exit" (PR 423).
+- [S12] …/modules/setting/actions.go — `[actions]` settings as shipped: no MAX/concurrency knobs; ZOMBIE/ENDLESS/ABANDONED timeouts; `CONCURRENCY_GROUP_QUEUE_ENABLED` default true.
+- [S13] https://forgejo.org/docs/v15.0/ — admin/actions/registration (uuid+token "username and password" model; UI/API/offline paths; offline example secret→uuid `37633331-…`; "update the secret … same first 16 chars"; ephemeral "at most one job before they get deleted"; "enforced by Forgejo"), admin/actions/configuration (labels/`ItRunsOn` model; capacity reference pointer), admin/actions/security (ephemeral section — daemon exits, lingering-until-job, host-mode token theft, `capacity>1` + custom-network contention, `.runner` exfil class; "Cache is stored by the runner itself and never sent to Forgejo"), admin/actions (multi-runner-per-instance statement), admin/config-cheat-sheet (cron sections: `[cron] ENABLED=false`, cleanup_offline_runners defaults false/24h/@midnight/GLOBAL_SCOPE_ONLY=true).
+- [S14] https://aahlenst.dev/blog/autoscaling-forgejo-runner/ (2026-04-12) — the canonical 15.0-era scaling writeup: queue API per scope, runner CRUD API (+`visible=false`), ephemeral via `POST {…/actions/,}runners`, `one-job --handle --wait` semantics and the label-superset race it prevents, waiting≠ready (issue 10259), no webhooks yet (PR 9803), soft-delete lingering (discussions #385), rejected JIT (runner PR 1122) and k8s-native (plugin interface fr#107), pre-warmed runners caveat, mixing persistent+ephemeral via disjoint labels.
+- [S15] GitHub API 2026-11-26 — repo search "forgejo runner kubernetes" + `ultimaterex/forgejo-runner-k8s` record (6★, 0 forks, created 2026-08-27, pushed 2026-10-19, no license): KEDA ScaledJob/ScaledObject, register-ephemeral per job, dind sidecar, MTU + registry-mirror awareness; plus `neodymium6/forgejo-ephemeral-runner` (1★), `farazmd`/`emdzej`/`thaddeuscleo/forgejo-runner-operator` (0★), `dtechvision/forgejo-runner-helm-chart` (v0.0.1, self-flagged), wrenix artifacthub `forgejo-runner 0.2.9`.
+- [S16] https://codeberg.org/wrenix/helm-charts + artifacthub (search-confirmed existence; chart contents not fetched this round — single-runner scope only, per kubesearch/artifacthub listings).
+- [S17] https://lunar.computer/forgejo-v15-0-ships-repository-scoped-tokens-20260416 — "Forgejo v15.0 … ephemeral runners" release coverage (2026-04-16).
+- [D57] ticket `DECISIONS.md` 2026-11-26 entry (owner ruling being researched) + `services/dev/prod/values.yaml:178-193` + `services/gpu/prod/values.yaml:272-280` (replicas 10, capacity 1, both slices) + `charts/forgejo-runner/templates/secret-runner.yaml:88` (capacity 1 hardcode) — disk reads 2026-11-26.
+
