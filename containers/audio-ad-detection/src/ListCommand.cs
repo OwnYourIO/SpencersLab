@@ -45,12 +45,15 @@ public static class ListCommand
             if (!track.MetaFields.TryGetValue(SightingStore.PromotedFlag, out var promotedFlag) || promotedFlag != "true")
                 continue;
             any = true;
+            // MetaFields is an IDictionary (no GetValueOrDefault): the
+            // TryGetValue form is the interface-stable read.
+            var capturedAt = track.MetaFields.TryGetValue("captured_at", out var ca) ? ca : "-";
+            var sourceGroup = track.MetaFields.TryGetValue("source_group", out var sg) ? sg : "-";
+            var sightings = track.MetaFields.TryGetValue("sightings", out var sn) ? sn : "-";
             Console.WriteLine(
                 "  {Id}  {Title}  captured_at={CapturedAt}  group={Group}  sightings={Sightings}",
                 track.Id, track.Title,
-                track.MetaFields.GetValueOrDefault("captured_at", "-"),
-                track.MetaFields.GetValueOrDefault("source_group", "-"),
-                track.MetaFields.GetValueOrDefault("sightings", "-"));
+                capturedAt, sourceGroup, sightings);
         }
         if (!any)
             Console.WriteLine("  (none)");

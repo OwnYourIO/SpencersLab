@@ -60,8 +60,12 @@ public sealed class SnapClientSupervisor : BackgroundService
         });
 
     private volatile Process? _child;
-    private volatile DateTime _lastByteAt;
-    private volatile DateTime _lastReconnectKeywordAt;
+    // volatile is not legal on DateTime: the timestamps are 64-bit UTC
+    // ticks kept atomic by Interlocked — the write side (child start,
+    // read loop, stderr events) and the watchdog read side are different
+    // threads, and a torn 64-bit read would skew the last-byte age.
+    private long _lastByteAtTicks;
+    private long _lastReconnectKeywordAtTicks;
     private volatile int _frameParity;
     private long _totalBytes;
     private int _killsTotal;
@@ -213,7 +217,20 @@ public sealed class SnapClientSupervisor : BackgroundService
                             UseShellExecute = false,
                         });
                         if (term is not null)
-                            await term.WaitForExitAsync(TimeSpan.FromMilliseconds(TermWaitMs));
+                        {
+                            // Process only exposes WaitForExitAsync(CancellationToken):
+                            // the timeout token carries the TermWaitMs grace, and a
+                            // timeout falls through to the SIGKILL leg below.
+                            using var exitCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(TermWaitMs));
+                            try
+                            {
+                                await term.WaitForExitAsync(exitCts.Token);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                // Grace window elapsed before the kill process exited.
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -242,7 +259,7 @@ public sealed class SnapClientSupervisor : BackgroundService
         return _shutdownDone.Task;
     }
 
-    protected override Task StopAsync(CancellationToken cancellationToken) => ShutdownChildAsync();
+    public override Task StopAsync(CancellationToken cancellationToken) => ShutdownChildAsync();
 
     private Process StartChild()
     {
@@ -268,7 +285,7 @@ public sealed class SnapClientSupervisor : BackgroundService
         child.ErrorDataReceived += OnStderrLine;
         child.BeginErrorReadLine();
         _child = child;
-        _lastByteAt = DateTime.UtcNow;
+        _lastByteAtTicks = Interlocked.Exchange(ref _lastByteAtTicks, DateTime.UtcNow.Ticks);
         _frameParity = 0;
         _logger.LogInformation("snapclient launched (pid {Pid})", child.Id);
         return child;
@@ -348,7 +365,7 @@ public sealed class SnapClientSupervisor : BackgroundService
                 if (n == 0)
                     break; // EOF = child death
                 Interlocked.Add(ref _totalBytes, n);
-                _lastByteAt = DateTime.UtcNow;
+                _lastByteAtTicks = Interlocked.Exchange(ref _lastByteAtTicks, DateTime.UtcNow.Ticks);
                 _frameParity = (_frameParity + n) % FrameBytes;
                 var chunk = new byte[n];
                 Buffer.BlockCopy(buffer, 0, chunk, 0, n);
@@ -375,7 +392,7 @@ public sealed class SnapClientSupervisor : BackgroundService
         // client retries every fixed 1 s while the server is down — a
         // legitimate silence the watchdog must not kill).
         if (line.Contains("Reconnecting") || line.Contains("Connecting to host"))
-            _lastReconnectKeywordAt = DateTime.UtcNow;
+            _lastReconnectKeywordAtTicks = Interlocked.Exchange(ref _lastReconnectKeywordAtTicks, DateTime.UtcNow.Ticks);
 
         if (StderrTailKeywords.Any(line.Contains))
             _logger.LogInformation("[snapclient] {Line}", line);
@@ -386,13 +403,17 @@ public sealed class SnapClientSupervisor : BackgroundService
         if ((nowUtc - startedAtUtc).TotalSeconds < StartupGraceSeconds)
             return false;
 
-        var quietMs = (nowUtc - _lastByteAt).TotalMilliseconds;
+        var lastByteAt = new DateTime(Interlocked.Read(ref _lastByteAtTicks), DateTimeKind.Utc);
+        var quietMs = (nowUtc - lastByteAt).TotalMilliseconds;
         var threshold = OutageTolerant(nowUtc) ? OutageToleranceMs : KillThresholdMs;
         return quietMs > threshold;
     }
 
-    private bool OutageTolerant(DateTime nowUtc) =>
-        (nowUtc - _lastReconnectKeywordAt).TotalMilliseconds <= ReconnectKeywordRecencyMs;
+    private bool OutageTolerant(DateTime nowUtc)
+    {
+        var lastKeywordAt = new DateTime(Interlocked.Read(ref _lastReconnectKeywordAtTicks), DateTimeKind.Utc);
+        return (nowUtc - lastKeywordAt).TotalMilliseconds <= ReconnectKeywordRecencyMs;
+    }
 
     private void RecordKill()
     {

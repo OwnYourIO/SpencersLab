@@ -1,8 +1,12 @@
+using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
+using MQTTnet.Formatter;
+using MQTTnet.Protocol;
+using SoundFingerprinting.DAO.Data;
 using SoundFingerprinting.Query;
 
 namespace AudioAdDetection;
@@ -129,7 +133,7 @@ public sealed class BrokerPublisher : BackgroundService
         }
     }
 
-    protected override async Task StopAsync(CancellationToken cancellationToken)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
         // The clean disconnect flips IsConnected, which ends the run
         // loop's session wait; the loop then exits on the host stop
@@ -298,7 +302,7 @@ public sealed class BrokerPublisher : BackgroundService
         var message = new MqttApplicationMessage
         {
             Topic = topic,
-            Payload = Encoding.UTF8.GetBytes(payload),
+            Payload = new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(payload)),
             QualityOfServiceLevel = PublishQoS,
             Retain = retain,
         };

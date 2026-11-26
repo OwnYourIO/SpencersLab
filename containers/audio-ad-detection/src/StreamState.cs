@@ -27,11 +27,21 @@ public interface IStreamState
 /// </summary>
 public sealed class StreamState : IStreamState
 {
-    private DateTime? _lastMatchAt;
+    // The nullable timestamp is carried as Interlocked ticks: .NET 10's
+    // Volatile.Read/Write<T> is reference-type-only and a DateTime? is not —
+    // 0 = no match since startup (a real timestamp's ticks are always > 0).
+    private long _lastMatchAtTicks;
     private string? _lastMatchMeta;
     private double _currentRmsDb = double.NaN;
 
-    public DateTime? LastMatchAt => Volatile.Read(ref _lastMatchAt);
+    public DateTime? LastMatchAt
+    {
+        get
+        {
+            var ticks = Interlocked.Read(ref _lastMatchAtTicks);
+            return ticks > 0 ? new DateTime(ticks, DateTimeKind.Utc) : null;
+        }
+    }
 
     public string? LastMatchMeta => Volatile.Read(ref _lastMatchMeta);
 
@@ -42,15 +52,15 @@ public sealed class StreamState : IStreamState
         // Monotonicity clamp: a late callback must not rewind the
         // timestamp — the capture state machine keys the no-match span
         // length on it.
-        var current = Volatile.Read(ref _lastMatchAt);
-        if (current is { } last && matchedAtUtc < last)
+        var currentTicks = Interlocked.Read(ref _lastMatchAtTicks);
+        if (currentTicks > 0 && matchedAtUtc < new DateTime(currentTicks, DateTimeKind.Utc))
             return;
 
         // Meta lands before the timestamp: a reader that sees the new
         // timestamp never sees a null meta (it may briefly see the old pair
         // — benign for telemetry).
         Volatile.Write(ref _lastMatchMeta, meta);
-        Volatile.Write(ref _lastMatchAt, matchedAtUtc);
+        Interlocked.Exchange(ref _lastMatchAtTicks, matchedAtUtc.Ticks);
     }
 
     public void SetRmsDb(double rmsDb) => Volatile.Write(ref _currentRmsDb, rmsDb);

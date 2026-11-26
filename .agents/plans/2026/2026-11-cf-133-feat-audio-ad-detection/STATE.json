@@ -567,10 +567,38 @@
       ]
     },
     "C08": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": [
         "C07"
+      ],
+      "dev_session": "ses_de6980501ffedrv2trAeVnUN4w",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "session": "ses_de6980501ffedrv2trAeVnUN4w",
+          "at": "2026-11-26T20:55:00+00:00",
+          "status": "DONE_WITH_CONCERNS",
+          "result_verbatim": "LOCAL ORACLE ESTABLISHED: dotnet-install channel 10.0 => SDK 10.0.404 ~/.dotnet (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 needed, no libicu); dotnet build -c Release => 0 warnings 0 errors; dotnet publish (Dockerfile-exact -r linux-x64 --self-contained false) => exit 0. All 10 incident errors verified gone + 33 LATENT found-and-fixed: nonexistent APIs (BitConverter.To*LittleEndian->BinaryPrimitives, BlockingCollection async Add/TryTake->Task.Run bridge + WhenAny(ct) race preserving backpressure AND cancellation, JsonNode/JsonElement.Clone->DeepClone/raw-text re-parse, CreateLogger<T> on static classes CS0718 + ILogger-not-IDisposable CS1674->literal-category CreateLogger, PosixSignalRegistration ctor/Register removed in net10->Create factory, Volatile.Read/Write<T> class-constraint->Interlocked-ticks (0-sentinel, UTC reconstruction, monotonic clamp + ordering preserved), readonly-reassign CS0191, WaitForExitAsync(TimeSpan)->CTS-token overload, GetValueOrDefault on IDictionary->TryGetValue, MQTTnet 5.2 Payload byte[]->ReadOnlySequence, missing usings incl MQTTnet.Protocol/Formatter + System.Buffers + System.Text); StopAsync x2 protected->public + StartAsync sweep clean. MAP CORRECTIONS (deviation 1, oracle-verified): IModelService = SoundFingerprinting ROOT (planner map's .Model does not exist in 18.0.0); TrackData = SoundFingerprinting.DAO.Data (not .Data). AC5: repository ghcr.io/ownyourio->git.spencerslab.com/curatedforest (forgejo-runner sibling convention), :main+Always+PIN-ME verbatim, comment reworded to dual-push build-containers truth; render diff = exactly the one repository line both arms; 0 OVERRIDE_*; Chart.yaml untouched. SUITE 29/31: t29 ALREADY RED at base 0ce0d4d8f (arm pins one-time 1.0.0; CI release pipeline legitimately bumped 2026.11.1 — base drift; out of C08 scope: tests read-only + never-hand-bump) + t30 derivative (re-enter log: t29 sole failure); t1-t28+t31 green. bin/obj artifact pollution of t10/t11 greps fixed by removal (final 0 untracked). aislop 90/100 0 errors 5 style warnings (gate pass); comment-slop pass; 14 files (1 chart values + 13 src), zero commits, zero test edits. open_questions: (1) t29 arm needs test-session update to calendar-version reality (assert shape/no-downgrade vs literal 1.0.0) — coord routes; (2) proxy-values absence by-design headless, no action.",
+          "changed_files": ["charts/audio-ad-detection/values.yaml", "containers/audio-ad-detection/src/ModelService.cs", "containers/audio-ad-detection/src/AdEventSink.cs", "containers/audio-ad-detection/src/MqttPublisher.cs", "containers/audio-ad-detection/src/SnapClientSupervisor.cs", "containers/audio-ad-detection/src/CandidateWriter.cs", "containers/audio-ad-detection/src/AudioPipeline.cs", "containers/audio-ad-detection/src/CaptureState.cs", "containers/audio-ad-detection/src/StreamState.cs", "containers/audio-ad-detection/src/StreamAssigner.cs", "containers/audio-ad-detection/src/ListCommand.cs", "containers/audio-ad-detection/src/PromoteCommand.cs", "containers/audio-ad-detection/src/PruneCommand.cs", "containers/audio-ad-detection/src/Program.cs"]
+        },
+        {
+          "role": "test-fix",
+          "session": "ses_df42f3707ffeA5DxxYBbpLaJ0x",
+          "at": "2026-11-26T21:20:00+00:00",
+          "status": "DONE — t29 rule-not-snapshot",
+          "result_verbatim": "t29 literal 1.0.0 pin replaced by calendar-shape invariant ^version:[0-9]{4}.[1-9][0-9]?.[0-9]+$ (unpadded month 1-9 or 10-12; no hardcoded 2026.11.1; survives every future bump; only literal-form/zero-padded/0.0.0 redden). All other t29 pins byte-unchanged; 2 stale doc lines (header, t25-t29 group) updated same pass; 4-hunk diff only. Verification: t29 ok on current Chart.yaml 2026.11.1; shape probe 4-forms-match/4-forms-reject; regression sim mutations 1.0.0/0.0.0/2026.01.1 each red then restored clean; FULL SUITE 31 ok 0 skipped exit 0 (t30 cascade green). Deviations noted: instruction's [1-9] term alone failed November — used [1-9][0-9]?; did NOT add description/type/catalogVersion pins (not in merged arm; touch-nothing-else honored); 2 aislop warnings belong to C08's C# files, left to owners per test-role rule."
+        },
+        {
+          "role": "review",
+          "session": "ses_de65a44cfffeYY8nOBFB84Q14L",
+          "at": "2026-11-26T22:05:00+00:00",
+          "status": "APPROVED (round 1)",
+          "result_verbatim": "Verdict APPROVED (1+1). DEFINING RE-RUN: independent dotnet build -c Release 0w/0e rc 0 (SDK 10.0.404 ~/.dotnet, INVARIANT=1); dotnet publish Dockerfile-exact rc 0; artifacts cleaned (16 M, 0 untracked — t10/t11 trap held); suite 31/31 incl re-shaped t29 (calendar regex anchored, hand-edit shapes red, 4-hunk diff, pins byte-stable); helm lint 0; both arms diff = exactly one repository line. All 10 incident fixes verified in hunks (usings x5, StopAsync public x2 + StartAsync sweep 0, volatile->Interlocked ticks, nullable utcNow). MAP CORRECTIONS ADJUDICATED CORRECT vs NuGet XML: IModelService = root (.Model has ZERO members), TrackData = DAO.Data; no broad alias import (0-error compile excludes CS0104). 33-claim spot-verified 8/8 semantic categories: watchdog ticks (UTC atomic, 500ms/15s/300s/3-in-5/45s/5s constants verbatim, 0-sentinel impossible), Task.Run+WhenAny bridges keep backpressure AND unblock at CompleteAdding on all three shutdown orders, BinaryPrimitives LE incl WAV header ints, ReadOnlySequence per MQTTnet 5.2 XML, DeepClone/raw-text equivalence, literal logger categories = generic FullName exactly, PosixSignalRegistration.Create semantics preserved, TERM 5s grace + SIGKILL leg intact. Deviations dev 1-6 + test 1-4 ALL ACCEPTED. aislop 90/100 0 errors 5 warnings gate-pass; NEW 452-line SnapClientSupervisor warning ACCEPTED without split (t6 pins ~15 tokens across that file — split breaks C01 arm + no-test-change law; AutoPromote-451 precedent; deferred hygiene candidate recorded; benign nit: unobserved IOE in orphaned Add task at teardown). Chart.yaml diff empty; services entry verified; convention cite forgejo-runner:149-153; rebase confirmed (merge-base --is-ancestor 0ce0d4d8f HEAD). Next: owner merge + re-dispatch (expected green on local oracle), C09 launches."
+        }
       ]
     },
     "C09": {

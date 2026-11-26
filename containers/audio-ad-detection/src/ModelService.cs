@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SoundFingerprinting;
 using SoundFingerprinting.InMemory;
 
 namespace AudioAdDetection;
