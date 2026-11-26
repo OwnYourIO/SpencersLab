@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-55-feat-helm-builds-to-forgejo",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "updated_at": "2026-11-25T05:30:00+00:00",
   "coord_session": "ses_e38ca0929ffe4wS9EGOd3D9TRf",
   "test_session": "ses_def674664fferVKggtFKLUUZFQ (round-4 test wave, 2026-11-25 — current for validation_at_fault routing; fix-round-1 session ses_e006a6794ffe)",
@@ -89,7 +89,8 @@
     "branch_state": "reset --hard origin/main 52d3b5c45 — full round-4 stack landed as twins (755ef2aed..52d3b5c45); owner's aeda85f86 + radiance/renovate work on top",
     "autoscaling_card": "MINTED iaJq5bgWHHDHotcBY (Inbox, research+implement, Services infra+gpu, feat, Qwen Dense, parent-links #55 in body; parent_id PUT 405s on this build as before)",
     "scout": "ses_dea348c49ffeYmLuG95nZVFApu IN FLIGHT — grounds A containers-build marker mechanics + rename blast, B build-charts detection + version-regex bug + prowlarr/llama-swap fire outcomes, C main-sync orchestration options (workflow_call support on THIS Forgejo? dispatch+poll alternative), D runner replica keys + suite pins, E coder-templates location for the shared-marker story, F containers-build rename surface list",
-    "open_from_r4": "round-4 close question was DISMISSED — the admitted-externals / carry-over / old-name-prose / C12-evidence card list still awaits the owner's word; the autoscaling card was ordered explicitly and is minted"
+    "open_from_r4": "round-4 close question was DISMISSED — the admitted-externals / carry-over / old-name-prose / C12-evidence card list still awaits the owner's word; the autoscaling card was ordered explicitly and is minted",
+    "owner_answers_r5": "2026-11-26 batched round — APPROVED C13->C14->C15->C16 (test wave first); F1 marker name ci/last-built ACCEPTED; F2 OWNER OVERRIDE of D54: sync-fanout HARD-GATES on both builders green (plain needs, no always()) — the MIRROR jobs (push-gh/push-dev) stay unconditional per the owner's own words ('sync to github and dev'); what the gate freezes is the FLEET sync-fanout step until a green build, recovery rides the un-advanced marker; plan fold resolved my looser 'mirror freezes' phrasing — settled wording, interpretation CLOSED; F3+F4 ACCEPTED: pre-advance ci/last-built to main tip before C15 (UA-R5-2 owner step) + land C14+C15 same session. Plan fold running ses_dea24aa04ffe (D59)"
   },
   "final_review": {
     "at": "2026-11-11T06:35:00Z",

@@ -1037,3 +1037,44 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
     plan_status -> needs-approval (round-5 delta complete on the existing
     plan of record; no new folder, STATE untouched by the planner per
     the launch instruction). Models per D35 (openrouter flash).
+  - 2026-11-26 human D59 (round-5 batched owner round — ALL ANSWERED,
+    no forks remain): (1) APPROVAL: run C13 -> C14 -> C15 -> C16, TEST
+    WAVE FIRST; plan_status -> approved (the STATE flip is coord-side —
+    the planner touched no STATE.json). (2) F1 ACCEPTED: the shared
+    marker branch name `ci/last-built` is FINAL (D53's veto slot closed
+    by the owner's word; C14 marked accordingly). (3) F2 OWNER OVERRIDE
+    of D54's fanout recommendation — verbatim: "So it should sync to
+    github and dev, but sync-fanout should wait until it builds
+    successfully." ENCODED SEMANTICS (plan central ruling 5 re-written;
+    C15 §B/§D + AC4/AC7 amended): `sync-fanout` HARD-GATES on both
+    called builders GREEN — plain `needs: [push-gh, build-containers,
+    build-charts]`, and `if:` stays BYTE-EQUAL to the pre-existing
+    `contains(vars.ROLE, 'prod')` GUARD (no `always()`, no result
+    function); the "always()-tolerant" shape is SUPERSEDED. A builder
+    red ⇒ aggregate advance SKIPS (marker unmoved ⇒ next push re-covers)
+    AND the fan-out SKIPS ⇒ the ArgoCD fleet stays at the previous
+    revision until the next GREEN fire — ACCEPTED CONSEQUENCE,
+    owner-ruled (the plan's own rejected alternative, hard-gating, is
+    what the owner chose; the recovery path is the marker re-cover
+    chain). The MIRROR jobs `push-gh`/`push-dev` run regardless — per
+    the owner's words the gate is ONLY the fan-out step; empty-green
+    called builders pass it, so a no-chart/no-container push syncs
+    exactly as today. D54 SUPERSESSION POINTER: only D54's
+    failure-semantics paragraph is overridden — the aggregate single-
+    writer advance topology (the poisoning analysis that moved the
+    writer to main-sync) SURVIVES UNCHANGED. Suite consequences: t3's
+    planned fanout `if` EXEMPTION is VOID (fanout stays inside the
+    byte-GUARD loop), t9 gains a result-function BAN needle, t17 flips
+    from "builder-red cannot block sync" to the executed needs-graph
+    truth table (both-green ⇒ RUNS; either-red ⇒ SKIPPED).
+    (4) F3 ACCEPTED: UA-R5-2 (advance `ci/last-built` to the main tip
+    immediately before the C15 merge) lands as an APPROVED owner
+    action; skipping it is priced (one benign extra prowlarr version on
+    the first called fire), not fatal. (5) F4 ACCEPTED AS RULING: C14 +
+    C15 merge in the SAME session — the interim dual-writer swallow
+    window is ruled out (plan landing §2, C14 notes folded); a fire
+    landing inside the gap becomes a ticket record + a marker-vs-range
+    check before the pre-advance. Models per D35 (openrouter flash);
+    next surface: the round-5 TEST WAVE (C13 t27–t29, C14 t30–t33 +
+    containers ref fold, C15 renamed-suite + main-sync t14–t17 vs the
+    D59 graph, C16 replica/capacity/default legs), then dev waves 1→4.

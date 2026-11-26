@@ -981,7 +981,7 @@ allow-set, the runner B1/capacity surface, the coder-templates
 |-----|-------|------|------|------------|--------------------|
 | C13 | Parser + comment fix: comment-tolerant version regexes at BOTH sites, prowlarr comment moved off the version line, executed mutant batteries, guard-trio admit of `charts/prowlarr/Chart.yaml` | S | 1 | [] | unblocks the fire: every later chunk re-fires the bump path; no regex leg is byte-pinned today (verified), so the delta is new legs, not re-pins |
 | C14 | Shared marker: rename `refs/heads/ci/containers-built` → `refs/heads/ci/last-built` + ancestor-tolerant advance body; build-charts adoption (resolver step, marker..sha chain mirroring containers semantics incl the idempotence info-line and loud die, `bump_sha` output, INTERIM own-fire advance job); t16 exclusivity walk → builder ALLOW-SET; `main-sync.yaml:121` anchor re-cite | M | 2 | [C13] | a marker chain on the dead parser re-dies on the same leg; C14's new build-charts legs stack on the fixed suite's ordinal (t27+), and C13's merge is the first real fire the chain must not double-kill |
-| C15 | Builders invoked by main-sync + the rename: `containers-build.yaml` → `build-containers.yaml` (10 hard pins enumerated as tasks), BOTH builders lose push triggers and gain `on: workflow_call`; main-sync calls both in parallel ROLE-guarded `uses:` jobs; advance moves to an AGGREGATE main-sync job gated on both builders green (the interim build-charts job and the containers job are deleted); sync-fanout `needs` both and waits, `always()`-tolerant of builder red; detect script call-arm; full suite folds incl. new main-sync t14+ legs and the t8 stale-name widen | L | 3 | [C14] | the rename + trigger removal ride the shared branch C14 establishes (FJ_SET/WIDEN_OK/t16 allow-set/t2 pins all key on C14's final file state); aggregate-advance relocation is one atomic graph change — splitting it would leave a mixed push/call writer topology, the poisoned shape (D54) |
+| C15 | Builders invoked by main-sync + the rename: `containers-build.yaml` → `build-containers.yaml` (10 hard pins enumerated as tasks), BOTH builders lose push triggers and gain `on: workflow_call`; main-sync calls both in parallel ROLE-guarded `uses:` jobs; advance moves to an AGGREGATE main-sync job gated on both builders green (the interim build-charts job and the containers job are deleted); sync-fanout `needs` both and HARD-GATES on their green (plain success graph, no `always()` — D59 owner ruling); detect script call-arm; full suite folds incl. new main-sync t14+ legs and the t8 stale-name widen | L | 3 | [C14] | the rename + trigger removal ride the shared branch C14 establishes (FJ_SET/WIDEN_OK/t16 allow-set/t2 pins all key on C14's final file state); aggregate-advance relocation is one atomic graph change — splitting it would leave a mixed push/call writer topology, the poisoned shape (D54) |
 | C16 | Runner scale: `replicas: 10` per release on both instances (services slices `forgejo-runner-dev` / `forgejo-runner-gpu`), B1 comment re-truthed in chart values, capacity STAYS 1, dev/gpu suite re-pins | S | 4 | [C15] | no file dependency (file-disjoint from C13–C15) — ordered last for landing linearity: its merge is the designed first end-to-end proof of the post-C15 call chain (a `charts/forgejo-runner/**` change fires only via main-sync after C15, and it should fire ONCE through the final shape, not twice through intermediates) |
 
 Waves: 1 = C13 → 2 = C14 → 3 = C15 → 4 = C16.
@@ -1020,15 +1020,21 @@ Waves: 1 = C13 → 2 = C14 → 3 = C15 → 4 = C16.
    The bump's own push-to-main still re-triggers nothing (the rule that
    makes today safe is unchanged by this round); the marker property makes
    re-triggering harmless EVEN IF the rule ever changes — belt, recorded.
-5. **Failure semantics (recommended ruling, D54):** a builder red ⇒
-   aggregate advance SKIPS (needs-graph ⇒ marker unmoved ⇒ next fire
-   re-covers) and `sync-fanout` STILL RUNS: `needs: [push-gh,
-   build-containers, build-charts]` with
-   `if: always() && contains(vars.ROLE, 'prod')` — ArgoCD sync is the
-   deploy path and stays decoupled from the release path exactly as today
-   (a failed builder blocks nothing that a push today blocks); the cf-139
-   race gate (fanout after push-gh success) is unchanged. Hard-gating
-   fanout on builder green REJECTED.
+5. **Failure semantics — OWNER RULING (D59), SUPERSEDES the D54
+   recommendation:** `sync-fanout` HARD-GATES on both builders green —
+   plain `needs: [push-gh, build-containers, build-charts]` with the
+   pre-existing `if:` byte-unchanged (`contains(vars.ROLE, 'prod')`), NO
+   `always()`. Owner verbatim: *"So it should sync to github and dev, but
+   sync-fanout should wait until it builds successfully."* Accepted
+   consequence (owner-ruled): a builder red ⇒ aggregate advance SKIPS
+   (marker unmoved ⇒ next fire re-covers) AND the fan-out SKIPS ⇒ the
+   ArgoCD fleet stays at the previous revision until the next GREEN fire;
+   recovery flows through the marker chain. `push-gh`/`push-dev` mirror
+   jobs run regardless — the gate is ONLY the fan-out step, per the
+   owner's words ("it should sync to github and dev" = the mirror legs
+   stay unconditional siblings). An EMPTY-but-green called builder (no
+   changes in range) passes the gate, so a no-chart/no-container push
+   behaves exactly as today.
 6. **What still fires what after C15:** main-sync = push-to-main +
    workflow_dispatch (unchanged; PRs never fired it); builders = called
    ONLY (containers KEEPS `pull_request` for the dev-role `pr-` tag lane +
@@ -1071,18 +1077,21 @@ Waves: 1 = C13 → 2 = C14 → 3 = C15 → 4 = C16.
    skipped, the first fire bootstraps tip-only + `::warning::` — designed
    tolerant, recovery resumes next fire. INTERIM STATE after this merge:
    push-triggered builders, dual writers of the shared ref, per-fire
-   advances with ancestor tolerance; the cross-domain swallow window is
-   OPEN — do not let C14 sit on main alone across days (land C15 same
-   session; any container fire before C15 can advance past an unreleased
-   charts range).
-3. **C15 merge** (owner pre-step first: advance `ci/last-built` to the
-   main tip immediately before merging — UA-R5-2; skipping it makes the
-   first called fire re-detect C13's already-released prowlarr window and
-   mint ONE benign extra patch-class calendar version — harmless, noisy,
-   predicted): touches `.forgejo/**` + tests + docs + `renovate.json` →
+   advances with ancestor tolerance. The cross-domain swallow window that
+   state opens is CLOSED by owner ruling (F4/D59: C14 + C15 land in the
+   SAME merge session; a container fire landing between the two merges
+   could advance the shared ref past an unreleased charts range — the gap
+   is ruled out, not merely discouraged).
+3. **C15 merge** (owner pre-step FIRST — UA-R5-2, APPROVED in the batched
+   round: advance `ci/last-built` to the main tip immediately before
+   merging; skipping it lets the first called fire re-cover C13's
+   already-released prowlarr window and mint ONE benign extra calendar
+   version — harmless, noisy, predicted): touches `.forgejo/**` + tests +
+   docs + `renovate.json` →
    main-sync fires → calls both builders → each diffs marker..E empty →
    aggregate advance lands the marker at E, `bumped nothing` reads green,
-   fanout still syncs (its today behavior on a no-chart push). This is the
+   fanout runs (empty-green calls pass the D59 hard gate — a no-chart
+   push syncs exactly as it does today). This is the
    call-chain smoke: expected green on all six jobs. After this merge the
    OLD ref is unreferenced → owner deletes it (UA-R5-3). From here a
    `charts/**` prose merge bumps NOTHING until main-sync next fires — the
@@ -1151,9 +1160,14 @@ the vacuous-clean shell posture recorded honestly)
   creates/FF; target==marker up-to-date green; marker ahead AND ancestor
   of target's skip-green info line; marker ahead NOT-ancestor ⇒ RED with
   divergence named; one called leg red ⇒ advance job skipped by
-  needs-graph — the re-cover law, structural); fanout shape leg
-  (`needs` set-exact + `if` byte-exact `always() && contains(vars.ROLE,
-  'prod')` + push-gh-gate preserved); trigger-set legs (build-charts
+  needs-graph — the re-cover law, structural); fanout HARD-GATE legs per
+   the D59 owner ruling (`needs` EXACTLY {push-gh, build-containers,
+   build-charts}; `if` byte-equal to the pre-existing ROLE GUARD — an
+   `always()`/result-function token in the fanout `if` is RED; executed
+   truth table over the parsed graph: both-green ⇒ RUNS, red+green ⇒
+   SKIPPED, green+red ⇒ SKIPPED, both-red ⇒ SKIPPED, push-gh-failed ⇒
+   SKIPPED — the cf-139 push-gh gate is subsumed, unchanged in effect);
+   trigger-set legs (build-charts
   `{'workflow_call'}`; containers `{'pull_request','workflow_dispatch',
   'workflow_call'}`); `uses:` byte-pins (exact same-repo paths,
   `secrets: inherit`, ROLE guard on all three new jobs); t8 widened to ban
@@ -1165,4 +1179,36 @@ the vacuous-clean shell posture recorded honestly)
   assert each services block carries `app-template.controllers.runner.
   replicas: 10` and the chart default stays 1; a capacity leg asserts
   `secret-runner.yaml` still renders `capacity: 1` (decision, pinned).
+
+### Round-5 owner fold (2026-11-26 — batched answers in, D59; this round's forks are CLOSED)
+
+Owner batched-round answers (verbatim where noted; DECISIONS D59 is the
+record):
+
+- **APPROVAL — plan_status approved (coord flips STATE.json; planner
+  touched nothing there):** run **C13 → C14 → C15 → C16, TEST WAVE
+  FIRST** (all four chunks' legs land green-in-red-first before any dev).
+- **F1 ACCEPTED:** shared marker branch name `ci/last-built` is FINAL
+  (D53's veto slot exercised-and-kept). C14 folds it as confirmed.
+- **F2 OWNER OVERRIDE of the D54 recommendation** — verbatim: *"So it
+  should sync to github and dev, but sync-fanout should wait until it
+  builds successfully."* Encoded as central ruling 5 (re-written above):
+  `sync-fanout` hard-gates — plain `needs: [push-gh, build-containers,
+  build-charts]`, `if:` stays byte-equal to the pre-existing ROLE GUARD,
+  NO `always()`; builder red ⇒ advance AND fanout both SKIP; the
+  mirror jobs (`push-gh`/`push-dev`) run regardless (gate is ONLY the
+  fan-out step per the owner's words). Accepted consequence recorded as
+  owner-ruled: a red builder freezes fleet sync at the previous revision
+  until the next green fire; the marker's no-advance ⇒ re-cover chain is
+  the recovery path. C15's fanout tasks/ACs/legs amended accordingly.
+- **F3 + F4 ACCEPTED as rulings:** UA-R5-2 (pre-advance `ci/last-built`
+  to the main tip immediately before the C15 merge) lands as an APPROVED
+  owner action (landing §3), and **C14 + C15 merge in the SAME session**
+  (landing §2) — the interim dual-writer swallow window is ruled out, not
+  just discouraged.
+
+No forks remain open for round 5. The test wave may now write against
+final names/semantics: `ci/last-built`, the hard-gate fanout truth table,
+and the same-session landing assumption.
+
 
