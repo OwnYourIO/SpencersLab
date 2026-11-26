@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "approved",
-  "reopen4_note": "research-gated re-cut pending",
+  "plan_status": "complete",
+  "plan_status_note": "COMPLETE 2026-11-26 (reopen4): R8 fleet-blind pipeline closed by chain re-review #4 (APPROVED-DONE: §2.3b recipe executed leak-free verbatim, three-surface name recount clean, byte-keeps verified, judgment call empirically cleared, Minor 1 attribution fixed pre-commit). Owner legs: 22 org keys + first-dispatch engine validation (fallback d81831446 one-commit revert) + branch-protection card abkP2XsbuuPuuvri6. History: reopen3 complete at d81831446 (pure discovery later restated under R8 - key NAMES/placement unchanged); reopen2 waves 7-9 at 6ed762140; reopen1 R1-R4; original waves 1-3 (relay era) superseded by disposal C07.",
   "reopen3": {
     "at": "2026-11-25T01:35:00+00:00",
     "reason": "owner direction in-session: vault input redesign - per-cluster env discovery (org vars ARGOCD_SYNC_<CAT>_URL + org secrets ARGOCD_SYNC_<CAT>_TOKEN, script scans ARGOCD_SYNC_*); single-blob paste ruled too error-prone; supersedes OQ8 newline mechanics + multi-line-paste + per-line-masking legs",
@@ -29,8 +29,8 @@
   "plan_status_note": "reopen4 APPROVED 2026-11-26 — OQ-A batched round answered PURE DISCOVERY (option b), against the coordinator-recommended categories oracle: the org vault map alone is fleet membership, roster stays the five globals (zero schema churn, main-sync t13 parse-only split permanent). Ruled envelope: half-delete RED / blanked-both (j)-RED / both-deleted clean-quiet-drop (count-only signal, by design) / stray-complete-pair joins-quiet. History: reopen4 drafted gated on OQ-A; reopen3 closed complete at d81831446; reopen2 approved 2026-11-23; reopen1 approved 2026-11-21.",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
-  "current_wave": 13,
-  "updated_at": "2026-11-26T04:11:00Z",
+  "current_wave": 15,
+  "updated_at": "2026-11-26T07:50:00+00:00",
   "reopen": {
     "at": "2026-11-21T20:05:00+00:00",
     "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub",
@@ -463,17 +463,19 @@
       ]
     },
     "C15": {
-      "status": "pending",
+      "status": "done",
       "wave": 15,
       "depends_on": [
         "C13",
         "C14"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "note": "runbook rewrite #5 (surgery): sections 1/4/5/7/8 enumeration-era sentences; 2/3/6/appendix byte-unchanged (owner vault work identical); 5(a) first-dispatch validation leg list + d81831446 fallback + fleet-drift honesty line (expect == vault reality); 7 decommission = delete BOTH org keys, zero repo edits, lever byte-kept; 8 pure-discovery envelope + org-name discipline + branch-protection card abkP2XsbuuPuuvri6 as the oracle-substitute lever; categories/oracle vocabulary BANNED file-wide; second test launch at wave start",
-      "handoffs": []
+      "handoffs": [
+        { "at": "2026-11-26T08:05+00:00", "event": "dev DONE (6/6 FIRST PASS, byte-keeps verified) + chain re-review #4 APPROVED (C15 AC-verify folded per C11 precedent; §2.3b recipe executed verbatim leak-free; own three-surface name recount; judgment call on hyphenated same-release empirically cleared; Minor 1 attribution fix applied pre-commit)" }
+      ]
     }
   },
   "blocked": [],
