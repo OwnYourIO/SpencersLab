@@ -7,7 +7,7 @@
 # (contains(vars.ROLE, 'prod'), the repo-wide shape of the AGENTS.md Forge
 # Actions law: guards test membership, never equality, and never an instance
 # URL; this workflow stays NARROW on unset — a bump/publish pipeline must
-# not fire unconfigured, the opposite polarity of containers-build.yaml's
+# not fire unconfigured, the opposite polarity of build-containers.yaml's
 # deliberate widen), the bump leg being a single-writer idempotent
 # fast-forward-only loop (concurrency is best-effort; the loop is the safety
 # property), the per-direction credential topology (PUSH_TOKEN_GH serves the
@@ -16,7 +16,7 @@
 # literal lowercase curatedforest namespace — the Actions job token cannot
 # write packages, and the retired PUSH_TOKEN_FJ/FJ_PACKAGE_USER pair must
 # never re-enter as a binding), the output-write compat idiom
-# (${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}, the same one containers-build.yaml
+# (${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}, the same one build-containers.yaml
 # ships), the release/forgejo-publish independence, the retired wrapper
 # actions really retired, and the full-depth checkouts the inline git-diff
 # and cr replacements live on (a shallow clone silently empties the detect
@@ -218,7 +218,7 @@ for expr in live_ifs:
         need('contains(vars.ROLE' in expr,
              f'a live if tests vars.ROLE without contains() membership ({expr!r}) — equality guards retired repo-wide (D31)')
         # Narrow-on-unset polarity: this pipeline must never fire with ROLE
-        # unset; the `vars.ROLE == null` widen clause (containers-build's
+        # unset; the `vars.ROLE == null` widen clause (build-containers's
         # deliberate opposite) has no place here.
         need('== null' not in expr and '!= null' not in expr,
              f'a live if carries an unset-widen clause ({expr!r}) — build-charts.yaml is narrow-on-unset by the bump-is-a-state-change reading (D31/D32)')
@@ -383,7 +383,8 @@ n = len(re.findall(r'git\s+merge(?!-base)', raw))
 need(n == 0, f'git merge (non-base) occurs {n} time(s) file-wide, expected zero (a refused non-FF re-loops; it never overwrites; merge-base --is-ancestor is the tolerated classify)')
 
 # The bump rides the checkout's default same-repo credentials — the automatic
-# token's non-re-trigger is the loop guard — so no secret may be named in it.
+# automatic-token carve-out is the loop-guard history (R3/D5 — C15 moved
+# the guard to marker idempotence) — so no secret may be named in it.
 # (This is the ONE carved-out automatic-token use in the repo's CI law: a
 # same-repo git push, never a package write.)
 need('secrets.' not in yaml.dump(job),
@@ -955,7 +956,7 @@ ok "t15: both index carriers resolve ENTRY versions on dep-block fixtures (pytho
 
 # --- t16: output writes carry the GITHUB_OUTPUT/FORGEJO_OUTPUT compat idiom -----
 # Forgejo exports the GITHUB_* compatibility family but the reference names
-# the FORGEJO_* fallback (the same idiom containers-build.yaml writes its
+# the FORGEJO_* fallback (the same idiom build-containers.yaml writes its
 # outputs with); a bare "$GITHUB_OUTPUT" write dies on any engine build that
 # drops the compat export, and the detect output is exactly what must not
 # vanish silently.
@@ -988,7 +989,7 @@ PY
 then
   fail "t16: see the t16 detail above"
 fi
-ok "t16: every output write uses \${GITHUB_OUTPUT:-\$FORGEJO_OUTPUT} (the cf-6 containers-build idiom); none relies on the bare GITHUB_* export"
+ok "t16: every output write uses \${GITHUB_OUTPUT:-\$FORGEJO_OUTPUT} (the cf-6 build-containers idiom); none relies on the bare GITHUB_* export"
 
 # --- t17: the gh-pages publish rides the fetched tracking ref --------------------
 # cr's pages worktree reads the LOCAL remote-tracking ref and never fetches,
@@ -1531,7 +1532,7 @@ code = '\n'.join(l for l in body.splitlines() if not l.lstrip().startswith('#'))
 # --- static calendar pins (C10.md t25) ---
 stamps = [l for l in code.splitlines() if 'date' in l and re.search(r'\+?%Y', l)]
 need(len(stamps) == 1 and '+%Y.%-m' in stamps[0],
-     f'the bump step carries {len(stamps)} clock-stamp line(s), expected exactly one `date -u +%Y.%-m` (one stamp per run like containers-build\'s month= law; UNPADDED month is the Masterminds law, D47.4)')
+     f'the bump step carries {len(stamps)} clock-stamp line(s), expected exactly one `date -u +%Y.%-m` (one stamp per run like build-containers\'s month= law; UNPADDED month is the Masterminds law, D47.4)')
 for bad in ('+%Y.%m', '02d', '%.2d', 'strftime'):
     need(bad not in code,
          f'a zero-pad spelling ({bad!r}) survives on code lines — a padded stamp renders invalid semver (2026.07.1) and dies at helm package; the trap must be unproducible')
@@ -2295,7 +2296,10 @@ ok "t33: bump.outputs.bump_sha maps a declared step id whose body emits sha=$(gi
 
 # --- t34: on.workflow_call.outputs declaration (C15 §A) --------------------------
 # main-sync's advance consumes this file's bump output — declared in the
-# trigger block, mapping jobs.bump.outputs.sha (the C14 job output).
+# trigger block, mapping jobs.bump.outputs.bump_sha (the C14 JOB output key;
+# distinct from the steps-level `sha` — B1 review-fold: the conflation made
+# the called output resolve empty, dropping the aggregate advance to the
+# event sha and re-arming the D53 bump-commit tail this pin exists to fence).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
@@ -2310,13 +2314,13 @@ if 'bump_sha' not in outs:
     print(f'FAIL: t34: on.workflow_call.outputs is {outs!r} — bump_sha is not exported (main-sync consumes needs.build-charts.outputs.bump_sha)', file=sys.stderr)
     sys.exit(1)
 val = outs['bump_sha'].get('value') if isinstance(outs['bump_sha'], dict) else outs['bump_sha']
-if str(val) != '${{ jobs.bump.outputs.sha }}':
-    print(f"FAIL: t34: on.workflow_call.outputs.bump_sha is {outs['bump_sha']!r}, expected the value jobs.bump.outputs.sha interpolation", file=sys.stderr)
+if str(val) != '${{ jobs.bump.outputs.bump_sha }}':
+    print(f"FAIL: t34: on.workflow_call.outputs.bump_sha is {outs['bump_sha']!r}, expected the value jobs.bump.outputs.bump_sha interpolation (the JOB key — steps-level `sha` resolves empty cross-job, B1)", file=sys.stderr)
     sys.exit(1)
 PY
 then
   fail "t34: see the t34 detail above"
 fi
-ok "t34: on.workflow_call.outputs declares bump_sha = jobs.bump.outputs.sha — the called-run output the main-sync aggregate advance rides (C15 §A task 3)"
+ok "t34: on.workflow_call.outputs declares bump_sha = jobs.bump.outputs.bump_sha (job key, B1) — the called-run output the main-sync aggregate advance rides (C15 §A task 3)"
 
 printf 'PASS: forgejo-build-charts checks (%d ok)\n' "$checks"

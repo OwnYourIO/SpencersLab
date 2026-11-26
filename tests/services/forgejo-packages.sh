@@ -3,7 +3,7 @@
 # package registries (cf-55 C04, rebuilt): the `[packages]` declaration in
 # custom-values/infra/prod-values.yaml is what serves BOTH registries the CI
 # pushes to — the Helm registry (build-charts.yaml's forgejo-publish leg) and the
-# OCI registry (cf-6's containers-build.yaml instance push) — the single
+# OCI registry (cf-6's build-containers.yaml instance push) — the single
 # section gating both. Invariants pinned here — the declaration rides the
 # INFRA slice only (dev stays un-enabled, D20; its registries would silently
 # share the prod publish targets), the value is the STRING "true" in the
@@ -315,6 +315,6 @@ PY
 then
   fail "t7: see the t7 detail above"
 fi
-ok "t7: the packages: comment carries the reconciled provenance (containers-build.yaml sibling, cf-6 proven-live, [storage] non-touch, D24/D20 laws)"
+ok "t7: the packages: comment carries the reconciled provenance (build-containers.yaml sibling, cf-6 proven-live, [storage] non-touch, D24/D20 laws)"
 
 printf 'PASS: forgejo-packages checks (%d ok)\n' "$checks"

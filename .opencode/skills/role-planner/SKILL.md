@@ -62,7 +62,7 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
    `version` to the calendar release when changes land on Forgejo main and publishes dual (GitHub
    Releases/gh-pages + the instance Helm registry); containers are tag-based (a
    `prod`-role main merge pushes `yy.mm.N` + `:latest` + `:main` to both
-   registries via the forge `containers-build.yaml`; the GitHub
+   registries via the forge `build-containers.yaml`; the GitHub
    `docker-build.yaml` is a `workflow_dispatch`-only manual fallback). Only
    brand-new charts get an initial version (`Y.M.1` — the current stamp, unpadded month).
 7. Right-size the work: multi-session, cross-subsystem, or new-interface

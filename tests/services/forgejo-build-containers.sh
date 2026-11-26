@@ -1134,7 +1134,11 @@ PY
   # dispatch no-op, the before==sha no-op and a non-empty set stay silent; a
   # real empty push range and a real empty PR merge-base range both warn. Run
   # -5 keeps those five byte-equivalent as the marker-MISSING bootstrap proofs
-  # (AC2's posture survives the re-scope) and adds three marker-set shapes. The
+  # (AC2's posture survives the re-scope — verified against the round-5
+  # marker-presence gate: dispatch and before==sha stay silent, both real
+  # empty ranges still warn, none of the five hinged on the dead push-event
+  # calm-gate) and adds four marker-set shapes (run -5's three push-era ones
+  # plus the C15 call-era verified-empty case). The
   # all-zero first-push shape is deliberately not pinned here (the detector
   # owns that announcement, d11; the step warning there is the shipped
   # behavior, and neither posture may be demanded by this leg).
@@ -1194,11 +1198,16 @@ PY
   # exits info while the same endpoints without a marker still warn (the
   # shipped shape one line above); (c) marker set with a non-empty answer keeps
   # the no-warning posture and names the marker in the echo. All three stay
-  # silent as ::notice::-free plain echoes (runner v13.2.0).
+  # silent as ::notice::-free plain echoes (runner v13.2.0). The C15 M1
+  # review-fold adds the call-era twin of (b): under the final trigger set
+  # EVERY fan arrives as workflow_call, and the calm branch is gated on MARKER
+  # PRESENCE, not on the dead push event (the M1 blocker: the same endpoints
+  # warned under the push-only gate the fix replaced).
   t14_step_marker "$sdir" 'marker-equals-sha push'        info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_C" || return 1
   t14_step_marker "$sdir" 'marker-verified-empty push'    info    -  EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_D" "MARKER_SHA=$S_A" || return 1
   t14_step_marker "$sdir" 'marker set, non-empty push'    visible "$S_A" EVENT_NAME=push "EVENT_BEFORE=$S_B" "SHA=$S_C" "MARKER_SHA=$S_A" || return 1
-  ok "t14: the detect step echoes changed containers: with the event, endpoint and MARKER_SHA tokens, and the warning scope executes right on eight shapes — empty push/PR ranges without a marker warn, the dispatch no-op, the before==sha no-op and non-empty sets stay silent, and both marker-verified-empty shapes exit with the plain verified-empty info line and no annotation (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6; run -5 C01 AC3]"
+  t14_step_marker "$sdir" 'marker-verified-empty call run' info   -  EVENT_NAME=workflow_call EVENT_BEFORE= "SHA=$S_D" "MARKER_SHA=$S_A" || return 1
+  ok "t14: the detect step echoes changed containers: with the event, endpoint and MARKER_SHA tokens, and the warning scope executes right on nine shapes — empty push/PR ranges without a marker warn, the dispatch no-op, the before==sha no-op and non-empty sets stay silent, and the marker-verified-empty shapes (push and workflow_call alike, plus marker==sha) exit with the plain verified-empty info line and no annotation: the calm gate reads MARKER_SHA presence for any event, the payload warning reserved for marker-missing ranges (executed, not just texted; job-log legibility only, no UI-chip claim) [run -2 C01, invariant 6; run -5 C01 AC3; round-5 C15 M1]"
 }
 
 leg_t15() {

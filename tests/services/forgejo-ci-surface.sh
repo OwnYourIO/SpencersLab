@@ -198,7 +198,7 @@ def need(cond, msg):
 # The credential law as LANDED: AGENTS names the shared instance PAT + the
 # lowercase namespace; the GitHub-side secret name is workflow law pinned
 # per file — chart releases by forgejo-build-charts.sh t8, container pushes by
-# cf-6's containers-build suite t7 — and ONE name serves both lanes since
+# cf-6's build-containers suite t7 — and ONE name serves both lanes since
 # R-A (2026-11-22): PUSH_TOKEN_GH. The rules file deliberately stays at the
 # shared identity + the job-token prohibition.
 for tok in ('FORGE_PUSH_TOKEN', 'curatedforest'):
@@ -254,7 +254,7 @@ PY
 then
   fail "t6: see the t6 detail above"
 fi
-ok "t6: every ROLE guard in every .forgejo workflow is a contains() membership test; the unset-widen clause stays exclusive to containers-build.yaml"
+ok "t6: every ROLE guard in every .forgejo workflow is a contains() membership test; the unset-widen clause stays exclusive to build-containers.yaml"
 
 # --- t7: the chart clause in the chart skill names the forge builder -------------------
 if ! python3 - <<'PY'
@@ -292,7 +292,7 @@ ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forge
 # red state is the half-renamed intermediate (C11.md's posture — report
 # reading: the t-spec's teeth "drop one bare literal into a live file -> red"
 # only have meaning once build-charts.yaml exists). Round 5 WIDENS the leg
-# (C15 §D): a second sweep, armed by the containers-build.yaml ->
+# (C15 §D): a second sweep, armed by the containers-build ->
 # build-containers.yaml rename, bans the bare old file token on live
 # surfaces; composed forms + FROZEN records + self-identifying dated
 # history exempt (D50.3).

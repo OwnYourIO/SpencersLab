@@ -6,7 +6,7 @@
 # nothing too (fail-safe).
 #
 # Guards test ROLE membership with contains(), the repo-wide shape, so a
-# list value like dev,prod passes. Unlike containers-build.yaml, whose
+# list value like dev,prod passes. Unlike build-containers.yaml, whose
 # guards widen on unset, an unset ROLE stays fail-safe here on purpose.
 #
 # Every push is plain and non-force: a refused non-fast-forward or any
@@ -27,9 +27,14 @@
 #
 # The sync-fanout job IS the webhook: no external webhook exists. It drives
 # every cluster's ArgoCD API directly with the per-cluster bearer tokens and
-# fires only after push-gh succeeded, because the fleet's app sources read
+# fires only after push-gh succeeded AND both called builders (C15) came
+# back green, because the fleet's app sources read
 # GitHub — an earlier fan-out would land the PREVIOUS revision (the ordering
-# is the race resolution, cf-139 R1 option (c)). Its failure posture has two
+# is the race resolution, cf-139 R1 option (c); the builder wait is the
+# owner's D59 ruling: sync waits until it BUILDS successfully — a red
+# builder holds the fleet at the previous revision until the next green
+# fan, and the unmoved marker re-covers the failed range by construction).
+# Its failure posture has two
 # halves: the unset-vault state is designed (warn and skip green, manual
 # sync or the next push covers it), while setup errors go RED through the
 # unguarded script call — a typo'd vault record must not silently lose a
@@ -38,6 +43,16 @@
 # fan-out job breaks nothing but hides nothing either; per-target runtime
 # failures audit honestly and stay green (the fan-out is SHA-agnostic, the
 # next push self-heals).
+#
+# The advance-marker job is the SHARED MARKER'S SINGLE WRITER (D54): it
+# needs both builders (the plain success gate IS the aggregate rule), pushes
+# the charts bump commit when this fan's range minted one — else the event
+# sha —
+# onto refs/heads/ci/last-built with the C14 ancestor tolerance (refusal is
+# a CLASSIFY: already-advanced skip-green, divergence red). The marker
+# stays Forgejo-local: this file mirrors refs/heads/main alone, so GitHub
+# never receives it, and the push wears no PAT (the same-repo credential,
+# the header law above, moved here with the job).
 
 on:
   push:
@@ -87,18 +102,76 @@ jobs:
           rest="${PUSH_URL#https://}"
           git push "https://x-access-token:${PUSH_TOKEN}@${rest}" HEAD:refs/heads/main
 
+  build-containers:
+    # C15/D56: the containers builder is CALLED, not push-triggered — one
+    # fan per prod-main push, its own ROLE guard inside stays the belt.
+    if: contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    uses: ./.forgejo/workflows/build-containers.yaml
+    secrets: inherit
+
+  build-charts:
+    # Same for the chart builder (marker..sha detection inside replaces the
+    # retired paths filter); its bump_sha output feeds the advance below.
+    if: contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    uses: ./.forgejo/workflows/build-charts.yaml
+    secrets: inherit
+
+  advance-marker:
+    # D54 single writer: needs IS the aggregate rule — both builders green
+    # or this job never runs; a red fan leaves the marker put, so the next
+    # fan's marker..sha range still carries the failed work (re-cover).
+    needs: [build-containers, build-charts]
+    if: contains(vars.ROLE, 'prod')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Push negotiation needs the real history, not the single-commit
+          # default (the main-sync and builder precedent).
+          fetch-depth: 0
+      - name: advance the shared last-built marker
+        run: |
+          set -euo pipefail
+          # The endpoint: the charts bump commit if this fan's range minted
+          # one (D53 — an event-sha endpoint would re-enter the bump's own
+          # charts/** edits into the next detection forever), else the
+          # event sha. Fetch main so the bump object is pushable from this
+          # checkout. Plain push first, no force form anywhere; on a shared
+          # branch a refusal is a CLASSIFY (C14/D54): already-advanced reads
+          # calm-green, divergence goes red naming both sides and the owner
+          # verbs. No PAT: the checkout's same-repo credential.
+          git fetch origin refs/heads/main:refs/remotes/origin/main
+          TARGET=${{ needs.build-charts.outputs.bump_sha }}
+          TARGET=${TARGET:-$GITHUB_SHA}
+          if git push origin "${TARGET}:refs/heads/ci/last-built"; then
+            echo "marker advanced to ${TARGET}"
+            exit 0
+          fi
+          git fetch origin refs/heads/ci/last-built
+          if git merge-base --is-ancestor "${TARGET}" FETCH_HEAD; then
+            echo "marker already advanced past this run's endpoint — consistent"
+            exit 0
+          fi
+          echo "main-sync: ci/last-built diverged from this fan's endpoint ${TARGET} (marker $(git rev-parse FETCH_HEAD) — not an ancestor either way) — reset the marker ref to a reachable commit or delete it to fall back to the payload chain" >&2
+          exit 1
+
   sync-fanout:
-    # needs: [push-gh] IS the race resolution (cf-139 R1 option (c)): the
+    # needs: [push-gh, build-containers, build-charts] IS the race
+    # resolution (cf-139 R1 option (c)) grown by the D59 owner ruling: the
     # fleet's app sources track GitHub, so the fan-out may only fire once
-    # GitHub already carries this push — earlier, every sync lands the
-    # previous revision. The single vault reference is the ORG-level secret
-    # (owner ruling 2026-11-23): mapped into env only — the value must never
+    # GitHub already carries this push, AND it waits for both builders to
+    # come back green (a red release holds the fleet; the unmoved marker
+    # re-covers the failed range next fan). The single vault reference is
+    # the ORG-level secret (owner ruling 2026-11-23): mapped into env only
+    # — the value must never
     # reach the run body (it would land in the step script file the runner
     # writes) or argv. The python call is UN-guarded on purpose: config/setup
     # errors go red (the ruled exit-posture refinement), unset vault was
     # already skipped green above, and per-target runtime failures stay soft
     # inside the script's own contract.
-    needs: [push-gh]
+    needs: [push-gh, build-containers, build-charts]
     if: contains(vars.ROLE, 'prod')
     runs-on: ubuntu-24.04
     steps:
@@ -118,7 +191,7 @@ jobs:
             echo '::warning::sync-fanout not configured (org-level Actions secret ARGOCD_SYNC_TOKENS absent) — fan-out skipped, manual sync or the next push covers it'
             exit 0
           fi
-          # dispatch/first-push may carry no event ref (build-charts.yaml:92
+          # dispatch/first-push may carry no event ref (build-charts.yaml:95
           # precedent) — the chain resolves main, never an empty ref.
           REF="${EVT_REF:-${GH_REF:-refs/heads/main}}"
           python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"

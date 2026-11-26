@@ -398,7 +398,7 @@ mitigations:
 ## In-repo images (`containers/<name>`)
 
 If the MCP server is built in this repo (see the `container-creation` skill),
-the forge `containers-build.yaml` workflow is tag-based: a `prod`-role main
+the forge `build-containers.yaml` workflow is tag-based: a `prod`-role main
 merge (or a `workflow_dispatch` run) publishes the `:yy.mm.N` calendar tag
 plus the rolling `:latest` / `:main` tags to both `ghcr.io/ownyourio/<name>`
 and the instance's own Forgejo registry, and a PR pushes

@@ -2,7 +2,7 @@
 # four act-24.04-family labels (charts/forgejo-runner). D33 bake: the
 # release pipeline's first fire died on a read ECONNRESET downloading helm
 # from get.helm.sh inside a job's "Set up helm" step, so the toolchain
-# bakes at image build time, on the containers-build egress lane that
+# bakes at image build time, on the build-containers egress lane that
 # production already proves, and workflow jobs install nothing at run time.
 #
 # This is a DERIVATIVE of the production act base, not a rebuild: the

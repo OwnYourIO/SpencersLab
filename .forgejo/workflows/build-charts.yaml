@@ -1,5 +1,8 @@
 # Build Charts — the chart bump+publish pipeline running on Forgejo Actions
-# (cf-55). The prod instance's runner is the single chart-version authority:
+# (cf-55), INVOKED BY main-sync.yaml on the prod-main fan (C15/D56 — the
+# push arm is retired; path filtering lives in the marker..sha detection on
+# the shared ci/last-built marker). The prod instance's runner is the single
+# chart-version authority:
 # it detects changed charts, test-builds them, commits Chart.yaml calendar
 # bumps (Y.M.N) to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
 # byte-stable consumer contract) and this instance's Helm package registry.
@@ -11,7 +14,7 @@
 # contains(), so a list value like dev,prod passes, and a non-prod value
 # renders the guard false and nothing fires — an unguarded twin would
 # double-publish from the dev copy (D8). Unset stays narrow here BY
-# DELIBERATE choice, beside containers-build.yaml's widen: this pipeline
+# DELIBERATE choice, beside build-containers.yaml's widen: this pipeline
 # commits to main and mints releases, so it must never fire unconfigured.
 # Substring caveat: no future role word may contain prod as a substring —
 # "production" would silently widen these guards. has-changes gating belongs
@@ -30,10 +33,10 @@
 # chart per fire (D47).
 name: Build Charts
 on:
-  push:
-    branches: [main]
-    paths:
-      - charts/**
+  workflow_call:
+    outputs:
+      bump_sha:
+        value: ${{ jobs.bump.outputs.bump_sha }}
 
 jobs:
   changes:
@@ -249,9 +252,13 @@ jobs:
           # git itself refuses a stale head: fast-forward-only, a refused
           # attempt re-loops and can never overwrite (V-4). No secret
           # reference: the checkout's automatic same-repo credential pushes
-          # main, and its push re-triggers no workflow — that
-          # non-re-trigger is the loop guard (R3/D5).
-          # ONE clock stamp per run (the containers-build month= law): all
+          # main. Loop guard (C15/D53): a re-fire of the same range reads
+          # marker..sha EMPTY — the marker at-or-past the endpoint makes the
+          # detection verified-empty and mints nothing, so even a triggering
+          # re-run cannot double-bump; the marker idempotence IS the loop
+          # guard (the retired push-era shape relied on main's own
+          # non-re-trigger of a workflow push).
+          # ONE clock stamp per run (the build-containers month= law): all
           # retry attempts share one Y.M, so a straddle of UTC midnight on
           # the 1st cannot split a release lineage across two months. The
           # month is UNPADDED here and int()-reformatted in the derivation:
@@ -354,7 +361,7 @@ jobs:
               # second half) — a published version is never re-minted.
               # Bounded walk: an index more than 50 same-month versions
               # ahead of the candidate is a corruption signal to fail on,
-              # not a queue to drain (containers-build's bounded-walk
+              # not a queue to drain (build-containers's bounded-walk
               # precedent).
               steps = 0
               while published.get(key, (0, 0, 0)) >= cand:
@@ -523,7 +530,7 @@ jobs:
         if: needs.changes.outputs.has_changes == 'true'
         env:
           # The Actions job token's package permission check is unimplemented
-          # upstream — the same fact containers-build.yaml already pays with
+          # upstream — the same fact build-containers.yaml already pays with
           # FORGE_PUSH_TOKEN (a human-minted, non-admin write:package PAT on
           # the account owning the curatedforest namespace). The username
           # half of the basic-auth pair is cosmetic — the same
@@ -568,44 +575,3 @@ jobs:
             fi
             curl -f -X POST --user "forge:${FORGE_PKG_TOKEN}" --upload-file "$pkg" "$pkg_api"
           done
-
-  advance-marker:
-    if: contains(vars.ROLE, 'prod') && needs.changes.outputs.has_changes == 'true'
-    needs: [bump, release, forgejo-publish]
-    runs-on: ubuntu-24.04
-    env:
-      BUMP_SHA: ${{ needs.bump.outputs.bump_sha }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          # Push negotiation needs the real history, not the single-commit
-          # default (V-6-1 law, this file's precedent).
-          fetch-depth: 0
-      - name: Advance the shared last-built marker
-        run: |
-          set -euo pipefail
-          # INTERIM writer (C14; C15 replaces it with main-sync's aggregate
-          # and deletes this job — D54). The endpoint is the BUMP COMMIT job
-          # output, never the event sha: an event-sha marker re-enters the
-          # bump's own charts/** edits into the next detection and mints an
-          # eternal one-release-per-fire tail (D53). The bump commit is a
-          # child of this job's event checkout, so fetch main to make the
-          # endpoint object pushable; the push itself rides the output sha,
-          # never a main refspec. Plain push FIRST — on a shared branch a
-          # refusal is a CLASSIFY (D54): already-advanced reads calm-green
-          # with the info line, divergence goes red naming both sides. No
-          # force form, no PAT: the checkout's same-repo credential, the
-          # containers advance laws travel with the job.
-          git fetch origin refs/heads/main:refs/remotes/origin/main
-          if git push origin "${BUMP_SHA}:refs/heads/ci/last-built"; then
-            echo "ci/last-built advanced to the bump commit ${BUMP_SHA}"
-            exit 0
-          fi
-          git fetch origin refs/heads/ci/last-built
-          if git merge-base --is-ancestor "${BUMP_SHA}" FETCH_HEAD; then
-            echo "marker already advanced past this run's endpoint — consistent"
-            exit 0
-          fi
-          echo "build-charts: ci/last-built diverged from the bump endpoint ${BUMP_SHA} (marker $(git rev-parse FETCH_HEAD) — not an ancestor either way) — reset the marker ref to a reachable commit or delete it to fall back" >&2
-          exit 1

@@ -994,6 +994,14 @@ fi
 # wildcard (C16 asked to verify — covered), and the prowlarr admit already
 # stands from the C11 round (C13's fold is a no-op there). A replan-added
 # file joins THIS line.
+# cf-55 ROUND 5 / C15 (2026-11-26, D56; chunks/C15.md): the rename's
+# collateral comment re-truths are forced on live surfaces by ci-surface
+# t8's armed containers sweep — join lines extended with
+# .github/workflows/docker-build.yaml:5 (the GitHub twin citing the forge
+# builder) and containers/vllm-radiance-mxfp4/{Dockerfile,README.md}
+# (first-build calendar-tag cites). Exact per-file joins, no wildcards;
+# the rebuild round's "NO docker-build or vllm-radiance admits" premise
+# assumed the branch touches neither — C15's fence says otherwise.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -1075,6 +1083,7 @@ if want t14; then
       .forgejo/workflows/renovate.yaml|\
       .forgejo/workflows/main-sync.yaml|charts/prowlarr/Chart.yaml|\
       .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
+      .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
       services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;

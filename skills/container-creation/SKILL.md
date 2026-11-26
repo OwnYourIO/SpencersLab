@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio or the instance's own Forgejo registry (same tag set), working with the tag-based containers-build Forgejo workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio or the instance's own Forgejo registry (same tag set), working with the tag-based build-containers Forgejo workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -41,7 +41,7 @@ instance's own Forgejo registry.
 
 ## Build pipeline
 
-`.forgejo/workflows/containers-build.yaml` builds and pushes containers
+`.forgejo/workflows/build-containers.yaml` builds and pushes containers
 automatically on lab Forgejo instances; what an instance publishes is
 decided by its `ROLE` repo variable — a comma list without spaces over
 `{dev, prod}` (e.g. `dev,prod`; unset defaults to both roles), never by an
@@ -348,7 +348,7 @@ Before merging a new container to `main`:
 
 - [ ] `containers/<name>/Dockerfile` exists; the build gate is CI — agent
       sessions have no docker daemon, so the Forgejo
-      `containers-build.yaml` run on the pushed branch is authoritative, and
+      `build-containers.yaml` run on the merged main (via the main-sync fan) is authoritative, and
       build-critical facts (base image layout, binary paths, digests) are
       verified locally from the pinned images' GHCR layer tar-listings
       instead

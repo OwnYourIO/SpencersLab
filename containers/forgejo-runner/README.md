@@ -12,7 +12,7 @@ a 22.04 label would lie about its OS anyway).
 Why it exists: the release pipeline's first fire on Forgejo died inside a
 job's `Set up helm` step on a read `ECONNRESET` from get.helm.sh (owner
 ruling D33). The fix bakes the toolchain at image build time — on the
-`containers-build` egress lane production already proves — so workflow
+`build-containers` egress lane production already proves — so workflow
 jobs install nothing at run time.
 
 ## Base + digest
@@ -70,7 +70,7 @@ forbids the workflows from ever installing tools at run time again.
 
 ## Bump law
 
-Edit `Dockerfile` → PR → merge to `main` → the `containers-build`
+Edit `Dockerfile` → PR → merge to `main` → the `build-containers`
 workflow publishes `:yy.mm.N` + `:main` + `:latest` to
 `ghcr.io/ownyourio/forgejo-runner` and the instance registry. The runner
 labels are **manual pins**: no renovate manager reads
@@ -80,7 +80,7 @@ re-pull a tag they already cached, so a rolling ref would freeze silently
 tag by hand.
 
 First-merge note (D42): this image's first build IS the merge fire's own
-`containers-build` run, and a brand-new image's first calendar tag is
+`build-containers` run, and a brand-new image's first calendar tag is
 deterministic — both registry walks see no tags, so it publishes
 `<yy.mm>.1` of the merge month (`26.11.1` for the November landing); the
 C06 label pins predict exactly that literal. If the merge crosses into the

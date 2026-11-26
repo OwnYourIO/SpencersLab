@@ -160,7 +160,7 @@ self-tunes with `tools/hip/tune_hipblaslt.cpp` (PR #3636 ran gfx1201 on
 
 ## Publishing — CI, not hand-releases
 
-The Forgejo workflow `.forgejo/workflows/containers-build.yaml` detects this
+The Forgejo workflow `.forgejo/workflows/build-containers.yaml` detects this
 changed directory on PRs (a `dev`-role PR pushes `pr-<branch>-<sha>` to the
 local registry only) and on merges to `main` pushes the `:yy.mm.N` calendar
 tag (plus the rolling `:latest` / `:main` tags) to both
