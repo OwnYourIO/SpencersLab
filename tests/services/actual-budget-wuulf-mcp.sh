@@ -1,19 +1,31 @@
 #!/usr/bin/env bash
-# C01 + C02 acceptance checks (2026-11-cf-156 feat-actual-budget-mcp-server):
+# C01 + C02 + C03 acceptance checks (2026-11-cf-156 feat-actual-budget-mcp-server):
 # the wuulf-budget third Actual Budget instance (C01 — the service-trio mirror
 # of the live bri-budget precedent, plus the R2 criterion: wuulf comes up
 # WITHOUT the broken 01-enable-openid initContainer that lives only in the
 # umbrella's own actualbudget: block, while the chart's SSO envFrom wiring
-# and both existing instances stay untouched) and the s-stefanov/actual-mcp
+# and both existing instances stay untouched), the s-stefanov/actual-mcp
 # ToolHive server on home (C02 — read-only tier BY THE ABSENCE of
-# --enable-write, the SPLIT credential sentinels with 1:1 UUID mirrors, the
-# wuulf in-cluster URL, the deliberate ACTUAL_BUDGET_SYNC_ID absence).
+# --enable-write, the SPLIT credential, the wuulf in-cluster URL, the
+# deliberate ACTUAL_BUDGET_SYNC_ID absence), and the 2026-11-26 owner rework
+# (C03 — wuulf NO LONGER on proxy-remote: s2 flipped to an absence assert;
+# the two credential ExternalSecret templates + the data PVC MOVED into
+# charts/actualbudget/templates/ behind the per-instance mcp.enabled gate
+# (chart default false, true ONLY in the wuulf block) with release-prefixed
+# {{ .Release.Name }}-mcp-* names + deletionPolicy Delete, the bitwardenIds
+# sentinels MOVED into the chart and the real owner-minted UUIDs landed at
+# the custom-values TOP level: s6 re-pinned to the chart sentinel source,
+# both files 1:1 and GREEN). The designed 29/2 red shape is RETIRED by C03:
+# this suite is expected to end 0 failures once C03 lands.
 #
-# Hermetic (C01/C02 Tests): greps + python3/PyYAML structure asserts only;
+# Re-pinned 2026-11-26 by a FRESH Test Writing session (C03 round): s2/s5/s6
+# re-pinned to the owner rework, s1/s3/s4/s7 preserved verbatim.
+#
+# Hermetic (C01/C02/C03 Tests): greps + python3/PyYAML structure asserts only;
 # no cluster access, no helm in this suite. The render checks (C01 AC1/AC5,
-# C02 AC1/AC2 — the wuulf chart render, the hivetools render per the
-# mcp-servers.md Validation recipe) are plan Commands run by dev/review and
-# quoted in commands_run — the home-dead-image-refs.sh division of labor.
+# C02 AC1/AC2, the C03 three-way + collision-safety renders) are plan
+# Commands run by dev/review and quoted in commands_run — the
+# home-dead-image-refs.sh division of labor.
 # There is no docker-build leg in this plan (upstream image), so no check
 # references a build gate.
 #
@@ -22,7 +34,9 @@
 # + a non-empty, non-rolling tag — never a tag value, which is the dev-time
 # live registry query); the Bitwarden UUIDs are asserted by FORM (8-4-4-4-4
 # hex) and the count-based 1:1 sentinel<->custom-values pairing, never a
-# specific UUID value.
+# specific UUID value — the owner-minted UUID values themselves are proven by
+# the C03 plan-Commands render (the real UUID resolved through the
+# custom-values injection path).
 #
 # The proxy-local values define the YAML anchor `port` twice (qbittorrent 8080
 # + the backup entry's 80): legal YAML, which PyYAML refuses; this suite
@@ -77,6 +91,46 @@ want_min() {
     fail "$4 (count ${n:-0}, want >= $3; needle: $1 in $2)"
   fi
 }
+
+# want_dir_regex <regex> <dir> <n> <label> — extended-regex match-line count
+# across a directory tree (the s6 stale-name sweep). A missing directory is
+# a fail, not a silent 0 (the sweep must not pass on a tree that cannot be
+# read). The regex matches the OLD item names at a non-dash boundary (so the
+# C03-kept pod-local volume name actual-budget-mcp-data is not a false hit),
+# the OLD key item name, and the OLD claimName reference (renamed by C03).
+want_dir_regex() {
+  [ -d "$2" ] || { fail "$4 (directory $2 is missing — the sweep is unassessable)"; return; }
+  local n
+  n=$(grep -rnE -- "$1" "$2" 2>/dev/null | wc -l)
+  if [ "${n:-0}" -eq "$3" ]; then
+    pass "$4 (count $n == $3)"
+  else
+    fail "$4 (count ${n:-0}, want $3; regex: $1 in $2)"
+  fi
+}
+
+# --- s2 shell leg [C03 AC5 — the plan Commands changed leg] -----------------
+# wuulf is no longer exposed on proxy-remote (the 2026-11-26 owner
+# instruction): the string must be absent from the file at ANY position, so a
+# re-added entry fails even outside proxy.subdomains. The unreadable-file
+# guard is the s2 python leg below (a parse failure is a fail, not a pass).
+want_count 'wuulf-budget' "$PR" 0 's2 [C03]: the string wuulf-budget is absent from the proxy-remote values file (a re-added entry fails)'
+
+# --- s6 shell legs [C03 AC4/AC5 — the stale-name + no-sentinel sweep] ------
+# The owner rename (actual-budget-mcp / actual-budget-mcp-key ->
+# actualbudget-mcp-bearer / actualbudget-mcp-key): a stale reference must
+# not survive anywhere in the tracked service / chart / custom-values
+# surface — the C02 standing-constraint comment, the old top-level
+# sentinels, the hivetools entry names, the old claimName, the old template
+# files all carry the old names. The C03-kept pod-local volume name
+# actual-budget-mcp-data is NOT a stale reference (the chunk: the pod-local
+# volume name may stay as-is — it is not a cluster object), so the sweep
+# matches the old item names at a non-dash boundary only.
+STALE_RX='actual-budget-mcp([^a-z-]|$)|actual-budget-mcp-key|claimName:[[:space:]]*actual-budget-mcp-data'
+want_dir_regex "$STALE_RX" services/ 0 's6 [AC5]: the old names (actual-budget-mcp / actual-budget-mcp-key / the old claimName reference) are absent from every services/ file (stale-reference sweep)'
+want_dir_regex "$STALE_RX" charts/ 0 's6 [AC5]: the old names are absent from every charts/ file (stale-reference sweep)'
+want_dir_regex "$STALE_RX" custom-values/ 0 's6 [AC5]: the old names are absent from every custom-values/ file (stale-reference sweep)'
+want_count 'OVERRIDE_VIA_CUSTOM_VALUES' "$CV" 0 's6 [AC4]: the custom-values file carries no sentinel VALUES (every mirror is a real UUID)'
 
 # --- s4 shell legs [C01 AC2/R2 — the plan Commands R2 validation line] -------
 # The broken 01-enable-openid step must not migrate into the shared chart
@@ -207,17 +261,23 @@ if pl is not None:
         else:
             ok('s2 [AC3]: proxy-local wuulf-budget carries the actualbudget SSO redirect (client_id=actualbudget, the wuulf redirect URI) with target + loginSubDomain login')
 
+# [C03 — the 2026-11-26 owner instruction flips this leg to ABSENCE: "I
+# don't want anything on proxy-remote yet". The assert must fail on a
+# re-added entry at ANY position (the shell grep leg covers the raw file;
+# the tree scan here covers non-proxy placement) and must NOT pass on an
+# unreadable file (a parse failure below is a fail, not a pass).
 if pr is not None:
-    e = ((pr.get('proxy') or {}).get('subdomains') or {}).get('wuulf-budget')
-    if isinstance(e, dict) and e.get('enabled') is True:
-        ok('s2 [AC3]: proxy-remote wuulf-budget is enabled: true')
+    stray = find_keys(pr, 'wuulf-budget')
+    if stray:
+        e = ((pr.get('proxy') or {}).get('subdomains') or {}).get('wuulf-budget')
+        bad(f's2 [C03]: wuulf-budget is PRESENT in the proxy-remote values ({len(stray)} tree occurrence(s); the proxy.subdomains entry: {e!r}) — C03 removes it; wuulf stays on proxy-local only')
     else:
-        bad(f's2 [AC3]: proxy-remote wuulf-budget missing or not enabled: true (got {e!r})')
+        ok('s2 [C03]: the proxy-remote values carry NO wuulf-budget entry anywhere in the tree (the C01 enabled: true entry is removed; the proxy-local entry stands)')
 
 if pl is None:
     bad('s2: unassessable — the proxy-local values did not parse (see precondition fail above)')
 if pr is None:
-    bad('s2: unassessable — the proxy-remote values did not parse (see precondition fail above)')
+    bad('s2 [C03]: unassessable — the proxy-remote values did not parse; an absence assert must not pass on an unreadable file')
 
 # --- s3 [C01 AC4]: the 1:1 sentinel<->custom-values pairing for wuulf --------
 if cv is not None and home is not None:
@@ -285,17 +345,36 @@ if home is not None:
 if chart is None:
     bad('s4: unassessable — the chart values did not parse (see precondition fail above)')
 
-# --- s5 [C02 AC1/AC4/AC5 + file presence]: the mcp.actual-budget entry ------
-def file_check(path, label, needles):
-    if not os.path.isfile(path):
-        bad(f'{label}: {path} is missing')
-        return
-    text = open(path).read()
-    missing = [n for n in needles if n not in text]
-    if missing:
-        bad(f'{label}: {path} lacks: {", ".join(missing)}')
+# --- s5 [C02 AC1/AC4/AC5 + C03 re-pin]: the mcp.actual-budget entry --------
+# The C02 entry invariants stand (enabled, image format, transport, args
+# incl. the --enable-write absence, env, the mcp container, the security
+# floor); C03 re-pins the secrets wiring + volume claimName to the
+# release-prefixed names the moved chart templates render, and adds the
+# gate keys (chart default false; true ONLY in the wuulf block) plus the
+# moved-template shape (gate, release-prefixed names, owner-named remoteRef,
+# deletionPolicy Delete).
+
+if chart is not None:
+    mg = chart.get('mcp')
+    if isinstance(mg, dict) and mg.get('enabled') is False:
+        ok('s5 [C03]: the chart default is mcp.enabled false (the per-instance opt-in gate, OFF by default — bri-budget and home-actualbudget render NONE of the MCP objects)')
     else:
-        ok(f'{label}: {path} present with the {len(needles)} boilerplate markers (the bitwarden-login store ref + the conversion/decoding/metadataPolicy lines that keep ArgoCD quiet)')
+        bad(f's5 [C03]: the chart default mcp.enabled got {mg.get("enabled") if isinstance(mg, dict) else "no mcp key"} — want false')
+
+if home is not None:
+    wb = home.get('wuulf-budget')
+    wbm = (wb or {}).get('mcp') if isinstance(wb, dict) else None
+    if isinstance(wbm, dict) and wbm.get('enabled') is True:
+        ok('s5 [C03]: the wuulf-budget per-instance block sets mcp.enabled true (the ONLY instance that enables the gate)')
+    else:
+        bad(f's5 [C03]: the wuulf-budget block lacks mcp.enabled true (got {wbm.get("enabled") if isinstance(wbm, dict) else "no mcp key"})')
+    for inst in ('bri-budget', 'actualbudget'):
+        b = home.get(inst)
+        bm = (b or {}).get('mcp') if isinstance(b, dict) else None
+        if isinstance(bm, dict) and bm.get('enabled') is True:
+            bad(f's5 [C03]: the {inst} block sets mcp.enabled true — the gate must be true ONLY in the wuulf block')
+        else:
+            ok(f's5 [C03]: the {inst} block does not enable the mcp gate (only wuulf does)')
 
 if home is not None:
     e = ((home.get('hivetools') or {}).get('mcp') or {}).get('actual-budget')
@@ -369,11 +448,16 @@ if home is not None:
                 bad(f's5 [AC4]: ACTUAL_DATA_DIR {dd!r} matches no volumeMount mountPath (mounts: {[vm.get("mountPath") for vm in mounts]})')
             else:
                 vn = match[0].get('name')
-                is_pvc = any(v.get('name') == vn and isinstance(v.get('persistentVolumeClaim'), dict) for v in vols)
-                if is_pvc:
-                    ok(f's5 [AC4]: ACTUAL_DATA_DIR {dd!r} equals the data volume mount path, and that volume is a persistentVolumeClaim (the 5Gi cache PVC)')
-                else:
+                pv = [v for v in vols if v.get('name') == vn]
+                pvc0 = pv[0].get('persistentVolumeClaim') if pv else None
+                is_pvc = isinstance(pvc0, dict)
+                cn = pvc0.get('claimName') if is_pvc else None
+                if not is_pvc:
                     bad(f's5 [AC4]: the volume {vn!r} mounted at {dd!r} is not a persistentVolumeClaim entry')
+                elif cn != 'home-wuulf-budget-mcp-data':
+                    bad(f's5 [C03]: the data volume claimName got {cn!r}, want home-wuulf-budget-mcp-data (the release-prefixed name the moved PVC template renders)')
+                else:
+                    ok(f's5 [AC4/C03]: ACTUAL_DATA_DIR {dd!r} equals the data volume mount path, a persistentVolumeClaim with claimName home-wuulf-budget-mcp-data (the release-prefixed 5Gi cache PVC)')
         else:
             bad(f's5 [AC4]: ACTUAL_DATA_DIR env missing or not a string (got {dd!r})')
 
@@ -394,8 +478,8 @@ if home is not None:
         else:
             smap = {it.get('name'): it for it in sec if isinstance(it, dict)}
             want = {
-                'actual-budget-mcp': ('BEARER_TOKEN', 'BEARER_TOKEN'),
-                'actual-budget-mcp-key': ('ACTUAL_SESSION_TOKEN', 'ACTUAL_SESSION_TOKEN'),
+                'home-wuulf-budget-mcp-bearer': ('BEARER_TOKEN', 'BEARER_TOKEN'),
+                'home-wuulf-budget-mcp-key': ('ACTUAL_SESSION_TOKEN', 'ACTUAL_SESSION_TOKEN'),
             }
             diffs = []
             for name, (key, tenv) in want.items():
@@ -410,54 +494,136 @@ if home is not None:
             if extra:
                 diffs.append(f'unexpected extra secret entries: {extra}')
             if diffs:
-                bad('s5 [AC3/AC4]: the secrets wiring is wrong — ' + '; '.join(diffs))
+                bad('s5 [C03/AC4]: the secrets wiring is wrong — ' + '; '.join(diffs))
             else:
-                ok('s5 [AC3/AC4]: secrets carry exactly one entry per item — actual-budget-mcp -> BEARER_TOKEN, actual-budget-mcp-key -> ACTUAL_SESSION_TOKEN (the SPLIT credential, the API-key slot for the 26.12+ key)')
+                ok('s5 [C03/AC4]: secrets carry exactly one entry per credential — home-wuulf-budget-mcp-bearer -> BEARER_TOKEN, home-wuulf-budget-mcp-key -> ACTUAL_SESSION_TOKEN (the release-prefixed target Secrets the moved chart templates render; the owner-confirmed name->role mapping, OQ3)')
 
-    # File presence (the C02 new templates): ExternalSecret boilerplate per the
-    # wekan-mcp shape; the PVC template by presence (its shape is the plan's
-    # dev task, its name is the contract).
-    if home is not None:
-        file_check('services/home/prod/templates/secret-actual-budget-mcp.yaml', 's5 [AC3]',
-                   ['name: bitwarden-login', 'conversionStrategy: Default', 'decodingStrategy: None', 'metadataPolicy: None'])
-        file_check('services/home/prod/templates/secret-actual-budget-mcp-key.yaml', 's5 [AC3]',
-                   ['name: bitwarden-login', 'conversionStrategy: Default', 'decodingStrategy: None', 'metadataPolicy: None'])
-        if os.path.isfile('services/home/prod/templates/pvc-actual-budget-mcp-default.yaml'):
-            ok('s5 [AC3]: the pvc-actual-budget-mcp-default.yaml template exists (the 5Gi data PVC)')
+    # [C03]: the three C02 templates MOVED into the chart behind the
+    # per-instance gate — release-prefixed object names, the owner-named
+    # bitwardenIds remoteRef items, deletionPolicy Delete (the repo-wide
+    # convention for MCP-credential ExternalSecrets), the verbatim wekan-mcp
+    # boilerplate kept; the old umbrella files must be GONE (git mv, no
+    # copy-and-leave-behind).
+    def moved_shape(path, label, rx_name, min_name, item, extras):
+        if not os.path.isfile(path):
+            bad(f'{label}: {path} is missing (the C02 template must be MOVED here, behind the mcp.enabled gate)')
+            return
+        text = open(path).read()
+        problems = []
+        if not re.search(r'\{\{-?\s*if\s+index\s+\.Values\s+["\']mcp["\']\s+["\']enabled["\']\s*\}\}', text):
+            problems.append('the mcp.enabled gate ({{- if index .Values "mcp" "enabled" }}) is missing')
+        n = len(re.findall(rx_name, text))
+        if n < min_name:
+            problems.append(f'the release-prefixed name count is {n}, want >= {min_name} (metadata.name + target.name)')
+        if item is not None and not re.search(r'index\s+\.Values\s+"bitwardenIds"\s+"%s"' % item, text):
+            problems.append(f'the remoteRef bitwardenIds item {item} reference is missing')
+        for needle in extras:
+            if needle not in text:
+                problems.append(f'lacks {needle}')
+        if problems:
+            bad(f'{label}: {path} shape wrong — ' + '; '.join(problems))
         else:
-            bad('s5 [AC3]: services/home/prod/templates/pvc-actual-budget-mcp-default.yaml is missing')
+            what = f'the {item} remoteRef' if item else 'no remoteRef (a PVC)'
+            ok(f'{label}: {path} carries the mcp.enabled gate, the release-prefixed name, {what} and the credential boilerplate (bitwarden-login store ref, the conversion/decoding/metadataPolicy lines that keep ArgoCD quiet, deletionPolicy Delete)')
+
+    moved_shape('charts/actualbudget/templates/secret-actualbudget-mcp-key.yaml', 's5 [C03]',
+               r'\{\{\s*\.Release\.Name\s*\}\}-mcp-key', 2, 'actualbudget-mcp-key',
+               ['name: bitwarden-login', 'conversionStrategy: Default', 'decodingStrategy: None', 'metadataPolicy: None',
+                'creationPolicy: Owner', 'refreshInterval: 1h', 'engineVersion: v2', 'property: password',
+                'deletionPolicy: Delete',
+                'Boiler plate needed for ArgoCD to not complain about a mismatch.',
+                'ACTUAL_SESSION_TOKEN: "{{ `{{ .token }}` }}"'])
+    moved_shape('charts/actualbudget/templates/secret-actualbudget-mcp-bearer.yaml', 's5 [C03]',
+               r'\{\{\s*\.Release\.Name\s*\}\}-mcp-bearer', 2, 'actualbudget-mcp-bearer',
+               ['name: bitwarden-login', 'conversionStrategy: Default', 'decodingStrategy: None', 'metadataPolicy: None',
+                'creationPolicy: Owner', 'refreshInterval: 1h', 'engineVersion: v2', 'property: password',
+                'deletionPolicy: Delete',
+                'Boiler plate needed for ArgoCD to not complain about a mismatch.',
+                'BEARER_TOKEN: "{{ `{{ .token }}` }}"'])
+    moved_shape('charts/actualbudget/templates/pvc-actualbudget-mcp-data.yaml', 's5 [C03]',
+               r'\{\{\s*\.Release\.Name\s*\}\}-mcp-data', 1, None,
+               ['kind: PersistentVolumeClaim', 'namespace: default', 'ReadWriteOnce', '5Gi'])
+    for old in ('services/home/prod/templates/secret-actual-budget-mcp.yaml',
+               'services/home/prod/templates/secret-actual-budget-mcp-key.yaml',
+               'services/home/prod/templates/pvc-actual-budget-mcp-default.yaml'):
+        if os.path.isfile(old):
+            bad(f's5 [C03]: {old} is still present in the home umbrella — the templates MOVED into charts/actualbudget/templates/ (a rename, not a copy-and-leave-behind)')
+        else:
+            ok(f's5 [C03]: {old} is gone from the home umbrella (the move left no old file behind)')
 else:
     bad('s5: unassessable — the home service values did not parse (see precondition fail above)')
 
-# --- s6 [C02 AC3]: the 1:1 sentinel<->custom-values pairing, both items -----
-if home is not None and cv is not None:
-    tb = home.get('bitwardenIds') or {}
-    sentinels = {k for k, v in tb.items() if v == SENTINEL}
-    missing = [k for k in ('actual-budget-mcp', 'actual-budget-mcp-key') if k not in sentinels]
-    if missing:
-        bad(f's6 [AC3]: the top-level sentinels for {missing} are missing from the home service values bitwardenIds')
+# --- s6 [C03 AC4 + grep legs]: the 1:1 sentinel<->custom-values, both files -
+# The sentinels MOVED into the chart's bitwardenIds map (the lowest merge
+# tier); the real owner-minted UUIDs land at the custom-values TOP level
+# (the appset merge overrides the chart tier — the same injection that
+# resolves actualbudget-sso-secret; per-app blocks do NOT feed the chart
+# map, so no per-app UUID blocks are added). The 2026-11-24 ruling's
+# deliberate red state ENDS with C03: both files 1:1 and GREEN.
+if chart is not None and home is not None and cv is not None:
+    cb = chart.get('bitwardenIds')
+    if not isinstance(cb, dict) or not cb:
+        bad('s6 [AC4]: the chart bitwardenIds map is missing or empty — the two MCP sentinels must live in the chart (the lowest merge tier)')
     else:
-        ok('s6 [AC3]: both actual-budget-mcp and actual-budget-mcp-key top-level sentinels exist in the home service values')
+        leaked = sorted(k for k, v in cb.items() if not (isinstance(v, str) and v == SENTINEL))
+        want_keys = {'actualbudget-mcp-key', 'actualbudget-mcp-bearer'}
+        if set(cb) != want_keys or leaked:
+            bad(f's6 [AC4]: the chart bitwardenIds map is wrong (keys {sorted(cb)}, want exactly {sorted(want_keys)}; real UUIDs leaked into the tracked chart file: {leaked})')
+        else:
+            ok('s6 [AC4]: the chart carries exactly the two new sentinels (actualbudget-mcp-key / actualbudget-mcp-bearer), every value OVERRIDE_VIA_CUSTOM_VALUES (no real UUID leaked into the tracked chart file)')
+
+        cvb = cv.get('bitwardenIds') or {}
+        unmirrored = [k for k in cb if not (isinstance(cvb.get(k), str) and UUID_RE.fullmatch(cvb.get(k)) and cvb.get(k) != SENTINEL)]
+        if unmirrored:
+            bad(f's6 [AC4]: chart sentinels without a UUID-form top-level custom-values mirror (count-based 1:1 broken — a third unmirrored sentinel fails here): {unmirrored}')
+        else:
+            ok(f's6 [AC4]: every one of the {len(cb)} chart sentinels has a UUID-form top-level custom-values mirror (count-based 1:1 — the owner mint landed)')
+
+    tb = home.get('bitwardenIds') or {}
+    stale = [k for k in ('actual-budget-mcp', 'actual-budget-mcp-key') if k in tb]
+    if stale:
+        bad(f's6 [AC4]: the OLD sentinel names {stale} are still present in the home service values — they moved into the chart with the owner rename; a stale reference must not survive')
+    else:
+        ok('s6 [AC4]: the old sentinel names (actual-budget-mcp, actual-budget-mcp-key) are ABSENT from the home service values (the rename is complete)')
+
+    non_sent = sorted(k for k, v in tb.items() if not (isinstance(v, str) and v == SENTINEL))
+    if non_sent:
+        bad(f's6 [AC4]: non-sentinel values in the home top-level bitwardenIds (a real UUID leaked into the service values): {non_sent}')
+    else:
+        ok(f's6 [AC4]: every one of the {len(tb)} home top-level bitwardenIds values is the OVERRIDE_VIA_CUSTOM_VALUES sentinel (no UUID leaked into the service values)')
 
     cvb = cv.get('bitwardenIds') or {}
-    uuids = {k for k, v in cvb.items() if isinstance(v, str) and UUID_RE.fullmatch(v) and v != SENTINEL}
-    unmirrored = sorted(sentinels - uuids)
+    unmirrored = [k for k, v in tb.items() if v == SENTINEL and not (isinstance(cvb.get(k), str) and UUID_RE.fullmatch(cvb.get(k)))]
     if unmirrored:
-        bad(f's6 [AC3]: sentinels without a UUID-form custom-values mirror (count-based 1:1 broken — a third unmirrored sentinel fails here): {unmirrored}')
+        bad(f's6 [AC4]: home top-level sentinels without a UUID-form custom-values mirror (count-based 1:1 broken — every pre-existing sentinel must stay mirrored): {unmirrored}')
     else:
-        ok(f's6 [AC3]: every one of the {len(sentinels)} home top-level sentinels has a UUID-form mirror in custom-values (count-based 1:1)')
+        ok(f's6 [AC4]: every one of the {len(tb)} home top-level sentinels has a UUID-form custom-values mirror (count-based 1:1, both files 1:1)')
+
+    existing8 = ['admin-account', 'wekan-sso-secret', 'paperless-sso-secret', 'paperless-samba-secret',
+                'karakeep-secret', 'karakeep-sso', 'actualbudget-sso-secret', 'mcp-pg-paperless']
+    missing8 = [k for k in existing8 if k not in tb]
+    if missing8:
+        bad(f's6 [AC4]: pre-existing home top-level sentinels missing (regression — C03 removes exactly the two old MCP names, nothing else): {missing8}')
+    else:
+        ok('s6 [AC4]: all 8 pre-existing home top-level sentinels are present (regression pin — the C02 pair is out, the 8 stand)')
 
     diffs = []
-    for k in ('actual-budget-mcp', 'actual-budget-mcp-key'):
+    for k in ('actualbudget-mcp-key', 'actualbudget-mcp-bearer'):
         v = cvb.get(k)
         if not (isinstance(v, str) and UUID_RE.fullmatch(v) and v != SENTINEL):
-            diffs.append(f'custom-values bitwardenIds.{k} got {v!r}, want a UUID-form non-sentinel value')
+            diffs.append(f'custom-values bitwardenIds.{k} got {v!r}, want a UUID-form (real, not a sentinel) value')
     if diffs:
-        bad('s6 [AC3]: ' + '; '.join(diffs))
+        bad('s6 [AC4]: ' + '; '.join(diffs))
     else:
-        ok('s6 [AC3]: both credential UUIDs in custom-values are UUID-form, not sentinels (the 1:1 pair, both mirrored)')
-elif home is None or cv is None:
-    bad('s6: unassessable — one of the home service values / custom-values did not parse (see precondition fail above)')
+        ok('s6 [AC4]: both owner-minted credential UUIDs (actualbudget-mcp-key / actualbudget-mcp-bearer) are UUID-form, not sentinels — the 2026-11-24 ruling red state ends with C03 (the exact values are proven by the C03 plan-Commands render)')
+
+    bad_sent = sorted(k for k, v in cvb.items() if v == SENTINEL)
+    if bad_sent:
+        bad(f's6 [AC4]: sentinel VALUES in the custom-values top-level bitwardenIds (a mirror must be a real UUID, not the sentinel string): {bad_sent}')
+    else:
+        ok('s6 [AC4]: the custom-values top-level bitwardenIds carries no sentinel VALUES (every mirror is a real UUID)')
+elif chart is None or home is None or cv is None:
+    bad('s6: unassessable — one of the chart / home service values / custom-values did not parse (see precondition fail above)')
 
 # --- s7 [C02 Notes]: ACTUAL_BUDGET_SYNC_ID is deliberately absent -----------
 if home is not None:

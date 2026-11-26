@@ -12,7 +12,8 @@
     "still_owner_owned": "Prerequisite 1 (Keycloak redirect URIs + web origins for wuulf-budget.spencerslab.com) and Prerequisite 3 (the 26.12.x pin move via Renovate + the attached @actual-app/api exactly-26.10.0 SDK re-check)"
   },
   "coord_session": null,
-  "test_session": "ses_df1f0c304ffe61hq5LzFUdMdyO",
+  "test_session": "ses_de9fa4ee1ffeb7H4DQM18LdC85",
+  "test_session_note": "re-assigned at the C03 re-pin round (2026-11-26). The original author (ses_df1f0c304ffe61hq5LzFUdMdyO) was bound to the landing checkout, which no longer holds this ticket folder, so C03's re-pin is authored fresh in the worktree and this session is now the single author of record for every later test fix.",
   "current_wave": 3,
   "updated_at": "2026-11-26T03:34:22+00:00",
   "run_state": {
@@ -32,6 +33,17 @@
     "main_cleanup": "reverse-applied the cf-156-only patch in /home/coder/SpencersLab: the three exclusively-cf-156 files returned to HEAD, custom-values is clean, and services/home/prod/values.yaml now differs from HEAD by exactly 8 insertions — the co-tenant's audio-ad-detection hunk, left byte-as-found. The four new files and main's stale copy of the ticket folder were removed after the branch copy was hash-verified and committed."
   },
   "updated_at": "2026-11-26T03:34:22+00:00",
+  "test_repin_c03": {
+    "at": "2026-11-26T04:38:16Z",
+    "session": "ses_de9fa4ee1ffeb7H4DQM18LdC85",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+    "designed_shape_change": "the '29 pass / 2 fail' shape is RETIRED. Pre-C03 the re-pinned suite is 30 pass / 17 fail (every red is an unimplemented C03 surface); post-C03 the expected outcome is 48 pass / 0 fail, verified by faithful simulation rather than claimed.",
+    "re_pinned": "s2 proxy-remote leg INVERTED to assert absence (wuulf stays local-only, proxy-local unchanged); s5 moved to charts/actualbudget paths with the mcp.enabled gate, release-prefixed names, deletionPolicy: Delete, re-pointed hivetools secret references, tag-by-format and no --enable-write retained; s6 chart-sentinel source + count-based 1:1 across both files + real-UUID form asserts + a stale-name sweep across services/, charts/ and custom-values/",
+    "held_intact": "s1, s3, s4 (R2 no-initContainers proof) and s7 unchanged and re-verified green; the 8-pre-existing home sentinel set pinned as its own regression leg",
+    "mutation_proofs": "7 targeted mutations each caught by exactly one intended check family: re-added proxy-remote entry, third unmirrored chart sentinel, UUID leaked into the tracked chart file, gate removed from a moved template, --enable-write added, stale old-name comment re-added, claimName reverted",
+    "coord_verification": "I independently confirmed the recovery the session reported: git diff --cached --stat is EMPTY and git status --porcelain shows only 'M tests/services/actual-budget-wuulf-mcp.sh', so the worktree is at its true pre-C03 state and no simulated C03 surface leaked into the index or the files",
+    "uuid_discipline": "the owner's real UUIDs are asserted by FORM + 1:1 pairing, never as literals in the suite; their exact values are proven by the C03 plan-Commands render (dev/review), which keeps the suite from re-creating this ticket's own stale-pin failure mode"
+  },
   "final_review": {
     "status": "done",
     "verdict": "APPROVED (whole plan)",
