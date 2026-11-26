@@ -1,6 +1,6 @@
 {
   "feature": "cf-156-feat-actual-budget-mcp-server",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "c03_approval": {
     "at": "2026-11-26T04:02:56Z",
     "approved_by": "owner, in-session — 'Approve C03 as planned' plus the OQ3 confirmation 'bearer=BEARER_TOKEN, key=ACTUAL_SESSION_TOKEN'; the PVC-stays-in-chart alternative was offered and declined, so the 5Gi SDK-cache PVC moves into the chart with the two ExternalSecrets",
@@ -21,6 +21,7 @@
     "plan_status_decision": "left at 'approved', NOT 'complete' — the done-gate requires every chunk done and C02 is dev_done_blocked by owner ruling (two custom-values UUID mirrors cannot exist until the owner mints the Bitwarden items). Marking the plan complete would assert a finished gate that the suite's two reds contradict; the pipeline's own rule is that files state facts, not aspirations.",
     "commit": {
       "sha": "0d2a662bd",
+      "branch_tip_after_c03": "6baa0f16d (then the final-review records commit); full set over base 8f04bf915: 0d2a662bd C01+C02+records, 85529c241 records, 7bb4843ea C03 plan, 0cb16d68f test re-pin, 38a8df2cc C03 code, 6baa0f16d records fix — six linear single-parent commits, no merges, nothing pushed, merge-base main HEAD = 8f04bf915",
       "branch": "cf-156-feat-actual-budget-mcp-server",
       "base": "8f04bf915b4ce1f561e7c26b06fbc22e16e45e9e",
       "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-156-feat-actual-budget-mcp-server",
@@ -57,6 +58,22 @@
     ],
     "no_validation_at_fault": true,
     "records_check": "python3 json.load of STATE.json passed for the reviewer after my hand-edits, confirming the re-homed C03_planner_skeleton did not break the file"
+  },
+  "final_review_rerun": {
+    "at": "2026-11-26T05:40:00Z",
+    "session": "ses_de9b57177ffeJPdpYYs5QKE3vU",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+    "verdict": "APPROVED (whole plan, post-C03) — SUPERSEDES the 2026-11-25 final_review block above, which was rendered against the two-chunk inert-credentials state and is kept as history, not as the current verdict.",
+    "why_a_rerun": "the owner's four C03 instructions retired the designed-red suite shape, relocated and renamed the credential surface, and turned the delivery from inert to startable — so the prior verdict could not simply be extended.",
+    "covers": "three-chunk coherence (C01's home-wuulf-budget:5006 is exactly C02's ACTUAL_SERVER_URL; claimName home-wuulf-budget-mcp-data matches the release-prefixed PVC the moved template renders); the post-hoc changed-requirement records honestly cover what C03 moved, with every C02 invariant re-verified live rather than only asserted; the green suite is earned (s2 absence assert, s5 nil-safe index gate regex + gone-old-files, s6 count-based 1:1 with a sweep that fails on a missing directory); no live object is touched (bri gate-closed byte-identical md5 109d542ef8757a867e180f5721a8484f recomputed independently; umbrella renders zero mcp objects; home-actualbudget Deployment sha256 identical with 01-enable-openid still present; comm -12 = 0 shared names; the removed umbrella templates never existed on main so nothing live is pruned); no ApplicationSet edit, no Chart.yaml diff, no kubectl, no hand-bumped tag (the only image line in the whole branch diff is the new v1.15.1), zero owner UUIDs in charts/ or services/; git posture clean (merge-base main HEAD = 8f04bf915, six linear single-parent commits, nothing pushed).",
+    "does_not_cover": "the card's end-to-end goal is NOT executable on merge. The pod can start at first sync, but it authenticates only once Prerequisite 3 lands (the sole credential is a 26.12+ budget-scoped key while the deployed image carries @actual-app/api exactly 26.10.0 with no API-key route — the failure is visible, not silent); split/assign additionally needs the leg-4 --enable-write flip (no re-mint, because the key has no read/write axis and caps blast radius inside the wuulf budget file); Prerequisite 1 (Keycloak redirect URIs + web origins) is owner-owned or wuulf's SSO login cannot complete. The read-only boundary is genuinely the absence of a single flag.",
+    "findings": [
+      "minor (records wording): the 'can start and connect' shorthand in DECISIONS 2026-11-26 and the C03 Notes compresses the leg-3 gate; the same files name the gate one line away, so the records as a whole are accurate — no action, recorded here",
+      "carried nit: the suite's s5 PVC pass message labels deletionPolicy boilerplate that a PVC cannot carry — checks are honest, label overstates",
+      "carried nit: the new hivetools entry omits the '# oidc:' re-enable marker its 9 gpu + 2 chart siblings carry"
+    ],
+    "no_validation_at_fault": true,
+    "deferred_carried_forward": ["Prerequisite 1 Keycloak redirect URIs + web origins (owner)", "Prerequisite 3 the 26.12.x pin move via Renovate + the attached exactly-26.10.0 SDK re-check, canary --test-resources + tools/list (owner)", "leg-4 --enable-write flip (owner, no re-mint)", "OQ4: a future bri MCP ticket needs its own items + a per-app UUID injection path — the gate is collision-safe, not a shared-credential solution", "5Gi data-PVC size remains an assumption (no upstream guidance)"]
   },
   "final_review": {
     "status": "done",
