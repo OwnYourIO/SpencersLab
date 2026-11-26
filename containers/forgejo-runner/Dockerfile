@@ -73,7 +73,7 @@ FROM ghcr.io/catthehacker/ubuntu:act-24.04@sha256:7bf3a8afc2bbfe7fdaf4b9d2716cb2
 # renovate: datasource=github-releases depName=helm/helm
 ARG HELM_VERSION=v3.22.1
 
-# cr at the version+digest pair release.yaml pinned and the C01 review
+# cr at the version+digest pair build-charts.yaml pinned and the C01 review
 # verified against upstream checksums.txt (D37 migrates the pair from
 # workflow env into this build's ARGs).
 # renovate: datasource=github-releases depName=helm/chart-releaser

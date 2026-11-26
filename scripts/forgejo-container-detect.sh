@@ -7,9 +7,14 @@
 #   detect    stdout a sorted JSON array of the containers/<name> dirs to
 #             rebuild, run at the checked-out repo root. Inputs are
 #             environment variables: EVENT_NAME (push|pull_request|
-#             workflow_dispatch), EVENT_BEFORE and SHA (push range), BASE_SHA
-#             and HEAD_SHA (pull-request range), MANUAL_CONTAINERS (dispatch
-#             list, comma/space separated).
+#             workflow_dispatch), EVENT_BEFORE and SHA (push range), MARKER_SHA
+#             (the last-built marker: when set it replaces before as the push
+#             base, so a build a dead or cancelled run lost is re-covered by
+#             the next push instead of staying skipped forever). The
+#             container-build workflow resolves and validates MARKER_SHA; this
+#             script only reads it, and an empty value is the bootstrap
+#             fallback to before..sha. BASE_SHA and HEAD_SHA (pull-request
+#             range), MANUAL_CONTAINERS (dispatch list, comma/space separated).
 #   next-n    stdin a tags/list JSON body (either registry), env YYMM=yy.mm;
 #             stdout the month's next calendar release number, max(yy.mm.N)+1 or 1.
 #   sanitize  argv branch name; stdout a Docker-tag-safe rolling/PR component.
@@ -29,7 +34,7 @@ detect() {
     # commit range behind it, so an empty list builds nothing.
     names=$(printf '%s' "${MANUAL_CONTAINERS:-}" | tr ', ' '\n\n')
   else
-    local a b
+    local a b base_src=''
     if [ "$event" = pull_request ]; then
       a="${BASE_SHA:-}"
       b="${HEAD_SHA:-}"
@@ -52,7 +57,14 @@ detect() {
         # push to the tip commit.
         die 'push arm: EVENT_BEFORE is empty, which no push payload sends'
       fi
-      if [ -z "${before//[0]/}" ]; then
+      # Marker first: the payload before can name a range a dead or
+      # cancelled run already lost, and re-diffing it is the heal this
+      # base exists for.
+      if [ -n "${MARKER_SHA:-}" ]; then
+        a="$MARKER_SHA"
+        b="${SHA:-HEAD}"
+        base_src='marker'
+      elif [ -z "${before//[0]/}" ]; then
         # The first push to a branch carries an all-zero before and
         # HEAD^..HEAD is the pushed commit — a tip-only range: older
         # commits of that push stay invisible, and the log line is where
@@ -60,15 +72,21 @@ detect() {
         printf '::warning::first push (all-zero before): tip-only detection over HEAD^..HEAD\n' >&2
         a='HEAD^'
         b='HEAD'
+        base_src='tip-only'
       else
         a="$before"
         b="${SHA:-HEAD}"
+        base_src='before'
       fi
     fi
     # The endpoints actually diffed, named on stderr before the call: a red
     # detection must be diagnosable from the job log alone. stdout stays
-    # exactly the JSON array — the step captures it into its output.
-    printf 'detect: range %s..%s (event %s)\n' "$a" "$b" "$event" >&2
+    # exactly the JSON array — the step captures it into its output. The
+    # push arm also names which base won, so a marker-fed run reads
+    # differently from a bootstrap one; the pull_request arm echoes no base
+    # token, its output being byte-frozen against the PR re-run law.
+    printf 'detect: range %s..%s (event %s%s)\n' "$a" "$b" "$event" \
+      "${base_src:+, base=$base_src}" >&2
     # No `|| true` and no masking pipe on the git call itself: a range that
     # fails to resolve must fail the job, not be reported as "nothing
     # changed" and silently skip the builds it covers.

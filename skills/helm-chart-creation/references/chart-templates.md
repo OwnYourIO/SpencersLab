@@ -26,10 +26,11 @@ Is there an official Helm chart?
 When no official chart exists:
 
 1. `mkdir -p charts/<service>/templates`
-2. Create `Chart.yaml` (pattern below) — name, `version: 1.0.0` (initial only;
-   `release.yaml` — on prod-Forgejo Actions — auto-bumps patch on every merge
-   landing on Forgejo `main` and chart-releaser tags `<chart>-<version>` —
-   never bump it by hand), `appVersion`
+2. Create `Chart.yaml` (pattern below) — name, `version: Y.M.1` (the current
+   calendar stamp, initial only; `build-charts.yaml` — on prod-Forgejo Actions —
+   bumps the calendar release on every merge landing on Forgejo `main`:
+   same-month N+1, new-month N=1 — and chart-releaser tags
+   `<chart>-<version>` — never bump it by hand), `appVersion`
    (latest from Docker Hub), app-template dependency at the repo-standard
    version (check an existing chart; currently `5.0.1`).
 3. Create `values.yaml` from the template below — inject service-specific env
@@ -83,13 +84,14 @@ minimal internal `charts:` entry. Reference implementation: `charts/erp-next`
 (wraps frappe/erpnext).
 
 1. `mkdir -p charts/<service>/templates`
-2. `Chart.yaml` — name `<service>`, `version: 1.0.0`, `appVersion` of the
+2. `Chart.yaml` — name `<service>`, `version: Y.M.1` (the current stamp, per
+   the calendar seed law), `appVersion` of the
    wrapped app, and the official chart as a dependency:
 
    ```yaml
    apiVersion: v2
    name: <service>
-   version: 1.0.0
+   version: Y.M.1
    appVersion: <app-version>
    dependencies:
    - name: <official-chart-name>
@@ -151,7 +153,7 @@ Notes:
 ```yaml
 apiVersion: v2
 name: <service-name>
-version: 1.0.0  # initial only — release.yaml (prod Forgejo) bumps patch on every merge to main
+version: Y.M.1  # current calendar stamp, initial seed only — build-charts.yaml (prod Forgejo) bumps it: same-month N+1, new-month N=1
 appVersion: <latest-version>  # research from Docker Hub
 dependencies:
 - name: app-template

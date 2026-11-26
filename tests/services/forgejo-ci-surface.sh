@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Whole-state surface guard for the REBUILT cf-55 (chart-half move, reconciled
 # to cf-6's conventions per DECISIONS D31/D32): the fence's OTHER side.
-# forgejo-release.sh proves the moved builder's internals from the .forgejo
+# forgejo-build-charts.sh proves the moved builder's internals from the .forgejo
 # side; this suite pins the inventory from both sides and sweeps every live
 # surface for stale claims the rebuild must have erased:
 #   - .forgejo/workflows/ holds EXACTLY the five-workflow family (cf-6's
-#     main-sync/renovate/containers-build + this ticket's release.yaml + the
+#     main-sync/renovate/containers-build + this ticket's build-charts.yaml + the
 #     cf-6 builder-bootstrap dispatch recovery lane);
 #   - .github/workflows/ keeps the seven gate workflows AND docker-build.yaml
 #     — the workflow_dispatch-only manual-fallback builder cf-6 deliberately
-#     kept — and NOT release.yaml (the chart half moved, the container half
+#     kept — and NOT the deleted chart twin (the chart half moved, the container half
 #     did not);
 #   - no live surface cites the deleted GitHub release path;
 #   - on the carriers the reconcile touched, every docker-build mention
@@ -34,6 +34,19 @@
 # tests/) does not match its own patterns; cf-6's inventory lines naming
 # docker-build are exempt because tests/ is outside this suite's claim
 # routes, and the ci-surface ban list is exactly the DELETED twin path.
+#
+# Round 4 (chunks/C11.md, D47.6): t8 joins — the stale-name sweep for the
+# chart-builder workflow rename (its old bare name token is deliberately
+# not written in this comment — this suite is a live surface of its own t8
+# once the rename lands). It is CONDITIONAL BY DESIGN:
+# while the builder still lives under its old name (this HEAD state) the
+# sweep is vacuously green — nothing is stale yet; once the renamed file
+# lands, every bare name/title token on a live surface must have been
+# re-fenced in the same commit set, with the FROZEN/deferred files
+# hard-listed (append-only records, the fire-coupled deferrals D47.8) and
+# the sanctioned composed forms (os.path.join, path-qualified twin/history
+# mentions) passing. That makes the half-renamed intermediate the leg's
+# red state — its named purpose — and C11's merge its first full run.
 #
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-ci-surface.sh
@@ -64,7 +77,7 @@ GH = '.github/workflows'
 # builder-bootstrap is cf-6's public-image dispatch recovery lane — the
 # fence moved to five before the file landed (red-first doctrine), so a
 # fourth-file-only tree is a designed RED here, not a stale pin.
-FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'release.yaml',
+FJ_SET = {'main-sync.yaml', 'renovate.yaml', 'containers-build.yaml', 'build-charts.yaml',
           'builder-bootstrap.yaml'}
 # Ruling R1's five gates + the render-test growth (amd-gpu, radiance) that
 # landed on main since, PLUS the docker-build manual fallback cf-6 kept.
@@ -83,13 +96,13 @@ def names(d):
 
 fj = names(FJ)
 if fj != FJ_SET:
-    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the five-workflow forge family — release.yaml is this ticket\'s, builder-bootstrap.yaml is the cf-6 recovery lane, nothing else may appear)', file=sys.stderr)
+    print(f'FAIL: t1: {FJ} holds {sorted(fj)}, expected exactly {sorted(FJ_SET)} (the five-workflow forge family — build-charts.yaml is this ticket\'s, builder-bootstrap.yaml is the cf-6 recovery lane, nothing else may appear)', file=sys.stderr)
     sys.exit(1)
 print('ok: t1: the Forgejo inventory is exactly the five-workflow family (cf-6 trio + the moved chart builder + the bootstrap recovery lane)')
 
 gh = names(GH)
 if gh != GH_SET:
-    print(f'FAIL: t2: {GH} holds {sorted(gh)}, expected the seven gate workflows + docker-build.yaml (the manual-fallback builder cf-6 kept) and NOT release.yaml (the chart half moved) — a stray here means a gate was deleted or a cutover half-did', file=sys.stderr)
+    print(f'FAIL: t2: {GH} holds {sorted(gh)}, expected the seven gate workflows + docker-build.yaml (the manual-fallback builder cf-6 kept) and NOT the chart twin (the chart half moved) — a stray here means a gate was deleted or a cutover half-did', file=sys.stderr)
     sys.exit(1)
 if os.path.join(GH, 'release.yaml') in [os.path.join(GH, n) for n in gh]:
     print('FAIL: t2: the GitHub release twin survived the cutover', file=sys.stderr)
@@ -111,7 +124,7 @@ if stale=$(git grep -IlE "$STALE_PAT" -- skills tests containers .rulesync .open
   printf 'FAIL: t3: live surfaces still citing the deleted GitHub release path:\n%s\n' "$stale" >&2
   exit 1
 fi
-ok "t3: no tracked live-surface file cites the deleted GitHub release.yaml path"
+ok "t3: no tracked live-surface file cites the deleted GitHub twin's workflow path"
 
 # --- t4: builder-claim sweep on the reconciled carriers -------------------------
 # docker-build.yaml still EXISTS (cf-6 kept it as the workflow_dispatch-only
@@ -169,7 +182,7 @@ def need(cond, msg):
 
 # The credential law as LANDED: AGENTS names the shared instance PAT + the
 # lowercase namespace; the GitHub-side secret name is workflow law pinned
-# per file — chart releases by forgejo-release.sh t8, container pushes by
+# per file — chart releases by forgejo-build-charts.sh t8, container pushes by
 # cf-6's containers-build suite t7 — and ONE name serves both lanes since
 # R-A (2026-11-22): PUSH_TOKEN_GH. The rules file deliberately stays at the
 # shared identity + the job-token prohibition.
@@ -194,7 +207,7 @@ PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; one GitHub-side name — PUSH_TOKEN_GH — for both lanes, pinned per file by forgejo-release.sh t8 and the containers-build suite) with every retired scheme absent"
+ok "t5: AGENTS + container skill state the reconciled law (instance FORGE_PUSH_TOKEN + curatedforest + per-PAT registry pushes; one GitHub-side name — PUSH_TOKEN_GH — for both lanes, pinned per file by forgejo-build-charts.sh t8 and the containers-build suite) with every retired scheme absent"
 
 # --- t6: ROLE guard membership is consistent across the .forgejo family ---------------
 if ! python3 - <<'PY'
@@ -244,14 +257,91 @@ def need(cond, msg):
 
 # The chart-creation reference teaches where bumps/publish run; a reader
 # following it must land on the Forgejo reality, not the deleted GitHub one.
-need('release.yaml' in ref and 'Forgejo' in ref,
-     'chart-templates.md does not situate release.yaml on prod Forgejo — the two release.yaml sentences must describe where CI actually runs')
+need('build-charts.yaml' in ref and 'Forgejo' in ref,
+     'chart-templates.md does not situate build-charts.yaml on prod Forgejo — the two build-charts.yaml sentences must describe where CI actually runs')
 for tok in ('publishes DUAL', 'gh-pages', 'Helm package registry'):
     need(tok in agents, f'AGENTS.md lost the chart clause token {tok!r} — the DUAL publish (GitHub Releases + Pages AND the instance Helm registry) is the landed law')
 PY
 then
   fail "t7: see the t7 detail above"
 fi
-ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forgejo release.yaml, DUAL publish to GitHub Releases/gh-pages and the instance Helm registry)"
+ok "t7: the chart-creation reference + AGENTS carry the chart clause (prod-Forgejo build-charts.yaml, DUAL publish to GitHub Releases/gh-pages and the instance Helm registry)"
+
+# --- t8: stale-name sweep, armed by the rename (C11 AC2/D47.6) -------------------
+# EXPLORE's rename law: after the git mv, NO live surface may carry the old
+# workflow's bare name or display-title token — every legitimate survivor is
+# either a composed twin mention (os.path.join, the path-qualified `".github/"`
+# alternation the coord allow-cases use, the dated containers-build history
+# line) or a hard-listed append-only record. Pre-rename the sweep is
+# vacuously green by design: the name is live truth, nothing lies; the leg's
+# red state is the half-renamed intermediate (C11.md's posture — report
+# reading: the t-spec's teeth "drop one bare literal into a live file -> red"
+# only have meaning once build-charts.yaml exists).
+if ! python3 - <<'PY'
+import os, re, subprocess, sys
+
+# Needles composed at runtime (t3's STALE_PAT discipline): this live file
+# must never carry the plain tokens it bans.
+OLD = 'release' + '.' + 'yaml'
+old_re = re.compile('release' + r'[.]' + 'yaml')
+title_re = re.compile('Release' + r'[ ]Charts')
+
+# Armed = the renamed builder exists and the old workflow file no longer
+# does (the rename commit's state; a half-landed checkout flips this too).
+if not (os.path.exists(os.path.join('.forgejo', 'workflows', 'build-charts.yaml'))
+        and not os.path.exists(os.path.join('.forgejo', 'workflows', OLD))):
+    print('  (pre-rename state: the builder still lives under its old name — sweep vacuous-green, armed by C11\'s git mv)')
+    sys.exit(0)
+
+# Hard-listed exemptions (C11.md FROZEN + LEAVE-AS-RECORD + D47.8 fire-
+# coupled deferrals — every entry names why it may carry the historical
+# token; the follow-up-card sweep removes them file by file).
+EXEMPT = {
+    os.path.join('charts', 'llama-swap', 'tests', 'evidence', 'c05_expected_evidence.yaml'),  # historical evidence artifact
+    os.path.join('tests', 'cf96-deploy', 'readback-runbook.md'),                               # dated runbook, append-only law
+    os.path.join('charts', 'amd-gpu', 'tests', 'test_provenance.py'),                          # fire-coupled FAIL prose (charts/** edit mints a release)
+    os.path.join('charts', 'radiance', 'tests', 'test_contract.py'),                           #   ...same deferral
+    os.path.join('tests', 'multi-repo', 'ha-chart.sh'),                                        #   ...same deferral
+    os.path.join('tests', 'multi-repo', 'mosquitto-chart.sh'),                                 #   ...same deferral
+}
+
+offenders = []
+files = subprocess.run(['git', 'ls-files', '-z'], capture_output=True, text=True).stdout.split('\0')
+for f in files:
+    if not f or f.startswith('.agents' + os.sep):
+        continue
+    if f in EXEMPT:
+        continue
+    try:
+        text = open(f, encoding='utf-8', errors='replace').read()
+    except (IsADirectoryError, OSError):
+        continue
+    for i, l in enumerate(text.splitlines(), 1):
+        if title_re.search(l):
+            offenders.append(f'{f}:{i}: [title token] {l.strip()[:100]}')
+            continue
+        for m in old_re.finditer(l):
+            # Composed forms pass (EXPLORE H.1 / C11 AC2): an os.path.join
+            # carrier, or a path-qualified mention whose line already names
+            # the GitHub twin or brackets itself as history ("since renamed",
+            # "moved to"). A bare name claim — stale allow-case member,
+            # forgotten prose cite — matches neither and reddens.
+            if 'os.path.join' in l:
+                continue
+            before = l[:m.start()]
+            if before.endswith('/') and re.search(r'(?i)github|renamed|moved to', l):
+                continue
+            offenders.append(f'{f}:{i}: [bare name token] {l.strip()[:100]}')
+
+if offenders:
+    print('FAIL: t8: live surfaces still carrying the old builder name/title after the rename — the git mv and the re-fence ride ONE commit set (C11 AC2):', file=sys.stderr)
+    for o in offenders:
+        print('  ' + o, file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t8: see the t8 detail above"
+fi
+ok "t8: with the rename landed, zero bare old-name/old-title tokens survive on live surfaces (composed twin forms and the hard-listed records pass; pre-rename the leg is vacuous-green by design)"
 
 printf 'PASS: forgejo-ci-surface checks (%d ok)\n' "$checks"

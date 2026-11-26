@@ -236,17 +236,23 @@ role × permission matrix is in the `agents-sync` skill references
   reports them honestly in `commands_run`. A `docker build => no-daemon,
   CI-deferred` line is the designed passing gate shape, not a deviation
   (ruled 2026-10-28, cf-77). Detection in that forge workflow is
-  range-pinned: a push diffs the whole `before..sha` range — the reason
-  its detect job checks out with `fetch-depth: 0` — and a PR diffs
-  merge-base to head, hand-rolled because the `git diff --merge-base`
-  flag needs git ≥ 2.43 and the runner image's git is unverified. The
-  first push to a branch is deliberately tip-only and announces itself
-  in the run log, as does an empty changed set on a real push/PR range;
-  a no-op push (its `before` equals its `sha`) and an empty dispatch
-  list stay silent by ruling; an empty `before` is fatal and an
-  unresolvable range fails loud rather than resolving to nothing. Push
-  payloads leave `total_commits` at 0, so detection never counts
-  commits.
+  range-pinned: a push diffs `marker..sha` — from the last-built marker
+  ref, which the workflow advances only on a push run whose whole build
+  matrix published green, so a build a dead run lost is re-covered by
+  the next push instead of staying skipped forever — with the whole
+  `before..sha` range as the marker-missing fallback; the reason its
+  detect job checks out with `fetch-depth: 0` is that either range must
+  resolve locally, and a PR diffs merge-base to head, hand-rolled
+  because the `git diff --merge-base` flag needs git ≥ 2.43 and the
+  runner image's git is unverified. The first push to a branch is
+  deliberately tip-only and announces itself in the run log, as does an
+  empty changed set on a real push/PR range without a marker; a no-op
+  push (its `before` equals its `sha`) and an empty dispatch list stay
+  silent by ruling, and an empty range measured from a present marker is
+  informational — it proves nothing was missed; an empty `before` is
+  fatal and an unresolvable range fails loud rather than resolving to
+  nothing. Push payloads leave `total_commits` at 0, so detection never
+  counts commits.
 - Agent-shell tooling recipes: `helm` lives at `~/.local/bin` — export
   `PATH=$HOME/.local/bin:$PATH` before suite runs and renders (without it
   pytest silently mass-skips its helm-guarded tests); `aislop` runs via
@@ -456,14 +462,16 @@ change.
 - Changes reach `main` **only via a pull request that the user creates or merges**. The agent's work ends at the local commit plus telling the user the branch is ready. Pushing the *feature* branch to origin (e.g. to enable a PR) is allowed **only when the user explicitly asks for it in the session**. Otherwise leave commits local.
 - If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
 - Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
-- **Never bump versions or image tags by hand.** `release.yaml` runs on the
-  prod Forgejo Actions: it bumps `Chart.yaml` `version` (patch) when changes
-  land on Forgejo main (idempotent FF-only single-writer loop; GitHub learns
+- **Never bump versions or image tags by hand.** `build-charts.yaml` runs on the
+  prod Forgejo Actions: it bumps `Chart.yaml` `version` to the calendar
+  release `Y.M.N` (unpadded month) — same-month N+1, new-month N=1, a tree
+  ahead of the clock fails loud — when changes land on Forgejo main
+  (idempotent FF-only single-writer loop; GitHub learns
   the bumps via the main-sync fan-out, never a CI push to GitHub), then
   publishes DUAL — GitHub Releases + the gh-pages index via cr (consumer
   contract byte-stable, release tag `<chart>-<version>`) AND the instance's
-  Helm package registry (FORGE_PUSH_TOKEN). Set `version: 1.0.0` only on a
-  brand-new chart.
+  Helm package registry (FORGE_PUSH_TOKEN). Set
+  `version: Y.M.1` (the current stamp) only on a brand-new chart.
   Containers are tag-based: on a `prod`-role instance a main/dispatch build
   pushes `yy.mm.N` + `:latest` + `:main` to `ghcr.io/ownyourio/<image>` AND
   the same three tags to that instance's own Forgejo registry as
@@ -494,7 +502,7 @@ change.
   deliberate in all five `.forgejo` workflows: `containers-build.yaml`
   widens on unset (a null clause ahead of the membership tests — the
   single-server case publishes everything), while `main-sync.yaml`,
-  `renovate.yaml`, `release.yaml` and `builder-bootstrap.yaml` stay narrow
+  `renovate.yaml`, `build-charts.yaml` and `builder-bootstrap.yaml` stay narrow
   on unset (bare membership tests, fail-safe: neither the fan-out nor the
   daily Renovate pass may fire unconfigured, and a bump/publish pipeline
   even less so — the bootstrap lane mints calendar tags, so an unset ROLE

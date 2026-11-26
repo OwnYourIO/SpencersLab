@@ -124,12 +124,24 @@ RUN apt-get update \
 # npm has no pin of its own — it ships inside the checksum-verified node
 # tarball, so the assertion compares it against the bundled copy: drift here
 # means a stray or broken npm on PATH, not a new version.
-RUN curl -fsSL -o "/tmp/node-${NODE_VERSION}-linux-x64.tar.xz" "https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz" \
- && curl -fsSL -o /tmp/SHASUMS256.txt "https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt" \
- && (cd /tmp && grep " node-${NODE_VERSION}-linux-x64.tar.xz$" SHASUMS256.txt | sha256sum -c -) \
- && tar -xJf "/tmp/node-${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
- && rm -f "/tmp/node-${NODE_VERSION}-linux-x64.tar.xz" /tmp/SHASUMS256.txt \
- && test "$(node --version)" = "${NODE_VERSION}" \
+#
+# The v prefix lives at the use sites, not in ARG NODE_VERSION: the
+# datasource=node-version contract emits bare versions, so a v inside the ARG
+# would break every renovate bump, while nodejs.org hosts only v-prefixed
+# dist paths, so a bare interpolation 404s every fetch. The verify step keeps
+# the (cd /tmp && ...) subshell because sha256sum -c resolves the vendor's
+# bare filenames against the working directory, and it captures the grep
+# result and refuses emptiness before sha256sum -c sees it: an unmatched grep
+# piped straight into the checker feeds empty input, which exits 0 silently —
+# the failure mode that kept this layer 0-green/15-red in CI from 3713c83d1
+# (2026-10-20) with every shape-level check green.
+RUN curl -fsSL -o "/tmp/node-v${NODE_VERSION}-linux-x64.tar.xz" "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+ && curl -fsSL -o /tmp/SHASUMS256.txt "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" \
+ && (cd /tmp && node_shasums=$(grep " node-v${NODE_VERSION}-linux-x64.tar.xz$" SHASUMS256.txt) \
+ && [ -n "$node_shasums" ] && printf '%s\n' "$node_shasums" | sha256sum -c -) \
+ && tar -xJf "/tmp/node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+ && rm -f "/tmp/node-v${NODE_VERSION}-linux-x64.tar.xz" /tmp/SHASUMS256.txt \
+ && test "$(node --version)" = "v${NODE_VERSION}" \
  && test "$(npm --version)" = "$(node -p 'require("/usr/local/lib/node_modules/npm/package.json").version')"
 
 RUN curl -fsSL -o /tmp/go.tar.gz "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" \

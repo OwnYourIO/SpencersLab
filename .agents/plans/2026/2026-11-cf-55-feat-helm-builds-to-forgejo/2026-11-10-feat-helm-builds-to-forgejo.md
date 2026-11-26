@@ -816,3 +816,129 @@ re-run posture as D42 established).
 - `npx --yes aislop@0.20.0 ci --changes --base origin/main --human` (vacuous
   for yaml/shell — record honestly, standing FRICTION posture)
 - `docker build => no-daemon, CI-deferred` unchanged (nothing built this round)
+
+## Round 4 (2026-11-25) — lock self-heal, calendar chart versions, the rename
+
+**Goal:** make the release pipeline immune to `Chart.lock` drift (owner Q2:
+self-heal is LOAD-BEARING), move chart versioning to calendar `Y.M.N` with
+the N derived locally (owner Q1: "Simple: local N only"; migration by
+natural change, no sweep), and rename `release.yaml` → `build-charts.yaml`
+LANDED LAST (owner Q3) — with the renovate-image root-cause fix as an
+owner-gated option (C12).
+
+**Fire evidence (ground truth chain):** the owner's 2026-11-25 fresh fire
+walked `Add repositories` GREEN in 10 s (C08 validated in production;
+UA-11 satisfied — STATE.fire3_discrimination close) and died at
+test-build `the lock file (Chart.lock) is out of sync with the
+dependencies file (Chart.yaml)` in `charts/base`. Drift confirmed in git:
+instance-era renovate chart-dep PRs merge Chart.yaml-only — `95533725d`
+(argo-cd 10.18.3) and `a619fe6ad` (traefik 42.4.2) without their locks —
+because the instance's slim renovate image cannot execute helm (EACCES
+`/opt/containerbase/data` + `spawn helm ENOENT` smoking guns, RESEARCH.md:
+984-1011 (A(d)) [61][62]); the live drift trio at `3f21e85e8` is
+{base, traefik, traefik-zerotrust} (RESEARCH.md:1418 item 83) — and
+`cr package` Build()s EVERY chart EVERY fire, so one drifted chart
+poisons the whole release leg (RESEARCH.md:1092-1096 [79]).
+
+**Research summary (all in RESEARCH.md '## Round-4 research', :883-1418):**
+helmv3 lock-in-same-PR is Renovate's DEFAULT — no knob to enable
+(RESEARCH.md:940-958 (A(a))); the regen verb is `helm dependency update`,
+byte-no-op on fresh locks, auto-adding missing repos
+(RESEARCH.md:1061-1067 (B(a)) [72][78]; no `--force-update` on dep
+subcommands, :1069-1075 [70][71]); the top-level chart `version:` is
+OUTSIDE the hashed inputs so bump+heal in one commit is digest-safe
+(RESEARCH.md:1053-1056 [73]); recommendation BOTH — pipeline heal
+(load-bearing) + renovate image fix (root cause), :1145-1161. Calendar:
+`2026.11.1` legal semver end-to-end, **unpadded month is law** (Masterminds
+rejects leading zeros — `date +%Y.%-m`, D15 reborn; RESEARCH.md:1178-1184
+[88]); 61 own-chart consumer pins ALL exact, zero ranges — the jump is one
+benign major PR per pin (RESEARCH.md:1207-1211, :1418 item 83); walk rule
++ FF/idempotency re-derivation :1221-1253; per-chart-on-change migration :
+1255-1263; precedents (sbomify 26.11.1, NVIDIA 22.9.0 calver) :1265-1273.
+Rename surface + traps fully enumerated in EXPLORE.md '## Rename surface'
+(:1139-1210); fire-3 protocol ruling stands (D46).
+
+### Round-4 chunks
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C09 | Lock self-heal in the pipeline: bump-job full-tree `dep update` + commit; test-build flips build→update; direct regeneration of the drifted trio | M | 1 | [] | the owner-designated load-bearing guarantee; trio regen lands as explicit repo-state in the chunk (the repro fixture = the fix; AC forces suite-green-at-merge) |
+| C12 | Renovate image root-cause fix (`-full` + global, gated by the helm4→helm3 digest cross-check; fallback lab-baked v3 sidecar; owner may degrade to UA-12) | M | 1 | [] | disjoint files (renovate.yaml + its two pin contracts); owner fork OQ-R4-1 decides execution + route; independent of C09 by design (belt vs guarantee) |
+| C10 | Calendar bump scheme in the bump loop: local-N walk rule, unpadded month, one clock stamp, collision-guard-only index, FF-loop re-derived; AGENTS/skill law pair rewrite | M | 2 | [C09] | edits the SAME bump-loop python block C09 just reshaped (parser/guard placement); suite legs stack ordinals (t25/t26 after t22-t24) and the t15 re-aim rides C09's parser-retention |
+| C11 | Rename `release.yaml` → `build-charts.yaml` + every hard/soft pin + suite rename + guards | M | 3 | [C09, C10] | owner ruling "LANDS LAST"; re-fences the exact suite/workflow state C09/C10 produce (WF constant, 26 legs, admits); its merge is the first fire under heal+calendar |
+
+Waves: 1 = C09 ∥ C12 (owner-gated) → 2 = C10 → 3 = C11. C12 has no
+dependers; it can also run after C11 (touches none of the renamed
+surfaces — the `forgejo-releases` datasource token family is a different
+string; EXPLORE §H.4).
+
+### Landing order & first-fire consequences (owner merge sequence)
+
+1. **C09 merge is itself a fire** (touches `charts/*/Chart.lock`): the
+   fire runs the NEW heal (no-op — the tree arrives healed) and mints
+   patch bumps for exactly {base, traefik, traefik-zerotrust} (still
+   1.0.x-era: C10 has not landed) — **those three bumps are the drift
+   trio's consumers' wake-up call**: their republish drives the next
+   renovate pass to open exact-pin bump PRs across the 61-pin set for
+   the trio's charts (human-merged like every other; benign, one-time
+   for this event class). Also finally greens the admitted pre-existing
+   dev-forgejo-runner t10 red (the live-helm drift witness).
+2. **C12 merge** (if owner approves a route): touches no `charts/**` →
+   no fire; its effect shows on the NEXT renovate pass (locks land in
+   the PR; green `renovate/artifacts` is the observation — UA-12b).
+3. **C10 merge**: no `charts/**` touched by design (prose re-pins in
+   chart test files deliberately STAY and ride follow-up cards — editing
+   them would mint real releases for message cosmetics). Next fire
+   converts whatever chart changes first: tree 1.0.x → `Y.M.1`.
+4. **C11 merge (last)** touches `charts/prowlarr/Chart.yaml:3` (the
+   comment naming the old workflow) → the merge is the renamed file's
+   FIRST fire: prowlarr 1.0.1 → **2026.11.1** (or 2026.12.1 if the
+   December clock catches the merge — deterministic either way, the
+   stamp is read at fire time), published dual; expect exactly one
+   benign bump commit (rename_scout coupling, precedent
+   STATE.post_merge_adaptation). The heal + calendar + rename trio is all
+   validated by that one fire.
+- Post-merge owner observation (UI history grouping after the rename):
+  EXPLORE §F — run IDs stay intact regardless; observation only.
+
+### Commands (round-4 additions; standing laws: PATH export, accumulation
+driver for spot-tables, no docker daemon — `docker build` n/a this round
+except C12-route-B, rulesync source+mirror pair for every AGENTS/overview
+law touch)
+
+- C09: `bash tests/services/forgejo-release.sh` (24 legs) + trio
+  `helm lint`/`helm template` + `bash tests/services/dev-forgejo-runner.sh`
+  (t10 green) + full admitted-baseline table (ci-surface 7/7, packages,
+  main-sync, strata, containers-build, gpu/dev) + aislop.
+- C12: gate one-time helm-v4 fetch + cross-check transcript +
+  `bash tests/services/forgejo-renovate.sh` +
+  `bash tests/renovate/forgejo-move-config.sh` + aislop.
+- C10: `bash tests/services/forgejo-release.sh` (26 legs, t25/t26 + t15
+  re-aim battery) + rulesync x2 + `--check` + trio + ci-surface 7/7 +
+  aislop.
+- C11: `bash tests/services/forgejo-build-charts.sh` (renamed suite) +
+  `bash tests/services/forgejo-ci-surface.sh` (8 legs, t8 new) +
+  `bash tests/pipeline-push-pr/surface.sh` + strata + rulesync x2 +
+  `--check` + aislop.
+- Smoke posture unchanged: first-fire observation stays owner-side
+  (UA-class); static contract suites are the test surface.
+
+### Owner-pending (batched round; D48) — plan decisions vs genuine forks
+
+Six research forks were priced; four are EVIDENCE-SETTLED by this plan
+(D47): heal placement full-tree-in-bump + test-build heal-ephemerally,
+instance-index exclusion from N-derivation (the t7 bump-secrets ban
+makes reading it structurally illegal), 4-digit year + unpadded month
+(owner literal + [88]), suite rename to forgejo-build-charts.sh. The
+genuine owner forks go to the batched round: **OQ-R4-1** renovate image
+route (recommend `-full` behind the digest cross-check gate), **OQ-R4-2**
+`lockFileMaintenance` on/off (recommend OFF — under the repo's all-exact
+pins a weekly refresh is a provable no-op [RESEARCH.md:1207-1211], so it
+adds zero coverage on top of C09+C12 while still generating PR churn in
+any window where renovate's sandbox regresses again), **OQ-R4-3**
+new-chart seed (recommend `1.0.0` kept as the seed with calendar
+conversion on first fire — every chart's first PUBLISHED calendar version
+is then exactly `Y.M.1`, the AGENTS clause survives verbatim, and the
+walk rule handles the jump as the (iii) battery case; owner may prefer
+seeding straight `Y.M.1`, which the C10 task list already prices).
+

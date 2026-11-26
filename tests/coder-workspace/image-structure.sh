@@ -1,14 +1,33 @@
 #!/usr/bin/env bash
 # C01 structural acceptance checks (2026-10-feat-coder-workspace-rebuild),
-# criteria 2-6, run by grep/awk against containers/coder-workspace/.
+# criteria 2-6, run by grep/awk against containers/coder-workspace/, plus the
+# C02 criterion-7 node-layer teeth (cf-6-debug-detect-rerun): static pins for
+# the v-prefixed nodejs.org URL/filename/assertion shapes and executed
+# scratch-fixture legs for the checksum leg's non-vacuity.
 #
 # This repo has no unit-test suite (AGENTS.md "Pipeline specifics"); these
 # structural checks are the local gate because there is no docker daemon here
 # and the build proof is PR CI. Each check prints one pass/fail line; any fail
 # makes the script exit non-zero.
 #
+# Criterion 7 is the class-of-failure lesson of EXPLORE §Bucket-C: the node
+# layer ran 0-green/15-red since 3713c83d1 (2026-10-20) with every leg above
+# green, because those pin shapes — "a checksum line is present", "an
+# assertion is live" — while the bug (bare semver interpolated into nodejs.org
+# paths that only exist v-prefixed, plus an unmatched grep piped straight
+# into `sha256sum -c -`, which exits 0 silently on empty input) kept every
+# shape literally true and semantically empty. Static shape-pins catch the
+# interpolation class; the executed fixtures catch the vacuity class — the
+# daemon-free detection this container never had.
+#
+# Posture: 52 pass / 1 fail expected once the fix lands — the 1 is the
+# PRE-EXISTING c2 debian-annotation red (cf-95 removed the dead comment;
+# owner ledger, not criterion 7's to fix). Against the unfixed layer the six
+# c7 legs are authored-red by design and the c7g historical-form control is
+# green by design.
+#
 # Tests are the dev agent's contract: every pinned value below is taken from
-# chunks/C01.md "Acceptance criteria" and DECISIONS.md.
+# chunks/C01.md + chunks/C02.md "Acceptance criteria" and DECISIONS.md.
 #
 # Usage: bash tests/coder-workspace/image-structure.sh
 
@@ -173,7 +192,8 @@ fi
 # layer; the block ends at the first physical line without a backslash
 # (whole-line comments inside a continuation are skipped by Docker, so they
 # do not end the block).
-layer_block() { # $1 = ARG name
+layer_block() { # $1 = ARG name, $2 = Dockerfile path (default: the repo's)
+  local f="${2:-$DOCKERFILE}"
   awk -v ref="\${$1}" '
     function emit(   i) { for (i = 1; i <= n; i++) print b[i]; found = 1; exit }
     !inrun && /^[[:space:]]*RUN[[:space:]]/ { inrun = 1; n = 0; hit = 0 }
@@ -185,7 +205,7 @@ layer_block() { # $1 = ARG name
       inrun = 0
       if (hit) emit()
     }
-  ' "$DOCKERFILE"
+  ' "$f"
 }
 
 # A version assertion is a test/grep line that names the tool, references the
@@ -307,6 +327,197 @@ if [ -z "$dangling" ]; then
   pass "c3: no RUN line ends with a dangling '&&' or broken continuation"
 else
   fail "c3: dangling '&&'/continuation error(s): $(printf '%s' "$dangling" | tr '\n' '; ')"
+fi
+
+# --- criterion 7 (C02): node-layer v-prefix + checksum non-vacuity ---------
+# EXPLORE §Bucket-C grounds this block: the legs above stayed green through
+# a 0-green/15-red node layer because they pin shapes ("a checksum line is
+# present", "an assertion is live") while bare-semver interpolation into
+# v-only nodejs.org paths and an empty grep piped into `sha256sum -c -` kept
+# every shape literally true. Here the shapes are pinned directly and the
+# verify step is EXECUTED against a vendor-shaped scratch fixture — static
+# legs catch the interpolation class, executed legs catch the vacuity class,
+# neither needs a docker daemon.
+
+# Fixture version reads the file's own ARG so the executed legs track future
+# renovate bumps; PIN[NODE_VERSION] (c3) owns the value, and the
+# datasource=node-version contract keeps the ARG bare — the v is the
+# interpolation's job.
+node_ver=$(code_lines "$DOCKERFILE" | grep -E '^ARG NODE_VERSION=' | head -n 1 | sed -E 's/^ARG NODE_VERSION=//; s/[[:space:]]*(#.*)?$//' || true)
+node_ver=${node_ver:-${PIN[NODE_VERSION]}}
+node_xz="node-v${node_ver}-linux-x64.tar.xz"
+
+# c7a — the two dist URLs (tarball fetch, SHASUMS fetch) must interpolate
+# the v-prefixed version, restated from the AC1 grep fingerprint.
+dist_v=$(code_lines "$DOCKERFILE" | grep -oF 'nodejs.org/dist/v${NODE_VERSION}' | wc -l)
+dist_bare=$(code_lines "$DOCKERFILE" | grep -oF 'nodejs.org/dist/${NODE_VERSION}' | wc -l)
+if [ "$dist_v" -eq 2 ] && [ "$dist_bare" -eq 0 ]; then
+  pass "c7a: both nodejs.org dist URLs use 'dist/v\${NODE_VERSION}' and no bare interpolation survives"
+else
+  fail "c7a: nodejs.org dist URLs: want 2 'dist/v\${NODE_VERSION}' sites and 0 bare, got ${dist_v} v-prefixed and ${dist_bare} bare"
+fi
+
+# c7b — the tarball filename at its five use sites (curl -o, dist URL tail,
+# grep pattern, tar, rm): occurrence-count, not line-count, because curl's
+# -o and URL share a physical line.
+xz_v=$(code_lines "$DOCKERFILE" | grep -oF 'node-v${NODE_VERSION}-linux-x64.tar.xz' | wc -l)
+xz_bare=$(code_lines "$DOCKERFILE" | grep -oF 'node-${NODE_VERSION}-linux-x64.tar.xz' | wc -l)
+if [ "$xz_v" -eq 5 ] && [ "$xz_bare" -eq 0 ]; then
+  pass "c7b: 'node-v\${NODE_VERSION}-linux-x64.tar.xz' at all 5 use sites and bare form gone"
+else
+  fail "c7b: 'node-v\${NODE_VERSION}-linux-x64.tar.xz': want 5 occurrences and 0 bare, got ${xz_v} v-prefixed and ${xz_bare} bare"
+fi
+
+# c7c — node prints the v; an assertion comparing "$(node --version)" to the
+# bare ARG could never pass, and never did.
+if code_lines "$DOCKERFILE" | grep -qF 'test "$(node --version)" = "v${NODE_VERSION}"' \
+  && ! code_lines "$DOCKERFILE" | grep -qF 'test "$(node --version)" = "${NODE_VERSION}"'; then
+  pass "c7c: the node version assertion compares against \"v\${NODE_VERSION}\" exactly"
+else
+  fail "c7c: no exact 'test \"\$(node --version)\" = \"v\${NODE_VERSION}\"' (v-form missing or bare form survives)"
+fi
+
+# c7d — checksum-leg shape: the grep result must be captured and proven
+# non-empty before `sha256sum -c -` sees it. A grep piped directly into
+# sha256sum is the historical bug shape: a miss forwards empty input to the
+# checker, and whether that passes silently is a property of the checker's
+# version, never of the layer (see the stub note in the executed section).
+# Sanctioned spellings capture the grep result and guard it, so the scope is
+# pinned while the spelling stays dev's choice.
+node_block=$(layer_block NODE_VERSION)
+pipe_bug=$(printf '%s\n' "$node_block" | grep -E 'grep[^()&|;]*\|[[:space:]]*sha256sum' || true)
+capture=$(printf '%s\n' "$node_block" | grep -E '\$\([^)]*grep|grep[^|]*[[:space:]]>' || true)
+guard=$(printf '%s\n' "$node_block" | grep -E '(\[+|test)[[:space:]]+!?[[:space:]]*-[nsz][[:space:]]' || true)
+if [ -z "$pipe_bug" ] && [ -n "$capture" ] && [ -n "$guard" ]; then
+  pass "c7d: checksum leg captures the grep result and guards emptiness before sha256sum -c"
+else
+  fail "c7d: checksum leg not capture-and-guard shaped (want no direct grep->sha256sum pipe, a captured grep result, and an emptiness test)"
+fi
+
+# The executed legs run the layer's own verify step: extracted from the
+# SHASUMS grep line through the sha256sum line, continuations joined into
+# one '&&' chain, and the layer's /tmp rewritten to the fixture dir — so a
+# single-line, subshell-wrapped, or multi-line capture-and-guard spelling
+# all execute identically.
+extract_verify() { # $1 = Dockerfile path; prints the verify chain, or nothing
+  layer_block NODE_VERSION "$1" | awk '
+    {
+      line = $0
+      sub(/\\[[:space:]]*$/, "", line)
+      sub(/^[[:space:]]*(&&[[:space:]]*)+/, "", line)
+      sub(/^[[:space:]]+/, "", line)
+      sub(/[[:space:]]+&&$/, "", line)
+      sub(/[[:space:]]+$/, "", line)
+      if (started) {
+        seg = seg " && " line
+      } else if (line ~ /grep/ && (line ~ /SHASUMS/ || line ~ /linux-x64/)) {
+        started = 1
+        seg = line
+      } else {
+        next
+      }
+      if (line ~ /sha256sum/) { print seg; exit }
+    }
+  '
+}
+
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/cf6-c02-XXXXXX" 2>/dev/null || true)
+if [ -z "$scratch" ]; then
+  fail "c7e: scratch fixture dir could not be created"
+  fail "c7f: scratch fixture dir could not be created"
+  fail "c7g: scratch fixture dir could not be created"
+else
+  trap 'rm -rf "$scratch"' EXIT
+  mkdir -p "$scratch/pos" "$scratch/neg" "$scratch/bin"
+  printf 'cf-6 C02 fixture payload — never a real node artifact\n' > "$scratch/pos/$node_xz"
+  cp "$scratch/pos/$node_xz" "$scratch/neg/$node_xz"
+  real_sha=$(command -v sha256sum)
+  real_hex=$("$real_sha" "$scratch/pos/$node_xz" | cut -d' ' -f1)
+  fake_hex=$(printf 'f%.0s' {1..64})
+
+  # The executed legs run behind a lenient-checker stand-in: coreutils >=8.31
+  # refuses empty stdin to sha256sum -c with exit 1 ("no properly formatted
+  # checksum lines"), so on THIS host's tool the historical pipe dies by a
+  # version accident rather than by design — and any pre-8.31 behaviour, a
+  # re-implemented coreutils on the runner, or a checksum step fed a
+  # non-matching-but-well-formed line is the silent exit 0 the doctrine is
+  # written against. The stub emulates exactly the vacuous semantics (empty
+  # input => exit 0, no output; real input => delegate unchanged), so the
+  # legs ask "can this layer pass verification while checking nothing?" —
+  # a structural question — instead of "what does today's coreutils do?".
+  cat > "$scratch/bin/sha256sum" <<EOF
+#!/bin/sh
+f=\$(mktemp)
+cat > "\$f"
+if [ ! -s "\$f" ]; then rm -f "\$f"; exit 0; fi
+"$real_sha" "\$@" < "\$f"
+rc=\$?
+rm -f "\$f"
+exit \$rc
+EOF
+  chmod +x "$scratch/bin/sha256sum"
+
+  # Vendor SHASUMS256.txt form: "<hex><space><space><name>", one line per
+  # release artifact; the two-space gap is what the layer's single-leading-
+  # space grep pattern anchors on. Neighbour artifacts sit on either side so
+  # the anchored match must pick OUR line, not any line.
+  {
+    printf '%s  node-v%s-headers.tar.gz\n' "$fake_hex" "$node_ver"
+    printf '%s  %s\n' "$real_hex" "$node_xz"
+    printf '%s  node-v%s-linux-arm64.tar.xz\n' "$fake_hex" "$node_ver"
+  } > "$scratch/pos/SHASUMS256.txt"
+
+  # A vendor file that names nothing matching our artifact: the tarball is on
+  # disk with its true hex known, so any green must come from a real match.
+  # "Nothing matched" must be data, never green (the family's AD-133 class).
+  {
+    printf '%s  node-v9.9.9-linux-x64.tar.xz\n' "$real_hex"
+    printf '%s  node-v%s-linux-arm64.tar.xz\n' "$real_hex" "$node_ver"
+    printf '%s  node-v%s-linux-x64.tar.gz\n' "$real_hex" "$node_ver"
+  } > "$scratch/neg/SHASUMS256.txt"
+
+  run_verify() { # $1 = verify command (Dockerfile text), $2 = fixture dir;
+                 # sets RUN_RC and RUN_OUT (stdout only, like the layer sees).
+                 # No pipefail: the chain's emptiness guard, not grep's own
+                 # exit status, is what must refuse here.
+    local cmd="${1//\/tmp/$2}"
+    RUN_OUT=$(cd "$2" && env PATH="$scratch/bin:$PATH" NODE_VERSION="$node_ver" bash -c "$cmd" 2>/dev/null)
+    RUN_RC=$?
+  }
+
+  seg=$(extract_verify "$DOCKERFILE")
+  if [ -z "$seg" ]; then
+    fail "c7e: no verify step extractable from the node layer (nothing from the SHASUMS grep through sha256sum)"
+    fail "c7f: no verify step extractable from the node layer (nothing from the SHASUMS grep through sha256sum)"
+  else
+    run_verify "$seg" "$scratch/pos"
+    if [ "$RUN_RC" -eq 0 ] && printf '%s\n' "$RUN_OUT" | grep -Fq "$node_xz: OK"; then
+      pass "c7e: extracted verify line exits 0 on the matching vendor line and claims '${node_xz}: OK'"
+    else
+      fail "c7e: extracted verify line exited ${RUN_RC} with '${RUN_OUT:-<no output>}'; want exit 0 plus the '${node_xz}: OK' claim — the OK line is the only stdout proof that a checksum was actually checked, and the old pipe never printed one"
+    fi
+
+    run_verify "$seg" "$scratch/neg"
+    if [ "$RUN_RC" -ne 0 ]; then
+      pass "c7f: extracted verify line refuses a SHASUMS256.txt with no matching entry (exit ${RUN_RC})"
+    else
+      fail "c7f: extracted verify line exited 0 with '${RUN_OUT:-<no output>}' though no listed checksum matches the fetched file — the empty-grep-green is still structurally possible"
+    fi
+  fi
+
+  # c7g — negative control, GREEN at authoring and green by design after the
+  # fix: the historical verify line embedded VERBATIM here (not read from the
+  # Dockerfile — dev will remove it there) run against c7f's mismatched
+  # fixture under the lenient stand-in checker. It exits 0 with empty stdout:
+  # the exact vacuous pass, pinned as the mutation column proving c7f's
+  # non-zero exit is decided by the layer's guard, not by fixture luck or
+  # coreutils behaviour.
+  run_verify '(cd /tmp && grep " node-${NODE_VERSION}-linux-x64.tar.xz$" SHASUMS256.txt | sha256sum -c -)' "$scratch/neg"
+  if [ "$RUN_RC" -eq 0 ] && [ -z "$RUN_OUT" ]; then
+    pass "c7g: the historical empty-grep pipe passes silently when the checker accepts empty input (documents the vacuity c7f must now refuse)"
+  else
+    fail "c7g: historical verify line exited ${RUN_RC} with '${RUN_OUT:-<empty>}' — expected the documented vacuous exit 0 with no output"
+  fi
 fi
 
 echo "=== image-structure: $PASS passed, $FAIL failed ==="

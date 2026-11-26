@@ -1,7 +1,7 @@
-# Release Charts — the chart bump+publish pipeline running on Forgejo Actions
+# Build Charts — the chart bump+publish pipeline running on Forgejo Actions
 # (cf-55). The prod instance's runner is the single chart-version authority:
-# it detects changed charts, test-builds them, commits Chart.yaml patch bumps
-# to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
+# it detects changed charts, test-builds them, commits Chart.yaml calendar
+# bumps (Y.M.N) to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
 # byte-stable consumer contract) and this instance's Helm package registry.
 #
 # Both instances receive the synced copy, so EVERY job guards on the
@@ -22,10 +22,13 @@
 # run-time tool download, the flaky-egress class the bake retires). No step
 # installs anything here, and no presence-check step stands in for one
 # (D43): the plain helm/cr calls below ARE the toolchain check — a mis-baked
-# image dies at its first command-not-found, loud and early. The published-
-# index fetch in the bump leg is the one runtime download that survives the
-# bake: it carries data, not a tool, and it rides a bounded --retry (D37).
-name: Release Charts
+# image dies at its first command-not-found, loud and early. The bake retires
+# TOOL downloads, not DATA ones: the bump leg still reads the published index
+# (bounded --retry, D37), and the helm dependency updates — the test-build
+# smoke and the bump leg's lock self-heal — fetch repo indexes and subchart
+# tarballs, the same upstream-egress class cr's Build() already pays per
+# chart per fire (D47).
+name: Build Charts
 on:
   push:
     branches: [main]
@@ -131,12 +134,16 @@ jobs:
       - name: Lint and package smoke
         run: |
           set -euo pipefail
-          # The GitHub twin's build-only leg (its upload step was disabled);
-          # the consumer contract is proven, so the shape stays: dependency
-          # build offline from Chart.lock against the added repos, then lint
-          # and package. No publish API call.
+          # dependency update, not the digest-checking build verb: build
+          # aborts on a drifted lock BEFORE any download, and with job order
+          # test-build → bump an aborting smoke on the drift-carrying push
+          # would make the bump job's self-heal unreachable exactly when it
+          # is needed (D47.2). The update re-negotiates and heals the matrix
+          # copy ephemerally, never pushed; the pre-merge drift signal lives
+          # in the contract suite's hermetic lock-consistency leg. lint +
+          # package stay (consumer-shape smoke, no publish API call).
           mkdir -p /tmp/chart-smoke
-          helm dependency build "charts/${{ matrix.chart }}"
+          helm dependency update "charts/${{ matrix.chart }}"
           helm lint "charts/${{ matrix.chart }}"
           helm package "charts/${{ matrix.chart }}" --destination /tmp/chart-smoke
 
@@ -168,19 +175,43 @@ jobs:
           # known-broken commits-stepping-on-each-other shape (D4). Each
           # attempt re-derives versions from the REMOTE main tip — the
           # checkout is a detached HEAD, so only a remote-tracking fetch
-          # refspec reads it correctly; a bare pull cannot (V-6-3) — and
-          # from the published GitHub index. The push is plain, so git
-          # itself refuses a stale head: fast-forward-only, a refused
+          # refspec reads it correctly; a bare pull cannot (V-6-3) — with
+          # N from the tree plus the run's clock stamp and the published
+          # GitHub index only guarding collisions. The push is plain, so
+          # git itself refuses a stale head: fast-forward-only, a refused
           # attempt re-loops and can never overwrite (V-4). No secret
           # reference: the checkout's automatic same-repo credential pushes
           # main, and its push re-triggers no workflow — that
           # non-re-trigger is the loop guard (R3/D5).
+          # ONE clock stamp per run (the containers-build month= law): all
+          # retry attempts share one Y.M, so a straddle of UTC midnight on
+          # the 1st cannot split a release lineage across two months. The
+          # month is UNPADDED here and int()-reformatted in the derivation:
+          # a padded "2026.07.1" is invalid semver under Masterminds
+          # NewVersion and dies at helm package (D15 class).
+          STAMP=$(date -u +%Y.%-m)
           for attempt in $(seq 1 5); do
             echo "bump attempt ${attempt} of 5"
             git fetch origin refs/heads/main:refs/remotes/origin/main
             git reset --hard refs/remotes/origin/main
             curl -fsSL --retry 3 -o /tmp/published-index.yaml "$PUBLISHED_INDEX"
-            bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml <<'PY'
+            # Lock self-heal, full tree (D47.1): cr package Build()s EVERY
+            # chart EVERY fire, so one drifted lock outside the changed
+            # matrix poisons release + forgejo-publish whatever this push
+            # touched — changed-set-only healing leaves that path open.
+            # dependency update is the only regen verb, a byte-no-op on a
+            # fresh lock, and auto-adds unknown repos, so no repo-add step
+            # is needed and the pass is cheap on churn. It runs AFTER the
+            # reset because heal decisions must ride the remote tip, never
+            # the event checkout's stale tree. Locks land in the same commit
+            # as the versions: the top-level version: is outside helm's
+            # digest inputs, so the pair is digest-safe by construction.
+            # No retries: an upstream egress blip reddens this bump loudly
+            # and a re-fire is the recovery, the posture cr already has.
+            for lock in charts/*/Chart.lock; do
+              helm dependency update "charts/$(basename "$(dirname "$lock")")"
+            done
+            bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml "$STAMP" <<'PY'
           import json, re, sys
 
           def ver(s):
@@ -193,8 +224,9 @@ jobs:
           # INDENTATION only. A naive line scan resolves inline
           # dependencies: pins instead (wrapper charts re-use their
           # upstream dependency's name — traefik's dependency pin 42.1.3
-          # shadows the real entry version 1.0.103 — minting jump releases
-          # on first fire); this pairing is exact on every key of the live
+          # shadows the real entry version 1.0.103 — the collision guard
+          # below would then walk N past versions that were never
+          # published); this pairing is exact on every key of the live
           # index.
           published = {}
           name = None
@@ -214,6 +246,11 @@ jobs:
                   if v is not None and (name not in published or v > published[name]):
                       published[name] = v
 
+          # The run's single clock stamp (argv 3), re-formatted
+          # numerically: int() means no padded spelling of the stamp can
+          # survive into a written version.
+          Y, M = (int(p) for p in sys.argv[3].split("."))
+
           bumped = []
           for chart in json.loads(sys.argv[1]):
               path = f"charts/{chart}/Chart.yaml"
@@ -230,13 +267,34 @@ jobs:
               tree = ver(m.group(1))
               if tree is None:
                   raise SystemExit(f"{path}: version {m.group(1)!r} is not MAJOR.MINOR.PATCH")
-              # Always land strictly above BOTH the tree and the published
-              # index: a published version is never re-minted (the
-              # skip_existing semantics, D17) and an unpublished-version gap
-              # under interleaved runs is benign, not churn (V-4). The
-              # version: line only is rewritten — appVersion stays untouched.
-              base = max(tree, published.get(key, (0, 0, 0)))
-              nxt = f"{base[0]}.{base[1]}.{base[2] + 1}"
+              # Calendar walk (owner law R-Q1, D47.4): N derives from the
+              # tree plus the clock stamp, never from a published version.
+              # The stamp month walks the chart's own N+1; a tree below the
+              # month floor — rollover, or a legacy 1.0.x chart's first
+              # calendar fire — lands Y.M.1; a tree ahead of the clock
+              # fails loud, the walk never moves released versions
+              # backwards. The version: line only is rewritten — appVersion
+              # stays untouched.
+              if tree[:2] == (Y, M):
+                  cand = (Y, M, tree[2] + 1)
+              elif tree < (Y, M, 0):
+                  cand = (Y, M, 1)
+              else:
+                  raise SystemExit(f"{path}: tree version {tree} is ahead of the clock stamp — refusing to walk backwards")
+              # The published index is no longer a derivation term: it
+              # guards only the skip-when-already-published law (D17's
+              # second half) — a published version is never re-minted.
+              # Bounded walk: an index more than 50 same-month versions
+              # ahead of the candidate is a corruption signal to fail on,
+              # not a queue to drain (containers-build's bounded-walk
+              # precedent).
+              steps = 0
+              while published.get(key, (0, 0, 0)) >= cand:
+                  cand = (Y, M, cand[2] + 1)
+                  steps += 1
+                  if steps > 50:
+                      raise SystemExit(f"{path}: published index over 50 versions ahead of the calendar walk — refusing to mint")
+              nxt = f"{cand[0]}.{cand[1]}.{cand[2]}"
               open(path, "w").write(text[:m.start(1)] + nxt + text[m.end(1):])
               bumped.append(chart)
           print(" ".join(bumped))
@@ -249,7 +307,17 @@ jobs:
             for c in $bumped; do
               git add "charts/$c/Chart.yaml"
             done
-            git commit -m "chore(release): bump ${bumped}"
+            # The regenerated locks ride the same bump commit; a byte-no-op
+            # update stages nothing.
+            git add charts/*/Chart.lock
+            healed=$(git diff --cached --name-only | grep 'Chart\.lock$' || true)
+            message="chore(release): bump ${bumped}"
+            if [ -n "$healed" ]; then
+              message="${message} + heal $(echo "$healed" | tr '\n' ' ')"
+            fi
+            # Staged-content guard: a fresh-tree fire must not mint an
+            # empty commit under set -euo pipefail.
+            git diff --cached --quiet || git commit -m "$message"
             if git push origin HEAD:refs/heads/main; then
               echo "bumped and pushed: ${bumped}"
               exit 0

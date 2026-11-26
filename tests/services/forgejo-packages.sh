@@ -2,7 +2,7 @@
 # Offline contract suite for the repo-side enablement of the prod instance's
 # package registries (cf-55 C04, rebuilt): the `[packages]` declaration in
 # custom-values/infra/prod-values.yaml is what serves BOTH registries the CI
-# pushes to — the Helm registry (release.yaml's forgejo-publish leg) and the
+# pushes to — the Helm registry (build-charts.yaml's forgejo-publish leg) and the
 # OCI registry (cf-6's containers-build.yaml instance push) — the single
 # section gating both. Invariants pinned here — the declaration rides the
 # INFRA slice only (dev stays un-enabled, D20; its registries would silently

@@ -44,6 +44,21 @@
 # boolean True, so the trigger block is doc.get(True) or doc.get('on');
 # asserting on the string key 'on' alone would redden a correct file.
 #
+# C12 (cf-55 round 4, route F APPROVED by D49): the instance Renovate gains a
+# runnable helm via the official `-full` image (helm pre-baked, global tool
+# resolution — the slim tag's EACCES/ENOENT lock-regen failure is the chart
+# drift's FIRST cause). Re-aims: t4's tag regex and t5's off_image line accept
+# the `-full` variant; t5's EXPECTED env set grows seven keys -> eight with
+# RENOVATE_BINARY_SOURCE=global (explicit, so a base-image default flip can
+# never silently regress to install mode); t9's needle is UNCHANGED (the tag
+# shares the depName). New t10 pins image-and-env as one PAIR — the
+# install-mode regression fence. New t11 (C12 review r1 min-2) binds the
+# image-line digest comment to the strict sha256:[0-9a-f]{64} shape — a
+# 63-hex transcription rode through every prior leg because nothing read the
+# comment. Gate posture: the one-time helm4-writes/
+# helm3-builds digest cross-check is C12 DEV's pre-merge run (chunk AC1), not
+# a suite leg.
+#
 # Run from anywhere in the worktree:
 #   bash tests/services/forgejo-renovate.sh
 #   FORGEJO_RENOVATE_PROBE=1 bash tests/services/forgejo-renovate.sh
@@ -171,9 +186,9 @@ def need(cond, msg):
 
 image = (job.get('container') or {}).get('image')
 need(isinstance(image, str)
-     and re.fullmatch(r'ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+', image) is not None,
-     f'container.image is {image!r}, expected ghcr.io/renovatebot/renovate:<x.y.z> — '
-     'a full-patch immutable tag (floating tags stick at first-pull forever on the act runner)')
+     and re.fullmatch(r'ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+(?:-full)?', image) is not None,
+     f'container.image is {image!r}, expected ghcr.io/renovatebot/renovate:<x.y.z> (optionally the '
+     '`-full` variant, C12 route F) — a full-patch immutable tag (floating tags stick at first-pull forever on the act runner)')
 anns = [l for l in raw.splitlines() if re.search(r'#\s*renovate:', l)]
 need(not anns,
      f'{len(anns)} "# renovate:" annotation line(s) file-wide — the native github-actions '
@@ -182,7 +197,7 @@ PY
 then
   fail "t4: see the t4 detail above"
 fi
-ok "t4: container image is an immutable full-patch tag and the file carries no renovate annotation"
+ok "t4: container image is an immutable full-patch tag (slim or -full) and the file carries no renovate annotation"
 
 # --- t5 [AC4 + C05 AC1/AC2]: env wiring exact, secret/vars refs once, no host literals -
 if ! python3 - "$WF" <<'PY'
@@ -207,6 +222,11 @@ EXPECTED = {
     # tms@ from the guard's accepted set and leave the stuck ranges locked
     # (census arithmetic, DECISIONS D21).
     'RENOVATE_GIT_AUTHOR': '${{ vars.RENOVATE_GIT_AUTHOR }}',
+    # C12 route F (D49): the -full image ships its tools globally; declaring
+    # the mode explicitly is the fence against a base-image default flip back
+    # to install mode — the class that starved Chart.lock regeneration
+    # (EACCES /opt/containerbase/data, PR #112; spawn helm ENOENT, PR #113).
+    'RENOVATE_BINARY_SOURCE': 'global',
 }
 
 
@@ -237,14 +257,14 @@ for host in ('git.scifi.farm', 'git.spencerslab.com', 'github.com/'):
          f'host literal {host!r} in the file — the workflow stays instance-neutral (contexts + secrets only)')
 off_image = [l for l in raw.splitlines()
              if 'ghcr.io' in l
-             and not re.match(r'^\s+image: ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+$', l)]
+             and not re.match(r'^\s+image: ghcr\.io/renovatebot/renovate:\d+\.\d+\.\d+(?:-full)?$', l)]
 need(not off_image,
      f'ghcr.io appears outside the container image line: {off_image}')
 PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: seven exact env keys, each secret/vars ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
+ok "t5: eight exact env keys, each secret/vars ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
 
 # --- t6 [AC5]: two run-only steps, fail-fast, PATH proof -------------------------
 if ! python3 - "$WF" <<'PY'
@@ -387,5 +407,88 @@ else
     ok "t9: live probe — github-actions extracted ghcr.io/renovatebot/renovate (depType container) from $WF"
   fi
 fi
+
+# --- t10 [C12 AC2]: -full image and global tool mode travel as ONE pair -----------
+# The install-mode regression fence: the drift's first cause was a Renovate
+# that CANNOT run helm — either the image lacks the tools at runtime (the
+# slim tag's binarySource=install class, EACCES/ENOENT smoking guns) or the
+# mode is undeclared and a future base-image default flips it back. Either
+# half alone is that bug re-arming, so the leg asserts the PAIR, not two
+# independent keys.
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+doc = yaml.safe_load(open(sys.argv[1]))
+job = (doc.get('jobs') or {}).get('renovate') or {}
+image = str((job.get('container') or {}).get('image') or '')
+bs = (job.get('env') or {}).get('RENOVATE_BINARY_SOURCE')
+
+if not image.endswith('-full'):
+    print(f'FAIL: t10: container.image {image!r} does not end "-full" — the slim tag cannot execute helm in the sandbox (EACCES /opt/containerbase-data, spawn helm ENOENT: the Chart.lock drift sources, PRs #112/#113), so lock regeneration keeps failing inside the PR', file=sys.stderr)
+    sys.exit(1)
+if bs != 'global':
+    print(f'FAIL: t10: env.RENOVATE_BINARY_SOURCE is {bs!r}, expected "global" — the -full image must DECLARE its tool mode: implicit defaults are exactly how install-mode crept in the first time (C12 route F)', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t10: see the t10 detail above"
+fi
+ok "t10: image is the -full variant AND RENOVATE_BINARY_SOURCE=global is declared — the pair, or neither (install-mode regression fence)"
+
+# --- t11 [C12 review r1 min-2]: the image-line digest comment is strict-shape ------
+# The 63-hex transcription slip rode through every shipped leg because nothing
+# bound the comment's shape: a stale or mangled digest silently falsifies the
+# chunk's implementation-time evidence (C12.md task 2 requires the comment to
+# CARRY the -full tag's index digest; the review posture is "verify the digest
+# comment is the -full index digest, not the slim's"). SHAPE only — no leg
+# here reaches the registry (offline-suite law); verifying the token lives in
+# the dev RESULT's gate transcript, not in CI.
+# Posture pinned: for a -full image an accompanying digest comment is
+# REQUIRED (absent => red) — C12.md AC2 ships the pair "with a fresh digest
+# comment" (the slim era had the comment; the chunk REPLACES it, never drops
+# it, and the review posture reads it). For any image, every sha256 token
+# beside the image line must be exactly 64 lowercase hex on ONE line —
+# 63/65/uppercase/wrapped forms are the transcription class this leg exists
+# to catch.
+if ! python3 - "$WF" <<'PY'
+import re, sys
+
+lines = open(sys.argv[1]).read().splitlines()
+img_i = [i for i, l in enumerate(lines) if re.match(r'^\s+image:\s*ghcr\.io/renovatebot/renovate:', l)]
+if len(img_i) != 1:
+    print(f'FAIL: t11: {len(img_i)} image lines found, expected exactly one (the t4/m6 anchor) — no single digest companion to bind', file=sys.stderr)
+    sys.exit(1)
+i = img_i[0]
+image = lines[i].split(':', 1)[1].strip()
+
+# The digest comment rides the image line: comment lines directly after it
+# (the block up to the next executable key), plus the one line before.
+block = [l for l in ([lines[i - 1]] if i and lines[i - 1].lstrip().startswith('#') else [])]
+for l in lines[i + 1:]:
+    if l.lstrip().startswith('#'):
+        block.append(l)
+    else:
+        break
+
+TOKEN = re.compile(r'sha256:[0-9A-Za-z]+')
+BAD = re.compile(r'^sha256:[0-9a-f]{64}$')
+
+tokens = [m.group(0) for l in block for m in TOKEN.finditer(l)]
+bad = [t for t in tokens if not BAD.match(t)]
+if bad:
+    why = []
+    for t in bad:
+        h = t[len('sha256:'):]
+        why.append(f'{t[:24]}... length {len(h)}' + ('' if h.islower() else ' (uppercase hex)'))
+    print(f'FAIL: t11: digest comment beside the image line violates the sha256:[0-9a-f]{{64}} shape: {why} — a 63/65-hex, uppercase, or line-wrapped transcription is exactly the slip C12 review r1 caught (the 63-hex comment passed every prior leg)', file=sys.stderr)
+    sys.exit(1)
+if image.endswith('-full') and not tokens:
+    print('FAIL: t11: the -full image carries no sha256 digest comment beside its line — C12.md AC2 ships the image+env pair WITH a fresh digest comment (the -full tag\'s manifest digest read at implementation time, replacing the stale slim-era one); without it that evidence is unverifiable', file=sys.stderr)
+    sys.exit(1)
+PY
+then
+  fail "t11: see the t11 detail above"
+fi
+ok "t11: the image-line digest comment is a complete lowercase sha256:[0-9a-f]{64} on one line, present for the -full tag (shape-only — registry truth is the dev transcript's, per the offline-suite law)"
 
 printf 'PASS: forgejo-renovate checks (%d ok)\n' "$checks"

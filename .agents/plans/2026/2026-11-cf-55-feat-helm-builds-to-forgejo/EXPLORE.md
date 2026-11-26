@@ -1135,3 +1135,76 @@ Build still errors" class — O3 input)
 - Forgejo UI exactness of "re-run reuses the trigger SHA's workflow" — the
   docs quote the sha/run_attempt semantics; the repo-side elimination in F3
   makes the verdict independent of this residual.
+
+## Rename surface (2026-11-25): release.yaml -> build-charts.yaml
+
+Rename-scout round (fresh launch, cwd `cf-55-feat-helm-builds-to-forgejo-rebuilt` at main `3f21e85e8`). Method: repo-wide greps of `release.yaml` and `Release Charts` (57 live-surface hits with `.agents/` excluded), per-surface reads of every hitting suite/file, Forgejo Actions reference docs webfetch for name semantics. Classes: **HARD** = code/tests that go RED if missed; **SOFT** = prose that lies if stale (no red leg unless a pin reads the token); **FROZEN** = ticket records — never rewrite.
+
+### A. Hard pins (break if missed)
+
+| Surface (file:line) | What it pins | Change type | Red leg if missed |
+|---|---|---|---|
+| `.forgejo/workflows/release.yaml` (429 lines; header token :1; `name: Release Charts` :28; push-only trigger :29-33) | the workflow itself | `git mv` -> `.forgejo/workflows/build-charts.yaml`; keep content byte-stable (D3/E anchor note); `name:` field is display-only (F) — change to match is the owner's style call, nothing reads it | — (the subject) |
+| `tests/services/forgejo-release.sh:63` | `WF=".forgejo/workflows/release.yaml"` — t1 `[ -f "$WF" ]`, every leg reads $WF | rewrite string | whole suite hard-exits at t1 (all 21 legs) |
+| `tests/services/forgejo-release.sh:88` | composed twin-absence check on `.github/workflows/release.yaml` | LEAVE — the deleted GitHub twin keeps its historical name forever | none (correct as-is) |
+| `tests/services/forgejo-ci-surface.sh:67` | `FJ_SET` = exact SET of file NAMES in `.forgejo/workflows/` (os.listdir, not paths) — enumerates `'release.yaml'` | rewrite member to `build-charts.yaml` (FAIL msg L86 prose too) | ci-surface t1 red (set equality); t3–t7 never run (hard-exit) |
+| `tests/services/forgejo-ci-surface.sh:94` | `.github` inventory must NOT hold `release.yaml` | LEAVE (twin name unchanged, still deleted) | none |
+| `tests/services/forgejo-ci-surface.sh:247` (t7) | `need('release.yaml' in ref and 'Forgejo' in ref)` over `skills/helm-chart-creation/references/chart-templates.md` | rewrite t7 token AND chart-templates.md:30,154 in ONE change | ci-surface t7 red |
+| `charts/llama-swap/tests/strata_testlib.py:51` | `RELEASE_WORKFLOW` path constant, read by `test_strata_untouched.py::test_c01_release_workflow_carries_no_strata_reference` (S.read raises on absent) | re-pin path | strata pytest leg errors (the Q-C pristine guard) |
+| `tests/pipeline-push-pr/surface.sh:215` | `contract ci-on-push … 'release.yaml'` — needle must appear in SRC `.rulesync/skills/pipeline-push-pr/SKILL.md` and GEN `.opencode/skills/pipeline-push-pr/SKILL.md` (:51-52; needle-substring semantics verified :80-110) | rewrite needle + skill source together (`build-charts.yaml` does not contain `release.yaml`) | pipeline-push-pr P3[AC3] ci-on-push red on both carriers |
+| `.rulesync/skills/pipeline-push-pr/SKILL.md:24` + `.opencode/skills/pipeline-push-pr/SKILL.md:27` | the push-effects law ("the forge `release.yaml` fires on push to prod main (paths `charts/**`)") every -pr session loads | rewrite string in source; `rulesync generate`; commit source+mirror in one commit | the row above; `rulesync generate --check` drift |
+| `tests/agent-board-coord/agents-md.sh:467`, `gate.sh:1027`, `rulesync-surface.sh:691` (+ their truth-comments :378/:401, :931/:948, :608) | the cf-55 arm's per-file allow-set names `.forgejo/workflows/release.yaml` + composed `".github/"workflows/release.yaml` | CONDITIONAL HARD: if the rename runs as a board-coord ticket, its own arm must admit the NEW workflow path, the rename ticket's plan folder, and `charts/prowlarr/Chart.yaml` (NOT under any wildcard); git-mv'd suites ride `tests/*`; new workflow file rides nothing — join it explicitly ("A replan-added file joins THIS line" convention) | c7 / t14 / c* fail "path outside C04's in-scope set" on the unadmitted new path |
+| `AGENTS.md:459` + `:497` and twin source `.rulesync/rules/overview.md:457` + `:495` | the bump law ("`release.yaml` runs on the prod Forgejo Actions") and the ROLE law's narrow five-workflow enumeration | rewrite string in overview.md, regenerate AGENTS.md, commit the pair; KEEP sentence shapes for the substring-pins (H) | no name-token pin found; sloppy prose rewrites trip ci-surface t5/t7 token lists and builder-bootstrap b9 (five/.forgejo/builder-bootstrap/narrow block; four-workflow ban regex) — and the stale name misinforms every session that loads AGENTS.md |
+
+### B. Soft prose (lies if stale; no red leg)
+
+| Surface (file:line) | Mention | Change type |
+|---|---|---|
+| `.forgejo/workflows/main-sync.yaml:121` | "(release.yaml:54 precedent)" | rewrite name -> `build-charts.yaml:54`; the :54 anchor (`EVENT_SHA: ${{ github.sha }}`) stays TRUE only if the file keeps 429 lines (pure mv or same-line-count edits) |
+| `tests/services/forgejo-main-sync.sh:438`, `:458` | same `release.yaml:54` cites in a FAIL message + comment | rewrite prose (legs parse main-sync.yaml only) |
+| `tests/services/forgejo-containers-build.sh:2086-2088` | x4 header: "release.yaml left this fence … moved to .forgejo/workflows/release.yaml" | dated reword or leave-as-history; x4's legs check the five `.github` siblings — unaffected |
+| `tests/services/forgejo-ci-surface.sh:7,8,12,86,88,92,97,114,172,197`; `forgejo-release.sh:2,167,282`; `forgejo-packages.sh:5` | comments + ok/FAIL message prose naming the workflow/suite | rewrite prose in the same pass |
+| `.rulesync/skills/role-planner/SKILL.md:60` + `.opencode/skills/role-planner/SKILL.md:61`; `role-code/SKILL.md:60` + `:61` | "the forge `release.yaml` bumps Chart.yaml" | rewrite source + regenerate mirrors (no token pin found over these) |
+| `skills/helm-chart-creation/references/chart-templates.md:30,154` | name prose AND the template line copied into every future Chart.yaml comment | rewrite (paired with hard t7 — see A) |
+| `charts/prowlarr/Chart.yaml:3` | "initial only — release.yaml auto-bumps patch on merge to main" — ships inside the packaged tgz; only chart with the line (verified) | rewrite string = touches `charts/**` -> first-fire coupling (E) |
+| `containers/forgejo-runner/Dockerfile:61` | "cr at the version+digest pair release.yaml pinned" | rewrite comment |
+| `containers/forgejo-runner/README.md:68` | names the suite path `tests/services/forgejo-release.sh` | true iff the suite keeps its name; re-pin if the suite is git-mv'd (C) |
+| `custom-values/infra/prod-values.yaml:87` | "(release.yaml's forgejo-publish leg)" | rewrite comment |
+| `tests/cf96-deploy/readback-runbook.md:88` | "release.yaml owns chart versions" | leave-as-record (dated historical runbook) or bracketed correction — plan's call |
+| `charts/amd-gpu/tests/test_provenance.py:42`; `charts/radiance/tests/test_contract.py:3,46`; `tests/multi-repo/ha-chart.sh:385`; `tests/multi-repo/mosquitto-chart.sh:175` | FAIL-message prose ("release.yaml owns bumps") | rewrite optional; message strings, no file reads |
+| `charts/llama-swap/tests/test_strata_untouched.py:1,4,10,35,64` | docstrings/messages; L10 "its name survives the cutover" becomes FALSE on rename | rewrite docstrings with the testlib re-pin |
+
+### C. Suite naming (the launch's question)
+
+`tests/services/` pairs `forgejo-<workflow>.sh` for every Forgejo workflow: `forgejo-main-sync.sh`, `forgejo-renovate.sh`, `forgejo-containers-build.sh`, `forgejo-builder-bootstrap.sh`, `forgejo-release.sh`. Precedent-consistent move: git mv the suite to `forgejo-build-charts.sh` alongside A1. Re-pin surface is small — ci-surface comments (L4,172,197), `containers/forgejo-runner/README.md:68` — and NO CI workflow or other suite executes or reads the path (grep-verified: only the README + ci-surface prose). Keeping the old suite name has zero red legs but breaks the pairing precedent. Decision for the plan; both costs enumerated.
+
+### D. Does anything KEY on the workflow NAME or FILE? No.
+
+- `Release Charts` appears only in the workflow itself (L1 comment, L28 `name:`). Docs: the `name:` is display-only in the Actions tab, falling back to the file name — safe to change or keep; nothing machine-reads it.
+- File name keys: trigger is push-only + `paths: charts/**` (release.sh t2 pins `set(trig)=={'push'}` — do NOT add workflow_dispatch while editing, it reddens t2); no badge URLs anywhere; cr writes use `--owner/--git-repo/--package-path .cr-release-packages` (cr's own default staging dir — the `.gitignore:2` entry is NOT workflow-derived); gh-pages/`:yy.mm.N` artifact paths independent; ArgoCD never sees workflow files; `renovate.yaml`, `containers-build.yaml`, `builder-bootstrap.yaml` contain zero release.yaml mentions (verified); `main-sync.yaml:121` comment is the only in-`.forgejo` cross-cite.
+- Instance side: workflows are discovered from the repo tree at the pushed SHA — no Forgejo config/registration change for a rename.
+
+### E. Runtime / first-fire effects
+
+- The merge landing the rename fires `build-charts.yaml` only if that merge touches `charts/**` (paths filter). If the prose pass edits `charts/prowlarr/Chart.yaml:3`, the SAME merge is the first fire and mints one benign prowlarr patch-bump commit (precedent: STATE `post_merge_adaptation` — "expect green + one benign forgejo-runner bump commit").
+- ROLE guards read `vars.ROLE`, not the file name; bump loop / DUAL publish / credential topology unchanged by a byte-stable mv.
+- Anchor discipline: three live cites of `:54` — keep 429 lines (mv + same-line-count header/name edits only) so reworded cites stay true.
+
+### F. Run history across a rename (partially grounded; OQ)
+
+- Grounded (Forgejo Actions reference docs, webfetched 2026-11-25): each run carries `workflow_ref` = `owner/repo/.forgejo/workflows/<file>@refs/heads/<ref>` — the PATH recorded at trigger time; the per-workflow dispatch API keys on workflow name (irrelevant here — no dispatch trigger); `name:` is display.
+- NOT verifiable from the repo seat: whether the Actions UI's per-workflow history view groups by that recorded path (old runs then vanish from the new file's view but remain in All-workflows and per-commit links, run IDs intact — the cf-55/cf-6 records cite runs 94/97/101/106 by number) or re-resolves to the current tree. Inference says the former; confirm via research or accept history-per-run-id.
+
+### G. Frozen history (never rewrite — list what carries mentions)
+
+- 105 record files under `.agents/plans/` cite `release.yaml` (count verified; the enumeration is representative): all of this ticket (plan file, DECISIONS, RESEARCH, FRICTION, STATE, EXPLORE incl. its own §1a/§8/A1 sections, chunks C01–C08); cf-6 `debug-forge-runner-docker` (+-1), `feat-builder-bootstrap` (+-2/-3/-4), `feat-forgejo-container-builds-1`; cf-135, cf-139, cf-143, cf-144, cf-145, cf-119, cf-104, cf-105, cf-93, cf-95, cf-97, cf-77 (both folders), cf-58; `2026-10-refactor-forgejo-runner-per-instance`, `2026-10-feat-forgejo-ssh`, `2026-10-feat-forgejo-infra-and-runner`, `2026-10-feat-llama-swap-config-generation`, `2026-10-feat-coder-workspace-rebuild`, `2026-10-bug-llama-swap-echo-proxy-port`, `2026-10-bug-kubernetes-mcp-toml`, `2026-10-dep-wekan-v12-upgrade`, `2026-10-debug-flash-next-vulkan-oom`, `2026-11-feat-radiance-multi-instance`, `2026-11-feat-seaweedfs-debug-skill`, plus the bare plans-root files (`2026-09-*`, `2026-10-12-feat-add-dev-service`, `2026-10-20-debug-gpu-*`, `2026-10-28-chore-friction-followups-cf-77-r2`, `2026-11-02-debug-proxy-remote-*`). They cite the pre-rename path honestly — append-only law; the plan must exempt them explicitly.
+- `.agents/skills/` vendored third-party: `gitops-workflows/references/repo_patterns.md:140` (generic tree diagram), `ha-integration-dev/references/publishing.md:386` (generic GitHub example) — SHA-pinned vendors, never hand-edit (skills-lock.json law).
+- `.agents/notes/`: zero mentions (grep-verified). `charts/llama-swap/tests/evidence/c05_expected_evidence.yaml:11`: a historical evidence artifact — leave as record.
+
+### H. Rewrite-law traps for the test wave
+
+1. ci-surface t3 (`STALE_PAT` L109, composed so the suite never self-matches) hard-exits if a PLAIN `.github/workflows/release.yaml` literal lands in any tracked file under `skills tests containers .rulesync .opencode charts services custom-values`. Every rewritten reference to the deleted GitHub twin must keep the sanctioned forms: prose "the GitHub release twin", `os.path.join(...)` in python, the composed `".github/"workflows/release.yaml` alternation in the coord allow-cases. Writing the plain literal = t3 red and t4–t7 masked.
+2. ci-surface t4: every `docker-build` mention on the carrier routes must keep its workflow_dispatch/manual/fallback co-word — the pipeline-push-pr SKILL and AGENTS lines pass today; preserve while rewriting the same sentences.
+3. builder-bootstrap b9 item 5: never introduce "four … .forgejo"-shaped phrasing into overview/AGENTS/README/skill docs (the four-workflow ban regex); the family stays five, only a member changes its name.
+4. NO global `s/forgejo-release/.../`: the token `forgejo-releases` is a Renovate DATASOURCE name (`renovate.json:136,141`, `containers/coder-workspace/Dockerfile:66`, `tests/renovate/dockerfile-pins.sh:81,91`, `tests/renovate/chart-yaml-legs.sh:254`, `tests/coder-workspace/image-structure.sh:48`) — a sed would break live pin contracts. All edits surgical per the tables above.
+5. Collision: `build-charts` is unused in the tree (the only grep hits are "helm dependency build charts/…" verb-phrase false positives); no existing file to collide; ci-surface t1's exact-set accepts the renamed member once L67 changes.

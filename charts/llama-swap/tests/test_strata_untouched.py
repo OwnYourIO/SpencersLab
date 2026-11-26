@@ -1,13 +1,13 @@
-# r2 Q-C machine pins — the ruling that reshaped run 2 was "release.yaml gets
+# r2 Q-C machine pins — the ruling that reshaped run 2 was "the chart builder gets
 # NO edits and the standalone chart ceases to exist as a top-level chart dir";
 # these guards make the FIRST half mechanical (the second half lives in
-# test_strata_wiring.py). The poison the ruling dodged: release.yaml's
+# test_strata_wiring.py). The poison the ruling dodged: the builder's
 # `Add repositories` awk loop mis-splits empty repo fields, so ANY declared
 # subchart dependency in ANY chart breaks every future release job (run-2
 # FRICTION + DECISIONS 2026-10-28 re-weigh).
 #
 # cf-55 moved the builder: the ruling now binds the MOVED file under
-# .forgejo/workflows/ (its name survives the cutover) and the "must not
+# .forgejo/workflows/ (its role survives the C11 rename) and the "must not
 # mention strata" assertion itself is unchanged. The workflow leg is red-first
 # until C01's twin lands; the other six legs stay green. A red names the chunk
 # whose edit violated the ruling (or the cutover that has not landed) — dev
@@ -32,7 +32,7 @@ def test_c01_release_workflow_carries_no_strata_reference():
     nothing strata-shaped. Its generic charts/** globs are not references."""
     text = S.read(S.RELEASE_WORKFLOW, "untouched-by-design (Q-C ruling)")
     assert "strata" not in text.lower(), (
-        "release.yaml mentions strata — the Q-C ruling forbids workflow edits on this ticket"
+        "build-charts.yaml mentions strata — the Q-C ruling forbids workflow edits on this ticket"
     )
 
 
@@ -61,7 +61,7 @@ def test_c01_chart_lock_has_no_strata_entry():
 
 @helm
 def test_c01_helm_dependency_list_never_sees_strata():
-    """The release.yaml awk loop consumes exactly this output; an extra line
+    """The build-charts.yaml awk loop consumes exactly this output; an extra line
     is the reproduced poison shape. app-template must remain the ONLY entry."""
     out = subprocess.run(["helm", "dependency", "list", str(S.CHART_DIR)],
                          capture_output=True, text=True, timeout=300)

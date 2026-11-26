@@ -55,12 +55,17 @@ plus `workflow_dispatch`.
 **Per changed container directory:**
 
 1. Detects changed container dirs over the event's commit range:
-    - a push diffs the whole `before..sha` range as a tree diff, so every
-      commit between the endpoints counts, not just the tip. The detect
-      job's checkout therefore carries `fetch-depth: 0`: at the shallow
-      default the range endpoints are absent locally and the diff dies on
-      `bad object` (exit 128) — loud, never a silent partial set. The
-      full fetch measured 21.23 MiB / 1,849 ms against the instance from
+    - a push diffs `marker..sha` — from the last-built marker ref, a
+      Forgejo-local branch the workflow itself advances to the sha of every
+      fully-green push build. A change that a dead or cancelled run lost is
+      therefore re-covered by the next push instead of staying skipped
+      forever. With no marker yet (the bootstrap state) a push falls back to
+      the whole `before..sha` range. Either way the diff is a tree diff, so
+      every commit between the endpoints counts, not just the tip. The
+      detect job's checkout therefore carries `fetch-depth: 0`: at the
+      shallow default the range endpoints are absent locally and the diff
+      dies on `bad object` (exit 128) — loud, never a silent partial set.
+      The full fetch measured 21.23 MiB / 1,849 ms against the instance from
       a workspace clone; no run of this workflow has executed yet, so
       every number here is offline. Depth-0 is not a correctness verdict:
       a depth-1 checkout plus a targeted fetch of `before` measured
@@ -77,12 +82,20 @@ plus `workflow_dispatch`.
     - an empty `before` is fatal: no push payload sends one, so its
       arrival means a wrong accessor or a misrouted event. A range whose
       endpoints do not resolve fails the job loudly too.
-    - every run echoes the resolved set with its event and endpoints. An
-      empty set on a real push or PR range warns with `::warning::`; a
-      no-op push (its `before` equals its `sha`) and an empty
-      `workflow_dispatch` list stay silent — emptiness is their correct
-      semantics by ruling. These lines are run-log text; this Forgejo
-      build surfaces nothing richer, and none of it is live-validated.
+    - every run echoes the resolved set with its event, endpoints and
+      base source. An empty set on a real push or PR range warns with
+      `::warning::`; a no-op push (its `before` equals its `sha`), an
+      empty `workflow_dispatch` list and an empty range measured FROM the
+      marker stay un-annotated — the first two because emptiness is their
+      correct semantics by ruling, the last because a marker range that
+      resolves empty PROVES nothing was missed, so it reads as one plain
+      info line. These lines are run-log text; this Forgejo build
+      surfaces nothing richer, and none of it is live-validated.
+    - the marker advances only on a push run whose build matrix
+      published fully green: a partial failure leaves it put, so the
+      re-run re-diffs the same `marker..sha` and retries the residue.
+      The advance is a plain push, and git's own non-fast-forward
+      refusal is what keeps the marker from ever moving backwards.
     - `total_commits` reads 0 on Forgejo push payloads, so detection
       never counts commits: an empty commit list is not an empty range.
    Only strict DNS-safe names with a `Dockerfile` are accepted — the

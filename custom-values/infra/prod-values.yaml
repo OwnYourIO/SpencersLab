@@ -84,7 +84,7 @@ forgejo:
           FROM: "git@spencerslab.com"
           PROTOCOL: "smtp"
         # Package registries the cf-55 dual-publish CI pushes to (RESEARCH
-        # V-3): [packages] gates BOTH the Helm chart registry (release.yaml's
+        # V-3): [packages] gates BOTH the Helm chart registry (build-charts.yaml's
         # forgejo-publish job) and the OCI container registry
         # (containers-build.yaml's instance OCI push). Prod-only by ruling
         # D20 — the dev slice intentionally carries no packages block.

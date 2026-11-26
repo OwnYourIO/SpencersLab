@@ -212,7 +212,7 @@ if want p3; then
     grep -qF 'never a refspec' "$f" || grep -qF 'HEAD:main' "$f" \
       || fail "P3[AC3]: $f never cites the refspec-updating-main hard rule ('never a refspec that updates main' / the HEAD:main form) — one of the pinned AGENTS.md citations (red before C01)"
     # 3. What a push triggers — CI facts, and push is build+test, not deploy.
-    contract ci-on-push 1 600 "$f" 'aislop ci --changes' 'docker-build' 'release.yaml'
+    contract ci-on-push 1 600 "$f" 'aislop ci --changes' 'docker-build' 'build-charts.yaml'
     contract build-not-deploy 1 300 "$f" 'build' 'deploy'
     contract argocd-after-merge 1 300 "$f" 'ArgoCD' 'merge'
     # 4. PR creation — gh when authenticated, else the compare URL, never a claim of a PR that was not created.
