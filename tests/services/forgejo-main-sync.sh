@@ -451,7 +451,7 @@ for src in [job.get('env') or {}] + [s.get('env') or {} for s in (job.get('steps
 need('ARGOCD_SYNC_TOKENS' in env_kv, 'env key ARGOCD_SYNC_TOKENS is not set — the vault secret must arrive via an env: mapping (secrets interpolated into run bodies land in the step script file, [27][29])')
 need('secrets.ARGOCD_SYNC_TOKENS' in env_kv.get('ARGOCD_SYNC_TOKENS', ''), f'env ARGOCD_SYNC_TOKENS is {env_kv.get("ARGOCD_SYNC_TOKENS")!r}, expected to reference secrets.ARGOCD_SYNC_TOKENS')
 need('github.event.ref' in env_kv.get('EVT_REF', ''), 'EVT_REF is not wired to github.event.ref (push events carry the ref)')
-need('github.ref' in env_kv.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the dispatch/workflow fallback, build-charts.yaml:57 precedent)')
+need('github.ref' in env_kv.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the dispatch/workflow fallback, build-charts.yaml:92 precedent)')
 # Secrets are env-only: an interpolated ${{ secrets.* }} inside a run body
 # lands the literal value in the step script file the runner writes
 # ([27][29] doctrine). vars.* interpolation stays legal (the diag neighbors
@@ -471,7 +471,7 @@ for ln in invocation_lines:
     need('ARGOCD_SYNC_TOKENS' not in ln, f'the invocation line references the vault key ({ln.strip()[:100]!r}) — tokens are env-mapped to the STEP, never passed per-call')
     need('--token' not in ln, f'the invocation passes a --token flag — banned by the CLI contract (plan: tokens ONLY from the environment)')
 
-# REF fallback chain: dispatch pushes may carry no event ref (build-charts.yaml:57
+# REF fallback chain: dispatch pushes may carry no event ref (build-charts.yaml:92
 # context-quirk precedent) — the chain is pinned exactly.
 need(re.search(r'REF="\$\{EVT_REF:-\$\{GH_REF:-refs/heads/main\}\}"', blob),
      'no REF="${EVT_REF:-${GH_REF:-refs/heads/main}}" fallback chain — dispatch/first-push runs must resolve main, not fan out on an empty ref')

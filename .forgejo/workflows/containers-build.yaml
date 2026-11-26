@@ -43,12 +43,13 @@
 # to pr-.* — latest is code-protected, but main and the calendar line survive
 # only while that pattern stays narrow. The marker ref is the one write here
 # that wears no PAT: it is a branch of this repository, so the checkout's own
-# same-repo credential pushes it (the release.yaml idiom), and it stays
+# same-repo credential pushes it (the build-charts/main-sync idiom), and it stays
 # Forgejo-local — main-sync mirrors refs/heads/main alone, so GitHub never
 # receives the marker and the registry PATs are never marker credentials.
 #
 # Detection. A push diffs marker..sha — the last run that built this
-# repository green, remembered as the ci/containers-built marker ref, so a
+# repository green, remembered as the ci/last-built marker ref (shared with
+# the chart builder since C14), so a
 # change a dead or cancelled run lost is re-covered by the next push instead
 # of staying skipped forever. With no marker yet (the bootstrap state, and
 # every state until the first green push run advances it) a push falls back
@@ -144,7 +145,7 @@ jobs:
             echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
             exit 0
           fi
-          marker=$(git ls-remote origin refs/heads/ci/containers-built | cut -f1)
+          marker=$(git ls-remote origin refs/heads/ci/last-built | cut -f1)
           if [ -z "$marker" ]; then
             # No marker yet: the before-chain answers, and this run's own
             # green advance will create it.
@@ -474,10 +475,21 @@ jobs:
       - name: advance the last-built marker
         run: |
           set -euo pipefail
-          # Plain push, no force flag anywhere: git's own non-fast-forward
-          # refusal is the monotonicity law, so a queued or rewound run that
-          # lands behind the marker fails this job loudly instead of moving
-          # it backwards. The non-FF shape is the advance contract, not a
-          # retry case — a red leg here is the signal, never something to
+          # Plain push first, no force form anywhere: git's own refusal keeps
+          # the marker moving only forward (the monotonicity law). On a
+          # SHARED branch a refusal is a CLASSIFY, not the signal (D54): the
+          # arms below tell a sibling builder's already-advanced ref — calm
+          # green, nothing written — from a real divergence: red, both sides
+          # named, owner verbs. Divergence is the signal, never something to
           # force past.
-          git push origin HEAD:refs/heads/ci/containers-built
+          if git push origin HEAD:refs/heads/ci/last-built; then
+            echo "marker advanced to this run's endpoint"
+            exit 0
+          fi
+          git fetch origin refs/heads/ci/last-built
+          if git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "marker already advanced past this run's endpoint — consistent"
+            exit 0
+          fi
+          echo "containers-build: the marker diverged from this run's endpoint $(git rev-parse HEAD) (marker $(git rev-parse FETCH_HEAD) — not an ancestor either way) — reset the marker ref to a reachable commit or delete it to fall back to the payload chain" >&2
+          exit 1
