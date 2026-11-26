@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-11-cf-139-feat-argocd-webhook-sync",
-  "plan_status": "approved",
+  "plan_status": "draft",
   "reopen4_note": "research-gated re-cut pending",
   "reopen3": {
     "at": "2026-11-25T01:35:00+00:00",
@@ -13,14 +13,23 @@
     "plan_recut_at": "2026-11-25T01:40:00Z",
     "recut": "waves 10-12 (C09 input redesign, C10 workflow env map, C11 runbook #4); fan-out semantics byte-untouched; DECISIONS 2026-11-25 R7 + pinned micro-calls a-h; + (i) coord ruling 2026-11-25 (test-session spec gap): malformed-with-value + zero-valid-tokens => RED-FIRST (broad-catch precedes the kill lane; a typo'd row must not skip green past its only visible trace); kill-lane-green applies only with no malformed non-empty residue; + (j) CODE-REPAIR ruling 2026-11-25 (C11 round-1 MAJOR1: both-empty enumerated rows RED in a configured fleet, kill-lane boundaries preserved — silent loss is a bug, not a mode; executed as C12 at de3bccf43, independently closed by chain re-review #3)"
   },
-  "reopen4": { "at": "2026-11-26T03:00:00+00:00", "reason": "owner review note: the 11-cluster enumeration must not be hardcoded in the job - detect dynamically and pass in; research ordered (toJSON(secrets/vars) support in Forgejo/act, org-inheritance in context, masking, security widening, inline-filter mitigation). Card comment rWTMRa4opbxwCP6jb. Lock 5e190923 verified live (no reap).", "plan_status_before": "complete at d81831446 (reopen3 closed)",
+  "reopen4": {
+    "at": "2026-11-26T03:00:00+00:00",
+    "reason": "owner review note: the 11-cluster enumeration must not be hardcoded in the job - detect dynamically and pass in; research ordered (toJSON(secrets/vars) support in Forgejo/act, org-inheritance in context, masking, security widening, inline-filter mitigation). Card comment rWTMRa4opbxwCP6jb. Lock 5e190923 verified live (no reap).",
+    "plan_status_before": "complete at d81831446 (reopen3 closed)",
     "owner_decision": "ADOPT WITHOUT PROBING (2026-11-26): premise source-refuted, build on it; RESEARCH's probe-gated recommendation overridden by owner - engine claims now rest on Forgejo source-reads + production precedent; FIRST dispatch smoke is the de-facto live validation. Branch-protection follow-up card created: abkP2XsbuuPuuvri6 (Inbox, labels Provider: Local + Pipeline: CICD applied via set_card_labels).",
-    "R8": "dynamic adoption: 22 rows -> toJSON(secrets)+toJSON(vars) blobs + inline filter step -> $RUNNER_TEMP/pairs.json; script gains ARGOCD_PAIRS_FILE channel, env scan stays default; ≈0 widening claim documented, protected by the follow-up card's branch protection" },
-  "plan_status_note": "REOPENED 2026-11-26 (reopen4): dynamic-discovery research per owner note; reopen3 was COMPLETE at d81831446 (R7 env-discovery input + ruling (j)/C12 closed by chain re-review #3). History: reopen2 approved 2026-11-23 batched round (OQ8 newline/OQ9 warn-skip/OQ10 indefinite/ORG-scope — OQ8 mechanics since superseded by R7); reopen2 waves 7-9 shipped and chain-reviewed at 6ed762140; reopen3 waves 10-12 at 1b4223609..de3bccf43 + §5a/C12-record closure.",
+    "R8": "dynamic adoption: 22 rows -> toJSON(secrets)+toJSON(vars) blobs + inline filter step -> $RUNNER_TEMP/pairs.json; script gains ARGOCD_PAIRS_FILE channel, env scan stays default; ≈0 widening claim documented, protected by the follow-up card's branch protection",
+    "plan_recut_at": "2026-11-26T03:28:00Z",
+    "recut": "waves 13-15 (C13 workflow fleet-blind + filter, C14 script ARGOCD_PAIRS_FILE channel + categories oracle, C15 runbook #5); fan-out core + lane strings + owner vault procedures byte-untouched; fallback-if-red = revert d81831446",
+    "approval_gate": [
+      "OQ-A categories oracle (recommend adopt; gates final approval only — C13 is oracle-independent, C14/C15 carry the flag-able lines)"
+    ]
+  },
+  "plan_status_note": "reopen4 re-cut drafted 2026-11-26 (R8 dynamic, probe gate overridden): APPROVAL GATED on ONE owner call — OQ-A categories oracle (recommendation: adopt minimal categories list in argocd-fanout.json as the membership/drift oracle; alternative: pure discovery with count-only drift). All other design points pinned (DECISIONS 2026-11-25 reopen4 block). History: reopen3 closed complete at d81831446 (waves 10-12, full-chain green); reopen2 approved 2026-11-23; reopen1 approved 2026-11-21.",
   "coord_session": "ses_e322c32b0ffe5HJ6VipD19SFKD",
   "test_session": "ses_e18a7fc94ffedBVR3829e1WcSu",
-  "current_wave": 12,
-  "updated_at": "2026-11-25T08:10:00+00:00",
+  "current_wave": 13,
+  "updated_at": "2026-11-26T03:28:00Z",
   "reopen": {
     "at": "2026-11-21T20:05:00+00:00",
     "reason": "owner ruling at Final Review: webhook source must be Forgejo (forge migrated to git.spencerslab.com), not GitHub",
@@ -361,8 +370,12 @@
       "last_verdict": "APPROVED",
       "note": "engine input redesign: env pair discovery (broad-catch/strict-validate, token-side configured predicate, aggregated RED), roster globals-only (targets[] deleted), --check from pairs, kill-lane warning; behavior.sh re-pin; fan-out core byte-untouched (AC10 diff proof)",
       "handoffs": [
-        { "at": "2026-11-25T03:20+00:00", "event": "dev DONE (13/13, t13 byte-lock at 6ed762140) + review APPROVED (18/18 adversarial discovery probes + reviewer's own AST re-proof + rootApp==name historical audit at 6ed762140: equality law is NOT a behavior change); 2 contract minors ruled in DECISIONS (i-adj-1 envelope accepted, (i-adj-2) two-round posture accepted); aislop format+size warns accepted with evidence" }
-      ]
+        {
+          "at": "2026-11-25T03:20+00:00",
+          "event": "dev DONE (13/13, t13 byte-lock at 6ed762140) + review APPROVED (18/18 adversarial discovery probes + reviewer's own AST re-proof + rootApp==name historical audit at 6ed762140: equality law is NOT a behavior change); 2 contract minors ruled in DECISIONS (i-adj-1 envelope accepted, (i-adj-2) two-round posture accepted); aislop format+size warns accepted with evidence"
+        }
+      ],
+      "reopen4_status": "done history — input channel re-cut by C14 (file feeds the same discover_targets body; env arms stay as the local posture); ruling-(j) \"enumerated\" class re-reads \"delivered/blanked\" per DECISIONS (g)"
     },
     "C10": {
       "status": "done",
@@ -374,7 +387,8 @@
       "review_rounds": 1,
       "last_verdict": "APPROVED",
       "note": "main-sync.yaml: 22-row org key-pair env map (alphabetical, URL+TOKEN per category) replaces blob map; shell unset-guard DELETED (script owns both lanes); header/job comments reworded; forgejo-main-sync t5/t11/t12/t13 re-pin incl. ARGOCD_SYNC_TOKENS file-wide ban",
-      "handoffs": []
+      "handoffs": [],
+      "reopen4_status": "done history — the 22-row enumeration is DELETED by C13 (blobs+filter replace it; micro-calls (e)(g) superseded); the job shape (needs/guard/checkout/invocation) survives byte-true"
     },
     "C11": {
       "status": "pending",
@@ -388,22 +402,73 @@
       "last_verdict": "APPROVED",
       "note": "runbook rewrite #4: §2 11 org vars + 11 org secrets (no paste/composition), sourced-env --check recipe (no argv leak), §2.4 trio delete-check (incl. ARGOCD_SYNC_TOKENS), §5 native-masking spot-check ([26]/multi-line legs dropped), §7 kill lever = delete/blank org TOKEN secrets (token-side predicate -> warn-green), §8 per-key rotation + decommission lockstep + category law; SECOND test launch at wave-12 start re-pins the runbook suite (parity greps read C09/C10 landed files)",
       "handoffs": [
-        { "at": "2026-11-25T07:10+00:00", "event": "dev DONE (6/6 after 4 doc-side iterations) + review R1 CHANGES_REQUESTED (MAJOR1 §8 decommission claim contradicted landed code -> coord ruling (j) CODE REPAIR not doc reword; 4 minors + 3 nits) + fix round DONE (all applied, suite-neutral, 6/6) committed 995bf892d; round-2 clear folded into chain re-review #3" },
-        { "at": "2026-11-25T08:05+00:00", "event": "chain re-review #3 round 2: five corrected claims CLOSED + one mirror finding (§5a smaller-count clause retro-voided by C12) fixed same-hour suite-neutral; verdict APPROVED at chain level" }
-      ]
+        {
+          "at": "2026-11-25T07:10+00:00",
+          "event": "dev DONE (6/6 after 4 doc-side iterations) + review R1 CHANGES_REQUESTED (MAJOR1 §8 decommission claim contradicted landed code -> coord ruling (j) CODE REPAIR not doc reword; 4 minors + 3 nits) + fix round DONE (all applied, suite-neutral, 6/6) committed 995bf892d; round-2 clear folded into chain re-review #3"
+        },
+        {
+          "at": "2026-11-25T08:05+00:00",
+          "event": "chain re-review #3 round 2: five corrected claims CLOSED + one mirror finding (§5a smaller-count clause retro-voided by C12) fixed same-hour suite-neutral; verdict APPROVED at chain level"
+        }
+      ],
+      "reopen4_status": "done history — runbook rewrite #4 stands as the spine; #5 (C15) edits enumeration-era sentences only; owner vault procedures unchanged"
     },
     "C12": {
       "status": "done",
       "wave": 12,
-      "depends_on": ["C09"],
+      "depends_on": [
+        "C09"
+      ],
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
       "note": "ruling (j) repair: both-empty enumerated rows join the aggregated sorted config RED when the fleet is configured; kill-lane boundaries preserved both directions (t5 pins); discover_targets-only diff (+16/-6), t13 core byte-lock green at 6ed762140",
       "handoffs": [
-        { "at": "2026-11-25T07:30+00:00", "event": "dev DONE: behavior 13/13 (t4 (j)-family ∧ t5 boundaries — the ruling split proven both ways), disposal 7/7, forgejo 13/13, self-probes a/b/c pinned postures, aislop 100/0; fast-path commit per C02-class precedent; verification folded into chain re-review #3" },
-        { "at": "2026-11-25T08:05+00:00", "event": "chain re-review #3 CLOSED C12: independent 29/29 posture probes + own AST diff vs 6ed762140 (delta = discover_targets exactly; reopen3 full delta input-layer only); sole finding was the §5a doc mirror clause - fixed; chunks/C12.md record created retroactively" }
-      ]
+        {
+          "at": "2026-11-25T07:30+00:00",
+          "event": "dev DONE: behavior 13/13 (t4 (j)-family ∧ t5 boundaries — the ruling split proven both ways), disposal 7/7, forgejo 13/13, self-probes a/b/c pinned postures, aislop 100/0; fast-path commit per C02-class precedent; verification folded into chain re-review #3"
+        },
+        {
+          "at": "2026-11-25T08:05+00:00",
+          "event": "chain re-review #3 CLOSED C12: independent 29/29 posture probes + own AST diff vs 6ed762140 (delta = discover_targets exactly; reopen3 full delta input-layer only); sole finding was the §5a doc mirror clause - fixed; chunks/C12.md record created retroactively"
+        }
+      ],
+      "reopen4_status": "done history — ruling-(j) semantics survive for blanked keys; the deleted-complete-pair class moves to the OQ-A oracle decision"
+    },
+    "C13": {
+      "status": "pending",
+      "wave": 13,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "workflow fleet-blind: 22 rows die -> SECRETS_JSON/VARS_JSON toJSON blobs [40][41][49] + inline filter step (dumb serializer: pair-regex union select, $RUNNER_TEMP/pairs.json flat {NAME:value}, chmod 600, count line only) + ARGOCD_PAIRS_FILE fan-out env; header precedence fix [44][45]; main-sync suite re-pin (fleet-blind bans, filter contract, t13 relaxed to parse-only)",
+      "handoffs": []
+    },
+    "C14": {
+      "status": "pending",
+      "wave": 14,
+      "depends_on": [
+        "C13"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "script ARGOCD_PAIRS_FILE channel: load_pairs_file (path-named REDs, {} => all-absent lane) feeds the existing discover_targets; precedence file-wins; env scan default unchanged; roster +categories oracle (OQ-A recommended; file-channel-strict only); core byte-lock leg extended; behavior.sh re-pin (precedence/error/parity/oracle-diff arms)",
+      "handoffs": []
+    },
+    "C15": {
+      "status": "pending",
+      "wave": 15,
+      "depends_on": [
+        "C13",
+        "C14"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "note": "runbook rewrite #5 (surgery): sections 1/4/5/7/8 enumeration-era sentences; 2/3/6/appendix byte-unchanged (owner vault work identical); 5(a) becomes the first-dispatch live-validation leg list + d81831446 fallback sentence; 7 lever byte-kept + decommission wording per OQ-A; 8 envelope/org-name discipline/masking-edge/branch-protection-card sentences; second test launch at wave start re-pins the runbook suite",
+      "handoffs": []
     }
   },
   "blocked": [],

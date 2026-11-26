@@ -540,3 +540,71 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   per GetVariablesOfRun (repo wins; moot under the no-repo-twin rule - wording fix
   rides the next workflow pass); org-key typo envelope re-verification rides any C13
   plan round (micro-calls (c)/(i-adj-1) lanes).
+
+## Owner reopen 2026-11-26 — reopen4 (STATE `reopen4`): DYNAMIC discovery (R8),
+## probe gate explicitly overridden; plan re-cut, approval gated on ONE owner call (OQ-A)
+- 2026-11-26 human (STATE `reopen4.owner_decision`, card comment rWTMRa4opbxwCP6jb):
+  **R8 — adopt the dynamic shape WITHOUT running RESEARCH's probe legs A–E.** The
+  22-row enumeration must not exist ("the 11 shouldn't be hardcoded into the job —
+  detect dynamically and pass in"). Build on the source-refuted premise (delivery is
+  unconditional [43][44][46]; `toJSON` ungated, `secrets` first-class, index op works
+  [40][41][49][50]); the FIRST dispatch smoke is the de-facto live validation.
+  Documented fallback, pinned with the ruling: a red smoke on an ENGINE claim ⇒ the
+  probe-never-ran conclusions were wrong ⇒ revert to `d81831446`'s static enumeration
+  (one commit, zero cluster impact). RESEARCH's probe-gated recommendation is
+  overridden, not ignored — its legs A–D become runbook §5's enumerated
+  validate-on-first-run assertions; v13's fail-loud-on-expression-error doctrine
+  [53] makes the residual risk visible instead of silent. Branch-protection follow-up
+  card `abkP2XsbuuPuuvri6` (mitosis #16 lever [55]) stands OUTSIDE this ticket.
+- 2026-11-26 plan(reopen4): design pins (all reversible one-liners; the fan-out core,
+  both lane strings, and the owner's vault procedures are byte-untouched): **(a) the
+  filter is a dumb serializer** — selection regex + union (secrets-wins) + write +
+  chmod 0600 + a count line ONLY; the script owns every integrity/kill/membership
+  decision identically for both channels (keeps C09's contract offline-testable — the
+  landed `discover_targets(source)` is dict-shaped, the file drops straight in).
+  **(b) pairs file = flat `{NAME: value}`** in the SAME `ARGOCD_SYNC_*` namespace
+  (deliberate deviation from RESEARCH's `{cat:{url,token}}` phrasing: one validator
+  body serves env AND file; a second grammar would fork the laws). **(c) channel =
+  env var `ARGOCD_PAIRS_FILE`, not a CLI flag** (argparse surface frozen; env-mapping
+  matches the tokens-by-env doctrine; paths aren't secrets so argv would've been legal
+  anyway). **(d) precedence: set-and-non-empty ⇒ file wins, env scan skipped entirely**;
+  unset/empty ⇒ env scan byte-unchanged (local/manual posture, all existing arms).
+  **(e) file errors are config RED naming the PATH** (missing/unreadable/non-JSON/
+  non-dict/non-string-values — never values); **an empty `{}` file is not an error** —
+  it is the all-absent discovery result ⇒ the SAME `WARN_NOT_CONFIGURED` green lane
+  (the string verified still-true in the blob world: "no ARGOCD_SYNC_*_TOKEN keys with
+  values" — zero text change anywhere, exactly the owner's §7 lever requirement).
+  **(f) mode duty is the filter's** (chmod 0600; RUNNER_TEMP per-job ephemeral [40][51],
+  same trust zone as today's step env); the script does not stat. **(g) the
+  "enumerated-but-empty" (j)-class dissolves honestly:** blanked keys still arrive as
+  `""` in the map ⇒ (j) RED survives; DELETED pairs leave no residue — clean deletes
+  need the OQ-A oracle to stay loud (below); half-pairs (one side deleted) were and
+  stay RED. **(h) the header's precedence sentence is fixed this round per source**
+  (vars: repo > org/user > global [45] — the v17 docs sentence stale [41]; secrets:
+  repo > owner [44]; moot under the no-repo-twin rule), and the enumeration/"cannot
+  index" sentences retire with the rows.
+- 2026-11-26 plan(reopen4): SUPERSEDED records (micro-call chain stays readable):
+  R7-consequence-(2)/micro-call (e)'s "static enumeration IS the discovery surface" —
+  dies with the rows; (d) decommission lockstep — no rows exist to leave behind, the
+  lockstep becomes vault↔list (oracle) or vault-only (none); (g) alphabetical row pins
+  — obsolete; (i-adj-1)'s "rows" vocabulary re-reads "delivered keys" (the malformed-
+  with-value lane now guards ORG KEY NAMES, making org write-access fleet-meaningful —
+  the runbook §8 sentence + the protection card carry it). R7 itself stands for the
+  KEY NAMES (upper-snake pairs) and the org placement; only their DELIVERY to the job
+  went dynamic.
+- 2026-11-26 plan(reopen4): chunks = waves 13–15: C13 (M, w13) workflow fleet-blind +
+  main-sync suite re-pin (t13 roster leg RELAXED to parse-only so the six-vs-five
+  schema question cannot red wave 13 — schema pin moves to behavior t2); C14 (M, w14)
+  script channel + `categories` oracle + behavior re-pin (core byte-lock leg extended);
+  C15 (S, w15) runbook rewrite #5 (surgery, not rewrite — §2 owner legs byte-unchanged)
+  + second test launch at wave start. **OQ-A (the single real owner call, gates
+  approval):** cleanly-deleted pair = silent fleet shrink in the blob world. (a)
+  RECOMMENDED — minimal `categories` array in `scripts/argocd-fanout.json` as the
+  membership oracle: configured-lane set-equality list↔discovered BOTH directions RED;
+  agile on values, PR-gated on names; the JOB stays fleet-blind (the owner's objection
+  was the job, not config-in-git); interim windows (vault-ahead-of-PR and reverse)
+  loud-RED by design; (b) pure discovery, zero-file fleet ops, accepting count-only
+  drift and org-write-equals-fleet-config (protection card weighs more). Pinned best
+  guesses either way: oracle enforced on the FILE channel only (manual env exports
+  need not mirror the fleet); `filter: N keys selected` print line; secrets-side wins
+  collisions; malformed-preemption order preserved.

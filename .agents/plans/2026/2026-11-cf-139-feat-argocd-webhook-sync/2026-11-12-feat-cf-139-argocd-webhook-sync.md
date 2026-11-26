@@ -1,275 +1,300 @@
 # PLAN: cf-139 — Pushes to main auto-sync every cluster (no manual `argocd sync`)
 feature: 2026/2026-11-cf-139-feat-argocd-webhook-sync
 card: AD-139 "Sync ArgoCD with Webhooks" (Y3vPeX4nhtDbsdwCg)
-status: REOPENED³ 2026-11-25 (STATE `reopen3`, card comment DM2pP35CGPbCjAWXu). Owner
-ruling R7 re-cuts the VAULT INPUT MECHANISM only: no single-blob secret — per-cluster
-org key PAIRS the script discovers from its environment. Waves 7–9 (C05–C08, shipped at
-tip `6ed762140`, 38/38 suites) stay DONE history: the fan-out semantics, the job shape,
-the disposals and the operator doc all stand — this round replaces the input layer
-(`parse_vault` + roster `targets[]` + the single-secret env map + the runbook paste
-mechanics) and nothing else. The ruling is COMPLETE: no batched round needed, residual
-micro-calls are pinned below (DECISIONS 2026-11-25), plan stays APPROVED.
-History: APPROVED 2026-11-17 (relay era, OQ1–OQ7); reopen1 2026-11-21 (R1–R4,
-Forgejo-origin); reopen2 2026-11-23 (R5/R6 vault-direct; batched round newline/warn-skip/
-indefinite/ORG-scope); reopen3 2026-11-25 (R7 per-cluster key pairs).
+status: REOPENED⁴ 2026-11-26 (STATE `reopen4`, owner_decision + R8; card comment
+rWTMRa4opbxwCP6jb). The owner ADOPTED the dynamic shape RESEARCH round 3 recommended —
+and explicitly OVERRODE its probe gate: build without dispatch probes; the FIRST
+dispatch smoke is the de-facto live validation (see Risks for the honest statement +
+the one-commit fallback to `d81831446`'s static enumeration). Waves 10–12 (C09–C12,
+closed at `d81831446`, 13/13 behavior + full-chain green) stand as DONE history: this
+round deletes ONLY the 22-row enumeration — the fan-out core, both input lanes'
+semantics, the warnings/RED strings, and the disposals are byte-untouched.
+**plan_status: draft — one real owner call (OQ-A, categories oracle) gates approval;
+everything else is pinned.** History: reopen1 2026-11-21 (R1–R4), reopen2 2026-11-23
+(R5/R6 + OQ8–OQ10 batch), reopen3 2026-11-25 (R7 env-pair input, waves 10–12).
 
 ## Goal
 
-A push to `main` lands on every cluster automatically, driven by the canonical Forgejo
-repo's own CI: the `.forgejo/workflows/main-sync.yaml` `sync-fanout` job (after
-`push-gh` — R1 option (c) untouched) runs `scripts/argocd-fanout.py`, which POSTs real
-syncs to each cluster's ArgoCD REST API. Endpoints + credentials now come from the
-**environment**: org Vars `ARGOCD_SYNC_<CAT>_URL` paired with org Secrets
-`ARGOCD_SYNC_<CAT>_TOKEN` (category upper-snake: `gpu-ai`→`GPU_AI`,
-`proxy-remote`→`PROXY_REMOTE`); the script BUILDS its target list by scanning its
-environment for the `ARGOCD_SYNC_*` pairs — **no category list in code or JSON** (R7).
-Kill-switch, appset gates, Bitwarden-free posture, zero in-cluster components: all
-unchanged from reopen2.
+A push to `main` lands on every cluster automatically, driven by the Forgejo
+`main-sync` job after `push-gh` (R1 option (c) untouched). The job becomes
+FLEET-BLIND: it carries no category rows at all. Instead two blob contexts —
+`SECRETS_JSON: ${{ toJSON(secrets) }}` + `VARS_JSON: ${{ toJSON(vars) }}` (supported:
+`toJSON` ungated in the act-lineage evaluator [40][41][49][50], and the server ships
+EVERY job the complete merged org+repo maps with no reference scan [43][44][46]) — feed
+ONE inline filter step that selects the `ARGOCD_SYNC_*_URL`/`_TOKEN` pair names and
+serializes them to `$RUNNER_TEMP/pairs.json`; the fan-out step hands that file to
+`scripts/argocd-fanout.py`, which applies its existing validation to the file map
+instead of the environment. Per-cluster org keys stay exactly as the owner runs them
+today (§2 of the runbook does not change).
 
-## Scope decisions — R7 + the pinned consequences
+## Scope decisions — R8 + pinned design
 
-- **R7 (supersedes OQ8's MECHANICS, not its spirit):** the single-blob paste was ruled
-  too error-prone. Per-cluster Actions keys per RESEARCH §2 option (2) — the strongest
-  masking shape (each token is a native single-line secret; no [26] per-line claim, no
-  multi-line-paste UI leg, no record grammar, no reversed-echo class). Costs taken
-  knowingly: static enumeration rows in the workflow per fleet change, and no dynamic
-  secret indexing (`${{ secrets[matrix] }}` unsupported [21][25]) — the second is why
-  discovery lives IN THE SCRIPT's env scan, not in expressions.
-- **Consequence (1), ruled — pair integrity (reversible):** the workflow passes every
-  enumerated key, so an unset org key arrives as an EMPTY STRING — the script's
-  empty-detection is the guard, no shell guard, no expression can catch it. Semantics:
-  a fleet is **configured iff at least one non-empty `*_TOKEN` value exists** (token-side
-  keying is what makes the §7 kill lever work: deleting the 11 token secrets ⇒
-  all-absent). All-absent ⇒ designed warn-green skip: `::warning::sync-fanout not
-  configured (no ARGOCD_SYNC_*_TOKEN keys with values) — fan-out skipped, manual sync or
-  the next push covers it`, exit 0, zero sockets. Once configured, EVERY discovered
-  category must be a complete valid pair — partial pair, empty-string residue, or
-  malformed value ⇒ config RED: one aggregated `argocd-fanout config:` stderr line naming
-  every offending CATEGORY (sorted, value-free), exit 1. Decommissioning a cluster =
-  org keys + its 2 workflow enumeration rows in the SAME release (lockstep doctrine,
-  mirrors [P §3]) — a deleted key alone leaves empty residue and reddens until the rows
-  go.
-- **Consequence (2), ruled — static enumeration:** the job's `env:` block grows exactly
-  22 lines (11×URL via `vars.`, 11×TOKEN via `secrets.`), one pair per fleet category,
-  plus `EVT_REF`/`GH_REF`. Adding a cluster = 2 org keys + 2 rows (PR-reviewable).
-- **Consequence (3), ruled — roster shrinks to GLOBALS:** `scripts/argocd-fanout.json`
-  keeps `allowed_refs`, `tracked_repo` (GLOBAL stays — one GitHub URL for all clusters,
-  [P §3] lockstep law unchanged), `settle_seconds`, `target_timeout_seconds`,
-  `parallel_workers`; the `targets[]` ARRAY DELETES — URLs come from env, and
-  root_app == category == discovered name is a CODE convention (the fleet's roots are
-  named by category, [E §2]). **Route-truth test duty relocates:** the repo can no
-  longer test-pin 11 hosts (they are instance-side now); the verification surface moves
-  to the runbook §6 table + the `--check` pair listing + the dispatch smoke — the
-  doctrine's text ("live-verified, never guessed") transfers to the runbook.
-- **Consequence (4), ruled — masking simplifies:** native per-secret masking [21][22];
-  the runbook §5(c) [26]-verification leg and §2 multi-line-paste UI leg DROP; the
-  comma/newline-tolerant parser and the M1 reversed-record arm DIE with the blob. The
-  no-value-echo law (AC8) survives and matters MORE: pair errors must name categories,
-  never the offending URL-adjacent values or tokens.
-- **Category law (pinned, with its collision thought):** env segment ⇒ category is
-  `lower()` + `_`→`-`. All 11 current categories are hyphen-only DNS labels, so the
-  mapping is injective (`GPU_AI`→`gpu-ai`). The rule constrains the future: a category
-  named with a literal underscore is NOT REPRESENTABLE (its env name is indistinguishable
-  from a hyphenated sibling's — `foo_bar` and `foo-bar` would collide on one env key, and
-  env uniqueness silently picks one winner, undetectable at scan time); dots are
-  unrepresentable too (`vars.A.B` parses as property access). Enforcement (broad-catch,
-  pinned): any key matching `^ARGOCD_SYNC_(.+)_(URL|TOKEN)$` whose segment violates
-  `[A-Z0-9][A-Z0-9_]*[A-Z0-9]` (no leading/trailing/double `_`) or whose derived
-  category fails `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` goes RED naming the raw key when its
-  value is NON-empty (a typo'd enumeration row must never vanish silently — that is the
-  silent-loss class again); empty malformed residue is ignored. If someone ever creates
-  keys for a literal underscore category anyway, the derived hyphen name simply finds
-  no matching root app — an honest `skipped`/`failed` line, never a silent success.
-- **Unchanged, explicitly:** `needs: push-gh` + exact ROLE guard + checkout + bare
-  invocation line; root-first→settle→sweep, byte `repoURL == tracked_repo` + live
-  targetRevision match (OQ7), prune=false query+body non-force (OQ6), 409-as-success,
-  per-target isolation + 60 s timeouts + ThreadPool(4), the audit/summary grammar, the
-  all-skipped `::warning::` (column 0), the no-follow redirect opener (M2), the
-  config-RED/runtime-green exit posture, ref gate, proxy-backup + proxy-local ruled
-  expectations ([P2], OQ9, the 307 finding), the disposals (C07 closed), kill-switch
-  annotations, charts/base, appset gates.
+- **R8 (2026-11-26, STATE `reopen4.R8`):** dynamic adoption — 22 rows → two `toJSON`
+  blobs + inline filter → `pairs.json`; script gains the `ARGOCD_PAIRS_FILE` channel,
+  env scan stays the default; the ≈0-widening claim is documented and its real lever
+  (`.forgejo/workflows/**` branch protection) is the follow-up card already created
+  (`abkP2XsbuuPuuvri6`, Inbox). Supersedes: micro-call (2) consequence ("static
+  enumeration rows"), micro-call (d) decommission lockstep (no rows exist to
+  leave-behind), micro-call (g) alphabetical-row pins, and the (i-adj-1) envelope's
+  "rows" vocabulary (re-reads as "discovered keys"). The premise it replaces — "Forgejo
+  cannot index secrets dynamically [21][25]" — is SOURCE-REFUTED [43][44][46][49];
+  DECISIONS 2026-11-26 records the refutation and the override.
+- **Division of duty (pinned): the filter is a DUMB SERIALIZER; the script owns ALL
+  integrity/kill/membership semantics.** The filter: regex-select pair-shape names from
+  BOTH blobs (union; secrets-side wins a same-name collision), write flat
+  `{NAME: value}` JSON (the SAME namespace as env — deviation from RESEARCH's
+  `{cat:{url,token}}` phrasing, deliberate: one validator body serves both channels),
+  `chmod 600`, print ONLY `filter: <N> keys selected` (count; never names-with-values,
+  never the blob), treat missing/empty/unparseable-side blobs per the designed states
+  below. It never validates a pair, never decides configured/kill lanes — those are
+  the script's, identical across channels, which is what keeps C09's contract
+  offline-testable and the strings byte-stable.
+- **Channel (pinned):** env var `ARGOCD_PAIRS_FILE` (NOT a CLI flag — argparse surface
+  frozen; a file path is not a secret so argv would be legal too [t12 context], but the
+  env channel matches the tokens-arrive-by-env doctrine and the runbook recipe style).
+  Set-and-non-empty ⇒ pairs load from the file and the env scan is SKIPPED ENTIRELY
+  (precedence pinned: file wins when both exist; the file is the deliberate CI
+  posture). Unset or empty ⇒ env scan byte-unchanged (local/manual posture, behavior
+  t-arms preserved). File errors are config RED naming the PATH (missing/unreadable/
+  non-JSON/non-dict/non-string-values); an empty JSON object `{}` is NOT an error — it
+  is the all-absent discovery result ⇒ the normal warn-green lane.
+- **The reachability envelope changes honestly (rule the new one):** the
+  "enumerated-but-empty" (j)-class was CREATED by the static map — a deleted org key
+  arrived as an empty string in env. With blob discovery a DELETED key is simply
+  ABSENT from the map; a BLANKED key still arrives as `""`. So: blanked-both pair ⇒
+  same (j) RED (names present, values empty — unchanged semantics, "present" now means
+  "in the map"); deleted-TOKEN beside surviving tokens ⇒ half-pair RED (URL present,
+  TOKEN absent) as before; **deleted-COMPLETE-pair ⇒ the category vanishes from
+  discovery entirely** — under OQ-A's recommendation the roster `categories` list
+  catches it RED (list↔map set-equality in the configured lane, BOTH directions: a
+  vault pair not in the list is also membership drift); without the oracle it is a
+  count-only drift signal (summary `targets=N`). Malformed-name-with-value stays a
+  pre-predicate RED short-circuit regardless of channel ((i-adj-2) order preserved).
+  The kill lever (delete-or-blank ALL 11 TOKEN secrets ⇒ zero non-empty tokens ⇒
+  NOT_CONFIGURED ⇒ the EXACT same §4 warning string — verified still-true phrasing,
+  no text change anywhere) survives identically.
+- **Security honesty (RESEARCH Agenda 4):** today every job of every workflow in the
+  repo ALREADY receives all org+repo secrets (no reference filtering, `permissions:`
+  ignored, no environments [42][43][44][46][57]) — the blob's widening delta is ≈0;
+  the inline filter preserves the narrower invariant that the CHECKOUT-RUNNING
+  process's env stays at the 22-value floor (step-2 sees only `ARGOCD_PAIRS_FILE` +
+  refs; the blob lives only in step-1's process) — unlike the naive shape (blob
+  straight into the script's env, which would hand a scripts-only attacker
+  PUSH_TOKEN_* + the token aliases). `pairs.json` rests plaintext in the job container
+  until cleanup — same trust zone as today's step env; chmod 600 belt; RUNNER_TEMP is
+  per-job ephemeral (`runner.temp` ↔ `RUNNER_TEMP`, steps share one container
+  [40][51] — this is a probe-conclusion the owner's override folds into the first
+  dispatch). Masking: each delivered VALUE is registered independently and masks
+  inside the serialized blob ([40]'s own `"token": "***"` example; edge: JSON-escaped
+  values would not match — current JWT/URL charsets are escape-free [30][31], the
+  §5 spot-check asserts it live).
+- **Header wording fix (queued from round 3, rides C13):** the vars-precedence half is
+  wrong per `GetVariablesOfRun` (Repo > Org/User > Global [45], docs sentence stale
+  [41]; secrets repo-over-owner [44]) — reword to the source truth, moot either way
+  under the no-repo-twin rule; the "static enumeration IS the discovery surface /
+  cannot index dynamically" sentences RETIRE with the rows.
+- **Unchanged, explicitly (byte-locked):** fan-out core + `t13`-style function locks
+  from C09/C12; `needs: [push-gh]`, exact ROLE guard, diag step, bare
+  `actions/checkout@v7`, REF fallback chain, the invocation line
+  `python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"`;
+  all script strings (`WARN_NOT_CONFIGURED`, `pair integrity:` aggregation, malformed
+  preemption, `pairs: N targets discovered (values never printed)`), exit doctrine
+  (0/1/2), `--check`/`--dry-run` modes, JWT/URL/segment/category regex laws,
+  `tracked_repo` + `allowed_refs` globals, disposals, runbook path.
 
-## Context — shipped facts this round re-cuts around (read tip `6ed762140`)
+## Context — verified facts
 
-- `scripts/argocd-fanout.py` 440 L: `load_roster` (six-key schema incl. `targets`),
-  `parse_vault` (blob `[,\s]+` records, first-colon split, M1 reversed arm, set-equality
-  red), the fan-out core, `cmd_check` (prints the roster targets table + `vault: N
-  records matched…` line). The core + `_NoRedirect` + `drive_target`/`fan_out` are NOT
-  touched; `load_roster`/`parse_vault`/`main`'s wiring + `cmd_check`'s table ARE the
-  redesign surface.
-- `scripts/argocd-fanout.json`: globals + 11 targets (targets array dies; globals stay
-  byte-true, `tracked_repo` unchanged).
-- `.forgejo/workflows/main-sync.yaml` `sync-fanout`: env block `ARGOCD_SYNC_TOKENS` +
-  `EVT_REF`/`GH_REF`; run block = shell `-z` unset guard (org-worded warning) → REF
-  chain → unguarded python call. The guard LINE + the blob map die (posture moves into
-  the script — consequence 1); the REF chain + invocation byte-true stay.
-- Suites: `tests/argocd-fanout/behavior.sh` (12 legs, blob-parser matrix in t3/t4/t5,
-  roster byte-pins incl. 11 targets in t2, vault env plumbing in the harness `run()`);
-  `tests/services/forgejo-main-sync.sh` (t5 single-secret exactly-once + no-vars-twin +
-  header org-sentence legs; t11 blob env-map + invocation; t12 shell-guard regex +
-  pinned warning string; t13 roster `json.load`); `tests/notes/argocd-fanout-runbook.sh`
-  (parity greps read LANDED files — hence its re-pin rides waves 10–11 completion).
-- `tests/argocd-fanout/disposal.sh` untouched — nothing it pins changes.
-- Runner/vault mechanics [21][22][25][27]: org secrets/vars inherit to repos with
-  repo→org→user resolution (repo twin would silently WIN — the runbook's single-instance
-  sentence survives); unset keys render EMPTY into the step env; values surface only via
-  `${{ }}`-mapped env; native masking per secret value.
+- [R3] Landed at `a65d60e05` (tip; reopen3 closed `d81831446`): `discover_targets(env)`
+  is dict-shaped (a file map drops in with ZERO validation divergence — the one
+  structural change is `load_pairs_file()` + channel branch in `main`/cmd flows);
+  `ROSTER_KEYS` = the five globals; roster JSON = five keys; workflow = 22 enumerated
+  rows with placement bans; suites green (behavior 13/13, main-sync t1–t13, runbook
+  parity legs; C12 = the ruling-(j) both-empty RED + kill-lane boundaries, t13
+  core byte-locked).
+- [43][44][45][46] delivery/merge source-reads; [49][50] evaluator (toJSON ungated,
+  secrets first-class, index op works); [52] GitHub divergence (there unseal-on-
+  reference; here always delivered); [54][55] production precedent incl. the
+  branch-protection lesson (mitosis #16) → follow-up card; [40][41][51][53] docs +
+  runner-v13 breaking-change context (expression failures RED the job — the fallback
+  trip-wire is loud, not silent); probe legs A–E defined in RESEARCH Agenda 6 are NOT
+  run first (owner override) — their assertions become the first dispatch's
+  expectations.
+- Org inventory claim under test by the smoke: `CuratedForest` org holds the 22
+  ARGOCD_SYNC_* keys (and `ROLE`/`PUSH_URL_*` vars); PUSH_TOKEN_* repo-side [R3] —
+  Agenda-4's owner-API inventory shells stay an optional owner leg (doc honesty only).
+- FRICTION/precedents: helm PATH export; offline static suites (no actionlint);
+  column-0 `::warning::` annotation grammar; argv secret-ban law; aislop gate.
 
-## Out of scope (unchanged from reopen2 + this round)
+## Out of scope
 
-- Any fan-out SEMANTICS change (the ruling is input-mechanism only). Re-introducing any
-  blob/record grammar. Re-creating relay-era surfaces. Annotation flips, `charts/base`,
-  appset gates, argocd-notifications, per-cluster exposure, webhook creation. The
-  proxy-local 307 remedy (separate owner call, recorded 2026-11-23). Backwards
-  compatibility with `ARGOCD_SYNC_TOKENS`: NONE — the blob name is banned everywhere;
-  the owner-side delete-check leg (§2.4) sweeps a possibly-created key.
+- Everything reopen2/reopen3 ruled out that is still ruled out (relay/door/flip/
+  Bitwarden/webhooks/notifications/per-cluster exposure).
+- Branch protection on `.forgejo/workflows/**` — follow-up card `abkP2XsbuuPuuvri6`
+  (org-settings leg, owner-executed; NOT a chunk here).
+- Probing first: ruled out by the owner (the override IS the accepted risk — Risks
+  row 1). Mechanism 2 (matrix-from-outputs chain) and 3 (REST-API discovery) per
+  RESEARCH Agenda 5 scoring. Retro-fitting the env channel: it stays exactly as
+  landed (local/manual default; no membership diffing there, see OQ-A pin).
 
 ## Commands (validation-first)
 
-- `export PATH=$HOME/.local/bin:$PATH` (helm legs).
-- C09: `python3 -m py_compile scripts/argocd-fanout.py`;
-  `python3 -c "import json; r=json.load(open('scripts/argocd-fanout.json')); assert set(r)=={'allowed_refs','tracked_repo','settle_seconds','target_timeout_seconds','parallel_workers'}"`;
-  `bash tests/argocd-fanout/behavior.sh` (re-pinned legs t1–t13);
-  offline pair-discovery arms need NO network (fake-transport localhost only).
-- C10: `bash tests/services/forgejo-main-sync.sh` (t5/t11/t12/t13 re-pinned; t9/t10
-  byte-true; `bash -n` + py_compile + globals-schema parse legs) — THE `.forgejo`
-  validation shape, no actionlint precedent.
-- C11: `bash tests/notes/argocd-fanout-runbook.sh` (re-pinned for rewrite #4: per-pair
-  creation legs, paste/composition/line-masking legs BANNED, kill-lever wording,
-  three-key delete-check incl. `ARGOCD_SYNC_TOKENS`, parity greps against landed
-  C09/C10 files).
-- Chain regression: `bash tests/argocd-fanout/disposal.sh` (unchanged pins) +
-  `git diff --name-only` scope law (no `services/*/templates/appset.yaml`, no
-  `charts/base/**`, no `renovate.json`; this round touches exactly
-  `scripts/argocd-fanout.py`, `scripts/argocd-fanout.json`,
-  `.forgejo/workflows/main-sync.yaml`, the three suites, the runbook).
-- `npx aislop ci --changes` clean on every touched file at review; no docker (none of
-  this is container code); no helm trio (chart disposed, absence stays asserted by
-  disposal.sh).
+- C13: `bash tests/services/forgejo-main-sync.sh` (re-pinned: blob-expression legs,
+  fleet-blind ban — zero `ARGOCD_SYNC_<SEG>_(URL|TOKEN)` name strings and zero category
+  tokens in the file, filter-contract legs incl. no-print grep + `bash -n` of the
+  filter run block, pairs-path wiring; t13 roster leg RELAXED to parse-only so the
+  six-vs-five schema question cannot red wave 13) + `git diff --name-only` keep-outs
+  (`needs: [push-gh]`, ROLE guard, push jobs byte-zero).
+- C14: `python3 -m py_compile scripts/argocd-fanout.py`; `bash tests/argocd-fanout/behavior.sh`
+  (file-channel arms + precedence + env-unchanged legs); roster schema leg flips to
+  SIX keys incl. `categories` here (t2) — behavior.sh owns the schema pin now.
+- C15: `bash tests/notes/argocd-fanout-runbook.sh` (re-pinned for rewrite #5: §4
+  filter anatomy, §5 first-dispatch-as-validation leg list + fallback sentence greps,
+  §7 lever strings byte-true (`WARN_NOT_CONFIGURED` parity), §8 envelope reword,
+  stale-vocabulary ban: no "enumeration row(s)" claims outside history lines).
+- Chain: `bash tests/argocd-fanout/disposal.sh` untouched; `npx aislop ci --changes`
+  clean per touched file; no helm/docker legs (no chart/container surface this round).
 
-## Chunks (reopen3 table)
+## Chunks (reopen4 table)
 
 | id | title | size | wave | status | depends_on | why the dependency |
 |----|-------|------|------|--------|------------|--------------------|
-| C01…C08 | relay era + vault-direct waves 1–9 (input mechanics of C05/C06/C08 superseded at reopen3; fan-out semantics, disposals, docs spine stand) | — | 1–9 | **done-at-review history** | — | untouched |
-| C09 | fan-out engine INPUT redesign: env pair discovery + category law + roster globals-only + `--check` from pairs + behavior.sh re-pin | M | 10 | pending | [] | the interface C10's env block and C11's docs consume; core fan-out semantics byte-untouched |
-| C10 | main-sync.yaml: 22-line org key-pair env map, blob map + shell guard deleted, header/job comments reworded + forgejo-main-sync t5/t11/t12/t13 re-pin | S | 11 | pending | [C09] | the workflow hands env to the discovery contract C09 lands; the posture (warn-green) moved INTO the script, so the file must drop its guard in the same release |
-| C11 | runbook rewrite #4: §2 org vars+secrets creation (no paste/composition), §2.4 three-key delete-check, §5 drop [26]/paste-UI legs → native masking spot-check, §7 kill lever = delete 11 org TOKEN secrets, §8 per-key rotation + decommission lockstep | S | 12 | pending | [C09, C10] | the suite's parity greps read the landed files (brief: rides their landing); docs-parity last, as every reopen has ordered it |
+| C01…C12 | relay → vault-direct → env-pairs waves 1–12 | — | 1–12 | **done-at-review history** (C09/C10/C12 input-mechanics legs superseded at reopen4; fan-out core + lanes + strings live on unchanged) | — | untouched |
+| C13 | main-sync.yaml fleet-blind rework: 22 rows → `toJSON` blobs + inline filter step → `$RUNNER_TEMP/pairs.json`; fan-out step gains `ARGOCD_PAIRS_FILE`; header comment fix (precedence halves, enumeration retirement) + main-sync suite re-pin | M | 13 | pending | [] | the workflow is the new channel's PRODUCER; its filter contract is pinned by this plan so C14's reader matches |
+| C14 | script `ARGOCD_PAIRS_FILE` channel (load → same `discover_targets` body; precedence; path-error REDs; `{}` ⇒ warn-green; roster gains `categories` oracle per OQ-A recommendation) + behavior.sh re-pin | M | 14 | pending | [C13] | implements the reader for the producer's exact file shape + env name; landing together-in-branch keeps CI coherent (mid-branch the script warn-greens — inert, never wrong) |
+| C15 | runbook rewrite #5 (§2 vault work UNCHANGED + fleet-blind sentence; §4 filter anatomy; §5 first dispatch = the live engine-claims validation, legs enumerated, fallback sentence; §7 lever + decommission wording per OQ-A; §8 envelope/escape/masking honesty) + second test launch (runbook suite re-pin) | S | 15 | pending | [C13, C14] | parity greps read both landed files, as every prior docs chunk has |
 
-Test sessions (repo law — tests precede dev, TWO launches this round): **pre-wave-10**,
-ONE session re-pins `tests/argocd-fanout/behavior.sh` (env-discovery matrix, globals
-roster pins, harness env plumbing, dropped blob arms, new pair/kill-lane legs) and the
-`forgejo-main-sync.sh` legs (t5 pair matrix, t11 env-map shape, t12 guard-ban +
-script-owned posture cross-reference, t13 globals-schema leg) — designed-red until
-C09/C10 land. **At wave-12 start**, a short test launch re-pins
-`tests/notes/argocd-fanout-runbook.sh` to the rewrite-#4 contract (red until C11 lands);
-it cannot ride the first session because its parity greps must quote the C09/C10-landed
-files.
+Test sessions (law: tests precede dev): **pre-wave-13 ONE session** re-pins
+`tests/services/forgejo-main-sync.sh` (blob/filter/fleet-blind legs; t13 roster leg
+relaxed to parse-only) and `tests/argocd-fanout/behavior.sh` (file-channel arms
+designed-red until C14; env-scan legs byte-kept). **At wave-15 start** the short second
+launch re-pins `tests/notes/argocd-fanout-runbook.sh` (reads C13/C14 landed bytes).
 
 ## Wave order
 
-10. C09 → 11. C10 → 12. C11 (runbook-test re-pin executes first inside wave 12).
-Serial; C10 depends on C09's discovery semantics (warning strings, RED aggregation,
-category law) because the shell guard's removal transfers that duty; C11 depends on both
-for parity. Chain-wide first all-green at C11 review (reopen1/reopen2 pattern: the
-re-pinned suites stay designed-red mid-flight, each red naming its unlanded artifact).
+13. C13 → 14. C14 → 15. C15 (runbook-test launch first inside wave 15). Serial per the
+brief's sequencing; C14 could parallel-run C13 on disjoint files but the shape pins
+(file format, env name) are C13-published, and reopen4 keeps the strict test-first-
+then-consumer order for a clean designed-red story. Plan approval gates on OQ-A
+(batched round, coord-side); the other micro-calls below are pinned best guesses.
 
-## Fan-out INPUT contract (pinned; C09 implements, C10 wires, C11 documents)
+## Fan-out INPUT contract v3 (pinned; C13 produces, C14 consumes, C15 documents)
 
-- CLI UNCHANGED: `python3 scripts/argocd-fanout.py [--config PATH] [--ref FULLREF]
-  [--check] [--dry-run]`; config default `scripts/argocd-fanout.json`.
-- Discovery: env keys matching broadly `^ARGOCD_SYNC_(.+)_(URL|TOKEN)$` — segment then
-  STRICT-validates (`[A-Z0-9][A-Z0-9_]*[A-Z0-9]`, no leading/trailing/double `_`, no
-  dots; derived category matches `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`); strict-fail with a
-  non-empty value ⇒ violation naming the RAW KEY (a typo'd enumeration row must never
-  silently vanish — that would re-open the silent-loss class), strict-fail empty ⇒
-  ignored; segment → category by `lower()` + `_`→`-`. `ARGOCD_SYNC_TOKENS` (the dead
-  blob) matches nothing and is ignored by construction.
-- Configured predicate: any non-empty `*_TOKEN` value. Not configured ⇒ pinned
-  column-0 warning line + exit 0 (no table, no sockets). Configured ⇒ every discovered
-  category must have non-empty URL (scheme `https://`/`http://`, no `@`, no `?`, rstrip
-  `/`) + non-empty JWT-shaped TOKEN (`JWT_RE` survives); every violation collected, one
-  aggregated `argocd-fanout config:` stderr line listing categories sorted (each
-  violation phrase pinned: `category "x" missing URL value` / `… missing TOKEN value` /
-  `… token is not JWT-shaped` / `… URL must start with http(s)://`), exit 1.
-- Roster globals (exactly five keys, extras red): `allowed_refs` `["refs/heads/main"]`
-  (full-ref/`refs/tags` validation ported), `tracked_repo` byte-true,
-  `settle_seconds` 10.0, `target_timeout_seconds` 60.0, `parallel_workers` 4
-  (finiteness/whole-number guards ported). Missing/extra keys ⇒ ConfigError.
-- Targets = discovered pairs; `root_app` = category; URL = the env value. `--check`
-  prints: `argocd-fanout --check: OK`, allowed_refs, tunables, the table
-  (`NAME`/`URL` from pairs), and `pairs: N targets discovered (values never printed)`.
-- Behavior/audit/summary/exit codes/all-skipped/M2/M1-spirit(no echo): byte-unchanged
-  from the shipped script; summary's `targets=%d` now carries the DISCOVERED count.
-- Job wiring (C10): 22 enumerated `env:` entries (the pinned order: alphabetical by
-  category, URL then TOKEN per pair, `EVT_REF`/`GH_REF` last); run block =
-  `set -euo pipefail` + REF fallback chain + unguarded python call ONLY (no `-z` guard,
-  no warning echo — the script owns both lanes); header + job comments: org-scope
-  single-instance sentence now covers BOTH vars and secrets, static-enumeration cost
-  sentence, decommission lockstep sentence, the unset-lane pointer moves to the script.
+- Filter step (C13): `name: resolve fan-out pairs`; `env: VARS_JSON: ${{ toJSON(vars)
+  }}` + `SECRETS_JSON: ${{ toJSON(secrets) }}` [40][41][49]; run block (one
+  `python3 -c`, stdlib json/re/os): each blob env value → `json.loads(... or "{}")`
+  (missing/empty side ⇒ `{}`; non-JSON ⇒ RED-style exception exits nonzero — engine
+  surprise must be loud, message names the blob NAME only); select keys matching the
+  SAME broad pair regex `^ARGOCD_SYNC_(.+)_(URL|TOKEN)$` from both maps (union,
+  secrets-wins on collision); `mkdir -p "$RUNNER_TEMP"`; write
+  `$RUNNER_TEMP/pairs.json` (flat `{NAME: value}` map, `sort_keys=True`), `chmod 0600`;
+  print exactly `filter: <N> keys selected`; NEVER print values, names-with-values,
+  counts-of-others, or the blobs. Zero pair keys ⇒ empty `{}` file, green (the script's
+  lanes decide everything downstream).
+- Fan-out step (C13): `env: ARGOCD_PAIRS_FILE: ${{ runner.temp }}/pairs.json` +
+  `EVT_REF`/`GH_REF`; run block = `set -euo pipefail`, REF chain bytes, invocation
+  bytes, unguarded.
+- Script (C14): `main` branch: `pairs_file = os.environ.get("ARGOCD_PAIRS_FILE")`;
+  truthy ⇒ `load_pairs_file(pairs_file)` (existence/read/JSON/dict/value-str checks →
+  ConfigError naming the path only) and `discover_targets(that_map)`; else
+  `discover_targets(os.environ)` unchanged. `discover_targets` body: ZERO semantic
+  change for shared classes; NEW optional membership oracle (OQ-A): when
+  `strict_membership` (file channel only — pin) compare the category set against
+  `cfg["categories"]` in the configured lane, collecting both-direction diffs into the
+  same sorted aggregate (`category "x" listed but has no vault keys` / `vault pair "y"
+  not in categories`); malformed-preemption and TOKEN-side predicate order preserved.
+  Roster: five globals + (OQ-A recommendation) `"categories": [11 hyphen names]`;
+  `--check` derives from whichever channel and gains a `membership: 11 listed / N
+  discovered` line ONLY if the oracle lands (string pinned then; current line survives
+  otherwise).
+- Strings pinned UNCHANGED: `WARN_NOT_CONFIGURED`, `pair integrity: …` aggregation,
+  `malformed ARGOCD_SYNC_* … keys with values: …` (reword ONLY if OQ-A rejects — the
+  phrase "enumeration keys" → "vault keys" rides the same decision), `pairs: N targets
+  discovered (values never printed)`, fan-out core entirely (C09/C12 t13 byte-lock
+  doctrine extended: C14's AC includes a zero-hunk proof for
+  `ref_tail…fan_out`/`_NoRedirect`/`drive_target`).
 
-## Human-owned list (delta vs reopen2's — nothing else moves)
+## Human-owned list (delta only — everything else in runbook #4 stands)
 
-- **§2 creation legs rewrite:** 11 mints unchanged (same table, same hosts) → then 11
-  org VARS `ARGOCD_SYNC_<CAT>_URL` (values = the §6 hosts) AND 11 org SECRETS
-  `ARGOCD_SYNC_<CAT>_TOKEN` (value = that cluster's JWT) in prod-instance ORG Settings →
-  Actions; no composition/paste step; single-instance discipline (repo twins WIN
-  silently — never create repo-side); pre-verify `--check` via a locally-sourced pairs
-  env file (NEVER `env KEY=value` — argv leak; the source-then-run recipe gets pinned in
-  the runbook).
-- **§2.4 delete-check grows to three:** `vars.ARGOCD_HOOK_URL`, `secrets.ARGOCD_HOOK_SECRET`,
-  and `secrets.ARGOCD_SYNC_TOKENS` (the reopen2 blob — the waves-7–9 vault leg may or may
-  not have run; absence-or-delete either way).
-- **§5 smoke:** dispatch unchanged; expected rows now include the two RULED `failed`
-  lines (proxy-local 307, proxy-backup) and the summary's discovered count; masking
-  spot-check keeps as a native single-secret sanity grep, not a [26] verification.
-- **§7 kill lever:** delete (or blank) the 11 org TOKEN secrets — token-side predicate
-  ⇒ all-absent warn-green; URL vars may stay populated (the warning line is the
-  proof-of-off). Full removal stays PR-revert.
-- Rotation (§8): per-cluster — re-mint → `argocd account delete-token` old → overwrite
-  that ONE org secret row. Decommission: org pair + 2 workflow rows in one release
-  (lockstep, else config-red by design).
-- Unchanged: org-scope hygiene ownership, proxy-backup vantage check, PR/merge, card.
+- Vault work **unchanged**: 11 mints, 11 org vars, 11 org secrets, trio delete-check —
+  literally the same legs; the only difference is the owner NEVER touches the workflow
+  again for fleet membership.
+- **NEW owner calls via the batched round:** OQ-A (categories oracle: adopt — the
+  recommendation — or accept count-only drift). If the oracle lands, first
+  cluster-add after this merge = org pair + one `categories` line in a PR; first
+  DECOMMISSION = delete pair + delete line (PR-first ordering avoids the interim RED,
+  documented either way).
+- **The first dispatch smoke gains its true role (override consequence):** it is the
+  live validation of the engine claims RESEARCH could not close without probes — legs
+  enumerated in runbook §5 (expression green ⇒ toJSON+delivery; `filter: 22 keys` ⇒
+  merge-complete; step-2 reads the file ⇒ RUNNER_TEMP persistence; log search finds no
+  raw values ⇒ blob-internal masking [40]; the two RULED failed rows unchanged:
+  proxy-local 307, proxy-backup). A red smoke on any CLAIM ⇒ the probes' conclusions
+  were wrong ⇒ documented fallback: revert the branch to `d81831446`'s static
+  enumeration (one commit, zero cluster impact — the standing rule, not agent-owned).
 
 ## Risks / assumptions
 
-- **Decommission/rotation transient reddens are BY DESIGN** (configured + residue ⇒ red):
-  a delete-then-create rotation window that catches a push shows one red job, then
-  self-clears; the alternative (silent drop) was the ruled-out class. Reversible via the
-  aggregated message naming the category.
-- **Enumeration drift:** workflow rows and org keys drift silently in the SAFE direction
-  only (missing key ⇒ RED); EXTRA rows (fleet shrunk, file not updated) also RED —
-  both directions are visible, none silent. The cost RESEARCH §2 named, accepted.
-- **Category-law constraint is future-facing:** a future cluster category with
-  underscore/dot literally cannot be onboarded without breaking discovery — the red
-  names the raw key, and the runbook §8 sentence is the mitigation. No current category
-  touches it.
-- Kill-lever depends on the token-side configured predicate (pinned); if a URL-side
-  keying had been chosen, blanking tokens would RED instead — recorded so a future
-  reader sees why token-side.
-- Shipped risks survive unchanged (gpu self-restart window, dind DNS acceptance leg,
-  mirror lag, home Unknown, proxy-local 307 structural finding — owner leg).
+- **NO PROBE GATE (owner-ruled, stated plainly):** the design's engine claims rest on
+  source-reads + production precedent [43–46][49][54][55] but NOT on a run against
+  prod's exact fork build (the method note's admitted gap). Mitigations: v13 doctrine
+  makes unsupported expressions fail LOUD at job start [53] (mirror pushes are
+  unaffected — push jobs complete independently); the first dispatch is scheduled as
+  the acceptance leg with the one-commit revert prepared. This risk is the direct,
+  accepted cost of the override.
+- **Blob exposure surface:** every value in the org+repo merged maps serializes into
+  step-1's env; the filter's never-print law + step-2's file-only env keep the
+  checkout-running process at today's floor; the real boundary is PR review, and the
+  branch-protection lever is carded (`abkP2XsbuuPuuvri6`). Honest delta: ≈0 vs today
+  [43][46] — but "≈0" assumes the org inventory (Agenda-4 note) — the optional owner
+  API shells complete that claim.
+- Masking edge: JSON-escaped values wouldn't match the masker — current fleet
+  escape-free [30][31]; §8 states the charset rule for future keys.
+- Empty-string-vs-absent semantics hinge on `toJSON` including created-but-blank keys
+  (source says the map carries what exists — blanks included [44]); the smoke's
+  filter-count line discriminates.
+- Carried: gpu self-restart window, dind DNS (dispatch is its leg too), mirror lag,
+  home Unknown, proxy-local 307 owner decision.
 
-## Open questions — R7 COMPLETE; NONE (no batched round this time)
+## Open questions (batched round — ONE real call + pinned micro-calls)
 
-The owner ruling answered the only design-space question (input mechanism); the four
-pinned consequences came from coord with the ruling and the residual micro-calls are all
-best-guesses recorded in DECISIONS 2026-11-25, each a reversible one-liner or a wording
-row: token-side configured predicate (forced by the ruled kill lever), aggregated
-multi-category config-red, alphabetical 22-row enumeration, category charset law + raw
-key naming, the source-file `--check` recipe, `pairs: N targets discovered` check-line
-wording, decomposition lockstep wording. If the owner disagrees with any, none cascades
-beyond C09's parse matrix + one suite leg.
+1. **OQ-A — categories oracle (the big one, real owner call):** in the blob world a
+   cleanly DELETED pair (both org keys) leaves no residue — the fleet just shrinks
+   (summary count signal only). Options: **(a) RECOMMENDED — keep a minimal
+   `"categories": [11 names]` array in `scripts/argocd-fanout.json` as the membership
+   oracle:** configured-lane set-equality list↔discovered, both directions RED (agile
+   on values, PR-gated on membership — restores ruling-(j) loudness; fleet changes =
+   vault keys + one JSON line in a PR; the workflow stays fleet-blind exactly as the
+   owner asked — the objection was "hardcoded into the JOB", and the job indeed carries
+   zero names); **(b) accept count-only drift** — pure discovery, zero files touched on
+   a fleet change, at the cost of silent clean-deletes and vault-writes becoming fleet
+   config (softening the PR-review doctrine; the branch-protection card then matters
+   more). Under (a): the oracle enforces in the FILE channel (CI); the env channel
+   (local manual) stays pure-discovery — pinned best guess, flipping it just adds a
+   `--strict` knob nobody asked for. `deleting-a-key-plus-list-entry` under (a) means
+   a clean decommission: consistent everywhere ⇒ green with N−1 targets, the interim
+   window (keys gone, line still in main) is RED-loud by design.
+2. Pinned micro-calls (NOT questions — best guesses, reversible one-liners): filter
+   prints `filter: N keys selected` only; secrets-wins collision order; `PAIRS_FILE`
+   set-and-non-empty ⇒ env scan skipped entirely (strict precedence); `{}` file is the
+   all-absent lane, a missing/invalid file is RED naming the path; chmod 600 is the
+   filter's duty, the script does not stat modes; `ARGOCD_PAIRS_FILE=""` ⇒ unset;
+   main-sync t13 roster leg relaxed to parse-only (schema pin moves to behavior t2);
+   malformed-lane message wording keeps "keys" (channel-neutral) regardless of OQ-A;
+   the header precedence fix ships with C13 as queued.
 
 ## Rejected alternatives
 
-Prior-round rejections all stand. NEW this round: keeping the blob secret with a
-newline grammar (OQ8's mechanics — ruled error-prone, superseded), 11 secrets WITHOUT
-env discovery (the `${{ secrets[matrix] }}` wall [21][25] + expression-per-name — the
-ruling resolves it by moving discovery into the script), keeping `targets[]` in the
-roster as the category list (contradicts "no category list in code or JSON" — discovery
-is the point), shell-side pair-completeness guards (22 emptiness tests in YAML — the
-script's empty-detection is the guard, ruled), URL-side configured predicate (would turn
-the ruled kill lever into a red-storm), warn-and-exclude for empty residue once
-configured (the silent-partial-fleet class, ruled RED since reopen2), repo-scoped key
-placement (reopen2's ruling stands: org-level, inherited, referenced identically).
+All prior rejections stand (blob secret #4-style [ruled dead twice], 11-row static
+enumeration (the owner's reopen4 ask — and its premise refuted [43][44][46]), relay,
+door, flips, notifs, public exposure). NEW: **probe-gated adoption** — RESEARCH's
+recommendation, explicitly OVERRIDDEN by the owner 2026-11-26 (the probe legs'
+assertions become the first dispatch's expectations instead); mechanism 2
+(matrix-from-outputs chain — engine-feasible, re-pays the fan-out topology,
+outputs-carrying-secrets hazard [56]); mechanism 3 (REST API discovery — secrets are
+names-only via API [47][48], tokens would need an org PAT crown jewel); naive shape
+(blob into the script's env — scripts-only attacker gains PUSH_TOKEN_* + token aliases,
+RESEARCH Agenda-4(b)); nested `{cat:{url,token}}` pairs file (second grammar — the
+flat env-namespace map keeps ONE validator body for both channels); a CLI `--pairs-file`
+flag (argparse surface churn for zero gain over the env channel); oracle-on-both-channels
+(manual/local runs must not need the full fleet exported); deleting the runbook's §2
+legs (the owner's vault work literally did not change).
