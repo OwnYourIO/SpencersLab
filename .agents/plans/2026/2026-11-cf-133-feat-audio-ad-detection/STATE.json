@@ -124,7 +124,9 @@
     "Chunk Development": "done (C01 1+1, C02a 1+1, C02b 3+3, C03 2+2, C04 1+1, C05 1+1 \u2014 all APPROVED; suite 31/31 exit 0 at close)",
     "Chunk Review": "done (9 review sessions total; 3+3 cap reached once on C02b, closed clean; zero validation_at_fault; one mechanical test repair routed to test session: t20 5-arm rework)",
     "Final Review": "RE-CLOSED APPROVED 2026-11-26 (ses_de9a6d2d9ffeq202uEPx1C5YYz, planning tier): 31/31 fresh, both arms, real-release-name render, zero worker-contract regression, pinned-skill zero-diff across both commits, all nine owner rulings stand, L1-L7 confirmed valid; plan_status complete; hand-off pending owner word",
-    "Rework R1": "done (C06 1+1 + C07 2+1 incl reviewer-minor micro-fix; fix-commit 447207614; FRICTION backfilled at re-close; carried: C05 runbook stale-list minor, skill :68-71 pre-existing notes, /tmp scratch NIT, original deferred roll)"
+    "Rework R1": "done (C06 1+1 + C07 2+1 incl reviewer-minor micro-fix; fix-commit 447207614; FRICTION backfilled at re-close; carried: C05 runbook stale-list minor, skill :68-71 pre-existing notes, /tmp scratch NIT, original deferred roll)",
+    "Rework R2": "executing (C08 DONE+APPROVED 1+1, fix-commit 7dfe03765: local-compile oracle 0w/0e + 33 latent fixed + registry switch + t29 rule-shape + map corrections XML-verified; C09 dev ses_de64c5052ffe65TM29XX9VtrCb in progress: build-charts workflow_call arm + bootstrap full-set-on-both-surfaces + C05 L1 reword; expected red cross-suite arms (cf-55 tests) to be reported for owner routing; then final whole-plan re-close v3)",
+    "C08": "done 1+1 (dev ses_de6980501ffedrv2trAeVnUN4w DONE_WITH_CONCERNS + test-fix t29 + review ses_de65a44cfffeYY8nOBFB84Q14L APPROVED)"
   },
   "stage_handoffs": [
     {
@@ -602,10 +604,30 @@
       ]
     },
     "C09": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": [
         "C08"
+      ],
+      "dev_session": "ses_de64c5052ffe65TM29XX9VtrCb",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "session": "ses_de64c5052ffe65TM29XX9VtrCb",
+          "at": "2026-11-26T22:58:00+00:00",
+          "status": "DONE",
+          "result_verbatim": "RESULT status: DONE chunk: C09 / files: scripts/forgejo-container-detect.sh (workflow_call no-marker => full-set base 4b825dc6..HEAD + announced warning; push+empty-before die preserved exit-2 contract), .forgejo/workflows/build-charts.yaml (inline detect body mirrors the script arm identically — same warning text, scoped push die), chunks/C05.md (L1 reworded to post-C15 truth: fan-calls + marker..sha + advance-marker aggregate seal + dispatch hatch + public git.spencerslab.com pull, every claim line-cited: build-containers.yaml:96-113/:404-422/:85, main-sync.yaml:105-125, values.yaml:57) / gates: bash -n pass (after one apostrophe-in-printf fix caught by the gate); yaml.safe_load all three workflows pass; AC2 scratch table PASS both surfaces (marker/call-no-marker/all-zero/die/dispatch arms; full-set warning identical script:85 vs yaml:124); suite 31/31; forgejo-build-charts.sh 34/34 GREEN (t18 pins order+presence, die retained scoped — predicted red did NOT materialize); forgejo-build-containers.sh 49/1 — ONLY d21 (:2398, arm :2388-2407) red: pins tip-only for the no-marker call, now full-set (expected-red per chunk, cf-55 surface); aislop: changes-scope vacuous for yaml/sh honest + full-scan 0 diagnostics in the 3 files (repo-wide 81 error-sev all pre-existing untouched files); comment-slop keep-verdicts incl mode-6 conditional / deviations: (1) C05.md reword via surgical python3 write (dev floor denies edit-tool on .agents/plans; chunk scopes the runbook section); (2) AC2(d) exit-2 vs predicted exit-1 (die contract; d12/d22 pin non-zero); (3) first warning-text pass failed bash -n (apostrophe) caught+reworded; (4) expected-reds reality = only d21 executable; :24/:962 prose pins still true / open_questions: (1) d21 re-pin route (cf-55 test surface) — coord/owner call; (2) build-containers.yaml:57-60 header stale (says tip-only), PR/dispatch byte-frozen lane out of C09 scope, owner follow-up; (3) AGENTS.md:245 + .rulesync/rules/overview.md:243 same stale tip-only line — rulesync source→generate→commit, owner follow-up; (4) .aislop/history.jsonl tooling bump — reverted by coord."
+        },
+        {
+          "role": "review",
+          "session": "ses_de632da04ffe31FMxFqGvm0NNp",
+          "at": "2026-11-26T23:40:00+00:00",
+          "status": "APPROVED (round 1)",
+          "result_verbatim": "Verdict APPROVED (1+1). Surface exactly 3 files + STATE. AC2 re-built independently (3-commit scratch chain, foo below tip = incident shape): all five script arms as designed (marker re-cover; all-zero push tip-only UNCHANGED; no-marker call full-set 4b825dc6..HEAD + warning; push+empty-before die rc=2 pre-existing; dispatch passthrough); real extracted inline yaml run block passes same cases (die rc=1; jq shim harness recorded); warning 243B byte-identical script:85 vs yaml:124. Regression: on:/ROLE-guards/needs identical (offset only); dispatch/PR/all-zero/die arms byte-identical to HEAD; build-containers.yaml + main-sync.yaml untouched — PR-lane byte-freeze holds. Suites: containers 31/31; build-charts 34/34 (t18 order+presence, predicted red absent); build-containers 49/1 ONLY d21 (exact text cited) — expected, cf-55 surface. AC5: 8 runbook claims verified vs live files; PIN-ME unchanged; non-L1 legs identical; RESEARCH/EXPLORE byte-clean. Deviations 1-4 ALL ACCEPTED. Comments pass (full-set rationale + bounded trade-off + rejection rationale w/ documented homes). Owner-roll non-blocking: build-containers.yaml:58-59 stale header; AGENTS.md:245 + rulesync source stale line; d21 re-pin (cf-55). Next: final re-close v3."
+        }
       ]
     }
   },

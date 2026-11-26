@@ -91,6 +91,7 @@ jobs:
       - name: Detect changed charts
         id: detect
         env:
+          EVENT_NAME: ${{ github.event_name }}
           EVENT_BEFORE: ${{ github.event.before }}
           EVENT_SHA: ${{ github.sha }}
           EVENT_MARKER: ${{ steps.marker.outputs.sha }}
@@ -101,11 +102,28 @@ jobs:
           # every payload fallback, so a chart change a dead run lost stays
           # inside the next fire's range instead of being skipped forever.
           # All-zero before (first push, marker absent) diffs HEAD^ and says
-          # so; an EMPTY before is fatal — no push payload sends one, and the
-          # silent HEAD^ fallback that used to hide it is buried (the
-          # containers law mirrored; D53 records the behavior change).
+          # so. An EMPTY before is fatal on a REAL PUSH — no push payload
+          # sends one, and the silent HEAD^ fallback that used to hide it is
+          # buried (the containers law mirrored; D53 records the behavior
+          # change); the die stays scoped to real pushes. Under workflow_call
+          # an empty before is EXPECTED (a called run carries no push
+          # payload — the containers script's law, mirrored): the no-marker
+          # called run diffs the FULL SET — the empty tree — announced. A
+          # tip-only range would skip-and-seal: directories introduced below
+          # a burst tip stay invisible, the marker seals at the tip on this
+          # run's green, and they never build; the one-time full build is
+          # bounded, the marker base re-covers after the seal. The rejected
+          # alternative — refusing to advance the marker on a multi-commit
+          # push — does not resolve the skip (the next no-marker called run
+          # is still tip-only; deferral is not coverage), defeats the
+          # marker's re-cover property (C14/D53), and cascades into the
+          # main-sync D54 single-writer job and its test: cf-55 territory.
           if [ -n "${EVENT_MARKER}" ]; then
             CHANGED_FILES=$(git diff --name-only "${EVENT_MARKER}" "${EVENT_SHA}" -- charts/ || true)
+          elif [ "${EVENT_NAME}" = "workflow_call" ]; then
+            echo '::warning::first called run (workflow_call, no marker): full-set detection over the empty tree — a tip-only range would skip-and-seal: directories introduced below a burst tip stay invisible, the marker seals at the tip and they never build' >&2
+            EMPTY_TREE=$(git mktree < /dev/null)
+            CHANGED_FILES=$(git diff --name-only "$EMPTY_TREE" "${EVENT_SHA}" -- charts/ || true)
           elif [ "${EVENT_BEFORE}" = "0000000000000000000000000000000000000000" ]; then
             echo "::warning::first push on the branch (all-zero before, no marker yet) — diffing HEAD^ only" >&2
             CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- charts/ || true)
