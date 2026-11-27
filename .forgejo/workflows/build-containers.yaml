@@ -233,14 +233,20 @@ jobs:
           set -euo pipefail
           echo "ROLE=[${{ vars.ROLE }}]"
           echo "event=${{ forgejo.event_name }} run=${{ forgejo.run_number }}"
-          # First-fire recorder for the runner's Actions-cache env and the
-          # buildx the job never uses; neither may fail the job.
-          env | grep ACTIONS_ || true
-          docker buildx version || true
-          # The plain docker build below talks to the in-pod dind daemon
-          # (chart socket contract); if it is unreachable, nothing after
-          # this point is worth logging.
-          docker info
+          # The heavy dumps are the DEBUG arm: DEBUG is an instance-side
+          # repo-scoped Actions variable (owner runbook item, the ROLE
+          # placement class) — unset renders empty, so the guard is false
+          # by default and the dumps run only when the owner opts in.
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            # First-fire recorder for the runner's Actions-cache env and the
+            # buildx the job never uses; neither may fail the job.
+            env | grep ACTIONS_ || true
+            docker buildx version || true
+            # The plain docker build below talks to the in-pod dind daemon
+            # (chart socket contract); if it is unreachable, nothing after
+            # this point is worth logging.
+            docker info
+          fi
 
       - name: log in to ghcr
         # The forge's per-run token is forge-scoped and cannot write ghcr;

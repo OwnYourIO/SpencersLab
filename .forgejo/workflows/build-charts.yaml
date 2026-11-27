@@ -49,10 +49,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # The default one-commit checkout would make the event-range diff
-          # below return an empty change set — a silently green "nothing
-          # changed" run, the loudest shallow-clone failure (V-6-1).
+          # The default one-commit checkout would make the event-range diff below
+          # return an empty change set (V-6-1); show-progress: false drops the fetch progress block (per-ref summary: documented residual, D7).
           fetch-depth: 0
+          show-progress: false
       - name: resolve last-built marker
         id: marker
         env:
@@ -163,7 +163,11 @@ jobs:
           # V-6-1 law for this workflow: no leg may rely on shallow-clone
           # semantics, so every checkout pins full depth (the one-commit
           # default is what silently empties git-based detection).
+          # show-progress: false drops the fetch progress block; the per-ref
+          # summary it still emits is a documented residual (D7: no quiet
+          # surface on the action).
           fetch-depth: 0
+          show-progress: false
       - name: Patch-bump Chart.yaml (local, never pushed)
         run: |
           set -euo pipefail
@@ -192,7 +196,17 @@ jobs:
           # scripts/forgejo-helm-repo-add.sh — the triple duplication across
           # the three sites was the drift class the extraction kills (C04
           # task 3).
-          bash scripts/forgejo-helm-repo-add.sh
+          # DEBUG is an instance-side repo-scoped Actions variable (owner
+          # runbook item, the ROLE placement class — see the file header):
+          # unset renders empty, so the guard is false by default and normal
+          # runs see the captured arm; DEBUG=true runs the uncaptured form.
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            bash scripts/forgejo-helm-repo-add.sh
+          else
+            bash scripts/forgejo-helm-repo-add.sh > repo-add.log 2>&1
+            n_repos=$(grep -c . repo-add.log || true)
+            echo "repo-add: $n_repos repo(s) processed (verbose: repo-add.log)"
+          fi
       - name: Lint and package smoke
         run: |
           set -euo pipefail
@@ -205,7 +219,12 @@ jobs:
           # in the contract suite's hermetic lock-consistency leg. lint +
           # package stay (consumer-shape smoke, no publish API call).
           mkdir -p /tmp/chart-smoke
-          helm dependency update "charts/${{ matrix.chart }}"
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            helm dependency update "charts/${{ matrix.chart }}"
+          else
+            helm dependency update "charts/${{ matrix.chart }}" > dep-update.log 2>&1
+            echo "dep-update: 1 chart updated (verbose: dep-update.log)"
+          fi
           helm lint "charts/${{ matrix.chart }}"
           helm package "charts/${{ matrix.chart }}" --destination /tmp/chart-smoke
 
@@ -226,7 +245,11 @@ jobs:
         with:
           # The push negotiation needs the real remote tip, not the
           # single-commit default checkout (V-6).
+          # show-progress: false drops the fetch progress block; the per-ref
+          # summary it still emits is a documented residual (D7: no quiet
+          # surface on the action).
           fetch-depth: 0
+          show-progress: false
       - name: Bump changed charts and fast-forward main
         id: bump
         env:
@@ -277,9 +300,18 @@ jobs:
             # digest inputs, so the pair is digest-safe by construction.
             # No retries: an upstream egress blip reddens this bump loudly
             # and a re-fire is the recovery, the posture cr already has.
-            for lock in charts/*/Chart.lock; do
-              helm dependency update "charts/$(basename "$(dirname "$lock")")"
-            done
+            if [ "${{ vars.DEBUG }}" = "true" ]; then
+              for lock in charts/*/Chart.lock; do
+                helm dependency update "charts/$(basename "$(dirname "$lock")")"
+              done
+            else
+              n_heal=0
+              for lock in charts/*/Chart.lock; do
+                helm dependency update "charts/$(basename "$(dirname "$lock")")" >> self-heal.log 2>&1
+                n_heal=$((n_heal + 1))
+              done
+              echo "self-heal: $n_heal lock(s) updated (verbose: self-heal.log)"
+            fi
             bumped=$(python3 - "${CHARTS_JSON}" /tmp/published-index.yaml "$STAMP" <<'PY'
           import json, re, sys
 
@@ -421,7 +453,11 @@ jobs:
           # load-bearing for git negotiation itself — the main-tip re-read
           # and cr's pages worktree/pull sequence cannot run against a
           # one-commit clone (main-sync.yaml's paid lesson, same class).
+          # show-progress: false drops the fetch progress block; the per-ref
+          # summary it still emits is a documented residual (D7: no quiet
+          # surface on the action).
           fetch-depth: 0
+          show-progress: false
       - name: Configure Git
         run: |
           set -euo pipefail
@@ -438,7 +474,15 @@ jobs:
           # fetch precedes any cr invocation in cr-running legs (V-6-2 guard).
           git fetch origin refs/heads/main:refs/remotes/origin/main
           git reset --hard refs/remotes/origin/main
-          git fetch --tags
+          # The explicit tag fetch is the ~976 ln/fan-push ref enumeration
+          # (LOGSPAM's biggest "ours" source): -q is the silent default — a
+          # non-tty fetch still lists every new ref without --quiet, only -q
+          # is fully quiet — DEBUG=true re-arms the per-ref summary.
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            git fetch --tags
+          else
+            git fetch --tags -q
+          fi
       - name: Add repositories
         run: |
           set -euo pipefail
@@ -446,7 +490,13 @@ jobs:
           # scripts/forgejo-helm-repo-add.sh — the triple duplication across
           # the three sites was the drift class the extraction kills (C04
           # task 3).
-          bash scripts/forgejo-helm-repo-add.sh
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            bash scripts/forgejo-helm-repo-add.sh
+          else
+            bash scripts/forgejo-helm-repo-add.sh > repo-add.log 2>&1
+            n_repos=$(grep -c . repo-add.log || true)
+            echo "repo-add: $n_repos repo(s) processed (verbose: repo-add.log)"
+          fi
       - name: Publish GitHub Releases and the Pages index
         if: needs.changes.outputs.has_changes == 'true'
         env:
@@ -467,21 +517,35 @@ jobs:
           # cr index --push regenerates the gh-pages index from the
           # repository's release assets, so a chart skipped this fire
           # keeps its published tgz in the index.
-          for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
-            cr package "charts/$c"
-          done
-          cr upload --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --skip-existing --token "$CR_TOKEN"
-          # gh-pages is pushed to GitHub through the credential slot (the
-          # proven main-sync push shape) and cr's pages worktree is pointed
-          # at that named remote: cr's default remote is origin, which here
-          # is the Forgejo checkout — publishing the index there would be
-          # silently wrong. cr builds its worktree from the LOCAL
-          # remote-tracking ref and never fetches it, so fetch gh-pages
-          # through the new remote before invoking cr index.
-          rest="${PUSH_URL#https://}"
-          git remote add publish "https://x-access-token:${CR_TOKEN}@${rest}"
-          git fetch publish refs/heads/gh-pages:refs/remotes/publish/gh-pages
-          cr index --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --push --remote publish --token "$CR_TOKEN"
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+              cr package "charts/$c"
+            done
+            cr upload --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --skip-existing --token "$CR_TOKEN"
+            # gh-pages is pushed to GitHub through the credential slot (the
+            # proven main-sync push shape) and cr's pages worktree is pointed
+            # at that named remote: cr's default remote is origin, which here
+            # is the Forgejo checkout — publishing the index there would be
+            # silently wrong. cr builds its worktree from the LOCAL
+            # remote-tracking ref and never fetches it, so fetch gh-pages
+            # through the new remote before invoking cr index.
+            rest="${PUSH_URL#https://}"
+            git remote add publish "https://x-access-token:${CR_TOKEN}@${rest}"
+            git fetch publish refs/heads/gh-pages:refs/remotes/publish/gh-pages
+            cr index --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --push --remote publish --token "$CR_TOKEN"
+          else
+            n_pkg=0
+            for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+              cr package "charts/$c" >> cr-release.log 2>&1
+              n_pkg=$((n_pkg + 1))
+            done
+            cr upload --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --skip-existing --token "$CR_TOKEN" >> cr-release.log 2>&1
+            rest="${PUSH_URL#https://}"
+            git remote add publish "https://x-access-token:${CR_TOKEN}@${rest}"
+            git fetch publish refs/heads/gh-pages:refs/remotes/publish/gh-pages
+            cr index --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --push --remote publish --token "$CR_TOKEN" >> cr-release.log 2>&1
+            echo "release: packaged $n_pkg chart(s); upload ok; index pushed (verbose: cr-release.log)"
+          fi
 
   forgejo-publish:
     if: contains(vars.ROLE, 'prod')
@@ -494,7 +558,11 @@ jobs:
           # V-6-1 law for this workflow: full depth everywhere — the
           # main-tip re-read below is a git negotiation that a one-commit
           # clone cannot serve.
+          # show-progress: false drops the fetch progress block; the per-ref
+          # summary it still emits is a documented residual (D7: no quiet
+          # surface on the action).
           fetch-depth: 0
+          show-progress: false
       - name: Pick up the bump commits and release tags
         run: |
           set -euo pipefail
@@ -503,7 +571,15 @@ jobs:
           # tag fetch precedes any cr invocation in cr-running legs (V-6-2).
           git fetch origin refs/heads/main:refs/remotes/origin/main
           git reset --hard refs/remotes/origin/main
-          git fetch --tags
+          # The explicit tag fetch is the ~976 ln/fan-push ref enumeration
+          # (LOGSPAM's biggest "ours" source): -q is the silent default — a
+          # non-tty fetch still lists every new ref without --quiet, only -q
+          # is fully quiet — DEBUG=true re-arms the per-ref summary.
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            git fetch --tags
+          else
+            git fetch --tags -q
+          fi
       - name: Add repositories
         run: |
           set -euo pipefail
@@ -511,7 +587,13 @@ jobs:
           # scripts/forgejo-helm-repo-add.sh — the triple duplication across
           # the three sites was the drift class the extraction kills (C04
           # task 3).
-          bash scripts/forgejo-helm-repo-add.sh
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            bash scripts/forgejo-helm-repo-add.sh
+          else
+            bash scripts/forgejo-helm-repo-add.sh > repo-add.log 2>&1
+            n_repos=$(grep -c . repo-add.log || true)
+            echo "repo-add: $n_repos repo(s) processed (verbose: repo-add.log)"
+          fi
       - name: Package charts
         if: needs.changes.outputs.has_changes == 'true'
         env:
@@ -525,9 +607,18 @@ jobs:
           # registry curl below, whose skip-if-in-index guard narrows
           # naturally — unchanged charts cost nothing and a retry never
           # churns a published version.
-          for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
-            cr package "charts/$c"
-          done
+          if [ "${{ vars.DEBUG }}" = "true" ]; then
+            for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+              cr package "charts/$c"
+            done
+          else
+            n_pkg=0
+            for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+              cr package "charts/$c" >> cr-forgejo-publish.log 2>&1
+              n_pkg=$((n_pkg + 1))
+            done
+            echo "forgejo-publish: packaged $n_pkg chart(s) (verbose: cr-forgejo-publish.log)"
+          fi
       - name: Push packages to the instance Helm registry
         if: needs.changes.outputs.has_changes == 'true'
         env:
