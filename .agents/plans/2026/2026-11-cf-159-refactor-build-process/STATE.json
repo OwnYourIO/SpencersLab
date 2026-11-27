@@ -1,0 +1,101 @@
+{
+  "feature": "cf-159-refactor-build-process",
+  "folder": ".agents/plans/2026/2026-11-cf-159-refactor-build-process",
+  "plan_file": "2026-11-27-refactor-build-process.md",
+  "plan_status": "draft",
+  "created_at": "2026-11-27T05:23+00:00",
+  "updated_at": "2026-11-27T14:52+00:00",
+  "kickoff": {
+    "card": "NSJdtS7FkQpryhSAr",
+    "card_number": 159,
+    "board": "TNQJ2BrXenZovngTS",
+    "slug": "cf-159-refactor-build-process",
+    "type": "refactor",
+    "services": ["dev", "gpu", "infra"],
+    "coord_session": "ses_de48b8d53ffeX58xO2I6x47B2k",
+    "coord_session_note": "captured via session_move return (Session Rename stage itself stayed unchecked; id now legitimately known) — resume/fuser hand-back works",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-159-refactor-build-process",
+    "worktree_note": "OWNER OVERRIDE 2026-11-27T14:45Z: card left Worktree Creation unchecked, owner directed the worktree+branch step in-session; kickoff sequence ran complete (worktree_create -> kickoff-mint-branch.sh MINTED a91627e06 -> kickoff-warm-location.sh WARMED -> session_move).",
+    "branch": "cf-159-refactor-build-process",
+    "branch_source": "kickoff mint off local main a91627e06, then git rebase origin/main => branch == origin/main tip 1d46d1c84 (OQ5 ruling honoured via rebase: merge --ff-only denied by shell floor)",
+    "commits": "coord commits on ticket branch (standard posture restored by owner override)",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "priority": { "raw": null, "class": "default" },
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "code": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "local": true,
+      "note": "Routed per Model(s) Dense+Local -> gpu-ai/qwen3.8-27b-radiance: loud 502 (ses_de4896a32ffet8kjSUugBiBQ1h). Fallback attempt gpu-ai/qwen3.8-flash-next-radiance: also loud 502 (ses_de487f27effeV30utA9pi3gKLG). OWNER RULEING 2026-11-27T05:3xZ (in-session): use the TP2 dense lane -> both tiers gpu-ai/qwen3.8-27b-radiance-tp2 (explicit-request opt-in route, pipeline-models resting-lane row)."
+    },
+    "run_tag": null,
+    "board_context": {
+      "collected_at": "2026-11-27T05:22:26.824Z",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4"
+      },
+      "custom_fields": { "slug": "RaNeqvh9YoT4bnkZ8", "Priority": "fp5vnD5YrA7oAxPiK" }
+    },
+    "preload": { "at": "2026-11-27T05:23+00:00", "tool": "preload_board", "cards": "In Process scope", "degraded": "with_checklists arg not advertised by deployed build -> trees rode along, unconsumed; no gate skip needed (card carries no dependency edges)" },
+    "card_details": { "at": "2026-11-27T05:23+00:00", "tool": "get_card_details", "degraded": "none" },
+    "claim": {
+      "setId": "efd11717-ed8e-4ad0-9a88-1451031392ab",
+      "pipelines": ["CICD"],
+      "at": "2026-11-27T05:23+00:00",
+      "note": "CICD lock had been reaped 04:56Z; free at claim; verified alive 14:14Z"
+    }
+  },
+  "stages": {
+    "exploration": "DONE ses_de485968dffeSRUdqTvy4ft91M -> EXPLORE.md (464 lines; file lives in the OLD main-checkout folder until the dump leg lands it here)",
+    "agent-decides-research": "decided (coord, 14:15Z): NO deep research round — remaining unknowns were owner decisions, resolved in the batched round; RESEARCH.md not commissioned.",
+    "planning": "agent-plan DONE ses_de2a2aad3ffecLLbiNuJuFwFNn (draft, 8 OQs) -> batched round ANSWERED 14:40Z -> rework pending (C02 evidence-driven per OQ1 answer; plan-folder location moved to the worktree by owner override)",
+    "logspam-evidence": "scout ses_de2910960ffeg9us45PaluOkMy running (writes LOGSPAM.md into the main-checkout folder; will be carried to this worktree folder; OQ3 ruling says C18 IS applied live — scout brief predates it, cluster observation still welcome)",
+    "test-writing": "pending",
+    "chunk-development": "pending",
+    "chunk-review": "pending",
+    "final-review": "pending",
+    "deployment": "skipped (unchecked)",
+    "single-session": "skipped (unchecked)",
+    "follow-up-cards": "skipped (unchecked)"
+  },
+  "wave": null,
+  "chunks": {
+    "C01": { "status": "pending", "wave": 1, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
+    "C02": { "status": "pending", "wave": 2, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
+    "C03": { "status": "pending", "wave": 2, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
+    "C04": { "status": "pending", "wave": 3, "depends_on": ["C03"], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] }
+  },
+  "test_session": null,
+  "handoffs": [
+    {
+      "chunk": "exploration",
+      "at": "2026-11-27T14:15+00:00",
+      "session": "ses_de485968dffeSRUdqTvy4ft91M",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2 (clean run; two earlier launches died on lane 502s)",
+      "status": "DONE",
+      "files_changed": [".agents/plans/2026/2026-11-cf-159-refactor-build-process/EXPLORE.md"],
+      "summary": "EXPLORE.md written (464 lines): six-workflow build/sync thread map, ci/last-built marker law (== origin/main tip 1d46d1c84), cf-55-rebuilt branch = 6 unmerged commits (C18 fix: Force+Replace sync-options + content-validation guard), live runner breakage confirmed on dev+gpu (0/10 ready both, empty config.yaml + existence-only guard; dev also 5/10 Unschedulable capacity), set -e inventory (43 sites, zero set -x/DEBUG — errexit emits no logs; chatty sources = diag steps, LOG_LEVEL, helm/cr chatter), local main 2 commits behind origin (now RESOLVED: branch sits on 1d46d1c84).",
+      "deviation_noted": "scout made one stray `question` call (answered skip) against the no-question instruction; no info lost",
+      "open_questions_carried": "EXPLORE.md §6 items 1-5 carried by agent-plan into the plan's Open questions (8 total); ALL answered in the 14:40Z batched round (see DECISIONS.md batched-round section)"
+    },
+    {
+      "chunk": "plan",
+      "at": "2026-11-27T14:29+00:00",
+      "session": "ses_de2a2aad3ffecLLbiNuJuFwFNn",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "status": "DONE",
+      "files_changed": [".agents/plans/2026/2026-11-cf-159-refactor-build-process/2026-11-27-refactor-build-process.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/DECISIONS.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/chunks/C01.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/chunks/C02.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/chunks/C03.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/chunks/C04.md", ".agents/plans/2026/2026-11-cf-159-refactor-build-process/STATE.json"],
+      "commands_run": "git grounding + full workflow reads + grep inventories => pass; suites: forgejo-renovate 10 ok, dev/gpu-forgejo-runner 67/24, build-charts 34, main-sync 18, build-containers 50, builder-bootstrap 20 => pass at base; forgejo-ci-surface pre-existing red t4 (seaweedfs-debug prose, cf-55 D44 class, admitted+excluded from chunk gates); helm lint + hermetic helm template charts/forgejo-runner => pass; aislop plan folder pass; STATE json.load pass",
+      "summary": "Plan of record 2026-11-27-refactor-build-process.md (draft) + chunks C01-C04. Waves: 1=C01 (carry C18 runner fix into working tree), 2=C02 (DEBUG-gated verbosity, errexit untouched) + C03 (scope cr package to changed set; D47.1 full-tree self-heal stays), 3=C04 (builder-family unification: marker-gate shape, forgejo.* contexts, repo-add loop script; rest documented-and-kept). C04 depends C03. 8 open questions -> batched round (ANSWERED).",
+      "deviations": "none",
+      "open_questions": "8 -> answered 14:40Z; OQ1 redirect (evidence-driven spam identification) + posture move to worktree require a plan rework pass",
+      "next_suggested": "rework plan (same session) with batched answers + LOGSPAM.md + worktree posture, then approval -> test wave -> C01 dev"
+    }
+  ]
+}
