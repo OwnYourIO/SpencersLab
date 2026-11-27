@@ -210,8 +210,10 @@ public sealed class SnapClientSupervisor : BackgroundService
     /// kill -TERM to the child, wait the 5 s grace, SIGKILL if it is still
     /// alive, and only then close the pipe read end — closing it first would
     /// race a SIGPIPE into the writer (R3 implication 7). Idempotent: the
-    /// Generic Host lifetime and the explicit signal registration in Program
-    /// both route here.
+    /// signal registration in Program triggers the same host stop the
+    /// lifetime uses, so every entry lands on this one teardown — the guard
+    /// makes a repeated entry re-enter the completed shutdown instead of
+    /// re-running the kill sequence.
     /// </summary>
     public Task ShutdownChildAsync()
     {
@@ -279,7 +281,22 @@ public sealed class SnapClientSupervisor : BackgroundService
         return _shutdownDone.Task;
     }
 
-    public override Task StopAsync(CancellationToken cancellationToken) => ShutdownChildAsync();
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        // base.StopAsync cancels ExecuteAsync's stoppingToken, which is
+        // what unwinds the respawn loop: the while check, the linked
+        // per-iteration CTS, and the respawn Task.Delay all break on it
+        // (a loop mid-respawn delay leaves the delay immediately). The
+        // _shutdownStarted guard stays the idempotency barrier: a
+        // repeated call re-enters the same teardown instead of re-running
+        // the kill sequence. Cancel first so the loop leaves any
+        // in-flight child iteration before the ordered kill sequence
+        // runs; the sequence owns the child-gone-before-pipe-close
+        // ordering, and the stop stays ahead of Program's
+        // post-RunAsync snapshot leg.
+        await base.StopAsync(cancellationToken);
+        await ShutdownChildAsync();
+    }
 
     private Process StartChild()
     {

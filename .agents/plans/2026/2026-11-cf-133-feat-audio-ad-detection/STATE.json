@@ -728,6 +728,35 @@
       ]
     }
   },
+  "C12": {
+    "status": "done",
+    "wave": 8,
+    "depends_on": [
+      "C11"
+    ],
+    "registration": "coord-registered fast chunk (owner ruling 2026-11-27: fix stop-path BEFORE cycle-4 merge, one clean dispatch); spec = C11 review's verbatim deferred finding; chunk file lands with the review notes",
+    "dev_session": "ses_de168af40ffePBLPLtBIsupsJY",
+    "dev_rounds": 1,
+    "review_rounds": 1,
+    "last_verdict": "APPROVED",
+    "handoffs": [
+        {
+          "role": "dev",
+          "session": "ses_de168af40ffePBLPLtBIsupsJY",
+          "at": "2026-11-27T21:05:00+00:00",
+          "status": "DONE",
+          "result_verbatim": "RESULT status: DONE chunk: C12 / T1: base.StopAsync FIRST in both overrides (the only thing cancelling ExecuteAsync's token), placement per code-read + per-file why-comments: BrokerPublisher base-first unwinds loop WHILE disconnect runs and structurally kills the reconnect window (base-LAST would leave a reconnect gap re-publishing retained online = the blip); supervisor base-first breaks loop-top check + linked CTS + respawn Task.Delay (mid-45s escalation departs immediately); _shutdownStarted guard kept; kill sequence still owns child-gone->pipe-close awaited; snapshot stays last in Program; stale 'host stop token' comment rewritten to real mechanism; BackoffDelayAsync + respawn delay VERIFIED already token-aware (no bare Task.Delay anywhere). T2 alternative not used (trace). T3 PROOF fresh smoke (port 47045, absent backends): Application started (DI intact); 503/503/200 all 5 tokens; SIGTERM -> listener stop -> SILENT (grep 'still running' = 0; BEFORE verbatim: 'warn: broker run loop still running 10s after stop'); SHUTDOWN_WALL_TIME=0.22s vs ~11s; EXIT 0; audio/+video/+snapshot.complete. Compile 0w/0e; suite 31/31 after rm bin/obj (t30 green); chart/tests byte-untouched, render identical; grep PosixSignal|SIGTERM = Program.cs only (t24 seam restored after deviation 4 self-caught token slip); aislop 100/100 0 errors 1 file-too-large warning (C08 class); zero untracked zero commits / deviations: (1) base-first both files w/ why-comments; (2) backoffs pre-verified token-aware; (3) ShutdownChildAsync docstring reworded to true converged-via-host-stop mechanism; (4) t24 token-sensitivity slip self-caught+fixed in-tree (comment-only, no test edit); (5) 489-line supervisor = adjudicated class / open_questions: none / next: C12 review (independent re-smoke), coord fix-commit, owner cycle 4 (one clean dispatch carries stop-path per ruling)"
+        },
+        {
+          "role": "review",
+          "session": "ses_de151a30cffeMtVBRz7jRkoO5U",
+          "at": "2026-11-27T21:55:00+00:00",
+          "status": "APPROVED (round 1) + minors M1/M2",
+          "result_verbatim": "Verdict APPROVED (1+1). Independent: build 0w/0e, publish rc 0, suite 31/31, PosixSignal|SIGTERM = Program.cs only, smoke (port 33891): Application started, 503/503/200 five tokens, SIGTERM -> EXIT 0, SHUTDOWN_WALL_TIME=0.162s (vs ~11s before), grep 'still running'=0, audio/+video/+snapshot.complete. Base-first ordering verified by hand-interleaving against .NET 10 BackgroundService source (base BOTH cancels token AND awaits ExecuteAsync): broker while-check/OCE-return/post-backoff gates make post-disconnect ConnectAsync unreachable; worst race (CONNACK in cancel window) = one redundant same-value retained-online re-publish BEFORE the clean disconnect, no LWT — benign. Supervisor: loop breaks at every gate (top, linked CTS, respawn incl mid-45s); ShutdownChildAsync unconditional, guard intact. MINOR M2 (owner follow-up call): base awaits the loop -> loop nulls _child first -> kill sequence TERM/SIGKILL leg skipped on hosted path; live child dies by EPIPE at/before process exit (stdout pipe kept open by Process.Close SyncMode skip; stderr closed) — NO survivor, regression bar not met, but R3 implication-7 ordering inverted on that path; options recorded (keep last-child ref / snapshot _child pre-base). MINOR M1: comment claim 'sequence owns child-gone-before-pipe-close' imprecise on that path. Scope clean (2 files, comments + base calls + expression-body->block-body); charts/tests/records zero-diff; aislop 90/100 0 errors adjudicated classes. Next: coord fix-commit + final re-close v5 (C11+C12 delta), then owner cycle 4."
+        }
+      ],
+    "spec": "T1: BrokerPublisher.StopAsync + SnapClientSupervisor.StopAsync must call await base.StopAsync(cancellationToken) (BackgroundService contract) so ExecuteAsync's token is cancelled — broker run-loop must STOP after the clean disconnect (no reconnect-after-disconnect, no 10s grace burn, no post-disconnect online blip; graceful = no LWT expected), supervisor loop terminates via token (keep _shutdownStarted guard); fix both comments asserting the uncancelled-token mechanism; alternative (wire loop to dedicated _loopCts cancelled in StopAsync) allowed ONLY if base.StopAsync ordering provably cannot break the snapshot-last/shutdown sequence — dev decides on code read, documents choice. T2: AC ordering care: base.StopAsync AFTER custom legs (disconnect, snapshot stay where the reverse-stop design needs them) — read the current bodies; assert cancel-token actually breaks the broker backoff sleep (read the wait — must be token-aware; if it is a bare Task.Delay, use theCTS-linked form). T3: re-run full smoke (absent backends): stop completes WITHOUT the 'still running' warning, shutdown wall-time meaningfully < previous ~11s (measure), snapshot.complete + exit 0 preserved; fresh compile 0w/0e; suite 31/31; chart/tests untouched. Scope: src/MqttPublisher.cs + src/SnapClientSupervisor.cs (+ comments)."
+  },
   "blocked": [],
   "deferred": []
 }

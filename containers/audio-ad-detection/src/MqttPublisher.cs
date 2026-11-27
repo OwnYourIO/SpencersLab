@@ -135,11 +135,20 @@ public sealed class BrokerPublisher : BackgroundService
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        // The clean disconnect flips IsConnected, which ends the run
-        // loop's session wait; the loop then exits on the host stop
-        // token. CancellationToken.None: the stop token is the one this
-        // method exists to complete under — it must not cancel the
-        // disconnect.
+        // base.StopAsync is the only thing that cancels ExecuteAsync's
+        // stoppingToken: without the base call the token stays
+        // uncancelled, the backoff delay keeps the run loop alive, and
+        // the wait below consumes the full StopWait. Cancel first so the
+        // loop unwinds (the backoff delay and the session poll break on
+        // the token) while the clean disconnect runs — and the loop
+        // cannot reconnect after the disconnect because the while check
+        // fails before the next ConnectAsync. The disconnect stays ahead
+        // of the wait, and the stop stays ahead of Program's
+        // post-RunAsync snapshot leg.
+        // CancellationToken.None on the disconnect: the stop token is the
+        // one this method exists to complete under — it must not cancel
+        // the disconnect.
+        await base.StopAsync(cancellationToken);
         await DisconnectAsync(CancellationToken.None);
         if (_run is not null)
         {
