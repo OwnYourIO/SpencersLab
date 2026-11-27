@@ -1002,17 +1002,6 @@ fi
 # (first-build calendar-tag cites). Exact per-file joins, no wildcards;
 # the rebuild round's "NO docker-build or vllm-radiance admits" premise
 # assumed the branch touches neither — C15's fence says otherwise.
-# cf-55 ROUND 6 / C17 (2026-11-26, owner ruling D64; chunks/C17.md): the two
-# runner custom-values files join as EXACT per-file admits — the round-6
-# registration-token re-truth is a COMMENT-ONLY edit of
-# custom-values/dev/prod-values.yaml + custom-values/gpu/prod-values.yaml
-# (the runner-token KEY and its UUID stay; D64 repurpose-existing-items).
-# The content teeth move to gpu-forgejo-runner.sh g7 (content-line fence +
-# dated-hunk rule) and the suites' slot legs; no custom-values/* wildcard:
-# every sibling category file stays outside the arm. Chart moves are already
-# covered: charts/forgejo-runner/* matches templates/secret-runner.yaml
-# whatever its diff status (case globs span '/', so a future whole-file
-# deletion of an admitted path needs no new join — C17 only rewrites it).
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -1096,7 +1085,6 @@ if want t14; then
       .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
       .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
       services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
-      custom-values/dev/prod-values.yaml|custom-values/gpu/prod-values.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill + cf-124 plan-folder admit + cf-143 radiance-serving admits + cf-55 chart-half admits)" ;;

@@ -7,29 +7,22 @@
 #
 # Leg -> acceptance-criteria map (plan test contract, section C):
 #   g1  harness: dependency build of a charts/forgejo-runner copy  plan Commands
-#   g2  deployed-shape render of the gpu release (names, replicas 10 +
-#       Parallel + register init, VCTs, skeleton labels map == the post-C04
-#       act set, single fetched registration-token ESO, no target.template)
-#                                                                     C05 AC1 + C17
+#   g2  standalone render of the gpu release (names, replicas, VCTs,
+#       labels map == the post-C04 act set)                       C05 AC1
 #   g3  the SERVICES file carries the top-level slice with the exact
 #       infra URL, and no in-cluster/dead host anywhere            C05 AC2
 #   g4  charts: alias entry + trio-exemption comment + no new
 #       ingress.subdomains entry                                   C05 AC3
 #   g5  custom-values UUID for the runner token, naming the new
-#       forgejo-runner item AND its registration-token content; the
-#       reserved dev item never here                              C05 AC4 + C17
+#       forgejo-runner item; the reserved dev item never here       C05 AC4
 #   g6  gpu umbrella sentinel sweep at the pinned baseline 1 and a
 #       sentinel-free forgejo-runner-gpu values JSON                C05 AC5
 #   g7  blast radius: dev runner trio untouched, no gpu Forgejo or
-#       SeaweedFS, chart moves confined to the C17 re-shape surfaces  C05 AC6
+#       SeaweedFS, runner chart untouched beyond C04's swap         C05 AC6
 #   g8  the SERVICES slice carries app-template.controllers.runner.
-#       replicas: 10 — D57 count standing under D61                  C16 (a)
-#   g9  the deployed render keeps runner capacity 1 in the skeleton
-#       (stay-1 ruling, D57 arithmetic under D61)                    C16 (b)
-#   g10 the chart default renders replicas 1 with NO override        C16 (c)
-#   g11 register init behavior on the deployed render (guard-first,
-#       downward-API name, token env, ephemeral false, PVC writes,
-#       no deregistration) — the C17/D62 script teeth                C17
+#       replicas: 10 — owner ruling 2026-11-26 (B1-as-amended)      C16 (a)
+#   g9  the deployed render keeps runner capacity 1 (stay-1 ruling)  C16 (b)
+#   g10 the chart default renders replicas 1 with NO override       C16 (c)
 #
 # Why the URL is pinned instead of derived: `git.spencerslab.com` is the infra
 # instance's canonical DOMAIN/ROOT_URL host and split DNS carries it to the
@@ -38,17 +31,13 @@
 # mismatch (EXPLORE R3) — so the alias is banned, not merely disfavoured. An
 # in-cluster URL is dead on gpu: no forgejo service exists there.
 #
-# Red-first by design: the cf-55 ROUND-6 legs (g2's single-key ESO / no-
-# template / ConfigMap skeleton / Parallel / register presence, g5's
-# registration-token comment, g11's script behavior, and dev-forgejo-runner.sh
-# t2/t11/t12/t21/t22) are RED at this pre-C17 HEAD — the (uuid, token) record
-# pair, the inline template and the declarative-only header are exactly what
-# C17 replaces (D61/D62, owner-approved D64). g7 is the blast-radius gate:
-# green while the chart and services diffs stay inside their bounded
-# sanctioned classes (sixth class: the C17 re-shape surfaces), red on anything
-# wider (re-armed by D41, cf-6 OQ-C, the run-1 R2′ two-class re-arm, and
-# C16's fifth class; g3 additionally guards that gpu NEVER gains a labels
-# override).
+# Red-first by design: g2 stops on cf-6-debug-forge-runner-docker-1 — its
+# ACT_LABELS wait on the run-1 DEV move re-pointing the chart default to the
+# infra instance registry (earlier stops: cf-104's C04/C05, then cf-55's C06;
+# same stop, new content). g7 is the blast-radius gate: green while the chart
+# and services/dev diffs stay inside their bounded sanctioned classes, red on
+# anything wider (re-armed by D41, cf-6 OQ-C, and the run-1 R2′ two-class
+# re-arm; g3 additionally guards that gpu NEVER gains a labels override).
 #
 # Harness per tests/services/infra-forgejo.sh:1-30 (helm from HELM_BIN/PATH/
 # ~/.local/bin//tmp/opencode, else v3.21.4 downloaded there; renders on
@@ -295,13 +284,7 @@ try:
     sts = next(d for d in docs if d.get('kind') == 'StatefulSet')
     spec = sts.get('spec') or {}
     if spec.get('replicas') != 10:
-        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 10 — owner ruling 2026-11-26: runners to replicas 10, both instances; the D57 count and capacity-1 arithmetic STAND under D61, with the identity law replaced: ten pods hold TEN self-minted records behind ONE reusable registration token (the shared (uuid, token) pair is retired — ActionRunner.UUID is UNIQUE, one row could never show the fleet)')
-    if spec.get('podManagementPolicy') != 'Parallel':
-        bad(f'g2: podManagementPolicy is {spec.get("podManagementPolicy")!r}, expected Parallel — the gpu freeze class this round was born from (EXPLORE Round-6 A1: pod-3 unschedulable under OrderedReady froze ordinals 4-9 out of existence; a pending ordinal must never block the registrations behind it, D62)')
-    gpod = ((spec.get('template') or {}).get('spec') or {})
-    gics = {(c or {}).get('name') for c in (gpod.get('initContainers') or [])}
-    if 'register' not in gics:
-        bad(f'g2: initContainers are {sorted(gics)}, expected the register init next to dind — per-ordinal self-registration is the deployed gpu shape (g11 owns the script teeth)')
+        bad(f'g2: replicas is {spec.get("replicas")!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5): runners to replicas 10, both instances; B1 AS AMENDED per D57 (10 pods poll ONE registration, capacity stays 1 per pod) — the services slice carries the override, the chart default stays single')
     vcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in (spec.get('volumeClaimTemplates') or [])}
     if set(vcts) != {'data', 'docker-data'}:
         bad(f'g2: volumeClaimTemplates named {sorted(vcts)}, expected exactly [data, docker-data]')
@@ -315,35 +298,18 @@ try:
         # default needs no per-cluster override.
         if vspec.get('storageClassName') != 'local-path':
             bad(f'g2: VCT {name} storageClassName is {vspec.get("storageClassName")!r}, expected local-path')
-    ok('g2: replicas 10 + podManagementPolicy Parallel + register init via the services slice (one token, ten records — D61), VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass) — the per-pod shape did not scale, the pod count did')
+    ok('g2: replicas 10 via the services slice (B1-as-amended, owner ruling 2026-11-26), VCTs data 2Gi + docker-data 10Gi, both RWO local-path (gpu default StorageClass) — the per-pod shape did not scale, the pod count did')
 
     es = next(d for d in docs if d.get('kind') == 'ExternalSecret')
-    espec = es.get('spec') or {}
-    # C17/D62 single-key shape, gpu twin of dev t2/t12 — these are the
-    # red-for-C17 legs (the template still renders at this HEAD).
-    if (espec.get('target') or {}).get('template') is not None:
-        bad('g2: the ExternalSecret still renders spec.target.template — C17 deletes the inline template (one fetched registration-token key; the card-#97 mergePolicy class goes moot by construction)')
-    fetched = [(e or {}).get('secretKey') for e in (espec.get('data') or [])]
-    if fetched != ['registration-token']:
-        bad(f'g2: the ExternalSecret fetches {fetched}, expected exactly one registration-token key — ONE reusable instance-scope registration token behind ten records (D61), never the (uuid, token) pair')
-    cms = [d for d in docs if d.get('kind') == 'ConfigMap']
-    if not cms:
-        bad('g2: the gpu render carries no ConfigMap — the config skeleton moved from the ESO template to the chart-side configmap-skeleton template (D62; app-template configMaps tpls against the SUBCHART context where the parent runner.* is invisible — D65)')
-    cm = cms[0]
-    if set((cm.get('data') or {})) != {'config.yaml'}:
-        bad(f'g2: the skeleton ConfigMap keys are {sorted((cm.get("data") or {}))}, expected exactly [config.yaml]')
-    cfg = yaml.safe_load(((cm.get('data') or {}).get('config.yaml') or ''))
+    data = (((es.get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+    cfg = yaml.safe_load(data.get('config.yaml') or '')
     conns = (((cfg or {}).get('server') or {}).get('connections') or {})
     if set(conns) != {'default'}:
         bad(f'g2: config connections are {sorted(conns)}, expected exactly [default]')
     conn = conns['default']
     if set(conn.get('labels') or []) != ACT_LABELS:
-        bad(f'g2: the skeleton default.labels are {sorted(conn.get("labels") or [])}, expected the chart-default baked 5-label set {sorted(ACT_LABELS)} — the gpu release rides the chart default (own-registry fork is dev-only, t17/g3); the byte-identity law moved with the config into the ConfigMap render (D62) and every row must advertise the IDENTICAL set')
-    if conn.get('token_url') != 'file:/data/config/token':
-        bad(f'g2: the skeleton default.token_url is {conn.get("token_url")!r}, expected file:/data/config/token (absolute PVC path — the CREDENTIALS_DIRECTORY pair retires, D62/G3)')
-    if re.search(r'CREDENTIALS_DIRECTORY', render):
-        bad('g2: CREDENTIALS_DIRECTORY survives the gpu render — the env/Secret-mount pair is chart-side and must retire on BOTH slices (t2/dev twin)')
-    ok('g2: skeleton on the release ConfigMap — baked act set intact (helm+cr behind the 24.04-family labels, plain act-22.04 kept), absolute token_url, single fetched registration-token, no ESO template')
+        bad(f'g2: default.labels are {sorted(conn.get("labels") or [])}, expected the chart-default baked 5-label set {sorted(ACT_LABELS)} — the gpu release rides the chart default, whose act-24.04-family refs are git.spencerslab.com/curatedforest/forgejo-runner calendar pins (cf-55 D39/D40 lineage; infra-instance re-pin cf-6-debug-forge-runner-docker-1, 2026-11-22); a gpu release on an installer-less map is the first-fire failure D33 fixed')
+    ok('g2: config.yaml labels map equals the baked act set (helm+cr behind the 24.04-family labels, plain act-22.04 kept)')
 
     with open(cv_file) as f:
         cv = yaml.safe_load(f) or {}
@@ -633,16 +599,7 @@ try:
     # valid boundaries.
     if not re.search(r'(?<![\w-])forgejo-runner(?![\w-])', blob):
         bad(f'g5: the comment above {gpu_cv} runner-token does not name the Bitwarden item forgejo-runner (the item name the user created it under, superseding the Q15 best guess — one item per concern, documented at the slot as the dev precedent does; the values key forgejo-runner-gpu and the superseded gpu-forgejo-runner do not name it)')
-    # C17/D64: the gpu item is REPURPOSED — the owner replaces its PASSWORD
-    # field with the instance-scope registration token (UA-R6-3). The slot
-    # comment must state the new content positively; the old record-pair
-    # instructions (create a runner record, fill the username uuid) are the
-    # retired truth and must not survive as guidance.
-    if not re.search(r'registration[\s-]+token', blob, re.I):
-        bad(f'g5: the {gpu_cv} runner-token slot comment never names the registration token — C17 Tasks: the item password now holds the instance-scope registration token (UA-R6-3 mints it); the record-token wording is retired')
-    if re.search(r'from the runner record|username = the runner uuid', blob, re.I):
-        bad(f'g5: the {gpu_cv} slot comment still instructs record-pair content — the stale username/uuid field is IGNORED by the new ESO shape (D64), so the comment must not ask for it')
-    ok('g5: the slot comment names the forgejo-runner item AND its registration-token content (D64 reuse ruling; record-pair instructions retired)')
+    ok('g5: the slot comment names the forgejo-runner item')
 
     reserved = raw.count('dev-forgejo-prod-runner')
     if reserved:
@@ -770,21 +727,9 @@ fi
 # discipline as R2′, add-side only (a scale-down revert is a fresh ruling,
 # not a silent hunk; the render pins t2/g2 and the slice pins t18/g8 carry
 # the content law). A partial hunk, a second occurrence, foreign indent, or
-# the shape under any other top-level block stays red. ROUND 6 / C17 (owner
-# ruling D64, chunks/C17.md; re-armed D65 fold) adds the SIXTH class: the register-on-boot
-# re-shape confined to charts/forgejo-runner/{values.yaml,
-# templates/secret-runner.yaml, templates/configmap-skeleton.yaml,
-# templates/NOTES.txt, Chart.yaml} — the skeleton renders as a PARENT-chart
-# template (app-template tpl's configMaps data against the SUBCHART context,
-# where the parent runner.* is invisible; import-values child->parent only,
-# the theorem STATE round6.c17_dev records) and the NOTES one-time-action
-# retires WITH the shape — plus dated comment-only hunks in
-# custom-values/{dev,gpu} (the UUID slots themselves stay pinned) — the
-# chart's non-comment moves outside those files stay red, and the re-shape's
-# CONTENT is pinned by the render/static legs, not by this fence. The
-# original hazards (a
+# the shape under any other top-level block stays red. The original hazards (a
 # shared-chart fork, a cross-instance or rolling ref, gpu-attributed wiring
-# landing in dev files, any custom-values/dev CONTENT move) stay red; anything wider
+# landing in dev files, any custom-values/dev move) stay red; anything wider
 # than the sanctioned classes stays red too.
 if [ -z "$DIFF_BASE" ]; then
   skip "g7: no main/origin/main ref to diff against; the blast-radius leg was not run (set GPU_RUNNER_DIFF_BASE)"
@@ -808,26 +753,9 @@ def git(*args):
     return subprocess.run(('git',) + args, capture_output=True, text=True).stdout
 
 try:
-    # C17/D63 retires the C05-era dev-vault zero-diff premise: this ticket
-    # owns comment-only re-truths in BOTH custom-values files (the runner
-    # token entry becomes the registration-token entry — UA-R6-3 mints, D64
-    # repurpose-existing-items). The blast-radius teeth survive as the
-    # CONTENT fence: a UUID, a key, or any non-comment line that moves is
-    # still the fork class this leg was built to catch, and a comment hunk
-    # still has to carry its date (the cf-6 OQ-C discipline).
-    cv_diff = git('diff', base, '--', 'custom-values/dev', 'custom-values/gpu')
-    cv_changed = [l for l in cv_diff.splitlines()
-                  if l[:1] in '+-' and not l.startswith(('+++', '---'))]
-    cv_content = [l for l in cv_changed if l[1:].strip() and not l[1:].lstrip().startswith('#')]
-    if cv_content:
-        bad(f'g7: the custom-values runner slots moved CONTENT: {[l.strip() for l in cv_content][:4]} — the C17 vault edits are comment-only; the item UUIDs stay put (D64 reuse ruling) and no key may shift')
-    cv_comments = [l for l in cv_changed if l[1:].lstrip().startswith('#')]
-    if cv_comments and not any(re.search(r'\d{4}-\d{2}-\d{2}', l) for l in cv_comments if l.startswith('+')):
-        bad(f'g7: the custom-values runner-token comment hunks are UNDATED: {[l.strip() for l in cv_comments][:4]} — a vault re-truth must name its ruling date like every other documented-surface edit')
-    if cv_content or cv_comments:
-        ok('g7: custom-values/{dev,gpu} changed as dated comment-only re-truths (C17 registration-token entry; the UUID slots content-pinned)')
-    else:
-        ok('g7: custom-values/{dev,gpu} runner slots byte-untouched (the C17 comment re-truths have not landed yet)')
+    cv = re.findall(r'^[+-].*forgejo-runner', git('diff', base, '--', 'custom-values/dev'), re.M)
+    if cv:
+        bad(f'g7: the dev runner surface changed: {cv[:4]} — dev keeps its own runner and its trio-exemption comment (dev-wiring.sh cites it); C05 is gpu-only')
     dev_diff_text = git('diff', base, '--', 'services/dev')
     dev_lines = [l for l in dev_diff_text.splitlines()
                  if l[:1] in '+-' and not l.startswith(('+++', '---'))
@@ -956,12 +884,6 @@ try:
     if len(imgs) > 8:
         bad(f'g7: {len(imgs)} docker:// lines changed under charts/forgejo-runner ({imgs[:6]}) — the C06 re-point is four labels in + four out, at most 8 lines; more is a fork of the shared chart (the rejected shape)')
     for l in imgs:
-        # C17 moves the value-exact docker_host socket line with the config
-        # body (template file -> values.yaml skeleton); it is the cf-6
-        # docker_host class, not a label-pin change — the sanctioned walk
-        # below counts it.
-        if 'docker_host:' in l:
-            continue
         if 'ubuntu-22.04:' in l:
             bad(f'g7: the ubuntu-22.04 label line moved ({l.strip()}) — D40 keeps it plain act-22.04: no job requests it and a 24.04-content image behind the label would lie about its OS')
         if l.startswith('-'):
@@ -976,39 +898,9 @@ try:
                 bad(f'g7: removed docker:// line is neither the act-24.04 out-shape nor a superseded calendar pin (ghcr.io/ownyourio or git.spencerslab.com/curatedforest): {l.strip()}')
         elif not re.search(r'git\.spencerslab\.com/curatedforest/forgejo-runner:[0-9]{2}\.[0-9]{2}\.[0-9]+', l):
             bad(f'g7: added docker:// line is not a git.spencerslab.com/curatedforest/forgejo-runner calendar ref: {l.strip()} — the chart default names the baked job image on the infra instance registry (cf-6 run-1, family B; D39 immutable calendar pin). A return to ghcr.io/ownyourio, catthehacker, or any rolling ref is a law change needing a fresh re-arm; the git.scifi.farm refs of the dev release belong to the sanctioned services/dev class, never the chart')
-    # C17 sixth-class file attribution: non-comment, non-label lines are
-    # bounded to the sanctioned re-shape surfaces (the single-key ESO
-    # rewrite, the values.yaml register-on-boot rework, the Chart.yaml
-    # description) — their CONTENT is pinned by dev-forgejo-runner.sh
-    # t2/t12/t21/t22 and the gpu twins here, not by this diff fence.
-    # Anything outside those three files (NOTES.txt, Chart.lock, other
-    # templates) stays red: the C05-era fork hazard never lapsed for them.
-    # C17_FILES (sixth class, re-armed by D65's fold): the sanctioned
-    # register-on-boot re-shape surfaces — values.yaml (init/env/persistence/
-    # policy/skeleton-source + header), templates/secret-runner.yaml (the
-    # single-key ESO rewrite), templates/configmap-skeleton.yaml (NEW — the
-    # skeleton's honest single-source home: app-template renders configMaps
-    # data via tpl against the SUBCHART context where the parent runner.*
-    # is invisible, so the chart template renders it; import-values runs
-    # child->parent only), templates/NOTES.txt (the one-time-action story
-    # retires WITH the shape — D65 fold; its wording is pinned by t11), and
-    # Chart.yaml (description only). Their CONTENT is pinned by
-    # dev-forgejo-runner.sh t2/t12/t21/t22 + t11, not by this fence;
-    # anything OUTSIDE the set (Chart.lock, other templates, values schema)
-    # stays red.
-    C17_FILES = ('charts/forgejo-runner/values.yaml',
-                 'charts/forgejo-runner/templates/secret-runner.yaml',
-                 'charts/forgejo-runner/templates/configmap-skeleton.yaml',
-                 'charts/forgejo-runner/templates/NOTES.txt',
-                 'charts/forgejo-runner/Chart.yaml')
-    nonlab, cur3 = [], None
-    for l in diff_text.splitlines():
-        if l.startswith('+++ b/'):
-            cur3 = l[6:]
-        elif l[:1] in '+-' and not l.startswith(('+++', '---')):
-            body = l[1:]
-            if body.strip() and not body.lstrip().startswith('#') and 'docker://' not in body:
-                nonlab.append((cur3, l))
+    nonlab = [l for l in changed
+              if l[1:].strip() and not l[1:].lstrip().startswith('#')
+              and 'docker://' not in l]
     # cf-6 re-arm (OQ-C): exactly one added value-exact socket-share line
     # in the config template is sanctioned — the job→dind contract fix. A
     # second copy, a different value, a different file, or any other
@@ -1025,20 +917,16 @@ try:
         if l.startswith('+++ b/'):
             cur = l[6:]
         elif l.startswith('+') and l[1:].strip() == SOCKET_LINE:
-            # C17 moves the socket-share line with the config body: template
-            # file -> values.yaml ConfigMap skeleton. Both homes are the
-            # cf-6 sanctioned single line (t15 owns the value pin).
-            if cur and (cur.endswith('templates/secret-runner.yaml')
-                        or cur.endswith('charts/forgejo-runner/values.yaml')):
+            if cur and cur.endswith('templates/secret-runner.yaml'):
                 sanctioned.append(l)
             else:
                 stray.append(f'{cur}: {l.strip()}')
     if len(sanctioned) > 1:
-        bad(f'g7: {len(sanctioned)} added docker_host lines under charts/forgejo-runner — the cf-6 sanctioned socket-share line is exactly one, wherever C17 parked it')
+        bad(f'g7: {len(sanctioned)} added docker_host lines under charts/forgejo-runner — the cf-6 sanctioned socket edit is exactly one line')
     if stray:
-        bad(f'g7: docker_host socket-share line added outside the config template / values skeleton: {stray[:2]} — the cf-6 sanction is the ONE line in the config home (C17: the values.yaml ConfigMap skeleton); an identical addition in any other chart file is unsanctioned content (the review-r1 compound shape)')
+        bad(f'g7: docker_host socket-share line added outside the config template: {stray[:2]} — the cf-6 sanction is the ONE line in templates/secret-runner.yaml; an identical addition in any other chart file is unsanctioned content (the review-r1 compound shape)')
     if sanctioned:
-        nonlab = [(f, l) for f, l in nonlab if not (l.startswith('+') and l[1:].strip() == SOCKET_LINE)]
+        nonlab = [l for l in nonlab if not (l.startswith('+') and l[1:].strip() == SOCKET_LINE)]
     # run-3 D33 re-arm (owner ruling 2026-11-23, family (c)): the FOURTH
     # sanctioned class — the dind MTU pair that keeps the documented TLS-35
     # egress class (lane dispatch #215's death) from recurring fleet-wide.
@@ -1063,15 +951,11 @@ try:
     if mtu_stray:
         bad(f'g7: MTU-class lines added outside charts/forgejo-runner/values.yaml: {mtu_stray[:2]} — the fourth-class sanction is the pair in the chart values alone; the same text in a template or any other chart file is unsanctioned content (the review-r1 compound-shape lesson)')
     if len(mtu_added) == 2:
-        nonlab = [(f, l) for f, l in nonlab if not (l.startswith('+') and l[1:].strip() in MTU_LINES)]
+        nonlab = [l for l in nonlab if not (l.startswith('+') and l[1:].strip() in MTU_LINES)]
         ok('g7: fourth class (run-3 D33 re-arm 2026-11-23) — the exact args:/--mtu=1450 pair added under charts/forgejo-runner/values.yaml alone, nothing else (dind bridge MTU capped for the fleet)')
-    stray_files = [(f, l) for f, l in nonlab if f not in C17_FILES]
-    c17_in = [(f, l) for f, l in nonlab if f in C17_FILES]
-    if stray_files:
-        bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines OUTSIDE the C17 re-shape surfaces: {[(f, l.strip()) for f, l in stray_files][:4]} — the sixth class (cf-55 ROUND 6 / C17 + D65 fold) covers values.yaml, templates/secret-runner.yaml, templates/configmap-skeleton.yaml, templates/NOTES.txt and Chart.yaml ONLY; Chart.lock and every other chart file stay byte-pinned (C17 Files-in-scope + renovate law)')
-    if c17_in:
-        ok(f'g7: sixth class (cf-55 ROUND 6 / C17, D62/D63 + D65 fold) — {len(c17_in)} non-comment chart lines moved inside the sanctioned re-shape surfaces (single-key ESO rewrite, values.yaml register-on-boot rework, parent-rendered skeleton template, NOTES one-time-action re-truth, Chart.yaml description); content rides t2/t12/t21/t22/t11, not this fence')
-    ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8 with the docker_host move exempted, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, non-comment moves confined to the C17 surfaces)')
+    if nonlab:
+        bad(f'g7: charts/forgejo-runner diff moves non-comment, non-label lines: {nonlab[:4]} — only the labels list, its comments, and the one sanctioned docker_host line may change; the values dind/runner pins and the app-template subtree stay byte-untouched (renovate law)')
+    ok(f'g7: charts/forgejo-runner diff is a bounded edit set ({len(imgs)} docker:// lines at cap 8, infra-instance calendar refs in / superseded pins out, ubuntu-22.04 stable, {len(sanctioned)}/1 sanctioned docker_host line, nothing else moved)')
 
     # C16/D57 fifth class, gpu leg: services/gpu gains its OWN positional
     # shape fence (the dev-side R2′ mirror) — the replicas-10 four-line hunk
@@ -1166,13 +1050,13 @@ d = yaml.safe_load(''.join(lines)) or {}
 block = d.get(key) or {}
 rep = (((block.get('app-template') or {}).get('controllers') or {}).get('runner') or {}).get('replicas')
 if rep != 10:
-    print(f'FAIL: g8: {src} top-level {key} block carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (D57 count, standing under D61): BOTH runner releases scale ten self-registering pods via the per-slice override, behind one reusable registration token', file=sys.stderr)
+    print(f'FAIL: g8: {src} top-level {key} block carries app-template.controllers.runner.replicas {rep!r}, expected 10 — owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57): BOTH runner releases scale via the per-slice override', file=sys.stderr)
     sys.exit(1)
 PY
 then
   fail "g8: see the g8 detail above"
 fi
-ok "g8: services/gpu/prod/values.yaml forgejo-runner-gpu block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, D57-as-superseded-by-D61 — ten records, one token)"
+ok "g8: services/gpu/prod/values.yaml forgejo-runner-gpu block pins app-template.controllers.runner.replicas: 10 (owner ruling 2026-11-26, B1-as-amended)"
 
 # --- g9: capacity STAYS 1 in the deployed render (C16 leg (b), D57) ------------
 # 10 pods x capacity 1 = 10 concurrent jobs; an in-pod queue (capacity>1)
@@ -1185,29 +1069,21 @@ else
 import sys, yaml
 
 docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
-# C17 reader move (dev t19 twin): capacity rides the ConfigMap skeleton; the
-# ESO-template limb only keeps the pre-C17 tree readable.
-cfg = None
-for d in docs:
-    if d.get('kind') == 'ConfigMap' and ((d.get('data') or {}).get('config.yaml')):
-        cfg = yaml.safe_load(d['data']['config.yaml'])
-        break
-if cfg is None:
-    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
-    if not es:
-        print('FAIL: g9: the deployed render carries neither the ConfigMap skeleton (C17 home) nor an ExternalSecret template (pre-C17) — the config.yaml home moved again and this leg was not re-aimed', file=sys.stderr)
-        sys.exit(1)
-    data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
-    cfg = yaml.safe_load(data.get('config.yaml') or '')
+es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+if not es:
+    print('FAIL: g9: no ExternalSecret in the deployed render (its config.yaml home is the capacity site — t/g2 would already be red)', file=sys.stderr)
+    sys.exit(1)
+data = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {}).get('data') or {}
+cfg = yaml.safe_load(data.get('config.yaml') or '')
 cap = ((cfg or {}).get('runner') or {}).get('capacity')
 if cap != 1:
-    print(f'FAIL: g9: the deployed render carries runner.capacity {cap!r}, expected 1 — stay-1 is a DECISION: D57 arithmetic survives D61 honest per row (ten pods, ten records, one job each inside the 2cpu/4Gi dind envelope; EXPLORE Round-6 B: the only concurrency cap is the client-side per-process budget)', file=sys.stderr)
+    print(f'FAIL: g9: the deployed render carries runner.capacity {cap!r}, expected 1 (D57 stay-1 ruling; secret-runner.yaml is NOT touched by the replicas scale)', file=sys.stderr)
     sys.exit(1)
 PY
   then
     fail "g9: see the g9 detail above"
   fi
-  ok "g9: the deployed gpu render carries runner capacity 1 in the ConfigMap skeleton — stay-1 fenced (D57 under D61: ten rows, one job each)"
+  ok "g9: the deployed gpu render carries runner capacity 1 — stay-1 fenced (D57: ten pods, one job each)"
 fi
 
 # --- g10: chart default renders replicas 1 with NO slice (C16 leg (c)) ---------
@@ -1234,95 +1110,13 @@ if len(sts) != 1:
     sys.exit(1)
 rep = (sts[0].get('spec') or {}).get('replicas')
 if rep != 1:
-    print(f'FAIL: g10: the NO-OVERRIDE chart render is replicas {rep!r}, expected 1 — charts/forgejo-runner/values.yaml keeps the single-pod default (D57 arithmetic under D61: scale rides per-slice overrides; a chart flip would silently multiply EVERY future release into ten self-registrations it never ruled)', file=sys.stderr)
+    print(f'FAIL: g10: the NO-OVERRIDE chart render is replicas {rep!r}, expected 1 — charts/forgejo-runner/values.yaml keeps the single-pod default (D57: scale rides per-slice overrides; a chart flip would multiply EVERY future release)', file=sys.stderr)
     sys.exit(1)
 PY
   then
     fail "g10: see the g10 detail above"
   fi
-  ok "g10: with no slice the chart renders replicas 1 — the default stays single (D57 count and default under D61)"
-fi
-
-# --- g11: register init behavior on the deployed gpu render (C17 twin) --------
-# The dev suite's t21 mirrors here on the gpu overlay (chart default labels,
-# infra URL): the re-attach script is one chart mechanism, so BOTH renders
-# must carry the same behavior teeth (guard-first, downward-API name,
-# release-Secret token env, ephemeral false, PVC write paths, loud failure,
-# zero deregistration). Red-first at this HEAD: no register container yet.
-if [ "$skip_helm" -eq 1 ]; then
-  skip "g11: not run (renders unavailable)"
-else
-  if ! python3 - "$gpu_render" "$APP" "$GPU_URL" <<'PY'
-import re, sys, yaml
-
-render, release, url = sys.argv[1:4]
-
-def bad(msg):
-    print(f'FAIL: {msg}', file=sys.stderr)
-    sys.exit(1)
-
-docs = [d for d in yaml.safe_load_all(open(render)) if d]
-sts = next((d for d in docs if d.get('kind') == 'StatefulSet'), None)
-pod = ((((sts or {}).get('spec') or {}).get('template') or {}).get('spec')) or {}
-reg = next((c for c in (pod.get('initContainers') or []) if (c or {}).get('name') == 'register'), None)
-if reg is None:
-    bad('g11: the deployed gpu render has no register init (g2 pins presence; this leg owns the script)')
-script = '\n'.join((reg.get('command') or []) + (reg.get('args') or []))
-if not script.strip():
-    bad('g11: register carries no command/args — the guard/POST/render sequence must be pinnable in the pod')
-# D65-review re-aim (dev t21 twin): whole-line comments stripped; guard,
-# endpoint and ordering index CODE — the shipped G1 comment names the
-# rejected admin-REST twin and must not be able to satisfy the leg alone.
-code = re.sub(r'(?m)^\s*#.*$', '', script)
-guard = re.search(r'\[\s*-f\s+/data/config/config\.yaml\s*\]', code)
-if not guard:
-    bad('g11: no /data/config/config.yaml guard IN CODE — without it every gpu restart re-POSTs and churns uuids (D62 restart discipline; the reloader annotation makes that routine, not exotic)')
-RPC = '/api/actions/forgejo.actions.runner.v1.RunnerService/Register'
-post = code.find(RPC)
-if post < 0:
-    bad('g11: no G1 Register RPC procedure dialed at the /api/actions connect route IN CODE — v15.0.10 [S3/S4]: Register is exempt from header auth and authenticates the token IN THE BODY (server mints uuid+token, unbounded reuse, no expiry column); the admin-REST twin wants a site-admin API token and is the NOT-used contrast — the call, not a comment, is the pin')
-if guard and guard.start() > post:
-    bad('g11: the guard sits AFTER the Register call in CODE — re-attach must win before any POST (guard-FIRST, D62)')
-envs = {(e or {}).get('name'): e for e in (reg.get('env') or [])}
-pn = envs.get('POD_NAME') or {}
-if ((pn.get('valueFrom') or {}).get('fieldRef') or {}).get('fieldPath') != 'metadata.name':
-    bad(f'g11: POD_NAME env is {pn!r}, expected downward-API metadata.name — record names equal pod names on gpu too ([S11] official shape)')
-if not re.search(r'\$\{?POD_NAME\}?', script):
-    bad('g11: script never uses POD_NAME as the registration name')
-tok = next(((n, e) for n, e in envs.items() if ((e or {}).get('valueFrom') or {}).get('secretKeyRef')), None)
-if tok is None:
-    bad('g11: no env with valueFrom.secretKeyRef — the registration token must come from the release Secret')
-skr = (tok[1].get('valueFrom') or {}).get('secretKeyRef') or {}
-if skr.get('key') != 'registration-token' or skr.get('name') != release:
-    bad(f'g11: token env {tok[0]!r} secretKeyRef is {skr!r}, expected {release!r}/registration-token (the fetched single key; never the forgejo-token item)')
-if not re.search(r'\$\{?' + re.escape(tok[0]) + r'\}?', script):
-    bad(f'g11: the fetched token env {tok[0]!r} is unused by the script')
-if not re.search(r'--post-data|-X[ ]+POST|--method[ ]*[:=][ ]*POST|request[ ]+POST', code, re.I):
-    bad('g11: the Register RPC call carries no POST limb — Register is a POST procedure at the /api/actions route (G1 [S3])')
-if not any('token' in l.lower() and re.search(r'\$\{?' + re.escape(tok[0]), l) for l in code.splitlines()):
-    bad(f'g11: the token env {tok[0]!r} is never interpolated on a request line alongside the token field — G1: token IN THE BODY for the Register RPC (dev-shape \\"token\\":\\"$env\\"); absent-at-call or header-only is not the evidenced channel')
-if re.search(r'ephemeral[^A-Za-z]{0,8}\btrue\b', script, re.I):
-    bad('g11: ephemeral TRUE in the payload — the daemon refuses ephemeral records ([S9 daemon.go]); tooth (d)')
-if not re.search(r'ephemeral[^A-Za-z]{0,12}\bfalse\b', script, re.I):
-    bad('g11: no ephemeral false-class token — the record must persist (C17 Tasks: REQUIRED)')
-for p in ('/data/config/config.yaml', '/data/config/token'):
-    if p not in script:
-        bad(f'g11: script never writes {p} — identity lands on the ordinal data PVC (D62)')
-if not any((m or {}).get('mountPath') == '/data' for m in (reg.get('volumeMounts') or [])):
-    bad('g11: register has no /data mount — writes go to the data PVC, nowhere else')
-if not re.search(r'set -e|exit 1|\|\|\s*exit|\|\|\s*\{', script):
-    bad('g11: no loud failure limb — a swallowed cold-boot error crash-loops the daemon on the placeholder (fail-fast class)')
-if re.search(r'deregist|-X\s*DELETE|DELETE\s', script, re.I):
-    bad('g11: deregistration/DELETE limb present — v13 has no client-side deregistration (RESEARCH Q4 [S9 grep]); D63 keeps stale rows owner-side')
-raw = open(render).read()
-noc = '\n'.join(l for l in raw.splitlines() if not l.strip().startswith('#'))
-if re.search(r'deregist|-X\s*DELETE', noc, re.I):
-    bad('g11: a deregistration call hides in the gpu render (AC5: none anywhere)')
-PY
-  then
-    fail "g11: see the g11 detail above"
-  fi
-  ok "g11: deployed gpu register init — guard-first, downward-API POD_NAME, release-Secret token env, ephemeral false, PVC writes, loud failure, zero deregistration (dev t21 mirror — one mechanism, both slices)"
+  ok "g10: with no slice the chart renders replicas 1 — the default stays single (B1-as-amended, D57)"
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

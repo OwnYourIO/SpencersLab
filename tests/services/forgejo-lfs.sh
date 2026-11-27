@@ -1522,23 +1522,12 @@ try:
 
     # C02's in-scope set (the forgejo SSA flip, pinned by t12) legitimately
     # touches exactly the dev + infra service values; every other path in
-    # this clause stays byte-pinned against the fork base. cf-55 ROUND 6 /
-    # C17 (D65(1) sanctioned re-aim — review bundle): the register-on-boot
-    # re-shape lands its declared five chart files + the gpu slice + the gpu
-    # vault comment; the C17 contract legs (dev/gpu-forgejo-runner suites +
-    # the guard-trio admits) own those files' content, so this leg ADMITS
-    # them by exact path — no wildcards: Chart.lock, other templates and
-    # every sibling stay byte-pinned.
-    c02_in_scope = {'services/dev/prod/values.yaml', 'services/infra/prod/values.yaml',
-                    'services/gpu/prod/values.yaml', 'custom-values/gpu/prod-values.yaml',
-                    'charts/forgejo-runner/Chart.yaml', 'charts/forgejo-runner/values.yaml',
-                    'charts/forgejo-runner/templates/NOTES.txt',
-                    'charts/forgejo-runner/templates/secret-runner.yaml',
-                    'charts/forgejo-runner/templates/configmap-skeleton.yaml'}
+    # this clause stays byte-pinned against the fork base.
+    c02_in_scope = {'services/dev/prod/values.yaml', 'services/infra/prod/values.yaml'}
     moved = [m for m in git('diff', '--name-only', base, '--', 'services', 'charts/forgejo-runner', 'custom-values/infra', 'custom-values/gpu').split() if m not in c02_in_scope]
     if moved:
-        bad(f't11: {moved} changed against the fork base {base} — out of scope for this ticket (C01: only the forgejo wrapper + the dev slice; C02: only the two forgejo values entries, pinned by t12; C17: the five chart files + gpu slice + gpu vault comment, D65(1))')
-    ok('t11: services/ (minus the C02 flip files and C17 gpu slice), charts/forgejo-runner/ (minus the C17 five files) and custom-values/{infra, and gpu minus the C17 comment hunk} have zero diff lines against the fork base')
+        bad(f't11: {moved} changed against the fork base {base} — out of scope for this ticket (C01: only the forgejo wrapper + the dev slice; C02: only the two forgejo values entries, pinned by t12)')
+    ok('t11: services/ (minus the two C02 flip files), charts/forgejo-runner/ and custom-values/{infra,gpu}/ have zero diff lines against the fork base')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
