@@ -226,36 +226,56 @@ manager reads these lines (the chart's own comment: the pins are
 immutable calendar tags, a wrong pin fails loudly as a pull error), so
 the bump is manual — the AGENTS.md law.
 
-1. After the merge fire, verify the new calendar tag is published — the
-   next `yy.mm.N` past the current pin `26.11.1` (i.e. `26.11.2` or
-   higher; check that the newest is YOURS — a build that predates the
-   merge you ship can already occupy a higher N, the container-creation
-   skill's warning). The registry-side read is the pull-scoped-token
-   shape: `GET https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull`
-   plus `GET https://ghcr.io/v2/ownyourio/forgejo-runner/tags/list`. Do
-   NOT enumerate with an untagged `docker buildx imagetools inspect` —
-   untagged, it resolves `:latest` (a rolling tag every main build
-   repoints) and lists nothing (the skill's explicit warning). The same
-   manifest read applies to the instance registry (anonymous pull):
+**Landed (2026-11-27, AD-56 C05):** the post-merge fan minted
+`26.11.5` — layer-verified on the instance registry (it carries
+`/usr/local/bin/coder`, 355,623,074 B, the AD-56 C01 bake; built
+2026-11-27 03:52; `latest` and `main` point at it; `26.11.2`–`4` are
+pre-bake re-mints of the same manifest — the skill's "check that the
+newest is YOURS" warning materialized, so the merge's own build is
+`26.11.5`, not the walk-predicted `26.11.2`). The pin sites moved
+together in C05 (chart default + the dev slice, the `ubuntu-22.04`
+line untouched in both); the ghcr-side confirmation (step 1) and the
+dev-registry push (step 2) remain owner legs.
+
+1. Verify the new calendar tag is published — the `yy.mm.N` past the
+   pin the bump outranks, confirming it is the merge's own build (a
+   build that predates the merge you ship can already occupy a higher
+   N, the container-creation skill's warning). Do NOT enumerate with an
+   untagged `docker buildx imagetools inspect` — untagged, it resolves
+   `:latest` (a rolling tag every main build repoints) and lists
+   nothing (the skill's explicit warning). The ghcr-side read: the
+   pull-scoped-token shape (`GET https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull`
+   + `GET https://ghcr.io/v2/ownyourio/forgejo-runner/tags/list`) no
+   longer answers as of 2026-11-27 (it 401s for this package while the
+   control package answers) — the ghcr-side confirmation is the owner's
+   UI leg. The instance registry answers an anonymous realm-JWT (a bare
+   curl 401s — mint the JWT first):
 
    ```bash
-   # human-executed — UA3: verify the new calendar tag on ghcr + the
-   # instance registry (the pull-scoped-token shape; untagged imagetools
-   # inspect resolves :latest and lists nothing — the skill's warning)
-   tag=26.11.2   # the expected next calendar tag — confirm it is the merge's own build
-   ghcr_token=$(curl -fsS "https://ghcr.io/token?scope=repository:ownyourio/forgejo-runner:pull" | jq -r .token)
-   curl -fsS -o /dev/null -w 'ghcr %{http_code}\n' -H "Authorization: Bearer $ghcr_token" "https://ghcr.io/v2/ownyourio/forgejo-runner/manifests/$tag"
-   # the instance registry (the infra forge host, the curatedforest owner, anonymous pull)
-   curl -fsS -o /dev/null -w 'instance-registry %{http_code}\n' "https://git.spencerslab.com/v2/curatedforest/forgejo-runner/manifests/$tag"
+   # human-executed — UA3: verify the new calendar tag on the instance
+   # registry (the anonymous realm-JWT flow — a bare curl 401s; the
+   # ghcr token flow 401s as of 2026-11-27, the owner's UI leg;
+   # untagged imagetools inspect resolves :latest and lists nothing —
+   # the skill's warning)
+   tag=26.11.5   # the merge fan's own build (C05 landed) — confirm it is the merge's own build
+   token=$(curl -fsS "https://git.spencerslab.com/v2/token?service=container_registry&scope=repository:curatedforest/forgejo-runner:pull" | jq -r .token)
+   curl -fsS -o /dev/null -w 'instance-registry %{http_code}\n' -H "Authorization: Bearer $token" "https://git.spencerslab.com/v2/curatedforest/forgejo-runner/manifests/$tag"
    ```
 
 2. Push the same new tag to the dev registry (git.scifi.farm) — the dev
    slice's pin rides it and the dev role's builds never mint calendar
    tags, so an unpushed registry copy freezes that site's runner on the
    old immutable tag forever, silently (the chart's own comment: a site
-   or a registry left behind rides its old immutable tag forever).
+   or a registry left behind rides its old immutable tag forever). As
+   of 2026-11-27 the package is absent there (NAME_UNKNOWN — absent or
+   anonymous-invisible), so the 26.11.5 copy is this leg's
+   precondition. The dev side is doubly inert until both preconditions
+   land: the dev cluster carries no runner workload (the appset entry is
+   present and default-enabled, the slice says `replicas: 10`; the
+   cause is not visible at agent tier), so the OQ10 dev-side dispatch
+   leg (§3, UA5 step 2) has no runner to run on either.
 
-3. Hand-bump the pin sites to the new tag, together: the four act-24.04-family label lines in `charts/forgejo-runner/values.yaml` (currently `:26.11.1`) AND the dev slice's own four label lines in `services/dev/prod/values.yaml` (`forgejo-runner-dev.runner.labels`) — Helm replaces label lists wholesale, so the dev site's list moves with the chart default (the chart's own comment). No renovate lane reads these pins — the bump is by hand, this is the AGENTS.md law.
+3. Hand-bump the pin sites to the new tag, together: the four act-24.04-family label lines in `charts/forgejo-runner/values.yaml` AND the dev slice's own four label lines in `services/dev/prod/values.yaml` (`forgejo-runner-dev.runner.labels`) — Helm replaces label lists wholesale, so the dev site's list moves with the chart default (the chart's own comment). No renovate lane reads these pins — the bump is by hand, this is the AGENTS.md law. C05 landed the `:26.11.1` → `:26.11.5` move on both sites (the `ubuntu-22.04` line stayed put in both).
 
 4. ArgoCD syncs the runner releases (the sole apply surface — nothing
    here touches a cluster directly). Only after the runner pods run the
