@@ -128,10 +128,13 @@ public sealed class SnapClientSupervisor : BackgroundService
             Process? child = null;
             Task? readLoop = null;
             Task? assign = null;
+            DateTime childStartedAtUtc = default;
+            bool watchdogKilled = false;
             try
             {
                 var spawned = StartChild();
                 child = spawned;
+                childStartedAtUtc = DateTime.UtcNow;
                 readLoop = Task.Run(() => ReadLoopAsync(spawned, cts.Token), CancellationToken.None);
                 assign = Task.Run(async () =>
                 {
@@ -167,6 +170,14 @@ public sealed class SnapClientSupervisor : BackgroundService
             if (assign is not null)
                 await AwaitTolerantAsync(assign, "stream assignment task cancelled (child shutdown)");
 
+            // Must precede the dispose below: once disposed, the code is unknowable.
+            int? exitCode = null;
+            var lifetimeSeconds = 0.0;
+            if (child is not null)
+            {
+                (exitCode, lifetimeSeconds) = ReadExitState(child, childStartedAtUtc);
+            }
+
             child?.Dispose();
             _child = null;
             _loopCts = null;
@@ -177,8 +188,8 @@ public sealed class SnapClientSupervisor : BackgroundService
                 break;
             }
 
-            var delay = child is not null
-                ? RespawnDelay(child.ExitCode)
+            var delay = exitCode.HasValue
+                ? RespawnDelay(exitCode.Value, lifetimeSeconds)
                 : TimeSpan.FromMilliseconds(NormalRespawnDelayMs);
             try
             {
@@ -202,6 +213,25 @@ public sealed class SnapClientSupervisor : BackgroundService
         catch (OperationCanceledException)
         {
             _logger.LogDebug(cancelledMessage);
+        }
+    }
+
+    // Process throws InvalidOperationException on any member access once
+    // disposed — a post-dispose ExitCode read stopped the host on the live
+    // 2026-11-27 crash. The first value is the exit code (null = unknown:
+    // a handle already gone mid-teardown, or a process that never ran to
+    // exit); the second is the child's run length in seconds at this read.
+    // An unknown code respawns on the normal delay.
+    private static (int? ExitCode, double LifetimeSeconds) ReadExitState(Process child, DateTime startedAtUtc)
+    {
+        var lifetime = (DateTime.UtcNow - startedAtUtc).TotalSeconds;
+        try
+        {
+            return child.HasExited ? (child.ExitCode, lifetime) : (null, lifetime);
+        }
+        catch (InvalidOperationException)
+        {
+            return (null, lifetime);
         }
     }
 
@@ -471,7 +501,7 @@ public sealed class SnapClientSupervisor : BackgroundService
         }
     }
 
-    private TimeSpan RespawnDelay(int exitCode)
+    private TimeSpan RespawnDelay(int exitCode, double lifetimeSeconds)
     {
         if (EscalationDue())
         {
@@ -481,8 +511,11 @@ public sealed class SnapClientSupervisor : BackgroundService
             return TimeSpan.FromSeconds(EscalatedRespawnDelaySeconds);
         }
 
-        _logger.LogWarning("snapclient exited (code={Code}) — respawning in {DelayMs} ms",
-            exitCode, NormalRespawnDelayMs);
+        // The cycle-5 discriminator: the exit code and the run length say
+        // WHY the child died (0 = the server told it to stop, 139 = #1563).
+        _logger.LogWarning(
+            "snapclient exited code={Code} after {After:0.#}s — respawn in {Delay:0.#}s",
+            exitCode, lifetimeSeconds, NormalRespawnDelayMs / 1000.0);
         return TimeSpan.FromMilliseconds(NormalRespawnDelayMs);
     }
 }

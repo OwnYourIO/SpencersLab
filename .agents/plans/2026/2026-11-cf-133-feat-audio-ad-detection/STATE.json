@@ -34,7 +34,7 @@
       "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "code": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "local": true,
-      "note": "Card answer Qwen Dense + Local => gpu-ai/qwen3.8-27b-radiance; owner directive in force 2026-11-23 supersedes: ALL subagents on the tp2 lane. Lane resting (replicas 0) answers a loud 502 -> report to owner, never silently reroute."
+      "note": "Card answer Qwen Dense + Local => gpu-ai/qwen3.8-27b-radiance; owner directive in force 2026-11-23 supersedes: ALL subagents on the tp2 lane. Lane resting (replicas 0) answers a loud 502 -> report to owner, never silently reroute. SUPERSEDED FOR REOPEN 2026-11-27: owner directive 'continue this work with openrouter's flash' -> continuation sessions (C13 dev onward) route openrouter/qwen/qwen3.8-flash; the earlier C13 launch on tp2 died in the server restart pre-edit (tree verified untouched) - relaunched FRESH on flash."
     },
     "claim": {
       "setId": "cdb43fd8-eff5-460d-9ca2-2e8fdf27211d",
@@ -62,6 +62,7 @@
         "cause": "session idle overnight awaiting owner hand-off answer; 2h staleness rule",
         "owner_answer": "YES (sanctioned single question answered in-session 2026-11-26)"
       },
+      "reclaim3_2026_11_27": { "setId": "0efec76a-4597-4db4-a7a5-cf8bf19bdaf7", "note": "third card-id-key claim after the cycle-4 reopen (owner live-log directive); prior 03c6e273 released at v5 hand-off. Board MCP (dev-boards) unavailable after restart: the Review->Executing card move + reopen comment are QUEUED until the MCP returns; code work proceeds under the live lock." },
       "reclaim": {
         "setId": "14a25753-552e-400a-bacd-0731878a5e90",
         "pipelines": [
@@ -756,6 +757,39 @@
         }
       ],
     "spec": "T1: BrokerPublisher.StopAsync + SnapClientSupervisor.StopAsync must call await base.StopAsync(cancellationToken) (BackgroundService contract) so ExecuteAsync's token is cancelled — broker run-loop must STOP after the clean disconnect (no reconnect-after-disconnect, no 10s grace burn, no post-disconnect online blip; graceful = no LWT expected), supervisor loop terminates via token (keep _shutdownStarted guard); fix both comments asserting the uncancelled-token mechanism; alternative (wire loop to dedicated _loopCts cancelled in StopAsync) allowed ONLY if base.StopAsync ordering provably cannot break the snapshot-last/shutdown sequence — dev decides on code read, documents choice. T2: AC ordering care: base.StopAsync AFTER custom legs (disconnect, snapshot stay where the reverse-stop design needs them) — read the current bodies; assert cancel-token actually breaks the broker backoff sleep (read the wait — must be token-aware; if it is a bare Task.Delay, use theCTS-linked form). T3: re-run full smoke (absent backends): stop completes WITHOUT the 'still running' warning, shutdown wall-time meaningfully < previous ~11s (measure), snapshot.complete + exit 0 preserved; fresh compile 0w/0e; suite 31/31; chart/tests untouched. Scope: src/MqttPublisher.cs + src/SnapClientSupervisor.cs (+ comments)."
+  },
+  "C13": {
+    "status": "done",
+    "wave": 9,
+    "depends_on": ["C12"],
+    "registration": "coord-registered fast chunk (owner live-log directive 2026-11-27 cycle-4 crash; owner routing directive: openrouter/qwen/qwen3.8-flash for all continuation sessions). First tp2 launch ses_de0d8bb68ffedA4nt1H4kcMoKw died in server restart PRE-EDIT (tree verified clean); relaunched fresh on flash as ses_de0aeaba9ffelo9fpYUw7a67XN. Spec: pre-dispose exit-state capture + per-death discriminator log + fake-child shims exercising the real child-death->respawn path for the first time, + T4 ranked report on the live fast clean-exit.",
+    "dev_session": "ses_de0aeaba9ffelo9fpYUw7a67XN",
+    "dev_rounds": 1,
+    "review_rounds": 1,
+    "last_verdict": "APPROVED",
+    "handoffs": [
+      {
+        "role": "dev",
+        "session": "ses_de0aeaba9ffelo9fpYUw7a67XN",
+        "at": "2026-11-28T00:40:00+00:00",
+        "status": "DONE",
+        "result_verbatim": "T1: ReadExitState(child, startedAt) helper reads HasExited/ExitCode strictly pre-dispose (catch IOE -> (null, lifetime) documented; stop-path reads it too); respawn decision = exitCode.HasValue ? RespawnDelay(code, lifetimeSeconds) : NormalRespawnDelayMs; stop-token break precedes delay; _shutdownStarted + escalation blocks byte-identical. T2: discriminator line 'snapclient exited code=N after Xs — respawn in Ys' reworded INTO the existing normal-branch LogWarning (single site :516, no new line, escalation error line untouched). T3 smokes: exit-7 shim 5 cycles 1s-spaced app survives; exit-0 same; hang child -> watchdog '500 ms of zero stdout bytes — SIGKILL' -> code=137 after 15.3s x2 -> 'kill escalation: 3 kills within 5 minutes — respawn delayed 45 s' fired, kills_total metric live, SIGTERM mid-45s-departed-instantly (C12 proof). Gates: build 0w/0e, suite 31/31 post rm bin/obj, seam grep Program.cs only, one-file scope, zero commits. T4 (R2-only, web MCPs down): 'Snapclient terminated.' = client's OWN graceful signal-path notice [R2-6] -> something server-side clean-stopped it ~1s after launch; ranked: (1) never-grouped/config-order client stopped by 0.28 server (predicts code=0 ~1s = EXACT match), (2) 0.35-hello vs 0.28 negotiation stop (code=0 or unmapped), (3) #1563 SIGSEGV (code=139, would NOT log the Notice — contradicted), (4) ungrouped-silent-stream (watchdog code=137 ~15s — contradicted), (5) external signal/OOM (contradicted). Cycle-5 reading guide: repeated 'code=0 after ~1s' => causes 1/2 -> check snapserver logs + get the L2.5 group name supplied; '137 ~15s' => cause 4; '139' => #1563."
+      },
+      {
+        "role": "verify",
+        "session": "ses_de0a4e9baffe2uQ3l9SdlhPdFq",
+        "at": "2026-11-28T00:55:00+00:00",
+        "status": "DONE — independent evidence run",
+        "result_verbatim": "Coord-run evidence pass: 10/10 launch->'exited code=7 after 0.2s — respawn in 1s' pairs pid-distinct no orphans; forbidden greps ALL zero ('No process is associated', 'BackgroundService failed', 'StopHost'); healthz/readyz 503 answering; SIGTERM gone in 0.1-0.2s + EXIT_CODE=0 on reaped re-run; models intact; tree back to two-M baseline."
+      },
+      {
+        "role": "review",
+        "session": "ses_de0a1e201ffeGK6jHaUHwjGnoH",
+        "at": "2026-11-28T01:10:00+00:00",
+        "status": "APPROVED (round 1) + minors M1/M2",
+        "result_verbatim": "Verdict APPROVED. Read-verified pre-dispose ordering (helper :177 vs dispose :180, git show HEAD proves the old read-after-dispose); catch = IOE only, documented null semantics, normal path unmaskable (HasExited true => cached ExitCode cannot throw); signature change diagnostics-only — escalation keys _killTimes via RecordKill (watchdog branch only), constants byte-identical; ten fast natural exits never escalate = PRE-EXISTING RULED design (watchdog=hangs; clean stops=group-state noise for L2.5) now reachable for the first time -> rolled as M2 (log-only flap, kills_total blind; option: aad_snapclient_respawns_total or widen escalation window — owner call). T2 single-site verified (repo grep 'snapclient exited' = :516 only; escalation error line :507-509 unmodified; unknowable-code branch silent = N1 nit). Deviations 1-4 accepted (helper extraction = aislop-driven, named home for the bug class). OWN fresh smoke: 13x code=7 discriminator lines, 0 crash-class greps, clean SIGTERM tail, scratch removed; build 0w/0e, suite 31/31, seam grep clean, aislop ci 99/0-errors/2-warnings (NEW function-too-long 91-vs-88 = M1, non-gate, teardown-helper lift queued). Deferred unchanged: _child dispose-before-null window covered by C12 audit. chunks/C13.md CREATED as durable record (none existed at dispatch — coord-registered chunk). Shell-hazard record: pkill -f inside compound kills the running shell (rc 143) — bracket patterns or kill by PID."
+      }
+    ]
   },
   "blocked": [],
   "deferred": []
