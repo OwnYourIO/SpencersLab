@@ -2,7 +2,7 @@
   "feature": "cf-159-refactor-build-process",
   "folder": ".agents/plans/2026/2026-11-cf-159-refactor-build-process",
   "plan_file": "2026-11-27-refactor-build-process.md",
-  "plan_status": "awaiting-approval",
+  "plan_status": "approved",
   "created_at": "2026-11-27T05:23+00:00",
   "updated_at": "2026-11-27T15:23+00:00",
   "kickoff": {
@@ -21,7 +21,7 @@
     "commits": "coord commits on ticket branch (standard posture restored by owner override)",
     "origin_dir": "/home/coder/SpencersLab",
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
-    "priority": { "raw": null, "class": "default" },
+    "priority": { "raw": 5, "class": "default", "note": "unset at claim -> stamped 5 at post-plan write-back 15:33Z (D20 single-card stamp; tool schema stored string '5' on the NUMBER field — WeKan coerces on read)" },
     "models": {
       "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "code": "gpu-ai/qwen3.8-27b-radiance-tp2",
@@ -54,9 +54,9 @@
   "stages": {
     "exploration": "DONE ses_de485968dffeSRUdqTvy4ft91M -> EXPLORE.md (464 lines; file lives in the OLD main-checkout folder until the dump leg lands it here)",
     "agent-decides-research": "decided (coord, 14:15Z): NO deep research round — remaining unknowns were owner decisions, resolved in the batched round; RESEARCH.md not commissioned.",
-    "planning": "DONE ses_de27efd8cffemF6tEwbvM0xASz (rework complete, files verified restored md5-identical + re-aimed) -> plan_status awaiting-approval -> human approval round",
+    "planning": "APPROVED 2026-11-27T15:31Z — human approval round: 'Approve, hold base' (OQ9 ruled: base stays 1d46d1c84; fate vs D67 revert = owner landing-leg). Post-plan card write-back next, then agent-test wave.",
+    "test-writing": "agent-test launched ses_de25d9737ffe30G29C1r2lvVEF (tp2 lane) — all four chunks' contract legs, red-first expected",
     "logspam-evidence": "DONE ses_de2910960ffeg9us45PaluOkMy -> LOGSPAM.md (105 lines) + relay of 7 folder files to /tmp/opencode/carry-cf159/ (md5-verified; line counts 464/139/105/73/82/76/97). Headline: biggest noise = build-charts git fetch ref-enumeration ~976 ln + helm dep chatter ~700 + cr echo ~250 per fan push; diag dumps only ~72 ln (smallest target); act platform noise ~21% NOT gateable; renovate ~95% info-artifacts (but owner ruled default stays info). Dev-instance logs unsampleable (runner down) — inference fallback documented.",
-    "test-writing": "pending",
     "chunk-development": "pending",
     "chunk-review": "pending",
     "final-review": "pending",
