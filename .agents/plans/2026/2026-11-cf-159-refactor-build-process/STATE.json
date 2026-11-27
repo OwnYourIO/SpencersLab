@@ -55,7 +55,7 @@
     "exploration": "DONE ses_de485968dffeSRUdqTvy4ft91M -> EXPLORE.md (464 lines; file lives in the OLD main-checkout folder until the dump leg lands it here)",
     "agent-decides-research": "decided (coord, 14:15Z): NO deep research round — remaining unknowns were owner decisions, resolved in the batched round; RESEARCH.md not commissioned.",
     "planning": "agent-plan DONE ses_de2a2aad3ffecLLbiNuJuFwFNn (draft, 8 OQs) -> batched round ANSWERED 14:40Z -> rework pending (C02 evidence-driven per OQ1 answer; plan-folder location moved to the worktree by owner override)",
-    "logspam-evidence": "scout ses_de2910960ffeg9us45PaluOkMy running (writes LOGSPAM.md into the main-checkout folder; will be carried to this worktree folder; OQ3 ruling says C18 IS applied live — scout brief predates it, cluster observation still welcome)",
+    "logspam-evidence": "DONE ses_de2910960ffeg9us45PaluOkMy -> LOGSPAM.md (105 lines) + relay of 7 folder files to /tmp/opencode/carry-cf159/ (md5-verified; line counts 464/139/105/73/82/76/97). Headline: biggest noise = build-charts git fetch ref-enumeration ~976 ln + helm dep chatter ~700 + cr echo ~250 per fan push; diag dumps only ~72 ln (smallest target); act platform noise ~21% NOT gateable; renovate ~95% info-artifacts (but owner ruled default stays info). Dev-instance logs unsampleable (runner down) — inference fallback documented.",
     "test-writing": "pending",
     "chunk-development": "pending",
     "chunk-review": "pending",
@@ -95,7 +95,20 @@
       "summary": "Plan of record 2026-11-27-refactor-build-process.md (draft) + chunks C01-C04. Waves: 1=C01 (carry C18 runner fix into working tree), 2=C02 (DEBUG-gated verbosity, errexit untouched) + C03 (scope cr package to changed set; D47.1 full-tree self-heal stays), 3=C04 (builder-family unification: marker-gate shape, forgejo.* contexts, repo-add loop script; rest documented-and-kept). C04 depends C03. 8 open questions -> batched round (ANSWERED).",
       "deviations": "none",
       "open_questions": "8 -> answered 14:40Z; OQ1 redirect (evidence-driven spam identification) + posture move to worktree require a plan rework pass",
-      "next_suggested": "rework plan (same session) with batched answers + LOGSPAM.md + worktree posture, then approval -> test wave -> C01 dev"
+      "next_suggested": "rework plan with batched answers + LOGSPAM.md + worktree posture (FRESH agent-plan in the worktree; the old plan session stays located in the main checkout), then approval -> test wave -> C01 dev"
+    },
+    {
+      "chunk": "logspam",
+      "at": "2026-11-27T14:54+00:00",
+      "session": "ses_de2910960ffeg9us45PaluOkMy",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "status": "DONE",
+      "files_changed": ["LOGSPAM.md (main-checkout folder) + relay of 7 files to /tmp/opencode/carry-cf159/"],
+      "summary": "Empirical log-volume grounding: fan #337 4,851 ln/push, build-charts leg 71% — git fetch ref enumeration ~976 ln (5 full-depth checkouts + fetch --tags at build-charts.yaml:447/:507), helm dep update ~700 ln, cr echo ~250 ln, act platform ~730 ln (NOT gateable); build-containers PR ~1,277 ln ~86% buildkit (real work); diag 72 ln release leg (smallest C02 target); renovate <=258 ln ~95% info artifacts; coder-template-push no standalone runs. Dev-instance logs unsampleable (runner down) -> inference fallback documented.",
+      "deviations": "documented sampling deviation (dev instance); log-download method quirk noted in-file",
+      "relay": "cp worked first try; md5-verified: EXPLORE.md 464, plan 139, LOGSPAM.md 105, C01 73, C02 82, C03 76, C04 97",
+      "open_questions": "owner re-check of dev-instance log volume after runner returns (low priority); no sampleable standalone build-containers release run (#334 failed — diag counts still valid)",
+      "next_suggested": "plan rework with corrected C02 priority; same-file overlap build-charts.yaml across C02/C03/C04 needs wave handling"
     }
   ]
 }
