@@ -4,7 +4,7 @@
 # the shared ci/last-built marker). The prod instance's runner is the single
 # chart-version authority:
 # it detects changed charts, test-builds them, commits Chart.yaml calendar
-# bumps (Y.M.N) to Forgejo main, then publishes DUAL: GitHub Releases + gh-pages index (the
+# bumps (Y.M.N) to Forgejo main, then publishes the changed set DUAL: GitHub Releases + gh-pages index (the
 # byte-stable consumer contract) and this instance's Helm package registry.
 #
 # Both instances receive the synced copy, so EVERY job guards on the
@@ -461,6 +461,8 @@ jobs:
           done
       - name: Publish GitHub Releases and the Pages index
         if: needs.changes.outputs.has_changes == 'true'
+        env:
+          CHARTS_JSON: ${{ needs.changes.outputs.charts }}
         run: |
           set -euo pipefail
           # Explicit GitHub literals, never forge-context identity: the
@@ -470,7 +472,16 @@ jobs:
           # main-sync fans them out, so cr's default (empty target_commitish,
           # GitHub resolves the default-branch head) is the one shape that
           # can never reference a commit GitHub has not seen.
-          cr package charts/*/
+          # Package the changed set only (D3): the changes job's
+          # DNS-safe, Chart.yaml-gated output drives one cr package per
+          # changed chart in detection order. Unchanged charts cost
+          # nothing — the upload de-duplicates with --skip-existing, and
+          # cr index --push regenerates the gh-pages index from the
+          # repository's release assets, so a chart skipped this fire
+          # keeps its published tgz in the index.
+          for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+            cr package "charts/$c"
+          done
           cr upload --owner OwnYourIO --git-repo SpencersLab --package-path .cr-release-packages --skip-existing --token "$CR_TOKEN"
           # gh-pages is pushed to GitHub through the credential slot (the
           # proven main-sync push shape) and cr's pages worktree is pointed
@@ -521,11 +532,20 @@ jobs:
           done
       - name: Package charts
         if: needs.changes.outputs.has_changes == 'true'
+        env:
+          CHARTS_JSON: ${{ needs.changes.outputs.charts }}
         run: |
           set -euo pipefail
-          # cr package is offline (Chart.lock build + helm package); the
-          # tarballs feed the registry curl below.
-          cr package charts/*/
+          # Package the changed set only (D3): the changes job's
+          # DNS-safe, Chart.yaml-gated output drives one cr package per
+          # changed chart in detection order. cr package is offline
+          # (Chart.lock build + helm package); the tarballs feed the
+          # registry curl below, whose skip-if-in-index guard narrows
+          # naturally — unchanged charts cost nothing and a retry never
+          # churns a published version.
+          for c in $(echo "$CHARTS_JSON" | jq -r '.[]'); do
+            cr package "charts/$c"
+          done
       - name: Push packages to the instance Helm registry
         if: needs.changes.outputs.has_changes == 'true'
         env:
