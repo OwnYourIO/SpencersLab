@@ -78,14 +78,23 @@
 # (it works; upstream discourages it in favour of declarative config) and
 # env-var identity does not exist. Because the identity file lives on the
 # ordinal's retained PVC, a restart — including the reloader's Secret-change
-# restart — is a RE-ATTACH, never a re-registration (the init guards on the
-# file first).
+# restart — is a RE-ATTACH, never a re-registration: the init's guard
+# CONTENT-validates (C18/D66(5)) — file exists, a parseable url: line, a
+# uuid: line that is not the __RUNNER_UUID__ placeholder, and a non-empty
+# token file — and only then skips. Kubelet auto-creates missing subPath
+# targets, so the frozen C17 PVCs carry EMPTY config.yaml leaves; an
+# existence-only guard would read them as registered and boot an empty
+# config (the silent second failure class). Pricing (accepted): an invalid
+# leaf never functioned, so re-registering costs no real row; a
+# config-valid/token-lost half-write re-mints and its dead row simply goes
+# stale-offline for owner-side deletion — cleanup cron STAYS OFF (D63).
 #
 # Stale-row runbook (D63): scale-down leaves the removed pods' rows in the
 # admin list — the client has no deregistration call and
 # cron.cleanup_offline_runners STAYS OFF (enabling it can delete a row under
 # a live PVC; the ordinal would crash-loop until you cleared its
-# /data/config/config.yaml, so recovery is owner-side, never automatic).
+# /data/config/config.yaml, so recovery is owner-side, never automatic —
+# post-C18 the cleared/empty ordinal just re-registers on next boot).
 # Concurrent first boots are safe: each POST mints an independent record
 # server-side.
 #
@@ -269,7 +278,14 @@ app-template:
       type: statefulset
       replicas: 1
       annotations:
+        # C18/D66(2): STS spec fields outside the update-exempt list
+        # (podManagementPolicy among them) are immutable for PATCH and PUT
+        # alike — the C17 rollout froze on exactly that. This pair makes
+        # ArgoCD delete-and-recreate the STS on sync (pods bounce, PVCs
+        # persist, the guard re-attaches); Replace alone would be a plain
+        # PUT hitting the same validator, Force drives the recreate.
         reloader.stakater.com/auto: "true"
+        argocd.argoproj.io/sync-options: "Force=true,Replace=true"
       statefulset:
         # C17/D62 belt: manage ordinals independently — under the
         # OrderedReady default one unschedulable pod (node CPU full —
@@ -388,10 +404,20 @@ app-template:
           args:
             - |
               set -eu
-              # Guard FIRST (D62 restart discipline): identity exists on this
-              # ordinal's PVC from the first successful boot — a container
-              # restart (reloader Secret-change included) must NOT re-POST.
-              [ -f /data/config/config.yaml ] && exit 0
+              # Guard FIRST (D62 restart discipline, D66(5) content law):
+              # skip only a CONTENT-VALID identity — kubelet auto-creates the
+              # subPath targets, so empty /data/config/config.yaml leaves sat
+              # on the C17 PVCs and an existence-only check misread them as
+              # registered. Existence, parseable url: and uuid: lines, no
+              # placeholder residue, a non-empty token — invalid falls
+              # through to a fresh registration (the write path replaces).
+              if [ -f /data/config/config.yaml ] \
+                 && grep -q '^[[:space:]]*url:' /data/config/config.yaml \
+                 && grep -q '^[[:space:]]*uuid:' /data/config/config.yaml \
+                 && ! grep -q '__RUNNER_UUID__' /data/config/config.yaml \
+                 && [ -s /data/config/token ]; then
+                exit 0
+              fi
               # Minting endpoint (G1, v15.0.10 @ 17e1001d): the shared
               # registration token authenticates ONLY the runner-service
               # Register RPC — the interceptor exempts Register from the
