@@ -168,14 +168,31 @@ jobs:
           # The endpoint: the charts bump commit if this fan's range minted
           # one (D53 — an event-sha endpoint would re-enter the bump's own
           # charts/** edits into the next detection forever), else the
-          # event sha. Fetch main so the bump object is pushable from this
+          # event sha — including when the called-workflow output arrives
+          # unexpanded (act hands unresolved outputs through as literal
+          # expression text, the no-bump fires). Fetch main so the bump
+          # object is pushable from this
           # checkout. Plain push first, no force form anywhere; on a shared
           # branch a refusal is a CLASSIFY (C14/D54): already-advanced reads
           # calm-green, divergence goes red naming both sides and the owner
           # verbs. No PAT: the checkout's same-repo credential.
           git fetch origin refs/heads/main:refs/remotes/origin/main
-          TARGET=${{ needs.build-charts.outputs.bump_sha }}
-          TARGET=${TARGET:-$GITHUB_SHA}
+          RAW='${{ needs.build-charts.outputs.bump_sha }}'
+          TARGET="$GITHUB_SHA"
+          # Unresolved called-workflow outputs reach bash as literal
+          # expression text (act pass-through, no-bump fires) — anything
+          # that is not a resolved 40-hex means no bump commit exists for
+          # this fan, so the event-sha endpoint is correct (D53); a
+          # resolved-but-malformed value stays loud red.
+          case "$RAW" in
+            ""|*'{{'*) : ;;
+            *) if printf '%s' "$RAW" | grep -Eq '^[0-9a-f]{40}$'; then
+                 TARGET="$RAW"
+               else
+                 echo "main-sync: bump_sha resolved to a non-sha value: $RAW" >&2
+                 exit 1
+               fi ;;
+          esac
           if git push origin "${TARGET}:refs/heads/ci/last-built"; then
             echo "marker advanced to ${TARGET}"
             exit 0

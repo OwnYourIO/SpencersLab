@@ -683,3 +683,23 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   Driver: the 2026-11-26 FRICTION dangling-merged-history hazard — rebases
   rewrite hashes (d81831446→3f330df1a did exactly that), and the owner reaches
   for these sentences precisely when history has just moved.
+
+## Deploy incident 2026-11-27 (advance-marker bad-substitution — engine fact + consumer law)
+- 2026-11-27 engine fact (owner-reported failure, resolved on the fork's act
+  engine): an UNRESOLVED called-workflow output reaches a consumer step's
+  rendered script as the literal expression text — `${{ steps.bump.outputs.sha
+  }}` arrived verbatim inside `TARGET=...`, and bash's parameter expansion
+  died with "bad substitution" when the bump step (build-charts) had minted
+  no sha (a fan with no charts change). Consumer hardening ADOPTED here
+  (main-sync advance-marker block): `RAW` is captured in SINGLE quotes (an
+  unexpanded `${{` cannot expand or error), and a case sanitizer routes
+  empty-or-literal-expression text to the event-sha endpoint (correct per
+  D53 when no bump exists) while a RESOLVED non-40-hex value stays loud red
+  (exit 1 naming it). Four-way simulated on the extracted block: literal
+  expression -> fallback, empty -> fallback, valid hex -> used, garbage ->
+  loud red.
+- 2026-11-27 producer-side law NOTED, not executed (cf-55/cf-159 territory):
+  build-charts.yaml's bump step should emit `sha=` on every path (emit-
+  always), which would make the pass-through class impossible at source.
+  Out of this ticket's file scope — a follow-up the owner may want; the
+  consumer sanitizer stands regardless.

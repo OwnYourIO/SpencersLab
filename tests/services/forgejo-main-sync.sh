@@ -25,6 +25,14 @@
 # `${{ forgejo.event.ref }}` context (GH_REF keeps github.ref for
 # GitHub-compat, with a comment) — that pin is a designed-red carrier
 # until the dev session lands the fold.
+# A deploy incident added t14: act passes unresolved called-workflow
+# outputs through as literal expression text, so the marker's
+# `TARGET=${{ needs.build-charts.outputs.bump_sha }}` died 'bad
+# substitution' on a no-bump fan. The advance-marker block must carry the
+# consumer sanitizer (quoted RAW capture, empty-or-literal case fallback
+# to $GITHUB_SHA, 40-hex win, loud exit on resolved garbage) — pinned
+# statically AND proven by running the landed decision block under four
+# stubbed inputs.
 #
 # The C10 22-row env enumeration DIES with R8: its premise (Forgejo cannot
 # index secrets dynamically) was source-refuted (DECISIONS 2026-11-26, RESEARCH
@@ -83,10 +91,10 @@ ok() {
 # battery address legs one at a time).
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 13); do WANT["t$i"]=1; done
+  for i in $(seq 1 14); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|1[0-3])$ ]] || fail "unknown test id '$a' (expected t1..t13)"
+    [[ "$a" =~ ^t([1-9]|1[0-4])$ ]] || fail "unknown test id '$a' (expected t1..t14)"
     WANT["$a"]=1
   done
 fi
@@ -810,6 +818,124 @@ then
   fail "t13: see the t13 detail above"
 fi
 ok "t13: every sync-fanout run block exists (diag/filter/fan-out) and passes bash -n, scripts/argocd-fanout.py py_compiles, and the roster parses — schema pin lives permanently in behavior.sh t2 (C13 AC1, parse-only split)"
+fi
+
+# --- t14: advance-marker output sanitizer — deploy-incident carrier ------------------
+# act hands an UNRESOLVED called-workflow output through to bash as literal
+# expression text: on a no-bump fan `needs.build-charts.outputs.bump_sha`
+# arrived unset, the old direct `TARGET=${{ ... }}` line died 'bad
+# substitution', and the `:-` default trick cannot help because the RAW
+# assignment is what explodes (owner deploy incident). The consumer
+# sanitizer (the dev session lands the fold): single-quoted RAW capture,
+# a case guard mapping empty-or-literal to the $GITHUB_SHA fallback,
+# resolved 40-hex winning, resolved-malformed exiting 1 LOUD naming
+# bump_sha. DESIGNED-RED CARRIER until the fold lands — the fail text
+# names it; the sim harness then runs the LANDED block itself (bash-stub
+# scratch, no net, no real marker — t13's run-block extraction pattern).
+if want t14; then
+if ! python3 - "$WF" <<'PY'
+import os, re, subprocess, sys, tempfile, yaml
+
+wf = sys.argv[1]
+jobs = (yaml.safe_load(open(wf)) or {}).get('jobs') or {}
+raw_text = open(wf).read()
+
+
+def bad(msg):
+    print('FAIL: t14: %s\nFAIL: t14: see the t14 detail above' % msg, file=sys.stderr)
+    sys.exit(1)
+
+
+CARRIER = "DESIGNED-RED CARRIER until the deploy-incident sanitizer fold lands (the parallel dev session owns .forgejo/workflows/main-sync.yaml; pre-fold the marker block still holds the bare TARGET=${{ ... }} form the owner's deploy died on)"
+
+job = jobs.get('advance-marker') or {}
+steps = [s for s in (job.get('steps') or []) if isinstance(s, dict)]
+runs = [str(s.get('run')) for s in steps if s.get('run')]
+block_all = "\n".join(runs)
+if not block_all:
+    bad("advance-marker has no run block — " + CARRIER)
+
+# --- static contract pins -----------------------------------------------------------
+m = re.search(r"""(?m)^([ \t]*)RAW='\$\{\{\s*needs\.build-charts\.outputs\.bump_sha\s*\}\}'[ \t]*$""", block_all)
+if not m:
+    bad("(a) no single-quoted RAW capture of the needs expression (expected exactly RAW='${{ needs.build-charts.outputs.bump_sha }}' on its own line — the quoting is the whole fix: the literal arrives as text instead of exploding as a parameter expansion) — " + CARRIER)
+if not re.search(r'(?m)^[ \t]*case[ \t]+"\$RAW"[ \t]+in[ \t]*$', block_all):
+    bad("(b) no `case \"$RAW\" in` dispatch on the captured value — " + CARRIER)
+if not re.search(r'''""\s*\|\s*\*\s*'\{\{'\*''', block_all):
+    bad("(b) the case guard lacks the empty-or-literal pattern (\"\"|*'{{'*) — the unresolved-act pass-through class is unmatched — " + CARRIER)
+if not re.search(r'\[0-9a-f\]\\?\{40\\?\}', block_all) and not re.search(r'\[0-9a-f\]\{40\}', block_all):
+    bad("(c) no 40-hex acceptance arm (^[0-9a-f]{40}$ grep) — a resolved-but-truncated value would silently drive the marker — " + CARRIER)
+loud = [ln for ln in block_all.splitlines() if re.search(r'(?i)(echo|printf)', ln) and 'bump_sha' in ln]
+if not loud:
+    bad("(d) no loud branch names bump_sha (the resolved-malformed class must announce WHICH output misbehaved) — " + CARRIER)
+if 'exit 1' not in block_all:
+    bad("(d) the malformed class has no exit 1 — resolved garbage must go RED, never fall back quietly — " + CARRIER)
+revived = [ln.strip()[:90] for ln in raw_text.splitlines() if re.match(r'^[ \t]*TARGET=.*\$\{\{', ln)]
+if revived:
+    bad("(e) the bare TARGET=${{ ... }} assignment (direct or quoted — both explode on the unresolved literal) is back: %r — this exact line caused the owner's deploy 'bad substitution'" % revived)
+trick = [ln.strip()[:90] for ln in raw_text.splitlines() if re.match(r'^[ \t]*TARGET=.*:-', ln)]
+if trick:
+    bad("(e) the `${TARGET:-...}` default trick is back: %r — the trick is dead because the RAW assignment explodes BEFORE any default on TARGET could apply; the case-guard fallback is the shape" % trick)
+
+# --- functional proof: run the LANDED decision block under four inputs ---------------
+lines = block_all.splitlines()
+start = next(i for i, ln in enumerate(lines) if re.search(r"""RAW='\$\{\{""", ln))
+end = next(i for i in range(start, len(lines)) if lines[i].strip() == 'esac')
+block = "\n".join(lines[start:end + 1])
+
+GH = "0f1e2d3c4b5a69788796a5b4c3d2e1f001234567"     # stub event sha (fallback owner)
+HEX = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"     # stub resolved bump sha
+
+
+def run_variant(raw_replacement=None):
+    script = block if raw_replacement is None else re.sub(r"RAW='[^']*'", "RAW='%s'" % raw_replacement, block, count=1)
+    # strip the embedded needs expression from the variant lines? NO — RAW='...'
+    # single-quoted content is literal text to bash; keep it byte-true.
+    full = "set -euo pipefail\n" + script + "\nprintf 'TARGET=%s\\n' \"$TARGET\"\n"
+    fd, path = tempfile.mkstemp(prefix='marker-sim-', suffix='.sh',
+                                dir=os.environ.get('TMPDIR', '/tmp/opencode'))
+    with os.fdopen(fd, 'w') as f:
+        f.write(full)
+    env = dict(os.environ)
+    env['GITHUB_SHA'] = GH
+    r = subprocess.run(['bash', path], capture_output=True, text=True, env=env, timeout=20)
+    os.unlink(path)
+    return r
+
+
+# (1) LITERAL PASS-THROUGH — the incident itself, exactly as act delivers it:
+r = run_variant(None)
+out = r.stdout + r.stderr
+if r.returncode != 0:
+    bad("sim/literal: the decision block EXITED %d on the unresolved-pass-through literal instead of falling back (%s) — the 'bad substitution' class is still alive in the landed shape" % (r.returncode, out[:200]))
+if 'TARGET=%s' % GH not in r.stdout:
+    bad("sim/literal: TARGET did not fall back to $GITHUB_SHA (%r, stdout %r) — the case guard misses the literal class" % (GH, r.stdout[:120]))
+if '{{' in r.stdout or 'bump_sha' in r.stdout:
+    bad("sim/literal: the expression literal LEAKED into TARGET (%r) — a marker ref must never be expression text" % r.stdout[:160])
+
+# (2) EMPTY — the plain unset case:
+r = run_variant('')
+if r.returncode != 0 or 'TARGET=%s' % GH not in r.stdout:
+    bad("sim/empty: rc %d stdout %r — an unset output must fall back to $GITHUB_SHA green" % (r.returncode, r.stdout[:120]))
+
+# (3) VALID HEX — the resolved bump wins over the event sha:
+r = run_variant(HEX)
+if r.returncode != 0 or 'TARGET=%s' % HEX not in r.stdout:
+    bad("sim/hex: rc %d stdout %r — a resolved 40-hex bump_sha must DRIVE the marker (D53 endpoint rule), not be discarded" % (r.returncode, r.stdout[:120]))
+
+# (4) GARBAGE — resolved-but-malformed stays LOUD:
+r = run_variant('oops-not-a-commit')
+out = r.stdout + r.stderr
+if r.returncode == 0:
+    bad("sim/garbage: rc 0 — resolved garbage fell through instead of exiting 1 (the marker would move to a non-commit; the loud class exists to stop exactly that)")
+if 'bump_sha' not in out:
+    bad("sim/garbage: the red path did not name bump_sha (%r) — operators cannot trace which output misbehaved" % out[:200])
+print('ok: t14 — sanitizer contract (quoted RAW, case guard, 40-hex arm, loud malformed branch, no bare TARGET/:- revival) and the decision block passes all four simulations')
+PY
+then
+  fail "t14: see the t14 detail above"
+fi
+ok "t14: advance-marker output sanitizer — RAW single-quoted capture of the needs expression, case guard on the empty-or-literal class (''|*'{{'*'), 40-hex win arm, loud exit-1 branch naming bump_sha, the bare TARGET=\${{ }} and :- -default revivals banned; FUNCTIONAL: the landed decision block runs under literal/empty/valid-hex/garbage inputs against a stub GITHUB_SHA and answers fallback/fallback/win/RED with no expression leak (deploy-incident carrier)"
 fi
 
 printf 'PASS: forgejo-main-sync checks (%d ok)\n' "$checks"
