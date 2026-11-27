@@ -128,13 +128,18 @@ runner:
   # own registry (git.scifi.farm) — a runner never cross-pulls another
   # instance's copy. ubuntu-22.04 stays a plain act tag in every set
   # (no job requests it, and a 24.04-content image behind a 22.04
-  # label would lie about its OS). The 26.11.1 is bootstrap
-  # provenance: owner-built and pushed to BOTH registries by hand
+  # label would lie about its OS). The 26.11.5 is fan-minted: the
+  # post-merge build fan (2026-11-27) built it from the baked
+  # Dockerfile (the AD-56 C01 coder CLI bake included) and pushed it
+  # to both registries. The 26.11.1 it replaced was bootstrap
+  # provenance — owner-built and pushed to both registries by hand
   # 2026-11-22, not minted by the containers-build pipeline. The pins
   # are immutable calendar tags and no renovate manager reads these
   # lines or the dev slice's — and the dev ROLE's builds never mint
-  # calendar tags, so that registry's copy is bootstrap-only — a bump
-  # is therefore manual across BOTH pin sites AND BOTH registries:
+  # calendar tags, so a new tag's dev-side copy is an owner
+  # precondition (the dev registry's package was absent —
+  # NAME_UNKNOWN — as of 2026-11-27): a bump is therefore manual
+  # across BOTH pin sites AND BOTH registries:
   # push the new tag to git.spencerslab.com and git.scifi.farm, then
   # move the chart default and the dev slice together; a site or
   # registry left behind rides its old immutable tag forever,
@@ -146,11 +151,11 @@ runner:
   # route, so a host runner must never carry act labels it cannot
   # execute).
   labels:
-    - ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
-    - ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
+    - ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5
+    - ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5
     - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
-    - docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
-    - node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
+    - docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5
+    - node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5
 
 app-template:
   controllers:

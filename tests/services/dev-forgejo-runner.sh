@@ -307,11 +307,11 @@ def bad(msg):
 # services slice. DESIGNED RED until the run-1 DEV move lands
 # charts/forgejo-runner/values.yaml (the t2 stop).
 ACT_LABELS = {
-    'ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
-    'ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
+    'ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5',
+    'ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-    'docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
-    'node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1',
+    'docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5',
+    'node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.5',
 }
 # Chart default runner.url — the standalone-render stand-in; the per-app
 # top-level slices override it at deploy time.
@@ -990,11 +990,11 @@ def bad(msg):
 # act-22.04 line carries no forgejo-runner ref, so it disappears from a
 # partial override).
 DEV_LABELS = {
-    'ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
-    'ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+    'ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5',
+    'ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-    'docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
-    'node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1',
+    'docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5',
+    'node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5',
 }
 # The slice's own values, restated here so a slice hunk that fixes labels
 # but moves the url or breaks the container merge dies naming t17.

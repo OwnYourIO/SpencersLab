@@ -1384,3 +1384,292 @@ R3-Q5(d).
    were already planned; the 5 containers-era workflow lines, the 5 suite
    lines, the 2 new w3 release-era suite lines, and the 5 runbook lines
    are the delta).
+
+## Round 4 (2026-11-27, live-state scout) — the "if necessary" verdict + pin-target facts
+
+Grounded 2026-11-27 (~18:45–19:35 UTC) by `agent-explore` (read-only) on
+`origin/main` @ `f3c6976c3` (post-merge, post the cf-55 r8 revert). Scope:
+whether a post-bake tag containing the coder binary was already published
+(which settles "rebuild if necessary"), the current pin-site facts on
+origin/main (the r8 revert moved the runner surface — the ticket-branch
+facts are stale), the CI run state on the clusters, the merge facts, the
+rebuild-lane shapes (for the record), and the test-surface re-pin list.
+
+### R4-Q1 — Merge facts (the "after this date, a tag is post-bake" anchor)
+
+- C01 bake commit: `b7588d57d` "C01 AD-56: bake coder CLI v2.39.5 into
+  `containers/forgejo-runner` - review APPROVED" (authored 2026-11-25
+  05:30:45Z).
+- Landed on `origin/main` via merge **`a91627e06`** "Merge branch
+  'cf-56-feat-forgejo-coder-template-pipeline'" (commit date
+  **2026-11-27 03:55:29Z**, parents `2a8cfe06d` + `87a1cb1f5`; `87a1cb1f5`
+  is the ticket-branch head — `git merge-base --is-ancestor b7588d57d
+  origin/main` = true).
+- Post-merge pre-r8 events (all Chart.yaml calendar bumps by the
+  build-charts fan; **none of them image-pin moves**): `e5a816295`
+  (03:57:03, `charts/coder` + `charts/forgejo-runner` — the merge's own
+  fan; the ticket changed `charts/coder/coder-templates/**`, so the D55
+  inherited filter bumped the coder wrapper), `1d46d1c84` (04:28:56),
+  `a72a513ef` (15:07:11 — the 14:39 r8-revert push's fan).
+- `6ffeeb87e` (14:39:15) "cf-55 r8: restore pre-C17 runners": the chart-side
+  revert (charts/forgejo-runner templates/values, custom-values, suite
+  re-pins); its `services/*/prod/values.yaml` hunks were **comment-only**
+  (the D61/C17 comment replaced by a D57-amends-B1 comment; `replicas: 10`
+  intact on both slices). The r8 chart change is what rolled the runner
+  release (R4-Q3).
+
+### R4-Q2 — Published tags (instance registry — the anonymous-JWT flow answers)
+
+**The instance registry v2 API answers to an anonymous JWT**: `GET
+https://git.spencerslab.com/v2/token?service=container_registry&scope=…`
+(no credentials) → 200 + JWT (payload `UserID:-1`); a direct unauthenticated
+GET 401s with challenge `Bearer realm="https://git.spencerslab.com/
+v2/token",service="container_registry",scope="*"`. (The runbook UA3's bare
+curl line against the instance registry 401s as written — the realm-JWT is
+the working anonymous shape; see Round-4 gotcha 6.)
+
+`GET /v2/curatedforest/forgejo-runner/tags/list` (read 2026-11-27 ~19:15Z):
+`26.11.1, 26.11.2, 26.11.3, 26.11.4, 26.11.5, latest, main,
+pr-renovate-ghcr.io-catthehacker-ubuntu-act-24.04-5b4af52,
+pr-renovate-ghcr.io-catthehacker-ubuntu-act-24.04-a1c0e5a`
+
+- **`26.11.1` / `26.11.2` / `26.11.3` / `26.11.4` all resolve to the SAME
+  amd64 manifest** `sha256:3bf08c36…` (9 layers; trailing layers built
+  2026-11-23 18:01: helm 61,702,306 B + cr 68,509,897 B baked; **NO coder
+  binary** — negative control, `tar -tvf` grep = 0 hits). Pre-bake image,
+  calendar re-mints/re-points (mechanism not visible at agent tier — see
+  gotcha 4).
+- **`26.11.5` = the distinct amd64 manifest** `sha256:3da7aeb4…` (10
+  layers; the first 6 layers shared with `3bf08c36`). Tail layers
+  layer-verified (the C01 offline recipe): helm 61,702,306 B (2026-10-15),
+  cr 68,509,897 B (2026-10-31), **`usr/local/bin/coder` 355,623,074 B,
+  uid 1000, mtime 2026-11-24 23:18** (the coder release artifact), build
+  dir mtimes **2026-11-27 03:52** — the merge fan's own build. `latest`
+  and `main` both point at the 26.11.5 manifest (rolling-tag law holds).
+
+**Verdict: a post-bake tag already exists — `26.11.5` contains the coder
+binary. NO rebuild is required. Bump target = `26.11.5`.**
+
+Corroboration: `ci/last-built` (live `git ls-remote` read 19:13Z) =
+`b50a5395c` (17:12:52) and `a91627e06` IS an ancestor of it — the merge
+fan (and every fan through 17:12) ran green, and the marker advances only
+on a fully-green fan, so the merge fan's `build-containers` build (whose
+`marker..sha`/tip-only bootstrap range carried the merge's Dockerfile
+change) was green. The in-image anchor RUN (`coder version | grep -q
+v2.39.5`) executes at build time, so a green build ⇒ the image carries a
+working coder binary. (The layer check is the direct proof; the fan/green
+chain is the belt-and-braces.)
+
+The runbook UA3 warning materialized exactly as written — "a build that
+predates the merge you ship can already occupy a higher N": 26.11.2–4 were
+occupied by pre-bake re-mints, so the merge's own build is **26.11.5, not
+26.11.2** (the runbook's `tag=26.11.2` expectation line is the pre-walk
+assumption; the owner's UA3 verify leg is what confirms "it is the
+merge's own build").
+
+**ghcr.io (the C01-proven flow no longer answers):** `GET
+https://ghcr.io/token?service=ghcr.io&scope=repository:ownyourio/
+forgejo-runner:pull` → 401 "authentication required"; the control
+`…scope=repository:catthehacker/ubuntu:pull` on the same flow → 200 +
+token. So GHCR now denies anonymous pull for `ownyourio/forgejo-runner`
+(visibility change or policy; the C01 proof was 2026-11-25) — the ghcr
+tag list / manifest cannot be verified at agent tier. The dual-publish law
+(same three tags pushed to ghcr + the instance registry on a prod-role
+fan) makes the instance-registry list the available authority; the ghcr
+side is the owner's UA3 UI confirmation.
+
+**Dev registry (git.scifi.farm):** same realm-JWT flow (200, `UserID:-1`)
+but `tags/list` → `{"errors":[{"code":"NAME_UNKNOWN"}]}` — the package
+`curatedforest/forgejo-runner` is absent or anonymous-invisible there. The
+dev slice pins `git.scifi.farm/curatedforest/forgejo-runner:26.11.1` and
+the chart comment's bump law says "push the new tag to git.spencerslab.com
+AND git.scifi.farm" — a 26.11.5 copy on the dev registry is an owner-side
+manual leg (runbook UA leg 2) before the dev site can pull it.
+
+### R4-Q3 — CI run state (clusters, readonly k8s MCP)
+
+- **Infra cluster**: no `forge` namespace (namespaces: default, kube-*,
+  system-upgrade); `infra-forgejo-55c7666785-5zbrl` (5d22h) + `pg-forgejo-1`
+  are the git service; **no runner workload on infra** (the Q6 relocation
+  law holds: the infra instance's runner = the gpu-cluster release).
+- **Gpu cluster**: `gpu-forgejo-runner-gpu-0..9` (10 pods, the D57 scale) —
+  **all created 2026-11-27 15:01:59–15:07:29Z** (StatefulSet age 3h54m at
+  ~18:55Z) — the ArgoCD rollout forced by the 14:39 r8 chart revert.
+  Runner daemon `data.forgejo.org/forgejo/runner:13.2.0`, dind
+  `docker:29.9.2-dind`; the per-JOB image is not a pod container — it is
+  the mounted config's act `labels` = still the `:26.11.1` pin (never
+  bumped) ⇒ every post-15:01 job ran the pre-bake image.
+- **Dev cluster**: **no forgejo-runner-dev workload at all** (no
+  StatefulSet/Deployment, no pods, ~19:0xZ) — the appset entry is present
+  (`services/dev/prod/values.yaml:116-119`, no `enabled` key ⇒
+  default-enabled) and the slice says `replicas: 10`; the absence's cause
+  is not visible at agent tier (no ArgoCD-state surface in the fleet). The
+  OQ10 dev-side dispatch leg is therefore doubly inert at the moment (no
+  runner pods + no dev-registry package, R4-Q1).
+- **Runner log timeline (gpu pods — post-15:01 only; the pre-15:01 logs
+  died with the rollout)**:
+  - the 03:52–04:30 merge fan: **log lost** — the 26.11.5 layer mtime
+    (03:52) + the green-marker progression carry the evidence.
+  - 15:05–15:15 fan (the 14:39 r8 push): push-gh/push-dev + detect-changes
+    + changes/test-build/bump/forgejo-publish/release + sync-fanout +
+    advance-marker — the chart-side fan (bump `a72a513ef`); **no container
+    build job** (`containers/` unchanged in that push).
+  - 16:18 / 17:11 fans (cf-133 pushes): the audio-ad-detection chart legs +
+    bumps (`d55dd88de`, `b50a5395c`) + advance-marker (17:19:43); no
+    forgejo-runner container build.
+  - 18:25 fan (the 18:22–24 pushes): push-gh/push-dev/detect-changes/
+    changes/advance-marker (18:25:28)/sync-fanout — **the 18:25:28
+    advance did NOT move the ref** (live read 19:13Z = still `b50a5395c`);
+    the 18:22–24 commits sit behind the marker ⇒ the next green fan
+    re-covers them (the designed re-cover law; the failure cause is not
+    visible at agent tier — job consoles live on the forge server).
+  - **18:36:42–18:36:57: a standalone coder-template-push run** —
+    `detect-changes` (pod1, 18:36:49) + the **`push kubernetes-hardened`
+    job (pod0, 18:36:57)**; no push-gh/push-dev in the window ⇒ not a
+    main-sync fan — the owner's **first real dispatch** (an explicit
+    template list; a called fan over `marker..sha` would have
+    verified-empty: no template change since the 18:25 advance). That job
+    ran on a 15:01 pod with the `:26.11.1` job image ⇒ `coder: command
+    not found` (the reported failure; the console text is server-side, not
+    in the pod log).
+  - no `build <container>` job line anywhere in the post-15:01 logs ⇒ no
+    post-15:01 build-containers dispatch and no 26.11.6 mint (consistent
+    with the tag list ending at 26.11.5).
+
+### R4-Q4 — Current pin sites on origin/main (post r8 revert — branch facts stale)
+
+`git grep` on `origin/main` @ `f3c6976c3`:
+
+| # | file | line | exact current value |
+|---|---|---|---|
+| 1 | `charts/forgejo-runner/values.yaml` | 149 | `- ubuntu-latest:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1` |
+| 2 | `charts/forgejo-runner/values.yaml` | 150 | `- ubuntu-24.04:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1` |
+| 3 | `charts/forgejo-runner/values.yaml` | 152 | `- docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1` |
+| 4 | `charts/forgejo-runner/values.yaml` | 153 | `- node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1` |
+| 5 | `services/dev/prod/values.yaml` | 201 | `- ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1` |
+| 6 | `services/dev/prod/values.yaml` | 202 | `- ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1` |
+| 7 | `services/dev/prod/values.yaml` | 204 | `- docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1` |
+| 8 | `services/dev/prod/values.yaml` | 205 | `- node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1` |
+
+- **Dev-slice answer: five entries, four move.** Both label lists carry
+  FIVE entries: the four calendar `:26.11.1` lines (the moving ones) + the
+  `ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04` line
+  (unchanged in both — chart L151, dev L203). The C04 review fact's
+  "five lines total" is the five-entry shape; the runbook's "the dev
+  slice's own four label lines" is the four that move. The dev-slice
+  comment (L188-196) still says "must re-declare ALL FIVE entries … (t17
+  pins the exact five-set)" — intact.
+- **The gpu site carries NO pin** — `services/gpu/prod/values.yaml:271-280`
+  (`forgejo-runner-gpu`) has `runner.url: https://git.spencerslab.com` +
+  `replicas: 10` and **no `runner.labels` key** (gpu-forgejo-runner.sh g3
+  asserts the absence) ⇒ the gpu release rides the chart default; the chart
+  bump covers it.
+- **No other image references**: `containers/` (Dockerfile header prose
+  only), `.forgejo/` (build-charts:23 comment; builder-bootstrap:112/172 —
+  the bootstrap lane's own target, not a pin), `custom-values/` none. The
+  `:26.11.1` literal appears exactly in the 8 pin lines + the suite
+  surfaces (R4-Q6) + the runbook text (R4-Q6).
+- Chart comment law (L125-146, intact post-r8): the 26.11.1 bootstrap
+  provenance ("owner-built and pushed to BOTH registries by hand
+  2026-11-22" — note: the current 26.11.1 manifest's build mtime is
+  11-23 18:01, so the tag's content was re-rolled/re-pointed at some
+  point; the re-pointing mechanism is not visible at agent tier),
+  immutable calendar tags, no renovate manager reads the pin lines, **the
+  bump is manual across BOTH pin sites AND BOTH registries** (push the new
+  tag to git.spencerslab.com and git.scifi.farm, then move the chart
+  default and the dev slice together), rolling refs forbidden.
+
+### R4-Q5 — Rebuild lanes (for the record — NOT required)
+
+- **build-containers dispatch (the byte-frozen hatch)**:
+  `.forgejo/workflows/build-containers.yaml` (origin/main) `on:` L96-113 =
+  `pull_request` (main, `paths: ['containers/**']`) + `workflow_dispatch`
+  (input **`containers`**, `description: 'Container names to build
+  (comma/space separated)'`, `required: false`, `default: ''`,
+  `type: string`, L103-109) + `workflow_call: {}` (L113). A rebuild = a
+  forge UI/API dispatch with `containers: forgejo-runner`; it fires on the
+  ROLE builder class (widens on unset), builds from the current tree, mints
+  the next calendar tag (a hypothetical 26.11.6) + `latest` + `main` to
+  both registries; it **never advances the marker**. The trigger is
+  owner/UI-side (no anonymous trigger path at agent tier).
+- **builder-bootstrap (the alternative lane)**: `workflow_dispatch` only (no
+  inputs; the P1 ruling), narrow-on-unset ROLE (prod-only — a dev-role
+  dispatch is inert by the guard), **target = the building instance's own
+  registry ONLY** (no ghcr arm of any shape; the calendar number is walked
+  from that registry alone; the FORGE push PAT is the only credential).
+  A no-input dispatch from the prod-instance UI.
+
+### R4-Q6 — Test surfaces that byte-pin the label lines (re-pin work list for the test session)
+
+| suite | leg | what it pins (exact strings) |
+|---|---|---|
+| `tests/services/dev-forgejo-runner.sh` | **t2** (L526) | the `ACT_LABELS` five-set (L309-315): the four `git.spencerslab.com/…forgejo-runner:26.11.1` lines + `ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04` — the chart-default render |
+| `tests/services/dev-forgejo-runner.sh` | **t17** (L1022) | the `DEV_LABELS` five-set (L992-998): the four `git.scifi.farm/…forgejo-runner:26.11.1` lines + the act-22.04 line — the dev slice override |
+| `tests/services/gpu-forgejo-runner.sh` | **g2** (L310) | the same `ACT_LABELS` five-set (L264-270) — the gpu release rides the chart default |
+| `tests/services/gpu-forgejo-runner.sh` | **g3** (L397-399) | the gpu slice carries **no** `runner.labels` key (a bump must not add one) |
+
+- `tests/containers/forgejo-runner.sh` (9 legs, the bake contract) pins the
+  **Dockerfile**, not the tag — unaffected by a pin bump.
+- `tests/renovate/services-values-pins.sh` **v8** (L404-412): a **regex
+  behavior table** (does the calendar versioning regex match the
+  hypothetical `26.11.1`/`26.11.2` vs `v84`/`main`/`latest`) — not a
+  live-line pin; unaffected.
+- `tests/services/dev-mcp-fleet-t7-shape.sh` **s4** (L155-166): the same
+  shape — a regex-shape test with `:26.11.1`/`:26.11.2` as calendar-form
+  examples; unaffected.
+- `.agents/notes/2026-11-25-coder-template-push.md` (runbook) UA3
+  (L222-258): carries `26.11.1` as "the current pin" (L230, L258) and
+  `tag=26.11.2` as "the expected next calendar tag" (L245) — **doc-level
+  staleness after a bump to 26.11.5**; `tests/notes/
+  coder-template-push-runbook.sh` pins postures, not the tag (grep-verified
+  no `26.11` in the suite) — a runbook-text reword is an optional hygiene
+  item, not a gate. The runbook UA3's ghcr one-liner and its instance-
+  registry "anonymous pull" phrasing are both stale against this round's
+  probes (the ghcr anonymous flow is denied; the instance registry wants
+  the realm-JWT — a bare curl 401s).
+
+## Round-4 gotchas
+
+1. **The pre-15:01 runner logs are gone** — the 14:39 r8 chart revert's
+   rollout (15:01–15:07) replaced all ten gpu runner pods, so the 03:52
+   merge-fan build's console is unrecoverable at agent tier. The 26.11.5
+   layer mtime + the green-marker progression carry the evidence.
+2. **The 18:25 fan's marker non-advance** — the advance job ran (18:25:28,
+   pod8) but the live ref (19:13Z) still sits at `b50a5395c`; the
+   18:22–24 commits sit behind the marker (re-covered on the next green
+   fan by design). The cause is not visible at agent tier.
+3. **`ci/containers-built` (the r4-era ref) is still live** @ `52d3b5c45`
+   (its UA-R5-3 deletion is owner-pending); `ci/last-built` is now live
+   (the C14 pre-steps have landed — R3 recorded them as not-yet).
+4. **The 26.11.2–4 tag identity** — same manifest as 26.11.1 (pre-bake,
+   built 11-23 18:01); their minting mechanism (comment-only-Dockerfile
+   fan re-mints, escape-hatch dispatches, or manual tag re-pointing) is
+   not visible at agent tier. They are inert for the bump (the pin moves
+   to 26.11.5 regardless).
+5. **The dev side is doubly inert at the moment** — no dev runner workload
+   on the dev cluster (appset entry default-enabled + slice `replicas:
+   10`; the cause is not visible at agent tier) + the dev-registry package
+   is `NAME_UNKNOWN`. The dev-slice pin bump still belongs in the bump
+   (the law moves both sites together); the dev-registry 26.11.5 push is
+   the UA-leg-2 owner job.
+6. **The runbook UA3 instance-registry one-liner 401s as written** (a bare
+   curl; the realm-JWT is required — this round's flow), and its ghcr
+   flow is denied (R4-Q1) — a runbook hygiene follow-up, not this round's
+   scope.
+
+## Round-4 open questions (for coord/owner)
+
+1. **The ghcr-side confirmation of 26.11.5** — the agent tier can no
+   longer read ghcr for this package (the anonymous flow is denied; the
+   control package works). Owner-side confirmation (forge/GH UI) that
+   26.11.5 is on ghcr.io/ownyourio per the dual-publish law — the UA3
+   leg's shape.
+2. **The 18:25 fan's marker non-advance** — the owner may want that fan's
+   run log from the forge UI (the job console is server-side). Not a
+   delivery loss (the re-cover law), just unexplained at agent tier.
+3. **The dev runner's absence** — the appset entry is default-enabled +
+   the slice `replicas: 10`, yet the dev cluster carries no runner
+   workload, and the dev-registry package is `NAME_UNKNOWN`. If the OQ10
+   dev-side dispatch leg is still intended, the dev runner's deployment +
+   the dev-registry copy are owner-side preconditions (neither is visible
+   at agent tier).

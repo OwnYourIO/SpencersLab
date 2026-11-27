@@ -191,18 +191,22 @@ forgejo-runner-dev:
     # instance, not cross-instance from the chart default's infra host.
     # Helm REPLACES lists wholesale, so the override must re-declare
     # ALL FIVE entries — a four-entry list silently drops
-    # ubuntu-22.04 (t17 pins the exact five-set). The 26.11.1 copy
-    # here is bootstrap-only: the dev ROLE's container builds never
-    # mint calendar tags, so every manual bump must push the new tag
-    # to this registry as well as git.spencerslab.com and move this
-    # list together with the chart default — an unmoved site rides
-    # its old immutable tag forever, silently.
+    # ubuntu-22.04 (t17 pins the exact five-set). The 26.11.5 copy
+    # here is a copy target, pushed owner-side: as of 2026-11-27 the
+    # package is absent there (NAME_UNKNOWN), and the dev ROLE's
+    # container builds never mint calendar tags, so every manual bump
+    # must push the new tag to this registry as well as
+    # git.spencerslab.com and move this list together with the chart
+    # default — an unmoved site rides its old immutable tag forever,
+    # silently. The 26.11.1 it replaced was bootstrap-only: owner-
+    # built and pushed by hand 2026-11-22, not minted by the
+    # containers-build pipeline.
     labels:
-      - ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1
-      - ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1
+      - ubuntu-latest:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5
+      - ubuntu-24.04:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5
       - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
-      - docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1
-      - node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.1
+      - docker:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5
+      - node22:docker://git.scifi.farm/curatedforest/forgejo-runner:26.11.5
 
 # Dev-mode flip of charts/home-assistant (cf-93, owner delta 2026-11-01): the
 # merge-only-the-<appName>-key law above is unchanged, so gates still flip
