@@ -52,15 +52,14 @@
     }
   },
   "stages": {
-    "exploration": "DONE ses_de485968dffeSRUdqTvy4ft91M -> EXPLORE.md (464 lines; file lives in the OLD main-checkout folder until the dump leg lands it here)",
+    "exploration": "DONE ses_de485968dffeSRUdqTvy4ft91M -> EXPLORE.md (464 lines; restored byte-identical into the worktree folder via the carry-cf159 relay, md5-verified at plan rework).",
     "agent-decides-research": "decided (coord, 14:15Z): NO deep research round — remaining unknowns were owner decisions, resolved in the batched round; RESEARCH.md not commissioned.",
     "planning": "APPROVED 2026-11-27T15:31Z — human approval round: 'Approve, hold base' (OQ9 ruled: base stays 1d46d1c84; fate vs D67 revert = owner landing-leg). Post-plan card write-back next, then agent-test wave.",
     "test-writing": "agent-test launched ses_de25d9737ffe30G29C1r2lvVEF (tp2 lane) — all four chunks' contract legs, red-first expected",
     "logspam-evidence": "DONE ses_de2910960ffeg9us45PaluOkMy -> LOGSPAM.md (105 lines) + relay of 7 folder files to /tmp/opencode/carry-cf159/ (md5-verified; line counts 464/139/105/73/82/76/97). Headline: biggest noise = build-charts git fetch ref-enumeration ~976 ln + helm dep chatter ~700 + cr echo ~250 per fan push; diag dumps only ~72 ln (smallest target); act platform noise ~21% NOT gateable; renovate ~95% info-artifacts (but owner ruled default stays info). Dev-instance logs unsampleable (runner down) — inference fallback documented.",
     "chunk-development": "ALL DONE: C01 3ab9ca435, C03 94067440b, C04 86b3682c2, C02 a471403bb",
     "chunk-review": "ALL DONE: four chunks, all r1 APPROVED, zero blockers/majors",
-    "final-review": "launching (planning tier, tp2)",
-    "final-review": "pending",
+    "final-review": "RUNNING ses_de1ca23b5ffewtiLy6OfiGtlhr (planning tier, tp2 lane) — full suite + cross-chunk coherence + plan-level verdict",
     "deployment": "skipped (unchecked)",
     "single-session": "skipped (unchecked)",
     "follow-up-cards": "skipped (unchecked)"
