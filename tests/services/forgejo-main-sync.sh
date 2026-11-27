@@ -485,7 +485,7 @@ for ln in invocation_lines:
     need('ARGOCD_SYNC_TOKENS' not in ln, f'the invocation line references the vault key ({ln.strip()[:100]!r}) — tokens are env-mapped to the STEP, never passed per-call')
     need('--token' not in ln, f'the invocation passes a --token flag — banned by the CLI contract (plan: tokens ONLY from the environment)')
 
-# REF fallback chain: dispatch pushes may carry no event ref (build-charts.yaml:95
+# REF fallback chain: dispatch pushes may carry no event ref (build-charts.yaml:96
 # context-quirk precedent) — the chain is pinned exactly.
 need(re.search(r'REF="\$\{EVT_REF:-\$\{GH_REF:-refs/heads/main\}\}"', blob),
      'no REF="${EVT_REF:-${GH_REF:-refs/heads/main}}" fallback chain — dispatch/first-push runs must resolve main, not fan out on an empty ref')

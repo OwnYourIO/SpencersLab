@@ -20,12 +20,15 @@ COPY --from=build /app/publish ./
 # The plain bookworm .deb is a SOXR build (libsoxr0 in Depends — the
 # --sampleformat option exists) and pulls no audio-server dependency (R2 §4).
 # The deb's version string is <ver>-1, so the URL stays version-stable under
-# the ARG pin above.
-RUN wget -q "https://github.com/snapcast/snapcast/releases/download/v${SNAPCAST_VERSION}/snapclient_${SNAPCAST_VERSION}-1_amd64_bookworm.deb" \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends ./snapclient_*.deb \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -f ./snapclient_*.deb
+# the ARG pin above. The runtime base carries no wget or curl (layer-
+# verified against the runtime:10.0 image — the 2026-11-27 CI fetch leg
+# died on it, exit 127), so the fetch is a zero-binary ADD (the okd-enketo
+# idiom); the 592 KB deb persists as its ADD layer — not removable in a
+# later RUN.
+ADD https://github.com/snapcast/snapcast/releases/download/v${SNAPCAST_VERSION}/snapclient_${SNAPCAST_VERSION}-1_amd64_bookworm.deb /tmp/snapclient.deb
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/snapclient.deb \
+    && rm -rf /var/lib/apt/lists/*
 # ffmpeg + ffprobe: the promote --dir lane's arbitrary-format decoder. The
 # 18.0.0 base package ships only the 44-byte-header s16 decoder (its
 # FFmpegAudioService moved to the SoundFingerprinting.Emy client package),

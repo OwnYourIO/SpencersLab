@@ -54,10 +54,12 @@ app-template:
       containers:
         main:
           image:
-            repository: ghcr.io/ownyourio/audio-ad-detection
+            repository: git.spencerslab.com/curatedforest/audio-ad-detection
             # Brand-new image: no calendar tag exists yet, so track the
-            # rolling :main tag the containers-build workflow publishes
-            # (pinned-image rule's "no pinned version" exception).
+            # rolling :main tag the build-containers workflow publishes
+            # (pinned-image rule's "no pinned version" exception) — the
+            # workflow pushes the tag set to both registries; the home
+            # cluster pulls the public instance one.
             # PIN-ME: pin the first :yy.mm.N once a prod build lands, then
             # drop pullPolicy: Always.
             tag: main

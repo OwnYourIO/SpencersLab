@@ -461,11 +461,6 @@ fi
 # (first-build calendar-tag cites). Exact per-file joins, no wildcards;
 # the rebuild round's "NO docker-build or vllm-radiance admits" premise
 # assumed the branch touches neither — C15's fence says otherwise.
-# cf-55 ROUND 6 / C17 (2026-11-26, owner ruling D64; chunks/C17.md): the two
-# runner custom-values files join as EXACT per-file admits (comment-only
-# registration-token re-truths; the KEY names and UUIDs stay). Chart moves
-# are already covered by charts/forgejo-runner/* — bash case globs span
-# '/', so an admitted path needs no new join regardless of diff status.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -536,7 +531,6 @@ if want c7; then
       .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
       .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
       services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
-      custom-values/dev/prod-values.yaml|custom-values/gpu/prod-values.yaml|\
       .agents/plans/2026/2026-11-bug-board-preload-lean-consumer/*|\
       .agents/plans/2026-11-07-bug-question-notify-instance-fanout.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE; cf-124 plan-folder + cf-143 radiance + cf-55 chart-half admits in the union)" ;;

@@ -217,6 +217,28 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   (unchanged); `helm lint charts/forgejo-runner` + the hermetic `helm template`
   pass.
 
+## Landing merge (2026-11-27, coord, owner-ruled)
+
+- 2026-11-27 human D10 (merge-conflict ruling, verbatim: "So if you have a fix
+  for the issue I raised, include that, otherwise leave the reverted and
+  functional chart." + "No merge pending there" for the main checkout):
+  the landing merge of origin/main INTO cf-159-refactor-build-process takes
+  MAIN's side for charts/forgejo-runner/values.yaml + dev/gpu-forgejo-runner.sh
+  (+ auto-merged gpu suite force-restored to theirs): the card's runner issue
+  was resolved by the owner's cf-55 r8 REVERT (6ffeeb87e, D67) — this ticket's
+  C18 port fixes the C17 SHAPE, which no longer exists on main, so C01's
+  chart delta and its t23/t24/g12/g13 legs are DROPPED (superseded, not
+  failed; D66/D67 records keep the Force/Replace + content-guard law for any
+  future re-landing). C02/C03/C04 (workflows + repo-add script) fully survive:
+  they answer the card's other three asks and are the ticket's shipped value.
+  The build-charts.yaml conflict (owner's cf-133 C09 dead-run/empty-before
+  arm + bootstrap no-marker full-set fix on the SAME resolver area vs our
+  C02/C03/C04 hunks) is INTEGRATED, both sides' semantics preserved.
+- 2026-11-27 coord (step-5a escape hatch): conflict integration in
+  build-charts.yaml launched on `code` (file edits + live merge state in one
+  session); coordinator commits the merge after re-verifying the full suite;
+  no commit by code.
+
 ## Deferred
 
 - The dev node capacity issue (5/10 runner pods unschedulable, EXPLORE §3.2) —

@@ -1198,3 +1198,130 @@ plan-changing finding (F-1). `plan_status` stays approved — this is delta work
    (t11 re-aim forced by the same header sites, g7 sixth-class re-arm,
    dual-source transition-green readers, behavior-form placeholder pins,
    init-image deferred to G2).
+ - 2026-11-27 plan D66 (round-7 C18 replan — probe verdict, owner ruling,
+   placement + mechanism + content-guard laws):
+  (1) PROBE FINDINGS adopted as the design record (ses_de7049e7affe, 2026-11-27,
+   no files — facts live in STATE.round7 + the card comment): chart CLEAN;
+   the C17 STS update died on K8s StatefulSet update validation —
+   `podManagementPolicy` is not in the exempt list (replicas/ordinals/template/
+   updateStrategy/revisionHistoryLimit/persistentVolumeClaimRetentionPolicy/
+   minReadySeconds) so the flip OrderedReady→Parallel is immutable-for-update
+   and the WHOLE patch (template included) was refused; ArgoCD left the release
+   SyncFailed while STAKATER RELOADER annotation-poked updateRevision
+   `b477f9cd4` (5s post-sync) carrying the PRE-C17 template — gpu-9 crashed on
+   the `runner-creds` subPath key the new Secret no longer carries; ordinals
+   0-8 survive only because kubelet pinned their containers' inodes (restart =
+   same crash); and kubelet AUTO-CREATES missing subPath targets on the volume,
+   leaving data PVCs 0-8 with EMPTY /data/config/config.yaml files that
+   C17's existence-only guard reads as registered (daemon boots empty config —
+   a silent second failure class); dev fully pre-C17, sync-as-is reproduces
+   failure + outage.
+  (2) OWNER RULING (verbatim): "Run C18, then unstick by sync" — C18 = (a)
+   Replace sync-option on the runner STS so immutable flips replace-and-
+   recreate, placement VERIFY-by-render not guess; (b) register-guard CONTENT
+   validation (url + uuid parseable non-placeholder, token non-empty), empty
+   leaves re-register, stale-row consequence priced and accepted for the
+   never-really-registered leaf case; (c) suite legs render-pinned +
+   empty-leaf-mutant behavior form; (d) values header note; NOTES untouched.
+   Landing after merge: gpu STS delete + sync (PVC leaf scrub OPTIONAL once
+   (b) ships) → 10-row verify → dev dance same session.
+  (3) PLACEMENT LAW, render-proven on this tree (app-template 5.0.1 vendored):
+   `app-template.controllers.runner.annotations` renders to the StatefulSet's
+   OWN `metadata.annotations` (reloader key sits there, pod template metadata
+   carries labels only, single occurrence per render) — exactly where ArgoCD
+   reads resource-level sync options (gitops-engine pkg/sync/sync_context.go:
+   1171 `HasAnnotationOption(t.targetObj, common.AnnotationSyncOptions, …)`
+   against the desired manifest's own metadata). No pod-only rescue was needed:
+   global.annotations (bleeds every resource), rawResources (duplicate
+   ownership, ANTI-HYBRID class), parent-side raw add (forks the workload) —
+   all REJECTED, moot by placement.
+  (4) MECHANISM LAW — the shipped literal is `argocd.argoproj.io/sync-options:
+   "Force=true,Replace=true"`, the ruling's INTENT ("REPLACE-and-recreate,
+   frozen-rollout class closed") with its true mechanism; the ruling's literal
+   Replace=true ALONE closes NOTHING: source-traced this round — gitops-engine
+   routes Replace to the vendored `kubectl replace` (resource_ops.go
+   ReplaceResource), whose non-force path is a plain PUT and the immutability
+   validation of (1) is VERB-INDEPENDENT (PATCH and PUT both reject the same
+   spec change — the probe's own error text is that validator). Recreation
+   lives in kubectl's force path (replace.go Run: ForceDeletion ⇒
+   forceReplace() = DELETE, poll-until-NotFound (5m), CREATE), wired by
+   resource_ops.go:559 `o.DeleteOptions.ForceDeletion = force`, and argo-cd's
+   docs spell the pair (`Force=true,Replace=true`) for exactly this purpose,
+   noting Force only bites with Replace or client-side apply and Replace
+   takes precedence over SSA. Cost priced: every sync that includes this
+   OutOfSync STS delete-and-recreates it — all pods bounce at once, PVCs
+   persist (STS default PVC retention keeps them; policy unset), guards
+   re-attach identities; accepted because it matches the D65-tolerated
+   simultaneous-10 Secret-change restart profile and beats SyncFailed-forever.
+   Rejected: Replace=true alone (intent unmet), application-level syncOptions
+   (sweeps ESO/CM/Service into replace semantics, blast radius the owner
+   posture keeps per-resource), the SSA route (t5 pins ServerSideApply=false
+   fleet-wide; --force-conflicts doesn't recreate anything), status-quo
+   manual-delete-on-every-flip (leaves the class open — the whole ask was to
+   close it). VETO slot: owner keeps Replace-only — then the literal ships as
+   ruled and the class stays open by that word, recorded.
+  (5) CONTENT-GUARD LAW: the skip requires existence AND a parseable url line
+   AND a parseable uuid that is NOT the __RUNNER_UUID__ placeholder AND a
+   NON-EMPTY (-s) /data/config/token; anything else falls through to the
+   existing register path, which overwrites both files. The existence limb
+   stays literally (t21/g11 index it; ordering tooth unchanged). Beyond the
+   kubelet empty leaves this heals C17's latent half-write window: writes go
+   config THEN token (values.yaml order), so a boot dying in between left a
+   guard-skipping config whose daemon dies on the missing token file — the old
+   guard crash-looped it; the new guard re-registers. Stale-row pricing:
+   kubelet leaves / never-booted ordinals had NO working row — re-registering
+   mints the first one, zero churn (owner's own reasoning, adopted); the only
+   new-row-over-a-live-row case is impossible by construction (a row only
+   works when both files validate, and both-valid ⇒ skip). One bounded
+   stale-offline row may accumulate per healed half-write; owner deletes them
+   manually, cleanup cron STAYS OFF (D63 unchanged).
+  (6) LANDING SEQUENCE (UA-R7-* in the plan Round-7 section): merge (fires the
+   fan, 2026.11.3→2026.11.4 CI-bump) → gpu STS delete + sync (explicit delete
+   KEPT even though the annotation would now replace-on-sync: it also clears
+   the reloader's stale updateRevision poke deterministically) → gpu 10-row
+   verify (UA-R6-1 resize prerequisite) → dev dance same session, with the
+   UA-R6-3 dev-token CONFIRMATION as the dev-side blocker (probe: dev's vault
+   item still carries the old record-pair — syncing without the mint
+   reproduces the outage there too).
+  (7) SUITE LAW: dev t23/g12 annotation placement ×3 renders (workload-metadata
+   presence + zero bleed); dev t24/g13 guard statics (four limbs, ordered,
+   comment-stripped code) + an EXECUTABLE hermetic EMPTY-LEAF battery (sandbox
+   path rewrite + stub wget, same-invocation /tmp law) proving skip-vs-register
+   per fixture; green-reachability synthetic pass mandatory before handback
+   (round-6 friction law); no live-API legs; trio at CHUNK_BASE=<round-7 plans
+   commit> expects exactly {c13, t17, c19}.
+   plan_status stays approved (delta on the approved plan of record; STATE
+   flips are coord-side — this planner touched nothing there). Branch anchor:
+   REBASED onto origin/main 00a5f3745 this round (is-ancestor check FAILED
+   first — main had merged round-6 + AD-56 landed on top: coder-cli bake,
+   release bumps, chart 2026.11.3; our unmerged commit was plans-only, replayed
+   clean, ticket folder verified, branch unpushed = equivalent-safe anchor per
+   the round-6 law; C17 files byte-unchanged by the AD-56 delta except
+   Chart.yaml version). Models per D35 (openrouter flash). Next surface: the
+   round-7 TEST WAVE (t23/t24 + g12/g13 red-first), then C18 dev.
+ - 2026-11-27 human D67 (round-8 REVERT directive — verbatim): "OK, currently,
+   the runners come in broken. Can you pull the recent refactor that broke
+   them? I don't want you to fix what you did, just pull it out to restore the
+   previously working state. If you can do it in a single commit that'd be
+   ideal." SCOPE: revert = the MERGED C17 R6-series on main — a6991e2fb (r6
+   test wave) + 944eaf8b9 (C17 impl: ESO single-key/register init/
+   configmap-skeleton NEW/NOTES fold/suite re-arms) + 89af34e65 (review
+   bundle: RPC legs + lfs fence). C18 NEVER LANDED main (local branch only;
+   re-anchor drops it — D66's probe/placement/mechanism findings REMAIN VALID
+   RECORD for any future re-landing; the Force/Replace + content-guard law is
+   the proven answer to the immutability + kubelet-leaf classes regardless of
+   which registration shape ships). EXCLUSIONS: .agents/plans records
+   (append-only), Chart.yaml (CI-owned); SHARED FILES (touched by cf-56
+   a91627e06 / cf-140 / bumps in-range) revert HUNK-SURGICAL ONLY — no
+   whole-file restore may clobber another ticket's work (lfs fence is the
+   named case: keep any cf-56-needed widen, pull the C17-file widen).
+   WHY SYNC RESTORES CLEANLY: the live STS never received Parallel (C17 patch
+   was API-rejected) — revert-vs-live delta carries NO immutable-field flip,
+   ordinary patch-sync applies; reloader poison revision superseded as the
+   reverted template rolls; pods 0-8's inode-pinned salvation becomes moot
+   (mounts return with the template). OWNER RESTORE LEGS (non-repo, stated
+   on-card): gpu Bitwarden item password currently = the minted REGISTRATION
+   token (UA-R6-3 was executed) — restore the ORIGINAL record token from
+   item revision history before/at sync else daemons 401; dev item untouched
+   (record-pair intact) -> dev restores clean; orphan runner rows from the
+   C17 attempt -> admin delete after; cleanup_offline_runners still OFF.

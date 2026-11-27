@@ -2,32 +2,31 @@ Forgejo Actions runner ({{ .Release.Name }})
 ============================================
 
 Nothing to browse or port-forward — this is a client-only service. One
-StatefulSet runs here; every pod is a privileged DinD sidecar + hardened
-runner container dialing the Forgejo instance its release was pointed at
-via runner.url (the dev release: in-cluster dev-forgejo-http, the infra
-release: the public infra host). Jobs run in each pod's privileged DinD
-sidecar; docker images are cached on the per-pod docker-data PVC so
-re-runs don't re-pull.
+runner pod runs here (privileged DinD sidecar + hardened runner container)
+and dials the Forgejo instance its release was pointed at via runner.url
+(the dev release: in-cluster dev-forgejo-http, the infra release: the
+public infra host). Jobs run in the pod's privileged DinD sidecar; docker
+images are cached on the docker-data PVC so re-runs don't re-pull.
 
-Identity (D61): the release uses ONE shared runner token and every pod
-registers itself with it on its first boot. An init container POSTs the
-registration (name = that pod's own name, the release's full label set,
-and never ephemeral — the v13 daemon refuses ephemeral records) to the
-instance's runner-registration endpoint; the server answers with that
-pod's own identity, which is persisted on the pod's data PVC. A restart
-re-attaches from the PVC and never re-registers. So a 10-replica release
-shows ten rows in Admin -> Actions -> Runners, each named after its pod,
-all advertising the identical labels; scaling works by pod count, each
-pod holding its own slot at capacity 1.
+Identity: the runner registers declaratively (its server.connections
+entry in the ExternalSecret-generated config.yaml, token read from
+file:$CREDENTIALS_DIRECTORY/token — no register CLI, no env vars). The
+uuid+token pair lives in this release's Bitwarden item; the ExternalSecret
+re-renders it on every pod start and the server matches the runner record
+by uuid, so a restart is a re-attach, NOT a re-registration. Never scale
+the StatefulSet: one uuid+token pair must map to exactly one pod (more
+runners = more runner records, each with its own pod).
 
-One-time user action (before any pod can register): mint a runner token
-on the target Forgejo instance (Admin -> Actions -> Runners, instance
-scope; the token is displayed once at creation and cannot be retrieved
-later) and store it in this release's Bitwarden item's login PASSWORD
-field. The login username field (the uuid of the old single shared
-pair) is no longer read by the fetch. The ExternalSecret reads only the
-login username and password fields; values in custom fields, notes, or
-the URI are not read. That item's Bitwarden ID goes in
-custom-values/dev/prod-values.yaml under
-<app-key>.bitwardenIds.runner-token — the fetch is by item ID, not
-item name, so a similarly-named item never syncs.
+One-time user action (before this runner can go online):
+  Create the runner record on the target Forgejo instance (Admin ->
+  Actions -> Runners, instance scope) and copy its UUID and the
+  runner token — both are shown once at creation and cannot be
+  retrieved later. Store the pair in this release's Bitwarden item's
+  login fields — username = the uuid, password = the runner
+  token. The ExternalSecret reads only the login username and
+  password; values in custom fields, notes, or the URI are not
+  read. Create the record persistent (NOT ephemeral) — the v13
+  daemon refuses ephemeral records. That item's Bitwarden ID
+  goes in custom-values/dev/prod-values.yaml under
+  <app-key>.bitwardenIds.runner-token — the fetch is by item ID, not
+  item name, so a similarly-named item never syncs.

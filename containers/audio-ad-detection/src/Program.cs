@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using AudioAdDetection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -90,11 +91,9 @@ var model = app.Services.GetRequiredService<ModelService>();
 // when that stop has finished. The remaining legs are the snapshot-on-exit
 // (the restart-load contract) and the idempotent MQTT disconnect safety
 // net; everything must land well inside the 30 s K8s grace.
-var sigterm = new PosixSignalRegistration();
-sigterm.Register(PosixSignal.SIGTERM, context =>
+var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
 {
     context.Cancel = true;
-    return true;
 });
 
 await app.RunAsync();

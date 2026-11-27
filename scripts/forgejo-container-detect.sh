@@ -12,14 +12,17 @@
 #             (the last-built marker: when set it replaces before as the base,
 #             so a build a dead or cancelled run lost is re-covered by the
 #             next run instead of staying skipped forever; on a workflow_call
-#             run with no marker the range is tip-only and announced — a
-#             called run carries no push payload, so an empty before is
-#             expected there and the push arm still dies on it). The
+#             run with no marker the range is the FULL SET — the empty tree —
+#             and announced: a tip-only range would skip-and-seal, the
+#             directories introduced below a burst tip stay invisible, the
+#             marker seals at the tip on this run's green, and they never
+#             build. A called run carries no push payload, so an empty before
+#             is expected there and the push arm still dies on it). The
 #             build-containers workflow resolves and validates MARKER_SHA; this
 #             script only reads it, and an empty value is the bootstrap
 #             fallback. The base token echoed on stderr names which arm won:
-#             marker|tip-only|before, so called runs read distinctly from
-#             push-era ones. BASE_SHA and HEAD_SHA (pull-request
+#             marker|full-set|tip-only|before, so called runs read distinctly
+#             from push-era ones. BASE_SHA and HEAD_SHA (pull-request
 #             range), MANUAL_CONTAINERS (dispatch list, comma/space separated).
 #   next-n    stdin a tags/list JSON body (either registry), env YYMM=yy.mm;
 #             stdout the month's next calendar release number, max(yy.mm.N)+1 or 1.
@@ -67,12 +70,23 @@ detect() {
         base_src='marker'
       elif [ "$event" = workflow_call ]; then
         # First called run with no marker (bootstrap, or the owner has not
-        # migrated the ref yet): tip-only and LOUD about it — the narrowing
-        # announces itself exactly like the all-zero first push arm.
-        printf '::warning::first called run (workflow_call, no marker): tip-only detection over HEAD^..HEAD\n' >&2
-        a='HEAD^'
+        # migrated the ref yet): the FULL SET and LOUD about it — a
+        # tip-only range would skip-and-seal: directories introduced below
+        # a burst tip stay invisible, the marker seals at the tip on this
+        # run's green, and they never build. The one-time full build is
+        # bounded: after this run's green the marker exists and every later
+        # fire diffs marker..sha.
+        # Why not the rejected alternative — refusing to advance the marker
+        # on a multi-commit push: it does not resolve the skip (the next
+        # no-marker called run is still tip-only; deferral is not coverage),
+        # it defeats the marker's re-cover property (C14/D53), and it
+        # cascades into the main-sync D54 single-writer job and its test —
+        # cf-55 territory.
+        printf '::warning::first called run (workflow_call, no marker): full-set detection over the empty tree — a tip-only range would skip-and-seal: directories introduced below a burst tip stay invisible, the marker seals at the tip and they never build\n' >&2
+        EMPTY_TREE=$(git mktree < /dev/null)
+        a="$EMPTY_TREE"
         b='HEAD'
-        base_src='tip-only'
+        base_src='full-set'
       else
         if [ -z "$before" ]; then
           # A v15.0.10 push payload always carries before: a real oid, or the

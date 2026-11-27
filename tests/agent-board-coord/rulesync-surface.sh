@@ -665,11 +665,6 @@ fi
 # files already ride tests/*, .rulesync/skills/* and .opencode/skills/* here;
 # the amendment is skill-side only (plan D8: no tool, plugin, collector or
 # rules surface), so nothing else joins.
-# cf-55 ROUND 6 / C17 (2026-11-26, owner ruling D64; chunks/C17.md): the two
-# runner custom-values files join as EXACT per-file admits (comment-only
-# registration-token re-truths; the KEY names and UUIDs stay) — which retires
-# the custom-values/gpu probe below, the same way the C16 round retired the
-# services/gpu probe. The content teeth move to gpu-forgejo-runner.sh g7.
 if want c8; then
 # (round-5 entries ride the cf-55 lines inside c8_admits; provenance)
 # cf-55 ROUND 5 (2026-11-26, chunks/C14-C16.md; D52-D59): the shared-marker
@@ -756,7 +751,6 @@ if want c8; then
       .forgejo/workflows/"containers-build".yaml|.forgejo/workflows/build-containers.yaml|renovate.json|\
       .github/workflows/docker-build.yaml|containers/vllm-radiance-mxfp4/Dockerfile|containers/vllm-radiance-mxfp4/README.md|\
       services/dev/prod/values.yaml|services/gpu/prod/values.yaml|\
-      custom-values/dev/prod-values.yaml|custom-values/gpu/prod-values.yaml|\
       .agents/plans/2026-11-cf-123-bug-tweak-init/*|\
       .agents/plans/2026/2026-11-cf-124-feat-checklist-locks-dependency/*|\
       .agents/plans/2026/2026-11-cf-126-feat-compaction-pipeline-sessions/*|\
@@ -797,11 +791,6 @@ if want c8; then
   # values.yaml RETIRES from this probe list — the owner's runner-scale
   # ruling makes it an admitted per-file surface (the replicas slice), the
   # same way services/dev/prod/values.yaml never carried a probe here.
-  # cf-55 ROUND 6 / C17 (2026-11-26, chunks/C17.md; D64): the same fall for
-  # custom-values/gpu/prod-values.yaml — the round-6 registration-token
-  # comment re-truth makes it a declared per-file admit (the UUID itself is
-  # content-pinned by gpu-forgejo-runner.sh g5/g7, never by this arm); the
-  # remaining sibling custom-values categories stay probed OUT.
   for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
            containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
            charts/llama-swap/templates/deployment.yaml \
@@ -809,13 +798,14 @@ if want c8; then
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md \
            charts/vllm/values.yaml \
            charts/loki/Chart.lock \
+           custom-values/gpu/prod-values.yaml \
            containers/renovate-mcp/README.md \
            containers/forgejo-host-runner/Dockerfile charts/forgejo/values.yaml; do
     if c8_admits "$p"; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits, the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs) and the cf-55 chart-half admits (own folder, Forgejo release builder + composed deleted GitHub twin, C04 infra values file, helm-chart-creation skill, renovate-mcp Dockerfile) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) + the cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3) + the cf-55 round-4/C12 admit (the renovate workflow's -full image+env pair behind the digest gate, D49, dev 93cb79107) — charts/vllm/values.yaml, the loki sibling lock, the sibling custom-values categories beyond the two admitted runner files, the act-base sibling container and the Forgejo-instance chart, and unadmitted container files stay probed OUT; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits), cf-96 (plan folder + C09 coder-template pair), the cf-106/cf-123 own-folder admits, the cf-143 radiance admits (plan folder, the two new chart trees, the vllm TEST tree only, three render workflows, three notes docs) and the cf-55 chart-half admits (own folder, Forgejo release builder + composed deleted GitHub twin, C04 infra values file, helm-chart-creation skill, renovate-mcp Dockerfile) + the cf-55 fix-round directory admits (charts/forgejo-runner, containers/forgejo-runner) + the cf-123 own-folder admit (bug-board-preload-lean-consumer) + the cf-55 round-4/C09 per-file admits (the three regenerated drift-trio Chart.locks + the two traefik values files, D51-Q1/Q3) + the cf-55 round-4/C12 admit (the renovate workflow's -full image+env pair behind the digest gate, D49, dev 93cb79107) — charts/vllm/values.yaml, the loki sibling lock, services/gpu, sibling custom-values, the act-base sibling container and the Forgejo-instance chart, and unadmitted container files stay probed OUT; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

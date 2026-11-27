@@ -1,14 +1,12 @@
-# Forgejo Actions runner — one registration token; every pod registers itself.
+# Forgejo Actions runner — one registration per release.
 #
 # The dev ApplicationSet aliases this chart once per deployed Forgejo
 # runner (each ArgoCD Application carries `chart: forgejo-runner`): today
 # forgejo-runner-dev (docker backend, dev instance); the infra alias is
-# un-wired pending the 2026-10-25 relocation. Each release runs N pods (the
-# slice's replicas; D61 supersedes the old one-pod-per-registration identity:
-# ten pods, ten self-registered records named after the pods, one shared
-# token), one headless Service, one ExternalSecret and one config-skeleton
-# ConfigMap — every resource is named after the release, so releases coexist
-# in namespace `default` without colliding.
+# un-wired pending the 2026-10-25 relocation. Each release runs exactly one
+# pod, one headless Service and one ExternalSecret — every resource is named
+# after the release, so releases coexist in namespace `default` without
+# colliding.
 #
 # Two backends via `runner.backend` (C03, ticket 2026-10-cf-11-feat-immich-
 # hugo-pipeline; docker is the default and the shape this file ships):
@@ -30,11 +28,10 @@
 #            gpu prod runner, or the separate-ask dev instance),
 #            persistence.socket, and
 #            containers.runner.env.DOCKER_HOST — and overrides the image and
-#            runner.labels. templates/secret-runner.yaml's gate plus
-#            templates/configmap-skeleton.yaml render the
-#            backend-appropriate config.yaml from runner.backend; keep their
+#            runner.labels. templates/secret-runner.yaml renders the
+#            backend-appropriate config.yaml from runner.backend; keep its
 #            file-level comments mode-neutral at all times — template
-#            comments land verbatim in the rendered manifests, so editing
+#            comments land verbatim in the rendered manifest, so editing
 #            them breaks the docker-render byte-identity (C03 AC2).
 #            TRANSPORT CAVEAT (card #88 inherits this): the null-outs ride
 #            inline valuesObject through ApplicationSet -> Application, and
@@ -52,9 +49,9 @@
 #            Application's valuesObject still carries the three null keys
 #            and the pod has no dind container.
 #            Registration itself is scope-AGNOSTIC (repo/org/instance): the
-#            scope is where the OWNER mints the registration token in the
-#            target Forgejo's Actions admin UI; every pod of the release
-#            registers against that one token either way. Cross-runner
+#            scope is where the OWNER creates the runner record in the target
+#            Forgejo's Actions admin UI; the chart consumes exactly the
+#            release's (uuid, token) Bitwarden item either way. Cross-runner
 #            job hijacking is prevented by LABELS, not scope: labels are
 #            instance-scoped, so each release must advertise a label set
 #            disjoint from every other runner on that instance (the act set
@@ -67,36 +64,14 @@
 # placement is load-bearing — the appset merge only flows those to the
 # release).
 #
-# Registration is per-pod at first boot (D61; runner v13): the register init
-# container POSTs the runner registration RPC with the shared registration
-# token (in the request BODY — the endpoint is otherwise unauthenticated for
-# Register only), receives its own uuid+token, and renders the
-# configSkeleton ConfigMap onto its own /data PVC. The daemon is
-# fully declarative from then on: server.connections.default from
-# /data/config/config.yaml, token_url: file:/data/config/token (absolute) —
-# no Secret mount, no credentials env. The v13 register CLI is deprecated
-# (it works; upstream discourages it in favour of declarative config) and
-# env-var identity does not exist. Because the identity file lives on the
-# ordinal's retained PVC, a restart — including the reloader's Secret-change
-# restart — is a RE-ATTACH, never a re-registration: the init's guard
-# CONTENT-validates (C18/D66(5)) — file exists, a parseable url: line, a
-# uuid: line that is not the __RUNNER_UUID__ placeholder, and a non-empty
-# token file — and only then skips. Kubelet auto-creates missing subPath
-# targets, so the frozen C17 PVCs carry EMPTY config.yaml leaves; an
-# existence-only guard would read them as registered and boot an empty
-# config (the silent second failure class). Pricing (accepted): an invalid
-# leaf never functioned, so re-registering costs no real row; a
-# config-valid/token-lost half-write re-mints and its dead row simply goes
-# stale-offline for owner-side deletion — cleanup cron STAYS OFF (D63).
-#
-# Stale-row runbook (D63): scale-down leaves the removed pods' rows in the
-# admin list — the client has no deregistration call and
-# cron.cleanup_offline_runners STAYS OFF (enabling it can delete a row under
-# a live PVC; the ordinal would crash-loop until you cleared its
-# /data/config/config.yaml, so recovery is owner-side, never automatic —
-# post-C18 the cleared/empty ordinal just re-registers on next boot).
-# Concurrent first boots are safe: each POST mints an independent record
-# server-side.
+# Registration is declarative (runner v13 — the register CLI and env-var
+# registration do not work): the daemon connects with its
+# server.connections.default entry from the ExternalSecret-generated
+# config.yaml and reads the token from file:$CREDENTIALS_DIRECTORY/token.
+# The identity is the (uuid, token) pair in the release's Bitwarden item —
+# the ExternalSecret re-renders it on every pod start, and the server
+# matches the runner record by uuid, so a restart is a re-attach, not a
+# re-registration (the daemon never writes a .runner file).
 #
 # k3s MTU warning: if a workflow dies during "checking out actions", first
 # suspect forgejo/runner#1779 (runner >= 12.5 intermittently fails action
@@ -114,17 +89,17 @@
 # Full research in RESEARCH-dind-supplement.md.
 
 bitwardenIds:
-  # The Bitwarden item whose login PASSWORD holds this instance's reusable
-  # registration token (one token for the whole release; owner-minted at
-  # Admin -> Actions -> Runners, UA-R6-3 — D61). The username field's old
-  # record-identity content is no longer fetched: identities are minted per
-  # pod at first boot and live on the pods' PVCs, not in the vault. The real
-  # item UUID rides custom-values/dev/prod-values.yaml under the app key and
-  # the ExternalSecret fetches by that ID: similarly-named vault items are
-  # invisible to the cluster. NEVER the `forgejo-token` item — that one is
-  # the Coder workspace access token. An empty password makes every pod's
-  # register init fail loudly on first boot (no silent crash-loop; the
-  # daemon-side empty-identity fail-fast class retires with the mount).
+  # The Bitwarden item holding this release's (uuid, token) identity
+  # (username = runner uuid, password = runner token — the long-lived
+  # token shown once at record creation, not the deprecated
+  # registration-token exchange). The real UUID rides
+  # custom-values/dev/prod-values.yaml under the app key and the
+  # ExternalSecret fetches by that ID: similarly-named vault items are
+  # invisible to the cluster. NEVER the `forgejo-token` item — that one
+  # is the Coder workspace access token. An empty or non-UUID username
+  # makes the daemon fail-fast (`connection "default" is invalid: 'uuid'
+  # is empty`) and the pod crash-loop — the identity fields must come
+  # from a real server-side runner record.
   runner-token: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Connection URL: chart default so the chart renders standalone — it is a
@@ -177,122 +152,20 @@ runner:
     - docker:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
     - node22:docker://git.spencerslab.com/curatedforest/forgejo-runner:26.11.1
 
-# The config skeleton (C17/D61/D62) as a template string, rendered by
-# templates/configmap-skeleton.yaml into the release-named ConfigMap. The
-# home is parent values, NOT app-template's configMaps key, by necessity
-# not taste: the library tpl's every container and configMap string against
-# the SUBCHART values context (common _env.tpl / _configmap.tpl rootContext
-# = the app-template: subtree + global), where this chart's top-level
-# runner.url / runner.labels — the slice-pinned values the t3/t5/t17 render
-# legs prove must flow — are invisible. The parent renders this body
-# instead, so one source feeds both the ConfigMap and the register init's
-# /skeleton re-attach read. The body's comments land verbatim in the
-# rendered ConfigMap (C03 byte-identity discipline, ConfigMap-borne).
-configSkeleton: |-
-  runner:
-    capacity: 1
-    # Explicit short bounds (not the 3h doc defaults) so an ArgoCD
-    # sync never hangs on a terminating pod; in-flight jobs get
-    # the 5m shutdown window.
-    timeout: 30m
-    shutdown_timeout: 5m
-  cache:
-    enabled: true
-    {{- if eq .Values.runner.backend "host" }}
-    # Host-backend cache dir on the release's /data PVC (the slice
-    # sizes the data VCT for it; the daemon writes its caches here
-    # so a pod restart re-attaches warm).
-    dir: /data/cache
-    {{- end }}
-  {{- if eq .Values.runner.backend "host" }}
-  # Host backend executes jobs directly in the runner container —
-  # no container: block (docker-mode syntax), no privileged stand-in.
-  host:
-    # Workdir_parent on the /data PVC alongside the cache.
-    workdir_parent: /data/workdir
-  {{- else }}
-  container:
-    privileged: false
-    # Share the pod-local dind socket with job containers — the
-    # v13.2.0 default "-" would mount nothing and the job's docker
-    # build would die dialing a missing file. cf-97 wired only the
-    # runner side; the mount, not a client env, was the missing
-    # half. cf-6-debug-forge-runner-docker, 2026-11-21.
-    docker_host: unix:///var/run/docker.sock
-  {{- end }}
-  server:
-    connections:
-      default:
-        url: {{ .Values.runner.url }}
-        # Substituted per pod by the register init on first boot
-        # (D61: the server mints the identity; the vault holds only
-        # the reusable registration token).
-        uuid: __RUNNER_UUID__
-        # Absolute path on the data PVC — the token file the init
-        # writes beside the config; no Secret mount or credentials
-        # env anywhere on the daemon (retired with C17).
-        token_url: file:/data/config/token
-        # The job-image label set (cf-55 D39/D40; per-release
-        # instance-registry re-point, family B,
-        # cf-6-debug-forge-runner-docker-1, 2026-11-22): every row
-        # this release registers advertises the IDENTICAL set (D62 —
-        # one url, one labels payload, jobs route uniformly across
-        # the rows). The four act-24.04-family labels resolve to the
-        # repo-built baked job image (containers/forgejo-runner): by
-        # chart default git.spencerslab.com/curatedforest/forgejo-runner,
-        # which the gpu release rides, and the dev release overrides
-        # the list in its services slice to
-        # git.scifi.farm/curatedforest/forgejo-runner — each runner
-        # pulls from its own instance registry. The base is
-        # digest-pinned upstream: git-lfs is inherited from the base's
-        # act.sh-installed binary, and helm and cr are baked into the
-        # image. Verify the toolchain in a job — `git lfs version`,
-        # `helm version`, `cr --version` — never from the tag alone.
-        # The ubuntu-22.04 label keeps the plain upstream act-22.04,
-        # whose git-lfs comes from the upstream installer pin, not
-        # from the tag. Label pins are calendar tags bumped manually
-        # on BOTH registries and BOTH pin sites (chart default + dev
-        # services slice) — no renovate manager reads these lines and
-        # the dev registry never self-mints a calendar tag. node22
-        # names a job slot, not a Node-22 guarantee: the baked base
-        # ships Node 20/24 as built today. The daemon image carries
-        # no git-lfs and needs none — the LFS filter only runs in job
-        # checkouts (the daemon's own git use is cloning action
-        # definitions). A job clones over HTTPS to the instance's
-        # ROOT_URL, so its LFS fetch is served by the instance — an
-        # LFS checkout works only while the instance serves an [lfs]
-        # store, and a job failing that way reads as a runner bug.
-        labels:
-          {{- .Values.runner.labels | toYaml | nindent 8 }}
-
 app-template:
   controllers:
     runner:
-      # Decision B1's identity half ("one (uuid, token) registration shared
-      # by the pods") is SUPERSEDED by D61 (C17): one registration token,
-      # per-pod self-registration, one record per pod. B1-as-amended (D57)
-      # still holds for sizing: the DEFAULT stays one pod until a services
-      # slice rules otherwise, and the slice scale-out is now ten honest
-      # rows, not ten pollers on one identity. Job-count autoscaling stays
+      # Decision B1 AS AMENDED (owner ruling 2026-11-26, cf-55 round-5):
+      # the DEFAULT stays one pod — a new release is single until a
+      # services slice rules otherwise — while the ruling permits
+      # per-release scale-out to N poller pods sharing one (uuid, token)
+      # registration via the slice override. Job-count autoscaling stays
       # OUT (Inbox card iaJq5bgWHHDHotcBY owns that dimension).
       type: statefulset
       replicas: 1
       annotations:
-        # C18/D66(2): STS spec fields outside the update-exempt list
-        # (podManagementPolicy among them) are immutable for PATCH and PUT
-        # alike — the C17 rollout froze on exactly that. This pair makes
-        # ArgoCD delete-and-recreate the STS on sync (pods bounce, PVCs
-        # persist, the guard re-attaches); Replace alone would be a plain
-        # PUT hitting the same validator, Force drives the recreate.
         reloader.stakater.com/auto: "true"
-        argocd.argoproj.io/sync-options: "Force=true,Replace=true"
       statefulset:
-        # C17/D62 belt: manage ordinals independently — under the
-        # OrderedReady default one unschedulable pod (node CPU full —
-        # EXPLORE Round-6 A1 froze gpu at 3/10) blocks every ordinal behind
-        # it from ever being created, let alone registering. Parallel lets
-        # each pod the scheduler places come up and self-register alone.
-        podManagementPolicy: Parallel
         # app-template 5.x VCTs are a LIST with singular accessMode/size.
         volumeClaimTemplates:
           # Config workdir and the act cache — the image sets HOME=/data,
@@ -380,104 +253,14 @@ app-template:
             limits:
               cpu: 2
               memory: 4Gi
-        # C17/D61: per-pod self-registration on FIRST boot (D62 A'). The
-        # G1 source facts this script encodes (v15.0.10 @ 17e1001d,
-        # routers/api/actions/runner/{runner,interceptor}.go): the
-        # RunnerService Register RPC takes the registration token IN THE
-        # BODY (the interceptor exempts only Register from the uuid/token
-        # header auth), the server mints the uuid, the token stays active
-        # across N registers (reusable), and nothing expires it. The admin
-        # REST twin POST /api/v1/admin/actions/runners needs a site-admin
-        # API token instead — not a vault-shareable runner credential —
-        # so it documents why the RPC path below is the one.
-        register:
-          # Same image as the daemon (G2: busybox sh + wget + ssl_client +
-          # CA bundle verified from the 13.2.0 layer listing) — one pinned
-          # ref, one bump site, no extra pull surface; node-CRI anonymous
-          # pull. Renovate's helm-values manager tracks the pair below.
-          image: &runner-image
-            repository: data.forgejo.org/forgejo/runner
-            tag: 13.2.0
-          command:
-            - /bin/sh
-            - -c
-          args:
-            - |
-              set -eu
-              # Guard FIRST (D62 restart discipline, D66(5) content law):
-              # skip only a CONTENT-VALID identity — kubelet auto-creates the
-              # subPath targets, so empty /data/config/config.yaml leaves sat
-              # on the C17 PVCs and an existence-only check misread them as
-              # registered. Existence, parseable url: and uuid: lines, no
-              # placeholder residue, a non-empty token — invalid falls
-              # through to a fresh registration (the write path replaces).
-              if [ -f /data/config/config.yaml ] \
-                 && grep -q '^[[:space:]]*url:' /data/config/config.yaml \
-                 && grep -q '^[[:space:]]*uuid:' /data/config/config.yaml \
-                 && ! grep -q '__RUNNER_UUID__' /data/config/config.yaml \
-                 && [ -s /data/config/token ]; then
-                exit 0
-              fi
-              # Minting endpoint (G1, v15.0.10 @ 17e1001d): the shared
-              # registration token authenticates ONLY the runner-service
-              # Register RPC — the interceptor exempts Register from the
-              # uuid/token header auth and the token stays active after
-              # each use. The site-admin REST twin,
-              # /api/v1/admin/actions/runners, wants a full admin API
-              # token — never a vault-shareable runner credential — so
-              # the RPC below is the channel.
-              # The registration target IS the mounted skeleton's url —
-              # the same runner.url the daemon will dial (one source of
-              # truth; app-template container env renders against the
-              # SUBCHART values context where runner.url does not exist,
-              # so the file, not an env, carries it).
-              url=$(sed -n 's/^[[:space:]]*url:[[:space:]]*\([^[:space:]]*\).*/\1/p' /skeleton/config.yaml | head -n1)
-              api="${url}/api/actions/forgejo.actions.runner.v1.RunnerService/Register"
-              # The release's exact label set, likewise read from the
-              # mounted skeleton (configmap-skeleton.yaml) so one source
-              # feeds both the POST and the config.
-              labels=$(sed -n 's/^ *- \([^ ]*\)$/"\1",/p' /skeleton/config.yaml | sed 's/,$//')
-              reply=$(wget -q -O - --header 'Content-Type: application/json' \
-                --post-data "{\"name\":\"${POD_NAME}\",\"token\":\"${RUNNER_REGISTRATION_TOKEN}\",\"ephemeral\":false,\"version\":\"v13.2.0\",\"labels\":[${labels}]}" \
-                "$api") || { echo "register: POST to ${api} failed" >&2; exit 1; }
-              uuid=$(printf '%s' "$reply" | sed -n 's/.*"uuid"[ ]*:[ ]*"\([^"]*\)".*/\1/p')
-              token=$(printf '%s' "$reply" | sed -n 's/.*"token"[ ]*:[ ]*"\([^"]*\)".*/\1/p')
-              if [ -z "$uuid" ] || [ -z "$token" ]; then
-                echo "register: response carried no uuid/token: $reply" >&2
-                exit 1
-              fi
-              mkdir -p /data/config
-              sed "s/__RUNNER_UUID__/${uuid}/" /skeleton/config.yaml > /data/config/config.yaml
-              printf '%s' "$token" > /data/config/token
-              chmod 0600 /data/config/token
-          env:
-            # The record name IS the pod name (official k8s example shape,
-            # RESEARCH [S11]) — downward API, never ordinal math.
-            POD_NAME:
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            # No RUNNER_URL env by chart law, not by oversight: app-template
-            # container env values tpl against the SUBCHART values context
-            # (common _env.tpl rootContext = app-template), where the parent
-            # chart's top-level runner.url — the slice-pinned, t3/t17-flowed
-            # value — is invisible (helm renders it empty/errors). The URL
-            # reaches the POST through the mounted skeleton instead: one
-            # source, resolved at boot, exactly the value the daemon dials.
-            RUNNER_REGISTRATION_TOKEN:
-              valueFrom:
-                secretKeyRef:
-                  name: '{{ .Release.Name }}'
-                  key: registration-token
       containers:
         runner:
-          # The register init references this same mapping (YAML anchor) —
-          # one pin, one bump site (G2: its sh/wget/TLS tooling is the point).
-          # The daemon image is the register init's anchor above — one pin
-          # site for Renovate's helm-values manager (dry-run verified
-          # 2026-10-23; the extraction follows the literal pair, not any
-          # per-line annotation).
-          image: *runner-image
+          image:
+            repository: data.forgejo.org/forgejo/runner
+            # Renovate's built-in helm-values manager tracks this pin
+            # (dry-run verified 2026-10-23) — the extraction comes from
+            # the manager, not from any per-line annotation.
+            tag: 13.2.0
           # The image's ENTRYPOINT is dumb-init (zombie reaping) and K8s
           # `command` replaces the entrypoint — so it goes back in
           # explicitly.
@@ -494,9 +277,9 @@ app-template:
             - -c
             - /data/config/config.yaml
           env:
-            # In-pod socket (the `socket` emptyDir), not a node socket. The
-            # old credentials-dir env retired with C17: config and token are
-            # PVC files produced by the register init, not Secret projections.
+            # Resolved by the runner for token_url: file:$CREDENTIALS_DIRECTORY/token
+            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner
+            # In-pod socket (the `socket` emptyDir), not a node socket.
             DOCKER_HOST: unix:///var/run/docker.sock
           resources:
             requests:
@@ -568,20 +351,19 @@ app-template:
       type: emptyDir
       globalMounts:
         - path: /var/run
-    # C17: the release Secret is consumed by the register init through a
-    # secretKeyRef ENV only — no container mounts it. The old runner-creds
-    # whole-Secret mount (+ its config.yaml subPath, which would shadow the
-    # PVC-rendered config) retires with the vault-held identity pair (D61).
-    runner-skeleton:
-      # The config template the register init reads, substitutes the
-      # __RUNNER_UUID__ placeholder in, and writes to the PVC. Mounted
-      # read-only into the init container only. Named by release (the
-      # chart-level template renders it — the dynamic keys come from the
-      # parent values, invisible to an app-template configMaps tpl).
-      type: configMap
-      name: "{{ .Release.Name }}-runner-config"
-      advancedMounts:
-        runner:
-          register:
-            - path: /skeleton
-              readOnly: true
+    # The ExternalSecret-generated identity: whole secret at
+    # CREDENTIALS_DIRECTORY (so `token` lands where token_url says) and
+    # config.yaml subPath-mounted where the daemon's -c flag points.
+    # subPath means the file does not hot-update — the reloader annotation
+    # restarts the pod on secret changes.
+    #
+    # The library tpl's name for type: secret, so a static values entry
+    # can still derive it from the release — each release's ExternalSecret
+    # targets a Secret of exactly its release name.
+    runner-creds:
+      type: secret
+      name: "{{ .Release.Name }}"
+      globalMounts:
+        - path: /run/secrets/forgejo-runner
+        - path: /data/config/config.yaml
+          subPath: config.yaml

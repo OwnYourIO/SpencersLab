@@ -3,7 +3,7 @@
 # containers/audio-ad-detection (the headless .NET 10 worker that taps the
 # home snapcast stream, fingerprints it with SoundFingerprinting 18.0.0, and
 # publishes ad events to Home Assistant over MQTT), charts/audio-ad-detection
-# (app-template 5.0.1, brand-new 1.0.0), and the services/home/prod wiring.
+# (app-template 5.0.1, calendar version), and the services/home/prod wiring.
 # Modeled on tests/containers/forgejo-runner.sh: no docker daemon exists in
 # agent sessions, so the gate is a static contract + hadolint, and the build
 # leg reports the designed-passing shape "docker build => no-daemon,
@@ -60,7 +60,7 @@
 #             no Ingress + ClusterIP/10Gi RWO PVC + security context), the
 #             services charts: entry shape + no ingress subdomain + no
 #             custom-values entry (verdict (a)) + the TBD-owner placeholder,
-#             Chart.yaml pins (apiVersion v2, version 1.0.0, app-template 5.0.1)
+#             Chart.yaml pins (apiVersion v2, calendar Y.M.N, app-template 5.0.1)
 # t30-t31 C05  whole-plan validation re-entry (helm lint + t1..t29 re-run),
 #             plan-of-record pin of the ruled defaults (drift reddens)
 #
@@ -1027,8 +1027,8 @@ if want t29; then
         fail "t29: Chart.yaml apiVersion is not v2"
       grep -qE '^name:[[:space:]]*audio-ad-detection' "$CHART_YAML" ||
         fail "t29: Chart.yaml name is not audio-ad-detection"
-      grep -qE '^version:[[:space:]]*1\.0\.0' "$CHART_YAML" ||
-        fail "t29: Chart.yaml version is not 1.0.0 (brand-new chart — the one-time 1.0.0; never hand-bump after)"
+      grep -qE '^version:[[:space:]]*[0-9]{4}\.[1-9][0-9]?\.[0-9]+[[:space:]]*$' "$CHART_YAML" ||
+        fail "t29: Chart.yaml version is not in the calendar release shape Y.M.N (unpadded month; e.g. 2026.11.1) — the release pipeline (build-charts.yaml) owns the bump (never hand-bump); a 1.0.0-style literal or 0.0.0 is a hand-edit signal"
       grep -qE 'app-template' "$CHART_YAML" ||
         fail "t29: no app-template dependency in Chart.yaml"
       grep -qE '5\.0\.1' "$CHART_YAML" ||
@@ -1046,7 +1046,7 @@ if want t29; then
           fail "t29: no required-value comment within 3 lines above SNAP_STREAM_ID — the documented placeholder must be documented"
       fi
     fi
-    if [ "$fail_count" -eq "$A" ]; then ok "t29: charts: entry in the existing shape; no ingress subdomain; no custom-values entry (verdict (a)); Chart.yaml (v2, 1.0.0, app-template 5.0.1); TBD-owner placeholder with its required-value comment"; fi
+    if [ "$fail_count" -eq "$A" ]; then ok "t29: charts: entry in the existing shape; no ingress subdomain; no custom-values entry (verdict (a)); Chart.yaml (v2, calendar Y.M.N, app-template 5.0.1); TBD-owner placeholder with its required-value comment"; fi
   fi
 fi
 
