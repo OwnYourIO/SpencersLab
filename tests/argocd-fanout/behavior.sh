@@ -37,7 +37,8 @@
 # everything else was green on the pre-C14 script and stayed green through C13
 # (C13 touches only the workflow — the script keeps env-scanning, and the
 # mid-wave CI run warn-greens inert, never wrong). After C14 the whole suite
-# must be green — PROVEN: the C14 landing (rebased c95cbaabf) turns the
+# must be green — PROVEN: the C14 landing (subject 'feat(fanout): C13+C14
+# fleet-blind pipeline') turns the
 # designed-red set green on the tracked script; any /tmp oracle used to
 # pre-prove the shape is a scratch artifact, not a suite dependency.
 #
@@ -85,17 +86,29 @@ cd "$(git rev-parse --show-toplevel)"
 
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
-# Core-diff baseline (post-rebase map: 0d1ba90eb = the C12 ruling-(j) fix;
-# pre-rebase 6ed762140 and de3bccf43 are dangling in origin/main's rebased
-# history). ONE commit covers BOTH locks: every core function is byte-
-# identical at 0d1ba90eb AND at the reopen3 close 3f330df1a, and 0d1ba90eb is
-# also the C12 input-layer state — review may repoint either.
-CORE_BASE="${CHUNK_BASE:-0d1ba90eb}"
-# C14's AC6 input-layer baseline: identical commit (0d1ba90eb, C12 close =
-# last script move before C13/C14; the reopen3-close chore 3f330df1a carries
-# the same script bytes; the R8 channel is docstring + load_pairs_file +
-# main's source selection ONLY).
-INPUT_BASE="${INPUT_BASE:-0d1ba90eb}"
+# BASELINE CONTENT-LOCKS (the cf-56-round durable convention): every raw
+# hash this chain has ever mapped — 6ed762140, de3bccf43, 0d1ba90eb — has
+# dangled within one rebase, because rebases and cherry-picks rewrite
+# hashes while PRESERVING commit subjects. So baselines resolve by subject:
+#   git log -F --grep='<subject>' --format=%H --reverse | head -1
+# An empty resolution FAILS loudly naming the subject (a legitimate subject
+# reword needs a suite-side remap, never a silent pass); the raw-hash env
+# overrides (CHUNK_BASE / INPUT_BASE) remain for review pinning to one
+# exact commit. Subject 'fix(fanout): C12 ruling (j)' covers BOTH locks:
+# every core function AND the whole pre-C14 input layer is byte-identical
+# there (the reopen3-close chore carries the same script bytes; C14's
+# allowed surface is docstring + load_pairs_file + main only).
+resolve_subject() {
+  local subj="$1" out
+  out=$(git log -F --grep="$subj" --format=%H --reverse | head -1)
+  if [ -z "$out" ]; then
+    printf 'FAIL: baseline subject "%s" resolves to NO commit in this history — the content-lock convention names commits by subject (survives rebase/cherry-pick); a subject reword is a plan-side event: remap this suite, or pass the raw-hash env override for one run\n' "$subj" >&2
+    exit 1
+  fi
+  printf '%s\n' "$out"
+}
+CORE_BASE="${CHUNK_BASE:-$(resolve_subject 'fix(fanout): C12 ruling (j)')}"
+INPUT_BASE="${INPUT_BASE:-$(resolve_subject 'fix(fanout): C12 ruling (j)')}"
 
 checks=0
 
@@ -1973,11 +1986,10 @@ PY
 fi
 
 # --- t15: byte-lock + zero-echo across BOTH channels (C14 AC6/AC8) ------------------
-# C09's guarantee (13 CORE names byte-identical to $CHUNK_BASE=0d1ba90eb, the
-# post-rebase map for pre-rebase 6ed762140) is KEPT UNCHANGED; the C14
-# extension adds the INPUT layer locked to the same $INPUT_BASE commit
-# (0d1ba90eb — C12 close, the last script move before C13/C14; one commit
-# covers both locks, documented at the defaults): the R8 channel is docstring +
+# C09's guarantee (13 CORE names byte-identical to $CHUNK_BASE — resolved by
+# SUBJECT 'fix(fanout): C12 ruling (j)', the durable content-lock) is KEPT
+# UNCHANGED; the C14 extension adds the INPUT layer locked to the same
+# subject-resolved commit: the R8 channel is docstring +
 # load_pairs_file + main's source selection ONLY. discover_targets,
 # cmd_check, load_roster, the error classes and every regex/lane constant
 # show ZERO hunks — one validator body serving both sources is the design,
@@ -2028,7 +2040,7 @@ def segments(src, label):
     return out
 
 
-# --- the unchanged CORE leg (13 names @ 0d1ba90eb, C12 t13 doctrine) ----------
+# --- the unchanged CORE leg (13 names @ the subject-resolved base) ----------
 CORE = ["log", "ref_tail", "app_name", "app_sources", "app_matches",
         "app_sync_status", "_NoRedirect", "api_request", "list_applications",
         "sync_application", "_reason", "drive_target", "fan_out"]

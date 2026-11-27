@@ -250,11 +250,15 @@ jobs:
           # The script discovers from this file; the blobs themselves stop
           # at the filter step.
           ARGOCD_PAIRS_FILE: ${{ runner.temp }}/pairs.json
-          EVT_REF: ${{ github.event.ref }}
+          EVT_REF: ${{ forgejo.event.ref }}
+          # GH_REF stays the github.ref compat name: no proven forgejo.ref
+          # sibling on this fleet (DECISIONS D4 — the ref family keeps the
+          # documented github.* fallback beside the fleet-proven event.*
+          # sub-context).
           GH_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
-          # dispatch/first-push may carry no event ref (build-charts.yaml:95
+          # dispatch/first-push may carry no event ref (build-charts.yaml:96
           # precedent) — the chain resolves main, never an empty ref.
           REF="${EVT_REF:-${GH_REF:-refs/heads/main}}"
           python3 scripts/argocd-fanout.py --config scripts/argocd-fanout.json --ref "$REF"

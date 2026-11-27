@@ -265,8 +265,11 @@ fan-out runs.
   joins silently (§8). Loudness is reserved for half-states and malformed key
   names, by ruling. If an ENGINE leg reddens (expression failure, blob short, file
   not found), RESEARCH round 3's source conclusions were wrong for this build — revert the
-  branch to `3f330df1a` (the pre-R8 delivery shape: one commit, zero cluster
-  impact); the owner accepted that risk with the no-probe ruling, and the runner
+  branch to the pre-R8 shape, titled "chore(cf-139): reopen3 complete - §5a
+  mirror-clause fix…" (`3f330df1a` at time of writing — the title is the identity;
+  the last commit before "plans(cf-139): reopen4 re-cut (R8)" on this
+  branch), one commit, zero cluster
+  impact; the owner accepted that risk with the no-probe ruling, and the runner
   v13 fail-loud doctrine [53] makes such a failure visible, not silent. Two rows are
   EXPECTED FAILED by ruling, not regressions:
   `target=proxy-local result=failed` — structural: the hub route 307s to the SSO
@@ -356,7 +359,9 @@ column once, then trust it.
    with it; the pre-ticket main-sync (push jobs only) returns. The org keys become
    inert once the job stops reading them; remove them whenever convenient under §2's
    org hygiene. If an ENGINE claim fails in the field (§5a's validation legs), the
-   reopen4 fallback is this same revert — back to `3f330df1a` — one commit, zero
+   reopen4 fallback is this same revert — to §5a's content-locked pre-R8 commit,
+   titled "chore(cf-139): reopen3 complete - §5a mirror-clause fix…" (`3f330df1a`
+   at time of writing) — one commit, zero
    cluster impact, owner's standing call.
 
 State plainly: nothing else changes anywhere — no residual impact. No cluster-side

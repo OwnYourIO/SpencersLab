@@ -662,3 +662,24 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   `WARN_NOT_CONFIGURED`, the `pairs: %d targets discovered` /
   `filter: %d keys selected` lines, the invocation line, and the five-globals
   roster — the runbook's byte-parity quotes stay true against the landed files.
+
+## Rebase round 2 2026-11-27 (fold-forward + content-lock convention — C13 adaptation)
+- 2026-11-27 dev (coord brief): cf-56 C04's D4 ref-context convention folded into the final
+  fleet-blind sync-fanout job — the fan-out step env now reads `EVT_REF:
+  ${{ forgejo.event.ref }}` with `GH_REF: ${{ github.ref }}` carrying the builder
+  family's compat comment VERBATIM (landed pattern evidence: main's pre-rebase
+  sync-fanout cut at commit 86b3682c2, main-sync.yaml lines 207-212; the
+  fleet-proven `forgejo.event.*` sub-context otherwise at build-charts.yaml:95
+  and build-containers.yaml:181-183). The run block's precedent citation now
+  points at the post-rebase build-charts.yaml:96 (same env-block lines the
+  main-side cut cited). Semantics unchanged: REF chain bytes, invocation bytes,
+  `needs: [push-gh, build-containers, build-charts]` STAYS — excluding
+  push-coder-templates from the gate is an owner decision, header-documented.
+- 2026-11-27 convention (owner-ruled via the same brief): runbook fallback
+  citations adopt the CONTENT-LOCK convention — a revert target is named by its
+  commit SUBJECT plus a structural anchor ("the last commit before
+  "plans(cf-139): reopen4 re-cut (R8)" on this branch"), and a raw SHA may only
+  appear as an annotated "at time of writing" aside, never as the identity.
+  Driver: the 2026-11-26 FRICTION dangling-merged-history hazard — rebases
+  rewrite hashes (d81831446→3f330df1a did exactly that), and the owner reaches
+  for these sentences precisely when history has just moved.

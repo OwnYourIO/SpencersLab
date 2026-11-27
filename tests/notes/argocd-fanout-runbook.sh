@@ -2,7 +2,8 @@
 # Sync fan-out operator runbook contract — C15 re-pin (reopen4, R8; rewrite
 # #5) (2026/2026-11-cf-139-feat-argocd-webhook-sync):
 # .agents/notes/2026-11-17-argocd-sync-fanout.md, re-pinned to the LANDED
-# fleet-blind shape (C13+C14 landed at c95cbaabf post-rebase — every parity grep
+# fleet-blind shape (the C13+C14 landing — subject 'feat(fanout): C13+C14
+# fleet-blind pipeline' — is in the tree; every parity grep
 # reads the REAL workflow/script/roster bytes, not /tmp references).
 #
 # What the re-pin MOVES vs the C11 (rewrite #4) suite:
@@ -15,14 +16,16 @@
 #    workflow now enumerates ZERO names and a reappearance reddens this leg).
 #    §2's OWNER work (mints block, 11-row table modulo the sanctioned
 #    vars./secrets. prefix drop, the §2.4 trio leg) stays byte-equal against
-#    the rewrite-#4 baseline (RUNBOOK_BASE, default c95cbaabf; pre-rebase
-#    ad86dd576 dangles in origin/main's rebased history) — the
+#    the rewrite-#4 baseline (RUNBOOK_BASE resolves by SUBJECT 'feat(fanout):
+#    C13+C14 fleet-blind pipeline' — content-lock convention: raw hashes
+#    dangle once per rebase, env override remains) — the
 #    redesign changed how the job discovers keys, not how the vault holds
 #    them. §2 URL values ⇄ §6 hosts equality SURVIVES.
 #  * r2 = §5's new role: the first dispatch is the de-facto live validation
 #    of the engine claims the owner chose to skip probing for (STATE
 #    reopen4.owner_decision) — the claim-token legs (toJSON / RUNNER_TEMP /
-#    filter-count / masking-log), the 3f330df1a revert-fallback sentence,
+#    filter-count / masking-log), the reopen3-complete SUBJECT revert-
+#    fallback sentence (content-locked; dangling-hash annotations banned),
 #    the fleet-drift honesty line (expect == VAULT reality), and the two
 #    RULED failed rows (proxy-local 307, proxy-backup OQ9).
 #  * r3's stale-vocabulary sweep EXTENDS to the enumeration-era claims
@@ -59,9 +62,10 @@
 #   bash tests/notes/argocd-fanout-runbook.sh r2 r5      # subset
 # Env: FANOUT_RUNBOOK (doc under test), MAIN_SYNC_WF / FANOUT_SCRIPT /
 #      FANOUT_ROSTER (parity sources; defaults = the landed repo files),
-#      RUNBOOK_BASE (rewrite-#4 baseline ref for the invariance legs;
-#      default = c95cbaabf, the post-rebase C13+C14 landing tip; mapped from
-#      the dangling pre-rebase ad86dd576).
+#      RUNBOOK_BASE (rewrite-#4 baseline ref for the invariance legs; by
+#      default resolved by SUBJECT 'feat(fanout): C13+C14 fleet-blind
+#      pipeline' per the content-lock convention; a raw-hash value remains
+#      the one-run override).
 set -euo pipefail
 
 cd "${FANOUT_ROOT:-$(git rev-parse --show-toplevel)}"
@@ -70,7 +74,22 @@ RUNBOOK="${FANOUT_RUNBOOK:-.agents/notes/2026-11-17-argocd-sync-fanout.md}"
 WF="${MAIN_SYNC_WF:-.forgejo/workflows/main-sync.yaml}"
 FANOUT="${FANOUT_SCRIPT:-scripts/argocd-fanout.py}"
 ROSTER="${FANOUT_ROSTER:-scripts/argocd-fanout.json}"
-RUNBOOK_BASE="${RUNBOOK_BASE:-c95cbaabf}"
+# BASELINE CONTENT-LOCK (the cf-56-round durable convention; mirrors
+# behavior.sh): raw hashes dangle on every rebase — ad86dd576 and the
+# mapped c95cbaabf both already did — so the rewrite-#4 baseline resolves
+# by commit SUBJECT (subjects survive rebase/cherry-pick). Empty resolution
+# FAILS loudly naming the subject; the raw-hash RUNBOOK_BASE override
+# remains for one-run repinning.
+resolve_subject() {
+  local subj="$1" out
+  out=$(git log -F --grep="$subj" --format=%H --reverse | head -1)
+  if [ -z "$out" ]; then
+    printf 'FAIL: baseline subject "%s" resolves to NO commit in this history — the content-lock convention names commits by subject (survives rebase/cherry-pick); a subject reword is a plan-side event: remap this suite, or pass RUNBOOK_BASE=<hash> for one run\n' "$subj" >&2
+    exit 1
+  fi
+  printf '%s\n' "$out"
+}
+RUNBOOK_BASE="${RUNBOOK_BASE:-$(resolve_subject 'feat(fanout): C13+C14 fleet-blind pipeline')}"
 RUNBOOK_PATH_IN_GIT=".agents/notes/2026-11-17-argocd-sync-fanout.md"
 
 # Dead-grammar fragments (spaces keep the joined literal OUT of this file;
@@ -421,7 +440,7 @@ fi
 # --- r2: §5 = the first dispatch as the live engine-claims validation (C15 AC2) -----
 if want r2; then
   if ! python3 - "$RUNBOOK" <<'PY'
-import os, re, sys
+import os, re, subprocess, sys
 
 sys.path.insert(0, os.environ["RB_WORKDIR"])
 import rbcommon as rb
@@ -438,16 +457,34 @@ def bad(msg):
     sys.exit(1)
 
 
-# 1. The revert fallback: hash + revert verb + the one-commit/zero-impact
-#    shape (C15 §5 verbatim claim — the chunk's own parenthetical wording is
-#    avoided because AC4 bans it; the pinned truth is the hash + scope).
-#    Post-rebase the fallback is 3f330df1a (CANONICAL MAP: old d81831446
-#    dangles in rebased history — a doc that names it points a human at an
-#    unreachable commit; the doc-side session mirrors the map).
-if not re.search(r"(?is)revert[\s\S]{0,160}?3f330df1a|3f330df1a[\s\S]{0,160}?revert", sec5):
-    bad("§5 lacks the 3f330df1a revert-fallback sentence — the owner's no-probe ruling is only honest with the one-commit fallback pinned (STATE reopen4, C15 AC2; if the doc still names the pre-rebase d81831446, the DOC side owes the map mirror)")
-if not re.search(r"(?is)3f330df1a[\s\S]{0,160}?(one commit|zero cluster impact)|(one commit|zero cluster impact)[\s\S]{0,160}?3f330df1a", sec5):
+# 1. The revert fallback in its CONTENT-LOCK form (cf-56-round convention):
+#    every raw hash in this chain has dangled once per rebase, so §5 names
+#    the reopen3-close commit BY SUBJECT — the durable handle the operator
+#    can always resolve (git log --grep=...). Pinned: the exact subject
+#    string inside §5, a revert verb in its window, and the
+#    one-commit/zero-cluster-impact scope claim. A raw hash beside the
+#    subject is an OPTIONAL annotation — tolerated dangling ONLY with the
+#    time-bound qualifier naming the subject as the identity.
+FALLBACK_SUBJECT = "chore(cf-139): reopen3 complete"
+if FALLBACK_SUBJECT not in sec5:
+    bad("§5's fallback sentence does not carry the reopen3-close commit SUBJECT (%r) — raw hashes dangle on every rebase (C15 AC2; if the doc names only a hash, the DOC side owes the content-lock mirror — the subject form is the contract)" % FALLBACK_SUBJECT)
+if not re.search(r"(?is)" + re.escape(FALLBACK_SUBJECT) + r"[\s\S]{0,220}?revert|revert[\s\S]{0,220}?" + re.escape(FALLBACK_SUBJECT), sec5):
+    bad("§5 lacks a revert verb in the fallback subject's neighborhood (STATE reopen4, C15 AC2)")
+if not re.search(r"(?is)" + re.escape(FALLBACK_SUBJECT) + r"[\s\S]{0,220}?(one commit|zero cluster impact)|(one commit|zero cluster impact)[\s\S]{0,220}?" + re.escape(FALLBACK_SUBJECT), sec5):
     bad("§5's fallback sentence must carry the landed scope claim (one commit, zero cluster impact)")
+m = re.search(r"(?is)" + re.escape(FALLBACK_SUBJECT) + r"[\s\S]{0,120}?\b([0-9a-f]{7,40})\b|\b([0-9a-f]{7,40})\b[\s\S]{0,120}?" + re.escape(FALLBACK_SUBJECT), sec5)
+if m:
+    tag = m.group(1) or m.group(2)
+    anc = subprocess.run(["git", "merge-base", "--is-ancestor", tag, "HEAD"], capture_output=True)
+    if anc.returncode != 0:
+        # A dangling hash annotation is tolerated ONLY when the sentence
+        # marks it time-bound and names the SUBJECT as the identity (the
+        # landed doc-side form: "(<hash> at time of writing — the title is
+        # the identity…)"); a bare dangling hash in the fallback sentence
+        # is the stale-data bug the content-lock convention exists to kill.
+        window = sec5[max(0, m.start()-260):m.end()+260]
+        if not re.search(r"(?i)time of writing|title is the identity|subject is the identity|title (?:is|stands) as (?:the )?identity", window):
+            bad("§5's fallback annotation names hash %r, unreachable from HEAD after the rebase, WITHOUT the time-bound qualifier that marks the SUBJECT as the identity — drop the hash, repoint it, or phrase it as the doc-side content-lock mirror does (the subject pin above is the contract)" % tag)
 
 # 2. The engine-claim legs the skipped probes would have run (C15 §5(a)):
 #    each claim token must appear in §5 with its consequence (windows tolerate
@@ -501,7 +538,7 @@ PY
   then
     fail "r2: §5's first-dispatch-as-validation contract is violated (reason printed above)"
   fi
-  ok "r2: 3f330df1a revert-fallback sentence (hash + one-commit/zero-impact scope); the four engine-claim tokens (toJSON / filter-count / RUNNER_TEMP / masking-log) as enumerated first-dispatch legs; the fleet-drift honesty line (vault reality, not a repo list, count-as-audit) with NO alert-on-drift softening; the two RULED failed rows intact; §5(b) carries the pairs-file variant; the landed flag surface is four and no --pairs flag is advertised (AC2)"
+  ok "r2: reopen3-complete SUBJECT revert-fallback (content-locked subject + revert verb + one-commit/zero-impact scope; a dangling hash annotation only passes with the time-bound subject-is-identity qualifier); the four engine-claim tokens (toJSON / filter-count / RUNNER_TEMP / masking-log) as enumerated first-dispatch legs; the fleet-drift honesty line (vault reality, not a repo list, count-as-audit) with NO alert-on-drift softening; the two RULED failed rows intact; §5(b) carries the pairs-file variant; the landed flag surface is four and no --pairs flag is advertised (AC2)"
 fi
 
 # --- r3: stale-vocabulary sweep — enumeration-era claims die (C15 AC4) --------------
