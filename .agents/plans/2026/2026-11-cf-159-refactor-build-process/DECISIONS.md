@@ -135,6 +135,88 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - 2026-11-27 human OQ8: RULED — the cheap single-line diag echoes stay ungated;
   DEBUG gates only the heavy dumps (as C02's evidence-driven scope decides).
 
+## Rework decisions (plan, 2026-11-27 — post-batched-round rework)
+
+- 2026-11-27 plan D6 (the same-file collision, the wave re-order):
+  build-charts.yaml is now owned by THREE chunks — C02 (the (a)(b)(c)
+  quiet/capture legs, per the OQ1 evidence redirect), C03 (the packaging scope),
+  C04 (the unification) — so the draft's wave-2 C02/C03 parallelism would have
+  interleaved same-file edits. Re-ordered: 1=C01, 2=C03, 3=C04 (depends C03),
+  4=C02 (depends C03+C04); the coordinator's suite-green gate between chunk
+  commits keeps the file sequential. Rationale: C03 lands the cr-package step
+  shape change first, so C02(c)'s echo capture wraps the final scoped loop; C04
+  extracts the triple-duplicated repo-add loop to
+  `scripts/forgejo-helm-repo-add.sh` next, so C02(b)'s output capture wraps the
+  single script invocation per leg (the one-line-summary-per-leg shape LOGSPAM
+  recommends) instead of an inline loop a later chunk would move; C02's (a)
+  fetch-quieting is orthogonal but same-file and lands last, so all of C02's
+  suite re-aim happens once against the final shape with no re-aim of later
+  chunks. Rejected: the leg split (C02's (d)+(e) diag/renovate legs — the
+  draft's entire C02 scope — as a wave-2 parallel with C03, the build-charts
+  noise legs as a new C05 in wave 4). Why rejected: it mints a fifth chunk for
+  one logical change (the DEBUG-gate + quiet-by-default doctrine) and splits
+  one review gate across two waves of the same change; the (d)/(e) gates are
+  the smallest log targets (≤72 ln, LOGSPAM) and the card's priority order
+  (runner fix > packaging scope > log noise) defers them cheaply; fewer
+  cohesive chunks is the planning rule.
+- 2026-11-27 plan D7 (the C02 evidence re-aim, mechanism findings): the gate
+  set is the LOGSPAM.md ranking, D2's errexit-untouched law unchanged (OQ1's
+  redirect endorses nothing about `set -e`): (a) the build-charts git-fetch
+  ref enumeration + progress block (~976 ln/fan-push) — the two explicit
+  `git fetch --tags` (build-charts.yaml:447/:507) take a DEBUG-gated `-q`
+  form (empirically verified: `git fetch -q` is fully silent; a non-tty fetch
+  WITHOUT `--progress` still emits the per-ref summary); the five full-depth
+  `actions/checkout@v7` steps take `show-progress: false` (input default true;
+  v7 source-verified: the action's fetch args are `--no-tags --prune
+  --no-recurse-submodules` + `--progress` only when `show-progress` is true —
+  no `--quiet`/refspec surface) — removing the `remote:` progress block only;
+  the checkouts' per-ref summary lines are a DOCUMENTED RESIDUAL (the action
+  cannot quiet them); the `fetch-depth: 0` lines stay byte-unchanged (law).
+  (b) the `helm dependency update` / `repo add` chatter (~700 ln) — output
+  capture to a per-leg log file + one summary line per leg; the full-tree
+  self-heal loop's BEHAVIOR is unchanged (D47.1), only its output is captured.
+  (c) the `cr` package/upload/index echo (~250 ln) — output capture + one
+  summary line per leg; the registry `curl` push leg stays (real work).
+  (d) the heavy diag dumps in build-containers + builder-bootstrap (the 72-ln
+  release legs — the smallest target) — DEBUG-gated; the one-line echoes stay
+  ungated (OQ8). (e) renovate `LOG_LEVEL` default STAYS `info` (OQ7 — the
+  scout's `warn` recommendation is overruled); `DEBUG=true` → `debug`. The
+  act-runner platform noise is not gateable from workflow YAML — out of scope,
+  recorded.
+- 2026-11-27 plan D8 (the C01 source fix + the main-moved finding + the
+  baseline re-measure): the cf-55 r8 round (14:39–14:40Z, concurrent with the
+  batched round) landed on main: `6ffeeb87e` (D67: the owner's REVERT
+  directive — pull the merged C17 refactor out, restore the previously working
+  state, single commit as requested; C18 NEVER landed main — the re-anchor
+  dropped the C18 commits from the rebuilt branch ref, which now points at
+  main's tip `5bea6160b`) + `5bea6160b` (the plans record: the r8 revert
+  record, D67, the fence-trip law). Consequences: (1) the C01 port source is
+  the commit objects 3d2159dca (the red-first contracts) / 67569ebfe (the chart
+  delta), NOT the branch ref (its files now carry the reverted state —
+  porting from the ref would import the revert, not the fix); the objects
+  were verified resolvable at rework time, C01's dev pass re-verifies at run
+  start and stops with NEEDS_INFO if GC'd (D1: never re-derive). (2) The
+  ticket branch is 2 commits behind the moved main (the revert touches the
+  same chart/test files the C01 port owns); OQ5's "base on the true tip"
+  principle collides with D1's no-re-derivation law (a rebase onto
+  `5bea6160b` would move the C18 port onto the reverted registration shape) —
+  the base holds at 1d46d1c84; the chart-hunk fate at landing (D67 repo
+  revert vs OQ3 live out-of-band C18 parity) is the owner's landing-leg call
+  (OQ6 mechanism owner-chosen), surfaced as plan open question 9 for the
+  approval round. (3) The C01 read-only cluster-reconcile observation leg
+  (OQ3's recorded tension): the dev pass re-observes the dev+gpu runner pods
+  read-only and records which state is live (healthy-after-apply vs pods
+  predating the apply vs degraded) — fix nothing. (4) Suite baseline
+  re-measured at rework time on the branch tip 1d7979c1e (base 1d46d1c84 =
+  a91627e06 + 2 file-disjoint CI-bump commits; all offline): dev-forgejo-
+  runner 67 ok, gpu-forgejo-runner 25 ok (corrects the 24 recorded at
+  planning — the a91627e06 tree also reports 25; the earlier handoff number
+  was stale), forgejo-build-charts 34 ok, forgejo-main-sync 18 ok,
+  forgejo-build-containers 50 ok, forgejo-builder-bootstrap 20 ok,
+  forgejo-renovate 10 ok, forgejo-ci-surface t1–t3 ok / t4 admitted red
+  (unchanged); `helm lint charts/forgejo-runner` + the hermetic `helm template`
+  pass.
+
 ## Deferred
 
 - The dev node capacity issue (5/10 runner pods unschedulable, EXPLORE §3.2) —
