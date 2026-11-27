@@ -1428,3 +1428,154 @@ this round only records the manual-sync fact in the landing legs); instance
 `app.ini` cron config (not a repo surface — EXPLORE open item 3's answer stays
 owner-side); GitHub-side mirrors; the values.yaml:67 reword lands HERE (next
 touch), not on a separate card.
+
+## Round 7 (2026-11-27) — C18: Replace-and-recreate the frozen STS + content-validating register guard
+
+**Goal:** close the frozen-rollout class the C17 deploy hit — an immutable
+StatefulSet field (`podManagementPolicy`) made the whole STS update
+API-REJECTED, so the new template never landed while the reloader poked the OLD
+template onto the pods — and make the register guard reject the empty
+`config.yaml` leaves kubelet auto-created on the data PVCs. One S chunk.
+
+**Verdict recap (probe ses_de7049e7affe, STATE `round7.probe` — the probe wrote
+no files; EXPLORE '## Round-6 diagnosis' carries the prior live tables):**
+the chart is CLEAN (render refutes a chart-bug reading — the only forbidden
+delta is `podManagementPolicy`). The chain: C17 sync applied ESO/CM/skeleton
+fine but the STS patch died on OrderedReady→Parallel (`updates to statefulset
+spec for fields other than 'replicas', 'ordinals', 'template', … are
+forbidden` — StatefulSet update validation is VERB-INDEPENDENT: PATCH and PUT
+both hit it); ArgoCD marked SyncFailed; STAKATER RELOADER then annotation-poked
+updateRevision `b477f9cd4` 5s later, carrying the OLD template — gpu-9
+scheduled there crashed on the `runner-creds` subPath key the new Secret no
+longer has; ordinals 0-8 are inode-pinned survivors (restart = same crash);
+and KUBELET AUTO-CREATES missing subPath targets ON THE VOLUME — data PVCs 0-8
+now hold EMPTY `/data/config/config.yaml` leaves that C17's existence-only
+guard would read as registered (daemon boots an empty config). Dev is fully
+pre-C17: sync-as-is reproduces the failure + outage.
+
+**Owner directive (verbatim, ruling 2026-11-27):** "Run C18, then unstick by
+sync" — C18 = (a) `argocd.argoproj.io/sync-options: Replace=true` on the runner
+STS so immutable-field flips REPLACE-and-recreate (future frozen-rollout class
+closed), with the placement verified by render, not guessed; (b) register-guard
+CONTENT-validation: an existing `/data/config/config.yaml` must parse (carries
+`url:`, a non-placeholder `uuid:`, and the token file must be non-empty) else
+treat as UNREGISTERED and re-register — the kubelet empty leaves die there;
+(c) suite legs: render pins + content-guard behavior form with an EMPTY-LEAF
+MUTANT proving the register path fires instead of the skip; (d) values-header
+immutable-field + Replace note. NOTES.txt untouched. Landing after the merge:
+gpu STS delete + sync — the PVC leaf scrub is OPTIONAL once (b) ships, the
+guard heals empty leaves at boot — then the 10-row verify, then the dev dance
+in the same session, finally landing C16+C17+C18.
+
+### Round-7 chunk
+
+| id  | title | size | wave | depends_on | why |
+|-----|-------|------|------|------------|-----|
+| C18 | Sync-options on the runner STS (workload-metadata placement, render-proven) + content-validating register guard + suite legs + header note — rides C17's landed files, touches `charts/forgejo-runner/values.yaml` + the two runner suites only | S | 1 | [] | no pending dependency: C17 is done and its surfaces are on the branch tip; C18 edits those files in place |
+
+Wave: 1 (round-local; TEST WAVE FIRST per law — dev/gpu new legs land
+red-first against the C17 tree, then C18 dev).
+
+### Central rulings (detail + rejected alternatives in DECISIONS D66)
+
+1. **Placement — PROVEN by fresh render on this tree:** `app-template.
+   controllers.runner.annotations` lands on the StatefulSet's OWN
+   `metadata.annotations` (the reloader key is there; pod template metadata
+   carries labels only; single occurrence per render). ArgoCD reads resource
+   sync-options from the desired manifest's own metadata (gitops-engine
+   sync_context.go:1171 `HasAnnotationOption(t.targetObj, AnnotationSyncOptions,
+   …)`). So the annotation goes in the EXISTING `controllers.runner.annotations`
+   map — no pod-only rescue (global.annotations / rawResources / parent-side
+   file) is needed or wanted.
+2. **Mechanism — the literal is `Force=true,Replace=true`, the ruling's INTENT
+   ("REPLACE-and-recreate") with its true mechanism.** Source-traced this
+   round: Replace=true alone routes to `kubectl replace` = plain PUT
+   (resource_ops.go ReplaceResource), and a PUT carrying a `podManagementPolicy`
+   change is rejected by the same verb-independent validation as a PATCH —
+   Replace ALONE closes nothing for immutable flips. What recreates is kubectl's
+   force path (replace.go: `if o.DeleteOptions.ForceDeletion { return
+   o.forceReplace() }` — DELETE, poll until NotFound, CREATE), which gitops-
+   engine wires from the Force sync option (resource_ops.go:559) and ArgoCD's
+   own docs pair as `Force=true,Replace=true`. Force only bites with Replace
+   (or client-side apply); Replace takes precedence over SSA — the app stays
+   SSA=false (t5 pin), and the pair is robust to a future SSA flip. COST,
+   priced: every sync that includes this OutOfSync STS delete-and-recreates it
+   (pods bounce at once; PVCs survive — STS PVCs are not GC'd with the
+   controller, default retention — so the guards re-attach identities; the
+   same blast the D65-tolerated simultaneous-10 Secret-change restart already
+   accepts). VETO slot: owner may insist on `Replace=true` alone — then the
+   frozen class stays open (manual delete+sync forever) and the suites pin that
+   literal instead.
+3. **Content-guard law:** the guard keeps the `[ -f /data/config/config.yaml ]`
+   limb (t21/g11 regex + guard-first ordering tooth survive) but the skip
+   requires ALL of: `url:` parseable, `uuid:` parseable and NOT the
+   `__RUNNER_UUID__` placeholder, `/data/config/token` present AND non-empty
+   (`-s`). Invalid ⇒ fall through and register FRESH (the existing render+write
+   path overwrites both files). Stale-row pricing: kubelet leaves and
+   never-booted ordinals had no real row ⇒ zero churn from re-registering them
+   (owner ruling's own reasoning); the only mint-a-new-row case is a
+   config-valid/token-lost half-write — impossible to skip-safely anyway (old
+   guard crash-looped it: daemon dies on the missing token file), so one
+   bounded stale offline row is the price of healing an unrecoverable state;
+   owner deletes it if it ever appears, cleanup cron STAYS OFF (D63 law
+   unchanged).
+4. **Landing after the merge (owner legs, UA-R7-*):** merge (fires the
+   build-charts fan — chart bumps 2026.11.3→2026.11.4 by CI, never by hand) →
+   gpu: `kubectl delete statefulset gpu-forgejo-runner-gpu` (PVCs persist) →
+   sync the gpu app → the recreated STS carries annotation+Parallel+new guard →
+   the 10-row verify (UA-R6-1's node resize is the schedulability pre-cond;
+   with (b) shipped, empty leaves re-register at boot — the leaf scrub is
+   optional belt, not surgery) → dev, same session: CONFIRM the dev Bitwarden
+   item's password holds a minted registration token (UA-R6-3 — the probe found
+   dev's ESO still pre-C17, old record-pair content), delete dev STS + sync,
+   dev 10-row verify. With the annotation shipped, a plain sync would already
+   replace the frozen STS; the explicit delete stays in the recipe because it
+   also clears the reloader's stale `updateRevision` poke residue deterministically.
+
+### Commands (round-7 additions; standing laws: PATH export, CHUNK_BASE trio,
+/tmp same-call scratch, no live-API in suites, no hand-bumped versions)
+
+- C18: `bash tests/services/dev-forgejo-runner.sh` + `bash tests/services/
+  gpu-forgejo-runner.sh` (new legs t23/t24 + g12/g13, old contract re-aims if
+  the wave finds collisions) + `bash tests/containers/forgejo-runner.sh` +
+  `bash tests/containers/forgejo-host-runner.sh` (regression, expect
+  byte-unchanged green) + `helm lint charts/forgejo-runner` + three-way
+  `helm template` (default; dev-slice extract; gpu-slice extract — /tmp
+  same-call recipe, `bitwardenIds.runner-token` set, OVERRIDE_* sweep clean) +
+  guard-trio with `CHUNK_BASE=<the round-7 plans commit>` (expect ONLY the
+  external witnesses {c13, t17, c19}) + `aislop ci --changes` (shell/yaml
+  vacuous-clean posture recorded honestly). Render-based legs ONLY — the
+  cluster-side proof is the UA-R7 observations, never a suite call.
+
+### Round-7 test-wave expectations (reproducible shapes)
+
+- Render pin ×3 renders: STS `metadata.annotations['argocd.argoproj.io/sync-options']`
+  carries the ruled literal (Force/Replace pair — `Replace=true` too, the
+  substring check rides the same key) AND `reloader.stakater.com/auto` stays;
+  NO argocd sync-options key in the pod template or any other kind (single
+  occurrence, mirroring the reloader's proven shape).
+- Content-guard statics on the comment-stripped init script: the four validation
+  limbs (existence, url, uuid+placeholder-reject, `-s` token) all present and
+  all BEFORE the Register RPC line; loud-failure and no-deregistration limbs
+  unchanged.
+- EMPTY-LEAF MUTANT battery (executable, hermetic — sandbox rewrite of the
+  `/data` + `/skeleton` prefixes under $WORK, stub `wget` on PATH that records
+  its call and returns a canned uuid/token JSON): empty leaf ⇒ POST HAPPENS +
+  files written; valid config + valid token ⇒ NO POST, files untouched;
+  placeholder uuid ⇒ POST; valid config + empty/missing token ⇒ POST (heals the
+  half-write class). Each leg's premise-probe runs the compliant shape GREEN
+  (round-6 friction law: a wave that only proves mutants never proved its legs
+  CAN pass) before handback — the shipped C17 script reddens the empty-leaf
+  legs by design (red-first).
+- Existing-leg survey: t21/g11 guard regex and ordering tooth still index (the
+  existence limb stays); g7/suite fences re-run live and re-aimed mechanically
+  if the values.yaml hunks trip a class (validation-at-fault channel).
+
+### Out of scope (round 7)
+
+Application-level syncOptions (the fleet keeps per-resource scope — owner
+posture); ESO/ConfigMap/Service replace semantics (untouched, patch is fine for
+them); `persistentVolumeClaimRetentionPolicy` (defaults retain — the desired
+shape); cleanup cron (D63); runner autoscaling (card iaJq5bgWHHDHotcBY);
+NOTES.txt (the brief's "NOTES untouched"); services/custom-values content
+(the landing story is owner-side sync legs).
