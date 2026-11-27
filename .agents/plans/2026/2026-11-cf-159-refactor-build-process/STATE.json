@@ -2,7 +2,7 @@
   "feature": "cf-159-refactor-build-process",
   "folder": ".agents/plans/2026/2026-11-cf-159-refactor-build-process",
   "plan_file": "2026-11-27-refactor-build-process.md",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "created_at": "2026-11-27T05:23+00:00",
   "updated_at": "2026-11-27T15:23+00:00",
   "kickoff": {
@@ -59,12 +59,12 @@
     "logspam-evidence": "DONE ses_de2910960ffeg9us45PaluOkMy -> LOGSPAM.md (105 lines) + relay of 7 folder files to /tmp/opencode/carry-cf159/ (md5-verified; line counts 464/139/105/73/82/76/97). Headline: biggest noise = build-charts git fetch ref-enumeration ~976 ln + helm dep chatter ~700 + cr echo ~250 per fan push; diag dumps only ~72 ln (smallest target); act platform noise ~21% NOT gateable; renovate ~95% info-artifacts (but owner ruled default stays info). Dev-instance logs unsampleable (runner down) — inference fallback documented.",
     "chunk-development": "ALL DONE: C01 3ab9ca435, C03 94067440b, C04 86b3682c2, C02 a471403bb",
     "chunk-review": "ALL DONE: four chunks, all r1 APPROVED, zero blockers/majors",
-    "final-review": "RUNNING ses_de1ca23b5ffewtiLy6OfiGtlhr (planning tier, tp2 lane) — full suite + cross-chunk coherence + plan-level verdict",
+    "final-review": "APPROVED r1 2026-11-27T19:30Z ses_de1ca23b5ffewtiLy6OfiGtlhr — all 7 suites + ci-surface + helm lint + hermetic template + aislop green at final state; cross-chunk coherence verified; zero blockers/majors. HITL stop point (card): owner confirmation required before card->Review + pipeline_release.",
     "deployment": "skipped (unchecked)",
     "single-session": "skipped (unchecked)",
     "follow-up-cards": "skipped (unchecked)"
   },
-  "wave": null,
+  "wave": 4,
   "chunks": {
     "C01": { "status": "done", "wave": 1, "depends_on": [], "dev_rounds": 1, "review_rounds": 1, "last_verdict": "APPROVED r1", "dev_session": "ses_de21dc419ffeNvw4ZtIoqfscM5", "handoffs": [
       { "at": "2026-11-27T16:30+00:00", "status": "DONE", "files": ["charts/forgejo-runner/values.yaml (33+/7-, byte-identical to git show 67569ebfe:charts/forgejo-runner/values.yaml per cmp; working diff == git diff 5cef0f6c6 67569ebfe per diff)"],
@@ -158,6 +158,16 @@
       "deviations": "set -e count 43->42 MEASURED (per-file 14/11/7/5/3/2, pinned with teeth; plan text says 43 — DECISIONS records truth); chunk leg-numbering corrections (C04 't16'=actual t30, main-sync 't16'=actual t11); t6 pins n>=1 invocations; build-charts full-green order only observable at final state (per-leg gates documented in header); dev 67-vs-68 ok-line pre-existing print quirk",
       "open_questions": "t42/t43 expect dev's per-leg logs INSIDE the workspace sandbox (confirm at C02 review); t41 doubles fixture cost (runtime fine)",
       "friction": "shell location-shutdown + token-truncation risk mitigated via log redirection + block extraction (appended to FRICTION.md)"
+    },
+    {
+      "chunk": "final",
+      "at": "2026-11-27T19:30+00:00",
+      "session": "ses_de1ca23b5ffewtiLy6OfiGtlhr",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2 (planning tier)",
+      "status": "APPROVED (r1, zero blockers/majors, cap 3 -> 0 raised)",
+      "commands": "full suite re-run at e77f1a40e: dev 69/70, gpu 27, build-charts 45/45 NO HALT, main-sync 18/18 (t18 anchor live), containers 50/50, bootstrap 20/20, renovate 10/10, ci-surface t1-3 + admitted t4, helm lint + hermetic template (1 sync-options occurrence), aislop ci --changes --base 1d46d1c84 100/100 (whole-repo superset fallback reported), scope: 24 files all in chunk scope; C18 byte-faithfulness re-verified vs 67569ebfe/3d2159dca; leftover sweeps clean",
+      "summary": "Final whole-plan APPROVED: card's four asks all met (runner C18 carry + reconcile observation; evidence-driven quieting; touched-charts packaging; builder-family unification with documented-and-kept divergences). Cross-chunk coherence in build-charts.yaml verified top-to-bottom. Open items for the step-9 report: owner landing (PR/merge + D66(6) unstick; dev STS state to confirm; main moved further, re-check at landing), dev-instance log re-check post-runner, frozen main-checkout folder cleanup, records nuance (43 vs 42 inventory figure in D2).",
+      "next_suggested": "HITL stop (card's Final Review check): owner sign-off -> card to Review + summary comment -> pipeline_release(done) -> step-10 cleanup (remove worktree only on explicit owner request; default keep surfaces) + step-11 friction questions"
     }
   ]
 }
