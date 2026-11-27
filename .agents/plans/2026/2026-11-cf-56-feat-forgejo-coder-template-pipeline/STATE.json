@@ -1,6 +1,12 @@
 {
   "feature": "2026/2026-11-cf-56-feat-forgejo-coder-template-pipeline",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "reopen": {
+    "at": "2026-11-27T19:55:17+00:00",
+    "reason": "first-fire failure post owner-merge (coder: command not found; stale :26.11.1 pins); owner instruction: rebuild-if-needed (verdict: NOT needed, 26.11.5 live) + update main chart pins",
+    "claim": { "route": "post-reap takeover under card-id key", "setId": "2eafff4c-67ca-4914-9d6f-3336696b85a3", "previous": "CICD key reaped 2026-11-27T06:16" },
+    "branch": "rebased onto origin/main (87a1cb1f5-era), replaying only explore-r4 3700f5022"
+  },
   "coord_session": null,
   "final_review": {
     "at": "2026-11-25T07:02:00+00:00",
@@ -167,6 +173,16 @@
         }
       ]
     },
+    "C05": {
+      "status": "in-progress",
+      "wave": 4,
+      "depends_on": ["C04"],
+      "scope": "pin bump :26.11.1 -> :26.11.5 (8 lines: charts/forgejo-runner/values.yaml L149/150/152/153 + services/dev/prod/values.yaml L201/202/204/205), act-22.04 lines untouched; suite re-pins dev-forgejo-runner.sh t2/t17 + gpu-forgejo-runner.sh g2 (test wave first); runbook UA3 reword",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
   },
   "blocked": [],
   "deferred": []
