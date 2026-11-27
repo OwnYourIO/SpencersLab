@@ -1212,3 +1212,219 @@ final names/semantics: `ci/last-built`, the hard-gate fanout truth table,
 and the same-session landing assumption.
 
 
+## Round 6 (2026-11-26) — one registration token, ten self-registering runners
+
+**Goal:** keep the replicas-10 fleet (D57) but make Forgejo SEE it: one reusable
+instance-scope **registration token** per release in the (still ESO-backed)
+Secret; each pod self-registers on its ordinal's FIRST boot
+(`POST {runner.url}/api/v1/admin/actions/runners`, body name=pod + the chart's
+5-label set + `ephemeral: false`), receives its own `{id, uuid, token}`
+(RESEARCH §Q2(b) [S14]), and persists that identity on its OWN `data` PVC so a
+restart is a re-attach, not a re-registration. Ten rows, individually named,
+one token — the owner's words, and the only reading with a delta to build.
+
+**Owner requirement (verbatim):** "a single token from Forgejo that gets used
+in the 10 runners." (STATE `round6.owner_resolution_r6`.) This SUPERSEDES the
+D60(2) "N releases" pick: N releases means N long-lived records and N Bitwarden
+identities, which is not a single token. Interpretation (i) — status quo, one
+shared (uuid, token) — is REJECTED as reading (zero delta: it IS C16, and it
+can never show more than one row because `ActionRunner.UUID` is a UNIQUE column
+[RESEARCH TL;DR 1, S2]). Interpretation (ii) — one registration token, ten
+self-registrations — is the requirement (D61).
+
+**Coord-record correction (mandatory before the shape is built):** STATE
+round6's interim line "remaining gap is k8s-only … per-ordinal label injection"
+is NOT sound on 15.0.10. `Declare` overwrites the row's `agent_labels` on every
+authenticated call, so ten replicas advertising DIFFERENT labels on ONE uuid
+silently thrash the row's label set and mis-route jobs — last writer decides
+eligibility (RESEARCH Q1 "Heartbeat = overwrite" [S4]; Q4 "Declare-churn is
+benign only while identical"). Individuality therefore lives in the RUNNER
+RECORD and NAME (per-pod, mirroring the official k8s example "names = pod
+names" [S11]); the LABEL payload stays the identical baked 5-set on all ten
+rows so jobs route uniformly (D62).
+
+**Ground truth:** RESEARCH.md '## Round-6 research' (:1420-1818 — dispatch
+model Q1, minting paths Q2(b) incl. the runner CRUD API response
+`{id, uuid, token}` + admin/org/repo/user scopes + offline `--secret`
+registration, lifecycle pitfalls Q4 incl. NO client-side deregistration and
+`cron.cleanup_offline_runners` OFF by default) + EXPLORE '## Round-6 diagnosis'
+(:1293-1369 — dev fleet never synced (manual-sync app, OutOfSync since
+2026-11-09), gpu frozen at 3/10 by `Insufficient cpu` + StatefulSet ordinal
+sequencing, daemons healthy, no per-uuid server gate).
+
+### Round-6 chunk
+
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| C17 | Self-registering runner fleet: ESO Secret becomes ONE reusable registration token; per-pod register-on-first-boot init container; identity persists on the per-ordinal `data` PVC; dev/gpu suite re-aims; header + comment re-truths (incl. the values.yaml:67 "register CLI … do not work" softening to "deprecated" per the research contradiction verdict) | M | 1 | [C16] | C17 rewrites the exact surfaces C16 pinned (t2/g2 replicas legs, g7/g8 slice classes, the shared-uuid law in the values header) — the suites re-aim ONCE against the final shape; no other file dependency |
+
+Wave: 1 (round-local sequence: TEST WAVE FIRST — dev/gpu suite re-aims land
+green-in-red-first against the pre-change tree, then dev; D59 precedent).
+
+### Central design rulings (detail + rejected alternatives in DECISIONS D61–D63)
+
+1. **Shape A′ — register-on-boot with PER-ORDINAL PVC persistence** (the
+   launch brief's option (A) with its restart-churn problem solved by the
+   structure the chart already ships): the StatefulSet's `data` VCT is
+   ordinal-stable and already mounted at `/data` in every container, so the
+   init container writes `/data/config/config.yaml` + `/data/config/token`
+   there. First boot: POST with the registration token, parse the response,
+   render the chart's config skeleton (static half moves to an app-template
+   `configMaps:` entry — capacity 1, timeouts, backend-conditional blocks,
+   url, labels; uuid placeholder) into the PVC. Every later boot: file exists
+   ⇒ skip the POST entirely ⇒ same uuid, same row, no churn. No emptyDir, no
+   ConfigMap ownerRef tricks, no per-ordinal secrets.
+2. **Secret semantics change** (the brief's verify-item, ANSWERED — the
+   current Secret does NOT hold a registration token): today the Bitwarden
+   item carries a REGISTERED runner's `(uuid, token)` pair (values.yaml:92-94
+   says so explicitly — "the long-lived token shown once at record creation,
+   NOT the deprecated registration-token exchange"). C17 replaces the ESO
+   `data` with a SINGLE fetch — item password → secretKey `registration-token`
+   — and DELETES the ESO inline template (config.yaml + token keys) entirely:
+   with no template, the v2-CRD mergePolicy trap the card-#97 lesson (t12)
+   pinned becomes moot by construction; t12 re-aims to the single-key shape.
+   The `bitwardenIds.runner-token` KEY name stays (custom-values + g5 anchors;
+   comment re-truths the content).
+3. **Reuse + lifecycle semantics, per RESEARCH:** registration-token reuse
+   across N POSTs is upstream-evidenced (official k8s example: `replicas: 2`
+   pods, ONE shared registration token, names = pod names [S11]; the on-demand
+   example registers a runner per job off one token [S9 examples/on-demand]).
+   `ephemeral: false` is REQUIRED — the v13 daemon refuses to run against an
+   ephemeral record (exits "not supported in daemon-mode" [S9 daemon.go]) and
+   the server deletes ephemeral rows after one job [S2,S3]. Token TTL/expiry is
+   NOT in the evidence set (the Gitea-era 24h folklore was not carried over —
+   same class as the dead `-1 = unlimited` capacity myth [S10]); G1 reads the
+   `Register` handler for it. Consequence bounded by design: the token is
+   needed ONLY on a cold boot of a fresh ordinal, never at steady state.
+   Pod death mid-job = failed job at the 10-min zombie sweep (unchanged,
+   cron-gated [S8,S13]); stale rows: NO client-side deregistration exists in
+   v13 [Q4], cleanup cron stays OFF (owner's instance config, repo never
+   assumes it) — scale-down leaves offline rows, STS PVC retention re-attaches
+   them on scale-up, runbook for row loss = delete `/data/config/config.yaml`
+   on that ordinal so the next boot re-registers (D63).
+4. **Registration client = evidence gate G2** (dev decides, suites pin
+   BEHAVIOR not spelling): preferred order — (a) the pinned `runner` image
+   itself if its layer tar-listing shows sh + a TLS-capable HTTP client;
+   (b) the lab's own baked job image (curl+jq; adds a third pin site —
+   documented); (c) the deprecated `forgejo-runner register` CLI (zero new
+   images, TLS built-in, the k8s-example shape) — permitted ONLY as a recorded
+   deviation with G2' proof of its config-write semantics, since RESEARCH's
+   stance is "deprecated, not broken — do not adopt" (contradictions §).
+5. **D57 law re-anchored, not deleted:** capacity STAYS 1 (now honest per-row:
+   one ordinal = one record = one slot), chart default STAYS 1, slices keep
+   `replicas: 10`; the one-registration-ten-pods text in the values header +
+   both slice comments becomes the one-TOKEN-ten-RECORDS law. Belt folded
+   (diagnosis's freeze class): `podManagementPolicy: Parallel` on the runner
+   STS (app-template 5.0.1 supports it — values-schema :97) so a pending
+   ordinal never blocks registration of the ones behind it.
+6. **Rotations get simpler, stated honestly:** the runner uuid/token never
+   enter the vault again; rotating the registration token (item edit → ESO →
+   reloader restart) does NOT re-register anything — pods re-attach. The
+   simultaneous-10-restart cost on Secret change stays as-is (research Q4
+   shared-config note), in-flight jobs keep the 5m window.
+
+### Evidence gates (workspace reads only — NO live instance calls in any suite)
+
+- **G1 — endpoint + auth + reuse + expiry:** read v15.0.10 raw at
+  `17e1001d5e00e8ee3cbc1b6dd31be94ac38185f9` (FRICTION recipe: direct curl,
+  full SHAs): the admin-scope runner CRUD route + which credential authorizes
+  `POST …/admin/actions/runners` (registration token vs admin token), whether
+  the registration token carries an expiry in code, and the request-body field
+  shape (name/labels/ephemeral). HALT-AND-REPORT (D54's shape) if instance-scope
+  self-serve with one reusable token is contradicted — the named fallbacks are
+  the owner's (veto slots below), not dev's.
+- **G2 — init tooling:** the pinned 13.2.0 image layer tar-listing (container-
+  creation recipe: manifest + layer listing via registry API) for sh/curl/wget-
+  TLS; decides ruling 4's client.
+- **G3 — config schema:** v13 `config.go`/`config.example.yaml` [S9] — inline
+  `token` vs `token_url` file semantics for the rendered skeleton + response
+  field names; the current `token_url: file:$CREDENTIALS_DIRECTORY/token` +
+  `CREDENTIALS_DIRECTORY` env pair retires with the Secret mount.
+
+### Landing order & owner legs (UA-R6-*)
+
+1. **UA-R6-1 (owner, pending):** reboot the resized gpu VM. Post-reboot the
+   gpu node fits 10×350m requests (diagnosis A1 arithmetic; resize amount
+   unmeasured from here). C17's Parallel policy makes partial fits visible
+   instead of frozen.
+2. **UA-R6-2 (owner, done → VERIFY):** dev fleet sync — the diagnosis found
+   `dev-forgejo-runner-dev` OutOfSync since 2026-11-09 (manual-sync app); the
+   owner says synced; verify `spec.replicas: 10` on the STS post-merge.
+3. **UA-R6-3 (owner, BEFORE merge of C17's deploy window):** mint ONE
+   instance-scope registration token per instance (admin → Actions → Runners,
+   [S13] registration paths) and replace the PASSWORD of the two existing
+   Bitwarden items (`dev-forgejo-dev-runner`, `forgejo-runner`) with it —
+   reuse over re-creation is the default so `custom-values` UUIDs stay put;
+   a fresh item instead moves the UUID (repo edit, owner-commit).
+4. **Merge:** touches `charts/forgejo-runner/**` → main-sync fan calls
+   build-charts → bumps `forgejo-runner 2026.11.1 → 2026.11.2` + fanout under
+   the D59 hard gate. Both runner Applications are MANUAL-sync: sync both
+   (UA-R6-2 class — the silent-never-applied lesson is why this leg is a
+   numbered step, not a footnote).
+5. **UA-R6-4 (owner, first-fire):** per instance, admin UI (`/admin/actions/runners`,
+   API twin `GET /api/v1/admin/actions/runners` [S14]) shows TEN rows named
+   `<sts>-0 … <sts>-9`, `ephemeral: false`, the 5 labels, online; STS
+   `readyReplicas == 10` (the render can pin the shape, only the cluster
+   proves readiness — this round's whole lesson); delete one pod → SAME row
+   survives the restart (re-attach proof — no new row appears).
+6. **UA-R6-5 (owner, posture):** scale-down leaves offline rows (no client
+   deregistration [Q4]); cleanup cron stays OFF — enabling it can delete rows
+   under live PVCs (crash-loop until the runbook clears the ordinal's
+   config). Cleanup is manual admin deletes, or accept the offline list.
+
+### Commands (round-6 additions; standing laws: PATH export, CHUNK_BASE trio,
+/tmp same-call scratch, no live-API in suites, no hand-bumped versions)
+
+- C17: `bash tests/services/dev-forgejo-runner.sh` + `bash tests/services/gpu-forgejo-runner.sh`
+  (re-aimed contract) + `bash tests/containers/forgejo-runner.sh` +
+  `bash tests/containers/forgejo-host-runner.sh` (Dockerfile contracts —
+  regression, expect byte-unchanged green) + `helm lint charts/forgejo-runner` +
+  `helm template` three ways (default; gpu slice extract; dev slice extract —
+  /tmp same-call recipe) + guard-trio with `CHUNK_BASE=<the round-6 plans
+  commit>` (expect ONLY the external witnesses {c13, t17, c19}, unchanged —
+  the cf-55 admits already cover `charts/forgejo-runner/*`) +
+  `aislop ci --changes` (shell/yaml vacuous-clean posture recorded honestly).
+
+### Round-6 test-wave expectations (reproducible shapes)
+
+- ESO render: EXACTLY one `data` entry, secretKey `registration-token`,
+  remoteRef property `password`, item = the release's `bitwardenIds.runner-token`
+  UUID; NO `spec.target.template` block (t12 re-aims to the single-key shape,
+  card-#97 lesson message text preserved).
+- ConfigMap skeleton: capacity 1, timeout 30m, shutdown_timeout 5m,
+  backend-conditional cache/container/host branches byte-anchored (old legs
+  move from ESO-data to ConfigMap-data readers at dev-forgejo :626/:844/:906/:1010),
+  `connections.default` with the uuid PLACEHOLDER and absolute `token_url`;
+  the 5-label set unchanged (dev-slice own-registry set unchanged).
+- initContainer `register`: guard, POD_NAME downward-API env, token env from
+  the Secret key, writes `/data/config/config.yaml` + `/data/config/token`,
+  exits non-zero on register/parse failure; payload semantics greps
+  (`ephemeral` false-class token present, no deregister/delete calls).
+- Main container: NO secret persistence mount, NO `CREDENTIALS_DIRECTORY` env,
+  command keeps `-c /data/config/config.yaml`; STS keeps `replicas` default 1 /
+  slice 10 legs (t2/g2 amended-law messages re-cite D57-as-replaced-by-D61),
+  `podManagementPolicy: Parallel` pin if shipped.
+- Host-mode null-out gate legs stay (the `{{- fail }}` block untouched).
+- readyReplicas == replicas is an OWNER OBSERVATION (UA-R6-4), never a suite
+  leg — no leg may call the instance.
+
+### Owner veto slots (batched round may swap at bounded cost; none block the test wave)
+
+- If G1 reddens: (a) admin-token-as-the-single-token, (b) org/repo-scope
+  registration (fleet serves only that scope — changes which repos schedule),
+  (c) revert to the superseded D60(2) N-releases pick, (d) B2 offline N-secret
+  registrations (worst "single token" fit, rotation-friendly). Owner's word.
+- Runner NAME scheme (default: pod name) and description payload (default:
+  release + ordinal, cosmetic).
+- Reuse-both-Bitwarden-items vs fresh items (repo edit rides the choice).
+
+### Out of scope (round 6)
+
+Autoscaling (card `iaJq5bgWHHDHotcBY` owns the ephemeral `one-job` + queue-API
+shape — RESEARCH explicitly reserves D for it; reference, never recreate);
+capacity ≠ 1 (stay-1 ruling survives); the gpu/dev node resizing and VM reboots
+(owner infra); ArgoCD sync-policy automation for the fleet (owner posture —
+this round only records the manual-sync fact in the landing legs); instance
+`app.ini` cron config (not a repo surface — EXPLORE open item 3's answer stays
+owner-side); GitHub-side mirrors; the values.yaml:67 reword lands HERE (next
+touch), not on a separate card.

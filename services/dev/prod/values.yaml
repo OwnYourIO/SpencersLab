@@ -176,9 +176,9 @@ ingress:
 # reaches it), so the per-instance URL must ride here — the chart's
 # runner.url default is a render-time stand-in.
 forgejo-runner-dev:
-  # Owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57 amends B1): 10
-  # poller pods share one (uuid, token) registration; capacity stays 1 per
-  # pod, the chart default stays 1 — the scale is this slice's.
+  # Owner ruling 2026-11-26 (cf-55 round-5 directive 5, D57), re-truthed by
+  # D61 (C17): 10 pods, 10 self-registered records named after the pods, ONE
+  # shared runner token; capacity stays 1 per pod, the chart default stays 1.
   app-template:
     controllers:
       runner:

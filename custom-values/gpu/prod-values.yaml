@@ -108,13 +108,15 @@ archon:
 
 forgejo-runner-gpu:
   bitwardenIds:
-    # Item `forgejo-runner`: username = the runner uuid, password = its token,
-    # from the runner record created on the INFRA instance (git.spencerslab.com).
-    # The pair is instance-specific — a record from another instance never
-    # authenticates here. gpu has its own item (user decision 2026-11-04); the
+    # Item `forgejo-runner`: its login password holds the INFRA instance's
+    # registration token — one reusable token minted at Admin -> Actions ->
+    # Runners on git.spencerslab.com (D61/UA-R6-3 repurpose; the old
+    # username-uuid record content is retired and the field is ignored).
+    # The token is instance-specific — a token from another instance never
+    # registers rows here. gpu has its own item (user decision 2026-11-04); the
     # vault item held for the infra runner's relocation stays free, so it is
-    # not this slot. No placeholder: an unresolved id crash-loops the daemon
-    # (`connection "default" is invalid: 'uuid' is empty`).
+    # not this slot. No placeholder: an unresolved id fails every pod's
+    # register init on first boot.
     runner-token: 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400
 
 seaweedfs-csi-driver:

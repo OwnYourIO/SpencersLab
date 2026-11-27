@@ -1,0 +1,13 @@
+{{- if index .Values "mcp" "enabled" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-mcp-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+{{- end }}

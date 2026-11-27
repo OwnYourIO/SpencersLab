@@ -1,0 +1,646 @@
+{
+  "feature": "cf-156-feat-actual-budget-mcp-server",
+  "plan_status": "complete",
+  "c03_approval": {
+    "at": "2026-11-26T04:02:56Z",
+    "approved_by": "owner, in-session — 'Approve C03 as planned' plus the OQ3 confirmation 'bearer=BEARER_TOKEN, key=ACTUAL_SESSION_TOKEN'; the PVC-stays-in-chart alternative was offered and declined, so the 5Gi SDK-cache PVC moves into the chart with the two ExternalSecrets",
+    "wave": 3,
+    "depends_on": ["C01", "C02"],
+    "shape_approved": "chart-default-off gate mcp.enabled=false with true only in the wuulf per-instance block; release-prefixed resource names ({{ .Release.Name }}-mcp-*) so a second enabled instance cannot collide; deletionPolicy: Delete; sentinels move to the chart with both real UUIDs mirrored at custom-values TOP level (the appset merge does not feed the chart map from per-app blocks); three-way render proof required (wuulf renders them, bri renders NONE, home-actualbudget renders NONE)",
+    "oq3_closed": "name-to-role mapping CONFIRMED by the owner rather than guessed: actualbudget-mcp-bearer (075f18ca-a137-415a-9296-b50e0033589c) -> BEARER_TOKEN; actualbudget-mcp-key (29e97ab5-db7f-4214-affd-b50e0032788d) -> ACTUAL_SESSION_TOKEN",
+    "consequence_accepted": "the 29/2 designed-red shape is retired: with real UUIDs landed, the suite is expected to reach 0 failures, C02's blocker clears (it can move out of dev_done_blocked once the C03 tests go green), and the MCP pod may now actually start and connect. The read-only boundary remains the absence of --enable-write.",
+    "still_owner_owned": "Prerequisite 1 (Keycloak redirect URIs + web origins for wuulf-budget.spencerslab.com) and Prerequisite 3 (the 26.12.x pin move via Renovate + the attached @actual-app/api exactly-26.10.0 SDK re-check)"
+  },
+  "coord_session": null,
+  "test_session": "ses_de9fa4ee1ffeb7H4DQM18LdC85",
+  "test_session_note": "re-assigned at the C03 re-pin round (2026-11-26). The original author (ses_df1f0c304ffe61hq5LzFUdMdyO) was bound to the landing checkout, which no longer holds this ticket folder, so C03's re-pin is authored fresh in the worktree and this session is now the single author of record for every later test fix.",
+  "current_wave": 3,
+  "updated_at": "2026-11-26T03:34:22+00:00",
+  "run_state": {
+    "at": "2026-11-25T01:30:00Z",
+    "plan_status_decision": "left at 'approved', NOT 'complete' — the done-gate requires every chunk done and C02 is dev_done_blocked by owner ruling (two custom-values UUID mirrors cannot exist until the owner mints the Bitwarden items). Marking the plan complete would assert a finished gate that the suite's two reds contradict; the pipeline's own rule is that files state facts, not aspirations.",
+    "commit": {
+      "sha": "0d2a662bd",
+      "branch_tip_after_c03": "6baa0f16d (then the final-review records commit); full set over base 8f04bf915: 0d2a662bd C01+C02+records, 85529c241 records, 7bb4843ea C03 plan, 0cb16d68f test re-pin, 38a8df2cc C03 code, 6baa0f16d records fix — six linear single-parent commits, no merges, nothing pushed, merge-base main HEAD = 8f04bf915",
+      "branch": "cf-156-feat-actual-budget-mcp-server",
+      "base": "8f04bf915b4ce1f561e7c26b06fbc22e16e45e9e",
+      "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-156-feat-actual-budget-mcp-server",
+      "contents": "16 files, +2960: C01's four values files, C02's hivetools entry + two ExternalSecret templates + PVC template, the test suite at mode 100755, and the whole ticket folder (plan of record, STATE, DECISIONS, FRICTION, EXPLORE, RESEARCH, chunks/C01+C02)",
+      "single_commit_rationale": "services/home/prod/values.yaml carries both chunks' hunks in one file, so a per-chunk commit split would need hunk surgery on already-reviewed content; one commit citing both chunks and both verdicts keeps the branch history honest.",
+      "pushed": false,
+      "push_note": "never pushed — the feature branch push needs an explicit owner request, and main is never advanced by this run"
+    },
+    "landing_state": "NOT landed in main by content (main is unchanged at 8f04bf915; no merge, no rebase, no push). Branch and worktree are KEPT — the default under step 10 when the work has not landed.",
+    "main_cleanup": "reverse-applied the cf-156-only patch in /home/coder/SpencersLab: the three exclusively-cf-156 files returned to HEAD, custom-values is clean, and services/home/prod/values.yaml now differs from HEAD by exactly 8 insertions — the co-tenant's audio-ad-detection hunk, left byte-as-found. The four new files and main's stale copy of the ticket folder were removed after the branch copy was hash-verified and committed."
+  },
+  "updated_at": "2026-11-26T03:34:22+00:00",
+  "test_repin_c03": {
+    "at": "2026-11-26T04:38:16Z",
+    "session": "ses_de9fa4ee1ffeb7H4DQM18LdC85",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+    "designed_shape_change": "the '29 pass / 2 fail' shape is RETIRED. Pre-C03 the re-pinned suite is 30 pass / 17 fail (every red is an unimplemented C03 surface); post-C03 the expected outcome is 48 pass / 0 fail, verified by faithful simulation rather than claimed.",
+    "re_pinned": "s2 proxy-remote leg INVERTED to assert absence (wuulf stays local-only, proxy-local unchanged); s5 moved to charts/actualbudget paths with the mcp.enabled gate, release-prefixed names, deletionPolicy: Delete, re-pointed hivetools secret references, tag-by-format and no --enable-write retained; s6 chart-sentinel source + count-based 1:1 across both files + real-UUID form asserts + a stale-name sweep across services/, charts/ and custom-values/",
+    "held_intact": "s1, s3, s4 (R2 no-initContainers proof) and s7 unchanged and re-verified green; the 8-pre-existing home sentinel set pinned as its own regression leg",
+    "mutation_proofs": "7 targeted mutations each caught by exactly one intended check family: re-added proxy-remote entry, third unmirrored chart sentinel, UUID leaked into the tracked chart file, gate removed from a moved template, --enable-write added, stale old-name comment re-added, claimName reverted",
+    "coord_verification": "I independently confirmed the recovery the session reported: git diff --cached --stat is EMPTY and git status --porcelain shows only 'M tests/services/actual-budget-wuulf-mcp.sh', so the worktree is at its true pre-C03 state and no simulated C03 surface leaked into the index or the files",
+    "uuid_discipline": "the owner's real UUIDs are asserted by FORM + 1:1 pairing, never as literals in the suite; their exact values are proven by the C03 plan-Commands render (dev/review), which keeps the suite from re-creating this ticket's own stale-pin failure mode"
+  },
+  "c03_review": {
+    "at": "2026-11-26T05:12:00Z",
+    "session": "ses_de9c94a98ffeXmiEesrjWb3q6S",
+    "verdict": "APPROVED",
+    "handoff_recorded_in": "chunks.C03.handoffs (review entry appended here rather than inside the array, because my multi-line JSON anchor edit risked a second orphan; the reviewer confirmed STATE.json parses after these edits)",
+    "summary": "All C03 ACs held under the reviewer's own re-runs. It read the suite whole and confirmed the re-pinned legs are substantive rather than widened into a no-op: s2 asserts proxy-remote absence with unreadable-file-fails, s5 checks the index-based gate regex, release-prefixed names, deletionPolicy and gone-old-files, s6 re-pins 1:1 to the chart sentinel source with the 8-sentinel regression pin and a sweep that fails on a missing directory. Verdict detail: charts/actualbudget is NOT cluster-wide (absent from base's charts: list; exactly two chart: consumers), so the mcp-servers.md cross-cluster sentinel concern cannot arise; deletionPolicy Delete on the ExternalSecrets is repo convention; the moved PVC has no deletionPolicy (an ES-only field) and is the SDK cache, not a source of truth, so a prune self-heals; the instances' own pvc-data-default.yaml remains unmodified and ungated.",
+    "collision_and_parity": "bri gate-ON yields home-bri-budget-mcp-* with comm -12 shared names = 0; bri gate-closed chart render is byte-identical pre/post-C03 (md5 109d542ef8757a867e180f5721a8484f); home-actualbudget Deployment doc sha256 identical (0e73db3b...) with 01-enable-openid still present.",
+    "findings": [
+      "minor: chunks/C03.md Notes line 1 says 'dev commits C03 on the ticket branch', contradicting the coordinator-solo-committer contract (and its own second sentence) — corrected in the records by the coordinator, as the reviewer recommended",
+      "nit: the suite's s5 PVC pass message narrates 'deletionPolicy Delete' boilerplate while the PVC's checked extras are kind/namespace/RWO/5Gi — the checks are honest (a PVC has no such field), only the label overstates. Left as-is, recorded here."
+    ],
+    "no_validation_at_fault": true,
+    "records_check": "python3 json.load of STATE.json passed for the reviewer after my hand-edits, confirming the re-homed C03_planner_skeleton did not break the file"
+  },
+  "final_review_rerun": {
+    "at": "2026-11-26T05:40:00Z",
+    "session": "ses_de9b57177ffeJPdpYYs5QKE3vU",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+    "verdict": "APPROVED (whole plan, post-C03) — SUPERSEDES the 2026-11-25 final_review block above, which was rendered against the two-chunk inert-credentials state and is kept as history, not as the current verdict.",
+    "why_a_rerun": "the owner's four C03 instructions retired the designed-red suite shape, relocated and renamed the credential surface, and turned the delivery from inert to startable — so the prior verdict could not simply be extended.",
+    "covers": "three-chunk coherence (C01's home-wuulf-budget:5006 is exactly C02's ACTUAL_SERVER_URL; claimName home-wuulf-budget-mcp-data matches the release-prefixed PVC the moved template renders); the post-hoc changed-requirement records honestly cover what C03 moved, with every C02 invariant re-verified live rather than only asserted; the green suite is earned (s2 absence assert, s5 nil-safe index gate regex + gone-old-files, s6 count-based 1:1 with a sweep that fails on a missing directory); no live object is touched (bri gate-closed byte-identical md5 109d542ef8757a867e180f5721a8484f recomputed independently; umbrella renders zero mcp objects; home-actualbudget Deployment sha256 identical with 01-enable-openid still present; comm -12 = 0 shared names; the removed umbrella templates never existed on main so nothing live is pruned); no ApplicationSet edit, no Chart.yaml diff, no kubectl, no hand-bumped tag (the only image line in the whole branch diff is the new v1.15.1), zero owner UUIDs in charts/ or services/; git posture clean (merge-base main HEAD = 8f04bf915, six linear single-parent commits, nothing pushed).",
+    "does_not_cover": "the card's end-to-end goal is NOT executable on merge. The pod can start at first sync, but it authenticates only once Prerequisite 3 lands (the sole credential is a 26.12+ budget-scoped key while the deployed image carries @actual-app/api exactly 26.10.0 with no API-key route — the failure is visible, not silent); split/assign additionally needs the leg-4 --enable-write flip (no re-mint, because the key has no read/write axis and caps blast radius inside the wuulf budget file); Prerequisite 1 (Keycloak redirect URIs + web origins) is owner-owned or wuulf's SSO login cannot complete. The read-only boundary is genuinely the absence of a single flag.",
+    "findings": [
+      "minor (records wording): the 'can start and connect' shorthand in DECISIONS 2026-11-26 and the C03 Notes compresses the leg-3 gate; the same files name the gate one line away, so the records as a whole are accurate — no action, recorded here",
+      "carried nit: the suite's s5 PVC pass message labels deletionPolicy boilerplate that a PVC cannot carry — checks are honest, label overstates",
+      "carried nit: the new hivetools entry omits the '# oidc:' re-enable marker its 9 gpu + 2 chart siblings carry"
+    ],
+    "no_validation_at_fault": true,
+    "deferred_carried_forward": ["Prerequisite 1 Keycloak redirect URIs + web origins (owner)", "Prerequisite 3 the 26.12.x pin move via Renovate + the attached exactly-26.10.0 SDK re-check, canary --test-resources + tools/list (owner)", "leg-4 --enable-write flip (owner, no re-mint)", "OQ4: a future bri MCP ticket needs its own items + a per-app UUID injection path — the gate is collision-safe, not a shared-credential solution", "5Gi data-PVC size remains an assumption (no upstream guidance)"]
+  },
+  "final_review": {
+    "status": "done",
+    "verdict": "APPROVED (whole plan)",
+    "session": "ses_defd9d069ffeuqBjr2XpfoXEQu",
+    "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+    "at": "2026-11-25T00:52:00Z",
+    "covers": "C01+C02 land coherently as one delivery (C01's home-wuulf-budget:5006 is exactly C02's ACTUAL_SERVER_URL; the wuulf host is consistent across home ingress, proxy-local redirect and proxy-remote enable; single-budget design coherent with the wuulf-only ruling); the implemented surface is correct with every AC invariant re-rendered by the reviewer; the suite's only two reds are the ruled-out custom-values mirrors, red for the ruling's reason; ArgoCD is undisturbed (all C02 objects are new; the sentinel reaches only the two new ExternalSecrets remoteRef.key -> visible NotReady -> pod cannot start; both live instances render byte-unchanged; 8 pre-existing sentinels 0-unmirrored; no sentinel VALUES in custom-values).",
+    "does_not_cover": "it does NOT promote C02 out of dev_done_blocked or waive the done-gate: C02 cannot reach done until the owner lands the two UUID lines. The reviewer stated this scope itself rather than leaving APPROVED to be over-read.",
+    "findings": [
+      "F1 (minor, recorded, non-blocking): the card's split/assign workflow is reachable only after owner legs 1-3 plus the leg-4 --enable-write flip — the ruling's designed shape, not under-delivery; the read/compare half is executable at the read-only tier today",
+      "F2 (nit, deferred): the new hivetools entry omits the commented '# oidc:' re-enable marker carried by 9 pre-existing gpu entries + 2 in the hivetools chart (0 on the new entry); functionally identical opt-out, oidcConfigRef absence verified in the render, but a platform-wide OIDC re-enable grep will not surface this server"
+    ],
+    "clean_checks": "no leaked secrets; zero chart/version changes (git diff --stat -- charts/ empty); no unpinned image (v1.15.1 from the live registry query); no kubectl; no scope creep; all six hunks in the changed files attributable (C01 x3, C02 x2, co-tenant cf-133 x1 ignored)",
+    "reviewer_self_reported_error": "its first hivetools block extraction wrapped the block under a 'hivetools:' key, which renders NO entry silently (no error, just an empty result); it caught this by reading appset-charts.yaml:36 (the appset promotes the service's hivetools block to chart-top-level values) and re-extracting the CONTENTS. Carried into every later launch brief, including the worktree transfer."
+  },
+  "worktree_transfer": {
+    "at": "2026-11-25T01:15:00Z",
+    "trigger": "owner instruction 2026-11-25: 'It looks like you missed the create worktree and branch step. Do so now and move your code there' — an explicit override of the card's absent Worktree Creation stage, recorded as an owner ruling rather than a correction of agent error",
+    "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-156-feat-actual-budget-mcp-server",
+    "branch": "cf-156-feat-actual-budget-mcp-server",
+    "base_commit": "8f04bf915b4ce1f561e7c26b06fbc22e16e45e9e",
+    "patch": "/tmp/opencode/cf156-transfer.patch — 727 lines, 12 sections, built hunk-filtered in the landing checkout: five cf-156 hunks in services/home/prod/values.yaml, one hunk each for the three exclusively-cf-156 files, four full-file additions with the test script at mode 100755",
+    "apply_evidence": "git apply --check OK at 8f04bf915; applied 8 files / +635; grep -n audio-ad-detection services/home/prod/values.yaml => exit 1, 0 MATCHES (the co-tenant's hunk did not travel); 8-way comparison vs the landing checkout leaves the excluded 8-line cf-133 hunk as the only content divergence (77 vs 69 added lines), plus the explained 755-vs-644 mode of the test script",
+    "revalidation_in_worktree": "suite 29 pass / 2 fail with both reds on s6's ruled-out mirror legs; helm lint clean on charts/actualbudget, charts/hivetools and the home umbrella; both plan-Commands renders reproduce every AC1 invariant; npx aislop ci --changes => 0 errors / 0 warnings / 0 fixable (stricter than the landing run's 0/4 — those four warnings lived only in cf-133's .cs files, which correctly are not here)",
+    "not_re_run_in_worktree": "the home-umbrella render was not re-run here (the transfer brief named only the two plan renders plus the umbrella lint). The two ExternalSecret + PVC templates arrived byte-identical with green s5 presence/boilerplate legs, so the umbrella-render proof stands as recorded by the C02 and Final reviews rather than being re-executed on the branch.",
+    "records_relocated": "the whole ticket folder was copied verbatim: 8 files both sides, 0 asymmetric entries, per-file sha256 MATCH, diff -r clean, STATE.json re-parsed (plan_status approved, both takeovers, C01 done / C02 dev_done_blocked, 2 handoffs per chunk)",
+    "correction_to_friction": "my earlier FRICTION entry blamed repeated multi-line edit failures on 'mixed CRLF/LF' in DECISIONS.md. The copier measured the file: 0 CR bytes, pure LF. The diagnosis was wrong and is being corrected in place — the real cause was my own anchors assuming indentation that the wrapped markdown prose does not have. Keeping the false version would send a later session hunting for a line-ending problem that does not exist."
+  },
+  "stages_note_test": "Test Writing ran BEFORE any implementation, as the card's checked stage requires; suite verified in three states (red pre-implementation 7/15-fail with every failure an unimplemented entry, 31/31 green against a simulated tree in a scratch repo, and 5/5 targeted mutations each caught by exactly its intended check). CAUTION for the uncommitted-in-place posture: the shared landing tree also carries the co-tenant run's uncommitted cf-133 audio-ad-detection edits to services/home/prod/values.yaml — the working diff is therefore NOT purely this ticket's, and every chunk review must read the enumerated C0x file/hunk list, not `git diff` wholesale.",
+  "plan_approval": {
+    "approved_by": "owner, in-session, 2026-11-24 (the reworked plan — a fresh nod was required because the server swap changed C02's env surface materially, not just cosmetically)",
+    "round_1": "approved as written before Post Research disproved its premise (agigante80 password-only)",
+    "round_2": "approved the rework: C02 -> s-stefanov/actual-mcp, C01 gains the wuulf-only enable-openid criterion",
+    "card_comment": "PLAN APPROVED — reworked round posted 2026-11-24 (setId fd1d1121); it names the zero-commit/working-diff review surface, the owner-owned Keycloak prerequisite, and that BOTH earlier Local-pipeline holders on this card were reaped while this run continues under its card-id lock",
+    "writeback": {
+      "at": "2026-11-24T05:20:00Z",
+      "slug_field": "written as the BARE slug 'cf-156-feat-actual-budget-mcp-server' (field id RaNeqvh9YoT4bnkZ8) — this run is rename-skipped, so no session link exists to append; the Resume rule parses a bare value, so resume still works",
+      "priority": { "raw": 5, "class": "default", "stamped": true, "note": "field read null at claim; the default-class stamp is visibility only, per the board ruling" },
+      "unchecked_items_deleted": 31,
+      "survivors_verified": "re-read after deletion: every surviving item still finished=true (Services home+agent context; Type feat; Model(s) Qwen Dense+Local; Lifecycle the eight running stages; HITL Pre Research, Planning, Final Review, Deployment). A first read-back looked like a reset only because the field is 'finished', not 'isChecked' — read artifact, no board damage.",
+      "legacy_session_field": "untouched, still null — retired, never read, never written"
+    }
+  },
+  "kickoff": {
+    "card": "itMHzqvEWzc6LAWvh",
+    "card_number": 156,
+    "board": "AI-Dev (TNQJ2BrXenZovngTS)",
+    "repo_identity": "SpencersLab (basename of git-common-dir parent; AGENTS.md 'Repo identity: SpencersLab' agrees)",
+    "slug": "cf-156-feat-actual-budget-mcp-server",
+    "slug_source": "derived from card content (Type feat checked, card title); slug custom field read null at claim -> fresh kickoff, no resume (D11)",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 2 - no 'Session origin:' line rode the launch; scripts/session-origin.sh run once at claim",
+    "coord_session": null,
+    "coord_session_reason": "session-rename-skipped (Lifecycle checklist on this card is the pre-cutover 11-item shape and carries no 'Session Rename' item; gate bit reads unchecked, so no sessionID is captured, no in-work mark is written, and this run's slug-stack line is the bare slug)",
+    "origin_dir": "/home/coder/SpencersLab",
+    "worktree": null,
+    "worktree_reason": "worktree-creation-skipped (no 'Worktree Creation' item on the card's Lifecycle shape; gate bit reads unchecked)",
+    "branch": "main",
+    "branch_source": "launch-checkout (Worktree Creation unchecked)",
+    "commits": "none (superseded 2026-11-25 by owner instruction — see kickoff.posture_change)",
+    "posture_change": {
+      "at": "2026-11-25T00:55:00Z",
+      "owner_instruction": "It looks like you missed the create worktree and branch step. Do so now and move your code there",
+      "interpretation": "an explicit owner override of the card's unchecked Worktree Creation stage, not a correction of a mistake: the stages were absent from the card's pre-cutover 11-item Lifecycle, so the uncommitted-in-place/zero-commit posture was the documented behaviour of that shape, recorded in kickoff and in the claim comment. The owner's word now supersedes it for the remainder of the run.",
+      "worktree": "/home/coder/.local/share/opencode/worktree/e32e19/cf-156-feat-actual-budget-mcp-server",
+      "branch": "cf-156-feat-actual-budget-mcp-server",
+      "minted_at_commit": "8f04bf915b4ce1f561e7c26b06fbc22e16e45e9e",
+      "mint_verdict": "MINTED (scripts/kickoff-mint-branch.sh), destination WARMED (scripts/kickoff-warm-location.sh) before the session_move, per the pipeline-kickoff leg gate",
+      "commits_now": "the coordinator commits the transferred work on the feature branch; main is never advanced, never pushed",
+      "transfer_method": "a cf-156-only patch built in main at /tmp/opencode/cf156-transfer.patch (hunk-filtered: five cf-156 hunks in the shared home values file, the three clean-file diffs, and the four untracked files as full additions), applied in the worktree, then main's own hunks are stripped only AFTER the in-flight Final Review has read that tree",
+      "co_tenant_protection": "cf-133's uncommitted audio-ad-detection hunk in services/home/prod/values.yaml, its staged cf-55 edits and its untracked paths are excluded from the patch and left byte-as-found in main; no wholesale checkout/restore/clean is used anywhere in this sequence"
+    },
+    "posture": "uncommitted, in place, on main in the landing checkout; the coordinator makes zero commits - the never-advance-main law is honoured by that absence, never by refusing to work",
+    "claim": {
+      "setId": "5d58d120-6e5c-4f66-abee-b1ad09333abb",
+      "pipelines": ["Local"],
+      "pipeline_source": "derived from board label 'Pipeline: Local' (D17)",
+      "shared": true,
+      "shared_reason": "explicit owner word in-session 2026-11-23T21:14Z for THIS claim only, after pipeline_claim answered occupied",
+      "co_tenants": [
+        {
+          "cardId": "itMHzqvEWzc6LAWvh",
+          "sessionID": "ses_df6dcd46bffeG0el3qCKVmGh2X",
+          "setId": "759eecb1-6626-415d-b28f-c5c146511845",
+          "claimedAt": "2026-11-23T16:07:16.835Z",
+          "heartbeatAt": "2026-11-23T20:39:58.105Z"
+        }
+      ],
+      "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/Local.json"],
+      "note": "plugin-owned surfaces; this record names the shared key only for traceability. Two sessions hold this card; each releases only its own holder.",
+      "reaped": {
+        "at": "2026-11-24T01:19:58.999Z",
+        "lostPipelines": ["Local"],
+        "cause": "the 2h stale clock keeps ticking through stop points; the run was paused at the card's checked 'Pre Research' HITL stop when it expired"
+      },
+      "takeover": {
+        "authorized_by": "owner answered the ONE sanctioned question ('may I continue anyway?') = YES, in-session 2026-11-24",
+        "resume_form": "fresh claim under the card-id key — the only door after a reap; no self-reclaim of the reaped Local label",
+        "setId": "fd1d1121-7591-4ef1-896e-be6b2e394096",
+        "pipelines": ["itMHzqvEWzc6LAWvh"],
+        "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"],
+        "card_list": "unchanged, still Executing — no move was made or needed",
+        "co_tenant": "ses_df6dcd46bffeG0el3qCKVmGh2X keeps its own holder; this run releases only its own"
+      },
+      "takeover_2": {
+        "reaped_at": "2026-11-24T23:47:47.397Z",
+        "lost_setId": "fd1d1121-7591-4ef1-896e-be6b2e394096",
+        "lost_pipelines": ["itMHzqvEWzc6LAWvh"],
+        "cause": "the 2h stale clock expired while the session sat idle at the C02 hand-back boundary; the reap record names this card explicitly",
+        "answer_to_the_one_question": "the owner's 'Continue' continuation prompt is the sanctioned answer (boards Human-stops rule: a later continuation IS the answer, not a workaround), so the question was NOT asked a second time in this run",
+        "resume_form": "fresh claim under the card-id key — the reaped fd1d1121 set is never revived",
+        "setId": "838a0af2-0e2a-4b9f-8abe-5d8817b46c9a",
+        "pipelines": ["itMHzqvEWzc6LAWvh"],
+        "lockPaths": ["/home/coder/SpencersLab/.pipeline/locks/itMHzqvEWzc6LAWvh.json"],
+        "card_list": "unchanged, still Executing",
+        "at": "2026-11-25T00:24:43Z"
+      }
+    },
+    "provider": "Local (label 'Provider: Local' consumed; no provider question asked)",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "code": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "local": true,
+      "checklist_route": "gpu-ai/qwen3.8-27b-radiance (Model(s) = Qwen Dense + Local; D20)",
+      "checklist_route_outcome": "DOWN - answered 'peer proxy error: dial tcp 10.43.162.16:8000: connect: connection refused' (q27 pod parked at replicas 0); the first Exploration attempt (ses_df5bbeedcffe360E7LrFfODD03) died on it and wrote nothing",
+      "interim_route": "openrouter/qwen/qwen3.8-27b (documented hosted fallback for the same dense family, stated not silent) - carried the completed Exploration scout ses_df5ba492affewXmmK6G7fVuYV1",
+      "override": "owner instruction in-session 2026-11-23T21:22Z: 'use gpu-ai radiance tp2 27b for the model the subagents use' -> BOTH tiers now ride gpu-ai/qwen3.8-27b-radiance-tp2 for every launch from Pre Research onward; kickoff choices override pipeline-models defaults",
+      "override_caveat": "git renders gpu-ai-radiance-q27-tp2 at replicas 0 (2-card claim parks the pool); llama-swap neither health-checks nor hides peers, so if the owner's scale act has not landed the next launch answers the same loud 502. On that answer this run STOPS and names the missing scale act rather than routing around the owner's chosen lane. No kubernetes surface exists in this session's catalog, so the endpoint state could not be pre-probed.",
+      "served_model_note": "the Exploration scout ran on the interim hosted route because the override arrived after its launch; not re-run to avoid duplicating a live subagent"
+    },
+    "priority": { "raw": null, "class": "default" },
+    "checklists_consumed": {
+      "Type": ["feat"],
+      "Services": ["home", "agent context"],
+      "Model(s)": ["Qwen Dense", "Local (gpu-ai)"],
+      "Lifecycle_checked_in_card_order": ["Exploration", "Pre Research", "Planning", "Post Research", "Test Writing", "Chunk Development", "Chunk Review", "Final Review"],
+      "Lifecycle_unchecked": ["Agent Decides Research", "Deployment", "Single Session"],
+      "Lifecycle_absent_from_shape": ["Session Rename", "Worktree Creation"],
+      "Human_in_the_Loop_checked": ["Pre Research", "Planning", "Final Review", "Deployment"],
+      "stop_points": ["after Pre Research", "after Planning (= the plan-approval pause)", "after Final Review", "after Deployment (VACUOUS - stage unchecked)"],
+      "checklist_ids": {
+        "Model(s)": "LPatxS5f82wxMryod",
+        "Services": "d5XmTPRgArcfrWS4Y",
+        "Type": "SgeY89R4DBDpRKLFk",
+        "Lifecycle": "KmLXxcfY8u43DDmix",
+        "Human in the Loop": "Bhmj93mSfSHtXp54Q"
+      }
+    },
+    "follow_up_cards": "NOT checked and not on this checklist shape -> the run creates no follow-up cards; deferred asks ride plan open questions + the final summary comment",
+    "board_context": {
+      "collected": "2026-11-23T21:09:47.170Z",
+      "producer": "prompt hook (dev-boards)",
+      "note": "starting map only; the card's live list and checklist state were re-read at claim and drove every consumption decision"
+    },
+    "preload": {
+      "at": "2026-11-23T21:14:00Z",
+      "tool": "preload_board",
+      "scope": ["In Process"],
+      "ask": "with_checklists=false passed; the deployed build still returned per-card checklists (pre-bump build, harmless furniture)",
+      "cards": null,
+      "cards_note": "not tallied - the payload is deliberately not persisted (only the lean stamp is)",
+      "degraded": false
+    },
+    "card_details": {
+      "at": "2026-11-23T21:14:00Z",
+      "tool": "get_card_details (present in this session's catalog; not called - the claim-time reads get_card + preload_board + list_comments carried everything consumed)",
+      "degraded": false
+    }
+  },
+  "stages": {
+    "replan": {
+      "status": "done",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "at": "2026-11-26T03:34:22+00:00",
+      "trigger": "owner instruction 2026-11-26 — four verbatim directives (recorded in DECISIONS 2026-11-26, binding, not re-litigated): (1) remove wuulf-budget from proxy-remote ('so I don't want anything on proxy-remote yet'); (2) use actualbudget-mcp-key: 29e97ab5-db7f-4214-affd-b50e0032788d and actualbudget-mcp-bearer: 075f18ca-a137-415a-9296-b50e0033589c — rename both bitwardenIds sentinels, both ExternalSecret templates/resources and their remoteRef item names to the owner's spelling; (3) move the two ExternalSecret templates (and, if judged correct, the PVC — judged YES, justified) from services/home/prod/templates/ into charts/actualbudget/templates/; (4) add both UUIDs to custom-values/home/prod-values.yaml. Folded as a NEW chunk C03 (wave 3, depends C01+C02) — no second plan file.",
+      "what_changed": "plan of record edited in place: Goal + Out-of-scope gain the C03 rework paragraph + the collision-safe-future-bri note + the proxy-remote-removal note; a 'Verified at C03 replan time (2026-11-26)' section added (the C01/C02 surface is branch-only — all five targeted live gets not found; home-actualbudget cannot render the chart by construction — no actualbudget dependency in services/home/prod/Chart.yaml; the appset values-merge order; the shared-storage / enabled-gate / zigbee2mqtt-release-name / deletionPolicy precedents; the chart consumers are exactly bri-budget + wuulf-budget); Prerequisites 2 and 4 marked SATISFIED (the owner's mint), 1 and 3 remain owner-owned (3 with the @actual-app/api exactly-26.10.0 re-check attached); ## Commands: the C01 grep trio revised to a 4-file grep + a proxy-remote ABSENCE leg, the hivetools render re-pinned to the release-prefixed secrets/claimName (the ExternalSecrets no longer render there), the C03 three-way render proof added (wuulf gate-open + real injection via the extracted custom-values bitwardenIds / bri gate-closed rendering NONE / the umbrella rendering NONE for home-actualbudget) + the collision-safety proof (gate on bri renders home-bri-budget-mcp-*, distinct names), the 1:1 check re-pinned to the chart sentinels (expected GREEN), the suite line re-pinned (the designed 29/2 shape RETIRED — re-pinned suite expected 0 failures; a live MCP pod may now start and connect, the read-only boundary still the absence of --enable-write); chunks table + wave order gain C03; Risks: the inert-premise paragraph replaced by the sync-fight hazard the gate exists for, the ownership-flip hazard assessed benign (nothing live is pruned), and the inert-premise-is-over changed-requirement record; Open questions: the C01-AC3 changed-requirement record, OQ3 (item-name -> role mapping, name-derived best guess, visible-not-silent failure mode, two-line fix if swapped), OQ4 (shared-credential limitation of the two-instance gate — design note, the future bri MCP ticket needs its own items + a per-app UUID injection path; C03 is the collision-safe prerequisite, not the solution). chunks/C03.md created (9 tasks, 7 files in scope, 9 ACs, the test re-pin spec for a FRESH Test Writing session — s2 proxy-remote absence leg, s5 chart template paths + new names + gate keys + hivetools re-named entry, s6 chart sentinel source + both files 1:1 + real UUIDs green + old names absent; s1/s3/s4/s7 unchanged, Notes for dev, empty Review notes). DECISIONS.md: the dated 2026-11-26 C03 section appended (the owner's four instructions verbatim record + the gate/naming/PVC-move/deletionPolicy/injection-path/mapping decisions with their grounding + the verified-at-replan-time facts + the inert-premise-over consequence). plan_status approved -> proposed: the plan is no longer the approved shape — it awaits a fresh owner approval of the re-plan at the plan-approval pause before C03's Test Writing + dev.",
+      "consequences": "the inert-until-the-key-lands premise is OVER: Prerequisites 2 and 4 satisfied (both items minted with real UUIDs), the 1:1 sentinel check goes GREEN with C03, the suite's designed 29/2 shape is retired (re-pinned suite expected to pass in full, 0 failures — the two s6 reds flip green because the mirrors land with the owner's real UUIDs), and a live MCP pod may now actually start and connect the moment C03 lands (the ExternalSecrets resolve the real UUIDs -> the target Secrets exist -> the pod starts, connecting to wuulf through the budget-scoped key in the ACTUAL_SESSION_TOKEN slot). C02's dev_done_blocked is unblocked BY C03: C03's custom-values task IS the 2026-11-24 ruling's close-out leg 1 (the two UUID lines, under the owner's item names). Prerequisites 1 (Keycloak redirect URIs + web origins) and 3 (the 26.12.x pin move + the attached SDK re-check) remain owner-owned. C01's AC3 is a CHANGED requirement (the proxy-remote leg removed), recorded, not a re-opened chunk.",
+      "friction": "none — the batched-question protocol held (no user questions; the two genuine gaps — the item-name -> role mapping and the shared-credential limitation — went to plan Open questions with best guess + impact, per the brief)"
+    },
+    "exploration": {
+      "status": "done",
+      "session": "ses_df5ba492affewXmmK6G7fVuYV1",
+      "model": "openrouter/qwen/qwen3.8-27b",
+      "artifact": "EXPLORE.md",
+      "handoff": {
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/EXPLORE.md"],
+        "commands_run": [
+          "grep actualbudget/bri/wuulf across repo => pass",
+          "git log -S bri-budget (commits 217dae71d, cce60c729, 0bcc88d37) => pass",
+          "helm dependency update + helm template (chart copied to /tmp, release home-wuulf-budget, nameOverride set) => pass",
+          "readonly-home-kubernetes resources_get/list (deployments/services/pvcs/ingresses/MCPServers) => pass",
+          "readonly-gpu-kubernetes get home-bri-budget => expected not-found (home-only confirmed)",
+          "readonly-infra-postgres-keycloak execute_sql (client redirect URIs) => pass after 1 schema correction",
+          "git status => clean except new folder"
+        ],
+        "deviations": "none (helm render done on a /tmp copy; repo tree unmodified)",
+        "friction": "keycloak postgres schema differs from Keycloak 18-era expectations (no client.attributes; redirect URIs in separate tables keyed by client.id UUID) - resolved via information_schema probe; Code Mode k8s list tools return kubectl-formatted rows (Name key) while get returns full objects",
+        "open_questions": [
+          "Who/what is wuulf - confirm instance name wuulf-budget, host wuulf-budget.spencerslab.com, cluster home?",
+          "Who performs the live Keycloak change adding https://wuulf-budget.spencerslab.com/* to client 'actualbudget' redirect URIs + web origins?",
+          "Needs research: yes - which Actual Budget MCP server to run (upstream vs in-repo container a la wekan-mcp), which instance(s) it targets, its auth/token model, and how 'payments-grouped vs item-level exports + reconcile/split/assign' maps to Actual's API",
+          "Which cluster hosts the new mcp.<name> server (home co-located vs gpu where wekan-mcp lives)?"
+        ],
+        "next_suggested": "agent-research on Actual Budget MCP servers/API export surface, then agent-plan with C1 = wuulf-budget instance (pure bri-budget copy, EXPLORE section 2 table) and C2 = MCP server (hivetools entry + container), flagging the Keycloak-URI change as an owner ops step"
+      }
+    },
+    "research_pre": {
+      "status": "done",
+      "session": "ses_df5af53fdffeYYL4Vy4Z16I96x",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "model_note": "the owner's TP2 lane served this launch cleanly (no 502) - the route override is live for planning-tier work",
+      "artifact": "RESEARCH.md",
+      "audit_trail": "/tmp/opencode/storm/storm-runs/actual-budget-mcp-server-landscape-and-actual-budget-api/ (kept out of the ticket folder by the launch brief)",
+      "recommendation": "agigante80 Actual Budget MCP server, hosted as a ToolHive hivetools.mcp entry on home; 26 numbered sources",
+      "handoff": {
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/RESEARCH.md"],
+        "commands_run": [
+          "storm_run.py init (run dir under /tmp/opencode/storm) => pass",
+          "storm_run.py merge (26 numbered sources) => pass",
+          "global-searxng web search x3 (landscape survey) => pass",
+          "webfetch: 7 repo READMEs/package.jsons, 6 official actualbudget.org doc pages, npm registry, Docker Hub API x2, GitHub releases/commit-search/repo metadata => pass",
+          "shell writes for storm-runs intermediates => pass"
+        ],
+        "deviations": "none (storm intermediates kept out of the ticket folder per launch; all 5 interviews run in-session - no fan-out surface in that session)",
+        "friction": "the write tool is permission-scoped to the repo, so /tmp/opencode storm files were written via shell heredocs; npmjs.com 403s to webfetch (registry API used instead); henfrydls' default branch is master (first README fetch 404'd)",
+        "open_questions": [
+          "The exact 'exports' the owner means - 'payments grouped together' vs 'item-level but not bank-balanced': which format, what produces the grouping? (no source covers it; flagged, not invented)",
+          "'Reconcile the lists': import-reconciliation (dedupe/merge/cleared - all API-reachable) vs bank reconciliation (lock to statement balance - UI-only in the documented API surface; the one server that shipped it is archived; would be custom code over an undocumented flag)",
+          "Auth: session tokens on 26.10.0 (expiry caveat, minted post-Keycloak-login) vs upgrading all three instances to 26.12+ for revocable budget-scoped API keys (feature merged 2026-11-08..21, after v26.11.0 shipped 2026-11-02)",
+          "Scope: one agigante80 deployment covering all three instances (BUDGET_N registry) vs wuulf-only, and read-only-first vs full writes as the starting tier"
+        ],
+        "next_suggested": "agent-plan drafting two chunks - C1 wuulf-budget instance (pure bri-budget copy per EXPLORE section 2, Keycloak-URI change flagged as owner ops step) and C2 MCP server (agigante80 ToolHive entry on home per RESEARCH.md recommendation), with the four owner decision points presented at the plan-approval pause",
+        "reliability": "strong where sources are direct/current (official 'no HTTP API, SDK only' stance, documented API surface for import-reconciliation/splits/transfers/cleared, agigante80 multi-server registry). Watch: API-key version gating 26.12.0 is an inference (8/10). Honest gap: the 'reconciled' flag setter is absent from the documented writable surface - flagged for a live test in dev, not assumed."
+      }
+    },
+    "planning": {
+      "status": "done",
+      "session": "ses_df467f84dffeyFgpJl0urzVqdw",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "artifact": "2026-11-24-feat-actual-budget-mcp-server.md",
+      "planning_time_verification": "26.12.0 NOT published (GitHub releases latest v26.11.0 published 2026-11-02; npm latest 26.11.0, nightly 26.12.0-nightly.20261124) - the API-key wiring is gated on 26.12.x publication, verification handed to the Post Research round, no session-token fallback; agigante80 pin ghcr.io/agigante80/actual-mcp-server:0.4.2 (newest stable versioned GHCR tag, queried 2026-11-24)",
+      "chunks_decided": "C01 wuulf instance (wave 1) -> C02 MCP server (wave 2, depends_on C01: the BUDGET registry URL resolves against C01's in-cluster Service; sequential waves keep the working-diff review clean under the uncommitted posture); the auth/version leg is NOT a chunk (same file set as C02 + the version leg is a Renovate pin move, never hand-bumped) - carried as plan Prerequisites 2-4",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "plan",
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/2026-11-24-feat-actual-budget-mcp-server.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C01.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C02.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/FRICTION.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/DECISIONS.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/STATE.json"
+          ],
+          "commands_run": [
+            "GitHub releases API (actualbudget/actual, per_page=5) => pass (latest release v26.11.0)",
+            "npm dist-tags (@actual-app/api) => pass (latest 26.11.0, nightly 26.12.0-nightly.20261124)",
+            "GHCR tags list (agigante80/actual-mcp-server, anonymous pull token) => pass (newest stable versioned tag 0.4.2)",
+            "repo shape greps/reads (home umbrella values, custom-values, proxy values, wekan-mcp precedent + secret template, test style, templates inventory, hivetools values, renovate.json) => pass"
+          ],
+          "deviations": "none",
+          "friction": "none",
+          "open_questions": [
+            "Bitwarden item name/shape: actual-budget-mcp (LOGIN password = random MCP-side Bearer token; custom field api_key = budget-scoped key), MCP entry hivetools.mcp.actual-budget - conventional guess (wekan-mcp precedent); a rename is a two-line edit + the item name",
+            "API-key permission scope at minting: best guess = the documented workflow's permissions (reads + import/merge/split/transfer/assign + rules/budgets) with MCP_READ_ONLY as the first-tier server-side boundary (grafana defense-in-depth pattern)"
+          ],
+          "next_suggested": "the plan-approval pause (owner), then Test Writing (tests/services/actual-budget-wuulf-mcp.sh, one session before any dev), then C01 dev"
+        },
+        {
+          "status": "DONE",
+          "chunk": "plan",
+          "round": "rework (folds the 2026-11-24 replan rulings R1 + R2 into the approved plan, edited in place - never a second plan file)",
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/2026-11-24-feat-actual-budget-mcp-server.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C01.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C02.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/DECISIONS.md",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/STATE.json"
+          ],
+          "commands_run": [
+            "read charts/actualbudget/values.yaml in full (60 lines) => no initContainers defined - R2 grounded by construction (the broken 01-enable-openid step lives only in the umbrella's instance-1 actualbudget: block, services/home/prod/values.yaml:912-919, verified by grep)",
+            "read charts/actualbudget/templates + values => the SSO envFrom/secretRef wiring (actualbudget-sso-secret) is hardcoded in the chart values (lines 22-24); the only template is pvc-data-default.yaml (the Deployment renders via the app-template library)",
+            "webfetch s-stefanov/actual-mcp README (master, fetched 2026-11-24) => full surface grounded (image sstefanov/actual-mcp Docker Hub; --sse = streamable-http; --enable-bearer requires BEARER_TOKEN env; --enable-write enables writes; ACTUAL_SESSION_TOKEN takes precedence over ACTUAL_PASSWORD; ACTUAL_SERVER_URL; ACTUAL_DATA_DIR default ~/.actual; ACTUAL_BUDGET_SYNC_ID optional; ACTUAL_SYNC_TTL_MS default 60000; --port flag exists, default port not stated as a default; --test-resources)",
+            "read renovate.json customManagers => the plain-image regex manager covers image: lines in service values (the s-stefanov image line stays trackable, same shape as round 1)",
+            "grep agigante80/MCP_BRIDGE/BUDGET_N_/MCP_READ_ONLY/0.4.2 across plan + chunks => only deliberate historical references remain (dropped-not-postponed, the 0.4.2 cautionary precedent, the non-inherited fsGroup finding)"
+          ],
+          "what_changed": "R1: C02 rewritten for s-stefanov/actual-mcp (agigante80 DROPPED, not postponed - password-only, no sessionToken slot; the 0.4.2 pin withdrawn - the tag comes from a live Docker Hub registry query at implementation time, never lexicographic or from-memory; the 0.4.2-vs-0.35.2 trap recorded). Credentials split per OQ1 into two Bitwarden items (actual-budget-mcp / actual-budget-mcp-key) with two ExternalSecrets, two sentinels, two UUID mirrors; first tier = the absence of --enable-write (the credential is the gate, not the flag). R2: C01 gains the scoped criterion - wuulf comes up WITHOUT the broken 01-enable-openid initContainer by construction (the chart defines no initContainers - verified 2026-11-24) while the SSO envFrom wiring stays intact (enablement rides the auto-bootstrap path, live-verified); charts/actualbudget/values.yaml untouched, home-actualbudget/home-bri-budget untouched, NO blocking owner question needed. OQ1/OQ2 recorded resolved as the plan guessed. Test numbering coherent across the one script (C01 s1-s4, C02 s5-s7). Prerequisite 2 split per OQ1; Prerequisite 3 carries the earliest 26.12.x signals + the early-December-2026 recheck; the B3 assumption stripped; the inert reframed per the replan rulings. DECISIONS.md: rework-fold section appended (append-only; existing blocks kept verbatim). plan_status -> draft.",
+          "deviations": "none (plan of record edited in place; no second plan file; chunks C01.md + C02.md remain the only chunk files)",
+          "friction": "none",
+          "open_questions": "none - R2 resolved by construction (verified 2026-11-24); the remaining C02 unknowns (tag, default port, read-only flag, image entrypoint/user, Bearer wiring) are dev-time verification items with the check to run (C02 Notes), not blockers",
+          "next_suggested": "the plan-approval pause (owner), then Test Writing (tests/services/actual-budget-wuulf-mcp.sh, one session before any dev), then C01 dev"
+        }
+      ]
+    },
+    "research_post": {
+      "status": "done",
+      "session": "ses_df44ad6b5ffe3B6It55XggY1IP",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "artifact": "RESEARCH.md (appended 'Post Research (2026-11-24)' section, append-only, seam-verified; sources [27]-[55] added to the existing numbering)",
+      "plan_premise_conflict": true,
+      "handoff": {
+        "status": "DONE",
+        "chunk": "plan",
+        "verdicts": {
+          "Q1_publication_gate": "10/10 - 26.12.0 NOT published (v26.11.0 2026-11-02, npm latest 26.11.0, 26.11.0 blog carries zero API-key PRs). Earliest signal: npm nightly 26.12.0-nightly.20261124 + five upcoming-release-notes API-key fragments. Recheck early December 2026 (approx monthly, early-month cycle).",
+          "Q2_key_shape": "9/10 - per-budget, format actual_[43], stateless per-request, file-grant 403s, NO TTL, individually revocable, PASSED AS sessionToken (docs-confirmed), only opt-in is bank-sync-global. The full documented-workflow scope IS mintable - OQ2 has no conflict.",
+          "Q3_central_finding": "10/10 - current agigante80 (0.35.2) is PASSWORD-ONLY: no sessionToken/API-key variable exists in source, docs, history or tracker, and no open issue asks for one. The plan's BUDGET_<name>_SESSION_TOKEN does not exist upstream. Compounding: a new wuulf instance in the OIDC-only environment has no password line, so the current upstream CANNOT CONNECT TO WUULF AT ALL - independent of the 26.12 gate. The credential is the gate, not the flag.",
+          "Q4_version_hazard": "10/10 - 0.4.2 bundles SDK 25.12.0 (published 2025-12-31); 0.35.2 bundles 26.11.0 with an advisory-only fail-open guard (26.12.x falls inside SUPPORTED_ACTUAL_SERVER_RANGE, so no warning). THE PLAN'S PIN IS STALE: 0.35.2 has been latest since 2026-11-22, so the planner's 'verified 2026-11-24' newest-stable claim was wrong on that date.",
+          "Q5_runtime_fit": "(a) 10/10 - the image starts as root by design; the 65532 block works ONLY with fsGroup: 65532 + MCP_BRIDGE_DATA_DIR on the PVC mount (no fsGroup in the repo standard block) or by running as root. (b) 9/10 - no documented size guidance anywhere, so the 5Gi PVC stays a plan assumption."
+        },
+        "live_observations": [
+          "home-actualbudget and home-bri-budget: the 01-enable-openid initContainer fails on EVERY startup with 'Missing script: enable-openid' - the SSO-enable path relies on the auto-bootstrap route, not the intended script",
+          "ACTUAL_OPENID_ENFORCE's password-disabled claim (RESEARCH B3, from an MCP author's README) is disproven at the endpoint level by the Actual source itself"
+        ],
+        "effect_on_plan": "8 named items: C02 unlock condition must name upstream sessionToken/API-key support beside the 26.12.x gate; pin 0.4.2 -> 0.35.2; B6 resolved by fsGroup 65532 + data-dir on the PVC mount; OQ2 resolved with no conflict; the inert-first framing must say the credential (not just the version) is the blocker.",
+        "open_questions": [
+          "OWNER DECISION: no upstream agigante80 session-token/API-key support exists today and no issue requests it - wait for upstream (no ETA) vs re-evaluate the server/credential path. Flagged as a plan-premise conflict, not a re-open: binding #4 (26.12+ API keys) stands; the gate is necessary but NOT sufficient.",
+          "Password-row state of the existing instances is history-dependent and unreadable from readonly surfaces (the enable-openid initContainer never actually ran) - relevant only if a password path were revisited (the binding rejects it)",
+          "No upstream data-dir size guidance - 5Gi remains an assumption"
+        ],
+        "next_suggested": "re-plan C02's credential/server decision with the owner before Test Writing; C01 is unaffected and stays approved"
+      }
+    },
+    "test_writing": {
+      "status": "done",
+      "session": "ses_df1f0c304ffe61hq5LzFUdMdyO",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "artifact": "tests/services/actual-budget-wuulf-mcp.sh",
+      "handoff": {
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": ["tests/services/actual-budget-wuulf-mcp.sh"],
+        "commands_run": [
+          "bash tests/services/actual-budget-wuulf-mcp.sh (real tree, pre-implementation) => fail — EXPECTED RED: 7 pass / 15 fail, every failure an unimplemented C01/C02 entry; the 7 passes are live regression pins (chart has no initContainers/enable-openid, the umbrella block still carries the broken 01-enable-openid step, bri-budget untouched, all 8 pre-existing top-level sentinels UUID-mirrored). The tree also carried the co-tenant's uncommitted cf-133 audio-ad-detection entry in services/home/prod/values.yaml — no assertion touches it and it was left alone",
+          "bash tests/services/actual-budget-wuulf-mcp.sh from the tests/services subdir => fail (identical 7/15) — run-from-anywhere verified",
+          "suite vs simulated post-implementation tree (scratch git repo, exact chunk-specified edits) => pass — 31/31, exit 0",
+          "suite vs mutation tree (chart initContainer added; --enable-write added; image :latest; third unmirrored sentinel; ACTUAL_BUDGET_SYNC_ID set) => fail — 25/6, each mutation caught by exactly its intended check (s4 both legs, s5 AC4, s5 AC5, s6, s7)",
+          "python3 PyYAML pre-parse probe of the five target files => fail (pre-discovery): services/proxy-local/prod/values.yaml has a legal duplicate &port anchor (lines 440/608) that PyYAML rejects — resolved with an in-suite tolerant SafeLoader (last definition wins, as lenient parsers do)",
+          "npx aislop scan tests/services => pass (bash is outside aislop's analyzed language set — 0 files scored, the gate holds vacuously as for every tests/services/*.sh suite)",
+          "grep/read grounding of the target files => pass"
+        ],
+        "deviations": "no chunk-file `## Tests` edits (the role contract forbids writing under `.agents/plans/`; the planner's specs were already complete, so the brief's conditional did not fire); s5 additionally asserts the `mcp` container name and the repo-standard security floor (allowPrivilegeEscalation false + drop ALL), both grounded in mcp-servers.md/AC4 and the skill's non-negotiables, while runAsUser is deliberately NOT pinned because C02 Notes item 4 is a dev-time image check",
+        "friction": "PyYAML refuses the proxy-local values on a legal duplicate anchor (&port at lines 440/608) — resolution: an in-suite tolerant SafeLoader subclass, keeping the suite a single self-contained script",
+        "open_questions": "none — no acceptance criterion is unsupported; the render-only ACs (C01 AC1/AC5, C02 AC1/AC2 incl. mcpPort and the ingress path) belong to the plan `## Commands` for dev/review to run and quote, matching the chunks' division of labor. Nothing blocks C01 dev.",
+        "next_suggested": "launch C01 dev (wave 1): it runs the suite while implementing (15 red checks turn green as entries land) and quotes the plan-Commands render checks, incl. the R2 no-initContainers leg"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "review_session": "ses_df1e01e20ffecjPfZQtbxiVTRT",
+      "review_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "done_gate": "dev reported DONE + review APPROVED + review's own commands_run showing every plan-Commands validation passing with the suite ending in the designed 15/7 shape (the 7 = C02 s5-s7 only). No commit exists behind this chunk - uncommitted-in-place posture; the changed-file list in the hand-off IS the landed surface.",
+      "dev_session": "ses_df1e4e03dffelbn359gJ471Zh5",
+      "dev_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "handoffs": [
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-24T15:14:17Z",
+          "note_on_form": "the dev hand-back arrived as PROSE, not as the RESULT schema block (it claimed 'the RESULT block is above' where none was emitted). Reconstructed faithfully from its report and marked reconstructed; the missing block is logged as friction rather than papered over. All validation claims below are the dev's own reported outcomes.",
+          "status": "DONE (reconstructed)",
+          "chunk": "C01",
+          "files_changed": [
+            "services/home/prod/values.yaml",
+            "custom-values/home/prod-values.yaml",
+            "services/proxy-local/prod/values.yaml",
+            "services/proxy-remote/prod/values.yaml"
+          ],
+          "commands_run": [
+            "bash tests/services/actual-budget-wuulf-mcp.sh => 15 pass / 7 fail (baseline was 7/15) — every C01 leg s1-s4 green; the 7 residual failures are exactly C02's s5-s7, red by design",
+            "helm lint charts/actualbudget => pass, 0 failed",
+            "/tmp/opencode copy + helm dependency update + helm template home-wuulf-budget --set app-template.global.nameOverride=wuulf-budget --set bitwardenIds.actualbudget-sso-secret=test-uuid => Service+Deployment home-wuulf-budget, PVC wuulf-budget-data, 0 initContainers, envFrom actualbudget-sso-secret intact, 0 OVERRIDE_* sentinels",
+            "R2 grep line (plan Commands) => 0 hits",
+            "grep trio (the four C01 files) => all present",
+            "1:1 sentinel<->custom-values => 8 sentinels, 0 unmirrored; wuulf paired with the pre-existing shared SSO sentinel",
+            "aislop ci --changes => 0 errors, 0 fixable warnings; 4 warnings all in the co-tenant's audio-ad-detection C# files, not in this chunk's hunks"
+          ],
+          "deviations": "co-tenant's uncommitted audio-ad-detection hunk and its other staged/untracked files left exactly as found and reported; no new Bitwarden item created (reuses actualbudget-sso-secret); no Keycloak or pin changes (owner-owned prerequisites)",
+          "friction": "none reported",
+          "open_questions": "none reported",
+          "coord_verification": "independent `git status --porcelain` at 15:14:17Z confirms C01's four files are the ONLY unstaged (' M') working-tree edits of this ticket, and that the untracked test file belongs to Test Writing. It ALSO shows the shared tree carries other runs' work: STAGED ('M ', plus one 'D ') cf-55 plan/workflow/chart/test edits and untracked cf-133 chart/container/test/storm-runs paths — so `git diff` (unstaged) is this chunk's surface, `git diff --cached` is NOT, and no wholesale-diff review of this checkout can be trusted."
+        },
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-24T15:19:00Z",
+          "role": "review",
+          "status_verdict": "APPROVED",
+          "verbatim": {
+            "status": "DONE",
+            "chunk": "C01",
+            "files_changed": [],
+            "commands_run": [
+              "bash tests/services/actual-budget-wuulf-mcp.sh => fail (EXPECTED red: 15 pass / 7 fail, exit 1, all 7 = C02 s5-s7, all C01 s1-s4 green)",
+              "helm lint charts/actualbudget => pass (0 failed)",
+              "/tmp-opencode copy + helm dependency update + helm template home-wuulf-budget --set app-template.global.nameOverride=wuulf-budget --set bitwardenIds.actualbudget-sso-secret=test-uuid => pass (Service+Deployment home-wuulf-budget, PVC wuulf-budget-data, 0 initContainers, envFrom actualbudget-sso-secret intact, 0 OVERRIDE_*)",
+              "grep -c enable-openid charts/actualbudget/values.yaml => pass (0)",
+              "grep trio across the four C01 files => pass (all present)",
+              "python3/PyYAML 1:1 sentinel->custom-values => pass (8 sentinels, 0 unmirrored, wuulf UUID parity true)",
+              "git diff -- <four C01 paths> + git diff --stat -- charts/actualbudget/ => pass (chart untouched; hunks are pure bri mirrors)",
+              "git status --porcelain (scope check) => pass (only the 4 files unstaged; foreign staged/untracked paths confirmed co-tenant, ignored)"
+            ],
+            "deviations": "none",
+            "friction": "none",
+            "open_questions": "none",
+            "next_suggested": "C01 approved - coordinator may gate the chunk done and launch C02 dev (wave 2) when the owner's 26.12.x/Keycloak prerequisites are tracked; final review after C02"
+          },
+          "review_findings": "no blocker, major, minor or nit findings. R2 held per-instance (charts/actualbudget diff empty; the umbrella's broken 01-enable-openid step at home values:927-934 with its '|| true' swallow is STILL present; bri-budget byte-untouched). Every wuulf entry is a byte-shape mirror of its bri counterpart (SSA true, port 5006, service shape, shared client_id=actualbudget redirect, one-key nameOverride block; the 5-line comment mirrors bri's line-for-line). Secrets discipline clean: reuses the pre-existing actualbudget-sso-secret UUID 3f3ebb88-bded-44bf-afc9-b49d00225182, no new Bitwarden item, no invented UUID, no unmirrored sentinel, no secret material in the diff. No pins/versions/cluster mutation. s1-s4 genuinely prove the criteria rather than restating the diff.",
+          "scope_note_upheld": "the co-tenant's audio-ad-detection hunk inside services/home/prod/values.yaml and the other foreign staged/untracked paths were ignored per the 15:14:17Z scoping ruling - distinguishable from C01's hunks, neither judged nor cleaned."
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "status_changed_by": "C03 review 2026-11-26 — the reviewer's open_questions(1) recommended the move and the coordinator applied it. Post-hoc changed-requirement record, in the same form used for C01's AC3: C02's blocked_on condition (the two custom-values UUID mirrors) was resolved by C03's top-level custom-values leg under the owner's RENAMED items (owner instruction 2 supersedes the names this chunk originally pinned); C02's AC3 (template location under services/home/prod/templates) and AC6 (the designed 29/2 suite shape) are satisfied in C03's re-pinned form, not in their original wording. No C02 criterion is unmet in substance — AC1/AC2/AC4/AC5 invariants were re-verified by the C03 renders (image pin, gate-free hivetools entry, secret wiring to the renamed resources, no OVERRIDE_* in new documents).",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (implemented surface, by ruling) — chunk NOT done: validations cannot all pass until the owner lands the two UUID mirrors",
+      "dev_session": "ses_df08f0cb4ffeo2d9gLPEc00niN",
+      "dev_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "blocked_on": "owner-minted data, not code: the two Bitwarden item UUIDs (actual-budget-mcp, actual-budget-mcp-key) do not exist, so their custom-values mirrors cannot be written. Per the owner ruling 2026-11-24 the chunk is implemented anyway and left knowingly incomplete: the repo 1:1 sentinel<->custom-values convention is deliberately violated on exactly these two keys, the suite ends 29 pass / 2 fail instead of 31/0, and C02 cannot reach done until the owner lands the two UUID lines.",
+      "handoffs": [
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-25T00:24:43Z",
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": [
+            "services/home/prod/values.yaml",
+            "services/home/prod/templates/secret-actual-budget-mcp.yaml",
+            "services/home/prod/templates/secret-actual-budget-mcp-key.yaml",
+            "services/home/prod/templates/pvc-actual-budget-mcp-default.yaml",
+            ".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/DECISIONS.md"
+          ],
+          "landed_surface": "hivetools.mcp.actual-budget entry = sstefanov/actual-mcp:v1.15.1 (live registry query 2026-11-24T21:24:50Z), streamable-http, mcpPort 3000 (verified default, no --port needed), args --sse + --enable-bearer, NO --enable-write, ACTUAL_SERVER_URL http://home-wuulf-budget.default.svc:5006, ACTUAL_DATA_DIR /data on the PVC, container 65532 + pod fsGroup 65532 (re-derived from this image's real write surface), resources 200m/256Mi limit + 50m/64Mi request; two ExternalSecret templates in the verbatim wekan-mcp shape; 5Gi RWO PVC template; two top-level sentinels with one standing-constraint comment; custom-values UUID mirrors ABSENT by ruling.",
+          "dev_time_items_resolved": "all five, with real checks, no invented values: (1) tag v1.15.1 by the registry's own tag_last_pushed, corroborated against repo HEAD package.json, no lexicographic trap; (2) default port 3000 from src/index.ts + manifest ExposedPorts; (3) full flag set is --sse/--enable-write/--enable-bearer/--port/--test-resources/--test-custom, so the absence of --enable-write is confirmed to be the ONLY write control; (4) manifest config.User null + bare node entrypoint + empty baked TMPDIR -> 65532 + fsGroup 65532, the agigante80 entrypoint finding explicitly NOT inherited; (5) BEARER_TOKEN read from process.env gated by --enable-bearer.",
+          "load_bearing_discovery": "the v1.15.1 image bundles @actual-app/api EXACTLY 26.10.0 (a pin, not a caret), so it will NOT self-heal toward 26.12.x when the owner merges the server pin move. The key rides the sessionToken slot server-side, but the image-side SDK stays a version-drift hazard: the close-out must re-check for an s-stefanov release carrying a 26.12+ SDK, and the post-sync canary is --test-resources + tools/list.",
+          "commands_run": [
+            "bash tests/services/actual-budget-wuulf-mcp.sh => fail (EXPECTED by ruling): 29 pass / 2 fail — s5 13/13 green, s7 green, s6 green on the sentinel-presence leg; the 2 failures are exactly s6's count-based 1:1 + per-key legs on ['actual-budget-mcp','actual-budget-mcp-key'], the two missing owner-minted mirrors (baseline was 15/7)",
+            "/tmp/opencode/c02 hivetools copy + helm dependency update + helm template with both test UUIDs => pass (MCPServer mcp-actual-budget with the pinned tag, streamable-http, mcpPort 3000, --sse/--enable-bearer, no --enable-write, both secret entries, fsGroup 65532, /data = PVC actual-budget-mcp-data, resources as set; ingress host mcp.home-lab.test.example.com path /actual-budget -> mcp-mcp-actual-budget-proxy:8080; 0 OVERRIDE_* in the mcp-actual-budget document)",
+            "/tmp/opencode/c02 home-umbrella copy + helm dependency update + helm template home => pass (ExternalSecret actual-budget-mcp -> test-uuid-1 and actual-budget-mcp-key -> test-uuid-2, both bitwarden-login/property password with the full boilerplate, target keys BEARER_TOKEN / ACTUAL_SESSION_TOKEN; PVC actual-budget-mcp-data RWO 5Gi; 0 OVERRIDE_* in all three new resources)",
+            "regression: python 1:1 check => pass (10 top-level sentinels; the 8 pre-existing still 0-unmirrored; unmirrored bounded to the two new keys; custom-values carries no sentinel VALUES)",
+            "helm template home-bri-budget (chart copy, nameOverride bri-budget) => pass (Service/Deployment/PVC/ServiceAccount home-bri-budget, 0 initContainers, envFrom actualbudget-sso-secret intact, 0 OVERRIDE_* — chart + per-instance values byte-untouched)",
+            "home-actualbudget in the umbrella render => pass (Deployment present, the broken 01-enable-openid initContainer STILL present, envFrom intact — instance 1 untouched)",
+            "grep trio => pass (entry + both secret templates with all 4 boilerplate markers + PVC template + sentinel count 16 = 8 pre-existing top-level + 2 new + 4 hivetools-nested + 2 pre-existing root_url)",
+            "helm lint home umbrella (copy) => pass (0 failed); helm lint hivetools (copy) => pass (0 failed)",
+            "npx aislop ci --changes => 0 errors, 4 warnings — all in the co-tenant's containers/audio-ad-detection/*.cs (cf-133), 0 fixable; zero findings in this chunk's files"
+          ],
+          "deviations": [
+            "(1) custom-values/home/prod-values.yaml deliberately UNTOUCHED per the owner ruling — unmet ACs are AC3's 1:1 leg for the two items and the 'TWO top-level UUID mirrors' task line; the suite ends 29/2 instead of 31/0. This is the accepted dev_done_blocked shape, not a failure.",
+            "(2) The plan's literal hivetools render cannot contain the two ExternalSecrets — they live in the home umbrella templates, not charts/hivetools (mcp-servers.md architecture). AC1's ExternalSecret leg was proven by the umbrella render instead, plus the suite's file-presence/boilerplate asserts. A PLAN-TEXT inaccuracy, now corrected by evidence rather than by editing the accepted plan.",
+            "(3) DECISIONS.md written via shell append because this role's edit permission denies .agents/plans/ — the coordinator's brief mandated the verified-value record there, so the collision is the coordinator's, not the dev's initiative. Reported rather than silently done. Content verified additive and intact.",
+            "(4) No --port in args: verified default is 3000, so the Notes pin condition did not fire.",
+            "(5) pod-level fsGroup 65532 added to the wekan-shape block, derived from this image's facts (item 4), not inherited from agigante80.",
+            "(6) No comments in the hivetools entry; the single sanctioned standing-constraint comment sits beside the two sentinels.",
+            "Co-tenant interference: none — the cf-133 hunk in services/home/prod/values.yaml, the foreign staged cf-55 edits and the untracked cf-133 paths were left byte-as-found."
+          ],
+          "friction": "edit-tool writes under .agents/plans/ are permission-denied for this role (shell append used for the mandated DECISIONS record); Docker Hub blob endpoint 307-redirects (curl needs -L) and GitHub git/trees/master 404s (default branch is main — re-fetched, master==main for the compared files); one shell typo (curl -sSW) re-ran cleanly, no state impact",
+          "open_questions": "none — the close-out is the ruling's own four legs: (1) owner mints the two LOGIN items and lands their UUIDs in custom-values top-level bitwardenIds (the only repo edit that turns s6 green), (2) the 26.12.x pin move via Renovate + owner merge, (3) owner mints the wuulf budget-scoped key into actual-budget-mcp-key, (4) --enable-write flipped once the read-only tier has proved itself",
+          "next_suggested": "route to review: re-run the suite expecting the designed 29/2 shape, both renders, and the regression proof, then record C02 as dev_done_blocked per the ruling with the four-leg close-out named"
+        },
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-25T00:41:00Z",
+          "role": "review",
+          "session": "ses_defe635d9ffe7wKC8CN3gK5Jhz",
+          "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+          "verdict": "APPROVED — as defined by the coordinator's brief: 'the implemented surface is correct AND the only red checks are the two ruled-out mirrors'. Explicitly NOT a pass of the original done-gate; the chunk remains dev_done_blocked.",
+          "verbatim": {
+            "status": "DONE",
+            "chunk": "C02",
+            "files_changed": [".agents/plans/2026/2026-11-cf-156-feat-actual-budget-mcp-server/chunks/C02.md (review notes appended)"],
+            "commands_run": [
+              "bash tests/services/actual-budget-wuulf-mcp.sh => fail (EXPECTED by ruling): 29 pass / 2 fail, exit 1 — the 2 failures are s6's count-based 1:1 + per-key legs on ['actual-budget-mcp','actual-budget-mcp-key'] (got None — mirrors absent); every other check green",
+              "hivetools render (plan ## Commands, both test UUIDs) => pass (MCPServer mcp-actual-budget: sstefanov/actual-mcp:v1.15.1, streamable-http, mcpPort 3000, --sse/--enable-bearer, no --enable-write, both secrets entries, fsGroup 65532, /data=PVC actual-budget-mcp-data, resources 200m/256Mi + 50m/64Mi; ingress mcp.home-lab.test.example.com path /actual-budget -> mcp-mcp-actual-budget-proxy:8080, TLS cluster-wildcard-cert; 0 OVERRIDE_* in that document; only chart-template ExternalSecrets present)",
+              "home-umbrella render (same sets) => pass (ExternalSecret actual-budget-mcp -> test-uuid-1 and actual-budget-mcp-key -> test-uuid-2 with bitwarden-login/property password + full conversionStrategy/decodingStrategy/metadataPolicy boilerplate, target keys BEARER_TOKEN/ACTUAL_SESSION_TOKEN; PVC 5Gi RWO; 0 OVERRIDE_* in the three new resources)",
+              "helm template home-bri-budget (chart copy, nameOverride=bri-budget) => pass (Service/Deployment/PVC/ServiceAccount, 0 initContainers, envFrom actualbudget-sso-secret intact, 0 OVERRIDE_*)",
+              "umbrella render: home-actualbudget STILL carries the 01-enable-openid initContainer, envFrom intact => pass",
+              "helm lint charts/hivetools + charts/actualbudget + home umbrella => pass (0 failed each)",
+              "python 1:1 sentinel<->custom-values => pass (10 top-level sentinels: 8 pre-existing 0-unmirrored + 2 new; unmirrored bounded to exactly the two new keys; no sentinel VALUES in custom-values)",
+              "npx aislop ci --changes => pass (0 errors, 4 warnings all in the co-tenant's containers/audio-ad-detection/*.cs, 0 fixable, 0 in C02 files)",
+              "upstream spot-checks at tag v1.15.1 (Docker Hub tags API + raw GitHub package.json/src/index.ts/Dockerfile) => pass (tag by tag_last_pushed + repo version corroboration; port 3000; the six-flag set; no USER + bare node entrypoint + empty TMPDIR; BEARER_TOKEN from process.env; @actual-app/api EXACTLY 26.10.0 pin)"
+            ],
+            "deviations": "none — validated per the plan ## Commands; the 29/2 suite shape observed as the ruling prescribes; the plan-text AC1/## Commands inaccuracy (a single hivetools render cannot contain the two umbrella-template ExternalSecrets) judged via the dev's substitute proof (umbrella render + file-presence asserts), which fully covers AC1/AC2 — recorded as a minor plan-text finding, not a change demand",
+            "friction": "npx aislop ci --changes output is JSON embedded in non-JSON wrapper lines — per-file attribution required extracting the first '{' (resolved; no impact on the gate verdict)",
+            "open_questions": "none for the implemented surface. Close-out obligation (owner legs, unchanged): (1) owner mints the two LOGIN items and lands their UUID lines in custom-values top-level bitwardenIds — the only edit that turns s6 green; (2) the 26.12.x pin move via Renovate + owner merge, and the FINAL REVIEW must re-check for an s-stefanov release carrying a 26.12+ SDK at that point (v1.15.1 bundles exactly 26.10.0 as a pin — no self-heal); (3) owner mints the wuulf budget-scoped key into actual-budget-mcp-key; (4) --enable-write flipped only once the read-only tier has proved itself",
+            "next_suggested": "record C02 as dev_done_blocked (surface APPROVED, suite 29/2 by design), then run the Final Review over the whole plan covering C02 as a partial delivery by ruling, with the four-leg close-out named and the SDK re-check attached to leg 2"
+          },
+          "review_findings": "no blocker/major findings; security and repo discipline clean (Bearer on, writes off, pinned tag, capabilities dropped, resources set, no secret material, exactly one sanctioned comment, every hunk attributable). Tests prove the criteria rather than restating the diff; no validation_at_fault.",
+          "deferred_nit": "the new entry omits the commented `# oidc:` 'OIDC temporarily disabled (2026-09)' marker every pre-existing hivetools entry carries — functionally identical opt-out (no oidcConfigRef in the render), but a platform-wide re-enable grep will not surface this server. Deferred to DECISIONS.md, not a change demand.",
+          "coord_note": "this is the first hand-back in the ticket that emitted the literal RESULT schema block rather than prose — the instruction to do so is retained for the final review launch."
+        }
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "review_session": "ses_de9c94a98ffeXmiEesrjWb3q6S",
+      "review_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "done_gate": "dev DONE + review APPROVED with the reviewer's own re-runs: suite 48/0, three lints clean, the three-way render proof, the collision proof (0 shared names), live-pair byte-parity (bri chart render byte-identical pre/post, md5 109d542ef8757a867e180f5721a8484f), 1:1 green across both files, stale-name sweep 0/0/0, aislop 0/0/0. All C01+C02+C03 chunks are now done with the suite fully green for the first time in this ticket.",
+      "dev_session": "ses_de9d994b2ffeFErSMnHUMio1GE",
+      "dev_model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "handoffs": [
+        {
+          "recorded_by": "coord",
+          "at": "2026-11-26T04:52:00Z",
+          "role": "dev",
+          "status": "DONE",
+          "chunk": "C03",
+          "files_changed": [
+            "charts/actualbudget/values.yaml",
+            "services/home/prod/values.yaml",
+            "custom-values/home/prod-values.yaml",
+            "services/proxy-remote/prod/values.yaml",
+            "charts/actualbudget/templates/secret-actualbudget-mcp-key.yaml (renamed from services/home/prod/templates/secret-actual-budget-mcp-key.yaml)",
+            "charts/actualbudget/templates/secret-actualbudget-mcp-bearer.yaml (renamed from services/home/prod/templates/secret-actual-budget-mcp.yaml)",
+            "charts/actualbudget/templates/pvc-actualbudget-mcp-data.yaml (renamed from services/home/prod/templates/pvc-actual-budget-mcp-default.yaml)"
+          ],
+          "move_method": "git mv used for all three (grant available), rename similarity 72% / 71% / 64%; no copies of the old paths remain in the tree, so no duplicate-object state was left for the coordinator to clean",
+          "headline": "suite 48 pass / 0 fail, exit 0 — the first fully green run in this ticket; the designed 29/2 shape is retired by the owner supplying the real items",
+          "commands_run": [
+            "bash tests/services/actual-budget-wuulf-mcp.sh => pass (48/0, exit 0, no reds to describe)",
+            "helm lint charts/actualbudget => pass (0 failed, in-tree and /tmp copy); helm lint charts/hivetools => pass (0 failed, both); helm lint home umbrella (/tmp copy + deps) => pass (0 failed)",
+            "C03 render (i) wuulf, gate OPEN, real injection path => pass (ExternalSecret home-wuulf-budget-mcp-bearer remoteRef.key 075f18ca-a137-415a-9296-b50e0033589c -> BEARER_TOKEN + deletionPolicy Delete; ExternalSecret home-wuulf-budget-mcp-key remoteRef.key 29e97ab5-db7f-4214-affd-b50e0032788d -> ACTUAL_SESSION_TOKEN + deletionPolicy Delete; PVC home-wuulf-budget-mcp-data RWO 5Gi; Service+Deployment home-wuulf-budget; 0 initContainers; envFrom actualbudget-sso-secret intact; 0 OVERRIDE_*)",
+            "C03 render (ii) bri, gate CLOSED (chart default) => pass (0 hits on mcp-key|mcp-bearer|mcp-data; standing legs intact; --show-only on both moved templates returns 'could not find template', i.e. the gate renders empty)",
+            "C03 render (iii) home umbrella pre-C03 vs post, same sets => pass (0 cluster objects named *mcp-key/*mcp-bearer/*mcp-data; the one raw grep hit is the per-service ApplicationSet values JSON carrying hivetools config, not an object; pre/post diff = exactly the 3 branch-only C02 objects removed + that values line; home-actualbudget Deployment doc sha256 IDENTICAL pre/post; 01-enable-openid STILL present; OVERRIDE_ lines 3==3, all pre-existing)",
+            "C03 render (iv) collision safety, bri gate ON => pass (home-bri-budget-mcp-key/-bearer/-data render; comm -12 of the wuulf vs bri name sets = 0 shared names; and with the gate CLOSED the bri chart render is BYTE-IDENTICAL pre/post-C03, md5 109d542e... — no pre-existing resource name changed anywhere)",
+            "hivetools render => pass (mcp-actual-budget: v1.15.1, streamable-http, mcpPort 3000, --sse + --enable-bearer, NO --enable-write, secrets re-pointed to home-wuulf-budget-mcp-bearer/-key, pod-local volume name actual-budget-mcp-data kept -> claimName home-wuulf-budget-mcp-data, 65532 + fsGroup, 0 OVERRIDE_*)",
+            "grep trio (revised C03 leg) => pass (all present; grep -c wuulf-budget services/proxy-remote/prod/values.yaml = 0)",
+            "1:1 sentinel<->custom-values (both files) => pass GREEN (8 home top-level sentinels 0-unmirrored + exactly 2 chart sentinels actualbudget-mcp-key/-bearer 0-unmirrored; owner UUIDs at custom-values top level; 0 sentinel VALUES in custom-values)",
+            "stale-name sweep => pass (suite regex 0 hits across services/, charts/, custom-values/; only the kept pod-local volume name actual-budget-mcp-data remains, which the chunk rules is not a cluster object reference)",
+            "npx aislop ci --changes => pass (0 errors / 0 warnings / 0 fixable)",
+            "UUID-leak + pin hygiene => pass (0 owner UUIDs anywhere in charts/ or services/; v1.15.1 pin intact; charts/actualbudget/Chart.yaml diff empty — no version bump)"
+          ],
+          "deviations": "no implementation deviations. One plan-text conflict the dev surfaced rather than silently absorbing: chunks/C03.md's Notes line said 'dev commits C03 on the ticket branch', which contradicts the role contract and this run's coordinator-solo-committer rule; it followed the coordinator's brief (no commits) and left the work staged-as-renames in the tree at HEAD 0cb16d68f.",
+          "friction": "none new; it explicitly did NOT copy the worktree for scratch work (used /tmp subdirectory copies + git archive for the pre-C03 baseline), honouring the linked-worktree rule added to FRICTION.md this round. aislop's JSON-in-wrapper-lines shape is a known read pattern.",
+          "open_questions": "none",
+          "next_suggested": "chunk review (re-run suite + three-way render + collision proofs + live-pair byte-parity), then record C03 done and C02's dev_done_blocked as cleared by C03's custom-values leg, then the final-review re-run over the whole plan with the owner legs named"
+        }
+      ]
+    },
+    "C03_planner_skeleton": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "note": "the owner rework (2026-11-26, four binding instructions — DECISIONS 2026-11-26): proxy-remote removal, owner item names + real UUIDs (actualbudget-mcp-key / actualbudget-mcp-bearer), the two ExternalSecret templates + the data PVC moved into charts/actualbudget/templates/ behind the per-instance gate (mcp.enabled, chart default false, the wuulf block true) with release-prefixed collision-safe names, both UUIDs in custom-values. Lands on top of C01+C02 already committed to the branch (depends_on satisfied by branch state, not by waiting). C03's custom-values task IS the 2026-11-24 ruling's close-out leg 1 — it unblocks C02's dev_done_blocked state. Sequence: owner approval of the re-plan (plan-approval pause, plan_status proposed) -> a FRESH Test Writing session re-pins s2/s5/s6 (chunks/C03.md Tests section) -> C03 dev (runs the re-pinned suite while implementing) -> chunk review -> the final-review re-run over the whole plan (the close-out legs: Prerequisite 1 Keycloak, Prerequisite 3 the 26.12.x pin move + the attached @actual-app/api exactly-26.10.0 SDK re-check, the --enable-write flip)."
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

@@ -1,12 +1,12 @@
 dependencies:
 - name: argo-cd
   repository: https://argoproj.github.io/argo-helm
-  version: 10.18.3
+  version: 10.20.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.21.3
 - name: gateway-api-crds
   repository: https://charts.christianhuth.de
   version: 1.2.5
-digest: sha256:167975beb97683d31e9654b5252cf3c5694793c87c23af8209ce9b3ffc188114
-generated: "2026-11-25T03:26:24.571107396Z"
+digest: sha256:33a68d54b92f12b5b1bec751b95676f44bca226e7336e07f39d0b5b7a8d26db2
+generated: "2026-11-26T17:04:40.670755168Z"

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NAudio.Core only: the meta-package drags the Windows-only
+         sub-packages and the IIR-only provider surface; the resampling
+         contract is the low-level WDL resampler (R3 §2). -->
+    <PackageReference Include="NAudio.Core" Version="3.3.0" />
+    <PackageReference Include="SoundFingerprinting" Version="18.0.0" />
+    <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.15" />
+  </ItemGroup>
+
+</Project>

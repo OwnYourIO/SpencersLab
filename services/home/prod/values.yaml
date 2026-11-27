@@ -98,6 +98,10 @@ charts:
     namespace: default
     ServerSideApply: "true"
     chart: actualbudget
+  wuulf-budget:
+    namespace: default
+    ServerSideApply: "true"
+    chart: actualbudget
   brother-ptouch-automation:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -108,6 +112,14 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
+  audio-ad-detection:
+    # Headless worker (no UI): the service trio's proxy leg is N/A by design,
+    # not an oversight (no ingress.subdomains entry, dev-mosquitto precedent);
+    # verdict (a) carries no secrets, so no custom-values entry either.
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 ingress:
   subdomains:
@@ -187,6 +199,9 @@ ingress:
       port: 5006
     bri-budget:
       service: home-bri-budget
+      port: 5006
+    wuulf-budget:
+      service: home-wuulf-budget
       port: 5006
 
     bookmarks:
@@ -948,6 +963,18 @@ bri-budget:
     global:
       nameOverride: bri-budget
 
+# Third ActualBudget instance (wuulf's budget), deployed as its own ArgoCD
+# Application (home-wuulf-budget) from the standalone charts/actualbudget chart.
+# Declared via the 'wuulf-budget' entry under the top-level 'charts:' key above;
+# this block is injected into the chart as its values. All other configuration
+# comes from the chart's own values.yaml defaults.
+wuulf-budget:
+  app-template:
+    global:
+      nameOverride: wuulf-budget
+  mcp:
+    enabled: true
+
 karakeep:
   global:
     nameOverride: karakeep
@@ -1147,3 +1174,52 @@ hivetools:
       - name: paperless
         bitwardenIdKey: mcp-pg-paperless
         database: paperless
+  mcp:
+    actual-budget:
+      enabled: true
+      image: sstefanov/actual-mcp:v1.15.1
+      transport: streamable-http
+      mcpPort: 3000
+      args:
+        - --sse
+        - --enable-bearer
+      env:
+        - name: ACTUAL_SERVER_URL
+          value: "http://home-wuulf-budget.default.svc:5006"
+        - name: ACTUAL_DATA_DIR
+          value: "/data"
+      secrets:
+        - name: home-wuulf-budget-mcp-bearer
+          key: BEARER_TOKEN
+          targetEnvName: BEARER_TOKEN
+        - name: home-wuulf-budget-mcp-key
+          key: ACTUAL_SESSION_TOKEN
+          targetEnvName: ACTUAL_SESSION_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            fsGroup: 65532
+          containers:
+            - name: mcp
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /data
+                  name: actual-budget-mcp-data
+          volumes:
+            - name: actual-budget-mcp-data
+              persistentVolumeClaim:
+                claimName: home-wuulf-budget-mcp-data

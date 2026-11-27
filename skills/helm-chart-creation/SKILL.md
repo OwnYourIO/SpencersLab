@@ -14,7 +14,21 @@ Related skills:
 
 - `helm-bjw-s-chart` — upstream app-template API reference. Load it alongside
   this skill for any chart work; this skill is the repo workflow, that one is
-  the values schema.
+  the values schema. **Precedence:** for charts under `charts/`, the repo's
+  74 other charts (55 app-template nested siblings + 19 wrapper/upstream
+  consumers) and this skill override that skill's generic library guidance —
+  cross-check it, follow it only where it matches the repo idiom. The
+  mislead class, named explicitly: its Quick Start / Core Structure /
+  `assets/templates/` document the standalone-`common`-dep +
+  parent-side-loader shape (top-level `values.yaml` keys + the one-line
+  `templates/common.yaml` loader) — a legitimate upstream consumption of the
+  same library, but NOT the repo idiom; do not copy that shape into
+  `charts/`. It is hash-pinned in `skills-lock.json` (source
+  `obeone/claude-skills`) — provenance-locked, never edit it; this repo
+  skill is the sanctioned override surface. What happened: cf-133's C04
+  built the 1/75 hybrid under that misguidance; the owner review caught it;
+  C06 conformed the chart, so post-C06 `charts/audio-ad-detection` is the
+  in-repo exemplar.
 - `container-creation` — build the custom image a chart consumes
   (`containers/`).
 
@@ -226,6 +240,18 @@ Helm override gotchas hit while testing renders:
   temp file (`python3 -c "import yaml; ..."`) and render with
   `helm template <chart> -f <temp>` — see `references/mcp-servers.md`
   Validation for a worked example.
+- A top-level `--set` cannot reach subchart values: `--set
+  monitoring.annotations=false` does NOT flip the app-template `monitoring:`
+  gate (the map tpl's against the subchart values — the same reachability
+  law as the top-level-values gotcha in "Known gotchas"). Gate
+  app-template config with the qualified `app-template.<path>`: the repo
+  test convention is `--set 'app-template.controllers.runner.initContainers.dind=null'`,
+  `--set 'app-template.controllers.runner.containers.runner.env.DOCKER_HOST=null'`,
+  `--set 'app-template.persistence.socket=null'`
+  (`tests/services/dev-forgejo-runner.sh:828-830`). Top-level `--set` is
+  legitimate only for chart-root keys (`domain`, `clusterName`,
+  `bitwardenIds.*`, parent-template blocks — `--set bitwardenIds.runner-token=…`
+  / `--set runner.backend=host` at `tests/services/dev-forgejo-runner.sh:826-827`).
 
 ## Known gotchas (CRITICAL)
 
@@ -256,6 +282,47 @@ Helm override gotchas hit while testing renders:
   Domain-dependent env belongs in parent-context templates — an ExternalSecret
   or a small ConfigMap consumed via `envFrom` (see `charts/okd`
   `templates/configmap-okd-env.yaml`).
+- **ANTI-HYBRID — the chart is an app-template bundle, not a common-loader
+  chart.** The single `app-template` dep bundles the common chart internally
+  (it renders no k8s objects of its own); the workload renders from the
+  chart's `app-template:` values with no parent-side loader and no second
+  dep (the documented form, `charts/vllm/Chart.yaml:6-9`). The 1/75 outlier
+  shape a fresh agent can rediscover — parent-side loader + top-level
+  app-template keys (cf-133's C04 built exactly this; the precedence rule
+  under "Related skills" records the outcome):
+  - Never a parent-side `templates/common.yaml` with
+    `{{- include "bjw-s.common.loader.all" . }}` — 0/75 charts have one.
+  - Never top-level app-template workload keys (`controllers:`/`service:`/
+    `persistence:`/`defaultPodOptions:`/`monitoring:` at the chart root) —
+    all 56 app-template charts (the 55 siblings +
+    `charts/audio-ad-detection` post-C06) nest every workload config under
+    `app-template:`. Permitted at the root: `domain:` (+ `bitwardenIds:`
+    when there are secrets), `app-template:`, and the chart's OWN auxiliary
+    root values consumed by parent-side templates (15 siblings carry them —
+    `cachePvcSize` at `charts/vllm/values.yaml:8`, `modelsPvcSize` at
+    `charts/llama-swap/values.yaml:10`, the `runner:` block at
+    `charts/forgejo-runner/values.yaml:107` — the sanctioned home for
+    parent-context values). (11 siblings carry a root `global.nameOverride`
+    passthrough, e.g. `charts/snapcast/values.yaml:1-2`; the new-chart norm
+    is `app-template.global` — vllm/mosquitto/qdrant/radiance set it there.)
+  - Never a `catalogVersion` field in Chart.yaml — zero in the repo.
+  - Dep stanza spelling: `name: app-template`, `version: 5.0.1`,
+    `repository: https://bjw-s-labs.github.io/helm-charts/`
+    (`charts/vllm/Chart.yaml:10-12`) — the three-line name/version/repository
+    spelling is identical across all 56, extra fields allowed
+    (`charts/home-assistant/Chart.yaml:13` carries a `condition:` line).
+    Template: `references/chart-templates.md` Chart.yaml pattern.
+  - PVCs: the hand-written idiom — `persistence.<name>.existingClaim` in
+    values + `templates/pvc-<service>-default.yaml` (static name,
+    `namespace: default`, RWO, `storage: <size>Gi`); 48 app-template charts
+    (49 incl. the keycloakx wrapper's `claimName:` variant), the
+    `charts/qdrant` exemplar. Never the library `type:
+    persistentVolumeClaim` + `size:` PVC render — zero charts use it.
+    Template body: `references/chart-templates.md` "Template bodies".
+  - The `common:`/`rbac: {}` values stubs are read only by the parent-side
+    loader's renderers (dropping `rbac: {}` while the loader is still
+    present crashes the render: the common rbac renderer nil-derefs the
+    missing `.roles`) — they disappear with the loader.
 - Multi-container pods use **localhost** for intra-pod communication — but
   never for cross-pod/service communication (use service names).
 - PostgreSQL read-write endpoint is `pg-<service>-rw`.
@@ -330,6 +397,52 @@ Starting values — tune from observed usage:
   request `1Gi`+, limit `4Gi`+; Redis sidecars request `50Mi`, limit `256Mi`.
 - PVCs: config-only `1Gi`; app data `5Gi`–`10Gi`; databases `10Gi`–`20Gi`+.
 
+## D-8 scrape-annotation pattern (Prometheus scrape via k8s-monitoring)
+
+Charts that expose a metrics port are scraped by k8s-monitoring v4's
+`annotationAutodiscovery` through exactly **two** `k8s.grafana.com/*` pod
+annotations — `scrape` + `metrics.portNumber` — gated by one
+`monitoring.annotations` flag. The idiom (vllm/radiance on port 8000;
+`charts/audio-ad-detection` post-C06 on 8080, its health/metrics port):
+
+```yaml
+app-template:
+  monitoring:
+    annotations: true
+  defaultPodOptions:
+    annotations:
+      k8s.grafana.com/scrape: '{{ .Values.monitoring.annotations | ternary "true" "" }}'
+      k8s.grafana.com/metrics.portNumber: '{{ .Values.monitoring.annotations | ternary "8080" "" }}'
+```
+
+- **Values path**: `app-template.defaultPodOptions.annotations` carries the
+  pair — pod annotations, not controller metadata: k8s-monitoring v4
+  autodiscovery runs the pod + service roles only, so a
+  `controllers.<name>.annotations` copy of the pair is scraping-inert (all
+  three D-8 charts are pod-only —
+  `charts/audio-ad-detection/values.yaml:35-37`,
+  `charts/vllm/values.yaml:263-264`, `charts/radiance/values.yaml:274-275`).
+- **Gate placement**: `monitoring.annotations` must be nested in the SAME
+  `app-template:` subtree as the map it gates — app-template tpl's the
+  whole annotations map as a whole against the subchart values, so a
+  top-level gate is unreachable from the render (the law stated at
+  `charts/radiance/values.yaml:243-250`; the same reachability rule as the
+  top-level-values gotcha in "Known gotchas").
+- **Gate-off behavior**: the ternary keeps the keys with inert (empty)
+  values instead of dropping them — an empty value is what disables the
+  scrape (`charts/vllm/values.yaml:257-262`).
+- **Exactly two keys — no `metrics.scrapeInterval`**: 60 s is the
+  k8s-monitoring v4 `annotationAutodiscovery` feature default (cf-143 Q5
+  ruling; `charts/vllm/values.yaml:103-105`). Autodiscovery fills the job
+  name from the `app.kubernetes.io/name` label and the path from `/metrics`
+  (`charts/radiance/values.yaml:269-270`) — which is why
+  `app-template.global.nameOverride` belongs in the same block
+  (`charts/audio-ad-detection/values.yaml:19-24`).
+- **Test shape**: `helm template <name> charts/<name> --set
+  app-template.monitoring.annotations=false` flips the pair to inert values
+  — the qualified `app-template.<path>` is the only `--set` that reaches
+  the nested gate (the qualified `--set` gotcha in the Validate step).
+
 ## Service category matrix
 
 Pick the category whose ApplicationSet should deploy the service:
@@ -358,6 +471,12 @@ Each category dir holds `templates/appset.yaml` (per-service appset) and
 - ❌ Hardcoding Bitwarden UUIDs in `charts/` or `services/` (use sentinels).
 - ❌ Ignoring existing ApplicationSet categories (choose the right one).
 - ❌ Inventing new patterns when existing ones work.
+- ❌ The hybrid common-loader shape: a parent-side `templates/common.yaml`
+  loader include, top-level app-template workload keys at the chart root, a
+  `catalogVersion` field, or the library `type: persistentVolumeClaim` +
+  `size:` PVC render — 0/75 charts carry any of it (see **Known gotchas**,
+  ANTI-HYBRID; `helm-bjw-s-chart` documents that shape for standalone
+  charts — it is not the repo idiom).
 - ❌ Skipping security contexts (always drop ALL capabilities).
 - ❌ Sync database drivers (use async, e.g. `postgresql+psycopg`).
 - ❌ Forgetting the proxy entry for web-accessible services.
