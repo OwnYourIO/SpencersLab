@@ -1061,6 +1061,20 @@ entries:
   audio-ad-detection:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-11-27T17:19:08.086030773Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Headless snapcast-stream ad detector (SoundFingerprinting worker,
+      MQTT event publisher)
+    digest: 8fcf79b3535c067360811b5f6aefd3ea28f922a9eff6c7f3ec9c4c772926c547
+    name: audio-ad-detection
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/audio-ad-detection-2026.11.4/audio-ad-detection-2026.11.4.tgz
+    version: 2026.11.4
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-11-27T16:27:05.536470439Z"
     dependencies:
     - name: app-template
@@ -20443,4 +20457,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-11-27T16:27:23.315650063Z"
+generated: "2026-11-27T17:19:28.981109343Z"
