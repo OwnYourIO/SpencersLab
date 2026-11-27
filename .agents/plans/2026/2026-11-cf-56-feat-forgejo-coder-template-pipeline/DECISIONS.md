@@ -72,6 +72,57 @@ decisions carried into the plan's Open questions (OQ1–OQ9) for the batched rou
   2026-11-25-coder-template-push.md` with UA1–UA5 owner legs, the postures stated as
   answers, and `tests/notes/coder-template-push-runbook.sh` pinning them.
 
+## 2026-11-27 (C05 close — final-review coverage note + inherited-red routing)
+
+- **Final-review coverage decision**: no third whole-plan round — the C05 review ran the
+  ENTIRE plan validation roster fresh (dev 62, gpu 22, main-sync 18, build-containers
+  49+d21, ci-surface incl. t8/t4 probes, coder 13/9/7, runner 9, runbook 8, helm +
+  overlay renders, zero-live-pin grep) on the final tree, and C05 touched only values
+  pins + comments + test expectations; the whole-plan story was delta-reviewed at C04.
+  Recorded so the audit trail states WHY the rounds differ from the plain loop.
+- **Inherited reds routed (both review-verified pre-existing via scratch worktrees at
+  HEAD-without-C05 and origin/main)**:
+  1. build-containers d21 — upstream origin is cf-133 C09 (b4c51d0e7) whose own commit
+     message declares d21 the expected red, "cf-55 surface, owner roll" (the dev's
+     cf-159 guess corrected by review). Routing: owner roll / cf-55 surface, not AD-56.
+  2. ci-surface t8 — cf-133's audio-ad-detection.sh:11 bare containers-build.yaml token,
+     present since 6cad3667c, newly visible to this branch via the 2026-11-27 rebase.
+     Routing: cf-133 surface heal, candidate follow-up card.
+  3. ci-surface t4 — 2026-11-26 deferral stands.
+- **Post-ship sequence for the owner** (recorded as the runbook's own order): PR the
+  cf-56 branch -> merge -> ArgoCD rolls runner pods on :26.11.5 -> re-dispatch
+  kubernetes-hardened (prod-side; expect green) -> UA3 ghcr-side tag confirm (UI) ->
+  decide dev-side: push 26.11.5 to git.scifi.farm + dev runner workload, else UA5
+  dispatch stays inert.
+
+## 2026-11-27 (first-fire remediation — C05 opens; post-reap takeover)
+
+- **Owner report**: branch merged to main by owner; first real dispatch (workflow_dispatch
+  run=365, kubernetes-hardened) failed `coder: command not found` (exit 127, runner container).
+- **Post-reap takeover**: the CICD lease was reaped 2026-11-27T06:16 during idle; owner's
+  instruction to continue answers the sanctioned question — re-claimed under the card-id key
+  (pipelines:[BdMdZ5ia7kemwTB5x], setId 2eafff4c), card stays Executing, takeover commented.
+- **Diagnosis (explore round 4, EXPLORE.md L1387-1675)**: workflow + scripts landed and
+  scheduled correctly; the runner pods ran the CHART-PINNED pre-bake image
+  `forgejo-runner:26.11.1`. The image chain moved ahead of the pins exactly as the runbook's
+  UA3 warned: post-merge fan minted **26.11.5** (layer-verified: contains /usr/local/bin/coder
+  355,623,074 B; built 2026-11-27 03:52; latest/main point at it; 26.11.2–4 are pre-bake
+  re-mints sharing the old manifest). **NO rebuild necessary** — the trigger already exists.
+- **Owner instruction on scope**: "trigger a rebuild if necessary, update the main chart pins
+  to the correct labels" — rebuild is not; the bump IS owner-directed agent work this time
+  (the hand-bump law forbids automated lanes, not the owner's hammer; the PR/merge stay owner).
+- **C05 scope**: bump the 8 pin lines (charts/forgejo-runner/values.yaml L149/150/152/153 +
+  services/dev/prod/values.yaml L201/202/204/205) `:26.11.1 -> :26.11.5`; act-22.04 lines
+  (L151/L203) untouched; suite re-pins dev-forgejo-runner.sh t2/t17 + gpu-forgejo-runner.sh g2
+  (test-session-owned); runbook UA3 reword (26.11.2 expectation -> landed 26.11.5 + stale
+  registry one-liners). Branch rebased onto origin/main first (single replay 3700f5022).
+- **Owner-side residuals from R4** (unchanged legs + new): UA3 ghcr-side tag confirmation
+  (agent token flow now 401 for ownyourio/forgejo-runner), pushing 26.11.5 to git.scifi.farm
+  dev registry (package NAME_UNKNOWN today), dev-cluster runner workload absent despite
+  default-enabled appset (UA5 dev-dispatch leg is doubly inert until owner fixes it), and the
+  18:25 fan run did not advance ci/last-built (still b50a5395c — re-cover is by-design safe,
+  but the UI run log is owner-readable if wanted).
+
 ## 2026-11-26 (coord decision — C04 review nit)
 
 - Review C04 minor finding: main-sync.yaml sync-fanout header reword is a 4th change site

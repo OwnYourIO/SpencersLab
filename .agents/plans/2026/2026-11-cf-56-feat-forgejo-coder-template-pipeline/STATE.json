@@ -1,6 +1,12 @@
 {
   "feature": "2026/2026-11-cf-56-feat-forgejo-coder-template-pipeline",
-  "plan_status": "complete",
+  "plan_status": "approved",
+  "reopen": {
+    "at": "2026-11-27T19:55:17+00:00",
+    "reason": "first-fire failure post owner-merge (coder: command not found; stale :26.11.1 pins); owner instruction: rebuild-if-needed (verdict: NOT needed, 26.11.5 live) + update main chart pins",
+    "claim": { "route": "post-reap takeover under card-id key", "setId": "2eafff4c-67ca-4914-9d6f-3336696b85a3", "previous": "CICD key reaped 2026-11-27T06:16" },
+    "branch": "rebased onto origin/main (87a1cb1f5-era), replaying only explore-r4 3700f5022"
+  },
   "coord_session": null,
   "final_review": {
     "at": "2026-11-25T07:02:00+00:00",
@@ -167,6 +173,41 @@
         }
       ]
     },
+    "C05": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": ["C04"],
+      "dev_rounds": 1,
+      "dev_session": "ses_de1595026ffeh0b9v5bEE0Izrz",
+      "review_rounds": 1,
+      "review_sessions": ["ses_de13b52fdffe55JXmAsc08GFvg"],
+      "last_verdict": "APPROVED",
+      "scope": "pin bump :26.11.1 -> :26.11.5 (8 lines: charts/forgejo-runner/values.yaml L149/150/152/153 + services/dev/prod/values.yaml L201/202/204/205), act-22.04 lines untouched; suite re-pins dev-forgejo-runner.sh t2/t17 + gpu-forgejo-runner.sh g2 (test wave first); runbook UA3 reword",
+      "handoffs": [
+        {
+          "from": "test wave C05",
+          "at": "2026-11-27T20:20:00+00:00",
+          "status": "DONE",
+          "files_changed": ["tests/services/dev-forgejo-runner.sh (t2 L310/311/313/314 + t17 L993/994/996/997)", "tests/services/gpu-forgejo-runner.sh (g2 L265/266/268/269)"],
+          "summary": "12 expectation lines re-pinned :26.11.1 -> :26.11.5; designed-red {t2, t17, g2} with exact 5-set mismatch signal; 27 legs unchanged-green EVIDENCED on both sides (stash-rebuild preprobe: dev 62 ok / gpu 18 ok, 0 FAIL pre-pin). ci-surface unaffected (zero 26.11 refs); builder-bootstrap mut_bt10 frozen payload classified tag-independent. Dev flip notes: 8 pin lines + 2 provenance comments (charts L131 bootstrap->fan-minted story, dev-slice L194 same), act-22.04 lines untouched both files; 5-set exactness means partial bump re-arms red.",
+          "post_bump_expectation": "dev-forgejo-runner 20/20, gpu-forgejo-runner 10/10"
+        },
+        {
+          "from": "dev C05",
+          "at": "2026-11-27T21:10:00+00:00",
+          "status": "DONE",
+          "files_changed": ["charts/forgejo-runner/values.yaml", "services/dev/prod/values.yaml", ".agents/notes/2026-11-25-coder-template-push.md"],
+          "summary": "8 pin lines -> :26.11.5 (act-22.04 lines untouched); provenance comments rewritten R4-truthfully (fan-minted 26.11.5, layer-verified coder; dev-registry NAME_UNKNOWN owner precondition; 26.11.1 as history); runbook UA3 landed-facts rewrite with ghcr UI leg + realm-JWT fence re-aim. Gates: dev 62 ok / gpu 22 ok (t2/t17/g2 flipped), main-sync 18, coder 13/9/7, runner 9, runbook 8, helm clean, render 4x26.11.5/0x26.11.1.",
+          "deviations": "build-containers 49+d21 red and ci-surface t8 red reported PRE-EXISTING (scratch-verified by dev)"
+        },
+        {
+          "from": "review C05",
+          "at": "2026-11-27T21:40:00+00:00",
+          "status": "APPROVED",
+          "summary": "Round 1 fresh: all validations re-run at expected counts; diff line-for-line vs scope (8 pins + comments only, five-set moved together, zero live :26.11.1 label lines, no overclaim in comments, r5/r6 pins intact, tests 12 lines only, mut_bt10 untouched). BOTH inherited reds independently verified via scratch worktrees at HEAD-without-C05 AND at origin/main: d21 = pre-existing, attribution REFINED to cf-133 C09 b4c51d0e7 self-declared expected red ('cf-55 surface, owner roll') not cf-159; t8 = pre-existing cf-133 landing (audio-ad-detection.sh:11 bare containers-build.yaml token), green at C04 review, newly-red via the 2026-11-27 rebase; t4 deferral honored. No blocker/major; one routing note in chunks/C05.md."
+        }
+      ]
+    }
   },
   "blocked": [],
   "deferred": []
