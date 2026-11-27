@@ -5,7 +5,7 @@ description: Forgejo Actions runner — a StatefulSet per release whose pods
   (privileged DinD sidecar per pod), deployed once per target Forgejo
   instance (the dev ApplicationSet installs it twice)
 type: application
-version: 2026.11.2
+version: 2026.11.3
 appVersion: 13.2.0
 dependencies:
 - name: app-template
