@@ -204,7 +204,11 @@ jobs:
       - name: fan out ArgoCD syncs
         env:
           ARGOCD_SYNC_TOKENS: ${{ secrets.ARGOCD_SYNC_TOKENS }}
-          EVT_REF: ${{ github.event.ref }}
+          EVT_REF: ${{ forgejo.event.ref }}
+          # GH_REF stays the github.ref compat name: no proven forgejo.ref
+          # sibling on this fleet (DECISIONS D4 — the ref family keeps the
+          # documented github.* fallback beside the fleet-proven event.*
+          # sub-context).
           GH_REF: ${{ github.ref }}
         run: |
           set -euo pipefail

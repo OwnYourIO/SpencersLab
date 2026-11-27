@@ -56,16 +56,16 @@ jobs:
       - name: resolve last-built marker
         id: marker
         env:
-          EVENT_NAME: ${{ github.event_name }}
+          EVENT_NAME: ${{ forgejo.event_name }}
         run: |
           set -euo pipefail
-          # The marker is the fire's base (C14/D53). Marker-side events:
-          # push now, workflow_call from C15 — the gate is written final so
-          # C15 removes the trigger, not this body. Non-marker events still
-          # emit the output key: a step output that goes missing would reach
-          # detect() unset rather than empty, and an empty marker is exactly
-          # the state the payload arms are specified against.
-          if [ "$EVENT_NAME" != push ] && [ "$EVENT_NAME" != workflow_call ]; then
+          # The marker is call-side (C15/D56: main-sync's called runs read
+          # it; the push arm is gone — C04 unifies the three builders on
+          # this workflow_call-only gate shape). Non-marker-side events
+          # still emit the output key: a step output that goes missing would
+          # reach detect() unset rather than empty, and an empty sha= is
+          # exactly the state the payload arms are specified against.
+          if [ "$EVENT_NAME" != workflow_call ]; then
             echo "sha=" >> "${GITHUB_OUTPUT:-$FORGEJO_OUTPUT}"
             exit 0
           fi
@@ -91,8 +91,8 @@ jobs:
       - name: Detect changed charts
         id: detect
         env:
-          EVENT_BEFORE: ${{ github.event.before }}
-          EVENT_SHA: ${{ github.sha }}
+          EVENT_BEFORE: ${{ forgejo.event.before }}
+          EVENT_SHA: ${{ forgejo.sha }}
           EVENT_MARKER: ${{ steps.marker.outputs.sha }}
         run: |
           set -euo pipefail
@@ -188,17 +188,11 @@ jobs:
       - name: Add repositories
         run: |
           set -euo pipefail
-          for dir in $(ls -d charts/*/); do
-            # NAME + first URL-shaped field: a dependency with an empty
-            # REPOSITORY column shifts "unpacked" into $3, and
-            # `helm repo add <name> unpacked` breaks this step under bash -e
-            # (cf-77 r2 finding — repro: declared subchart with repository: "")
-            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; next } }' | while read name url; do
-              if [[ ! "$url" =~ ^oci:// ]]; then
-                helm repo add "$name" "$url"
-              fi
-            done
-          done
+          # The per-row registration (the cf-77/D45 recipe) moved verbatim to
+          # scripts/forgejo-helm-repo-add.sh — the triple duplication across
+          # the three sites was the drift class the extraction kills (C04
+          # task 3).
+          bash scripts/forgejo-helm-repo-add.sh
       - name: Lint and package smoke
         run: |
           set -euo pipefail
@@ -448,17 +442,11 @@ jobs:
       - name: Add repositories
         run: |
           set -euo pipefail
-          for dir in $(ls -d charts/*/); do
-            # NAME + first URL-shaped field: a dependency with an empty
-            # REPOSITORY column shifts "unpacked" into $3, and
-            # `helm repo add <name> unpacked` breaks this step under bash -e
-            # (cf-77 r2 finding — repro: declared subchart with repository: "")
-            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; next } }' | while read name url; do
-              if [[ ! "$url" =~ ^oci:// ]]; then
-                helm repo add "$name" "$url"
-              fi
-            done
-          done
+          # The per-row registration (the cf-77/D45 recipe) moved verbatim to
+          # scripts/forgejo-helm-repo-add.sh — the triple duplication across
+          # the three sites was the drift class the extraction kills (C04
+          # task 3).
+          bash scripts/forgejo-helm-repo-add.sh
       - name: Publish GitHub Releases and the Pages index
         if: needs.changes.outputs.has_changes == 'true'
         env:
@@ -519,17 +507,11 @@ jobs:
       - name: Add repositories
         run: |
           set -euo pipefail
-          for dir in $(ls -d charts/*/); do
-            # NAME + first URL-shaped field: a dependency with an empty
-            # REPOSITORY column shifts "unpacked" into $3, and
-            # `helm repo add <name> unpacked` breaks this step under bash -e
-            # (cf-77 r2 finding — repro: declared subchart with repository: "")
-            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; next } }' | while read name url; do
-              if [[ ! "$url" =~ ^oci:// ]]; then
-                helm repo add "$name" "$url"
-              fi
-            done
-          done
+          # The per-row registration (the cf-77/D45 recipe) moved verbatim to
+          # scripts/forgejo-helm-repo-add.sh — the triple duplication across
+          # the three sites was the drift class the extraction kills (C04
+          # task 3).
+          bash scripts/forgejo-helm-repo-add.sh
       - name: Package charts
         if: needs.changes.outputs.has_changes == 'true'
         env:

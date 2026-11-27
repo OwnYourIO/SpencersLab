@@ -898,7 +898,7 @@ for src, n in targets:
         print(f'FAIL: t18: {src} cites build-charts.yaml:{n} but the file is {len(bc)} lines — the anchor is dead', file=sys.stderr)
         sys.exit(1)
     line = bc[n - 1]
-    if 'EVENT_SHA' not in line or 'github.sha' not in line:
+    if 'EVENT_SHA' not in line or 'forgejo.sha' not in line:
         print(f'FAIL: t18: {src} cites build-charts.yaml:{n} but that line is {line.strip()[:80]!r} — after the marker-step insertions the EVENT_SHA pair moved; RE-CITE in the same commit (scout §C: stale anchors go silently red-free without this leg)', file=sys.stderr)
         sys.exit(1)
 print(f'  ({len(targets)} anchor cite(s) verified live)')
