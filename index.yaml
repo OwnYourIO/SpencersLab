@@ -5477,6 +5477,20 @@ entries:
   coder:
   - apiVersion: v2
     appVersion: 2.35.2
+    created: "2026-11-27T04:03:00.421811023Z"
+    dependencies:
+    - name: coder
+      repository: https://helm.coder.com/v2
+      version: 2.38.2
+    description: Wrapper around the official Coder chart — CNPG database + Bitwarden
+      ExternalSecrets for OIDC/PG
+    digest: 1a55b0a59a58766ad80998c821449b7ff8212d3bac2ee38e38fd611aae007801
+    name: coder
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/coder-2026.11.2/coder-2026.11.2.tgz
+    version: 2026.11.2
+  - apiVersion: v2
+    appVersion: 2.35.2
     created: "2026-10-26T18:06:49.053378959Z"
     dependencies:
     - name: coder
@@ -7274,6 +7288,23 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.1/forgejo-1.0.1.tgz
     version: 1.0.1
   forgejo-runner:
+  - apiVersion: v2
+    appVersion: 13.2.0
+    created: "2026-11-27T04:03:02.745057552Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Forgejo Actions runner — a StatefulSet per release whose pods self-register
+      at first boot with one shared instance-scope runner token (privileged DinD sidecar
+      per pod), deployed once per target Forgejo instance (the dev ApplicationSet
+      installs it twice)
+    digest: b9dd844dfa7acdfee9cd5dd86e8a2928637acf1e2bb43e9eec7064777cb2026f
+    name: forgejo-runner
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-runner-2026.11.4/forgejo-runner-2026.11.4.tgz
+    version: 2026.11.4
   - apiVersion: v2
     appVersion: 13.2.0
     created: "2026-11-26T16:50:54.899394889Z"
@@ -20336,4 +20367,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-11-26T17:17:14.855210223Z"
+generated: "2026-11-27T04:03:16.739096813Z"
