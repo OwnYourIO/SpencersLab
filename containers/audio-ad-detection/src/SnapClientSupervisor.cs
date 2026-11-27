@@ -125,45 +125,49 @@ public sealed class SnapClientSupervisor : BackgroundService
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
             _loopCts = cts;
 
-            var child = StartChild();
-            var readLoop = Task.Run(() => ReadLoopAsync(child, cts.Token), CancellationToken.None);
-            var assign = Task.Run(async () =>
+            Process? child = null;
+            Task? readLoop = null;
+            Task? assign = null;
+            try
             {
-                try
+                var spawned = StartChild();
+                child = spawned;
+                readLoop = Task.Run(() => ReadLoopAsync(spawned, cts.Token), CancellationToken.None);
+                assign = Task.Run(async () =>
                 {
-                    // Lead time for the child's connect + hello: the server
-                    // only knows the hostID's group once the client has
-                    // greeted it (R2 §5); the assignment itself is one-shot.
-                    await Task.Delay(TimeSpan.FromSeconds(AssignLeadSeconds), cts.Token);
-                    await _assigner.AssignOnceAsync(cts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogDebug("stream assignment cancelled (child shutdown)");
-                }
-            }, CancellationToken.None);
+                    try
+                    {
+                        // Lead time for the child's connect + hello: the server
+                        // only knows the hostID's group once the client has
+                        // greeted it (R2 §5); the assignment itself is one-shot.
+                        await Task.Delay(TimeSpan.FromSeconds(AssignLeadSeconds), cts.Token);
+                        await _assigner.AssignOnceAsync(cts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _logger.LogDebug("stream assignment cancelled (child shutdown)");
+                    }
+                }, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                // The binary can be absent (or momentarily unavailable):
+                // a spawn failure is the child-death-shaped event the
+                // respawn loop already handles — log, back off, respawn,
+                // instead of letting it out and ending the host.
+                _logger.LogWarning(ex, "snapclient spawn failed — backoff + respawn");
+            }
 
-            await WaitChildOrWatchdogAsync(child, cts.Token);
+            if (child is not null)
+                await WaitChildOrWatchdogAsync(child, cts.Token);
 
             cts.Cancel();
-            try
-            {
-                await readLoop;
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogDebug("read loop cancelled (child shutdown)");
-            }
-            try
-            {
-                await assign;
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogDebug("stream assignment task cancelled (child shutdown)");
-            }
+            if (readLoop is not null)
+                await AwaitTolerantAsync(readLoop, "read loop cancelled (child shutdown)");
+            if (assign is not null)
+                await AwaitTolerantAsync(assign, "stream assignment task cancelled (child shutdown)");
 
-            child.Dispose();
+            child?.Dispose();
             _child = null;
             _loopCts = null;
 
@@ -173,7 +177,9 @@ public sealed class SnapClientSupervisor : BackgroundService
                 break;
             }
 
-            var delay = RespawnDelay(child.ExitCode);
+            var delay = child is not null
+                ? RespawnDelay(child.ExitCode)
+                : TimeSpan.FromMilliseconds(NormalRespawnDelayMs);
             try
             {
                 await Task.Delay(delay, stoppingToken);
@@ -182,6 +188,20 @@ public sealed class SnapClientSupervisor : BackgroundService
             {
                 break;
             }
+        }
+    }
+
+    // At teardown the child's tasks are cancelled; the OCE is the expected
+    // outcome, not a fault.
+    private async Task AwaitTolerantAsync(Task task, string cancelledMessage)
+    {
+        try
+        {
+            await task;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug(cancelledMessage);
         }
     }
 

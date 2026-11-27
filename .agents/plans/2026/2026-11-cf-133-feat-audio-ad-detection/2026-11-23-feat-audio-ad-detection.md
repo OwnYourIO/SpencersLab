@@ -172,6 +172,7 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 | C08 | Forge-build compile fixes (the 10-error class sweep + volatile-DateTime/StopAsync/using/default-arg fixes + local dotnet attempt) + chart image switch to the instance registry | M | 5 | [C07] | the sweep must run on the post-C15 rebased tree (step 0) so the class sweep covers the exact source the next CI compile sees; the registry switch cites the post-rebase sibling cite |
 | C09 | Detection hardening (build-charts `workflow_call` arm before the empty-before die + bootstrap no-marker full-set on both detect surfaces) + C05 runbook L1 reword for the post-C15 fan | M | 5 | [C08] | C09's runbook reword names the post-C08 registry pull story and the post-C15 file names that only exist after C08's step-0 rebase |
 | C10 | Dockerfile fetch-leg fix (runtime-image tool assumption: `wget` absent from `dotnet/runtime:10.0`) + existence-proof AC + container-creation skill guardrail | M | 6 | [C09] | continues the deploy-incident chapter (C08 was the compile round; C10 is the runtime-image round) — the fix must land on the C08/C09-closed tree (registry + detection fixes in) so the owner's next re-dispatch exercises the whole stage-1 at once |
+| C11 | DI trap fix (the bare `AddHostedService<T>` trio + HealthMetricsServer → singleton+existing-instance per the in-file law) + the ticket's first-ever local runtime smoke (DI graph closed, steady-state 503s, graceful SIGTERM) | M | 7 | [C10] | the runtime smoke must run the C10-fixed tree (the deb leg reworked) so the app-execution proof covers the exact stage-1 shape the cycle-4 image carries |
 
 ## Wave order
 1. C01
@@ -184,6 +185,9 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 6. C10 (standalone — the runtime-image fetch-leg round; the CI build is
    again the authoritative proof, the layer-existence proof minimizes the
    surface)
+7. C11 (standalone — the app-level DI round; the local runtime smoke is
+   the ticket's first-ever app execution and the definitive DI-graph
+   proof)
 
 ## Risks / assumptions
 - **SF 18.0.0 maturity (Q4)**: shipped 2026-11-20 (a week old at plan time);
@@ -590,5 +594,86 @@ round) and must land on the C08/C09-closed tree so the owner's next
 re-dispatch exercises the whole stage-1 at once. **Commit shape:** another
 fix-commit on the `bcc55ebdf` chain (the OQ10 fix-commit pattern,
 confirmed). **Open questions:** none new — OQ9/OQ10 confirmed at close;
+`SNAP_STREAM_ID` stays TBD-owner; no user questions this round (scope
+fully determined).
+
+## Rework R4 (2026-11-27): the DI trap incident (app-level, cycle-3 pod)
+
+**Incident 3** (2026-11-27, owner-pasted pod crash — the cycle-3 build
+went **GREEN**: the image published, the container started,
+`ModelService` logged the empty-catalogue bootstrap path, then
+`Host.StartAsync` threw): `Unable to resolve service for type
+'AudioAdDetection.AudioPipeline' while attempting to activate
+'AudioAdDetection.CaptureMachine'`.
+
+**Diagnosis (verified against `Program.cs:41-78`):**
+`AddHostedService<T>` registers `T` **only as an `IHostedService`
+contribution (transient) — `T` is not resolvable as itself**. The
+in-file law is already **commented twice** there (the publisher
+`Program.cs:44-48` and the supervisor `:54-58` blocks): `AddSingleton<T>()
++ AddHostedService(sp => sp.GetRequiredService<T>())` — the supervisor
+comment names the exact bug class (a second constructor resolution
+launching a second snapclient child). The C03-era `Curator` (`:71`)
+follows the pattern, but the **C02-era trio stayed bare**:
+`CaptureMachine` (`:73` — its ctor demands `AudioPipeline` → the crash),
+`AudioPipeline` (`:76` — bare; it **must be a singleton**: the C06
+fan-out design requires `CaptureMachine` + `RealtimeQuery` to share
+**THE ONE** producer instance), `RealtimeQuery` (`:77` — bare ctor
+demanding `AudioPipeline` → a **second latent crash** had the first
+passed). Host start resolves the hosted enumerable **in registration
+order**: `BrokerPublisher` (singleton, OK) → `supervisor` (singleton, OK)
+→ `Curator` (singleton, OK) → `CaptureMachine` (bare, ctor demand
+unresolvable → **crash**). Two latent same-class bombs stand **after**
+it: `RealtimeQuery` (`:77`) and `HealthMetricsServer` (`:78` — bare,
+8-param ctor: `WorkerConfig`/`SnapClientSupervisor`/`IStreamState`/
+`Curator`/`ModelService`/`QueryStatus`/`BrokerPublisher`/`ILogger<>` —
+every dep is a registered singleton, but the pair has **never been
+through container validation**). And the **double-activation risk**: a
+bare hosted registration that resolves fine standalone gets a **second
+instance** the moment any other service takes it as a dependency — the
+original supervisor bug.
+
+**The lesson (DECISIONS):** `AddHostedService<T>` never registers `T` as
+itself — every hosted type consumed as a dependency (or sharing state)
+**MUST be singleton + existing-instance-hosted**; the third occurrence
+class ends with **uniformity** (one shared why-comment above the block,
+not per-line slop). Registration **order is kept** — hosted start order
+matters (C03's shutdown-reverse law: the host stops in reverse
+registration order, so the graceful MQTT disconnect lands after the
+child is gone; the producer is registered before its consumers).
+
+**Verified ground truth (planner, 2026-11-27):** no t-arm greps
+`Program.cs` / `AddHostedService` / `AddSingleton` /
+`GetRequiredService` (whole-suite grep — empty) → **no test change, no
+new t-numbers, no test-session step**; the runtime smoke lives in
+`commands_run` evidence (the static-only suite principle).
+`HealthMetricsServer`'s endpoints (read from code, for the T2(b)
+expectations): `/healthz` = `_supervisor.ChildAlive` → 200
+`ok: process alive + snapclient child alive` / **503** `degraded:
+snapclient child not alive`; `/readyz` =
+`PipeDelivering && _model.Ready && _queryStatus.Running &&
+_publisher.Connected` → 200 `ready (...)` / **503** `not ready (pipe /
+model / query / broker)`; `/metrics` = 200 with the 5-gauge/counter body
+(`aad_audio_rms_db`, `aad_capture_candidates_total`,
+`aad_snapclient_kills_total`, `aad_auto_promotions_total`,
+`aad_auto_promotions_capped_total`). Under ABSENT backends the expected
+steady state is: the host **starts fully** (the DI graph closed — the
+definitive proof), the snapclient child dead → `/healthz` **503**,
+`/readyz` **503** (the pipe/query/broker legs false; the `_model.Ready`
+leg may be true under the empty-catalogue bootstrap path — the owner's
+log shows exactly that leg ran; the dev records the actual body, and a
+true model leg under an empty catalogue is the documented bootstrap
+behavior, not a failure), `/metrics` 200. SIGTERM → the ordered shutdown
+(the Program.cs handler composes it: `context.Cancel` starts the
+sequence) → the snapshot write completes (`snapshot.complete` present) →
+**exit code 0** — the L7 leg dry-run.
+
+**Wave-7 topology:** C11 (M, depends C10) — standalone; it continues the
+deploy-incident chapter (compile → runtime-image → **app-level DI**).
+**Commit shape:** another fix-commit (the OQ10 pattern); zero dev
+commits, the coord fix-commits after review. **Owner cycle-4** = merge +
+re-dispatch (the image rebuild) + pod-restart note (`pullPolicy: Always`
+picks the new `:main` on the next pull — delete the pod or wait the
+backoff). **Open questions:** none new — OQ9/OQ10 confirmed at close;
 `SNAP_STREAM_ID` stays TBD-owner; no user questions this round (scope
 fully determined).

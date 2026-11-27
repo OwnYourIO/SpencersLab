@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging;
 namespace AudioAdDetection;
 
 /// <summary>
-/// The health + metrics surface: a plain System.Net.HttpListener on
-/// 0.0.0.0:HEALTH_PORT (the runtime image has no ASP.NET Core shared
-/// framework, so no Kestrel — R3 §1), with a hand-rolled text /metrics
-/// exposition (no extra package).
+/// The health + metrics surface: a plain System.Net.HttpListener on all
+/// interfaces at port HEALTH_PORT (the runtime image has no ASP.NET Core
+/// shared framework, so no Kestrel — R3 §1), with a hand-rolled text
+/// /metrics exposition (no extra package).
 /// </summary>
 public sealed class HealthMetricsServer : BackgroundService
 {
@@ -51,9 +51,14 @@ public sealed class HealthMetricsServer : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _listener = new HttpListener();
-        _listener.Prefixes.Add($"http://0.0.0.0:{_config.HealthPort}/");
+        // The managed listener (the runtime image has no ASP.NET Core, so
+        // this is the only shape — R3 §1) rejects the 0.0.0.0 host form
+        // (HttpListenerException 50, "The request is not supported"); the
+        // + prefix is the cross-platform any-address form and binds all
+        // interfaces the same way.
+        _listener.Prefixes.Add($"http://+:{_config.HealthPort}/");
         _listener.Start();
-        _logger.LogInformation("health/metrics listening on 0.0.0.0:{Port} (/healthz, /readyz, /metrics)",
+        _logger.LogInformation("health/metrics listening on all interfaces, port {Port} (/healthz, /readyz, /metrics)",
             _config.HealthPort);
 
         while (!stoppingToken.IsCancellationRequested)

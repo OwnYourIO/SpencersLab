@@ -63,19 +63,31 @@ builder.ConfigureServices(services =>
     services.AddSingleton<IStreamState, StreamState>();
     services.AddSingleton<IAdEventSink, BrokerAdEventSink>();
     services.AddSingleton<ModelService>();
-    // The low-priority curator path (retention + auto-promotion) and the
-    // capture state machine (exclusive consumer of the producer's
-    // per-consumer capture queue) are added as singletons + hosted
-    // services the same way the supervisor is, so a second constructor
-    // resolution cannot launch a second instance.
+    // The low-priority curator path (retention + auto-promotion) is added
+    // as a singleton + hosted service the same way the supervisor is, so
+    // a second constructor resolution cannot launch a second instance.
     services.AddSingleton<Curator>();
     services.AddHostedService(sp => sp.GetRequiredService<Curator>());
-    services.AddHostedService<CaptureMachine>();
-    // Hosted services start in registration order: the producer must be up
-    // before the query leg consumes its chunk queue.
-    services.AddHostedService<AudioPipeline>();
-    services.AddHostedService<RealtimeQuery>();
-    services.AddHostedService<HealthMetricsServer>();
+    // The remaining hosted services follow the same singleton +
+    // existing-instance law: AddHostedService<T> registers T only as a
+    // transient IHostedService contribution — T is not resolvable as
+    // itself, so a consumer's constructor demand for it throws at host
+    // start (the CaptureMachine -> AudioPipeline crash), and a second
+    // resolution would launch a second instance (the supervisor bug).
+    // AudioPipeline must be the shared singleton: the fan-out design
+    // hands the one producer's per-consumer queue to both the query and
+    // capture legs — a transient producer would give each leg its own
+    // queue. Hosted start order is the registration order and the host
+    // stops in reverse: the producer stays before its consumers, and the
+    // order keeps the graceful MQTT disconnect after the child is gone.
+    services.AddSingleton<CaptureMachine>();
+    services.AddHostedService(sp => sp.GetRequiredService<CaptureMachine>());
+    services.AddSingleton<AudioPipeline>();
+    services.AddHostedService(sp => sp.GetRequiredService<AudioPipeline>());
+    services.AddSingleton<RealtimeQuery>();
+    services.AddHostedService(sp => sp.GetRequiredService<RealtimeQuery>());
+    services.AddSingleton<HealthMetricsServer>();
+    services.AddHostedService(sp => sp.GetRequiredService<HealthMetricsServer>());
 });
 var app = builder.Build();
 
