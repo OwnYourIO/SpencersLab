@@ -2484,6 +2484,435 @@ then
 fi
 ok "t22: chart-text re-truths + single-key ESO statics + gate-hash pin landed (C17 ACs 2/6/7 render-side witnesses)"
 
+# --- t23: ArgoCD replace-and-recreate pair on the STS workload metadata (C18, AC1) ---
+# The C17 deploy froze on an immutable StatefulSet field: podManagementPolicy
+# is outside the update-exempt list, so PATCH and PUT both refused the whole
+# template flip (verb-independent validation), the release sat SyncFailed, and
+# the reloader poked the OLD template onto pods (C18.md Goal / D66(1)). The
+# closing mechanism is the workload-metadata sync-options PAIR —
+# "Force=true,Replace=true" (D66(2): Replace alone is a plain PUT and closes
+# nothing; the pair delete-and-recreates, pods bounce, PVCs persist).
+# Placement is render-proven (D66(3)): controllers.runner.annotations lands on
+# the STS's OWN metadata.annotations (gitops-engine reads resource sync-options
+# from the target manifest's metadata), so the key must occur EXACTLY ONCE per
+# render — a pod-template or other-kind copy is the bleed class the owner
+# posture rejects. Red-first at the C17 HEAD (no annotation yet on branch tip).
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t23: not run (renders unavailable)"
+else
+  if ! python3 - "$runner_out_dev" "default render" "$runner_out_slice" "DEPLOYED slice render" <<'PY'
+import sys, yaml
+
+args = sys.argv[1:]
+pairs = [(args[0], args[1]), (args[2], args[3])]
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+KEY = 'argocd.argoproj.io/sync-options'
+PAIR = 'Force=true,Replace=true'
+FREEZE = ('frozen-rollout class (C17 probe: podManagementPolicy is immutable for '
+          'update — PATCH and PUT both refuse it, SyncFailed froze the rollout and '
+          'the reloader poked the retired template onto pods): the '
+          'Force=true,Replace=true pair makes ArgoCD delete-and-recreate the STS '
+          'on sync (D66(2); Replace alone is a plain PUT and closes nothing)')
+
+def placement_violation(docs, raw, tag):
+    sts = next((d for d in docs if d.get('kind') == 'StatefulSet'), None)
+    if sts is None:
+        return f'{tag}: no StatefulSet — t2 owns STS presence, this leg names its dependency'
+    ann = ((sts.get('metadata') or {}).get('annotations') or {})
+    if ann.get('reloader.stakater.com/auto') != 'true':
+        return (f'{tag}: STS metadata.annotations lost reloader.stakater.com/auto: "true" '
+                f'(has {ann!r}) — C18 ADDS the sync-options key NEXT TO it (values Tasks); '
+                f'losing the reloader pair is a different change')
+    if ann.get(KEY) != PAIR:
+        return (f'{tag}: STS sync-options is {ann.get(KEY)!r}, expected the exact ruled '
+                f'literal {PAIR!r} — {FREEZE}. Exact spelling/order per C18 Tasks '
+                f'(argo-cd docs pair the options in ONE annotation; a VETO to '
+                f'Replace-only re-aims this pin, never loosens it to a substring)')
+    pod_ann = ((((sts.get('spec') or {}).get('template') or {}).get('metadata') or {}).get('annotations') or {})
+    if KEY in pod_ann:
+        return (f'{tag}: {KEY} bleeds onto the POD template — ArgoCD reads resource '
+                f'sync-options from the WORKLOAD manifest (gitops-engine '
+                f'sync_context.go HasAnnotationOption on targetObj); a pod copy proves '
+                f'placement was forked (D66(3)) and the frozen class stays open — {FREEZE}')
+    holders = [((d.get('metadata') or {}).get('name'), d.get('kind')) for d in docs
+               if KEY in (((d.get('metadata') or {}).get('annotations') or {}))]
+    bleed = [h for h in holders if h[1] != 'StatefulSet']
+    if bleed:
+        return (f'{tag}: {KEY} also on other kinds {bleed} — the ruled scope is the runner '
+                f'STS only (Application-level syncOptions and rawResource adds were '
+                f'rejected in D66(2)/(3): blast radius past the STS is the out-of-scope class)')
+    sts_only = [h for h in holders if h[1] == 'StatefulSet']
+    if len(sts_only) != 1:
+        return (f'{tag}: {KEY} on {len(sts_only)} StatefulSet metadata — exactly one '
+                f'(AC1: no duplicate-owner bleed; app-template 5.0.1 renders one STS)')
+    if raw.count(KEY) != 1:
+        return (f'{tag}: {KEY} occurs {raw.count(KEY)} times in the raw render — AC1 '
+                f'single-occurrence; a second textual copy (annotation + NOTES echo) '
+                f'would double the replace scope or fork the source')
+    return None
+
+# Green-reachability + non-vacuity premise probes (round-6 friction law, D66
+# test-wave mandate): the compliant shape must PASS the check and every bleed
+# class must single — before the real renders drive the leg's verdict.
+def syn(sts_ann, pod_ann=None, svc_ann=None):
+    tmpl_meta = {'annotations': dict(pod_ann)} if pod_ann is not None else {'labels': {'a': 'b'}}
+    docs = [
+        {'apiVersion': 'apps/v1', 'kind': 'StatefulSet',
+         'metadata': {'name': 'syn-runner', 'annotations': dict(sts_ann)},
+         'spec': {'template': {'metadata': tmpl_meta}}},
+        {'apiVersion': 'v1', 'kind': 'Service',
+         'metadata': {'name': 'syn-runner', 'annotations': dict(svc_ann or {})}},
+    ]
+    return docs, yaml.safe_dump_all(docs)
+
+GOOD = {'reloader.stakater.com/auto': 'true', KEY: PAIR}
+for label, kw, want_hit in (
+    ('compliant-shape', {'sts_ann': GOOD}, False),
+    ('pair-order-flip', {'sts_ann': {'reloader.stakater.com/auto': 'true', KEY: 'Replace=true,Force=true'}}, True),
+    ('key-absent', {'sts_ann': {'reloader.stakater.com/auto': 'true'}}, True),
+    ('pod-template-bleed', {'sts_ann': GOOD, 'pod_ann': {KEY: PAIR}}, True),
+    ('other-kind-bleed', {'sts_ann': GOOD, 'svc_ann': {KEY: PAIR}}, True),
+):
+    docs, raw = syn(**kw)
+    v = placement_violation(docs, raw, 'probe')
+    if want_hit and v is None:
+        bad(f't23 premise: the {label!r} mutant passed the placement check — the tooth is vacuous, fix the leg before blaming dev (round-6 validation-at-fault law)')
+    if not want_hit and v is not None:
+        bad(f't23 premise: the compliant synthetic render reddens the check ({v}) — the leg is UNSATISFIABLE as written; re-aim the pin (the C18 Tasks literal is the contract)')
+
+for render_file, tag in pairs:
+    try:
+        docs = [d for d in yaml.safe_load_all(open(render_file)) if d]
+        raw = open(render_file).read()
+    except Exception as e:
+        bad(f't23: {tag} could not be parsed ({type(e).__name__}: {e}) — harness fault, not a chart verdict')
+    v = placement_violation(docs, raw, f't23 {tag} (AC1)')
+    if v:
+        bad(v)
+PY
+  then
+    fail "t23: see the t23 detail above"
+  fi
+  ok "t23: both dev renders carry reloader + the exact Force=true,Replace=true pair on the STS workload metadata, pod template and other kinds clean, single occurrence per render (C18 AC1 — the frozen-rollout class closes; D66(2)/(3))"
+fi
+
+# --- t24: content-validating register guard — statics + EMPTY-LEAF battery (C18, AC2/AC3) ---
+# D66(5): kubelet AUTO-CREATES missing subPath targets on the volume, so the
+# data PVCs carry EMPTY /data/config/config.yaml leaves that C17's
+# existence-only guard reads as registered — the daemon then boots an empty
+# config (the silent second failure class of the probe). The skip must require
+# ALL of: the (byte-familiar) existence limb, a parseable url: line, a
+# parseable uuid: line whose value is NOT the __RUNNER_UUID__ placeholder, and
+# a NON-EMPTY (-s) /data/config/token. Invalid ⇒ fall through to the EXISTING
+# register path (which overwrites both files; the half-write window heals with
+# it). Statics pin the four limbs + their ORDER on the comment-stripped script
+# (t21's code recipe) — every validation limb BEFORE the Register RPC (the
+# churn class) and BEFORE the skip's exit 0 (the C17 misread reordered, not
+# replaced). The battery then EXECUTES the rendered script hermetically —
+# sandbox-rewritten paths, stub wget, no cluster/live-API — across AC3's
+# fixtures. Green-reachability is proven in-leg: the canonical C18-compliant
+# guard passes statics AND every battery fixture (round-6 t22 NameError law),
+# limb-strip/ordering/existence-only mutants each redden singly, and only then
+# does the REAL script drive the verdict (red-first at the C17 HEAD: the
+# empty-leaf fixtures fail exactly because the shipped guard skips on them).
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t24: not run (renders unavailable)"
+else
+  if ! python3 - "$runner_out_dev" "$runner_out_slice" "$WORK" <<'PY'
+import hashlib, os, re, shutil, subprocess, sys, yaml
+
+default_render, slice_render, work = sys.argv[1:4]
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+RPC = '/api/actions/forgejo.actions.runner.v1.RunnerService/Register'
+DATA_CFG = '/data/config/config.yaml'
+DATA_TOK = '/data/config/token'
+
+def code_of(script):
+    # t21's recipe: whole-line comments stripped — limbs must exist IN CODE,
+    # a prose mention satisfies nothing.
+    return re.sub(r'(?m)^\s*#.*$', '', script)
+
+TOOL = re.compile(r'\b(?:grep|fgrep|egrep|awk|sed)\b')
+EXIST = re.compile(r'\[\s*-f\s+/data/config/config\.yaml\s*\]')
+TOK_S = re.compile(r'\[\s*-s\s+/data/config/token\s*\]')
+SUBST = re.compile(r's/__RUNNER_UUID__/')
+REJECT = re.compile(
+    r'!\s*(?:/[^\n]*/\s*)?(?:[\w./-]+\s+)*grep\b'
+    r'|\b(?:grep|fgrep|egrep|awk|sed)\b[^\n]*?(?:--invert-match|\s-[A-Za-z]*v[A-Za-z]*\b)'
+    r'|!=')
+
+def limb_indices(code):
+    idx = {'existence': None, 'url': None, 'uuid': None, 'placeholder': None, 'token': None}
+    m = EXIST.search(code)
+    if m:
+        idx['existence'] = m.start()
+    pos = 0
+    for line in code.split('\n'):
+        if idx['url'] is None and TOOL.search(line) and 'url:' in line and DATA_CFG in line:
+            idx['url'] = pos
+        if idx['uuid'] is None and TOOL.search(line) and 'uuid:' in line and DATA_CFG in line:
+            idx['uuid'] = pos
+        if (idx['placeholder'] is None and '__RUNNER_UUID__' in line
+                and not SUBST.search(line) and REJECT.search(line)):
+            idx['placeholder'] = pos
+        if idx['token'] is None:
+            tm = TOK_S.search(line)
+            if tm:
+                idx['token'] = pos + tm.start()
+        pos += len(line) + 1
+    return idx
+
+NAMED = (
+    ('existence', 'the `[ -f /data/config/config.yaml ]` limb — C18 Tasks keep it literally '
+     '(the t21/g11 ordering tooth indexes it; a restart with a VALID pair must still skip, D62)'),
+    ('url', 'the url: content limb (a grep/sed/awk of `url:` against /data/config/config.yaml) — '
+     'kubelet auto-creates the EMPTY subPath leaf and an existence-only guard reads it as '
+     'registered: the daemon boots an empty config (D66(5) silent misread class)'),
+    ('uuid', 'the uuid: content limb (against /data/config/config.yaml) — a leaf with a url but '
+     'no uuid line is half-written and must re-register (D66(5))'),
+    ('placeholder', 'the __RUNNER_UUID__ rejection limb (negated grep or equivalent) — the write '
+     'path renders the skeleton with that placeholder; a leaf whose uuid is still the placeholder '
+     'never completed a registration and must fall through (D66(5))'),
+    ('token', 'the `-s /data/config/token` limb (token present AND non-empty) — the C17 '
+     'half-write window (config written, boot died before the token) left a guard-skipping pair '
+     'whose daemon crash-loops on the missing credential; the old guard could not heal it (D66(5))'),
+)
+
+def statics_violations(code):
+    viol = []
+    idx = limb_indices(code)
+    for name, why in NAMED:
+        if idx[name] is None:
+            viol.append(f'{name} limb absent — {why}')
+    rpc = code.find(RPC)
+    if rpc < 0:
+        viol.append('no Register RPC line — the fall-through path is gone; t21/g11 own the '
+                    'RPC pin, this leg names its dependency')
+    else:
+        for name, _ in NAMED:
+            if idx[name] is not None and idx[name] > rpc:
+                viol.append(f'the {name} limb sits AFTER the Register RPC — a restart re-registers '
+                            'before ever consulting the PVC (the churn class; guard-FIRST, D62/D66(5))')
+    skip0 = code.find('exit 0')
+    if skip0 >= 0 and idx['existence'] is not None and idx['existence'] < skip0:
+        for name, _ in NAMED:
+            if name != 'existence' and idx[name] is not None and idx[name] > skip0:
+                viol.append(f'the {name} limb sits AFTER the existence-skip exit 0 — the C17 guard '
+                            'reordered, not replaced: the empty leaf exits 0 before any content '
+                            'check runs (the misread class survives, D66(5))')
+    return viol
+
+# Canonical C18-compliant guard (test-owned, dev-shape-agnostic; C18 Notes-for-dev
+# sanctions exactly this compound form under set -eu) and the mutant set proving
+# each limb's tooth. tail = the byte-frozen register path (C18 Tasks: POST,
+# parsing, writes unchanged) from its anchor.
+GUARD_LINES = [
+    'if [ -f /data/config/config.yaml ] \\',
+    "   && grep -q '^[[:space:]]*url:' /data/config/config.yaml \\",
+    "   && grep -q '^[[:space:]]*uuid:' /data/config/config.yaml \\",
+    "   && ! grep -q '__RUNNER_UUID__' /data/config/config.yaml \\",
+    '   && [ -s /data/config/token ]; then',
+    '  exit 0',
+    'fi',
+]
+CANON = '\n'.join(GUARD_LINES)
+C17_GUARD = '[ -f /data/config/config.yaml ] && exit 0'
+
+def get_script(render_file):
+    docs = [d for d in yaml.safe_load_all(open(render_file)) if d]
+    sts = next((d for d in docs if d.get('kind') == 'StatefulSet'), None)
+    if sts is None:
+        bad('t24 premise: no StatefulSet to locate the register init on (t2 owns presence)')
+    pod = ((((sts.get('spec') or {}).get('template') or {}).get('spec')) or {})
+    reg = next((c for c in (pod.get('initContainers') or []) if (c or {}).get('name') == 'register'), None)
+    if reg is None:
+        bad('t24 premise: no register init container (t21 owns presence; the script legs need its carrier)')
+    script = '\n'.join((reg.get('command') or []) + (reg.get('args') or []))
+    if not script.strip():
+        bad('t24 premise: the register container carries no command/args')
+    cm = next((d for d in docs if d.get('kind') == 'ConfigMap'), None)
+    skel = (((cm or {}).get('data') or {}).get('config.yaml') or '')
+    if '__RUNNER_UUID__' not in skel:
+        bad('t24 premise: the rendered skeleton carries no __RUNNER_UUID__ placeholder — the '
+            'battery cannot model the write path (g2/t2 own the skeleton; dependency named)')
+    return script, skel
+
+slice_script, slice_skel = get_script(slice_render)
+default_script, _ = get_script(default_render)
+anchor = slice_script.find('url=$(sed')
+if anchor < 0:
+    bad('t24 premise: the byte-frozen url-extract anchor `url=$(sed` is gone from the script — '
+        'C18 Tasks freeze POST/parsing/writes; if dev moved it, that is the deviation. '
+        'Mechanical re-aim only if the freeze holds (validation-at-fault channel)')
+tail = slice_script[anchor:]
+canonic = 'set -eu\n' + CANON + '\n' + tail
+
+if statics_violations(code_of(canonic)):
+    bad(f't24 premise: the CANONICAL compliant guard fails its own statics '
+        f'({statics_violations(code_of(canonic))}) — unsatisfiable leg, fix the harness (round-6 law)')
+MUTS = {
+    'url': code_of('set -eu\n' + '\n'.join(l for i, l in enumerate(GUARD_LINES) if i != 1) + '\n' + tail),
+    'uuid': code_of('set -eu\n' + '\n'.join(l for i, l in enumerate(GUARD_LINES) if i != 2) + '\n' + tail),
+    'placeholder': code_of('set -eu\n' + '\n'.join(l for i, l in enumerate(GUARD_LINES) if i != 3) + '\n' + tail),
+    'token': code_of('set -eu\n' + '\n'.join(l for i, l in enumerate(GUARD_LINES) if i != 4) + '\n' + tail),
+    'existence-only-c17': code_of('set -eu\n' + C17_GUARD + '\n' + tail),
+    'limbs-after-skip': code_of('set -eu\n' + C17_GUARD + '\n'
+        + "grep -q '^[[:space:]]*url:' /data/config/config.yaml || :\n"
+        + "grep -q '^[[:space:]]*uuid:' /data/config/config.yaml || :\n"
+        + "! grep -q '__RUNNER_UUID__' /data/config/config.yaml || :\n"
+        + '[ -s /data/config/token ] || :\n' + tail),
+}
+for mname, mcode in MUTS.items():
+    mv = statics_violations(mcode)
+    if not mv:
+        bad(f't24 premise: mutant {mname!r} passed statics — the tooth is vacuous (a build shipping that shape must redden, C18.md Tests)')
+    if mname == 'limbs-after-skip':
+        if not any('AFTER the existence-skip' in v for v in mv):
+            bad(f't24 premise: the ordering mutant reddened without the skip-ordering class ({mv}) — the tooth must single it (brief: content-validation BEFORE the existence-skip it replaces)')
+    elif mname == 'existence-only-c17':
+        if not any(v.startswith('url limb absent') for v in mv):
+            bad(f't24 premise: the existence-only (C17-shape) mutant must redden naming the content limbs ({mv}) — this IS the empty-leaf misread mutant, tooth (c-extended)')
+    elif not any(v.startswith(mname + ' limb absent') for v in mv):
+        bad(f't24 premise: mutant {mname!r} reddened without naming its limb ({mv}) — the message set is the review trace')
+
+# --- EMPTY-LEAF battery (AC3, hermetic: sandbox paths + stub wget, no live API) ---
+STUB = ('#!/bin/sh\n'
+        'printf \'%s\\n\' "$*" >> "$WGET_LOG"\n'
+        'printf \'%s\' \'{"uuid":"u-1","token":"t-1"}\'\n')
+VALID_CFG = slice_skel.replace('__RUNNER_UUID__', 'real-uuid-9')
+CASES = [
+    ('empty-leaf', {DATA_CFG: '', DATA_TOK: 'tkn-9'}, 'register'),
+    ('garbage-leaf', {DATA_CFG: '}{ not-a-config\n', DATA_TOK: 'tkn-9'}, 'register'),
+    ('valid-pair-skip', {DATA_CFG: VALID_CFG, DATA_TOK: 'tkn-9'}, 'skip'),
+    ('placeholder-uuid', {DATA_CFG: slice_skel, DATA_TOK: 'tkn-9'}, 'register'),
+    ('missing-token', {DATA_CFG: VALID_CFG, DATA_TOK: None}, 'register'),
+    ('empty-token', {DATA_CFG: VALID_CFG, DATA_TOK: ''}, 'register'),
+]
+
+def sha(path):
+    with open(path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+def run_case(sb, name, files, expect, body_code):
+    fails = []
+    sb = os.path.join(sb, name)
+    shutil.rmtree(sb, ignore_errors=True)
+    for d in ('bin', 'skeleton', 'data/config'):
+        os.makedirs(os.path.join(sb, d))
+    with open(os.path.join(sb, 'skeleton', 'config.yaml'), 'w') as f:
+        f.write(slice_skel)
+    stub = os.path.join(sb, 'bin', 'wget')
+    with open(stub, 'w') as f:
+        f.write(STUB)
+    os.chmod(stub, 0o755)
+    cfg_p, tok_p = os.path.join(sb, 'data/config/config.yaml'), os.path.join(sb, 'data/config/token')
+    if files.get(DATA_CFG) is not None:
+        with open(cfg_p, 'w') as f:
+            f.write(files[DATA_CFG])
+    if files.get(DATA_TOK) is not None:
+        with open(tok_p, 'w') as f:
+            f.write(files[DATA_TOK])
+    pre = {p: (sha(p) if os.path.exists(p) else None) for p in (cfg_p, tok_p)}
+    script = body_code.replace('/data/config', os.path.join(sb, 'data/config')) \
+                      .replace('/skeleton', os.path.join(sb, 'skeleton'))
+    if script.count('/data/config') != script.count(os.path.join(sb, 'data/config')) \
+            or script.count('/skeleton') != script.count(os.path.join(sb, 'skeleton')):
+        fails.append('sandbox path-rewrite left a live absolute path — harness fault')
+        return fails
+    rp = os.path.join(sb, 'register.sh')
+    with open(rp, 'w') as f:
+        f.write(script)
+    env = dict(os.environ)
+    env['PATH'] = os.path.join(sb, 'bin') + os.pathsep + env['PATH']
+    log_p = os.path.join(sb, 'wget.log')
+    env['WGET_LOG'] = log_p
+    env['POD_NAME'] = 'dev-forgejo-runner-dev-0'
+    env['RUNNER_REGISTRATION_TOKEN'] = 'r7-probe-token'
+    r = subprocess.run(['sh', rp], env=env, capture_output=True, text=True, timeout=60)
+    log = open(log_p).read() if os.path.exists(log_p) else ''
+    if expect == 'skip':
+        if r.returncode != 0:
+            fails.append(f'{name}: expected exit 0, got {r.returncode} ({r.stderr.strip()[-200:]})')
+        if log.strip():
+            fails.append(f'{name}: the guard SKIPPED yet the stub was called ({log.strip()[:120]})')
+        if (sha(cfg_p) if os.path.exists(cfg_p) else None) != pre[cfg_p] \
+                or (sha(tok_p) if os.path.exists(tok_p) else None) != pre[tok_p]:
+            fails.append(f'{name}: skip rewrote the files — byte-untouched is the re-attach law')
+    else:
+        if 'Register' not in log:
+            fails.append(f'{name}: expected the register path to fire, stub was never called — the leaf misread as registered (exit {r.returncode}; {r.stderr.strip()[-200:]})')
+        elif r.returncode != 0:
+            fails.append(f'{name}: register path exited {r.returncode} ({r.stderr.strip()[-200:]})')
+        else:
+            if 'http' not in log:
+                fails.append(f'{name}: stub log lacks the dialed Register URL ({log.strip()[:120]})')
+            cfg_now = open(cfg_p).read() if os.path.exists(cfg_p) else ''
+            if '__RUNNER_UUID__' in cfg_now or 'u-1' not in cfg_now or not cfg_now:
+                fails.append(f'{name}: config not re-written from the minted identity ({cfg_now[:80]!r})')
+            tok_now = open(tok_p).read() if os.path.exists(tok_p) else ''
+            if tok_now != 't-1':
+                fails.append(f'{name}: token file is {tok_now!r}, expected the minted t-1 non-empty')
+    return fails
+
+def battery(tag, body_code):
+    fails = []
+    base = os.path.join(work, 't24-battery', tag)
+    shutil.rmtree(base, ignore_errors=True)
+    for name, files, expect in CASES:
+        fails += run_case(base, name, files, expect, body_code)
+    return fails
+
+canon_fails = battery('canonical', code_of(canonic))
+if canon_fails:
+    bad('t24 GREEN-REACHABILITY premise: the canonical C18-compliant script FAILED its own '
+        'battery — the leg cannot go green as written; fix the harness before charging dev '
+        '(round-6 t22 NameError law): ' + ' | '.join(canon_fails))
+c17_fails = battery('probe-c17-shape', code_of('set -eu\n' + C17_GUARD + '\n' + tail))
+miss = [n for n in ('empty-leaf', 'garbage-leaf', 'placeholder-uuid', 'missing-token', 'empty-token')
+        if not any(f.startswith(n) for f in c17_fails)]
+if miss or any(f.startswith('valid-pair-skip') for f in c17_fails):
+    bad(f't24 premise: the EMPTY-LEAF battery mis-scores the existence-only C17 shape '
+        f'(missed {miss}, skip-case failures {[f for f in c17_fails if f.startswith("valid-pair")]} '
+        f'— all five bad-leaf fixtures must redden and the valid pair must pass; the C17 guard IS '
+        'the empty-leaf misread mutant (C18.md Tests, tooth (c-extended)) — vacuous battery')
+
+for f, tag in ((default_render, 'default render'), (slice_render, 'DEPLOYED slice render')):
+    rscript, _ = get_script(f)
+    for v in statics_violations(code_of(rscript)):
+        bad(f't24 statics (AC2) {tag}: {v}')
+    rcode = code_of(rscript)
+    for needle, why in (
+        ('set -eu', 'errexit limb — C18 Tasks freeze it'),
+        ('--post-data', 'POST payload limb — C18 Tasks: POST byte-stable'),
+        ('s/__RUNNER_UUID__/', 'the skeleton substitution — the fall-through register path survives the guard rewrite'),
+        ('> /data/config/token', 'token write path — C18 Tasks: writes unchanged'),
+        ('chmod 0600', 'token file mode — C18 Tasks: writes unchanged'),
+        ('exit 1', 'loud-failure exit — C18 Tasks: exit-1 limbs unchanged'),
+    ):
+        if needle not in rcode:
+            bad(f't24 statics (AC2) {tag}: the {needle!r} limb is GONE — {why}')
+
+real_fails = battery('real', code_of(slice_script))
+if real_fails:
+    bad('t24 EMPTY-LEAF battery (AC3) on the DEPLOYED slice render\'s script: ' + ' | '.join(real_fails)
+        + ' — the shipped guard skips-or-misreads where D66(5) rules re-registration; '
+        'red-first expected at the C17 tree (empty leaves, placeholder residue and the '
+        'half-write token window all fall through to Register post-C18)')
+PY
+  then
+    fail "t24: see the t24 detail above"
+  fi
+  ok "t24: content guard — four limbs in code, ordered before the RPC and the skip; frozen POST/write/errexit limbs intact; EMPTY-LEAF battery green on the compliant shape and run on the deployed script (empty leaf, garbage, placeholder uuid, missing/empty token re-register; valid pair skips byte-untouched) (C18 AC2/AC3, D66(5))"
+fi
+
 # A successful run is the only moment the /tmp workspace can go — a failed
 # run keeps it so every "log kept at" pointer still resolves.
 rm -rf "$WORK"

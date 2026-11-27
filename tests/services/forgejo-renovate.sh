@@ -208,7 +208,9 @@ doc = yaml.safe_load(raw)
 job = (doc.get('jobs') or {}).get('renovate') or {}
 
 EXPECTED = {
-    'LOG_LEVEL': 'info',
+    # C02 (e) re-aim: LOG_LEVEL leaves the exact-value pin — it becomes the
+    # vars.DEBUG-gated shape (default info per OQ7, verbose debug); the value
+    # of the variable is never pinned (the suite's own law), its shape is.
     'RENOVATE_PLATFORM': 'forgejo',
     'RENOVATE_ENDPOINT': '${{ github.server_url }}',
     'RENOVATE_REPOSITORIES': '${{ github.repository }}',
@@ -238,10 +240,16 @@ def need(cond, msg):
 
 env = job.get('env')
 need(isinstance(env, dict), 'jobs.renovate has no env: mapping')
-need(set(env) == set(EXPECTED),
-     f'env keys are {sorted(env)}, expected exactly {sorted(EXPECTED)}')
+need(set(env) == set(EXPECTED) | {'LOG_LEVEL'},
+     f'env keys are {sorted(env)}, expected exactly {sorted(set(EXPECTED) | {"LOG_LEVEL"})} (the eight-key law, C02 task e: no new key)')
 for key, value in EXPECTED.items():
     need(env.get(key) == value, f'env.{key} is {env.get(key)!r}, expected {value!r}')
+ll = str(env.get('LOG_LEVEL', ''))
+need('vars.DEBUG' in ll, f'LOG_LEVEL is {ll!r} — it must reference vars.DEBUG (C02 task e: the single verbose switch; the scout\'s warn recommendation is overruled, OQ7)')
+need('info' in ll, f'LOG_LEVEL is {ll!r} — the info DEFAULT literal is missing (OQ7: the default stays info)')
+need('debug' in ll, f'LOG_LEVEL is {ll!r} — the debug VERBOSE literal is missing (DEBUG=true raises it)')
+n = len(re.findall(r'vars\.DEBUG(?![0-9A-Za-z_])', raw))
+need(n == 1, f'vars.DEBUG occurs {n} time(s) file-wide, expected exactly once (the single binding site; the variable\'s value is never pinned — the suite\'s own law, C02 task e)')
 for key in ('secrets.RENOVATE_TOKEN', 'secrets.RENOVATE_GITHUB_COM_TOKEN',
             'vars.RENOVATE_GIT_AUTHOR'):
     # Boundary-anchored like forgejo-main-sync.sh t5: an extended key name
@@ -264,7 +272,7 @@ PY
 then
   fail "t5: see the t5 detail above"
 fi
-ok "t5: eight exact env keys, each secret/vars ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image"
+ok "t5: eight env keys (the other seven exact, LOG_LEVEL in the vars.DEBUG-gated info/debug shape, value never pinned), each secret/vars ref once, no reserved-prefix refs, no host literals, ghcr.io only as the image (C05 AC1/AC2; C02 task e re-aim)"
 
 # --- t6 [AC5]: two run-only steps, fail-fast, PATH proof -------------------------
 if ! python3 - "$WF" <<'PY'

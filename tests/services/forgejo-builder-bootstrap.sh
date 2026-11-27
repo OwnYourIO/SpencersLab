@@ -84,7 +84,9 @@
 #     every docker push attributes to the forge side (any ghcr-attributed
 #     push is R-B returning).
 #   - b6 is the shrunk closed set (R-B + OQ-1=B): secrets exactly
-#     {FORGE_PUSH_TOKEN}, vars exactly {ROLE}, exactly ONE login on the
+#     {FORGE_PUSH_TOKEN}, vars exactly {ROLE, DEBUG} (the C02 gate variable —
+#     it carries no registry, so the no-second-registry law holds), exactly
+#     ONE login on the
 #     derived forge host, one push side, zero second-instance names AND the
 #     raw ban of both ghcr credential names (GHCR_PUSH_PAT and
 #     PUSH_TOKEN_GH) comments included — the lane holds no ghcr credential
@@ -656,8 +658,8 @@ secrets = set(re.findall(r'\bsecrets\.([A-Za-z_][A-Za-z0-9_]*)', raw))
 vars_ = set(re.findall(r'\bvars\.([A-Za-z_][A-Za-z0-9_]*)', raw))
 need(secrets == {'FORGE_PUSH_TOKEN'},
      f'secrets.* set is {sorted(secrets)}, expected FORGE_PUSH_TOKEN ALONE — the credential surface is CLOSED and shrunk by the owner rulings 2026-11-22 (R-B + OQ-1=B; P4\x27 lineage): the lane holds no ghcr credential of any name; a new secret needs a new ruling, and it reddens here first')
-need(vars_ == {'ROLE'},
-     f'vars.* set is {sorted(vars_)}, expected exactly ROLE — no second-registry variable may ever enter this lane (P4\x27)')
+need(vars_ == {'ROLE', 'DEBUG'},
+     f'vars.* set is {sorted(vars_)}, expected exactly ROLE + DEBUG (the C02 gate variable is the lane\'s only second variable — it carries no registry, so the P4\x27 no-second-registry law holds; C02 task d)')
 for tok in ('GHCR_PUSH_PAT', 'PUSH_TOKEN_GH', 'FORGE_DEV_REGISTRY', 'FORGE_PUSH_TOKEN_DEV',
              'PUSH_URL_DEV', 'PUSH_TOKEN_DEV', 'scifi.farm', 'spencerslab'):
     need(raw.count(tok) == 0,

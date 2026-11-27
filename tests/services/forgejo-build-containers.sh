@@ -703,6 +703,35 @@ diag = [r for job in jobs.values() for r in
         (str(s.get('run', '')) for s in (job or {}).get('steps', []) if isinstance(s, dict) and 'run' in s)
         if 'ROLE' in r and 'docker' in r]
 need(diag, 'no diag step names both ROLE and docker (the ROLE-era house shape per main-sync; the server_url echo retires with C02)')
+# C02 task d re-aim: the heavy diag dump lines (env | grep ACTIONS_, docker
+# buildx version, docker info) live ONLY inside the vars.DEBUG guard (an
+# unset variable renders empty -> the guard evaluates false); the one-line
+# ROLE echo stays ungated before it (OQ8).
+def guard_span(body):
+    lines = body.splitlines()
+    for i, l in enumerate(lines):
+        if l.strip().startswith('if [') and 'vars.DEBUG' in l:
+            depth = 0
+            for j in range(i, len(lines)):
+                t2 = lines[j].strip()
+                if t2.startswith('if '):
+                    depth += 1
+                if t2.startswith('fi'):
+                    depth -= 1
+                    if depth == 0:
+                        return (i, j)
+    return None
+for r in diag:
+    if 'docker info' not in r:
+        continue
+    sp = guard_span(r)
+    need(sp is not None, 'the heavy diag lines are not inside a vars.DEBUG guard — the dumps must be gated (unset variable evaluates false; C02 task d; red until it lands)')
+    lines = r.splitlines()
+    for tok in ('env | grep ACTIONS_', 'docker buildx version', 'docker info'):
+        idx = [i for i, l in enumerate(lines) if tok in l and not l.lstrip().startswith('#')]
+        need(idx, f'heavy diag line {tok!r} missing from the diag step (harness fault — the base shape carries it)')
+        need(all(sp[0] <= i <= sp[1] for i in idx), f'heavy diag line {tok!r} sits outside the vars.DEBUG guard (C02 task d)')
+    need(sp[0] > 0 and any('echo "ROLE=' in lines[i] for i in range(sp[0])), 'the one-line ROLE echo is not ungated before the guard (OQ8 — it stays ungated)')
 PY
   then
     return 1

@@ -94,6 +94,25 @@
 # D56) and t34 pins the on.workflow_call.outputs declaration. Re-aimed
 # t2/t18 are red until their own chunk lands.
 #
+# cf-159 (2026-11-27, chunks C02-C04; the C01 runner-chart legs live in the
+# dev/gpu-forgejo-runner suites): the build/sync unification wave.
+# C03: t35-t37 — the publish-leg changed-set packaging (executed package
+# steps over a stub cr + scratch remotes, the CHARTS_JSON wiring pins, the
+# glob ban, the unchanged has_changes/--skip-existing/skip-if-in-index
+# gates, the comment re-truth). C04: t6/t19/t21 re-aimed to the extracted
+# scripts/forgejo-helm-repo-add.sh (the D45 teeth re-pointed, the script
+# contract executed over a stub helm, the next->exit mutation), t30's
+# resolver battery gains the push-arm gate-skip, t38/t39 the cross-file
+# gate-shape and the forgejo.* context-family pins. C02: t40-t45 — the
+# show-progress/fetch-depth statics, the executed fetch-gate over a fixture
+# remote, the repo-add/dep-update and cr output-capture legs (stub
+# helm/cr, log-file discovery, one-line summaries, the = "true"->= "false"
+# unguard mutation), the self-heal capture pin, and the cross-file
+# set -euo pipefail count (42 workflow run blocks at base — 14/11/7/5/3/2
+# per file; the plan text's 43 rides the scout inventory's off-by-one on
+# build-charts — plus the three script lines) with a flip-to-set -u probe.
+# All new legs are red-first against the pre-change tree by design.
+#
 # Carried by C09's flip commit, NOT by this wave (chunk Files-in-scope):
 # t19's test-build cmds list swaps 'helm dependency build' -> 'helm
 # dependency update' exactly when the workflow flips (AC2's
@@ -291,34 +310,44 @@ then
 fi
 ok "t5: every uses is actions/checkout and nothing else; azure/setup-helm and the four retired actions appear nowhere in the file"
 
-# --- t6: hardened repo-add loop in every dependency-resolving leg (AC5) --------
+# --- t6: repo-add loop extracted — one script invocation per leg, inline loop retired (C04 AC3) ---
+# cf-77/D45's per-row contract (URL-shaped field guard + oci:// skip +
+# next-not-exit law) now lives in scripts/forgejo-helm-repo-add.sh, which
+# the D45 fix had to apply at three sites — the extraction kills the drift
+# class. This leg pins the invocation shape per job; t21 owns the script's
+# contract (executed over a stub helm + the all-rows completeness replay).
 if ! python3 - "$WF" <<'PY'
 import sys, yaml
 
 jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+SCRIPT = 'bash scripts/forgejo-helm-repo-add.sh'
 
-# Legs that run helm against chart dependencies. The hardened loop's contract
-# is the first URL-shaped field OF EACH dependency row, every row emitting:
-# a carrier that ends its print block with a program terminator registers
-# only each chart's FIRST row and cr package's lock-driven Build dies on the
-# rest (cf-77 r2's exit-vs-next defect, D45). This leg pins the loop's TOKENS
-# per job; the all-rows completeness replay is t21. A leg that runs `helm
-# dependency list` without the field guard re-breaks on any empty-REPOSITORY
-# subchart row.
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t6: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
 for jn in ('test-build', 'release', 'forgejo-publish'):
-    blob = '\n'.join(str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
-                     if isinstance(s, dict) and 'run' in s)
-    for tok, why in (('helm dependency list', 'the loop iterates this output'),
-                     ('^(https?|oci|file)', 'the awk URL-shaped-field scan (the awk source escapes the trailing slashes; the token up to the field list is the invariant)'),
-                     ('^oci://', 'the oci:// skip that keeps registry deps out of helm repo add')):
-        if tok not in blob:
-            print(f'FAIL: t6: {jn} run blocks lack {tok!r} — {why}', file=sys.stderr)
-            sys.exit(1)
+    runs = [str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
+            if isinstance(s, dict) and 'run' in s]
+    n = sum(r.count(SCRIPT) for r in runs)
+    need(n >= 1,
+         f'{jn} carries {n} {SCRIPT!r} invocation(s), expected at least one (one per repo-add-bearing job; the C02 capture duplicates the line across the guard arms — t42 pins the guard context; C04 task 3, AC3)')
+
+blob = '\n'.join(str(s.get('run', '')) for j in jobs.values() if isinstance(j, dict)
+                 for s in (j.get('steps') or []) if isinstance(s, dict) and 'run' in s)
+code = '\n'.join(l for l in blob.splitlines() if not l.lstrip().startswith('#'))
+need('helm dependency list' not in code,
+     'a run block still runs the inline `helm dependency list` loop — the loop moved VERBATIM to scripts/forgejo-helm-repo-add.sh (C04 task 3); an inline survivor is the triple-duplication returning (the D45 drift class)')
+need('helm repo add' not in code,
+     'a run block still runs an inline `helm repo add` — the per-row registration (cf-77/D45 recipe) lives in the extracted script, byte-faithful')
 PY
 then
   fail "t6: see the t6 detail above"
 fi
-ok "t6: the hardened Add-repositories loop (URL-shaped scan + oci:// skip) is in test-build, release and forgejo-publish"
+ok "t6: exactly one scripts/forgejo-helm-repo-add.sh invocation in test-build, release and forgejo-publish; the inline repo-add loop is absent from every run block (C04 AC3 — the D45 recipe moves verbatim to the script)"
 
 # --- t7: bump single-writer + idempotent FF-only loop (AC6) ---------------------
 if ! python3 - "$WF" <<'PY'
@@ -1145,19 +1174,24 @@ def runs(jn):
 
 
 tb, rel, fj = runs('test-build'), runs('release'), runs('forgejo-publish')
-for cmd in ('helm dependency list', 'helm repo add', 'helm dependency update',
-            'helm lint', 'helm package'):
+# C04: the inline helm repo-add work (dependency list + repo add) moved
+# verbatim into scripts/forgejo-helm-repo-add.sh; its presence is the
+# script invocation (t6 pins the one-per-job shape, t21 the contract).
+SCRIPT = 'bash scripts/forgejo-helm-repo-add.sh'
+for cmd in ('helm dependency update', 'helm lint', 'helm package'):
     need(cmd in tb,
          f'test-build no longer runs {cmd!r} — the flip cannot be satisfied by deleting the work the baked helm serves')
-for cmd in ('helm dependency list', 'helm repo add', 'cr package', 'cr upload', 'cr index'):
-    need(cmd in rel, f'release no longer runs {cmd!r} — the invocation sites are the de-facto toolchain check (D43)')
-for cmd in ('helm dependency list', 'cr package'):
-    need(cmd in fj, f'forgejo-publish no longer runs {cmd!r} — same law on the instance leg')
+for cmd in (SCRIPT, 'cr package', 'cr upload', 'cr index'):
+    need(cmd in rel,
+         f'release no longer runs {cmd!r} — the invocation sites are the de-facto toolchain check (D43); the repo-add work rides the extracted script (C04)')
+for cmd in (SCRIPT, 'cr package'):
+    need(cmd in fj,
+         f'forgejo-publish no longer runs {cmd!r} — same law on the instance leg (C04)')
 PY
 then
   fail "t19: see the t19 detail above"
 fi
-ok "t19: no cr env pair, no install/pin literals, no installer or presence-check steps anywhere; every baked helm/cr invocation site of the shipped contract still runs"
+ok "t19: no cr env pair, no install/pin literals, no installer or presence-check steps anywhere; every baked helm/cr invocation site of the shipped contract still runs (the repo-add work rides the C04-extracted script)"
 
 # --- t20: the bump leg's published-index fetch is retry-hardened (D37) -------
 # The one egress the bake cannot retire: the bump loop reads the PUBLISHED
@@ -1191,141 +1225,186 @@ then
 fi
 ok "t20: the bump leg's published-index curl carries --retry (the un-bakeable data egress gets bounded hardening, D37)"
 
-# --- t21: repo-add loop COMPLETENESS — every URL-shaped row registers (fix round 2, D45) ---
-# The owner's release re-run proved t6's token pins are not completeness: the
-# Add-repositories step ran green while registering only the FIRST URL-shaped
-# dependency row of each chart — cf-77 r2's awk ends its print block with
-# program-`exit`, which terminates the whole program where `next` would move
-# to the next record — and cr package died with `no repository definition for
-# https://charts.jetstack.io, https://charts.christianhuth.de` (scout TEST D
-# reproduced the owner's error verbatim from the shipped loop's state; TEST F
-# proved the exit->next shape end-to-end). This leg extracts each of the
-# three carriers and replays it OFFLINE through the shipped `tail +2 | head
-# -n -1` arithmetic over dependency-list-shaped fixtures, then over the four
-# victim charts' real Chart.lock rows — the lockfiles are the fixture source,
-# so a future multi-row chart is covered by derivation, not enumeration.
-if ! python3 - "$WF" <<'PY'
-import re, subprocess, sys, yaml
 
-jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
-JOBS = ('test-build', 'release', 'forgejo-publish')
-VICTIMS = ('base', 'k8s-monitoring', 'postiz', 'traefik')
+
+# --- t21: script CONTRACT — completeness re-pointed at scripts/forgejo-helm-repo-add.sh (C04, D45 teeth + executed battery) ---
+# The D45 completeness law (cf-77 r2: a print block ending in a program
+# terminator registers only each chart's FIRST URL-shaped row, and cr
+# package's lock-driven Build dies on the rest) now pins the extracted
+# script: the awk program is read from scripts/forgejo-helm-repo-add.sh,
+# the script is EXECUTED end-to-end against a stub helm recording argv
+# (the carrier-replay pattern, shim-on-PATH) over the D45 fixture set +
+# the four victim charts' Chart.lock rows, and the next->exit mutation
+# proves the completeness teeth bite.
+if ! python3 - <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+SCRIPT = 'scripts/forgejo-helm-repo-add.sh'
+if not os.path.exists(SCRIPT):
+    print(f'FAIL: t21: {SCRIPT} does not exist (C04 task 3 extracts the triple-duplicated repo-add loop there) — the script contract is unpinnable until it lands', file=sys.stderr)
+    sys.exit(1)
+
+text = open(SCRIPT).read()
+lines = text.splitlines()
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t21: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+# Convention pins (C04 AC3: the header follows the forgejo-container-detect.sh
+# convention — pure shell + coreutils, set -eu, the die() shape).
+need(lines and lines[0] == '#!/usr/bin/env bash',
+     'the script does not open with the env bash shebang (the detect-script convention, C04 AC3)')
+need(any(l.strip() == 'set -eu' for l in lines),
+     'the script carries no bare `set -eu` line (C04 task 3; the detect-script fail-fast shape — a failed helm repo add must die loud, not spin)')
+need(re.search(r'\bdie\(\)\s*\{', text) is not None,
+     'the script carries no die() shape (the forgejo-container-detect.sh convention, C04 Notes)')
+
+m = re.search(r"awk '([^']*)'", text)
+need(m is not None and 'helm dependency list' in text,
+     'no awk scan carrier on a `helm dependency list` line — the URL-shaped-field scan is missing')
+prog = m.group(1) if m else ''
+need('^(https?|oci|file' in prog,
+     'the script lost the awk URL-shaped-field scan (cf-77/D45 per-row contract: first URL-shaped field of each row; an empty-REPOSITORY row must shift the STATUS word out, not into a registered name)')
+# The oci:// skip may live at the awk level (^oci:// in the scan) or the
+# shell level (a [[ ! "$url" =~ ^oci:// ]] guard, the cf-77/D45 shipped
+# shape); the executed OCI_BOTH battery below is the real tooth either way.
+need('oci://' in text and 'helm repo add' in text,
+     'the script carries no oci:// skip (awk scan or shell guard) or the `helm repo add` call — registry deps must be scanned then kept out of helm repo add')
+
 HDR = 'NAME\tVERSION\tREPOSITORY\tSTATUS'
 
-# Fixtures: live-measured `helm dependency list` column shapes (workspace helm
-# 3.16.4, 2026-11-23). Display padding is stripped — awk splits on every run
-# of tabs/spaces, so the fields the carrier scans are the real output's; scout
-# TEST B' verified helm 3.22.1 (the baked runner version) keeps the rows +
-# trailing blank that the `tail +2 | head -n -1` arithmetic eats. The zero-dep
-# fixture is the one shape without a header: helm puts the WARNING line on
-# STDOUT (the step's `2> /dev/null` does not silence it) and `tail +2` drops
-# that single line — which is exactly what makes the step a no-op there.
+
 def fixture(rows):
     return HDR + '\n' + ''.join(r + '\n' for r in rows) + '\n'
 
-# charts/base — the owner-fire chart: rows 2 and 3 are the exact URLs the
-# dead fire named. An exit-shaped carrier emits 1 of these 3 pairs.
+
+# Fixtures: live-measured `helm dependency list` column shapes (the D45
+# fixture set, byte-stable from fix round 2; helm 3.22.1 keeps the rows +
+# trailing blank the shipped `tail +2 | head -n -1` arithmetic eats).
 BASE = fixture(['argo-cd\t10.18.2\thttps://argoproj.github.io/argo-helm\tmissing',
-                'cert-manager\tv1.21.3\thttps://charts.jetstack.io\tmissing',
-                'gateway-api-crds\t1.2.5\thttps://charts.christianhuth.de\tmissing'])
+               'cert-manager\tv1.21.3\thttps://charts.jetstack.io\tmissing',
+               'gateway-api-crds\t1.2.5\thttps://charts.christianhuth.de\tmissing'])
 BASE_PAIRS = [('argo-cd', 'https://argoproj.github.io/argo-helm'),
               ('cert-manager', 'https://charts.jetstack.io'),
               ('gateway-api-crds', 'https://charts.christianhuth.de')]
-# The six charts that packaged on the dead fire (loki/seaweedfs shape): the
-# completeness fix must not regress them — exactly one pair.
 SINGLE = fixture(['loki\t7.5.0\thttps://grafana.github.io/helm-charts\tmissing'])
 SINGLE_PAIRS = [('loki', 'https://grafana.github.io/helm-charts')]
-# cf-77 r2's class: an empty REPOSITORY column shifts the STATUS word into
-# $3, so the per-row field guard must skip the row instead of emitting a
-# name + status pair that `helm repo add` swallows and bash -e kills the
-# step over. Orthogonal to completeness: the exit-shape carrier PASSES this
-# fixture; it is the twin-era print-$1-$3 mutant that reddens here.
 EMPTY_REPO = fixture(['bjw-common\t9.9.9\thttps://bjw-s-labs.github.io/helm-charts/\tmissing',
-                      'local-sub\t1.0.0\t\tmissing'])
+                     'local-sub\t1.0.0\t\tmissing'])
 EMPTY_REPO_PAIRS = [('bjw-common', 'https://bjw-s-labs.github.io/helm-charts/')]
-# hivetools: both rows oci://. The awk emission duty covers them too;
-# keeping them out of helm repo add is the step's ^oci:// skip (t6's token).
 OCI_BOTH = fixture(['toolhive-operator-crds\t0.56.0\toci://ghcr.io/stacklok/toolhive\tmissing',
-                    'toolhive-operator\t0.56.0\toci://ghcr.io/stacklok/toolhive\tmissing'])
-OCI_BOTH_PAIRS = [('toolhive-operator-crds', 'oci://ghcr.io/stacklok/toolhive'),
-                  ('toolhive-operator', 'oci://ghcr.io/stacklok/toolhive')]
+                   'toolhive-operator\t0.56.0\toci://ghcr.io/stacklok/toolhive\tmissing'])
+OCI_BOTH_PAIRS = []  # the ^oci:// skip keeps both rows out of helm repo add
 ZERO_DEP = 'WARNING: no dependencies at charts/zerochart/charts\n'
+ZERO_DEP_PAIRS = []
 
-
-def carrier(jn):
-    # t6's blob idiom per job; the repo-add program is the single-quoted awk
-    # body riding the helm dependency list line. None = no scan carrier left.
-    blob = '\n'.join(str(s.get('run', '')) for s in (jobs.get(jn) or {}).get('steps', [])
-                     if isinstance(s, dict) and 'run' in s)
-    for line in blob.splitlines():
-        if 'helm dependency list' in line and 'awk' in line:
-            m = re.search(r"awk '([^']*)'", line)
-            if m:
-                return m.group(1)
-    return None
-
-
-def replay(prog, text):
-    # The shipped pipeline arithmetic verbatim, then the landed carrier as-is.
-    t = subprocess.run(['tail', '+2'], input=text, capture_output=True, text=True)
-    h = subprocess.run(['head', '-n', '-1'], input=t.stdout, capture_output=True, text=True)
-    a = subprocess.run(['awk', prog], input=h.stdout, capture_output=True, text=True)
-    if a.returncode != 0:
-        return None, a.stderr.strip()
-    return [tuple(l.split(' ', 1)) for l in a.stdout.splitlines() if l.strip()], ''
-
-
-def fmt(pairs):
-    return ', '.join(' '.join(p) for p in pairs) or 'nothing'
-
-
+VICTIMS = ('base', 'k8s-monitoring', 'postiz', 'traefik')
 problems = []
 
 
-def check(jn, what, pairs, expected):
-    missing = [p for p in expected if p not in pairs]
-    extra = [p for p in pairs if p not in expected]
+def run_case(script_text, text_in):
+    # One chart dir per case; the (possibly mutated) script runs in a sandbox
+    # with a stub helm on PATH recording every argv; the `helm repo add`
+    # pairs are the assertion surface.
+    sb = tempfile.mkdtemp(prefix='forgejo-t21-')
+    try:
+        shim = os.path.join(sb, 'shim')
+        os.makedirs(shim)
+        fix = os.path.join(sb, 'fix', 'c.rows')
+        os.makedirs(os.path.dirname(fix))
+        with open(fix, 'w') as f:
+            f.write(text_in)
+        os.makedirs(os.path.join(sb, 'charts', 'c'))
+        log = os.path.join(sb, 'helm.log')
+        stub = os.path.join(shim, 'helm')
+        with open(stub, 'w') as f:
+            f.write('#!/bin/sh\n'
+                    f'printf \'helm %s\\n\' "$*" >> "{log}"\n'
+                    f'if [ "$1" = "dependency" ]; then cat "{fix}" 2>/dev/null; fi\n'
+                    'exit 0\n')
+        os.chmod(stub, 0o755)
+        sp = os.path.join(sb, 'repo-add.sh')
+        with open(sp, 'w') as f:
+            f.write(script_text)
+        os.chmod(sp, 0o755)
+        e = os.environ.copy()
+        e['PATH'] = shim + os.pathsep + e['PATH']
+        r = subprocess.run(['bash', sp], cwd=sb, capture_output=True, text=True, env=e, timeout=60)
+        got = []
+        if os.path.exists(log):
+            for l in open(log).read().splitlines():
+                if l.startswith('helm repo add '):
+                    rest = l[len('helm repo add '):].split(' ', 1)
+                    if len(rest) == 2:
+                        got.append((rest[0], rest[1]))
+        return r, got
+    finally:
+        shutil.rmtree(sb, ignore_errors=True)
+
+
+# Green-reachability premise (round-6 law): the compliant shape must PASS and
+# the exit-mutant must RED before the real script drives the verdict.
+need(prog.count('next') >= 1,
+     f'premise: the awk program carries no `next` terminator ({prog!r}) — the next-not-exit law (cf-77/D45) is absent; the mutation anchor has nothing to bite')
+mutant = text.replace(' next }', ' exit }', 1)
+need(mutant != text,
+     'premise: the next->exit mutation did not bite (the ` next }` anchor shape moved) — a probe that cannot bite proves nothing')
+
+r0, g0 = run_case(text, BASE)
+if r0.returncode != 0:
+    need(False, f'premise: the COMPLIANT script reds its own 3-URL-row battery (exit {r0.returncode}, {(r0.stderr.strip() or r0.stdout.strip())[-120:]!r}) — the leg is unsatisfiable as written; re-aim before blaming dev')
+if g0 != BASE_PAIRS:
+    need(False, f'premise: the compliant script emitted {g0!r} on the 3-URL-row fixture, expected {BASE_PAIRS!r} — the battery cannot be green on the compliant shape; re-aim before blaming dev')
+r1, g1 = run_case(mutant, BASE)
+if r1.returncode == 0 and (g1 == BASE_PAIRS or len(g1) >= len(BASE_PAIRS)):
+    need(False, f'premise: the next->exit mutant still emits {g1!r} (expected a truncated set) — the completeness tooth is vacuous, fix the leg before blaming dev')
+
+# The executed contract battery (C04 Tests): one chart dir per case, the real
+# script, the stub helm recording argv.
+for label, txt, want in (
+    ('base 3-URL-row fixture', BASE, BASE_PAIRS),
+    ('single-row fixture', SINGLE, SINGLE_PAIRS),
+    ('oci-only fixture (skipped)', OCI_BOTH, OCI_BOTH_PAIRS),
+    ('empty-REPOSITORY row fixture', EMPTY_REPO, EMPTY_REPO_PAIRS),
+    ('zero-dependency chart (no-op)', ZERO_DEP, ZERO_DEP_PAIRS),
+):
+    r, got = run_case(text, txt)
+    if r.returncode != 0:
+        problems.append(f'{label}: the script exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the contract run must be clean under set -eu')
+        continue
+    missing = [p for p in want if p not in got]
+    extra = [p for p in got if p not in want]
     if missing or extra:
-        problems.append(f'{jn}: {what} emitted [{fmt(pairs)}]'
-                        + (f' — MISSING [{fmt(missing)}]' if missing else '')
-                        + (f' — unexpected [{fmt(extra)}]' if extra else ''))
+        problems.append(f'{label}: emitted {got!r} — '
+                       + (f'missing {missing!r} — ' if missing else '')
+                       + (f'unexpected {extra!r} — ' if extra else '')
+                       + 'the D45 per-row contract is violated')
 
-
-for jn in JOBS:
-    prog = carrier(jn)
-    if prog is None:
-        problems.append(f'{jn}: no repo-add awk carrier on the helm dependency list line')
+# AC2 derivation: the repo set the script derives must cover every http(s)
+# URL of each victim chart's Chart.lock (D45; the lockfiles are the fixture
+# source, so a future multi-row chart is covered by derivation, not
+# enumeration).
+for chart in VICTIMS:
+    deps = yaml.safe_load(open('charts/' + chart + '/Chart.lock'))['dependencies']
+    rows = [d['name'] + '\t' + str(d['version']) + '\t' + d['repository'] + '\tmissing'
+           for d in deps]
+    r, got = run_case(text, fixture(rows))
+    if r.returncode != 0:
+        problems.append(f'{chart}: the script exited {r.returncode} on the Chart.lock-derived fixture ({(r.stderr.strip() or r.stdout.strip())[-120:]!r})')
         continue
-    pairs, err = replay(prog, BASE)
-    if pairs is None:
-        problems.append(f"{jn}: carrier replay errored ({err!r}) — the awk program does not run")
-        continue
-    check(jn, 'base-shape 3-URL-row fixture', pairs, BASE_PAIRS)
-    check(jn, 'single-URL-row fixture', replay(prog, SINGLE)[0], SINGLE_PAIRS)
-    check(jn, 'empty-REPOSITORY fixture', replay(prog, EMPTY_REPO)[0], EMPTY_REPO_PAIRS)
-    check(jn, 'oci-both fixture', replay(prog, OCI_BOTH)[0], OCI_BOTH_PAIRS)
-    check(jn, 'zero-dependency fixture', replay(prog, ZERO_DEP)[0], [])
-    # AC2 derivation: the repo set the loop derives must cover every http(s)
-    # URL of the chart's Chart.lock — cr's lock-driven Build resolves each
-    # one against the repositories file (D45; victim set per scout §A2).
-    for chart in VICTIMS:
-        deps = yaml.safe_load(open('charts/' + chart + '/Chart.lock'))['dependencies']
-        rows = [d['name'] + '\t' + str(d['version']) + '\t' + d['repository'] + '\tmissing'
-                for d in deps]
-        emitted = {u for _, u in replay(prog, fixture(rows))[0]}
-        lock_http = {d['repository'] for d in deps
-                     if d['repository'].startswith(('http://', 'https://'))}
-        gap = sorted(lock_http - emitted)
-        if gap:
-            problems.append(f'{jn}: {chart} Chart.lock URLs never registered: '
-                            + ', '.join(gap))
+    emitted = {u for _, u in got}
+    lock_http = {d['repository'] for d in deps
+                 if d['repository'].startswith(('http://', 'https://'))}
+    gap = sorted(lock_http - emitted)
+    if gap:
+        problems.append(f'{chart}: Chart.lock URLs never registered: {", ".join(gap)}')
 
 if problems:
-    print('FAIL: t21: the repo-add loop is INCOMPLETE — a carrier that ends its print '
-          'block with a program terminator (cf-77 r2 wrote exit where the all-rows loop '
-          'needs next) registers only each chart\'s FIRST URL-shaped dependency row, so '
-          'cr package dies on the unregistered repos (no repository definition for ..., '
-          'the owner release fire). Offenders:', file=sys.stderr)
+    print('FAIL: t21: the extracted repo-add script is INCOMPLETE or out of contract — offenders:', file=sys.stderr)
     for p in problems:
         print('  ' + p, file=sys.stderr)
     sys.exit(1)
@@ -1333,7 +1412,7 @@ PY
 then
   fail "t21: see the t21 detail above"
 fi
-ok "t21: all three repo-add carriers emit every URL-shaped dependency row (base 3-of-3, loki-shape 1, oci-both 2, empty-REPOSITORY row silent, zero-dep silent) and the derived repo set covers every http(s) Chart.lock URL of the four victim charts"
+ok "t21: scripts/forgejo-helm-repo-add.sh carries the detect-script convention (shebang/set -eu/die) and the cf-77/D45 recipe; executed over a stub helm it emits every URL-shaped row (base 3-of-3, single 1, oci-only skipped, empty-REPOSITORY row silent, zero-dep no-op), covers every http(s) Chart.lock URL of the four victim charts, and the next->exit mutation reddens the 3-URL-row battery (C04 AC3, D45 teeth re-pointed)"
 
 # --- t22: the bump job's lock self-heal pin (C09, D47.1) -------------------------
 # One drifted Chart.lock poisons EVERY fire: cr package Build()s every chart
@@ -1909,7 +1988,9 @@ ok "t29: every live charts/*/Chart.yaml top-level version: line is comment-free 
 # network (dead-origin witness, the containers c5 idiom). Staged and executed
 # against a scratch bare remote; the battery runs the marker-side event as
 # workflow_call so it reads identically in the C14 (push+call) and C15
-# (call-only) gate states.
+# (call-only) gate states. C04 re-aim: the retired `push` arm (r6) must now
+# gate-skip like any non-workflow_call event — red until C04 unifies the
+# gate on the workflow_call-only shape.
 if ! python3 - "$WF" <<'PY'
 import os, re, shutil, subprocess, sys, tempfile, yaml
 
@@ -2030,6 +2111,18 @@ try:
         problems.append(f'r5 non-marker-side event: exit {r.returncode} against a DEAD origin — outside the marker-side set the resolver must emit sha= empty and touch no network (the shipped PR/dispatch law)')
     elif answer(out) != '':
         problems.append(f'r5 non-marker-side event: sha={answer(out)!r}, expected the empty emission')
+
+    # r6 (C04 re-aim): the RETIRED push arm must now gate-skip like any
+    # non-workflow_call event — the `push` belt died with C15/D56 and C04
+    # unifies the three builders on the workflow_call-only shape. A surviving
+    # push arm would ls-remote the dead origin and die: the unification is
+    # the pin.
+    out = os.path.join(root, 'out6')
+    r = run(script, dead, {'EVENT_NAME': 'push', 'MARKER_SHA': ''}, out)
+    if r.returncode != 0:
+        problems.append(f'r6 push arm (C04): exit {r.returncode} against a DEAD origin — the `push` arm must be retired from the gate (the unified workflow_call-only shape); a survivor touches the network')
+    elif answer(out) != '':
+        problems.append(f'r6 push arm (C04): sha={answer(out)!r}, expected the empty gate-skip emission')
 finally:
     shutil.rmtree(root, ignore_errors=True)
 
@@ -2042,7 +2135,7 @@ PY
 then
   fail "t30: see the t30 detail above"
 fi
-ok "t30: executed against scratch bare remotes — absent→empty, present+reachable→sha, orphaned→loud naming value+owner verbs, non-hex→loud, non-marker-side events answer empty network-free (C14 resolver)"
+ok "t30: executed against scratch bare remotes — absent→empty, present+reachable→sha, orphaned→loud naming value+owner verbs, non-hex→loud, non-marker-side events answer empty network-free, and the retired push arm gate-skips (C14 resolver; C04 re-aim)"
 
 # --- t31: executed marker..sha chain + idempotence + re-cover (C14) --------------
 # The detect chain of the changes job, staged and run against a scratch repo
@@ -2322,5 +2415,1041 @@ then
   fail "t34: see the t34 detail above"
 fi
 ok "t34: on.workflow_call.outputs declares bump_sha = jobs.bump.outputs.bump_sha (job key, B1) — the called-run output the main-sync aggregate advance rides (C15 §A task 3)"
+
+
+# --- t35: executed changed-set package steps (C03 AC1/AC2) ---------------------
+# The publish legs must package the changed set, not the tree: the package
+# step is driven by the changes job output, one `cr package "charts/<c>"`
+# per changed chart. Executed whole-step over a stub cr recording argv +
+# scratch remotes (the carrier-replay pattern): CHARTS_JSON=["a","b"] ->
+# exactly the two named package invocations, in order, nothing else;
+# CHARTS_JSON=[] -> zero. Red at base: the glob form packages the tree.
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t35: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+def package_step_body(jn):
+    for s in (jobs.get(jn) or {}).get('steps', []):
+        if isinstance(s, dict) and 'cr package' in str(s.get('run', '')):
+            return str(s.get('run', ''))
+    return None
+
+
+def normalize(body):
+    b = re.sub(r'\$\{\{\s*needs\.changes\.outputs\.charts\s*\}\}', '"$CHARTS_JSON"', body)
+    b = re.sub(r'\$\{\{\s*vars\.DEBUG\s*\}\}', '"$DEBUG"', b)
+    left = [l for l in b.splitlines() if '${{' in l and 'GITHUB_OUTPUT' not in l]
+    if left:
+        print(f'FAIL: t35: the staged step still carries an unnormalized interpolation: {left[0].strip()[:90]!r} — harness fault', file=sys.stderr)
+        sys.exit(1)
+    return b
+
+
+def run_step(body, charts_json, root):
+    sb = os.path.join(root, f'sb{len(os.listdir(root))}')
+    os.makedirs(os.path.join(sb, 'charts', 'a'))
+    os.makedirs(os.path.join(sb, 'charts', 'b'))
+    open(os.path.join(sb, 'charts', 'a', 'Chart.yaml'), 'w').write('apiVersion: v2\nname: a\nversion: 0.1.0\n')
+    open(os.path.join(sb, 'charts', 'b', 'Chart.yaml'), 'w').write('apiVersion: v2\nname: b\nversion: 0.1.0\n')
+    shim = os.path.join(sb, 'shim')
+    os.makedirs(shim)
+    rec = os.path.join(sb, 'cr.rec')
+    with open(os.path.join(shim, 'cr'), 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('printf "cr %%s\\n" "$*" >> "%s"\n' % rec)
+        f.write('exit 0\n')
+    with open(os.path.join(shim, 'git'), 'w') as f:
+        f.write('#!/bin/sh\nif [ "$1" = "remote" ] || [ "$1" = "fetch" ]; then exit 0; fi\nexec /usr/bin/git "$@"\n')
+    with open(os.path.join(shim, 'curl'), 'w') as f:
+        f.write('#!/bin/sh\nexit 0\n')
+    for n in ('cr', 'git', 'curl'):
+        os.chmod(os.path.join(shim, n), 0o755)
+    e = os.environ.copy()
+    e['PATH'] = shim + os.pathsep + e['PATH']
+    e['CHARTS_JSON'] = charts_json
+    e['CR_TOKEN'] = 'dummy-token'
+    e['PUSH_URL'] = 'https://example.invalid'
+    e['DEBUG'] = ''  # the platform renders an unset repo variable as empty; a missing env would die under set -u
+    r = subprocess.run(['bash', '-c', body], cwd=sb, capture_output=True, text=True, env=e, timeout=120)
+    pk = []
+    if os.path.exists(rec):
+        for l in open(rec).read().splitlines():
+            if l.startswith('cr package '):
+                pk.append(l[len('cr package '):].split())
+    return r, pk
+
+
+root = tempfile.mkdtemp(prefix='forgejo-t35-')
+try:
+    for jn in ('release', 'forgejo-publish'):
+        body = package_step_body(jn)
+        need(body is not None, f'{jn} has no cr package step to execute (harness fault — t1 owns that red)')
+        r, pk = run_step(normalize(body), '["a", "b"]', root)
+        if r.returncode != 0:
+            print(f'FAIL: t35: {jn} package step exited {r.returncode} on the changed-set run ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the step must be clean over a stub cr', file=sys.stderr)
+            sys.exit(1)
+        need(pk == [['charts/a'], ['charts/b']],
+             f'{jn}: cr package invocations are {pk!r}, expected exactly [charts/a] then [charts/b] (one named invocation per changed chart, in order, nothing else — C03 AC1; the base glob form packs the tree)')
+        r2, pk2 = run_step(normalize(body), '[]', root)
+        if r2.returncode != 0:
+            print(f'FAIL: t35: {jn} package step exited {r2.returncode} on the empty-set run ({(r2.stderr.strip() or r2.stdout.strip())[-140:]!r}) — an empty changed set must be a no-op, not a die (the has_changes gate shape, C03 AC2)', file=sys.stderr)
+            sys.exit(1)
+        need(pk2 == [],
+             f'{jn}: cr package invocations are {pk2!r} on the empty changed set, expected zero (a false set never reaches a package invocation)')
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+PY
+then
+  fail "t35: see the t35 detail above"
+fi
+ok "t35: executed over a stub cr — CHARTS_JSON [\"a\",\"b\"] packages exactly charts/a then charts/b and nothing else in release + forgejo-publish; the empty set packages nothing (C03 AC1/AC2)"
+
+# --- t36: static pins — CHARTS_JSON wiring, glob ban, unchanged gates (C03 AC1-AC2/AC5) ---
+if ! python3 - "$WF" <<'PY'
+import re, sys, yaml
+
+raw = open(sys.argv[1]).read()
+doc = yaml.safe_load(raw) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t36: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+# AC1: the CHARTS_JSON env wiring on both publish jobs — job-level or step
+# env, pinned by shape: a CHARTS_JSON key bound to needs.changes.outputs.charts.
+for jn in ('release', 'forgejo-publish'):
+    job = jobs.get(jn) or {}
+    envs = [job.get('env') or {}] + [s.get('env') or {} for s in (job.get('steps') or []) if isinstance(s, dict)]
+    wired = any('CHARTS_JSON' in e and 'needs.changes.outputs.charts' in str(e['CHARTS_JSON']) for e in envs)
+    need(wired, f'{jn} has no CHARTS_JSON env bound to needs.changes.outputs.charts (job-level or step env — dev\'s choice, pinned by shape; C03 task 1/2)')
+
+# AC1: the charts/*/ glob is banned on cr package lines; the heal glob is
+# exempted by the line's verb context (git add / the heal for-loop).
+for ln in raw.splitlines():
+    s = ln.strip()
+    if 'charts/*/' in s and not s.startswith('#'):
+        need('cr package' not in s,
+             f'a cr package line still carries the charts/*/ glob: {s[:100]!r} — the publish legs are changed-set scoped (C03 task 1/2); only the heal loop\'s Chart.lock glob and the git add may keep it')
+
+# AC2: the has_changes step gates are byte-untouched (three publish steps).
+n = len(re.findall(r"(?m)^\s*if:\s*needs\.changes\.outputs\.has_changes\s*==\s*'true'\s*$", raw))
+need(n == 3, f'{n} has_changes step gates, expected exactly 3 (release publish + forgejo Package + forgejo Push) — byte-untouched (C03 task 4)')
+
+# AC2: --skip-existing (GitHub) byte-untouched on every cr upload line
+# (the C02 capture may carry the line in both guard arms — hence the
+# per-line pin rather than a site count).
+up = [l for l in raw.splitlines() if 'cr upload' in l and not l.strip().startswith('#')]
+need(up, 'no cr upload line — the GitHub upload leg is missing (C03 task 4)')
+bad = [l for l in up if '--skip-existing' not in l]
+need(not bad, f'a cr upload line lost --skip-existing: {[l.strip()[:80] for l in bad]} — byte-untouched (C03 task 4)')
+
+# AC2: the instance skip-if-in-index guard stays.
+push = next((str(s.get('run', '')) for s in ((jobs.get('forgejo-publish') or {}).get('steps') or [])
+            if isinstance(s, dict) and 'Push packages' in str(s.get('name', ''))), '')
+need('for pkg in .cr-release-packages/*.tgz' in push, 'the forgejo push leg lost its .cr-release-packages/*.tgz iteration — the skip-if-in-index guard narrows naturally (C03 task 2)')
+need('already in the instance registry' in push, 'the forgejo push leg lost its skip-if-in-index echo — a retry must never churn (C03 task 2)')
+
+# AC2: the gh-pages cr index --push sequence stays.
+rel = next((str(s.get('run', '')) for s in ((jobs.get('release') or {}).get('steps') or [])
+           if isinstance(s, dict) and 'Publish GitHub Releases' in str(s.get('name', ''))), '')
+m = [l for l in rel.splitlines() if 'cr index' in l and not l.strip().startswith('#')]
+need(any('--push' in l and '--remote publish' in l for l in m),
+     'the release leg lost its cr index --push --remote publish shape (C03 task 4)')
+
+# AC5: the changes job owns the DNS-safe + Chart.yaml-present filter (static
+# wiring pin — no new behavior minted in the package legs).
+det = next((str(s.get('run', '')) for s in ((jobs.get('changes') or {}).get('steps') or [])
+           if isinstance(s, dict) and 'CHARTS=' in str(s.get('run', ''))), '')
+need("grep -E '^[a-z0-9]+(-[a-z0-9]+)*$'" in det,
+     'the changes job lost its DNS-safe name filter (C03 AC5 — the detected-name gate)')
+need('-f "charts/$c/Chart.yaml"' in det,
+     'the changes job lost its Chart.yaml-present filter (C03 AC5 — a name without a Chart.yaml cannot enter the package set)')
+PY
+then
+  fail "t36: see the t36 detail above"
+fi
+ok "t36: CHARTS_JSON env wiring on both publish jobs, the charts/*/ glob banned off cr package (heal glob exempted by verb context), the has_changes gates / --skip-existing / skip-if-in-index / cr index --push byte-untouched, the changes job's DNS-safe + Chart.yaml filter intact (C03 AC1/AC2/AC5)"
+
+# --- t37: comment re-truth — publish legs name the scope, the D47.1 heal comment stays (C03 task 3) ---
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t37: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+# The publish legs' comments must name the changed-set scope (task 3: the
+# stale "cr package Build()s every chart every fire" premise is re-truthed
+# where it stated the PUBLISH legs; loose word pin — the comment's wording
+# is dev's, its claim is not).
+for jn in ('release', 'forgejo-publish'):
+    body = next((str(s.get('run', '')) for s in ((jobs.get(jn) or {}).get('steps') or [])
+                if isinstance(s, dict) and 'cr package' in str(s.get('run', ''))), '')
+    comments = [l for l in body.splitlines() if l.lstrip().startswith('#')]
+    need(any('changed' in l.lower() for l in comments),
+         f'{jn} cr package step carries no comment naming the changed-set scope (C03 task 3 — the premise must be re-truthed in-file)')
+
+# The bump job's D47.1 heal comment survives verbatim (t22 pins the loop
+# structure; this pin owns the rationale text the suite's premise quotes).
+bump = next((str(s.get('run', '')) for s in ((jobs.get('bump') or {}).get('steps') or [])
+            if isinstance(s, dict) and 'Chart.lock' in str(s.get('run', ''))), '')
+for frag in ('Lock self-heal, full tree (D47.1)', 'Build()s EVERY'):
+    need(frag in bump, f'the bump job\'s D47.1 heal comment lost {frag!r} — the self-heal rationale comment survives verbatim (C03 task 3; t22 pins the loop, this pin the text)')
+PY
+then
+  fail "t37: see the t37 detail above"
+fi
+ok "t37: the publish-leg comments name the changed-set scope and the bump job's D47.1 heal comment survives verbatim (C03 task 3)"
+
+
+# --- t38: cross-file gate shape — the three builders share the workflow_call-only form (C04 AC1) ---
+# C04 unifies the marker-gate condition: build-charts (base: push+call) joins
+# build-containers :154 and coder-template-push :178 on the identical
+# `if [ "$EVENT_NAME" != workflow_call ]; then` shape. The negative pin is
+# the mutation tooth: re-adding the `push` arm reddens both pins at once.
+if ! python3 - <<'PY'
+import sys
+
+GATE = 'if [ "$EVENT_NAME" != workflow_call ]; then'
+for f in ('build-charts.yaml', 'build-containers.yaml', 'coder-template-push.yaml'):
+    raw = open('.forgejo/workflows/' + f).read()
+    n = sum(1 for l in raw.splitlines() if l.strip() == GATE)
+    if n != 1:
+        print(f'FAIL: t38: {f} carries {n} {GATE!r} line(s), expected exactly 1 (the three builders share the identical workflow_call-only gate shape, C04 AC1)', file=sys.stderr)
+        sys.exit(1)
+    if '!= push' in raw:
+        print(f'FAIL: t38: {f} still carries a `!= push` gate arm — the push belt is retired (D56; C04 unifies on the workflow_call-only shape)', file=sys.stderr)
+        sys.exit(1)
+PY
+then
+  fail "t38: see the t38 detail above"
+fi
+ok "t38: build-charts, build-containers and coder-template-push all carry the identical workflow_call-only gate shape and no push arm (C04 AC1; the re-added push arm reddens both pins)"
+
+# --- t39: forgejo.* context family — the github.* event reads are retired (C04 AC1) ---
+# Every one of the three event fields has live fleet precedent in
+# build-containers.yaml on the same Forgejo 15.0.10; the compat siblings
+# that stay (main-sync GH_REF github.ref, renovate server_url/repository)
+# live in the other files and are pinned there.
+if ! python3 - <<'PY'
+import re, sys
+
+raw = open('.forgejo/workflows/build-charts.yaml').read()
+for tok in ('github.event_name', 'github.event.before', 'github.sha'):
+    n = len(re.findall(re.escape(tok) + r'(?![0-9A-Za-z_])', raw))
+    if n != 0:
+        print(f'FAIL: t39: {tok!r} occurs {n} time(s) in build-charts.yaml, expected zero — the event-context family is forgejo.* only (C04 AC1; the documented-and-kept github.* compat reads live in main-sync/renovate, not here)', file=sys.stderr)
+        sys.exit(1)
+for tok in ('forgejo.event_name', 'forgejo.event.before', 'forgejo.sha'):
+    n = len(re.findall(re.escape(tok) + r'(?![0-9A-Za-z_])', raw))
+    if n < 1:
+        print(f'FAIL: t39: {tok!r} is absent from build-charts.yaml — the {tok.split(".")[1]} event read is not on the forgejo context family (C04 task 2)', file=sys.stderr)
+        sys.exit(1)
+PY
+then
+  fail "t39: see the t39 detail above"
+fi
+ok "t39: build-charts.yaml carries no github.event_name / github.event.before / github.sha reference and reads event_name / event.before / sha from the forgejo.* family (C04 task 2/AC1)"
+
+
+# --- t40: quiet-by-default statics — show-progress x5 + fetch-depth byte-invariance (C02 AC1) ---
+# The five full-depth checkouts gain show-progress: false (the action's
+# fetch args carry --progress only when it is true — source-verified); the
+# fetch-depth: 0 lines stay BYTE-UNCHANGED (law). Both removals redden.
+if ! python3 - "$WF" <<'PY'
+import sys, yaml
+
+raw = open(sys.argv[1]).read()
+doc = yaml.safe_load(raw) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t40: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+full = [s for j in jobs.values() if isinstance(j, dict)
+        for s in (j.get('steps') or [])
+        if isinstance(s, dict) and str(s.get('uses', '')).startswith('actions/checkout@')
+        and (s.get('with') or {}).get('fetch-depth') in (0, '0')]
+need(len(full) == 5, f'{len(full)} full-depth (fetch-depth: 0) checkout steps, expected 5 (the V-6 family — the C02 gate targets are these five)')
+for s in full:
+    sp = (s.get('with') or {}).get('show-progress')
+    need(sp in (False, 'false'),
+         f'a full-depth checkout pins show-progress {sp!r}, expected false — the action\'s fetch args emit --progress (the ~976 ln/fan-push block) only when it is true (C02 task a)')
+
+# fetch-depth lines byte-invariant: every fetch-depth line in the file is
+# exactly `fetch-depth: 0` and there are five of them (the V-6 family).
+fd0 = sum(1 for l in raw.splitlines() if l.strip() == 'fetch-depth: 0')
+fd_any = sum(1 for l in raw.splitlines() if l.strip().startswith('fetch-depth:'))
+need(fd0 == 5, f'{fd0} `fetch-depth: 0` lines, expected 5 — the V-6 full-depth law is byte-invariant (C02 task a: the redirect must not touch it)')
+need(fd_any == fd0, f'{fd_any} fetch-depth lines but only {fd0} are 0 — a shallow fetch-depth has crept in (the V-6 family is full-depth only)')
+PY
+then
+  fail "t40: see the t40 detail above"
+fi
+ok "t40: show-progress: false on all five full-depth checkout steps and the fetch-depth: 0 lines byte-invariant (5 of 5, no shallow creep) (C02 AC1 statics)"
+
+# --- t41: executed fetch gate — the two explicit tag fetches run -q by default (C02 AC1) ---
+# The release + forgejo-publish "Pick up" steps each carry an explicit
+# `git fetch --tags` (the ~976 ln per-ref enumeration, OQ1's biggest
+# "ours" source). Executed against a fixture remote with NEW refs created
+# after the clone: default (DEBUG unset) must be the -q form — silent, no
+# per-ref lines; DEBUG=true the unquieted form — the per-ref summary must
+# appear (empirically verified mechanism: only -q is fully silent).
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+raw = open(sys.argv[1]).read()
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t41: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+nq = sum(1 for l in raw.splitlines() if l.strip() == 'git fetch --tags -q')
+need(nq == 2, f'{nq} `git fetch --tags -q` lines, expected 2 (one per explicit-fetch leg — the DEBUG-gated pair\'s default arm; C02 task a)')
+
+picks = [str(s.get('run', '')) for j in jobs.values() if isinstance(j, dict)
+         for s in (j.get('steps') or [])
+         if isinstance(s, dict) and 'git fetch origin refs/heads/main:refs/remotes/origin/main' in str(s.get('run', ''))
+         and 'git fetch --tags' in str(s.get('run', ''))]
+need(len(picks) == 2, f'{len(picks)} explicit-fetch "Pick up" steps, expected 2 (release + forgejo-publish)')
+
+
+def normalize(body):
+    b = re.sub(r'\$\{\{\s*vars\.DEBUG\s*\}\}', '"$DEBUG"', body)
+    left = [l for l in b.splitlines() if '${{' in l]
+    if left:
+        print(f'FAIL: t41: the staged step still carries an unnormalized interpolation: {left[0].strip()[:90]!r} — harness fault', file=sys.stderr)
+        sys.exit(1)
+    return b
+
+
+def make_fixture(root, label):
+    git = shutil.which('git')
+    remote = os.path.join(root, label + '-remote.git')
+    subprocess.run([git, 'init', '-q', '--bare', remote], check=True)
+    work = os.path.join(root, label + '-work')
+    subprocess.run([git, 'clone', '-q', remote, work], check=True, capture_output=True)
+    subprocess.run([git, '-C', work, 'config', 'user.email', 'test@example.invalid'], check=True)
+    subprocess.run([git, '-C', work, 'config', 'user.name', 'test'], check=True)
+    open(os.path.join(work, 'seed.txt'), 'w').write('seed\n')
+    subprocess.run([git, '-C', work, 'add', '-A'], check=True)
+    subprocess.run([git, '-C', work, 'commit', '-qm', 'a'], check=True)
+    subprocess.run([git, '-C', work, 'push', '-q', 'origin', 'HEAD:refs/heads/main'], check=True)
+    # NEW refs after the clone: the unquieted fetch must enumerate them.
+    work2 = os.path.join(root, label + '-work2')
+    subprocess.run([git, 'clone', '-q', remote, work2], check=True, capture_output=True)
+    subprocess.run([git, '-C', work2, 'config', 'user.email', 'test@example.invalid'], check=True)
+    subprocess.run([git, '-C', work2, 'config', 'user.name', 'test'], check=True)
+    open(os.path.join(work2, 'feat.txt'), 'w').write('feat\n')
+    subprocess.run([git, '-C', work2, 'checkout', '-qb', 'feature'], check=True)
+    subprocess.run([git, '-C', work2, 'add', '-A'], check=True)
+    subprocess.run([git, '-C', work2, 'commit', '-qm', 'feat'], check=True)
+    subprocess.run([git, '-C', work2, 'push', '-q', 'origin', 'feature'], check=True)
+    # v2 is minted in the SECOND clone so it is a NEW ref for work's fetch
+    # (a tag created in work itself would not be enumerated as new).
+    subprocess.run([git, '-C', work2, 'tag', 'v2'], check=True)
+    subprocess.run([git, '-C', work2, 'push', '-q', 'origin', 'v2'], check=True)
+    return work
+
+
+root = tempfile.mkdtemp(prefix='forgejo-t41-')
+try:
+    for i, body in enumerate(picks):
+        # a fresh fixture per case: the default run's -q fetch would consume
+        # the new refs the DEBUG arm must enumerate.
+        for label, debug in (('default', False), ('debug', True)):
+            work = make_fixture(root, f'p{i}{label}')
+            e = os.environ.copy()
+            e['DEBUG'] = 'true' if debug else ''  # unset repo variable renders empty on the platform
+            r = subprocess.run(['bash', '-c', normalize(body)], cwd=work, capture_output=True, text=True, env=e, timeout=120)
+            out = r.stdout + r.stderr
+            tag = 'default' if not debug else 'DEBUG=true'
+            if r.returncode != 0:
+                print(f'FAIL: t41: pick-up step {i} exited {r.returncode} on the {tag} run ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the step must be clean over a fixture remote', file=sys.stderr)
+                sys.exit(1)
+            perref = [l for l in out.splitlines() if re.search(r'\*\s+\[new (tag|branch|head)\]', l)]
+            if not debug and perref:
+                print(f'FAIL: t41: pick-up step {i} DEFAULT run emitted per-ref lines from the explicit tag fetch: {perref[:3]} — the default arm must be the -q form (fully silent; C02 task a)', file=sys.stderr)
+                sys.exit(1)
+            if debug and (len(perref) < 2 or 'v2' not in out or 'feature' not in out):
+                print(f'FAIL: t41: pick-up step {i} DEBUG=true run emitted no per-ref summary ({len(perref)} new-ref lines; expected the v2 tag + feature branch enumeration) — the DEBUG arm must run the UNQUIETED form (C02 task a)', file=sys.stderr)
+                sys.exit(1)
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+PY
+then
+  fail "t41: see the t41 detail above"
+fi
+ok "t41: executed against fixture remotes with new refs — the default run is the silent -q form (no per-ref lines) and DEBUG=true runs the unquieted form (per-ref summary for the new tag + branch, both legs) (C02 AC1)"
+
+
+# --- t42: output capture — repo-add + dep-update legs, DEBUG-gated (C02 AC2) ---
+# The three "Add repositories" legs (one `bash scripts/forgejo-helm-repo-add.sh`
+# each after C04) and the `helm dependency update` calls (test-build matrix leg
+# + the bump-job full-tree self-heal loop, whose BEHAVIOR is unchanged — D47.1)
+# become DEBUG-gated: default = output to a per-leg log file + one summary line
+# per leg with a count; DEBUG=true = the uncaptured direct form. Executed over
+# a stub helm recording argv + emitting TALK chatter (the shim-on-PATH pattern);
+# an unguarded invocation added outside the capture reddens.
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t42: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+def step_body(jn, name_part):
+    for s in (jobs.get(jn) or {}).get('steps', []):
+        if isinstance(s, dict) and name_part in str(s.get('name', '')):
+            return str(s.get('run', ''))
+    return None
+
+
+def guard_span(body):
+    # (start, end) line indices of the vars.DEBUG guard block, or None.
+    lines = body.splitlines()
+    for i, l in enumerate(lines):
+        if l.strip().startswith('if [') and 'vars.DEBUG' in l:
+            depth = 0
+            for j in range(i, len(lines)):
+                t = lines[j].strip()
+                if re.match(r'^if\b', t):
+                    depth += 1
+                if re.match(r'^fi\b', t):
+                    depth -= 1
+                    if depth == 0:
+                        return (i, j)
+    return None
+
+
+def normalize(body):
+    b = re.sub(r'\$\{\{\s*vars\.DEBUG\s*\}\}', '"$DEBUG"', body)
+    b = re.sub(r'\$\{\{\s*matrix\.chart\s*\}\}', 'mchart', b)
+    left = [l for l in b.splitlines() if '${{' in l]
+    if left:
+        print(f'FAIL: t42: the staged block still carries an unnormalized interpolation: {left[0].strip()[:90]!r} — harness fault', file=sys.stderr)
+        sys.exit(1)
+    return b
+
+
+def make_sandbox(root, with_script, with_locks):
+    sb = tempfile.mkdtemp(prefix='forgejo-t42-', dir=root)
+    shim = os.path.join(sb, 'shim')
+    os.makedirs(shim)
+    rec = os.path.join(sb, 'helm.rec')
+    with open(os.path.join(shim, 'helm'), 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('printf \'helm %%s\\n\' "$*" >> "%s"\n' % rec)
+        f.write('if [ "$1" = "dependency" ]; then\n  if [ "$2" = "update" ]; then\n    echo "TALK: dep update $3"\n  else\n    printf \'NAME\\tVERSION\\tREPOSITORY\\tSTATUS\\nargo-cd\\t10.18.2\\thttps://argoproj.github.io/argo-helm\\tmissing\\ncert-manager\\tv1.21.3\\thttps://charts.jetstack.io\\tmissing\\ngateway-api-crds\\t1.2.5\\thttps://charts.christianhuth.de\\tmissing\\n\\n\'\n  fi\nelif [ "$1" = "repo" ]; then\n  echo "TALK: repo add $3 $4"\nfi\nexit 0\n')
+    os.chmod(os.path.join(shim, 'helm'), 0o755)
+    if with_script:
+        os.makedirs(os.path.join(sb, 'scripts'))
+        with open(os.path.join(sb, 'scripts', 'forgejo-helm-repo-add.sh'), 'w') as f:
+            f.write('#!/bin/sh\n'
+                    'helm repo add argo-cd https://argoproj.github.io/argo-helm\n'
+                    'helm repo add cert-manager https://charts.jetstack.io\n'
+                    'helm repo add gateway-api-crds https://charts.christianhuth.de\n'
+                    'exit 0\n')
+        os.chmod(os.path.join(sb, 'scripts', 'forgejo-helm-repo-add.sh'), 0o755)
+    if with_locks:
+        for c in ('a', 'b'):
+            os.makedirs(os.path.join(sb, 'charts', c))
+            open(os.path.join(sb, 'charts', c, 'Chart.lock'), 'w').write('dependencies: []\n')
+    return sb
+
+
+def pre_files(sb):
+    out = set()
+    for dirpath, _, filenames in os.walk(sb):
+        for fn in filenames:
+            out.add(os.path.join(dirpath, fn))
+    return out
+
+
+def find_marker(sb, marker, pre):
+    for dirpath, _, filenames in os.walk(sb):
+        for fn in filenames:
+            p = os.path.join(dirpath, fn)
+            if p in pre:
+                continue
+            try:
+                if marker in open(p, errors='ignore').read():
+                    return p
+            except OSError:
+                pass
+    return None
+
+
+def has_count(text, n):
+    return any(re.search(r'\b%d\b' % n, l) for l in text.splitlines())
+
+
+def run(text, sb, debug):
+    e = os.environ.copy()
+    e['PATH'] = os.path.join(sb, 'shim') + os.pathsep + e['PATH']
+    e['GITHUB_WORKSPACE'] = sb
+    e['FORGEJO_WORKSPACE'] = sb
+    if debug:
+        e['DEBUG'] = 'true'
+    else:
+        e['DEBUG'] = ''  # unset repo variable renders empty on the platform; a missing env would die under set -u
+    return subprocess.run(['bash', '-c', text], cwd=sb, capture_output=True, text=True, env=e, timeout=120)
+
+
+root = tempfile.mkdtemp(prefix='forgejo-t42-')
+try:
+    # (i) repo-add leg — the test-build "Add repositories" step, executed whole
+    # (post-C04 it is set -eu + the DEBUG-gated script invocation).
+    body = step_body('test-build', 'Add repositories')
+    need(body is not None, 'no test-build Add repositories step (harness fault — t6 owns that red)')
+    sb = make_sandbox(root, with_script=True, with_locks=True)
+    pre = pre_files(sb)
+    r = run(normalize(body), sb, debug=False)
+    out = r.stdout
+    if r.returncode != 0:
+        print(f'FAIL: t42: repo-add leg default run exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the captured form must run clean over the stub helm', file=sys.stderr)
+        sys.exit(1)
+    if 'TALK:' in out:
+        print('FAIL: t42: repo-add leg DEFAULT run emitted per-repo chatter on stdout — the captured form must redirect to a log file + one summary line (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    log = find_marker(sb, 'TALK:', pre)
+    if log is None:
+        print('FAIL: t42: repo-add leg default run wrote no log file carrying the chatter — the capture must land the per-repo output in a per-leg log file (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    if not has_count(out, 3):
+        print(f'FAIL: t42: repo-add leg default run summary carries no count matching the fixture (3 repos): {out.splitlines()!r} — the one-line summary must state the added-repo count (C02 AC2)', file=sys.stderr)
+        sys.exit(1)
+    r2 = run(normalize(body), sb, debug=True)
+    if r2.returncode != 0:
+        print(f'FAIL: t42: repo-add leg DEBUG=true run exited {r2.returncode} ({(r2.stderr.strip() or r2.stdout.strip())[-140:]!r})', file=sys.stderr)
+        sys.exit(1)
+    if r2.stdout.count('TALK:') < 3:
+        print('FAIL: t42: repo-add leg DEBUG=true run shows no per-repo chatter — the DEBUG arm must run the uncaptured direct form (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    rm = run(normalize(body) + '\nhelm repo add rogue https://rogue.example/rogue\n', sb, debug=False)
+    if 'TALK: repo add rogue' not in rm.stdout:
+        print('FAIL: t42: an UNGUARDED helm repo add outside the capture did not reach stdout — the capture teeth cannot bite (the mutant must red)', file=sys.stderr)
+        sys.exit(1)
+
+    # (ii) dep-update capture — the test-build matrix leg.
+    smoke = step_body('test-build', 'Lint and package smoke')
+    need(smoke is not None, 'no test-build Lint and package smoke step (harness fault — t19 owns that red)')
+    sp = guard_span(smoke)
+    if sp is None:
+        print('FAIL: t42: the test-build dep-update leg carries no vars.DEBUG guard — the helm dependency update chatter must be captured by default (C02 task b; red until it lands)', file=sys.stderr)
+        sys.exit(1)
+    block = '\n'.join(smoke.splitlines()[sp[0]:sp[1] + 1])
+    sb2 = make_sandbox(root, with_script=False, with_locks=False)
+    pre2 = pre_files(sb2)
+    r = run(normalize(block), sb2, debug=False)
+    if r.returncode != 0:
+        print(f'FAIL: t42: dep-update leg default run exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the captured form must run clean', file=sys.stderr)
+        sys.exit(1)
+    if 'TALK: dep update' in r.stdout:
+        print('FAIL: t42: dep-update leg DEFAULT run emitted per-chart chatter on stdout — it must be captured to the log file + summary (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    if find_marker(sb2, 'TALK:', pre2) is None:
+        print('FAIL: t42: dep-update leg default run wrote no log file carrying the chatter (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    if not has_count(r.stdout, 1):
+        print(f'FAIL: t42: dep-update leg default summary carries no count matching the fixture (1 chart): {r.stdout.splitlines()!r} — the one-line summary must state the updated-chart count (C02 AC2)', file=sys.stderr)
+        sys.exit(1)
+    r2 = run(normalize(block), sb2, debug=True)
+    if r2.returncode != 0 or 'TALK: dep update' not in r2.stdout:
+        print('FAIL: t42: dep-update leg DEBUG=true run shows no per-chart chatter — the DEBUG arm must run the uncaptured direct form (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    rm = run(normalize(block) + '\nhelm dependency update charts/rogue\n', sb2, debug=False)
+    if 'TALK: dep update charts/rogue' not in rm.stdout:
+        print('FAIL: t42: an UNGUARDED helm dependency update outside the capture did not reach stdout — the capture teeth cannot bite (the mutant must red)', file=sys.stderr)
+        sys.exit(1)
+
+    # (iii) dep-update capture — the bump-job full-tree self-heal loop.
+    bump = step_body('bump', 'Bump changed charts')
+    need(bump is not None, 'no bump step (harness fault — t22 owns that red)')
+    sp = guard_span(bump)
+    if sp is None:
+        print('FAIL: t42: the bump self-heal leg carries no vars.DEBUG guard — the heal loop output must be captured by default (C02 task b; behavior unchanged, D47.1; red until it lands)', file=sys.stderr)
+        sys.exit(1)
+    need('charts/*/Chart.lock' in '\n'.join(bump.splitlines()[sp[0]:sp[1] + 1]),
+         'the bump DEBUG guard does not wrap the Chart.lock self-heal loop — only the heal loop output is captured; its BEHAVIOR is unchanged (D47.1)')
+    block = '\n'.join(bump.splitlines()[sp[0]:sp[1] + 1])
+    sb3 = make_sandbox(root, with_script=False, with_locks=True)
+    pre3 = pre_files(sb3)
+    r = run(normalize(block), sb3, debug=False)
+    if r.returncode != 0:
+        print(f'FAIL: t42: self-heal leg default run exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the captured form must run clean over the fixture locks', file=sys.stderr)
+        sys.exit(1)
+    if 'TALK: dep update' in r.stdout:
+        print('FAIL: t42: self-heal leg DEFAULT run emitted per-chart chatter on stdout — it must be captured (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    if find_marker(sb3, 'TALK:', pre3) is None:
+        print('FAIL: t42: self-heal leg default run wrote no log file carrying the chatter (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+    if not has_count(r.stdout, 2):
+        print(f'FAIL: t42: self-heal leg default summary carries no count matching the fixture (2 locks): {r.stdout.splitlines()!r} — the one-line summary must state the healed-lock count (C02 AC2)', file=sys.stderr)
+        sys.exit(1)
+    r2 = run(normalize(block), sb3, debug=True)
+    if r2.returncode != 0 or r2.stdout.count('TALK: dep update') < 2:
+        print('FAIL: t42: self-heal leg DEBUG=true run shows no per-chart chatter — the DEBUG arm must run the uncaptured direct form (C02 task b)', file=sys.stderr)
+        sys.exit(1)
+
+    # statics: all five (b) sites sit inside a vars.DEBUG guard.
+    for jn in ('test-build', 'release', 'forgejo-publish'):
+        b = step_body(jn, 'Add repositories')
+        lines = (b or '').splitlines()
+        idx = [i for i, l in enumerate(lines) if 'bash scripts/forgejo-helm-repo-add.sh' in l and not l.strip().startswith('#')]
+        if not idx:
+            print(f'FAIL: t42: {jn} Add repositories leg has no scripts/forgejo-helm-repo-add.sh invocation — the capture wraps C04\'s extracted script (wave 4, D6); red until C04 lands', file=sys.stderr)
+            sys.exit(1)
+        sp = guard_span(b)
+        if sp is None or not any(sp[0] <= i <= sp[1] for i in idx):
+            print(f'FAIL: t42: {jn} Add repositories script invocation is not inside a vars.DEBUG guard (C02 task b)', file=sys.stderr)
+            sys.exit(1)
+    idx = [i for i, l in enumerate(smoke.splitlines()) if 'helm dependency update' in l and not l.strip().startswith('#')]
+    need(idx and guard_span(smoke) and all(guard_span(smoke)[0] <= i <= guard_span(smoke)[1] for i in idx),
+         'the test-build helm dependency update call is not inside a vars.DEBUG guard (C02 task b)')
+    idx = [i for i, l in enumerate(bump.splitlines()) if 'helm dependency update' in l and not l.strip().startswith('#')]
+    need(idx and guard_span(bump) and all(guard_span(bump)[0] <= i <= guard_span(bump)[1] for i in idx),
+         'the bump self-heal helm dependency update call is not inside a vars.DEBUG guard (C02 task b)')
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+PY
+then
+  fail "t42: see the t42 detail above"
+fi
+ok "t42: repo-add + dep-update capture executed over a stub helm — default run: no chatter on stdout, log file written, one-line summary count matches the fixture; DEBUG=true: chatter uncaptured; unguarded-invocation mutants red; all five (b) sites inside vars.DEBUG guards (C02 AC2)"
+
+
+# --- t43: output capture — the cr package/upload/index echo, DEBUG-gated (C02 AC3) ---
+# The release leg's cr sequence + the forgejo-publish Package charts leg
+# (C03's changed-set scoped shape, step untouched — only its output is
+# captured) become DEBUG-gated: default = per-leg log file + one summary line
+# (package count, upload result, index verdict); DEBUG=true = the uncaptured
+# form. Executed over a stub cr recording argv + emitting CRECHO echo, with a
+# tolerant git shim (the gh-pages prep lines) and a no-op curl; an unguarded
+# cr package mutant reddens.
+if ! python3 - "$WF" <<'PY'
+import os, re, shutil, subprocess, sys, tempfile, yaml
+
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+jobs = doc.get('jobs') or {}
+
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t43: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+def step_body(jn, name_part):
+    for s in (jobs.get(jn) or {}).get('steps', []):
+        if isinstance(s, dict) and name_part in str(s.get('name', '')):
+            return str(s.get('run', ''))
+    return None
+
+
+def guard_blocks(body):
+    lines = body.splitlines()
+    blocks = []
+    for i, l in enumerate(lines):
+        if l.strip().startswith('if [') and 'vars.DEBUG' in l:
+            depth = 0
+            for j in range(i, len(lines)):
+                t = lines[j].strip()
+                if re.match(r'^if\b', t):
+                    depth += 1
+                if re.match(r'^fi\b', t):
+                    depth -= 1
+                    if depth == 0:
+                        blocks.append((i, j))
+                        break
+    return blocks
+
+
+def normalize(body):
+    b = re.sub(r'\$\{\{\s*needs\.changes\.outputs\.charts\s*\}\}', '"$CHARTS_JSON"', body)
+    b = re.sub(r'\$\{\{\s*vars\.DEBUG\s*\}\}', '"$DEBUG"', body)
+    left = [l for l in b.splitlines() if '${{' in l]
+    if left:
+        print(f'FAIL: t43: the staged block still carries an unnormalized interpolation: {left[0].strip()[:90]!r} — harness fault', file=sys.stderr)
+        sys.exit(1)
+    return b
+
+
+def make_sandbox(root, label):
+    sb = tempfile.mkdtemp(prefix='forgejo-t43-' + label, dir=root)
+    shim = os.path.join(sb, 'shim')
+    os.makedirs(shim)
+    rec = os.path.join(sb, 'cr.rec')
+    with open(os.path.join(shim, 'cr'), 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('printf \'cr %%s\\n\' "$*" >> "%s"\n' % rec)
+        f.write('echo "CRECHO: $*"\nexit 0\n')
+    with open(os.path.join(shim, 'git'), 'w') as f:
+        f.write('#!/bin/sh\nif [ "$1" = "remote" ] || [ "$1" = "fetch" ]; then exit 0; fi\nexec /usr/bin/git "$@"\n')
+    with open(os.path.join(shim, 'curl'), 'w') as f:
+        f.write('#!/bin/sh\nexit 0\n')
+    for n in ('cr', 'git', 'curl'):
+        os.chmod(os.path.join(shim, n), 0o755)
+    return sb
+
+
+def pre_files(sb):
+    out = set()
+    for dirpath, _, filenames in os.walk(sb):
+        for fn in filenames:
+            out.add(os.path.join(dirpath, fn))
+    return out
+
+
+def find_marker(sb, marker, pre):
+    for dirpath, _, filenames in os.walk(sb):
+        for fn in filenames:
+            p = os.path.join(dirpath, fn)
+            if p in pre:
+                continue
+            try:
+                if marker in open(p, errors='ignore').read():
+                    return p
+            except OSError:
+                pass
+    return None
+
+
+def has_count(text, n):
+    return any(re.search(r'\b%d\b' % n, l) for l in text.splitlines())
+
+
+def run(text, sb, debug):
+    e = os.environ.copy()
+    e['PATH'] = os.path.join(sb, 'shim') + os.pathsep + e['PATH']
+    e['GITHUB_WORKSPACE'] = sb
+    e['FORGEJO_WORKSPACE'] = sb
+    e['CR_TOKEN'] = 'dummy-token'
+    e['PUSH_URL'] = 'https://example.invalid'
+    e['CHARTS_JSON'] = '["a", "b"]'
+    if debug:
+        e['DEBUG'] = 'true'
+    else:
+        e['DEBUG'] = ''  # unset repo variable renders empty on the platform; a missing env would die under set -u
+    return subprocess.run(['bash', '-c', text], cwd=sb, capture_output=True, text=True, env=e, timeout=120)
+
+
+root = tempfile.mkdtemp(prefix='forgejo-t43-')
+try:
+    for jn in ('release', 'forgejo-publish'):
+        name = 'Publish GitHub Releases' if jn == 'release' else 'Package charts'
+        body = step_body(jn, name)
+        need(body is not None, f'{jn} has no cr package step (harness fault — t35 owns that red)')
+        blocks = [b for b in guard_blocks(body) if 'cr ' in '\n'.join(body.splitlines()[b[0]:b[1] + 1])]
+        if not blocks:
+            print(f'FAIL: t43: {jn} cr sequence carries no vars.DEBUG guard — the cr package/upload/index echo must be captured by default (C02 task c; red until it lands)', file=sys.stderr)
+            sys.exit(1)
+        for bi, (i, j) in enumerate(blocks):
+            block = '\n'.join(body.splitlines()[i:j + 1])
+            sb = make_sandbox(root, f'{jn}{bi}')
+            pre = pre_files(sb)
+            r = run(normalize(block), sb, debug=False)
+            if r.returncode != 0:
+                print(f'FAIL: t43: {jn} cr block {bi} default run exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the captured form must run clean over a stub cr', file=sys.stderr)
+                sys.exit(1)
+            if 'CRECHO:' in r.stdout:
+                print(f'FAIL: t43: {jn} cr block {bi} DEFAULT run emitted cr echo on stdout — it must be captured to the log file + summary (C02 task c)', file=sys.stderr)
+                sys.exit(1)
+            if find_marker(sb, 'CRECHO:', pre) is None:
+                print(f'FAIL: t43: {jn} cr block {bi} default run wrote no log file carrying the cr echo (C02 task c)', file=sys.stderr)
+                sys.exit(1)
+            rec = []
+            recfile = os.path.join(sb, 'cr.rec')
+            if os.path.exists(recfile):
+                rec = [l for l in open(recfile).read().splitlines() if l.startswith('cr package ')]
+            pk = [l[len('cr package '):].split() for l in rec]
+            need(pk == [['charts/a'], ['charts/b']],
+                 f'{jn} cr block {bi}: cr package invocations are {pk!r}, expected exactly [charts/a] then [charts/b] (the C03 changed-set shape inside the C02 capture; D6 final shape)')
+            if not has_count(r.stdout, 2):
+                print(f'FAIL: t43: {jn} cr block {bi} default summary carries no package count matching the fixture (2): {r.stdout.splitlines()!r} — the one-line summary must state the package count (C02 AC3)', file=sys.stderr)
+                sys.exit(1)
+            r2 = run(normalize(block), sb, debug=True)
+            if r2.returncode != 0 or 'CRECHO:' not in r2.stdout:
+                print(f'FAIL: t43: {jn} cr block {bi} DEBUG=true run shows no cr echo — the DEBUG arm must run the uncaptured form (C02 task c)', file=sys.stderr)
+                sys.exit(1)
+            rm = run(normalize(block) + '\ncr package charts/rogue\n', sb, debug=False)
+            if 'CRECHO: package charts/rogue' not in rm.stdout:
+                print(f'FAIL: t43: an UNGUARDED cr package outside the capture did not reach stdout — the capture teeth cannot bite (the mutant must red)', file=sys.stderr)
+                sys.exit(1)
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+PY
+then
+  fail "t43: see the t43 detail above"
+fi
+ok "t43: cr capture executed over a stub cr — default run: no cr echo on stdout, log file written, package count 2 summary, the C03 changed-set package shape intact; DEBUG=true: echo uncaptured; unguarded cr package mutant red (C02 AC3)"
+
+# --- t44: executed diag gates — the heavy dump lines, DEBUG-gated in both files (C02 AC4) ---
+# build-containers + builder-bootstrap diag steps: the three heavy dump lines
+# (env | grep ACTIONS_, docker buildx version, docker info) live only inside
+# a DEBUG guard that evaluates false when the variable is unset; the
+# one-line ROLE/event/run echoes stay ungated (OQ8). Executed over a stub
+# docker recording argv + a real env carrying an ACTIONS_ variable; an
+# unguarded docker info added outside the guard reddens.
+if ! python3 - <<'PY'
+import os, re, shutil, subprocess, sys, tempfile
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t44: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+def normalize(body):
+    b = body.replace('${{ vars.DEBUG }}', '"$DEBUG"')
+    if '${{' in b:
+        left = [l for l in b.splitlines() if '${{' in l]
+        print(f'FAIL: t44: the staged block still carries an unnormalized interpolation: {left[0].strip()[:90]!r} — harness fault', file=sys.stderr)
+        sys.exit(1)
+    return b
+
+
+def guard_span(body):
+    lines = body.splitlines()
+    for i, l in enumerate(lines):
+        if l.strip().startswith('if [') and 'vars.DEBUG' in l:
+            depth = 0
+            for j in range(i, len(lines)):
+                t = lines[j].strip()
+                if re.match(r'^if\b', t):
+                    depth += 1
+                if re.match(r'^fi\b', t):
+                    depth -= 1
+                    if depth == 0:
+                        return (i, j)
+    return None
+
+
+def make_sandbox(root, label):
+    sb = tempfile.mkdtemp(prefix='forgejo-t44-' + label, dir=root)
+    shim = os.path.join(sb, 'shim')
+    os.makedirs(shim)
+    rec = os.path.join(sb, 'docker.rec')
+    with open(os.path.join(shim, 'docker'), 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('printf \'docker %%s\\n\' "$*" >> "%s"\n' % rec)
+        f.write('if [ "$1" = "info" ]; then echo "DOCKER-TALK: info"; fi\n')
+        f.write('if [ "$1" = "buildx" ]; then echo "DOCKER-TALK: buildx version"; fi\n')
+        f.write('exit 0\n')
+    os.chmod(os.path.join(shim, 'docker'), 0o755)
+    return sb
+
+
+def run(block, sb, debug):
+    e = os.environ.copy()
+    e['PATH'] = os.path.join(sb, 'shim') + os.pathsep + e['PATH']
+    e['ACTIONS_FOO'] = 'bar'
+    if debug:
+        e['DEBUG'] = 'true'
+    else:
+        e['DEBUG'] = ''  # unset repo variable renders empty on the platform; a missing env would die under set -u
+    return subprocess.run(['bash', '-c', block], cwd=sb, capture_output=True, text=True, env=e, timeout=120)
+
+
+root = tempfile.mkdtemp(prefix='forgejo-t44-')
+try:
+    for f in ('build-containers.yaml', 'builder-bootstrap.yaml'):
+        import yaml
+        doc = yaml.safe_load(open('.forgejo/workflows/' + f).read()) or {}
+        heavies = []
+        for job in (doc.get('jobs') or {}).values():
+            if not isinstance(job, dict):
+                continue
+            for s in (job.get('steps') or []):
+                if isinstance(s, dict) and str(s.get('name', '')) == 'diag' and 'docker info' in str(s.get('run', '')):
+                    heavies.append(str(s.get('run', '')))
+        need(heavies, f'{f} has no heavy diag step (the env-grep / buildx / docker-info dumps) — harness fault')
+        for body in heavies:
+            sp = guard_span(body)
+            if sp is None:
+                print(f'FAIL: t44: {f} diag step carries no vars.DEBUG guard — the three heavy dump lines must be gated (unset variable evaluates false; C02 task d; red until it lands)', file=sys.stderr)
+                sys.exit(1)
+            block = '\n'.join(body.splitlines()[sp[0]:sp[1] + 1])
+            # static || true pins: still guarded WHERE THEY WERE (env-grep +
+            # buildx guarded, the bare docker info unguarded — unchanged).
+            blines = block.splitlines()
+            eg = [l for l in blines if 'env | grep ACTIONS_' in l and not l.lstrip().startswith('#')]
+            bx = [l for l in blines if 'docker buildx version' in l and not l.lstrip().startswith('#')]
+            di = [l for l in blines if 'docker info' in l and not l.lstrip().startswith('#')]
+            need(eg and eg[0].rstrip().endswith('|| true'), f'{f}: `env | grep ACTIONS_` lost its || true guard (C02 task d — guarded where it was)')
+            need(bx and bx[0].rstrip().endswith('|| true'), f'{f}: `docker buildx version` lost its || true guard (C02 task d — guarded where it was)')
+            need(di and not di[0].rstrip().endswith('|| true'), f'{f}: `docker info` gained a || true guard it never had — the shape is unchanged (C02 task d)')
+            sb = make_sandbox(root, f)
+            r = run(normalize(block), sb, debug=False)
+            if r.returncode != 0:
+                print(f'FAIL: t44: {f} diag default run exited {r.returncode} ({(r.stderr.strip() or r.stdout.strip())[-140:]!r}) — the gated shape must run clean', file=sys.stderr)
+                sys.exit(1)
+            log = open(os.path.join(sb, 'docker.rec')).read() if os.path.exists(os.path.join(sb, 'docker.rec')) else ''
+            if 'ACTIONS_FOO=bar' in (r.stdout + r.stderr):
+                print(f'FAIL: t44: {f} DEFAULT run emitted the env dump — the heavy lines must be gated off when the variable is unset (C02 AC4)', file=sys.stderr)
+                sys.exit(1)
+            if 'info' in log.split() or 'buildx' in log.split():
+                print(f'FAIL: t44: {f} DEFAULT run invoked the heavy docker commands (rec={log!r}) — the guard must evaluate false when unset (C02 AC4)', file=sys.stderr)
+                sys.exit(1)
+            r2 = run(normalize(block), sb, debug=True)
+            if r2.returncode != 0:
+                print(f'FAIL: t44: {f} DEBUG=true run exited {r2.returncode} ({(r2.stderr.strip() or r2.stdout.strip())[-140:]!r})', file=sys.stderr)
+                sys.exit(1)
+            log2 = open(os.path.join(sb, 'docker.rec')).read() if os.path.exists(os.path.join(sb, 'docker.rec')) else ''
+            if 'ACTIONS_FOO=bar' not in (r2.stdout + r2.stderr):
+                print(f'FAIL: t44: {f} DEBUG=true run did not emit the env dump (C02 task d)', file=sys.stderr)
+                sys.exit(1)
+            if 'info' not in log2.split() or 'buildx' not in log2.split():
+                print(f'FAIL: t44: {f} DEBUG=true run did not fire the heavy docker commands (rec={log2!r}) (C02 task d)', file=sys.stderr)
+                sys.exit(1)
+            rm = run(normalize(block) + '\ndocker info\n', sb, debug=False)
+            logm = open(os.path.join(sb, 'docker.rec')).read() if os.path.exists(os.path.join(sb, 'docker.rec')) else ''
+            if 'info' not in logm.split():
+                print(f'FAIL: t44: an UNGUARDED docker info added outside the guard did not execute — the gate teeth cannot bite (the mutant must red)', file=sys.stderr)
+                sys.exit(1)
+            # one-line echoes stay ungated (OQ8): they precede the guard.
+            need(sp[0] > 0, f'{f}: the guard opens at line 0 — the one-line echoes cannot be ungated (OQ8)')
+            pre = body.splitlines()[:sp[0]]
+            need(any('echo "ROLE=' in l for l in pre), f'{f}: the one-line ROLE echo is missing before the guard (OQ8 — it stays ungated)')
+            need(any('echo "event=' in l for l in pre), f'{f}: the one-line event/run echo is missing before the guard (OQ8 — it stays ungated)')
+finally:
+    shutil.rmtree(root, ignore_errors=True)
+PY
+then
+  fail "t44: see the t44 detail above"
+fi
+ok "t44: executed diag gates in build-containers + builder-bootstrap — unset variable: no env dump / docker info / buildx version; DEBUG=true: all three fire with their || true posture intact; unguarded docker info mutant red; the one-line ROLE/event echoes stay ungated (C02 AC4, OQ8)"
+
+# --- t45: the set -euo pipefail invariant — 42 workflow run blocks + 3 script lines (C02 AC6) ---
+# D2's law: the quieting redirect does not endorse gating set -e. The
+# occurrence count is invariant across C02: 42 workflow run blocks (14/11/7/5/3/2
+# per file — the plan text's 43 rides the scout inventory's off-by-one on
+# build-charts) plus forgejo-container-detect.sh set -eu,
+# coder-template-detect.sh set -eu, coder-template-push.sh set -euo pipefail.
+# Mutation-proven: flipping one block to `set -u` drops the count by exactly one.
+if ! python3 - <<'PY'
+import os, re, sys, tempfile, yaml
+
+def need(cond, msg):
+    if not cond:
+        print(f'FAIL: t45: {msg}', file=sys.stderr)
+        sys.exit(1)
+
+
+FILES = ['build-charts', 'build-containers', 'main-sync', 'coder-template-push', 'builder-bootstrap', 'renovate']
+EXPECTED = {'build-charts': 14, 'build-containers': 11, 'main-sync': 7, 'coder-template-push': 5, 'builder-bootstrap': 3, 'renovate': 2}
+
+
+def count_blocks(path):
+    doc = yaml.safe_load(open(path).read()) or {}
+    n = 0
+    for j in (doc.get('jobs') or {}).values():
+        if not isinstance(j, dict):
+            continue
+        for s in (j.get('steps') or []):
+            if isinstance(s, dict) and 'run' in s and str(s['run']).strip():
+                first = str(s['run']).lstrip().splitlines()[0]
+                if first == 'set -euo pipefail':
+                    n += 1
+    return n
+
+
+def flipped_count(path, old, new):
+    raw = open(path).read()
+    lines = raw.splitlines(True)
+    done = False
+    out = []
+    for l in lines:
+        if not done and re.match(r'^\s*' + re.escape(old) + r'\s*$', l):
+            out.append(l.replace(old, new))
+            done = True
+        else:
+            out.append(l)
+    need(done, f'the mutation did not bite on {path} (no {old!r} line) — a probe that cannot bite proves nothing')
+    fd, tmp = tempfile.mkstemp(suffix='.yaml')
+    with os.fdopen(fd, 'w') as f:
+        f.writelines(out)
+    try:
+        return count_blocks(tmp)
+    finally:
+        os.unlink(tmp)
+
+
+tot = 0
+for f in FILES:
+    p = '.forgejo/workflows/' + f + '.yaml'
+    c = count_blocks(p)
+    need(c == EXPECTED[f], f'{f}: {c} run blocks open with `set -euo pipefail`, expected {EXPECTED[f]} (the D2 law — the C02 redirect must not touch errexit; C02 AC6)')
+    tot += c
+    fc = flipped_count(p, 'set -euo pipefail', 'set -u')
+    need(fc == EXPECTED[f] - 1, f'{f}: the set -u flip produced {fc}, expected {EXPECTED[f] - 1} — the count leg must see the flip (mutation tooth)')
+need(tot == 42, f'total workflow run blocks is {tot}, expected 42 (C02 AC6 — the plan text\'s 43 rides the scout inventory\'s off-by-one)')
+
+
+def script_line_count(path, pat):
+    return len(re.findall(r'(?m)^\s*' + re.escape(pat) + r'\s*$', open(path).read()))
+
+
+for f, pat in (('scripts/forgejo-container-detect.sh', 'set -eu'),
+               ('scripts/coder-template-detect.sh', 'set -eu')):
+    c = script_line_count(f, pat)
+    need(c == 1, f'{f}: {c} `set -eu` line(s), expected exactly 1 (C02 AC6)')
+    need(script_line_count(f, 'set -euo pipefail') == 0, f'{f}: a `set -euo pipefail` line crept in (C02 AC6)')
+    raw = open(f).read()
+    fd, tmp = tempfile.mkstemp(suffix='.sh')
+    with os.fdopen(fd, 'w') as fh:
+        fh.write(re.sub(r'(?m)^(\s*)set -eu\s*$', r'\1set -u', raw, count=1))
+    need(script_line_count(tmp, pat) == 0, f'{f}: the set -u flip is invisible to the line counter (mutation tooth)')
+    os.unlink(tmp)
+
+p = 'scripts/coder-template-push.sh'
+c = script_line_count(p, 'set -euo pipefail')
+need(c == 1, f'{p}: {c} `set -euo pipefail` line(s), expected exactly 1 (C02 AC6)')
+raw = open(p).read()
+fd, tmp = tempfile.mkstemp(suffix='.sh')
+with os.fdopen(fd, 'w') as fh:
+    fh.write(re.sub(r'(?m)^(\s*)set -euo pipefail\s*$', r'\1set -u', raw, count=1))
+need(script_line_count(tmp, 'set -euo pipefail') == 0, f'{p}: the set -u flip is invisible to the line counter (mutation tooth)')
+os.unlink(tmp)
+PY
+then
+  fail "t45: see the t45 detail above"
+fi
+ok "t45: the set -euo pipefail occurrence count is invariant — 42 workflow run blocks (14/11/7/5/3/2) + the three script set lines, with the set -u flip mutation proven on every file (C02 AC6, D2)"
 
 printf 'PASS: forgejo-build-charts checks (%d ok)\n' "$checks"

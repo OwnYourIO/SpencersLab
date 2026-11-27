@@ -434,7 +434,8 @@ ok "t10: zero HMAC/header/crypto/payload/curl/relay-key/hook-relay literals anyw
 if ! python3 - "$WF" <<'PY'
 import re, sys, yaml
 
-jobs = (yaml.safe_load(open(sys.argv[1])) or {}).get('jobs') or {}
+raw = open(sys.argv[1]).read()
+jobs = (yaml.safe_load(raw)).get('jobs') or {}
 job = jobs.get('sync-fanout') or {}
 
 
@@ -456,8 +457,15 @@ for src in [job.get('env') or {}] + [s.get('env') or {} for s in (job.get('steps
 # interpolation), and the context refs are the pinned pair.
 need('ARGOCD_SYNC_TOKENS' in env_kv, 'env key ARGOCD_SYNC_TOKENS is not set — the vault secret must arrive via an env: mapping (secrets interpolated into run bodies land in the step script file, [27][29])')
 need('secrets.ARGOCD_SYNC_TOKENS' in env_kv.get('ARGOCD_SYNC_TOKENS', ''), f'env ARGOCD_SYNC_TOKENS is {env_kv.get("ARGOCD_SYNC_TOKENS")!r}, expected to reference secrets.ARGOCD_SYNC_TOKENS')
-need('github.event.ref' in env_kv.get('EVT_REF', ''), 'EVT_REF is not wired to github.event.ref (push events carry the ref)')
-need('github.ref' in env_kv.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the dispatch/workflow fallback, build-charts.yaml:95 precedent)')
+# C04 re-aim: EVT_REF moved to the forgejo.event.ref sub-context (fleet-proven);
+# GH_REF stays the documented github.ref compat fallback (no proven forgejo.ref
+# sibling — DECISIONS D4) with the REF chain byte-unchanged.
+need('forgejo.event.ref' in env_kv.get('EVT_REF', ''), 'EVT_REF is not wired to forgejo.event.ref (C04 task 2: the event.* sub-context family is fleet-proven)')
+n = len(re.findall(r'github\.event\.ref(?![0-9A-Za-z_])', raw))
+need(n == 0, f'github.event.ref occurs {n} time(s) file-wide, expected zero (C04: the event.* sub-context moved to forgejo.*)')
+n = len(re.findall(r'forgejo\.event\.ref(?![0-9A-Za-z_])', raw))
+need(n == 1, f'forgejo.event.ref occurs {n} time(s) file-wide, expected exactly once (the single EVT_REF binding site)')
+need('github.ref' in env_kv.get('GH_REF', ''), 'GH_REF is not wired to github.ref (the documented compat fallback — no proven forgejo.ref sibling, DECISIONS D4; C04 keeps it)')
 # Secrets are env-only: an interpolated ${{ secrets.* }} inside a run body
 # lands the literal value in the step script file the runner writes
 # ([27][29] doctrine). vars.* interpolation stays legal (the diag neighbors
@@ -485,7 +493,7 @@ PY
 then
   fail "t11: see the t11 detail above"
 fi
-ok 't11: env mapping of the tokens secret + EVT_REF/GH_REF context wiring, no action-expression interpolation inside run bodies, the byte-pinned invocation (path/config/ref, no --token, no per-call key), and the exact REF fallback chain (C06 AC4/AC5)'
+ok 't11: env mapping of the tokens secret + EVT_REF (forgejo.event.ref) / GH_REF (github.ref compat fallback) context wiring, no action-expression interpolation inside run bodies, the byte-pinned invocation (path/config/ref, no --token, no per-call key), and the exact REF fallback chain (C06 AC4/AC5; C04 re-aim)'
 
 # --- t12: posture (C06 AC6, ruled exit refinement) ---------------------------------
 # Unset vault => warn (with the org-worded line pinned byte-true so operators

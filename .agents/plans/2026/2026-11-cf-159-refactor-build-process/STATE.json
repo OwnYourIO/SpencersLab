@@ -123,6 +123,18 @@
       "friction": "one large compound shell command aborted mid-run (location shut down) -> smaller pieces, no data lost [appended to FRICTION.md]",
       "open_questions": "OQ9: ticket branch base 1d46d1c84 is 2 behind main tip 5bea6160b (D67 C17 revert + plans). OQ5 'true tip' vs D1 no-re-derivation collide (rebase moves the C18 port onto reverted registration shape). Planner recommendation: HOLD base; chart-hunk fate at landing = owner landing-leg call. Needs owner confirmation at approval.",
       "next_suggested": "human approval round (incl. OQ9) -> agent-test wave -> C01 dev"
+    },
+    {
+      "chunk": "test",
+      "at": "2026-11-27T15:5x+00:00",
+      "session": "ses_de25d9737ffe30G29C1r2lvVEF",
+      "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
+      "status": "DONE",
+      "files_changed": ["tests/services/dev-forgejo-runner.sh (C18 t23-leg port, 806 lines, byte-faithful vs 3d2159dca)", "tests/services/gpu-forgejo-runner.sh (g12 port vs 67569ebfe)", "tests/services/forgejo-build-charts.sh (C03 t35-37; C04 t6/t19/t21/t30 re-aims + t38/t39; C02 t40-45)", "tests/services/forgejo-main-sync.sh (t11 EVT_REF re-aim)", "tests/services/forgejo-renovate.sh (t5 DEBUG-gate shape)", "tests/services/forgejo-builder-bootstrap.sh (b6 vars set)", "tests/services/forgejo-build-containers.sh (t9 diag-guard)", "FRICTION.md (one appended entry — outside strict test-writer file scope, noted)"],
+      "suite_state": "red-first by design: dev FAIL t23 / gpu FAIL g12 (C01 un-reds); build-charts HALT at t6 (re-aims + new legs red, per-leg verified); main-sync HALT t11; renovate HALT t5; bootstrap b6 fail; containers t9 fail; ci-surface only admitted t4; stays-green pins verified both directions (t22 heal, t45 set-e, gate pins)",
+      "deviations": "set -e count 43->42 MEASURED (per-file 14/11/7/5/3/2, pinned with teeth; plan text says 43 — DECISIONS records truth); chunk leg-numbering corrections (C04 't16'=actual t30, main-sync 't16'=actual t11); t6 pins n>=1 invocations; build-charts full-green order only observable at final state (per-leg gates documented in header); dev 67-vs-68 ok-line pre-existing print quirk",
+      "open_questions": "t42/t43 expect dev's per-leg logs INSIDE the workspace sandbox (confirm at C02 review); t41 doubles fixture cost (runtime fine)",
+      "friction": "shell location-shutdown + token-truncation risk mitigated via log redirection + block extraction (appended to FRICTION.md)"
     }
   ]
 }
