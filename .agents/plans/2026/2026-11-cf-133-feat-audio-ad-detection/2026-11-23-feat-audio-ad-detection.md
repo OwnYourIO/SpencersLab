@@ -171,6 +171,7 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 | C07 | Skill codification (D-8 section + anti-hybrid guardrail + qualified `--set` gotcha + precedence rule in `skills/helm-chart-creation`) | S | 4 | [C06] | cites the post-C06 idiom tree as the in-repo exemplar; must land after the conformance shape exists |
 | C08 | Forge-build compile fixes (the 10-error class sweep + volatile-DateTime/StopAsync/using/default-arg fixes + local dotnet attempt) + chart image switch to the instance registry | M | 5 | [C07] | the sweep must run on the post-C15 rebased tree (step 0) so the class sweep covers the exact source the next CI compile sees; the registry switch cites the post-rebase sibling cite |
 | C09 | Detection hardening (build-charts `workflow_call` arm before the empty-before die + bootstrap no-marker full-set on both detect surfaces) + C05 runbook L1 reword for the post-C15 fan | M | 5 | [C08] | C09's runbook reword names the post-C08 registry pull story and the post-C15 file names that only exist after C08's step-0 rebase |
+| C10 | Dockerfile fetch-leg fix (runtime-image tool assumption: `wget` absent from `dotnet/runtime:10.0`) + existence-proof AC + container-creation skill guardrail | M | 6 | [C09] | continues the deploy-incident chapter (C08 was the compile round; C10 is the runtime-image round) — the fix must land on the C08/C09-closed tree (registry + detection fixes in) so the owner's next re-dispatch exercises the whole stage-1 at once |
 
 ## Wave order
 1. C01
@@ -180,6 +181,9 @@ deduped, per-day cap) are fingerprinted into the live catalogue automatically
 4. C06, then C07 (intra-wave: C07 codifies the idiom shape C06 delivers)
 5. C08, then C09 (intra-wave: C09's runbook reword and post-C15 workflow
    edits stand on C08's step-0 rebase and registry switch)
+6. C10 (standalone — the runtime-image fetch-leg round; the CI build is
+   again the authoritative proof, the layer-existence proof minimizes the
+   surface)
 
 ## Risks / assumptions
 - **SF 18.0.0 maturity (Q4)**: shipped 2026-11-20 (a week old at plan time);
@@ -515,3 +519,76 @@ copy; hand-written PVC) and OQ10 (fix commit vs amend of the relocated
 commit; fix commit recommended) stand for the coord's batched round;
 `SNAP_STREAM_ID` stays TBD-owner (L2.5 owner leg). No user questions this
 round — the C08/C09 scope is fully determined.
+
+## Rework R3 (2026-11-27): the runtime-image fetch-leg incident
+
+**Incident 2** (owner's `workflow_dispatch` log, 2026-11-27): the C08
+compile fixes are **PROVEN ON CI** — build stage `[build 6/6] dotnet
+publish DONE`, the dll + `/app/publish` emitted. The failure **moved to the
+RUNTIME stage** `[stage-1 4/6]`, Dockerfile line 24:
+`wget -q "https://github.com/snapcast/snapcast/releases/download/
+v${SNAPCAST_VERSION}/snapclient_${SNAPCAST_VERSION}-1_amd64_bookworm.deb"
+&& apt-get update && apt-get install ...` → `/bin/sh: 1: wget: not found`,
+exit 127. `mcr.microsoft.com/dotnet/runtime:10.0` is a lean noble base
+**without `wget`** — and, verified this round by MCR layer listings,
+**without `curl` either**. **CLASS: runtime-image tool assumption** — the
+last untested assumption class in the Dockerfile (the other legs are
+proven: `apt-get`/`dpkg` via layer listing, `groupadd`/`useradd`/`chown`
+present, `dotnet` present; the CI log only proved the WORKDIR/COPY legs ran
+before the fetch died, so the apt legs were layer-proofed, not log-proofed).
+
+**The lesson (DECISIONS):** every `RUN`-referenced binary in a final-stage
+Dockerfile needs **existence-proof against the base image's actual layer
+contents** — or a **zero-binary mechanism**. C01's capture recorded the 5
+layers but not the tool inventory; the compile round proved the build
+stage but left the runtime stage's fetch leg untested. CI is again the
+authoritative proof (the owner's post-merge re-dispatch exercises the apt
+legs for real; further base-image surprises remain possible) — the
+layer-existence proof (C10 T2) is what minimizes the surface.
+
+**Verified ground truth (planner, 2026-11-27):**
+- `runtime:10.0` amd64 (tag → 10.0.15; 5 layers, manifest
+  `sha256:f4ee1b92…`): `wget` **absent** (the incident), `curl` **absent**
+  (the owner's suspicion, confirmed), `sh`/`apt-get`/`dpkg`/`groupadd`/
+  `useradd`/`chown`/`dotnet` all present (full table in the C10 chunk).
+- `sdk:10.0` amd64: layers 0–4 byte-identical to the runtime's; SDK tool
+  layers add **both** `/usr/bin/wget` and `/usr/bin/curl` (candidate (b)
+  is mechanically viable).
+- The deb is **byte-exact** re-verified this round: size 591,928, sha256
+  `b71575bcc2b4541f5004c73a0a1f43374e852bf5d5f2162aa1b230f3c209d9f3`.
+- **Sibling idioms:** `containers/okd-enketo/Dockerfile:21-22` uses
+  `ADD <url>` (BuildKit-native, zero-binary — built on this same forge
+  workflow: the precedent); `containers/forgejo-runner/Dockerfile:49-50`
+  bakes tools via **digest-pinned** `COPY --from` tool images (the repo
+  tool idiom); `forgejo-host-runner` uses `curl` on a curl-bearing base;
+  `music-assistant` uses `wget` on a wget-bearing custom base.
+- **Candidate weighing** (dev decides on the evidence; the planner's lean is
+  (a)): (a) `ADD <url> /tmp/snapclient.deb` — zero-binary, repo precedent,
+  no new image dependency, no new renovate surface (the comment-above-ARG
+  pin is the repo's canonical custom-manager pattern — untouched), the t3
+  shape preserved exactly, hadolint `DL3020` is warning-level (t9 runs at
+  the error threshold); cost: the 592 KB deb persists as a layer (plain
+  `docker build`, no squash) — trivial at this image size. (b) stage the
+  fetch in the build stage (has wget/curl, verified) — final image clean,
+  but a runtime OS asset in the SDK stage + egress coupling to the publish
+  cache + a larger diff. (c) apt-install curl then purge — defeats
+  zero-binary (purged files persist), and separate apt legs are a named
+  antipattern in the container-creation skill. (d)
+  `COPY --from=ghcr.io/curlimages/curl:8.14.1 --link` — a new tag-pinned
+  FROM (off-idiom: forgejo-runner pins digests) = a new renovate-tracked
+  surface, more machinery than (a).
+- **Test alignment (verified):** t3 pins the version-stable **URL string**
+  (`grep -qF` over the flattened file) + `apt-get install -y
+  --no-install-recommends.*\.deb` + the same-RUN apt cleanup — and does
+  **NOT** pin the literal `wget`. t4's `groupadd`/`useradd --uid 65532`
+  pins are base-present. t1/t2 (pinned FROMs, no `:latest`) are untouched
+  by the fix. **No test change, no new t-numbers, no test-session step.**
+
+**Wave-6 topology:** C10 (M, depends C09) — standalone; it continues the
+deploy-incident chapter (C08 = the compile round, C10 = the runtime-image
+round) and must land on the C08/C09-closed tree so the owner's next
+re-dispatch exercises the whole stage-1 at once. **Commit shape:** another
+fix-commit on the `bcc55ebdf` chain (the OQ10 fix-commit pattern,
+confirmed). **Open questions:** none new — OQ9/OQ10 confirmed at close;
+`SNAP_STREAM_ID` stays TBD-owner; no user questions this round (scope
+fully determined).

@@ -269,6 +269,12 @@ to keep layers small.
   (each one becomes a layer; consolidate).
 - ❌ `CMD` over `ENTRYPOINT` for service containers. Use `ENTRYPOINT` so
   Kubernetes args are appended, not replaced.
+- ❌ `RUN`-referenced fetcher binaries (`wget`/`curl`) on lean bases —
+  prove every `RUN`-referenced binary against the base image's actual
+  layer contents (MCR/GHCR anonymous v2 API, layer tar listings) or use
+  a zero-binary mechanism (`ADD <url>`; digest-pinned `COPY --from` tool
+  image, the forgejo-runner idiom). The dotnet `runtime:10.0` base
+  carries neither (cf-133 incident 2, 2026-11-27, exit 127).
 
 ## Consuming the image from a Helm chart
 
