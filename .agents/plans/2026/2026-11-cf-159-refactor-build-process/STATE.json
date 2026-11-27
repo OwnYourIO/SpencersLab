@@ -66,7 +66,12 @@
   },
   "wave": null,
   "chunks": {
-    "C01": { "status": "pending", "wave": 1, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
+    "C01": { "status": "dev-done", "wave": 1, "depends_on": [], "dev_rounds": 1, "review_rounds": 0, "last_verdict": null, "dev_session": "ses_de21dc419ffeNvw4ZtIoqfscM5", "handoffs": [
+      { "at": "2026-11-27T16:30+00:00", "status": "DONE", "files": ["charts/forgejo-runner/values.yaml (33+/7-, byte-identical to git show 67569ebfe:charts/forgejo-runner/values.yaml per cmp; working diff == git diff 5cef0f6c6 67569ebfe per diff)"],
+        "commands": "cat-file objects resolve pass; dev-forgejo-runner pass (t23/t24 green, 69 counted/70 printed incl known print quirk); gpu pass (g12/g13 green, 27 ok); helm lint pass; hermetic template pass + render check (one sync-options occurrence, exact literal, STS-only); ci-surface t1-t3 pass t4 admitted-red; aislop ci --changes pass 0/0",
+        "observation": "gpu runners HEALTHY post-out-of-band C18 (10/10 Running 2/2 0 restarts, recreated ~15:02Z, live task processing); dev runners ZERO pods in default (scale-0 vs deleted-STS indistinguishable read-only) — NOT the pre-apply crash-loop; dev leg of D66(6) unstick stays owner-side",
+        "deviations": "suite counts +1/+2 vs brief (explained); one indent slip self-caught by cmp and fixed same-turn; aislop file-form invalid -> ci --changes used",
+        "friction": "one shell location-shutdown mid-command, recovered, no loss" } ] },
     "C02": { "status": "pending", "wave": 4, "depends_on": ["C03", "C04"], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
     "C03": { "status": "pending", "wave": 2, "depends_on": [], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] },
     "C04": { "status": "pending", "wave": 3, "depends_on": ["C03"], "dev_rounds": 0, "review_rounds": 0, "last_verdict": null, "handoffs": [] }
@@ -126,7 +131,7 @@
     },
     {
       "chunk": "test",
-      "at": "2026-11-27T15:5x+00:00",
+      "at": "2026-11-27T15:50+00:00",
       "session": "ses_de25d9737ffe30G29C1r2lvVEF",
       "model": "gpu-ai/qwen3.8-27b-radiance-tp2",
       "status": "DONE",
