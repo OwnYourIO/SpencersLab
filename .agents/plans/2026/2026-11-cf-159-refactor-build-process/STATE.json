@@ -4,7 +4,7 @@
   "plan_file": "2026-11-27-refactor-build-process.md",
   "plan_status": "complete",
   "created_at": "2026-11-27T05:23+00:00",
-  "updated_at": "2026-11-27T15:23+00:00",
+  "updated_at": "2026-11-27T19:55+00:00",
   "kickoff": {
     "card": "NSJdtS7FkQpryhSAr",
     "card_number": 159,
@@ -168,6 +168,14 @@
       "commands": "full suite re-run at e77f1a40e: dev 69/70, gpu 27, build-charts 45/45 NO HALT, main-sync 18/18 (t18 anchor live), containers 50/50, bootstrap 20/20, renovate 10/10, ci-surface t1-3 + admitted t4, helm lint + hermetic template (1 sync-options occurrence), aislop ci --changes --base 1d46d1c84 100/100 (whole-repo superset fallback reported), scope: 24 files all in chunk scope; C18 byte-faithfulness re-verified vs 67569ebfe/3d2159dca; leftover sweeps clean",
       "summary": "Final whole-plan APPROVED: card's four asks all met (runner C18 carry + reconcile observation; evidence-driven quieting; touched-charts packaging; builder-family unification with documented-and-kept divergences). Cross-chunk coherence in build-charts.yaml verified top-to-bottom. Open items for the step-9 report: owner landing (PR/merge + D66(6) unstick; dev STS state to confirm; main moved further, re-check at landing), dev-instance log re-check post-runner, frozen main-checkout folder cleanup, records nuance (43 vs 42 inventory figure in D2).",
       "next_suggested": "HITL stop (card's Final Review check): owner sign-off -> card to Review + summary comment -> pipeline_release(done) -> step-10 cleanup (remove worktree only on explicit owner request; default keep surfaces) + step-11 friction questions"
+    },
+    {
+      "chunk": "merge",
+      "at": "2026-11-27T19:55+00:00",
+      "status": "COMMITTED 3e18457a1 (merge-review APPROVED ses_de19ceda3ffew10vf5KVCtrxk6; integration by code session ses_de1acce8affeBWqW6ABvlIT8Xr per step-5a escape hatch)",
+      "summary": "Merged origin/main (f3c6976c3) INTO the ticket branch per owner 'merge in main' request + D10 ruling: charts/forgejo-runner (values+templates+Chart.yaml), dev/gpu-forgejo-runner suites, custom-values/services = MAIN's reverted side (C18 port dropped to record — the card's runner issue was resolved by r8's revert); build-charts.yaml INTEGRATED (cf-133 C09 dead-run/empty-before arms byte-preserved under our unified gate + forgejo.* trio + CHANGED-set loops + DEBUG capture; EVENT_SHA cite :95->:96 re-aimed in main-sync comment + suite L488); C02/C03/C04 fully survive.",
+      "commands": "reviewer-verified: build-charts 45/45, main-sync 18/18 (:96 live, zero stale :95), bootstrap 20/20, renovate 10/10, dev/gpu 62/22 (main's reverted suites green), containers 49+d21 (byte-inherited from main, b4c51d0e7 owner-roll admitted), ci-surface t1-3+admitted t4, aislop 135 files 0/0, diff --check clean, staged partition cmp-verified",
+      "landing_state": "origin/main IS ancestor of branch HEAD 3e18457a1 -> owner's merge into main = clean fast-forward, zero conflicts; owner confirmed no merge pending in the main checkout"
     }
   ]
 }
