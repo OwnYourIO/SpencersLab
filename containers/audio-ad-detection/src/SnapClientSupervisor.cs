@@ -129,7 +129,6 @@ public sealed class SnapClientSupervisor : BackgroundService
             Task? readLoop = null;
             Task? assign = null;
             DateTime childStartedAtUtc = default;
-            bool watchdogKilled = false;
             try
             {
                 var spawned = StartChild();
