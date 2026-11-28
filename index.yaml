@@ -12500,6 +12500,18 @@ entries:
   minuspod:
   - apiVersion: v2
     appVersion: 2.95.3
+    created: "2026-11-28T16:51:25.997897683Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 0b44929d864123d903470dbe019eeff907d68cf0f8e1323081718ed55ed1b1c8
+    name: minuspod
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/minuspod-2026.11.3/minuspod-2026.11.3.tgz
+    version: 2026.11.3
+  - apiVersion: v2
+    appVersion: 2.95.3
     created: "2026-11-28T16:40:32.864272038Z"
     dependencies:
     - name: app-template
@@ -20498,4 +20510,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-11-28T16:40:32.865365166Z"
+generated: "2026-11-28T16:51:25.99924615Z"
